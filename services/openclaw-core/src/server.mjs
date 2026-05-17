@@ -1932,6 +1932,7 @@ function buildOpenClawNativePluginSdkContractImplementation({ packagePath = null
     "act.openclaw.workspace_patch_apply",
     "sense.openclaw.prompt_pack",
     "sense.openclaw.plugin_manifest_map",
+    "plan.openclaw.plugin_capability",
     "act.plugin.capability.invoke",
   ];
   const implementationSlots = requiredSlotIds.map((capabilityId) => {
@@ -2558,17 +2559,19 @@ function buildOpenClawNativePluginAdapterStatus() {
       "sense.openclaw.workspace_edit_target_select",
       "sense.openclaw.prompt_pack",
       "sense.openclaw.plugin_manifest_map",
+      "plan.openclaw.plugin_capability",
       "act.openclaw.workspace_text_write",
       "act.openclaw.workspace_patch_apply",
       "plan.plugin.runtime_preflight",
     ],
     pendingCapabilities: ["act.plugin.capability.invoke"],
     summary: {
-      implemented: 10,
+      implemented: 11,
       pending: 1,
       canReadManifestMetadata: true,
       canReadToolCatalogMetadata: true,
       canReadPluginManifestMapMetadata: true,
+      canPlanPluginCapabilityAbsorption: true,
       canReadWorkspaceSemanticMetadata: true,
       canExecuteWorkspaceSymbolLookup: true,
       canSelectWorkspaceEditTargets: true,
@@ -2589,6 +2592,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "manifest profile reads only bounded package metadata from reviewed plugin SDK paths",
       "tool catalog adapter reads only bounded enhanced OpenClaw tool metadata and never imports legacy tools",
       "plugin manifest map reads only bounded extension manifest metadata and never exposes manifest bodies, auth env var names, or config schema bodies",
+      "plugin capability planning derives governance gates from manifest metadata only and never imports, executes, or activates plugins",
       "workspace semantic index emits derived counts only and never exposes file contents",
       "runtime preflight builds a governed execution envelope without loading plugin modules",
       "source contents, README text, script bodies, dependency versions, plugin code execution, and runtime activation remain blocked",
@@ -2902,6 +2906,176 @@ function buildOpenClawPluginManifestMap({ workspacePath = null, query = null, li
       canMutate: false,
       createsTask: false,
       createsApproval: false,
+    },
+  };
+}
+
+function derivePluginCapabilityPlanRisk(manifest) {
+  if ((manifest.providerEndpointCount ?? 0) > 0 || (manifest.channelCount ?? 0) > 0) {
+    return "high";
+  }
+  if ((manifest.providerCount ?? 0) > 0 || (manifest.authReferenceCount ?? 0) > 0 || (manifest.toolContractCount ?? 0) > 0) {
+    return "medium";
+  }
+  return "low";
+}
+
+function derivePluginCapabilityPlanKind(manifest) {
+  if (manifest.category === "channels" || manifest.category === "media") {
+    return "act";
+  }
+  if (manifest.category === "memory" || manifest.category === "search_and_web" || manifest.category === "model_provider") {
+    return "plan";
+  }
+  return "sense";
+}
+
+function buildOpenClawPluginCapabilityPlan({ workspacePath = null, query = null, limit = 40 } = {}) {
+  const manifestMap = buildOpenClawPluginManifestMap({ workspacePath, query, limit });
+  const nativeRegistry = createOpenClawNativePluginRegistry();
+  const pluginItem = nativeRegistry.items.find((entry) => entry.id === "openclaw.native.plugin-sdk") ?? null;
+  const capability = pluginItem?.contract?.capabilities?.find((entry) => entry.id === "plan.openclaw.plugin_capability") ?? null;
+  const manifests = Array.isArray(manifestMap.manifests) ? manifestMap.manifests : [];
+  const safeLimit = normalisePositiveLimit(limit, 40, 120);
+  const candidates = manifests.slice(0, safeLimit).map((manifest) => {
+    const authReferenceCount = (manifest.providerAuthEnvVarCount ?? 0) + (manifest.channelEnvVarCount ?? 0) + (manifest.syntheticAuthRefCount ?? 0);
+    const risk = derivePluginCapabilityPlanRisk({ ...manifest, authReferenceCount });
+    const kind = derivePluginCapabilityPlanKind(manifest);
+    const crossBoundary = manifest.providerEndpointCount > 0 || manifest.channelCount > 0 || manifest.category === "search_and_web";
+    const requiresRuntimeAdapter = kind !== "sense" || manifest.toolContractCount > 0 || manifest.providerCount > 0 || manifest.channelCount > 0;
+    const requiresApproval = risk === "high" || crossBoundary || requiresRuntimeAdapter;
+    const candidateId = `plan.${String(manifest.id ?? manifest.extensionName ?? "plugin").replace(/[^a-zA-Z0-9_.:-]+/gu, "_")}`;
+    return {
+      id: candidateId,
+      manifestId: manifest.id,
+      extensionName: manifest.extensionName,
+      sourceManifestPath: manifest.relativePath,
+      category: manifest.category,
+      proposedCapability: {
+        id: candidateId,
+        kind,
+        risk,
+        domains: crossBoundary ? ["body_internal", "cross_boundary"] : ["body_internal"],
+        runtimeOwner: "openclaw_on_nixos",
+        approvalRequired: requiresApproval,
+        auditLedger: "capability_history",
+      },
+      signals: {
+        contractKeys: manifest.contractKeys,
+        contractCount: manifest.contractCount,
+        providerCount: manifest.providerCount,
+        providerEndpointCount: manifest.providerEndpointCount,
+        providerEndpointHostCount: manifest.providerEndpointHostCount,
+        channelCount: manifest.channelCount,
+        toolContractCount: manifest.toolContractCount,
+        authReferenceCount,
+        configSchemaPropertyCount: manifest.configSchemaPropertyCount,
+        enabledByDefault: manifest.enabledByDefault,
+      },
+      gates: [
+        {
+          id: "manifest_metadata_absorbed",
+          required: true,
+          status: "passed",
+          evidence: `manifest=${manifest.relativePath}`,
+        },
+        {
+          id: "native_capability_contract_required",
+          required: true,
+          status: "blocked",
+          evidence: "candidate is not yet registered as a native capability contract",
+        },
+        {
+          id: "runtime_adapter_required",
+          required: requiresRuntimeAdapter,
+          status: requiresRuntimeAdapter ? "blocked" : "not_required",
+          evidence: requiresRuntimeAdapter ? "provider/tool/channel contracts need native adapter implementation" : "metadata-only candidate",
+        },
+        {
+          id: "explicit_approval_required",
+          required: requiresApproval,
+          status: requiresApproval ? "blocked" : "not_required",
+          evidence: requiresApproval ? `risk=${risk}; crossBoundary=${crossBoundary}; runtimeAdapter=${requiresRuntimeAdapter}` : "read-only body-internal candidate",
+        },
+      ],
+      status: requiresRuntimeAdapter || requiresApproval ? "blocked_pending_native_adapter" : "planned_metadata_only",
+      canActivateRuntime: false,
+      canExecutePluginCode: false,
+      canImportModule: false,
+      contentExposed: false,
+    };
+  });
+  const countsByRisk = candidates.reduce((accumulator, candidate) => {
+    accumulator[candidate.proposedCapability.risk] = (accumulator[candidate.proposedCapability.risk] ?? 0) + 1;
+    return accumulator;
+  }, {});
+  const countsByKind = candidates.reduce((accumulator, candidate) => {
+    accumulator[candidate.proposedCapability.kind] = (accumulator[candidate.proposedCapability.kind] ?? 0) + 1;
+    return accumulator;
+  }, {});
+
+  return {
+    ok: true,
+    registry: "openclaw-plugin-capability-plan-v0",
+    mode: "manifest-derived-plan-only",
+    generatedAt: new Date().toISOString(),
+    sourceRegistries: [
+      manifestMap.registry,
+      nativeRegistry.registry,
+      capability?.id ?? "plan.openclaw.plugin_capability",
+    ],
+    capability: {
+      id: capability?.id ?? "plan.openclaw.plugin_capability",
+      kind: capability?.kind ?? "plan",
+      risk: capability?.risk ?? "low",
+      approvalRequired: capability?.approval?.required === true,
+      runtimeOwner: capability?.runtimeOwner ?? "openclaw_on_nixos",
+    },
+    workspace: manifestMap.workspace,
+    filter: manifestMap.filter,
+    candidates,
+    summary: {
+      candidateCount: candidates.length,
+      blockedCandidates: candidates.filter((candidate) => candidate.status === "blocked_pending_native_adapter").length,
+      metadataOnlyCandidates: candidates.filter((candidate) => candidate.status === "planned_metadata_only").length,
+      requiresApproval: candidates.filter((candidate) => candidate.proposedCapability.approvalRequired).length,
+      requiresRuntimeAdapter: candidates.filter((candidate) => candidate.gates.some((gate) => gate.id === "runtime_adapter_required" && gate.required)).length,
+      byRisk: countsByRisk,
+      byKind: countsByKind,
+      canReadManifestMetadata: true,
+      exposesManifestBodies: false,
+      exposesAuthEnvVarNames: false,
+      exposesConfigSchemaBodies: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      canMutate: false,
+      createsTask: false,
+      createsApproval: false,
+      nextAllowedWork: [
+        "select one blocked candidate for native adapter design",
+        "write native contract tests before registering candidate capabilities",
+        "keep runtime activation behind future approval-gated tasks",
+      ],
+    },
+    governance: {
+      mode: "plugin_capability_manifest_derived_plan_only",
+      runtimeOwner: "openclaw_on_nixos",
+      sourceRegistry: manifestMap.registry,
+      canReadManifestMetadata: true,
+      exposesManifestBodies: false,
+      exposesAuthEnvVarNames: false,
+      exposesConfigSchemaBodies: false,
+      exposesSourceFileContent: false,
+      exposesScriptBodies: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      canMutate: false,
+      createsTask: false,
+      createsApproval: false,
+      requiresExplicitApprovalBeforeExecution: true,
+      requiresNativeAdapterBeforeRuntimeActivation: true,
     },
   };
 }
@@ -6309,6 +6483,14 @@ function resolvePlanCapabilityId({ kind, intent, plannerIntent }) {
     return "sense.openclaw.tool_catalog";
   }
   if (
+    candidate === "openclaw.plugin.capability_plan"
+    || candidate === "openclaw.plugin-capability-plan"
+    || candidate === "plugin.capability_plan"
+    || candidate === "plugin-capability-plan"
+  ) {
+    return "plan.openclaw.plugin_capability";
+  }
+  if (
     candidate === "openclaw.workspace.semantic_index"
     || candidate === "openclaw.workspace.semantic-index"
     || candidate === "workspace.semantic_index"
@@ -7064,6 +7246,23 @@ function baseCapabilities() {
       description: "Map enhanced OpenClaw extension manifests into native registry candidates without exposing auth material, importing modules, or activating plugin runtimes.",
     },
     {
+      id: "plan.openclaw.plugin_capability",
+      name: "Native OpenClaw Plugin Capability Plan",
+      kind: "planner",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/plugins/native-adapter/plugin-capability-plan`,
+      intents: [
+        "openclaw.plugin.capability_plan",
+        "openclaw.plugin-capability-plan",
+        "plugin.capability_plan",
+        "plugin-capability-plan",
+      ],
+      domains: ["body_internal"],
+      risk: "low",
+      governance: "audit_only",
+      description: "Derive native capability candidates and governance gates from enhanced OpenClaw plugin manifests without importing, executing, or activating plugins.",
+    },
+    {
       id: "act.openclaw.workspace_text_write",
       name: "Native OpenClaw Workspace Text Write",
       kind: "actuator",
@@ -7485,6 +7684,14 @@ async function callCapabilityBackend(capability, request) {
 
   if (capability.id === "sense.openclaw.plugin_manifest_map") {
     return buildOpenClawPluginManifestMap({
+      workspacePath: request.params.workspacePath,
+      query: request.params.query ?? request.params.q,
+      limit: request.params.limit,
+    });
+  }
+
+  if (capability.id === "plan.openclaw.plugin_capability") {
+    return buildOpenClawPluginCapabilityPlan({
       workspacePath: request.params.workspacePath,
       query: request.params.query ?? request.params.q,
       limit: request.params.limit,
@@ -10232,6 +10439,20 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/plugin-manifest-map") {
     try {
       sendJson(res, 200, buildOpenClawPluginManifestMap({
+        workspacePath: requestUrl.searchParams.get("workspacePath"),
+        query: requestUrl.searchParams.get("query") ?? requestUrl.searchParams.get("q"),
+        limit: requestUrl.searchParams.get("limit"),
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 404, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/plugin-capability-plan") {
+    try {
+      sendJson(res, 200, buildOpenClawPluginCapabilityPlan({
         workspacePath: requestUrl.searchParams.get("workspacePath"),
         query: requestUrl.searchParams.get("query") ?? requestUrl.searchParams.get("q"),
         limit: requestUrl.searchParams.get("limit"),

@@ -151,7 +151,7 @@ if (!capability || capability.service !== "openclaw-core" || capability.governan
 if (
   !adapter.ok
   || adapter.registry !== "openclaw-native-plugin-adapter-v0"
-  || adapter.status !== "read_only_adapters_ready"
+  || adapter.status !== "read_only_and_approval_gated_mutation_adapters_ready"
   || adapter.summary?.canActivateRuntime !== false
   || adapter.summary?.canExecutePluginCode !== false
   || adapter.summary?.canExecuteToolCode !== false
@@ -159,7 +159,10 @@ if (
   || !adapter.implementedCapabilities?.includes("sense.openclaw.tool_catalog")
   || !adapter.implementedCapabilities?.includes("sense.openclaw.workspace_semantic_index")
   || !adapter.implementedCapabilities?.includes("sense.openclaw.workspace_symbol_lookup")
+  || !adapter.implementedCapabilities?.includes("sense.openclaw.plugin_manifest_map")
+  || !adapter.implementedCapabilities?.includes("plan.openclaw.plugin_capability")
   || adapter.summary?.canExecuteWorkspaceSymbolLookup !== true
+  || adapter.summary?.canPlanPluginCapabilityAbsorption !== true
 ) {
   throw new Error(`Observer adapter status mismatch: ${JSON.stringify(adapter)}`);
 }

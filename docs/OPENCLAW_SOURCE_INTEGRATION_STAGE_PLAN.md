@@ -1326,7 +1326,7 @@ Next intended slice after this passes:
 
 ## 33. 2026-05-15 Step 16 Update: Source-Derived Command Regression
 
-Status: implemented_waiting_check.
+Status: passed.
 
 Slice: focused regression for the enhanced `openclaw` source-derived command integration chain.
 
@@ -1361,7 +1361,7 @@ Next intended slice after this passes:
 
 ## 34. 2026-05-16 Step 17 Update: Plugin Manifest Map Absorption
 
-Status: implemented_waiting_check.
+Status: passed.
 
 Slice: read-only native absorption of enhanced `openclaw/extensions/*/openclaw.plugin.json` manifests.
 
@@ -1375,6 +1375,9 @@ Implemented artifacts:
 - Capability backend support for `sense.openclaw.plugin_manifest_map`.
 - Observer panel: `OpenClaw Plugin Manifest Map`.
 - Targeted checks: `openclaw-plugin-manifest-map`, `observer-openclaw-plugin-manifest-map`.
+
+Recheck note:
+- 2026-05-16 17:46 +08:00 NixOS targeted milestone passed: `openclaw-plugin-manifest-map`, `observer-openclaw-plugin-manifest-map`.
 
 Governance boundaries:
 - Reads extension manifest files only to derive bounded metadata.
@@ -1404,3 +1407,45 @@ Next intended slice after this passes:
 - Use the manifest map to choose one safe plugin capability shape for a native planning/preflight path.
 - Do not activate plugin runtime yet.
 - Keep execution and mutation behind explicit approval/task boundaries.
+
+## 35. 2026-05-17 Step 18 Update: Plugin Capability Plan
+
+Status: implemented_waiting_check.
+
+Slice: manifest-derived native OpenClaw plugin capability planning.
+
+Purpose: turn the absorbed `openclaw.plugin.json` manifest map into native capability candidates with explicit risk, policy domains, approval requirements, runtime-adapter gates, and blocked/not-required states. This is still plan-only: it decides what could become a native capability later, but does not register extension plugins as executable runtime modules.
+
+Implemented artifacts:
+- Native contract slot: `plan.openclaw.plugin_capability`.
+- Core API: `GET /plugins/native-adapter/plugin-capability-plan`.
+- Capability backend support for `plan.openclaw.plugin_capability`.
+- Observer panel: `OpenClaw Plugin Capability Plan`.
+- Targeted checks: `openclaw-plugin-capability-plan`, `observer-openclaw-plugin-capability-plan`.
+
+Governance boundaries:
+- Reads only manifest-derived metadata from the previous manifest map.
+- Does not expose manifest bodies.
+- Does not expose auth env var names, endpoint tokens, schema bodies, or script bodies.
+- Does not import old `openclaw` modules.
+- Does not execute plugin code or activate plugin runtime.
+- Direct endpoint reads do not create tasks, approvals, or capability invocations.
+- Capability invocation is audit-only and only records `plan.openclaw.plugin_capability` history.
+
+Local verification target:
+- `npm run typecheck`.
+- `git diff --check`.
+- Bash syntax check for the new milestone scripts.
+- Targeted milestone checks on NixOS.
+
+NixOS targeted milestone command:
+
+```bash
+cd /home/edvulcan/OpenClaw_On_NixOS && \
+git pull origin main && \
+OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-capability-plan,observer-openclaw-plugin-capability-plan npm run dev:milestone-check:unix
+```
+
+Next intended slice after this passes:
+- Select one blocked candidate category, likely `search_and_web` or `memory`, and write native adapter contract tests for that candidate.
+- Do not activate runtime or execute plugin code yet.

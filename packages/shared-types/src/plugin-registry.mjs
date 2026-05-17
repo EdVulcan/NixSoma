@@ -198,6 +198,25 @@ export function createOpenClawNativePluginRegistry({ generatedAt = new Date().to
         },
       },
       {
+        id: "plan.openclaw.plugin_capability",
+        title: "Plan OpenClaw plugin capability absorption",
+        description: "Derives native capability candidates and governance gates from enhanced OpenClaw plugin manifests without importing, executing, or activating plugins.",
+        kind: "plan",
+        domains: ["body_internal"],
+        risk: "low",
+        permissions: {
+          filesystemRead: true,
+        },
+        approval: {
+          required: false,
+          reason: "Plan-only plugin capability absorption inside the body boundary.",
+        },
+        audit: {
+          required: true,
+          ledger: "capability_history",
+        },
+      },
+      {
         id: "act.plugin.capability.invoke",
         title: "Invoke a governed plugin capability",
         description: "Invokes a registered capability only after policy evaluation and audit binding.",

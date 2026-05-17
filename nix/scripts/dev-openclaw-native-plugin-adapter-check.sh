@@ -155,13 +155,17 @@ if (
   !adapter.ok
   || adapter.registry !== "openclaw-native-plugin-adapter-v0"
   || adapter.mode !== "native-adapter-shell"
-  || adapter.status !== "read_only_adapters_ready"
+  || adapter.status !== "read_only_and_approval_gated_mutation_adapters_ready"
   || !adapter.implementedCapabilities?.includes("sense.plugin.manifest_profile")
   || !adapter.implementedCapabilities?.includes("sense.openclaw.tool_catalog")
   || !adapter.implementedCapabilities?.includes("sense.openclaw.workspace_semantic_index")
   || !adapter.implementedCapabilities?.includes("sense.openclaw.workspace_symbol_lookup")
+  || !adapter.implementedCapabilities?.includes("sense.openclaw.plugin_manifest_map")
+  || !adapter.implementedCapabilities?.includes("plan.openclaw.plugin_capability")
   || adapter.summary?.canReadManifestMetadata !== true
   || adapter.summary?.canReadToolCatalogMetadata !== true
+  || adapter.summary?.canReadPluginManifestMapMetadata !== true
+  || adapter.summary?.canPlanPluginCapabilityAbsorption !== true
   || adapter.summary?.canReadWorkspaceSemanticMetadata !== true
   || adapter.summary?.canExecuteWorkspaceSymbolLookup !== true
   || adapter.summary?.canReadSourceFileContent !== false

@@ -504,6 +504,15 @@ function observerHtml() {
           <pre id="plugin-manifest-map-json">Loading OpenClaw plugin manifest map...</pre>
         </section>
         <section class="panel">
+          <h2>OpenClaw Plugin Capability Plan</h2>
+          <div class="metric"><span>Registry</span><span id="plugin-capability-plan-registry">openclaw-plugin-capability-plan-v0</span></div>
+          <div class="metric"><span>Candidates</span><span id="plugin-capability-plan-candidates">0</span></div>
+          <div class="metric"><span>Blocked</span><span id="plugin-capability-plan-blocked">0</span></div>
+          <div class="metric"><span>Approval</span><span id="plugin-capability-plan-approval">0</span></div>
+          <div class="metric"><span>Runtime</span><span id="plugin-capability-plan-runtime">disabled</span></div>
+          <pre id="plugin-capability-plan-json">Loading OpenClaw plugin capability plan...</pre>
+        </section>
+        <section class="panel">
           <h2>OpenClaw Tool Catalog Adapter</h2>
           <div class="metric"><span>Registry</span><span id="tool-catalog-adapter-registry">openclaw-native-plugin-adapter-v0</span></div>
           <div class="metric"><span>Matches</span><span id="tool-catalog-adapter-matches">0</span></div>
@@ -988,6 +997,12 @@ const pluginManifestMapCategories = document.querySelector("#plugin-manifest-map
 const pluginManifestMapAuth = document.querySelector("#plugin-manifest-map-auth");
 const pluginManifestMapMode = document.querySelector("#plugin-manifest-map-mode");
 const pluginManifestMapJson = document.querySelector("#plugin-manifest-map-json");
+const pluginCapabilityPlanRegistry = document.querySelector("#plugin-capability-plan-registry");
+const pluginCapabilityPlanCandidates = document.querySelector("#plugin-capability-plan-candidates");
+const pluginCapabilityPlanBlocked = document.querySelector("#plugin-capability-plan-blocked");
+const pluginCapabilityPlanApproval = document.querySelector("#plugin-capability-plan-approval");
+const pluginCapabilityPlanRuntime = document.querySelector("#plugin-capability-plan-runtime");
+const pluginCapabilityPlanJson = document.querySelector("#plugin-capability-plan-json");
 const toolCatalogAdapterRegistry = document.querySelector("#tool-catalog-adapter-registry");
 const toolCatalogAdapterMatches = document.querySelector("#tool-catalog-adapter-matches");
 const toolCatalogAdapterCategories = document.querySelector("#tool-catalog-adapter-categories");
@@ -1788,6 +1803,34 @@ function renderPluginManifestMap(data) {
     ...categories.map((entry) => \`\${entry.category ?? "unknown"} count=\${entry.count ?? 0}\`),
     "",
     ...manifests.slice(0, 30).map((manifest) => \`\${manifest.relativePath ?? "unknown"} id=\${manifest.id ?? "unknown"} category=\${manifest.category ?? "unknown"} contracts=\${(manifest.contractKeys ?? []).join(",") || "none"} providers=\${manifest.providerCount ?? 0} endpoints=\${manifest.providerEndpointCount ?? 0} channels=\${manifest.channelCount ?? 0} authRefs=\${(manifest.providerAuthEnvVarCount ?? 0) + (manifest.channelEnvVarCount ?? 0) + (manifest.syntheticAuthRefCount ?? 0)} schemaProps=\${manifest.configSchemaPropertyCount ?? 0} contentExposed=\${Boolean(manifest.contentExposed)}\`),
+  ].join("\\n");
+}
+
+function renderPluginCapabilityPlan(data) {
+  const summary = data?.summary ?? {};
+  const governance = data?.governance ?? {};
+  const candidates = Array.isArray(data?.candidates) ? data.candidates : [];
+  pluginCapabilityPlanRegistry.textContent = data?.registry ?? "openclaw-plugin-capability-plan-v0";
+  pluginCapabilityPlanCandidates.textContent = String(summary.candidateCount ?? candidates.length);
+  pluginCapabilityPlanBlocked.textContent = String(summary.blockedCandidates ?? 0);
+  pluginCapabilityPlanApproval.textContent = String(summary.requiresApproval ?? 0);
+  pluginCapabilityPlanRuntime.textContent = summary.canActivateRuntime ? "enabled" : "disabled";
+
+  pluginCapabilityPlanJson.textContent = [
+    "Manifest-derived plugin capability plan: enhanced OpenClaw extension manifests become native capability candidates and governance gates.",
+    "This remains plan-only: no plugin modules are imported, no plugin code is executed, no runtime is activated, and no task or approval is created.",
+    \`Registry: \${data?.registry ?? "openclaw-plugin-capability-plan-v0"}\`,
+    \`Mode: \${data?.mode ?? "manifest-derived-plan-only"}\`,
+    \`Capability: \${data?.capability?.id ?? "plan.openclaw.plugin_capability"} risk=\${data?.capability?.risk ?? "low"} approval=\${Boolean(data?.capability?.approvalRequired)} owner=\${data?.capability?.runtimeOwner ?? "unknown"}\`,
+    \`Workspace: \${data?.workspace?.path ?? "unknown"}\`,
+    \`Counts: candidates=\${summary.candidateCount ?? candidates.length} blocked=\${summary.blockedCandidates ?? 0} metadataOnly=\${summary.metadataOnlyCandidates ?? 0} approval=\${summary.requiresApproval ?? 0} runtimeAdapter=\${summary.requiresRuntimeAdapter ?? 0}\`,
+    \`Risks: \${Object.entries(summary.byRisk ?? {}).map(([risk, count]) => \`\${risk}=\${count}\`).join(", ") || "none"}\`,
+    \`Kinds: \${Object.entries(summary.byKind ?? {}).map(([kind, count]) => \`\${kind}=\${count}\`).join(", ") || "none"}\`,
+    \`Governance: metadata=\${Boolean(governance.canReadManifestMetadata)} exposeBodies=\${Boolean(governance.exposesManifestBodies)} exposeAuthNames=\${Boolean(governance.exposesAuthEnvVarNames)} importModule=\${Boolean(governance.canImportModule)} executePlugin=\${Boolean(governance.canExecutePluginCode)} activateRuntime=\${Boolean(governance.canActivateRuntime)} task=\${Boolean(governance.createsTask)} approval=\${Boolean(governance.createsApproval)}\`,
+    "",
+    ...candidates.slice(0, 30).map((candidate) => \`\${candidate.id ?? "candidate"} manifest=\${candidate.manifestId ?? "unknown"} kind=\${candidate.proposedCapability?.kind ?? "unknown"} risk=\${candidate.proposedCapability?.risk ?? "unknown"} approval=\${Boolean(candidate.proposedCapability?.approvalRequired)} status=\${candidate.status ?? "unknown"} gates=\${(candidate.gates ?? []).map((gate) => \`\${gate.id}:\${gate.status}\`).join(",")}\`),
+    "",
+    \`Next Allowed Work: \${(summary.nextAllowedWork ?? []).join("; ") || "none"}\`,
   ].join("\\n");
 }
 
@@ -2689,6 +2732,20 @@ async function refreshPluginManifestMap() {
     pluginManifestMapAuth.textContent = "0";
     pluginManifestMapMode.textContent = "unknown";
     pluginManifestMapJson.textContent = "Unable to read OpenClaw plugin manifest map.";
+  }
+}
+
+async function refreshPluginCapabilityPlan() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/plugin-capability-plan?limit=40\`);
+    renderPluginCapabilityPlan(data);
+  } catch {
+    pluginCapabilityPlanRegistry.textContent = "offline";
+    pluginCapabilityPlanCandidates.textContent = "0";
+    pluginCapabilityPlanBlocked.textContent = "0";
+    pluginCapabilityPlanApproval.textContent = "0";
+    pluginCapabilityPlanRuntime.textContent = "unknown";
+    pluginCapabilityPlanJson.textContent = "Unable to read OpenClaw plugin capability plan.";
   }
 }
 
@@ -4558,6 +4615,7 @@ await refreshPluginSdkNativeContractTests();
 await refreshNativeSdkContractImplementation();
 await refreshOpenClawToolCatalog();
 await refreshPluginManifestMap();
+await refreshPluginCapabilityPlan();
 await refreshToolCatalogAdapter();
 await refreshSemanticIndex();
 await refreshSymbolLookup();
@@ -4608,6 +4666,7 @@ setInterval(refreshPluginSdkNativeContractTests, 5000);
 setInterval(refreshNativeSdkContractImplementation, 5000);
 setInterval(refreshOpenClawToolCatalog, 5000);
 setInterval(refreshPluginManifestMap, 5000);
+setInterval(refreshPluginCapabilityPlan, 5000);
 setInterval(refreshToolCatalogAdapter, 5000);
 setInterval(refreshSemanticIndex, 5000);
 setInterval(refreshSymbolLookup, 5000);
