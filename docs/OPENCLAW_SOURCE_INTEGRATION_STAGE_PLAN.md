@@ -1506,7 +1506,7 @@ Next intended slice after this passes:
 
 ## 37. 2026-05-17 Step 20 Update: Search/Web Adapter Contract Shell
 
-Status: local implementation ready; awaiting NixOS targeted milestone.
+Status: passed.
 
 Slice: native search/web adapter contract shell for selected enhanced OpenClaw plugin candidates.
 
@@ -1517,6 +1517,9 @@ Implemented artifacts:
 - Native adapter status includes `plan.openclaw.plugin_search_web_adapter_contract`.
 - Observer panel: `OpenClaw Search/Web Adapter Contract`.
 - Targeted checks: `openclaw-plugin-search-web-adapter-contract`, `observer-openclaw-plugin-search-web-adapter-contract`.
+
+Recheck note:
+- 2026-05-17 15:34 +08:00 NixOS targeted milestone passed: `openclaw-plugin-search-web-adapter-contract`, `observer-openclaw-plugin-search-web-adapter-contract`.
 
 Contract expectations now checked:
 - Provider contracts are derived from `openclaw-plugin-candidate-contract-tests-v0`.
@@ -1553,3 +1556,52 @@ Next intended slice after this passes:
 - Materialize search/web adapter invocation drafts as approval-gated tasks.
 - Keep actual network/provider execution deferred behind explicit approval and future runtime preflight.
 - Do not activate old OpenClaw plugin runtime.
+
+## 38. 2026-05-17 Step 21 Update: Search/Web Adapter Task Materialization
+
+Status: local implementation ready; awaiting NixOS targeted milestone.
+
+Slice: approval-gated native search/web adapter task materialization.
+
+Purpose: move the native search/web adapter contract shell into the normal OpenClawOnNixOS task/approval/operator path. This creates a queued task and linked pending approval for a selected search/web provider contract while keeping query content redacted and network/provider execution deferred.
+
+Implemented artifacts:
+- Core draft API: `GET /plugins/native-adapter/plugin-search-web-adapter-task-draft`.
+- Core task API: `POST /plugins/native-adapter/plugin-search-web-adapter-tasks`.
+- Observer control: `Create Search/Web Approval Task`.
+- Targeted checks: `openclaw-plugin-search-web-adapter-task`, `observer-openclaw-plugin-search-web-adapter-task`.
+
+Task boundaries now checked:
+- Task creation requires `confirm=true`.
+- The task is queued with policy decision `require_approval`.
+- A linked pending approval is created.
+- Operator step blocks before approval with `policy_requires_approval`.
+- Query content is represented only by length/digest and is not exposed.
+- Capability invocation history remains empty.
+- Network use, old module imports, plugin execution, runtime activation, mutation, and provider execution remain blocked.
+
+Governance boundaries:
+- Creates a task and approval only after explicit task materialization request.
+- Does not expose query content, manifest bodies, auth env var names, endpoint hosts/tokens, schema bodies, source files, or script bodies.
+- Does not perform network requests.
+- Does not import old `openclaw` modules.
+- Does not execute plugin code or activate plugin runtime.
+- Does not invoke capabilities or providers during task creation.
+
+Local verification target:
+- `npm run typecheck`.
+- `git diff --check`.
+- Bash syntax check for the new milestone scripts.
+- Targeted milestone checks on NixOS.
+
+NixOS targeted milestone command:
+
+```bash
+cd /home/edvulcan/OpenClaw_On_NixOS && \
+git pull origin main && \
+OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-task,observer-openclaw-plugin-search-web-adapter-task npm run dev:milestone-check:unix
+```
+
+Next intended slice after this passes:
+- Add denial and fresh-approval recovery for search/web adapter tasks.
+- Keep network/provider execution deferred until a future preflight and runtime boundary exists.

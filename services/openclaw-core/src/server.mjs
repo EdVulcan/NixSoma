@@ -3505,6 +3505,272 @@ function buildOpenClawPluginSearchWebAdapterContract({
   };
 }
 
+function findSearchWebProviderContract(adapterContract, providerContractId = null) {
+  const providerContracts = Array.isArray(adapterContract.providerContracts) ? adapterContract.providerContracts : [];
+  if (providerContracts.length === 0) {
+    throw new Error("No search/web provider contract is available for task materialization.");
+  }
+
+  if (typeof providerContractId === "string" && providerContractId.trim()) {
+    const requested = providerContractId.trim();
+    const match = providerContracts.find((contract) => (
+      contract.id === requested
+      || contract.candidateId === requested
+      || contract.manifestId === requested
+      || contract.proposedCapabilityId === requested
+    ));
+    if (!match) {
+      throw new Error("Requested providerContractId is not part of the search/web adapter contract.");
+    }
+    return match;
+  }
+
+  return providerContracts[0];
+}
+
+function buildOpenClawPluginSearchWebAdapterTaskDraft({
+  workspacePath = null,
+  providerContractId = null,
+  query = "openclaw native integration",
+  limit = 8,
+} = {}) {
+  const adapterContract = buildOpenClawPluginSearchWebAdapterContract({ workspacePath, limit });
+  const providerContract = findSearchWebProviderContract(adapterContract, providerContractId);
+  const safeQuery = typeof query === "string" && query.trim()
+    ? query.trim().slice(0, 160)
+    : "openclaw native integration";
+  const queryDigest = createHash("sha256").update(safeQuery).digest("hex").slice(0, 16);
+  const now = new Date().toISOString();
+  const policyRequest = {
+    intent: "plugin.search_web.invoke",
+    domain: "cross_boundary",
+    risk: providerContract.policy?.risk ?? "medium",
+    requiresApproval: true,
+    approved: false,
+    providerContractId: providerContract.id,
+    tags: ["openclaw_search_web_adapter", "explicit_approval_required", "network_deferred"],
+  };
+  const policyDecision = {
+    id: randomUUID(),
+    at: now,
+    engine: "openclaw-plugin-search-web-adapter-task-v0",
+    stage: "plugin_search_web.task.materialize",
+    subject: {
+      taskId: null,
+      type: "openclaw_search_web_adapter_invocation",
+      goal: `Prepare approved search/web adapter invocation for ${providerContract.manifestId}`,
+      targetUrl: null,
+      intent: policyRequest.intent,
+    },
+    domain: policyRequest.domain,
+    risk: policyRequest.risk,
+    decision: "require_approval",
+    reason: "search_web_adapter_invocation_requires_explicit_user_approval_before_network_use",
+    approved: false,
+    autonomyMode,
+    autonomous: false,
+  };
+  const plan = {
+    planId: `plan-${randomUUID()}`,
+    strategy: "openclaw-search-web-adapter-v0",
+    planner: "openclaw-plugin-search-web-adapter-task-v0",
+    capabilityAware: true,
+    status: "planned",
+    goal: `Prepare approved search/web adapter invocation for ${providerContract.manifestId}`,
+    targetUrl: null,
+    intent: policyRequest.intent,
+    createdAt: now,
+    updatedAt: now,
+    capabilitySummary: {
+      total: 3,
+      approvalGates: 2,
+      ids: [
+        "plan.openclaw.plugin_search_web_adapter_contract",
+        "govern.policy.evaluate",
+        "boundary.cross_domain.approval",
+      ],
+      byRisk: {
+        low: 1,
+        [policyRequest.risk]: 2,
+      },
+    },
+    steps: [
+      {
+        id: "step-review-search-web-contract",
+        kind: "openclaw.plugin.search_web_contract",
+        phase: "reviewing_search_web_contract",
+        title: "Review native search/web provider contract",
+        status: "pending",
+        capabilityId: "plan.openclaw.plugin_search_web_adapter_contract",
+        risk: "low",
+        governance: "audit_only",
+        requiresApproval: false,
+        params: {
+          providerContractId: providerContract.id,
+          manifestId: providerContract.manifestId,
+        },
+      },
+      {
+        id: "step-user-approval",
+        kind: "approval.gate",
+        phase: "waiting_for_approval",
+        title: "Wait for explicit user approval before any network-bound search/web use",
+        status: "pending",
+        capabilityId: "govern.policy.evaluate",
+        risk: policyRequest.risk,
+        governance: "require_approval",
+        requiresApproval: true,
+      },
+      {
+        id: "step-defer-network-provider-execution",
+        kind: "plugin.search_web.invoke",
+        phase: "network_provider_deferred",
+        title: "Defer search/web provider execution until runtime preflight exists",
+        status: "pending",
+        capabilityId: "boundary.cross_domain.approval",
+        risk: policyRequest.risk,
+        governance: "require_approval",
+        requiresApproval: true,
+        params: {
+          providerContractId: providerContract.id,
+          operation: providerContract.operations?.[0] ?? "search.query",
+          queryLength: safeQuery.length,
+          queryDigest,
+          queryContentExposed: false,
+          canUseNetwork: false,
+          canExecutePluginCode: false,
+        },
+      },
+    ],
+    governance: {
+      mode: "openclaw_search_web_adapter_task_plan",
+      runtimeOwner: "openclaw_on_nixos",
+      canUseNetwork: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      requiresExplicitApproval: true,
+      requiresRuntimePreflightBeforeExecution: true,
+    },
+  };
+
+  return {
+    ok: true,
+    registry: "openclaw-plugin-search-web-adapter-task-draft-v0",
+    mode: "approval-gated-search-web-task-draft",
+    generatedAt: now,
+    sourceRegistry: adapterContract.registry,
+    sourceRegistries: [
+      adapterContract.registry,
+      "openclaw-plugin-candidate-contract-tests-v0",
+      "openclaw-plugin-capability-plan-v0",
+    ],
+    workspace: adapterContract.workspace,
+    adapter: adapterContract.adapter,
+    providerContract,
+    query: {
+      present: safeQuery.length > 0,
+      length: safeQuery.length,
+      digest: queryDigest,
+      contentExposed: false,
+    },
+    plan,
+    policy: {
+      request: policyRequest,
+      decision: policyDecision,
+    },
+    governance: {
+      mode: "plugin_search_web_adapter_task_draft",
+      runtimeOwner: "openclaw_on_nixos",
+      createsTask: false,
+      createsApproval: false,
+      canReadManifestMetadata: true,
+      exposesManifestBodies: false,
+      exposesAuthEnvVarNames: false,
+      exposesEndpointHosts: false,
+      exposesQueryContent: false,
+      canUseNetwork: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      canMutate: false,
+      requiresExplicitApprovalBeforeNetworkUse: true,
+      requiresRuntimePreflightBeforeExecution: true,
+    },
+  };
+}
+
+async function createOpenClawPluginSearchWebAdapterTask({
+  workspacePath = null,
+  providerContractId = null,
+  query = "openclaw native integration",
+  limit = 8,
+  confirm = false,
+} = {}) {
+  if (confirm !== true) {
+    throw new Error("Search/web adapter task creation requires confirm=true.");
+  }
+
+  const draft = buildOpenClawPluginSearchWebAdapterTaskDraft({
+    workspacePath,
+    providerContractId,
+    query,
+    limit,
+  });
+  const task = createTask({
+    goal: draft.plan.goal,
+    type: "openclaw_search_web_adapter_invocation",
+    workViewStrategy: "openclaw-search-web-adapter",
+    plan: draft.plan,
+    policy: draft.policy.request,
+  }, { skipInitialPolicy: true });
+  task.policy = draft.policy;
+  const approval = createApprovalRequestForTask(task, draft.policy.decision);
+  const reclaimedTasks = supersedeOtherActiveTasks(task.id);
+  reconcileRuntimeState();
+  persistState();
+
+  await publishEvent("task.created", { task: serialiseTask(task), planner: "openclaw-plugin-search-web-adapter-task-v0" });
+  await publishTaskApprovalIfPending(task);
+  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+    task: serialiseTask(reclaimedTask),
+  })));
+
+  return {
+    ok: true,
+    registry: "openclaw-plugin-search-web-adapter-task-v0",
+    mode: "approval-gated-search-web-task",
+    generatedAt: new Date().toISOString(),
+    sourceRegistry: draft.registry,
+    adapter: draft.adapter,
+    providerContract: draft.providerContract,
+    query: draft.query,
+    task,
+    approval,
+    governance: {
+      mode: "plugin_search_web_adapter_task_approval_gated",
+      runtimeOwner: "openclaw_on_nixos",
+      createsTask: true,
+      createsApproval: true,
+      canExecuteWithoutApproval: false,
+      canReadManifestMetadata: true,
+      exposesManifestBodies: false,
+      exposesAuthEnvVarNames: false,
+      exposesEndpointHosts: false,
+      exposesQueryContent: false,
+      canUseNetwork: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      canMutate: false,
+      executed: false,
+      requiresExplicitApprovalBeforeNetworkUse: true,
+      requiresRuntimePreflightBeforeExecution: true,
+    },
+  };
+}
+
 function normalisePositiveLimit(value, fallback = 20, max = 80) {
   const parsed = Number.parseInt(String(value ?? ""), 10);
   return Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, max) : fallback;
@@ -6916,6 +7182,17 @@ function resolvePlanCapabilityId({ kind, intent, plannerIntent }) {
     return "plan.openclaw.plugin_capability";
   }
   if (
+    candidate === "openclaw.plugin.search_web_contract"
+    || candidate === "openclaw.plugin.search-web-contract"
+    || candidate === "plugin.search_web.contract"
+    || candidate === "plugin.search-web-contract"
+  ) {
+    return "plan.openclaw.plugin_search_web_adapter_contract";
+  }
+  if (candidate === "plugin.search_web.invoke" || candidate === "plugin.search-web.invoke") {
+    return "boundary.cross_domain.approval";
+  }
+  if (
     candidate === "openclaw.workspace.semantic_index"
     || candidate === "openclaw.workspace.semantic-index"
     || candidate === "workspace.semantic_index"
@@ -7686,6 +7963,23 @@ function baseCapabilities() {
       risk: "low",
       governance: "audit_only",
       description: "Derive native capability candidates and governance gates from enhanced OpenClaw plugin manifests without importing, executing, or activating plugins.",
+    },
+    {
+      id: "plan.openclaw.plugin_search_web_adapter_contract",
+      name: "Native OpenClaw Search/Web Adapter Contract",
+      kind: "planner",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/plugins/native-adapter/plugin-search-web-adapter-contract`,
+      intents: [
+        "openclaw.plugin.search_web_contract",
+        "openclaw.plugin.search-web-contract",
+        "plugin.search_web.contract",
+        "plugin.search-web-contract",
+      ],
+      domains: ["body_internal"],
+      risk: "low",
+      governance: "audit_only",
+      description: "Map selected enhanced OpenClaw search/web plugin candidates into native adapter contracts without network use, old module imports, plugin execution, or runtime activation.",
     },
     {
       id: "act.openclaw.workspace_text_write",
@@ -10914,6 +11208,43 @@ const server = http.createServer(async (req, res) => {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       sendJson(res, 404, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/plugin-search-web-adapter-task-draft") {
+    try {
+      sendJson(res, 200, buildOpenClawPluginSearchWebAdapterTaskDraft({
+        workspacePath: requestUrl.searchParams.get("workspacePath"),
+        providerContractId: requestUrl.searchParams.get("providerContractId"),
+        query: requestUrl.searchParams.get("query") ?? requestUrl.searchParams.get("q") ?? "openclaw native integration",
+        limit: requestUrl.searchParams.get("limit"),
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 404, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/plugins/native-adapter/plugin-search-web-adapter-tasks") {
+    try {
+      const body = await readJsonBody(req);
+      const result = await createOpenClawPluginSearchWebAdapterTask({
+        workspacePath: body.workspacePath,
+        providerContractId: body.providerContractId,
+        query: body.query ?? body.q,
+        limit: body.limit,
+        confirm: body.confirm,
+      });
+      sendJson(res, 201, {
+        ...result,
+        task: serialiseTask(result.task),
+        approval: serialiseApproval(result.approval),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
     }
     return;
   }

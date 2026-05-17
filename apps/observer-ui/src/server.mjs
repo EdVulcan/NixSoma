@@ -528,6 +528,9 @@ function observerHtml() {
           <div class="metric"><span>Required</span><span id="plugin-search-web-contract-required">0/0</span></div>
           <div class="metric"><span>Network</span><span id="plugin-search-web-contract-network">blocked</span></div>
           <div class="metric"><span>Runtime</span><span id="plugin-search-web-contract-runtime">disabled</span></div>
+          <div class="actions tight">
+            <button id="plugin-search-web-task-button" class="secondary">Create Search/Web Approval Task</button>
+          </div>
           <pre id="plugin-search-web-contract-json">Loading OpenClaw search/web adapter contract...</pre>
         </section>
         <section class="panel">
@@ -1033,6 +1036,7 @@ const pluginSearchWebContractRequired = document.querySelector("#plugin-search-w
 const pluginSearchWebContractNetwork = document.querySelector("#plugin-search-web-contract-network");
 const pluginSearchWebContractRuntime = document.querySelector("#plugin-search-web-contract-runtime");
 const pluginSearchWebContractJson = document.querySelector("#plugin-search-web-contract-json");
+const pluginSearchWebTaskButton = document.querySelector("#plugin-search-web-task-button");
 const toolCatalogAdapterRegistry = document.querySelector("#tool-catalog-adapter-registry");
 const toolCatalogAdapterMatches = document.querySelector("#tool-catalog-adapter-matches");
 const toolCatalogAdapterCategories = document.querySelector("#tool-catalog-adapter-categories");
@@ -3745,6 +3749,29 @@ async function createNativePluginInvokeApprovalTask() {
   await refreshNativePluginInvokePlan();
 }
 
+async function createPluginSearchWebApprovalTask() {
+  const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/plugin-search-web-adapter-tasks\`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      query: "openclaw native integration",
+      confirm: true,
+    }),
+  });
+
+  taskHistoryFocus = "selected-task";
+  selectedHistoryTaskId = result.task?.id ?? null;
+  taskDetailIdInput.value = result.task?.id ?? "";
+  renderPlanPanel(result.task);
+  setControlMessage(\`Created approval-gated search/web adapter task \${result.task?.id ?? "unknown"}; network execution remains deferred.\`);
+  await refreshRuntime();
+  await refreshTaskList();
+  await refreshTaskHistoryDetail();
+  await refreshApprovalState();
+  await refreshOperatorState();
+  await refreshPluginSearchWebAdapterContract();
+}
+
 async function createSourceAuthoredEditApprovalTask() {
   const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/source-authored-edit-tasks\`, {
     method: "POST",
@@ -4411,6 +4438,12 @@ sourceCommandTaskButton.addEventListener("click", () => {
 
 nativePluginInvokeTaskButton.addEventListener("click", () => {
   createNativePluginInvokeApprovalTask().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
+pluginSearchWebTaskButton.addEventListener("click", () => {
+  createPluginSearchWebApprovalTask().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);
   });
 });
