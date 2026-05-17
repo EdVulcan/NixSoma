@@ -1559,7 +1559,7 @@ Next intended slice after this passes:
 
 ## 38. 2026-05-17 Step 21 Update: Search/Web Adapter Task Materialization
 
-Status: local implementation ready; awaiting NixOS targeted milestone.
+Status: passed.
 
 Slice: approval-gated native search/web adapter task materialization.
 
@@ -1602,6 +1602,36 @@ git pull origin main && \
 OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-task,observer-openclaw-plugin-search-web-adapter-task npm run dev:milestone-check:unix
 ```
 
+Recheck note:
+- 2026-05-17 15:45 +08:00 NixOS targeted milestone passed: `openclaw-plugin-search-web-adapter-task`, `observer-openclaw-plugin-search-web-adapter-task`.
+
+## 39. 2026-05-17 Step 22 Update: Search/Web Adapter Denial Recovery
+
+Status: local implementation ready; awaiting NixOS targeted milestone.
+
+Slice: denial and fresh-approval recovery for native search/web adapter tasks.
+
+Purpose: make denied native search/web adapter tasks recoverable without inheriting approval or executing network/provider code. This keeps the user-control loop intact: denial fails the original task, recovery creates a fresh queued task and fresh pending approval, and even after approval the task remains deferred until a later runtime preflight boundary is implemented.
+
+Implemented artifacts:
+- Core recovery support for `openclaw_search_web_adapter_invocation` tasks with native adapter plans.
+- Runtime-preflight deferred execution boundary for approved search/web adapter tasks.
+- Targeted checks: `openclaw-plugin-search-web-adapter-denial-recovery`, `observer-openclaw-plugin-search-web-adapter-denial-recovery`.
+
+Safety boundaries:
+- Recovery does not reuse the denied approval ID.
+- Recovered task policy is reevaluated and requires a fresh explicit approval.
+- Approved recovered tasks do not use network, execute plugin/provider code, import old OpenClaw modules, or expose query/endpoint/auth-env details.
+- Duplicate recovery for the same denied task is rejected.
+
+Expected NixOS check:
+
+```bash
+cd /home/edvulcan/OpenClaw_On_NixOS && \
+git pull origin main && \
+OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-denial-recovery,observer-openclaw-plugin-search-web-adapter-denial-recovery npm run dev:milestone-check:unix
+```
+
 Next intended slice after this passes:
-- Add denial and fresh-approval recovery for search/web adapter tasks.
-- Keep network/provider execution deferred until a future preflight and runtime boundary exists.
+- Add search/web runtime preflight envelope.
+- Keep actual provider/network activation disabled until the preflight contract is observable and approved.

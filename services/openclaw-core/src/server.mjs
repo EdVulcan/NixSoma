@@ -7414,6 +7414,13 @@ function hasRecoverableCapabilityPlan(task) {
   return task?.type === "system_task" && planCapabilityActionSteps(task).length > 0;
 }
 
+function hasRecoverableSearchWebAdapterPlan(task) {
+  return isOpenClawSearchWebAdapterTask(task)
+    && task?.plan?.governance?.requiresRuntimePreflightBeforeExecution === true
+    && task?.plan?.governance?.canUseNetwork === false
+    && task?.plan?.governance?.canExecutePluginCode === false;
+}
+
 function isRecoverableTask(task) {
   if (!["completed", "failed", "superseded"].includes(task.status)) {
     return false;
@@ -7423,7 +7430,7 @@ function isRecoverableTask(task) {
     return true;
   }
 
-  return hasRecoverableCapabilityPlan(task);
+  return hasRecoverableCapabilityPlan(task) || hasRecoverableSearchWebAdapterPlan(task);
 }
 
 function compareTasksForDisplay(left, right) {
@@ -9370,6 +9377,11 @@ function isNativePluginCapabilityTask(task) {
   return task?.type === "native_plugin_capability";
 }
 
+function isOpenClawSearchWebAdapterTask(task) {
+  return task?.type === "openclaw_search_web_adapter_invocation"
+    && task?.plan?.strategy === "openclaw-search-web-adapter-v0";
+}
+
 async function deferNativePluginCapabilityExecution(task) {
   if (!isActiveTask(task)) {
     throw new Error("Task is not active and cannot be deferred.");
@@ -9417,6 +9429,61 @@ async function deferNativePluginCapabilityExecution(task) {
       canActivateRuntime: false,
       executed: false,
       requiresRuntimeAdapterBeforeExecution: true,
+    },
+  };
+}
+
+async function deferOpenClawSearchWebAdapterExecution(task) {
+  if (!isActiveTask(task)) {
+    throw new Error("Task is not active and cannot be deferred.");
+  }
+
+  const policy = ensureTaskPolicy(task, { stage: "openclaw.search_web.invoke.deferred" });
+  await publishEvent("policy.evaluated", { task: serialiseTask(task), policy: policy.decision });
+  const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
+  const providerStep = (task.plan?.steps ?? []).find((step) => step.kind === "plugin.search_web.invoke") ?? null;
+  const reason = "search_web_runtime_preflight_deferred";
+  const deferredTask = await setTaskPhase(task, "network_provider_deferred", {
+    status: "queued",
+    details: {
+      executor: "openclaw-search-web-adapter-v0",
+      reason,
+      providerContractId: providerStep?.params?.providerContractId ?? null,
+      operation: providerStep?.params?.operation ?? null,
+      queryLength: providerStep?.params?.queryLength ?? null,
+      queryDigest: providerStep?.params?.queryDigest ?? null,
+      queryContentExposed: false,
+      canUseNetwork: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      requiresRuntimePreflightBeforeExecution: true,
+    },
+  });
+
+  await publishEvent("task.blocked", {
+    task: serialiseTask(deferredTask),
+    reason,
+    executor: "openclaw-search-web-adapter-v0",
+  });
+
+  return {
+    task: deferredTask,
+    blocked: true,
+    reason,
+    actions: [],
+    capabilityInvocations: [],
+    commandTranscript: [],
+    verification: null,
+    policy: policy.decision,
+    approval: approval ? serialiseApproval(approval) : null,
+    governance: {
+      mode: "openclaw_search_web_runtime_preflight_deferred",
+      runtimeOwner: "openclaw_on_nixos",
+      canUseNetwork: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      executed: false,
+      requiresRuntimePreflightBeforeExecution: true,
     },
   };
 }
@@ -10286,12 +10353,14 @@ function recoverTask(sourceTask) {
 
   const recoveryAttempt = (sourceTask.recovery?.attempt ?? 0) + 1;
   const recoverableCapabilityPlan = hasRecoverableCapabilityPlan(sourceTask);
+  const recoverableSearchWebAdapterPlan = hasRecoverableSearchWebAdapterPlan(sourceTask);
+  const shouldRecoverExistingPlan = recoverableCapabilityPlan || recoverableSearchWebAdapterPlan;
   const recoveryBody = {
     goal: sourceTask.goal,
     type: sourceTask.type,
     targetUrl: sourceTask.targetUrl,
     workViewStrategy: sourceTask.workViewStrategy,
-    includePlan: Boolean(sourceTask.plan) && !recoverableCapabilityPlan,
+    includePlan: Boolean(sourceTask.plan) && !shouldRecoverExistingPlan,
     recovery: {
       recoveredFromTaskId: sourceTask.id,
       recoveredFromOutcome: sourceTask.outcome?.kind ?? sourceTask.status,
@@ -10299,7 +10368,7 @@ function recoverTask(sourceTask) {
     },
   };
 
-  if (recoverableCapabilityPlan) {
+  if (shouldRecoverExistingPlan) {
     recoveryBody.plan = resetRecoveredPlan(sourceTask.plan);
     recoveryBody.policy = buildRecoveredPolicyRequest(sourceTask);
   }
@@ -10402,6 +10471,18 @@ function serialiseExecutionResult(executionResult) {
 async function executeTaskWithRecovery(task, options = {}) {
   if (isNativePluginCapabilityTask(task)) {
     const deferredExecution = await deferNativePluginCapabilityExecution(task);
+    return {
+      finalExecution: deferredExecution,
+      attempts: [deferredExecution],
+      recovery: {
+        attempted: false,
+        maxAttempts: 0,
+      },
+    };
+  }
+
+  if (isOpenClawSearchWebAdapterTask(task)) {
+    const deferredExecution = await deferOpenClawSearchWebAdapterExecution(task);
     return {
       finalExecution: deferredExecution,
       attempts: [deferredExecution],
