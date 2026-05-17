@@ -561,6 +561,9 @@ function observerHtml() {
           <div class="metric"><span>Required</span><span id="plugin-search-web-sandbox-required">0/0</span></div>
           <div class="metric"><span>Network</span><span id="plugin-search-web-sandbox-network">blocked</span></div>
           <div class="metric"><span>Runtime</span><span id="plugin-search-web-sandbox-runtime">disabled</span></div>
+          <div class="actions tight">
+            <button id="plugin-search-web-sandbox-task-button" class="secondary">Create Provider Sandbox Task</button>
+          </div>
           <pre id="plugin-search-web-sandbox-json">Loading OpenClaw search/web provider runtime sandbox contract...</pre>
         </section>
         <section class="panel">
@@ -1086,6 +1089,7 @@ const pluginSearchWebSandboxRequired = document.querySelector("#plugin-search-we
 const pluginSearchWebSandboxNetwork = document.querySelector("#plugin-search-web-sandbox-network");
 const pluginSearchWebSandboxRuntime = document.querySelector("#plugin-search-web-sandbox-runtime");
 const pluginSearchWebSandboxJson = document.querySelector("#plugin-search-web-sandbox-json");
+const pluginSearchWebSandboxTaskButton = document.querySelector("#plugin-search-web-sandbox-task-button");
 const toolCatalogAdapterRegistry = document.querySelector("#tool-catalog-adapter-registry");
 const toolCatalogAdapterMatches = document.querySelector("#tool-catalog-adapter-matches");
 const toolCatalogAdapterCategories = document.querySelector("#tool-catalog-adapter-categories");
@@ -3983,6 +3987,30 @@ async function createPluginSearchWebRuntimeActivationApprovalTask() {
   await refreshPluginSearchWebRuntimeActivationPlan();
 }
 
+async function createPluginSearchWebProviderSandboxApprovalTask() {
+  const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/plugin-search-web-adapter-provider-runtime-sandbox-tasks\`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      providerContractId: "openclaw.web-search",
+      query: "openclaw native integration",
+      confirm: true,
+    }),
+  });
+
+  taskHistoryFocus = "selected-task";
+  selectedHistoryTaskId = result.task?.id ?? null;
+  taskDetailIdInput.value = result.task?.id ?? "";
+  renderPlanPanel(result.task);
+  setControlMessage(\`Created approval-gated search/web provider sandbox task \${result.task?.id ?? "unknown"}; provider runtime remains deferred.\`);
+  await refreshRuntime();
+  await refreshTaskList();
+  await refreshTaskHistoryDetail();
+  await refreshApprovalState();
+  await refreshOperatorState();
+  await refreshPluginSearchWebProviderRuntimeSandbox();
+}
+
 async function createSourceAuthoredEditApprovalTask() {
   const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/source-authored-edit-tasks\`, {
     method: "POST",
@@ -4661,6 +4689,12 @@ pluginSearchWebTaskButton.addEventListener("click", () => {
 
 pluginSearchWebActivationTaskButton.addEventListener("click", () => {
   createPluginSearchWebRuntimeActivationApprovalTask().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
+pluginSearchWebSandboxTaskButton.addEventListener("click", () => {
+  createPluginSearchWebProviderSandboxApprovalTask().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);
   });
 });

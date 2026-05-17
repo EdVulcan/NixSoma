@@ -4187,6 +4187,192 @@ function buildOpenClawPluginSearchWebAdapterProviderRuntimeSandbox({
   };
 }
 
+function buildOpenClawPluginSearchWebAdapterProviderRuntimeSandboxTaskDraft({
+  workspacePath = null,
+  providerContractId = null,
+  query = "openclaw native integration",
+  limit = 8,
+} = {}) {
+  const sandbox = buildOpenClawPluginSearchWebAdapterProviderRuntimeSandbox({
+    workspacePath,
+    providerContractId,
+    query,
+    limit,
+  });
+  const provider = sandbox.provider ?? {};
+  const now = new Date().toISOString();
+  const blockedCheckIds = (sandbox.checks ?? [])
+    .filter((check) => check.required === true && check.status === "blocked")
+    .map((check) => check.id);
+  const policyRequest = {
+    intent: "plugin.search_web.provider_runtime_sandbox",
+    domain: "cross_boundary",
+    risk: "high",
+    requiresApproval: true,
+    approved: false,
+    providerContractId: provider.id ?? null,
+    sandboxId: sandbox.sandbox?.sandboxId ?? "openclaw.search_web.provider-runtime-sandbox.v0",
+    tags: ["openclaw_search_web_provider_runtime_sandbox", "explicit_approval_required", "provider_runtime_sandbox_deferred"],
+  };
+  const policyDecision = {
+    id: randomUUID(),
+    at: now,
+    engine: "openclaw-plugin-search-web-adapter-provider-runtime-sandbox-task-v0",
+    stage: "plugin_search_web.provider_runtime_sandbox.task.materialize",
+    subject: {
+      taskId: null,
+      type: "openclaw_search_web_provider_runtime_sandbox",
+      goal: `Prepare approved provider runtime sandbox for ${provider.manifestId ?? "search/web provider"}`,
+      targetUrl: null,
+      intent: policyRequest.intent,
+    },
+    domain: policyRequest.domain,
+    risk: policyRequest.risk,
+    decision: "require_approval",
+    reason: "search_web_provider_runtime_sandbox_requires_explicit_user_approval_before_provider_runtime_enablement",
+    approved: false,
+    autonomyMode,
+    autonomous: false,
+  };
+  const plan = {
+    planId: `plan-${randomUUID()}`,
+    strategy: "openclaw-search-web-provider-runtime-sandbox-v0",
+    planner: "openclaw-plugin-search-web-adapter-provider-runtime-sandbox-task-v0",
+    capabilityAware: true,
+    status: "planned",
+    goal: policyDecision.subject.goal,
+    targetUrl: null,
+    intent: policyRequest.intent,
+    createdAt: now,
+    updatedAt: now,
+    capabilitySummary: {
+      total: 3,
+      approvalGates: 2,
+      ids: [
+        "plan.openclaw.plugin_search_web_runtime_activation",
+        "govern.policy.evaluate",
+        "boundary.cross_domain.approval",
+      ],
+      byRisk: {
+        low: 1,
+        high: 2,
+      },
+    },
+    steps: [
+      {
+        id: "step-review-provider-runtime-sandbox",
+        kind: "openclaw.plugin.search_web_provider_runtime_sandbox_contract",
+        phase: "reviewing_provider_runtime_sandbox",
+        title: "Review search/web provider runtime sandbox boundary",
+        status: "pending",
+        capabilityId: "plan.openclaw.plugin_search_web_runtime_activation",
+        risk: "low",
+        governance: "audit_only",
+        requiresApproval: false,
+        params: {
+          providerContractId: provider.id ?? null,
+          manifestId: provider.manifestId ?? null,
+          sandboxId: sandbox.sandbox?.sandboxId ?? null,
+          sandboxStatus: sandbox.status,
+          blockedCheckIds,
+        },
+      },
+      {
+        id: "step-user-approval",
+        kind: "approval.gate",
+        phase: "waiting_for_approval",
+        title: "Wait for explicit user approval before any provider runtime sandbox activation attempt",
+        status: "pending",
+        capabilityId: "govern.policy.evaluate",
+        risk: "high",
+        governance: "require_approval",
+        requiresApproval: true,
+      },
+      {
+        id: "step-defer-provider-runtime-sandbox",
+        kind: "plugin.search_web.provider_runtime_sandbox",
+        phase: "provider_runtime_sandbox_deferred",
+        title: "Defer provider runtime sandbox activation until a native network runtime adapter exists",
+        status: "pending",
+        capabilityId: "boundary.cross_domain.approval",
+        risk: "high",
+        governance: "require_approval",
+        requiresApproval: true,
+        params: {
+          providerContractId: provider.id ?? null,
+          manifestId: provider.manifestId ?? null,
+          sandboxId: sandbox.sandbox?.sandboxId ?? null,
+          contractVersion: sandbox.sandbox?.contractVersion ?? null,
+          blockedCheckIds,
+          canUseNetwork: false,
+          canImportModule: false,
+          canExecuteProviderCode: false,
+          canActivateRuntime: false,
+          queryContentExposed: false,
+          endpointHostsExposed: false,
+          authEnvVarNamesExposed: false,
+        },
+      },
+    ],
+    governance: {
+      mode: "openclaw_search_web_provider_runtime_sandbox_task_plan",
+      runtimeOwner: "openclaw_on_nixos",
+      canUseNetwork: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      requiresExplicitApproval: true,
+      requiresRuntimeAdapterBeforeExecution: true,
+      requiresSandboxApprovalBeforeRuntimeActivation: true,
+    },
+  };
+
+  return {
+    ok: true,
+    registry: "openclaw-plugin-search-web-adapter-provider-runtime-sandbox-task-draft-v0",
+    mode: "approval-gated-search-web-provider-runtime-sandbox-task-draft",
+    generatedAt: now,
+    sourceRegistry: sandbox.registry,
+    sourceMode: sandbox.mode,
+    adapter: sandbox.adapter,
+    provider,
+    query: sandbox.query,
+    sandboxContract: {
+      registry: sandbox.registry,
+      status: sandbox.status,
+      activationReady: sandbox.activationReady,
+      sandbox: sandbox.sandbox,
+      summary: sandbox.summary,
+      checks: sandbox.checks,
+    },
+    plan,
+    policy: {
+      request: policyRequest,
+      decision: policyDecision,
+    },
+    governance: {
+      mode: "plugin_search_web_provider_runtime_sandbox_task_draft",
+      runtimeOwner: "openclaw_on_nixos",
+      createsTask: false,
+      createsApproval: false,
+      canReadManifestMetadata: true,
+      canResolveProviderMetadata: true,
+      exposesManifestBodies: false,
+      exposesAuthEnvVarNames: false,
+      exposesEndpointHosts: false,
+      exposesSourceFileContent: false,
+      exposesQueryContent: false,
+      canUseNetwork: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      canMutate: false,
+      requiresExplicitApprovalBeforeProviderRuntimeSandbox: true,
+      requiresRuntimeAdapterBeforeExecution: true,
+    },
+  };
+}
+
 function buildOpenClawPluginSearchWebAdapterRuntimeActivationTaskDraft({
   workspacePath = null,
   providerContractId = null,
@@ -4507,6 +4693,81 @@ async function createOpenClawPluginSearchWebAdapterRuntimeActivationTask({
       canMutate: false,
       executed: false,
       requiresExplicitApprovalBeforeNetworkRuntimeActivation: true,
+      requiresRuntimeAdapterBeforeExecution: true,
+    },
+  };
+}
+
+async function createOpenClawPluginSearchWebAdapterProviderRuntimeSandboxTask({
+  workspacePath = null,
+  providerContractId = null,
+  query = "openclaw native integration",
+  limit = 8,
+  confirm = false,
+} = {}) {
+  if (confirm !== true) {
+    throw new Error("Search/web provider runtime sandbox task creation requires confirm=true.");
+  }
+
+  const draft = buildOpenClawPluginSearchWebAdapterProviderRuntimeSandboxTaskDraft({
+    workspacePath,
+    providerContractId,
+    query,
+    limit,
+  });
+  const task = createTask({
+    goal: draft.plan.goal,
+    type: "openclaw_search_web_provider_runtime_sandbox",
+    workViewStrategy: "openclaw-search-web-provider-runtime-sandbox",
+    plan: draft.plan,
+    policy: draft.policy.request,
+  }, { skipInitialPolicy: true });
+  task.policy = draft.policy;
+  const approval = createApprovalRequestForTask(task, draft.policy.decision);
+  const reclaimedTasks = supersedeOtherActiveTasks(task.id);
+  reconcileRuntimeState();
+  persistState();
+
+  await publishEvent("task.created", { task: serialiseTask(task), planner: "openclaw-plugin-search-web-adapter-provider-runtime-sandbox-task-v0" });
+  await publishTaskApprovalIfPending(task);
+  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+    task: serialiseTask(reclaimedTask),
+  })));
+
+  return {
+    ok: true,
+    registry: "openclaw-plugin-search-web-adapter-provider-runtime-sandbox-task-v0",
+    mode: "approval-gated-search-web-provider-runtime-sandbox-task",
+    generatedAt: new Date().toISOString(),
+    sourceRegistry: draft.registry,
+    sourceMode: draft.mode,
+    adapter: draft.adapter,
+    provider: draft.provider,
+    query: draft.query,
+    sandboxContract: draft.sandboxContract,
+    task,
+    approval,
+    governance: {
+      mode: "plugin_search_web_provider_runtime_sandbox_task_approval_gated",
+      runtimeOwner: "openclaw_on_nixos",
+      createsTask: true,
+      createsApproval: true,
+      canExecuteWithoutApproval: false,
+      canReadManifestMetadata: true,
+      canResolveProviderMetadata: true,
+      exposesManifestBodies: false,
+      exposesAuthEnvVarNames: false,
+      exposesEndpointHosts: false,
+      exposesSourceFileContent: false,
+      exposesQueryContent: false,
+      canUseNetwork: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      canMutate: false,
+      executed: false,
+      requiresExplicitApprovalBeforeProviderRuntimeSandbox: true,
       requiresRuntimeAdapterBeforeExecution: true,
     },
   };
@@ -10132,6 +10393,11 @@ function isOpenClawSearchWebRuntimeActivationTask(task) {
     && task?.plan?.strategy === "openclaw-search-web-runtime-activation-v0";
 }
 
+function isOpenClawSearchWebProviderRuntimeSandboxTask(task) {
+  return task?.type === "openclaw_search_web_provider_runtime_sandbox"
+    && task?.plan?.strategy === "openclaw-search-web-provider-runtime-sandbox-v0";
+}
+
 async function deferNativePluginCapabilityExecution(task) {
   if (!isActiveTask(task)) {
     throw new Error("Task is not active and cannot be deferred.");
@@ -10284,6 +10550,66 @@ async function deferOpenClawSearchWebRuntimeActivation(task) {
       mode: "openclaw_search_web_network_runtime_adapter_deferred",
       runtimeOwner: "openclaw_on_nixos",
       canUseNetwork: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      executed: false,
+      requiresRuntimeAdapterBeforeExecution: true,
+    },
+  };
+}
+
+async function deferOpenClawSearchWebProviderRuntimeSandbox(task) {
+  if (!isActiveTask(task)) {
+    throw new Error("Task is not active and cannot be deferred.");
+  }
+
+  const policy = ensureTaskPolicy(task, { stage: "openclaw.search_web.provider_runtime_sandbox.deferred" });
+  await publishEvent("policy.evaluated", { task: serialiseTask(task), policy: policy.decision });
+  const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
+  const sandboxStep = (task.plan?.steps ?? []).find((step) => step.kind === "plugin.search_web.provider_runtime_sandbox") ?? null;
+  const reason = "search_web_provider_runtime_sandbox_deferred";
+  const deferredTask = await setTaskPhase(task, "provider_runtime_sandbox_deferred", {
+    status: "queued",
+    details: {
+      executor: "openclaw-search-web-provider-runtime-sandbox-v0",
+      reason,
+      providerContractId: sandboxStep?.params?.providerContractId ?? null,
+      manifestId: sandboxStep?.params?.manifestId ?? null,
+      sandboxId: sandboxStep?.params?.sandboxId ?? null,
+      contractVersion: sandboxStep?.params?.contractVersion ?? null,
+      blockedCheckIds: sandboxStep?.params?.blockedCheckIds ?? [],
+      queryContentExposed: false,
+      endpointHostsExposed: false,
+      authEnvVarNamesExposed: false,
+      canUseNetwork: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      requiresRuntimeAdapterBeforeExecution: true,
+    },
+  });
+
+  await publishEvent("task.blocked", {
+    task: serialiseTask(deferredTask),
+    reason,
+    executor: "openclaw-search-web-provider-runtime-sandbox-v0",
+  });
+
+  return {
+    task: deferredTask,
+    blocked: true,
+    reason,
+    actions: [],
+    capabilityInvocations: [],
+    commandTranscript: [],
+    verification: null,
+    policy: policy.decision,
+    approval: approval ? serialiseApproval(approval) : null,
+    governance: {
+      mode: "openclaw_search_web_provider_runtime_sandbox_deferred",
+      runtimeOwner: "openclaw_on_nixos",
+      canUseNetwork: false,
+      canImportModule: false,
       canExecutePluginCode: false,
       canActivateRuntime: false,
       executed: false,
@@ -11309,6 +11635,18 @@ async function executeTaskWithRecovery(task, options = {}) {
     };
   }
 
+  if (isOpenClawSearchWebProviderRuntimeSandboxTask(task)) {
+    const deferredExecution = await deferOpenClawSearchWebProviderRuntimeSandbox(task);
+    return {
+      finalExecution: deferredExecution,
+      attempts: [deferredExecution],
+      recovery: {
+        attempted: false,
+        maxAttempts: 0,
+      },
+    };
+  }
+
   if (shouldExecuteCapabilityPlan(task)) {
     const capabilityExecution = await executeCapabilityPlanTask(task, options);
     return {
@@ -12184,6 +12522,21 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/plugin-search-web-adapter-provider-runtime-sandbox-task-draft") {
+    try {
+      sendJson(res, 200, buildOpenClawPluginSearchWebAdapterProviderRuntimeSandboxTaskDraft({
+        workspacePath: requestUrl.searchParams.get("workspacePath"),
+        providerContractId: requestUrl.searchParams.get("providerContractId"),
+        query: requestUrl.searchParams.get("query") ?? "openclaw native integration",
+        limit: Number.parseInt(requestUrl.searchParams.get("limit") ?? "8", 10),
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return;
+  }
+
   if (req.method === "POST" && requestUrl.pathname === "/plugins/native-adapter/plugin-search-web-adapter-tasks") {
     try {
       const body = await readJsonBody(req);
@@ -12210,6 +12563,28 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readJsonBody(req);
       const result = await createOpenClawPluginSearchWebAdapterRuntimeActivationTask({
+        workspacePath: body.workspacePath,
+        providerContractId: body.providerContractId,
+        query: body.query ?? body.q,
+        limit: body.limit,
+        confirm: body.confirm,
+      });
+      sendJson(res, 201, {
+        ...result,
+        task: serialiseTask(result.task),
+        approval: serialiseApproval(result.approval),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/plugins/native-adapter/plugin-search-web-adapter-provider-runtime-sandbox-tasks") {
+    try {
+      const body = await readJsonBody(req);
+      const result = await createOpenClawPluginSearchWebAdapterProviderRuntimeSandboxTask({
         workspacePath: body.workspacePath,
         providerContractId: body.providerContractId,
         query: body.query ?? body.q,

@@ -1840,7 +1840,7 @@ Recheck note:
 
 ## 46. 2026-05-17 Step 29 Update: Search/Web Provider Runtime Sandbox Contract
 
-Status: local implementation ready; awaiting NixOS targeted milestone.
+Status: passed.
 
 Slice: provider runtime sandbox contract for native search/web adapter invocation.
 
@@ -1865,4 +1865,37 @@ Expected NixOS check:
 cd /home/edvulcan/OpenClaw_On_NixOS && \
 git pull origin main && \
 OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-provider-runtime-sandbox,observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox npm run dev:milestone-check:unix
+```
+
+Recheck note:
+- 2026-05-17 17:40 +08:00 NixOS targeted milestone passed: `openclaw-plugin-search-web-adapter-provider-runtime-sandbox`, `observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox`.
+
+## 47. 2026-05-17 Step 30 Update: Search/Web Provider Runtime Sandbox Task
+
+Status: local implementation ready; awaiting NixOS targeted milestone.
+
+Slice: approval-gated provider runtime sandbox task shell for native search/web adapter invocation.
+
+Purpose: materialize the provider runtime sandbox approval boundary as explicit operator-visible work without enabling live provider runtime. The sandbox task creates a queued task and pending approval, blocks before approval, and after approval still stops at the provider runtime sandbox boundary until a future network runtime adapter exists.
+
+Implemented artifacts:
+- Core API: `GET /plugins/native-adapter/plugin-search-web-adapter-provider-runtime-sandbox-task-draft`.
+- Core API: `POST /plugins/native-adapter/plugin-search-web-adapter-provider-runtime-sandbox-tasks`.
+- Task type: `openclaw_search_web_provider_runtime_sandbox`.
+- Observer control: `Create Provider Sandbox Task` in the `OpenClaw Search/Web Provider Sandbox` panel.
+- Targeted checks: `openclaw-plugin-search-web-adapter-provider-runtime-sandbox-task`, `observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox-task`.
+
+Safety boundaries:
+- Task creation requires `confirm=true`.
+- Before approval, operator execution blocks with `policy_requires_approval`.
+- After approval, operator execution remains deferred with `search_web_provider_runtime_sandbox_deferred`.
+- No network request, capability invocation, provider execution, old module import, mutation, or runtime activation occurs.
+- Query, endpoint hosts/tokens, auth env var names, source contents, script bodies, and package versions remain hidden.
+
+Expected NixOS check:
+
+```bash
+cd /home/edvulcan/OpenClaw_On_NixOS && \
+git pull origin main && \
+OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-provider-runtime-sandbox-task,observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox-task npm run dev:milestone-check:unix
 ```
