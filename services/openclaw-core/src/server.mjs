@@ -2561,19 +2561,21 @@ function buildOpenClawNativePluginAdapterStatus() {
       "sense.openclaw.plugin_manifest_map",
       "plan.openclaw.plugin_capability",
       "plan.openclaw.plugin_search_web_adapter_contract",
+      "plan.openclaw.plugin_search_web_runtime_preflight",
       "act.openclaw.workspace_text_write",
       "act.openclaw.workspace_patch_apply",
       "plan.plugin.runtime_preflight",
     ],
     pendingCapabilities: ["act.plugin.capability.invoke"],
     summary: {
-      implemented: 12,
+      implemented: 13,
       pending: 1,
       canReadManifestMetadata: true,
       canReadToolCatalogMetadata: true,
       canReadPluginManifestMapMetadata: true,
       canPlanPluginCapabilityAbsorption: true,
       canPlanSearchWebAdapterContract: true,
+      canPlanSearchWebRuntimePreflight: true,
       canReadWorkspaceSemanticMetadata: true,
       canExecuteWorkspaceSymbolLookup: true,
       canSelectWorkspaceEditTargets: true,
@@ -2596,6 +2598,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "plugin manifest map reads only bounded extension manifest metadata and never exposes manifest bodies, auth env var names, or config schema bodies",
       "plugin capability planning derives governance gates from manifest metadata only and never imports, executes, or activates plugins",
       "search/web adapter contract shell maps selected manifest-derived candidates into native contracts without network access or runtime activation",
+      "search/web runtime preflight builds a governed provider execution envelope while keeping network/provider activation disabled",
       "workspace semantic index emits derived counts only and never exposes file contents",
       "runtime preflight builds a governed execution envelope without loading plugin modules",
       "source contents, README text, script bodies, dependency versions, plugin code execution, and runtime activation remain blocked",
@@ -3696,6 +3699,130 @@ function buildOpenClawPluginSearchWebAdapterTaskDraft({
       canMutate: false,
       requiresExplicitApprovalBeforeNetworkUse: true,
       requiresRuntimePreflightBeforeExecution: true,
+    },
+  };
+}
+
+function buildOpenClawPluginSearchWebAdapterRuntimePreflight({
+  workspacePath = null,
+  providerContractId = null,
+  query = "openclaw native integration",
+  limit = 8,
+} = {}) {
+  const taskDraft = buildOpenClawPluginSearchWebAdapterTaskDraft({
+    workspacePath,
+    providerContractId,
+    query,
+    limit,
+  });
+  const providerContract = taskDraft.providerContract ?? {};
+  const policyDecision = taskDraft.policy?.decision ?? {};
+  const operation = providerContract.operations?.[0] ?? "search.query";
+
+  return {
+    ok: true,
+    registry: "openclaw-plugin-search-web-adapter-runtime-preflight-v0",
+    mode: "preflight-only",
+    generatedAt: new Date().toISOString(),
+    sourceRegistry: taskDraft.registry,
+    sourceMode: taskDraft.mode,
+    sourceRegistries: [
+      taskDraft.registry,
+      "openclaw-plugin-search-web-adapter-contract-v0",
+      "openclaw-plugin-candidate-contract-tests-v0",
+    ],
+    workspace: taskDraft.workspace,
+    adapter: {
+      id: "openclaw.search_web.native-adapter",
+      runtimeOwner: "openclaw_on_nixos",
+      status: "preflight_ready_network_runtime_disabled",
+      canResolveProviderMetadata: true,
+      canUseNetwork: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+    },
+    provider: {
+      id: providerContract.id ?? null,
+      manifestId: providerContract.manifestId ?? null,
+      extensionName: providerContract.extensionName ?? null,
+      category: providerContract.category ?? "search_and_web",
+      operations: providerContract.operations ?? [],
+      proposedCapabilityId: providerContract.proposedCapabilityId ?? null,
+      policy: providerContract.policy ?? {},
+      audit: providerContract.audit ?? {},
+    },
+    query: taskDraft.query,
+    executionEnvelope: {
+      envelopeVersion: "openclaw-search-web-execution-envelope-v0",
+      state: "blocked_pending_network_runtime_adapter",
+      adapterId: "openclaw.search_web.native-adapter",
+      providerContractId: providerContract.id ?? null,
+      manifestId: providerContract.manifestId ?? null,
+      operation,
+      query: {
+        present: taskDraft.query?.present === true,
+        length: taskDraft.query?.length ?? 0,
+        digest: taskDraft.query?.digest ?? null,
+        contentExposed: false,
+      },
+      policyDecision: {
+        decision: policyDecision.decision ?? null,
+        reason: policyDecision.reason ?? null,
+        domain: policyDecision.domain ?? null,
+        risk: policyDecision.risk ?? null,
+        approved: policyDecision.approved === true,
+      },
+      approval: {
+        required: true,
+        collected: false,
+        reason: "Search/web provider invocation requires explicit approval before any network use.",
+      },
+      audit: {
+        required: providerContract.audit?.required !== false,
+        ledger: providerContract.audit?.ledger ?? "capability_history",
+      },
+      permissions: {
+        providerMetadataRead: true,
+        networkSearch: true,
+        webFetchMetadata: (providerContract.operations ?? []).includes("web.fetch_metadata"),
+      },
+      constraints: {
+        canReadManifestMetadata: true,
+        canResolveProviderMetadata: true,
+        canExposeQueryContent: false,
+        canExposeManifestBodies: false,
+        canExposeAuthEnvVarNames: false,
+        canExposeEndpointHosts: false,
+        canUseNetwork: false,
+        canImportModule: false,
+        canExecutePluginCode: false,
+        canActivateRuntime: false,
+        canMutate: false,
+        canCreateTask: false,
+        canCreateApproval: false,
+      },
+    },
+    governance: {
+      mode: "plugin_search_web_runtime_preflight_only",
+      runtimeOwner: "openclaw_on_nixos",
+      createsTask: false,
+      createsApproval: false,
+      canReadManifestMetadata: true,
+      canResolveProviderMetadata: true,
+      exposesManifestBodies: false,
+      exposesAuthEnvVarNames: false,
+      exposesEndpointHosts: false,
+      exposesConfigSchemaBodies: false,
+      exposesSourceFileContent: false,
+      exposesQueryContent: false,
+      canUseNetwork: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      canMutate: false,
+      requiresExplicitApprovalBeforeNetworkUse: true,
+      requiresRuntimeAdapterBeforeExecution: true,
     },
   };
 }
@@ -11304,6 +11431,21 @@ const server = http.createServer(async (req, res) => {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       sendJson(res, 404, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/plugin-search-web-adapter-runtime-preflight") {
+    try {
+      sendJson(res, 200, buildOpenClawPluginSearchWebAdapterRuntimePreflight({
+        workspacePath: requestUrl.searchParams.get("workspacePath"),
+        providerContractId: requestUrl.searchParams.get("providerContractId"),
+        query: requestUrl.searchParams.get("query") ?? "openclaw native integration",
+        limit: Number.parseInt(requestUrl.searchParams.get("limit") ?? "8", 10),
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
     }
     return;
   }

@@ -1607,7 +1607,7 @@ Recheck note:
 
 ## 39. 2026-05-17 Step 22 Update: Search/Web Adapter Denial Recovery
 
-Status: local implementation ready; awaiting NixOS targeted milestone.
+Status: passed.
 
 Slice: denial and fresh-approval recovery for native search/web adapter tasks.
 
@@ -1632,6 +1632,41 @@ git pull origin main && \
 OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-denial-recovery,observer-openclaw-plugin-search-web-adapter-denial-recovery npm run dev:milestone-check:unix
 ```
 
+Recheck note:
+- 2026-05-17 15:59 +08:00 NixOS targeted milestone passed: `openclaw-plugin-search-web-adapter-denial-recovery`.
+- 2026-05-17 16:01 +08:00 NixOS targeted milestone passed: `observer-openclaw-plugin-search-web-adapter-denial-recovery`.
+
+## 40. 2026-05-17 Step 23 Update: Search/Web Runtime Preflight
+
+Status: local implementation ready; awaiting NixOS targeted milestone.
+
+Slice: runtime preflight envelope for native search/web adapter invocation.
+
+Purpose: add an observable preflight-only envelope for the native search/web adapter before any network/provider runtime can be activated. This keeps the integration moving toward real provider capability while preserving the hard boundary: no network, no provider execution, no old OpenClaw module import, no task or approval creation at the preflight endpoint.
+
+Implemented artifacts:
+- Core API: `GET /plugins/native-adapter/plugin-search-web-adapter-runtime-preflight`.
+- Observer panel: `OpenClaw Search/Web Runtime Preflight`.
+- Native adapter status capability: `plan.openclaw.plugin_search_web_runtime_preflight`.
+- Targeted checks: `openclaw-plugin-search-web-adapter-runtime-preflight`, `observer-openclaw-plugin-search-web-adapter-runtime-preflight`.
+
+Preflight boundaries now checked:
+- Envelope version is `openclaw-search-web-execution-envelope-v0`.
+- State is `blocked_pending_network_runtime_adapter`.
+- Explicit approval is required but not collected by preflight.
+- Audit remains bound to `capability_history`.
+- Query is represented only by length/digest and content is not exposed.
+- Network, module import, plugin/provider execution, runtime activation, mutation, task creation, and approval creation remain blocked.
+- Manifest bodies, endpoint hosts/tokens, auth env var names, source contents, script bodies, and package versions remain hidden.
+
+Expected NixOS check:
+
+```bash
+cd /home/edvulcan/OpenClaw_On_NixOS && \
+git pull origin main && \
+OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-runtime-preflight,observer-openclaw-plugin-search-web-adapter-runtime-preflight npm run dev:milestone-check:unix
+```
+
 Next intended slice after this passes:
-- Add search/web runtime preflight envelope.
-- Keep actual provider/network activation disabled until the preflight contract is observable and approved.
+- Add search/web runtime activation plan gates.
+- Keep actual provider/network execution disabled until activation gates and approval-gated task flow are explicit.
