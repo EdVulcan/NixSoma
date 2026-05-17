@@ -555,6 +555,15 @@ function observerHtml() {
           <pre id="plugin-search-web-activation-json">Loading OpenClaw search/web runtime activation plan...</pre>
         </section>
         <section class="panel">
+          <h2>OpenClaw Search/Web Provider Sandbox</h2>
+          <div class="metric"><span>Registry</span><span id="plugin-search-web-sandbox-registry">openclaw-plugin-search-web-adapter-provider-runtime-sandbox-v0</span></div>
+          <div class="metric"><span>Status</span><span id="plugin-search-web-sandbox-status">unknown</span></div>
+          <div class="metric"><span>Required</span><span id="plugin-search-web-sandbox-required">0/0</span></div>
+          <div class="metric"><span>Network</span><span id="plugin-search-web-sandbox-network">blocked</span></div>
+          <div class="metric"><span>Runtime</span><span id="plugin-search-web-sandbox-runtime">disabled</span></div>
+          <pre id="plugin-search-web-sandbox-json">Loading OpenClaw search/web provider runtime sandbox contract...</pre>
+        </section>
+        <section class="panel">
           <h2>OpenClaw Tool Catalog Adapter</h2>
           <div class="metric"><span>Registry</span><span id="tool-catalog-adapter-registry">openclaw-native-plugin-adapter-v0</span></div>
           <div class="metric"><span>Matches</span><span id="tool-catalog-adapter-matches">0</span></div>
@@ -1071,6 +1080,12 @@ const pluginSearchWebActivationNetwork = document.querySelector("#plugin-search-
 const pluginSearchWebActivationRuntime = document.querySelector("#plugin-search-web-activation-runtime");
 const pluginSearchWebActivationJson = document.querySelector("#plugin-search-web-activation-json");
 const pluginSearchWebActivationTaskButton = document.querySelector("#plugin-search-web-activation-task-button");
+const pluginSearchWebSandboxRegistry = document.querySelector("#plugin-search-web-sandbox-registry");
+const pluginSearchWebSandboxStatus = document.querySelector("#plugin-search-web-sandbox-status");
+const pluginSearchWebSandboxRequired = document.querySelector("#plugin-search-web-sandbox-required");
+const pluginSearchWebSandboxNetwork = document.querySelector("#plugin-search-web-sandbox-network");
+const pluginSearchWebSandboxRuntime = document.querySelector("#plugin-search-web-sandbox-runtime");
+const pluginSearchWebSandboxJson = document.querySelector("#plugin-search-web-sandbox-json");
 const toolCatalogAdapterRegistry = document.querySelector("#tool-catalog-adapter-registry");
 const toolCatalogAdapterMatches = document.querySelector("#tool-catalog-adapter-matches");
 const toolCatalogAdapterCategories = document.querySelector("#tool-catalog-adapter-categories");
@@ -2017,6 +2032,42 @@ function renderPluginSearchWebRuntimeActivationPlan(data) {
     ...gates.map((gate) => {
       const required = gate.required ? "required" : "optional";
       return \`[\${gate.status ?? "unknown"}/\${required}] \${gate.id ?? "gate"} :: \${gate.evidence ?? "no evidence"}\`;
+    }),
+    "",
+    \`Next Allowed Work: \${(summary.nextAllowedWork ?? []).join("; ") || "none"}\`,
+    \`Forbidden Work: \${(summary.forbiddenWork ?? []).join("; ") || "none"}\`,
+  ].join("\\n");
+}
+
+function renderPluginSearchWebProviderRuntimeSandbox(data) {
+  const summary = data?.summary ?? {};
+  const governance = data?.governance ?? {};
+  const sandbox = data?.sandbox ?? {};
+  const checks = Array.isArray(data?.checks) ? data.checks : [];
+  pluginSearchWebSandboxRegistry.textContent = data?.registry ?? "openclaw-plugin-search-web-adapter-provider-runtime-sandbox-v0";
+  pluginSearchWebSandboxStatus.textContent = data?.status ?? "unknown";
+  pluginSearchWebSandboxRequired.textContent = \`\${summary.passedRequired ?? 0}/\${summary.requiredChecks ?? 0}\`;
+  pluginSearchWebSandboxNetwork.textContent = summary.canUseNetwork ? "enabled" : "blocked";
+  pluginSearchWebSandboxRuntime.textContent = summary.canActivateRuntime ? "enabled" : "disabled";
+
+  pluginSearchWebSandboxJson.textContent = [
+    "Search/Web provider runtime sandbox contract: defines the native provider boundary before any live network runtime is enabled.",
+    "This is contract-only: it creates no task, approval, network call, capability invocation, provider import, or provider execution.",
+    \`Registry: \${data?.registry ?? "openclaw-plugin-search-web-adapter-provider-runtime-sandbox-v0"}\`,
+    \`Mode: \${data?.mode ?? "provider-runtime-sandbox-contract"}\`,
+    \`Status: \${data?.status ?? "unknown"} sandboxApproved=\${Boolean(summary.sandboxApproved)} activationReady=\${Boolean(data?.activationReady)}\`,
+    \`Required Checks: \${summary.passedRequired ?? 0}/\${summary.requiredChecks ?? 0} blocked=\${summary.blockedRequired ?? 0}\`,
+    \`Provider: \${data?.provider?.id ?? "unknown"} manifest=\${data?.provider?.manifestId ?? "unknown"} operations=\${(data?.provider?.operations ?? []).join(",") || "none"}\`,
+    \`Sandbox: \${sandbox.contractVersion ?? "unknown"} state=\${sandbox.state ?? "unknown"} approvalRequired=\${Boolean(sandbox.approval?.required)} collected=\${Boolean(sandbox.approval?.collected)}\`,
+    \`Isolation: process=\${Boolean(sandbox.isolation?.processIsolationRequired)} oldModuleImport=\${Boolean(sandbox.isolation?.oldOpenClawModuleImportAllowed)} secretsMounted=\${Boolean(sandbox.isolation?.secretsMounted)}\`,
+    \`Egress: default=\${sandbox.egress?.networkEgressDefault ?? "unknown"} network=\${Boolean(sandbox.egress?.canUseNetwork)} allowlist=\${(sandbox.egress?.allowlist ?? []).length} dns=\${Boolean(sandbox.egress?.dnsResolutionAllowed)}\`,
+    \`Execution: import=\${Boolean(sandbox.execution?.canImportModule)} providerCode=\${Boolean(sandbox.execution?.canExecuteProviderCode)} activateRuntime=\${Boolean(sandbox.execution?.canActivateRuntime)} mutate=\${Boolean(sandbox.execution?.canMutate)}\`,
+    \`Privacy: query=\${Boolean(sandbox.privacy?.queryContentExposed)} manifestBodies=\${Boolean(sandbox.privacy?.manifestBodiesExposed)} authNames=\${Boolean(sandbox.privacy?.authEnvVarNamesExposed)} endpoints=\${Boolean(sandbox.privacy?.endpointHostsExposed)} source=\${Boolean(sandbox.privacy?.sourceFileContentExposed)}\`,
+    \`Governance: task=\${Boolean(governance.createsTask)} approval=\${Boolean(governance.createsApproval)} network=\${Boolean(governance.canUseNetwork)} import=\${Boolean(governance.canImportModule)} execute=\${Boolean(governance.canExecutePluginCode)} runtime=\${Boolean(governance.canActivateRuntime)}\`,
+    "",
+    ...checks.map((check) => {
+      const required = check.required ? "required" : "optional";
+      return \`[\${check.status ?? "unknown"}/\${required}] \${check.id ?? "check"} :: \${check.evidence ?? "no evidence"}\`;
     }),
     "",
     \`Next Allowed Work: \${(summary.nextAllowedWork ?? []).join("; ") || "none"}\`,
@@ -2992,6 +3043,20 @@ async function refreshPluginSearchWebRuntimeActivationPlan() {
     pluginSearchWebActivationNetwork.textContent = "unknown";
     pluginSearchWebActivationRuntime.textContent = "unknown";
     pluginSearchWebActivationJson.textContent = "Unable to read OpenClaw search/web runtime activation plan.";
+  }
+}
+
+async function refreshPluginSearchWebProviderRuntimeSandbox() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/plugin-search-web-adapter-provider-runtime-sandbox?providerContractId=openclaw.web-search&limit=8\`);
+    renderPluginSearchWebProviderRuntimeSandbox(data);
+  } catch {
+    pluginSearchWebSandboxRegistry.textContent = "offline";
+    pluginSearchWebSandboxStatus.textContent = "unknown";
+    pluginSearchWebSandboxRequired.textContent = "0/0";
+    pluginSearchWebSandboxNetwork.textContent = "unknown";
+    pluginSearchWebSandboxRuntime.textContent = "unknown";
+    pluginSearchWebSandboxJson.textContent = "Unable to read OpenClaw search/web provider runtime sandbox contract.";
   }
 }
 
@@ -4925,6 +4990,7 @@ await refreshPluginCandidateContractTests();
 await refreshPluginSearchWebAdapterContract();
 await refreshPluginSearchWebRuntimePreflight();
 await refreshPluginSearchWebRuntimeActivationPlan();
+await refreshPluginSearchWebProviderRuntimeSandbox();
 await refreshToolCatalogAdapter();
 await refreshSemanticIndex();
 await refreshSymbolLookup();
@@ -4980,6 +5046,7 @@ setInterval(refreshPluginCandidateContractTests, 5000);
 setInterval(refreshPluginSearchWebAdapterContract, 5000);
 setInterval(refreshPluginSearchWebRuntimePreflight, 5000);
 setInterval(refreshPluginSearchWebRuntimeActivationPlan, 5000);
+setInterval(refreshPluginSearchWebProviderRuntimeSandbox, 5000);
 setInterval(refreshToolCatalogAdapter, 5000);
 setInterval(refreshSemanticIndex, 5000);
 setInterval(refreshSymbolLookup, 5000);

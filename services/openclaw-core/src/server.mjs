@@ -3978,6 +3978,215 @@ function buildOpenClawPluginSearchWebAdapterRuntimeActivationPlan({
   };
 }
 
+function buildOpenClawPluginSearchWebAdapterProviderRuntimeSandbox({
+  workspacePath = null,
+  providerContractId = null,
+  query = "openclaw native integration",
+  limit = 8,
+} = {}) {
+  const activationPlan = buildOpenClawPluginSearchWebAdapterRuntimeActivationPlan({
+    workspacePath,
+    providerContractId,
+    query,
+    limit,
+  });
+  const provider = activationPlan.provider ?? {};
+  const envelope = activationPlan.executionEnvelope ?? {};
+  const checks = [
+    {
+      id: "preflight_envelope_bound",
+      label: "Provider sandbox is bound to a search/web runtime preflight envelope",
+      required: true,
+      status: envelope.envelopeVersion === "openclaw-search-web-execution-envelope-v0" ? "passed" : "blocked",
+      evidence: `envelope=${envelope.envelopeVersion ?? "missing"}`,
+    },
+    {
+      id: "provider_metadata_only",
+      label: "Sandbox contract uses provider metadata without exposing manifest bodies",
+      required: true,
+      status: provider.id && provider.manifestId ? "passed" : "blocked",
+      evidence: `provider=${provider.id ?? "missing"} manifest=${provider.manifestId ?? "missing"}`,
+    },
+    {
+      id: "network_egress_default_deny",
+      label: "Network egress remains denied until a future allowlisted runtime adapter exists",
+      required: true,
+      status: "passed",
+      evidence: "networkEgressDefault=deny canUseNetwork=false",
+    },
+    {
+      id: "query_privacy_locked",
+      label: "Query content remains redacted inside the sandbox contract",
+      required: true,
+      status: activationPlan.query?.contentExposed === false ? "passed" : "blocked",
+      evidence: `queryContentExposed=${Boolean(activationPlan.query?.contentExposed)}`,
+    },
+    {
+      id: "provider_code_import_blocked",
+      label: "Old provider modules cannot be imported by this sandbox contract",
+      required: true,
+      status: "passed",
+      evidence: "canImportModule=false",
+    },
+    {
+      id: "provider_execution_blocked",
+      label: "Provider code execution remains blocked by this sandbox contract",
+      required: true,
+      status: "passed",
+      evidence: "canExecuteProviderCode=false",
+    },
+    {
+      id: "sandbox_approval_required",
+      label: "Provider runtime sandbox requires separate approval before activation",
+      required: true,
+      status: "blocked",
+      evidence: "sandbox approval task has not been materialized",
+    },
+    {
+      id: "network_runtime_adapter_required",
+      label: "Network runtime adapter is still required before live provider calls",
+      required: true,
+      status: "blocked",
+      evidence: "no network runtime adapter is active",
+    },
+  ];
+  const requiredChecks = checks.filter((check) => check.required);
+  const passedRequired = requiredChecks.filter((check) => check.status === "passed").length;
+  const blockedRequired = requiredChecks.length - passedRequired;
+
+  return {
+    ok: true,
+    registry: "openclaw-plugin-search-web-adapter-provider-runtime-sandbox-v0",
+    mode: "provider-runtime-sandbox-contract",
+    generatedAt: new Date().toISOString(),
+    sourceRegistry: activationPlan.registry,
+    sourceMode: activationPlan.mode,
+    runtimeOwner: "openclaw_on_nixos",
+    status: "contract_ready_activation_blocked",
+    activationReady: false,
+    adapter: {
+      id: "openclaw.search_web.native-adapter",
+      runtimeOwner: "openclaw_on_nixos",
+      status: "provider_runtime_sandbox_contract_ready_runtime_disabled",
+      canResolveProviderMetadata: true,
+      canUseNetwork: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+    },
+    provider: {
+      id: provider.id ?? null,
+      manifestId: provider.manifestId ?? null,
+      extensionName: provider.extensionName ?? null,
+      category: provider.category ?? "search_and_web",
+      operations: provider.operations ?? [],
+      proposedCapabilityId: provider.proposedCapabilityId ?? null,
+      policy: provider.policy ?? {},
+      audit: provider.audit ?? {},
+    },
+    query: activationPlan.query,
+    sandbox: {
+      sandboxId: "openclaw.search_web.provider-runtime-sandbox.v0",
+      contractVersion: "openclaw-search-web-provider-runtime-sandbox-v0",
+      state: "contract_ready_not_approved",
+      approval: {
+        required: true,
+        collected: false,
+        reason: "Provider runtime sandbox must be separately approved before network/provider activation.",
+      },
+      isolation: {
+        processIsolationRequired: true,
+        providerRuntimeBoundary: "openclaw_on_nixos_owned_adapter",
+        providerCodeImportAllowed: false,
+        oldOpenClawModuleImportAllowed: false,
+        secretsMounted: false,
+      },
+      egress: {
+        networkEgressDefault: "deny",
+        allowlistRequired: true,
+        allowlist: [],
+        dnsResolutionAllowed: false,
+        endpointHostsExposed: false,
+        canUseNetwork: false,
+      },
+      privacy: {
+        queryContentExposed: false,
+        manifestBodiesExposed: false,
+        authEnvVarNamesExposed: false,
+        endpointHostsExposed: false,
+        sourceFileContentExposed: false,
+        scriptBodiesExposed: false,
+      },
+      execution: {
+        canImportModule: false,
+        canExecuteProviderCode: false,
+        canActivateRuntime: false,
+        canMutate: false,
+      },
+      audit: {
+        required: true,
+        ledger: "capability_history",
+        transcriptRequired: true,
+        preflightRequired: true,
+        runtimeActivationTaskRequired: true,
+      },
+    },
+    checks,
+    summary: {
+      totalChecks: checks.length,
+      requiredChecks: requiredChecks.length,
+      passedRequired,
+      blockedRequired,
+      sandboxContractReady: passedRequired >= 6,
+      sandboxApproved: false,
+      activationReady: false,
+      canReadManifestMetadata: true,
+      canResolveProviderMetadata: true,
+      exposesQueryContent: false,
+      exposesEndpointHosts: false,
+      exposesAuthEnvVarNames: false,
+      canUseNetwork: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      canMutate: false,
+      createsTask: false,
+      createsApproval: false,
+      nextAllowedWork: [
+        "materialize provider runtime sandbox approval only through explicit activation tasks",
+        "bind a future network runtime adapter to this sandbox contract before live provider calls",
+      ],
+      forbiddenWork: [
+        "do not perform network requests from the sandbox contract",
+        "do not import old OpenClaw provider modules",
+        "do not expose query content, endpoint hosts, auth env var names, source contents, or script bodies",
+      ],
+    },
+    governance: {
+      mode: "plugin_search_web_provider_runtime_sandbox_contract",
+      runtimeOwner: "openclaw_on_nixos",
+      createsTask: false,
+      createsApproval: false,
+      canReadManifestMetadata: true,
+      canResolveProviderMetadata: true,
+      exposesManifestBodies: false,
+      exposesAuthEnvVarNames: false,
+      exposesEndpointHosts: false,
+      exposesConfigSchemaBodies: false,
+      exposesSourceFileContent: false,
+      exposesQueryContent: false,
+      canUseNetwork: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      canMutate: false,
+      requiresExplicitApprovalBeforeNetworkUse: true,
+      requiresRuntimeAdapterBeforeExecution: true,
+      requiresSandboxApprovalBeforeRuntimeActivation: true,
+    },
+  };
+}
+
 function buildOpenClawPluginSearchWebAdapterRuntimeActivationTaskDraft({
   workspacePath = null,
   providerContractId = null,
@@ -11933,6 +12142,21 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/plugin-search-web-adapter-runtime-activation-plan") {
     try {
       sendJson(res, 200, buildOpenClawPluginSearchWebAdapterRuntimeActivationPlan({
+        workspacePath: requestUrl.searchParams.get("workspacePath"),
+        providerContractId: requestUrl.searchParams.get("providerContractId"),
+        query: requestUrl.searchParams.get("query") ?? "openclaw native integration",
+        limit: Number.parseInt(requestUrl.searchParams.get("limit") ?? "8", 10),
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/plugin-search-web-adapter-provider-runtime-sandbox") {
+    try {
+      sendJson(res, 200, buildOpenClawPluginSearchWebAdapterProviderRuntimeSandbox({
         workspacePath: requestUrl.searchParams.get("workspacePath"),
         providerContractId: requestUrl.searchParams.get("providerContractId"),
         query: requestUrl.searchParams.get("query") ?? "openclaw native integration",

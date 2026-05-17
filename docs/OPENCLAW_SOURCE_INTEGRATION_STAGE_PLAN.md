@@ -1808,7 +1808,7 @@ Recheck note:
 
 ## 45. 2026-05-17 Step 28 Update: Search/Web Runtime Activation Persistence
 
-Status: local implementation ready; awaiting NixOS targeted milestone.
+Status: passed.
 
 Slice: restart persistence for native search/web runtime activation approval and recovery chains.
 
@@ -1833,4 +1833,36 @@ Expected NixOS check:
 cd /home/edvulcan/OpenClaw_On_NixOS && \
 git pull origin main && \
 OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-runtime-activation-persistence,observer-openclaw-plugin-search-web-adapter-runtime-activation-persistence npm run dev:milestone-check:unix
+```
+
+Recheck note:
+- 2026-05-17 17:31 +08:00 NixOS targeted milestone passed: `openclaw-plugin-search-web-adapter-runtime-activation-persistence`, `observer-openclaw-plugin-search-web-adapter-runtime-activation-persistence`.
+
+## 46. 2026-05-17 Step 29 Update: Search/Web Provider Runtime Sandbox Contract
+
+Status: local implementation ready; awaiting NixOS targeted milestone.
+
+Slice: provider runtime sandbox contract for native search/web adapter invocation.
+
+Purpose: move beyond activation workflow hardening into the first concrete provider-runtime boundary. This introduces an OpenClawOnNixOS-owned sandbox contract for search/web providers: provider metadata can be resolved, but network egress, old module imports, provider execution, runtime activation, secrets, endpoint hosts, and query content remain blocked until a future explicit sandbox approval and network runtime adapter exist.
+
+Implemented artifacts:
+- Core API: `GET /plugins/native-adapter/plugin-search-web-adapter-provider-runtime-sandbox`.
+- Observer panel: `OpenClaw Search/Web Provider Sandbox`.
+- Targeted checks: `openclaw-plugin-search-web-adapter-provider-runtime-sandbox`, `observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox`.
+
+Sandbox contract boundaries:
+- Contract version: `openclaw-search-web-provider-runtime-sandbox-v0`.
+- Status: `contract_ready_activation_blocked`.
+- Required checks: provider metadata, preflight binding, default-deny egress, query privacy, import blocking, execution blocking, sandbox approval requirement, and network runtime adapter requirement.
+- Passed checks: 6; blocked checks: sandbox approval and network runtime adapter.
+- No task, approval, network request, capability invocation, provider execution, old module import, mutation, or runtime activation is created.
+- Query, endpoint hosts/tokens, auth env var names, source contents, script bodies, and package versions remain hidden.
+
+Expected NixOS check:
+
+```bash
+cd /home/edvulcan/OpenClaw_On_NixOS && \
+git pull origin main && \
+OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-provider-runtime-sandbox,observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox npm run dev:milestone-check:unix
 ```
