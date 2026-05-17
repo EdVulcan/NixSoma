@@ -1455,7 +1455,7 @@ Next intended slice after this passes:
 
 ## 36. 2026-05-17 Step 19 Update: Plugin Candidate Contract Tests
 
-Status: local implementation ready; awaiting NixOS targeted milestone.
+Status: passed.
 
 Slice: native adapter contract tests for the selected enhanced OpenClaw plugin candidate category `search_and_web`.
 
@@ -1465,6 +1465,9 @@ Implemented artifacts:
 - Core API: `GET /plugins/native-adapter/plugin-candidate-contract-tests?category=search_and_web`.
 - Observer panel: `OpenClaw Plugin Candidate Contract Tests`.
 - Targeted checks: `openclaw-plugin-candidate-contract-tests`, `observer-openclaw-plugin-candidate-contract-tests`.
+
+Recheck note:
+- 2026-05-17 15:24 +08:00 NixOS targeted milestone passed: `openclaw-plugin-candidate-contract-tests`, `observer-openclaw-plugin-candidate-contract-tests`.
 
 Contract expectations now checked:
 - The selected candidate must come from `openclaw-plugin-capability-plan-v0`.
@@ -1500,3 +1503,53 @@ Next intended slice after this passes:
 - Implement the selected `search_and_web` native adapter contract shell inside `OpenClawOnNixOS`.
 - Keep actual command/network/plugin execution behind explicit approval-gated task materialization.
 - Add runtime preflight only after this candidate contract stays green.
+
+## 37. 2026-05-17 Step 20 Update: Search/Web Adapter Contract Shell
+
+Status: local implementation ready; awaiting NixOS targeted milestone.
+
+Slice: native search/web adapter contract shell for selected enhanced OpenClaw plugin candidates.
+
+Purpose: move from testing candidate boundaries into an OpenClawOnNixOS-owned adapter contract shape. This maps `search_and_web` candidates into native provider contracts with cross-boundary approval policy, audit binding, privacy redaction, and runtime-disabled execution boundaries before any network access, plugin import, plugin execution, task materialization, or runtime activation.
+
+Implemented artifacts:
+- Core API: `GET /plugins/native-adapter/plugin-search-web-adapter-contract`.
+- Native adapter status includes `plan.openclaw.plugin_search_web_adapter_contract`.
+- Observer panel: `OpenClaw Search/Web Adapter Contract`.
+- Targeted checks: `openclaw-plugin-search-web-adapter-contract`, `observer-openclaw-plugin-search-web-adapter-contract`.
+
+Contract expectations now checked:
+- Provider contracts are derived from `openclaw-plugin-candidate-contract-tests-v0`.
+- Each provider contract is owned by `openclaw_on_nixos`.
+- Each provider contract remains `cross_boundary` and approval-gated.
+- Each provider contract binds to `capability_history` audit.
+- Network use, old module imports, plugin execution, runtime activation, task creation, and approval creation remain blocked.
+- Manifest bodies, auth env var names, endpoint hosts, config schema bodies, source contents, and script bodies remain hidden.
+
+Governance boundaries:
+- Reads only manifest-derived metadata and candidate contract output.
+- Does not expose manifest bodies.
+- Does not expose auth env var names, endpoint hosts/tokens, schema bodies, source files, or script bodies.
+- Does not perform network requests.
+- Does not import old `openclaw` modules.
+- Does not execute plugin code or activate plugin runtime.
+- Direct endpoint reads do not create tasks, approvals, or capability invocations.
+
+Local verification target:
+- `npm run typecheck`.
+- `git diff --check`.
+- Bash syntax check for the new milestone scripts.
+- Targeted milestone checks on NixOS.
+
+NixOS targeted milestone command:
+
+```bash
+cd /home/edvulcan/OpenClaw_On_NixOS && \
+git pull origin main && \
+OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-contract,observer-openclaw-plugin-search-web-adapter-contract npm run dev:milestone-check:unix
+```
+
+Next intended slice after this passes:
+- Materialize search/web adapter invocation drafts as approval-gated tasks.
+- Keep actual network/provider execution deferred behind explicit approval and future runtime preflight.
+- Do not activate old OpenClaw plugin runtime.

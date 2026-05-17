@@ -522,6 +522,15 @@ function observerHtml() {
           <pre id="plugin-candidate-contract-tests-json">Loading OpenClaw plugin candidate contract tests...</pre>
         </section>
         <section class="panel">
+          <h2>OpenClaw Search/Web Adapter Contract</h2>
+          <div class="metric"><span>Registry</span><span id="plugin-search-web-contract-registry">openclaw-plugin-search-web-adapter-contract-v0</span></div>
+          <div class="metric"><span>Providers</span><span id="plugin-search-web-contract-providers">0</span></div>
+          <div class="metric"><span>Required</span><span id="plugin-search-web-contract-required">0/0</span></div>
+          <div class="metric"><span>Network</span><span id="plugin-search-web-contract-network">blocked</span></div>
+          <div class="metric"><span>Runtime</span><span id="plugin-search-web-contract-runtime">disabled</span></div>
+          <pre id="plugin-search-web-contract-json">Loading OpenClaw search/web adapter contract...</pre>
+        </section>
+        <section class="panel">
           <h2>OpenClaw Tool Catalog Adapter</h2>
           <div class="metric"><span>Registry</span><span id="tool-catalog-adapter-registry">openclaw-native-plugin-adapter-v0</span></div>
           <div class="metric"><span>Matches</span><span id="tool-catalog-adapter-matches">0</span></div>
@@ -1018,6 +1027,12 @@ const pluginCandidateContractTestsRequired = document.querySelector("#plugin-can
 const pluginCandidateContractTestsContracts = document.querySelector("#plugin-candidate-contract-tests-contracts");
 const pluginCandidateContractTestsRuntime = document.querySelector("#plugin-candidate-contract-tests-runtime");
 const pluginCandidateContractTestsJson = document.querySelector("#plugin-candidate-contract-tests-json");
+const pluginSearchWebContractRegistry = document.querySelector("#plugin-search-web-contract-registry");
+const pluginSearchWebContractProviders = document.querySelector("#plugin-search-web-contract-providers");
+const pluginSearchWebContractRequired = document.querySelector("#plugin-search-web-contract-required");
+const pluginSearchWebContractNetwork = document.querySelector("#plugin-search-web-contract-network");
+const pluginSearchWebContractRuntime = document.querySelector("#plugin-search-web-contract-runtime");
+const pluginSearchWebContractJson = document.querySelector("#plugin-search-web-contract-json");
 const toolCatalogAdapterRegistry = document.querySelector("#tool-catalog-adapter-registry");
 const toolCatalogAdapterMatches = document.querySelector("#tool-catalog-adapter-matches");
 const toolCatalogAdapterCategories = document.querySelector("#tool-catalog-adapter-categories");
@@ -1875,6 +1890,37 @@ function renderPluginCandidateContractTests(data) {
     ...contracts.slice(0, 20).map((contract) => \`\${contract.candidateId ?? "candidate"} manifest=\${contract.manifestId ?? "unknown"} capability=\${contract.proposedCapabilityId ?? "unknown"} approval=\${Boolean(contract.approvalRequired)} status=\${contract.implementationStatus ?? "unknown"} surfaces=\${(contract.expectedNativeSurfaces ?? []).join(",")}\`),
     "",
     ...tests.slice(0, 36).map((test) => \`\${test.id ?? "test"} status=\${test.status ?? "unknown"} required=\${Boolean(test.required)} evidence=\${test.evidence ?? ""}\`),
+    "",
+    \`Next Allowed Work: \${(summary.nextAllowedWork ?? []).join("; ") || "none"}\`,
+  ].join("\\n");
+}
+
+function renderPluginSearchWebAdapterContract(data) {
+  const summary = data?.summary ?? {};
+  const governance = data?.governance ?? {};
+  const adapter = data?.adapter ?? {};
+  const providerContracts = Array.isArray(data?.providerContracts) ? data.providerContracts : [];
+  const checks = Array.isArray(data?.contractChecks) ? data.contractChecks : [];
+  pluginSearchWebContractRegistry.textContent = data?.registry ?? "openclaw-plugin-search-web-adapter-contract-v0";
+  pluginSearchWebContractProviders.textContent = String(summary.providerContractCount ?? providerContracts.length);
+  pluginSearchWebContractRequired.textContent = \`\${summary.passedRequired ?? 0}/\${summary.requiredChecks ?? 0}\`;
+  pluginSearchWebContractNetwork.textContent = summary.canUseNetwork ? "enabled" : "blocked";
+  pluginSearchWebContractRuntime.textContent = summary.canActivateRuntime ? "enabled" : "disabled";
+
+  pluginSearchWebContractJson.textContent = [
+    "Search/Web adapter contract shell: selected enhanced OpenClaw search/web providers are mapped to native OpenClawOnNixOS adapter contracts.",
+    "No network access, old module import, plugin execution, runtime activation, task creation, or approval creation is available at this layer.",
+    \`Registry: \${data?.registry ?? "openclaw-plugin-search-web-adapter-contract-v0"}\`,
+    \`Mode: \${data?.mode ?? "native-search-web-adapter-contract-shell"}\`,
+    \`Adapter: \${adapter.id ?? "openclaw.search_web.native-adapter"} status=\${adapter.status ?? "unknown"} owner=\${adapter.runtimeOwner ?? "unknown"}\`,
+    \`Sources: \${(data?.sourceRegistries ?? []).join(", ") || "none"}\`,
+    \`Counts: providers=\${summary.providerContractCount ?? providerContracts.length} operations=\${summary.operationCount ?? 0} checks=\${summary.passedRequired ?? 0}/\${summary.requiredChecks ?? 0} approval=\${summary.requiresApproval ?? 0} crossBoundary=\${summary.crossBoundaryContracts ?? 0}\`,
+    \`Boundaries: network=\${Boolean(summary.canUseNetwork)} import=\${Boolean(summary.canImportModule)} executePlugin=\${Boolean(summary.canExecutePluginCode)} activateRuntime=\${Boolean(summary.canActivateRuntime)} task=\${Boolean(summary.createsTask)} approval=\${Boolean(summary.createsApproval)}\`,
+    \`Privacy: manifestBodies=\${Boolean(governance.exposesManifestBodies)} authNames=\${Boolean(governance.exposesAuthEnvVarNames)} endpoints=\${Boolean(governance.exposesEndpointHosts)} schemaBodies=\${Boolean(governance.exposesConfigSchemaBodies)} source=\${Boolean(governance.exposesSourceFileContent)}\`,
+    "",
+    ...providerContracts.slice(0, 24).map((contract) => \`\${contract.id ?? "provider"} manifest=\${contract.manifestId ?? "unknown"} capability=\${contract.proposedCapabilityId ?? "unknown"} operations=\${(contract.operations ?? []).join(",") || "none"} risk=\${contract.policy?.risk ?? "unknown"} approval=\${Boolean(contract.policy?.requiresApproval)} network=\${Boolean(contract.runtime?.canUseNetwork)} runtime=\${contract.runtime?.implementationState ?? "unknown"}\`),
+    "",
+    ...checks.slice(0, 32).map((check) => \`\${check.id ?? "check"} status=\${check.status ?? "unknown"} required=\${Boolean(check.required)} evidence=\${check.evidence ?? ""}\`),
     "",
     \`Next Allowed Work: \${(summary.nextAllowedWork ?? []).join("; ") || "none"}\`,
   ].join("\\n");
@@ -2806,6 +2852,20 @@ async function refreshPluginCandidateContractTests() {
     pluginCandidateContractTestsContracts.textContent = "0";
     pluginCandidateContractTestsRuntime.textContent = "unknown";
     pluginCandidateContractTestsJson.textContent = "Unable to read OpenClaw plugin candidate contract tests.";
+  }
+}
+
+async function refreshPluginSearchWebAdapterContract() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/plugin-search-web-adapter-contract?limit=8\`);
+    renderPluginSearchWebAdapterContract(data);
+  } catch {
+    pluginSearchWebContractRegistry.textContent = "offline";
+    pluginSearchWebContractProviders.textContent = "0";
+    pluginSearchWebContractRequired.textContent = "0/0";
+    pluginSearchWebContractNetwork.textContent = "unknown";
+    pluginSearchWebContractRuntime.textContent = "unknown";
+    pluginSearchWebContractJson.textContent = "Unable to read OpenClaw search/web adapter contract.";
   }
 }
 
@@ -4677,6 +4737,7 @@ await refreshOpenClawToolCatalog();
 await refreshPluginManifestMap();
 await refreshPluginCapabilityPlan();
 await refreshPluginCandidateContractTests();
+await refreshPluginSearchWebAdapterContract();
 await refreshToolCatalogAdapter();
 await refreshSemanticIndex();
 await refreshSymbolLookup();
@@ -4729,6 +4790,7 @@ setInterval(refreshOpenClawToolCatalog, 5000);
 setInterval(refreshPluginManifestMap, 5000);
 setInterval(refreshPluginCapabilityPlan, 5000);
 setInterval(refreshPluginCandidateContractTests, 5000);
+setInterval(refreshPluginSearchWebAdapterContract, 5000);
 setInterval(refreshToolCatalogAdapter, 5000);
 setInterval(refreshSemanticIndex, 5000);
 setInterval(refreshSymbolLookup, 5000);
