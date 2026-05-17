@@ -1638,7 +1638,7 @@ Recheck note:
 
 ## 40. 2026-05-17 Step 23 Update: Search/Web Runtime Preflight
 
-Status: local implementation ready; awaiting NixOS targeted milestone.
+Status: passed.
 
 Slice: runtime preflight envelope for native search/web adapter invocation.
 
@@ -1667,6 +1667,39 @@ git pull origin main && \
 OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-runtime-preflight,observer-openclaw-plugin-search-web-adapter-runtime-preflight npm run dev:milestone-check:unix
 ```
 
+Recheck note:
+- 2026-05-17 16:14 +08:00 NixOS targeted milestone passed: `openclaw-plugin-search-web-adapter-runtime-preflight`, `observer-openclaw-plugin-search-web-adapter-runtime-preflight`.
+
+## 41. 2026-05-17 Step 24 Update: Search/Web Runtime Activation Plan
+
+Status: local implementation ready; awaiting NixOS targeted milestone.
+
+Slice: plan-only runtime activation gates for native search/web adapter invocation.
+
+Purpose: make the remaining activation gates explicit before any search/web provider or network runtime can be enabled. This keeps the next real integration step controlled: the preflight, audit, approval requirement, and query privacy gates are visible and passed, while network runtime, provider sandbox, and approval-gated activation task remain blocked.
+
+Implemented artifacts:
+- Core API: `GET /plugins/native-adapter/plugin-search-web-adapter-runtime-activation-plan`.
+- Observer panel: `OpenClaw Search/Web Runtime Activation Plan`.
+- Native adapter status capability: `plan.openclaw.plugin_search_web_runtime_activation`.
+- Targeted checks: `openclaw-plugin-search-web-adapter-runtime-activation-plan`, `observer-openclaw-plugin-search-web-adapter-runtime-activation-plan`.
+
+Activation gates now checked:
+- Required gates total: 7.
+- Passed gates: preflight envelope, audit binding, explicit approval requirement, query privacy lock.
+- Blocked gates: network runtime adapter, provider runtime sandbox, runtime activation approval task.
+- Activation remains not ready.
+- Network, module import, plugin/provider execution, runtime activation, mutation, task creation, and approval creation remain blocked.
+- Query, endpoint hosts/tokens, auth env var names, source contents, script bodies, and package versions remain hidden.
+
+Expected NixOS check:
+
+```bash
+cd /home/edvulcan/OpenClaw_On_NixOS && \
+git pull origin main && \
+OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-runtime-activation-plan,observer-openclaw-plugin-search-web-adapter-runtime-activation-plan npm run dev:milestone-check:unix
+```
+
 Next intended slice after this passes:
-- Add search/web runtime activation plan gates.
-- Keep actual provider/network execution disabled until activation gates and approval-gated task flow are explicit.
+- Materialize search/web runtime activation as an approval-gated task shell.
+- Still keep actual provider/network execution disabled until the task shell and observer controls are proven stable.

@@ -543,6 +543,15 @@ function observerHtml() {
           <pre id="plugin-search-web-preflight-json">Loading OpenClaw search/web runtime preflight...</pre>
         </section>
         <section class="panel">
+          <h2>OpenClaw Search/Web Runtime Activation Plan</h2>
+          <div class="metric"><span>Registry</span><span id="plugin-search-web-activation-registry">openclaw-plugin-search-web-adapter-runtime-activation-plan-v0</span></div>
+          <div class="metric"><span>Status</span><span id="plugin-search-web-activation-status">unknown</span></div>
+          <div class="metric"><span>Required</span><span id="plugin-search-web-activation-required">0/0</span></div>
+          <div class="metric"><span>Network</span><span id="plugin-search-web-activation-network">blocked</span></div>
+          <div class="metric"><span>Runtime</span><span id="plugin-search-web-activation-runtime">disabled</span></div>
+          <pre id="plugin-search-web-activation-json">Loading OpenClaw search/web runtime activation plan...</pre>
+        </section>
+        <section class="panel">
           <h2>OpenClaw Tool Catalog Adapter</h2>
           <div class="metric"><span>Registry</span><span id="tool-catalog-adapter-registry">openclaw-native-plugin-adapter-v0</span></div>
           <div class="metric"><span>Matches</span><span id="tool-catalog-adapter-matches">0</span></div>
@@ -1052,6 +1061,12 @@ const pluginSearchWebPreflightApproval = document.querySelector("#plugin-search-
 const pluginSearchWebPreflightNetwork = document.querySelector("#plugin-search-web-preflight-network");
 const pluginSearchWebPreflightRuntime = document.querySelector("#plugin-search-web-preflight-runtime");
 const pluginSearchWebPreflightJson = document.querySelector("#plugin-search-web-preflight-json");
+const pluginSearchWebActivationRegistry = document.querySelector("#plugin-search-web-activation-registry");
+const pluginSearchWebActivationStatus = document.querySelector("#plugin-search-web-activation-status");
+const pluginSearchWebActivationRequired = document.querySelector("#plugin-search-web-activation-required");
+const pluginSearchWebActivationNetwork = document.querySelector("#plugin-search-web-activation-network");
+const pluginSearchWebActivationRuntime = document.querySelector("#plugin-search-web-activation-runtime");
+const pluginSearchWebActivationJson = document.querySelector("#plugin-search-web-activation-json");
 const toolCatalogAdapterRegistry = document.querySelector("#tool-catalog-adapter-registry");
 const toolCatalogAdapterMatches = document.querySelector("#tool-catalog-adapter-matches");
 const toolCatalogAdapterCategories = document.querySelector("#tool-catalog-adapter-categories");
@@ -1969,6 +1984,39 @@ function renderPluginSearchWebRuntimePreflight(data) {
     \`Audit: required=\${Boolean(envelope.audit?.required)} ledger=\${envelope.audit?.ledger ?? "unknown"}\`,
     \`Constraints: network=\${Boolean(constraints.canUseNetwork)} import=\${Boolean(constraints.canImportModule)} executePlugin=\${Boolean(constraints.canExecutePluginCode)} activateRuntime=\${Boolean(constraints.canActivateRuntime)} task=\${Boolean(constraints.canCreateTask)} approval=\${Boolean(constraints.canCreateApproval)}\`,
     \`Privacy: query=\${Boolean(governance.exposesQueryContent)} manifestBodies=\${Boolean(governance.exposesManifestBodies)} authNames=\${Boolean(governance.exposesAuthEnvVarNames)} endpoints=\${Boolean(governance.exposesEndpointHosts)} source=\${Boolean(governance.exposesSourceFileContent)}\`,
+  ].join("\\n");
+}
+
+function renderPluginSearchWebRuntimeActivationPlan(data) {
+  const summary = data?.summary ?? {};
+  const governance = data?.governance ?? {};
+  const gates = Array.isArray(data?.gates) ? data.gates : [];
+  const envelope = data?.executionEnvelope ?? {};
+  pluginSearchWebActivationRegistry.textContent = data?.registry ?? "openclaw-plugin-search-web-adapter-runtime-activation-plan-v0";
+  pluginSearchWebActivationStatus.textContent = data?.status ?? "unknown";
+  pluginSearchWebActivationRequired.textContent = \`\${summary.passedRequired ?? 0}/\${summary.requiredGates ?? 0}\`;
+  pluginSearchWebActivationNetwork.textContent = summary.canUseNetwork ? "enabled" : "blocked";
+  pluginSearchWebActivationRuntime.textContent = summary.canActivateRuntime ? "enabled" : "disabled";
+
+  pluginSearchWebActivationJson.textContent = [
+    "Search/Web runtime activation plan: records the remaining gates before native provider/network execution can be enabled.",
+    "This is plan-only: it creates no task, approval, network call, capability invocation, or provider execution.",
+    \`Registry: \${data?.registry ?? "openclaw-plugin-search-web-adapter-runtime-activation-plan-v0"}\`,
+    \`Mode: \${data?.mode ?? "activation-plan-only"}\`,
+    \`Status: \${data?.status ?? "unknown"} activationReady=\${Boolean(data?.activationReady)}\`,
+    \`Required Gates: \${summary.passedRequired ?? 0}/\${summary.requiredGates ?? 0} blocked=\${summary.blockedRequired ?? 0}\`,
+    \`Envelope: \${envelope.envelopeVersion ?? "unknown"} state=\${envelope.state ?? "unknown"}\`,
+    \`Provider: \${data?.provider?.id ?? "unknown"} manifest=\${data?.provider?.manifestId ?? "unknown"} operation=\${envelope.operation ?? "unknown"}\`,
+    \`Network Activation: \${summary.canUseNetwork ? "enabled" : "disabled"} importModule=\${Boolean(summary.canImportModule)} executePlugin=\${Boolean(summary.canExecutePluginCode)} activateRuntime=\${Boolean(summary.canActivateRuntime)}\`,
+    \`Governance: createsTask=\${Boolean(governance.createsTask)} createsApproval=\${Boolean(governance.createsApproval)} query=\${Boolean(governance.exposesQueryContent)} endpoints=\${Boolean(governance.exposesEndpointHosts)} authNames=\${Boolean(governance.exposesAuthEnvVarNames)}\`,
+    "",
+    ...gates.map((gate) => {
+      const required = gate.required ? "required" : "optional";
+      return \`[\${gate.status ?? "unknown"}/\${required}] \${gate.id ?? "gate"} :: \${gate.evidence ?? "no evidence"}\`;
+    }),
+    "",
+    \`Next Allowed Work: \${(summary.nextAllowedWork ?? []).join("; ") || "none"}\`,
+    \`Forbidden Work: \${(summary.forbiddenWork ?? []).join("; ") || "none"}\`,
   ].join("\\n");
 }
 
@@ -2926,6 +2974,20 @@ async function refreshPluginSearchWebRuntimePreflight() {
     pluginSearchWebPreflightNetwork.textContent = "unknown";
     pluginSearchWebPreflightRuntime.textContent = "unknown";
     pluginSearchWebPreflightJson.textContent = "Unable to read OpenClaw search/web runtime preflight.";
+  }
+}
+
+async function refreshPluginSearchWebRuntimeActivationPlan() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/plugin-search-web-adapter-runtime-activation-plan?providerContractId=openclaw.web-search&limit=8\`);
+    renderPluginSearchWebRuntimeActivationPlan(data);
+  } catch {
+    pluginSearchWebActivationRegistry.textContent = "offline";
+    pluginSearchWebActivationStatus.textContent = "unknown";
+    pluginSearchWebActivationRequired.textContent = "0/0";
+    pluginSearchWebActivationNetwork.textContent = "unknown";
+    pluginSearchWebActivationRuntime.textContent = "unknown";
+    pluginSearchWebActivationJson.textContent = "Unable to read OpenClaw search/web runtime activation plan.";
   }
 }
 
@@ -4828,6 +4890,7 @@ await refreshPluginCapabilityPlan();
 await refreshPluginCandidateContractTests();
 await refreshPluginSearchWebAdapterContract();
 await refreshPluginSearchWebRuntimePreflight();
+await refreshPluginSearchWebRuntimeActivationPlan();
 await refreshToolCatalogAdapter();
 await refreshSemanticIndex();
 await refreshSymbolLookup();
@@ -4882,6 +4945,7 @@ setInterval(refreshPluginCapabilityPlan, 5000);
 setInterval(refreshPluginCandidateContractTests, 5000);
 setInterval(refreshPluginSearchWebAdapterContract, 5000);
 setInterval(refreshPluginSearchWebRuntimePreflight, 5000);
+setInterval(refreshPluginSearchWebRuntimeActivationPlan, 5000);
 setInterval(refreshToolCatalogAdapter, 5000);
 setInterval(refreshSemanticIndex, 5000);
 setInterval(refreshSymbolLookup, 5000);

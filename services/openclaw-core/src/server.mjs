@@ -2562,13 +2562,14 @@ function buildOpenClawNativePluginAdapterStatus() {
       "plan.openclaw.plugin_capability",
       "plan.openclaw.plugin_search_web_adapter_contract",
       "plan.openclaw.plugin_search_web_runtime_preflight",
+      "plan.openclaw.plugin_search_web_runtime_activation",
       "act.openclaw.workspace_text_write",
       "act.openclaw.workspace_patch_apply",
       "plan.plugin.runtime_preflight",
     ],
     pendingCapabilities: ["act.plugin.capability.invoke"],
     summary: {
-      implemented: 13,
+      implemented: 14,
       pending: 1,
       canReadManifestMetadata: true,
       canReadToolCatalogMetadata: true,
@@ -2576,6 +2577,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       canPlanPluginCapabilityAbsorption: true,
       canPlanSearchWebAdapterContract: true,
       canPlanSearchWebRuntimePreflight: true,
+      canPlanSearchWebRuntimeActivation: true,
       canReadWorkspaceSemanticMetadata: true,
       canExecuteWorkspaceSymbolLookup: true,
       canSelectWorkspaceEditTargets: true,
@@ -2599,6 +2601,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "plugin capability planning derives governance gates from manifest metadata only and never imports, executes, or activates plugins",
       "search/web adapter contract shell maps selected manifest-derived candidates into native contracts without network access or runtime activation",
       "search/web runtime preflight builds a governed provider execution envelope while keeping network/provider activation disabled",
+      "search/web runtime activation planning records the remaining gates before any provider/network execution can be enabled",
       "workspace semantic index emits derived counts only and never exposes file contents",
       "runtime preflight builds a governed execution envelope without loading plugin modules",
       "source contents, README text, script bodies, dependency versions, plugin code execution, and runtime activation remain blocked",
@@ -3810,6 +3813,154 @@ function buildOpenClawPluginSearchWebAdapterRuntimePreflight({
       createsApproval: false,
       canReadManifestMetadata: true,
       canResolveProviderMetadata: true,
+      exposesManifestBodies: false,
+      exposesAuthEnvVarNames: false,
+      exposesEndpointHosts: false,
+      exposesConfigSchemaBodies: false,
+      exposesSourceFileContent: false,
+      exposesQueryContent: false,
+      canUseNetwork: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      canMutate: false,
+      requiresExplicitApprovalBeforeNetworkUse: true,
+      requiresRuntimeAdapterBeforeExecution: true,
+    },
+  };
+}
+
+function buildOpenClawPluginSearchWebAdapterRuntimeActivationPlan({
+  workspacePath = null,
+  providerContractId = null,
+  query = "openclaw native integration",
+  limit = 8,
+} = {}) {
+  const preflight = buildOpenClawPluginSearchWebAdapterRuntimePreflight({
+    workspacePath,
+    providerContractId,
+    query,
+    limit,
+  });
+  const envelope = preflight.executionEnvelope ?? {};
+  const constraints = envelope.constraints ?? {};
+  const gates = [
+    {
+      id: "preflight_envelope_ready",
+      label: "Search/web runtime preflight envelope is available",
+      required: true,
+      status: envelope.envelopeVersion === "openclaw-search-web-execution-envelope-v0" ? "passed" : "blocked",
+      evidence: `envelope=${envelope.envelopeVersion ?? "missing"}`,
+    },
+    {
+      id: "audit_binding_ready",
+      label: "Search/web provider audit ledger is bound",
+      required: true,
+      status: envelope.audit?.required === true && envelope.audit?.ledger === "capability_history" ? "passed" : "blocked",
+      evidence: `ledger=${envelope.audit?.ledger ?? "missing"}`,
+    },
+    {
+      id: "explicit_user_approval_required",
+      label: "Network-bound search/web invocation requires explicit approval",
+      required: true,
+      status: envelope.approval?.required === true ? "passed" : "blocked",
+      evidence: `approvalRequired=${Boolean(envelope.approval?.required)} collected=${Boolean(envelope.approval?.collected)}`,
+    },
+    {
+      id: "query_privacy_locked",
+      label: "Query content remains redacted before activation",
+      required: true,
+      status: envelope.query?.contentExposed === false && constraints.canExposeQueryContent === false ? "passed" : "blocked",
+      evidence: `queryContentExposed=${Boolean(envelope.query?.contentExposed)} canExposeQueryContent=${Boolean(constraints.canExposeQueryContent)}`,
+    },
+    {
+      id: "network_runtime_adapter_required",
+      label: "Sandboxed network runtime adapter must be implemented before provider execution",
+      required: true,
+      status: "blocked",
+      evidence: "no network runtime adapter is active",
+    },
+    {
+      id: "provider_runtime_sandbox_required",
+      label: "Provider runtime sandbox must be approved before network/provider activation",
+      required: true,
+      status: "blocked",
+      evidence: "provider runtime sandbox is not implemented or approved",
+    },
+    {
+      id: "runtime_activation_approval_required",
+      label: "Runtime activation needs a future approval-gated task",
+      required: true,
+      status: "blocked",
+      evidence: "this endpoint is plan-only and creates no approval",
+    },
+  ];
+  const requiredGates = gates.filter((gate) => gate.required);
+  const passedRequired = requiredGates.filter((gate) => gate.status === "passed").length;
+  const blockedRequired = requiredGates.length - passedRequired;
+
+  return {
+    ok: true,
+    registry: "openclaw-plugin-search-web-adapter-runtime-activation-plan-v0",
+    mode: "activation-plan-only",
+    generatedAt: new Date().toISOString(),
+    sourceRegistry: preflight.registry,
+    sourceMode: preflight.mode,
+    runtimeOwner: "openclaw_on_nixos",
+    status: "blocked_pending_network_runtime_adapter",
+    activationReady: false,
+    adapter: preflight.adapter,
+    provider: preflight.provider,
+    query: preflight.query,
+    executionEnvelope: {
+      envelopeVersion: envelope.envelopeVersion ?? null,
+      state: envelope.state ?? null,
+      adapterId: envelope.adapterId ?? null,
+      providerContractId: envelope.providerContractId ?? null,
+      manifestId: envelope.manifestId ?? null,
+      operation: envelope.operation ?? null,
+      query: envelope.query ?? null,
+      policyDecision: envelope.policyDecision ?? null,
+      approval: envelope.approval ?? null,
+      audit: envelope.audit ?? null,
+    },
+    gates,
+    summary: {
+      totalGates: gates.length,
+      requiredGates: requiredGates.length,
+      passedRequired,
+      blockedRequired,
+      activationReady: false,
+      canReadManifestMetadata: constraints.canReadManifestMetadata === true,
+      canResolveProviderMetadata: constraints.canResolveProviderMetadata === true,
+      exposesQueryContent: false,
+      exposesEndpointHosts: false,
+      exposesAuthEnvVarNames: false,
+      canUseNetwork: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      canMutate: false,
+      createsTask: false,
+      createsApproval: false,
+      nextAllowedWork: [
+        "design sandboxed network runtime adapter inside OpenClawOnNixOS",
+        "materialize search/web runtime activation only through approval-gated tasks",
+        "bind provider execution transcripts into capability history before any live network call",
+      ],
+      forbiddenWork: [
+        "do not perform network requests during activation planning",
+        "do not import old OpenClaw provider modules in this plan",
+        "do not execute provider code or expose query content before a future approval-gated activation task",
+      ],
+    },
+    governance: {
+      mode: "plugin_search_web_runtime_activation_plan_only",
+      runtimeOwner: "openclaw_on_nixos",
+      createsTask: false,
+      createsApproval: false,
+      canReadManifestMetadata: constraints.canReadManifestMetadata === true,
+      canResolveProviderMetadata: constraints.canResolveProviderMetadata === true,
       exposesManifestBodies: false,
       exposesAuthEnvVarNames: false,
       exposesEndpointHosts: false,
@@ -11438,6 +11589,21 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/plugin-search-web-adapter-runtime-preflight") {
     try {
       sendJson(res, 200, buildOpenClawPluginSearchWebAdapterRuntimePreflight({
+        workspacePath: requestUrl.searchParams.get("workspacePath"),
+        providerContractId: requestUrl.searchParams.get("providerContractId"),
+        query: requestUrl.searchParams.get("query") ?? "openclaw native integration",
+        limit: Number.parseInt(requestUrl.searchParams.get("limit") ?? "8", 10),
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/plugin-search-web-adapter-runtime-activation-plan") {
+    try {
+      sendJson(res, 200, buildOpenClawPluginSearchWebAdapterRuntimeActivationPlan({
         workspacePath: requestUrl.searchParams.get("workspacePath"),
         providerContractId: requestUrl.searchParams.get("providerContractId"),
         query: requestUrl.searchParams.get("query") ?? "openclaw native integration",
