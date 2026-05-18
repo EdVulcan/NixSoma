@@ -2222,7 +2222,7 @@ Recheck note:
 
 ## 58. 2026-05-18 Step 41 Update: Native Plugin Runtime Adapter Task
 
-Status: local implementation ready; awaiting NixOS targeted milestone.
+Status: passed.
 
 Slice: approval-gated native runtime adapter implementation task shell.
 
@@ -2247,3 +2247,6 @@ cd /home/edvulcan/OpenClaw_On_NixOS && \
 git pull origin main && \
 OPENCLAW_MILESTONE_CHECKS=openclaw-native-plugin-runtime-adapter-task,observer-openclaw-native-plugin-runtime-adapter-task npm run dev:milestone-check:unix
 ```
+
+Recheck note:
+- 2026-05-18 17:19 +08:00 NixOS targeted milestone passed: `openclaw-native-plugin-runtime-adapter-task`, `observer-openclaw-native-plugin-runtime-adapter-task`.
