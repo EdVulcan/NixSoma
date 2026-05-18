@@ -2281,3 +2281,32 @@ OPENCLAW_MILESTONE_CHECKS=openclaw-native-plugin-runtime-adapter-denial-recovery
 
 Recheck note:
 - 2026-05-18 17:28 +08:00 NixOS targeted milestone passed: `openclaw-native-plugin-runtime-adapter-denial-recovery`, `observer-openclaw-native-plugin-runtime-adapter-denial-recovery`.
+
+## 60. 2026-05-18 Step 43 Update: Native Plugin Runtime Adapter Hardening
+
+Status: local implementation ready; awaiting NixOS targeted milestone.
+
+Slice: approval expiry, duplicate clicks, duplicate recovery, and recovery chains for native runtime adapter implementation tasks.
+
+Purpose: harden the native runtime adapter implementation task boundary before adding persistence. Approval expiry must fail stale active adapter tasks; duplicate approval/denial must be rejected; duplicate recovery must be rejected once a recovery task exists; chained denied recoveries must keep creating fresh approvals and remain deferred after final approval.
+
+Implemented artifacts:
+- Core hardening check for `POST /plugins/native-adapter/runtime-adapter-tasks`.
+- Observer hardening check for adapter task controls, approval state, task list, and recovery chain visibility.
+- Targeted checks: `openclaw-native-plugin-runtime-adapter-hardening`, `observer-openclaw-native-plugin-runtime-adapter-hardening`.
+
+Safety boundaries:
+- Expired adapter approvals cannot be approved or denied after expiry.
+- Approved adapter approvals cannot be approved or denied again.
+- Duplicate recovery is rejected after a source task already has a recovery task.
+- Multi-hop recovered adapter tasks require fresh explicit approval at every hop.
+- Approved recovered adapter tasks remain queued and deferred at `runtime_adapter_implementation_deferred`.
+- No plugin module import, plugin execution, runtime activation, mutation, command execution, capability invocation, source exposure, script body exposure, or dependency/package version exposure occurs.
+
+Expected NixOS check:
+
+```bash
+cd /home/edvulcan/OpenClaw_On_NixOS && \
+git pull origin main && \
+OPENCLAW_MILESTONE_CHECKS=openclaw-native-plugin-runtime-adapter-hardening,observer-openclaw-native-plugin-runtime-adapter-hardening npm run dev:milestone-check:unix
+```
