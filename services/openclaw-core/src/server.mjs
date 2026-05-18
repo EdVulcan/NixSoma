@@ -8421,7 +8421,9 @@ function hasRecoverableSearchWebAdapterPlan(task) {
     ? task?.plan?.governance?.requiresRuntimePreflightBeforeExecution === true
     : isOpenClawSearchWebRuntimeActivationTask(task)
       ? task?.plan?.governance?.requiresRuntimeAdapterBeforeExecution === true
-      : false;
+      : isOpenClawSearchWebProviderRuntimeSandboxTask(task)
+        ? task?.plan?.governance?.requiresRuntimeAdapterBeforeExecution === true
+        : false;
   return hasDeferredBoundary
     && task?.plan?.governance?.canUseNetwork === false
     && task?.plan?.governance?.canExecutePluginCode === false;

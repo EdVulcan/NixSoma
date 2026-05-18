@@ -1872,7 +1872,7 @@ Recheck note:
 
 ## 47. 2026-05-17 Step 30 Update: Search/Web Provider Runtime Sandbox Task
 
-Status: local implementation ready; awaiting NixOS targeted milestone.
+Status: passed.
 
 Slice: approval-gated provider runtime sandbox task shell for native search/web adapter invocation.
 
@@ -1898,4 +1898,35 @@ Expected NixOS check:
 cd /home/edvulcan/OpenClaw_On_NixOS && \
 git pull origin main && \
 OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-provider-runtime-sandbox-task,observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox-task npm run dev:milestone-check:unix
+```
+
+Recheck note:
+- 2026-05-17 17:55 +08:00 NixOS targeted milestone passed: `openclaw-plugin-search-web-adapter-provider-runtime-sandbox-task`, `observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox-task`.
+
+## 48. 2026-05-18 Step 31 Update: Search/Web Provider Runtime Sandbox Denial Recovery
+
+Status: local implementation ready; awaiting NixOS targeted milestone.
+
+Slice: denial and fresh-approval recovery for native search/web provider sandbox tasks.
+
+Purpose: prove denied provider runtime sandbox approvals cannot be reused or silently converted into runtime readiness. A denied sandbox task must fail and become recoverable; recovery must create a fresh queued sandbox task and fresh pending approval; even after approval, operator execution must remain deferred at `search_web_provider_runtime_sandbox_deferred`.
+
+Implemented artifacts:
+- Recovery coverage for `openclaw_search_web_provider_runtime_sandbox` tasks.
+- Targeted checks: `openclaw-plugin-search-web-adapter-provider-runtime-sandbox-denial-recovery`, `observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox-denial-recovery`.
+- Provider sandbox tasks now participate in the native search/web recoverable-plan path.
+
+Safety boundaries:
+- Denied provider sandbox tasks do not become approved.
+- Recovered provider sandbox tasks do not reuse denied approval IDs.
+- Recovered provider sandbox tasks require fresh explicit approval.
+- Duplicate recovery for the same denied provider sandbox task is rejected.
+- Approved recovered provider sandbox tasks still do not use network, activate runtime, execute provider/plugin code, import old OpenClaw modules, mutate state, or expose query/endpoint/auth-env details.
+
+Expected NixOS check:
+
+```bash
+cd /home/edvulcan/OpenClaw_On_NixOS && \
+git pull origin main && \
+OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-provider-runtime-sandbox-denial-recovery,observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox-denial-recovery npm run dev:milestone-check:unix
 ```
