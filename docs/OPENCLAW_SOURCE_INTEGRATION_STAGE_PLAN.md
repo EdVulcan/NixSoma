@@ -2316,7 +2316,7 @@ Recheck note:
 
 ## 61. 2026-05-18 Step 44 Update: Native Plugin Runtime Adapter Persistence
 
-Status: local implementation ready; awaiting NixOS targeted milestone.
+Status: passed.
 
 Slice: restart persistence for native runtime adapter implementation approval and recovery chains.
 
@@ -2342,3 +2342,6 @@ cd /home/edvulcan/OpenClaw_On_NixOS && \
 git pull origin main && \
 OPENCLAW_MILESTONE_CHECKS=openclaw-native-plugin-runtime-adapter-persistence,observer-openclaw-native-plugin-runtime-adapter-persistence npm run dev:milestone-check:unix
 ```
+
+Recheck note:
+- 2026-05-18 17:55 +08:00 NixOS targeted milestone passed: `openclaw-native-plugin-runtime-adapter-persistence`, `observer-openclaw-native-plugin-runtime-adapter-persistence`.
