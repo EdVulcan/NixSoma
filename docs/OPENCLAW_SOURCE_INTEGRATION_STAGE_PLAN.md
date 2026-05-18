@@ -1936,7 +1936,7 @@ Recheck note:
 
 ## 49. 2026-05-18 Step 32 Update: Search/Web Provider Runtime Sandbox Hardening
 
-Status: local implementation ready; awaiting NixOS targeted milestone.
+Status: passed.
 
 Slice: hardening for native search/web provider runtime sandbox approvals and recovery chains.
 
@@ -1962,4 +1962,36 @@ Expected NixOS check:
 cd /home/edvulcan/OpenClaw_On_NixOS && \
 git pull origin main && \
 OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-provider-runtime-sandbox-hardening,observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox-hardening npm run dev:milestone-check:unix
+```
+
+Recheck note:
+- 2026-05-18 15:05 +08:00 NixOS targeted milestone passed: `openclaw-plugin-search-web-adapter-provider-runtime-sandbox-hardening`, `observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox-hardening`.
+
+## 50. 2026-05-18 Step 33 Update: Search/Web Provider Runtime Sandbox Persistence
+
+Status: local implementation ready; awaiting NixOS targeted milestone.
+
+Slice: restart persistence for native search/web provider sandbox approval and recovery chains.
+
+Purpose: prove the provider sandbox workflow remains trustworthy across service restarts before any provider/network runtime is enabled. Pending sandbox approvals must survive restart, denied sandbox tasks must remain linked to recovered tasks, recovered fresh approvals must survive restart, and approved recovered sandbox tasks must remain deferred after restart.
+
+Implemented artifacts:
+- Targeted checks: `openclaw-plugin-search-web-adapter-provider-runtime-sandbox-persistence`, `observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox-persistence`.
+- Restart coverage for pending provider sandbox approvals.
+- Restart coverage for denied provider sandbox source tasks and recovered provider sandbox tasks.
+- Restart coverage for approved recovered provider sandbox tasks that remain `provider_runtime_sandbox_deferred`.
+
+Safety boundaries:
+- Persisted provider sandbox tasks do not execute network/provider code after restart.
+- Recovered provider sandbox tasks retain fresh approval IDs and recovery lineage after restart.
+- Approved recovered provider sandbox tasks remain queued and deferred at `search_web_provider_runtime_sandbox_deferred`.
+- Capability history remains empty across the persistence chain.
+- Query, endpoint hosts/tokens, auth env var names, source contents, script bodies, and package versions remain hidden.
+
+Expected NixOS check:
+
+```bash
+cd /home/edvulcan/OpenClaw_On_NixOS && \
+git pull origin main && \
+OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-provider-runtime-sandbox-persistence,observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox-persistence npm run dev:milestone-check:unix
 ```
