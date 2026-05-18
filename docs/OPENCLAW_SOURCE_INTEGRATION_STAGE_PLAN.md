@@ -1905,7 +1905,7 @@ Recheck note:
 
 ## 48. 2026-05-18 Step 31 Update: Search/Web Provider Runtime Sandbox Denial Recovery
 
-Status: local implementation ready; awaiting NixOS targeted milestone.
+Status: passed.
 
 Slice: denial and fresh-approval recovery for native search/web provider sandbox tasks.
 
@@ -1929,4 +1929,37 @@ Expected NixOS check:
 cd /home/edvulcan/OpenClaw_On_NixOS && \
 git pull origin main && \
 OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-provider-runtime-sandbox-denial-recovery,observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox-denial-recovery npm run dev:milestone-check:unix
+```
+
+Recheck note:
+- 2026-05-18 14:52 +08:00 NixOS targeted milestone passed: `openclaw-plugin-search-web-adapter-provider-runtime-sandbox-denial-recovery`, `observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox-denial-recovery`.
+
+## 49. 2026-05-18 Step 32 Update: Search/Web Provider Runtime Sandbox Hardening
+
+Status: local implementation ready; awaiting NixOS targeted milestone.
+
+Slice: hardening for native search/web provider runtime sandbox approvals and recovery chains.
+
+Purpose: close edge cases around provider sandbox task approvals before any real provider/network runtime exists. This verifies approval expiry, duplicate approval/denial clicks, duplicate recovery rejection, and chained recovery attempts while preserving the key boundary: every approved sandbox task still stops at `search_web_provider_runtime_sandbox_deferred`.
+
+Implemented artifacts:
+- Targeted checks: `openclaw-plugin-search-web-adapter-provider-runtime-sandbox-hardening`, `observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox-hardening`.
+- Expiry coverage for stale provider sandbox approvals.
+- Duplicate approval/denial safety for already-resolved provider sandbox approvals.
+- Duplicate recovery safety for failed provider sandbox tasks.
+- Multi-hop denial/recovery chain coverage for `openclaw_search_web_provider_runtime_sandbox` tasks.
+
+Safety boundaries:
+- Expired provider sandbox approvals fail their active task and cannot be approved or denied later.
+- Approved provider sandbox approvals cannot be approved again or denied afterward.
+- A failed provider sandbox task can create only one direct recovery task.
+- Recovery chains preserve fresh approvals and attempt lineage.
+- Approved recovered provider sandbox tasks still do not use network, activate runtime, execute provider/plugin code, import old OpenClaw modules, mutate state, or expose query/endpoint/auth-env details.
+
+Expected NixOS check:
+
+```bash
+cd /home/edvulcan/OpenClaw_On_NixOS && \
+git pull origin main && \
+OPENCLAW_MILESTONE_CHECKS=openclaw-plugin-search-web-adapter-provider-runtime-sandbox-hardening,observer-openclaw-plugin-search-web-adapter-provider-runtime-sandbox-hardening npm run dev:milestone-check:unix
 ```
