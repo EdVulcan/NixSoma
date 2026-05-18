@@ -2566,10 +2566,11 @@ function buildOpenClawNativePluginAdapterStatus() {
       "act.openclaw.workspace_text_write",
       "act.openclaw.workspace_patch_apply",
       "plan.plugin.runtime_preflight",
+      "plan.plugin.runtime_adapter_contract",
     ],
     pendingCapabilities: ["act.plugin.capability.invoke"],
     summary: {
-      implemented: 14,
+      implemented: 15,
       pending: 1,
       canReadManifestMetadata: true,
       canReadToolCatalogMetadata: true,
@@ -2578,6 +2579,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       canPlanSearchWebAdapterContract: true,
       canPlanSearchWebRuntimePreflight: true,
       canPlanSearchWebRuntimeActivation: true,
+      canPlanNativeRuntimeAdapterContract: true,
       canReadWorkspaceSemanticMetadata: true,
       canExecuteWorkspaceSymbolLookup: true,
       canSelectWorkspaceEditTargets: true,
@@ -2602,6 +2604,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "search/web adapter contract shell maps selected manifest-derived candidates into native contracts without network access or runtime activation",
       "search/web runtime preflight builds a governed provider execution envelope while keeping network/provider activation disabled",
       "search/web runtime activation planning records the remaining gates before any provider/network execution can be enabled",
+      "native plugin runtime adapter contract defines the sandbox loader boundary before any plugin module can be loaded",
       "workspace semantic index emits derived counts only and never exposes file contents",
       "runtime preflight builds a governed execution envelope without loading plugin modules",
       "source contents, README text, script bodies, dependency versions, plugin code execution, and runtime activation remain blocked",
@@ -7582,6 +7585,200 @@ function buildNativePluginRuntimeActivationPlan({ packagePath = null, capability
       canActivateRuntime: false,
       canMutate: false,
       requiresExplicitApprovalBeforeExecution: true,
+      requiresRuntimeAdapterBeforeExecution: true,
+    },
+  };
+}
+
+function buildNativePluginRuntimeAdapterContract({ packagePath = null, capabilityId = "act.plugin.capability.invoke" } = {}) {
+  const activationPlan = buildNativePluginRuntimeActivationPlan({ packagePath, capabilityId });
+  const envelope = activationPlan.executionEnvelope ?? {};
+  const plugin = activationPlan.plugin ?? {};
+  const capability = activationPlan.capability ?? {};
+  const checks = [
+    {
+      id: "preflight_envelope_bound",
+      label: "Runtime adapter contract is bound to native plugin preflight",
+      required: true,
+      status: envelope.envelopeVersion === "native-plugin-execution-envelope-v0" ? "passed" : "blocked",
+      evidence: `envelope=${envelope.envelopeVersion ?? "missing"}`,
+    },
+    {
+      id: "activation_task_chain_available",
+      label: "Approval-gated runtime activation task chain exists",
+      required: true,
+      status: "passed",
+      evidence: "runtime activation task, denial/recovery, hardening, persistence, and regression checks are registered",
+    },
+    {
+      id: "source_content_import_blocked",
+      label: "Source file content remains unavailable to the runtime contract",
+      required: true,
+      status: "passed",
+      evidence: "canReadSourceFileContent=false",
+    },
+    {
+      id: "module_loader_default_deny",
+      label: "Plugin module loading is denied until a future sandbox loader exists",
+      required: true,
+      status: "passed",
+      evidence: "canImportModule=false",
+    },
+    {
+      id: "plugin_execution_blocked",
+      label: "Plugin code execution remains blocked by the contract shell",
+      required: true,
+      status: "passed",
+      evidence: "canExecutePluginCode=false",
+    },
+    {
+      id: "runtime_activation_default_deny",
+      label: "Runtime activation remains disabled until adapter implementation is approved",
+      required: true,
+      status: "passed",
+      evidence: "canActivateRuntime=false",
+    },
+    {
+      id: "runtime_loader_adapter_required",
+      label: "Sandboxed native runtime loader implementation is still required",
+      required: true,
+      status: "blocked",
+      evidence: "no native runtime loader adapter is active",
+    },
+  ];
+  const requiredChecks = checks.filter((check) => check.required);
+  const passedRequired = requiredChecks.filter((check) => check.status === "passed").length;
+  const blockedRequired = requiredChecks.length - passedRequired;
+
+  return {
+    ok: true,
+    registry: "openclaw-native-plugin-runtime-adapter-contract-v0",
+    mode: "runtime-adapter-contract",
+    generatedAt: new Date().toISOString(),
+    sourceRegistry: activationPlan.registry,
+    sourceMode: activationPlan.mode,
+    runtimeOwner: "openclaw_on_nixos",
+    status: "contract_ready_runtime_loader_blocked",
+    activationReady: false,
+    adapter: {
+      id: "native-plugin-runtime-adapter-v0",
+      runtimeOwner: "openclaw_on_nixos",
+      status: "contract_ready_runtime_disabled",
+      canReadManifestMetadata: true,
+      canReadSourceFileContent: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      canMutate: false,
+    },
+    plugin: {
+      id: plugin.id ?? null,
+      packageName: plugin.packageName ?? null,
+      hasTypes: plugin.hasTypes === true,
+      hasExports: plugin.hasExports === true,
+    },
+    capability: {
+      id: capability.id ?? capabilityId,
+      kind: capability.kind ?? null,
+      risk: capability.risk ?? null,
+      domains: capability.domains ?? [],
+      approvalRequired: capability.approvalRequired === true,
+      audit: capability.audit ?? {},
+      permissions: capability.permissions ?? {},
+    },
+    executionEnvelope: {
+      envelopeVersion: envelope.envelopeVersion ?? null,
+      state: envelope.state ?? null,
+      adapterId: envelope.adapterId ?? null,
+      capabilityId: envelope.capabilityId ?? null,
+      policyDecision: envelope.policyDecision ?? null,
+      approval: envelope.approval ?? null,
+      audit: envelope.audit ?? null,
+    },
+    runtimeContract: {
+      contractId: "native-plugin-runtime-adapter.v0",
+      contractVersion: "openclaw-native-plugin-runtime-adapter-contract-v0",
+      state: "contract_ready_not_implemented",
+      approval: {
+        required: true,
+        collected: false,
+        reason: "Native plugin runtime adapter implementation must be separately approved before module loading or execution.",
+      },
+      isolation: {
+        processIsolationRequired: true,
+        loaderBoundary: "openclaw_on_nixos_owned_adapter",
+        oldOpenClawModuleImportAllowed: false,
+        pluginModuleImportAllowed: false,
+        secretsMounted: false,
+      },
+      execution: {
+        canReadManifestMetadata: true,
+        canReadSourceFileContent: false,
+        canImportModule: false,
+        canExecutePluginCode: false,
+        canActivateRuntime: false,
+        canMutate: false,
+      },
+      privacy: {
+        readmeContentExposed: false,
+        sourceFileContentExposed: false,
+        scriptBodiesExposed: false,
+        dependencyVersionsExposed: false,
+        packageVersionExposed: false,
+      },
+      audit: {
+        required: true,
+        ledger: "capability_history",
+        activationTaskRequired: true,
+        transcriptRequiredBeforeExecution: true,
+        recoveryChainRequired: true,
+      },
+    },
+    checks,
+    summary: {
+      totalChecks: checks.length,
+      requiredChecks: requiredChecks.length,
+      passedRequired,
+      blockedRequired,
+      adapterContractReady: passedRequired >= 6,
+      runtimeLoaderImplemented: false,
+      activationReady: false,
+      canReadManifestMetadata: true,
+      canReadSourceFileContent: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      canMutate: false,
+      createsTask: false,
+      createsApproval: false,
+      nextAllowedWork: [
+        "implement a sandboxed native runtime loader contract task behind explicit approval",
+        "bind any future loader to the native activation task and recovery ledger",
+        "add transcript and capability-history coverage before plugin code execution",
+      ],
+      forbiddenWork: [
+        "do not import plugin modules from this contract endpoint",
+        "do not execute plugin code or activate runtime from this contract endpoint",
+        "do not expose README text, source contents, script bodies, dependency versions, or package versions",
+      ],
+    },
+    governance: {
+      mode: "native_plugin_runtime_adapter_contract",
+      runtimeOwner: "openclaw_on_nixos",
+      createsTask: false,
+      createsApproval: false,
+      canReadManifestMetadata: true,
+      canReadSourceFileContent: false,
+      exposesReadmeContent: false,
+      exposesSourceFileContent: false,
+      exposesScriptBodies: false,
+      exposesDependencyVersions: false,
+      exposesPackageVersions: false,
+      canImportModule: false,
+      canExecutePluginCode: false,
+      canActivateRuntime: false,
+      canMutate: false,
+      requiresExplicitApprovalBeforeRuntimeImplementation: true,
       requiresRuntimeAdapterBeforeExecution: true,
     },
   };
@@ -13225,6 +13422,19 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/runtime-activation-plan") {
     try {
       sendJson(res, 200, buildNativePluginRuntimeActivationPlan({
+        packagePath: requestUrl.searchParams.get("packagePath"),
+        capabilityId: requestUrl.searchParams.get("capabilityId") ?? "act.plugin.capability.invoke",
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/runtime-adapter-contract") {
+    try {
+      sendJson(res, 200, buildNativePluginRuntimeAdapterContract({
         packagePath: requestUrl.searchParams.get("packagePath"),
         capabilityId: requestUrl.searchParams.get("capabilityId") ?? "act.plugin.capability.invoke",
       }));

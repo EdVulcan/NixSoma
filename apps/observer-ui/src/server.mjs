@@ -695,6 +695,15 @@ function observerHtml() {
           <pre id="native-plugin-activation-json">Loading native plugin runtime activation plan...</pre>
         </section>
         <section class="panel">
+          <h2>OpenClaw Native Runtime Adapter Contract</h2>
+          <div class="metric"><span>Registry</span><span id="native-plugin-runtime-contract-registry">openclaw-native-plugin-runtime-adapter-contract-v0</span></div>
+          <div class="metric"><span>Status</span><span id="native-plugin-runtime-contract-status">unknown</span></div>
+          <div class="metric"><span>Required</span><span id="native-plugin-runtime-contract-required">0/0</span></div>
+          <div class="metric"><span>Runtime</span><span id="native-plugin-runtime-contract-runtime">disabled</span></div>
+          <div class="metric"><span>Mode</span><span id="native-plugin-runtime-contract-mode">runtime-adapter-contract</span></div>
+          <pre id="native-plugin-runtime-contract-json">Loading native plugin runtime adapter contract...</pre>
+        </section>
+        <section class="panel">
           <h2>OpenClaw Native Plugin Invoke Plan</h2>
           <div class="metric"><span>Registry</span><span id="native-plugin-invoke-plan-registry">openclaw-native-plugin-invoke-plan-v0</span></div>
           <div class="metric"><span>Capability</span><span id="native-plugin-invoke-plan-capability">act.plugin.capability.invoke</span></div>
@@ -1176,6 +1185,12 @@ const nativePluginActivationRuntime = document.querySelector("#native-plugin-act
 const nativePluginActivationMode = document.querySelector("#native-plugin-activation-mode");
 const nativePluginActivationJson = document.querySelector("#native-plugin-activation-json");
 const nativePluginActivationTaskButton = document.querySelector("#native-plugin-activation-task-button");
+const nativePluginRuntimeContractRegistry = document.querySelector("#native-plugin-runtime-contract-registry");
+const nativePluginRuntimeContractStatus = document.querySelector("#native-plugin-runtime-contract-status");
+const nativePluginRuntimeContractRequired = document.querySelector("#native-plugin-runtime-contract-required");
+const nativePluginRuntimeContractRuntime = document.querySelector("#native-plugin-runtime-contract-runtime");
+const nativePluginRuntimeContractMode = document.querySelector("#native-plugin-runtime-contract-mode");
+const nativePluginRuntimeContractJson = document.querySelector("#native-plugin-runtime-contract-json");
 const nativePluginInvokePlanRegistry = document.querySelector("#native-plugin-invoke-plan-registry");
 const nativePluginInvokePlanCapability = document.querySelector("#native-plugin-invoke-plan-capability");
 const nativePluginInvokePlanDecision = document.querySelector("#native-plugin-invoke-plan-decision");
@@ -2497,6 +2512,41 @@ function renderNativePluginActivationPlan(data) {
   ].join("\\n");
 }
 
+function renderNativePluginRuntimeAdapterContract(data) {
+  const summary = data?.summary ?? {};
+  const governance = data?.governance ?? {};
+  const contract = data?.runtimeContract ?? {};
+  const checks = Array.isArray(data?.checks) ? data.checks : [];
+  nativePluginRuntimeContractRegistry.textContent = data?.registry ?? "openclaw-native-plugin-runtime-adapter-contract-v0";
+  nativePluginRuntimeContractStatus.textContent = data?.status ?? "unknown";
+  nativePluginRuntimeContractRequired.textContent = \`\${summary.passedRequired ?? 0}/\${summary.requiredChecks ?? 0}\`;
+  nativePluginRuntimeContractRuntime.textContent = summary.canActivateRuntime ? "enabled" : "disabled";
+  nativePluginRuntimeContractMode.textContent = data?.mode ?? "runtime-adapter-contract";
+
+  nativePluginRuntimeContractJson.textContent = [
+    "Native runtime adapter contract: defines the sandboxed loader boundary before any plugin module can be loaded.",
+    "This is contract-only: it creates no task, approval, module import, plugin execution, runtime activation, or mutation.",
+    \`Registry: \${data?.registry ?? "openclaw-native-plugin-runtime-adapter-contract-v0"}\`,
+    \`Mode: \${data?.mode ?? "runtime-adapter-contract"}\`,
+    \`Status: \${data?.status ?? "unknown"} adapterReady=\${Boolean(summary.adapterContractReady)} activationReady=\${Boolean(data?.activationReady)}\`,
+    \`Required Checks: \${summary.passedRequired ?? 0}/\${summary.requiredChecks ?? 0} blocked=\${summary.blockedRequired ?? 0}\`,
+    \`Plugin: \${data?.plugin?.id ?? "unknown"} package=\${data?.plugin?.packageName ?? "unknown"} capability=\${data?.capability?.id ?? "unknown"}\`,
+    \`Contract: \${contract.contractVersion ?? "unknown"} state=\${contract.state ?? "unknown"} approvalRequired=\${Boolean(contract.approval?.required)} collected=\${Boolean(contract.approval?.collected)}\`,
+    \`Isolation: process=\${Boolean(contract.isolation?.processIsolationRequired)} oldModuleImport=\${Boolean(contract.isolation?.oldOpenClawModuleImportAllowed)} pluginImport=\${Boolean(contract.isolation?.pluginModuleImportAllowed)} secretsMounted=\${Boolean(contract.isolation?.secretsMounted)}\`,
+    \`Execution: import=\${Boolean(contract.execution?.canImportModule)} pluginCode=\${Boolean(contract.execution?.canExecutePluginCode)} activateRuntime=\${Boolean(contract.execution?.canActivateRuntime)} mutate=\${Boolean(contract.execution?.canMutate)}\`,
+    \`Privacy: readme=\${Boolean(contract.privacy?.readmeContentExposed)} source=\${Boolean(contract.privacy?.sourceFileContentExposed)} scripts=\${Boolean(contract.privacy?.scriptBodiesExposed)} deps=\${Boolean(contract.privacy?.dependencyVersionsExposed)} packageVersion=\${Boolean(contract.privacy?.packageVersionExposed)}\`,
+    \`Governance: task=\${Boolean(governance.createsTask)} approval=\${Boolean(governance.createsApproval)} readSource=\${Boolean(governance.canReadSourceFileContent)} import=\${Boolean(governance.canImportModule)} execute=\${Boolean(governance.canExecutePluginCode)} runtime=\${Boolean(governance.canActivateRuntime)}\`,
+    "",
+    ...checks.map((check) => {
+      const required = check.required ? "required" : "optional";
+      return \`[\${check.status ?? "unknown"}/\${required}] \${check.id ?? "check"} :: \${check.evidence ?? "no evidence"}\`;
+    }),
+    "",
+    \`Next Allowed Work: \${(summary.nextAllowedWork ?? []).join("; ") || "none"}\`,
+    \`Forbidden Work: \${(summary.forbiddenWork ?? []).join("; ") || "none"}\`,
+  ].join("\\n");
+}
+
 function renderNativePluginInvokePlan(data) {
   const governance = data?.governance ?? {};
   const policyDecision = data?.policy?.decision ?? {};
@@ -3252,6 +3302,20 @@ async function refreshNativePluginActivationPlan() {
     nativePluginActivationRuntime.textContent = "unknown";
     nativePluginActivationMode.textContent = "unknown";
     nativePluginActivationJson.textContent = "Unable to read native plugin runtime activation plan.";
+  }
+}
+
+async function refreshNativePluginRuntimeAdapterContract() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/runtime-adapter-contract\`);
+    renderNativePluginRuntimeAdapterContract(data);
+  } catch {
+    nativePluginRuntimeContractRegistry.textContent = "offline";
+    nativePluginRuntimeContractStatus.textContent = "unknown";
+    nativePluginRuntimeContractRequired.textContent = "0/0";
+    nativePluginRuntimeContractRuntime.textContent = "unknown";
+    nativePluginRuntimeContractMode.textContent = "unknown";
+    nativePluginRuntimeContractJson.textContent = "Unable to read native plugin runtime adapter contract.";
   }
 }
 
@@ -5071,6 +5135,7 @@ await refreshFormalIntegrationReadiness();
 await refreshNativePluginAdapter();
 await refreshNativePluginPreflight();
 await refreshNativePluginActivationPlan();
+await refreshNativePluginRuntimeAdapterContract();
 await refreshNativePluginInvokePlan();
 await refreshWorkspaceCommandProposals();
 await refreshSourceCommandProposals();
@@ -5127,6 +5192,7 @@ setInterval(refreshFormalIntegrationReadiness, 5000);
 setInterval(refreshNativePluginAdapter, 5000);
 setInterval(refreshNativePluginPreflight, 5000);
 setInterval(refreshNativePluginActivationPlan, 5000);
+setInterval(refreshNativePluginRuntimeAdapterContract, 5000);
 setInterval(refreshNativePluginInvokePlan, 5000);
 setInterval(refreshWorkspaceCommandProposals, 5000);
 setInterval(refreshSourceCommandProposals, 5000);

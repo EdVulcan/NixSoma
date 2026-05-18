@@ -2161,7 +2161,7 @@ Recheck note:
 
 ## 56. 2026-05-18 Step 39 Update: Native Plugin Runtime Activation Regression
 
-Status: local implementation ready; awaiting NixOS targeted milestone.
+Status: passed.
 
 Slice: focused regression for native OpenClaw plugin runtime activation approval and recovery chains.
 
@@ -2184,4 +2184,35 @@ Expected NixOS check:
 cd /home/edvulcan/OpenClaw_On_NixOS && \
 git pull origin main && \
 OPENCLAW_MILESTONE_CHECKS=openclaw-native-plugin-runtime-activation-regression,observer-openclaw-native-plugin-runtime-activation-regression npm run dev:milestone-check:unix
+```
+
+Recheck note:
+- 2026-05-18 16:54 +08:00 NixOS targeted milestone passed: `openclaw-native-plugin-runtime-activation-regression`, `observer-openclaw-native-plugin-runtime-activation-regression`.
+
+## 57. 2026-05-18 Step 40 Update: Native Plugin Runtime Adapter Contract
+
+Status: local implementation ready; awaiting NixOS targeted milestone.
+
+Slice: native runtime adapter contract shell before OpenClaw plugin module loading.
+
+Purpose: move from activation-workflow hardening toward a real native runtime adapter without enabling plugin loading or execution. This contract defines the sandboxed loader boundary that a future adapter must satisfy: it is bound to the existing runtime preflight and activation task chain, keeps module import and plugin execution default-deny, requires explicit approval before implementation, and exposes the boundary in Observer.
+
+Implemented artifacts:
+- Core API: `GET /plugins/native-adapter/runtime-adapter-contract`.
+- Observer panel: `OpenClaw Native Runtime Adapter Contract`.
+- Targeted checks: `openclaw-native-plugin-runtime-adapter-contract`, `observer-openclaw-native-plugin-runtime-adapter-contract`.
+
+Safety boundaries:
+- Contract endpoint creates no task and no approval.
+- Contract endpoint invokes no capabilities and records no plugin execution.
+- Runtime loader implementation remains blocked; runtime activation remains disabled.
+- Source contents, README text, script bodies, dependency versions, package versions, and old OpenClaw module imports remain hidden/blocked.
+- Future loader work must bind back to the activation task, recovery ledger, and capability history before any plugin code can execute.
+
+Expected NixOS check:
+
+```bash
+cd /home/edvulcan/OpenClaw_On_NixOS && \
+git pull origin main && \
+OPENCLAW_MILESTONE_CHECKS=openclaw-native-plugin-runtime-adapter-contract,observer-openclaw-native-plugin-runtime-adapter-contract npm run dev:milestone-check:unix
 ```
