@@ -2313,3 +2313,32 @@ OPENCLAW_MILESTONE_CHECKS=openclaw-native-plugin-runtime-adapter-hardening,obser
 
 Recheck note:
 - 2026-05-18 17:41 +08:00 NixOS targeted milestone passed: `openclaw-native-plugin-runtime-adapter-hardening`, `observer-openclaw-native-plugin-runtime-adapter-hardening`.
+
+## 61. 2026-05-18 Step 44 Update: Native Plugin Runtime Adapter Persistence
+
+Status: local implementation ready; awaiting NixOS targeted milestone.
+
+Slice: restart persistence for native runtime adapter implementation approval and recovery chains.
+
+Purpose: prove native runtime adapter implementation task state survives service restarts without weakening the deferred loader boundary. A pending adapter approval must remain pending after restart; a denied adapter task must remain failed and recoverable; recovery must preserve lineage and create a fresh pending approval; an approved recovered adapter task must remain deferred at `runtime_adapter_implementation_deferred` after the final restart.
+
+Implemented artifacts:
+- Core persistence check for pending, denied, recovered, and approved-deferred native adapter task state.
+- Observer persistence check for the same task, approval, and recovery visibility surfaces.
+- Targeted checks: `openclaw-native-plugin-runtime-adapter-persistence`, `observer-openclaw-native-plugin-runtime-adapter-persistence`.
+
+Safety boundaries:
+- Pending adapter approvals survive restart without becoming approved.
+- Denied adapter approvals cannot be reused after restart.
+- Recovered adapter tasks require fresh explicit approval after restart.
+- Approved recovered adapter tasks remain queued and deferred at `runtime_adapter_implementation_deferred`.
+- Capability history remains empty across the persistence chain.
+- No plugin module import, plugin execution, runtime activation, mutation, command execution, source exposure, script body exposure, or dependency/package version exposure occurs.
+
+Expected NixOS check:
+
+```bash
+cd /home/edvulcan/OpenClaw_On_NixOS && \
+git pull origin main && \
+OPENCLAW_MILESTONE_CHECKS=openclaw-native-plugin-runtime-adapter-persistence,observer-openclaw-native-plugin-runtime-adapter-persistence npm run dev:milestone-check:unix
+```
