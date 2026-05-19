@@ -88,7 +88,7 @@ for (const [label, evidence] of [
 
 console.log(JSON.stringify({
   observerActionEvidence: {
-    taskId,
+    taskId: taskDetail.task?.id ?? execution.task?.id ?? null,
     actionCount: latestEvidence?.actionCount ?? null,
     degradedCount: latestEvidence?.degradedCount ?? null,
     observedUrl: latestEvidence?.observedAfterActions?.url ?? null,

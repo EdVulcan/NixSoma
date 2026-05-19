@@ -81,7 +81,7 @@ if (!evidence.actions.every((action) => action.screenContext?.readiness === "rea
 }
 
 console.log(JSON.stringify({
-  taskId,
+  taskId: execution.task?.id ?? taskDetail.task?.id ?? null,
   actionEvidence: {
     kind: evidence.kind,
     actionCount: evidence.actionCount,
