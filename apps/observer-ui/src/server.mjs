@@ -3450,6 +3450,7 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
     }
     const taskVerification = task.outcome?.details?.verification ?? null;
     const taskWorkViewSummary = task.outcome?.details?.workViewSummary ?? taskVerification?.workViewSummary ?? null;
+    const taskActionEvidence = task.outcome?.details?.actionEvidence ?? taskVerification?.actionEvidence ?? null;
     if (taskVerification) {
       lines.push(\`Verification: \${taskVerification.ok === true ? "passed" : taskVerification.ok === false ? "failed" : "unknown"}\`);
     }
@@ -3457,6 +3458,11 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
       lines.push(\`Verification Work View Summary: \${taskWorkViewSummary.summaryText ?? "none"}\`);
       lines.push(\`Verification Work View URL: \${taskWorkViewSummary.url ?? "none"}\`);
       lines.push(\`Verification Visible Text: \${(taskWorkViewSummary.visibleTextBlocks ?? []).join(" | ") || "none"}\`);
+    }
+    if (taskActionEvidence) {
+      lines.push(\`Action Evidence: \${taskActionEvidence.actionCount ?? 0} action(s), degraded=\${taskActionEvidence.degradedCount ?? 0}\`);
+      lines.push(\`Action Evidence Observed URL: \${taskActionEvidence.observedAfterActions?.url ?? "none"}\`);
+      lines.push(\`Action Evidence Kinds: \${(taskActionEvidence.actions ?? []).map((action) => action.kind).join(" -> ") || "none"}\`);
     }
   }
 

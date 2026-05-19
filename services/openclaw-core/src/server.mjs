@@ -11825,6 +11825,34 @@ function buildCapabilityApprovalGate(task, actionSteps) {
   return null;
 }
 
+function buildActionEvidence(actionResults, workViewSummary) {
+  const actions = actionResults.map((action, index) => ({
+    index,
+    id: action?.id ?? null,
+    kind: action?.kind ?? null,
+    params: action?.params ?? {},
+    degraded: Boolean(action?.degraded),
+    result: action?.result ?? null,
+    executedAt: action?.executedAt ?? null,
+    screenContext: action?.screenContext ?? null,
+  }));
+
+  return {
+    kind: "eye-hand-action-evidence",
+    actionCount: actions.length,
+    degradedCount: actions.filter((action) => action.degraded).length,
+    actions,
+    observedAfterActions: workViewSummary
+      ? {
+          summaryText: workViewSummary.summaryText ?? null,
+          url: workViewSummary.url ?? null,
+          visibleTextBlocks: workViewSummary.visibleTextBlocks ?? [],
+          recentInteraction: workViewSummary.recentInteraction ?? null,
+        }
+      : null,
+  };
+}
+
 function buildExecutionVerification({ targetUrl, options, verifiedScreen, actionResults, workView }) {
   const expectedUrl =
     typeof options.expectedUrl === "string" && options.expectedUrl.trim()
@@ -11837,6 +11865,7 @@ function buildExecutionVerification({ targetUrl, options, verifiedScreen, action
   const activeUrl = workView?.activeUrl ?? verifiedScreen?.screen?.snapshotText?.match(/^URL: (.+)$/m)?.[1] ?? null;
   const readiness = verifiedScreen?.screen?.readiness ?? null;
   const workViewSummary = verifiedScreen?.screen?.workViewSummary ?? null;
+  const actionEvidence = buildActionEvidence(actionResults, workViewSummary);
   const degradedActions = actionResults.filter((action) => action?.degraded);
   const checks = [
     {
@@ -11878,6 +11907,7 @@ function buildExecutionVerification({ targetUrl, options, verifiedScreen, action
     workViewSummary,
     observedTextBlocks: workViewSummary?.visibleTextBlocks ?? [],
     recentInteraction: workViewSummary?.recentInteraction ?? null,
+    actionEvidence,
     checks,
     failedChecks,
   };
@@ -12000,6 +12030,7 @@ async function executeTask(task, options = {}) {
         executor: "core-v2",
         verification,
         workViewSummary: verification.workViewSummary ?? null,
+        actionEvidence: verification.actionEvidence ?? null,
         actionCount: actionResults.length,
       });
       await publishEvent("task.failed", {
@@ -12034,6 +12065,7 @@ async function executeTask(task, options = {}) {
       actionCount: actionResults.length,
       verification,
       workViewSummary: verification.workViewSummary ?? null,
+      actionEvidence: verification.actionEvidence ?? null,
       initialScreen: {
         readiness: initialScreen.screen?.readiness ?? null,
         focusedWindow: initialScreen.screen?.focusedWindow ?? null,
@@ -12044,9 +12076,12 @@ async function executeTask(task, options = {}) {
         workViewSummary: verification.workViewSummary ?? null,
       },
       actions: actionResults.map((action) => ({
+        id: action?.id ?? null,
         kind: action?.kind ?? null,
+        params: action?.params ?? {},
         degraded: Boolean(action?.degraded),
         result: action?.result ?? null,
+        screenContext: action?.screenContext ?? null,
       })),
       workView: {
         status: workView.status ?? null,
@@ -12395,6 +12430,10 @@ function serialiseExecutionResult(executionResult) {
       ?? finalExecution.task?.outcome?.details?.workViewSummary
       ?? null,
     observedTextBlocks: finalExecution.verification?.observedTextBlocks ?? [],
+    actionEvidence:
+      finalExecution.verification?.actionEvidence
+      ?? finalExecution.task?.outcome?.details?.actionEvidence
+      ?? null,
     capabilityInvocations: (finalExecution.capabilityInvocations ?? []).map((response) => ({
       id: response.invocation?.id ?? null,
       capabilityId: response.capability?.id ?? null,
