@@ -68,6 +68,7 @@ const STATUS_PRIORITY = {
   completed: 4,
   superseded: 5,
 };
+const SYSTEMD_REPAIR_EXECUTION_TASK_REGISTRY = "openclaw-systemd-repair-execution-task-v0";
 
 function normaliseAutonomyMode(value) {
   const mode = typeof value === "string" && value.trim() ? value.trim() : "guardian";
@@ -8706,6 +8707,171 @@ async function createOpenClawSourceCommandTask({
   };
 }
 
+function normaliseSystemdRepairUnit(value) {
+  const unit = typeof value === "string" && value.trim()
+    ? value.trim()
+    : "openclaw-browser-runtime.service";
+  return unit.endsWith(".service") ? unit : `${unit}.service`;
+}
+
+async function buildSystemdRepairExecutionTaskDraft({ unit = null } = {}) {
+  const targetUnit = normaliseSystemdRepairUnit(unit);
+  const dryRunEnvelope = await fetchJson(`${systemSenseUrl}/system/systemd/repair-dry-run?unit=${encodeURIComponent(targetUnit)}`);
+  const plan = dryRunEnvelope.plan;
+  const command = dryRunEnvelope.dryRun;
+  const goal = `Operator-reviewed systemd repair execution task for ${targetUnit}`;
+  const policyRequest = {
+    intent: "systemd.repair.execute",
+    domain: "body_internal",
+    risk: "high",
+    requiresApproval: true,
+    audit: true,
+    tags: ["systemd", "repair", "host_mutation_candidate", "operator_reviewed"],
+  };
+  const policyDecision = evaluatePolicyIntent({
+    type: "systemd_repair_execution_task",
+    goal,
+    policy: policyRequest,
+  }, {
+    stage: "systemd_repair_execution_task.draft",
+    type: "systemd_repair_execution_task",
+    goal,
+  });
+
+  return {
+    registry: SYSTEMD_REPAIR_EXECUTION_TASK_REGISTRY,
+    mode: "operator-reviewed-execution-task-draft",
+    generatedAt: new Date().toISOString(),
+    sourceRegistry: dryRunEnvelope.registry,
+    target: dryRunEnvelope.target,
+    repairPlan: plan,
+    dryRunEnvelope,
+    draft: {
+      goal,
+      type: "systemd_repair_execution_task",
+      workViewStrategy: "systemd-repair-execution",
+      plan: {
+        planner: "systemd-repair-execution-task-v0",
+        strategy: "operator-reviewed-systemd-repair-execution-task",
+        summary: `Create an approval-gated task for ${targetUnit}; do not execute until operator approval.`,
+        steps: [
+          {
+            id: "review-evidence",
+            phase: "review_repair_evidence",
+            title: "Review inventory, repair plan, and dry-run envelope",
+            status: "pending",
+            targetUnit,
+            requiresApproval: false,
+          },
+          {
+            id: "operator-approval",
+            phase: "waiting_for_approval",
+            title: "Wait for operator approval before any host mutation",
+            status: "pending",
+            capabilityId: "act.system.heal",
+            requiresApproval: true,
+            risk: "high",
+          },
+          {
+            id: "defer-real-execution",
+            phase: "deferred_execution_shell",
+            title: "Defer real systemd restart to a future execution milestone",
+            status: "pending",
+            command: command?.command ?? "systemctl",
+            args: command?.args ?? ["restart", targetUnit],
+            requiresApproval: true,
+          },
+        ],
+      },
+      policy: {
+        request: policyRequest,
+        decision: policyDecision,
+      },
+      systemdRepair: {
+        registry: SYSTEMD_REPAIR_EXECUTION_TASK_REGISTRY,
+        sourceRegistry: dryRunEnvelope.registry,
+        inventoryRegistry: dryRunEnvelope.source?.inventoryRegistry ?? plan?.source?.inventoryRegistry ?? null,
+        planRegistry: dryRunEnvelope.source?.planRegistry ?? plan?.registry ?? null,
+        target: dryRunEnvelope.target,
+        command: {
+          command: command?.command ?? "systemctl",
+          args: command?.args ?? ["restart", targetUnit],
+          wouldExecute: false,
+        },
+        evidence: {
+          plan,
+          dryRunEnvelope,
+        },
+        execution: {
+          shellOnly: true,
+          executed: false,
+          hostMutation: false,
+          futureExecutionRequiresSeparateMilestone: true,
+        },
+      },
+    },
+    governance: {
+      createsTask: false,
+      createsApproval: false,
+      canExecuteWithoutApproval: false,
+      executed: false,
+      hostMutation: false,
+      requiresExplicitApproval: true,
+      linkedEvidence: ["openclaw-systemd-unit-inventory-v0", "openclaw-systemd-repair-plan-v0", "openclaw-systemd-repair-dry-run-v0"],
+    },
+  };
+}
+
+async function createSystemdRepairExecutionTask({ unit = null, confirm = false } = {}) {
+  if (confirm !== true) {
+    throw new Error("Systemd repair execution task creation requires confirm=true.");
+  }
+
+  const draftEnvelope = await buildSystemdRepairExecutionTaskDraft({ unit });
+  const draft = draftEnvelope.draft;
+  const task = createTask({
+    goal: draft.goal,
+    type: draft.type,
+    workViewStrategy: draft.workViewStrategy,
+    plan: draft.plan,
+    policy: draft.policy.request,
+    systemdRepair: draft.systemdRepair,
+  }, { skipInitialPolicy: true });
+  task.policy = draft.policy;
+  const approval = createApprovalRequestForTask(task, draft.policy.decision);
+  const reclaimedTasks = supersedeOtherActiveTasks(task.id);
+  reconcileRuntimeState();
+  persistState();
+
+  await publishEvent("task.created", { task: serialiseTask(task), planner: draft.plan?.planner ?? "systemd-repair-execution-task-v0" });
+  await publishTaskApprovalIfPending(task);
+  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+    task: serialiseTask(reclaimedTask),
+  })));
+
+  return {
+    registry: SYSTEMD_REPAIR_EXECUTION_TASK_REGISTRY,
+    mode: "operator-reviewed-execution-task",
+    generatedAt: new Date().toISOString(),
+    sourceRegistry: draftEnvelope.sourceRegistry,
+    target: draftEnvelope.target,
+    task,
+    approval,
+    repairPlan: draftEnvelope.repairPlan,
+    dryRunEnvelope: draftEnvelope.dryRunEnvelope,
+    governance: {
+      createsTask: true,
+      createsApproval: true,
+      canExecuteWithoutApproval: false,
+      executed: false,
+      hostMutation: false,
+      requiresExplicitApproval: true,
+      futureExecutionRequiresSeparateMilestone: true,
+    },
+  };
+}
+
 function redactPublicParams(params) {
   if (!params || typeof params !== "object" || Array.isArray(params)) {
     return params ?? {};
@@ -8750,6 +8916,7 @@ function serialiseTask(task) {
     lastAction: task.lastAction ?? null,
     outcome: task.outcome ?? null,
     sourceCommand: task.sourceCommand ?? null,
+    systemdRepair: task.systemdRepair ?? null,
     recovery: task.recovery ?? null,
     recoveredByTaskId: task.recoveredByTaskId ?? null,
     restorable: isRecoverableTask(task),
@@ -10910,6 +11077,10 @@ function createTask(body, options = {}) {
       body.sourceCommand && typeof body.sourceCommand === "object"
         ? clonePlainObject(body.sourceCommand)
         : null,
+    systemdRepair:
+      body.systemdRepair && typeof body.systemdRepair === "object"
+        ? clonePlainObject(body.systemdRepair)
+        : null,
     recovery:
       body.recovery && typeof body.recovery === "object"
         ? {
@@ -11239,6 +11410,55 @@ function isOpenClawSearchWebRuntimeActivationTask(task) {
 function isOpenClawSearchWebProviderRuntimeSandboxTask(task) {
   return task?.type === "openclaw_search_web_provider_runtime_sandbox"
     && task?.plan?.strategy === "openclaw-search-web-provider-runtime-sandbox-v0";
+}
+
+function isSystemdRepairExecutionTask(task) {
+  return task?.type === "systemd_repair_execution_task"
+    && task?.systemdRepair?.registry === SYSTEMD_REPAIR_EXECUTION_TASK_REGISTRY;
+}
+
+async function deferSystemdRepairExecutionTask(task) {
+  const deferredTask = await setTaskPhase(task, "systemd_repair_execution_deferred", {
+    status: "completed",
+    details: {
+      executor: "systemd-repair-execution-task-v0",
+      reason: "operator_reviewed_execution_task_shell_only",
+      target: task.systemdRepair?.target ?? null,
+      command: task.systemdRepair?.command ?? null,
+      hostMutation: false,
+      executed: false,
+    },
+  });
+  deferredTask.outcome = {
+    kind: "systemd_repair_execution_deferred",
+    summary: `Operator-reviewed systemd repair execution task shell for ${task.systemdRepair?.target?.unit ?? "unknown unit"} is ready; no restart executed.`,
+    details: {
+      systemdRepair: task.systemdRepair ?? null,
+      hostMutation: false,
+      executed: false,
+      futureExecutionRequiresSeparateMilestone: true,
+    },
+    at: deferredTask.updatedAt,
+  };
+  deferredTask.closedAt = deferredTask.updatedAt;
+  reconcileRuntimeState();
+  persistState();
+  await publishEvent("systemd.repair.execution_deferred", { task: serialiseTask(deferredTask) });
+
+  return {
+    task: deferredTask,
+    policy: deferredTask.policy?.decision ?? null,
+    approval: deferredTask.approval ?? null,
+    blocked: false,
+    reason: null,
+    execution: {
+      mode: "deferred_execution_shell",
+      target: deferredTask.systemdRepair?.target ?? null,
+      command: deferredTask.systemdRepair?.command ?? null,
+      hostMutation: false,
+      executed: false,
+    },
+  };
 }
 
 async function deferNativePluginCapabilityExecution(task) {
@@ -12683,6 +12903,18 @@ async function executeTaskWithRecovery(task, options = {}) {
 
   if (isOpenClawSearchWebProviderRuntimeSandboxTask(task)) {
     const deferredExecution = await deferOpenClawSearchWebProviderRuntimeSandbox(task);
+    return {
+      finalExecution: deferredExecution,
+      attempts: [deferredExecution],
+      recovery: {
+        attempted: false,
+        maxAttempts: 0,
+      },
+    };
+  }
+
+  if (isSystemdRepairExecutionTask(task)) {
+    const deferredExecution = await deferSystemdRepairExecutionTask(task);
     return {
       finalExecution: deferredExecution,
       attempts: [deferredExecution],
@@ -14191,6 +14423,50 @@ const server = http.createServer(async (req, res) => {
         generatedAt: result.generatedAt,
         sourceRegistry: result.sourceRegistry,
         proposal: result.proposal,
+        task: serialiseTask(result.task),
+        approval: serialiseApproval(result.approval),
+        governance: result.governance,
+        summary: buildTaskSummary(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-execution-task-draft") {
+    try {
+      const result = await buildSystemdRepairExecutionTaskDraft({
+        unit: requestUrl.searchParams.get("unit") ?? requestUrl.searchParams.get("target"),
+      });
+      sendJson(res, 200, {
+        ok: true,
+        ...result,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/system/systemd/repair-execution-tasks") {
+    try {
+      const body = await readJsonBody(req);
+      const result = await createSystemdRepairExecutionTask({
+        unit: typeof body.unit === "string" ? body.unit : null,
+        confirm: body.confirm === true,
+      });
+      sendJson(res, 201, {
+        ok: true,
+        registry: result.registry,
+        mode: result.mode,
+        generatedAt: result.generatedAt,
+        sourceRegistry: result.sourceRegistry,
+        target: result.target,
+        repairPlan: result.repairPlan,
+        dryRunEnvelope: result.dryRunEnvelope,
         task: serialiseTask(result.task),
         approval: serialiseApproval(result.approval),
         governance: result.governance,

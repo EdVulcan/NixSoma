@@ -845,6 +845,17 @@ function observerHtml() {
           <pre id="systemd-repair-plan-json">Loading operator-visible systemd repair plan...</pre>
           <pre id="systemd-repair-dry-run-json">Loading dry-run repair envelope...</pre>
         </section>
+        <section class="panel" id="systemd-repair-execution-task-panel">
+          <h2>Systemd Repair Execution Task</h2>
+          <div class="metric"><span>Registry</span><span id="systemd-repair-execution-task-registry">openclaw-systemd-repair-execution-task-v0</span></div>
+          <div class="metric"><span>Target</span><span id="systemd-repair-execution-task-target">openclaw-browser-runtime.service</span></div>
+          <div class="metric"><span>Approval</span><span id="systemd-repair-execution-task-approval">required</span></div>
+          <div class="metric"><span>Executed</span><span id="systemd-repair-execution-task-executed">false</span></div>
+          <div class="actions tight">
+            <button id="create-systemd-repair-execution-task-button" class="secondary">Create Repair Execution Task</button>
+          </div>
+          <pre id="systemd-repair-execution-task-json">Loading operator-reviewed systemd repair execution task draft...</pre>
+        </section>
         <section class="panel">
           <h2>Heal History</h2>
           <div class="metric"><span>Entries</span><span id="heal-count">0</span></div>
@@ -956,6 +967,11 @@ const systemdRepairPlanMode = document.querySelector("#systemd-repair-plan-mode"
 const systemdRepairDryRunMode = document.querySelector("#systemd-repair-dry-run-mode");
 const systemdRepairPlanJson = document.querySelector("#systemd-repair-plan-json");
 const systemdRepairDryRunJson = document.querySelector("#systemd-repair-dry-run-json");
+const systemdRepairExecutionTaskRegistry = document.querySelector("#systemd-repair-execution-task-registry");
+const systemdRepairExecutionTaskTarget = document.querySelector("#systemd-repair-execution-task-target");
+const systemdRepairExecutionTaskApproval = document.querySelector("#systemd-repair-execution-task-approval");
+const systemdRepairExecutionTaskExecuted = document.querySelector("#systemd-repair-execution-task-executed");
+const systemdRepairExecutionTaskJson = document.querySelector("#systemd-repair-execution-task-json");
 const healCount = document.querySelector("#heal-count");
 const healSummary = document.querySelector("#heal-summary");
 const maintenancePolicyEnabled = document.querySelector("#maintenance-policy-enabled");
@@ -994,6 +1010,7 @@ const resumeButton = document.querySelector("#resume-button");
 const stopButton = document.querySelector("#stop-button");
 const openWorkViewUrlButton = document.querySelector("#open-work-view-url-button");
 const workViewUrlInput = document.querySelector("#work-view-url-input");
+const createSystemdRepairExecutionTaskButton = document.querySelector("#create-systemd-repair-execution-task-button");
 const taskPlanStatus = document.querySelector("#task-plan-status");
 const taskPlanCount = document.querySelector("#task-plan-count");
 const taskPlanPlanner = document.querySelector("#task-plan-planner");
@@ -3970,6 +3987,33 @@ async function refreshSystemdRepairPlan() {
   }
 }
 
+async function refreshSystemdRepairExecutionTaskDraft() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/system/systemd/repair-execution-task-draft?unit=openclaw-browser-runtime.service\`);
+    const draft = data.draft ?? {};
+    const systemdRepair = draft.systemdRepair ?? {};
+    systemdRepairExecutionTaskRegistry.textContent = data.registry ?? "openclaw-systemd-repair-execution-task-v0";
+    systemdRepairExecutionTaskTarget.textContent = data.target?.unit ?? systemdRepair.target?.unit ?? "unknown";
+    systemdRepairExecutionTaskApproval.textContent = draft.policy?.decision?.decision === "require_approval" ? "required" : "unknown";
+    systemdRepairExecutionTaskExecuted.textContent = String(Boolean(systemdRepair.execution?.executed));
+    systemdRepairExecutionTaskJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Mode: \${data.mode ?? "unknown"}\`,
+      \`Target: \${data.target?.unit ?? "unknown"}\`,
+      \`Policy: \${draft.policy?.decision?.decision ?? "unknown"} risk=\${draft.policy?.decision?.risk ?? "unknown"}\`,
+      \`Command: \${systemdRepair.command?.command ?? "systemctl"} \${(systemdRepair.command?.args ?? []).join(" ")}\`,
+      \`Evidence: inventory=\${systemdRepair.inventoryRegistry ?? "unknown"} plan=\${systemdRepair.planRegistry ?? "unknown"} dryRun=\${systemdRepair.sourceRegistry ?? "unknown"}\`,
+      \`Execution: shellOnly=\${Boolean(systemdRepair.execution?.shellOnly)} executed=\${Boolean(systemdRepair.execution?.executed)} hostMutation=\${Boolean(systemdRepair.execution?.hostMutation)}\`,
+    ].join("\\n");
+  } catch {
+    systemdRepairExecutionTaskRegistry.textContent = "offline";
+    systemdRepairExecutionTaskTarget.textContent = "offline";
+    systemdRepairExecutionTaskApproval.textContent = "unknown";
+    systemdRepairExecutionTaskExecuted.textContent = "false";
+    systemdRepairExecutionTaskJson.textContent = "Unable to read OpenClaw systemd repair execution task draft.";
+  }
+}
+
 async function refreshHealState() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemHealUrl}/heal/history\`);
@@ -4765,6 +4809,25 @@ async function runMaintenanceTickFromUi() {
   await refreshAuditState();
 }
 
+async function createSystemdRepairExecutionTask() {
+  const result = await fetchJson(\`\${observerConfig.coreUrl}/system/systemd/repair-execution-tasks\`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      unit: "openclaw-browser-runtime.service",
+      confirm: true,
+    }),
+  });
+  setControlMessage(\`Systemd repair execution task queued: \${result.task?.id ?? "unknown"} approval=\${result.approval?.id ?? "none"}\`);
+  await Promise.all([
+    refreshSystemdRepairExecutionTaskDraft(),
+    refreshTaskList(),
+    refreshApprovalState(),
+    refreshOperatorState(),
+  ]);
+  return result;
+}
+
 async function completeCurrentTask() {
   if (!currentTaskState?.id) {
     throw new Error("No active task to complete.");
@@ -5129,6 +5192,12 @@ runMaintenanceButton.addEventListener("click", () => {
   });
 });
 
+createSystemdRepairExecutionTaskButton.addEventListener("click", () => {
+  createSystemdRepairExecutionTask().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 completeTaskButton.addEventListener("click", () => {
   completeCurrentTask().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);
@@ -5353,6 +5422,7 @@ await refreshWorkspaceCommandPlanDraft();
 await refreshSystemState();
 await refreshSystemdUnitInventory();
 await refreshSystemdRepairPlan();
+await refreshSystemdRepairExecutionTaskDraft();
 await refreshHealState();
 await refreshMaintenanceState();
 await refreshAuditState();
@@ -5413,6 +5483,7 @@ setInterval(refreshWorkspaceCommandPlanDraft, 5000);
 setInterval(refreshSystemState, 5000);
 setInterval(refreshSystemdUnitInventory, 5000);
 setInterval(refreshSystemdRepairPlan, 5000);
+setInterval(refreshSystemdRepairExecutionTaskDraft, 5000);
 setInterval(refreshHealState, 5000);
 setInterval(refreshMaintenanceState, 5000);
 setInterval(refreshAuditState, 5000);`;
