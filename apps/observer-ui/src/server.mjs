@@ -797,6 +797,8 @@ function observerHtml() {
           <div class="metric"><span>Session</span><span id="screen-session">unknown</span></div>
           <div class="metric"><span>Readiness</span><span id="screen-readiness">warming_up</span></div>
           <div class="metric"><span>Capture Source</span><span id="screen-capture-source">unknown</span></div>
+          <div class="metric"><span>Capture Strategy</span><span id="screen-capture-strategy">unknown</span></div>
+          <div class="metric"><span>Work View URL</span><span id="screen-work-view-url">none</span></div>
           <pre id="screen-summary">Loading screen state...</pre>
         </section>
         <section class="panel">
@@ -899,6 +901,8 @@ const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
 const screenCaptureSource = document.querySelector("#screen-capture-source");
+const screenCaptureStrategy = document.querySelector("#screen-capture-strategy");
+const screenWorkViewUrl = document.querySelector("#screen-work-view-url");
 const screenSummary = document.querySelector("#screen-summary");
 const screenSnapshot = document.querySelector("#screen-snapshot");
 const actionKind = document.querySelector("#action-kind");
@@ -3732,6 +3736,8 @@ async function refreshScreen() {
     screenSession.textContent = screen.sessionId ?? "none";
     screenReadiness.textContent = screen.readiness ?? "unknown";
     screenCaptureSource.textContent = screen.captureSource ?? "unknown";
+    screenCaptureStrategy.textContent = screen.captureStrategy ?? "unknown";
+    screenWorkViewUrl.textContent = screen.workView?.activeUrl ?? screen.captureMetadata?.activeUrl ?? "none";
     screenSummary.textContent = screen.summary;
     screenSnapshot.textContent = screen.snapshotText ?? "No snapshot text.";
   } catch {
@@ -3739,6 +3745,8 @@ async function refreshScreen() {
     screenSession.textContent = "unknown";
     screenReadiness.textContent = "degraded";
     screenCaptureSource.textContent = "unavailable";
+    screenCaptureStrategy.textContent = "unavailable";
+    screenWorkViewUrl.textContent = "none";
     screenSummary.textContent = "Unable to read screen state.";
     screenSnapshot.textContent = "No screen preview available.";
   }

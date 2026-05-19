@@ -32,6 +32,9 @@ const screenState = {
   sessionId: null,
   readiness: "warming_up",
   captureSource: "browser",
+  captureStrategy: "browser-state-derived",
+  captureMetadata: null,
+  workView: null,
 };
 
 function corsHeaders(extraHeaders = {}) {
@@ -107,6 +110,40 @@ function deriveScreenPatch({ session, browser, browserCapture, degraded }) {
   const activeTitle = browserWindowReady ? browserFocusedTitle : "OpenClaw AI Work View";
   const activeUrl = browser?.running && tabs.length > 0 ? browser?.activeUrl ?? tabs.at(-1)?.url ?? "about:blank" : "about:blank";
   const readiness = computeReadiness({ session, browser, browserCapture, degraded });
+  const captureStrategy =
+    browserCapture?.captureStrategy ??
+    browserCapture?.workView?.captureStrategy ??
+    (browserCapture ? "browser-runtime-backed" : "browser-state-derived");
+  const captureSource = browserCapture?.source ?? "browser";
+  const workView =
+    browserCapture?.workView ??
+    (browser?.running
+      ? {
+          owner: "openclaw-screen-sense",
+          mode: "ai-owned-work-view",
+          visibility: browserWindowReady ? "observable" : "warming_up",
+          captureStrategy,
+          sessionId: session?.sessionId ?? browser?.sessionId ?? null,
+          activeTitle,
+          activeUrl,
+          tabCount: tabs.length,
+          updatedAt: browser?.updatedAt ?? null,
+        }
+      : null);
+  const captureMetadata = {
+    source: captureSource,
+    strategy: captureStrategy,
+    capturedAt: browserCapture?.capturedAt ?? null,
+    activeTitle: browserCapture?.activeTitle ?? activeTitle,
+    activeUrl: browserCapture?.activeUrl ?? activeUrl,
+    tabCount: typeof browserCapture?.tabCount === "number" ? browserCapture.tabCount : tabs.length,
+    sessionId: browserCapture?.sessionId ?? session?.sessionId ?? browser?.sessionId ?? null,
+    browserRunning: Boolean(browserCapture?.browserRunning ?? browser?.running),
+    lastInteraction: browserCapture?.lastInteraction ?? {
+      input: browser?.lastInput ?? null,
+      click: browser?.lastClick ?? null,
+    },
+  };
   const snapshotText =
     browserCapture?.snapshotText ??
     [
@@ -146,7 +183,10 @@ function deriveScreenPatch({ session, browser, browserCapture, degraded }) {
   return {
     sessionId: session?.sessionId ?? null,
     readiness,
-    captureSource: browserCapture?.source ?? "browser",
+    captureSource,
+    captureStrategy,
+    captureMetadata,
+    workView,
     snapshotPath: browserCapture?.snapshotPath ?? screenState.snapshotPath,
     snapshotText,
     focusedWindow:
