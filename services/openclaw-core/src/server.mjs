@@ -11836,6 +11836,7 @@ function buildExecutionVerification({ targetUrl, options, verifiedScreen, action
       : "ready";
   const activeUrl = workView?.activeUrl ?? verifiedScreen?.screen?.snapshotText?.match(/^URL: (.+)$/m)?.[1] ?? null;
   const readiness = verifiedScreen?.screen?.readiness ?? null;
+  const workViewSummary = verifiedScreen?.screen?.workViewSummary ?? null;
   const degradedActions = actionResults.filter((action) => action?.degraded);
   const checks = [
     {
@@ -11874,6 +11875,9 @@ function buildExecutionVerification({ targetUrl, options, verifiedScreen, action
     expectedReadiness,
     activeUrl,
     readiness,
+    workViewSummary,
+    observedTextBlocks: workViewSummary?.visibleTextBlocks ?? [],
+    recentInteraction: workViewSummary?.recentInteraction ?? null,
     checks,
     failedChecks,
   };
@@ -11995,6 +11999,7 @@ async function executeTask(task, options = {}) {
         targetUrl,
         executor: "core-v2",
         verification,
+        workViewSummary: verification.workViewSummary ?? null,
         actionCount: actionResults.length,
       });
       await publishEvent("task.failed", {
@@ -12028,6 +12033,7 @@ async function executeTask(task, options = {}) {
       executor: "core-v2",
       actionCount: actionResults.length,
       verification,
+      workViewSummary: verification.workViewSummary ?? null,
       initialScreen: {
         readiness: initialScreen.screen?.readiness ?? null,
         focusedWindow: initialScreen.screen?.focusedWindow ?? null,
@@ -12035,6 +12041,7 @@ async function executeTask(task, options = {}) {
       verifiedScreen: {
         readiness: verifiedScreen.screen?.readiness ?? null,
         focusedWindow: verifiedScreen.screen?.focusedWindow ?? null,
+        workViewSummary: verification.workViewSummary ?? null,
       },
       actions: actionResults.map((action) => ({
         kind: action?.kind ?? null,
@@ -12383,6 +12390,11 @@ function serialiseExecutionResult(executionResult) {
     })),
     policy: finalExecution.policy ?? finalExecution.task?.policy?.decision ?? null,
     verification: finalExecution.verification ?? null,
+    workViewSummary:
+      finalExecution.verification?.workViewSummary
+      ?? finalExecution.task?.outcome?.details?.workViewSummary
+      ?? null,
+    observedTextBlocks: finalExecution.verification?.observedTextBlocks ?? [],
     capabilityInvocations: (finalExecution.capabilityInvocations ?? []).map((response) => ({
       id: response.invocation?.id ?? null,
       capabilityId: response.capability?.id ?? null,
@@ -12400,6 +12412,7 @@ function serialiseExecutionResult(executionResult) {
       status: attempt.task?.status ?? null,
       phase: attempt.task?.executionPhase ?? null,
       verification: attempt.verification?.ok ?? null,
+      workViewSummaryUrl: attempt.verification?.workViewSummary?.url ?? null,
       failedChecks: attempt.verification?.failedChecks?.map((check) => check.name) ?? [],
     })),
   };

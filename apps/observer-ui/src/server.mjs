@@ -3448,6 +3448,16 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
     if (task.outcome?.reason) {
       lines.push(\`Failure Reason: \${task.outcome.reason}\`);
     }
+    const taskVerification = task.outcome?.details?.verification ?? null;
+    const taskWorkViewSummary = task.outcome?.details?.workViewSummary ?? taskVerification?.workViewSummary ?? null;
+    if (taskVerification) {
+      lines.push(\`Verification: \${taskVerification.ok === true ? "passed" : taskVerification.ok === false ? "failed" : "unknown"}\`);
+    }
+    if (taskWorkViewSummary) {
+      lines.push(\`Verification Work View Summary: \${taskWorkViewSummary.summaryText ?? "none"}\`);
+      lines.push(\`Verification Work View URL: \${taskWorkViewSummary.url ?? "none"}\`);
+      lines.push(\`Verification Visible Text: \${(taskWorkViewSummary.visibleTextBlocks ?? []).join(" | ") || "none"}\`);
+    }
   }
 
   if (includeRecovery) {
