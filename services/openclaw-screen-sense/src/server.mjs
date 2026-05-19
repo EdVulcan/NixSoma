@@ -35,6 +35,7 @@ const screenState = {
   captureStrategy: "browser-state-derived",
   captureMetadata: null,
   workView: null,
+  workViewSummary: null,
 };
 
 function corsHeaders(extraHeaders = {}) {
@@ -144,10 +145,36 @@ function deriveScreenPatch({ session, browser, browserCapture, degraded }) {
       click: browser?.lastClick ?? null,
     },
   };
+  const visibleTextBlocks =
+    browserCapture?.workViewSummary?.visibleTextBlocks ??
+    browserCapture?.visibleTextBlocks ??
+    (browser?.running
+      ? [
+          "AI-owned work view",
+          activeTitle,
+          activeUrl,
+          `Tabs ${tabs.length}`,
+          ...(browser?.lastInput ? [browser.lastInput, `Last input: ${browser.lastInput}`] : []),
+        ]
+      : ["OpenClaw AI Work View", readiness === "warming_up" ? "Warming up" : "No active work view"]);
+  const workViewSummary = browserCapture?.workViewSummary ?? {
+    kind: "screen-sense-work-view-summary",
+    title: activeTitle,
+    url: activeUrl,
+    tabCount: tabs.length,
+    visibleTextBlocks,
+    recentInteraction: captureMetadata.lastInteraction,
+    summaryText:
+      readiness === "ready"
+        ? `AI work view is focused on ${activeTitle} at ${activeUrl} with ${tabs.length} tab(s).`
+        : `AI work view is ${readiness}.`,
+    updatedAt: browser?.updatedAt ?? null,
+  };
   const snapshotText =
     browserCapture?.snapshotText ??
     [
       "OpenClaw screen frame",
+      `Summary: ${workViewSummary.summaryText}`,
       `Session: ${session?.sessionId ?? "none"}`,
       `Display: ${session?.displayTarget ?? "unknown"}`,
       `Active Title: ${activeTitle}`,
@@ -187,6 +214,7 @@ function deriveScreenPatch({ session, browser, browserCapture, degraded }) {
     captureStrategy,
     captureMetadata,
     workView,
+    workViewSummary,
     snapshotPath: browserCapture?.snapshotPath ?? screenState.snapshotPath,
     snapshotText,
     focusedWindow:

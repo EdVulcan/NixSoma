@@ -163,6 +163,26 @@ function buildBrowserCapture() {
     input: browserState.lastInput,
     click: browserState.lastClick ? { ...browserState.lastClick } : null,
   };
+  const visibleTextBlocks = [
+    "AI-owned work view",
+    activeTitle,
+    activeUrl,
+    `Tabs ${tabs.length}`,
+    ...(browserState.lastInput ? [browserState.lastInput, `Last input: ${browserState.lastInput}`] : []),
+    ...(browserState.lastClick
+      ? [`Last click: ${browserState.lastClick.x ?? "?"},${browserState.lastClick.y ?? "?"}`]
+      : []),
+  ];
+  const workViewSummary = {
+    kind: "browser-work-view-summary",
+    title: activeTitle,
+    url: activeUrl,
+    tabCount: tabs.length,
+    visibleTextBlocks,
+    recentInteraction: lastInteraction,
+    summaryText: `AI work view is focused on ${activeTitle} at ${activeUrl} with ${tabs.length} tab(s).`,
+    updatedAt: browserState.updatedAt,
+  };
   const workView = {
     owner: "openclaw-browser-runtime",
     mode: "ai-owned-work-view",
@@ -173,12 +193,14 @@ function buildBrowserCapture() {
     activeUrl,
     tabCount: tabs.length,
     lastInteraction,
+    summary: workViewSummary,
     updatedAt: browserState.updatedAt,
   };
   const lines = [
     "OpenClaw browser work view",
     "Source: browser-runtime",
     "Capture Strategy: browser-runtime-backed",
+    `Summary: ${workViewSummary.summaryText}`,
     `Session: ${browserState.sessionId ?? "none"}`,
     `Title: ${activeTitle}`,
     `URL: ${activeUrl}`,
@@ -205,6 +227,8 @@ function buildBrowserCapture() {
     browserRunning: browserState.running,
     lastInteraction,
     workView,
+    workViewSummary,
+    visibleTextBlocks,
     snapshotText: lines.join("\n"),
     ocrBlocks: [
       { text: "AI-owned work view", confidence: 0.99 },

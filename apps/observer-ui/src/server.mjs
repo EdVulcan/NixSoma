@@ -799,6 +799,7 @@ function observerHtml() {
           <div class="metric"><span>Capture Source</span><span id="screen-capture-source">unknown</span></div>
           <div class="metric"><span>Capture Strategy</span><span id="screen-capture-strategy">unknown</span></div>
           <div class="metric"><span>Work View URL</span><span id="screen-work-view-url">none</span></div>
+          <pre id="screen-work-view-summary">No work view summary yet.</pre>
           <pre id="screen-summary">Loading screen state...</pre>
         </section>
         <section class="panel">
@@ -903,6 +904,7 @@ const screenReadiness = document.querySelector("#screen-readiness");
 const screenCaptureSource = document.querySelector("#screen-capture-source");
 const screenCaptureStrategy = document.querySelector("#screen-capture-strategy");
 const screenWorkViewUrl = document.querySelector("#screen-work-view-url");
+const screenWorkViewSummary = document.querySelector("#screen-work-view-summary");
 const screenSummary = document.querySelector("#screen-summary");
 const screenSnapshot = document.querySelector("#screen-snapshot");
 const actionKind = document.querySelector("#action-kind");
@@ -3738,6 +3740,16 @@ async function refreshScreen() {
     screenCaptureSource.textContent = screen.captureSource ?? "unknown";
     screenCaptureStrategy.textContent = screen.captureStrategy ?? "unknown";
     screenWorkViewUrl.textContent = screen.workView?.activeUrl ?? screen.captureMetadata?.activeUrl ?? "none";
+    const workViewSummary = screen.workViewSummary ?? screen.workView?.summary ?? null;
+    screenWorkViewSummary.textContent = workViewSummary
+      ? [
+          "Summary: " + (workViewSummary.summaryText ?? "none"),
+          "Title: " + (workViewSummary.title ?? "none"),
+          "URL: " + (workViewSummary.url ?? "none"),
+          "Visible Text: " + ((workViewSummary.visibleTextBlocks ?? []).join(" | ") || "none"),
+          "Recent Input: " + (workViewSummary.recentInteraction?.input ?? "none"),
+        ].join("\\n")
+      : "No work view summary yet.";
     screenSummary.textContent = screen.summary;
     screenSnapshot.textContent = screen.snapshotText ?? "No snapshot text.";
   } catch {
@@ -3747,6 +3759,7 @@ async function refreshScreen() {
     screenCaptureSource.textContent = "unavailable";
     screenCaptureStrategy.textContent = "unavailable";
     screenWorkViewUrl.textContent = "none";
+    screenWorkViewSummary.textContent = "No work view summary available.";
     screenSummary.textContent = "Unable to read screen state.";
     screenSnapshot.textContent = "No screen preview available.";
   }
