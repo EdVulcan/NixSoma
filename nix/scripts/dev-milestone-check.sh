@@ -23,6 +23,7 @@ checks=(
   "openclaw-mvp-status|dev-openclaw-mvp-status-check.sh|First-stage MVP status, demo path, and next-phase boundary"
   "openclaw-mvp-demo-guide|dev-openclaw-mvp-demo-guide-check.sh|First-stage MVP human demo guide and evidence checklist"
   "openclaw-mvp-release-exit|dev-openclaw-mvp-release-exit-check.sh|First-stage MVP release exit gate"
+  "openclaw-phase-2-plan|dev-openclaw-phase-2-plan-check.sh|Whitepaper-aligned Phase 2 route selection"
   "task-workbench|dev-task-workbench-check.sh|Task lifecycle, recovery, history, and work view coordination"
   "task-executor|dev-task-executor-check.sh|Executor verification, failed checks, manual and auto recovery"
   "persistence|dev-persistence-check.sh|Core task state persistence and recovery chains"
