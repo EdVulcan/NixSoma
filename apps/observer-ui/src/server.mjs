@@ -3512,6 +3512,7 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
     const taskWorkViewSummary = task.outcome?.details?.workViewSummary ?? taskVerification?.workViewSummary ?? null;
     const taskActionEvidence = task.outcome?.details?.actionEvidence ?? taskVerification?.actionEvidence ?? null;
     const taskRecoveryEvidence = task.outcome?.details?.recoveryEvidence ?? task.recovery?.recoveryEvidence ?? null;
+    const taskPostExecutionVerification = task.outcome?.details?.postExecutionVerification ?? null;
     if (taskVerification) {
       lines.push(\`Verification: \${taskVerification.ok === true ? "passed" : taskVerification.ok === false ? "failed" : "unknown"}\`);
     }
@@ -3529,6 +3530,12 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
       lines.push(\`Recovery Evidence: \${taskRecoveryEvidence.reason ?? "none"}\`);
       lines.push(\`Recovery Evidence Observed URL: \${taskRecoveryEvidence.observedUrl ?? "none"}\`);
       lines.push(\`Recovery Recommendation: \${taskRecoveryEvidence.recommendation?.strategy ?? "none"} -> \${taskRecoveryEvidence.recommendation?.targetUrl ?? "none"}\`);
+    }
+    if (taskPostExecutionVerification) {
+      const summary = taskPostExecutionVerification.summary ?? {};
+      lines.push(\`Post Execution Verification: \${taskPostExecutionVerification.registry ?? "unknown"} / \${taskPostExecutionVerification.mode ?? "unknown"}\`);
+      lines.push(\`Post Verification Unit: \${taskPostExecutionVerification.targetUnit ?? "unknown"} before=\${summary.beforeActiveState ?? "unknown"} after=\${summary.afterActiveState ?? "unknown"}\`);
+      lines.push(\`Post Verification Health: beforeServiceOk=\${summary.beforeServiceOk ?? "unknown"} afterServiceOk=\${summary.afterServiceOk ?? "unknown"} noAutomaticRecovery=\${Boolean(summary.noAutomaticRecovery)}\`);
     }
   }
 

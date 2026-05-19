@@ -11544,6 +11544,108 @@ async function runSystemdRepairCommand(task) {
   }
 }
 
+function findSystemdVerificationUnit(inventory, targetUnit) {
+  return (inventory?.units ?? []).find((unit) => unit.unit === targetUnit) ?? null;
+}
+
+async function captureSystemdRepairVerificationSnapshot(targetUnit, stage) {
+  const checkedAt = new Date().toISOString();
+  const snapshot = {
+    stage,
+    checkedAt,
+    targetUnit,
+    unitInventory: null,
+    targetUnitState: null,
+    systemHealth: null,
+    targetServiceHealth: null,
+    errors: [],
+  };
+
+  try {
+    const inventory = await fetchJson(`${systemSenseUrl}/system/systemd/units`);
+    const unit = findSystemdVerificationUnit(inventory, targetUnit);
+    snapshot.unitInventory = {
+      registry: inventory.registry ?? null,
+      observedAt: inventory.observedAt ?? null,
+      systemdAvailable: inventory.source?.systemdAvailable ?? null,
+      summary: inventory.summary ?? null,
+    };
+    snapshot.targetUnitState = unit
+      ? {
+          unit: unit.unit,
+          activeState: unit.activeState ?? null,
+          subState: unit.subState ?? null,
+          loadState: unit.loadState ?? null,
+          unitFileState: unit.unitFileState ?? null,
+          systemdObserved: unit.systemdObserved === true,
+          observation: unit.observation ?? null,
+        }
+      : null;
+    if (!unit) {
+      snapshot.errors.push("target_unit_not_found_in_inventory");
+    }
+  } catch (error) {
+    snapshot.errors.push(`unit_inventory_unavailable:${error instanceof Error ? error.message : "unknown"}`);
+  }
+
+  try {
+    const health = await fetchJson(`${systemSenseUrl}/system/health`);
+    const browserRuntime = health.system?.services?.browserRuntime ?? null;
+    snapshot.systemHealth = {
+      timestamp: health.system?.timestamp ?? null,
+      alertCount: Array.isArray(health.system?.alerts) ? health.system.alerts.length : 0,
+      online: health.system?.network?.online ?? null,
+      checkedTargets: health.system?.network?.checkedTargets ?? null,
+    };
+    snapshot.targetServiceHealth = browserRuntime
+      ? {
+          name: browserRuntime.name ?? "browserRuntime",
+          ok: browserRuntime.ok === true,
+          status: browserRuntime.status ?? null,
+          url: browserRuntime.url ?? null,
+          latencyMs: browserRuntime.latencyMs ?? null,
+          checkedAt: browserRuntime.checkedAt ?? null,
+        }
+      : null;
+    if (!browserRuntime) {
+      snapshot.errors.push("browser_runtime_health_not_found");
+    }
+  } catch (error) {
+    snapshot.errors.push(`system_health_unavailable:${error instanceof Error ? error.message : "unknown"}`);
+  }
+
+  return snapshot;
+}
+
+function buildSystemdRepairPostExecutionVerification(targetUnit, before, after, result) {
+  return {
+    registry: "openclaw-systemd-repair-post-verification-v0",
+    mode: "single_observation_no_recovery",
+    targetUnit,
+    checkedAt: new Date().toISOString(),
+    commandExitCode: result.exitCode,
+    commandSucceeded: result.ok === true,
+    before,
+    after,
+    summary: {
+      unitObservedBefore: before.targetUnitState?.systemdObserved === true,
+      unitObservedAfter: after.targetUnitState?.systemdObserved === true,
+      beforeActiveState: before.targetUnitState?.activeState ?? null,
+      afterActiveState: after.targetUnitState?.activeState ?? null,
+      beforeServiceOk: before.targetServiceHealth?.ok ?? null,
+      afterServiceOk: after.targetServiceHealth?.ok ?? null,
+      errorCount: before.errors.length + after.errors.length,
+      noAutomaticRecovery: true,
+    },
+    governance: {
+      recordsEvidenceOnly: true,
+      triggersRecovery: false,
+      retriesExecution: false,
+      schedulesFollowUp: false,
+    },
+  };
+}
+
 async function executeSystemdRepairExecutionTask(task) {
   const targetUnit = task.systemdRepair?.target?.unit ?? null;
   if (targetUnit !== SYSTEMD_REPAIR_REAL_EXECUTION_UNIT) {
@@ -11556,6 +11658,7 @@ async function executeSystemdRepairExecutionTask(task) {
     throw new Error(`Unexpected systemd repair command: ${JSON.stringify(command)}`);
   }
 
+  const beforeVerification = await captureSystemdRepairVerificationSnapshot(targetUnit, "before_real_execution");
   const runningTask = await setTaskPhase(task, "systemd_repair_execution_running", {
     status: "running",
     details: {
@@ -11568,6 +11671,13 @@ async function executeSystemdRepairExecutionTask(task) {
   });
   const result = await runSystemdRepairCommand(runningTask);
   const commandTranscript = [buildSystemdRepairCommandTranscript(runningTask, result)];
+  const afterVerification = await captureSystemdRepairVerificationSnapshot(targetUnit, "after_real_execution");
+  const postExecutionVerification = buildSystemdRepairPostExecutionVerification(
+    targetUnit,
+    beforeVerification,
+    afterVerification,
+    result,
+  );
   const rollbackNote =
     runningTask.systemdRepair?.evidence?.plan?.proposal?.rollbackNote
     ?? runningTask.systemdRepair?.evidence?.dryRunEnvelope?.plan?.proposal?.rollbackNote
@@ -11585,6 +11695,7 @@ async function executeSystemdRepairExecutionTask(task) {
       executed: true,
       commandTranscript,
       result,
+      postExecutionVerification,
     },
   });
   updatedTask.systemdRepair = {
@@ -11617,6 +11728,7 @@ async function executeSystemdRepairExecutionTask(task) {
       executionSucceeded: result.ok,
       commandTranscript,
       result,
+      postExecutionVerification,
       rollbackNote,
     },
     at: updatedTask.updatedAt,
@@ -11646,6 +11758,7 @@ async function executeSystemdRepairExecutionTask(task) {
       executed: true,
       executionSucceeded: result.ok,
       exitCode: result.exitCode,
+      postExecutionVerification,
       rollbackNote: updatedTask.outcome.details.rollbackNote,
     },
   };

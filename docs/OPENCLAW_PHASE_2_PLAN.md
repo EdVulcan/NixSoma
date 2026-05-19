@@ -150,6 +150,18 @@ This checkpoint is allowed because it is the narrow Track A transition from simu
 - Exposes Observer-visible real execution intent and result fields.
 - Must not add persistence hardening, denial recovery, duplicate-click handling, schedulers, plugin/runtime adapter work, or any automatic repair loop.
 
+Post-execution verification checkpoint:
+
+After real execution passes, `openclaw-systemd-repair-post-verification` may record one before/after body-state verification bundle for `openclaw-browser-runtime.service`.
+
+This checkpoint is allowed because it closes the first Track A repair loop with evidence rather than adding another safety boundary:
+
+- Reads systemd unit inventory before and after the approved execution attempt.
+- Reads `/system/health` before and after the approved execution attempt.
+- Records target unit state, service health, command exit code, and verification summary in task evidence.
+- Exposes Observer-visible post-execution verification fields.
+- Must not retry the restart, trigger automatic recovery, add persistence hardening, add denial recovery, add duplicate-click handling, or schedule background repair.
+
 ## Phase 2 Gate
 
 Before implementing any Phase 2 feature, confirm:
