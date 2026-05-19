@@ -10821,6 +10821,10 @@ function createTask(body, options = {}) {
               Number.isInteger(body.recovery.attempt) && body.recovery.attempt > 0
                 ? body.recovery.attempt
                 : 1,
+            recoveryEvidence:
+              body.recovery.recoveryEvidence && typeof body.recovery.recoveryEvidence === "object"
+                ? clonePlainObject(body.recovery.recoveryEvidence)
+                : null,
           }
         : null,
     recoveredByTaskId: null,
@@ -10993,14 +10997,59 @@ function completeTask(task, details = null) {
   return task;
 }
 
+function buildEyeHandRecoveryEvidence(task, reason, details = null) {
+  if (!details || typeof details !== "object") {
+    return null;
+  }
+
+  const verification = details.verification ?? null;
+  const actionEvidence = details.actionEvidence ?? verification?.actionEvidence ?? null;
+  const workViewSummary = details.workViewSummary ?? verification?.workViewSummary ?? null;
+
+  if (!actionEvidence && !workViewSummary) {
+    return null;
+  }
+
+  const failedChecks = (verification?.failedChecks ?? []).map((check) => ({
+    name: check.name ?? null,
+    expected: check.expected ?? null,
+    actual: check.actual ?? null,
+  }));
+  const observedUrl = actionEvidence?.observedAfterActions?.url ?? workViewSummary?.url ?? details.targetUrl ?? task.targetUrl ?? null;
+
+  return {
+    kind: "eye-hand-recovery-evidence",
+    sourceTaskId: task.id,
+    reason,
+    failedChecks,
+    targetUrl: details.targetUrl ?? task.targetUrl ?? null,
+    observedUrl,
+    actionEvidence,
+    workViewSummary,
+    recommendation: {
+      strategy: "retry_with_fresh_observation",
+      targetUrl: observedUrl,
+      rationale: failedChecks.length > 0
+        ? `Recover by re-opening the work view and re-verifying failed check(s): ${failedChecks.map((check) => check.name).join(", ")}.`
+        : "Recover by re-opening the work view and re-checking the latest observation after the recorded action sequence.",
+    },
+  };
+}
+
 function failTask(task, reason, details = null) {
+  const failureDetails = details && typeof details === "object"
+    ? {
+        ...details,
+        recoveryEvidence: details.recoveryEvidence ?? buildEyeHandRecoveryEvidence(task, reason, details),
+      }
+    : details;
   task.status = "failed";
-  appendTaskPhase(task, "failed", { reason, details });
+  appendTaskPhase(task, "failed", { reason, details: failureDetails });
   task.outcome = {
     kind: "failed",
     summary: reason,
     reason,
-    details,
+    details: failureDetails,
     at: task.updatedAt,
   };
   task.closedAt = task.updatedAt;
@@ -12344,6 +12393,7 @@ function recoverTask(sourceTask) {
       recoveredFromTaskId: sourceTask.id,
       recoveredFromOutcome: sourceTask.outcome?.kind ?? sourceTask.status,
       attempt: recoveryAttempt,
+      recoveryEvidence: sourceTask.outcome?.details?.recoveryEvidence ?? null,
     },
   };
 
