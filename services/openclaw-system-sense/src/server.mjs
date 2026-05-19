@@ -32,6 +32,8 @@ const commandTimeoutMs = Number.parseInt(process.env.OPENCLAW_SYSTEM_COMMAND_TIM
 const commandOutputLimit = Number.parseInt(process.env.OPENCLAW_SYSTEM_COMMAND_OUTPUT_LIMIT ?? "8192", 10);
 const execFileAsync = promisify(execFile);
 const SYSTEMD_UNIT_INVENTORY_REGISTRY = "openclaw-systemd-unit-inventory-v0";
+const SYSTEMD_REPAIR_PLAN_REGISTRY = "openclaw-systemd-repair-plan-v0";
+const SYSTEMD_REPAIR_DRY_RUN_REGISTRY = "openclaw-systemd-repair-dry-run-v0";
 
 const serviceTargets = {
   core: process.env.OPENCLAW_CORE_URL ?? "http://127.0.0.1:4100",
@@ -1053,6 +1055,172 @@ async function buildSystemdUnitInventory() {
   };
 }
 
+function normaliseUnitName(value) {
+  const raw = typeof value === "string" && value.trim()
+    ? value.trim()
+    : "openclaw-browser-runtime.service";
+  return raw.endsWith(".service") ? raw : `${raw}.service`;
+}
+
+function findInventoryUnit(inventory, unitName) {
+  const normalised = normaliseUnitName(unitName);
+  return inventory.units.find((unit) => {
+    return unit.unit === normalised
+      || unit.name === normalised.replace(/\.service$/, "")
+      || unit.key === unitName;
+  }) ?? null;
+}
+
+function classifySystemdRepairRisk(unit) {
+  if (unit.name === "openclaw-event-hub" || unit.name === "openclaw-core") {
+    return "high";
+  }
+  return "medium";
+}
+
+function buildSystemdRepairReason(unit, requestedReason) {
+  if (typeof requestedReason === "string" && requestedReason.trim()) {
+    return requestedReason.trim();
+  }
+  if (unit.activeState === "failed" || unit.subState === "failed") {
+    return `${unit.unit} reports failed state and may need an operator-approved restart.`;
+  }
+  if (unit.activeState === "inactive") {
+    return `${unit.unit} reports inactive state and may need an operator-reviewed start/restart decision.`;
+  }
+  return `${unit.unit} is an OpenClaw-owned body unit; this proposal demonstrates the controlled repair path without mutating the host.`;
+}
+
+async function buildSystemdRepairPlan({ unit: requestedUnit, reason } = {}) {
+  const inventory = await buildSystemdUnitInventory();
+  const unit = findInventoryUnit(inventory, requestedUnit);
+  if (!unit) {
+    const error = new Error("Requested unit is not part of the OpenClaw-owned systemd inventory.");
+    error.code = "SYSTEMD_UNIT_NOT_OPENCLAW_OWNED";
+    error.details = {
+      requestedUnit: requestedUnit ?? null,
+      allowedUnits: inventory.units.map((item) => item.unit),
+    };
+    throw error;
+  }
+
+  const risk = classifySystemdRepairRisk(unit);
+  const command = {
+    command: "systemctl",
+    args: ["restart", unit.unit],
+    shell: false,
+    requiresOperator: true,
+  };
+
+  return {
+    ok: true,
+    registry: SYSTEMD_REPAIR_PLAN_REGISTRY,
+    mode: "plan_only",
+    canMutate: false,
+    canRestart: false,
+    wouldExecute: false,
+    createdAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      inventoryRegistry: inventory.registry,
+      inventoryObservedAt: inventory.observedAt,
+      systemdAvailable: inventory.source.systemdAvailable,
+      evidence: "operator_visible_repair_proposal",
+    },
+    target: {
+      key: unit.key,
+      name: unit.name,
+      unit: unit.unit,
+      component: unit.component,
+      activeState: unit.activeState,
+      subState: unit.subState,
+      loadState: unit.loadState,
+      unitFileState: unit.unitFileState,
+      systemdObserved: unit.systemdObserved,
+      observation: unit.observation,
+    },
+    proposal: {
+      action: "restart-service",
+      command,
+      risk,
+      reason: buildSystemdRepairReason(unit, reason),
+      approvalRequiredForExecution: true,
+      dryRunRequiredBeforeExecution: true,
+      rollbackNote: `No automatic rollback is attempted. Before any future execution, capture systemctl status ${unit.unit}; after execution, verify health and journal output, then stop and escalate to the operator if the unit remains unhealthy.`,
+    },
+    governance: {
+      domain: "body_internal",
+      autonomy: "operator_visible_plan_only",
+      hostMutation: false,
+      executesCommand: false,
+      approvalFlowCreated: false,
+      forbiddenUntilFutureMilestone: ["automatic_restart", "blind_restart", "host_mutation"],
+    },
+    next: {
+      recommendedSlice: "openclaw-systemd-repair-dry-run",
+      boundary: "explicit dry-run envelope before any host mutation",
+    },
+  };
+}
+
+async function buildSystemdRepairDryRun({ unit, reason } = {}) {
+  const plan = await buildSystemdRepairPlan({ unit, reason });
+  const dryRun = buildCommandDryRun({
+    command: plan.proposal.command.command,
+    args: plan.proposal.command.args,
+    intent: "systemd.repair.dry_run",
+  });
+
+  return {
+    ok: true,
+    registry: SYSTEMD_REPAIR_DRY_RUN_REGISTRY,
+    mode: "operator_visible_dry_run",
+    canMutate: false,
+    canRestart: false,
+    wouldExecute: false,
+    createdAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      planRegistry: plan.registry,
+      inventoryRegistry: plan.source.inventoryRegistry,
+      evidence: "explicit_operator_visible_dry_run_envelope",
+    },
+    target: plan.target,
+    plan,
+    dryRun: {
+      ...dryRun,
+      risk: "high",
+      governance: "require_future_operator_approval",
+      requiresApproval: true,
+      checks: [
+        ...dryRun.checks,
+        {
+          name: "operator_visible_before_mutation",
+          passed: true,
+          detail: "Repair command is visible to Observer before any future host mutation milestone.",
+        },
+        {
+          name: "no_restart_executed",
+          passed: true,
+          detail: "This endpoint does not execute systemctl restart.",
+        },
+      ],
+    },
+    governance: {
+      domain: "body_internal",
+      autonomy: "dry_run_only",
+      hostMutation: false,
+      executesCommand: false,
+      approvalFlowCreated: false,
+      futureExecutionRequiresSeparateMilestone: true,
+    },
+    next: {
+      recommendedSlice: "operator-reviewed-systemd-repair-execution",
+      boundary: "do not execute until a separate whitepaper route review accepts real host mutation",
+    },
+  };
+}
+
 async function refreshSystemState() {
   const entries = await Promise.all(
     Object.entries(serviceTargets).map(async ([name, url]) => [name, await checkService(name, url)]),
@@ -1153,6 +1321,34 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/systemd/units") {
     const inventory = await buildSystemdUnitInventory();
     sendJson(res, 200, inventory);
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-plan") {
+    try {
+      const plan = await buildSystemdRepairPlan({
+        unit: requestUrl.searchParams.get("unit") ?? requestUrl.searchParams.get("target"),
+        reason: requestUrl.searchParams.get("reason"),
+      });
+      sendJson(res, 200, plan);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message, code: error.code ?? null, details: error.details ?? null });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-dry-run") {
+    try {
+      const envelope = await buildSystemdRepairDryRun({
+        unit: requestUrl.searchParams.get("unit") ?? requestUrl.searchParams.get("target"),
+        reason: requestUrl.searchParams.get("reason"),
+      });
+      sendJson(res, 200, envelope);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message, code: error.code ?? null, details: error.details ?? null });
+    }
     return;
   }
 

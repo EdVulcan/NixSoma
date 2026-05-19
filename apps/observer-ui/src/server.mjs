@@ -836,6 +836,15 @@ function observerHtml() {
           <div class="metric"><span>Mode</span><span id="systemd-unit-mode">read_only</span></div>
           <pre id="systemd-unit-json">Loading read-only OpenClaw systemd unit inventory...</pre>
         </section>
+        <section class="panel" id="systemd-repair-plan-panel">
+          <h2>Systemd Repair Plan</h2>
+          <div class="metric"><span>Target</span><span id="systemd-repair-plan-target">openclaw-browser-runtime.service</span></div>
+          <div class="metric"><span>Risk</span><span id="systemd-repair-plan-risk">loading</span></div>
+          <div class="metric"><span>Mode</span><span id="systemd-repair-plan-mode">plan_only</span></div>
+          <div class="metric"><span>Dry Run</span><span id="systemd-repair-dry-run-mode">loading</span></div>
+          <pre id="systemd-repair-plan-json">Loading operator-visible systemd repair plan...</pre>
+          <pre id="systemd-repair-dry-run-json">Loading dry-run repair envelope...</pre>
+        </section>
         <section class="panel">
           <h2>Heal History</h2>
           <div class="metric"><span>Entries</span><span id="heal-count">0</span></div>
@@ -941,6 +950,12 @@ const systemdUnitActive = document.querySelector("#systemd-unit-active");
 const systemdUnitObserved = document.querySelector("#systemd-unit-observed");
 const systemdUnitMode = document.querySelector("#systemd-unit-mode");
 const systemdUnitJson = document.querySelector("#systemd-unit-json");
+const systemdRepairPlanTarget = document.querySelector("#systemd-repair-plan-target");
+const systemdRepairPlanRisk = document.querySelector("#systemd-repair-plan-risk");
+const systemdRepairPlanMode = document.querySelector("#systemd-repair-plan-mode");
+const systemdRepairDryRunMode = document.querySelector("#systemd-repair-dry-run-mode");
+const systemdRepairPlanJson = document.querySelector("#systemd-repair-plan-json");
+const systemdRepairDryRunJson = document.querySelector("#systemd-repair-dry-run-json");
 const healCount = document.querySelector("#heal-count");
 const healSummary = document.querySelector("#heal-summary");
 const maintenancePolicyEnabled = document.querySelector("#maintenance-policy-enabled");
@@ -3917,6 +3932,44 @@ async function refreshSystemdUnitInventory() {
   }
 }
 
+async function refreshSystemdRepairPlan() {
+  try {
+    const [plan, dryRun] = await Promise.all([
+      fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/repair-plan?unit=openclaw-browser-runtime.service\`),
+      fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/repair-dry-run?unit=openclaw-browser-runtime.service\`),
+    ]);
+    const proposal = plan.proposal ?? {};
+    const target = plan.target ?? {};
+    systemdRepairPlanTarget.textContent = target.unit ?? "unknown";
+    systemdRepairPlanRisk.textContent = proposal.risk ?? "unknown";
+    systemdRepairPlanMode.textContent = plan.mode ?? "plan_only";
+    systemdRepairDryRunMode.textContent = dryRun.mode ?? "operator_visible_dry_run";
+    systemdRepairPlanJson.textContent = [
+      \`Registry: \${plan.registry ?? "unknown"}\`,
+      \`Target: \${target.unit ?? "unknown"} state=\${target.activeState ?? "unknown"}/\${target.subState ?? "unknown"}\`,
+      \`Command: \${proposal.command?.command ?? "systemctl"} \${(proposal.command?.args ?? []).join(" ")}\`,
+      \`Risk: \${proposal.risk ?? "unknown"} approvalForExecution=\${Boolean(proposal.approvalRequiredForExecution)}\`,
+      \`Reason: \${proposal.reason ?? "none"}\`,
+      \`Rollback: \${proposal.rollbackNote ?? "none"}\`,
+    ].join("\\n");
+    systemdRepairDryRunJson.textContent = [
+      \`Registry: \${dryRun.registry ?? "unknown"}\`,
+      \`Mode: \${dryRun.mode ?? "unknown"} wouldExecute=\${Boolean(dryRun.wouldExecute)} canRestart=\${Boolean(dryRun.canRestart)}\`,
+      \`Dry Run: \${dryRun.dryRun?.command ?? "systemctl"} \${(dryRun.dryRun?.args ?? []).join(" ")}\`,
+      \`Governance: \${dryRun.governance?.autonomy ?? "dry_run_only"} mutation=\${Boolean(dryRun.governance?.hostMutation)}\`,
+      \`Checks: \${(dryRun.dryRun?.checks ?? []).map((check) => \`\${check.name}=\${Boolean(check.passed)}\`).join(", ")}\`,
+      \`Next: \${dryRun.next?.recommendedSlice ?? "separate route review required"}\`,
+    ].join("\\n");
+  } catch {
+    systemdRepairPlanTarget.textContent = "offline";
+    systemdRepairPlanRisk.textContent = "unknown";
+    systemdRepairPlanMode.textContent = "offline";
+    systemdRepairDryRunMode.textContent = "offline";
+    systemdRepairPlanJson.textContent = "Unable to read OpenClaw systemd repair plan.";
+    systemdRepairDryRunJson.textContent = "Unable to read OpenClaw systemd repair dry-run envelope.";
+  }
+}
+
 async function refreshHealState() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemHealUrl}/heal/history\`);
@@ -5299,6 +5352,7 @@ await refreshSourceCommandPlanDraft();
 await refreshWorkspaceCommandPlanDraft();
 await refreshSystemState();
 await refreshSystemdUnitInventory();
+await refreshSystemdRepairPlan();
 await refreshHealState();
 await refreshMaintenanceState();
 await refreshAuditState();
@@ -5358,6 +5412,7 @@ setInterval(refreshSourceCommandPlanDraft, 5000);
 setInterval(refreshWorkspaceCommandPlanDraft, 5000);
 setInterval(refreshSystemState, 5000);
 setInterval(refreshSystemdUnitInventory, 5000);
+setInterval(refreshSystemdRepairPlan, 5000);
 setInterval(refreshHealState, 5000);
 setInterval(refreshMaintenanceState, 5000);
 setInterval(refreshAuditState, 5000);`;
