@@ -37,6 +37,7 @@ const HEALTH_TREND_SUMMARY_REGISTRY = "openclaw-health-trend-summary-v0";
 const ROUTE_AWARE_NEXT_ACTION_REGISTRY = "openclaw-route-aware-next-action-v0";
 const CONSERVATIVE_RECOVERY_POLICY_REGISTRY = "openclaw-conservative-recovery-policy-v0";
 const BODY_GOVERNANCE_READINESS_REGISTRY = "openclaw-body-governance-readiness-v0";
+const PHASE_2_ROUTE_REVIEW_REGISTRY = "openclaw-phase-2-route-review-v0";
 const SYSTEMD_REPAIR_PLAN_REGISTRY = "openclaw-systemd-repair-plan-v0";
 const SYSTEMD_REPAIR_DRY_RUN_REGISTRY = "openclaw-systemd-repair-dry-run-v0";
 const MAX_HEALTH_TREND_SNAPSHOTS = 24;
@@ -1284,6 +1285,99 @@ async function buildBodyGovernanceReadiness() {
   };
 }
 
+async function buildPhase2RouteReview() {
+  const bodyGovernance = await buildBodyGovernanceReadiness();
+  const trackCReady = bodyGovernance.summary?.ready === true;
+  const candidates = [
+    {
+      track: "Track B",
+      id: "operator-observer-demo-experience",
+      label: "Operator/Observer demo control room",
+      score: trackCReady ? 95 : 70,
+      recommended: true,
+      reason: "Track A has a real repair demo path and Track C now explains body governance; the next whitepaper-aligned gain is a clearer operator demo surface.",
+      firstSlice: "openclaw-phase-2-demo-control-room",
+      mutation: false,
+    },
+    {
+      track: "Track A",
+      id: "real-systemd-repair-semantics",
+      label: "Broader real repair semantics",
+      score: 75,
+      recommended: false,
+      reason: "The first real repair loop is already demoable; broadening repair actions should wait until the operator demo surface is easier to run and audit.",
+      firstSlice: "defer-broader-repair-mutations",
+      mutation: true,
+    },
+    {
+      track: "Deferred Track",
+      id: "plugin-runtime-adapter",
+      label: "Plugin/runtime adapter work",
+      score: 20,
+      recommended: false,
+      reason: "The whitepaper route keeps plugin/runtime work deferred unless it directly unlocks a visible body capability.",
+      firstSlice: "defer-plugin-runtime-adapter",
+      mutation: false,
+    },
+  ];
+
+  return {
+    ok: true,
+    registry: PHASE_2_ROUTE_REVIEW_REGISTRY,
+    mode: "read_only_route_selection",
+    generatedAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      bodyGovernanceReadinessRegistry: bodyGovernance.registry,
+      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      evidence: "whitepaper_aligned_phase_2_route_review",
+    },
+    governance: {
+      domain: "body_internal",
+      risk: "low",
+      autonomy: "route_selection_only",
+      approvalRequired: false,
+      hostMutation: false,
+      canMutate: false,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+    },
+    decision: {
+      selectedTrack: "Track B: Operator/Observer Demo Experience",
+      selectedSlice: "openclaw-phase-2-demo-control-room",
+      status: trackCReady ? "selected" : "blocked_until_track_c_ready",
+      rationale: "Complete a human-runnable body demo surface before expanding mutation scope or reopening plugin/runtime adapter work.",
+      notSelected: [
+        "no safety-boundary hardening loop",
+        "no denial recovery or duplicate-click work",
+        "no persistence hardening",
+        "no plugin/runtime adapter work",
+        "no broader host mutation",
+      ],
+    },
+    evidence: {
+      trackCReady,
+      trackCChecks: `${bodyGovernance.summary?.passedChecks ?? 0}/${bodyGovernance.summary?.totalChecks ?? 0}`,
+      completedTrack: bodyGovernance.completedTrack,
+      bodyGovernanceNext: bodyGovernance.next?.recommendedSlice ?? null,
+      routePriorityOrder: [
+        "real-systemd-repair-semantics",
+        "operator-observer-demo-experience",
+        "body-governance-enhancement",
+        "plugin-runtime-adapter-deferred",
+      ],
+    },
+    candidates,
+    next: {
+      recommendedSlice: "openclaw-phase-2-demo-control-room",
+      boundary: "build a read-only operator demo control surface from existing Track A and Track C evidence before adding new autonomy",
+    },
+  };
+}
+
 async function checkService(name, baseUrl) {
   const startedAt = Date.now();
   const controller = new AbortController();
@@ -1905,6 +1999,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/route/body-governance-readiness") {
     const readiness = await buildBodyGovernanceReadiness();
     sendJson(res, 200, readiness);
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/route/phase-2-review") {
+    const review = await buildPhase2RouteReview();
+    sendJson(res, 200, review);
     return;
   }
 

@@ -240,6 +240,21 @@ This checkpoint is allowed because it verifies that body governance has enough e
 - Creates no task, no approval, no command execution, no host mutation, no scheduler, and no recovery action.
 - Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, or arbitrary host control.
 
+Phase 2 route review checkpoint:
+
+After Track C body governance readiness passes, `openclaw-phase-2-route-review` may choose the next Phase 2 body-capability block.
+
+Decision:
+
+Select Track B, `openclaw-phase-2-demo-control-room`, as the next block.
+
+This checkpoint is allowed because Phase 2 now has real repair evidence and body governance evidence, so the next whitepaper-aligned gain is a clearer human demo/control surface before adding broader mutation or plugin/runtime capability:
+
+- Reads body governance readiness, Phase 2 priority order, and existing route evidence only.
+- Selects the next track and explains why Track A broadening, plugin/runtime adapter work, persistence hardening, denial recovery, duplicate-click handling, and broader host mutation are not selected.
+- Creates no task, no approval, no command execution, no host mutation, no scheduler, and no recovery action.
+- Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, or arbitrary host control.
+
 ## Phase 2 Gate
 
 Before implementing any Phase 2 feature, confirm:

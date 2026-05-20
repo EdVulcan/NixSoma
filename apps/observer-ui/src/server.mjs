@@ -868,6 +868,14 @@ function observerHtml() {
           <div class="metric"><span>Mutation</span><span id="body-governance-mutation">false</span></div>
           <pre id="body-governance-json">Loading body governance readiness bundle...</pre>
         </section>
+        <section class="panel" id="phase-2-route-review">
+          <h2>Phase 2 Route Review</h2>
+          <div class="metric"><span>Selected Track</span><span id="phase-2-route-selected-track">loading</span></div>
+          <div class="metric"><span>Next Slice</span><span id="phase-2-route-next-slice">loading</span></div>
+          <div class="metric"><span>Creates Task</span><span id="phase-2-route-creates-task">false</span></div>
+          <div class="metric"><span>Mutation</span><span id="phase-2-route-mutation">false</span></div>
+          <pre id="phase-2-route-json">Loading whitepaper-aligned Phase 2 route review...</pre>
+        </section>
         <section class="panel" id="systemd-unit-inventory">
           <h2>Systemd Unit Inventory</h2>
           <div class="metric"><span>Total Units</span><span id="systemd-unit-total">0</span></div>
@@ -1030,6 +1038,11 @@ const bodyGovernanceChecks = document.querySelector("#body-governance-checks");
 const bodyGovernancePosture = document.querySelector("#body-governance-posture");
 const bodyGovernanceMutation = document.querySelector("#body-governance-mutation");
 const bodyGovernanceJson = document.querySelector("#body-governance-json");
+const phase2RouteSelectedTrack = document.querySelector("#phase-2-route-selected-track");
+const phase2RouteNextSlice = document.querySelector("#phase-2-route-next-slice");
+const phase2RouteCreatesTask = document.querySelector("#phase-2-route-creates-task");
+const phase2RouteMutation = document.querySelector("#phase-2-route-mutation");
+const phase2RouteJson = document.querySelector("#phase-2-route-json");
 const systemdUnitTotal = document.querySelector("#systemd-unit-total");
 const systemdUnitActive = document.querySelector("#systemd-unit-active");
 const systemdUnitObserved = document.querySelector("#systemd-unit-observed");
@@ -4155,6 +4168,35 @@ async function refreshBodyGovernanceReadiness() {
   }
 }
 
+async function refreshPhase2RouteReview() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/route/phase-2-review\`);
+    const governance = data.governance ?? {};
+    const decision = data.decision ?? {};
+    const evidence = data.evidence ?? {};
+    phase2RouteSelectedTrack.textContent = decision.selectedTrack ?? "unknown";
+    phase2RouteNextSlice.textContent = decision.selectedSlice ?? data.next?.recommendedSlice ?? "unknown";
+    phase2RouteCreatesTask.textContent = String(Boolean(governance.createsTask));
+    phase2RouteMutation.textContent = String(Boolean(governance.hostMutation));
+    phase2RouteJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Mode: \${data.mode ?? "unknown"} mutation=\${Boolean(governance.hostMutation)} createsTask=\${Boolean(governance.createsTask)} executesCommand=\${Boolean(governance.executesCommand)}\`,
+      \`Decision: \${decision.status ?? "unknown"} track=\${decision.selectedTrack ?? "unknown"} slice=\${decision.selectedSlice ?? "unknown"}\`,
+      \`Rationale: \${decision.rationale ?? "none"}\`,
+      \`Avoid: \${(decision.notSelected ?? []).join(", ") || "none"}\`,
+      \`Evidence: trackCReady=\${Boolean(evidence.trackCReady)} checks=\${evidence.trackCChecks ?? "0/0"} completed=\${evidence.completedTrack?.completionClaim ?? "unknown"}\`,
+      \`Candidates: \${(data.candidates ?? []).map((candidate) => \`\${candidate.track}:\${candidate.firstSlice}:recommended=\${Boolean(candidate.recommended)}\`).join(", ")}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "demo control room"}\`,
+    ].join("\\n");
+  } catch {
+    phase2RouteSelectedTrack.textContent = "offline";
+    phase2RouteNextSlice.textContent = "unknown";
+    phase2RouteCreatesTask.textContent = "false";
+    phase2RouteMutation.textContent = "false";
+    phase2RouteJson.textContent = "Unable to read Phase 2 route review.";
+  }
+}
+
 async function refreshSystemdUnitInventory() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/units\`);
@@ -5721,6 +5763,7 @@ await refreshHealthTrends();
 await refreshRouteAwareNextAction();
 await refreshConservativeRecoveryPolicy();
 await refreshBodyGovernanceReadiness();
+await refreshPhase2RouteReview();
 await refreshSystemdUnitInventory();
 await refreshSystemdDependencyMap();
 await refreshSystemdRepairPlan();
@@ -5788,6 +5831,7 @@ setInterval(refreshHealthTrends, 5000);
 setInterval(refreshRouteAwareNextAction, 5000);
 setInterval(refreshConservativeRecoveryPolicy, 5000);
 setInterval(refreshBodyGovernanceReadiness, 5000);
+setInterval(refreshPhase2RouteReview, 5000);
 setInterval(refreshSystemdUnitInventory, 5000);
 setInterval(refreshSystemdDependencyMap, 5000);
 setInterval(refreshSystemdRepairPlan, 5000);
