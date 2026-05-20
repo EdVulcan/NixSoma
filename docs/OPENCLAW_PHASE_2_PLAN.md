@@ -196,6 +196,17 @@ This checkpoint is allowed because it advances Track C body governance: OpenClaw
 - Creates no task, no approval, no command execution, no host mutation, and no repair action.
 - Must not add automatic restart, background repair, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, or arbitrary systemd control.
 
+Health trend summary checkpoint:
+
+After the dependency map passes, `openclaw-health-trend-summary` may summarize recent `/system/health` snapshots.
+
+This checkpoint is allowed because OpenClaw needs short-term body memory before it can make route-aware recovery recommendations:
+
+- Reads existing system-sense health snapshots only.
+- Exposes sample window, service stability, degraded services, alert count, and resource min/max/latest summaries.
+- Creates no task, no approval, no command execution, no host mutation, no scheduler, and no recovery action.
+- Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, or arbitrary host control.
+
 ## Phase 2 Gate
 
 Before implementing any Phase 2 feature, confirm:

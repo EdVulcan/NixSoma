@@ -836,6 +836,14 @@ function observerHtml() {
           <div class="metric"><span>Body Uptime</span><span id="system-body-uptime">0s</span></div>
           <pre id="system-summary">Loading system state...</pre>
         </section>
+        <section class="panel" id="system-health-trends">
+          <h2>Health Trends</h2>
+          <div class="metric"><span>Samples</span><span id="health-trend-sample-count">0</span></div>
+          <div class="metric"><span>Stable Services</span><span id="health-trend-stable-services">0</span></div>
+          <div class="metric"><span>Degraded</span><span id="health-trend-degraded-services">0</span></div>
+          <div class="metric"><span>Latest Alerts</span><span id="health-trend-alert-count">0</span></div>
+          <pre id="health-trend-json">Loading read-only OpenClaw health trend summary...</pre>
+        </section>
         <section class="panel" id="systemd-unit-inventory">
           <h2>Systemd Unit Inventory</h2>
           <div class="metric"><span>Total Units</span><span id="systemd-unit-total">0</span></div>
@@ -978,6 +986,11 @@ const systemServicesOnline = document.querySelector("#system-services-online");
 const systemAlertCount = document.querySelector("#system-alert-count");
 const systemBodyUptime = document.querySelector("#system-body-uptime");
 const systemSummary = document.querySelector("#system-summary");
+const healthTrendSampleCount = document.querySelector("#health-trend-sample-count");
+const healthTrendStableServices = document.querySelector("#health-trend-stable-services");
+const healthTrendDegradedServices = document.querySelector("#health-trend-degraded-services");
+const healthTrendAlertCount = document.querySelector("#health-trend-alert-count");
+const healthTrendJson = document.querySelector("#health-trend-json");
 const systemdUnitTotal = document.querySelector("#systemd-unit-total");
 const systemdUnitActive = document.querySelector("#systemd-unit-active");
 const systemdUnitObserved = document.querySelector("#systemd-unit-observed");
@@ -3986,6 +3999,34 @@ async function refreshSystemState() {
   }
 }
 
+async function refreshHealthTrends() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/health/trends\`);
+    const summary = data.summary ?? {};
+    const resources = data.resources ?? {};
+    const services = Array.isArray(data.services) ? data.services : [];
+    healthTrendSampleCount.textContent = String(summary.sampleCount ?? 0);
+    healthTrendStableServices.textContent = String(summary.stableServices ?? 0);
+    healthTrendDegradedServices.textContent = String(summary.degradedServices ?? 0);
+    healthTrendAlertCount.textContent = String(summary.latestAlertCount ?? 0);
+    healthTrendJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Mode: \${data.mode ?? "unknown"} mutation=\${Boolean(data.governance?.hostMutation)} recovery=\${Boolean(data.governance?.triggersRecovery)}\`,
+      \`Window: \${summary.windowStart ?? "none"} -> \${summary.windowEnd ?? "none"} samples=\${summary.sampleCount ?? 0}\`,
+      \`Services: online=\${summary.latestOnlineServices ?? 0}/\${summary.latestTotalServices ?? 0} stable=\${summary.stableServices ?? 0} degraded=\${summary.degradedServices ?? 0}\`,
+      \`Resources: cpu=\${resources.cpuPercent?.latest ?? "n/a"}% memory=\${resources.memoryPercent?.latest ?? "n/a"}% disk=\${resources.diskPercent?.latest ?? "n/a"}%\`,
+      \`Service trends: \${services.map((service) => \`\${service.service}:\${service.latestStatus}/offline=\${service.offline}\`).join(", ")}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "route-aware recommendation"}\`,
+    ].join("\\n");
+  } catch {
+    healthTrendSampleCount.textContent = "0";
+    healthTrendStableServices.textContent = "0";
+    healthTrendDegradedServices.textContent = "0";
+    healthTrendAlertCount.textContent = "0";
+    healthTrendJson.textContent = "Unable to read OpenClaw health trend summary.";
+  }
+}
+
 async function refreshSystemdUnitInventory() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/units\`);
@@ -5548,6 +5589,7 @@ await refreshSourceCommandProposals();
 await refreshSourceCommandPlanDraft();
 await refreshWorkspaceCommandPlanDraft();
 await refreshSystemState();
+await refreshHealthTrends();
 await refreshSystemdUnitInventory();
 await refreshSystemdDependencyMap();
 await refreshSystemdRepairPlan();
@@ -5611,6 +5653,7 @@ setInterval(refreshSourceCommandProposals, 5000);
 setInterval(refreshSourceCommandPlanDraft, 5000);
 setInterval(refreshWorkspaceCommandPlanDraft, 5000);
 setInterval(refreshSystemState, 5000);
+setInterval(refreshHealthTrends, 5000);
 setInterval(refreshSystemdUnitInventory, 5000);
 setInterval(refreshSystemdDependencyMap, 5000);
 setInterval(refreshSystemdRepairPlan, 5000);

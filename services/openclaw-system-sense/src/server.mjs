@@ -33,8 +33,10 @@ const commandOutputLimit = Number.parseInt(process.env.OPENCLAW_SYSTEM_COMMAND_O
 const execFileAsync = promisify(execFile);
 const SYSTEMD_UNIT_INVENTORY_REGISTRY = "openclaw-systemd-unit-inventory-v0";
 const SYSTEMD_DEPENDENCY_MAP_REGISTRY = "openclaw-systemd-dependency-map-v0";
+const HEALTH_TREND_SUMMARY_REGISTRY = "openclaw-health-trend-summary-v0";
 const SYSTEMD_REPAIR_PLAN_REGISTRY = "openclaw-systemd-repair-plan-v0";
 const SYSTEMD_REPAIR_DRY_RUN_REGISTRY = "openclaw-systemd-repair-dry-run-v0";
+const MAX_HEALTH_TREND_SNAPSHOTS = 24;
 
 const serviceTargets = {
   core: process.env.OPENCLAW_CORE_URL ?? "http://127.0.0.1:4100",
@@ -139,6 +141,7 @@ const systemState = {
   },
   alerts: [],
 };
+const healthSnapshots = [];
 
 let previousCpuSnapshot = null;
 
@@ -851,6 +854,130 @@ function buildResourceState() {
   };
 }
 
+function recordHealthSnapshot() {
+  const services = Object.values(systemState.services ?? {});
+  healthSnapshots.push({
+    at: systemState.timestamp,
+    onlineServices: services.filter((service) => service.ok).length,
+    totalServices: services.length,
+    alertCount: Array.isArray(systemState.alerts) ? systemState.alerts.length : 0,
+    cpuPercent: systemState.resources?.cpuPercent ?? 0,
+    memoryPercent: systemState.resources?.memoryPercent ?? 0,
+    diskPercent: systemState.resources?.diskPercent ?? 0,
+    networkOnline: systemState.network?.online === true,
+    services: Object.fromEntries(services.map((service) => [
+      service.name,
+      {
+        ok: service.ok === true,
+        status: service.status ?? "unknown",
+        latencyMs: service.latencyMs ?? null,
+      },
+    ])),
+  });
+  if (healthSnapshots.length > MAX_HEALTH_TREND_SNAPSHOTS) {
+    healthSnapshots.splice(0, healthSnapshots.length - MAX_HEALTH_TREND_SNAPSHOTS);
+  }
+}
+
+function numericTrend(values) {
+  const numeric = values.filter((value) => Number.isFinite(value));
+  if (numeric.length === 0) {
+    return { latest: null, min: null, max: null, average: null };
+  }
+  const latest = numeric[numeric.length - 1];
+  const total = numeric.reduce((sum, value) => sum + value, 0);
+  return {
+    latest,
+    min: Math.min(...numeric),
+    max: Math.max(...numeric),
+    average: Math.round((total / numeric.length) * 10) / 10,
+  };
+}
+
+function serviceTrendSummary(serviceName) {
+  const samples = healthSnapshots
+    .map((snapshot) => snapshot.services?.[serviceName])
+    .filter(Boolean);
+  const online = samples.filter((sample) => sample.ok).length;
+  return {
+    service: serviceName,
+    samples: samples.length,
+    online,
+    offline: samples.length - online,
+    latestStatus: samples[samples.length - 1]?.status ?? "unknown",
+    latestOk: samples[samples.length - 1]?.ok ?? null,
+    latencyMs: numericTrend(samples.map((sample) => sample.latencyMs)),
+  };
+}
+
+async function buildHealthTrendSummary() {
+  await refreshSystemState();
+  const serviceNames = Object.keys(systemState.services ?? {}).sort();
+  const latest = healthSnapshots[healthSnapshots.length - 1] ?? null;
+  return {
+    ok: true,
+    registry: HEALTH_TREND_SUMMARY_REGISTRY,
+    mode: "read_only_recent_snapshots",
+    generatedAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      evidence: "recent_system_health_snapshots",
+      snapshotLimit: MAX_HEALTH_TREND_SNAPSHOTS,
+      systemHealthEndpoint: "/system/health",
+    },
+    governance: {
+      domain: "body_internal",
+      risk: "low",
+      autonomy: "observe_only",
+      approvalRequired: false,
+      hostMutation: false,
+      canMutate: false,
+      executesCommand: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+    },
+    summary: {
+      sampleCount: healthSnapshots.length,
+      windowStart: healthSnapshots[0]?.at ?? null,
+      windowEnd: latest?.at ?? null,
+      latestOnlineServices: latest?.onlineServices ?? 0,
+      latestTotalServices: latest?.totalServices ?? 0,
+      latestAlertCount: latest?.alertCount ?? 0,
+      networkOnlineSamples: healthSnapshots.filter((snapshot) => snapshot.networkOnline).length,
+      stableServices: serviceNames.filter((name) => {
+        const trend = serviceTrendSummary(name);
+        return trend.samples > 0 && trend.offline === 0;
+      }).length,
+      degradedServices: serviceNames.filter((name) => {
+        const trend = serviceTrendSummary(name);
+        return trend.offline > 0;
+      }).length,
+    },
+    resources: {
+      cpuPercent: numericTrend(healthSnapshots.map((snapshot) => snapshot.cpuPercent)),
+      memoryPercent: numericTrend(healthSnapshots.map((snapshot) => snapshot.memoryPercent)),
+      diskPercent: numericTrend(healthSnapshots.map((snapshot) => snapshot.diskPercent)),
+      alertCount: numericTrend(healthSnapshots.map((snapshot) => snapshot.alertCount)),
+      onlineServices: numericTrend(healthSnapshots.map((snapshot) => snapshot.onlineServices)),
+    },
+    services: serviceNames.map((name) => serviceTrendSummary(name)),
+    snapshots: healthSnapshots.slice(-6).map((snapshot) => ({
+      at: snapshot.at,
+      onlineServices: snapshot.onlineServices,
+      totalServices: snapshot.totalServices,
+      alertCount: snapshot.alertCount,
+      cpuPercent: snapshot.cpuPercent,
+      memoryPercent: snapshot.memoryPercent,
+      diskPercent: snapshot.diskPercent,
+      networkOnline: snapshot.networkOnline,
+    })),
+    next: {
+      recommendedSlice: "openclaw-route-aware-next-action-recommendation",
+      boundary: "recommend only from observed body evidence before creating any recovery task",
+    },
+  };
+}
+
 async function checkService(name, baseUrl) {
   const startedAt = Date.now();
   const controller = new AbortController();
@@ -1419,6 +1546,7 @@ async function refreshSystemState() {
     checkedTargets: Object.keys(serviceTargets).length,
   };
   systemState.alerts = alerts;
+  recordHealthSnapshot();
 }
 
 const server = http.createServer(async (req, res) => {
@@ -1447,6 +1575,12 @@ const server = http.createServer(async (req, res) => {
       ok: true,
       system: { ...systemState },
     });
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/health/trends") {
+    const trendSummary = await buildHealthTrendSummary();
+    sendJson(res, 200, trendSummary);
     return;
   }
 
