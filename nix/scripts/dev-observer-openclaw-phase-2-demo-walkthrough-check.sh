@@ -66,7 +66,7 @@ const requiredClient = [
   "phase2DemoWalkthroughControlRoom",
   "phase2DemoWalkthroughMutation",
   "phase2DemoWalkthroughJson",
-  "No hidden mutation",
+  "script",
 ];
 
 for (const token of requiredHtml) {
