@@ -34,7 +34,7 @@ for (const token of [
   "if [ \"$#\" -ne 0 ]; then",
   "exec ${pkgs.systemd}/bin/systemctl restart openclaw-browser-runtime.service",
   "OPENCLAW_SYSTEMD_REPAIR_RESTART_HELPER",
-  "OPENCLAW_SYSTEMD_REPAIR_RESTART_HELPER_SUDO",
+  'OPENCLAW_SYSTEMD_REPAIR_RESTART_HELPER_SUDO = "/run/wrappers/bin/sudo"',
   "OPENCLAW_SYSTEMD_REPAIR_AUTH_DELEGATION",
   "security.sudo.extraRules",
   "delegationUser = if cfg.user == null then \"openclaw\" else cfg.user",

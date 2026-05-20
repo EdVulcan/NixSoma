@@ -126,7 +126,7 @@ let
     OPENCLAW_EVENT_LOG_FILE = "${cfg.stateDir}/openclaw-events.jsonl";
   } // optionalAttrs cfg.systemdRepairAuthDelegation.enable {
     OPENCLAW_SYSTEMD_REPAIR_RESTART_HELPER = "${systemdRepairRestartHelper}/bin/openclaw-systemd-repair-restart-browser-runtime";
-    OPENCLAW_SYSTEMD_REPAIR_RESTART_HELPER_SUDO = "${pkgs.sudo}/bin/sudo";
+    OPENCLAW_SYSTEMD_REPAIR_RESTART_HELPER_SUDO = "/run/wrappers/bin/sudo";
     OPENCLAW_SYSTEMD_REPAIR_AUTH_DELEGATION = "sudo-nopasswd-fixed-helper";
   };
 
