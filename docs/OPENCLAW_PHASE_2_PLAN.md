@@ -207,6 +207,17 @@ This checkpoint is allowed because OpenClaw needs short-term body memory before 
 - Creates no task, no approval, no command execution, no host mutation, no scheduler, and no recovery action.
 - Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, or arbitrary host control.
 
+Route-aware next-action recommendation checkpoint:
+
+After health trends pass, `openclaw-route-aware-next-action-recommendation` may combine the dependency map and health trends into a read-only next-action recommendation.
+
+This checkpoint is allowed because it turns body evidence into governance judgment without crossing into execution:
+
+- Reads dependency map and health trend summaries only.
+- Recommends observe/review/recovery-planning direction with evidence references and candidate actions.
+- Creates no task, no approval, no command execution, no host mutation, no scheduler, and no recovery action.
+- Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, or arbitrary host control.
+
 ## Phase 2 Gate
 
 Before implementing any Phase 2 feature, confirm:

@@ -34,6 +34,7 @@ const execFileAsync = promisify(execFile);
 const SYSTEMD_UNIT_INVENTORY_REGISTRY = "openclaw-systemd-unit-inventory-v0";
 const SYSTEMD_DEPENDENCY_MAP_REGISTRY = "openclaw-systemd-dependency-map-v0";
 const HEALTH_TREND_SUMMARY_REGISTRY = "openclaw-health-trend-summary-v0";
+const ROUTE_AWARE_NEXT_ACTION_REGISTRY = "openclaw-route-aware-next-action-v0";
 const SYSTEMD_REPAIR_PLAN_REGISTRY = "openclaw-systemd-repair-plan-v0";
 const SYSTEMD_REPAIR_DRY_RUN_REGISTRY = "openclaw-systemd-repair-dry-run-v0";
 const MAX_HEALTH_TREND_SNAPSHOTS = 24;
@@ -978,6 +979,110 @@ async function buildHealthTrendSummary() {
   };
 }
 
+function chooseRouteAwareRecommendation(trendSummary, dependencyMap) {
+  const degradedServices = (trendSummary.services ?? [])
+    .filter((service) => service.offline > 0 || service.latestOk === false)
+    .map((service) => service.service);
+  const alertCount = trendSummary.summary?.latestAlertCount ?? 0;
+  const highImpactNodes = (dependencyMap.nodes ?? [])
+    .filter((node) => ["foundational", "high"].includes(node.impactClass))
+    .map((node) => node.unit);
+
+  if (degradedServices.length > 0 || alertCount > 0) {
+    return {
+      action: "review-degraded-body-services",
+      priority: "high",
+      reason: "Recent health snapshots show degraded services or active alerts; inspect dependency impact before proposing recovery.",
+      targets: degradedServices,
+      requiresApprovalBeforeMutation: true,
+    };
+  }
+
+  return {
+    action: "continue-observe-body-governance",
+    priority: "normal",
+    reason: "Recent health snapshots are stable; keep observing high-impact body services before recommending recovery.",
+    targets: highImpactNodes,
+    requiresApprovalBeforeMutation: true,
+  };
+}
+
+async function buildRouteAwareNextActionRecommendation() {
+  const [dependencyMap, trendSummary] = await Promise.all([
+    buildSystemdDependencyMap(),
+    buildHealthTrendSummary(),
+  ]);
+  const recommendation = chooseRouteAwareRecommendation(trendSummary, dependencyMap);
+
+  return {
+    ok: true,
+    registry: ROUTE_AWARE_NEXT_ACTION_REGISTRY,
+    mode: "recommendation_only",
+    generatedAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      dependencyMapRegistry: dependencyMap.registry,
+      healthTrendRegistry: trendSummary.registry,
+      evidence: "route_aware_body_governance_recommendation",
+    },
+    governance: {
+      domain: "body_internal",
+      risk: "low",
+      autonomy: "observe_and_recommend_only",
+      approvalRequired: false,
+      hostMutation: false,
+      canMutate: false,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+    },
+    recommendation,
+    evidence: {
+      dependency: {
+        nodes: dependencyMap.summary.nodes,
+        edges: dependencyMap.summary.edges,
+        highImpact: dependencyMap.summary.highImpact,
+        roots: dependencyMap.roots,
+      },
+      health: {
+        samples: trendSummary.summary.sampleCount,
+        latestOnlineServices: trendSummary.summary.latestOnlineServices,
+        latestTotalServices: trendSummary.summary.latestTotalServices,
+        latestAlertCount: trendSummary.summary.latestAlertCount,
+        stableServices: trendSummary.summary.stableServices,
+        degradedServices: trendSummary.summary.degradedServices,
+      },
+    },
+    candidates: [
+      {
+        id: "health-trend-summary",
+        label: "Review recent body health trend",
+        allowedNow: true,
+        mutation: false,
+      },
+      {
+        id: "dependency-impact-review",
+        label: "Review dependency impact before recovery",
+        allowedNow: true,
+        mutation: false,
+      },
+      {
+        id: "operator-reviewed-repair",
+        label: "Create operator-reviewed repair task only if evidence degrades",
+        allowedNow: false,
+        mutation: true,
+        boundary: "requires separate approved task and existing repair execution route",
+      },
+    ],
+    next: {
+      recommendedSlice: "openclaw-conservative-recovery-policy-explanation",
+      boundary: "explain recovery policy before broadening recommendations into task creation",
+    },
+  };
+}
+
 async function checkService(name, baseUrl) {
   const startedAt = Date.now();
   const controller = new AbortController();
@@ -1581,6 +1686,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/health/trends") {
     const trendSummary = await buildHealthTrendSummary();
     sendJson(res, 200, trendSummary);
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/route/next-action") {
+    const recommendation = await buildRouteAwareNextActionRecommendation();
+    sendJson(res, 200, recommendation);
     return;
   }
 

@@ -844,6 +844,14 @@ function observerHtml() {
           <div class="metric"><span>Latest Alerts</span><span id="health-trend-alert-count">0</span></div>
           <pre id="health-trend-json">Loading read-only OpenClaw health trend summary...</pre>
         </section>
+        <section class="panel" id="route-aware-next-action">
+          <h2>Route-Aware Next Action</h2>
+          <div class="metric"><span>Action</span><span id="route-next-action-name">loading</span></div>
+          <div class="metric"><span>Priority</span><span id="route-next-action-priority">unknown</span></div>
+          <div class="metric"><span>Creates Task</span><span id="route-next-action-creates-task">false</span></div>
+          <div class="metric"><span>Mutation</span><span id="route-next-action-mutation">false</span></div>
+          <pre id="route-next-action-json">Loading route-aware body governance recommendation...</pre>
+        </section>
         <section class="panel" id="systemd-unit-inventory">
           <h2>Systemd Unit Inventory</h2>
           <div class="metric"><span>Total Units</span><span id="systemd-unit-total">0</span></div>
@@ -991,6 +999,11 @@ const healthTrendStableServices = document.querySelector("#health-trend-stable-s
 const healthTrendDegradedServices = document.querySelector("#health-trend-degraded-services");
 const healthTrendAlertCount = document.querySelector("#health-trend-alert-count");
 const healthTrendJson = document.querySelector("#health-trend-json");
+const routeNextActionName = document.querySelector("#route-next-action-name");
+const routeNextActionPriority = document.querySelector("#route-next-action-priority");
+const routeNextActionCreatesTask = document.querySelector("#route-next-action-creates-task");
+const routeNextActionMutation = document.querySelector("#route-next-action-mutation");
+const routeNextActionJson = document.querySelector("#route-next-action-json");
 const systemdUnitTotal = document.querySelector("#systemd-unit-total");
 const systemdUnitActive = document.querySelector("#systemd-unit-active");
 const systemdUnitObserved = document.querySelector("#systemd-unit-observed");
@@ -4027,6 +4040,35 @@ async function refreshHealthTrends() {
   }
 }
 
+async function refreshRouteAwareNextAction() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/route/next-action\`);
+    const recommendation = data.recommendation ?? {};
+    const governance = data.governance ?? {};
+    const evidence = data.evidence ?? {};
+    routeNextActionName.textContent = recommendation.action ?? "unknown";
+    routeNextActionPriority.textContent = recommendation.priority ?? "unknown";
+    routeNextActionCreatesTask.textContent = String(Boolean(governance.createsTask));
+    routeNextActionMutation.textContent = String(Boolean(governance.hostMutation));
+    routeNextActionJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Mode: \${data.mode ?? "unknown"} mutation=\${Boolean(governance.hostMutation)} createsTask=\${Boolean(governance.createsTask)} recovery=\${Boolean(governance.triggersRecovery)}\`,
+      \`Recommendation: \${recommendation.action ?? "unknown"} priority=\${recommendation.priority ?? "unknown"}\`,
+      \`Reason: \${recommendation.reason ?? "none"}\`,
+      \`Targets: \${(recommendation.targets ?? []).join(", ") || "none"}\`,
+      \`Evidence: dependencyNodes=\${evidence.dependency?.nodes ?? 0} highImpact=\${evidence.dependency?.highImpact ?? 0} healthSamples=\${evidence.health?.samples ?? 0} degraded=\${evidence.health?.degradedServices ?? 0}\`,
+      \`Candidates: \${(data.candidates ?? []).map((candidate) => \`\${candidate.id}:allowed=\${Boolean(candidate.allowedNow)} mutation=\${Boolean(candidate.mutation)}\`).join(", ")}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "policy explanation"}\`,
+    ].join("\\n");
+  } catch {
+    routeNextActionName.textContent = "offline";
+    routeNextActionPriority.textContent = "unknown";
+    routeNextActionCreatesTask.textContent = "false";
+    routeNextActionMutation.textContent = "false";
+    routeNextActionJson.textContent = "Unable to read route-aware next-action recommendation.";
+  }
+}
+
 async function refreshSystemdUnitInventory() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/units\`);
@@ -5590,6 +5632,7 @@ await refreshSourceCommandPlanDraft();
 await refreshWorkspaceCommandPlanDraft();
 await refreshSystemState();
 await refreshHealthTrends();
+await refreshRouteAwareNextAction();
 await refreshSystemdUnitInventory();
 await refreshSystemdDependencyMap();
 await refreshSystemdRepairPlan();
@@ -5654,6 +5697,7 @@ setInterval(refreshSourceCommandPlanDraft, 5000);
 setInterval(refreshWorkspaceCommandPlanDraft, 5000);
 setInterval(refreshSystemState, 5000);
 setInterval(refreshHealthTrends, 5000);
+setInterval(refreshRouteAwareNextAction, 5000);
 setInterval(refreshSystemdUnitInventory, 5000);
 setInterval(refreshSystemdDependencyMap, 5000);
 setInterval(refreshSystemdRepairPlan, 5000);
