@@ -9883,6 +9883,118 @@ function buildPhase2RepairDemoStatus() {
   };
 }
 
+async function buildPhase2DemoControlRoom() {
+  const mvpRoute = buildMvpRouteAlignment();
+  const repairDemo = buildPhase2RepairDemoStatus();
+  let routeReview = null;
+  try {
+    routeReview = await fetchJson(`${systemSenseUrl}/system/route/phase-2-review`);
+  } catch {
+    routeReview = null;
+  }
+
+  const panels = [
+    {
+      id: "service-health",
+      label: "Body service health",
+      source: "/health plus Observer service health pills",
+      status: "available",
+    },
+    {
+      id: "mvp-route",
+      label: "Whitepaper route alignment",
+      source: "/mvp/route",
+      status: mvpRoute?.ok ? "available" : "unavailable",
+    },
+    {
+      id: "phase-2-repair-demo",
+      label: "Phase 2 repair demo evidence",
+      source: "/phase-2/repair-demo-status",
+      status: repairDemo?.ok ? "available" : "unavailable",
+    },
+    {
+      id: "phase-2-route-review",
+      label: "Phase 2 next-block route review",
+      source: `${systemSenseUrl}/system/route/phase-2-review`,
+      status: routeReview?.ok ? "available" : "unavailable",
+    },
+    {
+      id: "body-governance-readiness",
+      label: "Track C body governance readiness",
+      source: routeReview?.source?.bodyGovernanceReadinessRegistry ?? "openclaw-body-governance-readiness-v0",
+      status: routeReview?.evidence?.trackCReady === true ? "available" : "unavailable",
+    },
+  ];
+  const available = panels.filter((panel) => panel.status === "available").length;
+  const ready = available === panels.length
+    && routeReview?.decision?.selectedSlice === "openclaw-phase-2-demo-control-room";
+
+  return {
+    ok: true,
+    registry: "openclaw-phase-2-demo-control-room-v0",
+    mode: "read_only_demo_control_surface",
+    generatedAt: new Date().toISOString(),
+    status: ready ? "control_room_ready" : "waiting_for_route_review_evidence",
+    source: {
+      service: "openclaw-core",
+      mvpRouteRegistry: mvpRoute?.registry ?? null,
+      repairDemoRegistry: repairDemo?.registry ?? null,
+      routeReviewRegistry: routeReview?.registry ?? null,
+      evidence: "phase_2_demo_control_room_bundle",
+    },
+    governance: {
+      readOnly: true,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      mutatesHost: false,
+      triggersRecovery: false,
+      schedulesWork: false,
+    },
+    summary: {
+      ready,
+      availablePanels: available,
+      totalPanels: panels.length,
+      selectedTrack: routeReview?.decision?.selectedTrack ?? "unknown",
+      selectedSlice: routeReview?.decision?.selectedSlice ?? "unknown",
+      repairDemoStatus: repairDemo?.status ?? "unknown",
+      repairDemoReady: repairDemo?.summary?.demoReady === true,
+      bodyGovernanceReady: routeReview?.evidence?.trackCReady === true,
+      avoidsSafetyBoundaryLoop: routeReview?.decision?.notSelected?.some((item) => item.includes("safety-boundary")) === true,
+    },
+    panels,
+    evidence: {
+      mvpRoute: {
+        current: mvpRoute?.mainline?.current ?? null,
+        nextRecommendedTrunk: mvpRoute?.mainline?.nextRecommendedTrunk ?? null,
+        guardrails: mvpRoute?.guardrails ?? null,
+      },
+      repairDemo: {
+        status: repairDemo?.status ?? null,
+        checklistPassed: repairDemo?.summary?.passed ?? 0,
+        checklistTotal: repairDemo?.summary?.total ?? 0,
+        targetUnit: repairDemo?.summary?.targetUnit ?? "openclaw-browser-runtime.service",
+        nextRecommendedSlice: repairDemo?.route?.nextRecommendedSlice ?? null,
+      },
+      routeReview: routeReview ? {
+        selectedTrack: routeReview.decision?.selectedTrack ?? null,
+        selectedSlice: routeReview.decision?.selectedSlice ?? null,
+        notSelected: routeReview.decision?.notSelected ?? [],
+      } : null,
+    },
+    operatorScript: [
+      "Open Observer UI.",
+      "Confirm service health, MVP route, repair demo status, body governance readiness, and Phase 2 route review panels are visible.",
+      "Explain that the next work is demo/control-room clarity, not broader mutation or plugin/runtime work.",
+      "Only run a real repair through the already-approved operator-reviewed repair path when intentionally demonstrating Track A.",
+    ],
+    next: {
+      recommendedSlice: "openclaw-phase-2-demo-walkthrough",
+      boundary: "turn the control room into a human-readable walkthrough without adding new autonomy or host mutation",
+    },
+  };
+}
+
 function baseCapabilities() {
   return [
     {
@@ -13661,6 +13773,11 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "GET" && requestUrl.pathname === "/phase-2/repair-demo-status") {
     sendJson(res, 200, buildPhase2RepairDemoStatus());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-2/demo-control-room") {
+    sendJson(res, 200, await buildPhase2DemoControlRoom());
     return;
   }
 

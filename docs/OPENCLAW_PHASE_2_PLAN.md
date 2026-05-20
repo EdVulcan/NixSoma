@@ -255,6 +255,17 @@ This checkpoint is allowed because Phase 2 now has real repair evidence and body
 - Creates no task, no approval, no command execution, no host mutation, no scheduler, and no recovery action.
 - Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, or arbitrary host control.
 
+Phase 2 demo control room checkpoint:
+
+After the route review selects Track B, `openclaw-phase-2-demo-control-room` may expose a read-only demo control surface that gathers the visible Phase 2 body evidence into one operator view.
+
+This checkpoint is allowed because it improves the human demo path without broadening autonomy:
+
+- Reads MVP route alignment, repair demo status, route review, and body governance readiness evidence only.
+- Exposes available panels, selected next slice, repair demo readiness, body governance readiness, and an operator walkthrough script.
+- Creates no task, no approval, no command execution, no host mutation, no scheduler, and no recovery action.
+- Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, or arbitrary host control.
+
 ## Phase 2 Gate
 
 Before implementing any Phase 2 feature, confirm:

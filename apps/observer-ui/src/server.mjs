@@ -289,6 +289,14 @@ function observerHtml() {
           <div class="metric"><span>Next</span><span id="phase2-repair-demo-next">demo evidence bundle</span></div>
           <pre id="phase2-repair-demo-json">Loading Phase 2 repair demo status...</pre>
         </section>
+        <section class="panel" id="phase2-demo-control-room-panel">
+          <h2>Phase 2 Demo Control Room</h2>
+          <div class="metric"><span>Status</span><span id="phase2-demo-control-room-status">loading</span></div>
+          <div class="metric"><span>Panels</span><span id="phase2-demo-control-room-panels">0/0</span></div>
+          <div class="metric"><span>Selected Slice</span><span id="phase2-demo-control-room-slice">loading</span></div>
+          <div class="metric"><span>Mutation</span><span id="phase2-demo-control-room-mutation">false</span></div>
+          <pre id="phase2-demo-control-room-json">Loading Phase 2 demo control room...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -1001,6 +1009,11 @@ const phase2RepairDemoEvidence = document.querySelector("#phase2-repair-demo-evi
 const phase2RepairDemoTarget = document.querySelector("#phase2-repair-demo-target");
 const phase2RepairDemoNext = document.querySelector("#phase2-repair-demo-next");
 const phase2RepairDemoJson = document.querySelector("#phase2-repair-demo-json");
+const phase2DemoControlRoomStatus = document.querySelector("#phase2-demo-control-room-status");
+const phase2DemoControlRoomPanels = document.querySelector("#phase2-demo-control-room-panels");
+const phase2DemoControlRoomSlice = document.querySelector("#phase2-demo-control-room-slice");
+const phase2DemoControlRoomMutation = document.querySelector("#phase2-demo-control-room-mutation");
+const phase2DemoControlRoomJson = document.querySelector("#phase2-demo-control-room-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -3807,6 +3820,36 @@ async function refreshPhase2RepairDemoStatus() {
   }
 }
 
+async function refreshPhase2DemoControlRoom() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-2/demo-control-room\`);
+    const summary = data.summary ?? {};
+    const governance = data.governance ?? {};
+    const evidence = data.evidence ?? {};
+    phase2DemoControlRoomStatus.textContent = data.status ?? "unknown";
+    phase2DemoControlRoomPanels.textContent = \`\${summary.availablePanels ?? 0}/\${summary.totalPanels ?? 0}\`;
+    phase2DemoControlRoomSlice.textContent = summary.selectedSlice ?? "unknown";
+    phase2DemoControlRoomMutation.textContent = String(Boolean(governance.mutatesHost));
+    phase2DemoControlRoomJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Mode: \${data.mode ?? "unknown"} readOnly=\${Boolean(governance.readOnly)} createsTask=\${Boolean(governance.createsTask)} executesCommand=\${Boolean(governance.executesCommand)} mutatesHost=\${Boolean(governance.mutatesHost)}\`,
+      \`Status: \${data.status ?? "unknown"} ready=\${Boolean(summary.ready)} panels=\${summary.availablePanels ?? 0}/\${summary.totalPanels ?? 0}\`,
+      \`Route: track=\${summary.selectedTrack ?? "unknown"} slice=\${summary.selectedSlice ?? "unknown"} avoidsSafetyBoundaryLoop=\${Boolean(summary.avoidsSafetyBoundaryLoop)}\`,
+      \`Repair Demo: status=\${summary.repairDemoStatus ?? "unknown"} ready=\${Boolean(summary.repairDemoReady)} target=\${evidence.repairDemo?.targetUnit ?? "unknown"}\`,
+      \`Body Governance: ready=\${Boolean(summary.bodyGovernanceReady)} routeReview=\${data.source?.routeReviewRegistry ?? "unknown"}\`,
+      \`Panels: \${(data.panels ?? []).map((panel) => \`\${panel.id}=\${panel.status}\`).join(", ")}\`,
+      \`Script: \${(data.operatorScript ?? []).join(" | ")}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "demo walkthrough"}\`,
+    ].join("\\n");
+  } catch {
+    phase2DemoControlRoomStatus.textContent = "offline";
+    phase2DemoControlRoomPanels.textContent = "0/0";
+    phase2DemoControlRoomSlice.textContent = "unknown";
+    phase2DemoControlRoomMutation.textContent = "false";
+    phase2DemoControlRoomJson.textContent = "Unable to read Phase 2 demo control room.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -5709,6 +5752,7 @@ taskListItems.addEventListener("click", (event) => {
 await refreshHealth();
 await refreshMvpRoute();
 await refreshPhase2RepairDemoStatus();
+await refreshPhase2DemoControlRoom();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -5777,6 +5821,7 @@ subscribeEvents();
 setInterval(refreshHealth, 5000);
 setInterval(refreshMvpRoute, 5000);
 setInterval(refreshPhase2RepairDemoStatus, 5000);
+setInterval(refreshPhase2DemoControlRoom, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);
