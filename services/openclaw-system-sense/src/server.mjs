@@ -1,5 +1,5 @@
 import http from "node:http";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statfsSync, statSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -45,6 +45,7 @@ const BODY_EVIDENCE_LEDGER_STORAGE_ROOT_PLAN_REGISTRY = "openclaw-body-evidence-
 const BODY_EVIDENCE_LEDGER_STORAGE_ROOT_ROUTE_REVIEW_REGISTRY = "openclaw-body-evidence-ledger-storage-root-route-review-v0";
 const BODY_EVIDENCE_LEDGER_FIRST_RECORD_PLAN_REGISTRY = "openclaw-body-evidence-ledger-first-record-plan-v0";
 const BODY_EVIDENCE_LEDGER_FIRST_RECORD_ROUTE_REVIEW_REGISTRY = "openclaw-body-evidence-ledger-first-record-route-review-v0";
+const BODY_EVIDENCE_LEDGER_READINESS_REGISTRY = "openclaw-body-evidence-ledger-readiness-v0";
 const PHASE_2_ROUTE_REVIEW_REGISTRY = "openclaw-phase-2-route-review-v0";
 const SYSTEMD_REPAIR_CANDIDATE_ASSESSMENT_REGISTRY = "openclaw-systemd-repair-candidate-assessment-v0";
 const SYSTEMD_REPAIR_CANDIDATE_PLAN_REGISTRY = "openclaw-systemd-repair-candidate-plan-v0";
@@ -3247,6 +3248,192 @@ async function buildBodyEvidenceLedgerFirstRecordRouteReview() {
   };
 }
 
+function readBodyEvidenceLedgerRecords() {
+  const ledgerFileDisplayPath = ".artifacts/openclaw-body-evidence-ledger/body-evidence-ledger.jsonl";
+  const ledgerFilePath = path.resolve(process.cwd(), "../..", ledgerFileDisplayPath);
+  const fileExists = existsSync(ledgerFilePath) && statSync(ledgerFilePath).isFile();
+  if (!fileExists) {
+    return {
+      ledgerFileDisplayPath,
+      ledgerFilePath,
+      fileExists: false,
+      records: [],
+      parseErrors: [],
+      lineCount: 0,
+      bytes: 0,
+    };
+  }
+
+  const content = readFileSync(ledgerFilePath, "utf8");
+  const lines = content.trim().length > 0 ? content.trim().split("\n").filter(Boolean) : [];
+  const records = [];
+  const parseErrors = [];
+  lines.forEach((line, index) => {
+    try {
+      const record = JSON.parse(line);
+      const { contentHash, ...hashBase } = record;
+      const expectedHash = createHash("sha256").update(JSON.stringify(hashBase)).digest("hex");
+      records.push({
+        ...record,
+        hashValid: typeof contentHash === "string" && contentHash === expectedHash,
+        expectedHash,
+      });
+    } catch (error) {
+      parseErrors.push({
+        line: index + 1,
+        message: error instanceof Error ? error.message : "Invalid JSONL record.",
+      });
+    }
+  });
+
+  return {
+    ledgerFileDisplayPath,
+    ledgerFilePath,
+    fileExists,
+    records,
+    parseErrors,
+    lineCount: lines.length,
+    bytes: Buffer.byteLength(content, "utf8"),
+  };
+}
+
+async function buildBodyEvidenceLedgerReadiness() {
+  const ledgerPlan = await buildBodyEvidenceLedgerPlan();
+  const firstRecordPlan = await buildBodyEvidenceLedgerFirstRecordPlan();
+  const ledger = readBodyEvidenceLedgerRecords();
+  const bootstrapRecords = ledger.records.filter((record) => record.evidenceType === "body_evidence_ledger_bootstrap");
+  const firstRecord = bootstrapRecords[0] ?? null;
+  const checks = [
+    {
+      id: "ledger-plan-ready",
+      label: "Body evidence ledger schema plan is ready",
+      passed: ledgerPlan.summary?.planReady === true,
+      evidence: ledgerPlan.registry,
+    },
+    {
+      id: "ledger-file-exists",
+      label: "Workspace-bounded body evidence ledger JSONL file exists",
+      passed: ledger.fileExists === true,
+      evidence: ledger.ledgerFileDisplayPath,
+    },
+    {
+      id: "single-bootstrap-record",
+      label: "Ledger contains exactly one bootstrap record for this readiness checkpoint",
+      passed: ledger.lineCount === 1 && bootstrapRecords.length === 1,
+      evidence: `lines=${ledger.lineCount};bootstrap=${bootstrapRecords.length}`,
+    },
+    {
+      id: "record-source-ready",
+      label: "Bootstrap record cites body evidence timeline readiness",
+      passed: firstRecord?.sourceRegistry === BODY_EVIDENCE_TIMELINE_READINESS_REGISTRY
+        && firstRecord?.sourceEndpoint === "/system/route/body-evidence-timeline-readiness",
+      evidence: firstRecord?.sourceRegistry ?? null,
+    },
+    {
+      id: "content-hash-valid",
+      label: "Bootstrap record content hash validates against canonical payload",
+      passed: firstRecord?.hashValid === true,
+      evidence: firstRecord?.contentHash ?? null,
+    },
+    {
+      id: "governance-boundary",
+      label: "Bootstrap record preserves no scheduler, no background writer, and no bulk import boundary",
+      passed: firstRecord?.governance?.appendOnly === true
+        && firstRecord?.governance?.scheduler === false
+        && firstRecord?.governance?.backgroundWriter === false
+        && firstRecord?.governance?.bulkImport === false,
+      evidence: firstRecord?.governance ?? null,
+    },
+    {
+      id: "parse-clean",
+      label: "Ledger JSONL parses cleanly",
+      passed: ledger.parseErrors.length === 0,
+      evidence: `parseErrors=${ledger.parseErrors.length}`,
+    },
+  ];
+  const passedChecks = checks.filter((check) => check.passed).length;
+  const ready = passedChecks === checks.length;
+
+  return {
+    ok: true,
+    registry: BODY_EVIDENCE_LEDGER_READINESS_REGISTRY,
+    mode: "read_only_body_evidence_ledger_readiness",
+    generatedAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      ledgerPlanRegistry: ledgerPlan.registry,
+      firstRecordPlanRegistry: firstRecordPlan.registry,
+      evidence: "body_evidence_ledger_readiness",
+    },
+    governance: {
+      domain: "body_internal",
+      risk: "low",
+      autonomy: "readiness_report_only",
+      approvalRequired: false,
+      hostMutation: false,
+      canMutate: false,
+      canAppendLedgerRecord: false,
+      canWriteLedger: false,
+      durableStorageWritten: false,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+      backgroundWriter: false,
+      bulkImport: false,
+    },
+    summary: {
+      ready,
+      passedChecks,
+      totalChecks: checks.length,
+      ledgerFile: ledger.ledgerFileDisplayPath,
+      ledgerFileExists: ledger.fileExists,
+      recordCount: ledger.records.length,
+      bootstrapRecordCount: bootstrapRecords.length,
+      latestRecordId: ledger.records.at(-1)?.id ?? null,
+      latestRecordHash: ledger.records.at(-1)?.contentHash ?? null,
+      hiddenMutation: false,
+    },
+    checks,
+    completedBlock: {
+      id: "phase-2-track-c-body-evidence-ledger",
+      name: "Body Evidence Ledger",
+      completedSlices: [
+        "openclaw-body-evidence-ledger-plan",
+        "openclaw-body-evidence-ledger-route-review",
+        "openclaw-body-evidence-ledger-storage-root-plan",
+        "openclaw-body-evidence-ledger-storage-root-route-review",
+        "openclaw-body-evidence-ledger-directory-task",
+        "openclaw-body-evidence-ledger-directory-execution",
+        "openclaw-body-evidence-ledger-first-record-plan",
+        "openclaw-body-evidence-ledger-first-record-route-review",
+        "openclaw-body-evidence-ledger-first-record-task",
+        "openclaw-body-evidence-ledger-first-record-append",
+      ],
+      completionClaim: ready ? "body_evidence_ledger_first_record_ready_for_route_review" : "body_evidence_ledger_incomplete",
+    },
+    evidence: {
+      ledger,
+      records: ledger.records.map((record) => ({
+        id: record.id,
+        recordedAt: record.recordedAt,
+        sourceRegistry: record.sourceRegistry,
+        evidenceType: record.evidenceType,
+        phase: record.phase,
+        contentHash: record.contentHash,
+        hashValid: record.hashValid,
+        governance: record.governance,
+      })),
+      parseErrors: ledger.parseErrors,
+    },
+    next: {
+      recommendedSlice: "openclaw-phase-2-next-capability-route-review",
+      boundary: "return to whitepaper route review before adding additional ledger records, background writers, schedulers, or new mutation",
+    },
+  };
+}
+
 function classifySystemdRepairRisk(unit) {
   if (unit.name === "openclaw-event-hub" || unit.name === "openclaw-core") {
     return "high";
@@ -3544,6 +3731,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/route/body-evidence-ledger-first-record-route-review") {
     const review = await buildBodyEvidenceLedgerFirstRecordRouteReview();
     sendJson(res, 200, review);
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/route/body-evidence-ledger-readiness") {
+    const readiness = await buildBodyEvidenceLedgerReadiness();
+    sendJson(res, 200, readiness);
     return;
   }
 

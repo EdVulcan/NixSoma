@@ -986,6 +986,14 @@ function observerHtml() {
           </div>
           <pre id="body-evidence-ledger-first-record-task-json">Loading approval-gated first record task boundary...</pre>
         </section>
+        <section class="panel" id="body-evidence-ledger-readiness-panel">
+          <h2>Body Evidence Ledger Readiness</h2>
+          <div class="metric"><span>Ready</span><span id="body-evidence-ledger-readiness-ready">false</span></div>
+          <div class="metric"><span>Checks</span><span id="body-evidence-ledger-readiness-checks">0/0</span></div>
+          <div class="metric"><span>Records</span><span id="body-evidence-ledger-readiness-records">0</span></div>
+          <div class="metric"><span>Mutation</span><span id="body-evidence-ledger-readiness-mutation">false</span></div>
+          <pre id="body-evidence-ledger-readiness-json">Loading body evidence ledger readiness...</pre>
+        </section>
         <section class="panel" id="phase-2-route-review">
           <h2>Phase 2 Route Review</h2>
           <div class="metric"><span>Selected Track</span><span id="phase-2-route-selected-track">loading</span></div>
@@ -1285,6 +1293,11 @@ const bodyEvidenceLedgerFirstRecordTaskType = document.querySelector("#body-evid
 const bodyEvidenceLedgerFirstRecordTaskApproval = document.querySelector("#body-evidence-ledger-first-record-task-approval");
 const bodyEvidenceLedgerFirstRecordTaskAppended = document.querySelector("#body-evidence-ledger-first-record-task-appended");
 const bodyEvidenceLedgerFirstRecordTaskJson = document.querySelector("#body-evidence-ledger-first-record-task-json");
+const bodyEvidenceLedgerReadinessReady = document.querySelector("#body-evidence-ledger-readiness-ready");
+const bodyEvidenceLedgerReadinessChecks = document.querySelector("#body-evidence-ledger-readiness-checks");
+const bodyEvidenceLedgerReadinessRecords = document.querySelector("#body-evidence-ledger-readiness-records");
+const bodyEvidenceLedgerReadinessMutation = document.querySelector("#body-evidence-ledger-readiness-mutation");
+const bodyEvidenceLedgerReadinessJson = document.querySelector("#body-evidence-ledger-readiness-json");
 const phase2RouteSelectedTrack = document.querySelector("#phase-2-route-selected-track");
 const phase2RouteNextSlice = document.querySelector("#phase-2-route-next-slice");
 const phase2RouteCreatesTask = document.querySelector("#phase-2-route-creates-task");
@@ -4879,6 +4892,35 @@ async function refreshBodyEvidenceLedgerFirstRecordTask() {
   }
 }
 
+async function refreshBodyEvidenceLedgerReadiness() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/route/body-evidence-ledger-readiness\`);
+    const summary = data.summary ?? {};
+    const governance = data.governance ?? {};
+    const checks = Array.isArray(data.checks) ? data.checks : [];
+    const records = Array.isArray(data.evidence?.records) ? data.evidence.records : [];
+    bodyEvidenceLedgerReadinessReady.textContent = String(Boolean(summary.ready));
+    bodyEvidenceLedgerReadinessChecks.textContent = \`\${summary.passedChecks ?? 0}/\${summary.totalChecks ?? checks.length}\`;
+    bodyEvidenceLedgerReadinessRecords.textContent = String(summary.recordCount ?? records.length);
+    bodyEvidenceLedgerReadinessMutation.textContent = String(Boolean(governance.hostMutation));
+    bodyEvidenceLedgerReadinessJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Mode: \${data.mode ?? "unknown"} ready=\${Boolean(summary.ready)} records=\${summary.recordCount ?? records.length} bootstrap=\${summary.bootstrapRecordCount ?? 0} file=\${summary.ledgerFile ?? "unknown"} exists=\${Boolean(summary.ledgerFileExists)}\`,
+      \`Governance: canAppendLedgerRecord=\${Boolean(governance.canAppendLedgerRecord)} canWriteLedger=\${Boolean(governance.canWriteLedger)} createsTask=\${Boolean(governance.createsTask)} executesCommand=\${Boolean(governance.executesCommand)} mutation=\${Boolean(governance.hostMutation)} scheduler=\${Boolean(governance.schedulesFollowUp)} backgroundWriter=\${Boolean(governance.backgroundWriter)} bulkImport=\${Boolean(governance.bulkImport)}\`,
+      \`Checks: \${checks.map((check) => \`\${check.id}=\${Boolean(check.passed)}\`).join(", ")}\`,
+      \`Records: \${records.map((record) => \`\${record.id}:\${record.evidenceType}:hash=\${Boolean(record.hashValid)}:source=\${record.sourceRegistry}\`).join(", ") || "none"}\`,
+      \`Completed: \${data.completedBlock?.completionClaim ?? "unknown"} slices=\${(data.completedBlock?.completedSlices ?? []).length}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "openclaw-phase-2-next-capability-route-review"} boundary=\${data.next?.boundary ?? "route review before more ledger writes"}\`,
+    ].join("\\n");
+  } catch {
+    bodyEvidenceLedgerReadinessReady.textContent = "false";
+    bodyEvidenceLedgerReadinessChecks.textContent = "0/0";
+    bodyEvidenceLedgerReadinessRecords.textContent = "0";
+    bodyEvidenceLedgerReadinessMutation.textContent = "false";
+    bodyEvidenceLedgerReadinessJson.textContent = "Unable to read body evidence ledger readiness.";
+  }
+}
+
 async function refreshPhase2RouteReview() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/route/phase-2-review\`);
@@ -6770,6 +6812,7 @@ await refreshBodyEvidenceLedgerDirectoryTask();
 await refreshBodyEvidenceLedgerFirstRecordPlan();
 await refreshBodyEvidenceLedgerFirstRecordRouteReview();
 await refreshBodyEvidenceLedgerFirstRecordTask();
+await refreshBodyEvidenceLedgerReadiness();
 await refreshPhase2RouteReview();
 await refreshSystemdRepairCandidates();
 await refreshSystemdRepairCandidatePlan();
@@ -6859,6 +6902,7 @@ setInterval(refreshBodyEvidenceLedgerDirectoryTask, 5000);
 setInterval(refreshBodyEvidenceLedgerFirstRecordPlan, 5000);
 setInterval(refreshBodyEvidenceLedgerFirstRecordRouteReview, 5000);
 setInterval(refreshBodyEvidenceLedgerFirstRecordTask, 5000);
+setInterval(refreshBodyEvidenceLedgerReadiness, 5000);
 setInterval(refreshPhase2RouteReview, 5000);
 setInterval(refreshSystemdRepairCandidates, 5000);
 setInterval(refreshSystemdRepairCandidatePlan, 5000);
