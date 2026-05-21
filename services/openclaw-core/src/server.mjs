@@ -12317,19 +12317,23 @@ async function executeBodyEvidenceLedgerDirectoryTask(task) {
   const displayPath = typeof directory.displayPath === "string" && directory.displayPath.trim()
     ? directory.displayPath.trim()
     : ".artifacts/openclaw-body-evidence-ledger";
+  const executionPath = path.isAbsolute(displayPath)
+    ? displayPath
+    : path.resolve(process.cwd(), "../..", displayPath);
 
   await setTaskPhase(task, "body_evidence_ledger_directory_create", {
     status: "running",
     details: {
       executor: "body-evidence-ledger-directory-task-v0",
       target: displayPath,
+      executionPath,
       hostMutation: true,
       recordWritesEnabled: false,
     },
   });
 
   const result = await postJson(`${systemSenseUrl}/system/files/mkdir`, {
-    path: displayPath,
+    path: executionPath,
     recursive: true,
     intent: "body.evidence.ledger.directory.create",
   });

@@ -155,6 +155,7 @@ start_service_process() {
     export OPENCLAW_SYSTEM_SENSE_URL="$SYSTEM_SENSE_URL"
     export OPENCLAW_SYSTEM_HEAL_URL="$SYSTEM_HEAL_URL"
     export OPENCLAW_EVENT_LOG_FILE="$OPENCLAW_EVENT_LOG_FILE"
+    export OPENCLAW_SYSTEM_ALLOWED_ROOTS="${OPENCLAW_SYSTEM_ALLOWED_ROOTS:-$REPO_ROOT:$ARTIFACT_DIR:$working_dir}"
     nohup "$NODE_EXE" src/server.mjs >"$log_file" 2>&1 &
     echo $! >"$pid_file"
   )
