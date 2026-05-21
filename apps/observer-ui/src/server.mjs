@@ -924,6 +924,14 @@ function observerHtml() {
           <div class="metric"><span>Mutation</span><span id="systemd-repair-candidate-plan-mutation">false</span></div>
           <pre id="systemd-repair-candidate-plan-json">Loading plan-only systemd repair candidate scope...</pre>
         </section>
+        <section class="panel" id="systemd-repair-candidate-task-route-panel">
+          <h2>Repair Candidate Route</h2>
+          <div class="metric"><span>Status</span><span id="systemd-repair-candidate-route-status">loading</span></div>
+          <div class="metric"><span>Target</span><span id="systemd-repair-candidate-route-target">loading</span></div>
+          <div class="metric"><span>Creates Task</span><span id="systemd-repair-candidate-route-creates-task">false</span></div>
+          <div class="metric"><span>Mutation</span><span id="systemd-repair-candidate-route-mutation">false</span></div>
+          <pre id="systemd-repair-candidate-route-json">Loading read-only repair candidate task route gate...</pre>
+        </section>
         <section class="panel" id="systemd-unit-inventory">
           <h2>Systemd Unit Inventory</h2>
           <div class="metric"><span>Total Units</span><span id="systemd-unit-total">0</span></div>
@@ -1121,6 +1129,11 @@ const systemdRepairCandidatePlanMode = document.querySelector("#systemd-repair-c
 const systemdRepairCandidatePlanCreatesTask = document.querySelector("#systemd-repair-candidate-plan-creates-task");
 const systemdRepairCandidatePlanMutation = document.querySelector("#systemd-repair-candidate-plan-mutation");
 const systemdRepairCandidatePlanJson = document.querySelector("#systemd-repair-candidate-plan-json");
+const systemdRepairCandidateRouteStatus = document.querySelector("#systemd-repair-candidate-route-status");
+const systemdRepairCandidateRouteTarget = document.querySelector("#systemd-repair-candidate-route-target");
+const systemdRepairCandidateRouteCreatesTask = document.querySelector("#systemd-repair-candidate-route-creates-task");
+const systemdRepairCandidateRouteMutation = document.querySelector("#systemd-repair-candidate-route-mutation");
+const systemdRepairCandidateRouteJson = document.querySelector("#systemd-repair-candidate-route-json");
 const systemdUnitTotal = document.querySelector("#systemd-unit-total");
 const systemdUnitActive = document.querySelector("#systemd-unit-active");
 const systemdUnitObserved = document.querySelector("#systemd-unit-observed");
@@ -4446,6 +4459,33 @@ async function refreshSystemdRepairCandidatePlan() {
   }
 }
 
+async function refreshSystemdRepairCandidateRoute() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/repair-candidate-task-route\`);
+    const governance = data.governance ?? {};
+    const decision = data.routeDecision ?? {};
+    systemdRepairCandidateRouteStatus.textContent = decision.status ?? "unknown";
+    systemdRepairCandidateRouteTarget.textContent = decision.targetUnit ?? "unknown";
+    systemdRepairCandidateRouteCreatesTask.textContent = String(Boolean(governance.createsTask));
+    systemdRepairCandidateRouteMutation.textContent = String(Boolean(governance.hostMutation));
+    systemdRepairCandidateRouteJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Mode: \${data.mode ?? "unknown"} mutation=\${Boolean(governance.hostMutation)} createsTask=\${Boolean(governance.createsTask)} executesCommand=\${Boolean(governance.executesCommand)} canRestart=\${Boolean(governance.canRestart)}\`,
+      \`Decision: status=\${decision.status ?? "unknown"} target=\${decision.targetUnit ?? "none"} existingRoute=\${decision.existingRoute ?? "none"} available=\${Boolean(decision.existingRouteAvailable)}\`,
+      \`Reason: \${decision.reason ?? "none"}\`,
+      \`Required: \${(data.requiredBeforeTaskCreation ?? []).join(", ") || "none"}\`,
+      \`Allowed Next: \${(data.allowedNextActions ?? []).map((action) => \`\${action.id}:allowed=\${Boolean(action.allowedNow)} createsTask=\${Boolean(action.createsTask)}\`).join(", ")}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "candidate task shell"}\`,
+    ].join("\\n");
+  } catch {
+    systemdRepairCandidateRouteStatus.textContent = "offline";
+    systemdRepairCandidateRouteTarget.textContent = "offline";
+    systemdRepairCandidateRouteCreatesTask.textContent = "false";
+    systemdRepairCandidateRouteMutation.textContent = "false";
+    systemdRepairCandidateRouteJson.textContent = "Unable to read repair candidate task route gate.";
+  }
+}
+
 async function refreshSystemdUnitInventory() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/units\`);
@@ -6019,6 +6059,7 @@ await refreshBodyGovernanceReadiness();
 await refreshPhase2RouteReview();
 await refreshSystemdRepairCandidates();
 await refreshSystemdRepairCandidatePlan();
+await refreshSystemdRepairCandidateRoute();
 await refreshSystemdUnitInventory();
 await refreshSystemdDependencyMap();
 await refreshSystemdRepairPlan();
@@ -6093,6 +6134,7 @@ setInterval(refreshBodyGovernanceReadiness, 5000);
 setInterval(refreshPhase2RouteReview, 5000);
 setInterval(refreshSystemdRepairCandidates, 5000);
 setInterval(refreshSystemdRepairCandidatePlan, 5000);
+setInterval(refreshSystemdRepairCandidateRoute, 5000);
 setInterval(refreshSystemdUnitInventory, 5000);
 setInterval(refreshSystemdDependencyMap, 5000);
 setInterval(refreshSystemdRepairPlan, 5000);

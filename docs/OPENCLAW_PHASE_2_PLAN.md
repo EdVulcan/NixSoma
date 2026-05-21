@@ -325,6 +325,17 @@ This checkpoint is allowed because it advances Track A repair semantics from can
 - Creates no task, no approval, no command execution, no host mutation, no scheduler, and no recovery action.
 - Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, or arbitrary host control.
 
+Systemd repair candidate task route checkpoint:
+
+After the candidate plan is visible in Observer, `openclaw-systemd-repair-candidate-task-route` may decide whether the selected candidate can use an existing operator-reviewed repair task shell.
+
+This checkpoint is allowed because it checks the route before task materialization:
+
+- Reads repair candidate plan evidence only.
+- Exposes target unit, existing-route availability, required-before-task-creation gates, allowed next actions, and task-shell boundary.
+- Creates no task, no approval, no command execution, no host mutation, no scheduler, and no recovery action.
+- Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, or arbitrary host control.
+
 ## Phase 2 Gate
 
 Before implementing any Phase 2 feature, confirm:

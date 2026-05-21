@@ -40,6 +40,7 @@ const BODY_GOVERNANCE_READINESS_REGISTRY = "openclaw-body-governance-readiness-v
 const PHASE_2_ROUTE_REVIEW_REGISTRY = "openclaw-phase-2-route-review-v0";
 const SYSTEMD_REPAIR_CANDIDATE_ASSESSMENT_REGISTRY = "openclaw-systemd-repair-candidate-assessment-v0";
 const SYSTEMD_REPAIR_CANDIDATE_PLAN_REGISTRY = "openclaw-systemd-repair-candidate-plan-v0";
+const SYSTEMD_REPAIR_CANDIDATE_TASK_ROUTE_REGISTRY = "openclaw-systemd-repair-candidate-task-route-v0";
 const SYSTEMD_REPAIR_PLAN_REGISTRY = "openclaw-systemd-repair-plan-v0";
 const SYSTEMD_REPAIR_DRY_RUN_REGISTRY = "openclaw-systemd-repair-dry-run-v0";
 const MAX_HEALTH_TREND_SNAPSHOTS = 24;
@@ -1933,6 +1934,76 @@ async function buildSystemdRepairCandidatePlan() {
   };
 }
 
+async function buildSystemdRepairCandidateTaskRoute() {
+  const candidatePlan = await buildSystemdRepairCandidatePlan();
+  const targetUnit = candidatePlan.plan?.targetUnit ?? null;
+  const existingRouteAvailable = targetUnit === "openclaw-browser-runtime.service"
+    && candidatePlan.selectedCandidate?.existingDemoTarget === true;
+
+  return {
+    ok: true,
+    registry: SYSTEMD_REPAIR_CANDIDATE_TASK_ROUTE_REGISTRY,
+    mode: "read_only_task_route_gate",
+    generatedAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      candidatePlanRegistry: candidatePlan.registry,
+      evidence: "systemd_repair_candidate_task_route_gate",
+    },
+    governance: {
+      domain: "body_internal",
+      risk: "medium",
+      autonomy: "route_gate_only",
+      approvalRequired: false,
+      hostMutation: false,
+      canMutate: false,
+      canRestart: false,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+    },
+    routeDecision: {
+      targetUnit,
+      status: existingRouteAvailable ? "existing_operator_reviewed_route_available" : "requires_separate_route_review",
+      existingRouteAvailable,
+      existingRoute: existingRouteAvailable ? "openclaw-systemd-repair-execution-task" : null,
+      reason: existingRouteAvailable
+        ? "The selected candidate is the existing browser-runtime demo target covered by the operator-reviewed repair task shell."
+        : "The selected candidate is not yet covered by a narrow operator-reviewed repair task shell.",
+    },
+    requiredBeforeTaskCreation: [
+      "Observer-visible candidate plan",
+      "operator-reviewed task materialization route",
+      "explicit approval gate",
+      "dry-run or existing real execution route evidence",
+      "post-execution verification bundle",
+    ],
+    allowedNextActions: [
+      {
+        id: "review-existing-route",
+        label: "Review the existing operator-reviewed repair task shell",
+        allowedNow: existingRouteAvailable,
+        createsTask: false,
+        mutatesHost: false,
+      },
+      {
+        id: "create-candidate-task-shell",
+        label: "Create a candidate-specific task shell in a future milestone",
+        allowedNow: false,
+        createsTask: true,
+        mutatesHost: false,
+        boundary: "requires separate milestone and must still end before command execution",
+      },
+    ],
+    next: {
+      recommendedSlice: "openclaw-systemd-repair-candidate-task-shell",
+      boundary: "task shell only; no approval auto-grant, no command execution, no host mutation",
+    },
+  };
+}
+
 function classifySystemdRepairRisk(unit) {
   if (unit.name === "openclaw-event-hub" || unit.name === "openclaw-core") {
     return "high";
@@ -2232,6 +2303,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-candidate-plan") {
     const plan = await buildSystemdRepairCandidatePlan();
     sendJson(res, 200, plan);
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-candidate-task-route") {
+    const route = await buildSystemdRepairCandidateTaskRoute();
+    sendJson(res, 200, route);
     return;
   }
 
