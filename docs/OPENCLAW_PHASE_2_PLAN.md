@@ -303,6 +303,17 @@ This checkpoint is allowed because Track B demo readiness is complete, and the w
 - Creates no task, no approval, no command execution, no host mutation, no scheduler, and no recovery action.
 - Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, or arbitrary host control.
 
+Systemd repair candidate assessment checkpoint:
+
+After the next capability route review selects Track A, `openclaw-systemd-repair-candidate-assessment` may rank OpenClaw-owned systemd units as read-only repair candidates.
+
+This checkpoint is allowed because it resumes real NixOS/systemd repair semantics without immediately broadening mutation:
+
+- Reads systemd inventory, dependency map, and health trend evidence only.
+- Exposes candidate score, impact class, health signal, existing demo target flag, recommended unit, and next plan-only boundary.
+- Creates no task, no approval, no command execution, no host mutation, no scheduler, and no recovery action.
+- Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, or arbitrary host control.
+
 ## Phase 2 Gate
 
 Before implementing any Phase 2 feature, confirm:

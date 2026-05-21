@@ -38,6 +38,7 @@ const ROUTE_AWARE_NEXT_ACTION_REGISTRY = "openclaw-route-aware-next-action-v0";
 const CONSERVATIVE_RECOVERY_POLICY_REGISTRY = "openclaw-conservative-recovery-policy-v0";
 const BODY_GOVERNANCE_READINESS_REGISTRY = "openclaw-body-governance-readiness-v0";
 const PHASE_2_ROUTE_REVIEW_REGISTRY = "openclaw-phase-2-route-review-v0";
+const SYSTEMD_REPAIR_CANDIDATE_ASSESSMENT_REGISTRY = "openclaw-systemd-repair-candidate-assessment-v0";
 const SYSTEMD_REPAIR_PLAN_REGISTRY = "openclaw-systemd-repair-plan-v0";
 const SYSTEMD_REPAIR_DRY_RUN_REGISTRY = "openclaw-systemd-repair-dry-run-v0";
 const MAX_HEALTH_TREND_SNAPSHOTS = 24;
@@ -1750,6 +1751,107 @@ function findInventoryUnit(inventory, unitName) {
   }) ?? null;
 }
 
+async function buildSystemdRepairCandidateAssessment() {
+  const [inventory, dependencyMap, trendSummary] = await Promise.all([
+    buildSystemdUnitInventory(),
+    buildSystemdDependencyMap(),
+    buildHealthTrendSummary(),
+  ]);
+  const trendByService = new Map((trendSummary.services ?? []).map((trend) => [trend.service, trend]));
+  const candidates = (dependencyMap.nodes ?? []).map((node) => {
+    const unit = findInventoryUnit(inventory, node.unit) ?? {};
+    const serviceTrend = trendByService.get(node.key) ?? trendByService.get(node.name) ?? null;
+    const degraded = unit.activeState === "failed"
+      || unit.subState === "failed"
+      || serviceTrend?.latestOk === false
+      || (serviceTrend?.offline ?? 0) > 0;
+    const existingDemoTarget = node.unit === "openclaw-browser-runtime.service";
+    const impactWeight = node.impactClass === "foundational" ? 40
+      : node.impactClass === "high" ? 30
+        : node.impactClass === "medium" ? 20
+          : 10;
+    const score = impactWeight
+      + (degraded ? 35 : 0)
+      + (existingDemoTarget ? 20 : 0)
+      + Math.min(node.impactRadius ?? 0, 5);
+    return {
+      unit: node.unit,
+      component: node.component,
+      activeState: unit.activeState ?? node.activeState ?? "unknown",
+      subState: unit.subState ?? node.subState ?? "unknown",
+      impactClass: node.impactClass,
+      impactRadius: node.impactRadius,
+      dependencyLayer: node.dependencyLayer,
+      upstream: node.upstream,
+      downstream: node.downstream,
+      health: {
+        samples: serviceTrend?.samples ?? 0,
+        offline: serviceTrend?.offline ?? 0,
+        latestOk: serviceTrend?.latestOk ?? null,
+        latestStatus: serviceTrend?.latestStatus ?? "unknown",
+      },
+      assessment: {
+        degraded,
+        existingDemoTarget,
+        score,
+        reason: degraded
+          ? "Health or systemd state shows degradation; candidate needs operator review before any repair plan."
+          : existingDemoTarget
+            ? "Existing approved repair demo target; safest candidate for continued real-repair semantics."
+            : "Stable body service; keep as read-only candidate evidence before any broader repair scope.",
+      },
+      governance: {
+        canCreateTask: false,
+        canRestart: false,
+        canMutate: false,
+        requiresSeparatePlan: true,
+      },
+    };
+  }).sort((a, b) => b.assessment.score - a.assessment.score || a.unit.localeCompare(b.unit));
+  const recommended = candidates[0] ?? null;
+
+  return {
+    ok: true,
+    registry: SYSTEMD_REPAIR_CANDIDATE_ASSESSMENT_REGISTRY,
+    mode: "read_only_repair_candidate_assessment",
+    generatedAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      inventoryRegistry: inventory.registry,
+      dependencyMapRegistry: dependencyMap.registry,
+      healthTrendRegistry: trendSummary.registry,
+      evidence: "systemd_repair_candidate_assessment",
+    },
+    governance: {
+      domain: "body_internal",
+      risk: "low",
+      autonomy: "assess_only",
+      approvalRequired: false,
+      hostMutation: false,
+      canMutate: false,
+      canRestart: false,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+    },
+    summary: {
+      totalCandidates: candidates.length,
+      degradedCandidates: candidates.filter((candidate) => candidate.assessment.degraded).length,
+      existingDemoTargets: candidates.filter((candidate) => candidate.assessment.existingDemoTarget).length,
+      recommendedUnit: recommended?.unit ?? null,
+      recommendedReason: recommended?.assessment.reason ?? null,
+      highImpactCandidates: candidates.filter((candidate) => ["foundational", "high"].includes(candidate.impactClass)).length,
+    },
+    candidates,
+    next: {
+      recommendedSlice: "openclaw-systemd-repair-candidate-plan",
+      boundary: "plan-only repair candidate scope before creating tasks, approvals, commands, or host mutation",
+    },
+  };
+}
+
 function classifySystemdRepairRisk(unit) {
   if (unit.name === "openclaw-event-hub" || unit.name === "openclaw-core") {
     return "high";
@@ -2037,6 +2139,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/systemd/dependency-map") {
     const dependencyMap = await buildSystemdDependencyMap();
     sendJson(res, 200, dependencyMap);
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-candidates") {
+    const assessment = await buildSystemdRepairCandidateAssessment();
+    sendJson(res, 200, assessment);
     return;
   }
 
