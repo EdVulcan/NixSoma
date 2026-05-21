@@ -411,6 +411,18 @@ This checkpoint is allowed because the first durable body-memory record must be 
 - Does not append a ledger record, execute commands, schedule background persistence, trigger recovery, or broaden filesystem access.
 - Must remain limited to the planned bootstrap record and must not add background ledger writers, bulk import, automatic repair, denial recovery, duplicate-click handling, plugin/runtime adapter work, arbitrary host control, or broader mutation.
 
+Body evidence ledger first record append checkpoint:
+
+After the first record task is explicitly approved, `openclaw-body-evidence-ledger-first-record-append` may append one bootstrap JSONL record into the workspace-bounded body evidence ledger.
+
+This checkpoint is allowed because durable body memory needs a first real, inspectable record before any scheduler, import, or autonomous writer is considered:
+
+- Reads the approved first record task and body evidence timeline readiness.
+- Appends exactly one `body_evidence_ledger_bootstrap` JSONL record to `.artifacts/openclaw-body-evidence-ledger/body-evidence-ledger.jsonl`.
+- Records source registry, source endpoint, governance, content hash, task id, approval id, and append result evidence.
+- Does not schedule background persistence, import bulk evidence, trigger recovery, execute arbitrary commands, or broaden filesystem access beyond the selected ledger file.
+- Must not add background ledger writers, automatic repair, denial recovery, duplicate-click handling, plugin/runtime adapter work, arbitrary host control, or broader mutation.
+
 Body evidence timeline checkpoint:
 
 After the next capability route review selects Track C, `openclaw-body-evidence-timeline` may expose a read-only chronological memory spine for OpenClaw body evidence.

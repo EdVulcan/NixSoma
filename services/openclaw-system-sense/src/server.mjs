@@ -487,20 +487,32 @@ function appendTextFile(body = {}) {
 
   const contentBytes = Buffer.byteLength(content, "utf8");
   const resolved = resolveAllowedPath(targetPath);
+  const createIfMissing = body.createIfMissing === true;
   if (!existsSync(resolved.path)) {
-    const error = new Error("Target file must exist for append-text.");
-    error.code = "TARGET_NOT_FOUND";
-    throw error;
+    if (!createIfMissing) {
+      const error = new Error("Target file must exist for append-text.");
+      error.code = "TARGET_NOT_FOUND";
+      throw error;
+    }
+    const parentPath = path.dirname(resolved.path);
+    resolveAllowedPath(parentPath);
+    if (!existsSync(parentPath) || !statSync(parentPath).isDirectory()) {
+      const error = new Error("Parent directory must exist inside allowed roots.");
+      error.code = "PARENT_DIRECTORY_NOT_FOUND";
+      error.details = { parentPath };
+      throw error;
+    }
   }
 
-  const existingStats = statSync(resolved.path);
-  if (!existingStats.isFile()) {
+  const existedBefore = existsSync(resolved.path);
+  const existingStats = existedBefore ? statSync(resolved.path) : null;
+  if (existingStats && !existingStats.isFile()) {
     const error = new Error("Cannot append text to a non-file target.");
     error.code = "TARGET_NOT_FILE";
     throw error;
   }
 
-  const previousBytes = existingStats.size;
+  const previousBytes = existingStats?.size ?? 0;
   const totalBytes = previousBytes + contentBytes;
   if (totalBytes > maxFileWriteBytes) {
     const error = new Error("Text append exceeds OpenClaw file write limit.");
@@ -518,6 +530,8 @@ function appendTextFile(body = {}) {
     previousBytes,
     totalBytes,
     encoding,
+    created: !existedBefore,
+    createIfMissing,
     metadata,
   };
 }

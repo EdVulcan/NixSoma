@@ -3913,6 +3913,11 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
       lines.push(\`Post Verification Unit: \${taskPostExecutionVerification.targetUnit ?? "unknown"} before=\${summary.beforeActiveState ?? "unknown"} after=\${summary.afterActiveState ?? "unknown"}\`);
       lines.push(\`Post Verification Health: beforeServiceOk=\${summary.beforeServiceOk ?? "unknown"} afterServiceOk=\${summary.afterServiceOk ?? "unknown"} noAutomaticRecovery=\${Boolean(summary.noAutomaticRecovery)}\`);
     }
+    if (task.bodyEvidenceLedgerFirstRecord) {
+      const firstRecord = task.bodyEvidenceLedgerFirstRecord;
+      lines.push(\`Body Evidence Ledger First Record: \${firstRecord.plannedRecordType ?? "unknown"} appended=\${Boolean(firstRecord.recordAppended)} storageWritten=\${Boolean(firstRecord.durableStorageWritten)}\`);
+      lines.push(\`Body Evidence Ledger File: \${firstRecord.ledgerFileDisplayPath ?? "pending"} recordId=\${firstRecord.recordId ?? "pending"} hash=\${firstRecord.contentHash ?? "pending"}\`);
+    }
   }
 
   if (includeRecovery) {

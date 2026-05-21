@@ -12298,6 +12298,11 @@ function isBodyEvidenceLedgerDirectoryTask(task) {
   return task?.type === "body_evidence_ledger_directory_task";
 }
 
+function isBodyEvidenceLedgerFirstRecordTask(task) {
+  return task?.type === "body_evidence_ledger_first_record_task"
+    && task?.bodyEvidenceLedgerFirstRecord?.registry === "openclaw-body-evidence-ledger-first-record-task-v0";
+}
+
 async function deferSystemdRepairExecutionTask(task) {
   const deferredTask = await setTaskPhase(task, "systemd_repair_execution_deferred", {
     status: "completed",
@@ -12512,6 +12517,130 @@ async function executeBodyEvidenceLedgerDirectoryTask(task) {
       directoryExists: true,
       durableStorageWritten: false,
       recordWritesEnabled: false,
+    },
+  };
+}
+
+async function executeBodyEvidenceLedgerFirstRecordTask(task) {
+  const firstRecord = task.bodyEvidenceLedgerFirstRecord ?? {};
+  const recordType = typeof firstRecord.plannedRecordType === "string" && firstRecord.plannedRecordType.trim()
+    ? firstRecord.plannedRecordType.trim()
+    : "body_evidence_ledger_bootstrap";
+  const ledgerFileDisplayPath = ".artifacts/openclaw-body-evidence-ledger/body-evidence-ledger.jsonl";
+  const ledgerFilePath = path.resolve(process.cwd(), "../..", ledgerFileDisplayPath);
+  const timelineReadiness = await fetchJson(`${systemSenseUrl}/system/route/body-evidence-timeline-readiness`);
+  const recordedAt = new Date().toISOString();
+  const recordBase = {
+    id: `body-ledger-${randomUUID()}`,
+    recordedAt,
+    sourceRegistry: firstRecord.sourceRegistry ?? "openclaw-body-evidence-timeline-readiness-v0",
+    sourceEndpoint: "/system/route/body-evidence-timeline-readiness",
+    phase: "phase_2_body_evidence_memory",
+    evidenceType: recordType,
+    summary: "Bootstrap durable OpenClaw body evidence memory from timeline readiness evidence.",
+    evidence: {
+      timelineReadinessRegistry: timelineReadiness.registry ?? null,
+      timelineReady: timelineReadiness.summary?.ready === true || timelineReadiness.ready === true,
+      bodyMemoryPurpose: timelineReadiness.memoryPurpose ?? timelineReadiness.purpose ?? "operator-visible body evidence memory",
+      sourceChecks: timelineReadiness.summary?.checks ?? timelineReadiness.checks ?? null,
+    },
+    governance: {
+      taskId: task.id,
+      approvalId: task.approval?.id ?? null,
+      approved: isTaskPolicyApproved(task),
+      appendOnly: true,
+      scheduler: false,
+      backgroundWriter: false,
+      bulkImport: false,
+      hostMutation: true,
+      scope: ledgerFileDisplayPath,
+    },
+  };
+  const contentHash = createHash("sha256").update(JSON.stringify(recordBase)).digest("hex");
+  const record = {
+    ...recordBase,
+    contentHash,
+  };
+  const line = `${JSON.stringify(record)}\n`;
+
+  await setTaskPhase(task, "body_evidence_ledger_first_record_append", {
+    status: "running",
+    details: {
+      executor: "body-evidence-ledger-first-record-task-v0",
+      ledgerFile: ledgerFileDisplayPath,
+      recordType,
+      hostMutation: true,
+      durableStorageWritten: false,
+    },
+  });
+
+  const result = await postJson(`${systemSenseUrl}/system/files/append-text`, {
+    path: ledgerFilePath,
+    content: line,
+    encoding: "utf8",
+    createIfMissing: true,
+    intent: "body.evidence.ledger.record.append",
+  });
+  task.bodyEvidenceLedgerFirstRecord = {
+    ...firstRecord,
+    ledgerFileDisplayPath,
+    ledgerFilePath: result.path ?? ledgerFilePath,
+    allowedRoot: result.root ?? null,
+    recordId: record.id,
+    contentHash,
+    contentBytes: result.contentBytes ?? Buffer.byteLength(line, "utf8"),
+    previousBytes: result.previousBytes ?? 0,
+    totalBytes: result.totalBytes ?? null,
+    recordAppended: true,
+    durableStorageWritten: true,
+    appendExecutionEnabled: true,
+    appendResult: {
+      registry: "openclaw-body-evidence-ledger-first-record-append-v0",
+      mode: result.mode ?? "append_text",
+      created: result.created === true,
+      createIfMissing: result.createIfMissing === true,
+      metadata: result.metadata ?? null,
+    },
+  };
+  const completedTask = completeTask(task, {
+    executor: "body-evidence-ledger-first-record-task-v0",
+    summary: `Appended first OpenClaw body evidence ledger record ${record.id} to ${ledgerFileDisplayPath}.`,
+    ledgerFile: ledgerFileDisplayPath,
+    result,
+    record,
+    hostMutation: true,
+    recordAppended: true,
+    durableStorageWritten: true,
+    scheduler: false,
+    backgroundWriter: false,
+    bulkImport: false,
+  });
+  await publishEvent("body_evidence_ledger.first_record_appended", {
+    task: serialiseTask(completedTask),
+    ledgerFile: ledgerFileDisplayPath,
+    recordId: record.id,
+    contentHash,
+  });
+
+  return {
+    task: completedTask,
+    policy: completedTask.policy?.decision ?? null,
+    approval: completedTask.approval ?? null,
+    actions: [],
+    verification: null,
+    execution: {
+      registry: "openclaw-body-evidence-ledger-first-record-append-v0",
+      mode: "approved_first_record_append",
+      ledgerFile: ledgerFileDisplayPath,
+      path: result.path ?? null,
+      recordId: record.id,
+      contentHash,
+      hostMutation: true,
+      recordAppended: true,
+      durableStorageWritten: true,
+      scheduler: false,
+      backgroundWriter: false,
+      bulkImport: false,
     },
   };
 }
@@ -14210,6 +14339,18 @@ async function executeTaskWithRecovery(task, options = {}) {
     return {
       finalExecution: directoryExecution,
       attempts: [directoryExecution],
+      recovery: {
+        attempted: false,
+        maxAttempts: 0,
+      },
+    };
+  }
+
+  if (isBodyEvidenceLedgerFirstRecordTask(task)) {
+    const firstRecordExecution = await executeBodyEvidenceLedgerFirstRecordTask(task);
+    return {
+      finalExecution: firstRecordExecution,
+      attempts: [firstRecordExecution],
       recovery: {
         attempted: false,
         maxAttempts: 0,
