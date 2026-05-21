@@ -916,6 +916,14 @@ function observerHtml() {
           <div class="metric"><span>Mutation</span><span id="systemd-repair-candidate-mutation">false</span></div>
           <pre id="systemd-repair-candidate-json">Loading read-only systemd repair candidate assessment...</pre>
         </section>
+        <section class="panel" id="systemd-repair-candidate-plan-panel">
+          <h2>Repair Candidate Plan</h2>
+          <div class="metric"><span>Target</span><span id="systemd-repair-candidate-plan-target">loading</span></div>
+          <div class="metric"><span>Mode</span><span id="systemd-repair-candidate-plan-mode">plan_only</span></div>
+          <div class="metric"><span>Creates Task</span><span id="systemd-repair-candidate-plan-creates-task">false</span></div>
+          <div class="metric"><span>Mutation</span><span id="systemd-repair-candidate-plan-mutation">false</span></div>
+          <pre id="systemd-repair-candidate-plan-json">Loading plan-only systemd repair candidate scope...</pre>
+        </section>
         <section class="panel" id="systemd-unit-inventory">
           <h2>Systemd Unit Inventory</h2>
           <div class="metric"><span>Total Units</span><span id="systemd-unit-total">0</span></div>
@@ -1108,6 +1116,11 @@ const systemdRepairCandidateRecommended = document.querySelector("#systemd-repai
 const systemdRepairCandidateCreatesTask = document.querySelector("#systemd-repair-candidate-creates-task");
 const systemdRepairCandidateMutation = document.querySelector("#systemd-repair-candidate-mutation");
 const systemdRepairCandidateJson = document.querySelector("#systemd-repair-candidate-json");
+const systemdRepairCandidatePlanTarget = document.querySelector("#systemd-repair-candidate-plan-target");
+const systemdRepairCandidatePlanMode = document.querySelector("#systemd-repair-candidate-plan-mode");
+const systemdRepairCandidatePlanCreatesTask = document.querySelector("#systemd-repair-candidate-plan-creates-task");
+const systemdRepairCandidatePlanMutation = document.querySelector("#systemd-repair-candidate-plan-mutation");
+const systemdRepairCandidatePlanJson = document.querySelector("#systemd-repair-candidate-plan-json");
 const systemdUnitTotal = document.querySelector("#systemd-unit-total");
 const systemdUnitActive = document.querySelector("#systemd-unit-active");
 const systemdUnitObserved = document.querySelector("#systemd-unit-observed");
@@ -4405,6 +4418,34 @@ async function refreshSystemdRepairCandidates() {
   }
 }
 
+async function refreshSystemdRepairCandidatePlan() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/repair-candidate-plan\`);
+    const governance = data.governance ?? {};
+    const plan = data.plan ?? {};
+    const selected = data.selectedCandidate ?? {};
+    systemdRepairCandidatePlanTarget.textContent = plan.targetUnit ?? selected.unit ?? "unknown";
+    systemdRepairCandidatePlanMode.textContent = data.mode ?? "plan_only";
+    systemdRepairCandidatePlanCreatesTask.textContent = String(Boolean(governance.createsTask));
+    systemdRepairCandidatePlanMutation.textContent = String(Boolean(governance.hostMutation));
+    systemdRepairCandidatePlanJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Mode: \${data.mode ?? "unknown"} mutation=\${Boolean(governance.hostMutation)} createsTask=\${Boolean(governance.createsTask)} executesCommand=\${Boolean(governance.executesCommand)} canRestart=\${Boolean(governance.canRestart)}\`,
+      \`Selected: \${selected.unit ?? "none"} score=\${selected.score ?? 0} demoTarget=\${Boolean(selected.existingDemoTarget)} degraded=\${Boolean(selected.degraded)}\`,
+      \`Plan: intent=\${plan.intent ?? "unknown"} target=\${plan.targetUnit ?? "none"} previewOnly=\${Boolean(plan.commandPreviewOnly)} command=\${plan.commandPreview ?? "none"}\`,
+      \`Steps: \${(plan.steps ?? []).map((step) => \`\${step.id}=\${step.status}\`).join(", ")}\`,
+      \`Required: \${(plan.requiredBeforeExecution ?? []).join(", ") || "none"}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "observer candidate plan"}\`,
+    ].join("\\n");
+  } catch {
+    systemdRepairCandidatePlanTarget.textContent = "offline";
+    systemdRepairCandidatePlanMode.textContent = "plan_only";
+    systemdRepairCandidatePlanCreatesTask.textContent = "false";
+    systemdRepairCandidatePlanMutation.textContent = "false";
+    systemdRepairCandidatePlanJson.textContent = "Unable to read systemd repair candidate plan.";
+  }
+}
+
 async function refreshSystemdUnitInventory() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/units\`);
@@ -5977,6 +6018,7 @@ await refreshConservativeRecoveryPolicy();
 await refreshBodyGovernanceReadiness();
 await refreshPhase2RouteReview();
 await refreshSystemdRepairCandidates();
+await refreshSystemdRepairCandidatePlan();
 await refreshSystemdUnitInventory();
 await refreshSystemdDependencyMap();
 await refreshSystemdRepairPlan();
@@ -6050,6 +6092,7 @@ setInterval(refreshConservativeRecoveryPolicy, 5000);
 setInterval(refreshBodyGovernanceReadiness, 5000);
 setInterval(refreshPhase2RouteReview, 5000);
 setInterval(refreshSystemdRepairCandidates, 5000);
+setInterval(refreshSystemdRepairCandidatePlan, 5000);
 setInterval(refreshSystemdUnitInventory, 5000);
 setInterval(refreshSystemdDependencyMap, 5000);
 setInterval(refreshSystemdRepairPlan, 5000);
