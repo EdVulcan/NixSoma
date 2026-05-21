@@ -12546,7 +12546,7 @@ async function executeBodyEvidenceLedgerFirstRecordTask(task) {
     },
     governance: {
       taskId: task.id,
-      approvalId: task.approval?.id ?? null,
+      approvalId: task.approval?.requestId ?? null,
       approved: isTaskPolicyApproved(task),
       appendOnly: true,
       scheduler: false,
