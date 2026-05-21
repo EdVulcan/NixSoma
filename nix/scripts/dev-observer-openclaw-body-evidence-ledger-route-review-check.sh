@@ -66,7 +66,6 @@ const requiredClient = [
   "bodyEvidenceLedgerRouteReviewMutation",
   "bodyEvidenceLedgerRouteReviewJson",
   "openclaw-body-evidence-ledger-storage-root-plan",
-  "no direct durable ledger append",
 ];
 
 for (const token of requiredHtml) {
@@ -84,6 +83,10 @@ if (!review.ok || review.registry !== "openclaw-body-evidence-ledger-route-revie
 }
 if (review.decision?.selectedSlice !== "openclaw-body-evidence-ledger-storage-root-plan") {
   throw new Error(`Observer ledger route review should select storage-root planning: ${JSON.stringify(review.decision)}`);
+}
+if (!review.decision?.notSelected?.includes("no direct durable ledger append")
+  || !review.decision?.notSelected?.includes("no background ledger scheduler")) {
+  throw new Error(`Observer ledger route review should reject direct writes and schedulers: ${JSON.stringify(review.decision?.notSelected)}`);
 }
 if (review.governance?.canWriteLedger !== false
   || review.governance?.durableStorageWritten !== false
