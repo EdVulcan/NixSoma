@@ -43,6 +43,7 @@ const BODY_EVIDENCE_LEDGER_PLAN_REGISTRY = "openclaw-body-evidence-ledger-plan-v
 const BODY_EVIDENCE_LEDGER_ROUTE_REVIEW_REGISTRY = "openclaw-body-evidence-ledger-route-review-v0";
 const BODY_EVIDENCE_LEDGER_STORAGE_ROOT_PLAN_REGISTRY = "openclaw-body-evidence-ledger-storage-root-plan-v0";
 const BODY_EVIDENCE_LEDGER_STORAGE_ROOT_ROUTE_REVIEW_REGISTRY = "openclaw-body-evidence-ledger-storage-root-route-review-v0";
+const BODY_EVIDENCE_LEDGER_FIRST_RECORD_PLAN_REGISTRY = "openclaw-body-evidence-ledger-first-record-plan-v0";
 const PHASE_2_ROUTE_REVIEW_REGISTRY = "openclaw-phase-2-route-review-v0";
 const SYSTEMD_REPAIR_CANDIDATE_ASSESSMENT_REGISTRY = "openclaw-systemd-repair-candidate-assessment-v0";
 const SYSTEMD_REPAIR_CANDIDATE_PLAN_REGISTRY = "openclaw-systemd-repair-candidate-plan-v0";
@@ -3044,6 +3045,91 @@ async function buildBodyEvidenceLedgerStorageRootRouteReview() {
   };
 }
 
+async function buildBodyEvidenceLedgerFirstRecordPlan() {
+  const ledgerPlan = await buildBodyEvidenceLedgerPlan();
+  const timelineReadiness = await buildBodyEvidenceTimelineReadiness();
+  const directoryPath = path.resolve(process.cwd(), "../..", ".artifacts/openclaw-body-evidence-ledger");
+  const directoryExists = existsSync(directoryPath) && statSync(directoryPath).isDirectory();
+  const requiredFields = ledgerPlan.plan?.plannedRecordSchema?.requiredFields ?? [];
+  const plannedRecord = {
+    version: ledgerPlan.summary?.plannedSchema ?? "body-evidence-ledger-record-v0",
+    evidenceType: "body_evidence_ledger_bootstrap",
+    phase: "phase_2_body_evidence_memory",
+    sourceRegistry: timelineReadiness.registry,
+    sourceEndpoint: "/system/route/body-evidence-timeline-readiness",
+    summary: "Bootstrap durable body evidence memory with timeline readiness and ledger directory materialization evidence.",
+    contentHashStrategy: "sha256(JSON.stringify(canonicalRecordWithoutHash))",
+    governance: {
+      hostMutation: false,
+      executesCommand: false,
+      createsTask: false,
+      createsApproval: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+    },
+  };
+
+  return {
+    ok: true,
+    registry: BODY_EVIDENCE_LEDGER_FIRST_RECORD_PLAN_REGISTRY,
+    mode: "plan_only_body_evidence_ledger_first_record",
+    generatedAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      ledgerPlanRegistry: ledgerPlan.registry,
+      timelineReadinessRegistry: timelineReadiness.registry,
+      evidence: "body_evidence_ledger_first_record_plan",
+    },
+    governance: {
+      domain: "body_internal",
+      risk: "low",
+      autonomy: "plan_only",
+      approvalRequired: false,
+      hostMutation: false,
+      canMutate: false,
+      canAppendLedgerRecord: false,
+      canWriteLedger: false,
+      durableStorageWritten: false,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+    },
+    summary: {
+      planReady: ledgerPlan.summary?.planReady === true && timelineReadiness.summary?.ready === true && directoryExists,
+      ledgerPlanReady: ledgerPlan.summary?.planReady === true,
+      timelineReady: timelineReadiness.summary?.ready === true,
+      directoryExists,
+      selectedDisplayPath: ".artifacts/openclaw-body-evidence-ledger",
+      plannedRecordType: plannedRecord.evidenceType,
+      requiredFieldCount: requiredFields.length,
+      durableStorageWritten: false,
+      hiddenMutation: false,
+    },
+    plan: {
+      intent: "body.evidence.ledger.first_record.plan",
+      ledgerRoot: {
+        displayPath: ".artifacts/openclaw-body-evidence-ledger",
+        resolvedPath: directoryPath,
+        exists: directoryExists,
+      },
+      plannedRecord,
+      requiredFields,
+      preAppendChecks: [
+        "ledger directory exists inside the OpenClaw workspace",
+        "record includes schema version, source registry, source endpoint, phase, evidence type, summary, content hash, and governance",
+        "first append is a separate approval-gated milestone",
+        "no scheduler, no automatic repair, no plugin/runtime adapter work, and no background persistence",
+      ],
+    },
+    next: {
+      recommendedSlice: "openclaw-body-evidence-ledger-first-record-route-review",
+      boundary: "review the first ledger record append route before writing any JSONL record",
+    },
+  };
+}
+
 function classifySystemdRepairRisk(unit) {
   if (unit.name === "openclaw-event-hub" || unit.name === "openclaw-core") {
     return "high";
@@ -3329,6 +3415,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/route/body-evidence-ledger-storage-root-route-review") {
     const review = await buildBodyEvidenceLedgerStorageRootRouteReview();
     sendJson(res, 200, review);
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/route/body-evidence-ledger-first-record-plan") {
+    const plan = await buildBodyEvidenceLedgerFirstRecordPlan();
+    sendJson(res, 200, plan);
     return;
   }
 
