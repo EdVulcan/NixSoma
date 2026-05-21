@@ -1101,6 +1101,14 @@ function observerHtml() {
           <div class="metric"><span>Mutation</span><span id="systemd-next-repair-dry-run-mutation">false</span></div>
           <pre id="systemd-next-repair-dry-run-json">Loading operator-visible next repair dry-run envelope...</pre>
         </section>
+        <section class="panel" id="systemd-next-repair-task-route-panel">
+          <h2>Next Repair Task Route</h2>
+          <div class="metric"><span>Status</span><span id="systemd-next-repair-task-route-status">loading</span></div>
+          <div class="metric"><span>Next Slice</span><span id="systemd-next-repair-task-route-slice">loading</span></div>
+          <div class="metric"><span>Creates Task</span><span id="systemd-next-repair-task-route-creates-task">false</span></div>
+          <div class="metric"><span>Mutation</span><span id="systemd-next-repair-task-route-mutation">false</span></div>
+          <pre id="systemd-next-repair-task-route-json">Loading read-only next repair task route...</pre>
+        </section>
         <section class="panel" id="systemd-unit-inventory">
           <h2>Systemd Unit Inventory</h2>
           <div class="metric"><span>Total Units</span><span id="systemd-unit-total">0</span></div>
@@ -1403,6 +1411,11 @@ const systemdNextRepairDryRunMode = document.querySelector("#systemd-next-repair
 const systemdNextRepairDryRunWouldExecute = document.querySelector("#systemd-next-repair-dry-run-would-execute");
 const systemdNextRepairDryRunMutation = document.querySelector("#systemd-next-repair-dry-run-mutation");
 const systemdNextRepairDryRunJson = document.querySelector("#systemd-next-repair-dry-run-json");
+const systemdNextRepairTaskRouteStatus = document.querySelector("#systemd-next-repair-task-route-status");
+const systemdNextRepairTaskRouteSlice = document.querySelector("#systemd-next-repair-task-route-slice");
+const systemdNextRepairTaskRouteCreatesTask = document.querySelector("#systemd-next-repair-task-route-creates-task");
+const systemdNextRepairTaskRouteMutation = document.querySelector("#systemd-next-repair-task-route-mutation");
+const systemdNextRepairTaskRouteJson = document.querySelector("#systemd-next-repair-task-route-json");
 const systemdUnitTotal = document.querySelector("#systemd-unit-total");
 const systemdUnitActive = document.querySelector("#systemd-unit-active");
 const systemdUnitObserved = document.querySelector("#systemd-unit-observed");
@@ -5359,6 +5372,35 @@ async function refreshSystemdNextRepairDryRun() {
   }
 }
 
+async function refreshSystemdNextRepairTaskRoute() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/next-repair-task-route\`);
+    const governance = data.governance ?? {};
+    const routeDecision = data.routeDecision ?? {};
+    const evidence = data.evidence ?? {};
+    systemdNextRepairTaskRouteStatus.textContent = routeDecision.status ?? "unknown";
+    systemdNextRepairTaskRouteSlice.textContent = routeDecision.selectedSlice ?? data.next?.recommendedSlice ?? "unknown";
+    systemdNextRepairTaskRouteCreatesTask.textContent = String(Boolean(governance.createsTask));
+    systemdNextRepairTaskRouteMutation.textContent = String(Boolean(governance.hostMutation));
+    systemdNextRepairTaskRouteJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Mode: \${data.mode ?? "unknown"} createsTask=\${Boolean(governance.createsTask)} createsApproval=\${Boolean(governance.createsApproval)} executesCommand=\${Boolean(governance.executesCommand)} mutation=\${Boolean(governance.hostMutation)} canRestart=\${Boolean(governance.canRestart)}\`,
+      \`Route: \${routeDecision.status ?? "unknown"} selected=\${routeDecision.selectedSlice ?? "unknown"} target=\${routeDecision.targetUnit ?? "unknown"} taskShellAllowed=\${Boolean(routeDecision.taskShellAllowed)}\`,
+      \`Reason: \${routeDecision.reason ?? "none"}\`,
+      \`Required: \${(data.requiredBeforeTaskCreation ?? []).join(", ") || "none"}\`,
+      \`Evidence: dryRunReady=\${Boolean(evidence.dryRunReady)} command=\${evidence.command ?? "none"} \${(evidence.args ?? []).join(" ")} wouldExecute=\${Boolean(evidence.wouldExecute)}\`,
+      \`Actions: \${(data.allowedNextActions ?? []).map((action) => \`\${action.id}:allowed=\${Boolean(action.allowedNow)}:createsTask=\${Boolean(action.createsTask)}:mutation=\${Boolean(action.mutatesHost)}\`).join(", ") || "none"}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "openclaw-systemd-next-repair-task-shell"} boundary=\${data.next?.boundary ?? "task shell only"}\`,
+    ].join("\\n");
+  } catch {
+    systemdNextRepairTaskRouteStatus.textContent = "offline";
+    systemdNextRepairTaskRouteSlice.textContent = "offline";
+    systemdNextRepairTaskRouteCreatesTask.textContent = "false";
+    systemdNextRepairTaskRouteMutation.textContent = "false";
+    systemdNextRepairTaskRouteJson.textContent = "Unable to read next repair task route.";
+  }
+}
+
 async function refreshSystemdUnitInventory() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/units\`);
@@ -7037,6 +7079,7 @@ await refreshSystemdNextRepairScopeReview();
 await refreshSystemdNextRepairPlan();
 await refreshSystemdNextRepairRouteReview();
 await refreshSystemdNextRepairDryRun();
+await refreshSystemdNextRepairTaskRoute();
 await refreshSystemdUnitInventory();
 await refreshSystemdDependencyMap();
 await refreshSystemdRepairPlan();
@@ -7132,6 +7175,7 @@ setInterval(refreshSystemdNextRepairScopeReview, 5000);
 setInterval(refreshSystemdNextRepairPlan, 5000);
 setInterval(refreshSystemdNextRepairRouteReview, 5000);
 setInterval(refreshSystemdNextRepairDryRun, 5000);
+setInterval(refreshSystemdNextRepairTaskRoute, 5000);
 setInterval(refreshSystemdUnitInventory, 5000);
 setInterval(refreshSystemdDependencyMap, 5000);
 setInterval(refreshSystemdRepairPlan, 5000);

@@ -51,6 +51,7 @@ const SYSTEMD_NEXT_REPAIR_SCOPE_REVIEW_REGISTRY = "openclaw-systemd-next-repair-
 const SYSTEMD_NEXT_REPAIR_PLAN_REGISTRY = "openclaw-systemd-next-repair-plan-v0";
 const SYSTEMD_NEXT_REPAIR_ROUTE_REVIEW_REGISTRY = "openclaw-systemd-next-repair-route-review-v0";
 const SYSTEMD_NEXT_REPAIR_DRY_RUN_REGISTRY = "openclaw-systemd-next-repair-dry-run-v0";
+const SYSTEMD_NEXT_REPAIR_TASK_ROUTE_REGISTRY = "openclaw-systemd-next-repair-task-route-v0";
 const PHASE_2_ROUTE_REVIEW_REGISTRY = "openclaw-phase-2-route-review-v0";
 const SYSTEMD_REPAIR_CANDIDATE_ASSESSMENT_REGISTRY = "openclaw-systemd-repair-candidate-assessment-v0";
 const SYSTEMD_REPAIR_CANDIDATE_PLAN_REGISTRY = "openclaw-systemd-repair-candidate-plan-v0";
@@ -3961,6 +3962,94 @@ async function buildSystemdNextRepairDryRun() {
   };
 }
 
+async function buildSystemdNextRepairTaskRoute() {
+  const envelope = await buildSystemdNextRepairDryRun();
+  const routeReady = envelope.registry === SYSTEMD_NEXT_REPAIR_DRY_RUN_REGISTRY
+    && envelope.target?.unit === "openclaw-system-sense.service"
+    && envelope.dryRun?.wouldExecute === false
+    && envelope.governance?.hostMutation === false
+    && envelope.governance?.executesCommand === false;
+
+  return {
+    ok: true,
+    registry: SYSTEMD_NEXT_REPAIR_TASK_ROUTE_REGISTRY,
+    mode: "read_only_next_systemd_repair_task_route",
+    generatedAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      nextRepairDryRunRegistry: envelope.registry,
+      nextRepairPlanRegistry: envelope.source?.nextRepairPlanRegistry ?? null,
+      routeReviewRegistry: envelope.source?.routeReviewRegistry ?? null,
+      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      evidence: "systemd_next_repair_task_route",
+    },
+    governance: {
+      domain: "body_internal",
+      risk: "medium",
+      autonomy: "task_route_only",
+      approvalRequired: false,
+      hostMutation: false,
+      canMutate: false,
+      canRestart: false,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+    },
+    routeDecision: {
+      targetUnit: envelope.target?.unit ?? null,
+      status: routeReady ? "task_shell_route_available" : "blocked_until_dry_run_ready",
+      selectedSlice: "openclaw-systemd-next-repair-task-shell",
+      taskShellAllowed: routeReady,
+      reason: routeReady
+        ? "The system-sense repair dry-run is visible and non-mutating; a future task shell may be created but must still stop before approval and execution."
+        : "Task shell route waits until the selected repair dry-run is ready and non-mutating.",
+    },
+    requiredBeforeTaskCreation: [
+      "Observer-visible next repair plan",
+      "read-only route review selecting dry-run",
+      "operator-visible dry-run envelope",
+      "explicit task shell milestone",
+      "separate operator approval before execution",
+    ],
+    allowedNextActions: [
+      {
+        id: "create-task-shell",
+        label: "Create approval-gated task shell for the selected system-sense repair",
+        allowedNow: routeReady,
+        createsTask: true,
+        createsApproval: true,
+        mutatesHost: false,
+        boundary: "task shell only; no approval auto-grant, no command execution, no restart",
+      },
+      {
+        id: "execute-restart",
+        label: "Execute systemctl restart for the selected system-sense repair",
+        allowedNow: false,
+        createsTask: false,
+        createsApproval: false,
+        mutatesHost: true,
+        boundary: "requires later approval and real execution milestones",
+      },
+    ],
+    evidence: {
+      dryRunReady: routeReady,
+      dryRunRegistry: envelope.registry,
+      targetUnit: envelope.target?.unit ?? null,
+      command: envelope.dryRun?.command ?? null,
+      args: envelope.dryRun?.args ?? [],
+      wouldExecute: envelope.dryRun?.wouldExecute === true,
+      routeReview: envelope.routeReview,
+      checks: envelope.dryRun?.checks ?? [],
+    },
+    next: {
+      recommendedSlice: "openclaw-systemd-next-repair-task-shell",
+      boundary: "approval-gated task shell only; do not approve, execute, restart, recover, schedule, or broaden systemd control",
+    },
+  };
+}
+
 function classifySystemdRepairRisk(unit) {
   if (unit.name === "openclaw-event-hub" || unit.name === "openclaw-core") {
     return "high";
@@ -4368,6 +4457,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/systemd/next-repair-dry-run") {
     const envelope = await buildSystemdNextRepairDryRun();
     sendJson(res, 200, envelope);
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/next-repair-task-route") {
+    const route = await buildSystemdNextRepairTaskRoute();
+    sendJson(res, 200, route);
     return;
   }
 
