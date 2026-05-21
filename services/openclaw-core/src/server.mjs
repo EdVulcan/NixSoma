@@ -10471,6 +10471,7 @@ async function buildPhase2NextCapabilityRouteReview() {
   const demoReady = demoExit.summary?.ready === true;
   let candidateDemoStatus = null;
   let bodyEvidenceTimelineReadiness = null;
+  let bodyEvidenceLedgerReadiness = null;
   try {
     candidateDemoStatus = await fetchJson(`${systemSenseUrl}/system/systemd/repair-candidate-demo-status`);
   } catch {
@@ -10481,13 +10482,23 @@ async function buildPhase2NextCapabilityRouteReview() {
   } catch {
     bodyEvidenceTimelineReadiness = null;
   }
+  try {
+    bodyEvidenceLedgerReadiness = await fetchJson(`${systemSenseUrl}/system/route/body-evidence-ledger-readiness`);
+  } catch {
+    bodyEvidenceLedgerReadiness = null;
+  }
   const candidateDemoReady = candidateDemoStatus?.summary?.demoReady === true;
   const bodyEvidenceTimelineReady = bodyEvidenceTimelineReadiness?.summary?.ready === true;
+  const bodyEvidenceLedgerReady = bodyEvidenceLedgerReadiness?.summary?.ready === true;
   const selectedTrack = candidateDemoReady
     ? "Track C: Body Governance Enhancement"
     : "Track A: Real NixOS/systemd Repair Semantics";
   const selectedSlice = candidateDemoReady
-    ? (bodyEvidenceTimelineReady ? "openclaw-body-evidence-ledger-plan" : "openclaw-body-evidence-timeline")
+    ? (bodyEvidenceLedgerReady
+        ? "openclaw-body-evidence-ledger-demo-status"
+        : bodyEvidenceTimelineReady
+          ? "openclaw-body-evidence-ledger-plan"
+          : "openclaw-body-evidence-timeline")
     : "openclaw-systemd-repair-candidate-assessment";
   const candidates = [
     {
@@ -10519,10 +10530,24 @@ async function buildPhase2NextCapabilityRouteReview() {
       id: "durable-body-evidence-ledger",
       label: "Read-only durable body evidence ledger plan",
       score: bodyEvidenceTimelineReady ? 98 : 62,
-      recommended: bodyEvidenceTimelineReady,
+      recommended: bodyEvidenceTimelineReady && !bodyEvidenceLedgerReady,
       firstSlice: "openclaw-body-evidence-ledger-plan",
       mutation: false,
-      reason: "The in-process evidence timeline is ready; the next route-reviewed step is a plan-only durable ledger design, not persistence implementation.",
+      reason: bodyEvidenceLedgerReady
+        ? "The first durable ledger record is ready; do not loop back into the ledger plan."
+        : "The in-process evidence timeline is ready; the next route-reviewed step is a plan-only durable ledger design, not persistence implementation.",
+    },
+    {
+      track: "Track C",
+      id: "durable-body-evidence-ledger-demo-status",
+      label: "Read-only body evidence ledger demo status",
+      score: bodyEvidenceLedgerReady ? 99 : 50,
+      recommended: bodyEvidenceLedgerReady,
+      firstSlice: "openclaw-body-evidence-ledger-demo-status",
+      mutation: false,
+      reason: bodyEvidenceLedgerReady
+        ? "The first durable ledger record is ready; package the completed body-memory block for operator demo before adding more writes."
+        : "Ledger demo status waits until the first durable record readiness gate passes.",
     },
     {
       track: "Track B",
@@ -10581,13 +10606,16 @@ async function buildPhase2NextCapabilityRouteReview() {
       selectedSlice,
       status: demoReady ? "selected" : "blocked_until_demo_exit_ready",
       rationale: candidateDemoReady
-        ? (bodyEvidenceTimelineReady
+        ? (bodyEvidenceLedgerReady
+            ? "The first durable body evidence ledger record is ready, so avoid more ledger writes and package the completed block for operator demo."
+            : bodyEvidenceTimelineReady
             ? "The body evidence timeline is ready, so avoid looping and plan durable evidence storage before implementing it."
             : "The repair candidate route has been made demo-ready, so avoid looping back into the same candidate block and move to read-only body evidence memory.")
         : "Return to the highest-priority body capability track, but start with read-only candidate assessment before broadening real repair mutation.",
       notSelected: [
         candidateDemoReady ? "no repair candidate assessment loop" : "no additional demo polish before new body capability",
         bodyEvidenceTimelineReady ? "no body evidence timeline loop" : "no candidate-specific approval replay",
+        bodyEvidenceLedgerReady ? "no body evidence ledger plan or append loop" : "no body evidence ledger demo before readiness",
         "no plugin/runtime adapter work",
         "no automatic repair",
         "no broader host mutation",
@@ -10602,6 +10630,9 @@ async function buildPhase2NextCapabilityRouteReview() {
       candidateDemoSelectedUnit: candidateDemoStatus?.summary?.selectedUnit ?? null,
       bodyEvidenceTimelineReady,
       bodyEvidenceTimelineReadinessRegistry: bodyEvidenceTimelineReadiness?.registry ?? null,
+      bodyEvidenceLedgerReady,
+      bodyEvidenceLedgerReadinessRegistry: bodyEvidenceLedgerReadiness?.registry ?? null,
+      bodyEvidenceLedgerRecordCount: bodyEvidenceLedgerReadiness?.summary?.recordCount ?? 0,
       completedDemoBlock: demoExit.completedBlock,
       priorityOrder: [
         "real-systemd-repair-semantics",
@@ -10613,7 +10644,9 @@ async function buildPhase2NextCapabilityRouteReview() {
     candidates,
     next: {
       recommendedSlice: selectedSlice,
-      boundary: bodyEvidenceTimelineReady
+      boundary: bodyEvidenceLedgerReady
+        ? "read-only ledger demo status only; do not add more ledger records, background writers, schedulers, or host mutation"
+        : bodyEvidenceTimelineReady
         ? "plan-only durable evidence ledger design; do not write durable storage, schedule work, execute commands, or mutate host"
         : candidateDemoReady
           ? "read-only body evidence timeline only; do not create tasks, execute commands, mutate host, or schedule recovery"

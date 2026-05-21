@@ -57,6 +57,7 @@ checks=(
   "openclaw-phase-2-demo-walkthrough|dev-openclaw-phase-2-demo-walkthrough-check.sh|Read-only Phase 2 human demo walkthrough"
   "openclaw-phase-2-demo-readiness-exit|dev-openclaw-phase-2-demo-readiness-exit-check.sh|Read-only Phase 2 demo readiness exit gate"
   "openclaw-phase-2-next-capability-route-review|dev-openclaw-phase-2-next-capability-route-review-check.sh|Whitepaper-aligned next Phase 2 body capability route review"
+  "openclaw-phase-2-next-capability-route-review-ledger-ready|dev-openclaw-phase-2-next-capability-route-review-ledger-ready-check.sh|Whitepaper-aligned next Phase 2 route review after body evidence ledger readiness"
   "openclaw-systemd-repair-candidate-assessment|dev-openclaw-systemd-repair-candidate-assessment-check.sh|Read-only OpenClaw systemd repair candidate assessment"
   "openclaw-systemd-repair-candidate-plan|dev-openclaw-systemd-repair-candidate-plan-check.sh|Plan-only OpenClaw systemd repair candidate scope"
   "openclaw-systemd-repair-candidate-task-route|dev-openclaw-systemd-repair-candidate-task-route-check.sh|Read-only OpenClaw systemd repair candidate task route gate"
