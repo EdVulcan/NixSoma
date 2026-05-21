@@ -1093,6 +1093,14 @@ function observerHtml() {
           <div class="metric"><span>Mutation</span><span id="systemd-next-repair-route-review-mutation">false</span></div>
           <pre id="systemd-next-repair-route-review-json">Loading read-only next repair route review...</pre>
         </section>
+        <section class="panel" id="systemd-next-repair-dry-run-panel">
+          <h2>Next Repair Dry Run</h2>
+          <div class="metric"><span>Target</span><span id="systemd-next-repair-dry-run-target">loading</span></div>
+          <div class="metric"><span>Mode</span><span id="systemd-next-repair-dry-run-mode">loading</span></div>
+          <div class="metric"><span>Would Execute</span><span id="systemd-next-repair-dry-run-would-execute">false</span></div>
+          <div class="metric"><span>Mutation</span><span id="systemd-next-repair-dry-run-mutation">false</span></div>
+          <pre id="systemd-next-repair-dry-run-json">Loading operator-visible next repair dry-run envelope...</pre>
+        </section>
         <section class="panel" id="systemd-unit-inventory">
           <h2>Systemd Unit Inventory</h2>
           <div class="metric"><span>Total Units</span><span id="systemd-unit-total">0</span></div>
@@ -1390,6 +1398,11 @@ const systemdNextRepairRouteReviewSlice = document.querySelector("#systemd-next-
 const systemdNextRepairRouteReviewCreatesTask = document.querySelector("#systemd-next-repair-route-review-creates-task");
 const systemdNextRepairRouteReviewMutation = document.querySelector("#systemd-next-repair-route-review-mutation");
 const systemdNextRepairRouteReviewJson = document.querySelector("#systemd-next-repair-route-review-json");
+const systemdNextRepairDryRunTarget = document.querySelector("#systemd-next-repair-dry-run-target");
+const systemdNextRepairDryRunMode = document.querySelector("#systemd-next-repair-dry-run-mode");
+const systemdNextRepairDryRunWouldExecute = document.querySelector("#systemd-next-repair-dry-run-would-execute");
+const systemdNextRepairDryRunMutation = document.querySelector("#systemd-next-repair-dry-run-mutation");
+const systemdNextRepairDryRunJson = document.querySelector("#systemd-next-repair-dry-run-json");
 const systemdUnitTotal = document.querySelector("#systemd-unit-total");
 const systemdUnitActive = document.querySelector("#systemd-unit-active");
 const systemdUnitObserved = document.querySelector("#systemd-unit-observed");
@@ -5318,6 +5331,33 @@ async function refreshSystemdNextRepairRouteReview() {
   }
 }
 
+async function refreshSystemdNextRepairDryRun() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/next-repair-dry-run\`);
+    const governance = data.governance ?? {};
+    const dryRun = data.dryRun ?? {};
+    systemdNextRepairDryRunTarget.textContent = data.target?.unit ?? data.plan?.plan?.targetUnit ?? "unknown";
+    systemdNextRepairDryRunMode.textContent = data.mode ?? "dry_run";
+    systemdNextRepairDryRunWouldExecute.textContent = String(Boolean(dryRun.wouldExecute));
+    systemdNextRepairDryRunMutation.textContent = String(Boolean(governance.hostMutation));
+    systemdNextRepairDryRunJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Mode: \${data.mode ?? "unknown"} wouldExecute=\${Boolean(data.wouldExecute)} canRestart=\${Boolean(data.canRestart)} mutation=\${Boolean(governance.hostMutation)} executesCommand=\${Boolean(governance.executesCommand)} createsTask=\${Boolean(governance.createsTask)} createsApproval=\${Boolean(governance.createsApproval)}\`,
+      \`Route: \${data.routeReview?.status ?? "unknown"} selected=\${data.routeReview?.selectedSlice ?? "unknown"} unit=\${data.routeReview?.selectedUnit ?? "unknown"}\`,
+      \`Target: \${data.target?.unit ?? "unknown"} impact=\${data.target?.impactClass ?? "unknown"} radius=\${data.target?.impactRadius ?? 0}\`,
+      \`Command: \${dryRun.command ?? "none"} \${(dryRun.args ?? []).join(" ")} risk=\${dryRun.risk ?? "unknown"} requiresApproval=\${Boolean(dryRun.requiresApproval)} wouldExecute=\${Boolean(dryRun.wouldExecute)}\`,
+      \`Checks: \${(dryRun.checks ?? []).map((check) => \`\${check.name}=\${Boolean(check.passed)}\`).join(", ") || "none"}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "openclaw-systemd-next-repair-task-route"} boundary=\${data.next?.boundary ?? "route-review task materialization"}\`,
+    ].join("\\n");
+  } catch {
+    systemdNextRepairDryRunTarget.textContent = "offline";
+    systemdNextRepairDryRunMode.textContent = "offline";
+    systemdNextRepairDryRunWouldExecute.textContent = "false";
+    systemdNextRepairDryRunMutation.textContent = "false";
+    systemdNextRepairDryRunJson.textContent = "Unable to read next repair dry-run envelope.";
+  }
+}
+
 async function refreshSystemdUnitInventory() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/units\`);
@@ -6995,6 +7035,7 @@ await refreshSystemdRepairCandidateDemoStatus();
 await refreshSystemdNextRepairScopeReview();
 await refreshSystemdNextRepairPlan();
 await refreshSystemdNextRepairRouteReview();
+await refreshSystemdNextRepairDryRun();
 await refreshSystemdUnitInventory();
 await refreshSystemdDependencyMap();
 await refreshSystemdRepairPlan();
@@ -7089,6 +7130,7 @@ setInterval(refreshSystemdRepairCandidateDemoStatus, 5000);
 setInterval(refreshSystemdNextRepairScopeReview, 5000);
 setInterval(refreshSystemdNextRepairPlan, 5000);
 setInterval(refreshSystemdNextRepairRouteReview, 5000);
+setInterval(refreshSystemdNextRepairDryRun, 5000);
 setInterval(refreshSystemdUnitInventory, 5000);
 setInterval(refreshSystemdDependencyMap, 5000);
 setInterval(refreshSystemdRepairPlan, 5000);

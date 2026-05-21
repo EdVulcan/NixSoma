@@ -50,6 +50,7 @@ const BODY_EVIDENCE_LEDGER_DEMO_STATUS_REGISTRY = "openclaw-body-evidence-ledger
 const SYSTEMD_NEXT_REPAIR_SCOPE_REVIEW_REGISTRY = "openclaw-systemd-next-repair-scope-review-v0";
 const SYSTEMD_NEXT_REPAIR_PLAN_REGISTRY = "openclaw-systemd-next-repair-plan-v0";
 const SYSTEMD_NEXT_REPAIR_ROUTE_REVIEW_REGISTRY = "openclaw-systemd-next-repair-route-review-v0";
+const SYSTEMD_NEXT_REPAIR_DRY_RUN_REGISTRY = "openclaw-systemd-next-repair-dry-run-v0";
 const PHASE_2_ROUTE_REVIEW_REGISTRY = "openclaw-phase-2-route-review-v0";
 const SYSTEMD_REPAIR_CANDIDATE_ASSESSMENT_REGISTRY = "openclaw-systemd-repair-candidate-assessment-v0";
 const SYSTEMD_REPAIR_CANDIDATE_PLAN_REGISTRY = "openclaw-systemd-repair-candidate-plan-v0";
@@ -3878,6 +3879,88 @@ async function buildSystemdNextRepairRouteReview() {
   };
 }
 
+async function buildSystemdNextRepairDryRun() {
+  const routeReview = await buildSystemdNextRepairRouteReview();
+  const repairPlan = await buildSystemdNextRepairPlan();
+  const dryRun = buildCommandDryRun({
+    command: "systemctl",
+    args: ["restart", repairPlan.plan?.targetUnit ?? ""].filter(Boolean),
+    intent: "systemd.next_repair.dry_run",
+  });
+
+  return {
+    ok: true,
+    registry: SYSTEMD_NEXT_REPAIR_DRY_RUN_REGISTRY,
+    mode: "operator_visible_next_systemd_repair_dry_run",
+    canMutate: false,
+    canRestart: false,
+    wouldExecute: false,
+    generatedAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      routeReviewRegistry: routeReview.registry,
+      nextRepairPlanRegistry: repairPlan.registry,
+      scopeReviewRegistry: repairPlan.source?.scopeReviewRegistry ?? null,
+      evidence: "systemd_next_repair_dry_run_envelope",
+    },
+    target: repairPlan.target,
+    plan: repairPlan,
+    routeReview: {
+      registry: routeReview.registry,
+      selectedSlice: routeReview.decision?.selectedSlice ?? null,
+      selectedUnit: routeReview.decision?.selectedUnit ?? null,
+      status: routeReview.decision?.status ?? "unknown",
+    },
+    dryRun: {
+      ...dryRun,
+      risk: "high",
+      governance: "require_future_operator_approval",
+      requiresApproval: true,
+      checks: [
+        ...dryRun.checks,
+        {
+          name: "route_review_selected_dry_run",
+          passed: routeReview.decision?.selectedSlice === "openclaw-systemd-next-repair-dry-run",
+          detail: "The previous route review selected this dry-run envelope before any task or host mutation.",
+        },
+        {
+          name: "target_is_system_sense",
+          passed: repairPlan.plan?.targetUnit === "openclaw-system-sense.service",
+          detail: "The dry-run envelope is limited to the selected system-sense repair scope.",
+        },
+        {
+          name: "operator_visible_before_mutation",
+          passed: true,
+          detail: "The restart command is visible before any future task, approval, or host mutation milestone.",
+        },
+        {
+          name: "no_restart_executed",
+          passed: true,
+          detail: "This endpoint does not execute systemctl restart.",
+        },
+      ],
+    },
+    governance: {
+      domain: "body_internal",
+      autonomy: "dry_run_only",
+      approvalRequired: false,
+      hostMutation: false,
+      canMutate: false,
+      canRestart: false,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+      futureExecutionRequiresSeparateMilestone: true,
+    },
+    next: {
+      recommendedSlice: "openclaw-systemd-next-repair-task-route",
+      boundary: "route-review task materialization before creating approvals, executing systemctl, restarting services, or mutating the host",
+    },
+  };
+}
+
 function classifySystemdRepairRisk(unit) {
   if (unit.name === "openclaw-event-hub" || unit.name === "openclaw-core") {
     return "high";
@@ -4279,6 +4362,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/systemd/next-repair-route-review") {
     const review = await buildSystemdNextRepairRouteReview();
     sendJson(res, 200, review);
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/next-repair-dry-run") {
+    const envelope = await buildSystemdNextRepairDryRun();
+    sendJson(res, 200, envelope);
     return;
   }
 

@@ -486,6 +486,18 @@ This checkpoint is allowed because the selected system-sense repair plan is visi
 - Creates no task, no approval, no command execution, no restart, no host mutation, no scheduler, no recovery action, and no additional ledger write.
 - Must not implement the dry-run envelope in this checkpoint; that belongs to `openclaw-systemd-next-repair-dry-run`.
 
+Systemd next repair dry-run checkpoint:
+
+After the route review selects `openclaw-systemd-next-repair-dry-run`, the system may expose an operator-visible dry-run envelope for the selected `openclaw-system-sense.service` repair.
+
+This checkpoint is allowed because it makes the exact future restart command visible without crossing into task creation, approval creation, or host mutation:
+
+- Reads the next repair route review and next repair plan only.
+- Exposes `systemctl restart openclaw-system-sense.service` as a dry-run command envelope with `wouldExecute=false`.
+- Records route-review evidence, target unit, risk, required future approval, no-execution checks, operator-visible-before-mutation check, and no-restart-executed check.
+- Creates no task, no approval, no command execution, no restart, no host mutation, no scheduler, no recovery action, and no additional ledger write.
+- Must not create the task shell, approve the action, execute `systemctl`, add automatic repair, replay the browser-runtime demo, add persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, arbitrary host control, or broader mutation.
+
 Body evidence timeline checkpoint:
 
 After the next capability route review selects Track C, `openclaw-body-evidence-timeline` may expose a read-only chronological memory spine for OpenClaw body evidence.
