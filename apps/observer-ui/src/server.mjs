@@ -924,6 +924,14 @@ function observerHtml() {
           <div class="metric"><span>Storage Written</span><span id="body-evidence-ledger-plan-written">false</span></div>
           <pre id="body-evidence-ledger-plan-json">Loading body evidence ledger plan...</pre>
         </section>
+        <section class="panel" id="body-evidence-ledger-route-review-panel">
+          <h2>Body Evidence Ledger Route Review</h2>
+          <div class="metric"><span>Status</span><span id="body-evidence-ledger-route-review-status">loading</span></div>
+          <div class="metric"><span>Next Slice</span><span id="body-evidence-ledger-route-review-next">loading</span></div>
+          <div class="metric"><span>Can Write</span><span id="body-evidence-ledger-route-review-write">false</span></div>
+          <div class="metric"><span>Mutation</span><span id="body-evidence-ledger-route-review-mutation">false</span></div>
+          <pre id="body-evidence-ledger-route-review-json">Loading body evidence ledger route review...</pre>
+        </section>
         <section class="panel" id="phase-2-route-review">
           <h2>Phase 2 Route Review</h2>
           <div class="metric"><span>Selected Track</span><span id="phase-2-route-selected-track">loading</span></div>
@@ -1188,6 +1196,11 @@ const bodyEvidenceLedgerPlanSchema = document.querySelector("#body-evidence-ledg
 const bodyEvidenceLedgerPlanGates = document.querySelector("#body-evidence-ledger-plan-gates");
 const bodyEvidenceLedgerPlanWritten = document.querySelector("#body-evidence-ledger-plan-written");
 const bodyEvidenceLedgerPlanJson = document.querySelector("#body-evidence-ledger-plan-json");
+const bodyEvidenceLedgerRouteReviewStatus = document.querySelector("#body-evidence-ledger-route-review-status");
+const bodyEvidenceLedgerRouteReviewNext = document.querySelector("#body-evidence-ledger-route-review-next");
+const bodyEvidenceLedgerRouteReviewWrite = document.querySelector("#body-evidence-ledger-route-review-write");
+const bodyEvidenceLedgerRouteReviewMutation = document.querySelector("#body-evidence-ledger-route-review-mutation");
+const bodyEvidenceLedgerRouteReviewJson = document.querySelector("#body-evidence-ledger-route-review-json");
 const phase2RouteSelectedTrack = document.querySelector("#phase-2-route-selected-track");
 const phase2RouteNextSlice = document.querySelector("#phase-2-route-next-slice");
 const phase2RouteCreatesTask = document.querySelector("#phase-2-route-creates-task");
@@ -4560,6 +4573,36 @@ async function refreshBodyEvidenceLedgerPlan() {
   }
 }
 
+async function refreshBodyEvidenceLedgerRouteReview() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/route/body-evidence-ledger-route-review\`);
+    const governance = data.governance ?? {};
+    const decision = data.decision ?? {};
+    const evidence = data.evidence ?? {};
+    const candidates = Array.isArray(data.candidates) ? data.candidates : [];
+    bodyEvidenceLedgerRouteReviewStatus.textContent = decision.status ?? "unknown";
+    bodyEvidenceLedgerRouteReviewNext.textContent = decision.selectedSlice ?? data.next?.recommendedSlice ?? "unknown";
+    bodyEvidenceLedgerRouteReviewWrite.textContent = String(Boolean(governance.canWriteLedger));
+    bodyEvidenceLedgerRouteReviewMutation.textContent = String(Boolean(governance.hostMutation));
+    bodyEvidenceLedgerRouteReviewJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Mode: \${data.mode ?? "unknown"} canWriteLedger=\${Boolean(governance.canWriteLedger)} storageWritten=\${Boolean(governance.durableStorageWritten)} mutation=\${Boolean(governance.hostMutation)} createsTask=\${Boolean(governance.createsTask)} executesCommand=\${Boolean(governance.executesCommand)}\`,
+      \`Decision: \${decision.status ?? "unknown"} track=\${decision.selectedTrack ?? "unknown"} slice=\${decision.selectedSlice ?? "unknown"}\`,
+      \`Rationale: \${decision.rationale ?? "none"}\`,
+      \`Avoid: \${(decision.notSelected ?? []).join(", ") || "none"}\`,
+      \`Evidence: ledgerPlanReady=\${Boolean(evidence.ledgerPlanReady)} schema=\${evidence.plannedSchema ?? "unknown"} gates=\${evidence.writeGateCount ?? 0} unmet=\${(evidence.unmetWriteGateIds ?? []).join(",") || "none"} durableStorageWritten=\${Boolean(evidence.durableStorageWritten)}\`,
+      \`Candidates: \${candidates.map((candidate) => \`\${candidate.id}:\${candidate.firstSlice}:recommended=\${Boolean(candidate.recommended)}:write=\${Boolean(candidate.durableWrite)}\`).join(", ")}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "openclaw-body-evidence-ledger-storage-root-plan"} boundary=\${data.next?.boundary ?? "storage root plan before writes"}\`,
+    ].join("\\n");
+  } catch {
+    bodyEvidenceLedgerRouteReviewStatus.textContent = "offline";
+    bodyEvidenceLedgerRouteReviewNext.textContent = "unknown";
+    bodyEvidenceLedgerRouteReviewWrite.textContent = "false";
+    bodyEvidenceLedgerRouteReviewMutation.textContent = "false";
+    bodyEvidenceLedgerRouteReviewJson.textContent = "Unable to read body evidence ledger route review.";
+  }
+}
+
 async function refreshPhase2RouteReview() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/route/phase-2-review\`);
@@ -6388,6 +6431,7 @@ await refreshBodyGovernanceReadiness();
 await refreshBodyEvidenceTimeline();
 await refreshBodyEvidenceTimelineReadiness();
 await refreshBodyEvidenceLedgerPlan();
+await refreshBodyEvidenceLedgerRouteReview();
 await refreshPhase2RouteReview();
 await refreshSystemdRepairCandidates();
 await refreshSystemdRepairCandidatePlan();
@@ -6470,6 +6514,7 @@ setInterval(refreshBodyGovernanceReadiness, 5000);
 setInterval(refreshBodyEvidenceTimeline, 5000);
 setInterval(refreshBodyEvidenceTimelineReadiness, 5000);
 setInterval(refreshBodyEvidenceLedgerPlan, 5000);
+setInterval(refreshBodyEvidenceLedgerRouteReview, 5000);
 setInterval(refreshPhase2RouteReview, 5000);
 setInterval(refreshSystemdRepairCandidates, 5000);
 setInterval(refreshSystemdRepairCandidatePlan, 5000);

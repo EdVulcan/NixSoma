@@ -319,6 +319,18 @@ This checkpoint is allowed because durable body memory is a whitepaper-aligned c
 - Creates no task, no approval, no command execution, no host mutation, no scheduler, no durable storage write, and no recovery action.
 - Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, arbitrary host control, durable event storage, or append-only ledger writes.
 
+Body evidence ledger route review checkpoint:
+
+After the ledger plan passes, `openclaw-body-evidence-ledger-route-review` may choose the next implementation-preparation slice.
+
+This checkpoint is allowed because the ledger schema and write gates are visible, but the project still needs a route decision before selecting any storage root or append behavior:
+
+- Reads body evidence ledger plan evidence only.
+- Selects an operator-visible storage root plan as the next slice before any durable append.
+- Explains why direct durable writes, background ledger schedulers, automatic repair, plugin/runtime adapter work, and safety-boundary hardening loops are not selected.
+- Creates no task, no approval, no command execution, no host mutation, no scheduler, no durable storage write, and no recovery action.
+- Must not add append-only ledger writes, durable event storage, background persistence, automatic repair, denial recovery, duplicate-click handling, plugin/runtime adapter work, arbitrary host control, or broader mutation.
+
 Body evidence timeline checkpoint:
 
 After the next capability route review selects Track C, `openclaw-body-evidence-timeline` may expose a read-only chronological memory spine for OpenClaw body evidence.
