@@ -9002,6 +9002,7 @@ function serialiseTask(task) {
     outcome: task.outcome ?? null,
     sourceCommand: task.sourceCommand ?? null,
     systemdRepair: task.systemdRepair ?? null,
+    systemdRepairCandidate: task.systemdRepairCandidate ?? null,
     recovery: task.recovery ?? null,
     recoveredByTaskId: task.recoveredByTaskId ?? null,
     restorable: isRecoverableTask(task),
