@@ -10223,16 +10223,41 @@ async function buildPhase2DemoReadinessExit() {
 async function buildPhase2NextCapabilityRouteReview() {
   const demoExit = await buildPhase2DemoReadinessExit();
   const demoReady = demoExit.summary?.ready === true;
+  let candidateDemoStatus = null;
+  try {
+    candidateDemoStatus = await fetchJson(`${systemSenseUrl}/system/systemd/repair-candidate-demo-status`);
+  } catch {
+    candidateDemoStatus = null;
+  }
+  const candidateDemoReady = candidateDemoStatus?.summary?.demoReady === true;
+  const selectedTrack = candidateDemoReady
+    ? "Track C: Body Governance Enhancement"
+    : "Track A: Real NixOS/systemd Repair Semantics";
+  const selectedSlice = candidateDemoReady
+    ? "openclaw-body-evidence-timeline"
+    : "openclaw-systemd-repair-candidate-assessment";
   const candidates = [
     {
       track: "Track A",
       id: "real-systemd-repair-semantics",
       label: "Read-only next repair candidate assessment",
-      score: demoReady ? 96 : 60,
-      recommended: true,
+      score: candidateDemoReady ? 58 : (demoReady ? 96 : 60),
+      recommended: !candidateDemoReady,
       firstSlice: "openclaw-systemd-repair-candidate-assessment",
       mutation: false,
-      reason: "Phase 2 now has demo readiness and body governance; the next body capability should return to real NixOS/systemd repair semantics without immediately broadening mutation.",
+      reason: candidateDemoReady
+        ? "The repair candidate route is already demo-ready; repeating candidate assessment would create a route loop."
+        : "Phase 2 now has demo readiness and body governance; the next body capability should return to real NixOS/systemd repair semantics without immediately broadening mutation.",
+    },
+    {
+      track: "Track C",
+      id: "body-governance-evidence-memory",
+      label: "Read-only body evidence timeline",
+      score: candidateDemoReady ? 97 : 64,
+      recommended: candidateDemoReady,
+      firstSlice: "openclaw-body-evidence-timeline",
+      mutation: false,
+      reason: "The repair candidate route is demo-ready; the next whitepaper-aligned gain is durable body evidence memory before any broader mutation.",
     },
     {
       track: "Track B",
@@ -10287,13 +10312,15 @@ async function buildPhase2NextCapabilityRouteReview() {
       schedulesWork: false,
     },
     decision: {
-      selectedTrack: "Track A: Real NixOS/systemd Repair Semantics",
-      selectedSlice: "openclaw-systemd-repair-candidate-assessment",
+      selectedTrack,
+      selectedSlice,
       status: demoReady ? "selected" : "blocked_until_demo_exit_ready",
-      rationale: "Return to the highest-priority body capability track, but start with read-only candidate assessment before broadening real repair mutation.",
+      rationale: candidateDemoReady
+        ? "The repair candidate route has been made demo-ready, so avoid looping back into the same candidate block and move to read-only body evidence memory."
+        : "Return to the highest-priority body capability track, but start with read-only candidate assessment before broadening real repair mutation.",
       notSelected: [
-        "no additional demo polish before new body capability",
-        "no governance-only expansion before candidate assessment",
+        candidateDemoReady ? "no repair candidate assessment loop" : "no additional demo polish before new body capability",
+        candidateDemoReady ? "no candidate-specific approval replay" : "no governance-only expansion before candidate assessment",
         "no plugin/runtime adapter work",
         "no automatic repair",
         "no broader host mutation",
@@ -10303,6 +10330,9 @@ async function buildPhase2NextCapabilityRouteReview() {
     evidence: {
       demoReady,
       demoExitChecks: `${demoExit.summary?.passed ?? 0}/${demoExit.summary?.total ?? 0}`,
+      candidateDemoReady,
+      candidateDemoStatusRegistry: candidateDemoStatus?.registry ?? null,
+      candidateDemoSelectedUnit: candidateDemoStatus?.summary?.selectedUnit ?? null,
       completedDemoBlock: demoExit.completedBlock,
       priorityOrder: [
         "real-systemd-repair-semantics",
@@ -10313,8 +10343,10 @@ async function buildPhase2NextCapabilityRouteReview() {
     },
     candidates,
     next: {
-      recommendedSlice: "openclaw-systemd-repair-candidate-assessment",
-      boundary: "read-only candidate assessment only; do not create repair tasks or execute host mutation",
+      recommendedSlice: selectedSlice,
+      boundary: candidateDemoReady
+        ? "read-only body evidence timeline only; do not create tasks, execute commands, mutate host, or schedule recovery"
+        : "read-only candidate assessment only; do not create repair tasks or execute host mutation",
     },
   };
 }

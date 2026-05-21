@@ -4047,8 +4047,9 @@ async function refreshPhase2NextCapabilityRoute() {
     const decision = data.decision ?? {};
     const governance = data.governance ?? {};
     const evidence = data.evidence ?? {};
+    const nextSlice = data.next?.recommendedSlice ?? "openclaw-body-evidence-timeline";
     phase2NextCapabilityTrack.textContent = decision.selectedTrack ?? "unknown";
-    phase2NextCapabilitySlice.textContent = decision.selectedSlice ?? data.next?.recommendedSlice ?? "unknown";
+    phase2NextCapabilitySlice.textContent = decision.selectedSlice ?? nextSlice;
     phase2NextCapabilityCreatesTask.textContent = String(Boolean(governance.createsTask));
     phase2NextCapabilityMutation.textContent = String(Boolean(governance.mutatesHost));
     phase2NextCapabilityJson.textContent = [
@@ -4057,9 +4058,9 @@ async function refreshPhase2NextCapabilityRoute() {
       \`Decision: \${decision.status ?? "unknown"} track=\${decision.selectedTrack ?? "unknown"} slice=\${decision.selectedSlice ?? "unknown"}\`,
       \`Rationale: \${decision.rationale ?? "none"}\`,
       \`Avoid: \${(decision.notSelected ?? []).join(", ") || "none"}\`,
-      \`Evidence: demoReady=\${Boolean(evidence.demoReady)} exitChecks=\${evidence.demoExitChecks ?? "0/0"} completed=\${evidence.completedDemoBlock?.completionClaim ?? "unknown"}\`,
+      \`Evidence: demoReady=\${Boolean(evidence.demoReady)} exitChecks=\${evidence.demoExitChecks ?? "0/0"} candidateDemoReady=\${Boolean(evidence.candidateDemoReady)} candidateUnit=\${evidence.candidateDemoSelectedUnit ?? "none"} completed=\${evidence.completedDemoBlock?.completionClaim ?? "unknown"}\`,
       \`Candidates: \${(data.candidates ?? []).map((candidate) => \`\${candidate.track}:\${candidate.firstSlice}:recommended=\${Boolean(candidate.recommended)}\`).join(", ")}\`,
-      \`Next: \${data.next?.recommendedSlice ?? "systemd repair candidate assessment"}\`,
+      \`Next: \${nextSlice}\`,
     ].join("\\n");
   } catch {
     phase2NextCapabilityTrack.textContent = "offline";
