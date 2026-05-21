@@ -43,6 +43,7 @@ const SYSTEMD_REPAIR_CANDIDATE_PLAN_REGISTRY = "openclaw-systemd-repair-candidat
 const SYSTEMD_REPAIR_CANDIDATE_TASK_ROUTE_REGISTRY = "openclaw-systemd-repair-candidate-task-route-v0";
 const SYSTEMD_REPAIR_CANDIDATE_READINESS_REGISTRY = "openclaw-systemd-repair-candidate-readiness-v0";
 const SYSTEMD_REPAIR_CANDIDATE_ROUTE_REVIEW_REGISTRY = "openclaw-systemd-repair-candidate-route-review-v0";
+const SYSTEMD_REPAIR_CANDIDATE_DEMO_STATUS_REGISTRY = "openclaw-systemd-repair-candidate-demo-status-v0";
 const SYSTEMD_REPAIR_PLAN_REGISTRY = "openclaw-systemd-repair-plan-v0";
 const SYSTEMD_REPAIR_DRY_RUN_REGISTRY = "openclaw-systemd-repair-dry-run-v0";
 const MAX_HEALTH_TREND_SNAPSHOTS = 24;
@@ -2248,6 +2249,122 @@ async function buildSystemdRepairCandidateRouteReview() {
   };
 }
 
+async function buildSystemdRepairCandidateDemoStatus() {
+  const [review, readiness, taskRoute] = await Promise.all([
+    buildSystemdRepairCandidateRouteReview(),
+    buildSystemdRepairCandidateReadiness(),
+    buildSystemdRepairCandidateTaskRoute(),
+  ]);
+  const selectedUnit = readiness.summary?.selectedUnit ?? taskRoute.routeDecision?.targetUnit ?? null;
+  const demoReady = review.decision?.selectedSlice === "openclaw-systemd-repair-candidate-demo-status"
+    && readiness.summary?.ready === true
+    && selectedUnit === "openclaw-browser-runtime.service";
+  const checklist = [
+    {
+      id: "candidate-ranked",
+      label: "Candidate assessment ranks browser runtime as the visible repair target",
+      passed: readiness.evidence?.recommendedCandidate === "openclaw-browser-runtime.service",
+      evidence: readiness.source?.candidateAssessmentRegistry ?? null,
+    },
+    {
+      id: "plan-preview-visible",
+      label: "Plan-only command preview is available without execution",
+      passed: typeof readiness.evidence?.commandPreview === "string"
+        && readiness.evidence.commandPreview.includes("openclaw-browser-runtime.service"),
+      evidence: readiness.source?.candidatePlanRegistry ?? null,
+    },
+    {
+      id: "existing-route-visible",
+      label: "Existing operator-reviewed repair route is selected",
+      passed: taskRoute.routeDecision?.existingRouteAvailable === true,
+      evidence: readiness.source?.candidateTaskRouteRegistry ?? null,
+    },
+    {
+      id: "task-shell-visible",
+      label: "Candidate task shell is visible in Observer before approval or execution",
+      passed: readiness.completedBlock?.completedSlices?.includes("observer-openclaw-systemd-repair-candidate-task-shell") === true,
+      evidence: readiness.source?.observerTaskShellRegistry ?? null,
+    },
+    {
+      id: "route-review-complete",
+      label: "Route review selects demo status instead of duplicate approval or mutation",
+      passed: review.registry === SYSTEMD_REPAIR_CANDIDATE_ROUTE_REVIEW_REGISTRY
+        && review.decision?.selectedSlice === "openclaw-systemd-repair-candidate-demo-status",
+      evidence: review.registry,
+    },
+    {
+      id: "no-hidden-action",
+      label: "Demo status remains read-only and non-executing",
+      passed: review.governance?.createsTask === false
+        && review.governance?.executesCommand === false
+        && review.governance?.hostMutation === false
+        && review.governance?.triggersRecovery === false,
+      evidence: "candidate_demo_status_governance",
+    },
+  ];
+  const passedChecks = checklist.filter((check) => check.passed).length;
+
+  return {
+    ok: true,
+    registry: SYSTEMD_REPAIR_CANDIDATE_DEMO_STATUS_REGISTRY,
+    mode: "read_only_candidate_repair_demo_status",
+    generatedAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      candidateReadinessRegistry: readiness.registry,
+      candidateRouteReviewRegistry: review.registry,
+      candidateTaskRouteRegistry: taskRoute.registry,
+      evidence: "systemd_repair_candidate_demo_status",
+    },
+    governance: {
+      domain: "body_internal",
+      risk: "low",
+      autonomy: "demo_status_only",
+      approvalRequired: false,
+      hostMutation: false,
+      canMutate: false,
+      canRestart: false,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+    },
+    summary: {
+      demoReady,
+      passedChecks,
+      totalChecks: checklist.length,
+      selectedUnit,
+      selectedSlice: review.decision?.selectedSlice ?? null,
+      nextSlice: review.next?.recommendedSlice ?? null,
+      hiddenMutation: false,
+    },
+    checklist,
+    operatorView: {
+      title: "Systemd repair candidate route is demo-ready",
+      narrative: "OpenClaw can explain how it selected one body service, planned a repair preview, verified an existing operator-reviewed task route, and stopped before approval or host mutation.",
+      speakingPoints: [
+        "The body candidate is selected from systemd inventory, dependency, and health trend evidence.",
+        "The command is only a preview until a separate operator action creates an approval-gated task shell.",
+        "The route review avoids replaying approval and execution for the same browser-runtime target.",
+        "The next expansion must be chosen by another whitepaper route review, not by safety-boundary momentum.",
+      ],
+    },
+    evidence: {
+      recommendedCandidate: readiness.evidence?.recommendedCandidate ?? null,
+      candidateReason: readiness.evidence?.candidateReason ?? null,
+      commandPreview: readiness.evidence?.commandPreview ?? null,
+      routeStatus: taskRoute.routeDecision?.status ?? "unknown",
+      notSelected: review.decision?.notSelected ?? [],
+      completedBlock: readiness.completedBlock,
+    },
+    next: {
+      recommendedSlice: "openclaw-phase-2-next-capability-route-review",
+      boundary: "return to a broader whitepaper route review before adding approval replay, execution replay, or broader systemd mutation",
+    },
+  };
+}
+
 function classifySystemdRepairRisk(unit) {
   if (unit.name === "openclaw-event-hub" || unit.name === "openclaw-core") {
     return "high";
@@ -2565,6 +2682,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-candidate-route-review") {
     const review = await buildSystemdRepairCandidateRouteReview();
     sendJson(res, 200, review);
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-candidate-demo-status") {
+    const status = await buildSystemdRepairCandidateDemoStatus();
+    sendJson(res, 200, status);
     return;
   }
 

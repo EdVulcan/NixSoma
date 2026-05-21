@@ -375,6 +375,17 @@ This checkpoint is allowed because the candidate repair route has reached a safe
 - Creates no task, no approval, no command execution, no host mutation, no scheduler, and no recovery action.
 - Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, or arbitrary host control.
 
+Systemd repair candidate demo status checkpoint:
+
+After candidate route review selects the demo-status route, `openclaw-systemd-repair-candidate-demo-status` may expose the completed candidate repair route as an operator-readable evidence bundle.
+
+This checkpoint is allowed because it turns the completed candidate route into a clear demo surface without replaying approval or execution:
+
+- Reads candidate readiness, candidate route review, and candidate task route evidence only.
+- Exposes demo readiness, checklist, selected unit, command preview, route status, speaking points, and no-hidden-mutation boundary.
+- Creates no task, no approval, no command execution, no host mutation, no scheduler, and no recovery action.
+- Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, candidate-specific approval replay, real execution replay, or arbitrary host control.
+
 ## Phase 2 Gate
 
 Before implementing any Phase 2 feature, confirm:
