@@ -48,10 +48,11 @@ step="$(post_json "$CORE_URL/operator/step" '{}')"
 task_id="$(node -e 'const data = JSON.parse(process.argv[1]); process.stdout.write(data.task.id)' "$created")"
 task_state="$(curl --silent --fail "$CORE_URL/tasks/$task_id")"
 directory_exists="false"
+record_count="0"
 if [[ -d "$LEDGER_DIR" ]]; then
   directory_exists="true"
+  record_count="$(find "$LEDGER_DIR" -type f 2>/dev/null | wc -l | tr -d ' ')"
 fi
-record_count="$(find "$LEDGER_DIR" -type f 2>/dev/null | wc -l | tr -d ' ')"
 
 node - <<'EOF' "$PLAN_FILE" "$created" "$approved" "$step" "$task_state" "$directory_exists" "$record_count"
 const fs = require("node:fs");
