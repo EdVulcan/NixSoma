@@ -39,6 +39,7 @@ const CONSERVATIVE_RECOVERY_POLICY_REGISTRY = "openclaw-conservative-recovery-po
 const BODY_GOVERNANCE_READINESS_REGISTRY = "openclaw-body-governance-readiness-v0";
 const PHASE_2_ROUTE_REVIEW_REGISTRY = "openclaw-phase-2-route-review-v0";
 const SYSTEMD_REPAIR_CANDIDATE_ASSESSMENT_REGISTRY = "openclaw-systemd-repair-candidate-assessment-v0";
+const SYSTEMD_REPAIR_CANDIDATE_PLAN_REGISTRY = "openclaw-systemd-repair-candidate-plan-v0";
 const SYSTEMD_REPAIR_PLAN_REGISTRY = "openclaw-systemd-repair-plan-v0";
 const SYSTEMD_REPAIR_DRY_RUN_REGISTRY = "openclaw-systemd-repair-dry-run-v0";
 const MAX_HEALTH_TREND_SNAPSHOTS = 24;
@@ -1852,6 +1853,86 @@ async function buildSystemdRepairCandidateAssessment() {
   };
 }
 
+async function buildSystemdRepairCandidatePlan() {
+  const assessment = await buildSystemdRepairCandidateAssessment();
+  const selected = assessment.candidates?.[0] ?? null;
+  const planSteps = selected ? [
+    {
+      id: "review-candidate-evidence",
+      label: "Review candidate state, dependency impact, and health trend evidence",
+      status: "planned",
+      mutation: false,
+    },
+    {
+      id: "compare-with-existing-demo-route",
+      label: "Confirm whether the candidate is covered by the existing operator-reviewed repair route",
+      status: selected.assessment?.existingDemoTarget ? "covered_by_existing_route" : "requires_future_route_review",
+      mutation: false,
+    },
+    {
+      id: "prepare-plan-only-repair-envelope",
+      label: "Prepare a separate plan-only repair proposal before any task or approval",
+      status: "planned",
+      mutation: false,
+    },
+  ] : [];
+
+  return {
+    ok: true,
+    registry: SYSTEMD_REPAIR_CANDIDATE_PLAN_REGISTRY,
+    mode: "plan_only_candidate_scope",
+    generatedAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      candidateAssessmentRegistry: assessment.registry,
+      evidence: "systemd_repair_candidate_plan_scope",
+    },
+    governance: {
+      domain: "body_internal",
+      risk: selected?.impactClass === "foundational" || selected?.impactClass === "high" ? "medium" : "low",
+      autonomy: "plan_only",
+      approvalRequired: false,
+      hostMutation: false,
+      canMutate: false,
+      canRestart: false,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+    },
+    selectedCandidate: selected ? {
+      unit: selected.unit,
+      impactClass: selected.impactClass,
+      impactRadius: selected.impactRadius,
+      score: selected.assessment?.score ?? 0,
+      existingDemoTarget: selected.assessment?.existingDemoTarget === true,
+      degraded: selected.assessment?.degraded === true,
+      reason: selected.assessment?.reason ?? null,
+    } : null,
+    plan: {
+      intent: "systemd.repair.candidate.plan",
+      targetUnit: selected?.unit ?? null,
+      commandPreview: selected ? `systemctl restart ${selected.unit}` : null,
+      commandPreviewOnly: true,
+      createsExecutableTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      steps: planSteps,
+      requiredBeforeExecution: [
+        "separate operator-reviewed repair task materialization",
+        "explicit operator approval",
+        "dry-run or existing real repair route evidence",
+        "post-execution verification plan",
+      ],
+    },
+    next: {
+      recommendedSlice: "openclaw-systemd-repair-candidate-observer-plan",
+      boundary: "make the plan-only candidate scope visible before any task creation or host mutation",
+    },
+  };
+}
+
 function classifySystemdRepairRisk(unit) {
   if (unit.name === "openclaw-event-hub" || unit.name === "openclaw-core") {
     return "high";
@@ -2145,6 +2226,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-candidates") {
     const assessment = await buildSystemdRepairCandidateAssessment();
     sendJson(res, 200, assessment);
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-candidate-plan") {
+    const plan = await buildSystemdRepairCandidatePlan();
+    sendJson(res, 200, plan);
     return;
   }
 

@@ -45,6 +45,7 @@ checks=(
   "openclaw-phase-2-demo-readiness-exit|dev-openclaw-phase-2-demo-readiness-exit-check.sh|Read-only Phase 2 demo readiness exit gate"
   "openclaw-phase-2-next-capability-route-review|dev-openclaw-phase-2-next-capability-route-review-check.sh|Whitepaper-aligned next Phase 2 body capability route review"
   "openclaw-systemd-repair-candidate-assessment|dev-openclaw-systemd-repair-candidate-assessment-check.sh|Read-only OpenClaw systemd repair candidate assessment"
+  "openclaw-systemd-repair-candidate-plan|dev-openclaw-systemd-repair-candidate-plan-check.sh|Plan-only OpenClaw systemd repair candidate scope"
   "task-workbench|dev-task-workbench-check.sh|Task lifecycle, recovery, history, and work view coordination"
   "task-executor|dev-task-executor-check.sh|Executor verification, failed checks, manual and auto recovery"
   "persistence|dev-persistence-check.sh|Core task state persistence and recovery chains"
