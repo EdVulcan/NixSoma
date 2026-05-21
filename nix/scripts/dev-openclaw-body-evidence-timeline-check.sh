@@ -17,7 +17,9 @@ export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-6420}"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-body-evidence-timeline-check.json}"
 export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-system-heal-body-evidence-timeline-check.json}"
 
+CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 SYSTEM_URL="http://127.0.0.1:$OPENCLAW_SYSTEM_SENSE_PORT"
+LEDGER_DIR="$REPO_ROOT/.artifacts/openclaw-body-evidence-ledger"
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -f \
@@ -25,6 +27,7 @@ rm -f \
   "$OPENCLAW_CORE_STATE_FILE.tmp" \
   "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
   "$OPENCLAW_SYSTEM_HEAL_STATE_FILE.tmp"
+rm -rf "$LEDGER_DIR"
 
 cleanup() {
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
@@ -32,6 +35,27 @@ cleanup() {
 trap cleanup EXIT
 
 "$SCRIPT_DIR/dev-up.sh"
+
+post_json() {
+  local url="$1"
+  local payload="$2"
+  curl --silent --fail -X POST "$url" -H 'content-type: application/json' --data "$payload"
+}
+
+created_directory="$(post_json "$CORE_URL/body/evidence-ledger/directory-tasks" '{"confirm":true}')"
+directory_approval_id="$(node -e 'const data = JSON.parse(process.argv[1]); process.stdout.write(data.approval.id)' "$created_directory")"
+post_json "$CORE_URL/approvals/$directory_approval_id/approve" '{"approvedBy":"milestone-check","reason":"Approve bounded ledger directory creation before body evidence timeline."}' >/dev/null
+post_json "$CORE_URL/operator/step" '{}' >/dev/null
+
+created_record_task="$(post_json "$CORE_URL/body/evidence-ledger/first-record-tasks" '{"confirm":true}')"
+record_approval_id="$(node -e 'const data = JSON.parse(process.argv[1]); process.stdout.write(data.approval.id)' "$created_record_task")"
+post_json "$CORE_URL/approvals/$record_approval_id/approve" '{"approvedBy":"milestone-check","reason":"Approve one bounded bootstrap append before body evidence timeline."}' >/dev/null
+post_json "$CORE_URL/operator/step" '{}' >/dev/null
+
+created_next_repair="$(post_json "$CORE_URL/system/systemd/next-repair-tasks" '{"confirm":true,"execute":true}')"
+next_repair_approval_id="$(node -e 'const data = JSON.parse(process.argv[1]); process.stdout.write(data.approval.id)' "$created_next_repair")"
+post_json "$CORE_URL/approvals/$next_repair_approval_id/approve" '{"approvedBy":"milestone-check","reason":"Approve one next repair execution before body evidence timeline."}' >/dev/null
+post_json "$CORE_URL/operator/step" '{}' >/dev/null
 
 curl --silent --fail "$SYSTEM_URL/system/health" >/dev/null
 timeline="$(curl --silent --fail "$SYSTEM_URL/system/route/body-evidence-timeline")"
@@ -59,9 +83,10 @@ if (timeline.mode !== "read_only_body_evidence_timeline") {
   throw new Error(`body evidence timeline should be read-only: ${JSON.stringify(timeline.mode)}`);
 }
 if (timeline.summary?.timelineReady !== true
-  || timeline.summary?.entries < 7
+  || timeline.summary?.entries < 8
   || timeline.summary?.bodyGovernanceReady !== true
   || timeline.summary?.candidateDemoReady !== true
+  || timeline.summary?.nextRepairDemoReady !== true
   || timeline.summary?.hiddenMutation !== false) {
   throw new Error(`body evidence timeline summary should show ready evidence memory: ${JSON.stringify(timeline.summary)}`);
 }
@@ -82,6 +107,7 @@ for (const id of [
   "body-governance-readiness",
   "phase-2-route-review",
   "systemd-repair-candidate-demo-status",
+  "systemd-next-repair-demo-status",
 ]) {
   if (!ids.has(id)) {
     throw new Error(`body evidence timeline missing entry ${id}: ${JSON.stringify(timeline.entries)}`);
@@ -89,6 +115,12 @@ for (const id of [
 }
 if ((timeline.entries ?? []).some((entry) => entry.mutation !== false)) {
   throw new Error(`body evidence timeline entries should all be non-mutating: ${JSON.stringify(timeline.entries)}`);
+}
+const nextRepairEntry = (timeline.entries ?? []).find((entry) => entry.id === "systemd-next-repair-demo-status");
+if (!nextRepairEntry
+  || nextRepairEntry.registry !== "openclaw-systemd-next-repair-demo-status-v0"
+  || !nextRepairEntry.summary.includes("openclaw-system-sense.service")) {
+  throw new Error(`body evidence timeline should include next repair demo evidence: ${JSON.stringify(nextRepairEntry)}`);
 }
 if (!timeline.memoryModel?.operatorUse?.some((item) => item.includes("body state"))) {
   throw new Error(`body evidence timeline should expose operator memory use: ${JSON.stringify(timeline.memoryModel)}`);

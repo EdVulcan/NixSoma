@@ -552,11 +552,11 @@ This checkpoint is allowed because it closes the second Track A repair loop as o
 
 Body evidence timeline checkpoint:
 
-After the next capability route review selects Track C, `openclaw-body-evidence-timeline` may expose a read-only chronological memory spine for OpenClaw body evidence.
+After the next repair demo status closes the second Track A repair loop, `openclaw-body-evidence-timeline` may expose a read-only chronological memory spine for OpenClaw body evidence.
 
 This checkpoint is allowed because the whitepaper calls for a resident digital body with persistent self-understanding, and the next useful step is to make prior body evidence navigable before adding durable storage or broader repair mutation:
 
-- Reads dependency map, health trend, route-aware recommendation, conservative recovery policy, body governance readiness, Phase 2 route review, and repair candidate demo status evidence only.
+- Reads dependency map, health trend, route-aware recommendation, conservative recovery policy, body governance readiness, Phase 2 route review, repair candidate demo status, and next repair demo status evidence only.
 - Exposes timeline entries, phases, latest entry, source registries, memory purpose, operator use, and no-hidden-mutation boundary.
 - Creates no task, no approval, no command execution, no host mutation, no scheduler, no durable storage, and no recovery action.
 - Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, arbitrary host control, or durable event storage.

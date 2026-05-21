@@ -1447,6 +1447,20 @@ async function checkService(name, baseUrl) {
   }
 }
 
+async function fetchServiceJson(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), serviceTimeoutMs);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`Request failed: ${response.status}`);
+    }
+    return await response.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function parseSystemctlShow(output) {
   return Object.fromEntries(
     output
@@ -2403,6 +2417,7 @@ async function buildBodyEvidenceTimeline() {
     governanceReadiness,
     phase2RouteReview,
     candidateDemoStatus,
+    nextRepairDemoStatus,
   ] = await Promise.all([
     buildSystemdDependencyMap(),
     buildHealthTrendSummary(),
@@ -2411,6 +2426,7 @@ async function buildBodyEvidenceTimeline() {
     buildBodyGovernanceReadiness(),
     buildPhase2RouteReview(),
     buildSystemdRepairCandidateDemoStatus(),
+    fetchServiceJson(`${serviceTargets.core}/phase-2/next-repair-demo-status`).catch(() => null),
   ]);
   const entries = [
     {
@@ -2490,10 +2506,22 @@ async function buildBodyEvidenceTimeline() {
       source: "/system/systemd/repair-candidate-demo-status",
       mutation: false,
     },
+    {
+      id: "systemd-next-repair-demo-status",
+      at: nextRepairDemoStatus?.generatedAt ?? new Date().toISOString(),
+      phase: "next_repair_demo",
+      registry: nextRepairDemoStatus?.registry ?? "openclaw-systemd-next-repair-demo-status-unavailable",
+      label: "Next systemd repair execution evidence became demo-ready",
+      evidenceType: "demo_status",
+      summary: `${nextRepairDemoStatus?.summary?.targetUnit ?? "openclaw-system-sense.service"} demoReady=${Boolean(nextRepairDemoStatus?.summary?.ready)} outcome=${nextRepairDemoStatus?.summary?.outcome ?? "none"}.`,
+      source: "/phase-2/next-repair-demo-status",
+      mutation: false,
+    },
   ].sort((a, b) => String(a.at ?? "").localeCompare(String(b.at ?? "")));
-  const timelineReady = entries.length >= 7
+  const timelineReady = entries.length >= 8
     && governanceReadiness.summary?.ready === true
-    && candidateDemoStatus.summary?.demoReady === true;
+    && candidateDemoStatus.summary?.demoReady === true
+    && nextRepairDemoStatus?.summary?.ready === true;
 
   return {
     ok: true,
@@ -2509,6 +2537,7 @@ async function buildBodyEvidenceTimeline() {
       bodyGovernanceReadinessRegistry: governanceReadiness.registry,
       phase2RouteReviewRegistry: phase2RouteReview.registry,
       candidateDemoStatusRegistry: candidateDemoStatus.registry,
+      nextRepairDemoStatusRegistry: nextRepairDemoStatus?.registry ?? null,
       evidence: "body_evidence_timeline_memory",
     },
     governance: {
@@ -2533,6 +2562,7 @@ async function buildBodyEvidenceTimeline() {
       latestRegistry: entries.at(-1)?.registry ?? null,
       bodyGovernanceReady: governanceReadiness.summary?.ready === true,
       candidateDemoReady: candidateDemoStatus.summary?.demoReady === true,
+      nextRepairDemoReady: nextRepairDemoStatus?.summary?.ready === true,
       hiddenMutation: false,
     },
     entries,
@@ -2564,6 +2594,7 @@ async function buildBodyEvidenceTimelineReadiness() {
     "body-governance-readiness",
     "phase-2-route-review",
     "systemd-repair-candidate-demo-status",
+    "systemd-next-repair-demo-status",
   ];
   const checks = [
     {
@@ -2643,6 +2674,8 @@ async function buildBodyEvidenceTimelineReadiness() {
       completedSlices: [
         "openclaw-body-evidence-timeline",
         "observer-openclaw-body-evidence-timeline",
+        "openclaw-systemd-next-repair-demo-status",
+        "observer-openclaw-systemd-next-repair-demo-status",
       ],
       completionClaim: ready ? "body_evidence_timeline_ready_for_route_review" : "body_evidence_timeline_incomplete",
     },

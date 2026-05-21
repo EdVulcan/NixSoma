@@ -4742,7 +4742,7 @@ async function refreshBodyEvidenceTimeline() {
       \`Registry: \${data.registry ?? "unknown"}\`,
       \`Mode: \${data.mode ?? "unknown"} ready=\${Boolean(summary.timelineReady)} entries=\${summary.entries ?? entries.length} phases=\${(summary.phases ?? []).join(",")}\`,
       \`Governance: createsTask=\${Boolean(governance.createsTask)} createsApproval=\${Boolean(governance.createsApproval)} executesCommand=\${Boolean(governance.executesCommand)} mutation=\${Boolean(governance.hostMutation)} recovery=\${Boolean(governance.triggersRecovery)}\`,
-      \`Latest: \${summary.latestEntryId ?? "none"} registry=\${summary.latestRegistry ?? "none"} candidateDemoReady=\${Boolean(summary.candidateDemoReady)} bodyGovernanceReady=\${Boolean(summary.bodyGovernanceReady)}\`,
+      \`Latest: \${summary.latestEntryId ?? "none"} registry=\${summary.latestRegistry ?? "none"} candidateDemoReady=\${Boolean(summary.candidateDemoReady)} nextRepairDemoReady=\${Boolean(summary.nextRepairDemoReady)} bodyGovernanceReady=\${Boolean(summary.bodyGovernanceReady)}\`,
       \`Entries: \${entries.map((entry) => \`\${entry.id}:\${entry.registry}:\${entry.phase}:mutation=\${Boolean(entry.mutation)}\`).join(", ")}\`,
       \`Memory: \${memory.label ?? "body_evidence_memory_v0"} purpose=\${memory.purpose ?? "none"}\`,
       \`Operator Use: \${(memory.operatorUse ?? []).join(" | ")}\`,
