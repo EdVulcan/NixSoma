@@ -459,6 +459,17 @@ This checkpoint is allowed because the durable ledger demo block is complete, an
 - Creates no task, no approval, no command execution, no restart, no host mutation, no scheduler, no recovery action, and no additional ledger write.
 - Must not loop back to the browser-runtime repair demo, replay approval/execution, add automatic repair, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, arbitrary host control, or broader mutation.
 
+Systemd next repair plan checkpoint:
+
+After the scope review selects `openclaw-system-sense.service`, `openclaw-systemd-next-repair-plan` may convert that selected unit into a plan-only repair scope.
+
+This checkpoint is allowed because it advances Track A real systemd semantics by naming the target, command preview, required gates, and route boundary without crossing into dry-run or execution:
+
+- Reads the next repair scope review and systemd inventory only.
+- Exposes target unit, impact context, command preview, command-preview-only flag, required-before-execution gates, and not-selected boundaries.
+- Creates no task, no approval, no command execution, no restart, no host mutation, no scheduler, no recovery action, and no additional ledger write.
+- Must not immediately create a dry-run, task, approval, restart, automatic repair, browser-runtime replay, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, arbitrary host control, or broader mutation.
+
 Body evidence timeline checkpoint:
 
 After the next capability route review selects Track C, `openclaw-body-evidence-timeline` may expose a read-only chronological memory spine for OpenClaw body evidence.

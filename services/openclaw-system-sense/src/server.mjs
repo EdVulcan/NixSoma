@@ -48,6 +48,7 @@ const BODY_EVIDENCE_LEDGER_FIRST_RECORD_ROUTE_REVIEW_REGISTRY = "openclaw-body-e
 const BODY_EVIDENCE_LEDGER_READINESS_REGISTRY = "openclaw-body-evidence-ledger-readiness-v0";
 const BODY_EVIDENCE_LEDGER_DEMO_STATUS_REGISTRY = "openclaw-body-evidence-ledger-demo-status-v0";
 const SYSTEMD_NEXT_REPAIR_SCOPE_REVIEW_REGISTRY = "openclaw-systemd-next-repair-scope-review-v0";
+const SYSTEMD_NEXT_REPAIR_PLAN_REGISTRY = "openclaw-systemd-next-repair-plan-v0";
 const PHASE_2_ROUTE_REVIEW_REGISTRY = "openclaw-phase-2-route-review-v0";
 const SYSTEMD_REPAIR_CANDIDATE_ASSESSMENT_REGISTRY = "openclaw-systemd-repair-candidate-assessment-v0";
 const SYSTEMD_REPAIR_CANDIDATE_PLAN_REGISTRY = "openclaw-systemd-repair-candidate-plan-v0";
@@ -3652,6 +3653,99 @@ async function buildSystemdNextRepairScopeReview() {
   };
 }
 
+async function buildSystemdNextRepairPlan() {
+  const scopeReview = await buildSystemdNextRepairScopeReview();
+  const selectedUnit = scopeReview.decision?.selectedUnit ?? null;
+  const inventory = await buildSystemdUnitInventory();
+  const unit = findInventoryUnit(inventory, selectedUnit);
+  const dependencyNode = scopeReview.evidence?.selectedDependencyNode ?? null;
+  const risk = unit ? classifySystemdRepairRisk(unit) : "unknown";
+
+  return {
+    ok: true,
+    registry: SYSTEMD_NEXT_REPAIR_PLAN_REGISTRY,
+    mode: "plan_only_next_systemd_repair_scope",
+    generatedAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      scopeReviewRegistry: scopeReview.registry,
+      inventoryRegistry: inventory.registry,
+      ledgerDemoStatusRegistry: scopeReview.evidence?.ledgerDemo?.registry ?? null,
+      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      evidence: "systemd_next_repair_plan",
+    },
+    governance: {
+      domain: "body_internal",
+      risk,
+      autonomy: "plan_only",
+      approvalRequired: false,
+      hostMutation: false,
+      canMutate: false,
+      canRestart: false,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+    },
+    scope: {
+      selectedUnit,
+      selectedSlice: scopeReview.decision?.selectedSlice ?? null,
+      scopeReady: scopeReview.summary?.ready === true,
+      ledgerDemoReady: scopeReview.summary?.ledgerDemoReady === true,
+      completedDemoUnit: scopeReview.summary?.completedDemoUnit ?? null,
+      rationale: scopeReview.decision?.rationale ?? null,
+    },
+    target: unit ? {
+      key: unit.key,
+      name: unit.name,
+      unit: unit.unit,
+      component: unit.component,
+      activeState: unit.activeState,
+      subState: unit.subState,
+      loadState: unit.loadState,
+      unitFileState: unit.unitFileState,
+      systemdObserved: unit.systemdObserved,
+      impactClass: dependencyNode?.impactClass ?? "unknown",
+      impactRadius: dependencyNode?.impactRadius ?? 0,
+      dependencyLayer: dependencyNode?.dependencyLayer ?? null,
+    } : null,
+    plan: {
+      intent: "systemd.next_repair.plan",
+      targetUnit: unit?.unit ?? null,
+      commandPreview: unit ? `systemctl restart ${unit.unit}` : null,
+      commandPreviewOnly: true,
+      createsExecutableTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      restartsService: false,
+      reason: unit
+        ? `${unit.unit} is the selected next Track A scope; this plan records the repair shape before any dry-run, task, approval, or restart.`
+        : "No selected OpenClaw-owned unit is available for the next repair plan.",
+      requiredBeforeExecution: [
+        "separate route review for the selected next repair plan",
+        "operator-visible dry-run envelope",
+        "approval-gated task shell",
+        "explicit operator approval",
+        "post-execution verification bundle",
+      ],
+      notSelected: [
+        "no immediate dry-run",
+        "no immediate repair task",
+        "no approval creation",
+        "no systemctl execution",
+        "no automatic repair",
+        "no browser-runtime repair demo replay",
+        "no additional ledger writes",
+      ],
+    },
+    next: {
+      recommendedSlice: "openclaw-systemd-next-repair-route-review",
+      boundary: "route review before any dry-run, task, approval, restart, or host mutation for the selected unit",
+    },
+  };
+}
+
 function classifySystemdRepairRisk(unit) {
   if (unit.name === "openclaw-event-hub" || unit.name === "openclaw-core") {
     return "high";
@@ -4041,6 +4135,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/systemd/next-repair-scope-review") {
     const review = await buildSystemdNextRepairScopeReview();
     sendJson(res, 200, review);
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/next-repair-plan") {
+    const plan = await buildSystemdNextRepairPlan();
+    sendJson(res, 200, plan);
     return;
   }
 
