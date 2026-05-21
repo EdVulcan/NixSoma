@@ -96,8 +96,8 @@ if (finalTask?.bodyEvidenceLedgerDirectory?.directoryExists !== true
   || finalTask?.bodyEvidenceLedgerDirectory?.recordWritesEnabled !== false) {
   throw new Error(`Observer-visible task detail should expose directory-only result: ${JSON.stringify(finalTask)}`);
 }
-if (step.execution?.finalExecution?.execution?.registry !== "openclaw-body-evidence-ledger-directory-execution-v0") {
-  throw new Error(`Observer-visible execution should expose directory execution registry: ${JSON.stringify(step.execution)}`);
+if (finalTask.bodyEvidenceLedgerDirectory?.mkdirResult?.registry !== "openclaw-body-evidence-ledger-directory-execution-v0") {
+  throw new Error(`Observer-visible task detail should expose directory execution registry: ${JSON.stringify(finalTask.bodyEvidenceLedgerDirectory)}`);
 }
 
 console.log(JSON.stringify({

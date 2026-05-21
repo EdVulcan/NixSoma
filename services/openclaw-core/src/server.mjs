@@ -12372,7 +12372,6 @@ async function executeBodyEvidenceLedgerDirectoryTask(task) {
     policy: completedTask.policy?.decision ?? null,
     approval: completedTask.approval ?? null,
     actions: [],
-    capabilityInvocations: [],
     verification: null,
     execution: {
       registry: "openclaw-body-evidence-ledger-directory-execution-v0",

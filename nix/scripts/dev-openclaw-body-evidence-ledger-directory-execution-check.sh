@@ -94,13 +94,11 @@ if (directory.displayPath !== ".artifacts/openclaw-body-evidence-ledger"
   || directory.recordWritesEnabled !== false) {
   throw new Error(`directory task should record directory-only evidence: ${JSON.stringify(directory)}`);
 }
-const finalExecution = step.execution?.finalExecution?.execution ?? {};
-if (finalExecution.registry !== "openclaw-body-evidence-ledger-directory-execution-v0"
-  || finalExecution.hostMutation !== true
-  || finalExecution.directoryExists !== true
-  || finalExecution.durableStorageWritten !== false
-  || finalExecution.recordWritesEnabled !== false) {
-  throw new Error(`operator execution should expose bounded directory execution: ${JSON.stringify(step.execution)}`);
+const mkdirResult = directory.mkdirResult ?? {};
+if (mkdirResult.registry !== "openclaw-body-evidence-ledger-directory-execution-v0"
+  || mkdirResult.created !== true
+  || mkdirResult.mode !== "mkdir") {
+  throw new Error(`task detail should expose bounded directory execution result: ${JSON.stringify(directory)}`);
 }
 const details = finalTask.outcome?.details ?? {};
 if (details.hostMutation !== true
