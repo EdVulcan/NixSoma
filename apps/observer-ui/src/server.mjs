@@ -932,6 +932,17 @@ function observerHtml() {
           <div class="metric"><span>Mutation</span><span id="systemd-repair-candidate-route-mutation">false</span></div>
           <pre id="systemd-repair-candidate-route-json">Loading read-only repair candidate task route gate...</pre>
         </section>
+        <section class="panel" id="systemd-repair-candidate-task-shell-panel">
+          <h2>Repair Candidate Task Shell</h2>
+          <div class="metric"><span>Ready</span><span id="systemd-repair-candidate-task-shell-ready">loading</span></div>
+          <div class="metric"><span>Target</span><span id="systemd-repair-candidate-task-shell-target">loading</span></div>
+          <div class="metric"><span>Approval</span><span id="systemd-repair-candidate-task-shell-approval">pending-after-create</span></div>
+          <div class="metric"><span>Mutation</span><span id="systemd-repair-candidate-task-shell-mutation">false</span></div>
+          <div class="actions tight">
+            <button id="create-systemd-repair-candidate-task-shell-button" class="secondary">Create Candidate Task Shell</button>
+          </div>
+          <pre id="systemd-repair-candidate-task-shell-json">Loading approval-gated repair candidate task shell boundary...</pre>
+        </section>
         <section class="panel" id="systemd-unit-inventory">
           <h2>Systemd Unit Inventory</h2>
           <div class="metric"><span>Total Units</span><span id="systemd-unit-total">0</span></div>
@@ -1134,6 +1145,11 @@ const systemdRepairCandidateRouteTarget = document.querySelector("#systemd-repai
 const systemdRepairCandidateRouteCreatesTask = document.querySelector("#systemd-repair-candidate-route-creates-task");
 const systemdRepairCandidateRouteMutation = document.querySelector("#systemd-repair-candidate-route-mutation");
 const systemdRepairCandidateRouteJson = document.querySelector("#systemd-repair-candidate-route-json");
+const systemdRepairCandidateTaskShellReady = document.querySelector("#systemd-repair-candidate-task-shell-ready");
+const systemdRepairCandidateTaskShellTarget = document.querySelector("#systemd-repair-candidate-task-shell-target");
+const systemdRepairCandidateTaskShellApproval = document.querySelector("#systemd-repair-candidate-task-shell-approval");
+const systemdRepairCandidateTaskShellMutation = document.querySelector("#systemd-repair-candidate-task-shell-mutation");
+const systemdRepairCandidateTaskShellJson = document.querySelector("#systemd-repair-candidate-task-shell-json");
 const systemdUnitTotal = document.querySelector("#systemd-unit-total");
 const systemdUnitActive = document.querySelector("#systemd-unit-active");
 const systemdUnitObserved = document.querySelector("#systemd-unit-observed");
@@ -1195,6 +1211,7 @@ const openWorkViewUrlButton = document.querySelector("#open-work-view-url-button
 const workViewUrlInput = document.querySelector("#work-view-url-input");
 const createSystemdRepairExecutionTaskButton = document.querySelector("#create-systemd-repair-execution-task-button");
 const createSystemdRepairRealExecutionTaskButton = document.querySelector("#create-systemd-repair-real-execution-task-button");
+const createSystemdRepairCandidateTaskShellButton = document.querySelector("#create-systemd-repair-candidate-task-shell-button");
 const taskPlanStatus = document.querySelector("#task-plan-status");
 const taskPlanCount = document.querySelector("#task-plan-count");
 const taskPlanPlanner = document.querySelector("#task-plan-planner");
@@ -4486,6 +4503,35 @@ async function refreshSystemdRepairCandidateRoute() {
   }
 }
 
+async function refreshSystemdRepairCandidateTaskShell() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/repair-candidate-task-route\`);
+    const governance = data.governance ?? {};
+    const decision = data.routeDecision ?? {};
+    const ready = decision.existingRouteAvailable === true
+      && decision.targetUnit === "openclaw-browser-runtime.service";
+    systemdRepairCandidateTaskShellReady.textContent = String(ready);
+    systemdRepairCandidateTaskShellTarget.textContent = decision.targetUnit ?? "unknown";
+    systemdRepairCandidateTaskShellApproval.textContent = ready ? "pending-after-create" : "route-blocked";
+    systemdRepairCandidateTaskShellMutation.textContent = "false";
+    systemdRepairCandidateTaskShellJson.textContent = [
+      "Registry: openclaw-systemd-repair-candidate-task-shell-v0",
+      \`Source Route: \${data.registry ?? "unknown"}\`,
+      \`Mode: approval-gated-candidate-task-shell ready=\${ready}\`,
+      \`Target: \${decision.targetUnit ?? "none"} existingRoute=\${decision.existingRoute ?? "none"} available=\${Boolean(decision.existingRouteAvailable)}\`,
+      \`Approval: creates pending high-risk approval only after explicit button click\`,
+      \`Governance: createsTaskOnClick=true mutation=false executed=false hostMutation=false routeMutation=\${Boolean(governance.hostMutation)}\`,
+      "Endpoint: /system/systemd/repair-candidate-tasks",
+    ].join("\\n");
+  } catch {
+    systemdRepairCandidateTaskShellReady.textContent = "false";
+    systemdRepairCandidateTaskShellTarget.textContent = "offline";
+    systemdRepairCandidateTaskShellApproval.textContent = "route-blocked";
+    systemdRepairCandidateTaskShellMutation.textContent = "false";
+    systemdRepairCandidateTaskShellJson.textContent = "Unable to read repair candidate task shell boundary.";
+  }
+}
+
 async function refreshSystemdUnitInventory() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/units\`);
@@ -5447,6 +5493,28 @@ async function createSystemdRepairRealExecutionTask() {
   return result;
 }
 
+async function createSystemdRepairCandidateTaskShell() {
+  const result = await fetchJson(\`\${observerConfig.coreUrl}/system/systemd/repair-candidate-tasks\`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      confirm: true,
+    }),
+  });
+  setControlMessage(\`Systemd repair candidate task shell queued: \${result.task?.id ?? "unknown"} approval=\${result.approval?.id ?? "none"} mutation=\${Boolean(result.governance?.hostMutation)}\`);
+  taskHistoryFocus = "selected-task";
+  selectedHistoryTaskId = result.task?.id ?? null;
+  taskDetailIdInput.value = result.task?.id ?? "";
+  await Promise.all([
+    refreshSystemdRepairCandidateTaskShell(),
+    refreshTaskList(),
+    refreshTaskHistoryDetail(),
+    refreshApprovalState(),
+    refreshOperatorState(),
+  ]);
+  return result;
+}
+
 async function completeCurrentTask() {
   if (!currentTaskState?.id) {
     throw new Error("No active task to complete.");
@@ -5825,6 +5893,12 @@ createSystemdRepairRealExecutionTaskButton.addEventListener("click", () => {
   });
 });
 
+createSystemdRepairCandidateTaskShellButton.addEventListener("click", () => {
+  createSystemdRepairCandidateTaskShell().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 completeTaskButton.addEventListener("click", () => {
   completeCurrentTask().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);
@@ -6060,6 +6134,7 @@ await refreshPhase2RouteReview();
 await refreshSystemdRepairCandidates();
 await refreshSystemdRepairCandidatePlan();
 await refreshSystemdRepairCandidateRoute();
+await refreshSystemdRepairCandidateTaskShell();
 await refreshSystemdUnitInventory();
 await refreshSystemdDependencyMap();
 await refreshSystemdRepairPlan();
@@ -6135,6 +6210,7 @@ setInterval(refreshPhase2RouteReview, 5000);
 setInterval(refreshSystemdRepairCandidates, 5000);
 setInterval(refreshSystemdRepairCandidatePlan, 5000);
 setInterval(refreshSystemdRepairCandidateRoute, 5000);
+setInterval(refreshSystemdRepairCandidateTaskShell, 5000);
 setInterval(refreshSystemdUnitInventory, 5000);
 setInterval(refreshSystemdDependencyMap, 5000);
 setInterval(refreshSystemdRepairPlan, 5000);

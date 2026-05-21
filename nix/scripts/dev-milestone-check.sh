@@ -268,6 +268,7 @@ checks=(
   "observer-openclaw-systemd-repair-candidate-assessment|dev-observer-openclaw-systemd-repair-candidate-assessment-check.sh|Observer visibility for OpenClaw systemd repair candidate assessment"
   "observer-openclaw-systemd-repair-candidate-plan|dev-observer-openclaw-systemd-repair-candidate-plan-check.sh|Observer visibility for plan-only OpenClaw systemd repair candidate scope"
   "observer-openclaw-systemd-repair-candidate-task-route|dev-observer-openclaw-systemd-repair-candidate-task-route-check.sh|Observer visibility for OpenClaw systemd repair candidate task route gate"
+  "observer-openclaw-systemd-repair-candidate-task-shell|dev-observer-openclaw-systemd-repair-candidate-task-shell-check.sh|Observer controls for approval-gated OpenClaw systemd repair candidate task shells"
   "observer-workspace-command-proposals|dev-observer-workspace-command-proposals-check.sh|Observer visibility for OpenClaw workspace command proposals"
   "observer-workspace-command-plan|dev-observer-workspace-command-plan-check.sh|Observer visibility for OpenClaw workspace command plan drafts"
   "observer-workspace-command-task|dev-observer-workspace-command-task-check.sh|Observer controls for approval-gated OpenClaw workspace command tasks"

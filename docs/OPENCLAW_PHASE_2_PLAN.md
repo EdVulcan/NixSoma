@@ -344,6 +344,7 @@ This checkpoint is allowed because it advances Track A from visible route gate t
 
 - Reads candidate task route evidence and reuses the existing browser-runtime repair execution task shell.
 - Creates a queued task and pending approval, but does not approve, execute, mutate host, schedule work, or trigger recovery.
+- Exposes Observer controls for the candidate task shell so the operator can see the route, target, pending-approval boundary, and no-mutation guarantee before materialization.
 - Must remain limited to `openclaw-browser-runtime.service` until a future route review explicitly accepts another unit.
 - Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, or arbitrary host control.
 
