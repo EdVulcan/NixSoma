@@ -4551,9 +4551,10 @@ async function refreshSystemdRepairCandidateReadiness() {
     const summary = data.summary ?? {};
     const governance = data.governance ?? {};
     const checks = Array.isArray(data.checks) ? data.checks : [];
+    const nextSlice = data.next?.recommendedSlice ?? "openclaw-systemd-repair-candidate-route-review";
     systemdRepairCandidateReadinessReady.textContent = String(Boolean(summary.ready));
     systemdRepairCandidateReadinessChecks.textContent = \`\${summary.passedChecks ?? 0}/\${summary.totalChecks ?? checks.length}\`;
-    systemdRepairCandidateReadinessNext.textContent = data.next?.recommendedSlice ?? "route-review";
+    systemdRepairCandidateReadinessNext.textContent = nextSlice;
     systemdRepairCandidateReadinessMutation.textContent = String(Boolean(governance.hostMutation));
     systemdRepairCandidateReadinessJson.textContent = [
       \`Registry: \${data.registry ?? "unknown"}\`,
@@ -4562,7 +4563,7 @@ async function refreshSystemdRepairCandidateReadiness() {
       \`Completed: \${data.completedBlock?.completionClaim ?? "unknown"} slices=\${(data.completedBlock?.completedSlices ?? []).length}\`,
       \`Evidence: candidate=\${data.evidence?.recommendedCandidate ?? "none"} route=\${data.evidence?.routeStatus ?? "unknown"} command=\${data.evidence?.commandPreview ?? "none"}\`,
       \`Governance: createsTask=\${Boolean(governance.createsTask)} createsApproval=\${Boolean(governance.createsApproval)} executesCommand=\${Boolean(governance.executesCommand)} mutation=\${Boolean(governance.hostMutation)} recovery=\${Boolean(governance.triggersRecovery)}\`,
-      \`Next: \${data.next?.recommendedSlice ?? "route-review"} boundary=\${data.next?.boundary ?? "whitepaper route review"}\`,
+      \`Next: \${nextSlice} boundary=\${data.next?.boundary ?? "whitepaper route review"}\`,
     ].join("\\n");
   } catch {
     systemdRepairCandidateReadinessReady.textContent = "false";
