@@ -37,6 +37,7 @@ const HEALTH_TREND_SUMMARY_REGISTRY = "openclaw-health-trend-summary-v0";
 const ROUTE_AWARE_NEXT_ACTION_REGISTRY = "openclaw-route-aware-next-action-v0";
 const CONSERVATIVE_RECOVERY_POLICY_REGISTRY = "openclaw-conservative-recovery-policy-v0";
 const BODY_GOVERNANCE_READINESS_REGISTRY = "openclaw-body-governance-readiness-v0";
+const BODY_EVIDENCE_TIMELINE_REGISTRY = "openclaw-body-evidence-timeline-v0";
 const PHASE_2_ROUTE_REVIEW_REGISTRY = "openclaw-phase-2-route-review-v0";
 const SYSTEMD_REPAIR_CANDIDATE_ASSESSMENT_REGISTRY = "openclaw-systemd-repair-candidate-assessment-v0";
 const SYSTEMD_REPAIR_CANDIDATE_PLAN_REGISTRY = "openclaw-systemd-repair-candidate-plan-v0";
@@ -2365,6 +2366,165 @@ async function buildSystemdRepairCandidateDemoStatus() {
   };
 }
 
+async function buildBodyEvidenceTimeline() {
+  const [
+    dependencyMap,
+    healthTrends,
+    routeAware,
+    recoveryPolicy,
+    governanceReadiness,
+    phase2RouteReview,
+    candidateDemoStatus,
+  ] = await Promise.all([
+    buildSystemdDependencyMap(),
+    buildHealthTrendSummary(),
+    buildRouteAwareNextActionRecommendation(),
+    buildConservativeRecoveryPolicyExplanation(),
+    buildBodyGovernanceReadiness(),
+    buildPhase2RouteReview(),
+    buildSystemdRepairCandidateDemoStatus(),
+  ]);
+  const entries = [
+    {
+      id: "body-dependency-map",
+      at: dependencyMap.generatedAt,
+      phase: "body_governance",
+      registry: dependencyMap.registry,
+      label: "OpenClaw-owned body service dependency map captured",
+      evidenceType: "structure",
+      summary: `${dependencyMap.summary?.nodes ?? dependencyMap.nodes?.length ?? 0} body services mapped with ${dependencyMap.summary?.edges ?? dependencyMap.edges?.length ?? 0} dependencies.`,
+      source: "/system/systemd/dependency-map",
+      mutation: false,
+    },
+    {
+      id: "health-trend-summary",
+      at: healthTrends.generatedAt,
+      phase: "body_governance",
+      registry: healthTrends.registry,
+      label: "Recent body health trend summarized",
+      evidenceType: "health_memory",
+      summary: `${healthTrends.summary?.samples ?? 0} health samples with ${healthTrends.summary?.degradedServices ?? 0} degraded services.`,
+      source: "/system/health/trends",
+      mutation: false,
+    },
+    {
+      id: "route-aware-next-action",
+      at: routeAware.generatedAt,
+      phase: "body_governance",
+      registry: routeAware.registry,
+      label: "Route-aware next action recommendation recorded",
+      evidenceType: "governance_judgment",
+      summary: `${routeAware.recommendation?.action ?? "observe"} priority=${routeAware.recommendation?.priority ?? "unknown"}.`,
+      source: "/system/route/next-action",
+      mutation: false,
+    },
+    {
+      id: "conservative-recovery-policy",
+      at: recoveryPolicy.generatedAt,
+      phase: "body_governance",
+      registry: recoveryPolicy.registry,
+      label: "Conservative recovery policy explained",
+      evidenceType: "policy",
+      summary: `${recoveryPolicy.policy?.currentPosture ?? "observe_first"} with ${recoveryPolicy.rules?.length ?? 0} rules.`,
+      source: "/system/route/recovery-policy",
+      mutation: false,
+    },
+    {
+      id: "body-governance-readiness",
+      at: governanceReadiness.generatedAt,
+      phase: "body_governance",
+      registry: governanceReadiness.registry,
+      label: "Body governance readiness bundle closed",
+      evidenceType: "readiness",
+      summary: `${governanceReadiness.summary?.passedChecks ?? 0}/${governanceReadiness.summary?.totalChecks ?? 0} checks passed.`,
+      source: "/system/route/body-governance-readiness",
+      mutation: false,
+    },
+    {
+      id: "phase-2-route-review",
+      at: phase2RouteReview.generatedAt,
+      phase: "route_review",
+      registry: phase2RouteReview.registry,
+      label: "Whitepaper-aligned Phase 2 route review selected demo surface",
+      evidenceType: "route_decision",
+      summary: `${phase2RouteReview.decision?.selectedSlice ?? "unknown"} selected; ${phase2RouteReview.decision?.notSelected?.length ?? 0} non-routes rejected.`,
+      source: "/system/route/phase-2-review",
+      mutation: false,
+    },
+    {
+      id: "systemd-repair-candidate-demo-status",
+      at: candidateDemoStatus.generatedAt,
+      phase: "repair_candidate_demo",
+      registry: candidateDemoStatus.registry,
+      label: "Systemd repair candidate route became demo-ready",
+      evidenceType: "demo_status",
+      summary: `${candidateDemoStatus.summary?.selectedUnit ?? "unknown"} demoReady=${Boolean(candidateDemoStatus.summary?.demoReady)} checks=${candidateDemoStatus.summary?.passedChecks ?? 0}/${candidateDemoStatus.summary?.totalChecks ?? 0}.`,
+      source: "/system/systemd/repair-candidate-demo-status",
+      mutation: false,
+    },
+  ].sort((a, b) => String(a.at ?? "").localeCompare(String(b.at ?? "")));
+  const timelineReady = entries.length >= 7
+    && governanceReadiness.summary?.ready === true
+    && candidateDemoStatus.summary?.demoReady === true;
+
+  return {
+    ok: true,
+    registry: BODY_EVIDENCE_TIMELINE_REGISTRY,
+    mode: "read_only_body_evidence_timeline",
+    generatedAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      dependencyMapRegistry: dependencyMap.registry,
+      healthTrendRegistry: healthTrends.registry,
+      routeAwareRegistry: routeAware.registry,
+      recoveryPolicyRegistry: recoveryPolicy.registry,
+      bodyGovernanceReadinessRegistry: governanceReadiness.registry,
+      phase2RouteReviewRegistry: phase2RouteReview.registry,
+      candidateDemoStatusRegistry: candidateDemoStatus.registry,
+      evidence: "body_evidence_timeline_memory",
+    },
+    governance: {
+      domain: "body_internal",
+      risk: "low",
+      autonomy: "evidence_memory_only",
+      approvalRequired: false,
+      hostMutation: false,
+      canMutate: false,
+      canRestart: false,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+    },
+    summary: {
+      timelineReady,
+      entries: entries.length,
+      phases: [...new Set(entries.map((entry) => entry.phase))],
+      latestEntryId: entries.at(-1)?.id ?? null,
+      latestRegistry: entries.at(-1)?.registry ?? null,
+      bodyGovernanceReady: governanceReadiness.summary?.ready === true,
+      candidateDemoReady: candidateDemoStatus.summary?.demoReady === true,
+      hiddenMutation: false,
+    },
+    entries,
+    memoryModel: {
+      label: "body_evidence_memory_v0",
+      purpose: "Keep a read-only chronological spine of body structure, health, policy, route, and repair-candidate evidence.",
+      retention: "in-process derived view; durable event storage remains a future route-reviewed capability",
+      operatorUse: [
+        "explain how OpenClaw knows its body state",
+        "show why the current route is not another safety-boundary loop",
+        "anchor future repair decisions in prior evidence instead of ad hoc action",
+      ],
+    },
+    next: {
+      recommendedSlice: "openclaw-body-evidence-timeline-readiness",
+      boundary: "close the evidence timeline with a read-only readiness check before adding durable storage, schedulers, or new mutation",
+    },
+  };
+}
+
 function classifySystemdRepairRisk(unit) {
   if (unit.name === "openclaw-event-hub" || unit.name === "openclaw-core") {
     return "high";
@@ -2614,6 +2774,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/route/body-governance-readiness") {
     const readiness = await buildBodyGovernanceReadiness();
     sendJson(res, 200, readiness);
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/route/body-evidence-timeline") {
+    const timeline = await buildBodyEvidenceTimeline();
+    sendJson(res, 200, timeline);
     return;
   }
 

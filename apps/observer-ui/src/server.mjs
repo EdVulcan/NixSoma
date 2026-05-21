@@ -900,6 +900,14 @@ function observerHtml() {
           <div class="metric"><span>Mutation</span><span id="body-governance-mutation">false</span></div>
           <pre id="body-governance-json">Loading body governance readiness bundle...</pre>
         </section>
+        <section class="panel" id="body-evidence-timeline-panel">
+          <h2>Body Evidence Timeline</h2>
+          <div class="metric"><span>Ready</span><span id="body-evidence-timeline-ready">false</span></div>
+          <div class="metric"><span>Entries</span><span id="body-evidence-timeline-entries">0</span></div>
+          <div class="metric"><span>Latest</span><span id="body-evidence-timeline-latest">loading</span></div>
+          <div class="metric"><span>Mutation</span><span id="body-evidence-timeline-mutation">false</span></div>
+          <pre id="body-evidence-timeline-json">Loading body evidence timeline...</pre>
+        </section>
         <section class="panel" id="phase-2-route-review">
           <h2>Phase 2 Route Review</h2>
           <div class="metric"><span>Selected Track</span><span id="phase-2-route-selected-track">loading</span></div>
@@ -1149,6 +1157,11 @@ const bodyGovernanceChecks = document.querySelector("#body-governance-checks");
 const bodyGovernancePosture = document.querySelector("#body-governance-posture");
 const bodyGovernanceMutation = document.querySelector("#body-governance-mutation");
 const bodyGovernanceJson = document.querySelector("#body-governance-json");
+const bodyEvidenceTimelineReady = document.querySelector("#body-evidence-timeline-ready");
+const bodyEvidenceTimelineEntries = document.querySelector("#body-evidence-timeline-entries");
+const bodyEvidenceTimelineLatest = document.querySelector("#body-evidence-timeline-latest");
+const bodyEvidenceTimelineMutation = document.querySelector("#body-evidence-timeline-mutation");
+const bodyEvidenceTimelineJson = document.querySelector("#body-evidence-timeline-json");
 const phase2RouteSelectedTrack = document.querySelector("#phase-2-route-selected-track");
 const phase2RouteNextSlice = document.querySelector("#phase-2-route-next-slice");
 const phase2RouteCreatesTask = document.querySelector("#phase-2-route-creates-task");
@@ -4432,6 +4445,36 @@ async function refreshBodyGovernanceReadiness() {
   }
 }
 
+async function refreshBodyEvidenceTimeline() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/route/body-evidence-timeline\`);
+    const summary = data.summary ?? {};
+    const governance = data.governance ?? {};
+    const entries = Array.isArray(data.entries) ? data.entries : [];
+    const memory = data.memoryModel ?? {};
+    bodyEvidenceTimelineReady.textContent = String(Boolean(summary.timelineReady));
+    bodyEvidenceTimelineEntries.textContent = String(summary.entries ?? entries.length);
+    bodyEvidenceTimelineLatest.textContent = summary.latestEntryId ?? "unknown";
+    bodyEvidenceTimelineMutation.textContent = String(Boolean(governance.hostMutation));
+    bodyEvidenceTimelineJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Mode: \${data.mode ?? "unknown"} ready=\${Boolean(summary.timelineReady)} entries=\${summary.entries ?? entries.length} phases=\${(summary.phases ?? []).join(",")}\`,
+      \`Governance: createsTask=\${Boolean(governance.createsTask)} createsApproval=\${Boolean(governance.createsApproval)} executesCommand=\${Boolean(governance.executesCommand)} mutation=\${Boolean(governance.hostMutation)} recovery=\${Boolean(governance.triggersRecovery)}\`,
+      \`Latest: \${summary.latestEntryId ?? "none"} registry=\${summary.latestRegistry ?? "none"} candidateDemoReady=\${Boolean(summary.candidateDemoReady)} bodyGovernanceReady=\${Boolean(summary.bodyGovernanceReady)}\`,
+      \`Entries: \${entries.map((entry) => \`\${entry.id}:\${entry.registry}:\${entry.phase}:mutation=\${Boolean(entry.mutation)}\`).join(", ")}\`,
+      \`Memory: \${memory.label ?? "body_evidence_memory_v0"} purpose=\${memory.purpose ?? "none"}\`,
+      \`Operator Use: \${(memory.operatorUse ?? []).join(" | ")}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "openclaw-body-evidence-timeline-readiness"} boundary=\${data.next?.boundary ?? "read-only readiness"}\`,
+    ].join("\\n");
+  } catch {
+    bodyEvidenceTimelineReady.textContent = "false";
+    bodyEvidenceTimelineEntries.textContent = "0";
+    bodyEvidenceTimelineLatest.textContent = "offline";
+    bodyEvidenceTimelineMutation.textContent = "false";
+    bodyEvidenceTimelineJson.textContent = "Unable to read body evidence timeline.";
+  }
+}
+
 async function refreshPhase2RouteReview() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/route/phase-2-review\`);
@@ -6257,6 +6300,7 @@ await refreshHealthTrends();
 await refreshRouteAwareNextAction();
 await refreshConservativeRecoveryPolicy();
 await refreshBodyGovernanceReadiness();
+await refreshBodyEvidenceTimeline();
 await refreshPhase2RouteReview();
 await refreshSystemdRepairCandidates();
 await refreshSystemdRepairCandidatePlan();
@@ -6336,6 +6380,7 @@ setInterval(refreshHealthTrends, 5000);
 setInterval(refreshRouteAwareNextAction, 5000);
 setInterval(refreshConservativeRecoveryPolicy, 5000);
 setInterval(refreshBodyGovernanceReadiness, 5000);
+setInterval(refreshBodyEvidenceTimeline, 5000);
 setInterval(refreshPhase2RouteReview, 5000);
 setInterval(refreshSystemdRepairCandidates, 5000);
 setInterval(refreshSystemdRepairCandidatePlan, 5000);
