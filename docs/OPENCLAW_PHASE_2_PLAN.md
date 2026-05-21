@@ -434,6 +434,17 @@ This checkpoint is allowed because the project now needs a whitepaper-aligned pa
 - Creates no task, no approval, no command execution, no host mutation, no scheduler, no recovery action, and no additional ledger record.
 - Must return to whitepaper route review before adding more ledger records, durable background persistence, automatic repair, denial recovery, duplicate-click handling, plugin/runtime adapter work, arbitrary host control, or broader mutation.
 
+Body evidence ledger demo status checkpoint:
+
+After the route review selects `openclaw-body-evidence-ledger-demo-status`, the system may package the completed first durable body-memory ledger block into an operator-visible demo status.
+
+This checkpoint is allowed because the completed ledger block needs a concise demo narrative before any next capability route is opened:
+
+- Reads body evidence ledger readiness only.
+- Exposes checklist status, bootstrap record id, content hash, task/approval provenance, no-background-writer boundary, and a short operator narrative.
+- Creates no task, no approval, no command execution, no host mutation, no scheduler, no recovery action, no background writer, and no additional ledger record.
+- Must return to whitepaper route review before adding more ledger records, durable background persistence, automatic repair, denial recovery, duplicate-click handling, plugin/runtime adapter work, arbitrary host control, or broader mutation.
+
 Body evidence timeline checkpoint:
 
 After the next capability route review selects Track C, `openclaw-body-evidence-timeline` may expose a read-only chronological memory spine for OpenClaw body evidence.

@@ -994,6 +994,14 @@ function observerHtml() {
           <div class="metric"><span>Mutation</span><span id="body-evidence-ledger-readiness-mutation">false</span></div>
           <pre id="body-evidence-ledger-readiness-json">Loading body evidence ledger readiness...</pre>
         </section>
+        <section class="panel" id="body-evidence-ledger-demo-status-panel">
+          <h2>Body Evidence Ledger Demo Status</h2>
+          <div class="metric"><span>Demo Ready</span><span id="body-evidence-ledger-demo-status-ready">false</span></div>
+          <div class="metric"><span>Checklist</span><span id="body-evidence-ledger-demo-status-checks">0/0</span></div>
+          <div class="metric"><span>Record</span><span id="body-evidence-ledger-demo-status-record">loading</span></div>
+          <div class="metric"><span>Mutation</span><span id="body-evidence-ledger-demo-status-mutation">false</span></div>
+          <pre id="body-evidence-ledger-demo-status-json">Loading body evidence ledger demo status...</pre>
+        </section>
         <section class="panel" id="phase-2-route-review">
           <h2>Phase 2 Route Review</h2>
           <div class="metric"><span>Selected Track</span><span id="phase-2-route-selected-track">loading</span></div>
@@ -1298,6 +1306,11 @@ const bodyEvidenceLedgerReadinessChecks = document.querySelector("#body-evidence
 const bodyEvidenceLedgerReadinessRecords = document.querySelector("#body-evidence-ledger-readiness-records");
 const bodyEvidenceLedgerReadinessMutation = document.querySelector("#body-evidence-ledger-readiness-mutation");
 const bodyEvidenceLedgerReadinessJson = document.querySelector("#body-evidence-ledger-readiness-json");
+const bodyEvidenceLedgerDemoStatusReady = document.querySelector("#body-evidence-ledger-demo-status-ready");
+const bodyEvidenceLedgerDemoStatusChecks = document.querySelector("#body-evidence-ledger-demo-status-checks");
+const bodyEvidenceLedgerDemoStatusRecord = document.querySelector("#body-evidence-ledger-demo-status-record");
+const bodyEvidenceLedgerDemoStatusMutation = document.querySelector("#body-evidence-ledger-demo-status-mutation");
+const bodyEvidenceLedgerDemoStatusJson = document.querySelector("#body-evidence-ledger-demo-status-json");
 const phase2RouteSelectedTrack = document.querySelector("#phase-2-route-selected-track");
 const phase2RouteNextSlice = document.querySelector("#phase-2-route-next-slice");
 const phase2RouteCreatesTask = document.querySelector("#phase-2-route-creates-task");
@@ -4921,6 +4934,35 @@ async function refreshBodyEvidenceLedgerReadiness() {
   }
 }
 
+async function refreshBodyEvidenceLedgerDemoStatus() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/route/body-evidence-ledger-demo-status\`);
+    const summary = data.summary ?? {};
+    const governance = data.governance ?? {};
+    const checklist = Array.isArray(data.checklist) ? data.checklist : [];
+    const narrative = Array.isArray(data.demoNarrative) ? data.demoNarrative : [];
+    bodyEvidenceLedgerDemoStatusReady.textContent = String(Boolean(summary.demoReady));
+    bodyEvidenceLedgerDemoStatusChecks.textContent = \`\${summary.passed ?? 0}/\${summary.total ?? checklist.length}\`;
+    bodyEvidenceLedgerDemoStatusRecord.textContent = summary.bootstrapRecordId ?? "none";
+    bodyEvidenceLedgerDemoStatusMutation.textContent = String(Boolean(governance.hostMutation));
+    bodyEvidenceLedgerDemoStatusJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Mode: \${data.mode ?? "unknown"} demoReady=\${Boolean(summary.demoReady)} ledgerReady=\${Boolean(summary.ledgerReady)} records=\${summary.recordCount ?? 0} file=\${summary.ledgerFile ?? "unknown"}\`,
+      \`Record: id=\${summary.bootstrapRecordId ?? "none"} hash=\${summary.bootstrapRecordHash ?? "none"}\`,
+      \`Governance: canAppendLedgerRecord=\${Boolean(governance.canAppendLedgerRecord)} canWriteLedger=\${Boolean(governance.canWriteLedger)} createsTask=\${Boolean(governance.createsTask)} executesCommand=\${Boolean(governance.executesCommand)} mutation=\${Boolean(governance.hostMutation)} scheduler=\${Boolean(governance.schedulesFollowUp)} backgroundWriter=\${Boolean(governance.backgroundWriter)} bulkImport=\${Boolean(governance.bulkImport)}\`,
+      \`Checklist: \${checklist.map((item) => \`\${item.id}=\${Boolean(item.passed)}\`).join(", ")}\`,
+      \`Narrative: \${narrative.join(" | ")}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "openclaw-phase-2-next-capability-route-review"} boundary=\${data.next?.boundary ?? "route review before more body capability work"}\`,
+    ].join("\\n");
+  } catch {
+    bodyEvidenceLedgerDemoStatusReady.textContent = "false";
+    bodyEvidenceLedgerDemoStatusChecks.textContent = "0/0";
+    bodyEvidenceLedgerDemoStatusRecord.textContent = "offline";
+    bodyEvidenceLedgerDemoStatusMutation.textContent = "false";
+    bodyEvidenceLedgerDemoStatusJson.textContent = "Unable to read body evidence ledger demo status.";
+  }
+}
+
 async function refreshPhase2RouteReview() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/route/phase-2-review\`);
@@ -6813,6 +6855,7 @@ await refreshBodyEvidenceLedgerFirstRecordPlan();
 await refreshBodyEvidenceLedgerFirstRecordRouteReview();
 await refreshBodyEvidenceLedgerFirstRecordTask();
 await refreshBodyEvidenceLedgerReadiness();
+await refreshBodyEvidenceLedgerDemoStatus();
 await refreshPhase2RouteReview();
 await refreshSystemdRepairCandidates();
 await refreshSystemdRepairCandidatePlan();
@@ -6903,6 +6946,7 @@ setInterval(refreshBodyEvidenceLedgerFirstRecordPlan, 5000);
 setInterval(refreshBodyEvidenceLedgerFirstRecordRouteReview, 5000);
 setInterval(refreshBodyEvidenceLedgerFirstRecordTask, 5000);
 setInterval(refreshBodyEvidenceLedgerReadiness, 5000);
+setInterval(refreshBodyEvidenceLedgerDemoStatus, 5000);
 setInterval(refreshPhase2RouteReview, 5000);
 setInterval(refreshSystemdRepairCandidates, 5000);
 setInterval(refreshSystemdRepairCandidatePlan, 5000);

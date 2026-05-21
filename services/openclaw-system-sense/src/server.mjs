@@ -46,6 +46,7 @@ const BODY_EVIDENCE_LEDGER_STORAGE_ROOT_ROUTE_REVIEW_REGISTRY = "openclaw-body-e
 const BODY_EVIDENCE_LEDGER_FIRST_RECORD_PLAN_REGISTRY = "openclaw-body-evidence-ledger-first-record-plan-v0";
 const BODY_EVIDENCE_LEDGER_FIRST_RECORD_ROUTE_REVIEW_REGISTRY = "openclaw-body-evidence-ledger-first-record-route-review-v0";
 const BODY_EVIDENCE_LEDGER_READINESS_REGISTRY = "openclaw-body-evidence-ledger-readiness-v0";
+const BODY_EVIDENCE_LEDGER_DEMO_STATUS_REGISTRY = "openclaw-body-evidence-ledger-demo-status-v0";
 const PHASE_2_ROUTE_REVIEW_REGISTRY = "openclaw-phase-2-route-review-v0";
 const SYSTEMD_REPAIR_CANDIDATE_ASSESSMENT_REGISTRY = "openclaw-systemd-repair-candidate-assessment-v0";
 const SYSTEMD_REPAIR_CANDIDATE_PLAN_REGISTRY = "openclaw-systemd-repair-candidate-plan-v0";
@@ -3434,6 +3435,115 @@ async function buildBodyEvidenceLedgerReadiness() {
   };
 }
 
+async function buildBodyEvidenceLedgerDemoStatus() {
+  const readiness = await buildBodyEvidenceLedgerReadiness();
+  const record = readiness.evidence?.records?.[0] ?? null;
+  const checklist = [
+    {
+      id: "ledger-readiness-ready",
+      label: "Body evidence ledger readiness passed",
+      passed: readiness.summary?.ready === true,
+      evidence: readiness.registry,
+    },
+    {
+      id: "bootstrap-record-visible",
+      label: "Bootstrap ledger record is visible to Observer and operator demo",
+      passed: readiness.summary?.recordCount === 1
+        && record?.evidenceType === "body_evidence_ledger_bootstrap",
+      evidence: record?.id ?? null,
+    },
+    {
+      id: "record-hash-valid",
+      label: "Bootstrap record hash validates",
+      passed: record?.hashValid === true,
+      evidence: record?.contentHash ?? null,
+    },
+    {
+      id: "operator-provenance",
+      label: "Bootstrap record carries task and approval provenance",
+      passed: typeof record?.governance?.taskId === "string"
+        && typeof record?.governance?.approvalId === "string",
+      evidence: {
+        taskId: record?.governance?.taskId ?? null,
+        approvalId: record?.governance?.approvalId ?? null,
+      },
+    },
+    {
+      id: "no-background-writers",
+      label: "Demo status confirms no background writer, scheduler, or bulk import",
+      passed: readiness.governance?.backgroundWriter === false
+        && readiness.governance?.schedulesFollowUp === false
+        && readiness.governance?.bulkImport === false
+        && record?.governance?.backgroundWriter === false
+        && record?.governance?.scheduler === false
+        && record?.governance?.bulkImport === false,
+      evidence: "no_background_ledger_writer",
+    },
+  ];
+  const passed = checklist.filter((item) => item.passed).length;
+  const demoReady = passed === checklist.length;
+
+  return {
+    ok: true,
+    registry: BODY_EVIDENCE_LEDGER_DEMO_STATUS_REGISTRY,
+    mode: "read_only_body_evidence_ledger_demo_status",
+    generatedAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      ledgerReadinessRegistry: readiness.registry,
+      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      evidence: "body_evidence_ledger_demo_status",
+    },
+    governance: {
+      domain: "body_internal",
+      risk: "low",
+      autonomy: "demo_status_only",
+      approvalRequired: false,
+      hostMutation: false,
+      canMutate: false,
+      canAppendLedgerRecord: false,
+      canWriteLedger: false,
+      durableStorageWritten: false,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+      backgroundWriter: false,
+      bulkImport: false,
+    },
+    summary: {
+      demoReady,
+      passed,
+      total: checklist.length,
+      ledgerReady: readiness.summary?.ready === true,
+      ledgerFile: readiness.summary?.ledgerFile ?? null,
+      recordCount: readiness.summary?.recordCount ?? 0,
+      bootstrapRecordId: record?.id ?? null,
+      bootstrapRecordHash: record?.contentHash ?? null,
+      hiddenMutation: false,
+    },
+    checklist,
+    demoNarrative: [
+      "OpenClaw now has a durable body evidence ledger root inside the workspace.",
+      "The first bootstrap JSONL record was created through an explicit task and approval.",
+      "The record points back to body evidence timeline readiness and validates with a content hash.",
+      "No background ledger writer, scheduler, bulk import, automatic repair, or plugin/runtime adapter was introduced.",
+      "The next move must return to route review before any additional durable writes.",
+    ],
+    evidence: {
+      readinessSummary: readiness.summary,
+      record,
+      completedBlock: readiness.completedBlock,
+      next: readiness.next,
+    },
+    next: {
+      recommendedSlice: "openclaw-phase-2-next-capability-route-review",
+      boundary: "route-review the next body capability; do not add more ledger records or background writers from demo status",
+    },
+  };
+}
+
 function classifySystemdRepairRisk(unit) {
   if (unit.name === "openclaw-event-hub" || unit.name === "openclaw-core") {
     return "high";
@@ -3737,6 +3847,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/route/body-evidence-ledger-readiness") {
     const readiness = await buildBodyEvidenceLedgerReadiness();
     sendJson(res, 200, readiness);
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/route/body-evidence-ledger-demo-status") {
+    const status = await buildBodyEvidenceLedgerDemoStatus();
+    sendJson(res, 200, status);
     return;
   }
 
