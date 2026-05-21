@@ -4231,7 +4231,7 @@ async function refreshPhase2NextRepairDemoStatus() {
     phase2NextRepairDemoTarget.textContent = summary.targetUnit ?? "openclaw-system-sense.service";
     phase2NextRepairDemoMutation.textContent = String(Boolean(governance.hostMutation));
     phase2NextRepairDemoJson.textContent = [
-      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Registry: \${data.registry ?? "openclaw-systemd-next-repair-demo-status-v0"}\`,
       \`Mode: \${data.mode ?? "unknown"} readsTaskHistoryOnly=\${Boolean(governance.readsTaskHistoryOnly)} createsTask=\${Boolean(governance.createsTask)} executesCommand=\${Boolean(governance.executesCommand)} mutation=\${Boolean(governance.hostMutation)}\`,
       \`Status: \${data.status ?? "unknown"} ready=\${Boolean(summary.ready)} target=\${summary.targetUnit ?? "unknown"}\`,
       \`Outcome: \${summary.outcome ?? "none"} hostMutationAttempted=\${Boolean(summary.hostMutationAttempted)} executionSucceeded=\${summary.executionSucceeded ?? "unknown"}\`,
