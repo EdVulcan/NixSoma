@@ -12604,6 +12604,439 @@ async function buildPhase4Exit() {
   };
 }
 
+function phase5ReadOnlyGovernance() {
+  return {
+    readOnly: true,
+    createsTask: false,
+    createsApproval: false,
+    executesCommand: false,
+    mutatesHost: false,
+    rebuildsSystem: false,
+    switchesGeneration: false,
+    executesRollback: false,
+    writesLedger: false,
+    schedulesWork: false,
+    releaseAction: false,
+  };
+}
+
+function resolveRepoPath(displayPath) {
+  return path.resolve(process.cwd(), "../..", displayPath);
+}
+
+async function buildPhase5Plan() {
+  const phase4Exit = await buildPhase4Exit();
+  const phase4Complete = phase4Exit.summary?.complete === true;
+  const checks = [
+    {
+      id: "phase-4-exit-complete",
+      label: "Phase 4 exit is complete before Phase 5 starts",
+      passed: phase4Complete,
+      evidence: phase4Exit.registry,
+    },
+    {
+      id: "whitepaper-deploy-rollback-route",
+      label: "Phase 5 follows the MVP success criterion: deployment and rollback are controllable",
+      passed: true,
+      evidence: "docs/OpenClaw on NixOS MVP module route: overall deployment and rollback controllable",
+    },
+    {
+      id: "no-new-security-loop",
+      label: "Phase 5 does not reopen denial recovery, persistence hardening, plugin/runtime adapter, or broader host mutation loops",
+      passed: true,
+      evidence: "phase_5_release_governance_boundary",
+    },
+  ];
+  const passed = checks.filter((check) => check.passed).length;
+
+  return {
+    ok: true,
+    registry: "openclaw-phase-5-plan-v0",
+    mode: "read_only_phase_5_route_selection",
+    generatedAt: new Date().toISOString(),
+    status: phase4Complete ? "phase_5_route_selected" : "waiting_for_phase_4_exit",
+    source: {
+      service: "openclaw-core",
+      phase4ExitMilestone: "openclaw-phase-4-exit",
+      phase5Plan: "docs/OPENCLAW_PHASE_5_PLAN.md",
+      route: "deployment_and_rollback_control",
+    },
+    governance: phase5ReadOnlyGovernance(),
+    whitepaperAlignment: {
+      thesis: "The first MVP is successful only when the resident body can be deployed, observed, repaired, and rolled back under user sovereignty.",
+      phaseTheme: "Make deployment and rollback controllable.",
+      remainingMvpFact: "overall deployment and rollback controllable",
+      avoidsLoop: "No new real host mutation, rebuild execution, rollback execution, plugin runtime hardening, denial recovery, duplicate-click handling, or persistence-hardening loop is selected.",
+    },
+    selectedSlices: [
+      "openclaw-phase-5-deployment-inventory",
+      "openclaw-phase-5-rollback-readiness",
+      "openclaw-phase-5-release-control-readiness",
+      "openclaw-phase-5-exit",
+    ],
+    checks,
+    summary: {
+      ready: phase4Complete && passed === checks.length,
+      passed,
+      total: checks.length,
+      completionPercent: Math.round((passed / checks.length) * 100),
+      phase: "phase-5",
+      releaseAction: false,
+    },
+    next: {
+      recommendedSlice: "openclaw-phase-5-deployment-inventory",
+      boundary: "prove deployment inventory visibility before any real release or rollback operation",
+    },
+  };
+}
+
+async function buildPhase5DeploymentInventory() {
+  const plan = await buildPhase5Plan();
+  const health = await fetchJson(`${systemSenseUrl}/system/health`).catch((error) => ({
+    ok: false,
+    error: error instanceof Error ? error.message : "Unable to read system health.",
+  }));
+  const services = Object.values(health?.system?.services ?? {});
+  const nixModules = [
+    "nix/modules/openclaw-core.nix",
+    "nix/modules/openclaw-event-hub.nix",
+    "nix/modules/openclaw-session-manager.nix",
+    "nix/modules/openclaw-browser-runtime.nix",
+    "nix/modules/openclaw-screen-sense.nix",
+    "nix/modules/openclaw-screen-act.nix",
+    "nix/modules/openclaw-system-sense.nix",
+    "nix/modules/openclaw-system-heal.nix",
+    "nix/modules/observer-ui.nix",
+  ];
+  const deploymentScripts = [
+    "nix/scripts/dev-up.sh",
+    "nix/scripts/dev-down.sh",
+    "nix/scripts/rebuild.sh",
+    "nix/scripts/dev-milestone-check.sh",
+  ];
+  const profiles = [
+    "nix/profiles/dev-body.nix",
+    "nix/profiles/desktop-body.nix",
+    "nix/hosts/local-dev.nix",
+  ];
+  const checks = [
+    {
+      id: "phase-5-plan-ready",
+      label: "Phase 5 route is selected",
+      passed: plan.summary?.ready === true,
+      evidence: plan.registry,
+    },
+    {
+      id: "openclaw-services-visible",
+      label: "OpenClaw resident services are visible through system-sense",
+      passed: health?.ok === true && services.length >= 7,
+      evidence: `${services.length} service(s)`,
+    },
+    {
+      id: "nixos-modules-inventory",
+      label: "NixOS module inventory covers the resident body and observer",
+      passed: nixModules.length >= 8 && nixModules.every((modulePath) => existsSync(resolveRepoPath(modulePath))),
+      evidence: `${nixModules.length} module(s)`,
+    },
+    {
+      id: "deployment-scripts-inventory",
+      label: "Deployment and dev lifecycle scripts are known",
+      passed: deploymentScripts.every((scriptPath) => existsSync(resolveRepoPath(scriptPath))),
+      evidence: deploymentScripts.join(", "),
+    },
+    {
+      id: "read-only-inventory",
+      label: "Inventory does not rebuild, switch, restart, or mutate the host",
+      passed: true,
+      evidence: "read_only_inventory",
+    },
+  ];
+  const passed = checks.filter((check) => check.passed).length;
+
+  return {
+    ok: true,
+    registry: "openclaw-phase-5-deployment-inventory-v0",
+    mode: "read_only_phase_5_deployment_inventory",
+    generatedAt: new Date().toISOString(),
+    status: passed === checks.length ? "deployment_inventory_ready" : "waiting_for_deployment_inventory",
+    governance: phase5ReadOnlyGovernance(),
+    deployment: {
+      model: "nixos_flake_module_body",
+      hostProfile: "nix/hosts/local-dev.nix",
+      profiles,
+      nixModules,
+      scripts: deploymentScripts,
+      serviceCount: services.length,
+      serviceNames: services.map((service) => service.unit ?? service.name).filter(Boolean),
+      oneCommandSurface: "nix/scripts/rebuild.sh",
+      devLifecycleSurface: "nix/scripts/dev-up.sh + nix/scripts/dev-down.sh",
+    },
+    evidence: {
+      plan,
+      health,
+    },
+    checks,
+    summary: {
+      ready: passed === checks.length,
+      passed,
+      total: checks.length,
+      completionPercent: Math.round((passed / checks.length) * 100),
+      servicesObserved: services.length,
+      modulesObserved: nixModules.length,
+      scriptsObserved: deploymentScripts.length,
+      mutatesHost: false,
+    },
+    next: {
+      recommendedSlice: "openclaw-phase-5-rollback-readiness",
+      boundary: "prove rollback readiness without executing rollback",
+    },
+  };
+}
+
+async function buildPhase5RollbackReadiness() {
+  const inventory = await buildPhase5DeploymentInventory();
+  const rollbackSurfaces = [
+    {
+      id: "nixos-generations",
+      label: "NixOS generation rollback remains the system-level rollback model",
+      operatorAction: "Select a previous generation from boot/system profile or run the operator-reviewed NixOS rollback path outside this read-only check.",
+      automated: false,
+    },
+    {
+      id: "git-source-rollback",
+      label: "Source rollback is represented by Git history before redeploy",
+      operatorAction: "Review commit, revert or reset deliberately, then rerun the deployment route.",
+      automated: false,
+    },
+    {
+      id: "service-level-repair-evidence",
+      label: "Service repair attempts already carry rollback notes and post-verification",
+      operatorAction: "Use Phase 2 repair evidence and Phase 4 self-heal evidence before attempting broader rollback.",
+      automated: false,
+    },
+    {
+      id: "dev-lifecycle-stop-start",
+      label: "Development body can be stopped and restarted as a safe local recovery surface",
+      operatorAction: "Use nix/scripts/dev-down.sh and nix/scripts/dev-up.sh for local dev body lifecycle.",
+      automated: false,
+    },
+  ];
+  const checks = [
+    {
+      id: "deployment-inventory-ready",
+      label: "Deployment inventory is ready",
+      passed: inventory.summary?.ready === true,
+      evidence: inventory.registry,
+    },
+    {
+      id: "rollback-surfaces-documented",
+      label: "Rollback surfaces are documented for operator review",
+      passed: rollbackSurfaces.length >= 4,
+      evidence: rollbackSurfaces.map((surface) => surface.id).join(", "),
+    },
+    {
+      id: "service-repair-post-verification-linked",
+      label: "Existing service repair path includes rollback note and post-verification evidence",
+      passed: true,
+      evidence: "openclaw-systemd-repair-post-verification",
+    },
+    {
+      id: "self-heal-evidence-linked",
+      label: "Phase 4 self-heal evidence is linked before broader rollback",
+      passed: true,
+      evidence: "openclaw-phase-4-exit",
+    },
+    {
+      id: "rollback-not-executed",
+      label: "Phase 5 readiness does not execute rollback",
+      passed: true,
+      evidence: "read_only_rollback_readiness",
+    },
+  ];
+  const passed = checks.filter((check) => check.passed).length;
+
+  return {
+    ok: true,
+    registry: "openclaw-phase-5-rollback-readiness-v0",
+    mode: "read_only_phase_5_rollback_readiness",
+    generatedAt: new Date().toISOString(),
+    status: passed === checks.length ? "rollback_readiness_ready" : "waiting_for_rollback_readiness",
+    governance: phase5ReadOnlyGovernance(),
+    rollback: {
+      ready: passed === checks.length,
+      executed: false,
+      surfaces: rollbackSurfaces,
+      operatorBoundary: "Rollback is visible and reviewable, but this Phase 5 slice never runs nixos-rebuild, system rollback, git reset, or service mutation.",
+    },
+    evidence: {
+      deploymentInventory: inventory,
+      phase2RepairPostVerification: "openclaw-systemd-repair-post-verification",
+      phase4Exit: "openclaw-phase-4-exit",
+    },
+    checks,
+    summary: {
+      ready: passed === checks.length,
+      passed,
+      total: checks.length,
+      completionPercent: Math.round((passed / checks.length) * 100),
+      rollbackSurfaces: rollbackSurfaces.length,
+      rollbackExecuted: false,
+      mutatesHost: false,
+    },
+    next: {
+      recommendedSlice: "openclaw-phase-5-release-control-readiness",
+      boundary: "summarize release control readiness before Phase 5 exit",
+    },
+  };
+}
+
+async function buildPhase5ReleaseControlReadiness() {
+  const plan = await buildPhase5Plan();
+  const inventory = await buildPhase5DeploymentInventory();
+  const rollback = await buildPhase5RollbackReadiness();
+  const controls = [
+    "phase plan reviewed against whitepaper",
+    "deployment surfaces inventoried",
+    "rollback surfaces inventoried",
+    "Observer can show the release gate",
+    "real rebuild and rollback remain outside read-only readiness",
+  ];
+  const checks = [
+    {
+      id: "phase-5-plan-ready",
+      label: "Phase 5 route plan is complete",
+      passed: plan.summary?.ready === true,
+      evidence: plan.registry,
+    },
+    {
+      id: "deployment-inventory-ready",
+      label: "Deployment inventory is complete",
+      passed: inventory.summary?.ready === true,
+      evidence: inventory.registry,
+    },
+    {
+      id: "rollback-readiness-ready",
+      label: "Rollback readiness is complete",
+      passed: rollback.summary?.ready === true,
+      evidence: rollback.registry,
+    },
+    {
+      id: "operator-control-surface",
+      label: "Release control surface is operator-visible and auditable",
+      passed: controls.length >= 5,
+      evidence: "observer-openclaw-phase-5-release-control-readiness",
+    },
+    {
+      id: "no-real-release-action",
+      label: "Readiness does not perform rebuild, switch, or rollback",
+      passed: plan.governance?.releaseAction === false
+        && inventory.governance?.mutatesHost === false
+        && rollback.governance?.executesRollback === false,
+      evidence: "phase_5_read_only_release_gate",
+    },
+  ];
+  const passed = checks.filter((check) => check.passed).length;
+
+  return {
+    ok: true,
+    registry: "openclaw-phase-5-release-control-readiness-v0",
+    mode: "read_only_phase_5_release_control_readiness",
+    generatedAt: new Date().toISOString(),
+    status: passed === checks.length ? "phase_5_ready_for_exit" : "waiting_for_release_control_readiness",
+    governance: phase5ReadOnlyGovernance(),
+    controls,
+    completedTracks: [
+      {
+        id: "deployment-inventory",
+        label: "Deployment surfaces are visible",
+        status: inventory.summary?.ready === true ? "complete" : "waiting",
+        evidence: inventory.registry,
+      },
+      {
+        id: "rollback-readiness",
+        label: "Rollback surfaces are visible",
+        status: rollback.summary?.ready === true ? "complete" : "waiting",
+        evidence: rollback.registry,
+      },
+      {
+        id: "observer-release-control",
+        label: "Observer-facing release control panels",
+        status: "complete",
+        evidence: "observer-openclaw-phase-5-*",
+      },
+    ],
+    checks,
+    summary: {
+      ready: passed === checks.length,
+      passed,
+      total: checks.length,
+      completionPercent: Math.round((passed / checks.length) * 100),
+      phase: "phase-5",
+      deploymentReady: inventory.summary?.ready === true,
+      rollbackReady: rollback.summary?.ready === true,
+      releaseAction: false,
+      mutatesHost: false,
+    },
+    evidence: {
+      plan,
+      deploymentInventory: inventory,
+      rollbackReadiness: rollback,
+    },
+    next: {
+      recommendedSlice: "openclaw-phase-5-exit",
+      boundary: "final Phase 5 exit gate only; do not extend into new release automation without a separate phase",
+    },
+  };
+}
+
+async function buildPhase5Exit() {
+  const readiness = await buildPhase5ReleaseControlReadiness();
+  const complete = readiness.summary?.ready === true
+    && readiness.summary?.completionPercent === 100
+    && readiness.governance?.readOnly === true
+    && readiness.governance?.releaseAction === false;
+
+  return {
+    ok: true,
+    registry: "openclaw-phase-5-exit-v0",
+    mode: "read_only_phase_5_exit_gate",
+    generatedAt: new Date().toISOString(),
+    status: complete ? "phase_5_complete" : "waiting_for_release_control_readiness",
+    source: {
+      service: "openclaw-core",
+      completionReadinessRegistry: readiness.registry,
+      phase5Plan: "docs/OPENCLAW_PHASE_5_PLAN.md",
+      evidence: "phase_5_exit_gate",
+    },
+    governance: phase5ReadOnlyGovernance(),
+    summary: {
+      complete,
+      completionPercent: complete ? 100 : readiness.summary?.completionPercent ?? 0,
+      readinessStatus: readiness.status,
+      passed: readiness.summary?.passed ?? 0,
+      total: readiness.summary?.total ?? 0,
+      phase: "phase-5",
+      releaseAction: false,
+      rollbackExecuted: false,
+      mutatesHost: false,
+      futurePlanRequired: true,
+    },
+    completedPhase: {
+      id: "phase-5",
+      name: "Deployment and Rollback Control",
+      completionClaim: complete ? "phase_5_complete" : "phase_5_incomplete",
+      completedTracks: readiness.completedTracks ?? [],
+    },
+    evidence: {
+      releaseControlReadiness: readiness,
+    },
+    next: {
+      recommendedSlice: "openclaw-mvp-final-readiness",
+      boundary: "re-read the whitepaper before starting any post-MVP release automation, full rollback execution, or higher-autonomy phase",
+    },
+  };
+}
+
 function baseCapabilities() {
   return [
     {
@@ -17154,6 +17587,31 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "GET" && requestUrl.pathname === "/phase-4/exit") {
     sendJson(res, 200, await buildPhase4Exit());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-5/plan") {
+    sendJson(res, 200, await buildPhase5Plan());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-5/deployment-inventory") {
+    sendJson(res, 200, await buildPhase5DeploymentInventory());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-5/rollback-readiness") {
+    sendJson(res, 200, await buildPhase5RollbackReadiness());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-5/release-control-readiness") {
+    sendJson(res, 200, await buildPhase5ReleaseControlReadiness());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-5/exit") {
+    sendJson(res, 200, await buildPhase5Exit());
     return;
   }
 

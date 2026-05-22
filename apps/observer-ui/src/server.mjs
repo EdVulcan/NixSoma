@@ -415,6 +415,41 @@ function observerHtml() {
           <div class="metric"><span>Next</span><span id="phase4-exit-next">loading</span></div>
           <pre id="phase4-exit-json">Loading Phase 4 exit gate...</pre>
         </section>
+        <section class="panel" id="phase5-plan-panel">
+          <h2>Phase 5 Plan</h2>
+          <div class="metric"><span>Ready</span><span id="phase5-plan-ready">false</span></div>
+          <div class="metric"><span>Next</span><span id="phase5-plan-next">loading</span></div>
+          <div class="metric"><span>Release Action</span><span id="phase5-plan-release-action">false</span></div>
+          <pre id="phase5-plan-json">Loading Phase 5 plan...</pre>
+        </section>
+        <section class="panel" id="phase5-deployment-inventory-panel">
+          <h2>Phase 5 Deployment Inventory</h2>
+          <div class="metric"><span>Ready</span><span id="phase5-deployment-ready">false</span></div>
+          <div class="metric"><span>Services</span><span id="phase5-deployment-services">0</span></div>
+          <div class="metric"><span>Modules</span><span id="phase5-deployment-modules">0</span></div>
+          <pre id="phase5-deployment-json">Loading Phase 5 deployment inventory...</pre>
+        </section>
+        <section class="panel" id="phase5-rollback-readiness-panel">
+          <h2>Phase 5 Rollback Readiness</h2>
+          <div class="metric"><span>Ready</span><span id="phase5-rollback-ready">false</span></div>
+          <div class="metric"><span>Surfaces</span><span id="phase5-rollback-surfaces">0</span></div>
+          <div class="metric"><span>Executed</span><span id="phase5-rollback-executed">false</span></div>
+          <pre id="phase5-rollback-json">Loading Phase 5 rollback readiness...</pre>
+        </section>
+        <section class="panel" id="phase5-release-control-readiness-panel">
+          <h2>Phase 5 Release Control Readiness</h2>
+          <div class="metric"><span>Ready</span><span id="phase5-release-ready">false</span></div>
+          <div class="metric"><span>Percent</span><span id="phase5-release-percent">0</span></div>
+          <div class="metric"><span>Mutation</span><span id="phase5-release-mutation">false</span></div>
+          <pre id="phase5-release-json">Loading Phase 5 release control readiness...</pre>
+        </section>
+        <section class="panel" id="phase5-exit-panel">
+          <h2>Phase 5 Exit</h2>
+          <div class="metric"><span>Complete</span><span id="phase5-exit-complete">false</span></div>
+          <div class="metric"><span>Percent</span><span id="phase5-exit-percent">0</span></div>
+          <div class="metric"><span>Next</span><span id="phase5-exit-next">loading</span></div>
+          <pre id="phase5-exit-json">Loading Phase 5 exit gate...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -1467,6 +1502,26 @@ const phase4ExitComplete = document.querySelector("#phase4-exit-complete");
 const phase4ExitPercent = document.querySelector("#phase4-exit-percent");
 const phase4ExitNext = document.querySelector("#phase4-exit-next");
 const phase4ExitJson = document.querySelector("#phase4-exit-json");
+const phase5PlanReady = document.querySelector("#phase5-plan-ready");
+const phase5PlanNext = document.querySelector("#phase5-plan-next");
+const phase5PlanReleaseAction = document.querySelector("#phase5-plan-release-action");
+const phase5PlanJson = document.querySelector("#phase5-plan-json");
+const phase5DeploymentReady = document.querySelector("#phase5-deployment-ready");
+const phase5DeploymentServices = document.querySelector("#phase5-deployment-services");
+const phase5DeploymentModules = document.querySelector("#phase5-deployment-modules");
+const phase5DeploymentJson = document.querySelector("#phase5-deployment-json");
+const phase5RollbackReady = document.querySelector("#phase5-rollback-ready");
+const phase5RollbackSurfaces = document.querySelector("#phase5-rollback-surfaces");
+const phase5RollbackExecuted = document.querySelector("#phase5-rollback-executed");
+const phase5RollbackJson = document.querySelector("#phase5-rollback-json");
+const phase5ReleaseReady = document.querySelector("#phase5-release-ready");
+const phase5ReleasePercent = document.querySelector("#phase5-release-percent");
+const phase5ReleaseMutation = document.querySelector("#phase5-release-mutation");
+const phase5ReleaseJson = document.querySelector("#phase5-release-json");
+const phase5ExitComplete = document.querySelector("#phase5-exit-complete");
+const phase5ExitPercent = document.querySelector("#phase5-exit-percent");
+const phase5ExitNext = document.querySelector("#phase5-exit-next");
+const phase5ExitJson = document.querySelector("#phase5-exit-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -4868,6 +4923,117 @@ async function refreshPhase4Exit() {
   }
 }
 
+async function refreshPhase5Plan() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-5/plan\`);
+    const summary = data.summary ?? {};
+    const governance = data.governance ?? {};
+    phase5PlanReady.textContent = String(Boolean(summary.ready));
+    phase5PlanNext.textContent = data.next?.recommendedSlice ?? "openclaw-phase-5-deployment-inventory";
+    phase5PlanReleaseAction.textContent = String(Boolean(governance.releaseAction));
+    phase5PlanJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-5-plan-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown") + " ready=" + Boolean(summary.ready),
+      "Theme: " + (data.whitepaperAlignment?.phaseTheme ?? "Make deployment and rollback controllable."),
+      "Slices: " + ((data.selectedSlices ?? []).join(", ") || "none"),
+      "Next: " + (data.next?.recommendedSlice ?? "unknown"),
+    ].join("\\n");
+  } catch {
+    phase5PlanReady.textContent = "false";
+    phase5PlanNext.textContent = "unknown";
+    phase5PlanReleaseAction.textContent = "false";
+    phase5PlanJson.textContent = "Unable to read Phase 5 plan.";
+  }
+}
+
+async function refreshPhase5DeploymentInventory() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-5/deployment-inventory\`);
+    const summary = data.summary ?? {};
+    phase5DeploymentReady.textContent = String(Boolean(summary.ready));
+    phase5DeploymentServices.textContent = String(summary.servicesObserved ?? 0);
+    phase5DeploymentModules.textContent = String(summary.modulesObserved ?? 0);
+    phase5DeploymentJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-5-deployment-inventory-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Ready: " + Boolean(summary.ready) + " checks=" + (summary.passed ?? 0) + "/" + (summary.total ?? 0),
+      "Deployment: model=" + (data.deployment?.model ?? "unknown") + " profile=" + (data.deployment?.hostProfile ?? "unknown"),
+      "Inventory: services=" + (summary.servicesObserved ?? 0) + " modules=" + (summary.modulesObserved ?? 0) + " scripts=" + (summary.scriptsObserved ?? 0),
+    ].join("\\n");
+  } catch {
+    phase5DeploymentReady.textContent = "false";
+    phase5DeploymentServices.textContent = "0";
+    phase5DeploymentModules.textContent = "0";
+    phase5DeploymentJson.textContent = "Unable to read Phase 5 deployment inventory.";
+  }
+}
+
+async function refreshPhase5RollbackReadiness() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-5/rollback-readiness\`);
+    const summary = data.summary ?? {};
+    phase5RollbackReady.textContent = String(Boolean(summary.ready));
+    phase5RollbackSurfaces.textContent = String(summary.rollbackSurfaces ?? 0);
+    phase5RollbackExecuted.textContent = String(Boolean(summary.rollbackExecuted));
+    phase5RollbackJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-5-rollback-readiness-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Ready: " + Boolean(summary.ready) + " checks=" + (summary.passed ?? 0) + "/" + (summary.total ?? 0),
+      "Rollback: surfaces=" + (summary.rollbackSurfaces ?? 0) + " executed=" + Boolean(summary.rollbackExecuted),
+      "Boundary: " + (data.rollback?.operatorBoundary ?? "read-only"),
+    ].join("\\n");
+  } catch {
+    phase5RollbackReady.textContent = "false";
+    phase5RollbackSurfaces.textContent = "0";
+    phase5RollbackExecuted.textContent = "false";
+    phase5RollbackJson.textContent = "Unable to read Phase 5 rollback readiness.";
+  }
+}
+
+async function refreshPhase5ReleaseControlReadiness() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-5/release-control-readiness\`);
+    const summary = data.summary ?? {};
+    phase5ReleaseReady.textContent = String(Boolean(summary.ready));
+    phase5ReleasePercent.textContent = String(summary.completionPercent ?? 0);
+    phase5ReleaseMutation.textContent = String(Boolean(summary.mutatesHost));
+    phase5ReleaseJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-5-release-control-readiness-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Ready: " + Boolean(summary.ready) + " percent=" + (summary.completionPercent ?? 0),
+      "Controls: " + ((data.controls ?? []).join(" | ") || "none"),
+      "Tracks: " + ((data.completedTracks ?? []).map((track) => track.id + "=" + track.status).join(" | ") || "none"),
+    ].join("\\n");
+  } catch {
+    phase5ReleaseReady.textContent = "false";
+    phase5ReleasePercent.textContent = "0";
+    phase5ReleaseMutation.textContent = "false";
+    phase5ReleaseJson.textContent = "Unable to read Phase 5 release control readiness.";
+  }
+}
+
+async function refreshPhase5Exit() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-5/exit\`);
+    const summary = data.summary ?? {};
+    phase5ExitComplete.textContent = String(Boolean(summary.complete));
+    phase5ExitPercent.textContent = String(summary.completionPercent ?? 0);
+    phase5ExitNext.textContent = data.next?.recommendedSlice ?? "openclaw-mvp-final-readiness";
+    phase5ExitJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-5-exit-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Complete: " + Boolean(summary.complete) + " percent=" + (summary.completionPercent ?? 0),
+      "Completed: " + (data.completedPhase?.completionClaim ?? "unknown"),
+      "Next: " + (data.next?.recommendedSlice ?? "openclaw-mvp-final-readiness"),
+    ].join("\\n");
+  } catch {
+    phase5ExitComplete.textContent = "false";
+    phase5ExitPercent.textContent = "0";
+    phase5ExitNext.textContent = "openclaw-mvp-final-readiness";
+    phase5ExitJson.textContent = "Unable to read Phase 5 exit gate.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -7880,6 +8046,11 @@ await refreshPhase4SelfHealLoop();
 await refreshPhase4HealHistoryEvidence();
 await refreshPhase4CompletionReadiness();
 await refreshPhase4Exit();
+await refreshPhase5Plan();
+await refreshPhase5DeploymentInventory();
+await refreshPhase5RollbackReadiness();
+await refreshPhase5ReleaseControlReadiness();
+await refreshPhase5Exit();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -7996,6 +8167,11 @@ setInterval(refreshPhase4SelfHealLoop, 5000);
 setInterval(refreshPhase4HealHistoryEvidence, 5000);
 setInterval(refreshPhase4CompletionReadiness, 5000);
 setInterval(refreshPhase4Exit, 5000);
+setInterval(refreshPhase5Plan, 5000);
+setInterval(refreshPhase5DeploymentInventory, 5000);
+setInterval(refreshPhase5RollbackReadiness, 5000);
+setInterval(refreshPhase5ReleaseControlReadiness, 5000);
+setInterval(refreshPhase5Exit, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);
