@@ -1018,6 +1018,14 @@ function observerHtml() {
           <div class="metric"><span>Storage Written</span><span id="body-evidence-ledger-followup-record-plan-written">false</span></div>
           <pre id="body-evidence-ledger-followup-record-plan-json">Loading body evidence ledger follow-up record plan...</pre>
         </section>
+        <section class="panel" id="body-evidence-ledger-followup-record-route-review-panel">
+          <h2>Body Evidence Ledger Follow-up Record Route Review</h2>
+          <div class="metric"><span>Status</span><span id="body-evidence-ledger-followup-record-route-review-status">loading</span></div>
+          <div class="metric"><span>Next Slice</span><span id="body-evidence-ledger-followup-record-route-review-next">loading</span></div>
+          <div class="metric"><span>Can Append</span><span id="body-evidence-ledger-followup-record-route-review-write">false</span></div>
+          <div class="metric"><span>Storage Written</span><span id="body-evidence-ledger-followup-record-route-review-written">false</span></div>
+          <pre id="body-evidence-ledger-followup-record-route-review-json">Loading body evidence ledger follow-up record route review...</pre>
+        </section>
         <section class="panel" id="phase-2-route-review">
           <h2>Phase 2 Route Review</h2>
           <div class="metric"><span>Selected Track</span><span id="phase-2-route-selected-track">loading</span></div>
@@ -1389,6 +1397,11 @@ const bodyEvidenceLedgerFollowupRecordPlanType = document.querySelector("#body-e
 const bodyEvidenceLedgerFollowupRecordPlanRecords = document.querySelector("#body-evidence-ledger-followup-record-plan-records");
 const bodyEvidenceLedgerFollowupRecordPlanWritten = document.querySelector("#body-evidence-ledger-followup-record-plan-written");
 const bodyEvidenceLedgerFollowupRecordPlanJson = document.querySelector("#body-evidence-ledger-followup-record-plan-json");
+const bodyEvidenceLedgerFollowupRecordRouteReviewStatus = document.querySelector("#body-evidence-ledger-followup-record-route-review-status");
+const bodyEvidenceLedgerFollowupRecordRouteReviewNext = document.querySelector("#body-evidence-ledger-followup-record-route-review-next");
+const bodyEvidenceLedgerFollowupRecordRouteReviewWrite = document.querySelector("#body-evidence-ledger-followup-record-route-review-write");
+const bodyEvidenceLedgerFollowupRecordRouteReviewWritten = document.querySelector("#body-evidence-ledger-followup-record-route-review-written");
+const bodyEvidenceLedgerFollowupRecordRouteReviewJson = document.querySelector("#body-evidence-ledger-followup-record-route-review-json");
 const phase2RouteSelectedTrack = document.querySelector("#phase-2-route-selected-track");
 const phase2RouteNextSlice = document.querySelector("#phase-2-route-next-slice");
 const phase2RouteCreatesTask = document.querySelector("#phase-2-route-creates-task");
@@ -5134,6 +5147,38 @@ async function refreshBodyEvidenceLedgerFollowupRecordPlan() {
   }
 }
 
+async function refreshBodyEvidenceLedgerFollowupRecordRouteReview() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/route/body-evidence-ledger-followup-record-route-review\`);
+    const governance = data.governance ?? {};
+    const decision = data.decision ?? {};
+    const evidence = data.evidence ?? {};
+    const candidates = Array.isArray(data.candidates) ? data.candidates : [];
+    bodyEvidenceLedgerFollowupRecordRouteReviewStatus.textContent = decision.status ?? "unknown";
+    bodyEvidenceLedgerFollowupRecordRouteReviewNext.textContent = decision.selectedSlice ?? data.next?.recommendedSlice ?? "unknown";
+    bodyEvidenceLedgerFollowupRecordRouteReviewWrite.textContent = String(Boolean(governance.canAppendLedgerRecord));
+    bodyEvidenceLedgerFollowupRecordRouteReviewWritten.textContent = String(Boolean(governance.durableStorageWritten));
+    bodyEvidenceLedgerFollowupRecordRouteReviewJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Mode: \${data.mode ?? "unknown"} canAppendLedgerRecord=\${Boolean(governance.canAppendLedgerRecord)} canWriteLedger=\${Boolean(governance.canWriteLedger)} storageWritten=\${Boolean(governance.durableStorageWritten)} mutation=\${Boolean(governance.hostMutation)} createsTask=\${Boolean(governance.createsTask)} scheduler=\${Boolean(governance.schedulesFollowUp)} backgroundWriter=\${Boolean(governance.backgroundWriter)}\`,
+      \`Decision: \${decision.status ?? "unknown"} track=\${decision.selectedTrack ?? "unknown"} slice=\${decision.selectedSlice ?? "unknown"}\`,
+      \`Rationale: \${decision.rationale ?? "none"}\`,
+      \`Avoid: \${(decision.notSelected ?? []).join(", ") || "none"}\`,
+      \`Evidence: planReady=\${Boolean(evidence.followupRecordPlanReady)} recordType=\${evidence.plannedRecordType ?? "unknown"} sequence=\${evidence.plannedSequence ?? "unknown"} existingRecords=\${evidence.existingRecordCount ?? 0} source=\${evidence.sourceRegistry ?? "unknown"} durableStorageWritten=\${Boolean(evidence.durableStorageWritten)}\`,
+      \`Pre-append Checks: \${(evidence.preAppendChecks ?? []).join(" | ")}\`,
+      \`Deferred: \${(evidence.deferredActions ?? []).join(" | ")}\`,
+      \`Candidates: \${candidates.map((candidate) => \`\${candidate.id}:\${candidate.firstSlice}:recommended=\${Boolean(candidate.recommended)}:mutation=\${Boolean(candidate.mutation)}:write=\${Boolean(candidate.durableWrite)}:scheduler=\${Boolean(candidate.scheduler)}\`).join(", ")}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "openclaw-body-evidence-ledger-followup-record-task"} boundary=\${data.next?.boundary ?? "future task shell before follow-up append"}\`,
+    ].join("\\n");
+  } catch {
+    bodyEvidenceLedgerFollowupRecordRouteReviewStatus.textContent = "offline";
+    bodyEvidenceLedgerFollowupRecordRouteReviewNext.textContent = "unknown";
+    bodyEvidenceLedgerFollowupRecordRouteReviewWrite.textContent = "false";
+    bodyEvidenceLedgerFollowupRecordRouteReviewWritten.textContent = "false";
+    bodyEvidenceLedgerFollowupRecordRouteReviewJson.textContent = "Unable to read body evidence ledger follow-up record route review.";
+  }
+}
+
 async function refreshPhase2RouteReview() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/route/phase-2-review\`);
@@ -7262,6 +7307,7 @@ await refreshBodyEvidenceLedgerFirstRecordTask();
 await refreshBodyEvidenceLedgerReadiness();
 await refreshBodyEvidenceLedgerDemoStatus();
 await refreshBodyEvidenceLedgerFollowupRecordPlan();
+await refreshBodyEvidenceLedgerFollowupRecordRouteReview();
 await refreshPhase2RouteReview();
 await refreshSystemdRepairCandidates();
 await refreshSystemdRepairCandidatePlan();
@@ -7361,6 +7407,7 @@ setInterval(refreshBodyEvidenceLedgerFirstRecordTask, 5000);
 setInterval(refreshBodyEvidenceLedgerReadiness, 5000);
 setInterval(refreshBodyEvidenceLedgerDemoStatus, 5000);
 setInterval(refreshBodyEvidenceLedgerFollowupRecordPlan, 5000);
+setInterval(refreshBodyEvidenceLedgerFollowupRecordRouteReview, 5000);
 setInterval(refreshPhase2RouteReview, 5000);
 setInterval(refreshSystemdRepairCandidates, 5000);
 setInterval(refreshSystemdRepairCandidatePlan, 5000);

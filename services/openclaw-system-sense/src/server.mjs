@@ -48,6 +48,7 @@ const BODY_EVIDENCE_LEDGER_FIRST_RECORD_ROUTE_REVIEW_REGISTRY = "openclaw-body-e
 const BODY_EVIDENCE_LEDGER_READINESS_REGISTRY = "openclaw-body-evidence-ledger-readiness-v0";
 const BODY_EVIDENCE_LEDGER_DEMO_STATUS_REGISTRY = "openclaw-body-evidence-ledger-demo-status-v0";
 const BODY_EVIDENCE_LEDGER_FOLLOWUP_RECORD_PLAN_REGISTRY = "openclaw-body-evidence-ledger-followup-record-plan-v0";
+const BODY_EVIDENCE_LEDGER_FOLLOWUP_RECORD_ROUTE_REVIEW_REGISTRY = "openclaw-body-evidence-ledger-followup-record-route-review-v0";
 const SYSTEMD_NEXT_REPAIR_SCOPE_REVIEW_REGISTRY = "openclaw-systemd-next-repair-scope-review-v0";
 const SYSTEMD_NEXT_REPAIR_PLAN_REGISTRY = "openclaw-systemd-next-repair-plan-v0";
 const SYSTEMD_NEXT_REPAIR_ROUTE_REVIEW_REGISTRY = "openclaw-systemd-next-repair-route-review-v0";
@@ -3704,6 +3705,116 @@ async function buildBodyEvidenceLedgerFollowupRecordPlan() {
   };
 }
 
+async function buildBodyEvidenceLedgerFollowupRecordRouteReview() {
+  const followupPlan = await buildBodyEvidenceLedgerFollowupRecordPlan();
+  const planReady = followupPlan.summary?.planReady === true;
+  const existingRecordCount = followupPlan.summary?.existingRecordCount ?? 0;
+  const plannedSequence = followupPlan.summary?.plannedSequence ?? null;
+  const candidates = [
+    {
+      track: "Track C",
+      id: "followup-record-append-task-shell",
+      label: "Approval-gated follow-up ledger record append task shell",
+      score: planReady ? 94 : 42,
+      recommended: planReady,
+      firstSlice: "openclaw-body-evidence-ledger-followup-record-task",
+      mutation: true,
+      durableWrite: true,
+      scheduler: false,
+      reason: planReady
+        ? "The follow-up record is planned against the current timeline readiness and existing ledger count; the next step, if accepted later, should be one explicit task shell rather than a background writer."
+        : "Follow-up append task routing stays blocked until the plan, timeline readiness, and first ledger record are ready.",
+    },
+    {
+      track: "Deferred Track",
+      id: "direct-followup-ledger-append",
+      label: "Direct second ledger record append",
+      score: 18,
+      recommended: false,
+      firstSlice: "defer-direct-followup-ledger-append",
+      mutation: true,
+      durableWrite: true,
+      scheduler: false,
+      reason: "Direct append would skip task-shell visibility and approval planning for the second durable record.",
+    },
+    {
+      track: "Deferred Track",
+      id: "recurring-ledger-writer",
+      label: "Recurring body evidence ledger writer",
+      score: 12,
+      recommended: false,
+      firstSlice: "defer-recurring-ledger-writer",
+      mutation: true,
+      durableWrite: true,
+      scheduler: true,
+      reason: "Recurring writers remain deferred until manually planned single-record follow-ups are proven and useful.",
+    },
+  ];
+
+  return {
+    ok: true,
+    registry: BODY_EVIDENCE_LEDGER_FOLLOWUP_RECORD_ROUTE_REVIEW_REGISTRY,
+    mode: "read_only_body_evidence_ledger_followup_record_route_review",
+    generatedAt: new Date().toISOString(),
+    source: {
+      service: "openclaw-system-sense",
+      followupRecordPlanRegistry: followupPlan.registry,
+      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      evidence: "body_evidence_ledger_followup_record_route_review",
+    },
+    governance: {
+      domain: "body_internal",
+      risk: "low",
+      autonomy: "route_selection_only",
+      approvalRequired: false,
+      hostMutation: false,
+      canMutate: false,
+      canAppendLedgerRecord: false,
+      canWriteLedger: false,
+      durableStorageWritten: false,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+      backgroundWriter: false,
+      bulkImport: false,
+    },
+    decision: {
+      selectedTrack: "Track C: Body Evidence Memory",
+      selectedSlice: "openclaw-body-evidence-ledger-followup-record-task",
+      status: planReady ? "selected" : "blocked_until_followup_record_plan_ready",
+      rationale: "Move from follow-up record planning to a future approval-gated single append task shell; continue deferring direct append, schedulers, and background writers.",
+      notSelected: [
+        "no direct follow-up ledger append",
+        "no recurring ledger writer",
+        "no background persistence",
+        "no automatic repair",
+        "no denial recovery or duplicate-click hardening",
+        "no plugin/runtime adapter work",
+        "no broader host mutation",
+      ],
+    },
+    evidence: {
+      followupRecordPlanReady: planReady,
+      plannedRecordType: followupPlan.summary?.plannedRecordType ?? null,
+      plannedSequence,
+      existingRecordCount,
+      latestRecordId: followupPlan.summary?.latestRecordId ?? null,
+      sourceRegistry: followupPlan.plan?.plannedRecord?.sourceRegistry ?? null,
+      sourceEndpoint: followupPlan.plan?.plannedRecord?.sourceEndpoint ?? null,
+      durableStorageWritten: followupPlan.summary?.durableStorageWritten === true,
+      preAppendChecks: followupPlan.plan?.preAppendChecks ?? [],
+      deferredActions: followupPlan.plan?.deferredActions ?? [],
+    },
+    candidates,
+    next: {
+      recommendedSlice: "openclaw-body-evidence-ledger-followup-record-task",
+      boundary: "future task shell only; do not append a second ledger record, request approval, or schedule recurring writes in this route review",
+    },
+  };
+}
+
 async function buildSystemdNextRepairScopeReview() {
   const inventory = await buildSystemdUnitInventory();
   const dependencyMap = await buildSystemdDependencyMap();
@@ -4520,6 +4631,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/route/body-evidence-ledger-followup-record-plan") {
     const plan = await buildBodyEvidenceLedgerFollowupRecordPlan();
     sendJson(res, 200, plan);
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/system/route/body-evidence-ledger-followup-record-route-review") {
+    const review = await buildBodyEvidenceLedgerFollowupRecordRouteReview();
+    sendJson(res, 200, review);
     return;
   }
 
