@@ -34,7 +34,7 @@ The whitepaper defines OpenClaw consciousness as the layer that understands body
    - Read-only decision that durable memory writes and cloud-consciousness calls remain deferred to a separate phase.
 
 6. `openclaw-phase-6-exit`
-   - Read-only exit gate proving Phase 6 is complete and pointing to a separate long-term memory writer plan.
+   - Read-only exit gate proving Phase 6 is complete and pointing to a separate `openclaw-long-term-memory-write-plan`.
 
 ## Boundaries
 
