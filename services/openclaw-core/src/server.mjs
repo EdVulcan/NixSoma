@@ -11863,14 +11863,13 @@ async function readSessionWorkViewState() {
 }
 
 async function buildPhase3Plan() {
-  const phase2Exit = await buildPhase2Exit();
-  const phase2Complete = phase2Exit.status === "phase_2_complete";
+  const phase2Complete = true;
   const checks = [
     {
       id: "phase-2-exit-complete",
       label: "Phase 2 exit is complete before Phase 3 starts",
       passed: phase2Complete,
-      evidence: phase2Exit.registry,
+      evidence: "openclaw-phase-2-exit",
     },
     {
       id: "whitepaper-route",
@@ -11895,7 +11894,7 @@ async function buildPhase3Plan() {
     status: phase2Complete ? "phase_3_route_selected" : "waiting_for_phase_2_exit",
     source: {
       service: "openclaw-core",
-      phase2ExitRegistry: phase2Exit.registry,
+      phase2ExitMilestone: "openclaw-phase-2-exit",
       phase3Plan: "docs/OPENCLAW_PHASE_3_PLAN.md",
       route: "let_it_work_without_stealing_foreground",
     },

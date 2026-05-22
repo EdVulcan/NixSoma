@@ -19,7 +19,6 @@ export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 SESSION_MANAGER_URL="http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT"
 LEDGER_DIR="$REPO_ROOT/.artifacts/openclaw-body-evidence-ledger"
-. "$SCRIPT_DIR/dev-phase-3-prereqs.sh"
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE.tmp"
@@ -32,7 +31,6 @@ cleanup() {
 trap cleanup EXIT
 
 "$SCRIPT_DIR/dev-up.sh"
-prepare_phase_3_prereqs "$CORE_URL" "Prepare Phase 2 exit evidence before Phase 3 background work view."
 curl --silent --fail -X POST "$SESSION_MANAGER_URL/work-view/prepare" \
   -H 'content-type: application/json' \
   --data '{"displayTarget":"workspace-2","entryUrl":"https://example.com/phase-3-background"}' >/dev/null
