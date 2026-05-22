@@ -11118,7 +11118,7 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
       id: "durable-body-evidence-ledger-demo-status",
       label: "Read-only body evidence ledger demo status",
       score: bodyEvidenceLedgerReady ? 99 : 50,
-      recommended: bodyEvidenceLedgerReady && !bodyEvidenceLedgerDemoReady && !followupRecordPlanRouteReady,
+      recommended: bodyEvidenceLedgerReady && !bodyEvidenceLedgerDemoReady && !followupRecordPlanRouteReady && !followupRecordReadinessReady,
       firstSlice: "openclaw-body-evidence-ledger-demo-status",
       mutation: false,
       reason: bodyEvidenceLedgerDemoReady
