@@ -10389,6 +10389,55 @@ function findLatestSystemdNextRepairDemoTask() {
     ?? null;
 }
 
+function findLatestBodyEvidenceLedgerFollowupRecordTask() {
+  return [...tasks.values()]
+    .filter((task) => task.type === "body_evidence_ledger_followup_record_task")
+    .filter((task) => task.bodyEvidenceLedgerFollowupRecord?.registry === "openclaw-body-evidence-ledger-followup-record-task-v0")
+    .sort((left, right) => taskTimeForDemo(right) - taskTimeForDemo(left))[0]
+    ?? null;
+}
+
+function readBodyEvidenceLedgerLines() {
+  const ledgerFileDisplayPath = ".artifacts/openclaw-body-evidence-ledger/body-evidence-ledger.jsonl";
+  const ledgerFilePath = path.resolve(process.cwd(), "../..", ledgerFileDisplayPath);
+  if (!existsSync(ledgerFilePath)) {
+    return {
+      ledgerFileDisplayPath,
+      ledgerFilePath,
+      exists: false,
+      lineCount: 0,
+      records: [],
+    };
+  }
+  const text = readFileSync(ledgerFilePath, "utf8");
+  const lines = text.trim() ? text.trim().split("\n").filter(Boolean) : [];
+  return {
+    ledgerFileDisplayPath,
+    ledgerFilePath,
+    exists: true,
+    lineCount: lines.length,
+    records: lines.map((line, index) => {
+      try {
+        const record = JSON.parse(line);
+        return {
+          index,
+          ok: true,
+          id: record.id ?? null,
+          evidenceType: record.evidenceType ?? null,
+          sourceRegistry: record.sourceRegistry ?? null,
+          contentHash: record.contentHash ?? null,
+        };
+      } catch (error) {
+        return {
+          index,
+          ok: false,
+          error: error instanceof Error ? error.message : "Invalid JSONL record",
+        };
+      }
+    }),
+  };
+}
+
 function buildPhase2RepairDemoStatus() {
   const route = buildMvpRouteAlignment();
   const latestTask = findLatestSystemdRepairDemoTask();
@@ -10549,6 +10598,112 @@ function buildPhase2NextRepairDemoStatus() {
     next: {
       recommendedSlice: "openclaw-body-evidence-timeline",
       boundary: "return to read-only body memory; do not add another execution, recovery, or hardening loop",
+    },
+  };
+}
+
+function buildBodyEvidenceLedgerFollowupRecordReadiness() {
+  const latestTask = findLatestBodyEvidenceLedgerFollowupRecordTask();
+  const followupRecord = latestTask?.bodyEvidenceLedgerFollowupRecord ?? null;
+  const ledger = readBodyEvidenceLedgerLines();
+  const checklist = [
+    {
+      id: "followup-task-shell",
+      label: "Follow-up ledger record task shell exists",
+      status: latestTask?.type === "body_evidence_ledger_followup_record_task" ? "passed" : "pending",
+      evidence: latestTask?.id ?? null,
+    },
+    {
+      id: "pending-approval-boundary",
+      label: "Follow-up task remains approval-gated before append execution",
+      status: latestTask?.approval?.status === "pending" && followupRecord?.appendExecutionEnabled === false ? "passed" : "pending",
+      evidence: latestTask?.approval?.requestId ?? latestTask?.approval?.id ?? null,
+    },
+    {
+      id: "planned-second-record",
+      label: "Task shell targets planned sequence 2 follow-up timeline record",
+      status: followupRecord?.plannedRecordType === "body_evidence_timeline_followup"
+        && followupRecord?.plannedSequence === 2 ? "passed" : "pending",
+      evidence: followupRecord?.sourceRegistry ?? null,
+    },
+    {
+      id: "no-second-ledger-record",
+      label: "Ledger still contains exactly one durable record",
+      status: ledger.exists === true && ledger.lineCount === 1 ? "passed" : "pending",
+      evidence: ledger.ledgerFileDisplayPath,
+    },
+    {
+      id: "no-hidden-writer",
+      label: "No scheduler, background writer, command execution, or host mutation is enabled",
+      status: followupRecord?.recordAppended === false
+        && followupRecord?.durableStorageWritten === false
+        && latestTask?.status === "queued" ? "passed" : "pending",
+      evidence: "followup_record_readiness_governance",
+    },
+  ];
+  const passedChecks = checklist.filter((item) => item.status === "passed").length;
+  const ready = passedChecks === checklist.length;
+
+  return {
+    ok: true,
+    registry: "openclaw-body-evidence-ledger-followup-record-readiness-v0",
+    mode: "read_only_followup_record_task_readiness",
+    generatedAt: new Date().toISOString(),
+    status: ready ? "ready_for_route_review" : "waiting_for_followup_task_shell",
+    source: {
+      service: "openclaw-core",
+      taskId: latestTask?.id ?? null,
+      taskRegistry: followupRecord?.registry ?? null,
+      ledgerFile: ledger.ledgerFileDisplayPath,
+      evidence: "body_evidence_ledger_followup_record_readiness",
+    },
+    checklist,
+    summary: {
+      ready,
+      passedChecks,
+      totalChecks: checklist.length,
+      taskId: latestTask?.id ?? null,
+      approvalId: latestTask?.approval?.requestId ?? latestTask?.approval?.id ?? null,
+      approvalStatus: latestTask?.approval?.status ?? null,
+      plannedRecordType: followupRecord?.plannedRecordType ?? null,
+      plannedSequence: followupRecord?.plannedSequence ?? null,
+      existingRecordCount: ledger.lineCount,
+      recordAppended: followupRecord?.recordAppended === true,
+      durableStorageWritten: followupRecord?.durableStorageWritten === true,
+      hiddenMutation: false,
+    },
+    evidence: {
+      task: latestTask ? serialiseTask(latestTask) : null,
+      followupRecord,
+      ledger,
+      noSecondRecord: ledger.lineCount === 1,
+      hardBoundary: [
+        "do not approve follow-up append in this checkpoint",
+        "do not append a second ledger record",
+        "no scheduler",
+        "no background writer",
+        "no command execution",
+        "no host mutation",
+      ],
+    },
+    governance: {
+      readsTaskHistoryOnly: true,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      hostMutation: false,
+      canAppendLedgerRecord: false,
+      canWriteLedger: false,
+      recordAppended: false,
+      durableStorageWritten: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+      backgroundWriter: false,
+      bulkImport: false,
+    },
+    next: {
+      recommendedSlice: "openclaw-phase-2-next-capability-route-review",
+      boundary: "return to whitepaper route review before approving the follow-up append, writing a second ledger record, or adding background persistence",
     },
   };
 }
@@ -15409,6 +15564,11 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "GET" && requestUrl.pathname === "/phase-2/next-repair-demo-status") {
     sendJson(res, 200, buildPhase2NextRepairDemoStatus());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-2/body-evidence-ledger-followup-record-readiness") {
+    sendJson(res, 200, buildBodyEvidenceLedgerFollowupRecordReadiness());
     return;
   }
 

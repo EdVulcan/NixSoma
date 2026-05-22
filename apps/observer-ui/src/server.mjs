@@ -1037,6 +1037,14 @@ function observerHtml() {
           </div>
           <pre id="body-evidence-ledger-followup-record-task-json">Loading approval-gated follow-up record task boundary...</pre>
         </section>
+        <section class="panel" id="body-evidence-ledger-followup-record-readiness-panel">
+          <h2>Body Evidence Ledger Follow-up Record Readiness</h2>
+          <div class="metric"><span>Ready</span><span id="body-evidence-ledger-followup-record-readiness-ready">false</span></div>
+          <div class="metric"><span>Checks</span><span id="body-evidence-ledger-followup-record-readiness-checks">0/0</span></div>
+          <div class="metric"><span>Ledger Records</span><span id="body-evidence-ledger-followup-record-readiness-records">0</span></div>
+          <div class="metric"><span>Mutation</span><span id="body-evidence-ledger-followup-record-readiness-mutation">false</span></div>
+          <pre id="body-evidence-ledger-followup-record-readiness-json">Loading follow-up record readiness bundle...</pre>
+        </section>
         <section class="panel" id="phase-2-route-review">
           <h2>Phase 2 Route Review</h2>
           <div class="metric"><span>Selected Track</span><span id="phase-2-route-selected-track">loading</span></div>
@@ -1418,6 +1426,11 @@ const bodyEvidenceLedgerFollowupRecordTaskType = document.querySelector("#body-e
 const bodyEvidenceLedgerFollowupRecordTaskApproval = document.querySelector("#body-evidence-ledger-followup-record-task-approval");
 const bodyEvidenceLedgerFollowupRecordTaskAppended = document.querySelector("#body-evidence-ledger-followup-record-task-appended");
 const bodyEvidenceLedgerFollowupRecordTaskJson = document.querySelector("#body-evidence-ledger-followup-record-task-json");
+const bodyEvidenceLedgerFollowupRecordReadinessReady = document.querySelector("#body-evidence-ledger-followup-record-readiness-ready");
+const bodyEvidenceLedgerFollowupRecordReadinessChecks = document.querySelector("#body-evidence-ledger-followup-record-readiness-checks");
+const bodyEvidenceLedgerFollowupRecordReadinessRecords = document.querySelector("#body-evidence-ledger-followup-record-readiness-records");
+const bodyEvidenceLedgerFollowupRecordReadinessMutation = document.querySelector("#body-evidence-ledger-followup-record-readiness-mutation");
+const bodyEvidenceLedgerFollowupRecordReadinessJson = document.querySelector("#body-evidence-ledger-followup-record-readiness-json");
 const phase2RouteSelectedTrack = document.querySelector("#phase-2-route-selected-track");
 const phase2RouteNextSlice = document.querySelector("#phase-2-route-next-slice");
 const phase2RouteCreatesTask = document.querySelector("#phase-2-route-creates-task");
@@ -5229,6 +5242,35 @@ async function refreshBodyEvidenceLedgerFollowupRecordTask() {
   }
 }
 
+async function refreshBodyEvidenceLedgerFollowupRecordReadiness() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-2/body-evidence-ledger-followup-record-readiness\`);
+    const summary = data.summary ?? {};
+    const governance = data.governance ?? {};
+    const checklist = Array.isArray(data.checklist) ? data.checklist : [];
+    const hardBoundary = Array.isArray(data.evidence?.hardBoundary) ? data.evidence.hardBoundary : [];
+    bodyEvidenceLedgerFollowupRecordReadinessReady.textContent = String(Boolean(summary.ready));
+    bodyEvidenceLedgerFollowupRecordReadinessChecks.textContent = \`\${summary.passedChecks ?? 0}/\${summary.totalChecks ?? checklist.length}\`;
+    bodyEvidenceLedgerFollowupRecordReadinessRecords.textContent = String(summary.existingRecordCount ?? 0);
+    bodyEvidenceLedgerFollowupRecordReadinessMutation.textContent = String(Boolean(governance.hostMutation));
+    bodyEvidenceLedgerFollowupRecordReadinessJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Mode: \${data.mode ?? "unknown"} status=\${data.status ?? "unknown"} ready=\${Boolean(summary.ready)} task=\${summary.taskId ?? "none"} approval=\${summary.approvalStatus ?? "unknown"}\`,
+      \`Record: type=\${summary.plannedRecordType ?? "unknown"} sequence=\${summary.plannedSequence ?? "unknown"} existingRecords=\${summary.existingRecordCount ?? 0} appended=\${Boolean(summary.recordAppended)} durableStorageWritten=\${Boolean(summary.durableStorageWritten)}\`,
+      \`Governance: createsTask=\${Boolean(governance.createsTask)} createsApproval=\${Boolean(governance.createsApproval)} canAppendLedgerRecord=\${Boolean(governance.canAppendLedgerRecord)} canWriteLedger=\${Boolean(governance.canWriteLedger)} executesCommand=\${Boolean(governance.executesCommand)} mutation=\${Boolean(governance.hostMutation)} scheduler=\${Boolean(governance.schedulesFollowUp)} backgroundWriter=\${Boolean(governance.backgroundWriter)} bulkImport=\${Boolean(governance.bulkImport)}\`,
+      \`Checklist: \${checklist.map((item) => \`\${item.id}=\${item.status}\`).join(", ")}\`,
+      \`Boundary: \${hardBoundary.join(" | ")}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "openclaw-phase-2-next-capability-route-review"} boundary=\${data.next?.boundary ?? "route review before any follow-up append"}\`,
+    ].join("\\n");
+  } catch {
+    bodyEvidenceLedgerFollowupRecordReadinessReady.textContent = "false";
+    bodyEvidenceLedgerFollowupRecordReadinessChecks.textContent = "0/0";
+    bodyEvidenceLedgerFollowupRecordReadinessRecords.textContent = "0";
+    bodyEvidenceLedgerFollowupRecordReadinessMutation.textContent = "false";
+    bodyEvidenceLedgerFollowupRecordReadinessJson.textContent = "Unable to read body evidence ledger follow-up record readiness.";
+  }
+}
+
 async function refreshPhase2RouteReview() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/route/phase-2-review\`);
@@ -7387,6 +7429,7 @@ await refreshBodyEvidenceLedgerDemoStatus();
 await refreshBodyEvidenceLedgerFollowupRecordPlan();
 await refreshBodyEvidenceLedgerFollowupRecordRouteReview();
 await refreshBodyEvidenceLedgerFollowupRecordTask();
+await refreshBodyEvidenceLedgerFollowupRecordReadiness();
 await refreshPhase2RouteReview();
 await refreshSystemdRepairCandidates();
 await refreshSystemdRepairCandidatePlan();
@@ -7488,6 +7531,7 @@ setInterval(refreshBodyEvidenceLedgerDemoStatus, 5000);
 setInterval(refreshBodyEvidenceLedgerFollowupRecordPlan, 5000);
 setInterval(refreshBodyEvidenceLedgerFollowupRecordRouteReview, 5000);
 setInterval(refreshBodyEvidenceLedgerFollowupRecordTask, 5000);
+setInterval(refreshBodyEvidenceLedgerFollowupRecordReadiness, 5000);
 setInterval(refreshPhase2RouteReview, 5000);
 setInterval(refreshSystemdRepairCandidates, 5000);
 setInterval(refreshSystemdRepairCandidatePlan, 5000);
