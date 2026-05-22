@@ -21,6 +21,7 @@ SYSTEM_URL="http://127.0.0.1:$OPENCLAW_SYSTEM_SENSE_PORT"
 OBSERVER_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
 LEDGER_DIR="$REPO_ROOT/.artifacts/openclaw-body-evidence-ledger"
 LEDGER_FILE="$LEDGER_DIR/body-evidence-ledger.jsonl"
+. "$SCRIPT_DIR/dev-body-evidence-prereqs.sh"
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -f \
@@ -43,6 +44,8 @@ post_json() {
 }
 
 "$SCRIPT_DIR/dev-up.sh"
+
+prepare_body_evidence_timeline_readiness "$CORE_URL" "Approve one next repair execution before observer body evidence ledger first record append."
 
 HTML_FILE="$(mktemp)"
 CLIENT_FILE="$(mktemp)"
