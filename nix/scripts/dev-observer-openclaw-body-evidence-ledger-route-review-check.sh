@@ -16,6 +16,7 @@ export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-6490}"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-observer-body-evidence-ledger-route-review-check.json}"
 export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-system-heal-observer-body-evidence-ledger-route-review-check.json}"
 
+CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 SYSTEM_URL="http://127.0.0.1:$OPENCLAW_SYSTEM_SENSE_PORT"
 OBSERVER_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
 
@@ -33,6 +34,17 @@ cleanup() {
 trap cleanup EXIT
 
 "$SCRIPT_DIR/dev-up.sh"
+
+post_json() {
+  local url="$1"
+  local payload="$2"
+  curl --silent --fail -X POST "$url" -H 'content-type: application/json' --data "$payload"
+}
+
+created_next_repair="$(post_json "$CORE_URL/system/systemd/next-repair-tasks" '{"confirm":true,"execute":true}')"
+next_repair_approval_id="$(node -e 'const data = JSON.parse(process.argv[1]); process.stdout.write(data.approval.id)' "$created_next_repair")"
+post_json "$CORE_URL/approvals/$next_repair_approval_id/approve" '{"approvedBy":"observer-milestone-check","reason":"Approve one next repair execution before observer body evidence ledger route review."}' >/dev/null
+post_json "$CORE_URL/operator/step" '{}' >/dev/null
 
 curl --silent --fail "$SYSTEM_URL/system/health" >/dev/null
 
