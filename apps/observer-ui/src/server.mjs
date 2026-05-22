@@ -4507,12 +4507,13 @@ async function refreshPhase2CompletionReadiness() {
 
 async function refreshPhase2Exit() {
   try {
+    const phase2ExitNextFallback = "openclaw-phase-3-plan";
     const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-2/exit\`);
     const summary = data.summary ?? {};
     const governance = data.governance ?? {};
     phase2ExitComplete.textContent = String(Boolean(summary.complete));
     phase2ExitPercent.textContent = String(summary.completionPercent ?? 0);
-    phase2ExitNext.textContent = data.next?.recommendedSlice ?? "unknown";
+    phase2ExitNext.textContent = data.next?.recommendedSlice ?? phase2ExitNextFallback;
     phase2ExitMutation.textContent = String(Boolean(governance.mutatesHost));
     phase2ExitJson.textContent = [
       \`Registry: \${data.registry ?? "openclaw-phase-2-exit-v0"}\`,
@@ -4520,12 +4521,12 @@ async function refreshPhase2Exit() {
       \`Readiness: status=\${summary.readinessStatus ?? "unknown"} checks=\${summary.passed ?? 0}/\${summary.total ?? 0} records=\${summary.durableBodyMemoryRecords ?? 0} followup=\${summary.followupRecordId ?? "none"}\`,
       \`Completed: \${data.completedPhase?.completionClaim ?? "unknown"} tracks=\${(data.completedPhase?.completedTracks ?? []).length}\`,
       \`Governance: readOnly=\${Boolean(governance.readOnly)} createsTask=\${Boolean(governance.createsTask)} createsApproval=\${Boolean(governance.createsApproval)} executesCommand=\${Boolean(governance.executesCommand)} mutatesHost=\${Boolean(governance.mutatesHost)} scheduler=\${Boolean(governance.schedulesWork)} backgroundWriter=\${Boolean(governance.backgroundWriter)} writesLedger=\${Boolean(governance.writesLedger)}\`,
-      \`Next: \${data.next?.recommendedSlice ?? "unknown"} boundary=\${data.next?.boundary ?? "unknown"}\`,
+      \`Next: \${data.next?.recommendedSlice ?? phase2ExitNextFallback} boundary=\${data.next?.boundary ?? "unknown"}\`,
     ].join("\\n");
   } catch {
     phase2ExitComplete.textContent = "false";
     phase2ExitPercent.textContent = "0";
-    phase2ExitNext.textContent = "unknown";
+    phase2ExitNext.textContent = "openclaw-phase-3-plan";
     phase2ExitMutation.textContent = "false";
     phase2ExitJson.textContent = "Unable to read Phase 2 exit gate.";
   }
