@@ -10902,6 +10902,119 @@ async function buildBodyEvidenceLedgerFollowupRecordAppendRouteReview() {
   };
 }
 
+function buildBodyEvidenceLedgerFollowupRecordAppendReadiness() {
+  const latestTask = findLatestBodyEvidenceLedgerFollowupRecordTask();
+  const followupRecord = latestTask?.bodyEvidenceLedgerFollowupRecord ?? null;
+  const ledger = readBodyEvidenceLedgerLines();
+  const firstRecord = ledger.records?.[0] ?? null;
+  const secondRecord = ledger.records?.[1] ?? null;
+  const checklist = [
+    {
+      id: "followup-task-completed",
+      label: "Follow-up ledger append task completed",
+      status: latestTask?.status === "completed" && followupRecord?.recordAppended === true ? "passed" : "pending",
+      evidence: latestTask?.id ?? null,
+    },
+    {
+      id: "two-ledger-records",
+      label: "Ledger contains exactly two durable JSONL records",
+      status: ledger.exists === true && ledger.lineCount === 2 ? "passed" : "pending",
+      evidence: ledger.ledgerFileDisplayPath,
+    },
+    {
+      id: "followup-record-type",
+      label: "Second record is the planned follow-up timeline record",
+      status: secondRecord?.evidenceType === "body_evidence_timeline_followup" ? "passed" : "pending",
+      evidence: secondRecord?.id ?? null,
+    },
+    {
+      id: "previous-record-link",
+      label: "Second record links back to the first durable record",
+      status: followupRecord?.previousRecordId === firstRecord?.id
+        && followupRecord?.previousRecordHash === firstRecord?.contentHash ? "passed" : "pending",
+      evidence: firstRecord?.id ?? null,
+    },
+    {
+      id: "no-hidden-writer",
+      label: "No scheduler, background writer, command execution, or recovery was added",
+      status: latestTask?.outcome?.details?.scheduler === false
+        && latestTask?.outcome?.details?.backgroundWriter === false
+        && latestTask?.outcome?.details?.bulkImport === false ? "passed" : "pending",
+      evidence: "followup_append_readiness_governance",
+    },
+  ];
+  const passedChecks = checklist.filter((item) => item.status === "passed").length;
+  const ready = passedChecks === checklist.length;
+
+  return {
+    ok: true,
+    registry: "openclaw-body-evidence-ledger-followup-record-append-readiness-v0",
+    mode: "read_only_followup_append_readiness",
+    generatedAt: new Date().toISOString(),
+    status: ready ? "ready_for_route_review" : "waiting_for_followup_append",
+    source: {
+      service: "openclaw-core",
+      taskId: latestTask?.id ?? null,
+      taskRegistry: followupRecord?.registry ?? null,
+      appendRegistry: followupRecord?.appendResult?.registry ?? null,
+      ledgerFile: ledger.ledgerFileDisplayPath,
+      evidence: "body_evidence_ledger_followup_record_append_readiness",
+    },
+    checklist,
+    summary: {
+      ready,
+      passedChecks,
+      totalChecks: checklist.length,
+      taskId: latestTask?.id ?? null,
+      approvalId: latestTask?.approval?.requestId ?? latestTask?.approval?.id ?? null,
+      approvalStatus: latestTask?.approval?.status ?? null,
+      plannedRecordType: followupRecord?.plannedRecordType ?? null,
+      plannedSequence: followupRecord?.plannedSequence ?? null,
+      recordId: followupRecord?.recordId ?? null,
+      previousRecordId: followupRecord?.previousRecordId ?? null,
+      previousRecordHash: followupRecord?.previousRecordHash ?? null,
+      contentHash: followupRecord?.contentHash ?? null,
+      existingRecordCount: ledger.lineCount,
+      recordAppended: followupRecord?.recordAppended === true,
+      durableStorageWritten: followupRecord?.durableStorageWritten === true,
+      hiddenMutation: false,
+    },
+    evidence: {
+      task: latestTask ? serialiseTask(latestTask) : null,
+      followupRecord,
+      ledger,
+      firstRecord,
+      secondRecord,
+      routeBoundary: [
+        "return to whitepaper route review before additional ledger records",
+        "no scheduler",
+        "no background writer",
+        "no command execution",
+        "no recovery action",
+      ],
+    },
+    governance: {
+      readsTaskHistoryOnly: true,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      hostMutation: false,
+      canAppendLedgerRecord: false,
+      canWriteLedger: false,
+      recordAppended: false,
+      durableStorageWritten: false,
+      triggersRecovery: false,
+      schedulesFollowUp: false,
+      backgroundWriter: false,
+      bulkImport: false,
+    },
+    next: {
+      recommendedSlice: "openclaw-phase-2-next-capability-route-review",
+      boundary: "return to whitepaper route review before more ledger writes, schedulers, background persistence, or broader mutation",
+    },
+  };
+}
+
 async function buildPhase2DemoControlRoom() {
   const mvpRoute = buildMvpRouteAlignment();
   const repairDemo = buildPhase2RepairDemoStatus();
@@ -15953,6 +16066,11 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "GET" && requestUrl.pathname === "/phase-2/body-evidence-ledger-followup-record-append-route-review") {
     sendJson(res, 200, await buildBodyEvidenceLedgerFollowupRecordAppendRouteReview());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-2/body-evidence-ledger-followup-record-append-readiness") {
+    sendJson(res, 200, buildBodyEvidenceLedgerFollowupRecordAppendReadiness());
     return;
   }
 
