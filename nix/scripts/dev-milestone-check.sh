@@ -61,6 +61,7 @@ checks=(
   "openclaw-phase-2-next-capability-route-review|dev-openclaw-phase-2-next-capability-route-review-check.sh|Whitepaper-aligned next Phase 2 body capability route review"
   "openclaw-phase-2-next-capability-route-review-ledger-ready|dev-openclaw-phase-2-next-capability-route-review-ledger-ready-check.sh|Whitepaper-aligned next Phase 2 route review after body evidence ledger readiness"
   "openclaw-phase-2-next-capability-route-review-ledger-demo-ready|dev-openclaw-phase-2-next-capability-route-review-ledger-demo-ready-check.sh|Whitepaper-aligned next Phase 2 route review after body evidence ledger demo readiness"
+  "openclaw-phase-2-next-capability-route-review-followup-ledger-plan|dev-openclaw-phase-2-next-capability-route-review-followup-ledger-plan-check.sh|Whitepaper-aligned next Phase 2 route review for follow-up body evidence ledger planning"
   "openclaw-systemd-next-repair-scope-review|dev-openclaw-systemd-next-repair-scope-review-check.sh|Read-only next OpenClaw systemd repair scope review after ledger demo status"
   "openclaw-systemd-next-repair-plan|dev-openclaw-systemd-next-repair-plan-check.sh|Plan-only next OpenClaw systemd repair scope after ledger demo status"
   "openclaw-systemd-next-repair-route-review|dev-openclaw-systemd-next-repair-route-review-check.sh|Read-only route review for the next OpenClaw systemd repair dry-run"

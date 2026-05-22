@@ -10711,10 +10711,12 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
   const demoExit = await buildPhase2DemoReadinessExit();
   const demoReady = demoExit.summary?.ready === true;
   const ledgerDemoStatusCheckpointComplete = options.ledgerDemoStatusCheckpointComplete === true;
+  const repairCandidateDemoCheckpointComplete = options.repairCandidateDemoCheckpointComplete === true;
   let candidateDemoStatus = null;
   let bodyEvidenceTimelineReadiness = null;
   let bodyEvidenceLedgerReadiness = null;
   let bodyEvidenceLedgerDemoStatus = null;
+  let bodyEvidenceLedgerFollowupRecordPlan = null;
   try {
     candidateDemoStatus = await fetchJson(`${systemSenseUrl}/system/systemd/repair-candidate-demo-status`);
   } catch {
@@ -10737,16 +10739,32 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
       bodyEvidenceLedgerDemoStatus = null;
     }
   }
+  if (repairCandidateDemoCheckpointComplete) {
+    try {
+      bodyEvidenceLedgerFollowupRecordPlan = await fetchJson(`${systemSenseUrl}/system/route/body-evidence-ledger-followup-record-plan`);
+    } catch {
+      bodyEvidenceLedgerFollowupRecordPlan = null;
+    }
+  }
   const candidateDemoReady = candidateDemoStatus?.summary?.demoReady === true;
   const bodyEvidenceTimelineReady = bodyEvidenceTimelineReadiness?.summary?.ready === true;
   const bodyEvidenceLedgerReady = bodyEvidenceLedgerReadiness?.summary?.ready === true;
   const bodyEvidenceLedgerDemoReady = bodyEvidenceLedgerDemoStatus?.summary?.demoReady === true;
-  const selectedTrack = candidateDemoReady
+  const followupRecordPlanReady = bodyEvidenceLedgerFollowupRecordPlan?.summary?.planReady === true;
+  const followupRecordPlanRouteReady = repairCandidateDemoCheckpointComplete
+    && candidateDemoReady
+    && bodyEvidenceTimelineReady
+    && bodyEvidenceLedgerReady;
+  const selectedTrack = followupRecordPlanRouteReady
+    ? "Track C: Body Evidence Memory"
+    : candidateDemoReady
     ? (bodyEvidenceLedgerDemoReady
       ? "Track A: Real NixOS/systemd Repair Semantics"
       : "Track C: Body Governance Enhancement")
     : "Track A: Real NixOS/systemd Repair Semantics";
-  const selectedSlice = candidateDemoReady
+  const selectedSlice = followupRecordPlanRouteReady
+    ? "openclaw-body-evidence-ledger-followup-record-plan"
+    : candidateDemoReady
     ? (bodyEvidenceLedgerDemoReady
         ? "openclaw-systemd-next-repair-scope-review"
         : bodyEvidenceLedgerReady
@@ -10807,11 +10825,23 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
         : "Ledger demo status waits until the first durable record readiness gate passes.",
     },
     {
+      track: "Track C",
+      id: "durable-body-evidence-ledger-followup-record-plan",
+      label: "Plan-only follow-up body evidence ledger record",
+      score: followupRecordPlanRouteReady ? 101 : 56,
+      recommended: followupRecordPlanRouteReady,
+      firstSlice: "openclaw-body-evidence-ledger-followup-record-plan",
+      mutation: false,
+      reason: followupRecordPlanRouteReady
+        ? "The candidate demo and durable ledger evidence are ready; plan the next body evidence ledger record without creating a task or writing JSONL."
+        : "Follow-up ledger record planning waits until candidate demo status and the first ledger record are both ready.",
+    },
+    {
       track: "Track A",
       id: "next-systemd-repair-scope-review",
       label: "Read-only next systemd repair scope review",
       score: bodyEvidenceLedgerDemoReady ? 100 : 54,
-      recommended: bodyEvidenceLedgerDemoReady,
+      recommended: bodyEvidenceLedgerDemoReady && !followupRecordPlanRouteReady,
       firstSlice: "openclaw-systemd-next-repair-scope-review",
       mutation: false,
       reason: bodyEvidenceLedgerDemoReady
@@ -10874,7 +10904,9 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
       selectedTrack,
       selectedSlice,
       status: demoReady ? "selected" : "blocked_until_demo_exit_ready",
-      rationale: candidateDemoReady
+      rationale: followupRecordPlanRouteReady
+        ? "Candidate repair demo evidence and the first ledger record are ready, so plan a follow-up body evidence ledger record without appending it yet."
+        : candidateDemoReady
         ? (bodyEvidenceLedgerDemoReady
             ? "The durable body evidence ledger is demo-ready, so return to Track A with a read-only next repair scope review rather than adding more ledger writes."
             : bodyEvidenceLedgerReady
@@ -10888,6 +10920,7 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
         bodyEvidenceTimelineReady ? "no body evidence timeline loop" : "no candidate-specific approval replay",
         bodyEvidenceLedgerReady ? "no body evidence ledger plan or append loop" : "no body evidence ledger demo before readiness",
         bodyEvidenceLedgerDemoReady ? "no body evidence ledger demo status loop" : "no next repair scope before ledger demo status",
+        followupRecordPlanRouteReady ? "no follow-up ledger append without a separate route review" : "no follow-up ledger record before candidate demo completion",
         "no plugin/runtime adapter work",
         "no automatic repair",
         "no broader host mutation",
@@ -10908,6 +10941,10 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
       bodyEvidenceLedgerDemoReady,
       bodyEvidenceLedgerDemoStatusCheckpointComplete: ledgerDemoStatusCheckpointComplete,
       bodyEvidenceLedgerDemoStatusRegistry: bodyEvidenceLedgerDemoStatus?.registry ?? null,
+      repairCandidateDemoStatusCheckpointComplete: repairCandidateDemoCheckpointComplete,
+      bodyEvidenceLedgerFollowupRecordPlanReady: followupRecordPlanReady,
+      bodyEvidenceLedgerFollowupRecordPlanRegistry: bodyEvidenceLedgerFollowupRecordPlan?.registry ?? null,
+      bodyEvidenceLedgerFollowupPlannedSequence: bodyEvidenceLedgerFollowupRecordPlan?.summary?.plannedSequence ?? null,
       completedDemoBlock: demoExit.completedBlock,
       priorityOrder: [
         "real-systemd-repair-semantics",
@@ -10919,7 +10956,9 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
     candidates,
     next: {
       recommendedSlice: selectedSlice,
-      boundary: bodyEvidenceLedgerDemoReady
+      boundary: followupRecordPlanRouteReady
+        ? "plan-only follow-up ledger record only; do not create tasks, approvals, schedulers, or append a second JSONL record"
+        : bodyEvidenceLedgerDemoReady
         ? "read-only next systemd repair scope review only; do not create repair tasks, execute commands, or broaden mutation"
         : bodyEvidenceLedgerReady
         ? "read-only ledger demo status only; do not add more ledger records, background writers, schedulers, or host mutation"
@@ -15160,6 +15199,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/phase-2/next-capability-route-review") {
     sendJson(res, 200, await buildPhase2NextCapabilityRouteReview({
       ledgerDemoStatusCheckpointComplete: requestUrl.searchParams.get("afterLedgerDemoStatus") === "true",
+      repairCandidateDemoCheckpointComplete: requestUrl.searchParams.get("afterRepairCandidateDemoStatus") === "true",
     }));
     return;
   }

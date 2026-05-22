@@ -290,7 +290,7 @@ This checkpoint is allowed because it confirms that the operator demo is ready b
 
 Phase 2 next capability route review checkpoint:
 
-After the demo readiness exit passes, `openclaw-phase-2-next-capability-route-review` may choose the next body-capability block. After the candidate repair demo status passes, the same route review must avoid looping back into the already completed candidate assessment block. After `openclaw-body-evidence-ledger-readiness` passes, it must avoid looping back into the already completed ledger plan or append path. After `openclaw-body-evidence-ledger-demo-status` passes, it must avoid looping back into the completed ledger demo package and return to Track A with `openclaw-systemd-next-repair-scope-review`.
+After the demo readiness exit passes, `openclaw-phase-2-next-capability-route-review` may choose the next body-capability block. After the candidate repair demo status passes, the same route review must avoid looping back into the already completed candidate assessment block. After `openclaw-body-evidence-ledger-readiness` passes, it must avoid looping back into the already completed ledger plan or append path. After `openclaw-body-evidence-ledger-demo-status` passes, it must avoid looping back into the completed ledger demo package and return to Track A with `openclaw-systemd-next-repair-scope-review`. After later repair/candidate demo evidence is visible, it may select `openclaw-body-evidence-ledger-followup-record-plan` as a plan-only body-memory checkpoint without creating another append.
 
 Decision:
 
@@ -302,10 +302,12 @@ After `openclaw-body-evidence-timeline-readiness` is complete, select Track C, `
 
 After `openclaw-body-evidence-ledger-demo-status` is complete, select Track A, `openclaw-systemd-next-repair-scope-review`, as the next block.
 
+After `openclaw-systemd-repair-candidate-demo-status` is complete and the durable ledger is ready, select Track C, `openclaw-body-evidence-ledger-followup-record-plan`, as the next plan-only body-memory checkpoint.
+
 This checkpoint is allowed because Track B demo readiness is complete, and the whitepaper priority order points back to real NixOS/systemd repair semantics until the candidate repair route is demo-ready. Once that candidate route is complete, the next whitepaper-aligned gain is body evidence memory rather than repeating the same candidate assessment:
 
 - Reads demo readiness exit, candidate demo status when available, Phase 2 priority order, and existing route evidence only.
-- Selects Track A candidate assessment before candidate demo completion, Track C body evidence timeline after candidate demo completion, Track C body evidence ledger plan after timeline readiness, Track C `openclaw-body-evidence-ledger-demo-status` after ledger readiness, then Track A `openclaw-systemd-next-repair-scope-review` after ledger demo readiness.
+- Selects Track A candidate assessment before candidate demo completion, Track C body evidence timeline after candidate demo completion, Track C body evidence ledger plan after timeline readiness, Track C `openclaw-body-evidence-ledger-demo-status` after ledger readiness, Track A `openclaw-systemd-next-repair-scope-review` after ledger demo readiness, then Track C `openclaw-body-evidence-ledger-followup-record-plan` after later repair/candidate demo evidence is available.
 - Explains why route loops, candidate-specific approval replay, durable storage implementation before a plan, plugin/runtime adapter work, automatic repair, broader mutation, persistence hardening, and denial recovery are not selected.
 - Creates no task, no approval, no command execution, no host mutation, no scheduler, and no recovery action.
 - Must not add automatic repair, background maintenance, persistence hardening, denial recovery, duplicate-click handling, plugin/runtime adapter work, or arbitrary host control.
