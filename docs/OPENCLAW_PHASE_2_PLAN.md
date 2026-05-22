@@ -511,6 +511,22 @@ This checkpoint is allowed because the follow-up task shell is visible and pendi
 - Creates no task, no approval, no command execution, no host mutation, no scheduler, no recovery action, no background writer, and no additional ledger record.
 - Must not approve the follow-up task, append the second record, add background persistence, schedulers, automatic repair, denial recovery, duplicate-click handling, plugin/runtime adapter work, arbitrary host control, or broader mutation.
 
+Body evidence ledger follow-up append route review checkpoint:
+
+After the next capability route review selects `openclaw-body-evidence-ledger-followup-record-append-route-review`, the system may review whether the existing pending follow-up task can become a future approved append.
+
+Decision:
+
+Select Track C, `openclaw-body-evidence-ledger-followup-record-append`, as a future explicit append execution slice only.
+
+This checkpoint is allowed because the second durable body-memory record should be route-reviewed before approval, but the route review itself must remain non-mutating:
+
+- Reads body evidence ledger follow-up record readiness and next capability route review only.
+- Confirms the pending task id, approval id, planned sequence 2, existing record count 1, and no second JSONL record.
+- Selects a future approved append execution slice without approving or executing it.
+- Creates no task, no approval, no command execution, no host mutation, no scheduler, no recovery action, no background writer, and no additional ledger record.
+- Must not approve the follow-up task, append the second record, add background persistence, schedulers, automatic repair, denial recovery, duplicate-click handling, plugin/runtime adapter work, arbitrary host control, or broader mutation.
+
 Systemd next repair scope review checkpoint:
 
 After the next capability route review selects `openclaw-systemd-next-repair-scope-review`, the system may choose the next Track A repair scope from existing body evidence.

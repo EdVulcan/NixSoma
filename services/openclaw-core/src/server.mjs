@@ -10708,6 +10708,120 @@ function buildBodyEvidenceLedgerFollowupRecordReadiness() {
   };
 }
 
+async function buildBodyEvidenceLedgerFollowupRecordAppendRouteReview() {
+  const readiness = buildBodyEvidenceLedgerFollowupRecordReadiness();
+  const routeReview = await buildPhase2NextCapabilityRouteReview();
+  const ready = readiness.summary?.ready === true
+    && routeReview.decision?.selectedSlice === "openclaw-body-evidence-ledger-followup-record-append-route-review"
+    && readiness.summary?.recordAppended === false
+    && readiness.summary?.existingRecordCount === 1;
+  const checklist = [
+    {
+      id: "followup-readiness-ready",
+      label: "Follow-up task readiness is complete",
+      status: readiness.summary?.ready === true ? "passed" : "pending",
+      evidence: readiness.registry,
+    },
+    {
+      id: "route-selected",
+      label: "Next capability route selected follow-up append route review",
+      status: routeReview.decision?.selectedSlice === "openclaw-body-evidence-ledger-followup-record-append-route-review" ? "passed" : "pending",
+      evidence: routeReview.registry,
+    },
+    {
+      id: "pending-approval",
+      label: "Existing follow-up task remains pending approval",
+      status: readiness.summary?.approvalStatus === "pending" ? "passed" : "pending",
+      evidence: readiness.summary?.approvalId ?? null,
+    },
+    {
+      id: "no-second-record",
+      label: "Ledger still contains exactly one durable record",
+      status: readiness.summary?.existingRecordCount === 1 && readiness.summary?.recordAppended === false ? "passed" : "pending",
+      evidence: readiness.source?.ledgerFile ?? null,
+    },
+    {
+      id: "review-only",
+      label: "Route review creates no task, approval, append, scheduler, or host mutation",
+      status: "passed",
+      evidence: "followup_append_route_review_governance",
+    },
+  ];
+  const passedChecks = checklist.filter((item) => item.status === "passed").length;
+
+  return {
+    ok: true,
+    registry: "openclaw-body-evidence-ledger-followup-record-append-route-review-v0",
+    mode: "read_only_followup_append_route_review",
+    generatedAt: new Date().toISOString(),
+    status: ready ? "selected" : "blocked_until_followup_readiness_route",
+    source: {
+      service: "openclaw-core",
+      readinessRegistry: readiness.registry,
+      nextCapabilityRouteRegistry: routeReview.registry,
+      evidence: "body_evidence_ledger_followup_append_route_review",
+    },
+    decision: {
+      selectedTrack: "Track C: Body Evidence Memory",
+      selectedSlice: ready ? "openclaw-body-evidence-ledger-followup-record-append" : "wait-for-followup-readiness-route",
+      status: ready ? "selected" : "blocked",
+      rationale: ready
+        ? "The follow-up ledger task is visible and pending; a future append execution may be opened only as a separate approved milestone."
+        : "The follow-up append route waits for readiness plus next-capability route selection.",
+      notSelected: [
+        "no approval in route review",
+        "no second ledger record append in route review",
+        "no background ledger writer",
+        "no scheduler",
+        "no automatic repair",
+        "no plugin/runtime adapter work",
+        "no arbitrary host control",
+      ],
+    },
+    checklist,
+    summary: {
+      ready,
+      passedChecks,
+      totalChecks: checklist.length,
+      taskId: readiness.summary?.taskId ?? null,
+      approvalId: readiness.summary?.approvalId ?? null,
+      approvalStatus: readiness.summary?.approvalStatus ?? null,
+      plannedRecordType: readiness.summary?.plannedRecordType ?? null,
+      plannedSequence: readiness.summary?.plannedSequence ?? null,
+      existingRecordCount: readiness.summary?.existingRecordCount ?? 0,
+      recordAppended: false,
+      durableStorageWritten: false,
+    },
+    governance: {
+      readOnly: true,
+      createsTask: false,
+      createsApproval: false,
+      approvesTask: false,
+      executesCommand: false,
+      hostMutation: false,
+      canAppendLedgerRecord: false,
+      recordAppended: false,
+      durableStorageWritten: false,
+      schedulesFollowUp: false,
+      backgroundWriter: false,
+      triggersRecovery: false,
+    },
+    evidence: {
+      readiness,
+      routeReview: {
+        registry: routeReview.registry,
+        selectedSlice: routeReview.decision?.selectedSlice ?? null,
+        recommendedSlice: routeReview.next?.recommendedSlice ?? null,
+      },
+      noSecondRecord: readiness.evidence?.noSecondRecord === true,
+    },
+    next: {
+      recommendedSlice: ready ? "openclaw-body-evidence-ledger-followup-record-append" : "openclaw-body-evidence-ledger-followup-record-readiness",
+      boundary: "future append must be a separate approved execution milestone; do not approve or write JSONL in this route review",
+    },
+  };
+}
+
 async function buildPhase2DemoControlRoom() {
   const mvpRoute = buildMvpRouteAlignment();
   const repairDemo = buildPhase2RepairDemoStatus();
@@ -15603,6 +15717,11 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "GET" && requestUrl.pathname === "/phase-2/body-evidence-ledger-followup-record-readiness") {
     sendJson(res, 200, buildBodyEvidenceLedgerFollowupRecordReadiness());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-2/body-evidence-ledger-followup-record-append-route-review") {
+    sendJson(res, 200, await buildBodyEvidenceLedgerFollowupRecordAppendRouteReview());
     return;
   }
 
