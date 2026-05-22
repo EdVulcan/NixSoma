@@ -345,6 +345,41 @@ function observerHtml() {
           <div class="metric"><span>Mutation</span><span id="phase2-exit-mutation">false</span></div>
           <pre id="phase2-exit-json">Loading Phase 2 exit gate...</pre>
         </section>
+        <section class="panel" id="phase3-plan-panel">
+          <h2>Phase 3 Plan</h2>
+          <div class="metric"><span>Ready</span><span id="phase3-plan-ready">false</span></div>
+          <div class="metric"><span>Next</span><span id="phase3-plan-next">loading</span></div>
+          <div class="metric"><span>Foreground Steal</span><span id="phase3-plan-foreground">false</span></div>
+          <pre id="phase3-plan-json">Loading Phase 3 plan...</pre>
+        </section>
+        <section class="panel" id="phase3-background-work-view-panel">
+          <h2>Phase 3 Background Work View</h2>
+          <div class="metric"><span>Ready</span><span id="phase3-background-ready">false</span></div>
+          <div class="metric"><span>Visibility</span><span id="phase3-background-visibility">loading</span></div>
+          <div class="metric"><span>Mode</span><span id="phase3-background-mode">loading</span></div>
+          <pre id="phase3-background-json">Loading Phase 3 background work view...</pre>
+        </section>
+        <section class="panel" id="phase3-operator-interrupt-controls-panel">
+          <h2>Phase 3 Operator Interrupt Controls</h2>
+          <div class="metric"><span>Ready</span><span id="phase3-controls-ready">false</span></div>
+          <div class="metric"><span>Takeover</span><span id="phase3-controls-takeover">false</span></div>
+          <div class="metric"><span>Hidden Automation</span><span id="phase3-controls-hidden-automation">false</span></div>
+          <pre id="phase3-controls-json">Loading Phase 3 operator controls...</pre>
+        </section>
+        <section class="panel" id="phase3-completion-readiness-panel">
+          <h2>Phase 3 Completion Readiness</h2>
+          <div class="metric"><span>Ready</span><span id="phase3-readiness-ready">false</span></div>
+          <div class="metric"><span>Checks</span><span id="phase3-readiness-checks">0/0</span></div>
+          <div class="metric"><span>Percent</span><span id="phase3-readiness-percent">0</span></div>
+          <pre id="phase3-readiness-json">Loading Phase 3 completion readiness...</pre>
+        </section>
+        <section class="panel" id="phase3-exit-panel">
+          <h2>Phase 3 Exit</h2>
+          <div class="metric"><span>Complete</span><span id="phase3-exit-complete">false</span></div>
+          <div class="metric"><span>Percent</span><span id="phase3-exit-percent">0</span></div>
+          <div class="metric"><span>Next</span><span id="phase3-exit-next">loading</span></div>
+          <pre id="phase3-exit-json">Loading Phase 3 exit gate...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -374,6 +409,7 @@ function observerHtml() {
               <button id="complete-task-button" class="secondary">Complete Current Task</button>
               <button id="pause-button" class="secondary">Pause Current Task</button>
               <button id="resume-button" class="secondary">Resume Current Task</button>
+              <button id="takeover-button" class="secondary">Take Over Current Task</button>
               <button id="stop-button" class="secondary">Stop Current Task</button>
             </div>
           </div>
@@ -1356,6 +1392,26 @@ const phase2ExitPercent = document.querySelector("#phase2-exit-percent");
 const phase2ExitNext = document.querySelector("#phase2-exit-next");
 const phase2ExitMutation = document.querySelector("#phase2-exit-mutation");
 const phase2ExitJson = document.querySelector("#phase2-exit-json");
+const phase3PlanReady = document.querySelector("#phase3-plan-ready");
+const phase3PlanNext = document.querySelector("#phase3-plan-next");
+const phase3PlanForeground = document.querySelector("#phase3-plan-foreground");
+const phase3PlanJson = document.querySelector("#phase3-plan-json");
+const phase3BackgroundReady = document.querySelector("#phase3-background-ready");
+const phase3BackgroundVisibility = document.querySelector("#phase3-background-visibility");
+const phase3BackgroundMode = document.querySelector("#phase3-background-mode");
+const phase3BackgroundJson = document.querySelector("#phase3-background-json");
+const phase3ControlsReady = document.querySelector("#phase3-controls-ready");
+const phase3ControlsTakeover = document.querySelector("#phase3-controls-takeover");
+const phase3ControlsHiddenAutomation = document.querySelector("#phase3-controls-hidden-automation");
+const phase3ControlsJson = document.querySelector("#phase3-controls-json");
+const phase3ReadinessReady = document.querySelector("#phase3-readiness-ready");
+const phase3ReadinessChecks = document.querySelector("#phase3-readiness-checks");
+const phase3ReadinessPercent = document.querySelector("#phase3-readiness-percent");
+const phase3ReadinessJson = document.querySelector("#phase3-readiness-json");
+const phase3ExitComplete = document.querySelector("#phase3-exit-complete");
+const phase3ExitPercent = document.querySelector("#phase3-exit-percent");
+const phase3ExitNext = document.querySelector("#phase3-exit-next");
+const phase3ExitJson = document.querySelector("#phase3-exit-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -1609,6 +1665,7 @@ const runMaintenanceButton = document.querySelector("#run-maintenance-button");
 const completeTaskButton = document.querySelector("#complete-task-button");
 const pauseButton = document.querySelector("#pause-button");
 const resumeButton = document.querySelector("#resume-button");
+const takeoverButton = document.querySelector("#takeover-button");
 const stopButton = document.querySelector("#stop-button");
 const openWorkViewUrlButton = document.querySelector("#open-work-view-url-button");
 const workViewUrlInput = document.querySelector("#work-view-url-input");
@@ -4532,6 +4589,118 @@ async function refreshPhase2Exit() {
   }
 }
 
+async function refreshPhase3Plan() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-3/plan\`);
+    const summary = data.summary ?? {};
+    const governance = data.governance ?? {};
+    phase3PlanReady.textContent = String(Boolean(summary.ready));
+    phase3PlanNext.textContent = data.next?.recommendedSlice ?? "openclaw-phase-3-background-work-view";
+    phase3PlanForeground.textContent = String(Boolean(governance.stealsForeground));
+    phase3PlanJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-3-plan-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown") + " ready=" + Boolean(summary.ready),
+      "Theme: " + (data.whitepaperAlignment?.phaseTheme ?? "Let it work without stealing the foreground."),
+      "Slices: " + ((data.selectedSlices ?? []).join(", ") || "none"),
+      "Next: " + (data.next?.recommendedSlice ?? "unknown"),
+    ].join("\\n");
+  } catch {
+    phase3PlanReady.textContent = "false";
+    phase3PlanNext.textContent = "unknown";
+    phase3PlanForeground.textContent = "false";
+    phase3PlanJson.textContent = "Unable to read Phase 3 plan.";
+  }
+}
+
+async function refreshPhase3BackgroundWorkView() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-3/background-work-view\`);
+    const summary = data.summary ?? {};
+    const workView = data.current?.workView ?? {};
+    phase3BackgroundReady.textContent = String(Boolean(summary.ready));
+    phase3BackgroundVisibility.textContent = workView.visibility ?? data.workViewContract?.defaultVisibility ?? "hidden";
+    phase3BackgroundMode.textContent = workView.mode ?? data.workViewContract?.defaultMode ?? "background";
+    phase3BackgroundJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-3-background-work-view-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Ready: " + Boolean(summary.ready) + " checks=" + (summary.passed ?? 0) + "/" + (summary.total ?? 0),
+      "Default: visibility=" + (data.workViewContract?.defaultVisibility ?? "hidden") + " mode=" + (data.workViewContract?.defaultMode ?? "background"),
+      "Current: visibility=" + (workView.visibility ?? "unknown") + " mode=" + (workView.mode ?? "unknown") + " capture=" + (workView.captureStrategy ?? "unknown"),
+    ].join("\\n");
+  } catch {
+    phase3BackgroundReady.textContent = "false";
+    phase3BackgroundVisibility.textContent = "unknown";
+    phase3BackgroundMode.textContent = "unknown";
+    phase3BackgroundJson.textContent = "Unable to read Phase 3 background work view.";
+  }
+}
+
+async function refreshPhase3OperatorInterruptControls() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-3/operator-interrupt-controls\`);
+    const summary = data.summary ?? {};
+    phase3ControlsReady.textContent = String(Boolean(summary.ready));
+    phase3ControlsTakeover.textContent = String(Boolean(summary.takeoverSupported));
+    phase3ControlsHiddenAutomation.textContent = String(Boolean(summary.hiddenAutomation));
+    phase3ControlsJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-3-operator-interrupt-controls-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Controls: " + ((data.controls ?? []).map((control) => control.id + " " + control.endpoint).join(" | ") || "none"),
+      "Operator: status=" + (data.operator?.status ?? "unknown") + " blocked=" + Boolean(data.operator?.blocked),
+      "Next: " + (data.next?.recommendedSlice ?? "unknown"),
+    ].join("\\n");
+  } catch {
+    phase3ControlsReady.textContent = "false";
+    phase3ControlsTakeover.textContent = "false";
+    phase3ControlsHiddenAutomation.textContent = "false";
+    phase3ControlsJson.textContent = "Unable to read Phase 3 operator controls.";
+  }
+}
+
+async function refreshPhase3CompletionReadiness() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-3/completion-readiness\`);
+    const summary = data.summary ?? {};
+    phase3ReadinessReady.textContent = String(Boolean(summary.ready));
+    phase3ReadinessChecks.textContent = (summary.passed ?? 0) + "/" + (summary.total ?? 0);
+    phase3ReadinessPercent.textContent = String(summary.completionPercent ?? 0);
+    phase3ReadinessJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-3-completion-readiness-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Ready: " + Boolean(summary.ready) + " percent=" + (summary.completionPercent ?? 0),
+      "Foreground Steal: " + Boolean(summary.foregroundStealByDefault),
+      "Tracks: " + ((data.completedTracks ?? []).map((track) => track.id + "=" + track.status).join(" | ") || "none"),
+    ].join("\\n");
+  } catch {
+    phase3ReadinessReady.textContent = "false";
+    phase3ReadinessChecks.textContent = "0/0";
+    phase3ReadinessPercent.textContent = "0";
+    phase3ReadinessJson.textContent = "Unable to read Phase 3 completion readiness.";
+  }
+}
+
+async function refreshPhase3Exit() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-3/exit\`);
+    const summary = data.summary ?? {};
+    phase3ExitComplete.textContent = String(Boolean(summary.complete));
+    phase3ExitPercent.textContent = String(summary.completionPercent ?? 0);
+    phase3ExitNext.textContent = data.next?.recommendedSlice ?? "openclaw-phase-4-plan";
+    phase3ExitJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-3-exit-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Complete: " + Boolean(summary.complete) + " percent=" + (summary.completionPercent ?? 0),
+      "Completed: " + (data.completedPhase?.completionClaim ?? "unknown"),
+      "Next: " + (data.next?.recommendedSlice ?? "openclaw-phase-4-plan"),
+    ].join("\\n");
+  } catch {
+    phase3ExitComplete.textContent = "false";
+    phase3ExitPercent.textContent = "0";
+    phase3ExitNext.textContent = "openclaw-phase-4-plan";
+    phase3ExitJson.textContent = "Unable to read Phase 3 exit gate.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -7366,6 +7535,12 @@ resumeButton.addEventListener("click", () => {
   });
 });
 
+takeoverButton.addEventListener("click", () => {
+  postControl("/control/takeover").catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 stopButton.addEventListener("click", () => {
   stopCurrentTask().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);
@@ -7528,6 +7703,11 @@ await refreshPhase2DemoReadinessExit();
 await refreshPhase2NextCapabilityRoute();
 await refreshPhase2CompletionReadiness();
 await refreshPhase2Exit();
+await refreshPhase3Plan();
+await refreshPhase3BackgroundWorkView();
+await refreshPhase3OperatorInterruptControls();
+await refreshPhase3CompletionReadiness();
+await refreshPhase3Exit();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -7634,6 +7814,11 @@ setInterval(refreshPhase2DemoReadinessExit, 5000);
 setInterval(refreshPhase2NextCapabilityRoute, 5000);
 setInterval(refreshPhase2CompletionReadiness, 5000);
 setInterval(refreshPhase2Exit, 5000);
+setInterval(refreshPhase3Plan, 5000);
+setInterval(refreshPhase3BackgroundWorkView, 5000);
+setInterval(refreshPhase3OperatorInterruptControls, 5000);
+setInterval(refreshPhase3CompletionReadiness, 5000);
+setInterval(refreshPhase3Exit, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);
