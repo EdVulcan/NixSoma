@@ -53,7 +53,7 @@ record_approval_id="$(node -e 'const data = JSON.parse(process.argv[1]); process
 post_json "$CORE_URL/approvals/$record_approval_id/approve" '{"approvedBy":"milestone-check","reason":"Approve one bounded bootstrap append before ledger-demo-ready route review."}' >/dev/null
 post_json "$CORE_URL/operator/step" '{}' >/dev/null
 ledger_demo_status="$(curl --silent --fail "$SYSTEM_URL/system/route/body-evidence-ledger-demo-status")"
-review="$(curl --silent --fail "$CORE_URL/phase-2/next-capability-route-review")"
+review="$(curl --silent --fail "$CORE_URL/phase-2/next-capability-route-review?afterLedgerDemoStatus=true")"
 
 node - <<'EOF' "$PLAN_FILE" "$ledger_demo_status" "$review"
 const fs = require("node:fs");

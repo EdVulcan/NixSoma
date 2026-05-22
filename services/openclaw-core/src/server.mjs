@@ -10707,9 +10707,10 @@ async function buildPhase2DemoReadinessExit() {
   };
 }
 
-async function buildPhase2NextCapabilityRouteReview() {
+async function buildPhase2NextCapabilityRouteReview(options = {}) {
   const demoExit = await buildPhase2DemoReadinessExit();
   const demoReady = demoExit.summary?.ready === true;
+  const ledgerDemoStatusCheckpointComplete = options.ledgerDemoStatusCheckpointComplete === true;
   let candidateDemoStatus = null;
   let bodyEvidenceTimelineReadiness = null;
   let bodyEvidenceLedgerReadiness = null;
@@ -10729,10 +10730,12 @@ async function buildPhase2NextCapabilityRouteReview() {
   } catch {
     bodyEvidenceLedgerReadiness = null;
   }
-  try {
-    bodyEvidenceLedgerDemoStatus = await fetchJson(`${systemSenseUrl}/system/route/body-evidence-ledger-demo-status`);
-  } catch {
-    bodyEvidenceLedgerDemoStatus = null;
+  if (ledgerDemoStatusCheckpointComplete) {
+    try {
+      bodyEvidenceLedgerDemoStatus = await fetchJson(`${systemSenseUrl}/system/route/body-evidence-ledger-demo-status`);
+    } catch {
+      bodyEvidenceLedgerDemoStatus = null;
+    }
   }
   const candidateDemoReady = candidateDemoStatus?.summary?.demoReady === true;
   const bodyEvidenceTimelineReady = bodyEvidenceTimelineReadiness?.summary?.ready === true;
@@ -10903,6 +10906,7 @@ async function buildPhase2NextCapabilityRouteReview() {
       bodyEvidenceLedgerReadinessRegistry: bodyEvidenceLedgerReadiness?.registry ?? null,
       bodyEvidenceLedgerRecordCount: bodyEvidenceLedgerReadiness?.summary?.recordCount ?? 0,
       bodyEvidenceLedgerDemoReady,
+      bodyEvidenceLedgerDemoStatusCheckpointComplete: ledgerDemoStatusCheckpointComplete,
       bodyEvidenceLedgerDemoStatusRegistry: bodyEvidenceLedgerDemoStatus?.registry ?? null,
       completedDemoBlock: demoExit.completedBlock,
       priorityOrder: [
@@ -15154,7 +15158,9 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && requestUrl.pathname === "/phase-2/next-capability-route-review") {
-    sendJson(res, 200, await buildPhase2NextCapabilityRouteReview());
+    sendJson(res, 200, await buildPhase2NextCapabilityRouteReview({
+      ledgerDemoStatusCheckpointComplete: requestUrl.searchParams.get("afterLedgerDemoStatus") === "true",
+    }));
     return;
   }
 
