@@ -11317,6 +11317,7 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
   let bodyEvidenceLedgerDemoStatus = null;
   let bodyEvidenceLedgerFollowupRecordPlan = null;
   let bodyEvidenceLedgerFollowupRecordReadiness = null;
+  let bodyEvidenceLedgerFollowupRecordAppendReadiness = null;
   try {
     candidateDemoStatus = await fetchJson(`${systemSenseUrl}/system/systemd/repair-candidate-demo-status`);
   } catch {
@@ -11351,17 +11352,25 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
   } catch {
     bodyEvidenceLedgerFollowupRecordReadiness = null;
   }
+  try {
+    bodyEvidenceLedgerFollowupRecordAppendReadiness = buildBodyEvidenceLedgerFollowupRecordAppendReadiness();
+  } catch {
+    bodyEvidenceLedgerFollowupRecordAppendReadiness = null;
+  }
   const candidateDemoReady = candidateDemoStatus?.summary?.demoReady === true;
   const bodyEvidenceTimelineReady = bodyEvidenceTimelineReadiness?.summary?.ready === true;
   const bodyEvidenceLedgerReady = bodyEvidenceLedgerReadiness?.summary?.ready === true;
   const bodyEvidenceLedgerDemoReady = bodyEvidenceLedgerDemoStatus?.summary?.demoReady === true;
   const followupRecordPlanReady = bodyEvidenceLedgerFollowupRecordPlan?.summary?.planReady === true;
   const followupRecordReadinessReady = bodyEvidenceLedgerFollowupRecordReadiness?.summary?.ready === true;
+  const followupRecordAppendReadinessReady = bodyEvidenceLedgerFollowupRecordAppendReadiness?.summary?.ready === true;
   const followupRecordPlanRouteReady = repairCandidateDemoCheckpointComplete
     && candidateDemoReady
     && bodyEvidenceTimelineReady
     && bodyEvidenceLedgerReady;
-  const selectedTrack = followupRecordReadinessReady
+  const selectedTrack = followupRecordAppendReadinessReady
+    ? "Phase 2 Completion"
+    : followupRecordReadinessReady
     ? "Track C: Body Evidence Memory"
     : followupRecordPlanRouteReady
     ? "Track C: Body Evidence Memory"
@@ -11370,7 +11379,9 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
       ? "Track A: Real NixOS/systemd Repair Semantics"
       : "Track C: Body Governance Enhancement")
     : "Track A: Real NixOS/systemd Repair Semantics";
-  const selectedSlice = followupRecordReadinessReady
+  const selectedSlice = followupRecordAppendReadinessReady
+    ? "openclaw-phase-2-completion-readiness"
+    : followupRecordReadinessReady
     ? "openclaw-body-evidence-ledger-followup-record-append-route-review"
     : followupRecordPlanRouteReady
     ? "openclaw-body-evidence-ledger-followup-record-plan"
@@ -11425,7 +11436,7 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
       id: "durable-body-evidence-ledger-demo-status",
       label: "Read-only body evidence ledger demo status",
       score: bodyEvidenceLedgerReady ? 99 : 50,
-      recommended: bodyEvidenceLedgerReady && !bodyEvidenceLedgerDemoReady && !followupRecordPlanRouteReady && !followupRecordReadinessReady,
+      recommended: bodyEvidenceLedgerReady && !bodyEvidenceLedgerDemoReady && !followupRecordPlanRouteReady && !followupRecordReadinessReady && !followupRecordAppendReadinessReady,
       firstSlice: "openclaw-body-evidence-ledger-demo-status",
       mutation: false,
       reason: bodyEvidenceLedgerDemoReady
@@ -11439,7 +11450,7 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
       id: "durable-body-evidence-ledger-followup-record-plan",
       label: "Plan-only follow-up body evidence ledger record",
       score: followupRecordPlanRouteReady ? 101 : 56,
-      recommended: followupRecordPlanRouteReady && !followupRecordReadinessReady,
+      recommended: followupRecordPlanRouteReady && !followupRecordReadinessReady && !followupRecordAppendReadinessReady,
       firstSlice: "openclaw-body-evidence-ledger-followup-record-plan",
       mutation: false,
       reason: followupRecordPlanRouteReady
@@ -11451,12 +11462,24 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
       id: "durable-body-evidence-ledger-followup-append-route",
       label: "Route review for pending follow-up ledger append",
       score: followupRecordReadinessReady ? 102 : 55,
-      recommended: followupRecordReadinessReady,
+      recommended: followupRecordReadinessReady && !followupRecordAppendReadinessReady,
       firstSlice: "openclaw-body-evidence-ledger-followup-record-append-route-review",
       mutation: false,
       reason: followupRecordReadinessReady
         ? "The follow-up ledger task shell is visible and pending; return to route review before any approval or second JSONL append."
         : "Follow-up append route review waits until the task shell readiness bundle proves no second ledger record exists.",
+    },
+    {
+      track: "Phase 2 Completion",
+      id: "phase-2-completion-readiness",
+      label: "Read-only Phase 2 completion readiness",
+      score: followupRecordAppendReadinessReady ? 103 : 45,
+      recommended: followupRecordAppendReadinessReady,
+      firstSlice: "openclaw-phase-2-completion-readiness",
+      mutation: false,
+      reason: followupRecordAppendReadinessReady
+        ? "The second durable body-memory record is ready; stop expanding ledger slices and summarize Phase 2 completion evidence."
+        : "Phase 2 completion readiness waits until the follow-up append readiness bundle closes body memory.",
     },
     {
       track: "Track A",
@@ -11526,7 +11549,9 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
       selectedTrack,
       selectedSlice,
       status: demoReady ? "selected" : "blocked_until_demo_exit_ready",
-      rationale: followupRecordReadinessReady
+      rationale: followupRecordAppendReadinessReady
+        ? "The follow-up append readiness bundle is complete, so stop opening new body-memory writes and prepare a read-only Phase 2 completion readiness summary."
+        : followupRecordReadinessReady
         ? "The follow-up ledger task shell is visible, so the next whitepaper-aligned step is a route review before any approval or second record append."
         : followupRecordPlanRouteReady
         ? "Candidate repair demo evidence and the first ledger record are ready, so plan a follow-up body evidence ledger record without appending it yet."
@@ -11544,7 +11569,7 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
         bodyEvidenceTimelineReady ? "no body evidence timeline loop" : "no candidate-specific approval replay",
         bodyEvidenceLedgerReady ? "no body evidence ledger plan or append loop" : "no body evidence ledger demo before readiness",
         bodyEvidenceLedgerDemoReady ? "no body evidence ledger demo status loop" : "no next repair scope before ledger demo status",
-        followupRecordReadinessReady ? "no follow-up ledger approval or append in this route review" : followupRecordPlanRouteReady ? "no follow-up ledger append without a separate route review" : "no follow-up ledger record before candidate demo completion",
+        followupRecordAppendReadinessReady ? "no additional ledger records after follow-up append readiness" : followupRecordReadinessReady ? "no follow-up ledger approval or append in this route review" : followupRecordPlanRouteReady ? "no follow-up ledger append without a separate route review" : "no follow-up ledger record before candidate demo completion",
         "no plugin/runtime adapter work",
         "no automatic repair",
         "no broader host mutation",
@@ -11576,6 +11601,10 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
       bodyEvidenceLedgerFollowupApprovalStatus: bodyEvidenceLedgerFollowupRecordReadiness?.summary?.approvalStatus ?? null,
       bodyEvidenceLedgerFollowupExistingRecordCount: bodyEvidenceLedgerFollowupRecordReadiness?.summary?.existingRecordCount ?? 0,
       bodyEvidenceLedgerFollowupRecordAppended: bodyEvidenceLedgerFollowupRecordReadiness?.summary?.recordAppended === true,
+      bodyEvidenceLedgerFollowupAppendReadinessReady: followupRecordAppendReadinessReady,
+      bodyEvidenceLedgerFollowupAppendReadinessRegistry: bodyEvidenceLedgerFollowupRecordAppendReadiness?.registry ?? null,
+      bodyEvidenceLedgerFollowupAppendRecordId: bodyEvidenceLedgerFollowupRecordAppendReadiness?.summary?.recordId ?? null,
+      bodyEvidenceLedgerFollowupAppendRecordCount: bodyEvidenceLedgerFollowupRecordAppendReadiness?.summary?.existingRecordCount ?? 0,
       completedDemoBlock: demoExit.completedBlock,
       priorityOrder: [
         "real-systemd-repair-semantics",
@@ -11587,7 +11616,9 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
     candidates,
     next: {
       recommendedSlice: selectedSlice,
-      boundary: followupRecordReadinessReady
+      boundary: followupRecordAppendReadinessReady
+        ? "read-only Phase 2 completion readiness only; do not add more ledger writes, repair executions, schedulers, or plugin/runtime work"
+        : followupRecordReadinessReady
         ? "route-review future follow-up append only; do not approve the pending task, append a second JSONL record, schedule work, or broaden mutation"
         : followupRecordPlanRouteReady
         ? "plan-only follow-up ledger record only; do not create tasks, approvals, schedulers, or append a second JSONL record"
@@ -11600,6 +11631,142 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
         : candidateDemoReady
           ? "read-only body evidence timeline only; do not create tasks, execute commands, mutate host, or schedule recovery"
         : "read-only candidate assessment only; do not create repair tasks or execute host mutation",
+    },
+  };
+}
+
+async function buildPhase2CompletionReadiness() {
+  const demoExit = await buildPhase2DemoReadinessExit();
+  const repairDemo = buildPhase2RepairDemoStatus();
+  const nextRepairDemo = buildPhase2NextRepairDemoStatus();
+  const followupAppendReadiness = buildBodyEvidenceLedgerFollowupRecordAppendReadiness();
+  let bodyGovernanceReadiness = null;
+  let candidateDemoStatus = null;
+  try {
+    bodyGovernanceReadiness = await fetchJson(`${systemSenseUrl}/system/route/body-governance-readiness`);
+  } catch {
+    bodyGovernanceReadiness = null;
+  }
+  try {
+    candidateDemoStatus = await fetchJson(`${systemSenseUrl}/system/systemd/repair-candidate-demo-status`);
+  } catch {
+    candidateDemoStatus = null;
+  }
+
+  const checks = [
+    {
+      id: "track-a-first-repair-demo",
+      label: "Track A first real repair demo is ready",
+      passed: repairDemo.summary?.demoReady === true,
+      evidence: repairDemo.registry,
+    },
+    {
+      id: "track-a-next-repair-demo",
+      label: "Track A next repair demo is ready",
+      passed: nextRepairDemo.summary?.ready === true,
+      evidence: nextRepairDemo.registry,
+    },
+    {
+      id: "track-a-candidate-demo",
+      label: "Repair candidate demo route is ready",
+      passed: candidateDemoStatus?.summary?.demoReady === true,
+      evidence: candidateDemoStatus?.registry ?? null,
+    },
+    {
+      id: "track-b-demo-exit",
+      label: "Operator/Observer demo readiness exit is ready",
+      passed: demoExit.summary?.ready === true,
+      evidence: demoExit.registry,
+    },
+    {
+      id: "track-c-body-governance",
+      label: "Body governance readiness is complete",
+      passed: bodyGovernanceReadiness?.summary?.ready === true,
+      evidence: bodyGovernanceReadiness?.registry ?? null,
+    },
+    {
+      id: "track-c-durable-body-memory",
+      label: "Durable body memory contains the follow-up ledger record",
+      passed: followupAppendReadiness.summary?.ready === true
+        && followupAppendReadiness.summary?.existingRecordCount === 2,
+      evidence: followupAppendReadiness.registry,
+    },
+    {
+      id: "no-hidden-autonomy",
+      label: "Completion readiness remains read-only with no scheduler or background writer",
+      passed: followupAppendReadiness.governance?.schedulesFollowUp === false
+        && followupAppendReadiness.governance?.backgroundWriter === false
+        && followupAppendReadiness.governance?.triggersRecovery === false,
+      evidence: "phase_2_completion_governance",
+    },
+  ];
+  const passed = checks.filter((check) => check.passed).length;
+  const ready = passed === checks.length;
+
+  return {
+    ok: true,
+    registry: "openclaw-phase-2-completion-readiness-v0",
+    mode: "read_only_phase_2_completion_readiness",
+    generatedAt: new Date().toISOString(),
+    status: ready ? "ready_for_phase_2_exit" : "waiting_for_phase_2_evidence",
+    source: {
+      service: "openclaw-core",
+      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      evidence: "phase_2_completion_readiness",
+    },
+    governance: {
+      readOnly: true,
+      createsTask: false,
+      createsApproval: false,
+      executesCommand: false,
+      mutatesHost: false,
+      triggersRecovery: false,
+      schedulesWork: false,
+      backgroundWriter: false,
+      writesLedger: false,
+    },
+    summary: {
+      ready,
+      passed,
+      total: checks.length,
+      completionPercent: ready ? 100 : Math.round((passed / checks.length) * 100),
+      firstRepairDemoReady: repairDemo.summary?.demoReady === true,
+      nextRepairDemoReady: nextRepairDemo.summary?.ready === true,
+      candidateDemoReady: candidateDemoStatus?.summary?.demoReady === true,
+      demoExitReady: demoExit.summary?.ready === true,
+      bodyGovernanceReady: bodyGovernanceReadiness?.summary?.ready === true,
+      durableBodyMemoryRecords: followupAppendReadiness.summary?.existingRecordCount ?? 0,
+      followupRecordId: followupAppendReadiness.summary?.recordId ?? null,
+    },
+    checks,
+    completedTracks: [
+      {
+        track: "Track A",
+        label: "Real NixOS/systemd Repair Semantics",
+        evidence: [repairDemo.registry, nextRepairDemo.registry, candidateDemoStatus?.registry ?? null].filter(Boolean),
+      },
+      {
+        track: "Track B",
+        label: "Operator/Observer Demo Experience",
+        evidence: [demoExit.registry],
+      },
+      {
+        track: "Track C",
+        label: "Body Governance and Durable Body Memory",
+        evidence: [bodyGovernanceReadiness?.registry ?? null, followupAppendReadiness.registry].filter(Boolean),
+      },
+    ],
+    evidence: {
+      repairDemo,
+      nextRepairDemo,
+      candidateDemoStatus,
+      demoExit,
+      bodyGovernanceReadiness,
+      followupAppendReadiness,
+    },
+    next: {
+      recommendedSlice: "openclaw-phase-2-exit",
+      boundary: "final Phase 2 exit gate only; do not add new capability slices before exit review",
     },
   };
 }
@@ -16094,6 +16261,11 @@ const server = http.createServer(async (req, res) => {
       ledgerDemoStatusCheckpointComplete: requestUrl.searchParams.get("afterLedgerDemoStatus") === "true",
       repairCandidateDemoCheckpointComplete: requestUrl.searchParams.get("afterRepairCandidateDemoStatus") === "true",
     }));
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-2/completion-readiness") {
+    sendJson(res, 200, await buildPhase2CompletionReadiness());
     return;
   }
 

@@ -329,6 +329,14 @@ function observerHtml() {
           <div class="metric"><span>Mutation</span><span id="phase2-next-capability-mutation">false</span></div>
           <pre id="phase2-next-capability-json">Loading Phase 2 next capability route review...</pre>
         </section>
+        <section class="panel" id="phase2-completion-readiness-panel">
+          <h2>Phase 2 Completion Readiness</h2>
+          <div class="metric"><span>Ready</span><span id="phase2-completion-readiness-ready">false</span></div>
+          <div class="metric"><span>Checks</span><span id="phase2-completion-readiness-checks">0/0</span></div>
+          <div class="metric"><span>Percent</span><span id="phase2-completion-readiness-percent">0</span></div>
+          <div class="metric"><span>Mutation</span><span id="phase2-completion-readiness-mutation">false</span></div>
+          <pre id="phase2-completion-readiness-json">Loading Phase 2 completion readiness...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -1330,6 +1338,11 @@ const phase2NextCapabilitySlice = document.querySelector("#phase2-next-capabilit
 const phase2NextCapabilityCreatesTask = document.querySelector("#phase2-next-capability-creates-task");
 const phase2NextCapabilityMutation = document.querySelector("#phase2-next-capability-mutation");
 const phase2NextCapabilityJson = document.querySelector("#phase2-next-capability-json");
+const phase2CompletionReadinessReady = document.querySelector("#phase2-completion-readiness-ready");
+const phase2CompletionReadinessChecks = document.querySelector("#phase2-completion-readiness-checks");
+const phase2CompletionReadinessPercent = document.querySelector("#phase2-completion-readiness-percent");
+const phase2CompletionReadinessMutation = document.querySelector("#phase2-completion-readiness-mutation");
+const phase2CompletionReadinessJson = document.querySelector("#phase2-completion-readiness-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -4453,6 +4466,32 @@ async function refreshPhase2NextCapabilityRoute() {
   }
 }
 
+async function refreshPhase2CompletionReadiness() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-2/completion-readiness\`);
+    const summary = data.summary ?? {};
+    const governance = data.governance ?? {};
+    phase2CompletionReadinessReady.textContent = String(Boolean(summary.ready));
+    phase2CompletionReadinessChecks.textContent = \`\${summary.passed ?? 0}/\${summary.total ?? 0}\`;
+    phase2CompletionReadinessPercent.textContent = String(summary.completionPercent ?? 0);
+    phase2CompletionReadinessMutation.textContent = String(Boolean(governance.mutatesHost));
+    phase2CompletionReadinessJson.textContent = [
+      \`Registry: \${data.registry ?? "openclaw-phase-2-completion-readiness-v0"}\`,
+      \`Mode: \${data.mode ?? "unknown"} status=\${data.status ?? "unknown"} ready=\${Boolean(summary.ready)} percent=\${summary.completionPercent ?? 0}\`,
+      \`Checks: \${summary.passed ?? 0}/\${summary.total ?? 0} firstRepair=\${Boolean(summary.firstRepairDemoReady)} nextRepair=\${Boolean(summary.nextRepairDemoReady)} candidate=\${Boolean(summary.candidateDemoReady)} demoExit=\${Boolean(summary.demoExitReady)} governance=\${Boolean(summary.bodyGovernanceReady)} ledgerRecords=\${summary.durableBodyMemoryRecords ?? 0}\`,
+      \`Follow-up: record=\${summary.followupRecordId ?? "none"}\`,
+      \`Governance: readOnly=\${Boolean(governance.readOnly)} createsTask=\${Boolean(governance.createsTask)} createsApproval=\${Boolean(governance.createsApproval)} executesCommand=\${Boolean(governance.executesCommand)} mutatesHost=\${Boolean(governance.mutatesHost)} scheduler=\${Boolean(governance.schedulesWork)} backgroundWriter=\${Boolean(governance.backgroundWriter)} writesLedger=\${Boolean(governance.writesLedger)}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "unknown"} boundary=\${data.next?.boundary ?? "unknown"}\`,
+    ].join("\\n");
+  } catch {
+    phase2CompletionReadinessReady.textContent = "false";
+    phase2CompletionReadinessChecks.textContent = "0/0";
+    phase2CompletionReadinessPercent.textContent = "0";
+    phase2CompletionReadinessMutation.textContent = "false";
+    phase2CompletionReadinessJson.textContent = "Unable to read Phase 2 completion readiness.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -7447,6 +7486,7 @@ await refreshPhase2DemoControlRoom();
 await refreshPhase2DemoWalkthrough();
 await refreshPhase2DemoReadinessExit();
 await refreshPhase2NextCapabilityRoute();
+await refreshPhase2CompletionReadiness();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -7551,6 +7591,7 @@ setInterval(refreshPhase2DemoControlRoom, 5000);
 setInterval(refreshPhase2DemoWalkthrough, 5000);
 setInterval(refreshPhase2DemoReadinessExit, 5000);
 setInterval(refreshPhase2NextCapabilityRoute, 5000);
+setInterval(refreshPhase2CompletionReadiness, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);
