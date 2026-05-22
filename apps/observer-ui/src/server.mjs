@@ -5254,7 +5254,7 @@ async function refreshBodyEvidenceLedgerFollowupRecordReadiness() {
     bodyEvidenceLedgerFollowupRecordReadinessRecords.textContent = String(summary.existingRecordCount ?? 0);
     bodyEvidenceLedgerFollowupRecordReadinessMutation.textContent = String(Boolean(governance.hostMutation));
     bodyEvidenceLedgerFollowupRecordReadinessJson.textContent = [
-      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Registry: \${data.registry ?? "openclaw-body-evidence-ledger-followup-record-readiness-v0"}\`,
       \`Mode: \${data.mode ?? "unknown"} status=\${data.status ?? "unknown"} ready=\${Boolean(summary.ready)} task=\${summary.taskId ?? "none"} approval=\${summary.approvalStatus ?? "unknown"}\`,
       \`Record: type=\${summary.plannedRecordType ?? "unknown"} sequence=\${summary.plannedSequence ?? "unknown"} existingRecords=\${summary.existingRecordCount ?? 0} appended=\${Boolean(summary.recordAppended)} durableStorageWritten=\${Boolean(summary.durableStorageWritten)}\`,
       \`Governance: createsTask=\${Boolean(governance.createsTask)} createsApproval=\${Boolean(governance.createsApproval)} canAppendLedgerRecord=\${Boolean(governance.canAppendLedgerRecord)} canWriteLedger=\${Boolean(governance.canWriteLedger)} executesCommand=\${Boolean(governance.executesCommand)} mutation=\${Boolean(governance.hostMutation)} scheduler=\${Boolean(governance.schedulesFollowUp)} backgroundWriter=\${Boolean(governance.backgroundWriter)} bulkImport=\${Boolean(governance.bulkImport)}\`,
