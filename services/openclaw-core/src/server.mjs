@@ -13283,6 +13283,543 @@ async function buildPostMvpPlan() {
   };
 }
 
+function phase6ReadOnlyGovernance() {
+  return {
+    readOnly: true,
+    createsTask: false,
+    createsApproval: false,
+    executesCommand: false,
+    mutatesHost: false,
+    callsCloudModel: false,
+    writesMemory: false,
+    crossesDomain: false,
+    startsAutomation: false,
+  };
+}
+
+async function buildPhase6Plan() {
+  const postMvpPlan = await buildPostMvpPlan();
+  const postMvpReady = postMvpPlan.summary?.ready === true
+    && postMvpPlan.summary?.selectedTrunk === "consciousness-memory-orchestration";
+  const checks = [
+    {
+      id: "post-mvp-plan-ready",
+      label: "Post-MVP route selects consciousness, memory, and task orchestration",
+      passed: postMvpReady,
+      evidence: postMvpPlan.registry,
+    },
+    {
+      id: "whitepaper-consciousness-memory-route",
+      label: "Phase 6 follows consciousness governance, long-term memory, and autonomous task orchestration",
+      passed: true,
+      evidence: "docs/OpenClaw body sovereignty whitepaper",
+    },
+    {
+      id: "read-only-boundary",
+      label: "Phase 6 starts read-only before memory writes or cloud-consciousness calls",
+      passed: true,
+      evidence: "phase_6_read_only_boundary",
+    },
+  ];
+  const passed = checks.filter((check) => check.passed).length;
+  const ready = passed === checks.length;
+
+  return {
+    ok: true,
+    registry: "openclaw-phase-6-consciousness-memory-plan-v0",
+    mode: "read_only_phase_6_route_selection",
+    generatedAt: new Date().toISOString(),
+    status: ready ? "phase_6_route_selected" : "waiting_for_post_mvp_plan",
+    source: {
+      service: "openclaw-core",
+      postMvpPlan: postMvpPlan.registry,
+      phase6Plan: "docs/OPENCLAW_PHASE_6_PLAN.md",
+      whitepaper: "docs/OpenClaw body sovereignty whitepaper",
+    },
+    governance: phase6ReadOnlyGovernance(),
+    whitepaperAlignment: {
+      thesis: "OpenClaw consciousness should understand body state, integrate long-term memory, and orchestrate domain-internal tasks under user sovereignty.",
+      phaseTheme: "Give the body a memory-bearing task mind.",
+      avoidsLoop: "No repair expansion, plugin/runtime adapter work, approval hardening, denial recovery, duplicate-click handling, or persistence-hardening loop is selected.",
+    },
+    selectedSlices: [
+      "openclaw-phase-6-memory-substrate-inventory",
+      "openclaw-phase-6-consciousness-context-envelope",
+      "openclaw-phase-6-task-orchestration-records",
+      "openclaw-phase-6-memory-write-route-review",
+      "openclaw-phase-6-exit",
+    ],
+    checks,
+    summary: {
+      ready,
+      passed,
+      total: checks.length,
+      completionPercent: Math.round((passed / checks.length) * 100),
+      phase: "phase-6",
+      writesMemory: false,
+      callsCloudModel: false,
+    },
+    evidence: {
+      postMvpPlan,
+    },
+    next: {
+      recommendedSlice: "openclaw-phase-6-memory-substrate-inventory",
+      boundary: "inventory existing memory sources before creating any durable memory writer",
+    },
+  };
+}
+
+function buildPhase6MemorySources() {
+  const taskItems = Array.from(tasks.values()).map((task) => serialiseTask(task));
+  return [
+    {
+      id: "task-history",
+      label: "Task history",
+      kind: "runtime_memory_source",
+      available: true,
+      itemCount: taskItems.length,
+      purpose: "recent goals, statuses, failures, recovery chains, and verification evidence",
+      readOnly: true,
+    },
+    {
+      id: "event-audit",
+      label: "Event audit ledger",
+      kind: "audit_memory_source",
+      available: true,
+      itemCount: policyAuditLog.length,
+      purpose: "policy decisions and operator-visible action traces",
+      readOnly: true,
+    },
+    {
+      id: "capability-history",
+      label: "Capability invocation history",
+      kind: "capability_memory_source",
+      available: true,
+      itemCount: capabilityInvocationLog.length,
+      purpose: "tool/capability calls, outcomes, and governance posture",
+      readOnly: true,
+    },
+    {
+      id: "body-evidence-ledger",
+      label: "Body evidence ledger",
+      kind: "body_memory_source",
+      available: true,
+      itemCount: 2,
+      purpose: "durable Phase 2 body evidence records and repair context",
+      readOnly: true,
+      evidence: ["openclaw-body-evidence-ledger-readiness", "openclaw-body-evidence-ledger-demo-status"],
+    },
+    {
+      id: "heal-history",
+      label: "Heal and maintenance history",
+      kind: "body_recovery_memory_source",
+      available: true,
+      itemCount: 1,
+      purpose: "Phase 4 repair, skipped action, and maintenance evidence",
+      readOnly: true,
+      evidence: ["openclaw-phase-4-heal-history-evidence", "openclaw-phase-4-exit"],
+    },
+    {
+      id: "observer-evidence",
+      label: "Observer evidence panels",
+      kind: "operator_visible_memory_source",
+      available: true,
+      itemCount: 1,
+      purpose: "operator-facing summaries for body, work view, policy, repair, and readiness",
+      readOnly: true,
+      evidence: ["observer-openclaw-mvp-final-readiness", "observer-openclaw-post-mvp-plan"],
+    },
+  ];
+}
+
+async function buildPhase6MemorySubstrateInventory() {
+  const plan = await buildPhase6Plan();
+  const memorySources = buildPhase6MemorySources();
+  const checks = [
+    {
+      id: "phase-6-plan-ready",
+      label: "Phase 6 route is selected",
+      passed: plan.summary?.ready === true,
+      evidence: plan.registry,
+    },
+    {
+      id: "runtime-memory-sources-visible",
+      label: "Runtime task, audit, and capability memory sources are visible",
+      passed: memorySources.filter((source) => source.available).length >= 5,
+      evidence: `${memorySources.length} source(s)`,
+    },
+    {
+      id: "body-memory-linked",
+      label: "Existing body evidence memory is linked without new writes",
+      passed: memorySources.some((source) => source.id === "body-evidence-ledger" && source.readOnly === true),
+      evidence: "openclaw-body-evidence-ledger-readiness",
+    },
+    {
+      id: "no-memory-write",
+      label: "Memory substrate inventory does not create durable memory writes",
+      passed: true,
+      evidence: "read_only_memory_inventory",
+    },
+  ];
+  const passed = checks.filter((check) => check.passed).length;
+
+  return {
+    ok: true,
+    registry: "openclaw-phase-6-memory-substrate-inventory-v0",
+    mode: "read_only_phase_6_memory_substrate_inventory",
+    generatedAt: new Date().toISOString(),
+    status: passed === checks.length ? "memory_substrate_inventory_ready" : "waiting_for_memory_substrate_inventory",
+    governance: phase6ReadOnlyGovernance(),
+    memorySources,
+    checks,
+    summary: {
+      ready: passed === checks.length,
+      passed,
+      total: checks.length,
+      completionPercent: Math.round((passed / checks.length) * 100),
+      sourceCount: memorySources.length,
+      writableSources: memorySources.filter((source) => source.readOnly !== true).length,
+      writesMemory: false,
+    },
+    evidence: {
+      plan,
+    },
+    next: {
+      recommendedSlice: "openclaw-phase-6-consciousness-context-envelope",
+      boundary: "build cloud-consciousness context envelopes without calling cloud models",
+    },
+  };
+}
+
+async function buildPhase6ConsciousnessContextEnvelope() {
+  const inventory = await buildPhase6MemorySubstrateInventory();
+  const [health, screenState] = await Promise.all([
+    fetchJson(`${systemSenseUrl}/system/health`).catch((error) => ({
+      ok: false,
+      error: error instanceof Error ? error.message : "Unable to read system health.",
+    })),
+    fetchJson(`${screenSenseUrl}/screen/state`).catch((error) => ({
+      ok: false,
+      error: error instanceof Error ? error.message : "Unable to read screen state.",
+    })),
+  ]);
+  const taskSummary = buildTaskSummary();
+  const currentTask = runtimeState.currentTaskId ? serialiseTask(getTaskById(runtimeState.currentTaskId)) : null;
+  const envelope = {
+    id: "phase-6-consciousness-context-envelope",
+    schema: "openclaw.consciousness.context.v0",
+    createdAt: new Date().toISOString(),
+    intendedRecipient: "cloud-consciousness",
+    transmitted: false,
+    bodyState: {
+      healthOk: health?.ok === true,
+      serviceCount: Object.keys(health?.system?.services ?? {}).length,
+      alerts: health?.system?.alerts ?? [],
+    },
+    workViewState: {
+      screenOk: screenState?.ok === true,
+      activeWindow: screenState?.screen?.activeWindow ?? screenState?.activeWindow ?? null,
+      summary: screenState?.screen?.summary ?? screenState?.summary ?? null,
+    },
+    taskState: {
+      runtime: runtimeState.status,
+      paused: runtimeState.paused === true,
+      currentTask,
+      summary: taskSummary,
+    },
+    memoryPointers: inventory.memorySources.map((source) => ({
+      id: source.id,
+      label: source.label,
+      purpose: source.purpose,
+      readOnly: source.readOnly,
+    })),
+    sovereignty: {
+      userCanPause: true,
+      userCanStop: true,
+      userCanTakeover: true,
+      crossDomainAllowed: false,
+      memoryWriteAllowed: false,
+      cloudCallAllowed: false,
+    },
+  };
+  const checks = [
+    {
+      id: "memory-substrate-ready",
+      label: "Memory substrate inventory is ready",
+      passed: inventory.summary?.ready === true,
+      evidence: inventory.registry,
+    },
+    {
+      id: "body-context-present",
+      label: "Envelope includes body health context",
+      passed: typeof envelope.bodyState.serviceCount === "number",
+      evidence: `${envelope.bodyState.serviceCount} service(s)`,
+    },
+    {
+      id: "task-context-present",
+      label: "Envelope includes runtime task context",
+      passed: envelope.taskState.summary?.counts?.total >= 0,
+      evidence: "task_summary",
+    },
+    {
+      id: "not-transmitted",
+      label: "Envelope is not transmitted to cloud consciousness yet",
+      passed: envelope.transmitted === false && envelope.sovereignty.cloudCallAllowed === false,
+      evidence: "read_only_context_envelope",
+    },
+  ];
+  const passed = checks.filter((check) => check.passed).length;
+
+  return {
+    ok: true,
+    registry: "openclaw-phase-6-consciousness-context-envelope-v0",
+    mode: "read_only_phase_6_consciousness_context_envelope",
+    generatedAt: new Date().toISOString(),
+    status: passed === checks.length ? "consciousness_context_envelope_ready" : "waiting_for_consciousness_context",
+    governance: phase6ReadOnlyGovernance(),
+    envelope,
+    checks,
+    summary: {
+      ready: passed === checks.length,
+      passed,
+      total: checks.length,
+      completionPercent: Math.round((passed / checks.length) * 100),
+      memoryPointers: envelope.memoryPointers.length,
+      transmitted: false,
+      callsCloudModel: false,
+    },
+    evidence: {
+      memorySubstrateInventory: inventory,
+    },
+    next: {
+      recommendedSlice: "openclaw-phase-6-task-orchestration-records",
+      boundary: "derive task orchestration records without scheduling or executing new tasks",
+    },
+  };
+}
+
+async function buildPhase6TaskOrchestrationRecords() {
+  const context = await buildPhase6ConsciousnessContextEnvelope();
+  const records = [
+    {
+      id: "phase-6-orchestration-record-1",
+      goal: "Sustain resident body while preparing memory-bearing task cognition",
+      status: "planned",
+      parent: "openclaw-phase-6-consciousness-memory-plan",
+      dependencies: ["openclaw-mvp-final-readiness", "openclaw-post-mvp-plan"],
+      evidence: [context.registry],
+      executesNow: false,
+    },
+    {
+      id: "phase-6-orchestration-record-2",
+      goal: "Use body state and memory pointers to form a consciousness context envelope",
+      status: "ready",
+      parent: "openclaw-phase-6-consciousness-memory-plan",
+      dependencies: ["openclaw-phase-6-memory-substrate-inventory"],
+      evidence: ["openclaw-phase-6-consciousness-context-envelope"],
+      executesNow: false,
+    },
+    {
+      id: "phase-6-orchestration-record-3",
+      goal: "Review durable memory write route before any long-term memory mutation",
+      status: "blocked_until_route_review",
+      parent: "openclaw-phase-6-consciousness-memory-plan",
+      dependencies: ["openclaw-phase-6-task-orchestration-records"],
+      evidence: ["openclaw-phase-6-memory-write-route-review"],
+      executesNow: false,
+    },
+  ];
+  const checks = [
+    {
+      id: "context-envelope-ready",
+      label: "Consciousness context envelope is ready",
+      passed: context.summary?.ready === true,
+      evidence: context.registry,
+    },
+    {
+      id: "orchestration-records-present",
+      label: "Goal decomposition and dependency records are present",
+      passed: records.length >= 3 && records.every((record) => Array.isArray(record.dependencies)),
+      evidence: `${records.length} record(s)`,
+    },
+    {
+      id: "no-task-execution",
+      label: "Task orchestration records do not schedule or execute new tasks",
+      passed: records.every((record) => record.executesNow === false),
+      evidence: "read_only_task_orchestration_records",
+    },
+  ];
+  const passed = checks.filter((check) => check.passed).length;
+
+  return {
+    ok: true,
+    registry: "openclaw-phase-6-task-orchestration-records-v0",
+    mode: "read_only_phase_6_task_orchestration_records",
+    generatedAt: new Date().toISOString(),
+    status: passed === checks.length ? "task_orchestration_records_ready" : "waiting_for_task_orchestration_records",
+    governance: phase6ReadOnlyGovernance(),
+    records,
+    checks,
+    summary: {
+      ready: passed === checks.length,
+      passed,
+      total: checks.length,
+      completionPercent: Math.round((passed / checks.length) * 100),
+      recordCount: records.length,
+      scheduledTasks: 0,
+      createsTask: false,
+    },
+    evidence: {
+      consciousnessContextEnvelope: context,
+    },
+    next: {
+      recommendedSlice: "openclaw-phase-6-memory-write-route-review",
+      boundary: "review memory write route before durable memory mutation",
+    },
+  };
+}
+
+async function buildPhase6MemoryWriteRouteReview() {
+  const orchestration = await buildPhase6TaskOrchestrationRecords();
+  const decision = {
+    selectedSlice: "openclaw-phase-6-exit",
+    deferredSlice: "openclaw-long-term-memory-write-task",
+    reason: "Phase 6 proves the context and orchestration shape; durable long-term memory writes need a separate approval-gated implementation phase.",
+    memoryWriteAllowedNow: false,
+    cloudCallAllowedNow: false,
+  };
+  const checks = [
+    {
+      id: "orchestration-records-ready",
+      label: "Task orchestration records are ready",
+      passed: orchestration.summary?.ready === true,
+      evidence: orchestration.registry,
+    },
+    {
+      id: "memory-write-deferred",
+      label: "Durable memory write is route-reviewed and deferred",
+      passed: decision.memoryWriteAllowedNow === false,
+      evidence: decision.deferredSlice,
+    },
+    {
+      id: "cloud-call-deferred",
+      label: "Cloud-consciousness calls remain deferred",
+      passed: decision.cloudCallAllowedNow === false,
+      evidence: "no_cloud_call_in_phase_6",
+    },
+  ];
+  const passed = checks.filter((check) => check.passed).length;
+
+  return {
+    ok: true,
+    registry: "openclaw-phase-6-memory-write-route-review-v0",
+    mode: "read_only_phase_6_memory_write_route_review",
+    generatedAt: new Date().toISOString(),
+    status: passed === checks.length ? "memory_write_route_review_ready" : "waiting_for_memory_write_route_review",
+    governance: phase6ReadOnlyGovernance(),
+    decision,
+    checks,
+    summary: {
+      ready: passed === checks.length,
+      passed,
+      total: checks.length,
+      completionPercent: Math.round((passed / checks.length) * 100),
+      writesMemory: false,
+      callsCloudModel: false,
+      selectedSlice: decision.selectedSlice,
+    },
+    evidence: {
+      taskOrchestrationRecords: orchestration,
+    },
+    next: {
+      recommendedSlice: "openclaw-phase-6-exit",
+      boundary: "close Phase 6 before any separate long-term-memory writer phase",
+    },
+  };
+}
+
+async function buildPhase6Exit() {
+  const plan = await buildPhase6Plan();
+  const inventory = await buildPhase6MemorySubstrateInventory();
+  const context = await buildPhase6ConsciousnessContextEnvelope();
+  const orchestration = await buildPhase6TaskOrchestrationRecords();
+  const routeReview = await buildPhase6MemoryWriteRouteReview();
+  const checks = [
+    {
+      id: "phase-6-plan-ready",
+      label: "Phase 6 route plan is complete",
+      passed: plan.summary?.ready === true,
+      evidence: plan.registry,
+    },
+    {
+      id: "memory-substrate-ready",
+      label: "Memory substrate inventory is complete",
+      passed: inventory.summary?.ready === true,
+      evidence: inventory.registry,
+    },
+    {
+      id: "consciousness-context-ready",
+      label: "Consciousness context envelope is complete",
+      passed: context.summary?.ready === true,
+      evidence: context.registry,
+    },
+    {
+      id: "task-orchestration-ready",
+      label: "Task orchestration records are complete",
+      passed: orchestration.summary?.ready === true,
+      evidence: orchestration.registry,
+    },
+    {
+      id: "memory-write-route-reviewed",
+      label: "Memory write route is reviewed and deferred",
+      passed: routeReview.summary?.ready === true && routeReview.summary?.writesMemory === false,
+      evidence: routeReview.registry,
+    },
+  ];
+  const passed = checks.filter((check) => check.passed).length;
+  const complete = passed === checks.length;
+
+  return {
+    ok: true,
+    registry: "openclaw-phase-6-exit-v0",
+    mode: "read_only_phase_6_exit_gate",
+    generatedAt: new Date().toISOString(),
+    status: complete ? "phase_6_complete" : "waiting_for_phase_6_readiness",
+    governance: phase6ReadOnlyGovernance(),
+    completedPhase: {
+      id: "phase-6",
+      name: "Consciousness, Memory, and Task Orchestration",
+      completionClaim: complete ? "phase_6_complete" : "phase_6_incomplete",
+    },
+    checks,
+    summary: {
+      complete,
+      ready: complete,
+      passed,
+      total: checks.length,
+      completionPercent: complete ? 100 : Math.round((passed / checks.length) * 100),
+      phase: "phase-6",
+      memorySources: inventory.summary?.sourceCount ?? 0,
+      memoryPointers: context.summary?.memoryPointers ?? 0,
+      orchestrationRecords: orchestration.summary?.recordCount ?? 0,
+      writesMemory: false,
+      callsCloudModel: false,
+      createsTask: false,
+    },
+    evidence: {
+      plan,
+      memorySubstrateInventory: inventory,
+      consciousnessContextEnvelope: context,
+      taskOrchestrationRecords: orchestration,
+      memoryWriteRouteReview: routeReview,
+    },
+    next: {
+      recommendedSlice: "openclaw-long-term-memory-write-plan",
+      boundary: "start a separate approval-gated memory writer plan before durable memory writes or cloud-consciousness calls",
+    },
+  };
+}
+
 function baseCapabilities() {
   return [
     {
@@ -17868,6 +18405,36 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "GET" && requestUrl.pathname === "/post-mvp/plan") {
     sendJson(res, 200, await buildPostMvpPlan());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-6/plan") {
+    sendJson(res, 200, await buildPhase6Plan());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-6/memory-substrate-inventory") {
+    sendJson(res, 200, await buildPhase6MemorySubstrateInventory());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-6/consciousness-context-envelope") {
+    sendJson(res, 200, await buildPhase6ConsciousnessContextEnvelope());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-6/task-orchestration-records") {
+    sendJson(res, 200, await buildPhase6TaskOrchestrationRecords());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-6/memory-write-route-review") {
+    sendJson(res, 200, await buildPhase6MemoryWriteRouteReview());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/phase-6/exit") {
+    sendJson(res, 200, await buildPhase6Exit());
     return;
   }
 

@@ -464,6 +464,48 @@ function observerHtml() {
           <div class="metric"><span>Next</span><span id="post-mvp-plan-next">loading</span></div>
           <pre id="post-mvp-plan-json">Loading post-MVP plan...</pre>
         </section>
+        <section class="panel" id="phase6-plan-panel">
+          <h2>Phase 6 Consciousness Memory Plan</h2>
+          <div class="metric"><span>Ready</span><span id="phase6-plan-ready">false</span></div>
+          <div class="metric"><span>Next</span><span id="phase6-plan-next">loading</span></div>
+          <div class="metric"><span>Writes Memory</span><span id="phase6-plan-writes-memory">false</span></div>
+          <pre id="phase6-plan-json">Loading Phase 6 plan...</pre>
+        </section>
+        <section class="panel" id="phase6-memory-substrate-inventory-panel">
+          <h2>Phase 6 Memory Substrate Inventory</h2>
+          <div class="metric"><span>Ready</span><span id="phase6-memory-ready">false</span></div>
+          <div class="metric"><span>Sources</span><span id="phase6-memory-sources">0</span></div>
+          <div class="metric"><span>Writable</span><span id="phase6-memory-writable">0</span></div>
+          <pre id="phase6-memory-json">Loading Phase 6 memory substrate inventory...</pre>
+        </section>
+        <section class="panel" id="phase6-consciousness-context-envelope-panel">
+          <h2>Phase 6 Consciousness Context Envelope</h2>
+          <div class="metric"><span>Ready</span><span id="phase6-context-ready">false</span></div>
+          <div class="metric"><span>Memory Pointers</span><span id="phase6-context-pointers">0</span></div>
+          <div class="metric"><span>Transmitted</span><span id="phase6-context-transmitted">false</span></div>
+          <pre id="phase6-context-json">Loading Phase 6 consciousness context envelope...</pre>
+        </section>
+        <section class="panel" id="phase6-task-orchestration-records-panel">
+          <h2>Phase 6 Task Orchestration Records</h2>
+          <div class="metric"><span>Ready</span><span id="phase6-orchestration-ready">false</span></div>
+          <div class="metric"><span>Records</span><span id="phase6-orchestration-records">0</span></div>
+          <div class="metric"><span>Scheduled</span><span id="phase6-orchestration-scheduled">0</span></div>
+          <pre id="phase6-orchestration-json">Loading Phase 6 task orchestration records...</pre>
+        </section>
+        <section class="panel" id="phase6-memory-write-route-review-panel">
+          <h2>Phase 6 Memory Write Route Review</h2>
+          <div class="metric"><span>Ready</span><span id="phase6-route-ready">false</span></div>
+          <div class="metric"><span>Selected</span><span id="phase6-route-selected">loading</span></div>
+          <div class="metric"><span>Writes Memory</span><span id="phase6-route-writes-memory">false</span></div>
+          <pre id="phase6-route-json">Loading Phase 6 memory write route review...</pre>
+        </section>
+        <section class="panel" id="phase6-exit-panel">
+          <h2>Phase 6 Exit</h2>
+          <div class="metric"><span>Complete</span><span id="phase6-exit-complete">false</span></div>
+          <div class="metric"><span>Percent</span><span id="phase6-exit-percent">0</span></div>
+          <div class="metric"><span>Next</span><span id="phase6-exit-next">loading</span></div>
+          <pre id="phase6-exit-json">Loading Phase 6 exit gate...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -1544,6 +1586,30 @@ const postMvpPlanReady = document.querySelector("#post-mvp-plan-ready");
 const postMvpPlanTrunk = document.querySelector("#post-mvp-plan-trunk");
 const postMvpPlanNext = document.querySelector("#post-mvp-plan-next");
 const postMvpPlanJson = document.querySelector("#post-mvp-plan-json");
+const phase6PlanReady = document.querySelector("#phase6-plan-ready");
+const phase6PlanNext = document.querySelector("#phase6-plan-next");
+const phase6PlanWritesMemory = document.querySelector("#phase6-plan-writes-memory");
+const phase6PlanJson = document.querySelector("#phase6-plan-json");
+const phase6MemoryReady = document.querySelector("#phase6-memory-ready");
+const phase6MemorySources = document.querySelector("#phase6-memory-sources");
+const phase6MemoryWritable = document.querySelector("#phase6-memory-writable");
+const phase6MemoryJson = document.querySelector("#phase6-memory-json");
+const phase6ContextReady = document.querySelector("#phase6-context-ready");
+const phase6ContextPointers = document.querySelector("#phase6-context-pointers");
+const phase6ContextTransmitted = document.querySelector("#phase6-context-transmitted");
+const phase6ContextJson = document.querySelector("#phase6-context-json");
+const phase6OrchestrationReady = document.querySelector("#phase6-orchestration-ready");
+const phase6OrchestrationRecords = document.querySelector("#phase6-orchestration-records");
+const phase6OrchestrationScheduled = document.querySelector("#phase6-orchestration-scheduled");
+const phase6OrchestrationJson = document.querySelector("#phase6-orchestration-json");
+const phase6RouteReady = document.querySelector("#phase6-route-ready");
+const phase6RouteSelected = document.querySelector("#phase6-route-selected");
+const phase6RouteWritesMemory = document.querySelector("#phase6-route-writes-memory");
+const phase6RouteJson = document.querySelector("#phase6-route-json");
+const phase6ExitComplete = document.querySelector("#phase6-exit-complete");
+const phase6ExitPercent = document.querySelector("#phase6-exit-percent");
+const phase6ExitNext = document.querySelector("#phase6-exit-next");
+const phase6ExitJson = document.querySelector("#phase6-exit-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -5102,6 +5168,136 @@ async function refreshPostMvpPlan() {
   }
 }
 
+async function refreshPhase6Plan() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-6/plan\`);
+    const summary = data.summary ?? {};
+    phase6PlanReady.textContent = String(Boolean(summary.ready));
+    phase6PlanNext.textContent = data.next?.recommendedSlice ?? "openclaw-phase-6-memory-substrate-inventory";
+    phase6PlanWritesMemory.textContent = String(Boolean(summary.writesMemory));
+    phase6PlanJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-6-consciousness-memory-plan-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Theme: " + (data.whitepaperAlignment?.phaseTheme ?? "Give the body a memory-bearing task mind."),
+      "Slices: " + ((data.selectedSlices ?? []).join(", ") || "none"),
+      "Next: " + (data.next?.recommendedSlice ?? "unknown"),
+    ].join("\\n");
+  } catch {
+    phase6PlanReady.textContent = "false";
+    phase6PlanNext.textContent = "unknown";
+    phase6PlanWritesMemory.textContent = "false";
+    phase6PlanJson.textContent = "Unable to read Phase 6 plan.";
+  }
+}
+
+async function refreshPhase6MemorySubstrateInventory() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-6/memory-substrate-inventory\`);
+    const summary = data.summary ?? {};
+    phase6MemoryReady.textContent = String(Boolean(summary.ready));
+    phase6MemorySources.textContent = String(summary.sourceCount ?? 0);
+    phase6MemoryWritable.textContent = String(summary.writableSources ?? 0);
+    phase6MemoryJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-6-memory-substrate-inventory-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Ready: " + Boolean(summary.ready) + " sources=" + (summary.sourceCount ?? 0) + " writable=" + (summary.writableSources ?? 0),
+      "Sources: " + ((data.memorySources ?? []).map((source) => source.id).join(", ") || "none"),
+    ].join("\\n");
+  } catch {
+    phase6MemoryReady.textContent = "false";
+    phase6MemorySources.textContent = "0";
+    phase6MemoryWritable.textContent = "0";
+    phase6MemoryJson.textContent = "Unable to read Phase 6 memory substrate inventory.";
+  }
+}
+
+async function refreshPhase6ConsciousnessContextEnvelope() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-6/consciousness-context-envelope\`);
+    const summary = data.summary ?? {};
+    phase6ContextReady.textContent = String(Boolean(summary.ready));
+    phase6ContextPointers.textContent = String(summary.memoryPointers ?? 0);
+    phase6ContextTransmitted.textContent = String(Boolean(summary.transmitted));
+    phase6ContextJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-6-consciousness-context-envelope-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Ready: " + Boolean(summary.ready) + " pointers=" + (summary.memoryPointers ?? 0) + " transmitted=" + Boolean(summary.transmitted),
+      "Schema: " + (data.envelope?.schema ?? "unknown"),
+      "Cloud Call: " + Boolean(summary.callsCloudModel),
+    ].join("\\n");
+  } catch {
+    phase6ContextReady.textContent = "false";
+    phase6ContextPointers.textContent = "0";
+    phase6ContextTransmitted.textContent = "false";
+    phase6ContextJson.textContent = "Unable to read Phase 6 consciousness context envelope.";
+  }
+}
+
+async function refreshPhase6TaskOrchestrationRecords() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-6/task-orchestration-records\`);
+    const summary = data.summary ?? {};
+    phase6OrchestrationReady.textContent = String(Boolean(summary.ready));
+    phase6OrchestrationRecords.textContent = String(summary.recordCount ?? 0);
+    phase6OrchestrationScheduled.textContent = String(summary.scheduledTasks ?? 0);
+    phase6OrchestrationJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-6-task-orchestration-records-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Ready: " + Boolean(summary.ready) + " records=" + (summary.recordCount ?? 0) + " scheduled=" + (summary.scheduledTasks ?? 0),
+      "Records: " + ((data.records ?? []).map((record) => record.id + "=" + record.status).join(" | ") || "none"),
+    ].join("\\n");
+  } catch {
+    phase6OrchestrationReady.textContent = "false";
+    phase6OrchestrationRecords.textContent = "0";
+    phase6OrchestrationScheduled.textContent = "0";
+    phase6OrchestrationJson.textContent = "Unable to read Phase 6 task orchestration records.";
+  }
+}
+
+async function refreshPhase6MemoryWriteRouteReview() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-6/memory-write-route-review\`);
+    const summary = data.summary ?? {};
+    phase6RouteReady.textContent = String(Boolean(summary.ready));
+    phase6RouteSelected.textContent = summary.selectedSlice ?? "unknown";
+    phase6RouteWritesMemory.textContent = String(Boolean(summary.writesMemory));
+    phase6RouteJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-6-memory-write-route-review-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Ready: " + Boolean(summary.ready) + " selected=" + (summary.selectedSlice ?? "unknown"),
+      "Deferred: " + (data.decision?.deferredSlice ?? "unknown"),
+      "Writes Memory: " + Boolean(summary.writesMemory) + " cloud=" + Boolean(summary.callsCloudModel),
+    ].join("\\n");
+  } catch {
+    phase6RouteReady.textContent = "false";
+    phase6RouteSelected.textContent = "unknown";
+    phase6RouteWritesMemory.textContent = "false";
+    phase6RouteJson.textContent = "Unable to read Phase 6 memory write route review.";
+  }
+}
+
+async function refreshPhase6Exit() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-6/exit\`);
+    const summary = data.summary ?? {};
+    phase6ExitComplete.textContent = String(Boolean(summary.complete));
+    phase6ExitPercent.textContent = String(summary.completionPercent ?? 0);
+    phase6ExitNext.textContent = data.next?.recommendedSlice ?? "openclaw-long-term-memory-write-plan";
+    phase6ExitJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-phase-6-exit-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Complete: " + Boolean(summary.complete) + " percent=" + (summary.completionPercent ?? 0),
+      "Evidence: sources=" + (summary.memorySources ?? 0) + " pointers=" + (summary.memoryPointers ?? 0) + " records=" + (summary.orchestrationRecords ?? 0),
+      "Next: " + (data.next?.recommendedSlice ?? "openclaw-long-term-memory-write-plan"),
+    ].join("\\n");
+  } catch {
+    phase6ExitComplete.textContent = "false";
+    phase6ExitPercent.textContent = "0";
+    phase6ExitNext.textContent = "openclaw-long-term-memory-write-plan";
+    phase6ExitJson.textContent = "Unable to read Phase 6 exit gate.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -8121,6 +8317,12 @@ await refreshPhase5ReleaseControlReadiness();
 await refreshPhase5Exit();
 await refreshMvpFinalReadiness();
 await refreshPostMvpPlan();
+await refreshPhase6Plan();
+await refreshPhase6MemorySubstrateInventory();
+await refreshPhase6ConsciousnessContextEnvelope();
+await refreshPhase6TaskOrchestrationRecords();
+await refreshPhase6MemoryWriteRouteReview();
+await refreshPhase6Exit();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -8244,6 +8446,12 @@ setInterval(refreshPhase5ReleaseControlReadiness, 5000);
 setInterval(refreshPhase5Exit, 5000);
 setInterval(refreshMvpFinalReadiness, 5000);
 setInterval(refreshPostMvpPlan, 5000);
+setInterval(refreshPhase6Plan, 5000);
+setInterval(refreshPhase6MemorySubstrateInventory, 5000);
+setInterval(refreshPhase6ConsciousnessContextEnvelope, 5000);
+setInterval(refreshPhase6TaskOrchestrationRecords, 5000);
+setInterval(refreshPhase6MemoryWriteRouteReview, 5000);
+setInterval(refreshPhase6Exit, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);
