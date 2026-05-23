@@ -681,6 +681,69 @@ function observerHtml() {
           <div class="metric"><span>Next</span><span id="cloud-provider-exit-next">loading</span></div>
           <pre id="cloud-provider-exit-json">Loading cloud consciousness provider adapter exit gate...</pre>
         </section>
+        <section class="panel" id="cloud-consciousness-real-provider-call-plan-panel">
+          <h2>Cloud Consciousness Real Provider Call Plan</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-real-provider-plan-ready">false</span></div>
+          <div class="metric"><span>Cloud Call</span><span id="cloud-real-provider-plan-call">false</span></div>
+          <div class="metric"><span>Next</span><span id="cloud-real-provider-plan-next">loading</span></div>
+          <pre id="cloud-real-provider-plan-json">Loading real provider call plan...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-provider-egress-contract-panel">
+          <h2>Cloud Consciousness Provider Egress Contract</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-egress-contract-ready">false</span></div>
+          <div class="metric"><span>Preflights</span><span id="cloud-egress-contract-preflights">0</span></div>
+          <div class="metric"><span>Transmits</span><span id="cloud-egress-contract-transmits">false</span></div>
+          <pre id="cloud-egress-contract-json">Loading provider egress contract...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-provider-credential-preflight-panel">
+          <h2>Cloud Consciousness Provider Credential Preflight</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-credential-preflight-ready">false</span></div>
+          <div class="metric"><span>Credential Read</span><span id="cloud-credential-preflight-read">false</span></div>
+          <div class="metric"><span>Live Call</span><span id="cloud-credential-preflight-live">false</span></div>
+          <pre id="cloud-credential-preflight-json">Loading provider credential preflight...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-provider-request-redaction-review-panel">
+          <h2>Cloud Consciousness Provider Request Redaction Review</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-request-redaction-ready">false</span></div>
+          <div class="metric"><span>Rejected</span><span id="cloud-request-redaction-rejected">0</span></div>
+          <div class="metric"><span>Secrets</span><span id="cloud-request-redaction-secrets">false</span></div>
+          <pre id="cloud-request-redaction-json">Loading provider request redaction review...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-real-provider-call-route-review-panel">
+          <h2>Cloud Consciousness Real Provider Call Route</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-real-provider-route-ready">false</span></div>
+          <div class="metric"><span>Selected</span><span id="cloud-real-provider-route-selected">loading</span></div>
+          <div class="metric"><span>Cloud Call</span><span id="cloud-real-provider-route-call">false</span></div>
+          <pre id="cloud-real-provider-route-json">Loading real provider call route review...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-real-provider-call-task-panel">
+          <h2>Cloud Consciousness Real Provider Call Task</h2>
+          <div class="metric"><span>Route Ready</span><span id="cloud-real-provider-task-ready">false</span></div>
+          <div class="metric"><span>Creates Task</span><span id="cloud-real-provider-task-creates">false</span></div>
+          <div class="metric"><span>Approval</span><span id="cloud-real-provider-task-approval">required</span></div>
+          <pre id="cloud-real-provider-task-json">Loading real provider call task boundary...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-approved-provider-call-rehearsal-panel">
+          <h2>Cloud Consciousness Approved Provider Call Rehearsal</h2>
+          <div class="metric"><span>Records</span><span id="cloud-call-rehearsal-records">0</span></div>
+          <div class="metric"><span>Latest</span><span id="cloud-call-rehearsal-latest">none</span></div>
+          <div class="metric"><span>Transmitted</span><span id="cloud-call-rehearsal-transmitted">false</span></div>
+          <pre id="cloud-call-rehearsal-json">Loading approved provider call rehearsal evidence...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-provider-response-readback-panel">
+          <h2>Cloud Consciousness Provider Response Readback</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-response-readback-ready">false</span></div>
+          <div class="metric"><span>Records</span><span id="cloud-response-readback-records">0</span></div>
+          <div class="metric"><span>Hash</span><span id="cloud-response-readback-hash">none</span></div>
+          <pre id="cloud-response-readback-json">Loading provider response readback...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-real-provider-call-exit-panel">
+          <h2>Cloud Consciousness Real Provider Call Exit</h2>
+          <div class="metric"><span>Complete</span><span id="cloud-real-provider-exit-complete">false</span></div>
+          <div class="metric"><span>Percent</span><span id="cloud-real-provider-exit-percent">0</span></div>
+          <div class="metric"><span>Next</span><span id="cloud-real-provider-exit-next">loading</span></div>
+          <pre id="cloud-real-provider-exit-json">Loading real provider call exit gate...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -1885,6 +1948,42 @@ const cloudProviderExitComplete = document.querySelector("#cloud-provider-exit-c
 const cloudProviderExitPercent = document.querySelector("#cloud-provider-exit-percent");
 const cloudProviderExitNext = document.querySelector("#cloud-provider-exit-next");
 const cloudProviderExitJson = document.querySelector("#cloud-provider-exit-json");
+const cloudRealProviderPlanReady = document.querySelector("#cloud-real-provider-plan-ready");
+const cloudRealProviderPlanCall = document.querySelector("#cloud-real-provider-plan-call");
+const cloudRealProviderPlanNext = document.querySelector("#cloud-real-provider-plan-next");
+const cloudRealProviderPlanJson = document.querySelector("#cloud-real-provider-plan-json");
+const cloudEgressContractReady = document.querySelector("#cloud-egress-contract-ready");
+const cloudEgressContractPreflights = document.querySelector("#cloud-egress-contract-preflights");
+const cloudEgressContractTransmits = document.querySelector("#cloud-egress-contract-transmits");
+const cloudEgressContractJson = document.querySelector("#cloud-egress-contract-json");
+const cloudCredentialPreflightReady = document.querySelector("#cloud-credential-preflight-ready");
+const cloudCredentialPreflightRead = document.querySelector("#cloud-credential-preflight-read");
+const cloudCredentialPreflightLive = document.querySelector("#cloud-credential-preflight-live");
+const cloudCredentialPreflightJson = document.querySelector("#cloud-credential-preflight-json");
+const cloudRequestRedactionReady = document.querySelector("#cloud-request-redaction-ready");
+const cloudRequestRedactionRejected = document.querySelector("#cloud-request-redaction-rejected");
+const cloudRequestRedactionSecrets = document.querySelector("#cloud-request-redaction-secrets");
+const cloudRequestRedactionJson = document.querySelector("#cloud-request-redaction-json");
+const cloudRealProviderRouteReady = document.querySelector("#cloud-real-provider-route-ready");
+const cloudRealProviderRouteSelected = document.querySelector("#cloud-real-provider-route-selected");
+const cloudRealProviderRouteCall = document.querySelector("#cloud-real-provider-route-call");
+const cloudRealProviderRouteJson = document.querySelector("#cloud-real-provider-route-json");
+const cloudRealProviderTaskReady = document.querySelector("#cloud-real-provider-task-ready");
+const cloudRealProviderTaskCreates = document.querySelector("#cloud-real-provider-task-creates");
+const cloudRealProviderTaskApproval = document.querySelector("#cloud-real-provider-task-approval");
+const cloudRealProviderTaskJson = document.querySelector("#cloud-real-provider-task-json");
+const cloudCallRehearsalRecords = document.querySelector("#cloud-call-rehearsal-records");
+const cloudCallRehearsalLatest = document.querySelector("#cloud-call-rehearsal-latest");
+const cloudCallRehearsalTransmitted = document.querySelector("#cloud-call-rehearsal-transmitted");
+const cloudCallRehearsalJson = document.querySelector("#cloud-call-rehearsal-json");
+const cloudResponseReadbackReady = document.querySelector("#cloud-response-readback-ready");
+const cloudResponseReadbackRecords = document.querySelector("#cloud-response-readback-records");
+const cloudResponseReadbackHash = document.querySelector("#cloud-response-readback-hash");
+const cloudResponseReadbackJson = document.querySelector("#cloud-response-readback-json");
+const cloudRealProviderExitComplete = document.querySelector("#cloud-real-provider-exit-complete");
+const cloudRealProviderExitPercent = document.querySelector("#cloud-real-provider-exit-percent");
+const cloudRealProviderExitNext = document.querySelector("#cloud-real-provider-exit-next");
+const cloudRealProviderExitJson = document.querySelector("#cloud-real-provider-exit-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -6123,6 +6222,204 @@ async function refreshCloudConsciousnessProviderAdapterExit() {
   }
 }
 
+async function refreshCloudConsciousnessRealProviderCallPlan() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/real-provider-call-plan\`);
+    const summary = data.summary ?? {};
+    cloudRealProviderPlanReady.textContent = String(Boolean(summary.ready));
+    cloudRealProviderPlanCall.textContent = String(Boolean(summary.callsCloudModel));
+    cloudRealProviderPlanNext.textContent = data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-provider-egress-contract";
+    cloudRealProviderPlanJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-real-provider-call-plan-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Theme: " + (data.whitepaperAlignment?.phaseTheme ?? "Prepare the real provider-call path with a local response rehearsal, without external transmission."),
+      "Cloud Call: " + Boolean(summary.callsCloudModel),
+      "Next: " + (data.next?.recommendedSlice ?? "unknown"),
+    ].join("\\n");
+  } catch {
+    cloudRealProviderPlanReady.textContent = "false";
+    cloudRealProviderPlanCall.textContent = "false";
+    cloudRealProviderPlanNext.textContent = "openclaw-cloud-consciousness-provider-egress-contract";
+    cloudRealProviderPlanJson.textContent = "Unable to read real provider call plan.";
+  }
+}
+
+async function refreshCloudConsciousnessProviderEgressContract() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/provider-egress-contract\`);
+    const summary = data.summary ?? {};
+    cloudEgressContractReady.textContent = String(Boolean(summary.ready));
+    cloudEgressContractPreflights.textContent = String(summary.requiredPreflightCount ?? 0);
+    cloudEgressContractTransmits.textContent = String(Boolean(summary.transmitsExternally));
+    cloudEgressContractJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-provider-egress-contract-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Contract: " + (data.contract?.id ?? "unknown"),
+      "Required: " + ((data.contract?.requiredBeforeLiveCall ?? []).join(", ") || "none"),
+      "Transmits: " + Boolean(summary.transmitsExternally),
+    ].join("\\n");
+  } catch {
+    cloudEgressContractReady.textContent = "false";
+    cloudEgressContractPreflights.textContent = "0";
+    cloudEgressContractTransmits.textContent = "false";
+    cloudEgressContractJson.textContent = "Unable to read provider egress contract.";
+  }
+}
+
+async function refreshCloudConsciousnessProviderCredentialPreflight() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/provider-credential-preflight\`);
+    const summary = data.summary ?? {};
+    cloudCredentialPreflightReady.textContent = String(Boolean(summary.ready));
+    cloudCredentialPreflightRead.textContent = String(Boolean(summary.providerCredentialRead));
+    cloudCredentialPreflightLive.textContent = String(Boolean(data.preflight?.liveCallPermitted));
+    cloudCredentialPreflightJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-provider-credential-preflight-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Endpoint Env: " + (data.preflight?.endpointEnv ?? "unknown"),
+      "Credential Env: " + (data.preflight?.credentialEnv ?? "unknown"),
+      "Credential Read: " + Boolean(summary.providerCredentialRead),
+    ].join("\\n");
+  } catch {
+    cloudCredentialPreflightReady.textContent = "false";
+    cloudCredentialPreflightRead.textContent = "false";
+    cloudCredentialPreflightLive.textContent = "false";
+    cloudCredentialPreflightJson.textContent = "Unable to read provider credential preflight.";
+  }
+}
+
+async function refreshCloudConsciousnessProviderRequestRedactionReview() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/provider-request-redaction-review\`);
+    const summary = data.summary ?? {};
+    cloudRequestRedactionReady.textContent = String(Boolean(summary.ready));
+    cloudRequestRedactionRejected.textContent = String(summary.rejectedContentCount ?? 0);
+    cloudRequestRedactionSecrets.textContent = String(Boolean(summary.includesSecrets));
+    cloudRequestRedactionJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-provider-request-redaction-review-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Policy: " + (data.redaction?.policy ?? "unknown"),
+      "Rejected: " + ((data.redaction?.rejectedContent ?? []).join(", ") || "none"),
+      "Secrets: " + Boolean(summary.includesSecrets),
+    ].join("\\n");
+  } catch {
+    cloudRequestRedactionReady.textContent = "false";
+    cloudRequestRedactionRejected.textContent = "0";
+    cloudRequestRedactionSecrets.textContent = "false";
+    cloudRequestRedactionJson.textContent = "Unable to read provider request redaction review.";
+  }
+}
+
+async function refreshCloudConsciousnessRealProviderCallRouteReview() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/real-provider-call-route-review\`);
+    const summary = data.summary ?? {};
+    cloudRealProviderRouteReady.textContent = String(Boolean(summary.ready));
+    cloudRealProviderRouteSelected.textContent = summary.selectedSlice ?? "unknown";
+    cloudRealProviderRouteCall.textContent = String(Boolean(summary.callsCloudModel));
+    cloudRealProviderRouteJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-real-provider-call-route-review-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Selected: " + (summary.selectedSlice ?? "unknown"),
+      "Deferred: " + (summary.deferredSlice ?? "unknown"),
+      "Cloud Call: " + Boolean(summary.callsCloudModel),
+    ].join("\\n");
+  } catch {
+    cloudRealProviderRouteReady.textContent = "false";
+    cloudRealProviderRouteSelected.textContent = "unknown";
+    cloudRealProviderRouteCall.textContent = "false";
+    cloudRealProviderRouteJson.textContent = "Unable to read real provider call route review.";
+  }
+}
+
+async function refreshCloudConsciousnessRealProviderCallTask() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/real-provider-call-route-review\`);
+    const summary = data.summary ?? {};
+    cloudRealProviderTaskReady.textContent = String(Boolean(summary.ready));
+    cloudRealProviderTaskCreates.textContent = "true";
+    cloudRealProviderTaskApproval.textContent = data.decision?.canCreateTask === true ? "required" : "blocked";
+    cloudRealProviderTaskJson.textContent = [
+      "Registry: openclaw-cloud-consciousness-real-provider-call-task-v0",
+      "Route: " + (data.registry ?? "openclaw-cloud-consciousness-real-provider-call-route-review-v0"),
+      "Ready: " + Boolean(summary.ready),
+      "Creates Task: true",
+      "Provider Call: rehearsal only",
+    ].join("\\n");
+  } catch {
+    cloudRealProviderTaskReady.textContent = "false";
+    cloudRealProviderTaskCreates.textContent = "false";
+    cloudRealProviderTaskApproval.textContent = "unknown";
+    cloudRealProviderTaskJson.textContent = "Unable to read real provider call task boundary.";
+  }
+}
+
+async function refreshCloudConsciousnessApprovedProviderCallRehearsal() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/provider-response-readback\`);
+    const summary = data.summary ?? {};
+    cloudCallRehearsalRecords.textContent = String(summary.recordCount ?? 0);
+    cloudCallRehearsalLatest.textContent = summary.latestRecordId ?? "none";
+    cloudCallRehearsalTransmitted.textContent = String(Boolean(summary.transmitsExternally));
+    cloudCallRehearsalJson.textContent = [
+      "Registry: openclaw-cloud-consciousness-approved-provider-call-rehearsal-v0",
+      "Readback: " + (data.registry ?? "openclaw-cloud-consciousness-provider-response-readback-v0"),
+      "Records: " + (summary.recordCount ?? 0),
+      "Latest: " + (summary.latestRecordId ?? "none"),
+      "Transmitted: " + Boolean(summary.transmitsExternally),
+    ].join("\\n");
+  } catch {
+    cloudCallRehearsalRecords.textContent = "0";
+    cloudCallRehearsalLatest.textContent = "none";
+    cloudCallRehearsalTransmitted.textContent = "false";
+    cloudCallRehearsalJson.textContent = "No approved provider call rehearsal evidence yet.";
+  }
+}
+
+async function refreshCloudConsciousnessProviderResponseReadback() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/provider-response-readback\`);
+    const summary = data.summary ?? {};
+    cloudResponseReadbackReady.textContent = String(Boolean(summary.ready));
+    cloudResponseReadbackRecords.textContent = String(summary.recordCount ?? 0);
+    cloudResponseReadbackHash.textContent = summary.latestContentHash ?? "none";
+    cloudResponseReadbackJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-provider-response-readback-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Ready: " + Boolean(summary.ready) + " records=" + (summary.recordCount ?? 0),
+      "Latest: " + (summary.latestRecordId ?? "none"),
+      "Hash: " + (summary.latestContentHash ?? "none"),
+    ].join("\\n");
+  } catch {
+    cloudResponseReadbackReady.textContent = "false";
+    cloudResponseReadbackRecords.textContent = "0";
+    cloudResponseReadbackHash.textContent = "none";
+    cloudResponseReadbackJson.textContent = "Unable to read provider response readback.";
+  }
+}
+
+async function refreshCloudConsciousnessRealProviderCallExit() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/real-provider-call-exit\`);
+    const summary = data.summary ?? {};
+    cloudRealProviderExitComplete.textContent = String(Boolean(summary.complete));
+    cloudRealProviderExitPercent.textContent = String(summary.completionPercent ?? 0);
+    cloudRealProviderExitNext.textContent = data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-call-runbook";
+    cloudRealProviderExitJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-real-provider-call-exit-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Complete: " + Boolean(summary.complete) + " percent=" + (summary.completionPercent ?? 0),
+      "Records: " + (summary.recordCount ?? 0),
+      "Next: " + (data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-call-runbook"),
+    ].join("\\n");
+  } catch {
+    cloudRealProviderExitComplete.textContent = "false";
+    cloudRealProviderExitPercent.textContent = "0";
+    cloudRealProviderExitNext.textContent = "openclaw-cloud-consciousness-live-provider-call-runbook";
+    cloudRealProviderExitJson.textContent = "Unable to read real provider call exit gate.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -9173,6 +9470,15 @@ await refreshCloudConsciousnessProviderDryRunTask();
 await refreshCloudConsciousnessApprovedProviderDryRun();
 await refreshCloudConsciousnessProviderDryRunReadback();
 await refreshCloudConsciousnessProviderAdapterExit();
+await refreshCloudConsciousnessRealProviderCallPlan();
+await refreshCloudConsciousnessProviderEgressContract();
+await refreshCloudConsciousnessProviderCredentialPreflight();
+await refreshCloudConsciousnessProviderRequestRedactionReview();
+await refreshCloudConsciousnessRealProviderCallRouteReview();
+await refreshCloudConsciousnessRealProviderCallTask();
+await refreshCloudConsciousnessApprovedProviderCallRehearsal();
+await refreshCloudConsciousnessProviderResponseReadback();
+await refreshCloudConsciousnessRealProviderCallExit();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -9327,6 +9633,15 @@ setInterval(refreshCloudConsciousnessProviderDryRunTask, 5000);
 setInterval(refreshCloudConsciousnessApprovedProviderDryRun, 5000);
 setInterval(refreshCloudConsciousnessProviderDryRunReadback, 5000);
 setInterval(refreshCloudConsciousnessProviderAdapterExit, 5000);
+setInterval(refreshCloudConsciousnessRealProviderCallPlan, 5000);
+setInterval(refreshCloudConsciousnessProviderEgressContract, 5000);
+setInterval(refreshCloudConsciousnessProviderCredentialPreflight, 5000);
+setInterval(refreshCloudConsciousnessProviderRequestRedactionReview, 5000);
+setInterval(refreshCloudConsciousnessRealProviderCallRouteReview, 5000);
+setInterval(refreshCloudConsciousnessRealProviderCallTask, 5000);
+setInterval(refreshCloudConsciousnessApprovedProviderCallRehearsal, 5000);
+setInterval(refreshCloudConsciousnessProviderResponseReadback, 5000);
+setInterval(refreshCloudConsciousnessRealProviderCallExit, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);
