@@ -562,6 +562,69 @@ function observerHtml() {
           <div class="metric"><span>Next</span><span id="long-term-memory-exit-next">loading</span></div>
           <pre id="long-term-memory-exit-json">Loading long-term memory exit gate...</pre>
         </section>
+        <section class="panel" id="cloud-consciousness-context-review-panel">
+          <h2>Cloud Consciousness Context Review</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-context-review-ready">false</span></div>
+          <div class="metric"><span>Cloud Call</span><span id="cloud-context-review-call">false</span></div>
+          <div class="metric"><span>Next</span><span id="cloud-context-review-next">loading</span></div>
+          <pre id="cloud-context-review-json">Loading cloud consciousness context review...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-envelope-schema-panel">
+          <h2>Cloud Consciousness Envelope Schema</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-envelope-schema-ready">false</span></div>
+          <div class="metric"><span>Fields</span><span id="cloud-envelope-schema-fields">0</span></div>
+          <div class="metric"><span>Transmission</span><span id="cloud-envelope-schema-transmission">false</span></div>
+          <pre id="cloud-envelope-schema-json">Loading cloud consciousness envelope schema...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-context-package-panel">
+          <h2>Cloud Consciousness Context Package</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-context-package-ready">false</span></div>
+          <div class="metric"><span>Memory Records</span><span id="cloud-context-package-memory">0</span></div>
+          <div class="metric"><span>Secrets</span><span id="cloud-context-package-secrets">false</span></div>
+          <pre id="cloud-context-package-json">Loading cloud consciousness context package...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-redaction-review-panel">
+          <h2>Cloud Consciousness Redaction Review</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-redaction-ready">false</span></div>
+          <div class="metric"><span>Rejected</span><span id="cloud-redaction-rejected">0</span></div>
+          <div class="metric"><span>Secrets</span><span id="cloud-redaction-secrets">false</span></div>
+          <pre id="cloud-redaction-json">Loading cloud consciousness redaction review...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-transmission-route-review-panel">
+          <h2>Cloud Consciousness Transmission Route Review</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-route-ready">false</span></div>
+          <div class="metric"><span>Selected</span><span id="cloud-route-selected">loading</span></div>
+          <div class="metric"><span>Cloud Call</span><span id="cloud-route-call">false</span></div>
+          <pre id="cloud-route-json">Loading cloud consciousness transmission route review...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-handoff-task-panel">
+          <h2>Cloud Consciousness Handoff Task</h2>
+          <div class="metric"><span>Route Ready</span><span id="cloud-handoff-task-ready">false</span></div>
+          <div class="metric"><span>Creates Task</span><span id="cloud-handoff-task-creates">false</span></div>
+          <div class="metric"><span>Approval</span><span id="cloud-handoff-task-approval">required</span></div>
+          <pre id="cloud-handoff-task-json">Loading cloud consciousness handoff task boundary...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-approved-handoff-panel">
+          <h2>Cloud Consciousness Approved Handoff</h2>
+          <div class="metric"><span>Records</span><span id="cloud-approved-handoff-records">0</span></div>
+          <div class="metric"><span>Latest</span><span id="cloud-approved-handoff-latest">none</span></div>
+          <div class="metric"><span>Transmitted</span><span id="cloud-approved-handoff-transmitted">false</span></div>
+          <pre id="cloud-approved-handoff-json">Loading approved local handoff evidence...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-handoff-readback-panel">
+          <h2>Cloud Consciousness Handoff Readback</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-handoff-readback-ready">false</span></div>
+          <div class="metric"><span>Records</span><span id="cloud-handoff-readback-records">0</span></div>
+          <div class="metric"><span>Hash</span><span id="cloud-handoff-readback-hash">none</span></div>
+          <pre id="cloud-handoff-readback-json">Loading cloud consciousness handoff readback...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-exit-panel">
+          <h2>Cloud Consciousness Exit</h2>
+          <div class="metric"><span>Complete</span><span id="cloud-exit-complete">false</span></div>
+          <div class="metric"><span>Percent</span><span id="cloud-exit-percent">0</span></div>
+          <div class="metric"><span>Next</span><span id="cloud-exit-next">loading</span></div>
+          <pre id="cloud-exit-json">Loading cloud consciousness exit gate...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -1698,6 +1761,42 @@ const longTermMemoryExitComplete = document.querySelector("#long-term-memory-exi
 const longTermMemoryExitPercent = document.querySelector("#long-term-memory-exit-percent");
 const longTermMemoryExitNext = document.querySelector("#long-term-memory-exit-next");
 const longTermMemoryExitJson = document.querySelector("#long-term-memory-exit-json");
+const cloudContextReviewReady = document.querySelector("#cloud-context-review-ready");
+const cloudContextReviewCall = document.querySelector("#cloud-context-review-call");
+const cloudContextReviewNext = document.querySelector("#cloud-context-review-next");
+const cloudContextReviewJson = document.querySelector("#cloud-context-review-json");
+const cloudEnvelopeSchemaReady = document.querySelector("#cloud-envelope-schema-ready");
+const cloudEnvelopeSchemaFields = document.querySelector("#cloud-envelope-schema-fields");
+const cloudEnvelopeSchemaTransmission = document.querySelector("#cloud-envelope-schema-transmission");
+const cloudEnvelopeSchemaJson = document.querySelector("#cloud-envelope-schema-json");
+const cloudContextPackageReady = document.querySelector("#cloud-context-package-ready");
+const cloudContextPackageMemory = document.querySelector("#cloud-context-package-memory");
+const cloudContextPackageSecrets = document.querySelector("#cloud-context-package-secrets");
+const cloudContextPackageJson = document.querySelector("#cloud-context-package-json");
+const cloudRedactionReady = document.querySelector("#cloud-redaction-ready");
+const cloudRedactionRejected = document.querySelector("#cloud-redaction-rejected");
+const cloudRedactionSecrets = document.querySelector("#cloud-redaction-secrets");
+const cloudRedactionJson = document.querySelector("#cloud-redaction-json");
+const cloudRouteReady = document.querySelector("#cloud-route-ready");
+const cloudRouteSelected = document.querySelector("#cloud-route-selected");
+const cloudRouteCall = document.querySelector("#cloud-route-call");
+const cloudRouteJson = document.querySelector("#cloud-route-json");
+const cloudHandoffTaskReady = document.querySelector("#cloud-handoff-task-ready");
+const cloudHandoffTaskCreates = document.querySelector("#cloud-handoff-task-creates");
+const cloudHandoffTaskApproval = document.querySelector("#cloud-handoff-task-approval");
+const cloudHandoffTaskJson = document.querySelector("#cloud-handoff-task-json");
+const cloudApprovedHandoffRecords = document.querySelector("#cloud-approved-handoff-records");
+const cloudApprovedHandoffLatest = document.querySelector("#cloud-approved-handoff-latest");
+const cloudApprovedHandoffTransmitted = document.querySelector("#cloud-approved-handoff-transmitted");
+const cloudApprovedHandoffJson = document.querySelector("#cloud-approved-handoff-json");
+const cloudHandoffReadbackReady = document.querySelector("#cloud-handoff-readback-ready");
+const cloudHandoffReadbackRecords = document.querySelector("#cloud-handoff-readback-records");
+const cloudHandoffReadbackHash = document.querySelector("#cloud-handoff-readback-hash");
+const cloudHandoffReadbackJson = document.querySelector("#cloud-handoff-readback-json");
+const cloudExitComplete = document.querySelector("#cloud-exit-complete");
+const cloudExitPercent = document.querySelector("#cloud-exit-percent");
+const cloudExitNext = document.querySelector("#cloud-exit-next");
+const cloudExitJson = document.querySelector("#cloud-exit-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -5562,6 +5661,204 @@ async function refreshLongTermMemoryExit() {
   }
 }
 
+async function refreshCloudConsciousnessContextReview() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/context-review\`);
+    const summary = data.summary ?? {};
+    cloudContextReviewReady.textContent = String(Boolean(summary.ready));
+    cloudContextReviewCall.textContent = String(Boolean(summary.callsCloudModel));
+    cloudContextReviewNext.textContent = data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-envelope-schema";
+    cloudContextReviewJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-context-review-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Theme: " + (data.whitepaperAlignment?.phaseTheme ?? "Prepare the first cloud-consciousness context without transmitting it."),
+      "Cloud Call: " + Boolean(summary.callsCloudModel),
+      "Next: " + (data.next?.recommendedSlice ?? "unknown"),
+    ].join("\\n");
+  } catch {
+    cloudContextReviewReady.textContent = "false";
+    cloudContextReviewCall.textContent = "false";
+    cloudContextReviewNext.textContent = "openclaw-cloud-consciousness-envelope-schema";
+    cloudContextReviewJson.textContent = "Unable to read cloud consciousness context review.";
+  }
+}
+
+async function refreshCloudConsciousnessEnvelopeSchema() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/envelope-schema\`);
+    const summary = data.summary ?? {};
+    cloudEnvelopeSchemaReady.textContent = String(Boolean(summary.ready));
+    cloudEnvelopeSchemaFields.textContent = String(summary.requiredFieldCount ?? 0);
+    cloudEnvelopeSchemaTransmission.textContent = String(Boolean(summary.transmitsExternally));
+    cloudEnvelopeSchemaJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-envelope-schema-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Schema: " + (data.schema?.id ?? "unknown"),
+      "Fields: " + ((data.schema?.requiredFields ?? []).join(", ") || "none"),
+      "Transmission: " + Boolean(summary.transmitsExternally),
+    ].join("\\n");
+  } catch {
+    cloudEnvelopeSchemaReady.textContent = "false";
+    cloudEnvelopeSchemaFields.textContent = "0";
+    cloudEnvelopeSchemaTransmission.textContent = "false";
+    cloudEnvelopeSchemaJson.textContent = "Unable to read cloud consciousness envelope schema.";
+  }
+}
+
+async function refreshCloudConsciousnessContextPackage() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/context-package\`);
+    const summary = data.summary ?? {};
+    cloudContextPackageReady.textContent = String(Boolean(summary.ready));
+    cloudContextPackageMemory.textContent = String(summary.memoryRecordCount ?? 0);
+    cloudContextPackageSecrets.textContent = String(Boolean(summary.includesSecrets));
+    cloudContextPackageJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-context-package-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Package: " + (data.package?.id ?? "unknown"),
+      "Memory Records: " + (summary.memoryRecordCount ?? 0),
+      "Transmitted: " + Boolean(summary.transmitsExternally),
+    ].join("\\n");
+  } catch {
+    cloudContextPackageReady.textContent = "false";
+    cloudContextPackageMemory.textContent = "0";
+    cloudContextPackageSecrets.textContent = "false";
+    cloudContextPackageJson.textContent = "Unable to read cloud consciousness context package.";
+  }
+}
+
+async function refreshCloudConsciousnessRedactionReview() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/redaction-review\`);
+    const summary = data.summary ?? {};
+    cloudRedactionReady.textContent = String(Boolean(summary.ready));
+    cloudRedactionRejected.textContent = String(summary.rejectedContentCount ?? 0);
+    cloudRedactionSecrets.textContent = String(Boolean(summary.includesSecrets));
+    cloudRedactionJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-redaction-review-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Policy: " + (data.redaction?.policy ?? "unknown"),
+      "Rejected: " + ((data.redaction?.rejectedContent ?? []).join(", ") || "none"),
+      "Secrets: " + Boolean(summary.includesSecrets),
+    ].join("\\n");
+  } catch {
+    cloudRedactionReady.textContent = "false";
+    cloudRedactionRejected.textContent = "0";
+    cloudRedactionSecrets.textContent = "false";
+    cloudRedactionJson.textContent = "Unable to read cloud consciousness redaction review.";
+  }
+}
+
+async function refreshCloudConsciousnessTransmissionRouteReview() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/transmission-route-review\`);
+    const summary = data.summary ?? {};
+    cloudRouteReady.textContent = String(Boolean(summary.ready));
+    cloudRouteSelected.textContent = summary.selectedSlice ?? "unknown";
+    cloudRouteCall.textContent = String(Boolean(summary.callsCloudModel));
+    cloudRouteJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-transmission-route-review-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Selected: " + (summary.selectedSlice ?? "unknown"),
+      "Deferred: " + (summary.deferredSlice ?? "unknown"),
+      "Cloud Call: " + Boolean(summary.callsCloudModel),
+    ].join("\\n");
+  } catch {
+    cloudRouteReady.textContent = "false";
+    cloudRouteSelected.textContent = "unknown";
+    cloudRouteCall.textContent = "false";
+    cloudRouteJson.textContent = "Unable to read cloud consciousness transmission route review.";
+  }
+}
+
+async function refreshCloudConsciousnessHandoffTask() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/transmission-route-review\`);
+    const summary = data.summary ?? {};
+    cloudHandoffTaskReady.textContent = String(Boolean(summary.ready));
+    cloudHandoffTaskCreates.textContent = "true";
+    cloudHandoffTaskApproval.textContent = data.decision?.canCreateTask === true ? "required" : "blocked";
+    cloudHandoffTaskJson.textContent = [
+      "Registry: openclaw-cloud-consciousness-handoff-task-v0",
+      "Route: " + (data.registry ?? "openclaw-cloud-consciousness-transmission-route-review-v0"),
+      "Ready: " + Boolean(summary.ready),
+      "Creates Task: true",
+      "Provider Call: deferred",
+    ].join("\\n");
+  } catch {
+    cloudHandoffTaskReady.textContent = "false";
+    cloudHandoffTaskCreates.textContent = "false";
+    cloudHandoffTaskApproval.textContent = "unknown";
+    cloudHandoffTaskJson.textContent = "Unable to read cloud consciousness handoff task boundary.";
+  }
+}
+
+async function refreshCloudConsciousnessApprovedHandoff() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/handoff-readback\`);
+    const summary = data.summary ?? {};
+    cloudApprovedHandoffRecords.textContent = String(summary.recordCount ?? 0);
+    cloudApprovedHandoffLatest.textContent = summary.latestRecordId ?? "none";
+    cloudApprovedHandoffTransmitted.textContent = String(Boolean(summary.transmitsExternally));
+    cloudApprovedHandoffJson.textContent = [
+      "Registry: openclaw-cloud-consciousness-approved-handoff-v0",
+      "Readback: " + (data.registry ?? "openclaw-cloud-consciousness-handoff-readback-v0"),
+      "Records: " + (summary.recordCount ?? 0),
+      "Latest: " + (summary.latestRecordId ?? "none"),
+      "Transmitted: " + Boolean(summary.transmitsExternally),
+    ].join("\\n");
+  } catch {
+    cloudApprovedHandoffRecords.textContent = "0";
+    cloudApprovedHandoffLatest.textContent = "none";
+    cloudApprovedHandoffTransmitted.textContent = "false";
+    cloudApprovedHandoffJson.textContent = "No approved local handoff evidence yet.";
+  }
+}
+
+async function refreshCloudConsciousnessHandoffReadback() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/handoff-readback\`);
+    const summary = data.summary ?? {};
+    cloudHandoffReadbackReady.textContent = String(Boolean(summary.ready));
+    cloudHandoffReadbackRecords.textContent = String(summary.recordCount ?? 0);
+    cloudHandoffReadbackHash.textContent = summary.latestContentHash ?? "none";
+    cloudHandoffReadbackJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-handoff-readback-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Ready: " + Boolean(summary.ready) + " records=" + (summary.recordCount ?? 0),
+      "Latest: " + (summary.latestRecordId ?? "none"),
+      "Hash: " + (summary.latestContentHash ?? "none"),
+    ].join("\\n");
+  } catch {
+    cloudHandoffReadbackReady.textContent = "false";
+    cloudHandoffReadbackRecords.textContent = "0";
+    cloudHandoffReadbackHash.textContent = "none";
+    cloudHandoffReadbackJson.textContent = "Unable to read cloud consciousness handoff readback.";
+  }
+}
+
+async function refreshCloudConsciousnessExit() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/exit\`);
+    const summary = data.summary ?? {};
+    cloudExitComplete.textContent = String(Boolean(summary.complete));
+    cloudExitPercent.textContent = String(summary.completionPercent ?? 0);
+    cloudExitNext.textContent = data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-provider-adapter-plan";
+    cloudExitJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-exit-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Complete: " + Boolean(summary.complete) + " percent=" + (summary.completionPercent ?? 0),
+      "Records: " + (summary.recordCount ?? 0),
+      "Next: " + (data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-provider-adapter-plan"),
+    ].join("\\n");
+  } catch {
+    cloudExitComplete.textContent = "false";
+    cloudExitPercent.textContent = "0";
+    cloudExitNext.textContent = "openclaw-cloud-consciousness-provider-adapter-plan";
+    cloudExitJson.textContent = "Unable to read cloud consciousness exit gate.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -8595,6 +8892,15 @@ await refreshLongTermMemoryWriteTask();
 await refreshLongTermMemoryApprovedWrite();
 await refreshLongTermMemoryReadback();
 await refreshLongTermMemoryExit();
+await refreshCloudConsciousnessContextReview();
+await refreshCloudConsciousnessEnvelopeSchema();
+await refreshCloudConsciousnessContextPackage();
+await refreshCloudConsciousnessRedactionReview();
+await refreshCloudConsciousnessTransmissionRouteReview();
+await refreshCloudConsciousnessHandoffTask();
+await refreshCloudConsciousnessApprovedHandoff();
+await refreshCloudConsciousnessHandoffReadback();
+await refreshCloudConsciousnessExit();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -8732,6 +9038,15 @@ setInterval(refreshLongTermMemoryWriteTask, 5000);
 setInterval(refreshLongTermMemoryApprovedWrite, 5000);
 setInterval(refreshLongTermMemoryReadback, 5000);
 setInterval(refreshLongTermMemoryExit, 5000);
+setInterval(refreshCloudConsciousnessContextReview, 5000);
+setInterval(refreshCloudConsciousnessEnvelopeSchema, 5000);
+setInterval(refreshCloudConsciousnessContextPackage, 5000);
+setInterval(refreshCloudConsciousnessRedactionReview, 5000);
+setInterval(refreshCloudConsciousnessTransmissionRouteReview, 5000);
+setInterval(refreshCloudConsciousnessHandoffTask, 5000);
+setInterval(refreshCloudConsciousnessApprovedHandoff, 5000);
+setInterval(refreshCloudConsciousnessHandoffReadback, 5000);
+setInterval(refreshCloudConsciousnessExit, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);
