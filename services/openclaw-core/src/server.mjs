@@ -17092,6 +17092,18 @@ function phase11Governance({
   };
 }
 
+function phase11EvidenceRef(evidence) {
+  if (!evidence || typeof evidence !== "object") {
+    return null;
+  }
+  return {
+    registry: evidence.registry ?? null,
+    status: evidence.status ?? null,
+    summary: evidence.summary ?? null,
+    next: evidence.next ?? null,
+  };
+}
+
 function cloudConsciousnessLiveProviderRunbookFilePath() {
   return path.resolve(process.cwd(), "../..", CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RUNBOOK_FILE_DISPLAY_PATH);
 }
@@ -17200,7 +17212,7 @@ async function buildCloudConsciousnessLiveProviderCallRunbook() {
       writesRunbookArtifact: false,
     },
     evidence: {
-      phase10Exit,
+      phase10Exit: phase11EvidenceRef(phase10Exit),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-live-provider-operator-checklist",
@@ -17268,7 +17280,7 @@ async function buildCloudConsciousnessLiveProviderOperatorChecklist() {
       liveProviderCallEnabled: false,
     },
     evidence: {
-      runbook,
+      runbook: phase11EvidenceRef(runbook),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-live-provider-egress-transcript-schema",
@@ -17340,7 +17352,7 @@ async function buildCloudConsciousnessLiveProviderEgressTranscriptSchema() {
       liveProviderCallEnabled: false,
     },
     evidence: {
-      checklist,
+      checklist: phase11EvidenceRef(checklist),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-live-provider-final-authorization-review",
@@ -17405,8 +17417,8 @@ async function buildCloudConsciousnessLiveProviderFinalAuthorizationReview() {
       transmitsExternally: false,
     },
     evidence: {
-      transcriptSchema,
-      responseReadback,
+      transcriptSchema: phase11EvidenceRef(transcriptSchema),
+      responseReadback: phase11EvidenceRef(responseReadback),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-live-provider-runbook-route-review",
@@ -17470,7 +17482,7 @@ async function buildCloudConsciousnessLiveProviderRunbookRouteReview() {
       liveProviderCallEnabled: false,
     },
     evidence: {
-      authorizationReview,
+      authorizationReview: phase11EvidenceRef(authorizationReview),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-live-provider-runbook-task",
@@ -17489,7 +17501,7 @@ async function createCloudConsciousnessLiveProviderRunbookTask({ confirm = false
     throw new Error("Cloud consciousness live provider-call runbook task requires a ready route review.");
   }
 
-  const authorizationReview = routeReview.evidence?.authorizationReview ?? {};
+  const authorizationReview = await buildCloudConsciousnessLiveProviderFinalAuthorizationReview();
   const policyRequest = {
     intent: "cloud_consciousness.live_provider_call.runbook_write",
     domain: "body_internal",
@@ -17599,8 +17611,8 @@ function isCloudConsciousnessLiveProviderRunbookTask(task) {
 
 async function executeCloudConsciousnessLiveProviderRunbookTask(task) {
   const routeReview = await buildCloudConsciousnessLiveProviderRunbookRouteReview();
-  const authorizationReview = routeReview.evidence?.authorizationReview ?? await buildCloudConsciousnessLiveProviderFinalAuthorizationReview();
-  const transcriptSchema = authorizationReview.evidence?.transcriptSchema ?? await buildCloudConsciousnessLiveProviderEgressTranscriptSchema();
+  const authorizationReview = await buildCloudConsciousnessLiveProviderFinalAuthorizationReview();
+  const transcriptSchema = await buildCloudConsciousnessLiveProviderEgressTranscriptSchema();
   const runbookFileDisplayPath = CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RUNBOOK_FILE_DISPLAY_PATH;
   const runbookFilePath = cloudConsciousnessLiveProviderRunbookFilePath();
   const createdAt = new Date().toISOString();
@@ -17896,12 +17908,12 @@ async function buildCloudConsciousnessLiveProviderCallRunbookExit() {
       storageScope: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RUNBOOK_FILE_DISPLAY_PATH,
     },
     evidence: {
-      runbook,
-      checklist,
-      transcriptSchema,
-      authorizationReview,
-      routeReview,
-      readback,
+      runbook: phase11EvidenceRef(runbook),
+      checklist: phase11EvidenceRef(checklist),
+      transcriptSchema: phase11EvidenceRef(transcriptSchema),
+      authorizationReview: phase11EvidenceRef(authorizationReview),
+      routeReview: phase11EvidenceRef(routeReview),
+      readback: phase11EvidenceRef(readback),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-live-provider-call-execution-plan",
