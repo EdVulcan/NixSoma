@@ -34,44 +34,9 @@ const workViewState = {
   updatedAt: new Date().toISOString(),
 };
 
-function corsHeaders(extraHeaders = {}) {
-  return {
-    "access-control-allow-origin": "*",
-    "access-control-allow-methods": "GET, POST, OPTIONS",
-    "access-control-allow-headers": "content-type",
-    ...extraHeaders,
-  };
-}
+import { corsHeaders, sendJson, readJsonBody, createEventPublisher, registerService } from "../../../packages/shared-utils/src/http.mjs";
 
-function sendJson(res, statusCode, payload) {
-  res.writeHead(statusCode, corsHeaders({ "content-type": "application/json; charset=utf-8" }));
-  res.end(JSON.stringify(payload, null, 2));
-}
 
-function readJsonBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-
-    req.on("data", (chunk) => {
-      chunks.push(chunk);
-    });
-
-    req.on("end", () => {
-      if (chunks.length === 0) {
-        resolve({});
-        return;
-      }
-
-      try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
-      } catch (error) {
-        reject(error);
-      }
-    });
-
-    req.on("error", reject);
-  });
-}
 
 function serialiseSessionState() {
   return { ...sessionState };
@@ -109,21 +74,8 @@ function sleep(ms) {
   });
 }
 
-async function publishEvent(type, payload = {}) {
-  try {
-    await fetch(`${eventHubUrl}/events`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        type,
-        source: "openclaw-session-manager",
-        payload,
-      }),
-    });
-  } catch (error) {
-    console.error("Failed to publish session manager event:", error);
-  }
-}
+const publishEvent = createEventPublisher(eventHubUrl, "openclaw-session-manager");
+
 
 async function ensureBrowserWorkView(url = workViewState.entryUrl || defaultWorkViewUrl) {
   try {
@@ -414,6 +366,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(port, host, async () => {
   console.log(`openclaw-session-manager listening on http://${host}:${port}`);
+  await registerService(eventHubUrl, "openclaw-session-manager", `http://${host}:${port}`);
   await publishEvent("service.started", {
     service: "openclaw-session-manager",
     url: `http://${host}:${port}`,

@@ -26,38 +26,10 @@ const maintenancePolicy = {
   lastTick: null,
 };
 
-function corsHeaders(extraHeaders = {}) {
-  return {
-    "access-control-allow-origin": "*",
-    "access-control-allow-methods": "GET, POST, OPTIONS",
-    "access-control-allow-headers": "content-type",
-    ...extraHeaders,
-  };
-}
+import { corsHeaders, sendJson, readJsonBody, createEventPublisher, registerService } from "../../../packages/shared-utils/src/http.mjs";
 
-function sendJson(res, statusCode, payload) {
-  res.writeHead(statusCode, corsHeaders({ "content-type": "application/json; charset=utf-8" }));
-  res.end(JSON.stringify(payload, null, 2));
-}
+import { createDebouncedPersist } from "../../../packages/shared-utils/src/persist.mjs";
 
-function readJsonBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    req.on("data", (chunk) => chunks.push(chunk));
-    req.on("end", () => {
-      if (chunks.length === 0) {
-        resolve({});
-        return;
-      }
-      try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
-      } catch (error) {
-        reject(error);
-      }
-    });
-    req.on("error", reject);
-  });
-}
 
 function parseBooleanEnv(value, fallback) {
   if (typeof value !== "string" || !value.trim()) {
@@ -78,21 +50,8 @@ function parsePositiveInteger(value, fallback) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-async function publishEvent(type, payload = {}) {
-  try {
-    await fetch(`${eventHubUrl}/events`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        type,
-        source: "openclaw-system-heal",
-        payload,
-      }),
-    });
-  } catch (error) {
-    console.error("Failed to publish system-heal event:", error);
-  }
-}
+const publishEvent = createEventPublisher(eventHubUrl, "openclaw-system-heal");
+
 
 function addHistory(entry) {
   healHistory.unshift(entry);
@@ -111,25 +70,16 @@ function addMaintenanceRun(run) {
   persistState();
 }
 
-function persistState() {
-  try {
-    mkdirSync(path.dirname(stateFilePath), { recursive: true });
-    const payload = {
-      version: 1,
-      savedAt: new Date().toISOString(),
-      latestDiagnosis,
-      latestMaintenanceRun,
-      maintenancePolicy,
-      healHistory,
-      maintenanceRuns,
-    };
-    const tempPath = `${stateFilePath}.tmp`;
-    writeFileSync(tempPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
-    renameSync(tempPath, stateFilePath);
-  } catch (error) {
-    console.error("Failed to persist system-heal state:", error);
-  }
-}
+const persistState = createDebouncedPersist(stateFilePath, () => ({
+  version: 1,
+  savedAt: new Date().toISOString(),
+  latestDiagnosis,
+  latestMaintenanceRun,
+  maintenancePolicy,
+  healHistory,
+  maintenanceRuns,
+}));
+
 
 function loadPersistentState() {
   if (!existsSync(stateFilePath)) {
@@ -206,8 +156,15 @@ function updateMaintenancePolicy(patch = {}) {
   if (typeof patch.autofix === "boolean") {
     maintenancePolicy.autofix = patch.autofix;
   }
+  // M-2 Fix: Validate mode against the same VALID_HEAL_MODES allowlist used
+  // in loadPersistentState (M-6 Fix). Without this, the HTTP API could accept
+  // arbitrary mode strings that bypass the state machine.
   if (typeof patch.mode === "string" && patch.mode.trim()) {
-    maintenancePolicy.mode = patch.mode.trim();
+    const VALID_HEAL_MODES = ["simulated", "audit_only"];
+    const candidateMode = patch.mode.trim();
+    if (VALID_HEAL_MODES.includes(candidateMode)) {
+      maintenancePolicy.mode = candidateMode;
+    }
   }
 
   if (!maintenancePolicy.nextDueAt || patch.resetSchedule === true) {
@@ -706,6 +663,7 @@ loadPersistentState();
 
 server.listen(port, host, async () => {
   console.log(`openclaw-system-heal listening on http://${host}:${port}`);
+  await registerService(eventHubUrl, "openclaw-system-heal", `http://${host}:${port}`);
   await publishEvent("service.started", {
     service: "openclaw-system-heal",
     url: `http://${host}:${port}`,

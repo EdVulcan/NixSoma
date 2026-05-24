@@ -1732,11 +1732,11 @@ function clientScript() {
 const observerConfig = {
   coreUrl: \`\${observerBase}:4100\`,
   eventHubUrl: \`\${observerBase}:4101\`,
-  sessionManagerUrl: \`\${observerBase}:4102\`,
-  screenSenseUrl: \`\${observerBase}:4104\`,
-  screenActUrl: \`\${observerBase}:4105\`,
-  systemSenseUrl: \`\${observerBase}:4106\`,
-  systemHealUrl: \`\${observerBase}:4107\`,
+  sessionManagerUrl: \`\${observerBase}:4100/proxy/session-manager\`,
+  screenSenseUrl: \`\${observerBase}:4100/proxy/screen-sense\`,
+  screenActUrl: \`\${observerBase}:4100/proxy/screen-act\`,
+  systemSenseUrl: \`\${observerBase}:4100/proxy/system-sense\`,
+  systemHealUrl: \`\${observerBase}:4100/proxy/system-heal\`,
 };
 
 const SOURCE_DERIVED_EDIT_PROPOSAL_REGISTRY = "openclaw-source-derived-edit-proposal-v0";

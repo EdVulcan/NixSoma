@@ -1,7 +1,6 @@
-import { exec, execFile } from "node:child_process";
+import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
-const execAsync = promisify(exec);
 const execFileAsync = promisify(execFile);
 
 const captureMode = process.env.OPENCLAW_SCREEN_CAPTURE_MODE ?? "browser";
@@ -117,8 +116,13 @@ async function readCommandCapture() {
     };
   }
 
+  // H-3 Fix: Use execFileAsync instead of execAsync (which invokes a shell).
+  // This prevents shell injection if captureCommand contains metacharacters.
   try {
-    const { stdout } = await execAsync(captureCommand, {
+    const parts = captureCommand.trim().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
+    const { stdout } = await execFileAsync(cmd, args, {
       timeout: captureTimeoutMs,
       windowsHide: true,
     });

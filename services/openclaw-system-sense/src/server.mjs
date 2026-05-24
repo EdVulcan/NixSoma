@@ -153,6 +153,41 @@ const openClawSystemdUnitSpecs = [
   unit: `${spec.name}.service`,
 }));
 
+async function refreshServiceRegistry() {
+  try {
+    const response = await fetch(`${eventHubUrl}/services/registry`);
+    const data = await response.json();
+    if (data.ok && data.services) {
+      const keyMap = {
+        "openclaw-core": "core",
+        "openclaw-event-hub": "eventHub",
+        "openclaw-session-manager": "sessionManager",
+        "openclaw-browser-runtime": "browserRuntime",
+        "openclaw-screen-sense": "screenSense",
+        "openclaw-screen-act": "screenAct",
+        "openclaw-system-heal": "systemHeal"
+      };
+
+      for (const [name, info] of Object.entries(data.services)) {
+        const key = keyMap[name];
+        if (key) {
+          serviceTargets[key] = info.url;
+          const spec = openClawSystemdUnitSpecs.find(s => s.key === key);
+          if (spec) {
+            spec.url = info.url;
+            spec.healthUrl = `${info.url}/health`;
+          }
+        }
+      }
+    }
+  } catch (error) {
+    // Ignore and keep current values
+  }
+}
+
+refreshServiceRegistry().catch(() => {});
+setInterval(refreshServiceRegistry, 30_000);
+
 const systemState = {
   timestamp: new Date().toISOString(),
   body: {},
@@ -172,60 +207,11 @@ const healthSnapshots = [];
 
 let previousCpuSnapshot = null;
 
-function corsHeaders(extraHeaders = {}) {
-  return {
-    "access-control-allow-origin": "*",
-    "access-control-allow-methods": "GET, POST, OPTIONS",
-    "access-control-allow-headers": "content-type",
-    ...extraHeaders,
-  };
-}
+import { corsHeaders, sendJson, readJsonBody, createEventPublisher, registerService } from "../../../packages/shared-utils/src/http.mjs";
 
-function sendJson(res, statusCode, payload) {
-  res.writeHead(statusCode, corsHeaders({ "content-type": "application/json; charset=utf-8" }));
-  res.end(JSON.stringify(payload, null, 2));
-}
 
-function readJsonBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
+const publishEvent = createEventPublisher(eventHubUrl, "openclaw-system-sense");
 
-    req.on("data", (chunk) => {
-      chunks.push(chunk);
-    });
-
-    req.on("end", () => {
-      if (chunks.length === 0) {
-        resolve({});
-        return;
-      }
-
-      try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
-      } catch (error) {
-        reject(error);
-      }
-    });
-
-    req.on("error", reject);
-  });
-}
-
-async function publishEvent(type, payload = {}) {
-  try {
-    await fetch(`${eventHubUrl}/events`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        type,
-        source: "openclaw-system-sense",
-        payload,
-      }),
-    });
-  } catch (error) {
-    console.error("Failed to publish system-sense event:", error);
-  }
-}
 
 function normaliseForBoundary(value) {
   const resolved = path.resolve(value);
@@ -5010,6 +4996,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(port, host, async () => {
   console.log(`openclaw-system-sense listening on http://${host}:${port}`);
+  await registerService(eventHubUrl, "openclaw-system-sense", `http://${host}:${port}`);
   await publishEvent("service.started", {
     service: "openclaw-system-sense",
     url: `http://${host}:${port}`,

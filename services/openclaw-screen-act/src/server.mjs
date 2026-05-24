@@ -15,60 +15,11 @@ const actionState = {
   updatedAt: new Date().toISOString(),
 };
 
-function corsHeaders(extraHeaders = {}) {
-  return {
-    "access-control-allow-origin": "*",
-    "access-control-allow-methods": "GET, POST, OPTIONS",
-    "access-control-allow-headers": "content-type",
-    ...extraHeaders,
-  };
-}
+import { corsHeaders, sendJson, readJsonBody, createEventPublisher, registerService } from "../../../packages/shared-utils/src/http.mjs";
 
-function sendJson(res, statusCode, payload) {
-  res.writeHead(statusCode, corsHeaders({ "content-type": "application/json; charset=utf-8" }));
-  res.end(JSON.stringify(payload, null, 2));
-}
 
-function readJsonBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
+const publishEvent = createEventPublisher(eventHubUrl, "openclaw-screen-act");
 
-    req.on("data", (chunk) => {
-      chunks.push(chunk);
-    });
-
-    req.on("end", () => {
-      if (chunks.length === 0) {
-        resolve({});
-        return;
-      }
-
-      try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
-      } catch (error) {
-        reject(error);
-      }
-    });
-
-    req.on("error", reject);
-  });
-}
-
-async function publishEvent(type, payload = {}) {
-  try {
-    await fetch(`${eventHubUrl}/events`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        type,
-        source: "openclaw-screen-act",
-        payload,
-      }),
-    });
-  } catch (error) {
-    console.error("Failed to publish screen-act event:", error);
-  }
-}
 
 function sleep(ms) {
   return new Promise((resolve) => {
@@ -122,6 +73,14 @@ function updateActionState(action) {
 }
 
 async function executeAction(kind, params) {
+  const actionId = randomUUID();
+  const startedAt = new Date().toISOString();
+
+  // Audit: Record action started
+  await publishEvent("screen_act.action_started", {
+    actionId, kind, params, startedAt,
+  });
+
   const { screen, degraded } = await getScreenContext();
   if (!degraded && screen?.focusedWindow?.pid) {
     try {
@@ -145,7 +104,7 @@ async function executeAction(kind, params) {
   }
 
   const action = {
-    id: randomUUID(),
+    id: actionId,
     kind,
     params,
     executedAt: new Date().toISOString(),
@@ -161,6 +120,17 @@ async function executeAction(kind, params) {
   };
 
   updateActionState(action);
+
+  // Audit: Record action completed
+  await publishEvent("screen_act.action_completed", {
+    actionId,
+    kind,
+    params,
+    startedAt,
+    completedAt: new Date().toISOString(),
+    action,
+  });
+
   await publishEvent("action.completed", { action });
   return action;
 }
@@ -230,21 +200,33 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "POST" && requestUrl.pathname === "/act/keyboard/hotkey") {
-    const body = await readJsonBody(req);
-    const action = await executeAction("keyboard.hotkey", {
-      keys: Array.isArray(body.keys) ? body.keys : [],
-    });
-    sendJson(res, 200, { ok: true, action });
+    // M-1 Fix: Added try/catch consistent with all other POST routes.
+    try {
+      const body = await readJsonBody(req);
+      const action = await executeAction("keyboard.hotkey", {
+        keys: Array.isArray(body.keys) ? body.keys : [],
+      });
+      sendJson(res, 200, { ok: true, action });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
     return;
   }
 
   if (req.method === "POST" && requestUrl.pathname === "/act/window/focus") {
-    const body = await readJsonBody(req);
-    const action = await executeAction("window.focus", {
-      windowId: typeof body.windowId === "string" ? body.windowId : null,
-      title: typeof body.title === "string" ? body.title : null,
-    });
-    sendJson(res, 200, { ok: true, action });
+    // M-1 Fix: Added try/catch consistent with all other POST routes.
+    try {
+      const body = await readJsonBody(req);
+      const action = await executeAction("window.focus", {
+        windowId: typeof body.windowId === "string" ? body.windowId : null,
+        title: typeof body.title === "string" ? body.title : null,
+      });
+      sendJson(res, 200, { ok: true, action });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
     return;
   }
 
@@ -253,6 +235,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(port, host, async () => {
   console.log(`openclaw-screen-act listening on http://${host}:${port}`);
+  await registerService(eventHubUrl, "openclaw-screen-act", `http://${host}:${port}`);
   await publishEvent("service.started", {
     service: "openclaw-screen-act",
     url: `http://${host}:${port}`,

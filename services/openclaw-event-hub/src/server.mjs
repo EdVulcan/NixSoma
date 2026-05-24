@@ -15,45 +15,11 @@ const maxAuditQueryLimit = Number.parseInt(process.env.OPENCLAW_EVENT_AUDIT_MAX_
 
 const recentEvents = [];
 const streamClients = new Map();
+const serviceRegistry = new Map();
 
-function corsHeaders(extraHeaders = {}) {
-  return {
-    "access-control-allow-origin": "*",
-    "access-control-allow-methods": "GET, POST, OPTIONS",
-    "access-control-allow-headers": "content-type",
-    ...extraHeaders,
-  };
-}
 
-function sendJson(res, statusCode, payload) {
-  res.writeHead(statusCode, corsHeaders({ "content-type": "application/json; charset=utf-8" }));
-  res.end(JSON.stringify(payload, null, 2));
-}
+import { corsHeaders, sendJson, readJsonBody } from "../../../packages/shared-utils/src/http.mjs";
 
-function readJsonBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-
-    req.on("data", (chunk) => {
-      chunks.push(chunk);
-    });
-
-    req.on("end", () => {
-      if (chunks.length === 0) {
-        resolve({});
-        return;
-      }
-
-      try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
-      } catch (error) {
-        reject(error);
-      }
-    });
-
-    req.on("error", reject);
-  });
-}
 
 function normaliseEvent(input) {
   if (!input || typeof input !== "object") {
@@ -87,11 +53,18 @@ function normaliseEvent(input) {
   };
 }
 
-function ensureAuditLogReady() {
-  fs.mkdirSync(path.dirname(auditLogFile), { recursive: true });
-  if (!fs.existsSync(auditLogFile)) {
-    fs.writeFileSync(auditLogFile, "", "utf8");
+// M-6 Fix: Converted from sync I/O (mkdirSync, existsSync, writeFileSync) to
+// async fs.promises API to avoid blocking the event loop during audit setup.
+let auditLogReady = false;
+async function ensureAuditLogReady() {
+  if (auditLogReady) return;
+  await fs.promises.mkdir(path.dirname(auditLogFile), { recursive: true });
+  try {
+    await fs.promises.access(auditLogFile);
+  } catch {
+    await fs.promises.writeFile(auditLogFile, "", "utf8");
   }
+  auditLogReady = true;
 }
 
 function safeParseAuditLine(line) {
@@ -242,6 +215,35 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "OPTIONS") {
     res.writeHead(204, corsHeaders());
     res.end();
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/services/register") {
+    try {
+      const body = await readJsonBody(req);
+      if (body.name && body.url) {
+        serviceRegistry.set(body.name, {
+          name: body.name,
+          url: body.url,
+          healthUrl: `${body.url}/health`,
+          registeredAt: new Date().toISOString(),
+          lastHeartbeat: new Date().toISOString(),
+        });
+        sendJson(res, 200, { ok: true });
+      } else {
+        sendJson(res, 400, { ok: false, error: "name and url are required" });
+      }
+    } catch (error) {
+      sendJson(res, 400, { ok: false, error: error.message });
+    }
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/services/registry") {
+    sendJson(res, 200, {
+      ok: true,
+      services: Object.fromEntries(serviceRegistry),
+    });
     return;
   }
 

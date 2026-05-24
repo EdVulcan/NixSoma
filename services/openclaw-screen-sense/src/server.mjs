@@ -38,35 +38,11 @@ const screenState = {
   workViewSummary: null,
 };
 
-function corsHeaders(extraHeaders = {}) {
-  return {
-    "access-control-allow-origin": "*",
-    "access-control-allow-methods": "GET, POST, OPTIONS",
-    "access-control-allow-headers": "content-type",
-    ...extraHeaders,
-  };
-}
+import { corsHeaders, sendJson, createEventPublisher, registerService } from "../../../packages/shared-utils/src/http.mjs";
 
-function sendJson(res, statusCode, payload) {
-  res.writeHead(statusCode, corsHeaders({ "content-type": "application/json; charset=utf-8" }));
-  res.end(JSON.stringify(payload, null, 2));
-}
 
-async function publishEvent(type, payload = {}) {
-  try {
-    await fetch(`${eventHubUrl}/events`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        type,
-        source: "openclaw-screen-sense",
-        payload,
-      }),
-    });
-  } catch (error) {
-    console.error("Failed to publish screen-sense event:", error);
-  }
-}
+const publishEvent = createEventPublisher(eventHubUrl, "openclaw-screen-sense");
+
 
 function updateScreenState(patch) {
   Object.assign(screenState, patch, {
@@ -239,14 +215,17 @@ function deriveScreenPatch({ session, browser, browserCapture, degraded }) {
 }
 
 async function readUpstreamState() {
+  // M-7 Fix: Added .catch(() => null) to the sessionManager fetch, matching
+  // the browserRuntime fetch. Without this, an unreachable session-manager
+  // caused an unhandled exception instead of a graceful degradation.
   const [sessionResponse, browserResponse] = await Promise.all([
-    fetch(`${sessionManagerUrl}/session/state`),
+    fetch(`${sessionManagerUrl}/session/state`).catch(() => null),
     fetch(`${browserRuntimeUrl}/browser/state`).catch(() => null),
   ]);
 
-  const data = await sessionResponse.json();
-  const session = data?.session ?? null;
-  const browserData = browserResponse ? await browserResponse.json() : null;
+  const sessionData = sessionResponse ? await sessionResponse.json().catch(() => null) : null;
+  const session = sessionData?.session ?? null;
+  const browserData = browserResponse ? await browserResponse.json().catch(() => null) : null;
   const browser = browserData?.browser ?? null;
   const adapter = await readCaptureAdapter(async () => {
     const browserCaptureResponse = await fetch(`${browserRuntimeUrl}/browser/capture`).catch(() => null);
@@ -381,6 +360,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(port, host, async () => {
   console.log(`openclaw-screen-sense listening on http://${host}:${port}`);
+  await registerService(eventHubUrl, "openclaw-screen-sense", `http://${host}:${port}`);
   await publishEvent("service.started", {
     service: "openclaw-screen-sense",
     url: `http://${host}:${port}`,
