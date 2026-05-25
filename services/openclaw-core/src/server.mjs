@@ -42,7 +42,10 @@ const state = createRuntimeState({
   getTaskById: (id) => taskManager.getTaskById(id)
 });
 
-const policyEvaluator = createPolicyEvaluator({ state });
+const policyEvaluator = createPolicyEvaluator({
+  state,
+  createApprovalRequestForTask: (task, decision) => approvalEngine.createApprovalRequestForTask(task, decision),
+});
 
 const taskManager = createTaskManager({
   state,
