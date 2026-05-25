@@ -67,6 +67,7 @@ try {
   Assert-Condition ($readyAction.action.degraded -eq $false) "Expected action in ready state to have degraded=false."
 
   Stop-ServiceByName -Name "openclaw-session-manager"
+  Stop-ServiceByName -Name "openclaw-browser-runtime"
   Start-Sleep -Milliseconds 300
 
   $degradedScreen = Invoke-Json -Method GET -Uri "http://127.0.0.1:4104/screen/current"
