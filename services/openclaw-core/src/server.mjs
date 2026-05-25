@@ -49,12 +49,22 @@ const taskManager = createTaskManager({
   buildRulePlan: (args) => planBuilder.buildRulePlan(args),
   shouldBuildPlan: (args) => planBuilder.shouldBuildPlan(args),
   serialisePlanForPublic: (plan) => planBuilder.serialisePlanForPublic(plan),
+  updatePlanForPhase: (...args) => planBuilder.updatePlanForPhase(...args),
+  ensureTaskPolicy: (task, context) => policyEvaluator.ensureTaskPolicy(task, context),
   createApprovalRequestForTask: (task, decision) => approvalEngine.createApprovalRequestForTask(task, decision),
+  publishEvent,
 });
 
 const approvalEngine = createApprovalEngine({ state, taskManager });
 
-const pluginReview = createPluginReview({ client, state });
+const pluginReview = createPluginReview({
+  client,
+  state,
+  taskManager,
+  approvalEngine,
+  serialisePlanForPublic: (plan) => planBuilder.serialisePlanForPublic(plan),
+  publishEvent,
+});
 
 const workspaceOps = createWorkspaceOps({
   client,
@@ -62,7 +72,15 @@ const workspaceOps = createWorkspaceOps({
   selectOpenClawToolCatalogWorkspace: (args) => pluginReview.selectOpenClawToolCatalogWorkspace(args)
 });
 
-const planBuilder = createPlanBuilder({ client, state, taskManager, pluginReview });
+const planBuilder = createPlanBuilder({
+  client,
+  state,
+  taskManager,
+  pluginReview,
+  approvalEngine,
+  policyEvaluator,
+  publishEvent,
+});
 
 const executor = createTaskExecutor({
   client,
@@ -92,6 +110,7 @@ const handleRequest = registerRoutes({
   stateFilePath,
   eventHubUrl,
   sessionManagerUrl,
+  browserRuntimeUrl,
   screenSenseUrl,
   screenActUrl,
   systemSenseUrl,

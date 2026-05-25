@@ -1,8 +1,28 @@
 import { randomUUID } from "node:crypto";
 
 export function createTaskManager(deps) {
-  const { state, buildRulePlan, shouldBuildPlan, serialisePlanForPublic, createApprovalRequestForTask } = deps;
-  const { tasks, ACTIVE_TASK_STATUSES, MAX_TASK_ENTRIES, MAX_PHASE_HISTORY_ENTRIES, persistState, approvals, updateRuntimeState, getCurrentTask } = state;
+  const {
+    state,
+    buildRulePlan,
+    shouldBuildPlan,
+    serialisePlanForPublic,
+    createApprovalRequestForTask,
+    ensureTaskPolicy,
+    updatePlanForPhase,
+    publishEvent,
+  } = deps;
+  const {
+    tasks,
+    runtimeState,
+    ACTIVE_TASK_STATUSES,
+    MAX_TASK_ENTRIES,
+    MAX_PHASE_HISTORY_ENTRIES,
+    STATUS_PRIORITY,
+    persistState,
+    approvals,
+    updateRuntimeState,
+    getCurrentTask,
+  } = state;
 
   // L9571-9611
 function serialiseTask(task) {
@@ -33,6 +53,7 @@ function serialiseTask(task) {
     cloudConsciousnessProviderDryRun: task.cloudConsciousnessProviderDryRun ?? null,
     cloudConsciousnessProviderCallRehearsal: task.cloudConsciousnessProviderCallRehearsal ?? null,
     cloudConsciousnessLiveProviderRunbook: task.cloudConsciousnessLiveProviderRunbook ?? null,
+    cloudConsciousnessLiveProviderExecutionPlan: task.cloudConsciousnessLiveProviderExecutionPlan ?? null,
     recovery: task.recovery ?? null,
     recoveredByTaskId: task.recoveredByTaskId ?? null,
     restorable: isRecoverableTask(task),
@@ -50,6 +71,48 @@ function serialiseTask(task) {
   // L9924-10040
 function isActiveTask(task) {
   return ACTIVE_TASK_STATUSES.has(task.status);
+}
+
+const OPERATOR_INVOKABLE_CAPABILITIES = new Set([
+  "sense.system.vitals",
+  "sense.filesystem.read",
+  "act.filesystem.write_text",
+  "act.filesystem.append_text",
+  "act.filesystem.mkdir",
+  "sense.process.list",
+  "act.system.command.dry_run",
+  "act.system.command.execute",
+  "act.system.heal",
+]);
+
+function planCapabilityActionSteps(task) {
+  return (task.plan?.steps ?? [])
+    .filter((step) => step.phase === "acting_on_target" && OPERATOR_INVOKABLE_CAPABILITIES.has(step.capabilityId));
+}
+
+function isNativePluginRuntimeActivationTask(task) {
+  return task?.type === "native_plugin_runtime_activation"
+    && task?.plan?.strategy === "native-plugin-runtime-activation-v0";
+}
+
+function isNativePluginRuntimeAdapterTask(task) {
+  return task?.type === "native_plugin_runtime_adapter_implementation"
+    && task?.plan?.strategy === "native-plugin-runtime-adapter-v0";
+}
+
+function isOpenClawSearchWebAdapterTask(task) {
+  return task?.type === "openclaw_search_web_adapter_invocation"
+    && task?.plan?.strategy === "openclaw-search-web-adapter-v0";
+}
+
+function isOpenClawSearchWebRuntimeActivationTask(task) {
+  return task?.type === "openclaw_search_web_runtime_activation"
+    && task?.plan?.strategy === "openclaw-search-web-runtime-activation-v0";
+}
+
+function isOpenClawSearchWebProviderRuntimeSandboxTask(task) {
+  return task?.type === "openclaw_search_web_provider_runtime_sandbox"
+    && task?.plan?.strategy === "openclaw-search-web-provider-runtime-sandbox-v0";
 }
 
 function hasRecoverableCapabilityPlan(task) {
@@ -228,6 +291,10 @@ function createTask(body, options = {}) {
     systemdNextRepair:
       body.systemdNextRepair && typeof body.systemdNextRepair === "object"
         ? clonePlainObject(body.systemdNextRepair)
+        : null,
+    cloudConsciousnessLiveProviderExecutionPlan:
+      body.cloudConsciousnessLiveProviderExecutionPlan && typeof body.cloudConsciousnessLiveProviderExecutionPlan === "object"
+        ? clonePlainObject(body.cloudConsciousnessLiveProviderExecutionPlan)
         : null,
     recovery:
       body.recovery && typeof body.recovery === "object"
@@ -497,6 +564,82 @@ function failTask(task, reason, details = null) {
   reconcileRuntimeState();
   persistState();
   return task;
+}
+
+function clonePlainObject(value) {
+  return value && typeof value === "object" ? JSON.parse(JSON.stringify(value)) : {};
+}
+
+function buildRecoveredPolicyRequest(sourceTask) {
+  const request = clonePlainObject(sourceTask.policy?.request ?? sourceTask.policy ?? {});
+  delete request.approved;
+  return request;
+}
+
+function resetRecoveredPlan(plan) {
+  const now = new Date().toISOString();
+  const recoveredPlan = clonePlainObject(plan);
+  recoveredPlan.planId = `plan-${randomUUID()}`;
+  recoveredPlan.status = "planned";
+  recoveredPlan.createdAt = now;
+  recoveredPlan.updatedAt = now;
+  delete recoveredPlan.failure;
+
+  if (Array.isArray(recoveredPlan.steps)) {
+    recoveredPlan.steps = recoveredPlan.steps.map((step) => {
+      const recoveredStep = {
+        ...step,
+        status: "pending",
+      };
+      delete recoveredStep.completedAt;
+      delete recoveredStep.details;
+      return recoveredStep;
+    });
+  }
+
+  return recoveredPlan;
+}
+
+function recoverTask(sourceTask) {
+  if (sourceTask.recoveredByTaskId && tasks.has(sourceTask.recoveredByTaskId)) {
+    throw new Error(`Task already has a recovery task: ${sourceTask.recoveredByTaskId}`);
+  }
+
+  const recoveryAttempt = (sourceTask.recovery?.attempt ?? 0) + 1;
+  const recoverableCapabilityPlan = hasRecoverableCapabilityPlan(sourceTask);
+  const recoverableNativePluginRuntimeActivationPlan = hasRecoverableNativePluginRuntimeActivationPlan(sourceTask);
+  const recoverableSearchWebAdapterPlan = hasRecoverableSearchWebAdapterPlan(sourceTask);
+  const shouldRecoverExistingPlan = recoverableCapabilityPlan
+    || recoverableNativePluginRuntimeActivationPlan
+    || recoverableSearchWebAdapterPlan;
+  const recoveryBody = {
+    goal: sourceTask.goal,
+    type: sourceTask.type,
+    targetUrl: sourceTask.targetUrl,
+    workViewStrategy: sourceTask.workViewStrategy,
+    includePlan: Boolean(sourceTask.plan) && !shouldRecoverExistingPlan,
+    recovery: {
+      recoveredFromTaskId: sourceTask.id,
+      recoveredFromOutcome: sourceTask.outcome?.kind ?? sourceTask.status,
+      attempt: recoveryAttempt,
+      recoveryEvidence: sourceTask.outcome?.details?.recoveryEvidence ?? null,
+    },
+  };
+
+  if (shouldRecoverExistingPlan) {
+    recoveryBody.plan = resetRecoveredPlan(sourceTask.plan);
+    recoveryBody.policy = buildRecoveredPolicyRequest(sourceTask);
+  }
+  if (sourceTask.sourceCommand && typeof sourceTask.sourceCommand === "object") {
+    recoveryBody.sourceCommand = sourceTask.sourceCommand;
+  }
+
+  const recoveredTask = createTask(recoveryBody);
+
+  sourceTask.recoveredByTaskId = recoveredTask.id;
+  sourceTask.updatedAt = new Date().toISOString();
+  persistState();
+  return recoveredTask;
 }
 
 function buildWorkViewAttachPayload(data, targetUrl) {

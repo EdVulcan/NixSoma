@@ -1,11 +1,65 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
+import { execFile } from "node:child_process";
+import path from "node:path";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 
 export function createTaskExecutor(deps) {
   const { client, state, taskManager, planBuilder, approvalEngine, workspaceOps, policyEvaluator, publishEvent } = deps;
-  const { fetchJson, postJson } = client;
-  const { tasks, persistState, approvals, policyAuditLog, capabilityInvocationLog, updateRuntimeState } = state;
-  const { serialiseTask, getTaskById, appendTaskPhase, completeTask, failTask, reconcileRuntimeState } = taskManager;
-  const { serialisePlanForPublic, updatePlanForPhase } = planBuilder;
+  const {
+    fetchJson,
+    postJson,
+    sessionManagerUrl,
+    screenSenseUrl,
+    screenActUrl,
+    systemSenseUrl,
+  } = client;
+  const {
+    tasks,
+    persistState,
+    approvals,
+    policyAuditLog,
+    capabilityInvocationLog,
+    runtimeState,
+    updateRuntimeState,
+    getCurrentTask,
+    SYSTEMD_REPAIR_EXECUTION_TIMEOUT_MS,
+    SYSTEMD_REPAIR_RESTART_HELPER,
+    SYSTEMD_REPAIR_RESTART_HELPER_SUDO,
+    SYSTEMD_REPAIR_AUTH_DELEGATION,
+    SYSTEMD_REPAIR_EXECUTION_TASK_REGISTRY,
+    SYSTEMD_NEXT_REPAIR_TASK_SHELL_REGISTRY,
+    SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_REGISTRY,
+    SYSTEMD_REPAIR_REAL_EXECUTION_UNIT,
+    SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_UNIT,
+  } = state;
+  const {
+    serialiseTask,
+    getTaskById,
+    appendTaskPhase,
+    completeTask,
+    failTask,
+    reconcileRuntimeState,
+    getNextQueuedTask,
+    buildTaskSummary,
+  } = taskManager;
+  const {
+    serialisePlanForPublic,
+    updatePlanForPhase,
+    isLongTermMemoryWriteTask,
+    executeLongTermMemoryWriteTask,
+    isCloudConsciousnessHandoffTask,
+    executeCloudConsciousnessHandoffTask,
+    isCloudConsciousnessProviderDryRunTask,
+    executeCloudConsciousnessProviderDryRunTask,
+    isCloudConsciousnessProviderCallRehearsalTask,
+    executeCloudConsciousnessProviderCallRehearsalTask,
+    isCloudConsciousnessLiveProviderRunbookTask,
+    executeCloudConsciousnessLiveProviderRunbookTask,
+    isCloudConsciousnessLiveProviderExecutionPlanTask,
+    executeCloudConsciousnessLiveProviderExecutionPlanTask,
+  } = planBuilder;
   const { serialiseApproval, buildApprovalSummary } = approvalEngine;
   const { applyWorkspacePatchEdits, readBoundedWorkspaceTextFile } = workspaceOps;
   const { recordPolicyDecision, evaluatePolicyIntent } = policyEvaluator;
@@ -2655,6 +2709,18 @@ async function executeTaskWithRecovery(task, options = {}) {
     return {
       finalExecution: cloudConsciousnessLiveProviderRunbookExecution,
       attempts: [cloudConsciousnessLiveProviderRunbookExecution],
+      recovery: {
+        attempted: false,
+        maxAttempts: 0,
+      },
+    };
+  }
+
+  if (isCloudConsciousnessLiveProviderExecutionPlanTask(task)) {
+    const cloudConsciousnessLiveProviderExecutionPlanExecution = await executeCloudConsciousnessLiveProviderExecutionPlanTask(task);
+    return {
+      finalExecution: cloudConsciousnessLiveProviderExecutionPlanExecution,
+      attempts: [cloudConsciousnessLiveProviderExecutionPlanExecution],
       recovery: {
         attempted: false,
         maxAttempts: 0,

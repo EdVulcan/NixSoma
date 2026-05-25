@@ -47,6 +47,16 @@ function buildSystemSenseUrl(pathname, params = {}) {
 }
 
   return {
-    fetchJson, postJson, readJsonFileIfPresent, buildSystemSenseUrl
+    eventHubUrl,
+    sessionManagerUrl,
+    browserRuntimeUrl,
+    screenSenseUrl,
+    screenActUrl,
+    systemSenseUrl,
+    systemHealUrl,
+    fetchJson,
+    postJson,
+    readJsonFileIfPresent,
+    buildSystemSenseUrl,
   };
 }

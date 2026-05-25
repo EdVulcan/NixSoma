@@ -8,14 +8,24 @@ import {
   summariseOpenClawNativePluginRegistry,
   validateOpenClawNativePluginRegistry,
 } from "../../../packages/shared-types/src/plugin-registry.mjs";
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 
 export function createPluginReview(deps) {
-  const { client, state } = deps;
+  const { client, state, taskManager, approvalEngine, serialisePlanForPublic, publishEvent } = deps;
   const { fetchJson, readJsonFileIfPresent } = client;
-  const { workspaceRoots, tasks, persistState } = state;
+  const { workspaceRoots, tasks, persistState, autonomyMode } = state;
+  const {
+    createTask,
+    supersedeOtherActiveTasks,
+    reconcileRuntimeState,
+    serialiseTask,
+  } = taskManager;
+  const {
+    createApprovalRequestForTask,
+    publishTaskApprovalIfPending,
+  } = approvalEngine;
 
   // L331-5976
 function readPnpmWorkspacePackages(rootPath) {
@@ -5685,13 +5695,21 @@ function buildNativeOpenClawWorkspaceEditTargetSelection({
     buildOpenClawPluginCapabilityPlan,
     buildOpenClawPluginCandidateContractTests,
     buildOpenClawPluginSearchWebAdapterContract,
-    createOpenClawPluginSearchWebTask,
+    buildOpenClawPluginSearchWebAdapterTaskDraft,
+    buildOpenClawPluginSearchWebAdapterRuntimePreflight,
+    buildOpenClawPluginSearchWebAdapterRuntimeActivationPlan,
+    buildOpenClawPluginSearchWebAdapterProviderRuntimeSandbox,
+    buildOpenClawPluginSearchWebAdapterRuntimeActivationTaskDraft,
+    buildOpenClawPluginSearchWebAdapterProviderRuntimeSandboxTaskDraft,
+    createOpenClawPluginSearchWebAdapterTask,
+    createOpenClawPluginSearchWebAdapterRuntimeActivationTask,
+    createOpenClawPluginSearchWebAdapterProviderRuntimeSandboxTask,
     selectReviewedPluginSdkPackage,
     selectOpenClawToolCatalogWorkspace,
     buildNativeOpenClawToolCatalogProfile,
     buildNativeOpenClawPromptSemanticsProfile,
     buildNativeOpenClawWorkspaceSemanticIndex,
     buildNativeOpenClawWorkspaceSymbolLookup,
-    buildNativeOpenClawWorkspaceEditTargetSelect,
+    buildNativeOpenClawWorkspaceEditTargetSelection,
   };
 }

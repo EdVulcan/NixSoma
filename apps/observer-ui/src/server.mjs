@@ -807,6 +807,34 @@ function observerHtml() {
           <div class="metric"><span>Next</span><span id="cloud-live-exit-next">loading</span></div>
           <pre id="cloud-live-exit-json">Loading live provider call runbook exit gate...</pre>
         </section>
+        <section class="panel" id="cloud-consciousness-live-provider-call-execution-plan-panel">
+          <h2>Cloud Consciousness Live Provider Call Execution Plan</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-live-exec-plan-ready">false</span></div>
+          <div class="metric"><span>Live Enabled</span><span id="cloud-live-exec-plan-enabled">false</span></div>
+          <div class="metric"><span>Next</span><span id="cloud-live-exec-plan-next">loading</span></div>
+          <pre id="cloud-live-exec-plan-json">Loading live provider execution plan...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-live-provider-execution-route-review-panel">
+          <h2>Cloud Consciousness Live Provider Execution Route</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-live-exec-route-ready">false</span></div>
+          <div class="metric"><span>Selected</span><span id="cloud-live-exec-route-selected">loading</span></div>
+          <div class="metric"><span>Calls Cloud</span><span id="cloud-live-exec-route-call">false</span></div>
+          <pre id="cloud-live-exec-route-json">Loading live provider execution route...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-live-provider-execution-plan-readback-panel">
+          <h2>Cloud Consciousness Live Provider Execution Plan Readback</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-live-exec-readback-ready">false</span></div>
+          <div class="metric"><span>Records</span><span id="cloud-live-exec-readback-records">0</span></div>
+          <div class="metric"><span>Hash</span><span id="cloud-live-exec-readback-hash">none</span></div>
+          <pre id="cloud-live-exec-readback-json">Loading live provider execution plan readback...</pre>
+        </section>
+        <section class="panel" id="cloud-consciousness-live-provider-call-execution-plan-exit-panel">
+          <h2>Cloud Consciousness Live Provider Call Execution Plan Exit</h2>
+          <div class="metric"><span>Complete</span><span id="cloud-live-exec-exit-complete">false</span></div>
+          <div class="metric"><span>Percent</span><span id="cloud-live-exec-exit-percent">0</span></div>
+          <div class="metric"><span>Next</span><span id="cloud-live-exec-exit-next">loading</span></div>
+          <pre id="cloud-live-exec-exit-json">Loading live provider execution plan exit gate...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -2083,6 +2111,22 @@ const cloudLiveExitComplete = document.querySelector("#cloud-live-exit-complete"
 const cloudLiveExitPercent = document.querySelector("#cloud-live-exit-percent");
 const cloudLiveExitNext = document.querySelector("#cloud-live-exit-next");
 const cloudLiveExitJson = document.querySelector("#cloud-live-exit-json");
+const cloudLiveExecPlanReady = document.querySelector("#cloud-live-exec-plan-ready");
+const cloudLiveExecPlanEnabled = document.querySelector("#cloud-live-exec-plan-enabled");
+const cloudLiveExecPlanNext = document.querySelector("#cloud-live-exec-plan-next");
+const cloudLiveExecPlanJson = document.querySelector("#cloud-live-exec-plan-json");
+const cloudLiveExecRouteReady = document.querySelector("#cloud-live-exec-route-ready");
+const cloudLiveExecRouteSelected = document.querySelector("#cloud-live-exec-route-selected");
+const cloudLiveExecRouteCall = document.querySelector("#cloud-live-exec-route-call");
+const cloudLiveExecRouteJson = document.querySelector("#cloud-live-exec-route-json");
+const cloudLiveExecReadbackReady = document.querySelector("#cloud-live-exec-readback-ready");
+const cloudLiveExecReadbackRecords = document.querySelector("#cloud-live-exec-readback-records");
+const cloudLiveExecReadbackHash = document.querySelector("#cloud-live-exec-readback-hash");
+const cloudLiveExecReadbackJson = document.querySelector("#cloud-live-exec-readback-json");
+const cloudLiveExecExitComplete = document.querySelector("#cloud-live-exec-exit-complete");
+const cloudLiveExecExitPercent = document.querySelector("#cloud-live-exec-exit-percent");
+const cloudLiveExecExitNext = document.querySelector("#cloud-live-exec-exit-next");
+const cloudLiveExecExitJson = document.querySelector("#cloud-live-exec-exit-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -6716,6 +6760,94 @@ async function refreshCloudConsciousnessLiveProviderCallRunbookExit() {
   }
 }
 
+async function refreshCloudConsciousnessLiveProviderCallExecutionPlan() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-call-execution-plan\`);
+    const summary = data.summary ?? {};
+    cloudLiveExecPlanReady.textContent = String(Boolean(summary.ready));
+    cloudLiveExecPlanEnabled.textContent = String(Boolean(summary.liveProviderCallEnabled));
+    cloudLiveExecPlanNext.textContent = data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-endpoint-credential-binding";
+    cloudLiveExecPlanJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-live-provider-call-execution-plan-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Ready: " + Boolean(summary.ready) + " percent=" + (summary.completionPercent ?? 0),
+      "Live enabled: " + Boolean(summary.liveProviderCallEnabled),
+      "Next: " + (data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-endpoint-credential-binding"),
+    ].join("\\n");
+  } catch {
+    cloudLiveExecPlanReady.textContent = "false";
+    cloudLiveExecPlanEnabled.textContent = "false";
+    cloudLiveExecPlanNext.textContent = "openclaw-cloud-consciousness-live-provider-endpoint-credential-binding";
+    cloudLiveExecPlanJson.textContent = "Unable to read live provider execution plan.";
+  }
+}
+
+async function refreshCloudConsciousnessLiveProviderExecutionRouteReview() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-execution-route-review\`);
+    const summary = data.summary ?? {};
+    cloudLiveExecRouteReady.textContent = String(Boolean(summary.ready));
+    cloudLiveExecRouteSelected.textContent = summary.selectedSlice ?? "none";
+    cloudLiveExecRouteCall.textContent = String(Boolean(summary.callsCloudModel));
+    cloudLiveExecRouteJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-live-provider-execution-route-review-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Selected: " + (summary.selectedSlice ?? "none"),
+      "Deferred: " + (summary.deferredSlice ?? "none"),
+      "Calls cloud: " + Boolean(summary.callsCloudModel),
+    ].join("\\n");
+  } catch {
+    cloudLiveExecRouteReady.textContent = "false";
+    cloudLiveExecRouteSelected.textContent = "none";
+    cloudLiveExecRouteCall.textContent = "false";
+    cloudLiveExecRouteJson.textContent = "Unable to read live provider execution route review.";
+  }
+}
+
+async function refreshCloudConsciousnessLiveProviderExecutionPlanReadback() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-execution-plan-readback\`);
+    const summary = data.summary ?? {};
+    cloudLiveExecReadbackReady.textContent = String(Boolean(summary.ready));
+    cloudLiveExecReadbackRecords.textContent = String(summary.recordCount ?? 0);
+    cloudLiveExecReadbackHash.textContent = summary.latestContentHash ?? "none";
+    cloudLiveExecReadbackJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-live-provider-execution-plan-readback-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Ready: " + Boolean(summary.ready) + " records=" + (summary.recordCount ?? 0),
+      "Latest: " + (summary.latestRecordId ?? "none"),
+      "Hash: " + (summary.latestContentHash ?? "none"),
+    ].join("\\n");
+  } catch {
+    cloudLiveExecReadbackReady.textContent = "false";
+    cloudLiveExecReadbackRecords.textContent = "0";
+    cloudLiveExecReadbackHash.textContent = "none";
+    cloudLiveExecReadbackJson.textContent = "Unable to read live provider execution plan readback.";
+  }
+}
+
+async function refreshCloudConsciousnessLiveProviderCallExecutionPlanExit() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-call-execution-plan-exit\`);
+    const summary = data.summary ?? {};
+    cloudLiveExecExitComplete.textContent = String(Boolean(summary.complete));
+    cloudLiveExecExitPercent.textContent = String(summary.completionPercent ?? 0);
+    cloudLiveExecExitNext.textContent = data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-call-runtime-adapter-plan";
+    cloudLiveExecExitJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-live-provider-call-execution-plan-exit-v0"),
+      "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
+      "Complete: " + Boolean(summary.complete) + " percent=" + (summary.completionPercent ?? 0),
+      "Records: " + (summary.recordCount ?? 0),
+      "Next: " + (data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-call-runtime-adapter-plan"),
+    ].join("\\n");
+  } catch {
+    cloudLiveExecExitComplete.textContent = "false";
+    cloudLiveExecExitPercent.textContent = "0";
+    cloudLiveExecExitNext.textContent = "openclaw-cloud-consciousness-live-provider-call-runtime-adapter-plan";
+    cloudLiveExecExitJson.textContent = "Unable to read live provider execution plan exit gate.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -9784,6 +9916,10 @@ await refreshCloudConsciousnessLiveProviderRunbookTask();
 await refreshCloudConsciousnessApprovedLiveProviderRunbook();
 await refreshCloudConsciousnessLiveProviderRunbookReadback();
 await refreshCloudConsciousnessLiveProviderCallRunbookExit();
+await refreshCloudConsciousnessLiveProviderCallExecutionPlan();
+await refreshCloudConsciousnessLiveProviderExecutionRouteReview();
+await refreshCloudConsciousnessLiveProviderExecutionPlanReadback();
+await refreshCloudConsciousnessLiveProviderCallExecutionPlanExit();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -9956,6 +10092,10 @@ setInterval(refreshCloudConsciousnessLiveProviderRunbookTask, 5000);
 setInterval(refreshCloudConsciousnessApprovedLiveProviderRunbook, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderRunbookReadback, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderCallRunbookExit, 5000);
+setInterval(refreshCloudConsciousnessLiveProviderCallExecutionPlan, 5000);
+setInterval(refreshCloudConsciousnessLiveProviderExecutionRouteReview, 5000);
+setInterval(refreshCloudConsciousnessLiveProviderExecutionPlanReadback, 5000);
+setInterval(refreshCloudConsciousnessLiveProviderCallExecutionPlanExit, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);

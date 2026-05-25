@@ -1,16 +1,90 @@
 import { corsHeaders, sendJson, readJsonBody } from "../../../packages/shared-utils/src/http.mjs";
 
 export function registerRoutes(deps) {
-  const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl } = deps;
+  const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl } = deps;
 
-  const { tasks, approvals, runtimeState, policyAuditLog, capabilityInvocationLog, updateRuntimeState, persistState, loadPersistentState, getCurrentTask } = state;
+  const { tasks, approvals, runtimeState, policyAuditLog, capabilityInvocationLog, autonomyMode, updateRuntimeState, persistState, loadPersistentState, getCurrentTask } = state;
   const { fetchJson, postJson, readJsonFileIfPresent, buildSystemSenseUrl } = client;
   const { ensureTaskPolicy, buildPolicyState, evaluatePolicyIntent, recordPolicyDecision } = policyEvaluator;
   const { serialiseApproval, listApprovals, buildApprovalSummary, createApprovalRequestForTask, markApprovalApproved, markApprovalDenied, markApprovalExpired, reconcileApprovalExpirations, findExistingApprovalForTask, publishTaskApprovalIfPending } = approvalEngine;
   const { createTask, getTaskById, appendTaskPhase, completeTask, failTask, recoverTask, isRecoverableTask, supersedeOtherActiveTasks, compareTasksForDisplay, listTasks, getActiveTasks, getNextQueuedTask, getLatestFinishedTask, getLatestFailedTask, buildTaskSummary, serialiseTask, reconcileRuntimeState } = taskManager;
-  const { buildOpenClawPluginSdkContractReview, buildOpenClawNativePluginContractRegistry, buildOpenClawNativePluginRegistryResponse, buildOpenClawFormalIntegrationReadiness, buildOpenClawNativePluginAdapterStatus, buildOpenClawToolCatalog, buildOpenClawPluginCapabilityPlan, buildOpenClawPluginCandidateContractTests, buildOpenClawPluginSearchWebAdapterContract, createOpenClawPluginSearchWebTask, buildWorkspaceRegistry, buildWorkspaceCommandProposals, buildOpenClawSourceCommandProposals, buildOpenClawMigrationMap, buildOpenClawMigrationPlan, buildOpenClawPluginSdkSourceReviewScope, buildOpenClawPluginSdkSourceContentReview, buildOpenClawPluginSdkNativeContractTests, buildNativeOpenClawToolCatalogProfile, buildNativeOpenClawPromptSemanticsProfile, buildNativeOpenClawWorkspaceSemanticIndex, buildNativeOpenClawWorkspaceSymbolLookup, buildNativeOpenClawWorkspaceEditTargetSelect, selectReviewedPluginSdkPackage, selectOpenClawToolCatalogWorkspace } = pluginReview;
+  const {
+    buildOpenClawPluginSdkContractReview,
+    buildOpenClawNativePluginContractRegistry,
+    buildOpenClawNativePluginRegistryResponse,
+    buildOpenClawFormalIntegrationReadiness,
+    buildOpenClawNativePluginAdapterStatus,
+    buildOpenClawToolCatalog,
+    buildOpenClawPluginCapabilityPlan,
+    buildOpenClawPluginCandidateContractTests,
+    buildOpenClawPluginSearchWebAdapterContract,
+    buildOpenClawPluginSearchWebAdapterTaskDraft,
+    buildOpenClawPluginSearchWebAdapterRuntimePreflight,
+    buildOpenClawPluginSearchWebAdapterRuntimeActivationPlan,
+    buildOpenClawPluginSearchWebAdapterProviderRuntimeSandbox,
+    buildOpenClawPluginSearchWebAdapterRuntimeActivationTaskDraft,
+    buildOpenClawPluginSearchWebAdapterProviderRuntimeSandboxTaskDraft,
+    createOpenClawPluginSearchWebAdapterTask,
+    createOpenClawPluginSearchWebAdapterRuntimeActivationTask,
+    createOpenClawPluginSearchWebAdapterProviderRuntimeSandboxTask,
+    buildWorkspaceRegistry,
+    buildWorkspaceCommandProposals,
+    buildOpenClawSourceCommandProposals,
+    buildOpenClawMigrationMap,
+    buildOpenClawMigrationPlan,
+    buildOpenClawPluginSdkSourceReviewScope,
+    buildOpenClawPluginSdkSourceContentReview,
+    buildOpenClawPluginSdkNativeContractTests,
+    buildNativeOpenClawToolCatalogProfile,
+    buildNativeOpenClawPromptSemanticsProfile,
+    buildNativeOpenClawWorkspaceSemanticIndex,
+    buildNativeOpenClawWorkspaceSymbolLookup,
+    buildNativeOpenClawWorkspaceEditTargetSelection,
+    selectReviewedPluginSdkPackage,
+    selectOpenClawToolCatalogWorkspace,
+  } = pluginReview;
   const { resolveOpenClawWorkspaceTarget, buildNativeOpenClawWorkspaceTextWriteDraft, createNativeOpenClawWorkspaceTextWriteTask, readBoundedWorkspaceTextFile, buildWorkspaceCommandPlanDraft, buildOpenClawSourceCommandPlanDraft, createWorkspaceCommandTask, createOpenClawSourceCommandTask } = workspaceOps;
-  const { buildNativePluginCapabilityInvokePlan, buildNativePluginRuntimePreflight, buildNativePluginRuntimeActivationPlan, buildNativePluginRuntimeAdapterContract, buildNativePluginRuntimeAdapterTaskDraft, buildNativePluginRuntimeActivationTaskDraft, buildNativePluginInvokeTaskPlan, createNativePluginRuntimeActivationTask, createNativePluginRuntimeAdapterTask, createNativePluginInvokeTask, buildSystemdRepairExecutionTaskDraft, createSystemdRepairExecutionTask, createSystemdRepairCandidateTaskShell, createSystemdNextRepairTaskShell, createBodyEvidenceLedgerDirectoryTaskShell, createBodyEvidenceLedgerFirstRecordTaskShell, createBodyEvidenceLedgerFollowupRecordTaskShell, serialisePlanForPublic, buildRulePlan, shouldBuildPlan, updatePlanForPhase, buildMvpRouteAlignment, buildPhase2RepairDemoStatus, buildPhase2NextRepairDemoStatus, buildBodyEvidenceLedgerReadiness, buildPhase2DemoControlRoom, buildPhase2DemoWalkthrough, buildPhase2DemoReadinessExit } = planBuilder;
+  const { buildNativePluginCapabilityInvokePlan, buildNativePluginRuntimePreflight, buildNativePluginRuntimeActivationPlan, buildNativePluginRuntimeAdapterContract, buildNativePluginRuntimeAdapterTaskDraft, buildNativePluginRuntimeActivationTaskDraft, buildNativePluginInvokeTaskPlan, createNativePluginRuntimeActivationTask, createNativePluginRuntimeAdapterTask, createNativePluginInvokeTask, buildSystemdRepairExecutionTaskDraft, createSystemdRepairExecutionTask, createSystemdRepairCandidateTaskShell, createSystemdNextRepairTaskShell, createBodyEvidenceLedgerDirectoryTaskShell, createBodyEvidenceLedgerFirstRecordTaskShell, createBodyEvidenceLedgerFollowupRecordTaskShell, serialisePlanForPublic, buildRulePlan, shouldBuildPlan, updatePlanForPhase, buildMvpRouteAlignment, buildPhase2RepairDemoStatus, buildPhase2NextRepairDemoStatus, buildBodyEvidenceLedgerFollowupRecordReadiness, buildBodyEvidenceLedgerFollowupRecordAppendRouteReview, buildBodyEvidenceLedgerFollowupRecordAppendReadiness, armBodyEvidenceLedgerFollowupRecordAppend, buildPhase2NextCapabilityRouteReview, buildPhase2DemoControlRoom, buildPhase2DemoWalkthrough, buildPhase2DemoReadinessExit } = planBuilder;
+  const {
+    buildCloudConsciousnessContextReview,
+    buildCloudConsciousnessEnvelopeSchema,
+    buildCloudConsciousnessContextPackage,
+    buildCloudConsciousnessRedactionReview,
+    buildCloudConsciousnessTransmissionRouteReview,
+    createCloudConsciousnessHandoffTask,
+    buildCloudConsciousnessHandoffReadback,
+    buildCloudConsciousnessExit,
+    buildCloudConsciousnessProviderAdapterPlan,
+    buildCloudConsciousnessProviderContract,
+    buildCloudConsciousnessProviderRequestEnvelope,
+    buildCloudConsciousnessProviderDryRunRouteReview,
+    createCloudConsciousnessProviderDryRunTask,
+    buildCloudConsciousnessProviderDryRunReadback,
+    buildCloudConsciousnessProviderAdapterExit,
+    buildCloudConsciousnessRealProviderCallPlan,
+    buildCloudConsciousnessProviderEgressContract,
+    buildCloudConsciousnessProviderCredentialPreflight,
+    buildCloudConsciousnessProviderRequestRedactionReview,
+    buildCloudConsciousnessRealProviderCallRouteReview,
+    createCloudConsciousnessProviderCallRehearsalTask,
+    buildCloudConsciousnessProviderResponseReadback,
+    buildCloudConsciousnessRealProviderCallExit,
+    buildCloudConsciousnessLiveProviderCallRunbook,
+    buildCloudConsciousnessLiveProviderOperatorChecklist,
+    buildCloudConsciousnessLiveProviderEgressTranscriptSchema,
+    buildCloudConsciousnessLiveProviderFinalAuthorizationReview,
+    buildCloudConsciousnessLiveProviderRunbookRouteReview,
+    createCloudConsciousnessLiveProviderRunbookTask,
+    buildCloudConsciousnessLiveProviderRunbookReadback,
+    buildCloudConsciousnessLiveProviderCallRunbookExit,
+    buildCloudConsciousnessLiveProviderCallExecutionPlan,
+    buildCloudConsciousnessLiveProviderEndpointCredentialBinding,
+    buildCloudConsciousnessLiveProviderExecutionTranscriptSchema,
+    buildCloudConsciousnessLiveProviderExecutionRouteReview,
+    createCloudConsciousnessLiveProviderExecutionPlanTask,
+    buildCloudConsciousnessLiveProviderExecutionPlanReadback,
+    buildCloudConsciousnessLiveProviderCallExecutionPlanExit,
+  } = planBuilder;
   const { executeTask, executeTaskWithRecovery, buildOperatorState, buildOperatorOptions, runOperatorStep, runOperatorLoop } = executor;
 
   return async function handleRequest(req, res, requestUrl) {
@@ -406,6 +480,36 @@ export function registerRoutes(deps) {
 
   if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-call-runbook-exit") {
     sendJson(res, 200, await buildCloudConsciousnessLiveProviderCallRunbookExit());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-call-execution-plan") {
+    sendJson(res, 200, await buildCloudConsciousnessLiveProviderCallExecutionPlan());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-endpoint-credential-binding") {
+    sendJson(res, 200, await buildCloudConsciousnessLiveProviderEndpointCredentialBinding());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-execution-transcript-schema") {
+    sendJson(res, 200, await buildCloudConsciousnessLiveProviderExecutionTranscriptSchema());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-execution-route-review") {
+    sendJson(res, 200, await buildCloudConsciousnessLiveProviderExecutionRouteReview());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-execution-plan-readback") {
+    sendJson(res, 200, buildCloudConsciousnessLiveProviderExecutionPlanReadback());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-call-execution-plan-exit") {
+    sendJson(res, 200, await buildCloudConsciousnessLiveProviderCallExecutionPlanExit());
     return;
   }
 
@@ -1961,6 +2065,32 @@ export function registerRoutes(deps) {
         sourceRegistry: result.sourceRegistry,
         routeReview: result.routeReview,
         authorizationReview: result.authorizationReview,
+        task: serialiseTask(result.task),
+        approval: serialiseApproval(result.approval),
+        governance: result.governance,
+        summary: buildTaskSummary(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-execution-plan-tasks") {
+    try {
+      const body = await readJsonBody(req);
+      const result = await createCloudConsciousnessLiveProviderExecutionPlanTask({
+        confirm: body.confirm === true,
+      });
+      sendJson(res, 201, {
+        ok: true,
+        registry: result.registry,
+        mode: result.mode,
+        generatedAt: result.generatedAt,
+        sourceRegistry: result.sourceRegistry,
+        routeReview: result.routeReview,
+        transcriptSchema: result.transcriptSchema,
         task: serialiseTask(result.task),
         approval: serialiseApproval(result.approval),
         governance: result.governance,
