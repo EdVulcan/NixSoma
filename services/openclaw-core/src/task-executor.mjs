@@ -71,6 +71,9 @@ export function createTaskExecutor(deps) {
     executeCloudConsciousnessLiveProviderExecutionPlanTask,
     isCloudConsciousnessLiveProviderRuntimeAdapterTask,
     executeCloudConsciousnessLiveProviderRuntimeAdapterTask,
+    capabilityById,
+    normaliseCapabilityInvokeRequest,
+    buildCapabilityPolicyInput,
   } = planBuilder;
   const { serialiseApproval, buildApprovalSummary, createApprovalRequestForTask, publishTaskApprovalIfPending } = approvalEngine;
   const { applyWorkspacePatchEdits, readBoundedWorkspaceTextFile } = workspaceOps;

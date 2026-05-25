@@ -62,7 +62,18 @@ export function createPlanBuilder(deps) {
   } = taskManager;
   const { serialiseApproval, buildApprovalSummary, createApprovalRequestForTask, publishTaskApprovalIfPending } = approvalEngine;
   const { evaluatePolicyIntent, recordPolicyDecision, isPolicyExecutionAllowed } = policyEvaluator;
-  const { selectOpenClawToolCatalogWorkspace, buildOpenClawNativePluginRegistryResponse, buildNativePluginManifestProfile } = pluginReview;
+  const {
+    selectOpenClawToolCatalogWorkspace,
+    buildOpenClawNativePluginRegistryResponse,
+    buildNativePluginManifestProfile,
+    buildNativeOpenClawToolCatalogProfile,
+    buildNativeOpenClawWorkspaceSemanticIndex,
+    buildNativeOpenClawWorkspaceSymbolLookup,
+    buildNativeOpenClawWorkspaceEditTargetSelection,
+    buildNativeOpenClawPromptSemanticsProfile,
+    buildOpenClawPluginManifestMap,
+    buildOpenClawPluginCapabilityPlan,
+  } = pluginReview;
 
 function buildOperatorState() {
   reconcileRuntimeState();
@@ -12105,6 +12116,9 @@ async function buildCapabilityRegistry() {
     buildRulePlan,
     shouldBuildPlan,
     updatePlanForPhase,
+    capabilityById,
+    normaliseCapabilityInvokeRequest,
+    buildCapabilityPolicyInput,
     buildCapabilityRegistry,
     listCapabilityInvocations,
     buildCapabilityInvocationSummary,
