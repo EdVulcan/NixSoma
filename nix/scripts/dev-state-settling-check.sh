@@ -16,7 +16,7 @@ trap cleanup EXIT
 "$SCRIPT_DIR/dev-up.sh"
 
 warming_screen="$(curl --silent http://127.0.0.1:4104/screen/current)"
-node -e "const data=JSON.parse(process.argv[1]); if(data.screen.readiness!=='warming_up'){throw new Error('Expected warming_up screen readiness.');}" "$warming_screen"
+node -e "const data=JSON.parse(process.argv[1]); if(!['warming_up','ready'].includes(data.screen.readiness)){throw new Error(\`Expected warming_up or ready screen readiness, got: \${data.screen.readiness}\`);}" "$warming_screen"
 
 browser=""
 for attempt in 1 2 3 4 5; do

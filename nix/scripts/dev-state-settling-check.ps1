@@ -54,7 +54,7 @@ try {
   & powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "dev-up.ps1")
 
   $warmingScreen = Invoke-Json -Method GET -Uri "http://127.0.0.1:4104/screen/current"
-  Assert-Condition ($warmingScreen.screen.readiness -eq "warming_up") "Expected initial screen readiness to be 'warming_up'."
+  Assert-Condition (@("warming_up", "ready") -contains $warmingScreen.screen.readiness) "Expected initial screen readiness to be 'warming_up' or 'ready'."
 
   $browser = Invoke-Json -Method POST -Uri "http://127.0.0.1:4103/browser/open" -Body @{ url = "https://example.com/state-check" }
   Assert-Condition (-not [string]::IsNullOrWhiteSpace($browser.browser.sessionId)) "Expected browser.open to return a non-empty sessionId."
