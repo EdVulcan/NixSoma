@@ -77,9 +77,13 @@ const workspaceOps = createWorkspaceOps({
   buildOpenClawSourceCommandProposals: (...args) => pluginReview.buildOpenClawSourceCommandProposals(...args),
   buildRulePlan: (args) => planBuilder.buildRulePlan(args),
   createTask: (...args) => taskManager.createTask(...args),
+  supersedeOtherActiveTasks: (taskId) => taskManager.supersedeOtherActiveTasks(taskId),
+  serialiseTask: (task) => taskManager.serialiseTask(task),
+  serialisePlanForPublic: (plan) => planBuilder.serialisePlanForPublic(plan),
   createApprovalRequestForTask: (task, decision) => approvalEngine.createApprovalRequestForTask(task, decision),
   serialiseApproval: (approval) => approvalEngine.serialiseApproval(approval),
   publishTaskApprovalIfPending: (task) => approvalEngine.publishTaskApprovalIfPending(task),
+  publishEvent,
 });
 
 const planBuilder = createPlanBuilder({

@@ -12,9 +12,13 @@ export function createWorkspaceOps(deps) {
     buildOpenClawSourceCommandProposals,
     buildRulePlan,
     createTask,
+    supersedeOtherActiveTasks,
+    serialiseTask,
+    serialisePlanForPublic,
     createApprovalRequestForTask,
     serialiseApproval,
     publishTaskApprovalIfPending,
+    publishEvent,
   } = deps;
   const { postJson } = client;
   const { tasks, persistState, workspaceRoots, autonomyMode } = state;
