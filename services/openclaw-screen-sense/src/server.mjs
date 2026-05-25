@@ -255,12 +255,20 @@ async function collectStableScreenState() {
       // Now we distinguish three explicit cases:
       //   1. Browser explicitly reports running=false (not null): stable state,
       //      no need to wait further.
-      //   2. Session is ready (has a sessionId): stable state.
-      //   3. Everything else (null browser, browser running but no session yet):
+      //   2. Browser-runtime capture is ready: stable state, even when
+      //      session-manager is passive and has no separate sessionId.
+      //   3. Session is ready (has a sessionId): stable state.
+      //   4. Everything else (null browser, browser running but no session yet):
       //      keep polling until the deadline.
 
       if (latest.browser !== null && !latest.browser.running) {
         // Browser is explicitly not running — stable, nothing to wait for.
+        const patch = deriveScreenPatch({ ...latest, degraded: false });
+        updateScreenState(patch);
+        return { ...screenState };
+      }
+
+      if (latest.browserCapture?.snapshotText || latest.browserCapture?.focusedWindow) {
         const patch = deriveScreenPatch({ ...latest, degraded: false });
         updateScreenState(patch);
         return { ...screenState };
