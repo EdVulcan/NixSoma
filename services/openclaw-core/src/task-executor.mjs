@@ -62,7 +62,7 @@ export function createTaskExecutor(deps) {
   } = planBuilder;
   const { serialiseApproval, buildApprovalSummary } = approvalEngine;
   const { applyWorkspacePatchEdits, readBoundedWorkspaceTextFile } = workspaceOps;
-  const { recordPolicyDecision, evaluatePolicyIntent } = policyEvaluator;
+  const { ensureTaskPolicy, recordPolicyDecision, evaluatePolicyIntent } = policyEvaluator;
 
   // L10299-10323
 function buildOperatorState() {
