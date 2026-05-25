@@ -182,12 +182,12 @@ const step = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
 for (const token of ["openclaw-cloud-consciousness-approved-live-provider-runtime-adapter-deferred", "records the runtime adapter shell as deferred", "Does not call a provider"]) {
   if (!doc.includes(token)) throw new Error(`Phase 14 plan doc missing ${token}`);
 }
-if (!step.ok || step.execution?.finalExecution?.status !== "runtime_adapter_deferred_after_approval") {
+if (!step.ok || step.task?.cloudConsciousnessLiveProviderRuntimeAdapter?.implementationStatus !== "deferred_after_approval") {
   throw new Error(`Approved runtime adapter should defer after approval: ${JSON.stringify(step.execution)}`);
 }
-const summary = step.execution.finalExecution.summary;
-if (summary?.transmitsExternally !== false || summary?.providerSdkLoaded !== false || summary?.liveProviderCallEnabled !== false) {
-  throw new Error(`Approved runtime adapter must not enable live egress: ${JSON.stringify(summary)}`);
+const adapter = step.task.cloudConsciousnessLiveProviderRuntimeAdapter;
+if (adapter?.transmitsExternally !== false || adapter?.providerSdkLoaded !== false || adapter?.liveProviderCallEnabled !== false) {
+  throw new Error(`Approved runtime adapter must not enable live egress: ${JSON.stringify(adapter)}`);
 }
 console.log(JSON.stringify({ openclawCloudConsciousnessApprovedLiveProviderRuntimeAdapterDeferred: { status: "passed", taskId: step.task.id } }, null, 2));
 EOF
@@ -218,4 +218,3 @@ if (kind === "runtime-adapter-exit" && (data.summary?.complete !== true || data.
 }
 console.log(JSON.stringify({ openclawCloudConsciousnessRuntimeAdapter: { status: "passed", kind, registry } }, null, 2));
 EOF
-
