@@ -12,9 +12,24 @@ checks=(
   "dev-openclaw-eye-hand-auto-recovery-execution-check.sh"
 )
 
+run_child_check() {
+  env \
+    -u OPENCLAW_CORE_PORT \
+    -u OPENCLAW_EVENT_HUB_PORT \
+    -u OPENCLAW_SESSION_MANAGER_PORT \
+    -u OPENCLAW_BROWSER_RUNTIME_PORT \
+    -u OPENCLAW_SCREEN_SENSE_PORT \
+    -u OPENCLAW_SCREEN_ACT_PORT \
+    -u OPENCLAW_SYSTEM_SENSE_PORT \
+    -u OPENCLAW_SYSTEM_HEAL_PORT \
+    -u OBSERVER_UI_PORT \
+    -u OPENCLAW_CORE_STATE_FILE \
+    bash "$1"
+}
+
 for check in "${checks[@]}"; do
   echo "==> eye-hand recovery regression: $check"
-  bash "$SCRIPT_DIR/$check"
+  run_child_check "$SCRIPT_DIR/$check"
 done
 
 echo '{"openclawEyeHandRecoveryRegression":{"status":"passed","checks":6}}'
