@@ -44,8 +44,8 @@ assert_json() {
 
 open_result=""
 for attempt in 1 2 3 4 5; do
-  open_result="$(post_json "$BROWSER_URL/browser/open" "{\"url\":\"$TARGET_URL\"}")"
-  if node -e "const data=JSON.parse(process.argv[1]); process.exit(data.ok && data.browser?.sessionId ? 0 : 1);" "$open_result"; then
+  open_result="$(post_json "$BROWSER_URL/browser/open" "{\"url\":\"$TARGET_URL\"}" || true)"
+  if [[ -n "$open_result" ]] && node -e "try { const data=JSON.parse(process.argv[1]); process.exit(data.ok && data.browser?.sessionId ? 0 : 1); } catch { process.exit(1); }" "$open_result"; then
     break
   fi
   sleep 0.4
