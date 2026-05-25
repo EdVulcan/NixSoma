@@ -25,6 +25,18 @@ find_listener_pid() {
     | head -n 1
 }
 
+wait_port_released() {
+  local port="$1"
+  local deadline=$((SECONDS + 5))
+  while (( SECONDS < deadline )); do
+    if [[ -z "$(find_listener_pid "$port")" ]]; then
+      return 0
+    fi
+    sleep 0.2
+  done
+  return 1
+}
+
 is_managed_service_pid() {
   local pid="$1"
   local cmdline=""
@@ -66,6 +78,7 @@ for port in "${ports[@]}"; do
   if is_managed_service_pid "$pid"; then
     kill "$pid" >/dev/null 2>&1 || true
     echo "Stopped listener on port $port (PID $pid)"
+    wait_port_released "$port" >/dev/null 2>&1 || true
   fi
 done
 
@@ -75,5 +88,11 @@ while read -r pid; do
     echo "Stopped stale managed service (PID $pid)"
   fi
 done < <(pgrep -f 'src/server\.mjs' 2>/dev/null || true)
+
+for port in "${ports[@]}"; do
+  if [[ -n "$port" ]]; then
+    wait_port_released "$port" >/dev/null 2>&1 || true
+  fi
+done
 
 echo "Unix dev services stopped."

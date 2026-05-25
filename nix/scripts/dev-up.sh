@@ -182,7 +182,7 @@ for entry in "${services[@]}"; do
   for attempt in 1 2; do
     kill_listener_on_port "$port"
     start_service_process "$name" "$working_dir"
-    pid="$(cat "$ARTIFACT_DIR/$name.pid")"
+    pid="$(cat "$ARTIFACT_DIR/$name.pid" 2>/dev/null || true)"
 
     if wait_health "$health_url"; then
       success=1
