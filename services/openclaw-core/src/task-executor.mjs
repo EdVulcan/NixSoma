@@ -37,6 +37,7 @@ export function createTaskExecutor(deps) {
   const {
     serialiseTask,
     isActiveTask,
+    hasRecoverableCapabilityPlan,
     getTaskById,
     appendTaskPhase,
     setTaskPhase,
