@@ -89,7 +89,7 @@ export function registerRoutes(deps) {
     createCloudConsciousnessLiveProviderRuntimeAdapterTask,
     buildCloudConsciousnessLiveProviderRuntimeAdapterExit,
   } = planBuilder;
-  const { executeTask, executeTaskWithRecovery, serialiseExecutionResult, buildOperatorState, buildOperatorOptions, runOperatorStep, runOperatorLoop } = executor;
+  const { executeTask, executeTaskWithRecovery, serialiseExecutionResult, listCommandTranscriptRecords, buildCommandTranscriptSummary, serialiseCommandTranscriptSummary, listFilesystemChangeRecords, buildFilesystemChangeSummary, serialiseFilesystemChangeSummary, listFilesystemReadRecords, buildFilesystemReadSummary, serialiseFilesystemReadSummary, buildOperatorState, buildOperatorOptions, runOperatorStep, runOperatorLoop } = executor;
 
   return async function handleRequest(req, res, requestUrl) {
     // ---- Generic Proxy Routing for observer-ui ----
