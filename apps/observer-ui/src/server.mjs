@@ -6823,6 +6823,7 @@ async function refreshCloudConsciousnessLiveProviderExecutionPlanReadback() {
     cloudLiveExecReadbackHash.textContent = summary.latestContentHash ?? "none";
     cloudLiveExecReadbackJson.textContent = [
       "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-live-provider-execution-plan-readback-v0"),
+      "Approved Registry: openclaw-cloud-consciousness-approved-live-provider-execution-plan-v0",
       "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
       "Ready: " + Boolean(summary.ready) + " records=" + (summary.recordCount ?? 0),
       "Latest: " + (summary.latestRecordId ?? "none"),

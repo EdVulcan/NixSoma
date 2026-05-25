@@ -206,6 +206,24 @@ EOF
   exit 0
 fi
 
+if [[ "$CHECK_KIND" == "approved-live-provider-execution-plan" ]]; then
+  READBACK_FILE="$DATA_FILE"
+  curl --silent --fail "$CORE_URL/cloud-consciousness/live-provider-execution-plan-readback" > "$READBACK_FILE"
+  node - <<'EOF' "$PLAN_DOC" "$READBACK_FILE"
+const fs = require("node:fs");
+const doc = fs.readFileSync(process.argv[2], "utf8");
+const readback = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+for (const token of ["openclaw-cloud-consciousness-approved-live-provider-execution-plan", "appends exactly one local live provider-call execution-plan JSONL record", "Does not call a cloud provider"]) {
+  if (!doc.includes(token)) throw new Error(`Phase 12 plan doc missing ${token}`);
+}
+if (!readback.ok || readback.summary?.ready !== true || readback.summary?.recordCount < 1 || readback.summary?.transmitsExternally !== false || readback.summary?.callsCloudModel !== false || readback.summary?.liveProviderCallEnabled !== false) {
+  throw new Error(`Approved live provider execution plan should produce readable local non-live record: ${JSON.stringify(readback.summary)}`);
+}
+console.log(JSON.stringify({ openclawCloudConsciousnessApprovedLiveProviderExecutionPlan: { status: "passed", latestRecordId: readback.summary.latestRecordId, hash: readback.summary.latestContentHash } }, null, 2));
+EOF
+  exit 0
+fi
+
 node - <<'EOF' "$CHECK_KIND" "$REGISTRY" "$PLAN_DOC" "$DATA_FILE"
 const fs = require("node:fs");
 const kind = process.argv[2];
