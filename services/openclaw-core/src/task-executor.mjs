@@ -36,6 +36,7 @@ export function createTaskExecutor(deps) {
   } = state;
   const {
     serialiseTask,
+    isActiveTask,
     getTaskById,
     appendTaskPhase,
     setTaskPhase,
