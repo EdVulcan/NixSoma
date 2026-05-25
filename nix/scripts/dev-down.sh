@@ -20,7 +20,12 @@ ports=(
 
 find_listener_pid() {
   local port="$1"
-  ss -ltnpH "( sport = :$port )" 2>/dev/null \
+  {
+    ss -ltnpH "( sport = :$port )" 2>/dev/null
+    if command -v sudo >/dev/null 2>&1; then
+      sudo -n ss -ltnpH "( sport = :$port )" 2>/dev/null || true
+    fi
+  } \
     | sed -n 's/.*pid=\([0-9]\+\).*/\1/p' \
     | head -n 1
 }
@@ -48,6 +53,9 @@ is_managed_service_pid() {
 
   cmdline="$(ps -p "$pid" -o args= 2>/dev/null || true)"
   cwd="$(readlink -f "/proc/$pid/cwd" 2>/dev/null || true)"
+  if [[ -z "$cwd" ]] && command -v sudo >/dev/null 2>&1; then
+    cwd="$(sudo -n readlink -f "/proc/$pid/cwd" 2>/dev/null || true)"
+  fi
 
   if [[ "$cwd" == "$REPO_ROOT"/services/* ]] || [[ "$cwd" == "$REPO_ROOT"/apps/* ]]; then
     [[ "$cmdline" == *"src/server.mjs"* ]]
