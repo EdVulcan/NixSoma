@@ -72,7 +72,14 @@ const pluginReview = createPluginReview({
 const workspaceOps = createWorkspaceOps({
   client,
   state,
-  selectOpenClawToolCatalogWorkspace: (args) => pluginReview.selectOpenClawToolCatalogWorkspace(args)
+  selectOpenClawToolCatalogWorkspace: (args) => pluginReview.selectOpenClawToolCatalogWorkspace(args),
+  buildWorkspaceCommandProposals: (...args) => pluginReview.buildWorkspaceCommandProposals(...args),
+  buildOpenClawSourceCommandProposals: (...args) => pluginReview.buildOpenClawSourceCommandProposals(...args),
+  buildRulePlan: (args) => planBuilder.buildRulePlan(args),
+  createTask: (...args) => taskManager.createTask(...args),
+  createApprovalRequestForTask: (task, decision) => approvalEngine.createApprovalRequestForTask(task, decision),
+  serialiseApproval: (approval) => approvalEngine.serialiseApproval(approval),
+  publishTaskApprovalIfPending: (task) => approvalEngine.publishTaskApprovalIfPending(task),
 });
 
 const planBuilder = createPlanBuilder({

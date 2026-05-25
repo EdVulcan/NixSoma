@@ -1,9 +1,21 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { createOpenClawNativePluginRegistry } from "../../../packages/shared-types/src/plugin-registry.mjs";
 
 export function createWorkspaceOps(deps) {
-  const { client, state, selectOpenClawToolCatalogWorkspace } = deps;
+  const {
+    client,
+    state,
+    selectOpenClawToolCatalogWorkspace,
+    buildWorkspaceCommandProposals,
+    buildOpenClawSourceCommandProposals,
+    buildRulePlan,
+    createTask,
+    createApprovalRequestForTask,
+    serialiseApproval,
+    publishTaskApprovalIfPending,
+  } = deps;
   const { postJson } = client;
   const { tasks, persistState, workspaceRoots } = state;
 
