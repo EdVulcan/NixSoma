@@ -10,6 +10,7 @@ export function createWorkspaceOps(deps) {
     selectOpenClawToolCatalogWorkspace,
     buildWorkspaceCommandProposals,
     buildOpenClawSourceCommandProposals,
+    buildNativeOpenClawToolCatalogProfile,
     buildNativeOpenClawWorkspaceSemanticIndex,
     buildNativeOpenClawWorkspaceEditTargetSelection,
     buildNativeOpenClawPromptSemanticsProfile,

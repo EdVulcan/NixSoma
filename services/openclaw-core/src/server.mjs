@@ -75,6 +75,7 @@ const workspaceOps = createWorkspaceOps({
   selectOpenClawToolCatalogWorkspace: (args) => pluginReview.selectOpenClawToolCatalogWorkspace(args),
   buildWorkspaceCommandProposals: (...args) => pluginReview.buildWorkspaceCommandProposals(...args),
   buildOpenClawSourceCommandProposals: (...args) => pluginReview.buildOpenClawSourceCommandProposals(...args),
+  buildNativeOpenClawToolCatalogProfile: (...args) => pluginReview.buildNativeOpenClawToolCatalogProfile(...args),
   buildNativeOpenClawWorkspaceSemanticIndex: (...args) => pluginReview.buildNativeOpenClawWorkspaceSemanticIndex(...args),
   buildNativeOpenClawWorkspaceEditTargetSelection: (...args) => pluginReview.buildNativeOpenClawWorkspaceEditTargetSelection(...args),
   buildNativeOpenClawPromptSemanticsProfile: (...args) => pluginReview.buildNativeOpenClawPromptSemanticsProfile(...args),
