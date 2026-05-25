@@ -35,7 +35,7 @@ ready_action="$(curl --silent -X POST http://127.0.0.1:4105/act/mouse/click -H '
 node -e "const data=JSON.parse(process.argv[1]); if(data.action.degraded!==false){throw new Error('Expected ready action degraded=false.');}" "$ready_action"
 
 session_pid="$(awk -F $'\t' '$1=="openclaw-session-manager" { print $2 }' "$REPO_ROOT/.artifacts/dev-services-unix.tsv")"
-kill "$session_pid"
+kill "$session_pid" >/dev/null 2>&1 || true
 sleep 0.3
 
 degraded_screen="$(curl --silent http://127.0.0.1:4104/screen/current)"
