@@ -70,7 +70,7 @@ export function createTaskExecutor(deps) {
     isCloudConsciousnessLiveProviderRuntimeAdapterTask,
     executeCloudConsciousnessLiveProviderRuntimeAdapterTask,
   } = planBuilder;
-  const { serialiseApproval, buildApprovalSummary } = approvalEngine;
+  const { serialiseApproval, buildApprovalSummary, createApprovalRequestForTask, publishTaskApprovalIfPending } = approvalEngine;
   const { applyWorkspacePatchEdits, readBoundedWorkspaceTextFile } = workspaceOps;
   const { ensureTaskPolicy, recordPolicyDecision, evaluatePolicyIntent, isPolicyExecutionAllowed } = policyEvaluator;
 
