@@ -4679,7 +4679,7 @@ async function refreshWorkspacePatchApplyDraft() {
       { search: "before", replacement: "after", occurrence: 1 },
       { search: "omega", replacement: "zeta", occurrence: 1 },
     ]));
-    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/source-authored-edit/draft?edits=\${edits}&proposalQuery=edit&targetSelectionQuery=edit&contextLines=0\`);
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/workspace-patch-apply/draft?relativePath=scratch/observer-native-edit.txt&edits=\${edits}&contextLines=0\`);
     renderWorkspacePatchApplyDraft(data);
   } catch {
     workspacePatchApplyRegistry.textContent = "offline";

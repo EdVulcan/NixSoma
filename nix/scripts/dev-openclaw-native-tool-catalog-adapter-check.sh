@@ -163,7 +163,7 @@ if (
 }
 if (
   !adapter.ok
-  || adapter.status !== "read_only_adapters_ready"
+  || adapter.status !== "read_only_and_approval_gated_mutation_adapters_ready"
   || !adapter.implementedCapabilities?.includes("sense.openclaw.tool_catalog")
   || adapter.summary?.canReadToolCatalogMetadata !== true
   || adapter.summary?.canExecuteToolCode !== false
