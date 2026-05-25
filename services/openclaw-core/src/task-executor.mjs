@@ -38,6 +38,8 @@ export function createTaskExecutor(deps) {
     serialiseTask,
     isActiveTask,
     hasRecoverableCapabilityPlan,
+    hasRecoverableNativePluginRuntimeActivationPlan,
+    hasRecoverableSearchWebAdapterPlan,
     getTaskById,
     appendTaskPhase,
     setTaskPhase,
