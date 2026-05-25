@@ -5,7 +5,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 STATE_FILE="$REPO_ROOT/.artifacts/dev-services-unix.tsv"
 
-ports=(4100 4101 4102 4103 4104 4105 4106 4107 4170)
+ports=(
+  4100 4101 4102 4103 4104 4105 4106 4107 4170
+  "${OPENCLAW_CORE_PORT:-}"
+  "${OPENCLAW_EVENT_HUB_PORT:-}"
+  "${OPENCLAW_SESSION_MANAGER_PORT:-}"
+  "${OPENCLAW_BROWSER_RUNTIME_PORT:-}"
+  "${OPENCLAW_SCREEN_SENSE_PORT:-}"
+  "${OPENCLAW_SCREEN_ACT_PORT:-}"
+  "${OPENCLAW_SYSTEM_SENSE_PORT:-}"
+  "${OPENCLAW_SYSTEM_HEAL_PORT:-}"
+  "${OBSERVER_UI_PORT:-}"
+)
 
 find_listener_pid() {
   local port="$1"
@@ -48,11 +59,21 @@ else
 fi
 
 for port in "${ports[@]}"; do
+  if [[ -z "$port" ]]; then
+    continue
+  fi
   pid="$(find_listener_pid "$port")"
   if is_managed_service_pid "$pid"; then
     kill "$pid" >/dev/null 2>&1 || true
     echo "Stopped listener on port $port (PID $pid)"
   fi
 done
+
+while read -r pid; do
+  if is_managed_service_pid "$pid"; then
+    kill "$pid" >/dev/null 2>&1 || true
+    echo "Stopped stale managed service (PID $pid)"
+  fi
+done < <(pgrep -f 'src/server\.mjs' 2>/dev/null || true)
 
 echo "Unix dev services stopped."
