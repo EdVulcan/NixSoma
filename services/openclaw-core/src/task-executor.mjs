@@ -36,6 +36,7 @@ export function createTaskExecutor(deps) {
   } = state;
   const {
     serialiseTask,
+    createTask,
     isActiveTask,
     hasRecoverableCapabilityPlan,
     hasRecoverableNativePluginRuntimeActivationPlan,
