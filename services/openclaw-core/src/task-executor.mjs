@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 
@@ -192,6 +193,47 @@ function isBodyEvidenceLedgerFirstRecordTask(task) {
 function isBodyEvidenceLedgerFollowupRecordTask(task) {
   return task?.type === "body_evidence_ledger_followup_record_task"
     && task?.bodyEvidenceLedgerFollowupRecord?.registry === "openclaw-body-evidence-ledger-followup-record-task-v0";
+}
+
+function readBodyEvidenceLedgerLines() {
+  const ledgerFileDisplayPath = ".artifacts/openclaw-body-evidence-ledger/body-evidence-ledger.jsonl";
+  const ledgerFilePath = path.resolve(process.cwd(), "../..", ledgerFileDisplayPath);
+  if (!existsSync(ledgerFilePath)) {
+    return {
+      ledgerFileDisplayPath,
+      ledgerFilePath,
+      exists: false,
+      lineCount: 0,
+      records: [],
+    };
+  }
+  const text = readFileSync(ledgerFilePath, "utf8");
+  const lines = text.trim() ? text.trim().split("\n").filter(Boolean) : [];
+  return {
+    ledgerFileDisplayPath,
+    ledgerFilePath,
+    exists: true,
+    lineCount: lines.length,
+    records: lines.map((line, index) => {
+      try {
+        const record = JSON.parse(line);
+        return {
+          index,
+          ok: true,
+          id: record.id ?? null,
+          evidenceType: record.evidenceType ?? null,
+          sourceRegistry: record.sourceRegistry ?? null,
+          contentHash: record.contentHash ?? null,
+        };
+      } catch (error) {
+        return {
+          index,
+          ok: false,
+          error: error instanceof Error ? error.message : "Invalid JSONL record",
+        };
+      }
+    }),
+  };
 }
 
 async function deferSystemdRepairExecutionTask(task) {
