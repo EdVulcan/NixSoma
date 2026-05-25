@@ -34,7 +34,7 @@ This phase is intentionally narrow. It does not perform a live provider request,
    - Keeps endpoint contact disabled.
 
 3. `openclaw-cloud-consciousness-live-provider-execution-transcript-schema`
-   - Defines the local execution-plan transcript schema.
+   - Defines the local `openclaw.cloud_consciousness.live_provider.execution_plan_transcript.v0` execution-plan transcript schema.
    - Requires runbook hash, endpoint fingerprint, credential reference, request envelope hash, and egress state.
    - Records `execution_plan_recorded`, not live execution.
 

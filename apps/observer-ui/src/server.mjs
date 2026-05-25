@@ -6763,15 +6763,20 @@ async function refreshCloudConsciousnessLiveProviderCallRunbookExit() {
 async function refreshCloudConsciousnessLiveProviderCallExecutionPlan() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-call-execution-plan\`);
+    const binding = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-endpoint-credential-binding\`).catch(() => null);
     const summary = data.summary ?? {};
+    const bindingSummary = binding?.summary ?? {};
     cloudLiveExecPlanReady.textContent = String(Boolean(summary.ready));
     cloudLiveExecPlanEnabled.textContent = String(Boolean(summary.liveProviderCallEnabled));
     cloudLiveExecPlanNext.textContent = data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-endpoint-credential-binding";
     cloudLiveExecPlanJson.textContent = [
       "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-live-provider-call-execution-plan-v0"),
+      "Binding Registry: " + (binding?.registry ?? "openclaw-cloud-consciousness-live-provider-endpoint-credential-binding-v0"),
       "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
       "Ready: " + Boolean(summary.ready) + " percent=" + (summary.completionPercent ?? 0),
       "Live enabled: " + Boolean(summary.liveProviderCallEnabled),
+      "Endpoint contacted: " + Boolean(bindingSummary.endpointContacted),
+      "Credential value read: " + Boolean(bindingSummary.credentialValueRead),
       "Next: " + (data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-endpoint-credential-binding"),
     ].join("\\n");
   } catch {
@@ -6785,15 +6790,18 @@ async function refreshCloudConsciousnessLiveProviderCallExecutionPlan() {
 async function refreshCloudConsciousnessLiveProviderExecutionRouteReview() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-execution-route-review\`);
+    const schema = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-execution-transcript-schema\`).catch(() => null);
     const summary = data.summary ?? {};
     cloudLiveExecRouteReady.textContent = String(Boolean(summary.ready));
     cloudLiveExecRouteSelected.textContent = summary.selectedSlice ?? "none";
     cloudLiveExecRouteCall.textContent = String(Boolean(summary.callsCloudModel));
     cloudLiveExecRouteJson.textContent = [
       "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-live-provider-execution-route-review-v0"),
+      "Schema Registry: " + (schema?.registry ?? "openclaw-cloud-consciousness-live-provider-execution-transcript-schema-v0"),
       "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
       "Selected: " + (summary.selectedSlice ?? "none"),
       "Deferred: " + (summary.deferredSlice ?? "none"),
+      "Transcript Schema: " + (schema?.schema?.id ?? "openclaw.cloud_consciousness.live_provider.execution_plan_transcript.v0"),
       "Calls cloud: " + Boolean(summary.callsCloudModel),
     ].join("\\n");
   } catch {
