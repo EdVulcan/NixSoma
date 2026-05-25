@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-PLAN_DOC="$REPO_ROOT/docs/OPENCLAW_POST_MVP_PLAN.md"
+PLAN_DOC="$REPO_ROOT/docs/plans/OPENCLAW_POST_MVP_PLAN.md"
 
 export OPENCLAW_CORE_PORT="${OPENCLAW_CORE_PORT:-7010}"
 export OPENCLAW_EVENT_HUB_PORT="${OPENCLAW_EVENT_HUB_PORT:-7011}"

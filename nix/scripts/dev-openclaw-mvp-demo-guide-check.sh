@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-GUIDE_FILE="$REPO_ROOT/docs/OPENCLAW_MVP_DEMO_GUIDE.md"
+GUIDE_FILE="$REPO_ROOT/docs/guides/OPENCLAW_MVP_DEMO_GUIDE.md"
 
 if [[ ! -f "$GUIDE_FILE" ]]; then
   echo "Missing MVP demo guide: $GUIDE_FILE" >&2

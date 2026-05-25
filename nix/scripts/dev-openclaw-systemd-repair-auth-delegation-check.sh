@@ -11,7 +11,7 @@ const path = require("node:path");
 const root = process.argv[2];
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 
-const plan = read("docs/OPENCLAW_PHASE_2_PLAN.md");
+const plan = read("docs/plans/OPENCLAW_PHASE_2_PLAN.md");
 const bodyModule = read("nix/modules/openclaw-body.nix");
 const core = read("services/openclaw-core/src/server.mjs");
 const milestone = read("nix/scripts/dev-milestone-check.sh");

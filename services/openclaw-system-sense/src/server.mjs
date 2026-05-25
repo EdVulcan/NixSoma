@@ -431,7 +431,7 @@ function writeTextFile(body = {}) {
   const resolved = resolveAllowedPath(targetPath);
   const parentPath = path.dirname(resolved.path);
   // H-4 note: This call intentionally discards the return value. Its purpose
-  // is boundary validation only — it throws if parentPath falls outside the
+  // is boundary validation only; it throws if parentPath falls outside the
   // allowed roots. On NixOS the path check is correct and complete.
   resolveAllowedPath(parentPath);
   if (!existsSync(parentPath) || !statSync(parentPath).isDirectory()) {
@@ -1355,7 +1355,7 @@ async function buildPhase2RouteReview() {
     source: {
       service: "openclaw-system-sense",
       bodyGovernanceReadinessRegistry: bodyGovernance.registry,
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "whitepaper_aligned_phase_2_route_review",
     },
     governance: {
@@ -2230,7 +2230,7 @@ async function buildSystemdRepairCandidateRouteReview() {
     source: {
       service: "openclaw-system-sense",
       candidateReadinessRegistry: readiness.registry,
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "systemd_repair_candidate_route_review",
     },
     governance: {
@@ -2851,7 +2851,7 @@ async function buildBodyEvidenceLedgerRouteReview() {
     source: {
       service: "openclaw-system-sense",
       ledgerPlanRegistry: ledgerPlan.registry,
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "body_evidence_ledger_route_review",
     },
     governance: {
@@ -2937,7 +2937,7 @@ async function buildBodyEvidenceLedgerStorageRootPlan() {
     source: {
       service: "openclaw-system-sense",
       ledgerRouteReviewRegistry: routeReview.registry,
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "body_evidence_ledger_storage_root_plan",
     },
     governance: {
@@ -3040,7 +3040,7 @@ async function buildBodyEvidenceLedgerStorageRootRouteReview() {
     source: {
       service: "openclaw-system-sense",
       storageRootPlanRegistry: storageRootPlan.registry,
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "body_evidence_ledger_storage_root_route_review",
     },
     governance: {
@@ -3228,7 +3228,7 @@ async function buildBodyEvidenceLedgerFirstRecordRouteReview() {
     source: {
       service: "openclaw-system-sense",
       firstRecordPlanRegistry: firstRecordPlan.registry,
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "body_evidence_ledger_first_record_route_review",
     },
     governance: {
@@ -3520,7 +3520,7 @@ async function buildBodyEvidenceLedgerDemoStatus() {
     source: {
       service: "openclaw-system-sense",
       ledgerReadinessRegistry: readiness.registry,
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "body_evidence_ledger_demo_status",
     },
     governance: {
@@ -3620,7 +3620,7 @@ async function buildBodyEvidenceLedgerFollowupRecordPlan() {
       service: "openclaw-system-sense",
       timelineReadinessRegistry: timelineReadiness.registry,
       ledgerReadinessRegistry: ledgerReadiness.registry,
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "body_evidence_ledger_followup_record_plan",
     },
     governance: {
@@ -3748,7 +3748,7 @@ async function buildBodyEvidenceLedgerFollowupRecordRouteReview() {
     source: {
       service: "openclaw-system-sense",
       followupRecordPlanRegistry: followupPlan.registry,
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "body_evidence_ledger_followup_record_route_review",
     },
     governance: {
@@ -3851,7 +3851,7 @@ async function buildSystemdNextRepairScopeReview() {
       inventoryRegistry: inventory.registry,
       dependencyMapRegistry: dependencyMap.registry,
       ledgerDemoStatusRegistry: ledgerDemoStatus.registry,
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "systemd_next_repair_scope_review",
     },
     governance: {
@@ -3929,7 +3929,7 @@ async function buildSystemdNextRepairPlan() {
       scopeReviewRegistry: scopeReview.registry,
       inventoryRegistry: inventory.registry,
       ledgerDemoStatusRegistry: scopeReview.evidence?.ledgerDemo?.registry ?? null,
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "systemd_next_repair_plan",
     },
     governance: {
@@ -4074,7 +4074,7 @@ async function buildSystemdNextRepairRouteReview() {
       service: "openclaw-system-sense",
       nextRepairPlanRegistry: repairPlan.registry,
       scopeReviewRegistry: repairPlan.source?.scopeReviewRegistry ?? null,
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "systemd_next_repair_route_review",
     },
     governance: {
@@ -4235,7 +4235,7 @@ async function buildSystemdNextRepairTaskRoute() {
       nextRepairDryRunRegistry: envelope.registry,
       nextRepairPlanRegistry: envelope.source?.nextRepairPlanRegistry ?? null,
       routeReviewRegistry: envelope.source?.routeReviewRegistry ?? null,
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "systemd_next_repair_task_route",
     },
     governance: {

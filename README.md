@@ -839,4 +839,4 @@ See:
 
 - [docs/DESKTOP_CAPTURE_CONTRACT_V1.md](D:/OpenclawAndClaudecode/OpenClawOnNixOS/docs/DESKTOP_CAPTURE_CONTRACT_V1.md)
 - [docs/AI_WORK_VIEW_CAPTURE_STRATEGY.md](D:/OpenclawAndClaudecode/OpenClawOnNixOS/docs/AI_WORK_VIEW_CAPTURE_STRATEGY.md)
-- [docs/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md](D:/OpenclawAndClaudecode/OpenClawOnNixOS/docs/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md)
+- [docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md](D:/OpenclawAndClaudecode/OpenClawOnNixOS/docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md)

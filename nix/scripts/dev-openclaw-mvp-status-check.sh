@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-STATUS_FILE="$REPO_ROOT/docs/OPENCLAW_MVP_STATUS.md"
+STATUS_FILE="$REPO_ROOT/docs/guides/OPENCLAW_MVP_STATUS.md"
 
 if [[ ! -f "$STATUS_FILE" ]]; then
   echo "Missing MVP status document: $STATUS_FILE" >&2

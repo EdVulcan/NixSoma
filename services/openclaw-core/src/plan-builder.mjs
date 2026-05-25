@@ -2517,7 +2517,7 @@ function buildPhase2RepairDemoStatus() {
       id: "phase2-track-a-route",
       label: "Whitepaper route remains Phase 2 Track A to Track B",
       status: "passed",
-      evidence: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      evidence: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
     },
     {
       id: "operator-approved-real-execution",
@@ -3522,7 +3522,7 @@ async function buildPhase2NextCapabilityRouteReview(options = {}) {
     source: {
       service: "openclaw-core",
       demoReadinessExitRegistry: demoExit.registry,
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "phase_2_next_capability_route_review",
     },
     governance: {
@@ -3700,7 +3700,7 @@ async function buildPhase2CompletionReadiness() {
     status: ready ? "ready_for_phase_2_exit" : "waiting_for_phase_2_evidence",
     source: {
       service: "openclaw-core",
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "phase_2_completion_readiness",
     },
     governance: {
@@ -3775,7 +3775,7 @@ async function buildPhase2Exit() {
     source: {
       service: "openclaw-core",
       completionReadinessRegistry: readiness.registry,
-      phase2Plan: "docs/OPENCLAW_PHASE_2_PLAN.md",
+      phase2Plan: "docs/plans/OPENCLAW_PHASE_2_PLAN.md",
       evidence: "phase_2_exit_gate",
     },
     governance: {
@@ -3862,7 +3862,7 @@ async function buildPhase3Plan() {
       id: "whitepaper-route",
       label: "Phase 3 follows resident body, observer visibility, and user sovereignty",
       passed: true,
-      evidence: "docs/OPENCLAW_PHASE_3_PLAN.md",
+      evidence: "docs/plans/OPENCLAW_PHASE_3_PLAN.md",
     },
     {
       id: "non-intrusive-boundary",
@@ -3882,7 +3882,7 @@ async function buildPhase3Plan() {
     source: {
       service: "openclaw-core",
       phase2ExitMilestone: "openclaw-phase-2-exit",
-      phase3Plan: "docs/OPENCLAW_PHASE_3_PLAN.md",
+      phase3Plan: "docs/plans/OPENCLAW_PHASE_3_PLAN.md",
       route: "let_it_work_without_stealing_foreground",
     },
     governance: phase3ReadOnlyGovernance(),
@@ -4146,7 +4146,7 @@ async function buildPhase3Exit() {
     source: {
       service: "openclaw-core",
       completionReadinessRegistry: readiness.registry,
-      phase3Plan: "docs/OPENCLAW_PHASE_3_PLAN.md",
+      phase3Plan: "docs/plans/OPENCLAW_PHASE_3_PLAN.md",
       evidence: "phase_3_exit_gate",
     },
     governance: phase3ReadOnlyGovernance(),
@@ -4241,7 +4241,7 @@ async function buildPhase4Plan() {
       id: "whitepaper-self-heal-route",
       label: "Phase 4 follows body stability, self-maintenance, and user-visible evidence",
       passed: true,
-      evidence: "docs/OPENCLAW_PHASE_4_PLAN.md",
+      evidence: "docs/plans/OPENCLAW_PHASE_4_PLAN.md",
     },
     {
       id: "conservative-boundary",
@@ -4261,7 +4261,7 @@ async function buildPhase4Plan() {
     source: {
       service: "openclaw-core",
       phase3ExitMilestone: "openclaw-phase-3-exit",
-      phase4Plan: "docs/OPENCLAW_PHASE_4_PLAN.md",
+      phase4Plan: "docs/plans/OPENCLAW_PHASE_4_PLAN.md",
       route: "let_it_care_for_its_body",
     },
     governance: phase4ReadOnlyGovernance(),
@@ -4561,7 +4561,7 @@ async function buildPhase4Exit() {
     source: {
       service: "openclaw-core",
       completionReadinessRegistry: readiness.registry,
-      phase4Plan: "docs/OPENCLAW_PHASE_4_PLAN.md",
+      phase4Plan: "docs/plans/OPENCLAW_PHASE_4_PLAN.md",
       evidence: "phase_4_exit_gate",
     },
     governance: phase4ReadOnlyGovernance(),
@@ -4645,7 +4645,7 @@ async function buildPhase5Plan() {
     source: {
       service: "openclaw-core",
       phase4ExitMilestone: "openclaw-phase-4-exit",
-      phase5Plan: "docs/OPENCLAW_PHASE_5_PLAN.md",
+      phase5Plan: "docs/plans/OPENCLAW_PHASE_5_PLAN.md",
       route: "deployment_and_rollback_control",
     },
     governance: phase5ReadOnlyGovernance(),
@@ -4992,7 +4992,7 @@ async function buildPhase5Exit() {
     source: {
       service: "openclaw-core",
       completionReadinessRegistry: readiness.registry,
-      phase5Plan: "docs/OPENCLAW_PHASE_5_PLAN.md",
+      phase5Plan: "docs/plans/OPENCLAW_PHASE_5_PLAN.md",
       evidence: "phase_5_exit_gate",
     },
     governance: phase5ReadOnlyGovernance(),
@@ -5227,7 +5227,7 @@ async function buildPostMvpPlan() {
     source: {
       service: "openclaw-core",
       mvpFinalReadiness: finalReadiness.registry,
-      postMvpPlan: "docs/OPENCLAW_POST_MVP_PLAN.md",
+      postMvpPlan: "docs/plans/OPENCLAW_POST_MVP_PLAN.md",
       whitepaper: "docs/OpenClaw body sovereignty whitepaper",
     },
     governance: {
@@ -5320,7 +5320,7 @@ async function buildPhase6Plan() {
     source: {
       service: "openclaw-core",
       postMvpPlan: postMvpPlan.registry,
-      phase6Plan: "docs/OPENCLAW_PHASE_6_PLAN.md",
+      phase6Plan: "docs/plans/OPENCLAW_PHASE_6_PLAN.md",
       whitepaper: "docs/OpenClaw body sovereignty whitepaper",
     },
     governance: phase6ReadOnlyGovernance(),
