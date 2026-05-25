@@ -90,6 +90,8 @@ const planBuilder = createPlanBuilder({
   approvalEngine,
   policyEvaluator,
   publishEvent,
+  host,
+  port,
 });
 
 const executor = createTaskExecutor({

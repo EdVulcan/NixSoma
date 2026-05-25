@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 export function createPlanBuilder(deps) {
-  const { client, state, taskManager, pluginReview, approvalEngine, policyEvaluator, publishEvent } = deps;
+  const { client, state, taskManager, pluginReview, approvalEngine, policyEvaluator, publishEvent, host, port } = deps;
   const {
     fetchJson,
     postJson,
