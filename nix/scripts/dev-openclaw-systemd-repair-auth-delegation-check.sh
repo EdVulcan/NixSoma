@@ -13,7 +13,12 @@ const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "u
 
 const plan = read("docs/plans/OPENCLAW_PHASE_2_PLAN.md");
 const bodyModule = read("nix/modules/openclaw-body.nix");
-const core = read("services/openclaw-core/src/server.mjs");
+const core = [
+  read("services/openclaw-core/src/server.mjs"),
+  read("services/openclaw-core/src/runtime-state.mjs"),
+  read("services/openclaw-core/src/plan-builder.mjs"),
+  read("services/openclaw-core/src/task-executor.mjs"),
+].join("\n");
 const milestone = read("nix/scripts/dev-milestone-check.sh");
 
 for (const token of [
