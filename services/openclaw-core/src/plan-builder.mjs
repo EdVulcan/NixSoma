@@ -11158,6 +11158,111 @@ async function buildCloudConsciousnessLiveProviderCallFinalAuthorization() {
   };
 }
 
+function phase16Governance(extra = {}) {
+  return {
+    phase: "phase-16",
+    createsTask: false,
+    createsApproval: false,
+    grantsLaunchAuthorization: false,
+    callsCloudModel: false,
+    transmitsExternally: false,
+    liveProviderCallEnabled: false,
+    providerSdkLoaded: false,
+    providerCredentialRead: false,
+    credentialValueRead: false,
+    endpointContacted: false,
+    networkEgress: false,
+    ...extra,
+  };
+}
+
+async function buildCloudConsciousnessLiveProviderCallOperatorLaunchReview() {
+  const finalAuthorization = await buildCloudConsciousnessLiveProviderCallFinalAuthorization();
+  const phase14Exit = await buildCloudConsciousnessLiveProviderRuntimeAdapterExit();
+  const executionPlanReadback = buildCloudConsciousnessLiveProviderExecutionPlanReadback();
+  const launchReview = {
+    launchDecision: "not_authorized",
+    operatorReviewState: "ready_for_human_review",
+    launchAuthorized: false,
+    liveProviderCallEnabled: false,
+    providerSdkLoaded: false,
+    providerCredentialRead: false,
+    credentialValueRead: false,
+    endpointContacted: false,
+    networkEgress: false,
+    externalTransmissionAllowed: false,
+    blockingRequirement: "separate runtime implementation and explicit operator launch authorization",
+  };
+  const checks = [
+    {
+      id: "phase-15-final-authorization-ready",
+      label: "Phase 15 final authorization checkpoint is ready",
+      passed: finalAuthorization.summary?.ready === true,
+      evidence: finalAuthorization.registry,
+    },
+    {
+      id: "runtime-adapter-exit-linked",
+      label: "Runtime adapter shell exit evidence is linked",
+      passed: phase14Exit.summary?.complete === true,
+      evidence: phase14Exit.registry,
+    },
+    {
+      id: "execution-plan-readback-linked",
+      label: "Approved execution-plan readback is linked",
+      passed: executionPlanReadback.summary?.ready === true,
+      evidence: executionPlanReadback.registry,
+    },
+    {
+      id: "operator-launch-not-granted",
+      label: "Operator launch review does not grant live provider launch",
+      passed: launchReview.launchAuthorized === false
+        && launchReview.networkEgress === false
+        && launchReview.credentialValueRead === false,
+      evidence: launchReview.launchDecision,
+    },
+  ];
+  const passed = checks.filter((check) => check.passed).length;
+  const ready = passed === checks.length;
+  return {
+    ok: true,
+    registry: "openclaw-cloud-consciousness-live-provider-call-operator-launch-review-v0",
+    mode: "phase_16_live_provider_operator_launch_review",
+    generatedAt: new Date().toISOString(),
+    status: ready ? "operator_launch_review_ready_live_launch_not_authorized" : "waiting_for_operator_launch_review_prerequisites",
+    governance: phase16Governance(),
+    launchReview,
+    checks,
+    summary: {
+      ready,
+      complete: ready,
+      passed,
+      total: checks.length,
+      completionPercent: ready ? 100 : Math.round((passed / checks.length) * 100),
+      phase: "phase-16",
+      grantsLaunchAuthorization: false,
+      launchAuthorized: false,
+      callsCloudModel: false,
+      transmitsExternally: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      credentialValueRead: false,
+      endpointContacted: false,
+      liveProviderCallEnabled: false,
+      networkEgress: false,
+      createsTask: false,
+    },
+    evidence: {
+      finalAuthorization: phase12EvidenceRef(finalAuthorization),
+      phase14Exit: phase12EvidenceRef(phase14Exit),
+      executionPlanReadback: phase12EvidenceRef(executionPlanReadback),
+    },
+    next: {
+      recommendedSlice: "openclaw-cloud-consciousness-live-provider-call-runtime-implementation-plan",
+      boundary: "only a separate runtime implementation plan may prepare SDK and credential access; this launch review does not authorize live egress",
+    },
+  };
+}
+
 function baseCapabilities() {
   return [
     {
@@ -12332,5 +12437,6 @@ async function buildCapabilityRegistry() {
     executeCloudConsciousnessLiveProviderRuntimeAdapterTask,
     buildCloudConsciousnessLiveProviderRuntimeAdapterExit,
     buildCloudConsciousnessLiveProviderCallFinalAuthorization,
+    buildCloudConsciousnessLiveProviderCallOperatorLaunchReview,
   };
 }

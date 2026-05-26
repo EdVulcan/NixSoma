@@ -91,6 +91,7 @@ export function registerRoutes(deps) {
     createCloudConsciousnessLiveProviderRuntimeAdapterTask,
     buildCloudConsciousnessLiveProviderRuntimeAdapterExit,
     buildCloudConsciousnessLiveProviderCallFinalAuthorization,
+    buildCloudConsciousnessLiveProviderCallOperatorLaunchReview,
   } = planBuilder;
   const { executeTask, executeTaskWithRecovery, serialiseExecutionResult, listCommandTranscriptRecords, buildCommandTranscriptSummary, serialiseCommandTranscriptSummary, listFilesystemChangeRecords, buildFilesystemChangeSummary, serialiseFilesystemChangeSummary, listFilesystemReadRecords, buildFilesystemReadSummary, serialiseFilesystemReadSummary, buildOperatorState, buildOperatorOptions, runOperatorStep, runOperatorLoop } = executor;
 
@@ -532,6 +533,11 @@ export function registerRoutes(deps) {
 
   if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-call-final-authorization") {
     sendJson(res, 200, await buildCloudConsciousnessLiveProviderCallFinalAuthorization());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-call-operator-launch-review") {
+    sendJson(res, 200, await buildCloudConsciousnessLiveProviderCallOperatorLaunchReview());
     return;
   }
 
