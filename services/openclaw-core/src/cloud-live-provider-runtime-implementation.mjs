@@ -576,6 +576,8 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         completionPercent: ready ? 100 : Math.round((passed / checks.length) * 100),
         phase: "phase-24",
         moduleBoundaryDefined: moduleContract.summary?.moduleBoundaryDefined === true,
+        methodCount: moduleContract.summary?.methodCount ?? 0,
+        implementedMethodCount: moduleContract.summary?.implementedMethodCount ?? 0,
         implementsRuntimeAdapter: false,
         providerSdkLoaded: false,
         providerCredentialRead: false,
