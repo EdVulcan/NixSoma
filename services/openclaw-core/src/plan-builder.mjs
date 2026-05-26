@@ -11048,6 +11048,116 @@ async function buildCloudConsciousnessLiveProviderRuntimeAdapterExit() {
   };
 }
 
+function phase15Governance(extra = {}) {
+  return {
+    phase: "phase-15",
+    createsTask: false,
+    createsApproval: false,
+    grantsFinalAuthorization: false,
+    callsCloudModel: false,
+    transmitsExternally: false,
+    liveProviderCallEnabled: false,
+    providerSdkLoaded: false,
+    providerCredentialRead: false,
+    credentialValueRead: false,
+    endpointContacted: false,
+    networkEgress: false,
+    ...extra,
+  };
+}
+
+async function buildCloudConsciousnessLiveProviderCallFinalAuthorization() {
+  const phase14Exit = await buildCloudConsciousnessLiveProviderRuntimeAdapterExit();
+  const phase11Review = await buildCloudConsciousnessLiveProviderFinalAuthorizationReview();
+  const executionPlan = await buildCloudConsciousnessLiveProviderCallExecutionPlan();
+  const binding = await buildCloudConsciousnessLiveProviderEndpointCredentialBinding();
+  const checks = [
+    {
+      id: "phase-14-complete",
+      label: "Phase 14 runtime adapter exit is complete",
+      passed: phase14Exit.summary?.complete === true,
+      evidence: phase14Exit.registry,
+    },
+    {
+      id: "execution-plan-ready",
+      label: "Live provider execution plan is ready and locally reviewable",
+      passed: executionPlan.summary?.ready === true,
+      evidence: executionPlan.registry,
+    },
+    {
+      id: "endpoint-credential-reference-bound",
+      label: "Endpoint and credential reference are bound without endpoint contact or credential value reads",
+      passed: binding.summary?.ready === true
+        && binding.summary?.endpointContacted === false
+        && binding.summary?.credentialValueRead === false,
+      evidence: binding.registry,
+    },
+    {
+      id: "live-egress-not-authorized",
+      label: "Final authorization review remains explicit and does not enable live egress",
+      passed: phase11Review.summary?.liveProviderCallEnabled === false
+        && phase11Review.summary?.providerCredentialRead === false,
+      evidence: phase11Review.registry,
+    },
+  ];
+  const passed = checks.filter((check) => check.passed).length;
+  const ready = passed === checks.length;
+  return {
+    ok: true,
+    registry: "openclaw-cloud-consciousness-live-provider-call-final-authorization-v0",
+    mode: "phase_15_live_provider_call_final_authorization_review",
+    generatedAt: new Date().toISOString(),
+    status: ready ? "final_authorization_review_ready_live_egress_disabled" : "waiting_for_live_provider_authorization_prerequisites",
+    governance: phase15Governance(),
+    finalAuthorization: {
+      authorizationState: "not_granted",
+      liveProviderCallEnabled: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      credentialValueRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      externalTransmissionAllowed: false,
+      requiredBeforeLiveEgress: [
+        "explicit operator authorization outside read-only milestone checks",
+        "runtime adapter implementation review",
+        "credential value access approval",
+        "egress transcript persistence",
+        "post-call readback and rollback note",
+      ],
+    },
+    checks,
+    summary: {
+      ready,
+      complete: ready,
+      passed,
+      total: checks.length,
+      completionPercent: ready ? 100 : Math.round((passed / checks.length) * 100),
+      phase: "phase-15",
+      grantsFinalAuthorization: false,
+      callsCloudModel: false,
+      transmitsExternally: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      credentialValueRead: false,
+      endpointContacted: false,
+      liveProviderCallEnabled: false,
+      networkEgress: false,
+      createsTask: false,
+    },
+    evidence: {
+      phase14Exit: phase12EvidenceRef(phase14Exit),
+      phase11Review: phase12EvidenceRef(phase11Review),
+      executionPlan: phase12EvidenceRef(executionPlan),
+      binding: phase12EvidenceRef(binding),
+    },
+    next: {
+      recommendedSlice: "openclaw-cloud-consciousness-live-provider-call-operator-launch-review",
+      boundary: "a separate operator launch review must be added before any live provider SDK load, credential value read, endpoint contact, or external transmission",
+    },
+  };
+}
+
 function baseCapabilities() {
   return [
     {
@@ -12221,5 +12331,6 @@ async function buildCapabilityRegistry() {
     isCloudConsciousnessLiveProviderRuntimeAdapterTask,
     executeCloudConsciousnessLiveProviderRuntimeAdapterTask,
     buildCloudConsciousnessLiveProviderRuntimeAdapterExit,
+    buildCloudConsciousnessLiveProviderCallFinalAuthorization,
   };
 }
