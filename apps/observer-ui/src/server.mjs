@@ -7144,6 +7144,8 @@ async function refreshCloudConsciousnessLiveProviderRequestBuilder() {
       "Endpoint contacted: " + Boolean(summary.endpointContacted),
       "Network egress: " + Boolean(summary.networkEgress),
       "Live provider call: " + Boolean(summary.liveProviderCallEnabled),
+      "Task Endpoint: /cloud-consciousness/live-provider-request-builder-tasks",
+      "Task Registry: openclaw-cloud-consciousness-live-provider-request-builder-task-v0",
       "Next: " + (data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-request-builder-task"),
     ].join("\\n");
   } catch {

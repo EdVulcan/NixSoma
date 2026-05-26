@@ -9,6 +9,8 @@ const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RUNTIME_ADAPTER_IMPLEMENTATION_TASK_REGI
   "openclaw-cloud-consciousness-live-provider-runtime-adapter-implementation-task-v0";
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RUNTIME_ADAPTER_MODULE_TASK_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-runtime-adapter-module-task-v0";
+const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_REQUEST_BUILDER_TASK_REGISTRY =
+  "openclaw-cloud-consciousness-live-provider-request-builder-task-v0";
 
 function phase18Governance(extra = {}) {
   return {
@@ -108,6 +110,26 @@ function phase28Governance(extra = {}) {
   return {
     phase: "phase-28",
     pureProviderRequestBuilderReady: true,
+    implementsRuntimeAdapter: false,
+    callsCloudModel: false,
+    transmitsExternally: false,
+    liveProviderCallEnabled: false,
+    providerSdkLoaded: false,
+    providerCredentialRead: false,
+    credentialValueRead: false,
+    endpointContacted: false,
+    networkEgress: false,
+    ...extra,
+  };
+}
+
+function phase29Governance(extra = {}) {
+  return {
+    phase: "phase-29",
+    createsTask: false,
+    createsApproval: false,
+    pureProviderRequestBuilderReady: true,
+    usesProviderRequestBuilder: true,
     implementsRuntimeAdapter: false,
     callsCloudModel: false,
     transmitsExternally: false,
@@ -861,6 +883,130 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     };
   }
 
+  async function createCloudConsciousnessLiveProviderRequestBuilderTask({ confirm = false } = {}) {
+    if (confirm !== true) {
+      throw new Error("Cloud consciousness live provider request builder task creation requires confirm=true.");
+    }
+
+    const requestBuilder = await buildCloudConsciousnessLiveProviderRequestBuilder();
+    if (requestBuilder.summary?.ready !== true) {
+      throw new Error("Cloud consciousness live provider request builder task requires a ready Phase 28 request builder.");
+    }
+
+    const policyRequest = {
+      intent: "cloud_consciousness.live_provider_call.provider_request_builder",
+      domain: "cross_boundary",
+      risk: "high",
+      requiresApproval: true,
+      audit: true,
+      tags: ["cloud_consciousness", "live_provider_call", "provider_request_builder_task", "operator_reviewed"],
+    };
+    const goal = "Prepare reviewed live provider request builder task without reading credentials or enabling egress";
+    const policyDecision = evaluatePolicyIntent({
+      type: "cloud_consciousness_live_provider_request_builder_task",
+      goal,
+      policy: policyRequest,
+    }, {
+      stage: "cloud_consciousness.live_provider_request_builder_task.draft",
+      type: "cloud_consciousness_live_provider_request_builder_task",
+      goal,
+    });
+
+    const task = createTask({
+      goal,
+      type: "cloud_consciousness_live_provider_request_builder_task",
+      workViewStrategy: "cloud-consciousness-live-provider-request-builder",
+      policy: policyRequest,
+      plan: {
+        planner: "cloud-consciousness-live-provider-request-builder-task-v0",
+        strategy: "approval-gated-cloud-consciousness-live-provider-request-builder-shell",
+        summary: "Create an approval-gated task shell around the pure provider request builder while keeping credentials, endpoints, network egress, and live provider calls disabled.",
+        governance: phase29Governance({ createsTask: true, createsApproval: true }),
+        steps: [
+          {
+            id: "review-provider-request-builder",
+            phase: "review_live_provider_request_builder",
+            title: "Review Phase 28 pure provider request builder output",
+            status: "pending",
+            requiresApproval: false,
+          },
+          {
+            id: "operator-approval",
+            phase: "waiting_for_approval",
+            title: "Wait for operator approval before request builder output can be used by a runtime adapter path",
+            status: "pending",
+            capabilityId: "act.system.command.dry_run",
+            requiresApproval: true,
+            risk: "high",
+          },
+          {
+            id: "defer-provider-request-builder-use",
+            phase: "cloud_consciousness_live_provider_request_builder_deferred",
+            title: "Record approved request-builder task shell and defer credential, endpoint, network, and live-call work",
+            status: "pending",
+            requiresApproval: true,
+            executesNow: false,
+          },
+        ],
+      },
+    }, { skipInitialPolicy: true });
+
+    task.policy = {
+      request: policyRequest,
+      decision: policyDecision,
+    };
+    task.cloudConsciousnessLiveProviderRequestBuilder = {
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_REQUEST_BUILDER_TASK_REGISTRY,
+      requestBuilderRegistry: requestBuilder.registry,
+      providerRequestPath: requestBuilder.providerRequest?.request?.path ?? "/v1/chat/completions",
+      providerRequestMethod: requestBuilder.providerRequest?.request?.method ?? "POST",
+      messageCount: requestBuilder.summary?.messageCount ?? 0,
+      implementationStatus: "task_shell_only",
+      pureProviderRequestBuilderReady: true,
+      usesProviderRequestBuilder: true,
+      credentialReferenceOnly: true,
+      credentialValueIncluded: false,
+      implementsRuntimeAdapter: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      credentialValueRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      transmitsExternally: false,
+      liveProviderCallEnabled: false,
+    };
+
+    const approval = createApprovalRequestForTask(task, policyDecision);
+    const reclaimedTasks = supersedeOtherActiveTasks(task.id);
+    reconcileRuntimeState();
+    persistState();
+
+    await publishEvent("task.created", {
+      task: serialiseTask(task),
+      planner: "cloud-consciousness-live-provider-request-builder-task-v0",
+    });
+    await publishTaskApprovalIfPending(task);
+    await publishEvent("task.planned", {
+      task: serialiseTask(task),
+      plan: task.plan,
+    });
+    await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+      task: serialiseTask(reclaimedTask),
+    })));
+
+    return {
+      ok: true,
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_REQUEST_BUILDER_TASK_REGISTRY,
+      mode: "approval-gated-cloud-consciousness-live-provider-request-builder-task",
+      generatedAt: new Date().toISOString(),
+      sourceRegistry: requestBuilder.registry,
+      requestBuilder,
+      task,
+      approval,
+      governance: phase29Governance({ createsTask: true, createsApproval: true }),
+    };
+  }
+
   function isCloudConsciousnessLiveProviderRuntimeAdapterModuleTask(task) {
     return task?.type === "cloud_consciousness_live_provider_runtime_adapter_module_task"
       && task?.cloudConsciousnessLiveProviderRuntimeAdapterModule?.registry
@@ -1055,6 +1201,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     buildCloudConsciousnessLiveProviderCallRuntimeAdapterImplementation,
     buildCloudConsciousnessLiveProviderRuntimeAdapterModuleContract,
     buildCloudConsciousnessLiveProviderRequestBuilder,
+    createCloudConsciousnessLiveProviderRequestBuilderTask,
     createCloudConsciousnessLiveProviderRuntimeAdapterModuleTask,
     isCloudConsciousnessLiveProviderRuntimeAdapterModuleTask,
     executeCloudConsciousnessLiveProviderRuntimeAdapterModuleTask,

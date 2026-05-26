@@ -97,6 +97,7 @@ export function registerRoutes(deps) {
     buildCloudConsciousnessLiveProviderCallRuntimeAdapterImplementation,
     buildCloudConsciousnessLiveProviderRuntimeAdapterModuleContract,
     buildCloudConsciousnessLiveProviderRequestBuilder,
+    createCloudConsciousnessLiveProviderRequestBuilderTask,
     createCloudConsciousnessLiveProviderRuntimeAdapterModuleTask,
     createCloudConsciousnessLiveProviderRuntimeAdapterImplementationTask,
   } = planBuilder;
@@ -2246,6 +2247,31 @@ export function registerRoutes(deps) {
         generatedAt: result.generatedAt,
         sourceRegistry: result.sourceRegistry,
         moduleContract: result.moduleContract,
+        task: serialiseTask(result.task),
+        approval: serialiseApproval(result.approval),
+        governance: result.governance,
+        summary: buildTaskSummary(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-request-builder-tasks") {
+    try {
+      const body = await readJsonBody(req);
+      const result = await createCloudConsciousnessLiveProviderRequestBuilderTask({
+        confirm: body.confirm === true,
+      });
+      sendJson(res, 201, {
+        ok: true,
+        registry: result.registry,
+        mode: result.mode,
+        generatedAt: result.generatedAt,
+        sourceRegistry: result.sourceRegistry,
+        requestBuilder: result.requestBuilder,
         task: serialiseTask(result.task),
         approval: serialiseApproval(result.approval),
         governance: result.governance,
