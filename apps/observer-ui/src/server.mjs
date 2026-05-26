@@ -870,6 +870,13 @@ function observerHtml() {
           <div class="metric"><span>Next</span><span id="cloud-live-runtime-impl-plan-next">loading</span></div>
           <pre id="cloud-live-runtime-impl-plan-json">Loading live provider runtime implementation plan...</pre>
         </section>
+        <section class="panel" id="cloud-consciousness-live-provider-call-runtime-adapter-implementation-panel">
+          <h2>Cloud Consciousness Live Provider Runtime Adapter Implementation</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-live-runtime-adapter-impl-ready">false</span></div>
+          <div class="metric"><span>Interface Defined</span><span id="cloud-live-runtime-adapter-impl-interface">false</span></div>
+          <div class="metric"><span>Next</span><span id="cloud-live-runtime-adapter-impl-next">loading</span></div>
+          <pre id="cloud-live-runtime-adapter-impl-json">Loading live provider runtime adapter implementation scaffold...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -2182,6 +2189,10 @@ const cloudLiveRuntimeImplPlanReady = document.querySelector("#cloud-live-runtim
 const cloudLiveRuntimeImplPlanImplemented = document.querySelector("#cloud-live-runtime-impl-plan-implemented");
 const cloudLiveRuntimeImplPlanNext = document.querySelector("#cloud-live-runtime-impl-plan-next");
 const cloudLiveRuntimeImplPlanJson = document.querySelector("#cloud-live-runtime-impl-plan-json");
+const cloudLiveRuntimeAdapterImplReady = document.querySelector("#cloud-live-runtime-adapter-impl-ready");
+const cloudLiveRuntimeAdapterImplInterface = document.querySelector("#cloud-live-runtime-adapter-impl-interface");
+const cloudLiveRuntimeAdapterImplNext = document.querySelector("#cloud-live-runtime-adapter-impl-next");
+const cloudLiveRuntimeAdapterImplJson = document.querySelector("#cloud-live-runtime-adapter-impl-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -7039,6 +7050,32 @@ async function refreshCloudConsciousnessLiveProviderCallRuntimeImplementationPla
   }
 }
 
+async function refreshCloudConsciousnessLiveProviderCallRuntimeAdapterImplementation() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-call-runtime-adapter-implementation\`);
+    const summary = data.summary ?? {};
+    cloudLiveRuntimeAdapterImplReady.textContent = String(Boolean(summary.ready));
+    cloudLiveRuntimeAdapterImplInterface.textContent = String(Boolean(summary.definesRuntimeAdapterInterface));
+    cloudLiveRuntimeAdapterImplNext.textContent = data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-call-runtime-adapter-implementation-task";
+    cloudLiveRuntimeAdapterImplJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-live-provider-call-runtime-adapter-implementation-v0"),
+      "Ready: " + Boolean(summary.ready) + " percent=" + (summary.completionPercent ?? 0),
+      "Interface defined: " + Boolean(summary.definesRuntimeAdapterInterface),
+      "Runtime implemented: " + Boolean(summary.implementsRuntimeAdapter),
+      "SDK loaded: " + Boolean(summary.providerSdkLoaded),
+      "Credential value read: " + Boolean(summary.credentialValueRead),
+      "Endpoint contacted: " + Boolean(summary.endpointContacted),
+      "Network egress: " + Boolean(summary.networkEgress),
+      "Next: " + (data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-call-runtime-adapter-implementation-task"),
+    ].join("\\n");
+  } catch {
+    cloudLiveRuntimeAdapterImplReady.textContent = "false";
+    cloudLiveRuntimeAdapterImplInterface.textContent = "false";
+    cloudLiveRuntimeAdapterImplNext.textContent = "openclaw-cloud-consciousness-live-provider-call-runtime-adapter-implementation-task";
+    cloudLiveRuntimeAdapterImplJson.textContent = "Unable to read live provider runtime adapter implementation scaffold.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -10116,6 +10153,7 @@ await refreshCloudConsciousnessLiveProviderRuntimeAdapterExit();
 await refreshCloudConsciousnessLiveProviderCallFinalAuthorization();
 await refreshCloudConsciousnessLiveProviderCallOperatorLaunchReview();
 await refreshCloudConsciousnessLiveProviderCallRuntimeImplementationPlan();
+await refreshCloudConsciousnessLiveProviderCallRuntimeAdapterImplementation();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -10297,6 +10335,7 @@ setInterval(refreshCloudConsciousnessLiveProviderRuntimeAdapterExit, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderCallFinalAuthorization, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderCallOperatorLaunchReview, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderCallRuntimeImplementationPlan, 5000);
+setInterval(refreshCloudConsciousnessLiveProviderCallRuntimeAdapterImplementation, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);
