@@ -31,6 +31,9 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     reconcileRuntimeState,
     persistState,
     serialiseTask,
+    appendTaskPhase,
+    completeTask,
+    approvals,
   } = deps;
 
   async function createCloudConsciousnessLiveProviderRuntimeImplementationTask({ confirm = false } = {}) {
@@ -149,7 +152,96 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     };
   }
 
+  function isCloudConsciousnessLiveProviderRuntimeImplementationTask(task) {
+    return task?.type === "cloud_consciousness_live_provider_runtime_implementation_task"
+      && task?.cloudConsciousnessLiveProviderRuntimeImplementation?.registry
+        === CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RUNTIME_IMPLEMENTATION_TASK_REGISTRY;
+  }
+
+  async function executeCloudConsciousnessLiveProviderRuntimeImplementationTask(task) {
+    const implementationPlan = await buildRuntimeImplementationPlan();
+    const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
+    if (approval?.status !== "approved") {
+      return {
+        blocked: true,
+        reason: "approval_required",
+        task,
+        approval: approval ? { ...approval } : null,
+        policy: task.policy?.decision ?? null,
+      };
+    }
+
+    task.cloudConsciousnessLiveProviderRuntimeImplementation = {
+      ...(task.cloudConsciousnessLiveProviderRuntimeImplementation ?? {}),
+      implementationStatus: "deferred_after_approval",
+      approvedAt: approval.updatedAt,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      credentialValueRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      transmitsExternally: false,
+      liveProviderCallEnabled: false,
+    };
+    appendTaskPhase(task, "cloud_consciousness_live_provider_runtime_implementation_deferred", {
+      implementationPlanRegistry: implementationPlan.registry,
+      deferredSlice: "openclaw-cloud-consciousness-live-provider-call-runtime-adapter-implementation",
+      reason: "runtime implementation shell approved; SDK, credential, endpoint, network, and live call remain deferred",
+      callsCloudModel: false,
+      transmitsExternally: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      credentialValueRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      liveProviderCallEnabled: false,
+    });
+    completeTask(task, {
+      summary: "Approved runtime implementation task shell recorded; live provider runtime remains deferred.",
+      implementationPlanRegistry: implementationPlan.registry,
+      phase: "cloud_consciousness_live_provider_runtime_implementation_deferred",
+      callsCloudModel: false,
+      transmitsExternally: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      credentialValueRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      liveProviderCallEnabled: false,
+    });
+    persistState();
+    await publishEvent("task.completed", {
+      task: serialiseTask(task),
+      implementationPlan: {
+        registry: implementationPlan.registry,
+        ready: implementationPlan.summary?.ready ?? null,
+      },
+    });
+    return {
+      ok: true,
+      executor: "cloud-consciousness-live-provider-runtime-implementation-task-v0",
+      status: "runtime_implementation_deferred_after_approval",
+      task,
+      implementationPlan,
+      governance: phase18Governance({ createsTask: true, createsApproval: true }),
+      summary: {
+        ready: true,
+        implementationStatus: "deferred_after_approval",
+        callsCloudModel: false,
+        transmitsExternally: false,
+        providerSdkLoaded: false,
+        providerCredentialRead: false,
+        credentialValueRead: false,
+        endpointContacted: false,
+        networkEgress: false,
+        liveProviderCallEnabled: false,
+      },
+    };
+  }
+
   return {
     createCloudConsciousnessLiveProviderRuntimeImplementationTask,
+    isCloudConsciousnessLiveProviderRuntimeImplementationTask,
+    executeCloudConsciousnessLiveProviderRuntimeImplementationTask,
   };
 }

@@ -87,6 +87,9 @@ export function createPlanBuilder(deps) {
     reconcileRuntimeState,
     persistState,
     serialiseTask,
+    appendTaskPhase,
+    completeTask,
+    approvals,
   });
 
 function buildOperatorState() {
