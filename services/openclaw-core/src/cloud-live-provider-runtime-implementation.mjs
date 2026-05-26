@@ -1247,6 +1247,95 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     };
   }
 
+  function isCloudConsciousnessLiveProviderCredentialReferenceResolverTask(task) {
+    return task?.type === "cloud_consciousness_live_provider_credential_reference_resolver_task"
+      && task?.cloudConsciousnessLiveProviderCredentialReferenceResolver?.registry
+        === CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_REFERENCE_RESOLVER_TASK_REGISTRY;
+  }
+
+  async function executeCloudConsciousnessLiveProviderCredentialReferenceResolverTask(task) {
+    const credentialResolver = await buildCloudConsciousnessLiveProviderCredentialReferenceResolver();
+    const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
+    if (approval?.status !== "approved") {
+      return {
+        blocked: true,
+        reason: "approval_required",
+        task,
+        approval: approval ? { ...approval } : null,
+      };
+    }
+
+    task.cloudConsciousnessLiveProviderCredentialReferenceResolver = {
+      ...(task.cloudConsciousnessLiveProviderCredentialReferenceResolver ?? {}),
+      implementationStatus: "deferred_after_approval",
+      approvedAt: approval.updatedAt,
+      credentialResolverRegistry: credentialResolver.registry,
+      credentialReferencePresent: credentialResolver.summary?.credentialReferencePresent ?? false,
+      validReference: credentialResolver.summary?.validReference ?? false,
+      pureCredentialReferenceResolverReady: true,
+      referenceOnly: true,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      implementsRuntimeAdapter: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      transmitsExternally: false,
+      liveProviderCallEnabled: false,
+    };
+    appendTaskPhase(task, "cloud_consciousness_live_provider_credential_reference_resolver_deferred", {
+      credentialResolverRegistry: credentialResolver.registry,
+      deferredSlice: "openclaw-cloud-consciousness-approved-live-provider-credential-reference-resolver-deferred",
+      reason: "credential reference resolver task approved; credential-store access, credential values, endpoint contact, network egress, and live provider call remain deferred",
+      referenceOnly: true,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      liveProviderCallEnabled: false,
+    });
+    completeTask(task, {
+      summary: "Approved credential reference resolver task shell recorded; credential-store access remains deferred.",
+      credentialResolverRegistry: credentialResolver.registry,
+      phase: "cloud_consciousness_live_provider_credential_reference_resolver_deferred",
+      referenceOnly: true,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      liveProviderCallEnabled: false,
+    });
+    reconcileRuntimeState();
+    persistState();
+    await publishEvent("task.phase_changed", { task: serialiseTask(task) });
+    return {
+      ok: true,
+      executor: "cloud-consciousness-live-provider-credential-reference-resolver-task-v0",
+      status: "credential_reference_resolver_deferred_after_approval",
+      task,
+      credentialResolver,
+      governance: phase33Governance({ createsTask: true, createsApproval: true }),
+      summary: {
+        ready: true,
+        implementationStatus: "deferred_after_approval",
+        referenceOnly: true,
+        credentialValueIncluded: false,
+        credentialValueRead: false,
+        credentialValueExposed: false,
+        providerCredentialRead: false,
+        endpointContacted: false,
+        networkEgress: false,
+        liveProviderCallEnabled: false,
+      },
+    };
+  }
+
   function isCloudConsciousnessLiveProviderRequestBuilderTask(task) {
     return task?.type === "cloud_consciousness_live_provider_request_builder_task"
       && task?.cloudConsciousnessLiveProviderRequestBuilder?.registry
@@ -1537,6 +1626,8 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     buildCloudConsciousnessLiveProviderRequestBuilder,
     buildCloudConsciousnessLiveProviderCredentialReferenceResolver,
     createCloudConsciousnessLiveProviderCredentialReferenceResolverTask,
+    isCloudConsciousnessLiveProviderCredentialReferenceResolverTask,
+    executeCloudConsciousnessLiveProviderCredentialReferenceResolverTask,
     createCloudConsciousnessLiveProviderRequestBuilderTask,
     isCloudConsciousnessLiveProviderRequestBuilderTask,
     executeCloudConsciousnessLiveProviderRequestBuilderTask,
