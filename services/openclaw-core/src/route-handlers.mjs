@@ -96,6 +96,7 @@ export function registerRoutes(deps) {
     createCloudConsciousnessLiveProviderRuntimeImplementationTask,
     buildCloudConsciousnessLiveProviderCallRuntimeAdapterImplementation,
     buildCloudConsciousnessLiveProviderRuntimeAdapterModuleContract,
+    createCloudConsciousnessLiveProviderRuntimeAdapterModuleTask,
     createCloudConsciousnessLiveProviderRuntimeAdapterImplementationTask,
   } = planBuilder;
   const { executeTask, executeTaskWithRecovery, serialiseExecutionResult, listCommandTranscriptRecords, buildCommandTranscriptSummary, serialiseCommandTranscriptSummary, listFilesystemChangeRecords, buildFilesystemChangeSummary, serialiseFilesystemChangeSummary, listFilesystemReadRecords, buildFilesystemReadSummary, serialiseFilesystemReadSummary, buildOperatorState, buildOperatorOptions, runOperatorStep, runOperatorLoop } = executor;
@@ -2214,6 +2215,31 @@ export function registerRoutes(deps) {
         generatedAt: result.generatedAt,
         sourceRegistry: result.sourceRegistry,
         adapterImplementation: result.adapterImplementation,
+        task: serialiseTask(result.task),
+        approval: serialiseApproval(result.approval),
+        governance: result.governance,
+        summary: buildTaskSummary(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-runtime-adapter-module-tasks") {
+    try {
+      const body = await readJsonBody(req);
+      const result = await createCloudConsciousnessLiveProviderRuntimeAdapterModuleTask({
+        confirm: body.confirm === true,
+      });
+      sendJson(res, 201, {
+        ok: true,
+        registry: result.registry,
+        mode: result.mode,
+        generatedAt: result.generatedAt,
+        sourceRegistry: result.sourceRegistry,
+        moduleContract: result.moduleContract,
         task: serialiseTask(result.task),
         approval: serialiseApproval(result.approval),
         governance: result.governance,
