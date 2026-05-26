@@ -119,7 +119,8 @@ if (
   || contract.registry !== contractRegistry
   || contract.summary?.ready !== true
   || contract.summary?.moduleBoundaryDefined !== true
-  || contract.summary?.implementedMethodCount !== 0
+  || contract.summary?.methodCount < 6
+  || contract.summary?.implementedMethodCount > contract.summary?.methodCount
 ) {
   throw new Error(`Phase 24 module contract regression failed: ${JSON.stringify(contract.summary)}`);
 }

@@ -884,6 +884,13 @@ function observerHtml() {
           <div class="metric"><span>Next</span><span id="cloud-live-runtime-adapter-module-next">loading</span></div>
           <pre id="cloud-live-runtime-adapter-module-json">Loading live provider runtime adapter module contract...</pre>
         </section>
+        <section class="panel" id="cloud-consciousness-live-provider-request-builder-panel">
+          <h2>Cloud Consciousness Live Provider Request Builder</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-live-provider-request-builder-ready">false</span></div>
+          <div class="metric"><span>Messages</span><span id="cloud-live-provider-request-builder-messages">0</span></div>
+          <div class="metric"><span>Next</span><span id="cloud-live-provider-request-builder-next">loading</span></div>
+          <pre id="cloud-live-provider-request-builder-json">Loading live provider request builder...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -2204,6 +2211,10 @@ const cloudLiveRuntimeAdapterModuleReady = document.querySelector("#cloud-live-r
 const cloudLiveRuntimeAdapterModuleBoundary = document.querySelector("#cloud-live-runtime-adapter-module-boundary");
 const cloudLiveRuntimeAdapterModuleNext = document.querySelector("#cloud-live-runtime-adapter-module-next");
 const cloudLiveRuntimeAdapterModuleJson = document.querySelector("#cloud-live-runtime-adapter-module-json");
+const cloudLiveProviderRequestBuilderReady = document.querySelector("#cloud-live-provider-request-builder-ready");
+const cloudLiveProviderRequestBuilderMessages = document.querySelector("#cloud-live-provider-request-builder-messages");
+const cloudLiveProviderRequestBuilderNext = document.querySelector("#cloud-live-provider-request-builder-next");
+const cloudLiveProviderRequestBuilderJson = document.querySelector("#cloud-live-provider-request-builder-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -7118,6 +7129,31 @@ async function refreshCloudConsciousnessLiveProviderRuntimeAdapterModuleContract
   }
 }
 
+async function refreshCloudConsciousnessLiveProviderRequestBuilder() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-request-builder\`);
+    const summary = data.summary ?? {};
+    cloudLiveProviderRequestBuilderReady.textContent = String(Boolean(summary.ready));
+    cloudLiveProviderRequestBuilderMessages.textContent = String(summary.messageCount ?? 0);
+    cloudLiveProviderRequestBuilderNext.textContent = data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-request-builder-task";
+    cloudLiveProviderRequestBuilderJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-live-provider-request-builder-v0"),
+      "Ready: " + Boolean(summary.ready) + " percent=" + (summary.completionPercent ?? 0),
+      "Messages: " + (summary.messageCount ?? 0),
+      "Credential value included: " + Boolean(summary.credentialValueIncluded),
+      "Endpoint contacted: " + Boolean(summary.endpointContacted),
+      "Network egress: " + Boolean(summary.networkEgress),
+      "Live provider call: " + Boolean(summary.liveProviderCallEnabled),
+      "Next: " + (data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-request-builder-task"),
+    ].join("\\n");
+  } catch {
+    cloudLiveProviderRequestBuilderReady.textContent = "false";
+    cloudLiveProviderRequestBuilderMessages.textContent = "0";
+    cloudLiveProviderRequestBuilderNext.textContent = "openclaw-cloud-consciousness-live-provider-request-builder-task";
+    cloudLiveProviderRequestBuilderJson.textContent = "Unable to read live provider request builder.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -10197,6 +10233,7 @@ await refreshCloudConsciousnessLiveProviderCallOperatorLaunchReview();
 await refreshCloudConsciousnessLiveProviderCallRuntimeImplementationPlan();
 await refreshCloudConsciousnessLiveProviderCallRuntimeAdapterImplementation();
 await refreshCloudConsciousnessLiveProviderRuntimeAdapterModuleContract();
+await refreshCloudConsciousnessLiveProviderRequestBuilder();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -10380,6 +10417,7 @@ setInterval(refreshCloudConsciousnessLiveProviderCallOperatorLaunchReview, 5000)
 setInterval(refreshCloudConsciousnessLiveProviderCallRuntimeImplementationPlan, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderCallRuntimeAdapterImplementation, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderRuntimeAdapterModuleContract, 5000);
+setInterval(refreshCloudConsciousnessLiveProviderRequestBuilder, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);

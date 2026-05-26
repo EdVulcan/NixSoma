@@ -1,4 +1,7 @@
-import { buildCloudLiveProviderRuntimeAdapterModuleContract } from "./cloud-live-provider-runtime-adapter.mjs";
+import {
+  buildCloudLiveProviderRuntimeAdapterModuleContract,
+  buildProviderRequest,
+} from "./cloud-live-provider-runtime-adapter.mjs";
 
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RUNTIME_IMPLEMENTATION_TASK_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-runtime-implementation-task-v0";
@@ -88,6 +91,23 @@ function phase25Governance(extra = {}) {
     moduleBoundaryDefined: true,
     mutatesModule: false,
     writesSource: false,
+    implementsRuntimeAdapter: false,
+    callsCloudModel: false,
+    transmitsExternally: false,
+    liveProviderCallEnabled: false,
+    providerSdkLoaded: false,
+    providerCredentialRead: false,
+    credentialValueRead: false,
+    endpointContacted: false,
+    networkEgress: false,
+    ...extra,
+  };
+}
+
+function phase28Governance(extra = {}) {
+  return {
+    phase: "phase-28",
+    pureProviderRequestBuilderReady: true,
     implementsRuntimeAdapter: false,
     callsCloudModel: false,
     transmitsExternally: false,
@@ -744,6 +764,103 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     };
   }
 
+  async function buildCloudConsciousnessLiveProviderRequestBuilder() {
+    const moduleContract = await buildCloudConsciousnessLiveProviderRuntimeAdapterModuleContract();
+    const providerRequest = buildProviderRequest({
+      executionPlan: {
+        runbookRecordId: "phase28-runbook-record",
+        runbookContentHash: "phase28-runbook-content-hash",
+        requestEnvelopeHash: "phase28-request-envelope-hash",
+        endpointFingerprint: "phase28-endpoint-fingerprint",
+        credentialReference: "openclaw://credential/provider/live-provider-fixture",
+      },
+      requestEnvelope: {
+        id: "phase28-reviewed-request-envelope",
+        messages: [
+          {
+            role: "system",
+            content: "OpenClaw live provider adapter request builder dry run. Do not transmit externally.",
+          },
+          {
+            role: "user",
+            content: "Prepare the reviewed OpenClaw provider request payload from approved metadata only.",
+          },
+        ],
+      },
+      operatorAuthorization: {
+        state: "not_authorized",
+      },
+    });
+    const checks = [
+      {
+        id: "phase-24-module-contract-ready",
+        label: "Phase 24 runtime adapter module contract is ready",
+        passed: moduleContract.summary?.ready === true,
+        evidence: moduleContract.registry,
+      },
+      {
+        id: "pure-request-builder-ready",
+        label: "buildProviderRequest returns a local serialized provider request",
+        passed: providerRequest.summary?.ready === true
+          && typeof providerRequest.request?.bodyText === "string"
+          && providerRequest.request.bodyText.includes("phase28-request-envelope-hash"),
+        evidence: providerRequest.registry,
+      },
+      {
+        id: "no-live-provider-activity",
+        label: "Provider request builder does not read credentials, contact endpoints, transmit externally, or call providers",
+        passed: providerRequest.governance?.credentialValueRead === false
+          && providerRequest.governance?.endpointContacted === false
+          && providerRequest.governance?.networkEgress === false
+          && providerRequest.governance?.liveProviderCallEnabled === false,
+        evidence: "pure-function",
+      },
+    ];
+    const passed = checks.filter((check) => check.passed).length;
+    const ready = passed === checks.length;
+    return {
+      ok: true,
+      registry: providerRequest.registry,
+      mode: "phase_28_pure_provider_request_builder",
+      generatedAt: new Date().toISOString(),
+      status: ready ? "provider_request_builder_ready_no_live_egress" : "waiting_for_provider_request_builder_prerequisites",
+      governance: phase28Governance(),
+      providerRequest,
+      checks,
+      summary: {
+        ready,
+        complete: ready,
+        passed,
+        total: checks.length,
+        completionPercent: ready ? 100 : Math.round((passed / checks.length) * 100),
+        phase: "phase-28",
+        pureProviderRequestBuilderReady: true,
+        messageCount: providerRequest.summary?.messageCount ?? 0,
+        credentialValueIncluded: false,
+        implementsRuntimeAdapter: false,
+        callsCloudModel: false,
+        transmitsExternally: false,
+        providerSdkLoaded: false,
+        providerCredentialRead: false,
+        credentialValueRead: false,
+        endpointContacted: false,
+        networkEgress: false,
+        liveProviderCallEnabled: false,
+      },
+      evidence: {
+        moduleContract: {
+          registry: moduleContract.registry,
+          ready: moduleContract.summary?.ready ?? null,
+          implementedMethodCount: moduleContract.summary?.implementedMethodCount ?? null,
+        },
+      },
+      next: {
+        recommendedSlice: "openclaw-cloud-consciousness-live-provider-request-builder-task",
+        boundary: "separate approval is required before using this request builder in any executable egress path",
+      },
+    };
+  }
+
   function isCloudConsciousnessLiveProviderRuntimeAdapterModuleTask(task) {
     return task?.type === "cloud_consciousness_live_provider_runtime_adapter_module_task"
       && task?.cloudConsciousnessLiveProviderRuntimeAdapterModule?.registry
@@ -937,6 +1054,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     executeCloudConsciousnessLiveProviderRuntimeImplementationTask,
     buildCloudConsciousnessLiveProviderCallRuntimeAdapterImplementation,
     buildCloudConsciousnessLiveProviderRuntimeAdapterModuleContract,
+    buildCloudConsciousnessLiveProviderRequestBuilder,
     createCloudConsciousnessLiveProviderRuntimeAdapterModuleTask,
     isCloudConsciousnessLiveProviderRuntimeAdapterModuleTask,
     executeCloudConsciousnessLiveProviderRuntimeAdapterModuleTask,

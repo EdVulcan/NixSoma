@@ -1,10 +1,12 @@
 const RUNTIME_ADAPTER_MODULE_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-runtime-adapter-module-contract-v0";
+const PROVIDER_REQUEST_BUILDER_REGISTRY =
+  "openclaw-cloud-consciousness-live-provider-request-builder-v0";
 
 const ADAPTER_METHODS = [
   {
     name: "buildProviderRequest",
-    implemented: false,
+    implemented: true,
     boundary: "pure serialization only; no credential values, SDK calls, or network egress",
   },
   {
@@ -34,7 +36,97 @@ const ADAPTER_METHODS = [
   },
 ];
 
+function stableJson(value) {
+  if (value === undefined) {
+    return "null";
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableJson(item)).join(",")}]`;
+  }
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function normaliseMessages(messages) {
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return [];
+  }
+  return messages
+    .filter((message) => message && typeof message === "object")
+    .map((message) => ({
+      role: typeof message.role === "string" && message.role.trim() ? message.role.trim() : "user",
+      content: typeof message.content === "string" ? message.content : "",
+    }));
+}
+
+export function buildProviderRequest({
+  executionPlan = {},
+  requestEnvelope = {},
+  operatorAuthorization = {},
+} = {}) {
+  const messages = normaliseMessages(requestEnvelope.messages ?? requestEnvelope.request?.messages);
+  const body = {
+    model: requestEnvelope.model ?? "operator-selected-model",
+    messages,
+    metadata: {
+      openclawRequestId: requestEnvelope.id ?? executionPlan.requestEnvelopeHash ?? null,
+      runbookRecordId: executionPlan.runbookRecordId ?? requestEnvelope.runbookRecordId ?? null,
+      runbookContentHash: executionPlan.runbookContentHash ?? requestEnvelope.runbookContentHash ?? null,
+      requestEnvelopeHash: executionPlan.requestEnvelopeHash ?? requestEnvelope.contentHash ?? null,
+      endpointFingerprint: executionPlan.endpointFingerprint ?? requestEnvelope.endpointFingerprint ?? null,
+      authorizationState: operatorAuthorization.state ?? "not_authorized",
+    },
+  };
+  const bodyText = stableJson(body);
+  return {
+    ok: true,
+    registry: PROVIDER_REQUEST_BUILDER_REGISTRY,
+    mode: "phase_28_pure_provider_request_builder",
+    request: {
+      method: "POST",
+      path: "/v1/chat/completions",
+      headers: {
+        "content-type": "application/json",
+        "x-openclaw-egress-mode": "disabled",
+      },
+      body,
+      bodyText,
+      credentialReference: executionPlan.credentialReference ?? null,
+      credentialValue: null,
+      endpoint: {
+        fingerprint: executionPlan.endpointFingerprint ?? null,
+        contacted: false,
+      },
+    },
+    governance: {
+      pureFunction: true,
+      mutatesModule: false,
+      writesSource: false,
+      callsCloudModel: false,
+      transmitsExternally: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      credentialValueRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      liveProviderCallEnabled: false,
+    },
+    summary: {
+      ready: messages.length > 0,
+      messageCount: messages.length,
+      hasCredentialReference: typeof executionPlan.credentialReference === "string",
+      credentialValueIncluded: false,
+      endpointContacted: false,
+      networkEgress: false,
+      liveProviderCallEnabled: false,
+    },
+  };
+}
+
 export function buildCloudLiveProviderRuntimeAdapterModuleContract() {
+  const implementedMethodCount = ADAPTER_METHODS.filter((method) => method.implemented).length;
   return {
     ok: true,
     registry: RUNTIME_ADAPTER_MODULE_REGISTRY,
@@ -70,7 +162,8 @@ export function buildCloudLiveProviderRuntimeAdapterModuleContract() {
       completionPercent: 100,
       moduleBoundaryDefined: true,
       methodCount: ADAPTER_METHODS.length,
-      implementedMethodCount: ADAPTER_METHODS.filter((method) => method.implemented).length,
+      implementedMethodCount,
+      pureProviderRequestBuilderReady: true,
       implementsRuntimeAdapter: false,
       providerSdkLoaded: false,
       providerCredentialRead: false,

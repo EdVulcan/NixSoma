@@ -96,6 +96,7 @@ export function registerRoutes(deps) {
     createCloudConsciousnessLiveProviderRuntimeImplementationTask,
     buildCloudConsciousnessLiveProviderCallRuntimeAdapterImplementation,
     buildCloudConsciousnessLiveProviderRuntimeAdapterModuleContract,
+    buildCloudConsciousnessLiveProviderRequestBuilder,
     createCloudConsciousnessLiveProviderRuntimeAdapterModuleTask,
     createCloudConsciousnessLiveProviderRuntimeAdapterImplementationTask,
   } = planBuilder;
@@ -559,6 +560,11 @@ export function registerRoutes(deps) {
 
   if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-runtime-adapter-module-contract") {
     sendJson(res, 200, await buildCloudConsciousnessLiveProviderRuntimeAdapterModuleContract());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-request-builder") {
+    sendJson(res, 200, await buildCloudConsciousnessLiveProviderRequestBuilder());
     return;
   }
 

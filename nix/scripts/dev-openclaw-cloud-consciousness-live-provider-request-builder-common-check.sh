@@ -3,13 +3,13 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-OBSERVER_CHECK="${PHASE24_OBSERVER_CHECK:-false}"
-PORT_BASE="${PHASE24_PORT_BASE:-8580}"
+OBSERVER_CHECK="${PHASE28_OBSERVER_CHECK:-false}"
+PORT_BASE="${PHASE28_PORT_BASE:-8660}"
 CLOUD_DIR="$REPO_ROOT/.artifacts/openclaw-cloud-consciousness"
 PROVIDER_RESPONSE_FILE="$CLOUD_DIR/provider-response-rehearsal.jsonl"
 RUNBOOK_FILE="$CLOUD_DIR/live-provider-call-runbook.jsonl"
 EXECUTION_PLAN_FILE="$CLOUD_DIR/live-provider-call-execution-plan.jsonl"
-PLAN_DOC="$REPO_ROOT/docs/plans/OPENCLAW_PHASE_24_PLAN.md"
+PLAN_DOC="$REPO_ROOT/docs/plans/OPENCLAW_PHASE_28_PLAN.md"
 MODULE_FILE="$REPO_ROOT/services/openclaw-core/src/cloud-live-provider-runtime-adapter.mjs"
 
 export OPENCLAW_CORE_PORT="${OPENCLAW_CORE_PORT:-$PORT_BASE}"
@@ -21,18 +21,18 @@ export OPENCLAW_SCREEN_ACT_PORT="${OPENCLAW_SCREEN_ACT_PORT:-$((PORT_BASE + 5))}
 export OPENCLAW_SYSTEM_SENSE_PORT="${OPENCLAW_SYSTEM_SENSE_PORT:-$((PORT_BASE + 6))}"
 export OPENCLAW_SYSTEM_HEAL_PORT="${OPENCLAW_SYSTEM_HEAL_PORT:-$((PORT_BASE + 7))}"
 export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-$((PORT_BASE + 8))}"
-export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-phase-24-runtime-adapter-module-contract-check.json}"
-export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-system-heal-phase-24-runtime-adapter-module-contract-check.json}"
+export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-phase-28-provider-request-builder-check.json}"
+export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-system-heal-phase-28-provider-request-builder-check.json}"
 
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 OBSERVER_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
-REGISTRY="openclaw-cloud-consciousness-live-provider-runtime-adapter-module-contract-v0"
+REGISTRY="openclaw-cloud-consciousness-live-provider-request-builder-v0"
 
 . "$SCRIPT_DIR/dev-openclaw-cloud-consciousness-live-provider-fixtures.sh"
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE.tmp"
-seed_live_provider_call_prerequisites "$CLOUD_DIR" "$PROVIDER_RESPONSE_FILE" "$RUNBOOK_FILE" "$EXECUTION_PLAN_FILE" "phase24-prereq"
+seed_live_provider_call_prerequisites "$CLOUD_DIR" "$PROVIDER_RESPONSE_FILE" "$RUNBOOK_FILE" "$EXECUTION_PLAN_FILE" "phase28-prereq"
 cleanup() {
   rm -f "${DATA_FILE:-}" "${HTML_FILE:-}" "${CLIENT_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
@@ -41,7 +41,7 @@ trap cleanup EXIT
 "$SCRIPT_DIR/dev-up.sh"
 
 DATA_FILE="$(mktemp)"
-curl --silent --fail "$CORE_URL/cloud-consciousness/live-provider-runtime-adapter-module-contract" > "$DATA_FILE"
+curl --silent --fail "$CORE_URL/cloud-consciousness/live-provider-request-builder" > "$DATA_FILE"
 
 if [[ "$OBSERVER_CHECK" == "true" ]]; then
   HTML_FILE="$(mktemp)"
@@ -55,24 +55,23 @@ const data = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
 const html = fs.readFileSync(process.argv[4], "utf8");
 const client = fs.readFileSync(process.argv[5], "utf8");
 for (const token of [
-  "Cloud Consciousness Live Provider Runtime Adapter Module Contract",
-  "cloud-consciousness-live-provider-runtime-adapter-module-contract-panel",
-  "cloud-live-runtime-adapter-module-ready",
+  "Cloud Consciousness Live Provider Request Builder",
+  "cloud-consciousness-live-provider-request-builder-panel",
+  "cloud-live-provider-request-builder-ready",
 ]) {
   if (!html.includes(token)) throw new Error(`Observer HTML missing ${token}`);
 }
 for (const token of [
-  "/cloud-consciousness/live-provider-runtime-adapter-module-contract",
-  "refreshCloudConsciousnessLiveProviderRuntimeAdapterModuleContract",
+  "/cloud-consciousness/live-provider-request-builder",
+  "refreshCloudConsciousnessLiveProviderRequestBuilder",
   registry,
-  "services/openclaw-core/src/cloud-live-provider-runtime-adapter.mjs",
 ]) {
   if (!client.includes(token)) throw new Error(`Observer client missing ${token}`);
 }
-if (!data.ok || data.summary?.ready !== true || data.summary?.moduleBoundaryDefined !== true) {
-  throw new Error(`Observer Phase 24 endpoint should be ready: ${JSON.stringify(data.summary)}`);
+if (!data.ok || data.summary?.ready !== true) {
+  throw new Error(`Observer Phase 28 endpoint should be ready: ${JSON.stringify(data.summary)}`);
 }
-console.log(JSON.stringify({ observerOpenClawCloudConsciousnessRuntimeAdapterModuleContract: { status: "passed", registry } }, null, 2));
+console.log(JSON.stringify({ observerOpenClawCloudConsciousnessLiveProviderRequestBuilder: { status: "passed", registry } }, null, 2));
 EOF
   exit 0
 fi
@@ -84,11 +83,18 @@ const doc = fs.readFileSync(process.argv[3], "utf8");
 const moduleSource = fs.readFileSync(process.argv[4], "utf8");
 const data = JSON.parse(fs.readFileSync(process.argv[5], "utf8"));
 for (const token of [
-  "openclaw-cloud-consciousness-live-provider-runtime-adapter-module-contract",
-  "cloud-live-provider-runtime-adapter.mjs",
-  "remains contract-only",
+  "openclaw-cloud-consciousness-live-provider-request-builder",
+  "buildProviderRequest",
+  "performs no live provider activity",
 ]) {
-  if (!doc.includes(token)) throw new Error(`Phase 24 plan doc missing ${token}`);
+  if (!doc.includes(token)) throw new Error(`Phase 28 plan doc missing ${token}`);
+}
+for (const token of [
+  "export function buildProviderRequest",
+  "stableJson",
+  "x-openclaw-egress-mode",
+]) {
+  if (!moduleSource.includes(token)) throw new Error(`Runtime adapter module missing pure request builder token: ${token}`);
 }
 for (const forbidden of [
   "fetch(",
@@ -96,32 +102,30 @@ for (const forbidden of [
   "https.request",
   "OPENAI_API_KEY",
   "ANTHROPIC_API_KEY",
-  "providerSdkLoaded: true",
   "credentialValueRead: true",
   "networkEgress: true",
   "liveProviderCallEnabled: true",
 ]) {
-  if (moduleSource.includes(forbidden)) throw new Error(`Runtime adapter module contract contains forbidden live implementation token: ${forbidden}`);
+  if (moduleSource.includes(forbidden)) throw new Error(`Pure request builder contains forbidden live implementation token: ${forbidden}`);
 }
 if (!data.ok || data.registry !== registry) {
-  throw new Error(`Unexpected Phase 24 registry: ${JSON.stringify({ ok: data.ok, registry: data.registry })}`);
+  throw new Error(`Unexpected Phase 28 registry: ${JSON.stringify({ ok: data.ok, registry: data.registry })}`);
 }
 if (
   data.summary?.ready !== true
   || data.summary?.completionPercent !== 100
-  || data.summary?.moduleBoundaryDefined !== true
-  || data.summary?.methodCount < 6
-  || data.summary?.implementedMethodCount > data.summary?.methodCount
-  || data.summary?.implementsRuntimeAdapter !== false
-  || data.summary?.providerSdkLoaded !== false
-  || data.summary?.credentialValueRead !== false
+  || data.summary?.pureProviderRequestBuilderReady !== true
+  || data.summary?.messageCount < 2
+  || data.summary?.credentialValueIncluded !== false
   || data.summary?.endpointContacted !== false
   || data.summary?.networkEgress !== false
   || data.summary?.liveProviderCallEnabled !== false
-  || data.moduleContract?.methods?.length < 6
-  || data.moduleContract.methods.some((method) => method.implemented !== false)
+  || data.providerRequest?.request?.credentialValue !== null
+  || data.providerRequest?.request?.endpoint?.contacted !== false
+  || data.providerRequest?.request?.headers?.["x-openclaw-egress-mode"] !== "disabled"
+  || !data.providerRequest?.request?.bodyText?.includes("phase28-request-envelope-hash")
 ) {
-  throw new Error(`Phase 24 runtime adapter module contract should be ready but non-live: ${JSON.stringify(data.summary)}`);
+  throw new Error(`Phase 28 provider request builder should be pure and non-live: ${JSON.stringify(data.summary)}`);
 }
-console.log(JSON.stringify({ openclawCloudConsciousnessRuntimeAdapterModuleContract: { status: "passed", registry } }, null, 2));
+console.log(JSON.stringify({ openclawCloudConsciousnessLiveProviderRequestBuilder: { status: "passed", registry } }, null, 2));
 EOF
