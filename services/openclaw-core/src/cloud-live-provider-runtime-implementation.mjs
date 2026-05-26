@@ -1,6 +1,7 @@
 import {
   buildCloudLiveProviderRuntimeAdapterModuleContract,
   buildProviderRequest,
+  resolveCredentialReference,
 } from "./cloud-live-provider-runtime-adapter.mjs";
 
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RUNTIME_IMPLEMENTATION_TASK_REGISTRY =
@@ -137,6 +138,26 @@ function phase29Governance(extra = {}) {
     providerSdkLoaded: false,
     providerCredentialRead: false,
     credentialValueRead: false,
+    endpointContacted: false,
+    networkEgress: false,
+    ...extra,
+  };
+}
+
+function phase32Governance(extra = {}) {
+  return {
+    phase: "phase-32",
+    pureProviderRequestBuilderReady: true,
+    pureCredentialReferenceResolverReady: true,
+    referenceOnly: true,
+    implementsRuntimeAdapter: false,
+    callsCloudModel: false,
+    transmitsExternally: false,
+    liveProviderCallEnabled: false,
+    providerSdkLoaded: false,
+    providerCredentialRead: false,
+    credentialValueRead: false,
+    credentialValueExposed: false,
     endpointContacted: false,
     networkEgress: false,
     ...extra,
@@ -1007,6 +1028,79 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     };
   }
 
+  async function buildCloudConsciousnessLiveProviderCredentialReferenceResolver() {
+    const requestBuilder = await buildCloudConsciousnessLiveProviderRequestBuilder();
+    const credentialReference = requestBuilder.providerRequest?.request?.credentialReference;
+    const credentialResolution = resolveCredentialReference({
+      executionPlan: {
+        credentialReference,
+      },
+    });
+    const checks = [
+      {
+        id: "phase-28-request-builder-ready",
+        label: "Phase 28 request builder carries a credential reference",
+        passed: requestBuilder.summary?.ready === true
+          && requestBuilder.summary?.credentialValueIncluded === false
+          && typeof credentialReference === "string",
+        evidence: requestBuilder.registry,
+      },
+      {
+        id: "credential-reference-valid",
+        label: "Credential resolver validates reference format without reading credential values",
+        passed: credentialResolution.summary?.ready === true
+          && credentialResolution.summary?.referenceOnly === true
+          && credentialResolution.summary?.credentialValueRead === false
+          && credentialResolution.credential?.value === null,
+        evidence: credentialResolution.registry,
+      },
+      {
+        id: "no-live-provider-activity",
+        label: "Credential reference resolver does not contact endpoints, transmit externally, or call providers",
+        passed: credentialResolution.governance?.endpointContacted === false
+          && credentialResolution.governance?.networkEgress === false
+          && credentialResolution.governance?.liveProviderCallEnabled === false,
+        evidence: "reference-only",
+      },
+    ];
+    const passed = checks.filter((check) => check.passed).length;
+    const ready = passed === checks.length;
+    return {
+      ok: true,
+      registry: credentialResolution.registry,
+      mode: "phase_32_credential_reference_resolver",
+      generatedAt: new Date().toISOString(),
+      status: ready ? "credential_reference_resolver_ready_no_value_read" : "waiting_for_credential_reference_resolver_prerequisites",
+      governance: phase32Governance(),
+      credentialResolution,
+      requestBuilder,
+      checks,
+      summary: {
+        ready,
+        complete: ready,
+        passed,
+        total: checks.length,
+        completionPercent: ready ? 100 : Math.round((passed / checks.length) * 100),
+        phase: "phase-32",
+        pureCredentialReferenceResolverReady: true,
+        credentialReferencePresent: credentialResolution.summary?.credentialReferencePresent ?? false,
+        validReference: credentialResolution.summary?.validReference ?? false,
+        referenceOnly: true,
+        credentialValueIncluded: false,
+        credentialValueRead: false,
+        credentialValueExposed: false,
+        providerCredentialRead: false,
+        endpointContacted: false,
+        networkEgress: false,
+        liveProviderCallEnabled: false,
+      },
+      next: {
+        recommendedSlice: "openclaw-cloud-consciousness-live-provider-credential-reference-resolver-task",
+        boundary: "separate approval is required before resolving credential references through any credential store",
+      },
+    };
+  }
+
   function isCloudConsciousnessLiveProviderRequestBuilderTask(task) {
     return task?.type === "cloud_consciousness_live_provider_request_builder_task"
       && task?.cloudConsciousnessLiveProviderRequestBuilder?.registry
@@ -1295,6 +1389,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     buildCloudConsciousnessLiveProviderCallRuntimeAdapterImplementation,
     buildCloudConsciousnessLiveProviderRuntimeAdapterModuleContract,
     buildCloudConsciousnessLiveProviderRequestBuilder,
+    buildCloudConsciousnessLiveProviderCredentialReferenceResolver,
     createCloudConsciousnessLiveProviderRequestBuilderTask,
     isCloudConsciousnessLiveProviderRequestBuilderTask,
     executeCloudConsciousnessLiveProviderRequestBuilderTask,

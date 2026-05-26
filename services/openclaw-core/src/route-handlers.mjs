@@ -97,6 +97,7 @@ export function registerRoutes(deps) {
     buildCloudConsciousnessLiveProviderCallRuntimeAdapterImplementation,
     buildCloudConsciousnessLiveProviderRuntimeAdapterModuleContract,
     buildCloudConsciousnessLiveProviderRequestBuilder,
+    buildCloudConsciousnessLiveProviderCredentialReferenceResolver,
     createCloudConsciousnessLiveProviderRequestBuilderTask,
     createCloudConsciousnessLiveProviderRuntimeAdapterModuleTask,
     createCloudConsciousnessLiveProviderRuntimeAdapterImplementationTask,
@@ -566,6 +567,11 @@ export function registerRoutes(deps) {
 
   if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-request-builder") {
     sendJson(res, 200, await buildCloudConsciousnessLiveProviderRequestBuilder());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-credential-reference-resolver") {
+    sendJson(res, 200, await buildCloudConsciousnessLiveProviderCredentialReferenceResolver());
     return;
   }
 

@@ -891,6 +891,13 @@ function observerHtml() {
           <div class="metric"><span>Next</span><span id="cloud-live-provider-request-builder-next">loading</span></div>
           <pre id="cloud-live-provider-request-builder-json">Loading live provider request builder...</pre>
         </section>
+        <section class="panel" id="cloud-consciousness-live-provider-credential-reference-resolver-panel">
+          <h2>Cloud Consciousness Live Provider Credential Reference Resolver</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-live-provider-credential-reference-resolver-ready">false</span></div>
+          <div class="metric"><span>Reference Only</span><span id="cloud-live-provider-credential-reference-resolver-reference-only">false</span></div>
+          <div class="metric"><span>Next</span><span id="cloud-live-provider-credential-reference-resolver-next">loading</span></div>
+          <pre id="cloud-live-provider-credential-reference-resolver-json">Loading credential reference resolver...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -2215,6 +2222,10 @@ const cloudLiveProviderRequestBuilderReady = document.querySelector("#cloud-live
 const cloudLiveProviderRequestBuilderMessages = document.querySelector("#cloud-live-provider-request-builder-messages");
 const cloudLiveProviderRequestBuilderNext = document.querySelector("#cloud-live-provider-request-builder-next");
 const cloudLiveProviderRequestBuilderJson = document.querySelector("#cloud-live-provider-request-builder-json");
+const cloudLiveProviderCredentialReferenceResolverReady = document.querySelector("#cloud-live-provider-credential-reference-resolver-ready");
+const cloudLiveProviderCredentialReferenceResolverReferenceOnly = document.querySelector("#cloud-live-provider-credential-reference-resolver-reference-only");
+const cloudLiveProviderCredentialReferenceResolverNext = document.querySelector("#cloud-live-provider-credential-reference-resolver-next");
+const cloudLiveProviderCredentialReferenceResolverJson = document.querySelector("#cloud-live-provider-credential-reference-resolver-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -7156,6 +7167,34 @@ async function refreshCloudConsciousnessLiveProviderRequestBuilder() {
   }
 }
 
+async function refreshCloudConsciousnessLiveProviderCredentialReferenceResolver() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-credential-reference-resolver\`);
+    const summary = data.summary ?? {};
+    cloudLiveProviderCredentialReferenceResolverReady.textContent = String(Boolean(summary.ready));
+    cloudLiveProviderCredentialReferenceResolverReferenceOnly.textContent = String(Boolean(summary.referenceOnly));
+    cloudLiveProviderCredentialReferenceResolverNext.textContent = data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-credential-reference-resolver-task";
+    cloudLiveProviderCredentialReferenceResolverJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-live-provider-credential-reference-resolver-v0"),
+      "Ready: " + Boolean(summary.ready) + " percent=" + (summary.completionPercent ?? 0),
+      "Credential reference present: " + Boolean(summary.credentialReferencePresent),
+      "Valid reference: " + Boolean(summary.validReference),
+      "Reference only: " + Boolean(summary.referenceOnly),
+      "Credential value included: " + Boolean(summary.credentialValueIncluded),
+      "Credential value read: " + Boolean(summary.credentialValueRead),
+      "Endpoint contacted: " + Boolean(summary.endpointContacted),
+      "Network egress: " + Boolean(summary.networkEgress),
+      "Live provider call: " + Boolean(summary.liveProviderCallEnabled),
+      "Next: " + (data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-credential-reference-resolver-task"),
+    ].join("\\n");
+  } catch {
+    cloudLiveProviderCredentialReferenceResolverReady.textContent = "false";
+    cloudLiveProviderCredentialReferenceResolverReferenceOnly.textContent = "false";
+    cloudLiveProviderCredentialReferenceResolverNext.textContent = "openclaw-cloud-consciousness-live-provider-credential-reference-resolver-task";
+    cloudLiveProviderCredentialReferenceResolverJson.textContent = "Unable to read live provider credential reference resolver.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -10236,6 +10275,7 @@ await refreshCloudConsciousnessLiveProviderCallRuntimeImplementationPlan();
 await refreshCloudConsciousnessLiveProviderCallRuntimeAdapterImplementation();
 await refreshCloudConsciousnessLiveProviderRuntimeAdapterModuleContract();
 await refreshCloudConsciousnessLiveProviderRequestBuilder();
+await refreshCloudConsciousnessLiveProviderCredentialReferenceResolver();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -10420,6 +10460,7 @@ setInterval(refreshCloudConsciousnessLiveProviderCallRuntimeImplementationPlan, 
 setInterval(refreshCloudConsciousnessLiveProviderCallRuntimeAdapterImplementation, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderRuntimeAdapterModuleContract, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderRequestBuilder, 5000);
+setInterval(refreshCloudConsciousnessLiveProviderCredentialReferenceResolver, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);

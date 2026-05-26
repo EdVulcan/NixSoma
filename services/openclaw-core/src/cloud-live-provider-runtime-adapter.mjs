@@ -2,6 +2,8 @@ const RUNTIME_ADAPTER_MODULE_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-runtime-adapter-module-contract-v0";
 const PROVIDER_REQUEST_BUILDER_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-request-builder-v0";
+const CREDENTIAL_REFERENCE_RESOLVER_REGISTRY =
+  "openclaw-cloud-consciousness-live-provider-credential-reference-resolver-v0";
 
 const ADAPTER_METHODS = [
   {
@@ -11,8 +13,8 @@ const ADAPTER_METHODS = [
   },
   {
     name: "resolveCredentialReference",
-    implemented: false,
-    boundary: "future operator-approved credential lookup; current module must not read values",
+    implemented: true,
+    boundary: "reference validation only; no credential values are read or exposed",
   },
   {
     name: "sendProviderRequest",
@@ -125,6 +127,50 @@ export function buildProviderRequest({
   };
 }
 
+export function resolveCredentialReference({
+  executionPlan = {},
+  credentialReference,
+} = {}) {
+  const reference = credentialReference ?? executionPlan.credentialReference ?? null;
+  const validReference = typeof reference === "string" && reference.startsWith("openclaw://credential/");
+  return {
+    ok: true,
+    registry: CREDENTIAL_REFERENCE_RESOLVER_REGISTRY,
+    mode: "phase_32_credential_reference_resolver",
+    credential: {
+      reference,
+      validReference,
+      scope: validReference ? reference.replace("openclaw://credential/", "") : null,
+      value: null,
+      valueHash: null,
+      resolvedValue: null,
+    },
+    governance: {
+      pureFunction: true,
+      referenceOnly: true,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      liveProviderCallEnabled: false,
+    },
+    summary: {
+      ready: validReference,
+      credentialReferencePresent: typeof reference === "string",
+      validReference,
+      referenceOnly: true,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      liveProviderCallEnabled: false,
+    },
+  };
+}
+
 export function buildCloudLiveProviderRuntimeAdapterModuleContract() {
   const implementedMethodCount = ADAPTER_METHODS.filter((method) => method.implemented).length;
   return {
@@ -164,6 +210,7 @@ export function buildCloudLiveProviderRuntimeAdapterModuleContract() {
       methodCount: ADAPTER_METHODS.length,
       implementedMethodCount,
       pureProviderRequestBuilderReady: true,
+      pureCredentialReferenceResolverReady: true,
       implementsRuntimeAdapter: false,
       providerSdkLoaded: false,
       providerCredentialRead: false,
