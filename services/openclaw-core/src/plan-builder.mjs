@@ -76,11 +76,6 @@ export function createPlanBuilder(deps) {
     buildOpenClawPluginCapabilityPlan,
   } = pluginReview;
 
-function buildOperatorState() {
-  reconcileRuntimeState();
-  const currentTask = runtimeState.currentTaskId ? getTaskById(runtimeState.currentTaskId) : null;
-  const nextTask = getNextQueuedTask();
-  const paused = runtimeState.paused === true;
   const cloudLiveProviderRuntimeImplementation = createCloudLiveProviderRuntimeImplementation({
     buildRuntimeImplementationPlan: buildCloudConsciousnessLiveProviderCallRuntimeImplementationPlan,
     createTask,
@@ -93,6 +88,12 @@ function buildOperatorState() {
     persistState,
     serialiseTask,
   });
+
+function buildOperatorState() {
+  reconcileRuntimeState();
+  const currentTask = runtimeState.currentTaskId ? getTaskById(runtimeState.currentTaskId) : null;
+  const nextTask = getNextQueuedTask();
+  const paused = runtimeState.paused === true;
 
   return {
     status: paused ? "paused" : nextTask ? "ready" : "idle",
