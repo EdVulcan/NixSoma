@@ -15,6 +15,8 @@ const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_REQUEST_BUILDER_TASK_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-request-builder-task-v0";
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_REFERENCE_RESOLVER_TASK_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-credential-reference-resolver-task-v0";
+const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_NO_NETWORK_SENDER_TASK_REGISTRY =
+  "openclaw-cloud-consciousness-live-provider-no-network-sender-task-v0";
 
 function phase18Governance(extra = {}) {
   return {
@@ -191,6 +193,28 @@ function phase33Governance(extra = {}) {
 function phase36Governance(extra = {}) {
   return {
     phase: "phase-36",
+    noNetworkProviderRequestSenderReady: true,
+    dispatchDeferred: true,
+    referenceOnly: true,
+    implementsRuntimeAdapter: false,
+    callsCloudModel: false,
+    transmitsExternally: false,
+    liveProviderCallEnabled: false,
+    providerSdkLoaded: false,
+    providerCredentialRead: false,
+    credentialValueRead: false,
+    credentialValueExposed: false,
+    endpointContacted: false,
+    networkEgress: false,
+    ...extra,
+  };
+}
+
+function phase37Governance(extra = {}) {
+  return {
+    phase: "phase-37",
+    createsTask: false,
+    createsApproval: false,
     noNetworkProviderRequestSenderReady: true,
     dispatchDeferred: true,
     referenceOnly: true,
@@ -1340,6 +1364,128 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     };
   }
 
+  async function createCloudConsciousnessLiveProviderNoNetworkSenderTask({ confirm = false } = {}) {
+    if (confirm !== true) {
+      throw new Error("Cloud consciousness live provider no-network sender task creation requires confirm=true.");
+    }
+
+    const noNetworkSender = await buildCloudConsciousnessLiveProviderNoNetworkSender();
+    if (noNetworkSender.summary?.ready !== true) {
+      throw new Error("Cloud consciousness live provider no-network sender task requires a ready Phase 36 sender envelope.");
+    }
+
+    const policyRequest = {
+      intent: "cloud_consciousness.live_provider_call.no_network_sender",
+      domain: "cross_boundary",
+      risk: "high",
+      requiresApproval: true,
+      audit: true,
+      tags: ["cloud_consciousness", "live_provider_call", "no_network_sender_task", "operator_reviewed"],
+    };
+    const goal = "Prepare reviewed no-network provider request sender task without endpoint contact or network egress";
+    const policyDecision = evaluatePolicyIntent({
+      type: "cloud_consciousness_live_provider_no_network_sender_task",
+      goal,
+      policy: policyRequest,
+    }, {
+      stage: "cloud_consciousness.live_provider_no_network_sender_task.draft",
+      type: "cloud_consciousness_live_provider_no_network_sender_task",
+      goal,
+    });
+
+    const task = createTask({
+      goal,
+      type: "cloud_consciousness_live_provider_no_network_sender_task",
+      workViewStrategy: "cloud-consciousness-live-provider-no-network-sender",
+      policy: policyRequest,
+      plan: {
+        planner: "cloud-consciousness-live-provider-no-network-sender-task-v0",
+        strategy: "approval-gated-cloud-consciousness-live-provider-no-network-sender-shell",
+        summary: "Create an approval-gated task shell around the no-network sender envelope while keeping endpoint contact, network egress, and live provider calls disabled.",
+        governance: phase37Governance({ createsTask: true, createsApproval: true }),
+        steps: [
+          {
+            id: "review-no-network-sender-envelope",
+            phase: "review_live_provider_no_network_sender",
+            title: "Review Phase 36 no-network sender envelope",
+            status: "pending",
+            requiresApproval: false,
+          },
+          {
+            id: "operator-approval",
+            phase: "waiting_for_approval",
+            title: "Wait for operator approval before sender envelope can be connected to any egress path",
+            status: "pending",
+            capabilityId: "act.system.command.dry_run",
+            requiresApproval: true,
+            risk: "high",
+          },
+          {
+            id: "defer-no-network-sender-use",
+            phase: "cloud_consciousness_live_provider_no_network_sender_deferred",
+            title: "Record approved no-network sender shell and defer endpoint, network, and live-call work",
+            status: "pending",
+            requiresApproval: true,
+            executesNow: false,
+          },
+        ],
+      },
+    }, { skipInitialPolicy: true });
+
+    task.policy = {
+      request: policyRequest,
+      decision: policyDecision,
+    };
+    task.cloudConsciousnessLiveProviderNoNetworkSender = {
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_NO_NETWORK_SENDER_TASK_REGISTRY,
+      noNetworkSenderRegistry: noNetworkSender.registry,
+      implementationStatus: "task_shell_only",
+      noNetworkProviderRequestSenderReady: true,
+      dispatchDeferred: true,
+      referenceOnly: true,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      implementsRuntimeAdapter: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      transmitsExternally: false,
+      liveProviderCallEnabled: false,
+    };
+
+    const approval = createApprovalRequestForTask(task, policyDecision);
+    const reclaimedTasks = supersedeOtherActiveTasks(task.id);
+    reconcileRuntimeState();
+    persistState();
+
+    await publishEvent("task.created", {
+      task: serialiseTask(task),
+      planner: "cloud-consciousness-live-provider-no-network-sender-task-v0",
+    });
+    await publishTaskApprovalIfPending(task);
+    await publishEvent("task.planned", {
+      task: serialiseTask(task),
+      plan: task.plan,
+    });
+    await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+      task: serialiseTask(reclaimedTask),
+    })));
+
+    return {
+      ok: true,
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_NO_NETWORK_SENDER_TASK_REGISTRY,
+      mode: "approval-gated-cloud-consciousness-live-provider-no-network-sender-task",
+      generatedAt: new Date().toISOString(),
+      sourceRegistry: noNetworkSender.registry,
+      noNetworkSender,
+      task,
+      approval,
+      governance: phase37Governance({ createsTask: true, createsApproval: true }),
+    };
+  }
+
   function isCloudConsciousnessLiveProviderCredentialReferenceResolverTask(task) {
     return task?.type === "cloud_consciousness_live_provider_credential_reference_resolver_task"
       && task?.cloudConsciousnessLiveProviderCredentialReferenceResolver?.registry
@@ -1719,6 +1865,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     buildCloudConsciousnessLiveProviderRequestBuilder,
     buildCloudConsciousnessLiveProviderCredentialReferenceResolver,
     buildCloudConsciousnessLiveProviderNoNetworkSender,
+    createCloudConsciousnessLiveProviderNoNetworkSenderTask,
     createCloudConsciousnessLiveProviderCredentialReferenceResolverTask,
     isCloudConsciousnessLiveProviderCredentialReferenceResolverTask,
     executeCloudConsciousnessLiveProviderCredentialReferenceResolverTask,
