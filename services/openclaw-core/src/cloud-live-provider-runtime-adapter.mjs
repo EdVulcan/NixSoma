@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 const RUNTIME_ADAPTER_MODULE_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-runtime-adapter-module-contract-v0";
 const PROVIDER_REQUEST_BUILDER_REGISTRY =
@@ -6,6 +8,8 @@ const CREDENTIAL_REFERENCE_RESOLVER_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-credential-reference-resolver-v0";
 const PROVIDER_REQUEST_SENDER_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-send-provider-request-v0";
+const EGRESS_TRANSCRIPT_RECORDER_REGISTRY =
+  "openclaw-cloud-consciousness-live-provider-egress-transcript-recorder-v0";
 
 const ADAPTER_METHODS = [
   {
@@ -25,8 +29,8 @@ const ADAPTER_METHODS = [
   },
   {
     name: "recordEgressTranscript",
-    implemented: false,
-    boundary: "future transcript writer; current module must not create live-call records",
+    implemented: true,
+    boundary: "local transcript recorder only; no credential values, endpoint contact, or network egress",
   },
   {
     name: "verifyProviderResponse",
@@ -51,6 +55,10 @@ function stableJson(value) {
     return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(",")}}`;
   }
   return JSON.stringify(value);
+}
+
+function stableHash(value) {
+  return createHash("sha256").update(stableJson(value)).digest("hex");
 }
 
 function normaliseMessages(messages) {
@@ -239,6 +247,115 @@ export function sendProviderRequest({
   };
 }
 
+export function recordEgressTranscript({
+  egressEnvelope = {},
+  providerRequest = {},
+  credentialResolution = {},
+  operatorAuthorization = {},
+} = {}) {
+  const envelope = egressEnvelope.egressEnvelope ?? egressEnvelope ?? {};
+  const request = providerRequest.request ?? {};
+  const credential = credentialResolution.credential ?? {};
+  const endpoint = envelope.endpoint ?? request.endpoint ?? {};
+  const bodyText = typeof envelope.bodyText === "string"
+    ? envelope.bodyText
+    : typeof request.bodyText === "string"
+      ? request.bodyText
+      : stableJson(request.body ?? null);
+  const requestContentHash = stableHash(bodyText);
+  const credentialReference = envelope.credentialReference ?? request.credentialReference ?? credential.reference ?? null;
+  const dispatch = envelope.dispatch ?? "deferred";
+  const transcriptSeed = {
+    schema: "openclaw.cloud_consciousness.live_provider_egress_transcript.v0",
+    requestContentHash,
+    endpointFingerprint: endpoint.fingerprint ?? null,
+    credentialReference,
+    dispatch,
+  };
+  const transcript = {
+    id: `openclaw-live-provider-egress-transcript-${stableHash(transcriptSeed).slice(0, 16)}`,
+    createdAt: new Date().toISOString(),
+    schema: "openclaw.cloud_consciousness.live_provider_egress_transcript.v0",
+    requestId: request.body?.metadata?.openclawRequestId ?? requestContentHash,
+    requestContentHash,
+    operatorChecklistHash: operatorAuthorization.operatorChecklistHash ?? null,
+    endpointFingerprint: endpoint.fingerprint ?? null,
+    credentialSource: {
+      reference: credentialReference,
+      referenceOnly: true,
+      valueIncluded: false,
+      valueHash: null,
+    },
+    redactionPolicy: {
+      bodyStored: false,
+      bodyHashOnly: true,
+      credentialValueIncluded: false,
+      providerResponseIncluded: false,
+    },
+    egressDecision: {
+      dispatch,
+      authorized: operatorAuthorization.state === "authorized",
+      reason: dispatch === "deferred"
+        ? "no_network_sender_deferred"
+        : "non_live_transcript_recorded_without_dispatch",
+    },
+    liveCallStatus: "operator_deferred",
+    noNetworkEnvelope: {
+      method: envelope.method ?? request.method ?? "POST",
+      path: envelope.path ?? request.path ?? "/v1/chat/completions",
+      headerNames: Object.keys(envelope.headers ?? request.headers ?? {}).sort(),
+      dispatchDeferred: dispatch === "deferred",
+      endpointContacted: false,
+      networkEgress: false,
+    },
+    providerResponse: null,
+  };
+  transcript.contentHash = stableHash(transcript);
+  const ready = typeof credentialReference === "string"
+    && bodyText.length > 0
+    && dispatch === "deferred"
+    && envelope.response === null
+    && (envelope.credentialValue ?? null) === null
+    && (credential.value ?? null) === null
+    && (credential.resolvedValue ?? null) === null;
+  return {
+    ok: true,
+    registry: EGRESS_TRANSCRIPT_RECORDER_REGISTRY,
+    mode: "phase_40_local_egress_transcript_recorder",
+    transcript,
+    governance: {
+      pureFunction: true,
+      transcriptRecorded: true,
+      localOnly: true,
+      referenceOnly: true,
+      dispatchDeferred: true,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      liveProviderCallEnabled: false,
+    },
+    summary: {
+      ready,
+      transcriptRecorded: true,
+      localOnly: true,
+      referenceOnly: true,
+      dispatchDeferred: dispatch === "deferred",
+      credentialReferencePresent: typeof credentialReference === "string",
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      liveProviderCallEnabled: false,
+    },
+  };
+}
+
 export function buildCloudLiveProviderRuntimeAdapterModuleContract() {
   const implementedMethodCount = ADAPTER_METHODS.filter((method) => method.implemented).length;
   return {
@@ -280,6 +397,7 @@ export function buildCloudLiveProviderRuntimeAdapterModuleContract() {
       pureProviderRequestBuilderReady: true,
       pureCredentialReferenceResolverReady: true,
       noNetworkProviderRequestSenderReady: true,
+      localEgressTranscriptRecorderReady: true,
       implementsRuntimeAdapter: false,
       providerSdkLoaded: false,
       providerCredentialRead: false,

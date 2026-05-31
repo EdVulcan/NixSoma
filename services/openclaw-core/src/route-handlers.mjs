@@ -99,7 +99,9 @@ export function registerRoutes(deps) {
     buildCloudConsciousnessLiveProviderRequestBuilder,
     buildCloudConsciousnessLiveProviderCredentialReferenceResolver,
     buildCloudConsciousnessLiveProviderNoNetworkSender,
+    buildCloudConsciousnessLiveProviderEgressTranscriptRecorder,
     createCloudConsciousnessLiveProviderNoNetworkSenderTask,
+    createCloudConsciousnessLiveProviderEgressTranscriptRecorderTask,
     createCloudConsciousnessLiveProviderCredentialReferenceResolverTask,
     createCloudConsciousnessLiveProviderRequestBuilderTask,
     createCloudConsciousnessLiveProviderRuntimeAdapterModuleTask,
@@ -580,6 +582,11 @@ export function registerRoutes(deps) {
 
   if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-no-network-sender") {
     sendJson(res, 200, await buildCloudConsciousnessLiveProviderNoNetworkSender());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-egress-transcript-recorder") {
+    sendJson(res, 200, await buildCloudConsciousnessLiveProviderEgressTranscriptRecorder());
     return;
   }
 
@@ -2336,6 +2343,31 @@ export function registerRoutes(deps) {
         generatedAt: result.generatedAt,
         sourceRegistry: result.sourceRegistry,
         noNetworkSender: result.noNetworkSender,
+        task: serialiseTask(result.task),
+        approval: serialiseApproval(result.approval),
+        governance: result.governance,
+        summary: buildTaskSummary(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-egress-transcript-recorder-tasks") {
+    try {
+      const body = await readJsonBody(req);
+      const result = await createCloudConsciousnessLiveProviderEgressTranscriptRecorderTask({
+        confirm: body.confirm === true,
+      });
+      sendJson(res, 201, {
+        ok: true,
+        registry: result.registry,
+        mode: result.mode,
+        generatedAt: result.generatedAt,
+        sourceRegistry: result.sourceRegistry,
+        transcriptRecorder: result.transcriptRecorder,
         task: serialiseTask(result.task),
         approval: serialiseApproval(result.approval),
         governance: result.governance,

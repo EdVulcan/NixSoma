@@ -83,6 +83,8 @@ export function createTaskExecutor(deps) {
     executeCloudConsciousnessLiveProviderCredentialReferenceResolverTask,
     isCloudConsciousnessLiveProviderNoNetworkSenderTask,
     executeCloudConsciousnessLiveProviderNoNetworkSenderTask,
+    isCloudConsciousnessLiveProviderEgressTranscriptRecorderTask,
+    executeCloudConsciousnessLiveProviderEgressTranscriptRecorderTask,
     capabilityById,
     normaliseCapabilityInvokeRequest,
     buildCapabilityPolicyInput,
@@ -2873,6 +2875,18 @@ async function executeTaskWithRecovery(task, options = {}) {
     return {
       finalExecution: cloudConsciousnessLiveProviderNoNetworkSenderExecution,
       attempts: [cloudConsciousnessLiveProviderNoNetworkSenderExecution],
+      recovery: {
+        attempted: false,
+        maxAttempts: 0,
+      },
+    };
+  }
+
+  if (isCloudConsciousnessLiveProviderEgressTranscriptRecorderTask(task)) {
+    const cloudConsciousnessLiveProviderEgressTranscriptRecorderExecution = await executeCloudConsciousnessLiveProviderEgressTranscriptRecorderTask(task);
+    return {
+      finalExecution: cloudConsciousnessLiveProviderEgressTranscriptRecorderExecution,
+      attempts: [cloudConsciousnessLiveProviderEgressTranscriptRecorderExecution],
       recovery: {
         attempted: false,
         maxAttempts: 0,

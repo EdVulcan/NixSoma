@@ -1,6 +1,7 @@
 import {
   buildCloudLiveProviderRuntimeAdapterModuleContract,
   buildProviderRequest,
+  recordEgressTranscript,
   resolveCredentialReference,
   sendProviderRequest,
 } from "./cloud-live-provider-runtime-adapter.mjs";
@@ -17,6 +18,8 @@ const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_REFERENCE_RESOLVER_TASK_REGIS
   "openclaw-cloud-consciousness-live-provider-credential-reference-resolver-task-v0";
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_NO_NETWORK_SENDER_TASK_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-no-network-sender-task-v0";
+const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_EGRESS_TRANSCRIPT_RECORDER_TASK_REGISTRY =
+  "openclaw-cloud-consciousness-live-provider-egress-transcript-recorder-task-v0";
 
 function phase18Governance(extra = {}) {
   return {
@@ -228,6 +231,29 @@ function phase37Governance(extra = {}) {
     credentialValueExposed: false,
     endpointContacted: false,
     networkEgress: false,
+    ...extra,
+  };
+}
+
+function phase40Governance(extra = {}) {
+  return {
+    phase: "phase-40",
+    localEgressTranscriptRecorderReady: true,
+    transcriptRecorded: true,
+    localOnly: true,
+    dispatchDeferred: true,
+    referenceOnly: true,
+    implementsRuntimeAdapter: false,
+    callsCloudModel: false,
+    transmitsExternally: false,
+    liveProviderCallEnabled: false,
+    providerSdkLoaded: false,
+    providerCredentialRead: false,
+    credentialValueRead: false,
+    credentialValueExposed: false,
+    endpointContacted: false,
+    networkEgress: false,
+    providerResponseCreated: false,
     ...extra,
   };
 }
@@ -1486,6 +1512,312 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     };
   }
 
+  async function buildCloudConsciousnessLiveProviderEgressTranscriptRecorder() {
+    const noNetworkSender = await buildCloudConsciousnessLiveProviderNoNetworkSender();
+    const transcriptRecorder = recordEgressTranscript({
+      egressEnvelope: noNetworkSender.egressEnvelope,
+      providerRequest: noNetworkSender.credentialResolver?.requestBuilder?.providerRequest,
+      credentialResolution: noNetworkSender.credentialResolver?.credentialResolution,
+      operatorAuthorization: {
+        state: "not_authorized",
+      },
+    });
+    const checks = [
+      {
+        id: "phase-36-no-network-sender-ready",
+        label: "Phase 36 no-network sender envelope is ready",
+        passed: noNetworkSender.summary?.ready === true
+          && noNetworkSender.summary?.dispatchDeferred === true
+          && noNetworkSender.summary?.networkEgress === false,
+        evidence: noNetworkSender.registry,
+      },
+      {
+        id: "egress-transcript-recorded",
+        label: "recordEgressTranscript creates a local transcript for the deferred envelope",
+        passed: transcriptRecorder.summary?.ready === true
+          && transcriptRecorder.summary?.transcriptRecorded === true
+          && transcriptRecorder.transcript?.schema === "openclaw.cloud_consciousness.live_provider_egress_transcript.v0"
+          && typeof transcriptRecorder.transcript?.contentHash === "string",
+        evidence: transcriptRecorder.registry,
+      },
+      {
+        id: "no-live-provider-activity",
+        label: "Transcript recorder does not read credentials, contact endpoints, transmit externally, or create provider responses",
+        passed: transcriptRecorder.summary?.credentialValueRead === false
+          && transcriptRecorder.summary?.endpointContacted === false
+          && transcriptRecorder.summary?.networkEgress === false
+          && transcriptRecorder.summary?.providerResponseCreated === false
+          && transcriptRecorder.summary?.liveProviderCallEnabled === false,
+        evidence: "local-transcript-only",
+      },
+    ];
+    const passed = checks.filter((check) => check.passed).length;
+    const ready = passed === checks.length;
+    return {
+      ok: true,
+      registry: transcriptRecorder.registry,
+      mode: "phase_40_local_egress_transcript_recorder",
+      generatedAt: new Date().toISOString(),
+      status: ready ? "egress_transcript_recorder_ready_local_only" : "waiting_for_egress_transcript_recorder_prerequisites",
+      governance: phase40Governance(),
+      transcriptRecorder,
+      noNetworkSender,
+      checks,
+      summary: {
+        ready,
+        complete: ready,
+        passed,
+        total: checks.length,
+        completionPercent: ready ? 100 : Math.round((passed / checks.length) * 100),
+        phase: "phase-40",
+        localEgressTranscriptRecorderReady: true,
+        transcriptRecorded: true,
+        localOnly: true,
+        dispatchDeferred: true,
+        referenceOnly: true,
+        credentialValueIncluded: false,
+        credentialValueRead: false,
+        credentialValueExposed: false,
+        providerCredentialRead: false,
+        endpointContacted: false,
+        networkEgress: false,
+        providerResponseCreated: false,
+        liveProviderCallEnabled: false,
+      },
+      next: {
+        recommendedSlice: "openclaw-cloud-consciousness-live-provider-egress-transcript-recorder-task",
+        boundary: "separate approval is required before transcript records can be attached to any runtime egress path",
+      },
+    };
+  }
+
+  async function createCloudConsciousnessLiveProviderEgressTranscriptRecorderTask({ confirm = false } = {}) {
+    if (confirm !== true) {
+      throw new Error("Cloud consciousness live provider egress transcript recorder task creation requires confirm=true.");
+    }
+
+    const transcriptRecorder = await buildCloudConsciousnessLiveProviderEgressTranscriptRecorder();
+    if (transcriptRecorder.summary?.ready !== true) {
+      throw new Error("Cloud consciousness live provider egress transcript recorder task requires a ready Phase 40 transcript recorder.");
+    }
+
+    const policyRequest = {
+      intent: "cloud_consciousness.live_provider_call.egress_transcript_recorder",
+      domain: "cross_boundary",
+      risk: "high",
+      requiresApproval: true,
+      audit: true,
+      tags: ["cloud_consciousness", "live_provider_call", "egress_transcript_recorder_task", "operator_reviewed"],
+    };
+    const goal = "Prepare reviewed live provider egress transcript recorder task without endpoint contact or network egress";
+    const policyDecision = evaluatePolicyIntent({
+      type: "cloud_consciousness_live_provider_egress_transcript_recorder_task",
+      goal,
+      policy: policyRequest,
+    }, {
+      stage: "cloud_consciousness.live_provider_egress_transcript_recorder_task.draft",
+      type: "cloud_consciousness_live_provider_egress_transcript_recorder_task",
+      goal,
+    });
+
+    const task = createTask({
+      goal,
+      type: "cloud_consciousness_live_provider_egress_transcript_recorder_task",
+      workViewStrategy: "cloud-consciousness-live-provider-egress-transcript-recorder",
+      policy: policyRequest,
+      plan: {
+        planner: "cloud-consciousness-live-provider-egress-transcript-recorder-task-v0",
+        strategy: "approval-gated-cloud-consciousness-live-provider-egress-transcript-recorder-shell",
+        summary: "Create an approval-gated task shell around the local egress transcript recorder while keeping endpoint contact, network egress, provider responses, and live provider calls disabled.",
+        governance: phase40Governance({ createsTask: true, createsApproval: true }),
+        steps: [
+          {
+            id: "review-egress-transcript-recorder",
+            phase: "review_live_provider_egress_transcript_recorder",
+            title: "Review Phase 40 local egress transcript recorder output",
+            status: "pending",
+            requiresApproval: false,
+          },
+          {
+            id: "operator-approval",
+            phase: "waiting_for_approval",
+            title: "Wait for operator approval before transcript records can be attached to any egress path",
+            status: "pending",
+            capabilityId: "act.system.command.dry_run",
+            requiresApproval: true,
+            risk: "high",
+          },
+          {
+            id: "defer-egress-transcript-recorder-use",
+            phase: "cloud_consciousness_live_provider_egress_transcript_recorder_deferred",
+            title: "Record approved transcript-recorder shell and defer endpoint, network, response, and live-call work",
+            status: "pending",
+            requiresApproval: true,
+            executesNow: false,
+          },
+        ],
+      },
+    }, { skipInitialPolicy: true });
+
+    task.policy = {
+      request: policyRequest,
+      decision: policyDecision,
+    };
+    task.cloudConsciousnessLiveProviderEgressTranscriptRecorder = {
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_EGRESS_TRANSCRIPT_RECORDER_TASK_REGISTRY,
+      transcriptRecorderRegistry: transcriptRecorder.registry,
+      transcriptSchema: transcriptRecorder.transcriptRecorder?.transcript?.schema ?? null,
+      transcriptRecorded: true,
+      localEgressTranscriptRecorderReady: true,
+      implementationStatus: "task_shell_only",
+      localOnly: true,
+      dispatchDeferred: true,
+      referenceOnly: true,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      implementsRuntimeAdapter: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      transmitsExternally: false,
+      liveProviderCallEnabled: false,
+    };
+
+    const approval = createApprovalRequestForTask(task, policyDecision);
+    const reclaimedTasks = supersedeOtherActiveTasks(task.id);
+    reconcileRuntimeState();
+    persistState();
+
+    await publishEvent("task.created", {
+      task: serialiseTask(task),
+      planner: "cloud-consciousness-live-provider-egress-transcript-recorder-task-v0",
+    });
+    await publishTaskApprovalIfPending(task);
+    await publishEvent("task.planned", {
+      task: serialiseTask(task),
+      plan: task.plan,
+    });
+    await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+      task: serialiseTask(reclaimedTask),
+    })));
+
+    return {
+      ok: true,
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_EGRESS_TRANSCRIPT_RECORDER_TASK_REGISTRY,
+      mode: "approval-gated-cloud-consciousness-live-provider-egress-transcript-recorder-task",
+      generatedAt: new Date().toISOString(),
+      sourceRegistry: transcriptRecorder.registry,
+      transcriptRecorder,
+      task,
+      approval,
+      governance: phase40Governance({ createsTask: true, createsApproval: true }),
+    };
+  }
+
+  function isCloudConsciousnessLiveProviderEgressTranscriptRecorderTask(task) {
+    return task?.type === "cloud_consciousness_live_provider_egress_transcript_recorder_task"
+      && task?.cloudConsciousnessLiveProviderEgressTranscriptRecorder?.registry
+        === CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_EGRESS_TRANSCRIPT_RECORDER_TASK_REGISTRY;
+  }
+
+  async function executeCloudConsciousnessLiveProviderEgressTranscriptRecorderTask(task) {
+    const transcriptRecorder = await buildCloudConsciousnessLiveProviderEgressTranscriptRecorder();
+    const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
+    if (approval?.status !== "approved") {
+      return {
+        blocked: true,
+        reason: "approval_required",
+        task,
+        approval: approval ? { ...approval } : null,
+      };
+    }
+
+    task.cloudConsciousnessLiveProviderEgressTranscriptRecorder = {
+      ...(task.cloudConsciousnessLiveProviderEgressTranscriptRecorder ?? {}),
+      implementationStatus: "deferred_after_approval",
+      approvedAt: approval.updatedAt,
+      transcriptRecorderRegistry: transcriptRecorder.registry,
+      transcriptSchema: transcriptRecorder.transcriptRecorder?.transcript?.schema ?? null,
+      transcriptRecorded: true,
+      localEgressTranscriptRecorderReady: true,
+      localOnly: true,
+      dispatchDeferred: true,
+      referenceOnly: true,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      implementsRuntimeAdapter: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      transmitsExternally: false,
+      liveProviderCallEnabled: false,
+    };
+    appendTaskPhase(task, "cloud_consciousness_live_provider_egress_transcript_recorder_deferred", {
+      transcriptRecorderRegistry: transcriptRecorder.registry,
+      deferredSlice: "openclaw-cloud-consciousness-approved-live-provider-egress-transcript-recorder-deferred",
+      reason: "egress transcript recorder task approved; endpoint contact, network egress, provider response creation, and live provider call remain deferred",
+      transcriptRecorded: true,
+      localOnly: true,
+      dispatchDeferred: true,
+      referenceOnly: true,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      liveProviderCallEnabled: false,
+    });
+    completeTask(task, {
+      summary: "Approved egress transcript recorder task shell recorded; executable provider egress remains deferred.",
+      transcriptRecorderRegistry: transcriptRecorder.registry,
+      phase: "cloud_consciousness_live_provider_egress_transcript_recorder_deferred",
+      transcriptRecorded: true,
+      localOnly: true,
+      dispatchDeferred: true,
+      referenceOnly: true,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      liveProviderCallEnabled: false,
+    });
+    reconcileRuntimeState();
+    persistState();
+    await publishEvent("task.phase_changed", { task: serialiseTask(task) });
+    return {
+      ok: true,
+      executor: "cloud-consciousness-live-provider-egress-transcript-recorder-task-v0",
+      status: "egress_transcript_recorder_deferred_after_approval",
+      task,
+      transcriptRecorder,
+      governance: phase40Governance({ createsTask: true, createsApproval: true }),
+      summary: {
+        ready: true,
+        implementationStatus: "deferred_after_approval",
+        transcriptRecorded: true,
+        localOnly: true,
+        dispatchDeferred: true,
+        referenceOnly: true,
+        credentialValueIncluded: false,
+        credentialValueRead: false,
+        credentialValueExposed: false,
+        endpointContacted: false,
+        networkEgress: false,
+        providerResponseCreated: false,
+        liveProviderCallEnabled: false,
+      },
+    };
+  }
+
   function isCloudConsciousnessLiveProviderNoNetworkSenderTask(task) {
     return task?.type === "cloud_consciousness_live_provider_no_network_sender_task"
       && task?.cloudConsciousnessLiveProviderNoNetworkSender?.registry
@@ -1953,6 +2285,10 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     buildCloudConsciousnessLiveProviderRequestBuilder,
     buildCloudConsciousnessLiveProviderCredentialReferenceResolver,
     buildCloudConsciousnessLiveProviderNoNetworkSender,
+    buildCloudConsciousnessLiveProviderEgressTranscriptRecorder,
+    createCloudConsciousnessLiveProviderEgressTranscriptRecorderTask,
+    isCloudConsciousnessLiveProviderEgressTranscriptRecorderTask,
+    executeCloudConsciousnessLiveProviderEgressTranscriptRecorderTask,
     createCloudConsciousnessLiveProviderNoNetworkSenderTask,
     isCloudConsciousnessLiveProviderNoNetworkSenderTask,
     executeCloudConsciousnessLiveProviderNoNetworkSenderTask,
