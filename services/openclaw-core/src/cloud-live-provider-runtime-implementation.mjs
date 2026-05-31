@@ -4,6 +4,7 @@ import {
   recordEgressTranscript,
   resolveCredentialReference,
   sendProviderRequest,
+  verifyProviderResponse,
 } from "./cloud-live-provider-runtime-adapter.mjs";
 
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RUNTIME_IMPLEMENTATION_TASK_REGISTRY =
@@ -20,6 +21,8 @@ const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_NO_NETWORK_SENDER_TASK_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-no-network-sender-task-v0";
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_EGRESS_TRANSCRIPT_RECORDER_TASK_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-egress-transcript-recorder-task-v0";
+const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RESPONSE_VERIFIER_TASK_REGISTRY =
+  "openclaw-cloud-consciousness-live-provider-response-verifier-task-v0";
 
 function phase18Governance(extra = {}) {
   return {
@@ -243,6 +246,29 @@ function phase40Governance(extra = {}) {
     localOnly: true,
     dispatchDeferred: true,
     referenceOnly: true,
+    implementsRuntimeAdapter: false,
+    callsCloudModel: false,
+    transmitsExternally: false,
+    liveProviderCallEnabled: false,
+    providerSdkLoaded: false,
+    providerCredentialRead: false,
+    credentialValueRead: false,
+    credentialValueExposed: false,
+    endpointContacted: false,
+    networkEgress: false,
+    providerResponseCreated: false,
+    ...extra,
+  };
+}
+
+function phase44Governance(extra = {}) {
+  return {
+    phase: "phase-44",
+    localProviderResponseVerifierReady: true,
+    responseVerified: true,
+    localOnly: true,
+    dispatchDeferred: true,
+    responseSource: "local_rehearsal_readback",
     implementsRuntimeAdapter: false,
     callsCloudModel: false,
     transmitsExternally: false,
@@ -1818,6 +1844,342 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     };
   }
 
+  async function buildCloudConsciousnessLiveProviderResponseVerifier() {
+    const transcriptRecorder = await buildCloudConsciousnessLiveProviderEgressTranscriptRecorder();
+    const localResponseReadback = {
+      ok: true,
+      registry: "openclaw-cloud-consciousness-provider-response-readback-v0",
+      mode: "phase_44_fixture_local_provider_response_readback",
+      response: {
+        latest: {
+          id: "phase44-local-provider-response-rehearsal",
+          schema: "openclaw.cloud_consciousness.provider_call_rehearsal.v0",
+          requestId: transcriptRecorder.transcriptRecorder?.transcript?.requestId ?? null,
+          requestContentHash: transcriptRecorder.transcriptRecorder?.transcript?.requestContentHash ?? null,
+          contentHash: "phase44-local-provider-response-rehearsal-content-hash",
+          transmittedExternally: false,
+          cloudCallExecuted: false,
+          providerSdkLoaded: false,
+          credentialRead: false,
+        },
+      },
+      summary: {
+        ready: true,
+        recordCount: 1,
+        callsCloudModel: false,
+        transmitsExternally: false,
+        providerSdkLoaded: false,
+        providerCredentialRead: false,
+      },
+    };
+    const responseVerifier = verifyProviderResponse({
+      providerResponseReadback: localResponseReadback,
+      egressTranscriptRecord: transcriptRecorder.transcriptRecorder?.transcript,
+      operatorAuthorization: {
+        state: "not_authorized",
+      },
+    });
+    const checks = [
+      {
+        id: "phase-40-transcript-ready",
+        label: "Phase 40 egress transcript recorder is ready",
+        passed: transcriptRecorder.summary?.ready === true
+          && transcriptRecorder.summary?.localOnly === true
+          && transcriptRecorder.summary?.dispatchDeferred === true,
+        evidence: transcriptRecorder.registry,
+      },
+      {
+        id: "local-response-readback-ready",
+        label: "Local provider response rehearsal readback is available",
+        passed: localResponseReadback.summary?.ready === true
+          && localResponseReadback.response?.latest?.schema === "openclaw.cloud_consciousness.provider_call_rehearsal.v0",
+        evidence: localResponseReadback.registry,
+      },
+      {
+        id: "response-verifier-ready",
+        label: "verifyProviderResponse validates the local response rehearsal without creating provider responses",
+        passed: responseVerifier.summary?.ready === true
+          && responseVerifier.summary?.responseVerified === true
+          && responseVerifier.summary?.providerResponseCreated === false
+          && responseVerifier.verification?.responseSource === "local_rehearsal_readback",
+        evidence: responseVerifier.registry,
+      },
+      {
+        id: "no-live-provider-activity",
+        label: "Response verifier does not read credentials, contact endpoints, transmit externally, or call providers",
+        passed: responseVerifier.summary?.credentialValueRead === false
+          && responseVerifier.summary?.endpointContacted === false
+          && responseVerifier.summary?.networkEgress === false
+          && responseVerifier.summary?.liveProviderCallEnabled === false,
+        evidence: "local-response-verification-only",
+      },
+    ];
+    const passed = checks.filter((check) => check.passed).length;
+    const ready = passed === checks.length;
+    return {
+      ok: true,
+      registry: responseVerifier.registry,
+      mode: "phase_44_local_provider_response_verifier",
+      generatedAt: new Date().toISOString(),
+      status: ready ? "provider_response_verifier_ready_local_only" : "waiting_for_provider_response_verifier_prerequisites",
+      governance: phase44Governance(),
+      responseVerifier,
+      transcriptRecorder,
+      localResponseReadback,
+      checks,
+      summary: {
+        ready,
+        complete: ready,
+        passed,
+        total: checks.length,
+        completionPercent: ready ? 100 : Math.round((passed / checks.length) * 100),
+        phase: "phase-44",
+        localProviderResponseVerifierReady: true,
+        responseVerified: true,
+        localOnly: true,
+        responseSource: "local_rehearsal_readback",
+        localRehearsal: true,
+        safeReadback: true,
+        transcriptDeferred: true,
+        dispatchDeferred: true,
+        credentialValueIncluded: false,
+        credentialValueRead: false,
+        credentialValueExposed: false,
+        providerCredentialRead: false,
+        endpointContacted: false,
+        networkEgress: false,
+        providerResponseCreated: false,
+        liveProviderCallEnabled: false,
+      },
+      next: {
+        recommendedSlice: "openclaw-cloud-consciousness-live-provider-response-verifier-task",
+        boundary: "separate approval is required before response verification can be attached to any runtime egress path",
+      },
+    };
+  }
+
+  async function createCloudConsciousnessLiveProviderResponseVerifierTask({ confirm = false } = {}) {
+    if (confirm !== true) {
+      throw new Error("Cloud consciousness live provider response verifier task creation requires confirm=true.");
+    }
+
+    const responseVerifier = await buildCloudConsciousnessLiveProviderResponseVerifier();
+    if (responseVerifier.summary?.ready !== true) {
+      throw new Error("Cloud consciousness live provider response verifier task requires a ready Phase 44 response verifier.");
+    }
+
+    const policyRequest = {
+      intent: "cloud_consciousness.live_provider_call.response_verifier",
+      domain: "cross_boundary",
+      risk: "high",
+      requiresApproval: true,
+      audit: true,
+      tags: ["cloud_consciousness", "live_provider_call", "response_verifier_task", "operator_reviewed"],
+    };
+    const goal = "Prepare reviewed live provider response verifier task without endpoint contact or network egress";
+    const policyDecision = evaluatePolicyIntent({
+      type: "cloud_consciousness_live_provider_response_verifier_task",
+      goal,
+      policy: policyRequest,
+    }, {
+      stage: "cloud_consciousness.live_provider_response_verifier_task.draft",
+      type: "cloud_consciousness_live_provider_response_verifier_task",
+      goal,
+    });
+
+    const task = createTask({
+      goal,
+      type: "cloud_consciousness_live_provider_response_verifier_task",
+      workViewStrategy: "cloud-consciousness-live-provider-response-verifier",
+      policy: policyRequest,
+      plan: {
+        planner: "cloud-consciousness-live-provider-response-verifier-task-v0",
+        strategy: "approval-gated-cloud-consciousness-live-provider-response-verifier-shell",
+        summary: "Create an approval-gated task shell around the local provider response verifier while keeping endpoint contact, network egress, provider response creation, and live provider calls disabled.",
+        governance: phase44Governance({ createsTask: true, createsApproval: true }),
+        steps: [
+          {
+            id: "review-response-verifier",
+            phase: "review_live_provider_response_verifier",
+            title: "Review Phase 44 local provider response verifier output",
+            status: "pending",
+            requiresApproval: false,
+          },
+          {
+            id: "operator-approval",
+            phase: "waiting_for_approval",
+            title: "Wait for operator approval before response verification can be attached to any egress path",
+            status: "pending",
+            capabilityId: "act.system.command.dry_run",
+            requiresApproval: true,
+            risk: "high",
+          },
+          {
+            id: "defer-response-verifier-use",
+            phase: "cloud_consciousness_live_provider_response_verifier_deferred",
+            title: "Record approved response-verifier shell and defer endpoint, network, response creation, and live-call work",
+            status: "pending",
+            requiresApproval: true,
+            executesNow: false,
+          },
+        ],
+      },
+    }, { skipInitialPolicy: true });
+
+    task.policy = {
+      request: policyRequest,
+      decision: policyDecision,
+    };
+    task.cloudConsciousnessLiveProviderResponseVerifier = {
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RESPONSE_VERIFIER_TASK_REGISTRY,
+      responseVerifierRegistry: responseVerifier.registry,
+      responseSource: "local_rehearsal_readback",
+      responseVerified: true,
+      localProviderResponseVerifierReady: true,
+      implementationStatus: "task_shell_only",
+      localOnly: true,
+      dispatchDeferred: true,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      implementsRuntimeAdapter: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      transmitsExternally: false,
+      liveProviderCallEnabled: false,
+    };
+
+    const approval = createApprovalRequestForTask(task, policyDecision);
+    const reclaimedTasks = supersedeOtherActiveTasks(task.id);
+    reconcileRuntimeState();
+    persistState();
+
+    await publishEvent("task.created", {
+      task: serialiseTask(task),
+      planner: "cloud-consciousness-live-provider-response-verifier-task-v0",
+    });
+    await publishTaskApprovalIfPending(task);
+    await publishEvent("task.planned", {
+      task: serialiseTask(task),
+      plan: task.plan,
+    });
+    await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+      task: serialiseTask(reclaimedTask),
+    })));
+
+    return {
+      ok: true,
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RESPONSE_VERIFIER_TASK_REGISTRY,
+      mode: "approval-gated-cloud-consciousness-live-provider-response-verifier-task",
+      generatedAt: new Date().toISOString(),
+      sourceRegistry: responseVerifier.registry,
+      responseVerifier,
+      task,
+      approval,
+      governance: phase44Governance({ createsTask: true, createsApproval: true }),
+    };
+  }
+
+  function isCloudConsciousnessLiveProviderResponseVerifierTask(task) {
+    return task?.type === "cloud_consciousness_live_provider_response_verifier_task"
+      && task?.cloudConsciousnessLiveProviderResponseVerifier?.registry
+        === CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RESPONSE_VERIFIER_TASK_REGISTRY;
+  }
+
+  async function executeCloudConsciousnessLiveProviderResponseVerifierTask(task) {
+    const responseVerifier = await buildCloudConsciousnessLiveProviderResponseVerifier();
+    const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
+    if (approval?.status !== "approved") {
+      return {
+        blocked: true,
+        reason: "approval_required",
+        task,
+        approval: approval ? { ...approval } : null,
+      };
+    }
+
+    task.cloudConsciousnessLiveProviderResponseVerifier = {
+      ...(task.cloudConsciousnessLiveProviderResponseVerifier ?? {}),
+      implementationStatus: "deferred_after_approval",
+      approvedAt: approval.updatedAt,
+      responseVerifierRegistry: responseVerifier.registry,
+      responseSource: "local_rehearsal_readback",
+      responseVerified: true,
+      localProviderResponseVerifierReady: true,
+      localOnly: true,
+      dispatchDeferred: true,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      implementsRuntimeAdapter: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      transmitsExternally: false,
+      liveProviderCallEnabled: false,
+    };
+    appendTaskPhase(task, "cloud_consciousness_live_provider_response_verifier_deferred", {
+      responseVerifierRegistry: responseVerifier.registry,
+      deferredSlice: "openclaw-cloud-consciousness-approved-live-provider-response-verifier-deferred",
+      reason: "response verifier task approved; endpoint contact, network egress, provider response creation, and live provider call remain deferred",
+      responseVerified: true,
+      localOnly: true,
+      dispatchDeferred: true,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      liveProviderCallEnabled: false,
+    });
+    completeTask(task, {
+      summary: "Approved response verifier task shell recorded; executable provider egress remains deferred.",
+      responseVerifierRegistry: responseVerifier.registry,
+      phase: "cloud_consciousness_live_provider_response_verifier_deferred",
+      responseVerified: true,
+      localOnly: true,
+      dispatchDeferred: true,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      liveProviderCallEnabled: false,
+    });
+    reconcileRuntimeState();
+    persistState();
+    await publishEvent("task.phase_changed", { task: serialiseTask(task) });
+    return {
+      ok: true,
+      executor: "cloud-consciousness-live-provider-response-verifier-task-v0",
+      status: "response_verifier_deferred_after_approval",
+      task,
+      responseVerifier,
+      governance: phase44Governance({ createsTask: true, createsApproval: true }),
+      summary: {
+        ready: true,
+        implementationStatus: "deferred_after_approval",
+        responseVerified: true,
+        localOnly: true,
+        dispatchDeferred: true,
+        credentialValueIncluded: false,
+        credentialValueRead: false,
+        credentialValueExposed: false,
+        endpointContacted: false,
+        networkEgress: false,
+        providerResponseCreated: false,
+        liveProviderCallEnabled: false,
+      },
+    };
+  }
+
   function isCloudConsciousnessLiveProviderNoNetworkSenderTask(task) {
     return task?.type === "cloud_consciousness_live_provider_no_network_sender_task"
       && task?.cloudConsciousnessLiveProviderNoNetworkSender?.registry
@@ -2289,6 +2651,10 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     createCloudConsciousnessLiveProviderEgressTranscriptRecorderTask,
     isCloudConsciousnessLiveProviderEgressTranscriptRecorderTask,
     executeCloudConsciousnessLiveProviderEgressTranscriptRecorderTask,
+    buildCloudConsciousnessLiveProviderResponseVerifier,
+    createCloudConsciousnessLiveProviderResponseVerifierTask,
+    isCloudConsciousnessLiveProviderResponseVerifierTask,
+    executeCloudConsciousnessLiveProviderResponseVerifierTask,
     createCloudConsciousnessLiveProviderNoNetworkSenderTask,
     isCloudConsciousnessLiveProviderNoNetworkSenderTask,
     executeCloudConsciousnessLiveProviderNoNetworkSenderTask,

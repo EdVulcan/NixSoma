@@ -912,6 +912,13 @@ function observerHtml() {
           <div class="metric"><span>Next</span><span id="cloud-live-provider-egress-transcript-recorder-next">loading</span></div>
           <pre id="cloud-live-provider-egress-transcript-recorder-json">Loading egress transcript recorder...</pre>
         </section>
+        <section class="panel" id="cloud-consciousness-live-provider-response-verifier-panel">
+          <h2>Cloud Consciousness Live Provider Response Verifier</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-live-provider-response-verifier-ready">false</span></div>
+          <div class="metric"><span>Verified</span><span id="cloud-live-provider-response-verifier-verified">false</span></div>
+          <div class="metric"><span>Next</span><span id="cloud-live-provider-response-verifier-next">loading</span></div>
+          <pre id="cloud-live-provider-response-verifier-json">Loading response verifier...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -2248,6 +2255,10 @@ const cloudLiveProviderEgressTranscriptRecorderReady = document.querySelector("#
 const cloudLiveProviderEgressTranscriptRecorderLocal = document.querySelector("#cloud-live-provider-egress-transcript-recorder-local");
 const cloudLiveProviderEgressTranscriptRecorderNext = document.querySelector("#cloud-live-provider-egress-transcript-recorder-next");
 const cloudLiveProviderEgressTranscriptRecorderJson = document.querySelector("#cloud-live-provider-egress-transcript-recorder-json");
+const cloudLiveProviderResponseVerifierReady = document.querySelector("#cloud-live-provider-response-verifier-ready");
+const cloudLiveProviderResponseVerifierVerified = document.querySelector("#cloud-live-provider-response-verifier-verified");
+const cloudLiveProviderResponseVerifierNext = document.querySelector("#cloud-live-provider-response-verifier-next");
+const cloudLiveProviderResponseVerifierJson = document.querySelector("#cloud-live-provider-response-verifier-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -7280,6 +7291,39 @@ async function refreshCloudConsciousnessLiveProviderEgressTranscriptRecorder() {
   }
 }
 
+async function refreshCloudConsciousnessLiveProviderResponseVerifier() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-response-verifier\`);
+    const summary = data.summary ?? {};
+    cloudLiveProviderResponseVerifierReady.textContent = String(Boolean(summary.ready));
+    cloudLiveProviderResponseVerifierVerified.textContent = String(Boolean(summary.responseVerified));
+    cloudLiveProviderResponseVerifierNext.textContent = data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-response-verifier-task";
+    cloudLiveProviderResponseVerifierJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-live-provider-response-verifier-v0"),
+      "Ready: " + Boolean(summary.ready) + " percent=" + (summary.completionPercent ?? 0),
+      "Response verified: " + Boolean(summary.responseVerified),
+      "Local only: " + Boolean(summary.localOnly),
+      "Response source: " + (summary.responseSource ?? "local_rehearsal_readback"),
+      "Safe readback: " + Boolean(summary.safeReadback),
+      "Transcript deferred: " + Boolean(summary.transcriptDeferred),
+      "Credential value included: " + Boolean(summary.credentialValueIncluded),
+      "Credential value read: " + Boolean(summary.credentialValueRead),
+      "Endpoint contacted: " + Boolean(summary.endpointContacted),
+      "Network egress: " + Boolean(summary.networkEgress),
+      "Provider response created: " + Boolean(summary.providerResponseCreated),
+      "Live provider call: " + Boolean(summary.liveProviderCallEnabled),
+      "Task Endpoint: /cloud-consciousness/live-provider-response-verifier-tasks",
+      "Task Registry: openclaw-cloud-consciousness-live-provider-response-verifier-task-v0",
+      "Next: " + (data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-response-verifier-task"),
+    ].join("\\n");
+  } catch {
+    cloudLiveProviderResponseVerifierReady.textContent = "false";
+    cloudLiveProviderResponseVerifierVerified.textContent = "false";
+    cloudLiveProviderResponseVerifierNext.textContent = "openclaw-cloud-consciousness-live-provider-response-verifier-task";
+    cloudLiveProviderResponseVerifierJson.textContent = "Unable to read live provider response verifier.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -10363,6 +10407,7 @@ await refreshCloudConsciousnessLiveProviderRequestBuilder();
 await refreshCloudConsciousnessLiveProviderCredentialReferenceResolver();
 await refreshCloudConsciousnessLiveProviderNoNetworkSender();
 await refreshCloudConsciousnessLiveProviderEgressTranscriptRecorder();
+await refreshCloudConsciousnessLiveProviderResponseVerifier();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -10550,6 +10595,7 @@ setInterval(refreshCloudConsciousnessLiveProviderRequestBuilder, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderCredentialReferenceResolver, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderNoNetworkSender, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderEgressTranscriptRecorder, 5000);
+setInterval(refreshCloudConsciousnessLiveProviderResponseVerifier, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);

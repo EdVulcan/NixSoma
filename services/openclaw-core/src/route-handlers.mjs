@@ -100,8 +100,10 @@ export function registerRoutes(deps) {
     buildCloudConsciousnessLiveProviderCredentialReferenceResolver,
     buildCloudConsciousnessLiveProviderNoNetworkSender,
     buildCloudConsciousnessLiveProviderEgressTranscriptRecorder,
+    buildCloudConsciousnessLiveProviderResponseVerifier,
     createCloudConsciousnessLiveProviderNoNetworkSenderTask,
     createCloudConsciousnessLiveProviderEgressTranscriptRecorderTask,
+    createCloudConsciousnessLiveProviderResponseVerifierTask,
     createCloudConsciousnessLiveProviderCredentialReferenceResolverTask,
     createCloudConsciousnessLiveProviderRequestBuilderTask,
     createCloudConsciousnessLiveProviderRuntimeAdapterModuleTask,
@@ -587,6 +589,11 @@ export function registerRoutes(deps) {
 
   if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-egress-transcript-recorder") {
     sendJson(res, 200, await buildCloudConsciousnessLiveProviderEgressTranscriptRecorder());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-response-verifier") {
+    sendJson(res, 200, await buildCloudConsciousnessLiveProviderResponseVerifier());
     return;
   }
 
@@ -2368,6 +2375,31 @@ export function registerRoutes(deps) {
         generatedAt: result.generatedAt,
         sourceRegistry: result.sourceRegistry,
         transcriptRecorder: result.transcriptRecorder,
+        task: serialiseTask(result.task),
+        approval: serialiseApproval(result.approval),
+        governance: result.governance,
+        summary: buildTaskSummary(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-response-verifier-tasks") {
+    try {
+      const body = await readJsonBody(req);
+      const result = await createCloudConsciousnessLiveProviderResponseVerifierTask({
+        confirm: body.confirm === true,
+      });
+      sendJson(res, 201, {
+        ok: true,
+        registry: result.registry,
+        mode: result.mode,
+        generatedAt: result.generatedAt,
+        sourceRegistry: result.sourceRegistry,
+        responseVerifier: result.responseVerifier,
         task: serialiseTask(result.task),
         approval: serialiseApproval(result.approval),
         governance: result.governance,

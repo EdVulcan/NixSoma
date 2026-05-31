@@ -10,6 +10,8 @@ const PROVIDER_REQUEST_SENDER_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-send-provider-request-v0";
 const EGRESS_TRANSCRIPT_RECORDER_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-egress-transcript-recorder-v0";
+const PROVIDER_RESPONSE_VERIFIER_REGISTRY =
+  "openclaw-cloud-consciousness-live-provider-response-verifier-v0";
 
 const ADAPTER_METHODS = [
   {
@@ -34,8 +36,8 @@ const ADAPTER_METHODS = [
   },
   {
     name: "verifyProviderResponse",
-    implemented: false,
-    boundary: "future response verifier; current module must not call providers",
+    implemented: true,
+    boundary: "local response rehearsal verifier only; no provider response creation or live calls",
   },
   {
     name: "buildRollbackNote",
@@ -356,6 +358,78 @@ export function recordEgressTranscript({
   };
 }
 
+export function verifyProviderResponse({
+  providerResponseReadback = {},
+  egressTranscriptRecord = {},
+  operatorAuthorization = {},
+} = {}) {
+  const latest = providerResponseReadback.response?.latest ?? providerResponseReadback.latest ?? null;
+  const transcript = egressTranscriptRecord.transcript ?? egressTranscriptRecord ?? null;
+  const localRehearsal = latest?.schema === "openclaw.cloud_consciousness.provider_call_rehearsal.v0";
+  const transcriptDeferred = transcript?.egressDecision?.dispatch === "deferred"
+    && transcript?.providerResponse === null
+    && transcript?.noNetworkEnvelope?.networkEgress === false;
+  const safeReadback = localRehearsal
+    && latest?.transmittedExternally === false
+    && latest?.cloudCallExecuted === false
+    && latest?.providerSdkLoaded === false
+    && latest?.credentialRead === false
+    && typeof latest?.contentHash === "string"
+    && latest.contentHash.length > 0;
+  const ready = safeReadback && transcriptDeferred;
+  return {
+    ok: true,
+    registry: PROVIDER_RESPONSE_VERIFIER_REGISTRY,
+    mode: "phase_44_local_provider_response_verifier",
+    verification: {
+      responseRecordId: latest?.id ?? null,
+      responseContentHash: latest?.contentHash ?? null,
+      responseSchema: latest?.schema ?? null,
+      responseSource: "local_rehearsal_readback",
+      transcriptId: transcript?.id ?? null,
+      transcriptContentHash: transcript?.contentHash ?? null,
+      transcriptDispatch: transcript?.egressDecision?.dispatch ?? null,
+      authorized: operatorAuthorization.state === "authorized",
+      localRehearsal,
+      safeReadback,
+      transcriptDeferred,
+      providerResponseCreated: false,
+    },
+    governance: {
+      pureFunction: true,
+      responseVerified: true,
+      localOnly: true,
+      responseSource: "local_rehearsal_readback",
+      dispatchDeferred: transcriptDeferred,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      liveProviderCallEnabled: false,
+    },
+    summary: {
+      ready,
+      responseVerified: true,
+      localOnly: true,
+      responseSource: "local_rehearsal_readback",
+      localRehearsal,
+      safeReadback,
+      transcriptDeferred,
+      dispatchDeferred: transcriptDeferred,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      liveProviderCallEnabled: false,
+    },
+  };
+}
+
 export function buildCloudLiveProviderRuntimeAdapterModuleContract() {
   const implementedMethodCount = ADAPTER_METHODS.filter((method) => method.implemented).length;
   return {
@@ -398,6 +472,7 @@ export function buildCloudLiveProviderRuntimeAdapterModuleContract() {
       pureCredentialReferenceResolverReady: true,
       noNetworkProviderRequestSenderReady: true,
       localEgressTranscriptRecorderReady: true,
+      localProviderResponseVerifierReady: true,
       implementsRuntimeAdapter: false,
       providerSdkLoaded: false,
       providerCredentialRead: false,
