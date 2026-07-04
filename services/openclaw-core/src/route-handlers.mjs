@@ -108,6 +108,8 @@ export function registerRoutes(deps) {
     createCloudConsciousnessLiveProviderRealLaunchTask,
     buildCloudConsciousnessLiveProviderRealLaunchExecutionPreflight,
     recordCloudConsciousnessLiveProviderRealLaunchExecutionPreflight,
+    buildCloudConsciousnessLiveProviderCredentialValueAccessGate,
+    recordCloudConsciousnessLiveProviderCredentialValueAccessGate,
     createCloudConsciousnessLiveProviderNoNetworkSenderTask,
     createCloudConsciousnessLiveProviderEgressTranscriptRecorderTask,
     createCloudConsciousnessLiveProviderResponseVerifierTask,
@@ -628,6 +630,11 @@ export function registerRoutes(deps) {
 
   if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-real-launch-execution-preflight") {
     sendJson(res, 200, await buildCloudConsciousnessLiveProviderRealLaunchExecutionPreflight());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-credential-value-access-gate") {
+    sendJson(res, 200, await buildCloudConsciousnessLiveProviderCredentialValueAccessGate());
     return;
   }
 
@@ -2534,6 +2541,30 @@ export function registerRoutes(deps) {
         generatedAt: result.generatedAt,
         status: result.status,
         preflight: result.preflight,
+        task: serialiseTask(result.task),
+        governance: result.governance,
+        summary: buildTaskSummary(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-credential-value-access-gate") {
+    try {
+      const body = await readJsonBody(req);
+      const result = await recordCloudConsciousnessLiveProviderCredentialValueAccessGate({
+        confirm: body.confirm === true,
+      });
+      sendJson(res, 201, {
+        ok: true,
+        registry: result.registry,
+        mode: result.mode,
+        generatedAt: result.generatedAt,
+        status: result.status,
+        gate: result.gate,
         task: serialiseTask(result.task),
         governance: result.governance,
         summary: buildTaskSummary(),

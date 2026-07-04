@@ -91,6 +91,7 @@ export function createPlanBuilder(deps) {
     appendTaskPhase,
     completeTask,
     approvals,
+    getTaskById,
     listTasks,
   });
 

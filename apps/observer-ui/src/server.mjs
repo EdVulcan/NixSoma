@@ -954,6 +954,13 @@ function observerHtml() {
           <div class="metric"><span>Launch</span><span id="cloud-live-provider-real-launch-execution-preflight-launch">not authorized</span></div>
           <pre id="cloud-live-provider-real-launch-execution-preflight-json">Loading real launch execution preflight...</pre>
         </section>
+        <section class="panel" id="cloud-consciousness-live-provider-credential-value-access-gate-panel">
+          <h2>Cloud Consciousness Live Provider Credential Value Access Gate</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-live-provider-credential-value-access-gate-ready">false</span></div>
+          <div class="metric"><span>Credential</span><span id="cloud-live-provider-credential-value-access-gate-credential">not read</span></div>
+          <div class="metric"><span>Next</span><span id="cloud-live-provider-credential-value-access-gate-next">loading</span></div>
+          <pre id="cloud-live-provider-credential-value-access-gate-json">Loading credential value access gate...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -2314,6 +2321,10 @@ const cloudLiveProviderRealLaunchExecutionPreflightReady = document.querySelecto
 const cloudLiveProviderRealLaunchExecutionPreflightSource = document.querySelector("#cloud-live-provider-real-launch-execution-preflight-source");
 const cloudLiveProviderRealLaunchExecutionPreflightLaunch = document.querySelector("#cloud-live-provider-real-launch-execution-preflight-launch");
 const cloudLiveProviderRealLaunchExecutionPreflightJson = document.querySelector("#cloud-live-provider-real-launch-execution-preflight-json");
+const cloudLiveProviderCredentialValueAccessGateReady = document.querySelector("#cloud-live-provider-credential-value-access-gate-ready");
+const cloudLiveProviderCredentialValueAccessGateCredential = document.querySelector("#cloud-live-provider-credential-value-access-gate-credential");
+const cloudLiveProviderCredentialValueAccessGateNext = document.querySelector("#cloud-live-provider-credential-value-access-gate-next");
+const cloudLiveProviderCredentialValueAccessGateJson = document.querySelector("#cloud-live-provider-credential-value-access-gate-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -7535,6 +7546,41 @@ async function refreshCloudConsciousnessLiveProviderRealLaunchExecutionPreflight
   }
 }
 
+async function refreshCloudConsciousnessLiveProviderCredentialValueAccessGate() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-credential-value-access-gate\`);
+    const summary = data.summary ?? {};
+    cloudLiveProviderCredentialValueAccessGateReady.textContent = String(Boolean(summary.ready));
+    cloudLiveProviderCredentialValueAccessGateCredential.textContent = summary.credentialValueRead === true ? "read" : "not read";
+    cloudLiveProviderCredentialValueAccessGateNext.textContent = data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-endpoint-network-egress-gate";
+    cloudLiveProviderCredentialValueAccessGateJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-live-provider-credential-value-access-gate-v0"),
+      "Ready: " + Boolean(summary.ready) + " percent=" + (summary.completionPercent ?? 0),
+      "Recorded: " + Boolean(summary.credentialValueAccessGateRecorded),
+      "Source Task: " + (summary.sourceTaskId ?? "none"),
+      "Execution preflight found: " + Boolean(summary.executionPreflightFound),
+      "Credential access authorized: " + Boolean(summary.credentialValueAccessAuthorized),
+      "Credential access denied: " + Boolean(summary.credentialValueAccessDenied),
+      "Credential value included: " + Boolean(summary.credentialValueIncluded),
+      "Credential value read: " + Boolean(summary.credentialValueRead),
+      "Credential value exposed: " + Boolean(summary.credentialValueExposed),
+      "Endpoint contacted: " + Boolean(summary.endpointContacted),
+      "Network egress: " + Boolean(summary.networkEgress),
+      "Provider response created: " + Boolean(summary.providerResponseCreated),
+      "Rollback executed: " + Boolean(summary.rollbackExecuted),
+      "Host mutation: " + Boolean(summary.hostMutation),
+      "Live provider call: " + Boolean(summary.liveProviderCallEnabled),
+      "Record Endpoint: /cloud-consciousness/live-provider-credential-value-access-gate",
+      "Next: " + (data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-endpoint-network-egress-gate"),
+    ].join("\\n");
+  } catch {
+    cloudLiveProviderCredentialValueAccessGateReady.textContent = "false";
+    cloudLiveProviderCredentialValueAccessGateCredential.textContent = "not read";
+    cloudLiveProviderCredentialValueAccessGateNext.textContent = "openclaw-cloud-consciousness-live-provider-endpoint-network-egress-gate";
+    cloudLiveProviderCredentialValueAccessGateJson.textContent = "Unable to read live provider credential value access gate.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -10624,6 +10670,7 @@ await refreshCloudConsciousnessLiveProviderRuntimeAdapterCompletion();
 await refreshCloudConsciousnessLiveProviderRuntimeAdapterClosure();
 await refreshCloudConsciousnessLiveProviderRealLaunchRouteReview();
 await refreshCloudConsciousnessLiveProviderRealLaunchExecutionPreflight();
+await refreshCloudConsciousnessLiveProviderCredentialValueAccessGate();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -10817,6 +10864,7 @@ setInterval(refreshCloudConsciousnessLiveProviderRuntimeAdapterCompletion, 5000)
 setInterval(refreshCloudConsciousnessLiveProviderRuntimeAdapterClosure, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderRealLaunchRouteReview, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderRealLaunchExecutionPreflight, 5000);
+setInterval(refreshCloudConsciousnessLiveProviderCredentialValueAccessGate, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);
