@@ -1049,6 +1049,14 @@ function observerHtml() {
           <div class="metric"><span>Next</span><span id="cloud-live-provider-credential-value-access-authorization-route-next">loading</span></div>
           <pre id="cloud-live-provider-credential-value-access-authorization-route-json">Loading credential value access authorization route...</pre>
         </section>
+        <section class="panel" id="cloud-consciousness-live-provider-credential-value-access-authorization-task-shell-panel">
+          <h2>Cloud Consciousness Live Provider Credential Value Access Authorization Task Shell</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-live-provider-credential-value-access-authorization-task-shell-ready">false</span></div>
+          <div class="metric"><span>Approval</span><span id="cloud-live-provider-credential-value-access-authorization-task-shell-approval">required</span></div>
+          <div class="metric"><span>Credential</span><span id="cloud-live-provider-credential-value-access-authorization-task-shell-credential">not read</span></div>
+          <div class="metric"><span>Next</span><span id="cloud-live-provider-credential-value-access-authorization-task-shell-next">loading</span></div>
+          <pre id="cloud-live-provider-credential-value-access-authorization-task-shell-json">Loading credential value access authorization task shell...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -2468,6 +2476,11 @@ const cloudLiveProviderCredentialValueAccessAuthorizationRouteCredential = docum
 const cloudLiveProviderCredentialValueAccessAuthorizationRouteNetwork = document.querySelector("#cloud-live-provider-credential-value-access-authorization-route-network");
 const cloudLiveProviderCredentialValueAccessAuthorizationRouteNext = document.querySelector("#cloud-live-provider-credential-value-access-authorization-route-next");
 const cloudLiveProviderCredentialValueAccessAuthorizationRouteJson = document.querySelector("#cloud-live-provider-credential-value-access-authorization-route-json");
+const cloudLiveProviderCredentialValueAccessAuthorizationTaskShellReady = document.querySelector("#cloud-live-provider-credential-value-access-authorization-task-shell-ready");
+const cloudLiveProviderCredentialValueAccessAuthorizationTaskShellApproval = document.querySelector("#cloud-live-provider-credential-value-access-authorization-task-shell-approval");
+const cloudLiveProviderCredentialValueAccessAuthorizationTaskShellCredential = document.querySelector("#cloud-live-provider-credential-value-access-authorization-task-shell-credential");
+const cloudLiveProviderCredentialValueAccessAuthorizationTaskShellNext = document.querySelector("#cloud-live-provider-credential-value-access-authorization-task-shell-next");
+const cloudLiveProviderCredentialValueAccessAuthorizationTaskShellJson = document.querySelector("#cloud-live-provider-credential-value-access-authorization-task-shell-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -8102,6 +8115,39 @@ async function refreshCloudConsciousnessLiveProviderCredentialValueAccessAuthori
   }
 }
 
+async function refreshCloudConsciousnessLiveProviderCredentialValueAccessAuthorizationTaskShell() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-credential-value-access-authorization-route\`);
+    const summary = data.summary ?? {};
+    cloudLiveProviderCredentialValueAccessAuthorizationTaskShellReady.textContent = String(Boolean(summary.ready));
+    cloudLiveProviderCredentialValueAccessAuthorizationTaskShellApproval.textContent = "required";
+    cloudLiveProviderCredentialValueAccessAuthorizationTaskShellCredential.textContent = summary.credentialValueRead === true ? "read" : "not read";
+    cloudLiveProviderCredentialValueAccessAuthorizationTaskShellNext.textContent = "openclaw-cloud-consciousness-live-provider-credential-value-access-authorization-approved-deferred";
+    cloudLiveProviderCredentialValueAccessAuthorizationTaskShellJson.textContent = [
+      "Task Registry: openclaw-cloud-consciousness-live-provider-credential-value-access-authorization-task-v0",
+      "Ready: " + Boolean(summary.ready) + " percent=" + (summary.completionPercent ?? 0),
+      "Source Task: " + (summary.sourceTaskId ?? "none"),
+      "Source Registry: " + (summary.sourceRegistry ?? "openclaw-cloud-consciousness-live-provider-credential-value-access-authorization-route-v0"),
+      "Approval: required before access authorization shell can be completed",
+      "Task Endpoint: /cloud-consciousness/live-provider-credential-value-access-authorization-tasks",
+      "Access authorization task created: " + Boolean(summary.credentialValueAccessAuthorizationTaskCreated),
+      "Credential access authorized: " + Boolean(summary.credentialValueAccessAuthorized),
+      "Credential value read: " + Boolean(summary.credentialValueRead),
+      "Provider credential read: " + Boolean(summary.providerCredentialRead),
+      "Endpoint contacted: " + Boolean(summary.endpointContacted),
+      "Network egress: " + Boolean(summary.networkEgress),
+      "Live provider call: " + Boolean(summary.liveProviderCallEnabled),
+      "Next: openclaw-cloud-consciousness-live-provider-credential-value-access-authorization-approved-deferred",
+    ].join("\\n");
+  } catch {
+    cloudLiveProviderCredentialValueAccessAuthorizationTaskShellReady.textContent = "false";
+    cloudLiveProviderCredentialValueAccessAuthorizationTaskShellApproval.textContent = "required";
+    cloudLiveProviderCredentialValueAccessAuthorizationTaskShellCredential.textContent = "not read";
+    cloudLiveProviderCredentialValueAccessAuthorizationTaskShellNext.textContent = "openclaw-cloud-consciousness-live-provider-credential-value-access-authorization-task-shell";
+    cloudLiveProviderCredentialValueAccessAuthorizationTaskShellJson.textContent = "Unable to read live provider credential value access authorization task shell readiness.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -11203,6 +11249,7 @@ await refreshCloudConsciousnessLiveProviderCredentialValueReadinessPreflight();
 await refreshCloudConsciousnessLiveProviderCredentialValueReadTaskShell();
 await refreshCloudConsciousnessLiveProviderCredentialValueReadApprovedDeferred();
 await refreshCloudConsciousnessLiveProviderCredentialValueAccessAuthorizationRoute();
+await refreshCloudConsciousnessLiveProviderCredentialValueAccessAuthorizationTaskShell();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -11408,6 +11455,7 @@ setInterval(refreshCloudConsciousnessLiveProviderCredentialValueReadinessPreflig
 setInterval(refreshCloudConsciousnessLiveProviderCredentialValueReadTaskShell, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderCredentialValueReadApprovedDeferred, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderCredentialValueAccessAuthorizationRoute, 5000);
+setInterval(refreshCloudConsciousnessLiveProviderCredentialValueAccessAuthorizationTaskShell, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);
