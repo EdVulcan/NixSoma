@@ -34,6 +34,8 @@ const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RUNTIME_ADAPTER_CLOSURE_EXIT_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-runtime-adapter-closure-exit-v0";
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_REAL_LAUNCH_ROUTE_REVIEW_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-real-launch-route-review-v0";
+const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_REAL_LAUNCH_TASK_REGISTRY =
+  "openclaw-cloud-consciousness-live-provider-real-launch-task-v0";
 
 function phase18Governance(extra = {}) {
   return {
@@ -362,6 +364,34 @@ function phase56Governance(extra = {}) {
     transmitsExternally: false,
     liveProviderCallEnabled: false,
     launchAuthorized: false,
+    providerSdkLoaded: false,
+    providerCredentialRead: false,
+    credentialValueRead: false,
+    credentialValueExposed: false,
+    endpointContacted: false,
+    networkEgress: false,
+    providerResponseCreated: false,
+    rollbackExecuted: false,
+    rollbackCommandCreated: false,
+    hostMutation: false,
+    ...extra,
+  };
+}
+
+function phase57Governance(extra = {}) {
+  return {
+    phase: "phase-57",
+    createsTask: false,
+    createsApproval: false,
+    realLaunchTaskShell: true,
+    launchAuthorized: false,
+    launchExecuted: false,
+    localRuntimeAdapterComplete: true,
+    adapterMethodTableClosed: true,
+    implementsRuntimeAdapter: true,
+    callsCloudModel: false,
+    transmitsExternally: false,
+    liveProviderCallEnabled: false,
     providerSdkLoaded: false,
     providerCredentialRead: false,
     credentialValueRead: false,
@@ -3272,6 +3302,136 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     };
   }
 
+  async function createCloudConsciousnessLiveProviderRealLaunchTask({ confirm = false } = {}) {
+    if (confirm !== true) {
+      throw new Error("Cloud consciousness live provider real launch task creation requires confirm=true.");
+    }
+
+    const routeReview = await buildCloudConsciousnessLiveProviderRealLaunchRouteReview();
+    if (routeReview.summary?.ready !== true
+      || routeReview.decision?.selectedSlice !== "openclaw-cloud-consciousness-live-provider-real-launch-task") {
+      throw new Error("Cloud consciousness live provider real launch task requires a ready Phase 56 route review.");
+    }
+
+    const policyRequest = {
+      intent: "cloud_consciousness.live_provider_call.real_launch",
+      domain: "cross_boundary",
+      risk: "high",
+      requiresApproval: true,
+      audit: true,
+      tags: ["cloud_consciousness", "live_provider_call", "real_launch", "operator_reviewed"],
+    };
+    const goal = "Prepare operator-gated real live provider launch task without executing egress";
+    const policyDecision = evaluatePolicyIntent({
+      type: "cloud_consciousness_live_provider_real_launch_task",
+      goal,
+      policy: policyRequest,
+    }, {
+      stage: "cloud_consciousness.live_provider_real_launch_task.draft",
+      type: "cloud_consciousness_live_provider_real_launch_task",
+      goal,
+    });
+
+    const task = createTask({
+      goal,
+      type: "cloud_consciousness_live_provider_real_launch_task",
+      workViewStrategy: "cloud-consciousness-live-provider-real-launch",
+      policy: policyRequest,
+      plan: {
+        planner: "cloud-consciousness-live-provider-real-launch-task-v0",
+        strategy: "approval-gated-cloud-consciousness-live-provider-real-launch-shell",
+        summary: "Create an approval-gated real live provider launch task shell while keeping credential value reads, endpoint contact, network egress, provider responses, rollback execution, and live calls disabled.",
+        governance: phase57Governance({ createsTask: true, createsApproval: true }),
+        steps: [
+          {
+            id: "review-real-launch-route",
+            phase: "review_live_provider_real_launch_route",
+            title: "Review Phase 56 real launch route review and closed runtime adapter evidence",
+            status: "pending",
+            requiresApproval: false,
+          },
+          {
+            id: "operator-approval",
+            phase: "waiting_for_approval",
+            title: "Wait for operator approval before any live provider launch can be considered",
+            status: "pending",
+            capabilityId: "act.system.command.dry_run",
+            requiresApproval: true,
+            risk: "high",
+          },
+          {
+            id: "defer-real-launch-execution",
+            phase: "cloud_consciousness_live_provider_real_launch_deferred",
+            title: "Record launch task shell and defer credential access, endpoint contact, egress, response creation, and rollback execution",
+            status: "pending",
+            requiresApproval: true,
+            executesNow: false,
+          },
+        ],
+      },
+    }, { skipInitialPolicy: true });
+
+    task.policy = {
+      request: policyRequest,
+      decision: policyDecision,
+    };
+    task.cloudConsciousnessLiveProviderRealLaunch = {
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_REAL_LAUNCH_TASK_REGISTRY,
+      routeReviewRegistry: routeReview.registry,
+      implementationStatus: "task_shell_only",
+      selectedSlice: routeReview.decision?.selectedSlice ?? "openclaw-cloud-consciousness-live-provider-real-launch-task",
+      localRuntimeAdapterComplete: true,
+      adapterMethodTableClosed: true,
+      methodCount: routeReview.summary?.methodCount ?? 6,
+      implementedMethodCount: routeReview.summary?.implementedMethodCount ?? 6,
+      launchAuthorized: false,
+      launchExecuted: false,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      rollbackExecuted: false,
+      rollbackCommandCreated: false,
+      hostMutation: false,
+      transmitsExternally: false,
+      liveProviderCallEnabled: false,
+    };
+
+    const approval = createApprovalRequestForTask(task, policyDecision);
+    const reclaimedTasks = supersedeOtherActiveTasks(task.id);
+    reconcileRuntimeState();
+    persistState();
+
+    await publishEvent("task.created", {
+      task: serialiseTask(task),
+      planner: "cloud-consciousness-live-provider-real-launch-task-v0",
+    });
+    await publishTaskApprovalIfPending(task);
+    await publishEvent("task.planned", {
+      task: serialiseTask(task),
+      plan: task.plan,
+    });
+    await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+      task: serialiseTask(reclaimedTask),
+    })));
+
+    return {
+      ok: true,
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_REAL_LAUNCH_TASK_REGISTRY,
+      mode: "approval-gated-cloud-consciousness-live-provider-real-launch-task",
+      generatedAt: new Date().toISOString(),
+      sourceRegistry: routeReview.registry,
+      routeReview,
+      task,
+      approval,
+      governance: phase57Governance({ createsTask: true, createsApproval: true }),
+    };
+  }
+
   function isCloudConsciousnessLiveProviderNoNetworkSenderTask(task) {
     return task?.type === "cloud_consciousness_live_provider_no_network_sender_task"
       && task?.cloudConsciousnessLiveProviderNoNetworkSender?.registry
@@ -3757,6 +3917,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     executeCloudConsciousnessLiveProviderRuntimeAdapterClosureTask,
     buildCloudConsciousnessLiveProviderRuntimeAdapterClosureExit,
     buildCloudConsciousnessLiveProviderRealLaunchRouteReview,
+    createCloudConsciousnessLiveProviderRealLaunchTask,
     createCloudConsciousnessLiveProviderNoNetworkSenderTask,
     isCloudConsciousnessLiveProviderNoNetworkSenderTask,
     executeCloudConsciousnessLiveProviderNoNetworkSenderTask,

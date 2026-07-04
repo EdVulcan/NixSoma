@@ -7477,6 +7477,8 @@ async function refreshCloudConsciousnessLiveProviderRealLaunchRouteReview() {
       "Provider response created: " + Boolean(summary.providerResponseCreated),
       "Rollback executed: " + Boolean(summary.rollbackExecuted),
       "Live provider call: " + Boolean(summary.liveProviderCallEnabled),
+      "Task Endpoint: /cloud-consciousness/live-provider-real-launch-tasks",
+      "Task Registry: openclaw-cloud-consciousness-live-provider-real-launch-task-v0",
       "Next: " + (data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-real-launch-task"),
     ].join("\\n");
   } catch {
