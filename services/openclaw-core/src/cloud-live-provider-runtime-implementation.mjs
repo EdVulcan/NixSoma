@@ -48,6 +48,8 @@ const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_EGRESS_EXECUTION_TASK_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-egress-execution-task-v0";
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_EGRESS_EXECUTION_APPROVED_DEFERRED_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-egress-execution-approved-deferred-v0";
+const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_AUTHORIZATION_ROUTE_REGISTRY =
+  "openclaw-cloud-consciousness-live-provider-credential-value-authorization-route-v0";
 
 function phase18Governance(extra = {}) {
   return {
@@ -609,6 +611,36 @@ function phase64Governance(extra = {}) {
     rollbackExecuted: false,
     rollbackCommandCreated: false,
     hostMutation: false,
+    ...extra,
+  };
+}
+
+function phase65Governance(extra = {}) {
+  return {
+    phase: "phase-65",
+    credentialValueAuthorizationRouteOnly: true,
+    requiresApprovedDeferredEgressExecutionEvidence: true,
+    createsTask: false,
+    createsApproval: false,
+    credentialValueAuthorizationTaskCreated: false,
+    credentialValueAccessAuthorized: false,
+    credentialValueAccessDenied: true,
+    credentialValueIncluded: false,
+    credentialValueRead: false,
+    credentialValueExposed: false,
+    providerCredentialRead: false,
+    endpointNetworkEgressAuthorized: false,
+    endpointNetworkEgressDenied: true,
+    endpointContacted: false,
+    networkEgress: false,
+    transmitsExternally: false,
+    liveProviderCallEnabled: false,
+    providerResponseCreated: false,
+    rollbackExecuted: false,
+    rollbackCommandCreated: false,
+    hostMutation: false,
+    launchAuthorized: false,
+    launchExecuted: false,
     ...extra,
   };
 }
@@ -4971,6 +5003,110 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     };
   }
 
+  async function buildCloudConsciousnessLiveProviderCredentialValueAuthorizationRoute() {
+    const approvedDeferred = await buildCloudConsciousnessLiveProviderEgressExecutionApprovedDeferred();
+    const decision = {
+      decision: "route_to_approval_gated_credential_value_authorization_task",
+      selectedSlice: "openclaw-cloud-consciousness-live-provider-credential-value-authorization-task-shell",
+      reason: "The egress execution task shell is approved but deferred; the next whitepaper-aligned gate is an explicit credential-value authorization route before any credential value can be read.",
+      requiredBeforeCredentialValueRead: [
+        "separate approval-gated credential value authorization task shell",
+        "operator authorization naming the credential reference and provider endpoint context",
+        "redaction-safe transcript of the authorization decision",
+        "endpoint/network egress authorization remains a later separate gate",
+      ],
+      credentialReference: "openclaw://credential/provider/live-provider-fixture",
+      credentialValueAuthorizationTaskCreated: false,
+      credentialValueAccessAuthorized: false,
+      credentialValueAccessDenied: true,
+      credentialValueRead: false,
+    };
+    const checks = [
+      {
+        id: "phase-64-approved-deferred-ready",
+        label: "Phase 64 approved-deferred egress execution evidence is ready",
+        passed: approvedDeferred.summary?.ready === true
+          && approvedDeferred.summary?.approvedDeferredEvidenceFound === true,
+        evidence: approvedDeferred.registry,
+      },
+      {
+        id: "credential-value-still-unread",
+        label: "Credential value remains unread, unexposed, and unauthorized",
+        passed: approvedDeferred.summary?.credentialValueRead === false
+          && approvedDeferred.summary?.credentialValueIncluded === false
+          && approvedDeferred.summary?.credentialValueExposed === false
+          && approvedDeferred.summary?.providerCredentialRead === false
+          && decision.credentialValueAccessAuthorized === false,
+        evidence: decision.credentialReference,
+      },
+      {
+        id: "authorization-task-not-created",
+        label: "Route review does not create a credential value authorization task",
+        passed: decision.credentialValueAuthorizationTaskCreated === false,
+        evidence: decision.selectedSlice,
+      },
+      {
+        id: "no-endpoint-network-or-live-call",
+        label: "Route review does not contact endpoints, transmit externally, or enable live provider calls",
+        passed: approvedDeferred.summary?.endpointContacted === false
+          && approvedDeferred.summary?.networkEgress === false
+          && approvedDeferred.summary?.transmitsExternally === false
+          && approvedDeferred.summary?.liveProviderCallEnabled === false,
+        evidence: "credential_authorization_route_only",
+      },
+    ];
+    const passed = checks.filter((check) => check.passed).length;
+    const ready = passed === checks.length;
+    return {
+      ok: true,
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_AUTHORIZATION_ROUTE_REGISTRY,
+      mode: "phase_65_live_provider_credential_value_authorization_route",
+      generatedAt: new Date().toISOString(),
+      status: ready ? "credential_value_authorization_route_ready" : "waiting_for_phase_64_approved_deferred_evidence",
+      governance: phase65Governance(),
+      decision,
+      checks,
+      summary: {
+        ready,
+        complete: ready,
+        passed,
+        total: checks.length,
+        completionPercent: ready ? 100 : Math.round((passed / checks.length) * 100),
+        phase: "phase-65",
+        approvedDeferredEvidenceFound: approvedDeferred.summary?.approvedDeferredEvidenceFound === true,
+        sourceTaskId: approvedDeferred.summary?.sourceTaskId ?? null,
+        sourceRegistry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_EGRESS_EXECUTION_APPROVED_DEFERRED_REGISTRY,
+        selectedSlice: decision.selectedSlice,
+        credentialValueAuthorizationTaskCreated: false,
+        credentialValueAccessAuthorized: false,
+        credentialValueAccessDenied: true,
+        credentialValueIncluded: false,
+        credentialValueRead: false,
+        credentialValueExposed: false,
+        providerCredentialRead: false,
+        endpointNetworkEgressAuthorized: false,
+        endpointNetworkEgressDenied: true,
+        endpointContacted: false,
+        networkEgress: false,
+        providerResponseCreated: false,
+        rollbackExecuted: false,
+        rollbackCommandCreated: false,
+        hostMutation: false,
+        transmitsExternally: false,
+        liveProviderCallEnabled: false,
+        launchAuthorized: false,
+        launchExecuted: false,
+      },
+      evidence: {
+        approvedDeferred: runtimeAdapterEvidenceRef(approvedDeferred),
+      },
+      next: {
+        recommendedSlice: "openclaw-cloud-consciousness-live-provider-credential-value-authorization-task-shell",
+        boundary: "credential value reads, endpoint contact, network egress, provider response creation, rollback execution, host mutation, and live provider calls remain separate future gates",
+      },
+    };
+  }
+
   async function executeCloudConsciousnessLiveProviderEgressExecutionTask(task) {
     const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
     if (approval?.status !== "approved") {
@@ -5694,6 +5830,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     recordCloudConsciousnessLiveProviderEgressExecutionRouteTaskPreflight,
     createCloudConsciousnessLiveProviderEgressExecutionTask,
     buildCloudConsciousnessLiveProviderEgressExecutionApprovedDeferred,
+    buildCloudConsciousnessLiveProviderCredentialValueAuthorizationRoute,
     isCloudConsciousnessLiveProviderEgressExecutionTask,
     executeCloudConsciousnessLiveProviderEgressExecutionTask,
     isCloudConsciousnessLiveProviderRealLaunchTask,
