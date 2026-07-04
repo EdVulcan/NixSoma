@@ -110,6 +110,8 @@ export function registerRoutes(deps) {
     recordCloudConsciousnessLiveProviderRealLaunchExecutionPreflight,
     buildCloudConsciousnessLiveProviderCredentialValueAccessGate,
     recordCloudConsciousnessLiveProviderCredentialValueAccessGate,
+    buildCloudConsciousnessLiveProviderEndpointNetworkEgressGate,
+    recordCloudConsciousnessLiveProviderEndpointNetworkEgressGate,
     createCloudConsciousnessLiveProviderNoNetworkSenderTask,
     createCloudConsciousnessLiveProviderEgressTranscriptRecorderTask,
     createCloudConsciousnessLiveProviderResponseVerifierTask,
@@ -635,6 +637,11 @@ export function registerRoutes(deps) {
 
   if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-credential-value-access-gate") {
     sendJson(res, 200, await buildCloudConsciousnessLiveProviderCredentialValueAccessGate());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-endpoint-network-egress-gate") {
+    sendJson(res, 200, await buildCloudConsciousnessLiveProviderEndpointNetworkEgressGate());
     return;
   }
 
@@ -2556,6 +2563,30 @@ export function registerRoutes(deps) {
     try {
       const body = await readJsonBody(req);
       const result = await recordCloudConsciousnessLiveProviderCredentialValueAccessGate({
+        confirm: body.confirm === true,
+      });
+      sendJson(res, 201, {
+        ok: true,
+        registry: result.registry,
+        mode: result.mode,
+        generatedAt: result.generatedAt,
+        status: result.status,
+        gate: result.gate,
+        task: serialiseTask(result.task),
+        governance: result.governance,
+        summary: buildTaskSummary(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-endpoint-network-egress-gate") {
+    try {
+      const body = await readJsonBody(req);
+      const result = await recordCloudConsciousnessLiveProviderEndpointNetworkEgressGate({
         confirm: body.confirm === true,
       });
       sendJson(res, 201, {

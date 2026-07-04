@@ -40,6 +40,8 @@ const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_REAL_LAUNCH_EXECUTION_PREFLIGHT_REGISTRY
   "openclaw-cloud-consciousness-live-provider-real-launch-execution-preflight-v0";
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_ACCESS_GATE_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-credential-value-access-gate-v0";
+const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENDPOINT_NETWORK_EGRESS_GATE_REGISTRY =
+  "openclaw-cloud-consciousness-live-provider-endpoint-network-egress-gate-v0";
 
 function phase18Governance(extra = {}) {
   return {
@@ -452,6 +454,38 @@ function phase60Governance(extra = {}) {
     launchExecuted: false,
     credentialValueAccessAuthorized: false,
     credentialValueAccessDenied: true,
+    callsCloudModel: false,
+    transmitsExternally: false,
+    liveProviderCallEnabled: false,
+    providerSdkLoaded: false,
+    providerCredentialRead: false,
+    credentialValueIncluded: false,
+    credentialValueRead: false,
+    credentialValueExposed: false,
+    endpointContacted: false,
+    networkEgress: false,
+    providerResponseCreated: false,
+    rollbackExecuted: false,
+    rollbackCommandCreated: false,
+    hostMutation: false,
+    ...extra,
+  };
+}
+
+function phase61Governance(extra = {}) {
+  return {
+    phase: "phase-61",
+    endpointNetworkEgressGateOnly: true,
+    requiresCredentialValueAccessGateEvidence: true,
+    createsTask: false,
+    createsApproval: false,
+    realLaunchTaskShell: true,
+    launchAuthorized: false,
+    launchExecuted: false,
+    credentialValueAccessAuthorized: false,
+    credentialValueAccessDenied: true,
+    endpointNetworkEgressAuthorized: false,
+    endpointNetworkEgressDenied: true,
     callsCloudModel: false,
     transmitsExternally: false,
     liveProviderCallEnabled: false,
@@ -3570,6 +3604,42 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
           && [
             "cloud_consciousness_live_provider_real_launch_execution_preflight",
             "cloud_consciousness_live_provider_credential_value_access_gate",
+            "cloud_consciousness_live_provider_endpoint_network_egress_gate",
+          ].includes(task.outcome?.details?.phase);
+      })
+      .sort((a, b) => String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")));
+    return candidates[0]?.id ? getTaskById(candidates[0].id) ?? candidates[0] : null;
+  }
+
+  function findLatestCredentialValueAccessGateTask() {
+    const candidates = (typeof listTasks === "function" ? listTasks() : [])
+      .filter((task) => {
+        const shell = task?.cloudConsciousnessLiveProviderRealLaunch ?? {};
+        return isCloudConsciousnessLiveProviderRealLaunchTask(task)
+          && task.status === "completed"
+          && shell.operatorApprovalCaptured === true
+          && shell.launchExecutionDeferred === true
+          && shell.executionPreflightRecorded === true
+          && shell.executionPreflightRegistry === CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_REAL_LAUNCH_EXECUTION_PREFLIGHT_REGISTRY
+          && shell.credentialValueAccessGateRecorded === true
+          && shell.credentialValueAccessGateRegistry === CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_ACCESS_GATE_REGISTRY
+          && shell.credentialValueAccessAuthorized === false
+          && shell.credentialValueAccessDenied === true
+          && shell.launchAuthorized === false
+          && shell.launchExecuted === false
+          && shell.credentialValueIncluded === false
+          && shell.credentialValueRead === false
+          && shell.credentialValueExposed === false
+          && shell.providerCredentialRead === false
+          && shell.endpointContacted === false
+          && shell.networkEgress === false
+          && shell.providerResponseCreated === false
+          && shell.rollbackExecuted === false
+          && shell.hostMutation === false
+          && shell.liveProviderCallEnabled === false
+          && [
+            "cloud_consciousness_live_provider_credential_value_access_gate",
+            "cloud_consciousness_live_provider_endpoint_network_egress_gate",
           ].includes(task.outcome?.details?.phase);
       })
       .sort((a, b) => String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")));
@@ -3974,6 +4044,228 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       task,
       gate: await buildCloudConsciousnessLiveProviderCredentialValueAccessGate(),
       governance: phase60Governance(),
+    };
+  }
+
+  async function buildCloudConsciousnessLiveProviderEndpointNetworkEgressGate() {
+    const credentialGate = await buildCloudConsciousnessLiveProviderCredentialValueAccessGate();
+    const credentialGateTask = findLatestCredentialValueAccessGateTask();
+    const shell = credentialGateTask?.cloudConsciousnessLiveProviderRealLaunch ?? {};
+    const gate = {
+      decision: "endpoint_network_egress_not_authorized",
+      egressGateState: shell.endpointNetworkEgressGateRecorded === true ? "recorded_denied" : "ready_to_record_denial",
+      requiredBeforeEndpointContact: [
+        "separate explicit endpoint-network egress task",
+        "operator authorization that names the provider endpoint and method",
+        "credential-value access authorization evidence from a separate future gate",
+        "redaction-safe transcript of the egress decision",
+      ],
+      providerEndpointReference: "openclaw://provider-endpoint/live-provider-fixture",
+      endpointNetworkEgressAuthorized: false,
+      endpointNetworkEgressDenied: true,
+      endpointContacted: false,
+      networkEgress: false,
+      transmitsExternally: false,
+      liveProviderCallEnabled: false,
+    };
+    const checks = [
+      {
+        id: "phase-60-credential-value-access-gate-recorded",
+        label: "Phase 60 credential value access gate evidence is recorded",
+        passed: Boolean(credentialGateTask)
+          && shell.credentialValueAccessGateRecorded === true
+          && shell.credentialValueAccessGateRegistry === CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_ACCESS_GATE_REGISTRY
+          && credentialGate.summary?.executionPreflightFound === true,
+        evidence: credentialGateTask?.id ?? null,
+      },
+      {
+        id: "credential-value-still-denied-and-unread",
+        label: "Credential value access remains denied and credential values remain unread",
+        passed: shell.credentialValueAccessAuthorized === false
+          && shell.credentialValueAccessDenied === true
+          && shell.credentialValueIncluded === false
+          && shell.credentialValueRead === false
+          && shell.credentialValueExposed === false
+          && shell.providerCredentialRead === false,
+        evidence: "credential_value_access_denied",
+      },
+      {
+        id: "endpoint-network-egress-not-authorized",
+        label: "Endpoint contact and network egress remain explicitly unauthorized",
+        passed: gate.endpointNetworkEgressAuthorized === false
+          && gate.endpointNetworkEgressDenied === true
+          && gate.endpointContacted === false
+          && gate.networkEgress === false
+          && gate.transmitsExternally === false,
+        evidence: gate.decision,
+      },
+      {
+        id: "no-live-provider-call-or-provider-response",
+        label: "Endpoint egress gate does not enable live calls or create provider responses",
+        passed: shell.liveProviderCallEnabled === false
+          && shell.providerResponseCreated === false
+          && shell.launchAuthorized === false
+          && shell.launchExecuted === false,
+        evidence: "live_provider_call_deferred",
+      },
+      {
+        id: "no-rollback-or-host-mutation",
+        label: "Endpoint egress gate does not execute rollback or mutate host state",
+        passed: shell.rollbackExecuted === false
+          && shell.rollbackCommandCreated === false
+          && shell.hostMutation === false,
+        evidence: "post_call_activity_deferred",
+      },
+    ];
+    const passed = checks.filter((check) => check.passed).length;
+    const ready = passed === checks.length;
+    return {
+      ok: true,
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENDPOINT_NETWORK_EGRESS_GATE_REGISTRY,
+      mode: "phase_61_live_provider_endpoint_network_egress_gate",
+      generatedAt: new Date().toISOString(),
+      status: ready ? "endpoint_network_egress_gate_ready_denied" : "waiting_for_phase_60_credential_value_access_gate",
+      governance: phase61Governance(),
+      gate,
+      checks,
+      summary: {
+        ready,
+        complete: ready,
+        passed,
+        total: checks.length,
+        completionPercent: ready ? 100 : Math.round((passed / checks.length) * 100),
+        phase: "phase-61",
+        endpointNetworkEgressGateRecorded: shell.endpointNetworkEgressGateRecorded === true,
+        credentialValueAccessGateRequired: true,
+        credentialValueAccessGateFound: Boolean(credentialGateTask),
+        sourceTaskId: credentialGateTask?.id ?? null,
+        sourceRegistry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_ACCESS_GATE_REGISTRY,
+        credentialValueAccessAuthorized: false,
+        credentialValueAccessDenied: true,
+        endpointNetworkEgressAuthorized: false,
+        endpointNetworkEgressDenied: true,
+        credentialValueIncluded: false,
+        credentialValueRead: false,
+        credentialValueExposed: false,
+        providerSdkLoaded: false,
+        providerCredentialRead: false,
+        endpointContacted: false,
+        networkEgress: false,
+        providerResponseCreated: false,
+        rollbackExecuted: false,
+        rollbackCommandCreated: false,
+        hostMutation: false,
+        transmitsExternally: false,
+        liveProviderCallEnabled: false,
+        launchAuthorized: false,
+        launchExecuted: false,
+      },
+      evidence: {
+        credentialValueAccessGate: runtimeAdapterEvidenceRef(credentialGate),
+        credentialGateTask: credentialGateTask ? serialiseTask(credentialGateTask) : null,
+      },
+      next: {
+        recommendedSlice: "openclaw-cloud-consciousness-live-provider-egress-execution-route-task-preflight",
+        boundary: "credential values, endpoint contact, network egress, provider response creation, rollback execution, host mutation, and live provider calls remain separate future gates",
+      },
+    };
+  }
+
+  async function recordCloudConsciousnessLiveProviderEndpointNetworkEgressGate({ confirm = false } = {}) {
+    if (confirm !== true) {
+      throw new Error("Cloud consciousness live provider endpoint network egress gate requires confirm=true.");
+    }
+
+    const gate = await buildCloudConsciousnessLiveProviderEndpointNetworkEgressGate();
+    if (gate.summary?.credentialValueAccessGateFound !== true) {
+      throw new Error("Cloud consciousness live provider endpoint network egress gate requires Phase 60 credential value access gate evidence.");
+    }
+
+    const task = findLatestCredentialValueAccessGateTask();
+    if (!task) {
+      throw new Error("Unable to locate credential-value-gated real launch task for endpoint network egress gate.");
+    }
+
+    const recordedAt = new Date().toISOString();
+    task.cloudConsciousnessLiveProviderRealLaunch = {
+      ...(task.cloudConsciousnessLiveProviderRealLaunch ?? {}),
+      implementationStatus: "endpoint_network_egress_gate_recorded",
+      endpointNetworkEgressGateRecorded: true,
+      endpointNetworkEgressGateRegistry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENDPOINT_NETWORK_EGRESS_GATE_REGISTRY,
+      endpointNetworkEgressGateRecordedAt: recordedAt,
+      endpointNetworkEgressGateDecision: gate.gate,
+      endpointNetworkEgressAuthorized: false,
+      endpointNetworkEgressDenied: true,
+      credentialValueAccessAuthorized: false,
+      credentialValueAccessDenied: true,
+      launchAuthorized: false,
+      launchExecuted: false,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      rollbackExecuted: false,
+      rollbackCommandCreated: false,
+      hostMutation: false,
+      transmitsExternally: false,
+      liveProviderCallEnabled: false,
+    };
+    appendTaskPhase(task, "cloud_consciousness_live_provider_endpoint_network_egress_gate", {
+      gateRegistry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENDPOINT_NETWORK_EGRESS_GATE_REGISTRY,
+      recordedAt,
+      sourcePhase: "cloud_consciousness_live_provider_credential_value_access_gate",
+      gate: gate.gate,
+      nextSlice: "openclaw-cloud-consciousness-live-provider-egress-execution-route-task-preflight",
+      endpointNetworkEgressAuthorized: false,
+      endpointNetworkEgressDenied: true,
+      credentialValueAccessAuthorized: false,
+      credentialValueAccessDenied: true,
+      launchAuthorized: false,
+      launchExecuted: false,
+      credentialValueRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      rollbackExecuted: false,
+      hostMutation: false,
+      liveProviderCallEnabled: false,
+    });
+    completeTask(task, {
+      summary: "Endpoint network egress gate recorded; endpoint contact and network egress remain unauthorized.",
+      gateRegistry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENDPOINT_NETWORK_EGRESS_GATE_REGISTRY,
+      phase: "cloud_consciousness_live_provider_endpoint_network_egress_gate",
+      endpointNetworkEgressGateRecorded: true,
+      endpointNetworkEgressAuthorized: false,
+      endpointNetworkEgressDenied: true,
+      credentialValueAccessAuthorized: false,
+      credentialValueAccessDenied: true,
+      launchAuthorized: false,
+      launchExecuted: false,
+      credentialValueRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      rollbackExecuted: false,
+      hostMutation: false,
+      liveProviderCallEnabled: false,
+    });
+    reconcileRuntimeState();
+    persistState();
+    await publishEvent("task.phase_changed", { task: serialiseTask(task) });
+
+    return {
+      ok: true,
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENDPOINT_NETWORK_EGRESS_GATE_REGISTRY,
+      mode: "phase_61_live_provider_endpoint_network_egress_gate",
+      generatedAt: recordedAt,
+      status: "endpoint_network_egress_gate_recorded_denied",
+      task,
+      gate: await buildCloudConsciousnessLiveProviderEndpointNetworkEgressGate(),
+      governance: phase61Governance(),
     };
   }
 
@@ -4571,6 +4863,8 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     recordCloudConsciousnessLiveProviderRealLaunchExecutionPreflight,
     buildCloudConsciousnessLiveProviderCredentialValueAccessGate,
     recordCloudConsciousnessLiveProviderCredentialValueAccessGate,
+    buildCloudConsciousnessLiveProviderEndpointNetworkEgressGate,
+    recordCloudConsciousnessLiveProviderEndpointNetworkEgressGate,
     isCloudConsciousnessLiveProviderRealLaunchTask,
     executeCloudConsciousnessLiveProviderRealLaunchTask,
     createCloudConsciousnessLiveProviderNoNetworkSenderTask,
