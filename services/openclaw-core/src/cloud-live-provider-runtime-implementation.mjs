@@ -42,6 +42,8 @@ const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_ACCESS_GATE_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-credential-value-access-gate-v0";
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENDPOINT_NETWORK_EGRESS_GATE_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-endpoint-network-egress-gate-v0";
+const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_EGRESS_EXECUTION_ROUTE_TASK_PREFLIGHT_REGISTRY =
+  "openclaw-cloud-consciousness-live-provider-egress-execution-route-task-preflight-v0";
 
 function phase18Governance(extra = {}) {
   return {
@@ -480,6 +482,40 @@ function phase61Governance(extra = {}) {
     createsTask: false,
     createsApproval: false,
     realLaunchTaskShell: true,
+    launchAuthorized: false,
+    launchExecuted: false,
+    credentialValueAccessAuthorized: false,
+    credentialValueAccessDenied: true,
+    endpointNetworkEgressAuthorized: false,
+    endpointNetworkEgressDenied: true,
+    callsCloudModel: false,
+    transmitsExternally: false,
+    liveProviderCallEnabled: false,
+    providerSdkLoaded: false,
+    providerCredentialRead: false,
+    credentialValueIncluded: false,
+    credentialValueRead: false,
+    credentialValueExposed: false,
+    endpointContacted: false,
+    networkEgress: false,
+    providerResponseCreated: false,
+    rollbackExecuted: false,
+    rollbackCommandCreated: false,
+    hostMutation: false,
+    ...extra,
+  };
+}
+
+function phase62Governance(extra = {}) {
+  return {
+    phase: "phase-62",
+    egressExecutionRouteTaskPreflightOnly: true,
+    requiresEndpointNetworkEgressGateEvidence: true,
+    createsTask: false,
+    createsApproval: false,
+    realLaunchTaskShell: true,
+    egressExecutionTaskCreated: false,
+    egressExecutionTaskApproved: false,
     launchAuthorized: false,
     launchExecuted: false,
     credentialValueAccessAuthorized: false,
@@ -3576,6 +3612,8 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
             "cloud_consciousness_live_provider_real_launch_deferred",
             "cloud_consciousness_live_provider_real_launch_execution_preflight",
             "cloud_consciousness_live_provider_credential_value_access_gate",
+            "cloud_consciousness_live_provider_endpoint_network_egress_gate",
+            "cloud_consciousness_live_provider_egress_execution_route_task_preflight",
           ].includes(task.outcome?.details?.phase);
       })
       .sort((a, b) => String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")));
@@ -3605,6 +3643,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
             "cloud_consciousness_live_provider_real_launch_execution_preflight",
             "cloud_consciousness_live_provider_credential_value_access_gate",
             "cloud_consciousness_live_provider_endpoint_network_egress_gate",
+            "cloud_consciousness_live_provider_egress_execution_route_task_preflight",
           ].includes(task.outcome?.details?.phase);
       })
       .sort((a, b) => String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")));
@@ -3640,6 +3679,46 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
           && [
             "cloud_consciousness_live_provider_credential_value_access_gate",
             "cloud_consciousness_live_provider_endpoint_network_egress_gate",
+            "cloud_consciousness_live_provider_egress_execution_route_task_preflight",
+          ].includes(task.outcome?.details?.phase);
+      })
+      .sort((a, b) => String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")));
+    return candidates[0]?.id ? getTaskById(candidates[0].id) ?? candidates[0] : null;
+  }
+
+  function findLatestEndpointNetworkEgressGateTask() {
+    const candidates = (typeof listTasks === "function" ? listTasks() : [])
+      .filter((task) => {
+        const shell = task?.cloudConsciousnessLiveProviderRealLaunch ?? {};
+        return isCloudConsciousnessLiveProviderRealLaunchTask(task)
+          && task.status === "completed"
+          && shell.operatorApprovalCaptured === true
+          && shell.launchExecutionDeferred === true
+          && shell.executionPreflightRecorded === true
+          && shell.executionPreflightRegistry === CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_REAL_LAUNCH_EXECUTION_PREFLIGHT_REGISTRY
+          && shell.credentialValueAccessGateRecorded === true
+          && shell.credentialValueAccessGateRegistry === CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_ACCESS_GATE_REGISTRY
+          && shell.credentialValueAccessAuthorized === false
+          && shell.credentialValueAccessDenied === true
+          && shell.endpointNetworkEgressGateRecorded === true
+          && shell.endpointNetworkEgressGateRegistry === CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENDPOINT_NETWORK_EGRESS_GATE_REGISTRY
+          && shell.endpointNetworkEgressAuthorized === false
+          && shell.endpointNetworkEgressDenied === true
+          && shell.launchAuthorized === false
+          && shell.launchExecuted === false
+          && shell.credentialValueIncluded === false
+          && shell.credentialValueRead === false
+          && shell.credentialValueExposed === false
+          && shell.providerCredentialRead === false
+          && shell.endpointContacted === false
+          && shell.networkEgress === false
+          && shell.providerResponseCreated === false
+          && shell.rollbackExecuted === false
+          && shell.hostMutation === false
+          && shell.liveProviderCallEnabled === false
+          && [
+            "cloud_consciousness_live_provider_endpoint_network_egress_gate",
+            "cloud_consciousness_live_provider_egress_execution_route_task_preflight",
           ].includes(task.outcome?.details?.phase);
       })
       .sort((a, b) => String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")));
@@ -4269,6 +4348,237 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     };
   }
 
+  async function buildCloudConsciousnessLiveProviderEgressExecutionRouteTaskPreflight() {
+    const endpointGate = await buildCloudConsciousnessLiveProviderEndpointNetworkEgressGate();
+    const endpointGateTask = findLatestEndpointNetworkEgressGateTask();
+    const shell = endpointGateTask?.cloudConsciousnessLiveProviderRealLaunch ?? {};
+    const preflight = {
+      decision: "egress_execution_route_task_not_created",
+      preflightState: shell.egressExecutionRouteTaskPreflightRecorded === true ? "recorded_deferred" : "ready_to_record_deferred",
+      routeRequirements: [
+        "separate approval-gated egress execution task shell",
+        "operator authorization naming provider endpoint, method, credential reference, and transcript target",
+        "credential value access authorization evidence from a separate future gate",
+        "endpoint network egress authorization evidence from a separate future gate",
+        "rollback and response handling gates before live provider call enablement",
+      ],
+      futureTaskType: "cloud_consciousness_live_provider_egress_execution_task",
+      egressExecutionTaskCreated: false,
+      egressExecutionTaskApproved: false,
+      endpointContacted: false,
+      networkEgress: false,
+      transmitsExternally: false,
+      liveProviderCallEnabled: false,
+    };
+    const checks = [
+      {
+        id: "phase-61-endpoint-network-egress-gate-recorded",
+        label: "Phase 61 endpoint network egress gate evidence is recorded",
+        passed: Boolean(endpointGateTask)
+          && shell.endpointNetworkEgressGateRecorded === true
+          && shell.endpointNetworkEgressGateRegistry === CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENDPOINT_NETWORK_EGRESS_GATE_REGISTRY
+          && endpointGate.summary?.credentialValueAccessGateFound === true,
+        evidence: endpointGateTask?.id ?? null,
+      },
+      {
+        id: "credential-and-egress-still-denied",
+        label: "Credential value access and endpoint/network egress remain denied",
+        passed: shell.credentialValueAccessAuthorized === false
+          && shell.credentialValueAccessDenied === true
+          && shell.endpointNetworkEgressAuthorized === false
+          && shell.endpointNetworkEgressDenied === true,
+        evidence: "credential_and_egress_denied",
+      },
+      {
+        id: "egress-execution-task-not-created",
+        label: "Preflight does not create or approve an egress execution task",
+        passed: preflight.egressExecutionTaskCreated === false
+          && preflight.egressExecutionTaskApproved === false,
+        evidence: preflight.decision,
+      },
+      {
+        id: "no-credential-endpoint-or-network-activity",
+        label: "Preflight does not read credentials, contact endpoints, transmit externally, or call providers",
+        passed: shell.credentialValueRead === false
+          && shell.credentialValueIncluded === false
+          && shell.credentialValueExposed === false
+          && shell.providerCredentialRead === false
+          && shell.endpointContacted === false
+          && shell.networkEgress === false
+          && shell.transmitsExternally === false
+          && shell.liveProviderCallEnabled === false,
+        evidence: "execution_activity_deferred",
+      },
+      {
+        id: "no-response-rollback-or-host-mutation",
+        label: "Preflight does not create provider responses, execute rollback, or mutate host state",
+        passed: shell.providerResponseCreated === false
+          && shell.rollbackExecuted === false
+          && shell.rollbackCommandCreated === false
+          && shell.hostMutation === false,
+        evidence: "post_call_activity_deferred",
+      },
+    ];
+    const passed = checks.filter((check) => check.passed).length;
+    const ready = passed === checks.length;
+    return {
+      ok: true,
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_EGRESS_EXECUTION_ROUTE_TASK_PREFLIGHT_REGISTRY,
+      mode: "phase_62_live_provider_egress_execution_route_task_preflight",
+      generatedAt: new Date().toISOString(),
+      status: ready ? "egress_execution_route_task_preflight_ready_deferred" : "waiting_for_phase_61_endpoint_network_egress_gate",
+      governance: phase62Governance(),
+      preflight,
+      checks,
+      summary: {
+        ready,
+        complete: ready,
+        passed,
+        total: checks.length,
+        completionPercent: ready ? 100 : Math.round((passed / checks.length) * 100),
+        phase: "phase-62",
+        egressExecutionRouteTaskPreflightRecorded: shell.egressExecutionRouteTaskPreflightRecorded === true,
+        endpointNetworkEgressGateRequired: true,
+        endpointNetworkEgressGateFound: Boolean(endpointGateTask),
+        sourceTaskId: endpointGateTask?.id ?? null,
+        sourceRegistry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENDPOINT_NETWORK_EGRESS_GATE_REGISTRY,
+        egressExecutionTaskCreated: false,
+        egressExecutionTaskApproved: false,
+        credentialValueAccessAuthorized: false,
+        credentialValueAccessDenied: true,
+        endpointNetworkEgressAuthorized: false,
+        endpointNetworkEgressDenied: true,
+        credentialValueIncluded: false,
+        credentialValueRead: false,
+        credentialValueExposed: false,
+        providerSdkLoaded: false,
+        providerCredentialRead: false,
+        endpointContacted: false,
+        networkEgress: false,
+        providerResponseCreated: false,
+        rollbackExecuted: false,
+        rollbackCommandCreated: false,
+        hostMutation: false,
+        transmitsExternally: false,
+        liveProviderCallEnabled: false,
+        launchAuthorized: false,
+        launchExecuted: false,
+      },
+      evidence: {
+        endpointNetworkEgressGate: runtimeAdapterEvidenceRef(endpointGate),
+        endpointGateTask: endpointGateTask ? serialiseTask(endpointGateTask) : null,
+      },
+      next: {
+        recommendedSlice: "openclaw-cloud-consciousness-live-provider-egress-execution-task-shell",
+        boundary: "credential values, endpoint contact, network egress, provider response creation, rollback execution, host mutation, and live provider calls remain separate future gates",
+      },
+    };
+  }
+
+  async function recordCloudConsciousnessLiveProviderEgressExecutionRouteTaskPreflight({ confirm = false } = {}) {
+    if (confirm !== true) {
+      throw new Error("Cloud consciousness live provider egress execution route task preflight requires confirm=true.");
+    }
+
+    const preflight = await buildCloudConsciousnessLiveProviderEgressExecutionRouteTaskPreflight();
+    if (preflight.summary?.endpointNetworkEgressGateFound !== true) {
+      throw new Error("Cloud consciousness live provider egress execution route task preflight requires Phase 61 endpoint network egress gate evidence.");
+    }
+
+    const task = findLatestEndpointNetworkEgressGateTask();
+    if (!task) {
+      throw new Error("Unable to locate endpoint-network-egress-gated real launch task for egress execution route task preflight.");
+    }
+
+    const recordedAt = new Date().toISOString();
+    task.cloudConsciousnessLiveProviderRealLaunch = {
+      ...(task.cloudConsciousnessLiveProviderRealLaunch ?? {}),
+      implementationStatus: "egress_execution_route_task_preflight_recorded",
+      egressExecutionRouteTaskPreflightRecorded: true,
+      egressExecutionRouteTaskPreflightRegistry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_EGRESS_EXECUTION_ROUTE_TASK_PREFLIGHT_REGISTRY,
+      egressExecutionRouteTaskPreflightRecordedAt: recordedAt,
+      egressExecutionRouteTaskPreflight: preflight.preflight,
+      egressExecutionTaskCreated: false,
+      egressExecutionTaskApproved: false,
+      endpointNetworkEgressAuthorized: false,
+      endpointNetworkEgressDenied: true,
+      credentialValueAccessAuthorized: false,
+      credentialValueAccessDenied: true,
+      launchAuthorized: false,
+      launchExecuted: false,
+      credentialValueIncluded: false,
+      credentialValueRead: false,
+      credentialValueExposed: false,
+      providerSdkLoaded: false,
+      providerCredentialRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      rollbackExecuted: false,
+      rollbackCommandCreated: false,
+      hostMutation: false,
+      transmitsExternally: false,
+      liveProviderCallEnabled: false,
+    };
+    appendTaskPhase(task, "cloud_consciousness_live_provider_egress_execution_route_task_preflight", {
+      preflightRegistry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_EGRESS_EXECUTION_ROUTE_TASK_PREFLIGHT_REGISTRY,
+      recordedAt,
+      sourcePhase: "cloud_consciousness_live_provider_endpoint_network_egress_gate",
+      preflight: preflight.preflight,
+      nextSlice: "openclaw-cloud-consciousness-live-provider-egress-execution-task-shell",
+      egressExecutionTaskCreated: false,
+      egressExecutionTaskApproved: false,
+      endpointNetworkEgressAuthorized: false,
+      endpointNetworkEgressDenied: true,
+      credentialValueAccessAuthorized: false,
+      credentialValueAccessDenied: true,
+      launchAuthorized: false,
+      launchExecuted: false,
+      credentialValueRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      rollbackExecuted: false,
+      hostMutation: false,
+      liveProviderCallEnabled: false,
+    });
+    completeTask(task, {
+      summary: "Egress execution route/task preflight recorded; no egress execution task was created or approved.",
+      preflightRegistry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_EGRESS_EXECUTION_ROUTE_TASK_PREFLIGHT_REGISTRY,
+      phase: "cloud_consciousness_live_provider_egress_execution_route_task_preflight",
+      egressExecutionRouteTaskPreflightRecorded: true,
+      egressExecutionTaskCreated: false,
+      egressExecutionTaskApproved: false,
+      endpointNetworkEgressAuthorized: false,
+      endpointNetworkEgressDenied: true,
+      credentialValueAccessAuthorized: false,
+      credentialValueAccessDenied: true,
+      launchAuthorized: false,
+      launchExecuted: false,
+      credentialValueRead: false,
+      endpointContacted: false,
+      networkEgress: false,
+      providerResponseCreated: false,
+      rollbackExecuted: false,
+      hostMutation: false,
+      liveProviderCallEnabled: false,
+    });
+    reconcileRuntimeState();
+    persistState();
+    await publishEvent("task.phase_changed", { task: serialiseTask(task) });
+
+    return {
+      ok: true,
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_EGRESS_EXECUTION_ROUTE_TASK_PREFLIGHT_REGISTRY,
+      mode: "phase_62_live_provider_egress_execution_route_task_preflight",
+      generatedAt: recordedAt,
+      status: "egress_execution_route_task_preflight_recorded_deferred",
+      task,
+      preflight: await buildCloudConsciousnessLiveProviderEgressExecutionRouteTaskPreflight(),
+      governance: phase62Governance(),
+    };
+  }
+
   async function executeCloudConsciousnessLiveProviderRealLaunchTask(task) {
     const routeReview = await buildCloudConsciousnessLiveProviderRealLaunchRouteReview();
     const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
@@ -4865,6 +5175,8 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     recordCloudConsciousnessLiveProviderCredentialValueAccessGate,
     buildCloudConsciousnessLiveProviderEndpointNetworkEgressGate,
     recordCloudConsciousnessLiveProviderEndpointNetworkEgressGate,
+    buildCloudConsciousnessLiveProviderEgressExecutionRouteTaskPreflight,
+    recordCloudConsciousnessLiveProviderEgressExecutionRouteTaskPreflight,
     isCloudConsciousnessLiveProviderRealLaunchTask,
     executeCloudConsciousnessLiveProviderRealLaunchTask,
     createCloudConsciousnessLiveProviderNoNetworkSenderTask,
