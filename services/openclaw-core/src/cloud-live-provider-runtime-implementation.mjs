@@ -108,6 +108,8 @@ const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_LOCAL_READ_EXECUTION_LO
   "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-approved-deferred-v0";
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_LOCAL_READ_EXECUTION_LOCAL_READ_ATTEMPT_FINAL_READINESS_PREFLIGHT_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-final-readiness-preflight-v0";
+const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_LOCAL_READ_EXECUTION_LOCAL_READ_ATTEMPT_LOCAL_READ_ROUTE_REGISTRY =
+  "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-route-v0";
 
 function phase18Governance(extra = {}) {
   return {
@@ -1555,6 +1557,34 @@ function phase94Governance(extra = {}) {
     createsTask: false,
     createsApproval: false,
     credentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflightRecorded: false,
+    credentialValueRead: false,
+    credentialValueIncluded: false,
+    credentialValueExposed: false,
+    providerCredentialRead: false,
+    endpointNetworkEgressAuthorized: false,
+    endpointNetworkEgressDenied: true,
+    endpointContacted: false,
+    networkEgress: false,
+    transmitsExternally: false,
+    liveProviderCallEnabled: false,
+    providerResponseCreated: false,
+    rollbackExecuted: false,
+    rollbackCommandCreated: false,
+    hostMutation: false,
+    launchAuthorized: false,
+    launchExecuted: false,
+    ...extra,
+  };
+}
+
+function phase95Governance(extra = {}) {
+  return {
+    phase: "phase-95",
+    credentialValueLocalReadExecutionLocalReadAttemptLocalReadRouteOnly: true,
+    requiresCredentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflightEvidence: true,
+    createsTask: false,
+    createsApproval: false,
+    credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskCreated: false,
     credentialValueRead: false,
     credentialValueIncluded: false,
     credentialValueExposed: false,
@@ -9957,6 +9987,110 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     };
   }
 
+  async function buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadRoute() {
+    const finalReadinessPreflight = await buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflight();
+    const decision = {
+      decision: "route_to_approval_gated_credential_value_local_read_execution_local_read_attempt_local_read_task",
+      selectedSlice: "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-task-shell",
+      reason: "The local-read attempt final readiness preflight is recorded; the next whitepaper-aligned gate is a separate approval-gated bounded local-read task shell before any credential value can be read into a local-only result envelope.",
+      requiredBeforeCredentialValueRead: [
+        "separate approval-gated credential value local read attempt local-read task shell",
+        "redaction-safe local read result envelope that never exposes the credential value to logs or Observer",
+        "explicit proof that endpoint/network egress remains unauthorized",
+        "provider request assembly and egress remain separately gated after local read evidence",
+      ],
+      credentialReference: finalReadinessPreflight.preflight?.credentialReference ?? "openclaw://credential/provider/live-provider-fixture",
+      credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskCreated: false,
+      credentialValueRead: false,
+      credentialValueIncluded: false,
+      credentialValueExposed: false,
+      providerCredentialRead: false,
+    };
+    const checks = [
+      {
+        id: "phase-94-local-read-attempt-final-readiness-preflight-recorded",
+        label: "Phase 94 credential value local-read attempt final readiness preflight is recorded",
+        passed: finalReadinessPreflight.summary?.ready === true
+          && finalReadinessPreflight.summary?.credentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflightRecorded === true,
+        evidence: finalReadinessPreflight.summary?.sourceTaskId ?? null,
+      },
+      {
+        id: "credential-value-still-unread",
+        label: "Credential value remains unread, unexposed, and outside provider reads",
+        passed: finalReadinessPreflight.summary?.credentialValueRead === false
+          && finalReadinessPreflight.summary?.credentialValueIncluded === false
+          && finalReadinessPreflight.summary?.credentialValueExposed === false
+          && finalReadinessPreflight.summary?.providerCredentialRead === false
+          && decision.credentialValueRead === false,
+        evidence: decision.credentialReference,
+      },
+      {
+        id: "local-read-attempt-local-read-task-not-created",
+        label: "Local-read attempt local-read route does not create a credential value local read task",
+        passed: decision.credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskCreated === false,
+        evidence: decision.selectedSlice,
+      },
+      {
+        id: "no-endpoint-network-or-live-call",
+        label: "Local-read attempt local-read route does not contact endpoints, transmit externally, or enable live provider calls",
+        passed: finalReadinessPreflight.summary?.endpointContacted === false
+          && finalReadinessPreflight.summary?.networkEgress === false
+          && finalReadinessPreflight.summary?.transmitsExternally === false
+          && finalReadinessPreflight.summary?.liveProviderCallEnabled === false,
+        evidence: "credential_value_local_read_execution_local_read_attempt_local_read_route_only",
+      },
+    ];
+    const passed = checks.filter((check) => check.passed).length;
+    const ready = passed === checks.length;
+    return {
+      ok: true,
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_LOCAL_READ_EXECUTION_LOCAL_READ_ATTEMPT_LOCAL_READ_ROUTE_REGISTRY,
+      mode: "phase_95_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_route",
+      generatedAt: new Date().toISOString(),
+      status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_route_ready" : "waiting_for_phase_94_local_read_execution_local_read_attempt_final_readiness_preflight",
+      governance: phase95Governance(),
+      decision,
+      checks,
+      summary: {
+        ready,
+        complete: ready,
+        passed,
+        total: checks.length,
+        completionPercent: ready ? 100 : Math.round((passed / checks.length) * 100),
+        phase: "phase-95",
+        finalReadinessPreflightFound: finalReadinessPreflight.summary?.ready === true,
+        credentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflightRecorded: finalReadinessPreflight.summary?.credentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflightRecorded === true,
+        sourceTaskId: finalReadinessPreflight.summary?.sourceTaskId ?? null,
+        sourceRegistry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_LOCAL_READ_EXECUTION_LOCAL_READ_ATTEMPT_FINAL_READINESS_PREFLIGHT_REGISTRY,
+        selectedSlice: decision.selectedSlice,
+        credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskCreated: false,
+        credentialValueIncluded: false,
+        credentialValueRead: false,
+        credentialValueExposed: false,
+        providerCredentialRead: false,
+        endpointNetworkEgressAuthorized: false,
+        endpointNetworkEgressDenied: true,
+        endpointContacted: false,
+        networkEgress: false,
+        providerResponseCreated: false,
+        rollbackExecuted: false,
+        rollbackCommandCreated: false,
+        hostMutation: false,
+        transmitsExternally: false,
+        liveProviderCallEnabled: false,
+        launchAuthorized: false,
+        launchExecuted: false,
+      },
+      evidence: {
+        finalReadinessPreflight,
+      },
+      next: {
+        recommendedSlice: "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-task-shell",
+        boundary: "credential value reads, local read result envelopes, endpoint contact, network egress, provider response creation, rollback execution, host mutation, and live provider calls remain separate future gates",
+      },
+    };
+  }
+
   async function buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadApprovedDeferred() {
     const task = findLatestApprovedDeferredCredentialValueLocalReadExecutionLocalReadTask();
     const shell = task?.cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalRead ?? {};
@@ -11681,6 +11815,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptApprovedDeferred,
     buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflight,
     recordCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflight,
+    buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadRoute,
     isCloudConsciousnessLiveProviderCredentialValueAccessAuthorizationTask,
     executeCloudConsciousnessLiveProviderCredentialValueAccessAuthorizationTask,
     isCloudConsciousnessLiveProviderCredentialValueReadTask,
