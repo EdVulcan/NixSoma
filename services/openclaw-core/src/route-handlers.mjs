@@ -148,6 +148,7 @@ export function registerRoutes(deps) {
     buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadApprovedDeferred,
     buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadFinalReadinessPreflight,
     recordCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadFinalReadinessPreflight,
+    buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRoute,
     createCloudConsciousnessLiveProviderNoNetworkSenderTask,
     createCloudConsciousnessLiveProviderEgressTranscriptRecorderTask,
     createCloudConsciousnessLiveProviderResponseVerifierTask,
@@ -783,6 +784,11 @@ export function registerRoutes(deps) {
 
   if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-credential-value-local-read-execution-local-read-final-readiness-preflight") {
     sendJson(res, 200, await buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadFinalReadinessPreflight());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-credential-value-local-read-execution-local-read-attempt-route") {
+    sendJson(res, 200, await buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRoute());
     return;
   }
 

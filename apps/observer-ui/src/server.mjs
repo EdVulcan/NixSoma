@@ -1201,6 +1201,14 @@ function observerHtml() {
           <div class="metric"><span>Next</span><span id="cloud-live-provider-credential-value-local-read-execution-local-read-final-readiness-preflight-next">loading</span></div>
           <pre id="cloud-live-provider-credential-value-local-read-execution-local-read-final-readiness-preflight-json">Loading credential value local read execution local read final readiness preflight...</pre>
         </section>
+        <section class="panel" id="cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-route-panel">
+          <h2>Cloud Consciousness Live Provider Credential Value Local Read Execution Local Read Attempt Route</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-live-provider-credential-value-local-read-execution-local-read-attempt-route-ready">false</span></div>
+          <div class="metric"><span>Credential</span><span id="cloud-live-provider-credential-value-local-read-execution-local-read-attempt-route-credential">not read</span></div>
+          <div class="metric"><span>Network</span><span id="cloud-live-provider-credential-value-local-read-execution-local-read-attempt-route-network">no egress</span></div>
+          <div class="metric"><span>Next</span><span id="cloud-live-provider-credential-value-local-read-execution-local-read-attempt-route-next">loading</span></div>
+          <pre id="cloud-live-provider-credential-value-local-read-execution-local-read-attempt-route-json">Loading credential value local read execution local read attempt route...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -2715,6 +2723,11 @@ const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadFinalReadinessP
 const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadFinalReadinessPreflightCredential = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-final-readiness-preflight-credential");
 const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadFinalReadinessPreflightNext = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-final-readiness-preflight-next");
 const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadFinalReadinessPreflightJson = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-final-readiness-preflight-json");
+const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRouteReady = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-attempt-route-ready");
+const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRouteCredential = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-attempt-route-credential");
+const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRouteNetwork = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-attempt-route-network");
+const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRouteNext = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-attempt-route-next");
+const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRouteJson = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-attempt-route-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -8971,6 +8984,38 @@ async function refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExec
   }
 }
 
+async function refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRoute() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-credential-value-local-read-execution-local-read-attempt-route\`);
+    const summary = data.summary ?? {};
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRouteReady.textContent = String(Boolean(summary.ready));
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRouteCredential.textContent = summary.credentialValueRead === true ? "read" : "not read";
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRouteNetwork.textContent = summary.networkEgress === true ? "egress" : "no egress";
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRouteNext.textContent = data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-task-shell";
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRouteJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-route-v0"),
+      "Ready: " + Boolean(summary.ready) + " percent=" + (summary.completionPercent ?? 0),
+      "Source Task: " + (summary.sourceTaskId ?? "none"),
+      "Source Registry: " + (summary.sourceRegistry ?? "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-final-readiness-preflight-v0"),
+      "Selected: " + (summary.selectedSlice ?? "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-task-shell"),
+      "Local read attempt task created: " + Boolean(summary.credentialValueLocalReadExecutionLocalReadAttemptTaskCreated),
+      "Credential value read: " + Boolean(summary.credentialValueRead),
+      "Provider credential read: " + Boolean(summary.providerCredentialRead),
+      "Endpoint contacted: " + Boolean(summary.endpointContacted),
+      "Network egress: " + Boolean(summary.networkEgress),
+      "Live provider call: " + Boolean(summary.liveProviderCallEnabled),
+      "Endpoint: /cloud-consciousness/live-provider-credential-value-local-read-execution-local-read-attempt-route",
+      "Next: " + (data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-task-shell"),
+    ].join("\\n");
+  } catch {
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRouteReady.textContent = "false";
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRouteCredential.textContent = "not read";
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRouteNetwork.textContent = "no egress";
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRouteNext.textContent = "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-task-shell";
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRouteJson.textContent = "Unable to read live provider credential value local read execution local read attempt route.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -12091,6 +12136,7 @@ await refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLoca
 await refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadTaskShell();
 await refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadApprovedDeferred();
 await refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadFinalReadinessPreflight();
+await refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRoute();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -12315,6 +12361,7 @@ setInterval(refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecuti
 setInterval(refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadTaskShell, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadApprovedDeferred, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadFinalReadinessPreflight, 5000);
+setInterval(refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptRoute, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);
