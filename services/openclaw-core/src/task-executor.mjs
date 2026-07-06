@@ -105,6 +105,8 @@ export function createTaskExecutor(deps) {
     executeCloudConsciousnessLiveProviderCredentialValueAccessAuthorizationDecisionTask,
     isCloudConsciousnessLiveProviderCredentialValueLocalReadTask,
     executeCloudConsciousnessLiveProviderCredentialValueLocalReadTask,
+    isCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionTask,
+    executeCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionTask,
     capabilityById,
     normaliseCapabilityInvokeRequest,
     buildCapabilityPolicyInput,
@@ -3027,6 +3029,18 @@ async function executeTaskWithRecovery(task, options = {}) {
     return {
       finalExecution: cloudConsciousnessLiveProviderCredentialValueLocalRead,
       attempts: [cloudConsciousnessLiveProviderCredentialValueLocalRead],
+      recovery: {
+        attempted: false,
+        maxAttempts: 0,
+      },
+    };
+  }
+
+  if (isCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionTask(task)) {
+    const cloudConsciousnessLiveProviderCredentialValueLocalReadExecution = await executeCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionTask(task);
+    return {
+      finalExecution: cloudConsciousnessLiveProviderCredentialValueLocalReadExecution,
+      attempts: [cloudConsciousnessLiveProviderCredentialValueLocalReadExecution],
       recovery: {
         attempted: false,
         maxAttempts: 0,
