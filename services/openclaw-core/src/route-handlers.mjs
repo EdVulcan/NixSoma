@@ -130,6 +130,7 @@ export function registerRoutes(deps) {
     recordCloudConsciousnessLiveProviderCredentialValueFinalReadinessPreflight,
     buildCloudConsciousnessLiveProviderCredentialValueAccessAuthorizationDecisionRoute,
     createCloudConsciousnessLiveProviderCredentialValueAccessAuthorizationDecisionTask,
+    buildCloudConsciousnessLiveProviderCredentialValueAccessAuthorizationDecisionApprovedDeferred,
     createCloudConsciousnessLiveProviderNoNetworkSenderTask,
     createCloudConsciousnessLiveProviderEgressTranscriptRecorderTask,
     createCloudConsciousnessLiveProviderResponseVerifierTask,
@@ -710,6 +711,11 @@ export function registerRoutes(deps) {
 
   if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-credential-value-access-authorization-decision-route") {
     sendJson(res, 200, await buildCloudConsciousnessLiveProviderCredentialValueAccessAuthorizationDecisionRoute());
+    return;
+  }
+
+  if (req.method === "GET" && requestUrl.pathname === "/cloud-consciousness/live-provider-credential-value-access-authorization-decision-approved-deferred") {
+    sendJson(res, 200, await buildCloudConsciousnessLiveProviderCredentialValueAccessAuthorizationDecisionApprovedDeferred());
     return;
   }
 
