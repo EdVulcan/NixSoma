@@ -1249,6 +1249,14 @@ function observerHtml() {
           <div class="metric"><span>Next</span><span id="cloud-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-task-shell-next">loading</span></div>
           <pre id="cloud-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-task-shell-json">Loading credential value local read execution local read attempt local read task shell...</pre>
         </section>
+        <section class="panel" id="cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred-panel">
+          <h2>Cloud Consciousness Live Provider Credential Value Local Read Execution Local Read Attempt Local Read Approved Deferred</h2>
+          <div class="metric"><span>Ready</span><span id="cloud-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred-ready">false</span></div>
+          <div class="metric"><span>Source</span><span id="cloud-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred-source">none</span></div>
+          <div class="metric"><span>Credential</span><span id="cloud-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred-credential">not read</span></div>
+          <div class="metric"><span>Next</span><span id="cloud-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred-next">loading</span></div>
+          <pre id="cloud-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred-json">Loading credential value local read execution local read attempt local read approved deferred evidence...</pre>
+        </section>
         <section class="panel">
           <h2>Controls</h2>
           <div class="control-stack">
@@ -2793,6 +2801,11 @@ const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalRea
 const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskShellCredential = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-task-shell-credential");
 const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskShellNext = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-task-shell-next");
 const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskShellJson = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-task-shell-json");
+const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredReady = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred-ready");
+const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredSource = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred-source");
+const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredCredential = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred-credential");
+const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredNext = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred-next");
+const cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredJson = document.querySelector("#cloud-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred-json");
 const screenWindow = document.querySelector("#screen-window");
 const screenSession = document.querySelector("#screen-session");
 const screenReadiness = document.querySelector("#screen-readiness");
@@ -9241,6 +9254,38 @@ async function refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExec
   }
 }
 
+async function refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferred() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/cloud-consciousness/live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred\`);
+    const summary = data.summary ?? {};
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredReady.textContent = String(Boolean(summary.ready));
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredSource.textContent = summary.sourceTaskId ?? "none";
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredCredential.textContent = summary.credentialValueRead === true ? "read" : "not read";
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredNext.textContent = data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-final-readiness-preflight";
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredJson.textContent = [
+      "Registry: " + (data.registry ?? "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred-v0"),
+      "Ready: " + Boolean(summary.ready) + " percent=" + (summary.completionPercent ?? 0),
+      "Source Task: " + (summary.sourceTaskId ?? "none"),
+      "Source Registry: " + (summary.sourceRegistry ?? "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-task-v0"),
+      "Local read task approved: " + Boolean(summary.credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskApproved),
+      "Local read deferred: " + Boolean(summary.credentialValueLocalReadExecutionLocalReadAttemptLocalReadDeferred),
+      "Credential value read: " + Boolean(summary.credentialValueRead),
+      "Provider credential read: " + Boolean(summary.providerCredentialRead),
+      "Endpoint contacted: " + Boolean(summary.endpointContacted),
+      "Network egress: " + Boolean(summary.networkEgress),
+      "Live provider call: " + Boolean(summary.liveProviderCallEnabled),
+      "Endpoint: /cloud-consciousness/live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred",
+      "Next: " + (data.next?.recommendedSlice ?? "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-final-readiness-preflight"),
+    ].join("\\n");
+  } catch {
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredReady.textContent = "false";
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredSource.textContent = "none";
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredCredential.textContent = "not read";
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredNext.textContent = "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-final-readiness-preflight";
+    cloudLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredJson.textContent = "Unable to read live provider credential value local read execution local read attempt local read approved deferred evidence.";
+  }
+}
+
 async function refreshRuntime() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/state/runtime\`);
@@ -12367,6 +12412,7 @@ await refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLoca
 await refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflight();
 await refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadRoute();
 await refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskShell();
+await refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferred();
 await refreshRuntime();
 await refreshTaskList();
 await refreshTaskHistoryDetail();
@@ -12597,6 +12643,7 @@ setInterval(refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecuti
 setInterval(refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflight, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadRoute, 5000);
 setInterval(refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskShell, 5000);
+setInterval(refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferred, 5000);
 setInterval(refreshRuntime, 5000);
 setInterval(refreshTaskList, 5000);
 setInterval(refreshTaskHistoryDetail, 5000);

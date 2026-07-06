@@ -112,6 +112,8 @@ const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_LOCAL_READ_EXECUTION_LO
   "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-route-v0";
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_LOCAL_READ_EXECUTION_LOCAL_READ_ATTEMPT_LOCAL_READ_TASK_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-task-v0";
+const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_LOCAL_READ_EXECUTION_LOCAL_READ_ATTEMPT_LOCAL_READ_APPROVED_DEFERRED_REGISTRY =
+  "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred-v0";
 
 function phase18Governance(extra = {}) {
   return {
@@ -1615,6 +1617,35 @@ function phase96Governance(extra = {}) {
     createsTask: false,
     createsApproval: false,
     credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskCreated: false,
+    credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskApproved: false,
+    credentialValueLocalReadExecutionLocalReadAttemptLocalReadDeferred: true,
+    credentialValueRead: false,
+    credentialValueIncluded: false,
+    credentialValueExposed: false,
+    providerCredentialRead: false,
+    endpointNetworkEgressAuthorized: false,
+    endpointNetworkEgressDenied: true,
+    endpointContacted: false,
+    networkEgress: false,
+    transmitsExternally: false,
+    liveProviderCallEnabled: false,
+    providerResponseCreated: false,
+    rollbackExecuted: false,
+    rollbackCommandCreated: false,
+    hostMutation: false,
+    launchAuthorized: false,
+    launchExecuted: false,
+    ...extra,
+  };
+}
+
+function phase97Governance(extra = {}) {
+  return {
+    phase: "phase-97",
+    credentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredEvidenceOnly: true,
+    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskShellEvidence: true,
+    createsTask: false,
+    createsApproval: false,
     credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskApproved: false,
     credentialValueLocalReadExecutionLocalReadAttemptLocalReadDeferred: true,
     credentialValueRead: false,
@@ -10261,6 +10292,119 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         === CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_LOCAL_READ_EXECUTION_LOCAL_READ_ATTEMPT_LOCAL_READ_TASK_REGISTRY;
   }
 
+  function findLatestApprovedDeferredCredentialValueLocalReadExecutionLocalReadAttemptLocalReadTask() {
+    const candidates = (typeof listTasks === "function" ? listTasks() : [])
+      .filter((task) => {
+        const shell = task?.cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalRead ?? {};
+        return isCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadTask(task)
+          && task.status === "completed"
+          && shell.implementationStatus === "deferred_after_approval"
+          && shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskCreated === true
+          && shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskApproved === true
+          && shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadDeferred === true
+          && shell.credentialValueIncluded === false
+          && shell.credentialValueRead === false
+          && shell.credentialValueExposed === false
+          && shell.providerCredentialRead === false
+          && shell.endpointContacted === false
+          && shell.networkEgress === false
+          && shell.liveProviderCallEnabled === false
+          && task.outcome?.details?.phase === "cloud_consciousness_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_task_shell_deferred";
+      })
+      .sort((a, b) => String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")));
+    return candidates[0]?.id ? getTaskById(candidates[0].id) ?? candidates[0] : null;
+  }
+
+  async function buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferred() {
+    const task = findLatestApprovedDeferredCredentialValueLocalReadExecutionLocalReadAttemptLocalReadTask();
+    const shell = task?.cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalRead ?? {};
+    const checks = [
+      {
+        id: "credential-value-local-read-execution-local-read-attempt-local-read-task-approved",
+        label: "Credential value local read execution local-read attempt local-read task shell was approved",
+        passed: Boolean(task)
+          && task.approval?.status === "approved"
+          && shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskApproved === true,
+        evidence: task?.approval?.requestId ?? null,
+      },
+      {
+        id: "credential-value-local-read-execution-local-read-attempt-local-read-remains-deferred",
+        label: "Approved credential value local read execution local-read attempt local-read remains deferred",
+        passed: shell.implementationStatus === "deferred_after_approval"
+          && shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadDeferred === true,
+        evidence: task?.outcome?.details?.phase ?? null,
+      },
+      {
+        id: "credential-value-still-unread",
+        label: "Credential value remains unread, unexposed, and outside provider reads",
+        passed: shell.credentialValueIncluded === false
+          && shell.credentialValueRead === false
+          && shell.credentialValueExposed === false
+          && shell.providerCredentialRead === false,
+        evidence: shell.credentialReference ?? "openclaw://credential/provider/live-provider-fixture",
+      },
+      {
+        id: "no-endpoint-network-or-live-call",
+        label: "Approved deferred local-read evidence has no endpoint contact, network egress, or live provider call",
+        passed: shell.endpointContacted === false
+          && shell.networkEgress === false
+          && shell.transmitsExternally === false
+          && shell.liveProviderCallEnabled === false,
+        evidence: "no_network_activity",
+      },
+    ];
+    const passed = checks.filter((check) => check.passed).length;
+    const ready = passed === checks.length;
+    return {
+      ok: true,
+      registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_LOCAL_READ_EXECUTION_LOCAL_READ_ATTEMPT_LOCAL_READ_APPROVED_DEFERRED_REGISTRY,
+      mode: "phase_97_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_approved_deferred",
+      generatedAt: new Date().toISOString(),
+      status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_approved_deferred_ready" : "waiting_for_phase_96_approved_deferred_local_read_execution_local_read_attempt_local_read_task_shell",
+      governance: phase97Governance({
+        credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskApproved: shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskApproved === true,
+      }),
+      checks,
+      summary: {
+        ready,
+        complete: ready,
+        passed,
+        total: checks.length,
+        completionPercent: ready ? 100 : Math.round((passed / checks.length) * 100),
+        phase: "phase-97",
+        approvedDeferredEvidenceFound: Boolean(task),
+        sourceTaskId: task?.id ?? null,
+        sourceRegistry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_LOCAL_READ_EXECUTION_LOCAL_READ_ATTEMPT_LOCAL_READ_TASK_REGISTRY,
+        credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskCreated: shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskCreated === true,
+        credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskApproved: shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskApproved === true,
+        credentialValueLocalReadExecutionLocalReadAttemptLocalReadDeferred: shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadDeferred === true,
+        credentialValueIncluded: false,
+        credentialValueRead: false,
+        credentialValueExposed: false,
+        providerCredentialRead: false,
+        endpointNetworkEgressAuthorized: false,
+        endpointNetworkEgressDenied: true,
+        endpointContacted: false,
+        networkEgress: false,
+        providerResponseCreated: false,
+        rollbackExecuted: false,
+        rollbackCommandCreated: false,
+        hostMutation: false,
+        transmitsExternally: false,
+        liveProviderCallEnabled: false,
+        launchAuthorized: false,
+        launchExecuted: false,
+      },
+      evidence: {
+        task: task ? serialiseTask(task) : null,
+      },
+      next: {
+        recommendedSlice: "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-final-readiness-preflight",
+        boundary: "actual credential value reads, local read result envelopes, endpoint contact, network egress, provider response creation, rollback execution, host mutation, and live provider calls remain separate future gates",
+      },
+    };
+  }
+
   async function buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadApprovedDeferred() {
     const task = findLatestApprovedDeferredCredentialValueLocalReadExecutionLocalReadTask();
     const shell = task?.cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalRead ?? {};
@@ -12082,6 +12226,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     createCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadTask,
     isCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadTask,
     executeCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadTask,
+    buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferred,
     isCloudConsciousnessLiveProviderCredentialValueAccessAuthorizationTask,
     executeCloudConsciousnessLiveProviderCredentialValueAccessAuthorizationTask,
     isCloudConsciousnessLiveProviderCredentialValueReadTask,
