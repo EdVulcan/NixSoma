@@ -26,16 +26,33 @@ LOCAL_READ_ROUTE_REGISTRY="openclaw-cloud-consciousness-live-provider-credential
 PHASE114_CORE_STATE="$REPO_ROOT/.artifacts/openclaw-core-phase-114-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-final-readiness-preflight-check.json"
 PHASE114_SYSTEM_HEAL_STATE="$REPO_ROOT/.artifacts/openclaw-system-heal-phase-114-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-final-readiness-preflight-check.json"
 
+if [[ -f "$SCRIPT_DIR/dev-openclaw-service-reuse.sh" ]]; then
+  # shellcheck source=/dev/null
+  source "$SCRIPT_DIR/dev-openclaw-service-reuse.sh"
+fi
+
 cleanup() {
   rm -f "${HTML_FILE:-}" "${CLIENT_FILE:-}" "${ROUTE_FILE:-}"
-  "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
+  if declare -F openclaw_dev_cleanup_for_check >/dev/null; then
+    openclaw_dev_cleanup_for_check "$SCRIPT_DIR"
+  else
+    "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
+  fi
 }
 trap cleanup EXIT
 
-"$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
+if declare -F openclaw_dev_down_before_check >/dev/null; then
+  openclaw_dev_down_before_check "$SCRIPT_DIR"
+else
+  "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
+fi
 
 if [[ "$OBSERVER_CHECK" == "true" ]]; then
-  "$SCRIPT_DIR/dev-up.sh"
+  if declare -F openclaw_dev_up_for_check >/dev/null; then
+    openclaw_dev_up_for_check "$SCRIPT_DIR"
+  else
+    "$SCRIPT_DIR/dev-up.sh"
+  fi
   HTML_FILE="$(mktemp)"
   CLIENT_FILE="$(mktemp)"
   curl --silent --fail "$OBSERVER_URL/" > "$HTML_FILE"
@@ -66,26 +83,34 @@ EOF
   exit 0
 fi
 
-rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE.tmp"
-if [[ -f "$SCRIPT_DIR/dev-openclaw-fast-prereq-state.sh" ]]; then
-  # shellcheck source=/dev/null
-  source "$SCRIPT_DIR/dev-openclaw-fast-prereq-state.sh"
+if ! declare -F openclaw_dev_services_already_up >/dev/null || ! openclaw_dev_services_already_up; then
+  rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE.tmp"
+  if [[ -f "$SCRIPT_DIR/dev-openclaw-fast-prereq-state.sh" ]]; then
+    # shellcheck source=/dev/null
+    source "$SCRIPT_DIR/dev-openclaw-fast-prereq-state.sh"
+  fi
+
+  if ! declare -F openclaw_reuse_prereq_state >/dev/null \
+    || ! openclaw_reuse_prereq_state \
+      "$PHASE114_CORE_STATE" \
+      "$PHASE114_SYSTEM_HEAL_STATE" \
+      "$OPENCLAW_CORE_STATE_FILE" \
+      "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
+      "phase-114-result-envelope-creation-execution-attempt-final-readiness-preflight" \
+      "$FINAL_READINESS_PREFLIGHT_REGISTRY" \
+      "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_final_readiness_preflight_recorded"; then
+    PHASE114_PORT_BASE="$PORT_BASE" OPENCLAW_CORE_STATE_FILE="$OPENCLAW_CORE_STATE_FILE" OPENCLAW_SYSTEM_HEAL_STATE_FILE="$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
+      bash "$SCRIPT_DIR/dev-openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-final-readiness-preflight-common-check.sh" >/dev/null
+  fi
+else
+  echo "Using already-running OpenClaw dev services as the live Phase 114 prerequisite state."
 fi
 
-if ! declare -F openclaw_reuse_prereq_state >/dev/null \
-  || ! openclaw_reuse_prereq_state \
-    "$PHASE114_CORE_STATE" \
-    "$PHASE114_SYSTEM_HEAL_STATE" \
-    "$OPENCLAW_CORE_STATE_FILE" \
-    "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
-    "phase-114-result-envelope-creation-execution-attempt-final-readiness-preflight" \
-    "$FINAL_READINESS_PREFLIGHT_REGISTRY" \
-    "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_final_readiness_preflight_recorded"; then
-  PHASE114_PORT_BASE="$PORT_BASE" OPENCLAW_CORE_STATE_FILE="$OPENCLAW_CORE_STATE_FILE" OPENCLAW_SYSTEM_HEAL_STATE_FILE="$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
-    bash "$SCRIPT_DIR/dev-openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-final-readiness-preflight-common-check.sh" >/dev/null
+if declare -F openclaw_dev_up_for_check >/dev/null; then
+  openclaw_dev_up_for_check "$SCRIPT_DIR"
+else
+  "$SCRIPT_DIR/dev-up.sh"
 fi
-
-"$SCRIPT_DIR/dev-up.sh"
 ROUTE_FILE="$(mktemp)"
 curl --silent --fail "$CORE_URL/cloud-consciousness/live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-local-read-route" > "$ROUTE_FILE"
 
