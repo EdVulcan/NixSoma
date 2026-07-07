@@ -29,6 +29,9 @@ OPENCLAW_POST_JSON_DATA_FLAG="-d"
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
 
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-wait-helper.sh"
+
 
 post_json_status() {
   curl --silent --output "$3" --write-out "%{http_code}" -X POST "$1" -H 'content-type: application/json' -d "$2"
@@ -173,8 +176,7 @@ rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp"
 
 post_json "$CORE_URL/plugins/native-adapter/plugin-search-web-adapter-runtime-activation-tasks" "{\"providerContractId\":\"openclaw.web-search\",\"query\":\"$QUERY_SECRET\",\"confirm\":true}" > "$TASK_FILE"
 post_json "$CORE_URL/operator/step" '{}' > "$BLOCKED_FILE"
-sleep 0.2
-curl --silent --fail "$CORE_URL/approvals/summary" > "$SUMMARY_FILE"
+openclaw_wait_for_approval_summary_counts "$CORE_URL" "$SUMMARY_FILE" 1 0
 
 approval_id="$(node - <<'EOF' "$TASK_FILE" "$BLOCKED_FILE" "$SUMMARY_FILE"
 const fs = require("node:fs");

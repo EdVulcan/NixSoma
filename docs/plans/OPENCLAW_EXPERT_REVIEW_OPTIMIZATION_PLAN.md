@@ -24,7 +24,7 @@ The expert review items are considered complete only when each item has code-lev
 | Root package script redundancy E1/P2 | `package.json` had many hard-coded `dev:*check:unix` milestone scripts. | Complete | Root scripts reduced to one milestone runner plus stable lifecycle/smoke aliases; `dev-milestone-check.sh` accepts milestone names as npm args. |
 | Shell helper duplication E4 | `post_json()` was copied across many scripts. | Complete | 257 local definitions migrated to `dev-openclaw-http-json-helper.sh`; helper mode compatibility covered by `openclaw-http-json-helper`. |
 | Observer mirror test duplication T2 | Observer checks duplicate core setup. | Partial | Result-envelope batch milestone covers core and Observer in one live service lifecycle; broader migration pending. |
-| Fixed sleeps T4 | Scripts use fixed sleeps instead of polling. | Pending | Audit complete; high-impact waits still need helper-based migration. |
+| Fixed sleeps T4 | Scripts use fixed sleeps instead of polling. | Complete | `dev-openclaw-wait-helper.sh` replaces fixed numeric sleeps with bounded polling; audit has no `sleep N` matches under `nix/scripts`; `openclaw-wait-helper` and `@changed` passed. |
 | State reuse P1/T5 | Heavy prerequisite chains are replayed. | Partial | Fast prerequisite helper exists for live-provider result-envelope chain; broader coverage pending. |
 
 ## Current Slice Exit Evidence
@@ -52,9 +52,16 @@ The expert review items are considered complete only when each item has code-lev
 - `OPENCLAW_MILESTONE_CHECKS=@changed bash nix/scripts/dev-milestone-check.sh` passed and selected `task-workbench` as the representative real service check for the mechanical extraction.
 - `bash -n` passed for all changed shell scripts.
 
+## Wait Helper Evidence
+
+- Fixed numeric sleeps in `nix/scripts/*.sh` were replaced with bounded polling via `nix/scripts/dev-openclaw-wait-helper.sh`.
+- `rg -n '\bsleep [0-9]+(\.[0-9]+)?\b' nix/scripts -g '*.sh'` returned no matches.
+- `OPENCLAW_MILESTONE_CHECKS=openclaw-wait-helper bash nix/scripts/dev-milestone-check.sh` passed.
+- `OPENCLAW_MILESTONE_CHECKS=@changed bash nix/scripts/dev-milestone-check.sh` passed and selected structural checks plus representative real service checks: `openclaw-service-lifecycle-scope`, `openclaw-live-provider-result-envelope-batch-reuse`, `state-settling`, `openclaw-ai-work-view-capture`, and `openclaw-workspace-command-hardening`.
+- `bash -n` passed for all changed shell scripts and `git diff --check` passed.
+
 ## Next Expert Items After This Slice
 
-1. Reduce root `package.json` milestone script redundancy while preserving `dev:milestone-check:unix`.
-2. Introduce a shared shell HTTP helper and migrate high-churn scripts away from duplicated `post_json()`.
-3. Convert high-impact fixed sleeps to bounded polling helpers.
-4. Extend batch/observer co-validation beyond the result-envelope lane without weakening real service evidence.
+1. Extend batch/observer co-validation beyond the result-envelope lane without weakening real service evidence.
+2. Broaden safe state reuse for heavy prerequisite chains beyond the existing live-provider result-envelope path.
+3. Add broader service-layer unit tests so routine code edits do not require full-stack shell checks.

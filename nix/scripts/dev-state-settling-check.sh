@@ -19,6 +19,9 @@ BROWSER_RUNTIME_URL="http://127.0.0.1:$OPENCLAW_BROWSER_RUNTIME_PORT"
 SCREEN_SENSE_URL="http://127.0.0.1:$OPENCLAW_SCREEN_SENSE_PORT"
 SCREEN_ACT_URL="http://127.0.0.1:$OPENCLAW_SCREEN_ACT_PORT"
 
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-wait-helper.sh"
+
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp"
 
@@ -31,14 +34,7 @@ trap cleanup EXIT
 
 wait_http_down() {
   local url="$1"
-  local deadline=$((SECONDS + 5))
-  while (( SECONDS < deadline )); do
-    if ! curl --silent --fail "$url" >/dev/null 2>&1; then
-      return 0
-    fi
-    sleep 0.2
-  done
-  return 1
+  openclaw_wait_for_http_down "$url" 5 0.2
 }
 
 warming_screen="$(curl --silent "$SCREEN_SENSE_URL/screen/current")"
@@ -50,7 +46,7 @@ for attempt in 1 2 3 4 5; do
   if node -e "const data=JSON.parse(process.argv[1]); process.exit(data.ok && data.browser && data.browser.sessionId ? 0 : 1);" "$browser"; then
     break
   fi
-  sleep 0.4
+  openclaw_wait_interval 0.4
 done
 node -e "const data=JSON.parse(process.argv[1]); if(!(data.ok && data.browser && data.browser.sessionId)){throw new Error(\`Expected browser sessionId, got: \${JSON.stringify(data)}\`);}" "$browser"
 

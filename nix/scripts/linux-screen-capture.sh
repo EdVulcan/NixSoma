@@ -2,6 +2,10 @@
 # Experimental GNOME/Wayland whole-desktop capture adapter.
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-wait-helper.sh"
+
 TMP_DIR="${OPENCLAW_CAPTURE_TMP_DIR:-/tmp/openclaw-capture}"
 SCREENSHOT_PATH="${OPENCLAW_CAPTURE_SCREENSHOT_PATH:-$TMP_DIR/frame.png}"
 OCR_TEXT_PATH="${OPENCLAW_CAPTURE_OCR_TEXT_PATH:-$TMP_DIR/ocr.txt}"
@@ -53,7 +57,7 @@ capture_with_portal() {
 
   gdbus monitor --session --dest org.freedesktop.portal.Desktop >"$monitor_log" 2>&1 &
   monitor_pid=$!
-  sleep 0.2
+  openclaw_wait_interval 0.2
 
   reply="$(
     gdbus call --session \
@@ -124,7 +128,7 @@ PY
       break
     fi
 
-    sleep 0.2
+    openclaw_wait_interval 0.2
     attempts=$((attempts + 1))
   done
 

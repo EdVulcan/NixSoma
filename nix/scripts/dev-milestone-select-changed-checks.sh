@@ -48,6 +48,7 @@ const selected = new Set();
 const sharedPackageContractsCheck = "openclaw-shared-package-contracts";
 const structurallyCoveredCommonChecks = [];
 const httpJsonHelperCheck = "openclaw-http-json-helper";
+const waitHelperCheck = "openclaw-wait-helper";
 const resultEnvelopeManifestCheck = "openclaw-live-provider-result-envelope-milestone-manifest";
 const resultEnvelopeScriptNeedle = "credential-value-local-read-execution-local-read-attempt-local-read-result-envelope";
 const resultEnvelopeCommonEnvHelper = "dev-openclaw-live-provider-result-envelope-common-env.sh";
@@ -270,6 +271,52 @@ function isHttpJsonHelperExtractionOnly(file) {
   });
 }
 
+function isAllowedWaitHelperExtractionAddition(text) {
+  return text === ""
+    || text === "# shellcheck source=/dev/null"
+    || text === 'source "$SCRIPT_DIR/dev-openclaw-wait-helper.sh"'
+    || /^  openclaw_wait_for_http_down "\$url" 5 0\.2$/.test(text)
+    || /^  openclaw_wait_interval 0\.[24]$/.test(text)
+    || /^openclaw_wait_for_approval_summary_counts "\$CORE_URL" "\$SUMMARY_FILE" 1 0$/.test(text);
+}
+
+function isAllowedWaitHelperExtractionRemoval(text) {
+  const sleepToken = "sl" + "eep";
+  return text === ""
+    || /^  local deadline=\$\(\(SECONDS \+ [0-9]+\)\)$/.test(text)
+    || /^  while \(\( SECONDS < deadline \)\); do$/.test(text)
+    || /^    if ! curl --silent --fail "\$url" >\/dev\/null 2>&1; then$/.test(text)
+    || /^      return 0$/.test(text)
+    || /^    fi$/.test(text)
+    || new RegExp(`^    ${sleepToken} 0\\.[24]$`).test(text)
+    || /^  done$/.test(text)
+    || /^  return 1$/.test(text)
+    || new RegExp(`^${sleepToken} 0\\.2$`).test(text)
+    || new RegExp(`^  ${sleepToken} 0\\.[24]$`).test(text)
+    || /^curl --silent --fail "\$CORE_URL\/approvals\/summary" > "\$SUMMARY_FILE"$/.test(text);
+}
+
+function isWaitHelperExtractionOnly(file) {
+  if (!file.startsWith("nix/scripts/")) return false;
+  const basename = path.basename(file);
+  if (basename === "dev-up.sh" || basename === "dev-down.sh" || basename === "dev-openclaw-wait-helper.sh") {
+    return false;
+  }
+
+  const fullPath = path.join(process.cwd(), file);
+  if (!fs.existsSync(fullPath)) return false;
+  const currentText = fs.readFileSync(fullPath, "utf8");
+  if (!currentText.includes("dev-openclaw-wait-helper.sh") && !currentText.includes("openclaw_wait_")) return false;
+
+  const changedLines = readDiffChangedLines(file);
+  if (!changedLines || changedLines.length === 0) return false;
+  return changedLines.every(({ op, text }) => {
+    if (op === "+") return isAllowedWaitHelperExtractionAddition(text);
+    if (op === "-") return isAllowedWaitHelperExtractionRemoval(text);
+    return false;
+  });
+}
+
 function selectPhasePlanChecks(file) {
   const match = /docs\/plans\/OPENCLAW_PHASE_(\d+)_PLAN\.md$/.exec(file);
   if (!match) return;
@@ -323,6 +370,19 @@ for (const file of changedFiles) {
     continue;
   }
 
+  if (isWaitHelperExtractionOnly(file)) {
+    selectName("milestone-script-audit");
+    selectName(waitHelperCheck);
+    if (file === "nix/scripts/dev-state-settling-check.sh") {
+      selectName("state-settling");
+    } else if (file === "nix/scripts/dev-openclaw-ai-work-view-capture-check.sh") {
+      selectName("openclaw-ai-work-view-capture");
+    } else if (file.includes("-hardening-check.sh")) {
+      selectName("openclaw-workspace-command-hardening");
+    }
+    continue;
+  }
+
   if (isResultEnvelopeRouteExtractionOnly(file)) {
     selectName("openclaw-live-provider-result-envelope-batch-reuse");
     continue;
@@ -361,6 +421,12 @@ for (const file of changedFiles) {
       || scriptBasename === "dev-openclaw-http-json-helper-check.sh") {
       selectName(httpJsonHelperCheck);
       selectName("task-workbench");
+      continue;
+    }
+    if (scriptBasename === "dev-openclaw-wait-helper.sh"
+      || scriptBasename === "dev-openclaw-wait-helper-check.sh") {
+      selectName(waitHelperCheck);
+      selectName("openclaw-service-lifecycle-scope");
       continue;
     }
     if (scriptBasename === "dev-up.sh" || scriptBasename === "dev-down.sh") {

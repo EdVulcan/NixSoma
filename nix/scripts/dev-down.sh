@@ -6,6 +6,9 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 ARTIFACT_DIR="$REPO_ROOT/.artifacts"
 OPENCLAW_DEV_DOWN_SCOPE="${OPENCLAW_DEV_DOWN_SCOPE:-current}"
 
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-wait-helper.sh"
+
 sanitize_run_id() {
   local raw="$1"
   printf '%s' "$raw" | tr -c 'A-Za-z0-9_.-' '-'
@@ -71,14 +74,12 @@ find_listener_pid() {
 
 wait_port_released() {
   local port="$1"
-  local deadline=$((SECONDS + 5))
-  while (( SECONDS < deadline )); do
-    if [[ -z "$(find_listener_pid "$port")" ]]; then
-      return 0
-    fi
-    sleep 0.2
-  done
-  return 1
+  openclaw_wait_until 5 0.2 port_released "$port"
+}
+
+port_released() {
+  local port="$1"
+  [[ -z "$(find_listener_pid "$port")" ]]
 }
 
 is_managed_service_pid() {

@@ -8,6 +8,9 @@ OPENCLAW_EVENT_LOG_FILE="${OPENCLAW_EVENT_LOG_FILE:-$ARTIFACT_DIR/openclaw-event
 
 mkdir -p "$ARTIFACT_DIR"
 
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-wait-helper.sh"
+
 NODE_EXE="${NODE_EXE:-$(command -v node || true)}"
 if [[ -z "$NODE_EXE" ]]; then
   echo "Unable to locate node." >&2
@@ -76,14 +79,7 @@ OBSERVER_UI_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
 wait_health() {
   local url="$1"
   local timeout="${2:-30}"
-  local deadline=$((SECONDS + timeout))
-  while (( SECONDS < deadline )); do
-    if curl --silent --fail "$url" >/dev/null 2>&1; then
-      return 0
-    fi
-    sleep 0.4
-  done
-  return 1
+  openclaw_wait_for_http_up "$url" "$timeout" 0.4
 }
 
 find_listener_pid() {
@@ -160,8 +156,18 @@ kill_listener_on_port() {
   pid="$(find_listener_pid "$port")"
   if is_managed_service_pid "$pid"; then
     terminate_pid "$pid" || true
-    sleep 0.5
+    wait_port_released "$port" || true
   fi
+}
+
+port_released() {
+  local port="$1"
+  [[ -z "$(find_listener_pid "$port")" ]]
+}
+
+wait_port_released() {
+  local port="$1"
+  openclaw_wait_until 5 0.2 port_released "$port"
 }
 
 print_health_failure_debug() {
@@ -296,7 +302,7 @@ for entry in "${services[@]}"; do
       echo "Retrying $name startup..." >&2
       if is_managed_service_pid "$pid"; then
         terminate_pid "$pid" || true
-        sleep 0.5
+        wait_port_released "$port" || true
       fi
     fi
   done

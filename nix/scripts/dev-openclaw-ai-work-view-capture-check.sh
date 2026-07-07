@@ -33,6 +33,9 @@ OPENCLAW_POST_JSON_DATA_FLAG="-d"
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
 
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-wait-helper.sh"
+
 
 assert_json() {
   local json="$1"
@@ -48,7 +51,7 @@ for attempt in 1 2 3 4 5; do
   if [[ -n "$open_result" ]] && node -e "try { const data=JSON.parse(process.argv[1]); process.exit(data.ok && data.browser?.sessionId ? 0 : 1); } catch { process.exit(1); }" "$open_result"; then
     break
   fi
-  sleep 0.4
+  openclaw_wait_interval 0.4
 done
 assert_json "$open_result" 'const data=JSON.parse(process.argv[1]); if(!data.ok || !data.browser?.sessionId){throw new Error(`browser work view did not open with session: ${JSON.stringify(data)}`);}'
 

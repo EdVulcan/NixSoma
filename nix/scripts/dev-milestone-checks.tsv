@@ -4,6 +4,7 @@ milestone-script-audit	dev-milestone-script-audit-check.sh	Milestone script taxo
 openclaw-service-lifecycle-scope	dev-openclaw-service-lifecycle-scope-check.sh	Scoped Unix dev service lifecycle isolation and legacy state compatibility
 openclaw-shared-package-contracts	dev-openclaw-shared-package-contracts-check.sh	Shared package type exports, runtime split shims, and focused unit contracts
 openclaw-http-json-helper	dev-openclaw-http-json-helper-check.sh	Shared shell post_json helper mode compatibility
+openclaw-wait-helper	dev-openclaw-wait-helper-check.sh	Shared shell wait helper polling compatibility
 openclaw-live-provider-result-envelope-milestone-manifest	dev-openclaw-live-provider-result-envelope-milestone-manifest-check.sh	Phase 99-116 live-provider result-envelope milestone metadata alignment
 openclaw-live-provider-result-envelope-batch-reuse	dev-openclaw-live-provider-result-envelope-batch-reuse-check.sh	Phase 99-116 result-envelope batch validation with one reusable service lifecycle
 body-config	dev-body-config-check.sh	NixOS body module, profiles, and systemd service skeleton
