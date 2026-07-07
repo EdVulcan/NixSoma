@@ -21,6 +21,7 @@ export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO
 
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 OBSERVER_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
+RESULT_ENVELOPE_CREATION_EXECUTION_FINAL_READINESS_PREFLIGHT_REGISTRY="openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-final-readiness-preflight-v0"
 RESULT_ENVELOPE_CREATION_EXECUTION_ATTEMPT_ROUTE_REGISTRY="openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-route-v0"
 RESULT_ENVELOPE_CREATION_EXECUTION_ATTEMPT_TASK_REGISTRY="openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-task-v0"
 PHASE111_CORE_STATE="$REPO_ROOT/.artifacts/openclaw-core-phase-111-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-route-check.json"
@@ -85,8 +86,8 @@ if ! declare -F openclaw_reuse_prereq_state >/dev/null \
     "$OPENCLAW_CORE_STATE_FILE" \
     "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
     "phase-111-result-envelope-creation-execution-attempt-route" \
-    "$RESULT_ENVELOPE_CREATION_EXECUTION_ATTEMPT_ROUTE_REGISTRY" \
-    "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_route_ready"; then
+    "$RESULT_ENVELOPE_CREATION_EXECUTION_FINAL_READINESS_PREFLIGHT_REGISTRY" \
+    "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_final_readiness_preflight_recorded"; then
   PHASE111_PORT_BASE="$PORT_BASE" OPENCLAW_CORE_STATE_FILE="$OPENCLAW_CORE_STATE_FILE" OPENCLAW_SYSTEM_HEAL_STATE_FILE="$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
     bash "$SCRIPT_DIR/dev-openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-route-common-check.sh" >/dev/null
 fi

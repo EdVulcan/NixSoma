@@ -8,6 +8,8 @@ import {
   verifyProviderResponse,
 } from "./cloud-live-provider-runtime-adapter.mjs";
 
+import * as liveProviderPhaseGovernance from "./cloud-live-provider-runtime-governance.mjs";
+
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RUNTIME_IMPLEMENTATION_TASK_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-runtime-implementation-task-v0";
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_RUNTIME_ADAPTER_IMPLEMENTATION_TASK_REGISTRY =
@@ -153,2127 +155,6 @@ const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_LOCAL_READ_EXECUTION_LO
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_LOCAL_READ_EXECUTION_LOCAL_READ_ATTEMPT_LOCAL_READ_RESULT_ENVELOPE_CREATION_EXECUTION_ATTEMPT_LOCAL_READ_TASK_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-local-read-task-v0";
 
-function phase18Governance(extra = {}) {
-  return {
-    phase: "phase-18",
-    createsTask: false,
-    createsApproval: false,
-    implementsRuntimeAdapter: false,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    endpointContacted: false,
-    networkEgress: false,
-    ...extra,
-  };
-}
-
-function phase20Governance(extra = {}) {
-  return {
-    phase: "phase-20",
-    createsTask: false,
-    createsApproval: false,
-    definesRuntimeAdapterInterface: true,
-    implementsRuntimeAdapter: false,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    endpointContacted: false,
-    networkEgress: false,
-    ...extra,
-  };
-}
-
-function phase21Governance(extra = {}) {
-  return {
-    phase: "phase-21",
-    createsTask: false,
-    createsApproval: false,
-    definesRuntimeAdapterInterface: true,
-    implementsRuntimeAdapter: false,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    endpointContacted: false,
-    networkEgress: false,
-    ...extra,
-  };
-}
-
-function phase24Governance(extra = {}) {
-  return {
-    phase: "phase-24",
-    moduleBoundaryDefined: true,
-    implementsRuntimeAdapter: false,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    endpointContacted: false,
-    networkEgress: false,
-    ...extra,
-  };
-}
-
-function phase25Governance(extra = {}) {
-  return {
-    phase: "phase-25",
-    createsTask: false,
-    createsApproval: false,
-    moduleBoundaryDefined: true,
-    mutatesModule: false,
-    writesSource: false,
-    implementsRuntimeAdapter: false,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    endpointContacted: false,
-    networkEgress: false,
-    ...extra,
-  };
-}
-
-function phase28Governance(extra = {}) {
-  return {
-    phase: "phase-28",
-    pureProviderRequestBuilderReady: true,
-    implementsRuntimeAdapter: false,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    endpointContacted: false,
-    networkEgress: false,
-    ...extra,
-  };
-}
-
-function phase29Governance(extra = {}) {
-  return {
-    phase: "phase-29",
-    createsTask: false,
-    createsApproval: false,
-    pureProviderRequestBuilderReady: true,
-    usesProviderRequestBuilder: true,
-    implementsRuntimeAdapter: false,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    endpointContacted: false,
-    networkEgress: false,
-    ...extra,
-  };
-}
-
-function phase32Governance(extra = {}) {
-  return {
-    phase: "phase-32",
-    pureProviderRequestBuilderReady: true,
-    pureCredentialReferenceResolverReady: true,
-    referenceOnly: true,
-    implementsRuntimeAdapter: false,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    ...extra,
-  };
-}
-
-function phase33Governance(extra = {}) {
-  return {
-    phase: "phase-33",
-    createsTask: false,
-    createsApproval: false,
-    pureCredentialReferenceResolverReady: true,
-    referenceOnly: true,
-    implementsRuntimeAdapter: false,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    ...extra,
-  };
-}
-
-function phase36Governance(extra = {}) {
-  return {
-    phase: "phase-36",
-    noNetworkProviderRequestSenderReady: true,
-    dispatchDeferred: true,
-    referenceOnly: true,
-    implementsRuntimeAdapter: false,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    ...extra,
-  };
-}
-
-function phase37Governance(extra = {}) {
-  return {
-    phase: "phase-37",
-    createsTask: false,
-    createsApproval: false,
-    noNetworkProviderRequestSenderReady: true,
-    dispatchDeferred: true,
-    referenceOnly: true,
-    implementsRuntimeAdapter: false,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    ...extra,
-  };
-}
-
-function phase40Governance(extra = {}) {
-  return {
-    phase: "phase-40",
-    localEgressTranscriptRecorderReady: true,
-    transcriptRecorded: true,
-    localOnly: true,
-    dispatchDeferred: true,
-    referenceOnly: true,
-    implementsRuntimeAdapter: false,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    providerResponseCreated: false,
-    ...extra,
-  };
-}
-
-function phase44Governance(extra = {}) {
-  return {
-    phase: "phase-44",
-    localProviderResponseVerifierReady: true,
-    responseVerified: true,
-    localOnly: true,
-    dispatchDeferred: true,
-    responseSource: "local_rehearsal_readback",
-    implementsRuntimeAdapter: false,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    providerResponseCreated: false,
-    ...extra,
-  };
-}
-
-function phase48Governance(extra = {}) {
-  return {
-    phase: "phase-48",
-    localRollbackNoteBuilderReady: true,
-    rollbackNoteReady: true,
-    localOnly: true,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    dispatchDeferred: true,
-    implementsRuntimeAdapter: false,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    providerResponseCreated: false,
-    ...extra,
-  };
-}
-
-function phase52Governance(extra = {}) {
-  return {
-    phase: "phase-52",
-    localRuntimeAdapterComplete: true,
-    adapterMethodTableClosed: true,
-    localOnly: true,
-    dispatchDeferred: true,
-    implementsRuntimeAdapter: true,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    createsTask: false,
-    createsApproval: false,
-    ...extra,
-  };
-}
-
-function phase56Governance(extra = {}) {
-  return {
-    phase: "phase-56",
-    routeReviewOnly: true,
-    liveLaunchRouteReviewed: true,
-    selectedSlice: "openclaw-cloud-consciousness-live-provider-real-launch-task",
-    createsTask: false,
-    createsApproval: false,
-    localRuntimeAdapterComplete: true,
-    adapterMethodTableClosed: true,
-    implementsRuntimeAdapter: true,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    launchAuthorized: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    ...extra,
-  };
-}
-
-function phase57Governance(extra = {}) {
-  return {
-    phase: "phase-57",
-    createsTask: false,
-    createsApproval: false,
-    realLaunchTaskShell: true,
-    launchAuthorized: false,
-    launchExecuted: false,
-    localRuntimeAdapterComplete: true,
-    adapterMethodTableClosed: true,
-    implementsRuntimeAdapter: true,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    ...extra,
-  };
-}
-
-function phase59Governance(extra = {}) {
-  return {
-    phase: "phase-59",
-    executionPreflightOnly: true,
-    requiresApprovedDeferredEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    realLaunchTaskShell: true,
-    launchAuthorized: false,
-    launchExecuted: false,
-    localRuntimeAdapterComplete: true,
-    adapterMethodTableClosed: true,
-    implementsRuntimeAdapter: true,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    ...extra,
-  };
-}
-
-function phase60Governance(extra = {}) {
-  return {
-    phase: "phase-60",
-    credentialValueAccessGateOnly: true,
-    requiresExecutionPreflightEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    realLaunchTaskShell: true,
-    launchAuthorized: false,
-    launchExecuted: false,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    ...extra,
-  };
-}
-
-function phase61Governance(extra = {}) {
-  return {
-    phase: "phase-61",
-    endpointNetworkEgressGateOnly: true,
-    requiresCredentialValueAccessGateEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    realLaunchTaskShell: true,
-    launchAuthorized: false,
-    launchExecuted: false,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    ...extra,
-  };
-}
-
-function phase62Governance(extra = {}) {
-  return {
-    phase: "phase-62",
-    egressExecutionRouteTaskPreflightOnly: true,
-    requiresEndpointNetworkEgressGateEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    realLaunchTaskShell: true,
-    egressExecutionTaskCreated: false,
-    egressExecutionTaskApproved: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    ...extra,
-  };
-}
-
-function phase63Governance(extra = {}) {
-  return {
-    phase: "phase-63",
-    egressExecutionTaskShellOnly: true,
-    requiresEgressExecutionRouteTaskPreflightEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    realLaunchTaskShell: true,
-    egressExecutionTaskCreated: false,
-    egressExecutionTaskApproved: false,
-    egressExecutionDeferred: true,
-    launchAuthorized: false,
-    launchExecuted: false,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    ...extra,
-  };
-}
-
-function phase64Governance(extra = {}) {
-  return {
-    phase: "phase-64",
-    approvedDeferredEvidenceOnly: true,
-    requiresEgressExecutionTaskShellEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    egressExecutionTaskCreated: true,
-    egressExecutionTaskApproved: true,
-    egressExecutionDeferred: true,
-    launchAuthorized: false,
-    launchExecuted: false,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    callsCloudModel: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerSdkLoaded: false,
-    providerCredentialRead: false,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    endpointContacted: false,
-    networkEgress: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    ...extra,
-  };
-}
-
-function phase65Governance(extra = {}) {
-  return {
-    phase: "phase-65",
-    credentialValueAuthorizationRouteOnly: true,
-    requiresApprovedDeferredEgressExecutionEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueAuthorizationTaskCreated: false,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase66Governance(extra = {}) {
-  return {
-    phase: "phase-66",
-    credentialValueAuthorizationTaskShellOnly: true,
-    requiresCredentialValueAuthorizationRouteEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueAuthorizationTaskCreated: false,
-    credentialValueAuthorizationTaskApproved: false,
-    credentialValueAuthorizationDeferred: true,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase67Governance(extra = {}) {
-  return {
-    phase: "phase-67",
-    approvedDeferredEvidenceOnly: true,
-    requiresCredentialValueAuthorizationTaskShellEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueAuthorizationTaskCreated: true,
-    credentialValueAuthorizationTaskApproved: true,
-    credentialValueAuthorizationDeferred: true,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase68Governance(extra = {}) {
-  return {
-    phase: "phase-68",
-    credentialValueReadinessPreflightOnly: true,
-    requiresCredentialValueAuthorizationApprovedDeferredEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueReadinessPreflightRecorded: false,
-    credentialValueAuthorizationTaskCreated: true,
-    credentialValueAuthorizationTaskApproved: true,
-    credentialValueAuthorizationDeferred: true,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase69Governance(extra = {}) {
-  return {
-    phase: "phase-69",
-    credentialValueReadTaskShellOnly: true,
-    requiresCredentialValueReadinessPreflightEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueReadTaskCreated: false,
-    credentialValueReadTaskApproved: false,
-    credentialValueReadDeferred: true,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase70Governance(extra = {}) {
-  return {
-    phase: "phase-70",
-    approvedDeferredEvidenceOnly: true,
-    requiresCredentialValueReadTaskShellEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueReadTaskCreated: true,
-    credentialValueReadTaskApproved: true,
-    credentialValueReadDeferred: true,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase71Governance(extra = {}) {
-  return {
-    phase: "phase-71",
-    credentialValueAccessAuthorizationRouteOnly: true,
-    requiresCredentialValueReadApprovedDeferredEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueAccessAuthorizationTaskCreated: false,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase72Governance(extra = {}) {
-  return {
-    phase: "phase-72",
-    credentialValueAccessAuthorizationTaskShellOnly: true,
-    requiresCredentialValueAccessAuthorizationRouteEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueAccessAuthorizationTaskCreated: false,
-    credentialValueAccessAuthorizationTaskApproved: false,
-    credentialValueAccessAuthorizationDeferred: true,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase73Governance(extra = {}) {
-  return {
-    phase: "phase-73",
-    approvedDeferredEvidenceOnly: true,
-    requiresCredentialValueAccessAuthorizationTaskShellEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueAccessAuthorizationTaskCreated: true,
-    credentialValueAccessAuthorizationTaskApproved: true,
-    credentialValueAccessAuthorizationDeferred: true,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase74Governance(extra = {}) {
-  return {
-    phase: "phase-74",
-    credentialValueFinalReadinessPreflightOnly: true,
-    requiresCredentialValueAccessAuthorizationApprovedDeferredEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueFinalReadinessPreflightRecorded: false,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase75Governance(extra = {}) {
-  return {
-    phase: "phase-75",
-    credentialValueAccessAuthorizationDecisionRouteOnly: true,
-    requiresCredentialValueFinalReadinessPreflightEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueAccessAuthorizationDecisionTaskCreated: false,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase76Governance(extra = {}) {
-  return {
-    phase: "phase-76",
-    credentialValueAccessAuthorizationDecisionTaskShellOnly: true,
-    requiresCredentialValueAccessAuthorizationDecisionRouteEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueAccessAuthorizationDecisionTaskCreated: false,
-    credentialValueAccessAuthorizationDecisionTaskApproved: false,
-    credentialValueAccessAuthorizationDecisionDeferred: true,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase77Governance(extra = {}) {
-  return {
-    phase: "phase-77",
-    approvedDeferredEvidenceOnly: true,
-    requiresCredentialValueAccessAuthorizationDecisionTaskShellEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueAccessAuthorizationDecisionTaskCreated: true,
-    credentialValueAccessAuthorizationDecisionTaskApproved: true,
-    credentialValueAccessAuthorizationDecisionDeferred: true,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase78Governance(extra = {}) {
-  return {
-    phase: "phase-78",
-    credentialValueAccessAuthorizedLocalProofOnly: true,
-    requiresCredentialValueAccessAuthorizationDecisionApprovedDeferredEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueAccessAuthorizedLocalProofRecorded: false,
-    credentialValueAccessAuthorized: false,
-    credentialValueAccessDenied: true,
-    credentialValueIncluded: false,
-    credentialValueRead: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase79Governance(extra = {}) {
-  return {
-    phase: "phase-79",
-    credentialValueLocalReadRouteOnly: true,
-    requiresCredentialValueAccessAuthorizedLocalProofEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadTaskCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase80Governance(extra = {}) {
-  return {
-    phase: "phase-80",
-    credentialValueLocalReadTaskShellOnly: true,
-    requiresCredentialValueLocalReadRouteEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadTaskCreated: false,
-    credentialValueLocalReadTaskApproved: false,
-    credentialValueLocalReadDeferred: true,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase81Governance(extra = {}) {
-  return {
-    phase: "phase-81",
-    approvedDeferredEvidenceOnly: true,
-    requiresCredentialValueLocalReadTaskShellEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadTaskCreated: true,
-    credentialValueLocalReadTaskApproved: true,
-    credentialValueLocalReadDeferred: true,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase82Governance(extra = {}) {
-  return {
-    phase: "phase-82",
-    credentialValueLocalReadFinalReadinessPreflightOnly: true,
-    requiresCredentialValueLocalReadApprovedDeferredEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadFinalReadinessPreflightRecorded: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase83Governance(extra = {}) {
-  return {
-    phase: "phase-83",
-    credentialValueLocalReadExecutionRouteOnly: true,
-    requiresCredentialValueLocalReadFinalReadinessPreflightEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionTaskCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase84Governance(extra = {}) {
-  return {
-    phase: "phase-84",
-    credentialValueLocalReadExecutionTaskShellOnly: true,
-    requiresCredentialValueLocalReadExecutionRouteEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionTaskCreated: false,
-    credentialValueLocalReadExecutionTaskApproved: false,
-    credentialValueLocalReadExecutionDeferred: true,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase85Governance(extra = {}) {
-  return {
-    phase: "phase-85",
-    approvedDeferredEvidenceOnly: true,
-    requiresCredentialValueLocalReadExecutionTaskShellEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionTaskCreated: true,
-    credentialValueLocalReadExecutionTaskApproved: true,
-    credentialValueLocalReadExecutionDeferred: true,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase86Governance(extra = {}) {
-  return {
-    phase: "phase-86",
-    credentialValueLocalReadExecutionFinalReadinessPreflightOnly: true,
-    requiresCredentialValueLocalReadExecutionApprovedDeferredEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionFinalReadinessPreflightRecorded: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase87Governance(extra = {}) {
-  return {
-    phase: "phase-87",
-    credentialValueLocalReadExecutionLocalReadRouteOnly: true,
-    requiresCredentialValueLocalReadExecutionFinalReadinessPreflightEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadTaskCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase88Governance(extra = {}) {
-  return {
-    phase: "phase-88",
-    credentialValueLocalReadExecutionLocalReadTaskShellOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadRouteEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadTaskCreated: false,
-    credentialValueLocalReadExecutionLocalReadTaskApproved: false,
-    credentialValueLocalReadExecutionLocalReadDeferred: true,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase89Governance(extra = {}) {
-  return {
-    phase: "phase-89",
-    approvedDeferredEvidenceOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadTaskShellEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadTaskCreated: true,
-    credentialValueLocalReadExecutionLocalReadTaskApproved: true,
-    credentialValueLocalReadExecutionLocalReadDeferred: true,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase90Governance(extra = {}) {
-  return {
-    phase: "phase-90",
-    credentialValueLocalReadExecutionLocalReadFinalReadinessPreflightOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadApprovedDeferredEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadFinalReadinessPreflightRecorded: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase91Governance(extra = {}) {
-  return {
-    phase: "phase-91",
-    credentialValueLocalReadExecutionLocalReadAttemptRouteOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadFinalReadinessPreflightEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptTaskCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase92Governance(extra = {}) {
-  return {
-    phase: "phase-92",
-    credentialValueLocalReadExecutionLocalReadAttemptTaskShellOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptRouteEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptTaskCreated: false,
-    credentialValueLocalReadExecutionLocalReadAttemptTaskApproved: false,
-    credentialValueLocalReadExecutionLocalReadAttemptDeferred: true,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase93Governance(extra = {}) {
-  return {
-    phase: "phase-93",
-    credentialValueLocalReadExecutionLocalReadAttemptApprovedDeferredEvidenceOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptTaskShellEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptTaskApproved: false,
-    credentialValueLocalReadExecutionLocalReadAttemptDeferred: true,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase94Governance(extra = {}) {
-  return {
-    phase: "phase-94",
-    credentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflightOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptApprovedDeferredEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflightRecorded: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase95Governance(extra = {}) {
-  return {
-    phase: "phase-95",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadRouteOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflightEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase96Governance(extra = {}) {
-  return {
-    phase: "phase-96",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskShellOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadRouteEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskCreated: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskApproved: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadDeferred: true,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase97Governance(extra = {}) {
-  return {
-    phase: "phase-97",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredEvidenceOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskShellEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskApproved: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadDeferred: true,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase98Governance(extra = {}) {
-  return {
-    phase: "phase-98",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadFinalReadinessPreflightOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadApprovedDeferredEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadFinalReadinessPreflightRecorded: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase99Governance(extra = {}) {
-  return {
-    phase: "phase-99",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeRouteOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadFinalReadinessPreflightEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeTaskCreated: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase100Governance(extra = {}) {
-  return {
-    phase: "phase-100",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeTaskShellOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeRouteEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeTaskCreated: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeTaskApproved: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeDeferred: true,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase101Governance(extra = {}) {
-  return {
-    phase: "phase-101",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeApprovedDeferredEvidenceOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeTaskShellEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeTaskApproved: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeDeferred: true,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase102Governance(extra = {}) {
-  return {
-    phase: "phase-102",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeFinalReadinessPreflightOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeApprovedDeferredEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeFinalReadinessPreflightRecorded: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase103Governance(extra = {}) {
-  return {
-    phase: "phase-103",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationRouteOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeFinalReadinessPreflightEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeFinalReadinessPreflightRecorded: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationTaskCreated: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase104Governance(extra = {}) {
-  return {
-    phase: "phase-104",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationTaskShellOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationRouteEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationTaskCreated: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationTaskApproved: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationDeferred: true,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase105Governance(extra = {}) {
-  return {
-    phase: "phase-105",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationApprovedDeferredEvidenceOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationTaskShellEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationTaskApproved: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationDeferred: true,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase106Governance(extra = {}) {
-  return {
-    phase: "phase-106",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationFinalReadinessPreflightOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationApprovedDeferredEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationFinalReadinessPreflightRecorded: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase107Governance(extra = {}) {
-  return {
-    phase: "phase-107",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionRouteOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationFinalReadinessPreflightEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationFinalReadinessPreflightRecorded: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionTaskCreated: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase108Governance(extra = {}) {
-  return {
-    phase: "phase-108",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionTaskShellOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionRouteEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionTaskCreated: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionTaskApproved: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionDeferred: true,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase109Governance(extra = {}) {
-  return {
-    phase: "phase-109",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionApprovedDeferredEvidenceOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionTaskShellEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionTaskApproved: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionDeferred: true,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase110Governance(extra = {}) {
-  return {
-    phase: "phase-110",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionFinalReadinessPreflightOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionApprovedDeferredEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionFinalReadinessPreflightRecorded: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase111Governance(extra = {}) {
-  return {
-    phase: "phase-111",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptRouteOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionFinalReadinessPreflightEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionFinalReadinessPreflightRecorded: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptTaskCreated: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase112Governance(extra = {}) {
-  return {
-    phase: "phase-112",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptTaskShellOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptRouteEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptTaskCreated: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptTaskApproved: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptDeferred: true,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase113Governance(extra = {}) {
-  return {
-    phase: "phase-113",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptApprovedDeferredEvidenceOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptTaskShellEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptTaskApproved: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptDeferred: true,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase114Governance(extra = {}) {
-  return {
-    phase: "phase-114",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptFinalReadinessPreflightOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptApprovedDeferredEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptFinalReadinessPreflightRecorded: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase115Governance(extra = {}) {
-  return {
-    phase: "phase-115",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadRouteOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptFinalReadinessPreflightEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptFinalReadinessPreflightRecorded: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadTaskCreated: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
-function phase116Governance(extra = {}) {
-  return {
-    phase: "phase-116",
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadTaskShellOnly: true,
-    requiresCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadRouteEvidence: true,
-    createsTask: false,
-    createsApproval: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadTaskCreated: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadTaskApproved: false,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadDeferred: true,
-    credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreated: false,
-    credentialValueRead: false,
-    credentialValueIncluded: false,
-    credentialValueExposed: false,
-    providerCredentialRead: false,
-    endpointNetworkEgressAuthorized: false,
-    endpointNetworkEgressDenied: true,
-    endpointContacted: false,
-    networkEgress: false,
-    transmitsExternally: false,
-    liveProviderCallEnabled: false,
-    providerResponseCreated: false,
-    rollbackExecuted: false,
-    rollbackCommandCreated: false,
-    hostMutation: false,
-    launchAuthorized: false,
-    launchExecuted: false,
-    ...extra,
-  };
-}
-
 function runtimeAdapterEvidenceRef(result) {
   return {
     registry: result?.registry ?? null,
@@ -2341,7 +222,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-runtime-implementation-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-runtime-implementation-shell",
         summary: "Create an approval-gated runtime implementation shell while keeping SDK, credential, endpoint, and network activity disabled.",
-        governance: phase18Governance({ createsTask: true, createsApproval: true }),
+        governance: liveProviderPhaseGovernance.phase18Governance({ createsTask: true, createsApproval: true }),
         steps: [
           {
             id: "review-runtime-implementation-plan",
@@ -2415,7 +296,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       implementationPlan,
       task,
       approval,
-      governance: phase18Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase18Governance({ createsTask: true, createsApproval: true }),
     };
   }
 
@@ -2490,7 +371,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "runtime_implementation_deferred_after_approval",
       task,
       implementationPlan,
-      governance: phase18Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase18Governance({ createsTask: true, createsApproval: true }),
       summary: {
         ready: true,
         implementationStatus: "deferred_after_approval",
@@ -2582,7 +463,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_20_live_provider_runtime_adapter_implementation_interface_scaffold",
       generatedAt: new Date().toISOString(),
       status: ready ? "runtime_adapter_interface_scaffold_ready_no_live_egress" : "waiting_for_runtime_adapter_interface_prerequisites",
-      governance: phase20Governance(),
+      governance: liveProviderPhaseGovernance.phase20Governance(),
       adapterInterface,
       checks,
       summary: {
@@ -2656,7 +537,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-runtime-adapter-implementation-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-runtime-adapter-implementation-shell",
         summary: "Create an approval-gated runtime adapter implementation task shell while keeping provider SDK, credentials, endpoint contact, and network egress disabled.",
-        governance: phase21Governance({ createsTask: true, createsApproval: true }),
+        governance: liveProviderPhaseGovernance.phase21Governance({ createsTask: true, createsApproval: true }),
         steps: [
           {
             id: "review-runtime-adapter-interface-scaffold",
@@ -2732,7 +613,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       adapterImplementation,
       task,
       approval,
-      governance: phase21Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase21Governance({ createsTask: true, createsApproval: true }),
     };
   }
 
@@ -2773,7 +654,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_24_live_provider_runtime_adapter_module_contract",
       generatedAt: new Date().toISOString(),
       status: ready ? "runtime_adapter_module_contract_ready_no_live_egress" : "waiting_for_runtime_adapter_module_contract_prerequisites",
-      governance: phase24Governance(),
+      governance: liveProviderPhaseGovernance.phase24Governance(),
       moduleContract,
       checks,
       summary: {
@@ -2846,7 +727,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-runtime-adapter-module-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-runtime-adapter-module-shell",
         summary: "Create an approval-gated runtime adapter module task shell while keeping source mutation, SDK loading, credentials, endpoint contact, and network egress disabled.",
-        governance: phase25Governance({ createsTask: true, createsApproval: true }),
+        governance: liveProviderPhaseGovernance.phase25Governance({ createsTask: true, createsApproval: true }),
         steps: [
           {
             id: "review-runtime-adapter-module-contract",
@@ -2925,7 +806,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       moduleContract,
       task,
       approval,
-      governance: phase25Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase25Governance({ createsTask: true, createsApproval: true }),
     };
   }
 
@@ -2989,7 +870,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_28_pure_provider_request_builder",
       generatedAt: new Date().toISOString(),
       status: ready ? "provider_request_builder_ready_no_live_egress" : "waiting_for_provider_request_builder_prerequisites",
-      governance: phase28Governance(),
+      governance: liveProviderPhaseGovernance.phase28Governance(),
       providerRequest,
       checks,
       summary: {
@@ -3064,7 +945,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-request-builder-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-request-builder-shell",
         summary: "Create an approval-gated task shell around the pure provider request builder while keeping credentials, endpoints, network egress, and live provider calls disabled.",
-        governance: phase29Governance({ createsTask: true, createsApproval: true }),
+        governance: liveProviderPhaseGovernance.phase29Governance({ createsTask: true, createsApproval: true }),
         steps: [
           {
             id: "review-provider-request-builder",
@@ -3146,7 +1027,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       requestBuilder,
       task,
       approval,
-      governance: phase29Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase29Governance({ createsTask: true, createsApproval: true }),
     };
   }
 
@@ -3193,7 +1074,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_32_credential_reference_resolver",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_reference_resolver_ready_no_value_read" : "waiting_for_credential_reference_resolver_prerequisites",
-      governance: phase32Governance(),
+      governance: liveProviderPhaseGovernance.phase32Governance(),
       credentialResolution,
       requestBuilder,
       checks,
@@ -3261,7 +1142,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-credential-reference-resolver-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-credential-reference-resolver-shell",
         summary: "Create an approval-gated task shell around the credential reference resolver while keeping credential values, endpoints, network egress, and live provider calls disabled.",
-        governance: phase33Governance({ createsTask: true, createsApproval: true }),
+        governance: liveProviderPhaseGovernance.phase33Governance({ createsTask: true, createsApproval: true }),
         steps: [
           {
             id: "review-credential-reference-resolver",
@@ -3342,7 +1223,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       credentialResolver,
       task,
       approval,
-      governance: phase33Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase33Governance({ createsTask: true, createsApproval: true }),
     };
   }
 
@@ -3389,7 +1270,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_36_no_network_provider_request_sender",
       generatedAt: new Date().toISOString(),
       status: ready ? "no_network_sender_ready_deferred_egress" : "waiting_for_no_network_sender_prerequisites",
-      governance: phase36Governance(),
+      governance: liveProviderPhaseGovernance.phase36Governance(),
       egressEnvelope,
       credentialResolver,
       checks,
@@ -3456,7 +1337,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-no-network-sender-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-no-network-sender-shell",
         summary: "Create an approval-gated task shell around the no-network sender envelope while keeping endpoint contact, network egress, and live provider calls disabled.",
-        governance: phase37Governance({ createsTask: true, createsApproval: true }),
+        governance: liveProviderPhaseGovernance.phase37Governance({ createsTask: true, createsApproval: true }),
         steps: [
           {
             id: "review-no-network-sender-envelope",
@@ -3536,7 +1417,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       noNetworkSender,
       task,
       approval,
-      governance: phase37Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase37Governance({ createsTask: true, createsApproval: true }),
     };
   }
 
@@ -3587,7 +1468,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_40_local_egress_transcript_recorder",
       generatedAt: new Date().toISOString(),
       status: ready ? "egress_transcript_recorder_ready_local_only" : "waiting_for_egress_transcript_recorder_prerequisites",
-      governance: phase40Governance(),
+      governance: liveProviderPhaseGovernance.phase40Governance(),
       transcriptRecorder,
       noNetworkSender,
       checks,
@@ -3657,7 +1538,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-egress-transcript-recorder-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-egress-transcript-recorder-shell",
         summary: "Create an approval-gated task shell around the local egress transcript recorder while keeping endpoint contact, network egress, provider responses, and live provider calls disabled.",
-        governance: phase40Governance({ createsTask: true, createsApproval: true }),
+        governance: liveProviderPhaseGovernance.phase40Governance({ createsTask: true, createsApproval: true }),
         steps: [
           {
             id: "review-egress-transcript-recorder",
@@ -3741,7 +1622,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       transcriptRecorder,
       task,
       approval,
-      governance: phase40Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase40Governance({ createsTask: true, createsApproval: true }),
     };
   }
 
@@ -3827,7 +1708,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "egress_transcript_recorder_deferred_after_approval",
       task,
       transcriptRecorder,
-      governance: phase40Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase40Governance({ createsTask: true, createsApproval: true }),
       summary: {
         ready: true,
         implementationStatus: "deferred_after_approval",
@@ -3924,7 +1805,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_44_local_provider_response_verifier",
       generatedAt: new Date().toISOString(),
       status: ready ? "provider_response_verifier_ready_local_only" : "waiting_for_provider_response_verifier_prerequisites",
-      governance: phase44Governance(),
+      governance: liveProviderPhaseGovernance.phase44Governance(),
       responseVerifier,
       transcriptRecorder,
       localResponseReadback,
@@ -3998,7 +1879,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-response-verifier-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-response-verifier-shell",
         summary: "Create an approval-gated task shell around the local provider response verifier while keeping endpoint contact, network egress, provider response creation, and live provider calls disabled.",
-        governance: phase44Governance({ createsTask: true, createsApproval: true }),
+        governance: liveProviderPhaseGovernance.phase44Governance({ createsTask: true, createsApproval: true }),
         steps: [
           {
             id: "review-response-verifier",
@@ -4081,7 +1962,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       responseVerifier,
       task,
       approval,
-      governance: phase44Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase44Governance({ createsTask: true, createsApproval: true }),
     };
   }
 
@@ -4164,7 +2045,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "response_verifier_deferred_after_approval",
       task,
       responseVerifier,
-      governance: phase44Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase44Governance({ createsTask: true, createsApproval: true }),
       summary: {
         ready: true,
         implementationStatus: "deferred_after_approval",
@@ -4227,7 +2108,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_48_local_provider_rollback_note",
       generatedAt: new Date().toISOString(),
       status: ready ? "provider_rollback_note_ready_local_only" : "waiting_for_provider_rollback_note_prerequisites",
-      governance: phase48Governance(),
+      governance: liveProviderPhaseGovernance.phase48Governance(),
       rollbackNote,
       responseVerifier,
       checks,
@@ -4300,7 +2181,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-rollback-note-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-rollback-note-shell",
         summary: "Create an approval-gated task shell around the local rollback note while keeping rollback execution, host mutation, endpoint contact, network egress, and live provider calls disabled.",
-        governance: phase48Governance({ createsTask: true, createsApproval: true }),
+        governance: liveProviderPhaseGovernance.phase48Governance({ createsTask: true, createsApproval: true }),
         steps: [
           {
             id: "review-rollback-note",
@@ -4386,7 +2267,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       rollbackNote,
       task,
       approval,
-      governance: phase48Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase48Governance({ createsTask: true, createsApproval: true }),
     };
   }
 
@@ -4480,7 +2361,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "rollback_note_deferred_after_approval",
       task,
       rollbackNote,
-      governance: phase48Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase48Governance({ createsTask: true, createsApproval: true }),
       summary: {
         ready: true,
         implementationStatus: "deferred_after_approval",
@@ -4694,7 +2575,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_52_live_provider_runtime_adapter_completion_summary",
       generatedAt: new Date().toISOString(),
       status: ready ? "runtime_adapter_method_table_complete_local_only" : "waiting_for_runtime_adapter_method_table_completion",
-      governance: phase52Governance(),
+      governance: liveProviderPhaseGovernance.phase52Governance(),
       methodClosures,
       checks,
       summary: {
@@ -4778,7 +2659,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-runtime-adapter-closure-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-runtime-adapter-closure",
         summary: "Create an approval-gated closure task for the completed local adapter method table while keeping live provider egress disabled.",
-        governance: phase52Governance({ createsTask: true, createsApproval: true }),
+        governance: liveProviderPhaseGovernance.phase52Governance({ createsTask: true, createsApproval: true }),
         steps: [
           {
             id: "review-runtime-adapter-completion",
@@ -4865,7 +2746,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       completion,
       task,
       approval,
-      governance: phase52Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase52Governance({ createsTask: true, createsApproval: true }),
     };
   }
 
@@ -4954,7 +2835,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "runtime_adapter_closure_deferred_after_approval",
       task,
       completion,
-      governance: phase52Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase52Governance({ createsTask: true, createsApproval: true }),
       summary: {
         ready: true,
         implementationStatus: "deferred_after_approval",
@@ -5023,7 +2904,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_55_live_provider_runtime_adapter_closure_exit",
       generatedAt: new Date().toISOString(),
       status: complete ? "phase_55_runtime_adapter_closure_complete" : "waiting_for_runtime_adapter_closure_readiness",
-      governance: phase52Governance({ phase: "phase-55" }),
+      governance: liveProviderPhaseGovernance.phase52Governance({ phase: "phase-55" }),
       completedPhase: {
         id: "phase-55",
         name: "Live Provider Runtime Adapter Closure",
@@ -5144,7 +3025,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_56_live_provider_real_launch_route_review",
       generatedAt: new Date().toISOString(),
       status: ready ? "real_launch_route_review_ready_launch_task_selected" : "waiting_for_real_launch_route_review_prerequisites",
-      governance: phase56Governance(),
+      governance: liveProviderPhaseGovernance.phase56Governance(),
       decision,
       checks,
       summary: {
@@ -5228,7 +3109,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-real-launch-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-real-launch-shell",
         summary: "Create an approval-gated real live provider launch task shell while keeping credential value reads, endpoint contact, network egress, provider responses, rollback execution, and live calls disabled.",
-        governance: phase57Governance({ createsTask: true, createsApproval: true }),
+        governance: liveProviderPhaseGovernance.phase57Governance({ createsTask: true, createsApproval: true }),
         steps: [
           {
             id: "review-real-launch-route",
@@ -5315,7 +3196,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       routeReview,
       task,
       approval,
-      governance: phase57Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase57Governance({ createsTask: true, createsApproval: true }),
     };
   }
 
@@ -5562,7 +3443,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_59_live_provider_real_launch_execution_preflight",
       generatedAt: new Date().toISOString(),
       status: ready ? "real_launch_execution_preflight_ready" : "waiting_for_phase_58_approved_deferred_evidence",
-      governance: phase59Governance(),
+      governance: liveProviderPhaseGovernance.phase59Governance(),
       checklist,
       summary: {
         ready,
@@ -5688,7 +3569,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "real_launch_execution_preflight_recorded",
       task,
       preflight: await buildCloudConsciousnessLiveProviderRealLaunchExecutionPreflight(),
-      governance: phase59Governance(),
+      governance: liveProviderPhaseGovernance.phase59Governance(),
     };
   }
 
@@ -5766,7 +3647,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_60_live_provider_credential_value_access_gate",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_access_gate_ready_denied" : "waiting_for_phase_59_execution_preflight",
-      governance: phase60Governance(),
+      governance: liveProviderPhaseGovernance.phase60Governance(),
       gate,
       checks,
       summary: {
@@ -5898,7 +3779,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "credential_value_access_gate_recorded_denied",
       task,
       gate: await buildCloudConsciousnessLiveProviderCredentialValueAccessGate(),
-      governance: phase60Governance(),
+      governance: liveProviderPhaseGovernance.phase60Governance(),
     };
   }
 
@@ -5980,7 +3861,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_61_live_provider_endpoint_network_egress_gate",
       generatedAt: new Date().toISOString(),
       status: ready ? "endpoint_network_egress_gate_ready_denied" : "waiting_for_phase_60_credential_value_access_gate",
-      governance: phase61Governance(),
+      governance: liveProviderPhaseGovernance.phase61Governance(),
       gate,
       checks,
       summary: {
@@ -6120,7 +4001,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "endpoint_network_egress_gate_recorded_denied",
       task,
       gate: await buildCloudConsciousnessLiveProviderEndpointNetworkEgressGate(),
-      governance: phase61Governance(),
+      governance: liveProviderPhaseGovernance.phase61Governance(),
     };
   }
 
@@ -6203,7 +4084,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_62_live_provider_egress_execution_route_task_preflight",
       generatedAt: new Date().toISOString(),
       status: ready ? "egress_execution_route_task_preflight_ready_deferred" : "waiting_for_phase_61_endpoint_network_egress_gate",
-      governance: phase62Governance(),
+      governance: liveProviderPhaseGovernance.phase62Governance(),
       preflight,
       checks,
       summary: {
@@ -6351,7 +4232,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "egress_execution_route_task_preflight_recorded_deferred",
       task,
       preflight: await buildCloudConsciousnessLiveProviderEgressExecutionRouteTaskPreflight(),
-      governance: phase62Governance(),
+      governance: liveProviderPhaseGovernance.phase62Governance(),
     };
   }
 
@@ -6400,7 +4281,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-egress-execution-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-egress-execution-shell",
         summary: "Create an approval-gated egress execution task shell while keeping credential values, endpoint contact, network egress, provider responses, rollback execution, host mutation, and live provider calls disabled.",
-        governance: phase63Governance({ createsTask: true, createsApproval: true, egressExecutionTaskCreated: true }),
+        governance: liveProviderPhaseGovernance.phase63Governance({ createsTask: true, createsApproval: true, egressExecutionTaskCreated: true }),
         steps: [
           {
             id: "review-egress-route-task-preflight",
@@ -6491,7 +4372,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       preflight,
       task,
       approval,
-      governance: phase63Governance({ createsTask: true, createsApproval: true, egressExecutionTaskCreated: true }),
+      governance: liveProviderPhaseGovernance.phase63Governance({ createsTask: true, createsApproval: true, egressExecutionTaskCreated: true }),
     };
   }
 
@@ -6588,7 +4469,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_64_live_provider_egress_execution_approved_deferred",
       generatedAt: new Date().toISOString(),
       status: ready ? "egress_execution_approved_deferred_ready" : "waiting_for_phase_63_approved_deferred_task_shell",
-      governance: phase64Governance(),
+      governance: liveProviderPhaseGovernance.phase64Governance(),
       checks,
       summary: {
         ready,
@@ -6693,7 +4574,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_65_live_provider_credential_value_authorization_route",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_authorization_route_ready" : "waiting_for_phase_64_approved_deferred_evidence",
-      governance: phase65Governance(),
+      governance: liveProviderPhaseGovernance.phase65Governance(),
       decision,
       checks,
       summary: {
@@ -6776,7 +4657,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-credential-value-authorization-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-credential-value-authorization-shell",
         summary: "Create an approval-gated credential value authorization task shell while keeping credential values unread and endpoint/network activity disabled.",
-        governance: phase66Governance({ createsTask: true, createsApproval: true, credentialValueAuthorizationTaskCreated: true }),
+        governance: liveProviderPhaseGovernance.phase66Governance({ createsTask: true, createsApproval: true, credentialValueAuthorizationTaskCreated: true }),
         steps: [
           {
             id: "review-credential-value-authorization-route",
@@ -6866,7 +4747,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       route,
       task,
       approval,
-      governance: phase66Governance({ createsTask: true, createsApproval: true, credentialValueAuthorizationTaskCreated: true }),
+      governance: liveProviderPhaseGovernance.phase66Governance({ createsTask: true, createsApproval: true, credentialValueAuthorizationTaskCreated: true }),
     };
   }
 
@@ -6958,7 +4839,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_67_live_provider_credential_value_authorization_approved_deferred",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_authorization_approved_deferred_ready" : "waiting_for_phase_66_approved_deferred_task_shell",
-      governance: phase67Governance(),
+      governance: liveProviderPhaseGovernance.phase67Governance(),
       checks,
       summary: {
         ready,
@@ -7107,7 +4988,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_68_live_provider_credential_value_readiness_preflight",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_readiness_preflight_ready_deferred" : "waiting_for_phase_67_credential_value_authorization_approved_deferred",
-      governance: phase68Governance({
+      governance: liveProviderPhaseGovernance.phase68Governance({
         credentialValueReadinessPreflightRecorded: shell.credentialValueReadinessPreflightRecorded === true,
       }),
       preflight,
@@ -7248,7 +5129,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "credential_value_readiness_preflight_recorded_deferred",
       task,
       preflight: await buildCloudConsciousnessLiveProviderCredentialValueReadinessPreflight(),
-      governance: phase68Governance({ credentialValueReadinessPreflightRecorded: true }),
+      governance: liveProviderPhaseGovernance.phase68Governance({ credentialValueReadinessPreflightRecorded: true }),
     };
   }
 
@@ -7291,7 +5172,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-credential-value-read-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-credential-value-read-shell",
         summary: "Create an approval-gated credential value read task shell while keeping credential values unread and endpoint/network activity disabled.",
-        governance: phase69Governance({ createsTask: true, createsApproval: true, credentialValueReadTaskCreated: true }),
+        governance: liveProviderPhaseGovernance.phase69Governance({ createsTask: true, createsApproval: true, credentialValueReadTaskCreated: true }),
         steps: [
           {
             id: "review-credential-value-readiness-preflight",
@@ -7382,7 +5263,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       preflight,
       task,
       approval,
-      governance: phase69Governance({ createsTask: true, createsApproval: true, credentialValueReadTaskCreated: true }),
+      governance: liveProviderPhaseGovernance.phase69Governance({ createsTask: true, createsApproval: true, credentialValueReadTaskCreated: true }),
     };
   }
 
@@ -7466,7 +5347,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_70_live_provider_credential_value_read_approved_deferred",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_read_approved_deferred_ready" : "waiting_for_phase_69_approved_deferred_read_task_shell",
-      governance: phase70Governance(),
+      governance: liveProviderPhaseGovernance.phase70Governance(),
       checks,
       summary: {
         ready,
@@ -7570,7 +5451,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_71_live_provider_credential_value_access_authorization_route",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_access_authorization_route_ready" : "waiting_for_phase_70_read_approved_deferred_evidence",
-      governance: phase71Governance(),
+      governance: liveProviderPhaseGovernance.phase71Governance(),
       decision,
       checks,
       summary: {
@@ -7653,7 +5534,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-credential-value-access-authorization-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-credential-value-access-authorization-shell",
         summary: "Create an approval-gated credential value access authorization task shell while keeping credential values unread and endpoint/network activity disabled.",
-        governance: phase72Governance({ createsTask: true, createsApproval: true, credentialValueAccessAuthorizationTaskCreated: true }),
+        governance: liveProviderPhaseGovernance.phase72Governance({ createsTask: true, createsApproval: true, credentialValueAccessAuthorizationTaskCreated: true }),
         steps: [
           {
             id: "review-credential-value-access-authorization-route",
@@ -7743,7 +5624,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       route,
       task,
       approval,
-      governance: phase72Governance({ createsTask: true, createsApproval: true, credentialValueAccessAuthorizationTaskCreated: true }),
+      governance: liveProviderPhaseGovernance.phase72Governance({ createsTask: true, createsApproval: true, credentialValueAccessAuthorizationTaskCreated: true }),
     };
   }
 
@@ -7831,7 +5712,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: ready
         ? "credential_value_access_authorization_approved_deferred_ready"
         : "waiting_for_phase_72_approved_deferred_access_authorization_task_shell",
-      governance: phase73Governance(),
+      governance: liveProviderPhaseGovernance.phase73Governance(),
       checks,
       summary: {
         ready,
@@ -7941,7 +5822,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_74_live_provider_credential_value_final_readiness_preflight",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_final_readiness_preflight_ready_deferred" : "waiting_for_phase_73_access_authorization_approved_deferred",
-      governance: phase74Governance({
+      governance: liveProviderPhaseGovernance.phase74Governance({
         credentialValueFinalReadinessPreflightRecorded: shell.credentialValueFinalReadinessPreflightRecorded === true,
       }),
       preflight,
@@ -8071,7 +5952,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "credential_value_final_readiness_preflight_recorded_deferred",
       task: serialiseTask(task),
       preflight: await buildCloudConsciousnessLiveProviderCredentialValueFinalReadinessPreflight(),
-      governance: phase74Governance({ credentialValueFinalReadinessPreflightRecorded: true }),
+      governance: liveProviderPhaseGovernance.phase74Governance({ credentialValueFinalReadinessPreflightRecorded: true }),
     };
   }
 
@@ -8135,7 +6016,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_75_live_provider_credential_value_access_authorization_decision_route",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_access_authorization_decision_route_ready" : "waiting_for_phase_74_final_readiness_preflight",
-      governance: phase75Governance(),
+      governance: liveProviderPhaseGovernance.phase75Governance(),
       decision,
       checks,
       summary: {
@@ -8219,7 +6100,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-credential-value-access-authorization-decision-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-credential-value-access-authorization-decision-shell",
         summary: "Create an approval-gated credential value access authorization decision task shell while keeping credential values unread and endpoint/network activity disabled.",
-        governance: phase76Governance({ createsTask: true, createsApproval: true, credentialValueAccessAuthorizationDecisionTaskCreated: true }),
+        governance: liveProviderPhaseGovernance.phase76Governance({ createsTask: true, createsApproval: true, credentialValueAccessAuthorizationDecisionTaskCreated: true }),
         steps: [
           {
             id: "review-credential-value-access-authorization-decision-route",
@@ -8309,7 +6190,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       route,
       task,
       approval,
-      governance: phase76Governance({ createsTask: true, createsApproval: true, credentialValueAccessAuthorizationDecisionTaskCreated: true }),
+      governance: liveProviderPhaseGovernance.phase76Governance({ createsTask: true, createsApproval: true, credentialValueAccessAuthorizationDecisionTaskCreated: true }),
     };
   }
 
@@ -8397,7 +6278,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: ready
         ? "credential_value_access_authorization_decision_approved_deferred_ready"
         : "waiting_for_phase_76_approved_deferred_access_authorization_decision_task_shell",
-      governance: phase77Governance(),
+      governance: liveProviderPhaseGovernance.phase77Governance(),
       checks,
       summary: {
         ready,
@@ -8507,7 +6388,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_78_live_provider_credential_value_access_authorized_local_proof",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_access_authorized_local_proof_ready_deferred" : "waiting_for_phase_77_access_authorization_decision_approved_deferred",
-      governance: phase78Governance({
+      governance: liveProviderPhaseGovernance.phase78Governance({
         credentialValueAccessAuthorizedLocalProofRecorded: shell.credentialValueAccessAuthorizedLocalProofRecorded === true,
       }),
       proof,
@@ -8636,7 +6517,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "credential_value_access_authorized_local_proof_recorded_deferred",
       task: serialiseTask(task),
       proof: await buildCloudConsciousnessLiveProviderCredentialValueAccessAuthorizedLocalProof(),
-      governance: phase78Governance({ credentialValueAccessAuthorizedLocalProofRecorded: true }),
+      governance: liveProviderPhaseGovernance.phase78Governance({ credentialValueAccessAuthorizedLocalProofRecorded: true }),
     };
   }
 
@@ -8701,7 +6582,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_79_live_provider_credential_value_local_read_route",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_route_ready" : "waiting_for_phase_78_access_authorized_local_proof",
-      governance: phase79Governance(),
+      governance: liveProviderPhaseGovernance.phase79Governance(),
       decision,
       checks,
       summary: {
@@ -8783,7 +6664,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-credential-value-local-read-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-credential-value-local-read-shell",
         summary: "Create an approval-gated credential value local read task shell while keeping credential values unread and endpoint/network activity disabled.",
-        governance: phase80Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadTaskCreated: true }),
+        governance: liveProviderPhaseGovernance.phase80Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadTaskCreated: true }),
         steps: [
           {
             id: "review-credential-value-local-read-route",
@@ -8872,7 +6753,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       route,
       task,
       approval,
-      governance: phase80Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadTaskCreated: true }),
+      governance: liveProviderPhaseGovernance.phase80Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadTaskCreated: true }),
     };
   }
 
@@ -8953,7 +6834,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_81_live_provider_credential_value_local_read_approved_deferred",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_approved_deferred_ready" : "waiting_for_phase_80_approved_deferred_local_read_task_shell",
-      governance: phase81Governance(),
+      governance: liveProviderPhaseGovernance.phase81Governance(),
       checks,
       summary: {
         ready,
@@ -9060,7 +6941,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_82_live_provider_credential_value_local_read_final_readiness_preflight",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_final_readiness_preflight_ready_deferred" : "waiting_for_phase_81_local_read_approved_deferred",
-      governance: phase82Governance({
+      governance: liveProviderPhaseGovernance.phase82Governance({
         credentialValueLocalReadFinalReadinessPreflightRecorded: shell.credentialValueLocalReadFinalReadinessPreflightRecorded === true,
       }),
       preflight,
@@ -9184,7 +7065,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "credential_value_local_read_final_readiness_preflight_recorded_deferred",
       task: serialiseTask(task),
       preflight: await buildCloudConsciousnessLiveProviderCredentialValueLocalReadFinalReadinessPreflight(),
-      governance: phase82Governance({ credentialValueLocalReadFinalReadinessPreflightRecorded: true }),
+      governance: liveProviderPhaseGovernance.phase82Governance({ credentialValueLocalReadFinalReadinessPreflightRecorded: true }),
     };
   }
 
@@ -9249,7 +7130,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_83_live_provider_credential_value_local_read_execution_route",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_route_ready" : "waiting_for_phase_82_local_read_final_readiness_preflight",
-      governance: phase83Governance(),
+      governance: liveProviderPhaseGovernance.phase83Governance(),
       decision,
       checks,
       summary: {
@@ -9331,7 +7212,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-credential-value-local-read-execution-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-credential-value-local-read-execution-shell",
         summary: "Create an approval-gated credential value local read execution task shell while keeping credential values unread and endpoint/network activity disabled.",
-        governance: phase84Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionTaskCreated: true }),
+        governance: liveProviderPhaseGovernance.phase84Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionTaskCreated: true }),
         steps: [
           {
             id: "review-credential-value-local-read-execution-route",
@@ -9420,7 +7301,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       route,
       task,
       approval,
-      governance: phase84Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionTaskCreated: true }),
+      governance: liveProviderPhaseGovernance.phase84Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionTaskCreated: true }),
     };
   }
 
@@ -9519,7 +7400,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_86_live_provider_credential_value_local_read_execution_final_readiness_preflight",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_final_readiness_preflight_ready_deferred" : "waiting_for_phase_85_local_read_execution_approved_deferred",
-      governance: phase86Governance({
+      governance: liveProviderPhaseGovernance.phase86Governance({
         credentialValueLocalReadExecutionFinalReadinessPreflightRecorded: shell.credentialValueLocalReadExecutionFinalReadinessPreflightRecorded === true,
       }),
       preflight,
@@ -9643,7 +7524,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "credential_value_local_read_execution_final_readiness_preflight_recorded_deferred",
       task: serialiseTask(task),
       preflight: await buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionFinalReadinessPreflight(),
-      governance: phase86Governance({ credentialValueLocalReadExecutionFinalReadinessPreflightRecorded: true }),
+      governance: liveProviderPhaseGovernance.phase86Governance({ credentialValueLocalReadExecutionFinalReadinessPreflightRecorded: true }),
     };
   }
 
@@ -9708,7 +7589,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_87_live_provider_credential_value_local_read_execution_local_read_route",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_route_ready" : "waiting_for_phase_86_local_read_execution_final_readiness_preflight",
-      governance: phase87Governance(),
+      governance: liveProviderPhaseGovernance.phase87Governance(),
       decision,
       checks,
       summary: {
@@ -9790,7 +7671,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-shell",
         summary: "Create an approval-gated credential value local read execution local-read task shell while keeping credential values unread and endpoint/network activity disabled.",
-        governance: phase88Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadTaskCreated: true }),
+        governance: liveProviderPhaseGovernance.phase88Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadTaskCreated: true }),
         steps: [
           {
             id: "review-credential-value-local-read-execution-local-read-route",
@@ -9879,7 +7760,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       route,
       task,
       approval,
-      governance: phase88Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadTaskCreated: true }),
+      governance: liveProviderPhaseGovernance.phase88Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadTaskCreated: true }),
     };
   }
 
@@ -9978,7 +7859,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_90_live_provider_credential_value_local_read_execution_local_read_final_readiness_preflight",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_final_readiness_preflight_ready_deferred" : "waiting_for_phase_89_local_read_approved_deferred",
-      governance: phase90Governance({
+      governance: liveProviderPhaseGovernance.phase90Governance({
         credentialValueLocalReadExecutionLocalReadFinalReadinessPreflightRecorded: shell.credentialValueLocalReadExecutionLocalReadFinalReadinessPreflightRecorded === true,
       }),
       preflight,
@@ -10102,7 +7983,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "credential_value_local_read_execution_local_read_final_readiness_preflight_recorded_deferred",
       task: serialiseTask(task),
       preflight: await buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadFinalReadinessPreflight(),
-      governance: phase90Governance({ credentialValueLocalReadExecutionLocalReadFinalReadinessPreflightRecorded: true }),
+      governance: liveProviderPhaseGovernance.phase90Governance({ credentialValueLocalReadExecutionLocalReadFinalReadinessPreflightRecorded: true }),
     };
   }
 
@@ -10167,7 +8048,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_91_live_provider_credential_value_local_read_execution_local_read_attempt_route",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_route_ready" : "waiting_for_phase_90_local_read_final_readiness_preflight",
-      governance: phase91Governance(),
+      governance: liveProviderPhaseGovernance.phase91Governance(),
       decision,
       checks,
       summary: {
@@ -10249,7 +8130,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-shell",
         summary: "Create an approval-gated credential value local read execution local-read attempt task shell while keeping credential values unread and endpoint/network activity disabled.",
-        governance: phase92Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptTaskCreated: true }),
+        governance: liveProviderPhaseGovernance.phase92Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptTaskCreated: true }),
         steps: [
           {
             id: "review-credential-value-local-read-execution-local-read-attempt-route",
@@ -10338,7 +8219,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       route,
       task,
       approval,
-      governance: phase92Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptTaskCreated: true }),
+      governance: liveProviderPhaseGovernance.phase92Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptTaskCreated: true }),
     };
   }
 
@@ -10419,7 +8300,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_93_live_provider_credential_value_local_read_execution_local_read_attempt_approved_deferred",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_approved_deferred_ready" : "waiting_for_phase_92_approved_deferred_local_read_execution_local_read_attempt_task_shell",
-      governance: phase93Governance({
+      governance: liveProviderPhaseGovernance.phase93Governance({
         credentialValueLocalReadExecutionLocalReadAttemptTaskApproved: shell.credentialValueLocalReadExecutionLocalReadAttemptTaskApproved === true,
       }),
       checks,
@@ -10528,7 +8409,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_94_live_provider_credential_value_local_read_execution_local_read_attempt_final_readiness_preflight",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_final_readiness_preflight_ready_deferred" : "waiting_for_phase_93_local_read_execution_local_read_attempt_approved_deferred",
-      governance: phase94Governance({
+      governance: liveProviderPhaseGovernance.phase94Governance({
         credentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflightRecorded: shell.credentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflightRecorded === true,
       }),
       preflight,
@@ -10652,7 +8533,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "credential_value_local_read_execution_local_read_attempt_final_readiness_preflight_recorded_deferred",
       task: serialiseTask(task),
       preflight: await buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflight(),
-      governance: phase94Governance({ credentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflightRecorded: true }),
+      governance: liveProviderPhaseGovernance.phase94Governance({ credentialValueLocalReadExecutionLocalReadAttemptFinalReadinessPreflightRecorded: true }),
     };
   }
 
@@ -10717,7 +8598,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_95_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_route",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_route_ready" : "waiting_for_phase_94_local_read_execution_local_read_attempt_final_readiness_preflight",
-      governance: phase95Governance(),
+      governance: liveProviderPhaseGovernance.phase95Governance(),
       decision,
       checks,
       summary: {
@@ -10799,7 +8680,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-shell",
         summary: "Create an approval-gated credential value local read execution local-read attempt local-read task shell while keeping credential values unread and endpoint/network activity disabled.",
-        governance: phase96Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskCreated: true }),
+        governance: liveProviderPhaseGovernance.phase96Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskCreated: true }),
         steps: [
           {
             id: "review-credential-value-local-read-execution-local-read-attempt-local-read-route",
@@ -10888,7 +8769,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       route,
       task,
       approval,
-      governance: phase96Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskCreated: true }),
+      governance: liveProviderPhaseGovernance.phase96Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskCreated: true }),
     };
   }
 
@@ -10969,7 +8850,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_97_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_approved_deferred",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_approved_deferred_ready" : "waiting_for_phase_96_approved_deferred_local_read_execution_local_read_attempt_local_read_task_shell",
-      governance: phase97Governance({
+      governance: liveProviderPhaseGovernance.phase97Governance({
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskApproved: shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskApproved === true,
       }),
       checks,
@@ -11078,7 +8959,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_98_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_final_readiness_preflight",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_final_readiness_preflight_ready_deferred" : "waiting_for_phase_97_local_read_execution_local_read_attempt_local_read_approved_deferred",
-      governance: phase98Governance({
+      governance: liveProviderPhaseGovernance.phase98Governance({
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadFinalReadinessPreflightRecorded: shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadFinalReadinessPreflightRecorded === true,
       }),
       preflight,
@@ -11202,7 +9083,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "credential_value_local_read_execution_local_read_attempt_local_read_final_readiness_preflight_recorded_deferred",
       task: serialiseTask(task),
       preflight: await buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadFinalReadinessPreflight(),
-      governance: phase98Governance({ credentialValueLocalReadExecutionLocalReadAttemptLocalReadFinalReadinessPreflightRecorded: true }),
+      governance: liveProviderPhaseGovernance.phase98Governance({ credentialValueLocalReadExecutionLocalReadAttemptLocalReadFinalReadinessPreflightRecorded: true }),
     };
   }
 
@@ -11269,7 +9150,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_99_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_route",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_route_ready" : "waiting_for_phase_98_local_read_execution_local_read_attempt_local_read_final_readiness_preflight",
-      governance: phase99Governance(),
+      governance: liveProviderPhaseGovernance.phase99Governance(),
       decision,
       checks,
       summary: {
@@ -11352,7 +9233,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-shell",
         summary: "Create an approval-gated credential value local read result envelope task shell while keeping credential values unread, result envelopes uncreated, and endpoint/network activity disabled.",
-        governance: phase100Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeTaskCreated: true }),
+        governance: liveProviderPhaseGovernance.phase100Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeTaskCreated: true }),
         steps: [
           {
             id: "review-credential-value-local-read-result-envelope-route",
@@ -11442,7 +9323,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       route,
       task,
       approval,
-      governance: phase100Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeTaskCreated: true }),
+      governance: liveProviderPhaseGovernance.phase100Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeTaskCreated: true }),
     };
   }
 
@@ -11551,7 +9432,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       executor: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-task-v0",
       status: "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_task_shell_deferred_after_approval",
       task,
-      governance: phase100Governance({
+      governance: liveProviderPhaseGovernance.phase100Governance({
         createsTask: true,
         createsApproval: true,
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeTaskCreated: true,
@@ -11622,7 +9503,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_101_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_approved_deferred",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_approved_deferred_ready" : "waiting_for_phase_100_approved_deferred_local_read_execution_local_read_attempt_local_read_result_envelope_task_shell",
-      governance: phase101Governance({
+      governance: liveProviderPhaseGovernance.phase101Governance({
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeTaskApproved: shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeTaskApproved === true,
       }),
       checks,
@@ -11735,7 +9616,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_102_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_final_readiness_preflight",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_final_readiness_preflight_ready_deferred" : "waiting_for_phase_101_local_read_execution_local_read_attempt_local_read_result_envelope_approved_deferred",
-      governance: phase102Governance({
+      governance: liveProviderPhaseGovernance.phase102Governance({
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeFinalReadinessPreflightRecorded: shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeFinalReadinessPreflightRecorded === true,
       }),
       preflight,
@@ -11862,7 +9743,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_final_readiness_preflight_recorded_deferred",
       task: serialiseTask(task),
       preflight: await buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeFinalReadinessPreflight(),
-      governance: phase102Governance({ credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeFinalReadinessPreflightRecorded: true }),
+      governance: liveProviderPhaseGovernance.phase102Governance({ credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeFinalReadinessPreflightRecorded: true }),
     };
   }
 
@@ -11931,7 +9812,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_103_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_route",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_route_ready" : "waiting_for_phase_102_local_read_execution_local_read_attempt_local_read_result_envelope_final_readiness_preflight",
-      governance: phase103Governance({
+      governance: liveProviderPhaseGovernance.phase103Governance({
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeFinalReadinessPreflightRecorded:
           finalReadinessPreflight.summary?.credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeFinalReadinessPreflightRecorded === true,
       }),
@@ -12018,7 +9899,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-shell",
         summary: "Create an approval-gated credential value local read result envelope creation task shell while keeping credential values unread, result envelopes uncreated, and endpoint/network activity disabled.",
-        governance: phase104Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationTaskCreated: true }),
+        governance: liveProviderPhaseGovernance.phase104Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationTaskCreated: true }),
         steps: [
           {
             id: "review-credential-value-local-read-result-envelope-creation-route",
@@ -12108,7 +9989,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       route,
       task,
       approval,
-      governance: phase104Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationTaskCreated: true }),
+      governance: liveProviderPhaseGovernance.phase104Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationTaskCreated: true }),
     };
   }
 
@@ -12192,7 +10073,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       executor: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-task-v0",
       status: "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_task_shell_deferred_after_approval",
       task,
-      governance: phase104Governance({
+      governance: liveProviderPhaseGovernance.phase104Governance({
         createsTask: true,
         createsApproval: true,
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationTaskCreated: true,
@@ -12288,7 +10169,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_105_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_approved_deferred",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_approved_deferred_ready" : "waiting_for_phase_104_approved_deferred_local_read_execution_local_read_attempt_local_read_result_envelope_creation_task_shell",
-      governance: phase105Governance({
+      governance: liveProviderPhaseGovernance.phase105Governance({
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationTaskApproved: shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationTaskApproved === true,
       }),
       checks,
@@ -12401,7 +10282,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_106_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_final_readiness_preflight",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_final_readiness_preflight_ready_deferred" : "waiting_for_phase_105_local_read_execution_local_read_attempt_local_read_result_envelope_creation_approved_deferred",
-      governance: phase106Governance({
+      governance: liveProviderPhaseGovernance.phase106Governance({
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationFinalReadinessPreflightRecorded: shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationFinalReadinessPreflightRecorded === true,
       }),
       preflight,
@@ -12528,7 +10409,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_final_readiness_preflight_recorded_deferred",
       task: serialiseTask(task),
       preflight: await buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationFinalReadinessPreflight(),
-      governance: phase106Governance({ credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationFinalReadinessPreflightRecorded: true }),
+      governance: liveProviderPhaseGovernance.phase106Governance({ credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationFinalReadinessPreflightRecorded: true }),
     };
   }
 
@@ -12597,7 +10478,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_107_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_route",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_route_ready" : "waiting_for_phase_106_local_read_execution_local_read_attempt_local_read_result_envelope_creation_final_readiness_preflight",
-      governance: phase107Governance({
+      governance: liveProviderPhaseGovernance.phase107Governance({
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationFinalReadinessPreflightRecorded:
           finalReadinessPreflight.summary?.credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationFinalReadinessPreflightRecorded === true,
       }),
@@ -12684,7 +10565,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-shell",
         summary: "Create an approval-gated credential value local read result envelope creation execution task shell while keeping credential values unread, result envelopes uncreated, and endpoint/network activity disabled.",
-        governance: phase108Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionTaskCreated: true }),
+        governance: liveProviderPhaseGovernance.phase108Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionTaskCreated: true }),
         steps: [
           {
             id: "review-credential-value-local-read-result-envelope-creation-execution-route",
@@ -12774,7 +10655,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       route,
       task,
       approval,
-      governance: phase108Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionTaskCreated: true }),
+      governance: liveProviderPhaseGovernance.phase108Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionTaskCreated: true }),
     };
   }
 
@@ -12858,7 +10739,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       executor: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-task-v0",
       status: "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_task_shell_deferred_after_approval",
       task,
-      governance: phase108Governance({
+      governance: liveProviderPhaseGovernance.phase108Governance({
         createsTask: true,
         createsApproval: true,
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionTaskCreated: true,
@@ -12967,7 +10848,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_109_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_approved_deferred",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_approved_deferred_ready" : "waiting_for_phase_108_approved_deferred_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_task_shell",
-      governance: phase109Governance({
+      governance: liveProviderPhaseGovernance.phase109Governance({
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionTaskApproved: shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionTaskApproved === true,
       }),
       checks,
@@ -13092,7 +10973,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_110_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_final_readiness_preflight",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_final_readiness_preflight_ready_deferred" : "waiting_for_phase_109_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_approved_deferred",
-      governance: phase110Governance({
+      governance: liveProviderPhaseGovernance.phase110Governance({
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionFinalReadinessPreflightRecorded: shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionFinalReadinessPreflightRecorded === true,
       }),
       preflight,
@@ -13219,7 +11100,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_final_readiness_preflight_recorded_deferred",
       task: serialiseTask(task),
       preflight: await buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionFinalReadinessPreflight(),
-      governance: phase110Governance({ credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionFinalReadinessPreflightRecorded: true }),
+      governance: liveProviderPhaseGovernance.phase110Governance({ credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionFinalReadinessPreflightRecorded: true }),
     };
   }
 
@@ -13294,7 +11175,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_111_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_route",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_route_ready" : "waiting_for_phase_110_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_final_readiness_preflight",
-      governance: phase111Governance({
+      governance: liveProviderPhaseGovernance.phase111Governance({
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionFinalReadinessPreflightRecorded:
           finalReadinessPreflight.summary?.credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionFinalReadinessPreflightRecorded === true,
       }),
@@ -13381,7 +11262,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-shell",
         summary: "Create an approval-gated credential value local read result envelope creation execution attempt task shell while keeping credential values unread, result envelopes uncreated, and endpoint/network activity disabled.",
-        governance: phase112Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptTaskCreated: true }),
+        governance: liveProviderPhaseGovernance.phase112Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptTaskCreated: true }),
         steps: [
           {
             id: "review-credential-value-local-read-result-envelope-creation-execution-attempt-route",
@@ -13471,7 +11352,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       route,
       task,
       approval,
-      governance: phase112Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptTaskCreated: true }),
+      governance: liveProviderPhaseGovernance.phase112Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptTaskCreated: true }),
     };
   }
 
@@ -13555,7 +11436,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       executor: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-task-v0",
       status: "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_task_shell_deferred_after_approval",
       task,
-      governance: phase112Governance({
+      governance: liveProviderPhaseGovernance.phase112Governance({
         createsTask: true,
         createsApproval: true,
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptTaskCreated: true,
@@ -13665,7 +11546,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_113_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_approved_deferred",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_approved_deferred_ready" : "waiting_for_phase_112_approved_deferred_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_task_shell",
-      governance: phase113Governance({
+      governance: liveProviderPhaseGovernance.phase113Governance({
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptTaskApproved: shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptTaskApproved === true,
       }),
       checks,
@@ -13790,7 +11671,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_114_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_final_readiness_preflight",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_final_readiness_preflight_ready_deferred" : "waiting_for_phase_113_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_approved_deferred",
-      governance: phase114Governance({
+      governance: liveProviderPhaseGovernance.phase114Governance({
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptFinalReadinessPreflightRecorded: shell.credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptFinalReadinessPreflightRecorded === true,
       }),
       preflight,
@@ -13917,7 +11798,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_final_readiness_preflight_recorded_deferred",
       task: serialiseTask(task),
       preflight: await buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptFinalReadinessPreflight(),
-      governance: phase114Governance({ credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptFinalReadinessPreflightRecorded: true }),
+      governance: liveProviderPhaseGovernance.phase114Governance({ credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptFinalReadinessPreflightRecorded: true }),
     };
   }
 
@@ -13992,7 +11873,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_115_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_local_read_route",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_local_read_route_ready" : "waiting_for_phase_114_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_final_readiness_preflight",
-      governance: phase115Governance({
+      governance: liveProviderPhaseGovernance.phase115Governance({
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptFinalReadinessPreflightRecorded:
           finalReadinessPreflight.summary?.credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptFinalReadinessPreflightRecorded === true,
       }),
@@ -14079,7 +11960,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
         planner: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-local-read-task-v0",
         strategy: "approval-gated-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-local-read-shell",
         summary: "Create an approval-gated credential value local read execution local-read attempt local-read result envelope creation execution attempt local-read task shell while keeping credential values unread, result envelopes uncreated, and endpoint/network activity disabled.",
-        governance: phase116Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadTaskCreated: true }),
+        governance: liveProviderPhaseGovernance.phase116Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadTaskCreated: true }),
         steps: [
           {
             id: "review-credential-value-local-read-result-envelope-creation-execution-attempt-local-read-route",
@@ -14169,7 +12050,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       route,
       task,
       approval,
-      governance: phase116Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadTaskCreated: true }),
+      governance: liveProviderPhaseGovernance.phase116Governance({ createsTask: true, createsApproval: true, credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadTaskCreated: true }),
     };
   }
 
@@ -14277,7 +12158,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       executor: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-local-read-task-v0",
       status: "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_local_read_task_shell_deferred_after_approval",
       task,
-      governance: phase116Governance({
+      governance: liveProviderPhaseGovernance.phase116Governance({
         createsTask: true,
         createsApproval: true,
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadTaskCreated: true,
@@ -14357,7 +12238,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_89_live_provider_credential_value_local_read_execution_local_read_approved_deferred",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_local_read_approved_deferred_ready" : "waiting_for_phase_88_approved_deferred_local_read_execution_local_read_task_shell",
-      governance: phase89Governance(),
+      governance: liveProviderPhaseGovernance.phase89Governance(),
       checks,
       summary: {
         ready,
@@ -14470,7 +12351,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       executor: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-task-v0",
       status: "credential_value_local_read_execution_local_read_task_shell_deferred_after_approval",
       task,
-      governance: phase88Governance({
+      governance: liveProviderPhaseGovernance.phase88Governance({
         createsTask: true,
         createsApproval: true,
         credentialValueLocalReadExecutionLocalReadTaskCreated: true,
@@ -14563,7 +12444,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       executor: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-task-v0",
       status: "credential_value_local_read_execution_local_read_attempt_task_shell_deferred_after_approval",
       task,
-      governance: phase92Governance({
+      governance: liveProviderPhaseGovernance.phase92Governance({
         createsTask: true,
         createsApproval: true,
         credentialValueLocalReadExecutionLocalReadAttemptTaskCreated: true,
@@ -14656,7 +12537,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       executor: "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-task-v0",
       status: "credential_value_local_read_execution_local_read_attempt_local_read_task_shell_deferred_after_approval",
       task,
-      governance: phase96Governance({
+      governance: liveProviderPhaseGovernance.phase96Governance({
         createsTask: true,
         createsApproval: true,
         credentialValueLocalReadExecutionLocalReadAttemptLocalReadTaskCreated: true,
@@ -14725,7 +12606,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       mode: "phase_85_live_provider_credential_value_local_read_execution_approved_deferred",
       generatedAt: new Date().toISOString(),
       status: ready ? "credential_value_local_read_execution_approved_deferred_ready" : "waiting_for_phase_84_approved_deferred_local_read_execution_task_shell",
-      governance: phase85Governance(),
+      governance: liveProviderPhaseGovernance.phase85Governance(),
       checks,
       summary: {
         ready,
@@ -14838,7 +12719,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       executor: "cloud-consciousness-live-provider-credential-value-local-read-execution-task-v0",
       status: "credential_value_local_read_execution_task_shell_deferred_after_approval",
       task,
-      governance: phase84Governance({
+      governance: liveProviderPhaseGovernance.phase84Governance({
         createsTask: true,
         createsApproval: true,
         credentialValueLocalReadExecutionTaskCreated: true,
@@ -14931,7 +12812,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       executor: "cloud-consciousness-live-provider-credential-value-local-read-task-v0",
       status: "credential_value_local_read_task_shell_deferred_after_approval",
       task,
-      governance: phase80Governance({
+      governance: liveProviderPhaseGovernance.phase80Governance({
         createsTask: true,
         createsApproval: true,
         credentialValueLocalReadTaskCreated: true,
@@ -15030,7 +12911,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       executor: "cloud-consciousness-live-provider-credential-value-access-authorization-decision-task-v0",
       status: "credential_value_access_authorization_decision_task_shell_deferred_after_approval",
       task,
-      governance: phase76Governance({
+      governance: liveProviderPhaseGovernance.phase76Governance({
         createsTask: true,
         createsApproval: true,
         credentialValueAccessAuthorizationDecisionTaskCreated: true,
@@ -15131,7 +13012,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       executor: "cloud-consciousness-live-provider-credential-value-access-authorization-task-v0",
       status: "credential_value_access_authorization_task_shell_deferred_after_approval",
       task,
-      governance: phase72Governance({
+      governance: liveProviderPhaseGovernance.phase72Governance({
         createsTask: true,
         createsApproval: true,
         credentialValueAccessAuthorizationTaskCreated: true,
@@ -15232,7 +13113,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       executor: "cloud-consciousness-live-provider-credential-value-read-task-v0",
       status: "credential_value_read_task_shell_deferred_after_approval",
       task,
-      governance: phase69Governance({
+      governance: liveProviderPhaseGovernance.phase69Governance({
         createsTask: true,
         createsApproval: true,
         credentialValueReadTaskCreated: true,
@@ -15333,7 +13214,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       executor: "cloud-consciousness-live-provider-credential-value-authorization-task-v0",
       status: "credential_value_authorization_task_shell_deferred_after_approval",
       task,
-      governance: phase66Governance({
+      governance: liveProviderPhaseGovernance.phase66Governance({
         createsTask: true,
         createsApproval: true,
         credentialValueAuthorizationTaskCreated: true,
@@ -15449,7 +13330,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       executor: "cloud-consciousness-live-provider-egress-execution-task-v0",
       status: "egress_execution_task_shell_deferred_after_approval",
       task,
-      governance: phase63Governance({
+      governance: liveProviderPhaseGovernance.phase63Governance({
         createsTask: true,
         createsApproval: true,
         egressExecutionTaskCreated: true,
@@ -15560,7 +13441,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "real_launch_deferred_after_approval",
       task,
       routeReview,
-      governance: phase57Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase57Governance({ createsTask: true, createsApproval: true }),
       summary: {
         ready: true,
         implementationStatus: "deferred_after_approval",
@@ -15656,7 +13537,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "no_network_sender_deferred_after_approval",
       task,
       noNetworkSender,
-      governance: phase37Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase37Governance({ createsTask: true, createsApproval: true }),
       summary: {
         ready: true,
         implementationStatus: "deferred_after_approval",
@@ -15745,7 +13626,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "credential_reference_resolver_deferred_after_approval",
       task,
       credentialResolver,
-      governance: phase33Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase33Governance({ createsTask: true, createsApproval: true }),
       summary: {
         ready: true,
         implementationStatus: "deferred_after_approval",
@@ -15839,7 +13720,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "request_builder_deferred_after_approval",
       task,
       requestBuilder,
-      governance: phase29Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase29Governance({ createsTask: true, createsApproval: true }),
       summary: {
         ready: true,
         implementationStatus: "deferred_after_approval",
@@ -15935,7 +13816,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "runtime_adapter_module_deferred_after_approval",
       task,
       moduleContract,
-      governance: phase25Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase25Governance({ createsTask: true, createsApproval: true }),
       summary: {
         ready: true,
         implementationStatus: "deferred_after_approval",
@@ -16026,7 +13907,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
       status: "runtime_adapter_implementation_deferred_after_approval",
       task,
       adapterImplementation,
-      governance: phase21Governance({ createsTask: true, createsApproval: true }),
+      governance: liveProviderPhaseGovernance.phase21Governance({ createsTask: true, createsApproval: true }),
       summary: {
         ready: true,
         implementationStatus: "deferred_after_approval",
