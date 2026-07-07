@@ -18,7 +18,7 @@ The expert review items are considered complete only when each item has code-lev
 | Duplicate policy/risk types C2 | Policy domain and risk literals were duplicated. | Complete | `packages/shared-types/src/policy.ts` is the single source for `OpenClawPolicyDomain`, `PolicyDomain`, and `OpenClawRisk`. |
 | Event schema duplication C2 | `OpenClawEvent<T>` and `EventSchema` described the same event payload contract independently. | Complete | `EventSchema<T>` reuses `OpenClawEvent<T>` payload typing from shared-types. |
 | Shared package engineering E3 | Shared packages lacked independent tsconfig/barrel/type declarations. | Complete | Shared package `tsconfig.json` files, barrel entries, and `shared-utils` declarations added. |
-| Unit tests E2 | No focused unit tests existed for shared packages or services. | Partial, core service-layer unit coverage expanded | Node built-in tests added for plugin runtime, shared-events, shared-utils, and `openclaw-core` policy evaluation, service-client behavior, task-executor read models, and route handler contract helpers. Broader task dispatch execution branches remain pending for later focused tests. |
+| Unit tests E2 | No focused unit tests existed for shared packages or services. | Complete, focused service-layer and dispatch coverage established | Node built-in tests added for plugin runtime, shared-events, shared-utils, and `openclaw-core` policy evaluation, service-client behavior, route handler contract helpers, task-executor read models, delegated non-recoverable dispatch, internal deferred dispatch, capability-plan dispatch, and representative systemd/body-evidence deferred dispatch. |
 | Shared-client empty shell C5 | `shared-client` only exported tiny service constants. | Complete | `service-descriptors` now provides typed and runtime service ids, default ports, URL env vars, and resolver helpers; core and Observer consume the shared runtime descriptors for defaults. |
 | Shared-events identity helper C5 | `createEventName` was a no-op identity function. | Complete | Runtime and typed event factory validate names against `eventNames`; shared registry now covers existing maintenance, screen-act, command, body evidence, long-term memory, cloud-consciousness, and systemd repair publish events; core route/task/plan publish call sites now use registry-backed event names. |
 | Root package script redundancy E1/P2 | `package.json` had many hard-coded `dev:*check:unix` milestone scripts. | Complete | Root scripts reduced to one milestone runner plus stable lifecycle/smoke aliases; `dev-milestone-check.sh` accepts milestone names as npm args. |
@@ -80,6 +80,8 @@ The expert review items are considered complete only when each item has code-lev
 - `policy-evaluator.test.mjs` covers cross-boundary approval gating, body-internal audit-only decisions, absolute deny boundaries, audit log capping/counts, and task approval creation without starting dev services.
 - `service-client.test.mjs` covers JSON fetch/post behavior, error propagation, tolerant JSON file reads, and system-sense URL construction without starting dev services.
 - `task-executor.test.mjs` covers command transcript and filesystem read/change read models without starting dev services.
+- `task-executor.test.mjs` covers 33 plan-builder delegated non-recoverable dispatch entries through table-driven predicate/executor stubs, so registry wiring and option forwarding fail fast without starting services.
+- `task-executor.test.mjs` covers native-plugin and OpenClaw search-web internal deferred dispatch, capability-plan dispatch, systemd repair/next-repair deferred dispatch, and body-evidence follow-up deferred dispatch without executing plugins, network calls, systemd commands, or ledger appends.
 - `route-handlers.test.mjs` covers executor-backed GET response contracts and body-evidence follow-up task-shell POST serialization without starting dev services.
 - `openclaw-core-service-unit-tests` runs the focused service-layer unit tests as a milestone.
 
@@ -141,6 +143,6 @@ The expert review items are considered complete only when each item has code-lev
 
 ## Next Expert Items After This Slice
 
-1. Add focused service-layer unit tests for task dispatch execution branches as those branches are touched.
-2. Continue moving shared event names into non-core service publish call sites as those modules are touched.
-3. Add focused task-executor unit tests for uncovered dispatch branches without editing the task-executor monolith unless a test seam is strictly required.
+1. Continue moving shared event names into non-core service publish call sites as those modules are touched.
+2. Continue state-reuse and batch-reuse inventory for remaining long-running milestone lanes without weakening real service assertions.
+3. Keep adding focused service-layer unit tests for real-execution branches only when those branches are touched or can be safely isolated without host mutation.
