@@ -13,6 +13,7 @@ mkdir -p "$ARTIFACT_DIR"
 node - "$SCRIPT_DIR" "$REPO_ROOT" "$REGISTRY_FILE" "$MANIFEST_FILE" "$SUMMARY_FILE" <<'NODE'
 const fs = require("node:fs");
 const path = require("node:path");
+const { execFileSync } = require("node:child_process");
 
 const [scriptDir, repoRoot, registryFile, manifestFile, summaryFile] = process.argv.slice(2);
 const issues = [];
@@ -48,6 +49,10 @@ function requireContains(text, token, context) {
   }
 }
 
+function shellQuote(value) {
+  return `'${value.replace(/'/g, "'\\''")}'`;
+}
+
 function primaryRegistryForSlug(slug) {
   if (slug.endsWith("-task-shell")) {
     return `${slug.replace(/-task-shell$/, "-task")}-v0`;
@@ -73,6 +78,41 @@ function stateArtifactFilenamesForMilestone(milestone) {
   ];
 }
 
+function readCommonEnvForMilestone(milestone, commonEnvHelperPath) {
+  try {
+    const command = [
+      `set -euo pipefail`,
+      `SCRIPT_DIR=${shellQuote(scriptDir)}`,
+      `source ${shellQuote(commonEnvHelperPath)} ${milestone.phase}`,
+      `printf '%s\\n' "$PLAN_DOC" "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" "$CORE_URL" "$OBSERVER_URL" "$PORT_BASE" "$OBSERVER_CHECK" "$OPENCLAW_RESULT_ENVELOPE_SLUG"`,
+    ].join("; ");
+    const env = {
+      PATH: process.env.PATH ?? "/usr/bin:/bin",
+      HOME: process.env.HOME ?? "",
+    };
+    const [
+      planDoc,
+      coreStateFile,
+      systemHealStateFile,
+      coreUrl,
+      observerUrl,
+      portBase,
+      observerCheck,
+      slug,
+    ] = execFileSync("bash", ["-c", command], { encoding: "utf8", env }).trimEnd().split("\n");
+    return { planDoc, coreStateFile, systemHealStateFile, coreUrl, observerUrl, portBase, observerCheck, slug };
+  } catch (error) {
+    issues.push({
+      phase: milestone.phase,
+      file: commonEnvHelperPath,
+      issue: "common env helper execution failed",
+      message: error.message,
+      stderr: error.stderr?.toString?.() ?? "",
+    });
+    return null;
+  }
+}
+
 function primaryStatusMarkersForSlug(slug) {
   const base = markerBaseForSlug(slug);
   if (slug.endsWith("-task-shell")) {
@@ -89,6 +129,9 @@ const registryByName = new Map(registryEntries.map((entry) => [entry.name, entry
 const wrapperHelperScript = "dev-openclaw-live-provider-result-envelope-wrapper.sh";
 const wrapperHelperPath = path.join(scriptDir, wrapperHelperScript);
 const wrapperHelper = readIfExists(wrapperHelperPath, "result-envelope wrapper helper");
+const commonEnvHelperScript = "dev-openclaw-live-provider-result-envelope-common-env.sh";
+const commonEnvHelperPath = path.join(scriptDir, commonEnvHelperScript);
+const commonEnvHelper = readIfExists(commonEnvHelperPath, "result-envelope common env helper");
 const milestones = readTsv(manifestFile, [
   "phase",
   "slug",
@@ -106,6 +149,10 @@ requireContains(wrapperHelper, "openclaw-live-provider-result-envelope-milestone
 requireContains(wrapperHelper, "common-check.sh", { file: wrapperHelperPath });
 requireContains(wrapperHelper, "${phase_env}_PORT_BASE", { file: wrapperHelperPath });
 requireContains(wrapperHelper, "${phase_env}_OBSERVER_CHECK=true", { file: wrapperHelperPath });
+requireContains(commonEnvHelper, "openclaw-live-provider-result-envelope-milestones.tsv", { file: commonEnvHelperPath });
+requireContains(commonEnvHelper, "OPENCLAW_CORE_STATE_FILE", { file: commonEnvHelperPath });
+requireContains(commonEnvHelper, "OPENCLAW_SYSTEM_HEAL_STATE_FILE", { file: commonEnvHelperPath });
+requireContains(commonEnvHelper, "OPENCLAW_RESULT_ENVELOPE_SLUG", { file: commonEnvHelperPath });
 
 for (const [index, milestone] of milestones.entries()) {
   const expectedPhase = 99 + index;
@@ -139,6 +186,7 @@ for (const [index, milestone] of milestones.entries()) {
   const primaryRegistry = primaryRegistryForSlug(milestone.slug);
   const primaryStatusMarkers = primaryStatusMarkersForSlug(milestone.slug);
   const stateArtifactFilenames = stateArtifactFilenamesForMilestone(milestone);
+  const commonEnv = readCommonEnvForMilestone(milestone, commonEnvHelperPath);
   const coreRegistry = registryByName.get(milestone.slug);
   const observerRegistry = registryByName.get(observerName);
   const expectedCoreDescription = `Phase ${milestone.phase} ${milestone.coreDescription}`;
@@ -174,7 +222,9 @@ for (const [index, milestone] of milestones.entries()) {
   const coreWrapper = readIfExists(coreWrapperPath, "core wrapper");
   const observerWrapper = readIfExists(observerWrapperPath, "observer wrapper");
   const commonCheck = readIfExists(commonScriptPath, "common check");
-  const phaseEnvPrefix = `PHASE${milestone.phase}`;
+  const expectedPortBase = String(14900 + (milestone.phaseNumber * 100));
+  const expectedCoreStateFile = path.join(repoRoot, ".artifacts", stateArtifactFilenames[0]);
+  const expectedSystemHealStateFile = path.join(repoRoot, ".artifacts", stateArtifactFilenames[1]);
 
   requireContains(planDoc, `# OpenClaw Phase ${milestone.phase} Plan`, { phase: milestone.phase, file: planDocPath });
   requireContains(planDoc, milestone.slug, { phase: milestone.phase, file: planDocPath });
@@ -186,17 +236,37 @@ for (const [index, milestone] of milestones.entries()) {
   requireContains(coreWrapper, `${milestone.phase} core`, { phase: milestone.phase, file: coreWrapperPath });
   requireContains(observerWrapper, wrapperHelperScript, { phase: milestone.phase, file: observerWrapperPath });
   requireContains(observerWrapper, `${milestone.phase} observer`, { phase: milestone.phase, file: observerWrapperPath });
-  requireContains(commonCheck, `OBSERVER_CHECK="\${${phaseEnvPrefix}_OBSERVER_CHECK:-false}"`, { phase: milestone.phase, file: commonScriptPath });
-  requireContains(commonCheck, `PORT_BASE="\${${phaseEnvPrefix}_PORT_BASE:-`, { phase: milestone.phase, file: commonScriptPath });
-  requireContains(commonCheck, `OPENCLAW_PHASE_${milestone.phase}_PLAN.md`, { phase: milestone.phase, file: commonScriptPath });
+  requireContains(commonCheck, commonEnvHelperScript, { phase: milestone.phase, file: commonScriptPath });
+  requireContains(commonCheck, ` ${milestone.phase}`, { phase: milestone.phase, file: commonScriptPath });
   requireContains(commonCheck, milestone.slug, { phase: milestone.phase, file: commonScriptPath });
   requireContains(commonCheck, milestone.predecessorSlug, { phase: milestone.phase, file: commonScriptPath });
   requireContains(commonCheck, primaryRegistry, { phase: milestone.phase, file: commonScriptPath });
   for (const statusMarker of primaryStatusMarkers) {
     requireContains(commonCheck, statusMarker, { phase: milestone.phase, file: commonScriptPath });
   }
-  for (const artifactFilename of stateArtifactFilenames) {
-    requireContains(commonCheck, artifactFilename, { phase: milestone.phase, file: commonScriptPath });
+  if (commonEnv) {
+    const expectedCommonEnv = {
+      planDoc: planDocPath,
+      coreStateFile: expectedCoreStateFile,
+      systemHealStateFile: expectedSystemHealStateFile,
+      coreUrl: `http://127.0.0.1:${expectedPortBase}`,
+      observerUrl: `http://127.0.0.1:${Number(expectedPortBase) + 8}`,
+      portBase: expectedPortBase,
+      observerCheck: "false",
+      slug: milestone.slug,
+    };
+    for (const [key, expected] of Object.entries(expectedCommonEnv)) {
+      if (commonEnv[key] !== expected) {
+        issues.push({
+          phase: milestone.phase,
+          file: commonEnvHelperPath,
+          issue: "common env helper output mismatch",
+          field: key,
+          expected,
+          actual: commonEnv[key],
+        });
+      }
+    }
   }
 }
 
@@ -220,6 +290,8 @@ const summary = {
       phasePlansChecked: milestones.length,
       wrappersChecked: milestones.length * 2,
       wrapperHelpersChecked: 1,
+      commonEnvHelpersChecked: 1,
+      commonEnvOutputsChecked: milestones.length,
       commonChecksChecked: milestones.length,
       commonPrimaryRegistriesChecked: milestones.length,
       commonStatusMarkersChecked: milestones.reduce((total, milestone) => total + primaryStatusMarkersForSlug(milestone.slug).length, 0),

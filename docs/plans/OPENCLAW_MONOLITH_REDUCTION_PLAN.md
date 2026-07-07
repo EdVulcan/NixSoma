@@ -64,6 +64,9 @@ Audit sources used for this revision:
     route/approved/final-readiness/task-shell status markers in common checks.
 12. Extended the manifest check to derive and verify the repeated Phase 99-116
     core/system-heal state artifact filenames in common checks.
+13. Extracted the repeated Phase 99-116 common-check environment setup into a
+    manifest-driven helper for ports, plan docs, state artifacts, and core /
+    Observer URLs.
 
 These slices reduced live-provider runtime and milestone orchestration coupling
 while preserving the public runtime API and existing milestone entry names.
@@ -97,9 +100,9 @@ while preserving the public runtime API and existing milestone entry names.
 
 1. Finish reducing active live-provider lane coupling while it remains the
    current development surface.
-2. Use the active credential/result-envelope manifest to validate or generate
-   repeated common-check inputs so validation no longer depends on hand-repeated
-   artifact, predecessor, status, and docs strings.
+2. Use the active credential/result-envelope manifest to extract prerequisite
+   reuse setup and repeated assertion helpers so validation no longer depends on
+   hand-repeated predecessor, status, and docs strings.
 3. Split `route-handlers.mjs` by domain so future phases do not keep editing
    one router chain.
 4. Split `task-executor.mjs` dispatch so new task types register through a

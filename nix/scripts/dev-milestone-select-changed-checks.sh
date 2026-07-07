@@ -22,9 +22,11 @@ CHANGED_FILES="$(collect_changed_files | sort -u)"
 CHANGED_FILES="$CHANGED_FILES" node - "$SCRIPT_DIR" "$REGISTRY_FILE" <<'NODE'
 const fs = require("node:fs");
 const path = require("node:path");
+const { execFileSync } = require("node:child_process");
 
 const [scriptDir, registryFile] = process.argv.slice(2);
 const changedFiles = (process.env.CHANGED_FILES ?? "").split(/\n/).map((line) => line.trim()).filter(Boolean);
+const changedBase = process.env.OPENCLAW_MILESTONE_CHANGED_BASE ?? "";
 const registryText = fs.readFileSync(registryFile, "utf8").replace(/^\uFEFF/, "");
 const entries = registryText.split(/\n/)
   .map((line) => line.replace(/\r$/, ""))
@@ -37,8 +39,10 @@ const entries = registryText.split(/\n/)
 const byScript = new Map(entries.map((entry) => [entry.script, entry]));
 const byName = new Map(entries.map((entry) => [entry.name, entry]));
 const selected = new Set();
+const structurallyCoveredCommonChecks = [];
 const resultEnvelopeManifestCheck = "openclaw-live-provider-result-envelope-milestone-manifest";
 const resultEnvelopeScriptNeedle = "credential-value-local-read-execution-local-read-attempt-local-read-result-envelope";
+const resultEnvelopeCommonEnvHelper = "dev-openclaw-live-provider-result-envelope-common-env.sh";
 
 function selectName(name) {
   if (byName.has(name)) selected.add(name);
@@ -53,6 +57,78 @@ function selectScriptsReferencing(scriptBasename) {
       selected.add(entry.name);
     }
   }
+}
+
+function readDiffChangedLines(file) {
+  const commands = [];
+  if (changedBase) {
+    commands.push(["diff", "--no-ext-diff", "--unified=0", `${changedBase}...HEAD`, "--", file]);
+  }
+  commands.push(["diff", "--no-ext-diff", "--unified=0", "--", file]);
+  commands.push(["diff", "--cached", "--no-ext-diff", "--unified=0", "--", file]);
+
+  const lines = [];
+  for (const args of commands) {
+    try {
+      const output = execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+      for (const line of output.split(/\n/)) {
+        if (!line || line.startsWith("+++") || line.startsWith("---") || line.startsWith("@@")) continue;
+        if (line.startsWith("+") || line.startsWith("-")) {
+          lines.push({ op: line[0], text: line.slice(1) });
+        }
+      }
+    } catch (error) {
+      if (error.status === 1 && typeof error.stdout === "string") {
+        for (const line of error.stdout.split(/\n/)) {
+          if (!line || line.startsWith("+++") || line.startsWith("---") || line.startsWith("@@")) continue;
+          if (line.startsWith("+") || line.startsWith("-")) {
+            lines.push({ op: line[0], text: line.slice(1) });
+          }
+        }
+        continue;
+      }
+      return null;
+    }
+  }
+  return lines;
+}
+
+function isAllowedCommonEnvExtractionAddition(text) {
+  return text === ""
+    || text === 'SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"'
+    || text === "# shellcheck source=/dev/null"
+    || /^source "\$SCRIPT_DIR\/dev-openclaw-live-provider-result-envelope-common-env\.sh" [0-9]+$/.test(text);
+}
+
+function isAllowedCommonEnvExtractionRemoval(text) {
+  return text === ""
+    || text === 'SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"'
+    || text === 'REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"'
+    || /^OBSERVER_CHECK="\$\{PHASE[0-9]+_OBSERVER_CHECK:-false\}"$/.test(text)
+    || /^PORT_BASE="\$\{PHASE[0-9]+_PORT_BASE:-[0-9]+\}"$/.test(text)
+    || /^PLAN_DOC="\$REPO_ROOT\/docs\/plans\/OPENCLAW_PHASE_[0-9]+_PLAN\.md"$/.test(text)
+    || /^export (OPENCLAW_CORE_PORT|OPENCLAW_EVENT_HUB_PORT|OPENCLAW_SESSION_MANAGER_PORT|OPENCLAW_BROWSER_RUNTIME_PORT|OPENCLAW_SCREEN_SENSE_PORT|OPENCLAW_SCREEN_ACT_PORT|OPENCLAW_SYSTEM_SENSE_PORT|OPENCLAW_SYSTEM_HEAL_PORT|OBSERVER_UI_PORT)=/.test(text)
+    || /^export OPENCLAW_(CORE|SYSTEM_HEAL)_STATE_FILE=/.test(text)
+    || /^(CORE_URL|OBSERVER_URL)=/.test(text);
+}
+
+function isResultEnvelopeCommonEnvExtractionOnly(file, scriptBasename) {
+  if (!scriptBasename.includes(resultEnvelopeScriptNeedle) || !scriptBasename.endsWith("-common-check.sh")) {
+    return false;
+  }
+
+  const fullPath = path.join(process.cwd(), file);
+  if (!fs.existsSync(fullPath)) return false;
+  const currentText = fs.readFileSync(fullPath, "utf8");
+  if (!currentText.includes(resultEnvelopeCommonEnvHelper)) return false;
+
+  const changedLines = readDiffChangedLines(file);
+  if (!changedLines || changedLines.length === 0) return false;
+  return changedLines.every(({ op, text }) => {
+    if (op === "+") return isAllowedCommonEnvExtractionAddition(text);
+    if (op === "-") return isAllowedCommonEnvExtractionRemoval(text);
+    return false;
+  });
 }
 
 function selectPhasePlanChecks(file) {
@@ -115,16 +191,22 @@ for (const file of changedFiles) {
     const scriptBasename = path.basename(file);
     selectName("milestone-script-audit");
     if (scriptBasename === "openclaw-live-provider-result-envelope-milestones.tsv"
+      || scriptBasename === "dev-openclaw-live-provider-result-envelope-common-env.sh"
       || scriptBasename === "dev-openclaw-live-provider-result-envelope-wrapper.sh"
       || scriptBasename.includes(resultEnvelopeScriptNeedle)) {
       selectName(resultEnvelopeManifestCheck);
     }
     if (scriptBasename === "openclaw-live-provider-result-envelope-milestones.tsv"
+      || scriptBasename === "dev-openclaw-live-provider-result-envelope-common-env.sh"
       || scriptBasename === "dev-openclaw-live-provider-result-envelope-wrapper.sh") {
       continue;
     }
     if (scriptBasename.includes(resultEnvelopeScriptNeedle)) {
       if (scriptBasename.endsWith("-common-check.sh")) {
+        if (isResultEnvelopeCommonEnvExtractionOnly(file, scriptBasename)) {
+          structurallyCoveredCommonChecks.push(file);
+          continue;
+        }
         const coreName = scriptBasename.replace(/^dev-/, "").replace(/-common-check\.sh$/, "");
         selectName(coreName);
         selectName(`observer-${coreName}`);
@@ -152,6 +234,6 @@ if (selected.size === 0) {
 }
 
 const ordered = entries.map((entry) => entry.name).filter((name) => selected.has(name));
-console.error(JSON.stringify({ affectedChecks: ordered, changedFiles }, null, 2));
+console.error(JSON.stringify({ affectedChecks: ordered, changedFiles, structurallyCoveredCommonChecks }, null, 2));
 process.stdout.write(ordered.join(","));
 NODE

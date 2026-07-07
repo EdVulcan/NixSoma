@@ -132,7 +132,7 @@ const summary = {
       }] : []),
     ],
     issues,
-    nextRecommendedSlice: "Extend the Phase 99-116 live-provider manifest to validate or generate repeated common-check inputs before renaming or deleting legacy scripts.",
+    nextRecommendedSlice: "Use the Phase 99-116 live-provider manifest to extract repeated prerequisite reuse and assertion helpers before renaming or deleting legacy scripts.",
   },
 };
 
