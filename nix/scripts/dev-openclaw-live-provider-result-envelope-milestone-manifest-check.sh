@@ -132,6 +132,9 @@ const wrapperHelper = readIfExists(wrapperHelperPath, "result-envelope wrapper h
 const commonEnvHelperScript = "dev-openclaw-live-provider-result-envelope-common-env.sh";
 const commonEnvHelperPath = path.join(scriptDir, commonEnvHelperScript);
 const commonEnvHelper = readIfExists(commonEnvHelperPath, "result-envelope common env helper");
+const commonPrereqHelperScript = "dev-openclaw-live-provider-result-envelope-prereq.sh";
+const commonPrereqHelperPath = path.join(scriptDir, commonPrereqHelperScript);
+const commonPrereqHelper = readIfExists(commonPrereqHelperPath, "result-envelope prerequisite helper");
 const milestones = readTsv(manifestFile, [
   "phase",
   "slug",
@@ -153,7 +156,13 @@ requireContains(commonEnvHelper, "openclaw-live-provider-result-envelope-milesto
 requireContains(commonEnvHelper, "OPENCLAW_CORE_STATE_FILE", { file: commonEnvHelperPath });
 requireContains(commonEnvHelper, "OPENCLAW_SYSTEM_HEAL_STATE_FILE", { file: commonEnvHelperPath });
 requireContains(commonEnvHelper, "OPENCLAW_RESULT_ENVELOPE_SLUG", { file: commonEnvHelperPath });
+requireContains(commonPrereqHelper, "openclaw_result_envelope_prepare_prereq_state", { file: commonPrereqHelperPath });
+requireContains(commonPrereqHelper, "dev-openclaw-fast-prereq-state.sh", { file: commonPrereqHelperPath });
+requireContains(commonPrereqHelper, "openclaw_reuse_prereq_state", { file: commonPrereqHelperPath });
+requireContains(commonPrereqHelper, "fallback_port_base_env", { file: commonPrereqHelperPath });
+requireContains(commonPrereqHelper, "fallback_common_check", { file: commonPrereqHelperPath });
 
+let commonPrereqHelperCalls = 0;
 for (const [index, milestone] of milestones.entries()) {
   const expectedPhase = 99 + index;
   if (milestone.phaseNumber !== expectedPhase) {
@@ -238,6 +247,21 @@ for (const [index, milestone] of milestones.entries()) {
   requireContains(observerWrapper, `${milestone.phase} observer`, { phase: milestone.phase, file: observerWrapperPath });
   requireContains(commonCheck, commonEnvHelperScript, { phase: milestone.phase, file: commonScriptPath });
   requireContains(commonCheck, ` ${milestone.phase}`, { phase: milestone.phase, file: commonScriptPath });
+  const usesPrereqHelper = commonCheck.includes("openclaw_result_envelope_prepare_prereq_state");
+  if (usesPrereqHelper) {
+    commonPrereqHelperCalls += 1;
+    requireContains(commonCheck, commonPrereqHelperScript, { phase: milestone.phase, file: commonScriptPath });
+  }
+  for (const legacyPrereqToken of ["dev-openclaw-fast-prereq-state.sh", "openclaw_reuse_prereq_state"]) {
+    if (commonCheck.includes(legacyPrereqToken)) {
+      issues.push({
+        phase: milestone.phase,
+        file: commonScriptPath,
+        issue: "common check still contains direct prerequisite reuse wiring",
+        token: legacyPrereqToken,
+      });
+    }
+  }
   requireContains(commonCheck, milestone.slug, { phase: milestone.phase, file: commonScriptPath });
   requireContains(commonCheck, milestone.predecessorSlug, { phase: milestone.phase, file: commonScriptPath });
   requireContains(commonCheck, primaryRegistry, { phase: milestone.phase, file: commonScriptPath });
@@ -270,6 +294,15 @@ for (const [index, milestone] of milestones.entries()) {
   }
 }
 
+if (commonPrereqHelperCalls !== 16) {
+  issues.push({
+    file: commonPrereqHelperPath,
+    issue: "expected 16 Phase 99-116 common checks to use the prerequisite helper",
+    expected: 16,
+    actual: commonPrereqHelperCalls,
+  });
+}
+
 const summary = {
   liveProviderResultEnvelopeMilestoneManifest: {
     status: issues.length === 0 ? "passed" : "failed",
@@ -292,6 +325,8 @@ const summary = {
       wrapperHelpersChecked: 1,
       commonEnvHelpersChecked: 1,
       commonEnvOutputsChecked: milestones.length,
+      commonPrereqHelpersChecked: 1,
+      commonPrereqHelperCallsChecked: commonPrereqHelperCalls,
       commonChecksChecked: milestones.length,
       commonPrimaryRegistriesChecked: milestones.length,
       commonStatusMarkersChecked: milestones.reduce((total, milestone) => total + primaryStatusMarkersForSlug(milestone.slug).length, 0),

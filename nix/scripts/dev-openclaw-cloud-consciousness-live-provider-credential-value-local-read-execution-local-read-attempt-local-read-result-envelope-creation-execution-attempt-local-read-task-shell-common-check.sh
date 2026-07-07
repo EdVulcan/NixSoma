@@ -4,6 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-openclaw-live-provider-result-envelope-common-env.sh" 116
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-live-provider-result-envelope-prereq.sh"
 RESULT_ENVELOPE_CREATION_EXECUTION_ATTEMPT_FINAL_READINESS_PREFLIGHT_REGISTRY="openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-final-readiness-preflight-v0"
 LOCAL_READ_ROUTE_REGISTRY="openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-local-read-route-v0"
 LOCAL_READ_TASK_REGISTRY="openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-local-read-task-v0"
@@ -74,24 +76,17 @@ EOF
 fi
 
 if ! declare -F openclaw_dev_services_already_up >/dev/null || ! openclaw_dev_services_already_up; then
-  rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE.tmp"
-  if [[ -f "$SCRIPT_DIR/dev-openclaw-fast-prereq-state.sh" ]]; then
-    # shellcheck source=/dev/null
-    source "$SCRIPT_DIR/dev-openclaw-fast-prereq-state.sh"
-  fi
-
-  if ! declare -F openclaw_reuse_prereq_state >/dev/null \
-    || ! openclaw_reuse_prereq_state \
-      "$PHASE115_CORE_STATE" \
-      "$PHASE115_SYSTEM_HEAL_STATE" \
-      "$OPENCLAW_CORE_STATE_FILE" \
-      "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
-      "phase-115-result-envelope-creation-execution-attempt-local-read-route" \
-      "$RESULT_ENVELOPE_CREATION_EXECUTION_ATTEMPT_FINAL_READINESS_PREFLIGHT_REGISTRY" \
-      "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_final_readiness_preflight_recorded"; then
-    PHASE115_PORT_BASE="$PORT_BASE" OPENCLAW_CORE_STATE_FILE="$OPENCLAW_CORE_STATE_FILE" OPENCLAW_SYSTEM_HEAL_STATE_FILE="$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
-      bash "$SCRIPT_DIR/dev-openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-local-read-route-common-check.sh" >/dev/null
-  fi
+  openclaw_result_envelope_prepare_prereq_state \
+    "$SCRIPT_DIR" \
+    "$PHASE115_CORE_STATE" \
+    "$PHASE115_SYSTEM_HEAL_STATE" \
+    "$OPENCLAW_CORE_STATE_FILE" \
+    "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
+    "phase-115-result-envelope-creation-execution-attempt-local-read-route" \
+    "$RESULT_ENVELOPE_CREATION_EXECUTION_ATTEMPT_FINAL_READINESS_PREFLIGHT_REGISTRY" \
+    "credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_final_readiness_preflight_recorded" \
+    "PHASE115_PORT_BASE" \
+    "dev-openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-local-read-route-common-check.sh"
 else
   echo "Using already-running OpenClaw dev services as the live Phase 115 prerequisite state."
 fi

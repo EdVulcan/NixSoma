@@ -132,7 +132,7 @@ const summary = {
       }] : []),
     ],
     issues,
-    nextRecommendedSlice: "Use the Phase 99-116 live-provider manifest to extract repeated prerequisite reuse and assertion helpers before renaming or deleting legacy scripts.",
+    nextRecommendedSlice: "Use the Phase 99-116 live-provider manifest to extract repeated assertion helpers before renaming or deleting legacy scripts.",
   },
 };
 

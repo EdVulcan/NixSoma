@@ -4,6 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-openclaw-live-provider-result-envelope-common-env.sh" 113
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-live-provider-result-envelope-prereq.sh"
 RESULT_ENVELOPE_CREATION_EXECUTION_ATTEMPT_TASK_REGISTRY="openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-task-v0"
 RESULT_ENVELOPE_CREATION_EXECUTION_ATTEMPT_APPROVED_DEFERRED_REGISTRY="openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-approved-deferred-v0"
 PHASE112_CORE_STATE="$REPO_ROOT/.artifacts/openclaw-core-phase-112-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-task-shell-check.json"
@@ -49,24 +51,17 @@ EOF
   exit 0
 fi
 
-rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE.tmp"
-if [[ -f "$SCRIPT_DIR/dev-openclaw-fast-prereq-state.sh" ]]; then
-  # shellcheck source=/dev/null
-  source "$SCRIPT_DIR/dev-openclaw-fast-prereq-state.sh"
-fi
-
-if ! declare -F openclaw_reuse_prereq_state >/dev/null \
-  || ! openclaw_reuse_prereq_state \
-    "$PHASE112_CORE_STATE" \
-    "$PHASE112_SYSTEM_HEAL_STATE" \
-    "$OPENCLAW_CORE_STATE_FILE" \
-    "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
-    "phase-112-result-envelope-creation-execution-attempt-task-shell" \
-    "$RESULT_ENVELOPE_CREATION_EXECUTION_ATTEMPT_TASK_REGISTRY" \
-    "cloud_consciousness_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_task_shell_deferred"; then
-  PHASE112_PORT_BASE="$PORT_BASE" OPENCLAW_CORE_STATE_FILE="$OPENCLAW_CORE_STATE_FILE" OPENCLAW_SYSTEM_HEAL_STATE_FILE="$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
-    bash "$SCRIPT_DIR/dev-openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-task-shell-common-check.sh" >/dev/null
-fi
+openclaw_result_envelope_prepare_prereq_state \
+  "$SCRIPT_DIR" \
+  "$PHASE112_CORE_STATE" \
+  "$PHASE112_SYSTEM_HEAL_STATE" \
+  "$OPENCLAW_CORE_STATE_FILE" \
+  "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
+  "phase-112-result-envelope-creation-execution-attempt-task-shell" \
+  "$RESULT_ENVELOPE_CREATION_EXECUTION_ATTEMPT_TASK_REGISTRY" \
+  "cloud_consciousness_live_provider_credential_value_local_read_execution_local_read_attempt_local_read_result_envelope_creation_execution_attempt_task_shell_deferred" \
+  "PHASE112_PORT_BASE" \
+  "dev-openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-task-shell-common-check.sh"
 
 "$SCRIPT_DIR/dev-up.sh"
 APPROVED_DEFERRED_FILE="$(mktemp)"

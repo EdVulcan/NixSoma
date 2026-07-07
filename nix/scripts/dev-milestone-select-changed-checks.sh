@@ -43,6 +43,7 @@ const structurallyCoveredCommonChecks = [];
 const resultEnvelopeManifestCheck = "openclaw-live-provider-result-envelope-milestone-manifest";
 const resultEnvelopeScriptNeedle = "credential-value-local-read-execution-local-read-attempt-local-read-result-envelope";
 const resultEnvelopeCommonEnvHelper = "dev-openclaw-live-provider-result-envelope-common-env.sh";
+const resultEnvelopePrereqHelper = "dev-openclaw-live-provider-result-envelope-prereq.sh";
 
 function selectName(name) {
   if (byName.has(name)) selected.add(name);
@@ -112,6 +113,43 @@ function isAllowedCommonEnvExtractionRemoval(text) {
     || /^(CORE_URL|OBSERVER_URL)=/.test(text);
 }
 
+function isAllowedCommonPrereqExtractionAddition(text) {
+  return text === ""
+    || text === "# shellcheck source=/dev/null"
+    || text === 'source "$SCRIPT_DIR/dev-openclaw-live-provider-result-envelope-prereq.sh"'
+    || /^[ \t]*openclaw_result_envelope_prepare_prereq_state \\$/.test(text)
+    || /^[ \t]*"\$SCRIPT_DIR" \\$/.test(text)
+    || /^[ \t]*"\$PHASE[0-9]+_CORE_STATE" \\$/.test(text)
+    || /^[ \t]*"\$PHASE[0-9]+_SYSTEM_HEAL_STATE" \\$/.test(text)
+    || /^[ \t]*"\$OPENCLAW_CORE_STATE_FILE" \\$/.test(text)
+    || /^[ \t]*"\$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \\$/.test(text)
+    || /^[ \t]*"phase-[^"]+" \\$/.test(text)
+    || /^[ \t]*"\$[A-Z0-9_]+" \\$/.test(text)
+    || /^[ \t]*"[a-z0-9_]+" \\$/.test(text)
+    || /^[ \t]*"PHASE[0-9]+_PORT_BASE" \\$/.test(text)
+    || /^[ \t]*"dev-[^"]+-common-check\.sh"$/.test(text);
+}
+
+function isAllowedCommonPrereqExtractionRemoval(text) {
+  return text === ""
+    || /^[ \t]*rm -f "\$OPENCLAW_CORE_STATE_FILE" "\$OPENCLAW_CORE_STATE_FILE\.tmp" "\$OPENCLAW_SYSTEM_HEAL_STATE_FILE" "\$OPENCLAW_SYSTEM_HEAL_STATE_FILE\.tmp"$/.test(text)
+    || /^[ \t]*if \[\[ -f "\$SCRIPT_DIR\/dev-openclaw-fast-prereq-state\.sh" \]\]; then$/.test(text)
+    || /^[ \t]*# shellcheck source=\/dev\/null$/.test(text)
+    || /^[ \t]*source "\$SCRIPT_DIR\/dev-openclaw-fast-prereq-state\.sh"$/.test(text)
+    || /^[ \t]*fi$/.test(text)
+    || /^[ \t]*if ! declare -F openclaw_reuse_prereq_state >\/dev\/null \\$/.test(text)
+    || /^[ \t]*\|\| ! openclaw_reuse_prereq_state \\$/.test(text)
+    || /^[ \t]*"\$PHASE[0-9]+_CORE_STATE" \\$/.test(text)
+    || /^[ \t]*"\$PHASE[0-9]+_SYSTEM_HEAL_STATE" \\$/.test(text)
+    || /^[ \t]*"\$OPENCLAW_CORE_STATE_FILE" \\$/.test(text)
+    || /^[ \t]*"\$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \\$/.test(text)
+    || /^[ \t]*"phase-[^"]+" \\$/.test(text)
+    || /^[ \t]*"\$[A-Z0-9_]+" \\$/.test(text)
+    || /^[ \t]*"[a-z0-9_]+"; then$/.test(text)
+    || /^[ \t]*PHASE[0-9]+_PORT_BASE="\$PORT_BASE" OPENCLAW_CORE_STATE_FILE="\$OPENCLAW_CORE_STATE_FILE" OPENCLAW_SYSTEM_HEAL_STATE_FILE="\$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \\$/.test(text)
+    || /^[ \t]*bash "\$SCRIPT_DIR\/dev-[^"]+-common-check\.sh" >\/dev\/null$/.test(text);
+}
+
 function isResultEnvelopeCommonEnvExtractionOnly(file, scriptBasename) {
   if (!scriptBasename.includes(resultEnvelopeScriptNeedle) || !scriptBasename.endsWith("-common-check.sh")) {
     return false;
@@ -127,6 +165,26 @@ function isResultEnvelopeCommonEnvExtractionOnly(file, scriptBasename) {
   return changedLines.every(({ op, text }) => {
     if (op === "+") return isAllowedCommonEnvExtractionAddition(text);
     if (op === "-") return isAllowedCommonEnvExtractionRemoval(text);
+    return false;
+  });
+}
+
+function isResultEnvelopeCommonPrereqExtractionOnly(file, scriptBasename) {
+  if (!scriptBasename.includes(resultEnvelopeScriptNeedle) || !scriptBasename.endsWith("-common-check.sh")) {
+    return false;
+  }
+
+  const fullPath = path.join(process.cwd(), file);
+  if (!fs.existsSync(fullPath)) return false;
+  const currentText = fs.readFileSync(fullPath, "utf8");
+  if (!currentText.includes(resultEnvelopePrereqHelper)) return false;
+  if (!currentText.includes("openclaw_result_envelope_prepare_prereq_state")) return false;
+
+  const changedLines = readDiffChangedLines(file);
+  if (!changedLines || changedLines.length === 0) return false;
+  return changedLines.every(({ op, text }) => {
+    if (op === "+") return isAllowedCommonPrereqExtractionAddition(text);
+    if (op === "-") return isAllowedCommonPrereqExtractionRemoval(text);
     return false;
   });
 }
@@ -192,18 +250,24 @@ for (const file of changedFiles) {
     selectName("milestone-script-audit");
     if (scriptBasename === "openclaw-live-provider-result-envelope-milestones.tsv"
       || scriptBasename === "dev-openclaw-live-provider-result-envelope-common-env.sh"
+      || scriptBasename === "dev-openclaw-live-provider-result-envelope-prereq.sh"
       || scriptBasename === "dev-openclaw-live-provider-result-envelope-wrapper.sh"
       || scriptBasename.includes(resultEnvelopeScriptNeedle)) {
       selectName(resultEnvelopeManifestCheck);
     }
     if (scriptBasename === "openclaw-live-provider-result-envelope-milestones.tsv"
       || scriptBasename === "dev-openclaw-live-provider-result-envelope-common-env.sh"
+      || scriptBasename === "dev-openclaw-live-provider-result-envelope-prereq.sh"
       || scriptBasename === "dev-openclaw-live-provider-result-envelope-wrapper.sh") {
       continue;
     }
     if (scriptBasename.includes(resultEnvelopeScriptNeedle)) {
       if (scriptBasename.endsWith("-common-check.sh")) {
         if (isResultEnvelopeCommonEnvExtractionOnly(file, scriptBasename)) {
+          structurallyCoveredCommonChecks.push(file);
+          continue;
+        }
+        if (isResultEnvelopeCommonPrereqExtractionOnly(file, scriptBasename)) {
           structurallyCoveredCommonChecks.push(file);
           continue;
         }
