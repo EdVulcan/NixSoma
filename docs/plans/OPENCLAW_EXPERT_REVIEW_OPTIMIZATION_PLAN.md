@@ -20,7 +20,7 @@ The expert review items are considered complete only when each item has code-lev
 | Shared package engineering E3 | Shared packages lacked independent tsconfig/barrel/type declarations. | Complete | Shared package `tsconfig.json` files, barrel entries, and `shared-utils` declarations added. |
 | Unit tests E2 | No focused unit tests existed for shared packages or services. | Complete, focused service-layer and dispatch coverage established | Node built-in tests added for plugin runtime, shared-events, shared-utils, and `openclaw-core` policy evaluation, service-client behavior, route handler contract helpers, task-executor read models, delegated non-recoverable dispatch, internal deferred dispatch, capability-plan dispatch, and representative systemd/body-evidence deferred dispatch. |
 | Shared-client empty shell C5 | `shared-client` only exported tiny service constants. | Complete | `service-descriptors` now provides typed and runtime service ids, default ports, URL env vars, and resolver helpers; core and Observer consume the shared runtime descriptors for defaults. |
-| Shared-events identity helper C5 | `createEventName` was a no-op identity function. | Complete | Runtime and typed event factory validate names against `eventNames`; shared registry now covers existing maintenance, screen-act, command, body evidence, long-term memory, cloud-consciousness, and systemd repair publish events; core route/task/plan publish call sites now use registry-backed event names. |
+| Shared-events identity helper C5 | `createEventName` was a no-op identity function. | Complete | Runtime and typed event factory validate names against `eventNames`; shared registry now covers existing maintenance, screen-act, command, body evidence, long-term memory, cloud-consciousness, and systemd repair publish events; core route/task/plan publish call sites and non-core service publish call sites now use registry-backed event names. |
 | Root package script redundancy E1/P2 | `package.json` had many hard-coded `dev:*check:unix` milestone scripts. | Complete | Root scripts reduced to one milestone runner plus stable lifecycle/smoke aliases; `dev-milestone-check.sh` accepts milestone names as npm args. |
 | Shell helper duplication E4 | `post_json()` was copied across many scripts. | Complete | 257 local definitions migrated to `dev-openclaw-http-json-helper.sh`; helper mode compatibility covered by `openclaw-http-json-helper`. |
 | Observer mirror test duplication T2 | Observer checks duplicate core setup. | Partial, reusable pair runner expanded | Result-envelope batch milestone covers core and Observer in one live service lifecycle; `dev-openclaw-core-observer-pair-runner.sh` lets compatible core/Observer pairs reuse one service lifecycle while preserving real Observer HTML/client checks; the pair batch covers Phase 59-72 compatible pairs; Phase 73-90 local-read and Phase 91-98 local-read-attempt batches now run core and Observer assertions in one service lifecycle. Legacy standalone Observer scripts remain for compatibility. |
@@ -96,6 +96,7 @@ The expert review items are considered complete only when each item has code-lev
 - `shared-events` now includes the event names currently published by maintenance, screen action, system command, body evidence, long-term memory, cloud-consciousness, and systemd repair paths.
 - `screen-act`, `system-heal`, and `system-sense` use `createEventName()` on representative previously-unregistered publish events.
 - `openclaw-core` route handlers, task executor, and plan builder now use `createEventName()` for their direct publish call sites, so task, policy, approval, capability, body-evidence, long-term-memory, cloud-consciousness, and systemd event names are registry-validated at runtime.
+- `browser-runtime`, `screen-act`, `screen-sense`, `session-manager`, `system-heal`, and `system-sense` now wrap their direct `publishEvent()` names in `createEventName()` for startup, browser, screen, action, heal, file, process, command, and system refresh events.
 - `shared-events` unit tests cover the newly registered names.
 
 ## Phase 4 Fast Prerequisite Evidence
@@ -143,6 +144,6 @@ The expert review items are considered complete only when each item has code-lev
 
 ## Next Expert Items After This Slice
 
-1. Continue moving shared event names into non-core service publish call sites as those modules are touched.
-2. Continue state-reuse and batch-reuse inventory for remaining long-running milestone lanes without weakening real service assertions.
-3. Keep adding focused service-layer unit tests for real-execution branches only when those branches are touched or can be safely isolated without host mutation.
+1. Continue state-reuse and batch-reuse inventory for remaining long-running milestone lanes without weakening real service assertions.
+2. Keep adding focused service-layer unit tests for real-execution branches only when those branches are touched or can be safely isolated without host mutation.
+3. Keep moving remaining core helper-module event names behind the shared registry as those modules are touched.

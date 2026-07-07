@@ -1,5 +1,6 @@
 import http from "node:http";
 import { randomUUID } from "node:crypto";
+import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { corsHeaders, sendJson, readJsonBody, createEventPublisher, registerService } from "../../../packages/shared-utils/src/http.mjs";
 
 
@@ -214,7 +215,7 @@ const server = http.createServer(async (req, res) => {
 
       const tab = addTab(url);
       const browser = serialiseBrowserState();
-      await publishEvent("browser.started", { browser, tab });
+      await publishEvent(createEventName("browser.started"), { browser, tab });
       sendJson(res, 201, { ok: true, browser, tab });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -234,7 +235,7 @@ const server = http.createServer(async (req, res) => {
       const url = typeof body.url === "string" && body.url.trim() ? body.url.trim() : "https://example.com/docs";
       const tab = addTab(url);
       const browser = serialiseBrowserState();
-      await publishEvent("browser.updated", { browser, tab, action: "new-tab" });
+      await publishEvent(createEventName("browser.updated"), { browser, tab, action: "new-tab" });
       sendJson(res, 201, { ok: true, browser, tab });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -256,7 +257,7 @@ const server = http.createServer(async (req, res) => {
         lastInput: text,
       });
       const browser = serialiseBrowserState();
-      await publishEvent("browser.updated", { browser, action: "input", text });
+      await publishEvent(createEventName("browser.updated"), { browser, action: "input", text });
       sendJson(res, 200, { ok: true, browser, echoedInput: text });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -281,7 +282,7 @@ const server = http.createServer(async (req, res) => {
         lastClick: action,
       });
       const browser = serialiseBrowserState();
-      await publishEvent("browser.updated", { browser, action: "click", position: action });
+      await publishEvent(createEventName("browser.updated"), { browser, action: "click", position: action });
       sendJson(res, 200, { ok: true, browser, action });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -315,7 +316,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(port, host, async () => {
   console.log(`openclaw-browser-runtime listening on http://${host}:${port}`);
   await registerService(eventHubUrl, "openclaw-browser-runtime", `http://${host}:${port}`);
-  await publishEvent("service.started", {
+  await publishEvent(createEventName("service.started"), {
     service: "openclaw-browser-runtime",
     url: `http://${host}:${port}`,
   });

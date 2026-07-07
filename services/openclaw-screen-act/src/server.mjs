@@ -132,7 +132,7 @@ async function executeAction(kind, params) {
     action,
   });
 
-  await publishEvent("action.completed", { action });
+  await publishEvent(createEventName("action.completed"), { action });
   return action;
 }
 
@@ -237,7 +237,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(port, host, async () => {
   console.log(`openclaw-screen-act listening on http://${host}:${port}`);
   await registerService(eventHubUrl, "openclaw-screen-act", `http://${host}:${port}`);
-  await publishEvent("service.started", {
+  await publishEvent(createEventName("service.started"), {
     service: "openclaw-screen-act",
     url: `http://${host}:${port}`,
   });

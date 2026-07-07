@@ -4792,7 +4792,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const limit = Number.parseInt(requestUrl.searchParams.get("limit") ?? "50", 10);
       const result = listFiles(requestUrl.searchParams.get("path"), limit);
-      await publishEvent("system.files.listed", {
+      await publishEvent(createEventName("system.files.listed"), {
         path: result.path,
         count: result.count,
       });
@@ -4816,7 +4816,7 @@ const server = http.createServer(async (req, res) => {
         requestUrl.searchParams.get("query") ?? requestUrl.searchParams.get("q"),
         limit,
       );
-      await publishEvent("system.files.searched", {
+      await publishEvent(createEventName("system.files.searched"), {
         path: result.path,
         query: result.query,
         count: result.count,
@@ -4836,7 +4836,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && requestUrl.pathname === "/system/files/read-text") {
     try {
       const result = readTextFile(requestUrl.searchParams.get("path"));
-      await publishEvent("system.files.read", {
+      await publishEvent(createEventName("system.files.read"), {
         path: result.path,
         contentBytes: result.contentBytes,
         mode: result.mode,
@@ -4857,7 +4857,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readJsonBody(req);
       const result = writeTextFile(body);
-      await publishEvent("system.files.written", {
+      await publishEvent(createEventName("system.files.written"), {
         path: result.path,
         contentBytes: result.contentBytes,
         overwrite: result.overwrite,
@@ -4878,7 +4878,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readJsonBody(req);
       const result = appendTextFile(body);
-      await publishEvent("system.files.appended", {
+      await publishEvent(createEventName("system.files.appended"), {
         path: result.path,
         contentBytes: result.contentBytes,
         previousBytes: result.previousBytes,
@@ -4900,7 +4900,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readJsonBody(req);
       const result = createDirectory(body);
-      await publishEvent("system.files.directory_created", {
+      await publishEvent(createEventName("system.files.directory_created"), {
         path: result.path,
         recursive: result.recursive,
         created: result.created,
@@ -4924,7 +4924,7 @@ const server = http.createServer(async (req, res) => {
         query: requestUrl.searchParams.get("query") ?? requestUrl.searchParams.get("q") ?? "",
         limit,
       });
-      await publishEvent("system.processes.listed", {
+      await publishEvent(createEventName("system.processes.listed"), {
         count: result.count,
         query: result.query,
       });
@@ -4943,7 +4943,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readJsonBody(req);
       const plan = buildCommandDryRun(body);
-      await publishEvent("system.command.planned", { plan });
+      await publishEvent(createEventName("system.command.planned"), { plan });
       sendJson(res, 200, {
         ok: true,
         plan,
@@ -4979,7 +4979,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && requestUrl.pathname === "/system/refresh") {
     await refreshSystemState();
-    await publishEvent(systemState.alerts.length > 0 ? "service.failed" : "system.updated", {
+    await publishEvent(createEventName(systemState.alerts.length > 0 ? "service.failed" : "system.updated"), {
       alerts: systemState.alerts,
       services: systemState.services,
       resources: systemState.resources,
@@ -4998,7 +4998,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(port, host, async () => {
   console.log(`openclaw-system-sense listening on http://${host}:${port}`);
   await registerService(eventHubUrl, "openclaw-system-sense", `http://${host}:${port}`);
-  await publishEvent("service.started", {
+  await publishEvent(createEventName("service.started"), {
     service: "openclaw-system-sense",
     url: `http://${host}:${port}`,
   });

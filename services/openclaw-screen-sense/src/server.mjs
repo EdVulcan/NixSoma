@@ -1,5 +1,6 @@
 import http from "node:http";
 import { randomUUID } from "node:crypto";
+import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { readCaptureAdapter } from "./capture-adapter.mjs";
 
 const host = process.env.OPENCLAW_SCREEN_SENSE_HOST ?? "127.0.0.1";
@@ -358,7 +359,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && requestUrl.pathname === "/screen/refresh") {
     const screen = await collectStableScreenState();
-    await publishEvent("screen.updated", { screen });
+    await publishEvent(createEventName("screen.updated"), { screen });
     sendJson(res, 200, { ok: true, screen });
     return;
   }
@@ -369,7 +370,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(port, host, async () => {
   console.log(`openclaw-screen-sense listening on http://${host}:${port}`);
   await registerService(eventHubUrl, "openclaw-screen-sense", `http://${host}:${port}`);
-  await publishEvent("service.started", {
+  await publishEvent(createEventName("service.started"), {
     service: "openclaw-screen-sense",
     url: `http://${host}:${port}`,
   });

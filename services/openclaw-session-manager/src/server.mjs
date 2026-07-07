@@ -1,5 +1,6 @@
 import http from "node:http";
 import { randomUUID } from "node:crypto";
+import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 
 const host = process.env.OPENCLAW_SESSION_MANAGER_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SESSION_MANAGER_PORT ?? "4102", 10);
@@ -240,7 +241,7 @@ const server = http.createServer(async (req, res) => {
       await startSession(displayTarget);
       const session = serialiseSessionState();
       const workView = serialiseWorkViewState();
-      await publishEvent("service.started", {
+      await publishEvent(createEventName("service.started"), {
         service: "openclaw-session-manager",
         session,
         workView,
@@ -264,7 +265,7 @@ const server = http.createServer(async (req, res) => {
       await startSession(displayTarget);
       const session = serialiseSessionState();
       const workView = serialiseWorkViewState();
-      await publishEvent("service.started", {
+      await publishEvent(createEventName("service.started"), {
         service: "openclaw-session-manager",
         restarted: true,
         session,
@@ -295,7 +296,7 @@ const server = http.createServer(async (req, res) => {
       const workView = serialiseWorkViewState();
       // M-1 Fix: Use screen.updated instead of service.started for work-view
       // state transitions so event subscribers can distinguish them.
-      await publishEvent("screen.updated", {
+      await publishEvent(createEventName("screen.updated"), {
         service: "openclaw-session-manager",
         action: "work-view-prepared",
         session,
@@ -326,7 +327,7 @@ const server = http.createServer(async (req, res) => {
       const session = serialiseSessionState();
       const workView = serialiseWorkViewState();
       // M-1 Fix: Use screen.updated for visibility change events.
-      await publishEvent("screen.updated", {
+      await publishEvent(createEventName("screen.updated"), {
         service: "openclaw-session-manager",
         action: "work-view-revealed",
         session,
@@ -347,7 +348,7 @@ const server = http.createServer(async (req, res) => {
       const session = serialiseSessionState();
       const workView = serialiseWorkViewState();
       // M-1 Fix: Use screen.updated for visibility change events.
-      await publishEvent("screen.updated", {
+      await publishEvent(createEventName("screen.updated"), {
         service: "openclaw-session-manager",
         action: "work-view-hidden",
         session,
@@ -367,7 +368,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(port, host, async () => {
   console.log(`openclaw-session-manager listening on http://${host}:${port}`);
   await registerService(eventHubUrl, "openclaw-session-manager", `http://${host}:${port}`);
-  await publishEvent("service.started", {
+  await publishEvent(createEventName("service.started"), {
     service: "openclaw-session-manager",
     url: `http://${host}:${port}`,
   });

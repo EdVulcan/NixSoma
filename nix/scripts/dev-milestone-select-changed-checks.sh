@@ -483,6 +483,12 @@ function selectSourceHeuristics(file) {
     ["services/openclaw-core/src/cloud-live-provider-result-envelope-routes.mjs", ["openclaw-live-provider-result-envelope-batch-reuse"]],
     ["services/openclaw-core/src/server.mjs", ["task-workbench", "operator-loop", "persistence"]],
     ["services/openclaw-core/src/runtime-state.mjs", ["persistence", "operator-loop"]],
+    ["services/openclaw-browser-runtime/src/server.mjs", ["state-settling", "openclaw-ai-work-view-capture"]],
+    ["services/openclaw-screen-sense/src/server.mjs", ["state-settling", "openclaw-ai-work-view-capture"]],
+    ["services/openclaw-screen-act/src/server.mjs", ["task-executor"]],
+    ["services/openclaw-session-manager/src/server.mjs", ["state-settling"]],
+    ["services/openclaw-system-sense/src/server.mjs", ["system-sense"]],
+    ["services/openclaw-system-heal/src/server.mjs", ["system-heal"]],
     ["apps/observer-ui/src/server.mjs", ["observer-operator"]],
     ["apps/observer-ui/src/client-script.mjs", ["observer-operator"]],
   ]);

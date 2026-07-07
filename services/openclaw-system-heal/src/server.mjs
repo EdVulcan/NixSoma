@@ -308,13 +308,13 @@ async function executeHealStep(step) {
     completedAt: startedAt, // will be updated after execution below
   };
 
-  await publishEvent("heal.started", { entry, step });
+  await publishEvent(createEventName("heal.started"), { entry, step });
   // M-3 Fix: Record the actual completion time after work is done, then
   // persist history only after BOTH events have been published. This prevents
   // a state where history is written but heal.completed was never emitted
   // (e.g. if the first publishEvent call timed out).
   entry.completedAt = new Date().toISOString();
-  await publishEvent("heal.completed", { entry, step });
+  await publishEvent(createEventName("heal.completed"), { entry, step });
   addHistory(entry);
   return entry;
 }
@@ -584,7 +584,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readJsonBody(req);
       const diagnosis = await buildDiagnosisFromRequest(body);
-      await publishEvent("heal.diagnosed", { diagnosis });
+      await publishEvent(createEventName("heal.diagnosed"), { diagnosis });
       sendJson(res, 200, {
         ok: true,
         diagnosis,
@@ -646,9 +646,9 @@ const server = http.createServer(async (req, res) => {
         completedAt: new Date().toISOString(),
       };
 
-      await publishEvent("heal.started", { entry });
+      await publishEvent(createEventName("heal.started"), { entry });
       addHistory(entry);
-      await publishEvent("heal.completed", { entry });
+      await publishEvent(createEventName("heal.completed"), { entry });
       sendJson(res, 200, { ok: true, entry });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -665,7 +665,7 @@ loadPersistentState();
 server.listen(port, host, async () => {
   console.log(`openclaw-system-heal listening on http://${host}:${port}`);
   await registerService(eventHubUrl, "openclaw-system-heal", `http://${host}:${port}`);
-  await publishEvent("service.started", {
+  await publishEvent(createEventName("service.started"), {
     service: "openclaw-system-heal",
     url: `http://${host}:${port}`,
   });
