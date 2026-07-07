@@ -55,6 +55,23 @@ function primaryRegistryForSlug(slug) {
   return `${slug}-v0`;
 }
 
+function markerBaseForSlug(slug) {
+  return slug
+    .replace(/^openclaw-cloud-consciousness-live-provider-/, "")
+    .replace(/-/g, "_");
+}
+
+function primaryStatusMarkersForSlug(slug) {
+  const base = markerBaseForSlug(slug);
+  if (slug.endsWith("-task-shell")) {
+    return [`cloud_consciousness_live_provider_${base}_deferred`];
+  }
+  if (slug.endsWith("-final-readiness-preflight")) {
+    return [`${base}_ready_deferred`, `${base}_recorded_deferred`];
+  }
+  return [`${base}_ready`];
+}
+
 const registryEntries = readTsv(registryFile, ["name", "script", "description"], "registry");
 const registryByName = new Map(registryEntries.map((entry) => [entry.name, entry]));
 const wrapperHelperScript = "dev-openclaw-live-provider-result-envelope-wrapper.sh";
@@ -108,6 +125,7 @@ for (const [index, milestone] of milestones.entries()) {
   const observerName = `observer-${milestone.slug}`;
   const observerScript = `dev-observer-${milestone.slug}-check.sh`;
   const primaryRegistry = primaryRegistryForSlug(milestone.slug);
+  const primaryStatusMarkers = primaryStatusMarkersForSlug(milestone.slug);
   const coreRegistry = registryByName.get(milestone.slug);
   const observerRegistry = registryByName.get(observerName);
   const expectedCoreDescription = `Phase ${milestone.phase} ${milestone.coreDescription}`;
@@ -161,6 +179,9 @@ for (const [index, milestone] of milestones.entries()) {
   requireContains(commonCheck, milestone.slug, { phase: milestone.phase, file: commonScriptPath });
   requireContains(commonCheck, milestone.predecessorSlug, { phase: milestone.phase, file: commonScriptPath });
   requireContains(commonCheck, primaryRegistry, { phase: milestone.phase, file: commonScriptPath });
+  for (const statusMarker of primaryStatusMarkers) {
+    requireContains(commonCheck, statusMarker, { phase: milestone.phase, file: commonScriptPath });
+  }
 }
 
 const summary = {
@@ -172,6 +193,7 @@ const summary = {
       phase: milestone.phaseNumber,
       slug: milestone.slug,
       primaryRegistry: primaryRegistryForSlug(milestone.slug),
+      primaryStatusMarkers: primaryStatusMarkersForSlug(milestone.slug),
       predecessorSlug: milestone.predecessorSlug,
       nextSlug: milestone.nextSlug,
     })),
@@ -183,9 +205,10 @@ const summary = {
       wrapperHelpersChecked: 1,
       commonChecksChecked: milestones.length,
       commonPrimaryRegistriesChecked: milestones.length,
+      commonStatusMarkersChecked: milestones.reduce((total, milestone) => total + primaryStatusMarkersForSlug(milestone.slug).length, 0),
     },
     issues,
-    nextRecommendedSlice: "Extend the manifest check to cover repeated Phase 99-116 common-check status markers and artifact paths before renaming or deleting legacy scripts.",
+    nextRecommendedSlice: "Extend the manifest check to cover repeated Phase 99-116 common-check artifact paths before renaming or deleting legacy scripts.",
   },
 };
 

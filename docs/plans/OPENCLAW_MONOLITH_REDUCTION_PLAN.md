@@ -60,6 +60,8 @@ Audit sources used for this revision:
    and registry entry.
 10. Extended the Phase 99-116 manifest check to derive each phase primary
     registry and verify the repeated common-check registry inputs.
+11. Extended the same manifest check to derive and verify the repeated
+    route/approved/final-readiness/task-shell status markers in common checks.
 
 These slices reduced live-provider runtime and milestone orchestration coupling
 while preserving the public runtime API and existing milestone entry names.
