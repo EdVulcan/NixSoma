@@ -54,6 +54,14 @@ const resultEnvelopeScriptNeedle = "credential-value-local-read-execution-local-
 const resultEnvelopeCommonEnvHelper = "dev-openclaw-live-provider-result-envelope-common-env.sh";
 const resultEnvelopePrereqHelper = "dev-openclaw-live-provider-result-envelope-prereq.sh";
 
+function isBodyEvidenceFastPrereqScript(scriptBasename) {
+  return scriptBasename === "dev-body-evidence-prereqs.sh"
+    || scriptBasename === "dev-openclaw-body-evidence-fast-prereq-state.sh"
+    || scriptBasename === "dev-openclaw-body-evidence-fast-prereq-state-check.sh"
+    || /^dev-(observer-)?openclaw-body-evidence-ledger-followup-record-.*-check\.sh$/.test(scriptBasename)
+    || /^dev-(observer-)?openclaw-phase-2-(completion-readiness|exit|next-capability-route-review-followup-(readiness|ledger-plan|append-ready))-check\.sh$/.test(scriptBasename);
+}
+
 function selectName(name) {
   if (byName.has(name)) selected.add(name);
 }
@@ -441,9 +449,7 @@ for (const file of changedFiles) {
       selectName("openclaw-live-provider-result-envelope-batch-reuse");
       continue;
     }
-    if (scriptBasename === "dev-openclaw-body-evidence-fast-prereq-state.sh"
-      || scriptBasename === "dev-openclaw-body-evidence-fast-prereq-state-check.sh"
-      || scriptBasename === "dev-openclaw-body-evidence-ledger-followup-record-readiness-check.sh") {
+    if (isBodyEvidenceFastPrereqScript(scriptBasename)) {
       selectName("openclaw-body-evidence-fast-prereq-state");
       continue;
     }

@@ -39,6 +39,8 @@ trap cleanup EXIT
 source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
 
 
+prepare_body_evidence_ledger_demo_status_prereq_state "$SCRIPT_DIR" "$REPO_ROOT" "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" "$LEDGER_DIR" || true
+
 "$SCRIPT_DIR/dev-up.sh"
 
 prepare_body_evidence_ledger_demo_status "$CORE_URL" "Prepare body evidence ledger before follow-up record task shell."

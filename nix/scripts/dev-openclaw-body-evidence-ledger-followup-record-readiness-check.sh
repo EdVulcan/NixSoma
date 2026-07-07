@@ -20,10 +20,6 @@ export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 LEDGER_DIR="$REPO_ROOT/.artifacts/openclaw-body-evidence-ledger"
 . "$SCRIPT_DIR/dev-body-evidence-prereqs.sh"
-if [[ -f "$SCRIPT_DIR/dev-openclaw-body-evidence-fast-prereq-state.sh" ]]; then
-  # shellcheck source=/dev/null
-  source "$SCRIPT_DIR/dev-openclaw-body-evidence-fast-prereq-state.sh"
-fi
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -f \
@@ -32,11 +28,7 @@ rm -f \
   "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
   "$OPENCLAW_SYSTEM_HEAL_STATE_FILE.tmp"
 rm -rf "$LEDGER_DIR"
-BODY_EVIDENCE_FAST_PREREQ_REUSED=false
-if declare -F openclaw_body_evidence_prepare_demo_status_prereq_state >/dev/null \
-  && openclaw_body_evidence_prepare_demo_status_prereq_state "$SCRIPT_DIR" "$REPO_ROOT" "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" "$LEDGER_DIR"; then
-  BODY_EVIDENCE_FAST_PREREQ_REUSED=true
-fi
+prepare_body_evidence_ledger_demo_status_prereq_state "$SCRIPT_DIR" "$REPO_ROOT" "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" "$LEDGER_DIR" || true
 
 cleanup() {
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
@@ -49,13 +41,7 @@ source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
 
 "$SCRIPT_DIR/dev-up.sh"
 
-if [[ "$BODY_EVIDENCE_FAST_PREREQ_REUSED" != "true" ]]; then
-  if [[ "${OPENCLAW_BODY_EVIDENCE_FAST_PREREQ_REQUIRED:-false}" == "true" ]]; then
-    echo "Body evidence fast prerequisite state was required but not reused." >&2
-    exit 1
-  fi
-  prepare_body_evidence_ledger_demo_status "$CORE_URL" "Prepare body evidence ledger before follow-up record readiness."
-fi
+prepare_body_evidence_ledger_demo_status "$CORE_URL" "Prepare body evidence ledger before follow-up record readiness."
 created_record_task="$(post_json "$CORE_URL/body/evidence-ledger/followup-record-tasks" '{"confirm":true}')"
 readiness="$(curl --silent --fail "$CORE_URL/phase-2/body-evidence-ledger-followup-record-readiness")"
 

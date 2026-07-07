@@ -25,7 +25,7 @@ The expert review items are considered complete only when each item has code-lev
 | Shell helper duplication E4 | `post_json()` was copied across many scripts. | Complete | 257 local definitions migrated to `dev-openclaw-http-json-helper.sh`; helper mode compatibility covered by `openclaw-http-json-helper`. |
 | Observer mirror test duplication T2 | Observer checks duplicate core setup. | Partial, reusable pair runner complete | Result-envelope batch milestone covers core and Observer in one live service lifecycle; `dev-openclaw-core-observer-pair-runner.sh` lets compatible core/Observer pairs reuse one service lifecycle while preserving real Observer HTML/client checks. Legacy standalone Observer scripts remain for compatibility. |
 | Fixed sleeps T4 | Scripts use fixed sleeps instead of polling. | Complete | `dev-openclaw-wait-helper.sh` replaces fixed numeric sleeps with bounded polling; audit has no `sleep N` matches under `nix/scripts`; `openclaw-wait-helper` and `@changed` passed. |
-| State reuse P1/T5 | Heavy prerequisite chains are replayed. | Partial, Phase 4/body-evidence/result-envelope reuse complete | Fast prerequisite helper exists for live-provider result-envelope chain; Phase 4 system-heal prerequisite state can be reused by downstream Phase 6 checks; body-evidence demo-status core state and ledger JSONL can be reused by follow-up readiness in explicit fast mode. Broader common prerequisite migration remains pending. |
+| State reuse P1/T5 | Heavy prerequisite chains are replayed. | Partial, Phase 4/body-evidence/result-envelope reuse complete | Fast prerequisite helper exists for live-provider result-envelope chain; Phase 4 system-heal prerequisite state can be reused by downstream Phase 6 checks; body-evidence demo-status core state and ledger JSONL can be reused by all current follow-up/Observer/Phase 2 completion consumers in explicit fast mode. Broader non-body-evidence common prerequisite migration remains pending. |
 
 ## Current Slice Exit Evidence
 
@@ -101,11 +101,12 @@ The expert review items are considered complete only when each item has code-lev
 ## Body Evidence Fast Prerequisite Evidence
 
 - `dev-openclaw-body-evidence-fast-prereq-state.sh` reuses validated body-evidence demo-status core state plus the matching one-line bootstrap ledger JSONL only when `OPENCLAW_MILESTONE_PREREQ_MODE=fast`.
-- `dev-openclaw-body-evidence-ledger-followup-record-readiness-check.sh` can consume the reused body-evidence state before service startup, then run the real follow-up task and readiness assertions.
-- `openclaw-body-evidence-fast-prereq-state` creates the source demo-status evidence if needed and then requires fast reuse for the follow-up readiness proof.
+- `dev-body-evidence-prereqs.sh` exposes a shared pre-start hook so every current `prepare_body_evidence_ledger_demo_status` consumer can reuse body-evidence state before service startup, then fall back to the original full bootstrap when fast mode is not enabled.
+- Follow-up core checks, Observer mirrors, Phase 2 route-review follow-up checks, and Phase 2 completion/exit checks now have one pre-start hook before `dev-up.sh` and keep their real endpoint/task/Observer assertions.
+- `openclaw-body-evidence-fast-prereq-state` creates the source demo-status evidence if needed, statically audits all demo-status consumers for the pre-start hook, and requires fast reuse through representative core, Observer, and completion-readiness checks.
 
 ## Next Expert Items After This Slice
 
-1. Extend body-evidence prerequisite reuse to the remaining follow-up task/append route checks that repeat the same demo-status bootstrap.
-2. Add more service-layer unit tests for task execution and route handler contract helpers.
-3. Continue moving shared event names into additional publish call sites as those modules are touched.
+1. Add more service-layer unit tests for task execution and route handler contract helpers.
+2. Continue moving shared event names into additional publish call sites as those modules are touched.
+3. Broaden compatible core/Observer pair batching and multi-phase lane batching without weakening real service assertions.
