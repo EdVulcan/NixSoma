@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PHASE99_PORT_BASE=24800 bash "$(dirname "${BASH_SOURCE[0]}")/dev-openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-route-common-check.sh"
+bash "$(dirname "${BASH_SOURCE[0]}")/dev-openclaw-live-provider-result-envelope-wrapper.sh" 99 core

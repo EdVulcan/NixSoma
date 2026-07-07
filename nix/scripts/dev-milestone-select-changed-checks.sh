@@ -115,8 +115,21 @@ for (const file of changedFiles) {
     const scriptBasename = path.basename(file);
     selectName("milestone-script-audit");
     if (scriptBasename === "openclaw-live-provider-result-envelope-milestones.tsv"
+      || scriptBasename === "dev-openclaw-live-provider-result-envelope-wrapper.sh"
       || scriptBasename.includes(resultEnvelopeScriptNeedle)) {
       selectName(resultEnvelopeManifestCheck);
+    }
+    if (scriptBasename === "openclaw-live-provider-result-envelope-milestones.tsv"
+      || scriptBasename === "dev-openclaw-live-provider-result-envelope-wrapper.sh") {
+      continue;
+    }
+    if (scriptBasename.includes(resultEnvelopeScriptNeedle)) {
+      if (scriptBasename.endsWith("-common-check.sh")) {
+        const coreName = scriptBasename.replace(/^dev-/, "").replace(/-common-check\.sh$/, "");
+        selectName(coreName);
+        selectName(`observer-${coreName}`);
+      }
+      continue;
     }
     if (byScript.has(scriptBasename)) {
       selected.add(byScript.get(scriptBasename).name);

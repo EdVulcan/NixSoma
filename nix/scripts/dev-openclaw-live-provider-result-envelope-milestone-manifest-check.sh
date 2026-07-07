@@ -50,6 +50,9 @@ function requireContains(text, token, context) {
 
 const registryEntries = readTsv(registryFile, ["name", "script", "description"], "registry");
 const registryByName = new Map(registryEntries.map((entry) => [entry.name, entry]));
+const wrapperHelperScript = "dev-openclaw-live-provider-result-envelope-wrapper.sh";
+const wrapperHelperPath = path.join(scriptDir, wrapperHelperScript);
+const wrapperHelper = readIfExists(wrapperHelperPath, "result-envelope wrapper helper");
 const milestones = readTsv(manifestFile, [
   "phase",
   "slug",
@@ -62,6 +65,11 @@ const milestones = readTsv(manifestFile, [
 if (milestones.length !== 18) {
   issues.push({ manifestFile, issue: "expected 18 Phase 99-116 milestone rows", count: milestones.length });
 }
+
+requireContains(wrapperHelper, "openclaw-live-provider-result-envelope-milestones.tsv", { file: wrapperHelperPath });
+requireContains(wrapperHelper, "common-check.sh", { file: wrapperHelperPath });
+requireContains(wrapperHelper, "${phase_env}_PORT_BASE", { file: wrapperHelperPath });
+requireContains(wrapperHelper, "${phase_env}_OBSERVER_CHECK=true", { file: wrapperHelperPath });
 
 for (const [index, milestone] of milestones.entries()) {
   const expectedPhase = 99 + index;
@@ -135,11 +143,10 @@ for (const [index, milestone] of milestones.entries()) {
   requireContains(planDoc, milestone.predecessorSlug, { phase: milestone.phase, file: planDocPath });
   requireContains(planDoc, milestone.nextSlug, { phase: milestone.phase, file: planDocPath });
 
-  requireContains(coreWrapper, `${phaseEnvPrefix}_PORT_BASE=`, { phase: milestone.phase, file: coreWrapperPath });
-  requireContains(coreWrapper, commonScript, { phase: milestone.phase, file: coreWrapperPath });
-  requireContains(observerWrapper, `${phaseEnvPrefix}_OBSERVER_CHECK=true`, { phase: milestone.phase, file: observerWrapperPath });
-  requireContains(observerWrapper, `${phaseEnvPrefix}_PORT_BASE=`, { phase: milestone.phase, file: observerWrapperPath });
-  requireContains(observerWrapper, commonScript, { phase: milestone.phase, file: observerWrapperPath });
+  requireContains(coreWrapper, wrapperHelperScript, { phase: milestone.phase, file: coreWrapperPath });
+  requireContains(coreWrapper, `${milestone.phase} core`, { phase: milestone.phase, file: coreWrapperPath });
+  requireContains(observerWrapper, wrapperHelperScript, { phase: milestone.phase, file: observerWrapperPath });
+  requireContains(observerWrapper, `${milestone.phase} observer`, { phase: milestone.phase, file: observerWrapperPath });
   requireContains(commonCheck, `OBSERVER_CHECK="\${${phaseEnvPrefix}_OBSERVER_CHECK:-false}"`, { phase: milestone.phase, file: commonScriptPath });
   requireContains(commonCheck, `PORT_BASE="\${${phaseEnvPrefix}_PORT_BASE:-`, { phase: milestone.phase, file: commonScriptPath });
   requireContains(commonCheck, `OPENCLAW_PHASE_${milestone.phase}_PLAN.md`, { phase: milestone.phase, file: commonScriptPath });
@@ -163,10 +170,11 @@ const summary = {
       registryRowsChecked: milestones.length * 2,
       phasePlansChecked: milestones.length,
       wrappersChecked: milestones.length * 2,
+      wrapperHelpersChecked: 1,
       commonChecksChecked: milestones.length,
     },
     issues,
-    nextRecommendedSlice: "Generate Phase 99-116 core and observer wrapper shims from this manifest while preserving the current common-check scripts and registry names.",
+    nextRecommendedSlice: "Use this manifest to generate or validate the repeated Phase 99-116 common-check inputs before renaming or deleting legacy scripts.",
   },
 };
 

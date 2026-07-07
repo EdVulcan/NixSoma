@@ -132,7 +132,7 @@ const summary = {
       }] : []),
     ],
     issues,
-    nextRecommendedSlice: "Introduce metadata-generated milestone shims for the repeated late live-provider phase chain, then compare generated names/artifacts against current scripts before renaming or deleting legacy scripts.",
+    nextRecommendedSlice: "Extend the Phase 99-116 live-provider manifest to validate or generate repeated common-check inputs before renaming or deleting legacy scripts.",
   },
 };
 

@@ -55,6 +55,9 @@ Audit sources used for this revision:
 8. Added a Phase 99-116 live-provider result-envelope milestone manifest that
    statically proves registry rows, phase plans, core wrappers, Observer
    wrappers, and common checks still align with one metadata source.
+9. Replaced the 36 Phase 99-116 core/Observer wrapper bodies with a shared
+   manifest-driven wrapper helper while preserving every public script filename
+   and registry entry.
 
 These slices reduced live-provider runtime and milestone orchestration coupling
 while preserving the public runtime API and existing milestone entry names.
@@ -88,9 +91,9 @@ while preserving the public runtime API and existing milestone entry names.
 
 1. Finish reducing active live-provider lane coupling while it remains the
    current development surface.
-2. Generate Phase 99-116 milestone wrappers from the active
-   credential/result-envelope manifest so validation no longer depends on
-   hand-repeated wrapper strings.
+2. Use the active credential/result-envelope manifest to validate or generate
+   repeated common-check inputs so validation no longer depends on hand-repeated
+   artifact, predecessor, status, and docs strings.
 3. Split `route-handlers.mjs` by domain so future phases do not keep editing
    one router chain.
 4. Split `task-executor.mjs` dispatch so new task types register through a
