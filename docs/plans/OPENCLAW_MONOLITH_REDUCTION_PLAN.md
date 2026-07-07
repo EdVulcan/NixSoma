@@ -73,6 +73,16 @@ Audit sources used for this revision:
 15. Replaced the hand-written Phase 99-116 core / Observer milestone registry
     rows with manifest-generated registry directives, preserving public check
     names while reducing duplicated TSV wiring.
+16. Scoped Unix dev service lifecycle state by explicit run id while preserving
+    default legacy state / pid / log compatibility, enabling parallel and batch
+    validation without global process killing.
+17. Added a Phase 99-102 result-envelope batch validation lane that starts one
+    scoped service stack and reuses it across adjacent core and Observer checks.
+18. Confirmed `task-executor.mjs` now uses a `NON_RECOVERABLE_TASK_HANDLERS`
+    predicate/handler registry instead of the previous long task branch chain.
+19. Extracted the Phase 99-115 result-envelope GET route cluster from
+    `route-handlers.mjs` into a focused route group module while preserving all
+    public endpoint paths and builder names.
 
 These slices reduced live-provider runtime and milestone orchestration coupling
 while preserving the public runtime API and existing milestone entry names.
@@ -82,8 +92,8 @@ while preserving the public runtime API and existing milestone entry names.
 | Priority | Area | Coupling Evidence | Safe First Boundary |
 | --- | --- | --- | --- |
 | P0 | `nix/scripts` late credential-value/result-envelope phase chain | Phase number, slug, predecessor, artifact path, registry, status marker, docs token, observer token, endpoint, and `next.recommendedSlice` are repeated across the Phase 99-116 chain. Partial fast-prereq reuse means validation speed and evidence quality depend on per-script string wiring. | Introduce a metadata table for Phases 99-116 and keep existing scripts as shims. First proof should statically compare metadata to current script/doc strings, then run representative phases 100, 108, and 116 in full and fast modes. |
-| P0 | `services/openclaw-core/src/route-handlers.mjs` | Core HTTP dispatch, proxying, phase route mapping, plugin routes, task POST routes, approval surfaces, and workspace/body routes are all in one request chain. Route tokens must be hand-synced with runtime exports, Observer refreshers, and milestone scripts. | Add a route group registration layer while keeping `registerRoutes(deps)` stable. Start with the live-provider credential POST cluster because branches share `{ confirm }` parsing and `201` response shape. |
-| P0 | `services/openclaw-core/src/task-executor.mjs` | Execution dispatch imports many `is...Task`/`execute...Task` pairs and uses a long ordered branch chain for systemd, body evidence, plugins, workspace commands, long-term memory, and cloud live-provider tasks. | Introduce a task execution registry keyed by predicate/handler. Start with cloud live-provider handlers so `executeTaskWithRecovery` can iterate a table instead of growing branches. |
+| P0 | `services/openclaw-core/src/route-handlers.mjs` | Core HTTP dispatch, proxying, phase route mapping, plugin routes, task POST routes, approval surfaces, and workspace/body routes are all in one request chain. Route tokens must be hand-synced with runtime exports, Observer refreshers, and milestone scripts. Phase 99-115 result-envelope GET routes are now grouped, but most live-provider POST routes and non-provider route families still live in the main chain. | Continue route group extraction while keeping `registerRoutes(deps)` stable. Next cohesive target is the live-provider credential POST cluster because branches share `{ confirm }` parsing and `201` response shape. |
+| P0 | `services/openclaw-core/src/task-executor.mjs` | Execution dispatch still imports many `is...Task`/`execute...Task` pairs, but task matching now uses a `NON_RECOVERABLE_TASK_HANDLERS` registry instead of an ordered if/else branch chain. Remaining coupling is the broad import/destructure surface and mixed local executor domains. | Deprioritize branch-chain work; next improvement should split handler groups only when moving a cohesive domain and preserving the registry entry order. |
 | P0 | Observer UI startup and panel synchronization (`client-script-startup.mjs`, `server.mjs`, `client-script-config-dom.mjs`, `client-script-refreshers-cloud.mjs`) | Current contracts are internally consistent, but adding one panel requires matching HTML ids, DOM constants, refresh function, startup call, interval, and milestone token checks. Startup hard-codes every refresher twice: initial `await` sequence and `setInterval` registry. | Introduce a refresh descriptor list grouped by surface and generate startup calls/intervals from it. Then add grouped DOM descriptors for one cloud lane while preserving legacy aliases. |
 | P1 | `services/openclaw-core/src/plan-builder.mjs` | Plugin plans, runtime activation, systemd repair, body evidence, long-term memory, cloud live-provider wiring, policy intent, task creation, approval creation, event publishing, and system-sense fetches share one builder. | Extract the capability registry/invocation slice first: `baseCapabilities`, backend dispatch, result summarization, invocation logging, and registry build behind the same public return names. |
 | P1 | `services/openclaw-core/src/cloud-live-provider-runtime-implementation.mjs` | Still mixes early live-provider route/task lanes with registry constants, approval gates, task phase mutation, persistence, event publication, and repeated deferred execution envelopes. Recent extraction reduced the worst phase-lane coupling. | Continue lane extraction only where it removes cross-phase coupling. Next cohesive target is Phase 99-102 result-envelope route/task/approved-deferred/final-readiness. Separately consider an approved-deferred lifecycle helper that preserves status strings. |
@@ -109,10 +119,11 @@ while preserving the public runtime API and existing milestone entry names.
 2. Use the active credential/result-envelope manifest to extract repeated
    assertion helpers so validation no longer depends on hand-repeated docs,
    Observer, and state JSON assertions.
-3. Split `route-handlers.mjs` by domain so future phases do not keep editing
-   one router chain.
-4. Split `task-executor.mjs` dispatch so new task types register through a
-   domain table instead of a global branch chain.
+3. Continue splitting `route-handlers.mjs` by domain so future phases do not
+   keep editing one router chain.
+4. Split `task-executor.mjs` handler groups only after the current route
+   extraction work, since the global branch chain has already been replaced by
+   a registry table.
 5. Add Observer startup/panel/selector descriptors to stop HTML/DOM/refresher/startup
    drift.
 6. Add broader milestone phase descriptors and shared assertion helpers to reduce slow,

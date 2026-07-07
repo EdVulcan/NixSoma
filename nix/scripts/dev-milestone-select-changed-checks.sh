@@ -195,6 +195,41 @@ function isResultEnvelopeCommonPrereqExtractionOnly(file, scriptBasename) {
   });
 }
 
+function isAllowedResultEnvelopeRouteExtractionAddition(text) {
+  return text === ""
+    || text === 'import { handleCloudLiveProviderResultEnvelopeGetRoute } from "./cloud-live-provider-result-envelope-routes.mjs";'
+    || text === "  if (await handleCloudLiveProviderResultEnvelopeGetRoute({ req, res, requestUrl, planBuilder })) {"
+    || text === "    return;"
+    || text === "  }";
+}
+
+function isAllowedResultEnvelopeRouteExtractionRemoval(text) {
+  return text === ""
+    || text === "    return;"
+    || text === "  }"
+    || /^  if \(req\.method === "GET" && requestUrl\.pathname === "\/cloud-consciousness\/live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope/.test(text)
+    || /^    sendJson\(res, 200, await buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelope.*\(\)\);$/.test(text);
+}
+
+function isResultEnvelopeRouteExtractionOnly(file) {
+  if (file !== "services/openclaw-core/src/route-handlers.mjs") {
+    return false;
+  }
+
+  const fullPath = path.join(process.cwd(), file);
+  if (!fs.existsSync(fullPath)) return false;
+  const currentText = fs.readFileSync(fullPath, "utf8");
+  if (!currentText.includes("handleCloudLiveProviderResultEnvelopeGetRoute")) return false;
+
+  const changedLines = readDiffChangedLines(file);
+  if (!changedLines || changedLines.length === 0) return false;
+  return changedLines.every(({ op, text }) => {
+    if (op === "+") return isAllowedResultEnvelopeRouteExtractionAddition(text);
+    if (op === "-") return isAllowedResultEnvelopeRouteExtractionRemoval(text);
+    return false;
+  });
+}
+
 function selectPhasePlanChecks(file) {
   const match = /docs\/plans\/OPENCLAW_PHASE_(\d+)_PLAN\.md$/.exec(file);
   if (!match) return;
@@ -218,6 +253,7 @@ function selectSourceHeuristics(file) {
   const direct = new Map([
     ["services/openclaw-core/src/task-executor.mjs", ["task-executor"]],
     ["services/openclaw-core/src/route-handlers.mjs", ["task-workbench", "operator-loop", "observer-operator"]],
+    ["services/openclaw-core/src/cloud-live-provider-result-envelope-routes.mjs", ["openclaw-live-provider-result-envelope-batch-reuse"]],
     ["services/openclaw-core/src/server.mjs", ["task-workbench", "operator-loop", "persistence"]],
     ["services/openclaw-core/src/runtime-state.mjs", ["persistence", "operator-loop"]],
     ["apps/observer-ui/src/server.mjs", ["observer-operator"]],
@@ -240,6 +276,11 @@ function selectSourceHeuristics(file) {
 }
 
 for (const file of changedFiles) {
+  if (isResultEnvelopeRouteExtractionOnly(file)) {
+    selectName("openclaw-live-provider-result-envelope-batch-reuse");
+    continue;
+  }
+
   if (file === "nix/scripts/dev-milestone-check.sh"
     || file === "nix/scripts/dev-milestone-checks.tsv"
     || file === "nix/scripts/dev-milestone-expanded-registry.sh"
