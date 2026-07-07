@@ -2,6 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-live-provider-credential-value-local-read-prereq.sh"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 OBSERVER_CHECK="${PHASE79_OBSERVER_CHECK:-false}"
 PORT_BASE="${PHASE79_PORT_BASE:-22800}"
@@ -64,9 +66,7 @@ EOF
   exit 0
 fi
 
-rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE.tmp"
-PHASE78_PORT_BASE="$PORT_BASE" OPENCLAW_CORE_STATE_FILE="$OPENCLAW_CORE_STATE_FILE" OPENCLAW_SYSTEM_HEAL_STATE_FILE="$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
-  bash "$SCRIPT_DIR/dev-openclaw-cloud-consciousness-live-provider-credential-value-access-authorized-local-proof-common-check.sh" >/dev/null
+openclaw_credential_value_local_read_prepare_prereq_state 79
 
 "$SCRIPT_DIR/dev-up.sh"
 ROUTE_FILE="$(mktemp)"
