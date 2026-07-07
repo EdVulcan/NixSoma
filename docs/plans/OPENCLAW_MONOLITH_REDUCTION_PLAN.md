@@ -70,6 +70,9 @@ Audit sources used for this revision:
 14. Extracted the repeated Phase 99-116 fast prerequisite reuse setup into a
     bounded helper while preserving each milestone's local service assertions
     and fallback predecessor script.
+15. Replaced the hand-written Phase 99-116 core / Observer milestone registry
+    rows with manifest-generated registry directives, preserving public check
+    names while reducing duplicated TSV wiring.
 
 These slices reduced live-provider runtime and milestone orchestration coupling
 while preserving the public runtime API and existing milestone entry names.

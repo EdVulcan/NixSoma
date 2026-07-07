@@ -2,7 +2,13 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REGISTRY_FILE="${OPENCLAW_MILESTONE_CHECKS_FILE:-$SCRIPT_DIR/dev-milestone-checks.tsv}"
+REGISTRY_SOURCE_FILE="${OPENCLAW_MILESTONE_CHECKS_FILE:-$SCRIPT_DIR/dev-milestone-checks.tsv}"
+REGISTRY_FILE="$REGISTRY_SOURCE_FILE"
+
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-milestone-registry-expansion.sh"
+openclaw_milestone_prepare_expanded_registry "$SCRIPT_DIR" "$REGISTRY_SOURCE_FILE" REGISTRY_FILE
+trap openclaw_milestone_cleanup_expanded_registry EXIT
 
 node - "$SCRIPT_DIR" "$REGISTRY_FILE" <<'NODE'
 const fs = require("node:fs");

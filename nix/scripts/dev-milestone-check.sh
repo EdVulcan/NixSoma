@@ -4,7 +4,13 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 ARTIFACT_DIR="$REPO_ROOT/.artifacts/milestone-check"
-REGISTRY_FILE="${OPENCLAW_MILESTONE_CHECKS_FILE:-$SCRIPT_DIR/dev-milestone-checks.tsv}"
+REGISTRY_SOURCE_FILE="${OPENCLAW_MILESTONE_CHECKS_FILE:-$SCRIPT_DIR/dev-milestone-checks.tsv}"
+REGISTRY_FILE="$REGISTRY_SOURCE_FILE"
+
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-milestone-registry-expansion.sh"
+openclaw_milestone_prepare_expanded_registry "$SCRIPT_DIR" "$REGISTRY_SOURCE_FILE" REGISTRY_FILE
+trap openclaw_milestone_cleanup_expanded_registry EXIT
 
 mkdir -p "$ARTIFACT_DIR"
 
@@ -106,7 +112,8 @@ results_json=""
 
 echo "OpenClaw milestone check started at $started_at"
 echo "Logs: $ARTIFACT_DIR"
-echo "Registry: $REGISTRY_FILE"
+echo "Registry: $REGISTRY_SOURCE_FILE"
+echo "Expanded registry: $REGISTRY_FILE"
 if [[ -n "$selected_filter" ]]; then
   echo "Selected checks: $selected_filter"
 fi
@@ -156,6 +163,7 @@ cat >"$summary_json" <<EOF
 {
   "startedAt": "$started_at",
   "finishedAt": "$finished_at",
+  "registrySourceFile": $(json_escape "$REGISTRY_SOURCE_FILE"),
   "registryFile": $(json_escape "$REGISTRY_FILE"),
   "total": $total,
   "passed": $passed,

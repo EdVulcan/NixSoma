@@ -3,8 +3,14 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-REGISTRY_FILE="${OPENCLAW_MILESTONE_CHECKS_FILE:-$SCRIPT_DIR/dev-milestone-checks.tsv}"
+REGISTRY_SOURCE_FILE="${OPENCLAW_MILESTONE_CHECKS_FILE:-$SCRIPT_DIR/dev-milestone-checks.tsv}"
+REGISTRY_FILE="$REGISTRY_SOURCE_FILE"
 BASE="${OPENCLAW_MILESTONE_CHANGED_BASE:-}"
+
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-milestone-registry-expansion.sh"
+openclaw_milestone_prepare_expanded_registry "$SCRIPT_DIR" "$REGISTRY_SOURCE_FILE" REGISTRY_FILE
+trap openclaw_milestone_cleanup_expanded_registry EXIT
 
 cd "$REPO_ROOT"
 
@@ -236,6 +242,8 @@ function selectSourceHeuristics(file) {
 for (const file of changedFiles) {
   if (file === "nix/scripts/dev-milestone-check.sh"
     || file === "nix/scripts/dev-milestone-checks.tsv"
+    || file === "nix/scripts/dev-milestone-expanded-registry.sh"
+    || file === "nix/scripts/dev-milestone-registry-expansion.sh"
     || file === "nix/scripts/dev-milestone-registry-check.sh"
     || file === "nix/scripts/dev-milestone-script-audit-check.sh"
     || file === "nix/scripts/dev-milestone-select-changed-checks.sh") {

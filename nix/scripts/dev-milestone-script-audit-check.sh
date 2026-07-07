@@ -3,13 +3,19 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-REGISTRY_FILE="${OPENCLAW_MILESTONE_CHECKS_FILE:-$SCRIPT_DIR/dev-milestone-checks.tsv}"
+REGISTRY_SOURCE_FILE="${OPENCLAW_MILESTONE_CHECKS_FILE:-$SCRIPT_DIR/dev-milestone-checks.tsv}"
+REGISTRY_FILE="$REGISTRY_SOURCE_FILE"
 ARTIFACT_DIR="$REPO_ROOT/.artifacts/milestone-script-audit"
 SUMMARY_FILE="$ARTIFACT_DIR/summary.json"
 LONG_FILENAME_WARNING="${OPENCLAW_MILESTONE_SCRIPT_LONG_FILENAME_WARNING:-180}"
 HARD_FILENAME_LIMIT="${OPENCLAW_MILESTONE_SCRIPT_HARD_FILENAME_LIMIT:-240}"
 
 mkdir -p "$ARTIFACT_DIR"
+
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-milestone-registry-expansion.sh"
+openclaw_milestone_prepare_expanded_registry "$SCRIPT_DIR" "$REGISTRY_SOURCE_FILE" REGISTRY_FILE
+trap openclaw_milestone_cleanup_expanded_registry EXIT
 
 node - "$SCRIPT_DIR" "$REGISTRY_FILE" "$SUMMARY_FILE" "$LONG_FILENAME_WARNING" "$HARD_FILENAME_LIMIT" <<'NODE'
 const fs = require("node:fs");

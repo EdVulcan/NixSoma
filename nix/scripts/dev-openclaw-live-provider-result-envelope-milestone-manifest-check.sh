@@ -3,19 +3,25 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-REGISTRY_FILE="${OPENCLAW_MILESTONE_CHECKS_FILE:-$SCRIPT_DIR/dev-milestone-checks.tsv}"
+REGISTRY_SOURCE_FILE="${OPENCLAW_MILESTONE_CHECKS_FILE:-$SCRIPT_DIR/dev-milestone-checks.tsv}"
+REGISTRY_FILE="$REGISTRY_SOURCE_FILE"
 MANIFEST_FILE="${OPENCLAW_LIVE_PROVIDER_RESULT_ENVELOPE_MILESTONES_FILE:-$SCRIPT_DIR/openclaw-live-provider-result-envelope-milestones.tsv}"
 ARTIFACT_DIR="$REPO_ROOT/.artifacts/live-provider-result-envelope-milestone-manifest"
 SUMMARY_FILE="$ARTIFACT_DIR/summary.json"
 
 mkdir -p "$ARTIFACT_DIR"
 
-node - "$SCRIPT_DIR" "$REPO_ROOT" "$REGISTRY_FILE" "$MANIFEST_FILE" "$SUMMARY_FILE" <<'NODE'
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-milestone-registry-expansion.sh"
+openclaw_milestone_prepare_expanded_registry "$SCRIPT_DIR" "$REGISTRY_SOURCE_FILE" REGISTRY_FILE
+trap openclaw_milestone_cleanup_expanded_registry EXIT
+
+node - "$SCRIPT_DIR" "$REPO_ROOT" "$REGISTRY_FILE" "$REGISTRY_SOURCE_FILE" "$MANIFEST_FILE" "$SUMMARY_FILE" <<'NODE'
 const fs = require("node:fs");
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
 
-const [scriptDir, repoRoot, registryFile, manifestFile, summaryFile] = process.argv.slice(2);
+const [scriptDir, repoRoot, registryFile, registrySourceFile, manifestFile, summaryFile] = process.argv.slice(2);
 const issues = [];
 
 function readTsv(file, columns, label) {
@@ -126,6 +132,7 @@ function primaryStatusMarkersForSlug(slug) {
 
 const registryEntries = readTsv(registryFile, ["name", "script", "description"], "registry");
 const registryByName = new Map(registryEntries.map((entry) => [entry.name, entry]));
+const registrySourceText = readIfExists(registrySourceFile, "source registry");
 const wrapperHelperScript = "dev-openclaw-live-provider-result-envelope-wrapper.sh";
 const wrapperHelperPath = path.join(scriptDir, wrapperHelperScript);
 const wrapperHelper = readIfExists(wrapperHelperPath, "result-envelope wrapper helper");
@@ -161,6 +168,8 @@ requireContains(commonPrereqHelper, "dev-openclaw-fast-prereq-state.sh", { file:
 requireContains(commonPrereqHelper, "openclaw_reuse_prereq_state", { file: commonPrereqHelperPath });
 requireContains(commonPrereqHelper, "fallback_port_base_env", { file: commonPrereqHelperPath });
 requireContains(commonPrereqHelper, "fallback_common_check", { file: commonPrereqHelperPath });
+requireContains(registrySourceText, "# @openclaw-generate-live-provider-result-envelope core", { file: registrySourceFile });
+requireContains(registrySourceText, "# @openclaw-generate-live-provider-result-envelope observer", { file: registrySourceFile });
 
 let commonPrereqHelperCalls = 0;
 for (const [index, milestone] of milestones.entries()) {
@@ -200,6 +209,17 @@ for (const [index, milestone] of milestones.entries()) {
   const observerRegistry = registryByName.get(observerName);
   const expectedCoreDescription = `Phase ${milestone.phase} ${milestone.coreDescription}`;
   const expectedObserverDescription = `Observer visibility for Phase ${milestone.phase} ${milestone.observerDescription}`;
+
+  for (const handwrittenName of [milestone.slug, observerName]) {
+    if (registrySourceText.includes(`\n${handwrittenName}\t`) || registrySourceText.startsWith(`${handwrittenName}\t`)) {
+      issues.push({
+        phase: milestone.phase,
+        file: registrySourceFile,
+        issue: "source registry still contains hand-written result-envelope row",
+        name: handwrittenName,
+      });
+    }
+  }
 
   if (!coreRegistry) {
     issues.push({ phase: milestone.phase, name: milestone.slug, issue: "core registry row missing" });
@@ -320,6 +340,8 @@ const summary = {
     counts: {
       manifestRows: milestones.length,
       registryRowsChecked: milestones.length * 2,
+      generatedRegistryDirectivesChecked: 2,
+      generatedRegistrySourceRowsChecked: milestones.length * 2,
       phasePlansChecked: milestones.length,
       wrappersChecked: milestones.length * 2,
       wrapperHelpersChecked: 1,
