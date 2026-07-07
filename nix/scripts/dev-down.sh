@@ -3,21 +3,38 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-STATE_FILE="$REPO_ROOT/.artifacts/dev-services-unix.tsv"
+ARTIFACT_DIR="$REPO_ROOT/.artifacts"
+OPENCLAW_DEV_DOWN_SCOPE="${OPENCLAW_DEV_DOWN_SCOPE:-current}"
+
+sanitize_run_id() {
+  local raw="$1"
+  printf '%s' "$raw" | tr -c 'A-Za-z0-9_.-' '-'
+}
+
+CORE_PORT="${OPENCLAW_CORE_PORT:-4100}"
+OPENCLAW_DEV_RUN_ID_EXPLICIT="${OPENCLAW_DEV_RUN_ID+x}"
+OPENCLAW_DEV_STATE_FILE_EXPLICIT="${OPENCLAW_DEV_STATE_FILE+x}"
+OPENCLAW_DEV_RUN_ID="$(sanitize_run_id "${OPENCLAW_DEV_RUN_ID:-ports-$CORE_PORT}")"
+if [[ -n "$OPENCLAW_DEV_STATE_FILE_EXPLICIT" ]]; then
+  STATE_FILE="$OPENCLAW_DEV_STATE_FILE"
+elif [[ -n "$OPENCLAW_DEV_RUN_ID_EXPLICIT" ]]; then
+  STATE_FILE="$ARTIFACT_DIR/dev-services-unix-$OPENCLAW_DEV_RUN_ID.tsv"
+else
+  STATE_FILE="$ARTIFACT_DIR/dev-services-unix.tsv"
+fi
 
 ports=(
-  4100 4101 4102 4103 4104 4105 4106 4107 4170
-  "${OPENCLAW_CORE_PORT:-}"
-  "${OPENCLAW_EVENT_HUB_PORT:-}"
-  "${OPENCLAW_SESSION_MANAGER_PORT:-}"
-  "${OPENCLAW_BROWSER_RUNTIME_PORT:-}"
-  "${OPENCLAW_SCREEN_SENSE_PORT:-}"
-  "${OPENCLAW_SCREEN_ACT_PORT:-}"
-  "${OPENCLAW_SYSTEM_SENSE_PORT:-}"
-  "${OPENCLAW_SYSTEM_HEAL_PORT:-}"
-  "${OBSERVER_UI_PORT:-}"
+  "$CORE_PORT"
+  "${OPENCLAW_EVENT_HUB_PORT:-4101}"
+  "${OPENCLAW_SESSION_MANAGER_PORT:-4102}"
+  "${OPENCLAW_BROWSER_RUNTIME_PORT:-4103}"
+  "${OPENCLAW_SCREEN_SENSE_PORT:-4104}"
+  "${OPENCLAW_SCREEN_ACT_PORT:-4105}"
+  "${OPENCLAW_SYSTEM_SENSE_PORT:-4106}"
+  "${OPENCLAW_SYSTEM_HEAL_PORT:-4107}"
+  "${OBSERVER_UI_PORT:-4170}"
 )
-if [[ "${OPENCLAW_DEV_INCLUDE_HIGH_PORT_PHASES:-true}" == "true" ]]; then
+if [[ "$OPENCLAW_DEV_DOWN_SCOPE" == "all" || "${OPENCLAW_DEV_INCLUDE_HIGH_PORT_PHASES:-false}" == "true" ]]; then
   for port in $(seq 19160 19238); do
     ports+=("$port")
   done
@@ -103,18 +120,26 @@ terminate_pid() {
   return 1
 }
 
-if [[ ! -f "$STATE_FILE" ]]; then
-  echo "No unix dev state file found at $STATE_FILE"
-else
+state_files=("$STATE_FILE")
+if [[ "$OPENCLAW_DEV_DOWN_SCOPE" == "all" ]]; then
+  shopt -s nullglob
+  state_files=("$ARTIFACT_DIR"/dev-services-unix.tsv "$ARTIFACT_DIR"/dev-services-unix-*.tsv)
+  shopt -u nullglob
+fi
+
+for state_file in "${state_files[@]}"; do
+  if [[ ! -f "$state_file" ]]; then
+    continue
+  fi
   while IFS=$'\t' read -r name pid _rest; do
     if is_managed_service_pid "${pid:-}"; then
       terminate_pid "$pid" || true
       echo "Stopped $name (PID $pid)"
     fi
-  done <"$STATE_FILE"
+  done <"$state_file"
 
-  rm -f "$STATE_FILE"
-fi
+  rm -f "$state_file"
+done
 
 for port in "${ports[@]}"; do
   if [[ -z "$port" ]]; then
@@ -128,18 +153,20 @@ for port in "${ports[@]}"; do
   fi
 done
 
-while read -r pid; do
-  if is_managed_service_pid "$pid"; then
-    terminate_pid "$pid" || true
-    echo "Stopped stale managed service (PID $pid)"
-  fi
-done < <(
-  if command -v pgrep >/dev/null 2>&1; then
-    pgrep -f 'src/server\.mjs' 2>/dev/null || true
-  elif ps -W -f >/dev/null 2>&1; then
-    ps -W -f 2>/dev/null | awk '/src\/server\.mjs/ && !/awk/ { print $2 }' || true
-  fi
-)
+if [[ "$OPENCLAW_DEV_DOWN_SCOPE" == "all" || "${OPENCLAW_DEV_DOWN_STALE_SCAN:-false}" == "true" ]]; then
+  while read -r pid; do
+    if is_managed_service_pid "$pid"; then
+      terminate_pid "$pid" || true
+      echo "Stopped stale managed service (PID $pid)"
+    fi
+  done < <(
+    if command -v pgrep >/dev/null 2>&1; then
+      pgrep -f 'src/server\.mjs' 2>/dev/null || true
+    elif ps -W -f >/dev/null 2>&1; then
+      ps -W -f 2>/dev/null | awk '/src\/server\.mjs/ && !/awk/ { print $2 }' || true
+    fi
+  )
+fi
 
 for port in "${ports[@]}"; do
   if [[ -n "$port" ]]; then
@@ -147,4 +174,4 @@ for port in "${ports[@]}"; do
   fi
 done
 
-echo "Unix dev services stopped."
+echo "Unix dev services stopped for scope '$OPENCLAW_DEV_DOWN_SCOPE' run '$OPENCLAW_DEV_RUN_ID'."

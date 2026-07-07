@@ -4,7 +4,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 ARTIFACT_DIR="$REPO_ROOT/.artifacts"
-STATE_FILE="$ARTIFACT_DIR/dev-services-unix.tsv"
 OPENCLAW_EVENT_LOG_FILE="${OPENCLAW_EVENT_LOG_FILE:-$ARTIFACT_DIR/openclaw-events.jsonl}"
 
 mkdir -p "$ARTIFACT_DIR"
@@ -25,6 +24,44 @@ SCREEN_ACT_PORT="${OPENCLAW_SCREEN_ACT_PORT:-4105}"
 SYSTEM_SENSE_PORT="${OPENCLAW_SYSTEM_SENSE_PORT:-4106}"
 SYSTEM_HEAL_PORT="${OPENCLAW_SYSTEM_HEAL_PORT:-4107}"
 OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-4170}"
+
+sanitize_run_id() {
+  local raw="$1"
+  printf '%s' "$raw" | tr -c 'A-Za-z0-9_.-' '-'
+}
+
+OPENCLAW_DEV_RUN_ID_EXPLICIT="${OPENCLAW_DEV_RUN_ID+x}"
+OPENCLAW_DEV_STATE_FILE_EXPLICIT="${OPENCLAW_DEV_STATE_FILE+x}"
+OPENCLAW_DEV_RUN_ID="$(sanitize_run_id "${OPENCLAW_DEV_RUN_ID:-ports-$CORE_PORT}")"
+if [[ -n "$OPENCLAW_DEV_STATE_FILE_EXPLICIT" ]]; then
+  STATE_FILE="$OPENCLAW_DEV_STATE_FILE"
+elif [[ -n "$OPENCLAW_DEV_RUN_ID_EXPLICIT" ]]; then
+  STATE_FILE="$ARTIFACT_DIR/dev-services-unix-$OPENCLAW_DEV_RUN_ID.tsv"
+else
+  STATE_FILE="$ARTIFACT_DIR/dev-services-unix.tsv"
+fi
+
+use_scoped_service_artifacts() {
+  [[ -n "$OPENCLAW_DEV_RUN_ID_EXPLICIT" || -n "$OPENCLAW_DEV_STATE_FILE_EXPLICIT" ]]
+}
+
+service_pid_file() {
+  local name="$1"
+  if use_scoped_service_artifacts; then
+    echo "$ARTIFACT_DIR/$OPENCLAW_DEV_RUN_ID-$name.pid"
+  else
+    echo "$ARTIFACT_DIR/$name.pid"
+  fi
+}
+
+service_log_file() {
+  local name="$1"
+  if use_scoped_service_artifacts; then
+    echo "$ARTIFACT_DIR/$OPENCLAW_DEV_RUN_ID-$name.log"
+  else
+    echo "$ARTIFACT_DIR/$name.log"
+  fi
+}
 
 CORE_URL="http://127.0.0.1:$CORE_PORT"
 EVENT_HUB_URL="http://127.0.0.1:$EVENT_HUB_PORT"
@@ -131,9 +168,11 @@ print_health_failure_debug() {
   local name="$1"
   local port="$2"
   local health_url="$3"
-  local log_file="$ARTIFACT_DIR/$name.log"
-  local pid_file="$ARTIFACT_DIR/$name.pid"
+  local log_file
+  local pid_file
   local pid=""
+  log_file="$(service_log_file "$name")"
+  pid_file="$(service_pid_file "$name")"
 
   if [[ -f "$pid_file" ]]; then
     pid="$(cat "$pid_file" 2>/dev/null || true)"
@@ -169,8 +208,10 @@ print_health_failure_debug() {
 start_service_process() {
   local name="$1"
   local working_dir="$2"
-  local pid_file="$ARTIFACT_DIR/$name.pid"
-  local log_file="$ARTIFACT_DIR/$name.log"
+  local pid_file
+  local log_file
+  pid_file="$(service_pid_file "$name")"
+  log_file="$(service_log_file "$name")"
 
   rm -f "$pid_file" "$log_file"
   (
@@ -229,7 +270,7 @@ for entry in "${services[@]}"; do
   for attempt in 1 2; do
     kill_listener_on_port "$port"
     start_service_process "$name" "$working_dir"
-    pid="$(cat "$ARTIFACT_DIR/$name.pid" 2>/dev/null || true)"
+    pid="$(cat "$(service_pid_file "$name")" 2>/dev/null || true)"
 
     if wait_health "$health_url"; then
       success=1
@@ -256,4 +297,5 @@ done
 
 echo
 echo "All services are up."
+echo "Run id: $OPENCLAW_DEV_RUN_ID"
 echo "State file: $STATE_FILE"

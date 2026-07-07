@@ -256,6 +256,10 @@ for (const file of changedFiles) {
   if (file.startsWith("nix/scripts/")) {
     const scriptBasename = path.basename(file);
     selectName("milestone-script-audit");
+    if (scriptBasename === "dev-up.sh" || scriptBasename === "dev-down.sh") {
+      selectName("openclaw-service-lifecycle-scope");
+      continue;
+    }
     if (scriptBasename === "openclaw-live-provider-result-envelope-milestones.tsv"
       || scriptBasename === "dev-openclaw-live-provider-result-envelope-common-env.sh"
       || scriptBasename === "dev-openclaw-live-provider-result-envelope-prereq.sh"
