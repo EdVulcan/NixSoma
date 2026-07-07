@@ -58,6 +58,8 @@ Audit sources used for this revision:
 9. Replaced the 36 Phase 99-116 core/Observer wrapper bodies with a shared
    manifest-driven wrapper helper while preserving every public script filename
    and registry entry.
+10. Extended the Phase 99-116 manifest check to derive each phase primary
+    registry and verify the repeated common-check registry inputs.
 
 These slices reduced live-provider runtime and milestone orchestration coupling
 while preserving the public runtime API and existing milestone entry names.

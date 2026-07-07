@@ -48,6 +48,13 @@ function requireContains(text, token, context) {
   }
 }
 
+function primaryRegistryForSlug(slug) {
+  if (slug.endsWith("-task-shell")) {
+    return `${slug.replace(/-task-shell$/, "-task")}-v0`;
+  }
+  return `${slug}-v0`;
+}
+
 const registryEntries = readTsv(registryFile, ["name", "script", "description"], "registry");
 const registryByName = new Map(registryEntries.map((entry) => [entry.name, entry]));
 const wrapperHelperScript = "dev-openclaw-live-provider-result-envelope-wrapper.sh";
@@ -100,6 +107,7 @@ for (const [index, milestone] of milestones.entries()) {
   const commonScript = `dev-${milestone.slug}-common-check.sh`;
   const observerName = `observer-${milestone.slug}`;
   const observerScript = `dev-observer-${milestone.slug}-check.sh`;
+  const primaryRegistry = primaryRegistryForSlug(milestone.slug);
   const coreRegistry = registryByName.get(milestone.slug);
   const observerRegistry = registryByName.get(observerName);
   const expectedCoreDescription = `Phase ${milestone.phase} ${milestone.coreDescription}`;
@@ -152,6 +160,7 @@ for (const [index, milestone] of milestones.entries()) {
   requireContains(commonCheck, `OPENCLAW_PHASE_${milestone.phase}_PLAN.md`, { phase: milestone.phase, file: commonScriptPath });
   requireContains(commonCheck, milestone.slug, { phase: milestone.phase, file: commonScriptPath });
   requireContains(commonCheck, milestone.predecessorSlug, { phase: milestone.phase, file: commonScriptPath });
+  requireContains(commonCheck, primaryRegistry, { phase: milestone.phase, file: commonScriptPath });
 }
 
 const summary = {
@@ -162,6 +171,7 @@ const summary = {
     phases: milestones.map((milestone) => ({
       phase: milestone.phaseNumber,
       slug: milestone.slug,
+      primaryRegistry: primaryRegistryForSlug(milestone.slug),
       predecessorSlug: milestone.predecessorSlug,
       nextSlug: milestone.nextSlug,
     })),
@@ -172,9 +182,10 @@ const summary = {
       wrappersChecked: milestones.length * 2,
       wrapperHelpersChecked: 1,
       commonChecksChecked: milestones.length,
+      commonPrimaryRegistriesChecked: milestones.length,
     },
     issues,
-    nextRecommendedSlice: "Use this manifest to generate or validate the repeated Phase 99-116 common-check inputs before renaming or deleting legacy scripts.",
+    nextRecommendedSlice: "Extend the manifest check to cover repeated Phase 99-116 common-check status markers and artifact paths before renaming or deleting legacy scripts.",
   },
 };
 
