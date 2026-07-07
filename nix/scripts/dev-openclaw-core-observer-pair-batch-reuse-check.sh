@@ -14,6 +14,14 @@ PAIR_ROWS=(
   "phase62|dev-openclaw-cloud-consciousness-live-provider-egress-execution-route-task-preflight-common-check.sh|PHASE62_PORT_BASE|PHASE62_OBSERVER_CHECK|openclaw-cloud-consciousness-live-provider-egress-execution-route-task-preflight"
   "phase63|dev-openclaw-cloud-consciousness-live-provider-egress-execution-task-shell-common-check.sh|PHASE63_PORT_BASE|PHASE63_OBSERVER_CHECK|openclaw-cloud-consciousness-live-provider-egress-execution-task-shell"
   "phase64|dev-openclaw-cloud-consciousness-live-provider-egress-execution-approved-deferred-common-check.sh|PHASE64_PORT_BASE|PHASE64_OBSERVER_CHECK|openclaw-cloud-consciousness-live-provider-egress-execution-approved-deferred"
+  "phase65|dev-openclaw-cloud-consciousness-live-provider-credential-value-authorization-route-common-check.sh|PHASE65_PORT_BASE|PHASE65_OBSERVER_CHECK|openclaw-cloud-consciousness-live-provider-credential-value-authorization-route"
+  "phase66|dev-openclaw-cloud-consciousness-live-provider-credential-value-authorization-task-shell-common-check.sh|PHASE66_PORT_BASE|PHASE66_OBSERVER_CHECK|openclaw-cloud-consciousness-live-provider-credential-value-authorization-task-shell"
+  "phase67|dev-openclaw-cloud-consciousness-live-provider-credential-value-authorization-approved-deferred-common-check.sh|PHASE67_PORT_BASE|PHASE67_OBSERVER_CHECK|openclaw-cloud-consciousness-live-provider-credential-value-authorization-approved-deferred"
+  "phase68|dev-openclaw-cloud-consciousness-live-provider-credential-value-readiness-preflight-common-check.sh|PHASE68_PORT_BASE|PHASE68_OBSERVER_CHECK|openclaw-cloud-consciousness-live-provider-credential-value-readiness-preflight"
+  "phase69|dev-openclaw-cloud-consciousness-live-provider-credential-value-read-task-shell-common-check.sh|PHASE69_PORT_BASE|PHASE69_OBSERVER_CHECK|openclaw-cloud-consciousness-live-provider-credential-value-read-task-shell"
+  "phase70|dev-openclaw-cloud-consciousness-live-provider-credential-value-read-approved-deferred-common-check.sh|PHASE70_PORT_BASE|PHASE70_OBSERVER_CHECK|openclaw-cloud-consciousness-live-provider-credential-value-read-approved-deferred"
+  "phase71|dev-openclaw-cloud-consciousness-live-provider-credential-value-access-authorization-route-common-check.sh|PHASE71_PORT_BASE|PHASE71_OBSERVER_CHECK|openclaw-cloud-consciousness-live-provider-credential-value-access-authorization-route"
+  "phase72|dev-openclaw-cloud-consciousness-live-provider-credential-value-access-authorization-task-shell-common-check.sh|PHASE72_PORT_BASE|PHASE72_OBSERVER_CHECK|openclaw-cloud-consciousness-live-provider-credential-value-access-authorization-task-shell"
 )
 
 cleanup() {
