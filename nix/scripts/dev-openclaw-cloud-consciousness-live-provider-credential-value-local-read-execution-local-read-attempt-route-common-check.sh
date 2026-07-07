@@ -2,6 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-live-provider-credential-value-local-read-attempt-prereq.sh"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 OBSERVER_CHECK="${PHASE91_OBSERVER_CHECK:-false}"
 PORT_BASE="${PHASE91_PORT_BASE:-24000}"
@@ -23,8 +25,6 @@ CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 OBSERVER_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
 FINAL_READINESS_PREFLIGHT_REGISTRY="openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-final-readiness-preflight-v0"
 LOCAL_READ_ATTEMPT_ROUTE_REGISTRY="openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-route-v0"
-PHASE90_CORE_STATE="$REPO_ROOT/.artifacts/openclaw-core-phase-90-credential-value-local-read-execution-local-read-final-readiness-preflight-check.json"
-PHASE90_SYSTEM_HEAL_STATE="$REPO_ROOT/.artifacts/openclaw-system-heal-phase-90-credential-value-local-read-execution-local-read-final-readiness-preflight-check.json"
 
 cleanup() {
   rm -f "${HTML_FILE:-}" "${CLIENT_FILE:-}" "${ROUTE_FILE:-}"
@@ -66,24 +66,7 @@ EOF
   exit 0
 fi
 
-rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE.tmp"
-if [[ -f "$SCRIPT_DIR/dev-openclaw-fast-prereq-state.sh" ]]; then
-  # shellcheck source=/dev/null
-  source "$SCRIPT_DIR/dev-openclaw-fast-prereq-state.sh"
-fi
-
-if ! declare -F openclaw_reuse_prereq_state >/dev/null \
-  || ! openclaw_reuse_prereq_state \
-    "$PHASE90_CORE_STATE" \
-    "$PHASE90_SYSTEM_HEAL_STATE" \
-    "$OPENCLAW_CORE_STATE_FILE" \
-    "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
-    "phase-90-local-read-final-readiness-preflight" \
-    "$FINAL_READINESS_PREFLIGHT_REGISTRY" \
-    "credential_value_local_read_execution_local_read_final_readiness_preflight_recorded"; then
-  PHASE90_PORT_BASE="$PORT_BASE" OPENCLAW_CORE_STATE_FILE="$OPENCLAW_CORE_STATE_FILE" OPENCLAW_SYSTEM_HEAL_STATE_FILE="$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
-    bash "$SCRIPT_DIR/dev-openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-final-readiness-preflight-common-check.sh" >/dev/null
-fi
+openclaw_credential_value_local_read_attempt_prepare_prereq_state 91
 
 "$SCRIPT_DIR/dev-up.sh"
 ROUTE_FILE="$(mktemp)"

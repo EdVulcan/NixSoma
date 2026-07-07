@@ -25,7 +25,7 @@ The expert review items are considered complete only when each item has code-lev
 | Shell helper duplication E4 | `post_json()` was copied across many scripts. | Complete | 257 local definitions migrated to `dev-openclaw-http-json-helper.sh`; helper mode compatibility covered by `openclaw-http-json-helper`. |
 | Observer mirror test duplication T2 | Observer checks duplicate core setup. | Partial, reusable pair runner expanded | Result-envelope batch milestone covers core and Observer in one live service lifecycle; `dev-openclaw-core-observer-pair-runner.sh` lets compatible core/Observer pairs reuse one service lifecycle while preserving real Observer HTML/client checks; the batch now covers Phase 59-72 compatible pairs. Legacy standalone Observer scripts remain for compatibility. |
 | Fixed sleeps T4 | Scripts use fixed sleeps instead of polling. | Complete | `dev-openclaw-wait-helper.sh` replaces fixed numeric sleeps with bounded polling; audit has no `sleep N` matches under `nix/scripts`; `openclaw-wait-helper` and `@changed` passed. |
-| State reuse P1/T5 | Heavy prerequisite chains are replayed. | Partial, Phase 4/body-evidence/credential-value-local-read/result-envelope reuse complete | Fast prerequisite helper exists for live-provider result-envelope chain; Phase 4 system-heal prerequisite state can be reused by downstream Phase 6 checks; body-evidence demo-status core state and ledger JSONL can be reused by all current follow-up/Observer/Phase 2 completion consumers in explicit fast mode; Phase 73-90 credential-value local-read common checks can reuse manifest-validated direct predecessor state in explicit fast mode while preserving default full-chain fallback. Broader non-body-evidence common prerequisite migration remains pending. |
+| State reuse P1/T5 | Heavy prerequisite chains are replayed. | Partial, Phase 4/body-evidence/credential-value-local-read/result-envelope reuse complete | Fast prerequisite helper exists for live-provider result-envelope chain; Phase 4 system-heal prerequisite state can be reused by downstream Phase 6 checks; body-evidence demo-status core state and ledger JSONL can be reused by all current follow-up/Observer/Phase 2 completion consumers in explicit fast mode; Phase 73-90 credential-value local-read and Phase 91-98 local-read-attempt common checks can reuse manifest-validated persisted predecessor state in explicit fast mode while preserving default full-chain fallback. Broader non-body-evidence common prerequisite migration remains pending. |
 
 ## Current Slice Exit Evidence
 
@@ -64,7 +64,7 @@ The expert review items are considered complete only when each item has code-lev
 
 - `dev-openclaw-core-observer-pair-runner.sh` runs a compatible common-check once for core behavior and once for Observer HTML/client tokens while reusing the same live service lifecycle.
 - `openclaw-core-observer-pair-batch-reuse` is table-driven and covers Phase 59-72 cloud-consciousness launch/credential/egress/credential-authorization pairs outside the result-envelope lane.
-- Phase 73-90 core checks now use a manifest-backed prerequisite helper for direct predecessor state reuse in explicit fast mode, so their bottleneck is no longer treated as simple Observer mirror duplication. Phase 91+ chains remain outside the simple pair batch and require separate lane analysis.
+- Phase 73-90 and Phase 91-98 core checks now use manifest-backed prerequisite helpers for persisted predecessor state reuse in explicit fast mode, so their bottleneck is no longer treated as simple Observer mirror duplication. Batch reuse for these lanes remains a separate optimization step.
 - The pair runner preserves existing public core and Observer milestone scripts; it adds a faster co-validation path without deleting compatibility wrappers.
 - The pair runner now uses scoped event logs and cleans up its scoped services before returning even when a child core or Observer check fails.
 
@@ -118,8 +118,17 @@ The expert review items are considered complete only when each item has code-lev
 - `OPENCLAW_MILESTONE_PREREQ_MODE=fast` representative checks passed for Phase 82, 86, and 90 core milestones plus their Observer mirrors; core logs show direct predecessor state reuse.
 - Default full-mode fallback was preserved: `OPENCLAW_MILESTONE_CHECKS=openclaw-cloud-consciousness-live-provider-credential-value-local-read-final-readiness-preflight bash nix/scripts/dev-milestone-check.sh` passed in 227s.
 
+## Credential-Value Local-Read Attempt Prerequisite Evidence
+
+- `openclaw-live-provider-credential-value-local-read-attempt-milestones.tsv` captures Phase 91-98 slugs, public predecessor/next links, fast-source persisted state links, and prerequisite registry/marker evidence.
+- `dev-openclaw-live-provider-credential-value-local-read-attempt-prereq.sh` replaces the inline fast-prerequisite blocks in Phase 91-98 common checks while preserving default fallback to the public predecessor common check.
+- `dev-openclaw-live-provider-credential-value-local-read-attempt-milestone-manifest-check.sh` validates registry rows, wrappers, common-check helper calls, plan docs, state paths, adjacent public links, and fast-source metadata.
+- `OPENCLAW_MILESTONE_CHECKS=milestone-registry,milestone-script-audit,openclaw-live-provider-credential-value-local-read-attempt-milestone-manifest bash nix/scripts/dev-milestone-check.sh` passed.
+- `OPENCLAW_MILESTONE_PREREQ_MODE=fast` representative checks passed for Phase 91, 92, 94, and 98 core milestones plus their Observer mirrors; core logs show persisted predecessor state reuse.
+- Default full-mode fallback was preserved: `OPENCLAW_MILESTONE_CHECKS=openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-final-readiness-preflight bash nix/scripts/dev-milestone-check.sh` passed in 476s.
+
 ## Next Expert Items After This Slice
 
 1. Add focused service-layer unit tests for task dispatch execution branches as those branches are touched.
 2. Continue moving shared event names into non-core service publish call sites as those modules are touched.
-3. Analyze Phase 91-98 and other remaining prerequisite chains for manifest-backed state reuse or batch reuse without weakening real service assertions.
+3. Add Phase 91-98 local-read-attempt batch reuse, then Phase 73-90 local-read batch reuse, without weakening real service assertions.

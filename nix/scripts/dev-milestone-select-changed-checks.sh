@@ -51,6 +51,8 @@ const httpJsonHelperCheck = "openclaw-http-json-helper";
 const waitHelperCheck = "openclaw-wait-helper";
 const credentialValueLocalReadManifestCheck = "openclaw-live-provider-credential-value-local-read-milestone-manifest";
 const credentialValueLocalReadManifestFile = path.join(scriptDir, "openclaw-live-provider-credential-value-local-read-milestones.tsv");
+const credentialValueLocalReadAttemptManifestCheck = "openclaw-live-provider-credential-value-local-read-attempt-milestone-manifest";
+const credentialValueLocalReadAttemptManifestFile = path.join(scriptDir, "openclaw-live-provider-credential-value-local-read-attempt-milestones.tsv");
 const resultEnvelopeManifestCheck = "openclaw-live-provider-result-envelope-milestone-manifest";
 const resultEnvelopeScriptNeedle = "credential-value-local-read-execution-local-read-attempt-local-read-result-envelope";
 const resultEnvelopeCommonEnvHelper = "dev-openclaw-live-provider-result-envelope-common-env.sh";
@@ -73,6 +75,25 @@ const credentialValueLocalReadHelperScripts = new Set([
   "dev-openclaw-live-provider-credential-value-local-read-common-env.sh",
   "dev-openclaw-live-provider-credential-value-local-read-prereq.sh",
   "dev-openclaw-live-provider-credential-value-local-read-milestone-manifest-check.sh",
+]);
+
+function readCredentialValueLocalReadAttemptCommonScripts() {
+  if (!fs.existsSync(credentialValueLocalReadAttemptManifestFile)) return new Set();
+  return new Set(fs.readFileSync(credentialValueLocalReadAttemptManifestFile, "utf8")
+    .split(/\n/)
+    .map((line) => line.replace(/\r$/, ""))
+    .filter((line) => line.trim() && !line.startsWith("#"))
+    .map((line) => line.split("\t")[1])
+    .filter(Boolean)
+    .map((slug) => `dev-${slug}-common-check.sh`));
+}
+
+const credentialValueLocalReadAttemptCommonScripts = readCredentialValueLocalReadAttemptCommonScripts();
+const credentialValueLocalReadAttemptHelperScripts = new Set([
+  "openclaw-live-provider-credential-value-local-read-attempt-milestones.tsv",
+  "dev-openclaw-live-provider-credential-value-local-read-attempt-common-env.sh",
+  "dev-openclaw-live-provider-credential-value-local-read-attempt-prereq.sh",
+  "dev-openclaw-live-provider-credential-value-local-read-attempt-milestone-manifest-check.sh",
 ]);
 
 function isBodyEvidenceFastPrereqScript(scriptBasename) {
@@ -218,6 +239,53 @@ function isCredentialValueLocalReadCommonPrereqExtractionOnly(file, scriptBasena
   return changedLines.every(({ op, text }) => {
     if (op === "+") return isAllowedCredentialValueLocalReadPrereqExtractionAddition(text);
     if (op === "-") return isAllowedCredentialValueLocalReadPrereqExtractionRemoval(text);
+    return false;
+  });
+}
+
+function isAllowedCredentialValueLocalReadAttemptPrereqExtractionAddition(text) {
+  return text === ""
+    || text === "# shellcheck source=/dev/null"
+    || text === 'source "$SCRIPT_DIR/dev-openclaw-live-provider-credential-value-local-read-attempt-prereq.sh"'
+    || /^openclaw_credential_value_local_read_attempt_prepare_prereq_state (9[1-8])$/.test(text);
+}
+
+function isAllowedCredentialValueLocalReadAttemptPrereqExtractionRemoval(text) {
+  return text === ""
+    || /^PHASE[0-9]+_(CORE|SYSTEM_HEAL)_STATE="\$REPO_ROOT\/\.artifacts\/openclaw-(core|system-heal)-phase-[^"]+-check\.json"$/.test(text)
+    || /^[ \t]*rm -f "\$OPENCLAW_CORE_STATE_FILE" "\$OPENCLAW_CORE_STATE_FILE\.tmp" "\$OPENCLAW_SYSTEM_HEAL_STATE_FILE" "\$OPENCLAW_SYSTEM_HEAL_STATE_FILE\.tmp"$/.test(text)
+    || /^[ \t]*if \[\[ -f "\$SCRIPT_DIR\/dev-openclaw-fast-prereq-state\.sh" \]\]; then$/.test(text)
+    || /^[ \t]*# shellcheck source=\/dev\/null$/.test(text)
+    || /^[ \t]*source "\$SCRIPT_DIR\/dev-openclaw-fast-prereq-state\.sh"$/.test(text)
+    || /^[ \t]*fi$/.test(text)
+    || /^[ \t]*if ! declare -F openclaw_reuse_prereq_state >\/dev\/null \\$/.test(text)
+    || /^[ \t]*\|\| ! openclaw_reuse_prereq_state \\$/.test(text)
+    || /^[ \t]*"\$PHASE[0-9]+_(CORE|SYSTEM_HEAL)_STATE" \\$/.test(text)
+    || /^[ \t]*"\$OPENCLAW_CORE_STATE_FILE" \\$/.test(text)
+    || /^[ \t]*"\$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \\$/.test(text)
+    || /^[ \t]*"phase-[^"]+" \\$/.test(text)
+    || /^[ \t]*"\$[A-Z0-9_]+" \\$/.test(text)
+    || /^[ \t]*"[^"]+"; then$/.test(text)
+    || /^[ \t]*PHASE[0-9]+_PORT_BASE="\$PORT_BASE" OPENCLAW_CORE_STATE_FILE="\$OPENCLAW_CORE_STATE_FILE" OPENCLAW_SYSTEM_HEAL_STATE_FILE="\$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \\$/.test(text)
+    || /^[ \t]*bash "\$SCRIPT_DIR\/dev-[^"]+-common-check\.sh" >\/dev\/null$/.test(text);
+}
+
+function isCredentialValueLocalReadAttemptCommonPrereqExtractionOnly(file, scriptBasename) {
+  if (!credentialValueLocalReadAttemptCommonScripts.has(scriptBasename)) {
+    return false;
+  }
+
+  const fullPath = path.join(process.cwd(), file);
+  if (!fs.existsSync(fullPath)) return false;
+  const currentText = fs.readFileSync(fullPath, "utf8");
+  if (!currentText.includes("dev-openclaw-live-provider-credential-value-local-read-attempt-prereq.sh")) return false;
+  if (!currentText.includes("openclaw_credential_value_local_read_attempt_prepare_prereq_state")) return false;
+
+  const changedLines = readDiffChangedLines(file);
+  if (!changedLines || changedLines.length === 0) return false;
+  return changedLines.every(({ op, text }) => {
+    if (op === "+") return isAllowedCredentialValueLocalReadAttemptPrereqExtractionAddition(text);
+    if (op === "-") return isAllowedCredentialValueLocalReadAttemptPrereqExtractionRemoval(text);
     return false;
   });
 }
@@ -389,6 +457,9 @@ function selectPhasePlanChecks(file) {
   if (numericPhase >= 73 && numericPhase <= 90) {
     selectName(credentialValueLocalReadManifestCheck);
   }
+  if (numericPhase >= 91 && numericPhase <= 98) {
+    selectName(credentialValueLocalReadAttemptManifestCheck);
+  }
   if (numericPhase >= 99 && numericPhase <= 116) {
     selectName(resultEnvelopeManifestCheck);
   }
@@ -469,6 +540,7 @@ for (const file of changedFiles) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");
     selectName(credentialValueLocalReadManifestCheck);
+    selectName(credentialValueLocalReadAttemptManifestCheck);
     selectName(resultEnvelopeManifestCheck);
     continue;
   }
@@ -526,6 +598,23 @@ for (const file of changedFiles) {
     }
     if (credentialValueLocalReadCommonScripts.has(scriptBasename)) {
       if (isCredentialValueLocalReadCommonPrereqExtractionOnly(file, scriptBasename)) {
+        structurallyCoveredCommonChecks.push(file);
+        continue;
+      }
+      const coreName = scriptBasename.replace(/^dev-/, "").replace(/-common-check\.sh$/, "");
+      selectName(coreName);
+      selectName(`observer-${coreName}`);
+      continue;
+    }
+    if (credentialValueLocalReadAttemptHelperScripts.has(scriptBasename)
+      || credentialValueLocalReadAttemptCommonScripts.has(scriptBasename)) {
+      selectName(credentialValueLocalReadAttemptManifestCheck);
+    }
+    if (credentialValueLocalReadAttemptHelperScripts.has(scriptBasename)) {
+      continue;
+    }
+    if (credentialValueLocalReadAttemptCommonScripts.has(scriptBasename)) {
+      if (isCredentialValueLocalReadAttemptCommonPrereqExtractionOnly(file, scriptBasename)) {
         structurallyCoveredCommonChecks.push(file);
         continue;
       }

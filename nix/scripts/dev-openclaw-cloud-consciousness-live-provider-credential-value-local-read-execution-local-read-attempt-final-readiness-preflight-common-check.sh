@@ -2,6 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-live-provider-credential-value-local-read-attempt-prereq.sh"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 OBSERVER_CHECK="${PHASE94_OBSERVER_CHECK:-false}"
 PORT_BASE="${PHASE94_PORT_BASE:-24300}"
@@ -24,8 +26,6 @@ OBSERVER_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
 LOCAL_READ_ATTEMPT_APPROVED_DEFERRED_REGISTRY="openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-approved-deferred-v0"
 LOCAL_READ_ATTEMPT_FINAL_READINESS_PREFLIGHT_REGISTRY="openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-final-readiness-preflight-v0"
 LOCAL_READ_ATTEMPT_TASK_REGISTRY="openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-task-v0"
-PHASE93_CORE_STATE="$REPO_ROOT/.artifacts/openclaw-core-phase-93-credential-value-local-read-execution-local-read-attempt-approved-deferred-check.json"
-PHASE93_SYSTEM_HEAL_STATE="$REPO_ROOT/.artifacts/openclaw-system-heal-phase-93-credential-value-local-read-execution-local-read-attempt-approved-deferred-check.json"
 
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
@@ -71,24 +71,7 @@ EOF
   exit 0
 fi
 
-rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" "$OPENCLAW_SYSTEM_HEAL_STATE_FILE.tmp"
-if [[ -f "$SCRIPT_DIR/dev-openclaw-fast-prereq-state.sh" ]]; then
-  # shellcheck source=/dev/null
-  source "$SCRIPT_DIR/dev-openclaw-fast-prereq-state.sh"
-fi
-
-if ! declare -F openclaw_reuse_prereq_state >/dev/null \
-  || ! openclaw_reuse_prereq_state \
-    "$PHASE93_CORE_STATE" \
-    "$PHASE93_SYSTEM_HEAL_STATE" \
-    "$OPENCLAW_CORE_STATE_FILE" \
-    "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
-    "phase-93-local-read-attempt-approved-deferred-state" \
-    "$LOCAL_READ_ATTEMPT_TASK_REGISTRY" \
-    "cloud_consciousness_live_provider_credential_value_local_read_execution_local_read_attempt_task_shell_deferred"; then
-  PHASE93_PORT_BASE="$PORT_BASE" OPENCLAW_CORE_STATE_FILE="$OPENCLAW_CORE_STATE_FILE" OPENCLAW_SYSTEM_HEAL_STATE_FILE="$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
-    bash "$SCRIPT_DIR/dev-openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-approved-deferred-common-check.sh" >/dev/null
-fi
+openclaw_credential_value_local_read_attempt_prepare_prereq_state 94
 
 "$SCRIPT_DIR/dev-up.sh"
 BEFORE_FILE="$(mktemp)"
