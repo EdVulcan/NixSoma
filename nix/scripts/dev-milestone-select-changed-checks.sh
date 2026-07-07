@@ -94,6 +94,7 @@ const credentialValueLocalReadAttemptHelperScripts = new Set([
   "dev-openclaw-live-provider-credential-value-local-read-attempt-common-env.sh",
   "dev-openclaw-live-provider-credential-value-local-read-attempt-prereq.sh",
   "dev-openclaw-live-provider-credential-value-local-read-attempt-milestone-manifest-check.sh",
+  "dev-openclaw-live-provider-credential-value-local-read-attempt-batch-reuse-check.sh",
 ]);
 
 function isBodyEvidenceFastPrereqScript(scriptBasename) {
@@ -609,6 +610,10 @@ for (const file of changedFiles) {
     if (credentialValueLocalReadAttemptHelperScripts.has(scriptBasename)
       || credentialValueLocalReadAttemptCommonScripts.has(scriptBasename)) {
       selectName(credentialValueLocalReadAttemptManifestCheck);
+      if (scriptBasename === "dev-openclaw-live-provider-credential-value-local-read-attempt-batch-reuse-check.sh"
+        || scriptBasename === "dev-openclaw-live-provider-credential-value-local-read-attempt-prereq.sh") {
+        selectName("openclaw-live-provider-credential-value-local-read-attempt-batch-reuse");
+      }
     }
     if (credentialValueLocalReadAttemptHelperScripts.has(scriptBasename)) {
       continue;
