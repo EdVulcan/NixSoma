@@ -3,6 +3,7 @@ import { execFile } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
+import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -317,7 +318,7 @@ async function deferSystemdRepairExecutionTask(task) {
   deferredTask.closedAt = deferredTask.updatedAt;
   reconcileRuntimeState();
   persistState();
-  await publishEvent("systemd.repair.execution_deferred", { task: serialiseTask(deferredTask) });
+  await publishEvent(createEventName("systemd.repair.execution_deferred"), { task: serialiseTask(deferredTask) });
 
   return {
     task: deferredTask,
@@ -484,7 +485,7 @@ async function executeBodyEvidenceLedgerDirectoryTask(task) {
     durableStorageWritten: false,
     recordWritesEnabled: false,
   });
-  await publishEvent("body_evidence_ledger.directory_created", {
+  await publishEvent(createEventName("body_evidence_ledger.directory_created"), {
     task: serialiseTask(completedTask),
     target: displayPath,
     path: result.path ?? null,
@@ -605,7 +606,7 @@ async function executeBodyEvidenceLedgerFirstRecordTask(task) {
     backgroundWriter: false,
     bulkImport: false,
   });
-  await publishEvent("body_evidence_ledger.first_record_appended", {
+  await publishEvent(createEventName("body_evidence_ledger.first_record_appended"), {
     task: serialiseTask(completedTask),
     ledgerFile: ledgerFileDisplayPath,
     recordId: record.id,
@@ -685,7 +686,7 @@ async function deferBodyEvidenceLedgerFollowupRecordTask(task) {
     },
   };
   persistState();
-  await publishEvent("body_evidence_ledger.followup_record_deferred", {
+  await publishEvent(createEventName("body_evidence_ledger.followup_record_deferred"), {
     task: serialiseTask(deferredTask),
     recordType,
     plannedSequence,
@@ -829,7 +830,7 @@ async function executeBodyEvidenceLedgerFollowupRecordTask(task) {
     backgroundWriter: false,
     bulkImport: false,
   });
-  await publishEvent("body_evidence_ledger.followup_record_appended", {
+  await publishEvent(createEventName("body_evidence_ledger.followup_record_appended"), {
     task: serialiseTask(completedTask),
     ledgerFile: ledgerFileDisplayPath,
     recordId: record.id,
@@ -1110,7 +1111,7 @@ async function deferSystemdNextRepairTask(task) {
   deferredTask.closedAt = deferredTask.updatedAt;
   reconcileRuntimeState();
   persistState();
-  await publishEvent("systemd.next_repair.execution_deferred", { task: serialiseTask(deferredTask) });
+  await publishEvent(createEventName("systemd.next_repair.execution_deferred"), { task: serialiseTask(deferredTask) });
 
   return {
     task: deferredTask,
@@ -1252,7 +1253,7 @@ async function deferNativePluginCapabilityExecution(task) {
   }
 
   const policy = ensureTaskPolicy(task, { stage: "native_plugin.invoke.deferred" });
-  await publishEvent("policy.evaluated", { task: serialiseTask(task), policy: policy.decision });
+  await publishEvent(createEventName("policy.evaluated"), { task: serialiseTask(task), policy: policy.decision });
   const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
   const capabilityStep = (task.plan?.steps ?? []).find((step) => step.kind === "plugin.capability.invoke") ?? null;
   const reason = "runtime_adapter_deferred";
@@ -1270,7 +1271,7 @@ async function deferNativePluginCapabilityExecution(task) {
     },
   });
 
-  await publishEvent("task.blocked", {
+  await publishEvent(createEventName("task.blocked"), {
     task: serialiseTask(deferredTask),
     reason,
     executor: "native-plugin-adapter-v0",
@@ -1303,7 +1304,7 @@ async function deferNativePluginRuntimeActivation(task) {
   }
 
   const policy = ensureTaskPolicy(task, { stage: "native_plugin.runtime_activation.deferred" });
-  await publishEvent("policy.evaluated", { task: serialiseTask(task), policy: policy.decision });
+  await publishEvent(createEventName("policy.evaluated"), { task: serialiseTask(task), policy: policy.decision });
   const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
   const activationStep = (task.plan?.steps ?? []).find((step) => step.kind === "plugin.runtime_activation") ?? null;
   const reason = "native_plugin_runtime_activation_deferred";
@@ -1324,7 +1325,7 @@ async function deferNativePluginRuntimeActivation(task) {
     },
   });
 
-  await publishEvent("task.blocked", {
+  await publishEvent(createEventName("task.blocked"), {
     task: serialiseTask(deferredTask),
     reason,
     executor: "native-plugin-runtime-activation-v0",
@@ -1359,7 +1360,7 @@ async function deferNativePluginRuntimeAdapterImplementation(task) {
   }
 
   const policy = ensureTaskPolicy(task, { stage: "native_plugin.runtime_adapter.deferred" });
-  await publishEvent("policy.evaluated", { task: serialiseTask(task), policy: policy.decision });
+  await publishEvent(createEventName("policy.evaluated"), { task: serialiseTask(task), policy: policy.decision });
   const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
   const adapterStep = (task.plan?.steps ?? []).find((step) => step.kind === "plugin.runtime_adapter_implementation") ?? null;
   const reason = "native_plugin_runtime_adapter_implementation_deferred";
@@ -1382,7 +1383,7 @@ async function deferNativePluginRuntimeAdapterImplementation(task) {
     },
   });
 
-  await publishEvent("task.blocked", {
+  await publishEvent(createEventName("task.blocked"), {
     task: serialiseTask(deferredTask),
     reason,
     executor: "native-plugin-runtime-adapter-v0",
@@ -1417,7 +1418,7 @@ async function deferOpenClawSearchWebAdapterExecution(task) {
   }
 
   const policy = ensureTaskPolicy(task, { stage: "openclaw.search_web.invoke.deferred" });
-  await publishEvent("policy.evaluated", { task: serialiseTask(task), policy: policy.decision });
+  await publishEvent(createEventName("policy.evaluated"), { task: serialiseTask(task), policy: policy.decision });
   const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
   const providerStep = (task.plan?.steps ?? []).find((step) => step.kind === "plugin.search_web.invoke") ?? null;
   const reason = "search_web_runtime_preflight_deferred";
@@ -1438,7 +1439,7 @@ async function deferOpenClawSearchWebAdapterExecution(task) {
     },
   });
 
-  await publishEvent("task.blocked", {
+  await publishEvent(createEventName("task.blocked"), {
     task: serialiseTask(deferredTask),
     reason,
     executor: "openclaw-search-web-adapter-v0",
@@ -1472,7 +1473,7 @@ async function deferOpenClawSearchWebRuntimeActivation(task) {
   }
 
   const policy = ensureTaskPolicy(task, { stage: "openclaw.search_web.runtime_activation.deferred" });
-  await publishEvent("policy.evaluated", { task: serialiseTask(task), policy: policy.decision });
+  await publishEvent(createEventName("policy.evaluated"), { task: serialiseTask(task), policy: policy.decision });
   const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
   const activationStep = (task.plan?.steps ?? []).find((step) => step.kind === "plugin.search_web.runtime_activation") ?? null;
   const reason = "search_web_network_runtime_adapter_deferred";
@@ -1492,7 +1493,7 @@ async function deferOpenClawSearchWebRuntimeActivation(task) {
     },
   });
 
-  await publishEvent("task.blocked", {
+  await publishEvent(createEventName("task.blocked"), {
     task: serialiseTask(deferredTask),
     reason,
     executor: "openclaw-search-web-runtime-activation-v0",
@@ -1526,7 +1527,7 @@ async function deferOpenClawSearchWebProviderRuntimeSandbox(task) {
   }
 
   const policy = ensureTaskPolicy(task, { stage: "openclaw.search_web.provider_runtime_sandbox.deferred" });
-  await publishEvent("policy.evaluated", { task: serialiseTask(task), policy: policy.decision });
+  await publishEvent(createEventName("policy.evaluated"), { task: serialiseTask(task), policy: policy.decision });
   const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
   const sandboxStep = (task.plan?.steps ?? []).find((step) => step.kind === "plugin.search_web.provider_runtime_sandbox") ?? null;
   const reason = "search_web_provider_runtime_sandbox_deferred";
@@ -1551,7 +1552,7 @@ async function deferOpenClawSearchWebProviderRuntimeSandbox(task) {
     },
   });
 
-  await publishEvent("task.blocked", {
+  await publishEvent(createEventName("task.blocked"), {
     task: serialiseTask(deferredTask),
     reason,
     executor: "openclaw-search-web-provider-runtime-sandbox-v0",
@@ -2085,7 +2086,7 @@ async function executeTask(task, options = {}) {
   }
 
   const policy = ensureTaskPolicy(task, { stage: "task.execute", targetUrl });
-  await publishEvent("policy.evaluated", { task: serialiseTask(task), policy: policy.decision });
+  await publishEvent(createEventName("policy.evaluated"), { task: serialiseTask(task), policy: policy.decision });
   if (!isPolicyExecutionAllowed(policy.decision)) {
     const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
     const failedTask = failTask(task, `Policy blocked task execution: ${policy.decision.reason}`, {
@@ -2094,7 +2095,7 @@ async function executeTask(task, options = {}) {
       policy: policy.decision,
       approval: approval ? serialiseApproval(approval) : null,
     });
-    await publishEvent("task.failed", {
+    await publishEvent(createEventName("task.failed"), {
       task: serialiseTask(failedTask),
       reason: "Policy blocked task execution.",
       policy: policy.decision,
@@ -2139,7 +2140,7 @@ async function executeTask(task, options = {}) {
       entryUrl: targetUrl,
     });
     const attachedTask = attachTaskToWorkView(task, buildWorkViewAttachPayload(reveal, targetUrl));
-    await publishEvent("task.running", { task: serialiseTask(attachedTask) });
+    await publishEvent(createEventName("task.running"), { task: serialiseTask(attachedTask) });
 
     await setTaskPhase(task, "observing_screen", {
       status: "running",
@@ -2191,7 +2192,7 @@ async function executeTask(task, options = {}) {
         actionEvidence: verification.actionEvidence ?? null,
         actionCount: actionResults.length,
       });
-      await publishEvent("task.failed", {
+      await publishEvent(createEventName("task.failed"), {
         task: serialiseTask(failedTask),
         reason: "Executor verification failed.",
         verification,
@@ -2252,7 +2253,7 @@ async function executeTask(task, options = {}) {
         displayTarget: workView.displayTarget ?? displayTarget,
       },
     });
-    await publishEvent("task.completed", { task: serialiseTask(updatedTask), executor: "core-v2", verification });
+    await publishEvent(createEventName("task.completed"), { task: serialiseTask(updatedTask), executor: "core-v2", verification });
     return {
       task: updatedTask,
       prepare,
@@ -2270,7 +2271,7 @@ async function executeTask(task, options = {}) {
       executor: "core-v1",
       actionCount: actionResults.length,
     });
-    await publishEvent("task.failed", { task: serialiseTask(failedTask), reason: message, executor: "core-v1" });
+    await publishEvent(createEventName("task.failed"), { task: serialiseTask(failedTask), reason: message, executor: "core-v1" });
     throw error;
   }
 }
@@ -2286,7 +2287,7 @@ async function executeCapabilityPlanTask(task, options = {}) {
   }
 
   const policy = ensureTaskPolicy(task, { stage: "capability_plan.execute" });
-  await publishEvent("policy.evaluated", { task: serialiseTask(task), policy: policy.decision });
+  await publishEvent(createEventName("policy.evaluated"), { task: serialiseTask(task), policy: policy.decision });
   if (!isPolicyExecutionAllowed(policy.decision)) {
     const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
     const failedTask = failTask(task, `Policy blocked capability plan execution: ${policy.decision.reason}`, {
@@ -2294,7 +2295,7 @@ async function executeCapabilityPlanTask(task, options = {}) {
       policy: policy.decision,
       approval: approval ? serialiseApproval(approval) : null,
     });
-    await publishEvent("task.failed", {
+    await publishEvent(createEventName("task.failed"), {
       task: serialiseTask(failedTask),
       reason: "Policy blocked capability plan execution.",
       policy: policy.decision,
@@ -2313,7 +2314,7 @@ async function executeCapabilityPlanTask(task, options = {}) {
   const approvalGate = buildCapabilityApprovalGate(task, actionSteps);
   if (approvalGate) {
     const approval = createApprovalRequestForTask(task, approvalGate.decision);
-    await publishEvent("policy.evaluated", {
+    await publishEvent(createEventName("policy.evaluated"), {
       task: serialiseTask(task),
       policy: approvalGate.decision,
       capability: approvalGate.capability,
@@ -2377,7 +2378,7 @@ async function executeCapabilityPlanTask(task, options = {}) {
           invocation: response.invocation ?? null,
           policy: response.policy ?? null,
         });
-        await publishEvent("task.failed", {
+        await publishEvent(createEventName("task.failed"), {
           task: serialiseTask(failedTask),
           reason: "Capability invocation blocked.",
           invocation: response.invocation ?? null,
@@ -2419,7 +2420,7 @@ async function executeCapabilityPlanTask(task, options = {}) {
           failedCommand: transcriptEntry,
           onFailure: failureMode,
         });
-        await publishEvent("task.failed", {
+        await publishEvent(createEventName("task.failed"), {
           task: serialiseTask(failedTask),
           reason,
           invocation: response.invocation ?? null,
@@ -2448,7 +2449,7 @@ async function executeCapabilityPlanTask(task, options = {}) {
       })),
       commandTranscript,
     });
-    await publishEvent("task.completed", {
+    await publishEvent(createEventName("task.completed"), {
       task: serialiseTask(completedTask),
       executor: "capability-invoke-v1",
       capabilityInvocations: capabilityInvocations.map((response) => response.invocation ?? null),
@@ -2468,7 +2469,7 @@ async function executeCapabilityPlanTask(task, options = {}) {
       capabilityInvocations,
       commandTranscript,
     });
-    await publishEvent("task.failed", { task: serialiseTask(failedTask), reason: message, executor: "capability-invoke-v1" });
+    await publishEvent(createEventName("task.failed"), { task: serialiseTask(failedTask), reason: message, executor: "capability-invoke-v1" });
     return {
       task: failedTask,
       actions: [],
@@ -2745,9 +2746,9 @@ async function executeTaskWithRecovery(task, options = {}) {
     const recoveredTask = recoverTask(sourceTask);
     recoveredTaskIds.push(recoveredTask.id);
     reconcileRuntimeState();
-    await publishEvent("task.created", { task: serialiseTask(recoveredTask), executor: "core-v3" });
+    await publishEvent(createEventName("task.created"), { task: serialiseTask(recoveredTask), executor: "core-v3" });
     await publishTaskApprovalIfPending(recoveredTask);
-    await publishEvent("task.recovered", {
+    await publishEvent(createEventName("task.recovered"), {
       task: serialiseTask(recoveredTask),
       recoveredFromTaskId: sourceTask.id,
       autoRecovered: true,
@@ -2853,7 +2854,7 @@ async function runOperatorStep(body = {}) {
   }
 
   const policy = ensureTaskPolicy(task, { stage: "operator.step" });
-  await publishEvent("policy.evaluated", { task: serialiseTask(task), policy: policy.decision });
+  await publishEvent(createEventName("policy.evaluated"), { task: serialiseTask(task), policy: policy.decision });
   if (!isPolicyExecutionAllowed(policy.decision)) {
     const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
     return {

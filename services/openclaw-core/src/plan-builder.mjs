@@ -1,4 +1,5 @@
 import { createOpenClawNativePluginRegistry } from "../../../packages/plugin-runtime/src/plugin-registry.mjs";
+import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { createCloudLiveProviderRuntimeImplementation } from "./cloud-live-provider-runtime-implementation.mjs";
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
@@ -1096,10 +1097,10 @@ async function createNativePluginRuntimeActivationTask({
   reconcileRuntimeState();
   persistState();
 
-  await publishEvent("task.created", { task: serialiseTask(task), planner: "openclaw-native-plugin-runtime-activation-task-v0" });
+  await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: "openclaw-native-plugin-runtime-activation-task-v0" });
   await publishTaskApprovalIfPending(task);
-  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+  await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
     task: serialiseTask(reclaimedTask),
   })));
 
@@ -1160,10 +1161,10 @@ async function createNativePluginRuntimeAdapterTask({
   reconcileRuntimeState();
   persistState();
 
-  await publishEvent("task.created", { task: serialiseTask(task), planner: "openclaw-native-plugin-runtime-adapter-task-v0" });
+  await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: "openclaw-native-plugin-runtime-adapter-task-v0" });
   await publishTaskApprovalIfPending(task);
-  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+  await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
     task: serialiseTask(reclaimedTask),
   })));
 
@@ -1222,10 +1223,10 @@ async function createNativePluginInvokeTask({ packagePath = null, capabilityId =
   reconcileRuntimeState();
   persistState();
 
-  await publishEvent("task.created", { task: serialiseTask(task), planner: "native-plugin-invoke-plan-v0" });
+  await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: "native-plugin-invoke-plan-v0" });
   await publishTaskApprovalIfPending(task);
-  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+  await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
     task: serialiseTask(reclaimedTask),
   })));
 
@@ -1423,10 +1424,10 @@ async function createSystemdRepairExecutionTask({ unit = null, confirm = false, 
   reconcileRuntimeState();
   persistState();
 
-  await publishEvent("task.created", { task: serialiseTask(task), planner: draft.plan?.planner ?? "systemd-repair-execution-task-v0" });
+  await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: draft.plan?.planner ?? "systemd-repair-execution-task-v0" });
   await publishTaskApprovalIfPending(task);
-  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+  await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
     task: serialiseTask(reclaimedTask),
   })));
 
@@ -1618,10 +1619,10 @@ async function createSystemdNextRepairTaskShell({ confirm = false, execute = fal
   reconcileRuntimeState();
   persistState();
 
-  await publishEvent("task.created", { task: serialiseTask(task), planner: plan.planner });
+  await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: plan.planner });
   await publishTaskApprovalIfPending(task);
-  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+  await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
     task: serialiseTask(reclaimedTask),
   })));
 
@@ -1736,10 +1737,10 @@ async function createBodyEvidenceLedgerDirectoryTaskShell({ confirm = false } = 
   reconcileRuntimeState();
   persistState();
 
-  await publishEvent("task.created", { task: serialiseTask(task), planner: "body-evidence-ledger-directory-task-v0" });
+  await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: "body-evidence-ledger-directory-task-v0" });
   await publishTaskApprovalIfPending(task);
-  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+  await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
     task: serialiseTask(reclaimedTask),
   })));
 
@@ -1860,10 +1861,10 @@ async function createBodyEvidenceLedgerFirstRecordTaskShell({ confirm = false } 
   reconcileRuntimeState();
   persistState();
 
-  await publishEvent("task.created", { task: serialiseTask(task), planner: "body-evidence-ledger-first-record-task-v0" });
+  await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: "body-evidence-ledger-first-record-task-v0" });
   await publishTaskApprovalIfPending(task);
-  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+  await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
     task: serialiseTask(reclaimedTask),
   })));
 
@@ -1993,10 +1994,10 @@ async function createBodyEvidenceLedgerFollowupRecordTaskShell({ confirm = false
   reconcileRuntimeState();
   persistState();
 
-  await publishEvent("task.created", { task: serialiseTask(task), planner: "body-evidence-ledger-followup-record-task-v0" });
+  await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: "body-evidence-ledger-followup-record-task-v0" });
   await publishTaskApprovalIfPending(task);
-  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+  await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
     task: serialiseTask(reclaimedTask),
   })));
 
@@ -2305,7 +2306,7 @@ async function setTaskPhase(task, phase, { status = task.status, details = null 
   task.status = status;
   const updatedTask = appendTaskPhase(task, phase, details);
   reconcileRuntimeState();
-  await publishEvent("task.phase_changed", { task: serialiseTask(updatedTask) });
+  await publishEvent(createEventName("task.phase_changed"), { task: serialiseTask(updatedTask) });
   return updatedTask;
 }
 
@@ -2470,7 +2471,7 @@ async function armBodyEvidenceLedgerFollowupRecordAppend({ confirm = false, task
   };
   task.updatedAt = new Date().toISOString();
   persistState();
-  await publishEvent("body_evidence_ledger.followup_record_append_armed", {
+  await publishEvent(createEventName("body_evidence_ledger.followup_record_append_armed"), {
     task: serialiseTask(task),
     routeReview: {
       registry: routeReview.registry,
@@ -6331,10 +6332,10 @@ async function createLongTermMemoryWriteTask({ confirm = false } = {}) {
   reconcileRuntimeState();
   persistState();
 
-  await publishEvent("task.created", { task: serialiseTask(task), planner: "long-term-memory-write-task-v0" });
+  await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: "long-term-memory-write-task-v0" });
   await publishTaskApprovalIfPending(task);
-  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+  await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
     task: serialiseTask(reclaimedTask),
   })));
 
@@ -6448,7 +6449,7 @@ async function executeLongTermMemoryWriteTask(task) {
     backgroundWriter: false,
     bulkImport: false,
   });
-  await publishEvent("long_term_memory.record_appended", {
+  await publishEvent(createEventName("long_term_memory.record_appended"), {
     task: serialiseTask(completedTask),
     ledgerFile: ledgerFileDisplayPath,
     recordId: record.id,
@@ -7164,10 +7165,10 @@ async function createCloudConsciousnessHandoffTask({ confirm = false } = {}) {
   reconcileRuntimeState();
   persistState();
 
-  await publishEvent("task.created", { task: serialiseTask(task), planner: "cloud-consciousness-handoff-task-v0" });
+  await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: "cloud-consciousness-handoff-task-v0" });
   await publishTaskApprovalIfPending(task);
-  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+  await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
     task: serialiseTask(reclaimedTask),
   })));
 
@@ -7282,7 +7283,7 @@ async function executeCloudConsciousnessHandoffTask(task) {
     scheduler: false,
     backgroundWriter: false,
   });
-  await publishEvent("cloud_consciousness.local_handoff_written", {
+  await publishEvent(createEventName("cloud_consciousness.local_handoff_written"), {
     task: serialiseTask(completedTask),
     handoffFile: handoffFileDisplayPath,
     recordId: record.id,
@@ -7937,10 +7938,10 @@ async function createCloudConsciousnessProviderDryRunTask({ confirm = false } = 
   reconcileRuntimeState();
   persistState();
 
-  await publishEvent("task.created", { task: serialiseTask(task), planner: "cloud-consciousness-provider-dry-run-task-v0" });
+  await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: "cloud-consciousness-provider-dry-run-task-v0" });
   await publishTaskApprovalIfPending(task);
-  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+  await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
     task: serialiseTask(reclaimedTask),
   })));
 
@@ -8069,7 +8070,7 @@ async function executeCloudConsciousnessProviderDryRunTask(task) {
     scheduler: false,
     backgroundWriter: false,
   });
-  await publishEvent("cloud_consciousness.provider_dry_run_written", {
+  await publishEvent(createEventName("cloud_consciousness.provider_dry_run_written"), {
     task: serialiseTask(completedTask),
     dryRunFile: dryRunFileDisplayPath,
     recordId: record.id,
@@ -8759,10 +8760,10 @@ async function createCloudConsciousnessProviderCallRehearsalTask({ confirm = fal
   reconcileRuntimeState();
   persistState();
 
-  await publishEvent("task.created", { task: serialiseTask(task), planner: "cloud-consciousness-real-provider-call-task-v0" });
+  await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: "cloud-consciousness-real-provider-call-task-v0" });
   await publishTaskApprovalIfPending(task);
-  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+  await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
     task: serialiseTask(reclaimedTask),
   })));
 
@@ -8896,7 +8897,7 @@ async function executeCloudConsciousnessProviderCallRehearsalTask(task) {
     scheduler: false,
     backgroundWriter: false,
   });
-  await publishEvent("cloud_consciousness.provider_call_rehearsal_written", {
+  await publishEvent(createEventName("cloud_consciousness.provider_call_rehearsal_written"), {
     task: serialiseTask(completedTask),
     responseFile: responseFileDisplayPath,
     recordId: record.id,
@@ -9617,10 +9618,10 @@ async function createCloudConsciousnessLiveProviderRunbookTask({ confirm = false
   reconcileRuntimeState();
   persistState();
 
-  await publishEvent("task.created", { task: serialiseTask(task), planner: "cloud-consciousness-live-provider-runbook-task-v0" });
+  await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: "cloud-consciousness-live-provider-runbook-task-v0" });
   await publishTaskApprovalIfPending(task);
-  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+  await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
     task: serialiseTask(reclaimedTask),
   })));
 
@@ -9751,7 +9752,7 @@ async function executeCloudConsciousnessLiveProviderRunbookTask(task) {
     scheduler: false,
     backgroundWriter: false,
   });
-  await publishEvent("cloud_consciousness.live_provider_runbook_written", {
+  await publishEvent(createEventName("cloud_consciousness.live_provider_runbook_written"), {
     task: serialiseTask(completedTask),
     runbookFile: runbookFileDisplayPath,
     recordId: record.id,
@@ -10396,10 +10397,10 @@ async function createCloudConsciousnessLiveProviderExecutionPlanTask({ confirm =
   reconcileRuntimeState();
   persistState();
 
-  await publishEvent("task.created", { task: serialiseTask(task), planner: "cloud-consciousness-live-provider-execution-plan-task-v0" });
+  await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: "cloud-consciousness-live-provider-execution-plan-task-v0" });
   await publishTaskApprovalIfPending(task);
-  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+  await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
     task: serialiseTask(reclaimedTask),
   })));
 
@@ -10532,7 +10533,7 @@ async function executeCloudConsciousnessLiveProviderExecutionPlanTask(task) {
     scheduler: false,
     backgroundWriter: false,
   });
-  await publishEvent("cloud_consciousness.live_provider_execution_plan_written", {
+  await publishEvent(createEventName("cloud_consciousness.live_provider_execution_plan_written"), {
     task: serialiseTask(completedTask),
     executionPlanFile: executionPlanFileDisplayPath,
     recordId: record.id,
@@ -10924,10 +10925,10 @@ async function createCloudConsciousnessLiveProviderRuntimeAdapterTask({ confirm 
   reconcileRuntimeState();
   persistState();
 
-  await publishEvent("task.created", { task: serialiseTask(task), planner: "cloud-consciousness-live-provider-runtime-adapter-task-v0" });
+  await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: "cloud-consciousness-live-provider-runtime-adapter-task-v0" });
   await publishTaskApprovalIfPending(task);
-  await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+  await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+  await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
     task: serialiseTask(reclaimedTask),
   })));
 
@@ -10991,7 +10992,7 @@ async function executeCloudConsciousnessLiveProviderRuntimeAdapterTask(task) {
     providerCredentialRead: false,
     liveProviderCallEnabled: false,
   });
-  await publishEvent("task.completed", { task: serialiseTask(task), adapterPlan: phase12EvidenceRef(adapterPlan) });
+  await publishEvent(createEventName("task.completed"), { task: serialiseTask(task), adapterPlan: phase12EvidenceRef(adapterPlan) });
   return {
     ok: true,
     executor: "cloud-consciousness-live-provider-runtime-adapter-task-v0",
@@ -12349,7 +12350,7 @@ async function invokeCapability(body = {}) {
       goal: `Invoke ${capability.id}`,
     },
   ));
-  await publishEvent("policy.evaluated", { capability, policy });
+  await publishEvent(createEventName("policy.evaluated"), { capability, policy });
 
   if (!isPolicyExecutionAllowed(policy)) {
     const reason = policy.decision === "deny" ? "policy_denied" : "policy_requires_approval";
@@ -12365,7 +12366,7 @@ async function invokeCapability(body = {}) {
         ok: false,
       },
     });
-    await publishEvent("capability.blocked", {
+    await publishEvent(createEventName("capability.blocked"), {
       invocation,
       capability,
       policy,
@@ -12395,7 +12396,7 @@ async function invokeCapability(body = {}) {
     blocked: false,
     summary,
   });
-  await publishEvent("capability.invoked", {
+  await publishEvent(createEventName("capability.invoked"), {
     invocation,
     capability,
     policy,

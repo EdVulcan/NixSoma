@@ -1,4 +1,5 @@
 import { corsHeaders, sendJson, readJsonBody } from "../../../packages/shared-utils/src/http.mjs";
+import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { handleCloudLiveProviderResultEnvelopeGetRoute } from "./cloud-live-provider-result-envelope-routes.mjs";
 
 export function registerRoutes(deps) {
@@ -3526,7 +3527,7 @@ export function registerRoutes(deps) {
 
   if (req.method === "POST" && requestUrl.pathname === "/capabilities/refresh") {
     const registry = await buildCapabilityRegistry();
-    await publishEvent("capability.updated", {
+    await publishEvent(createEventName("capability.updated"), {
       registry: registry.registry,
       summary: registry.summary,
     });
@@ -3640,7 +3641,7 @@ export function registerRoutes(deps) {
     try {
       const body = await readJsonBody(req);
       const decision = recordPolicyDecision(evaluatePolicyIntent(body, { stage: "policy.evaluate" }));
-      await publishEvent("policy.evaluated", { policy: decision });
+      await publishEvent(createEventName("policy.evaluated"), { policy: decision });
       sendJson(res, 200, {
         ok: true,
         policy: decision,
@@ -3695,7 +3696,7 @@ export function registerRoutes(deps) {
         approvedBy: typeof body.approvedBy === "string" && body.approvedBy.trim() ? body.approvedBy.trim() : "user",
         reason: typeof body.reason === "string" && body.reason.trim() ? body.reason.trim() : "Approved by user.",
       });
-      await publishEvent("approval.approved", {
+      await publishEvent(createEventName("approval.approved"), {
         approval: serialiseApproval(result.approval),
         task: result.task ? serialiseTask(result.task) : null,
       });
@@ -3730,12 +3731,12 @@ export function registerRoutes(deps) {
         deniedBy: typeof body.deniedBy === "string" && body.deniedBy.trim() ? body.deniedBy.trim() : "user",
         reason: typeof body.reason === "string" && body.reason.trim() ? body.reason.trim() : "Denied by user.",
       });
-      await publishEvent("approval.denied", {
+      await publishEvent(createEventName("approval.denied"), {
         approval: serialiseApproval(result.approval),
         task: result.task ? serialiseTask(result.task) : null,
       });
       if (result.task?.status === "failed") {
-        await publishEvent("task.failed", {
+        await publishEvent(createEventName("task.failed"), {
           task: serialiseTask(result.task),
           reason: "Approval denied by user.",
           approval: serialiseApproval(result.approval),
@@ -3829,9 +3830,9 @@ export function registerRoutes(deps) {
       const reclaimedTasks = supersedeOtherActiveTasks(task.id);
       reconcileRuntimeState();
 
-      await publishEvent("task.created", { task: serialiseTask(task) });
+      await publishEvent(createEventName("task.created"), { task: serialiseTask(task) });
       await publishTaskApprovalIfPending(task);
-      await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+      await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
         task: serialiseTask(reclaimedTask),
       })));
       sendJson(res, 201, { ok: true, task: serialiseTask(task) });
@@ -3912,10 +3913,10 @@ export function registerRoutes(deps) {
       const reclaimedTasks = supersedeOtherActiveTasks(task.id);
       reconcileRuntimeState();
 
-      await publishEvent("task.created", { task: serialiseTask(task), planner: "rule-v1" });
+      await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: "rule-v1" });
       await publishTaskApprovalIfPending(task);
-      await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-      await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+      await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+      await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
         task: serialiseTask(reclaimedTask),
       })));
       sendJson(res, 201, {
@@ -3949,10 +3950,10 @@ export function registerRoutes(deps) {
       const reclaimedTasks = supersedeOtherActiveTasks(task.id);
       reconcileRuntimeState();
 
-      await publishEvent("task.created", { task: serialiseTask(task), planner: "rule-v1" });
+      await publishEvent(createEventName("task.created"), { task: serialiseTask(task), planner: "rule-v1" });
       await publishTaskApprovalIfPending(task);
-      await publishEvent("task.planned", { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
-      await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+      await publishEvent(createEventName("task.planned"), { task: serialiseTask(task), plan: serialisePlanForPublic(task.plan) });
+      await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
         task: serialiseTask(reclaimedTask),
       })));
 
@@ -3995,9 +3996,9 @@ export function registerRoutes(deps) {
       const reclaimedTasks = supersedeOtherActiveTasks(task.id);
       reconcileRuntimeState();
 
-      await publishEvent("task.created", { task: serialiseTask(task), executor: "core-v1" });
+      await publishEvent(createEventName("task.created"), { task: serialiseTask(task), executor: "core-v1" });
       await publishTaskApprovalIfPending(task);
-      await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+      await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
         task: serialiseTask(reclaimedTask),
       })));
 
@@ -4048,13 +4049,13 @@ export function registerRoutes(deps) {
       const reclaimedTasks = supersedeOtherActiveTasks(recoveredTask.id);
       reconcileRuntimeState();
 
-      await publishEvent("task.created", { task: serialiseTask(recoveredTask) });
+      await publishEvent(createEventName("task.created"), { task: serialiseTask(recoveredTask) });
       await publishTaskApprovalIfPending(recoveredTask);
-      await publishEvent("task.recovered", {
+      await publishEvent(createEventName("task.recovered"), {
         task: serialiseTask(recoveredTask),
         recoveredFromTaskId: sourceTask.id,
       });
-      await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent("task.phase_changed", {
+      await Promise.all(reclaimedTasks.map((reclaimedTask) => publishEvent(createEventName("task.phase_changed"), {
         task: serialiseTask(reclaimedTask),
       })));
       sendJson(res, 201, {
@@ -4148,7 +4149,7 @@ export function registerRoutes(deps) {
       const updatedTask = appendTaskPhase(task, phase, body.details ?? null);
       reconcileRuntimeState();
 
-      await publishEvent("task.phase_changed", { task: serialiseTask(updatedTask) });
+      await publishEvent(createEventName("task.phase_changed"), { task: serialiseTask(updatedTask) });
       sendJson(res, 200, {
         ok: true,
         task: serialiseTask(updatedTask),
@@ -4177,7 +4178,7 @@ export function registerRoutes(deps) {
     try {
       const body = await readJsonBody(req);
       const updatedTask = attachTaskToWorkView(task, body);
-      await publishEvent("task.running", { task: serialiseTask(updatedTask) });
+      await publishEvent(createEventName("task.running"), { task: serialiseTask(updatedTask) });
       sendJson(res, 200, {
         ok: true,
         task: serialiseTask(updatedTask),
@@ -4205,7 +4206,7 @@ export function registerRoutes(deps) {
     try {
       const body = await readJsonBody(req);
       const updatedTask = completeTask(task, body.details ?? null);
-      await publishEvent("task.completed", { task: serialiseTask(updatedTask) });
+      await publishEvent(createEventName("task.completed"), { task: serialiseTask(updatedTask) });
       sendJson(res, 200, {
         ok: true,
         task: serialiseTask(updatedTask),
@@ -4234,7 +4235,7 @@ export function registerRoutes(deps) {
     appendTaskPhase(task, "paused", { reason: "Paused by operator." });
     reconcileRuntimeState();
 
-    await publishEvent("task.paused", { task: serialiseTask(task) });
+    await publishEvent(createEventName("task.paused"), { task: serialiseTask(task) });
     sendJson(res, 200, { ok: true, task: serialiseTask(task), runtime: runtimeState });
     return;
   }
@@ -4253,7 +4254,7 @@ export function registerRoutes(deps) {
     appendTaskPhase(task, "resumed", { reason: "Resumed by operator." });
     reconcileRuntimeState();
 
-    await publishEvent("task.resumed", { task: serialiseTask(task) });
+    await publishEvent(createEventName("task.resumed"), { task: serialiseTask(task) });
     sendJson(res, 200, { ok: true, task: serialiseTask(task), runtime: runtimeState });
     return;
   }
@@ -4288,7 +4289,7 @@ export function registerRoutes(deps) {
     reconcileRuntimeState();
 
     const takeoverTask = serialiseTask(task);
-    await publishEvent("task.operator_takeover", { task: takeoverTask });
+    await publishEvent(createEventName("task.operator_takeover"), { task: takeoverTask });
     sendJson(res, 200, { ok: true, task: takeoverTask, runtime: runtimeState });
     return;
   }
@@ -4317,7 +4318,7 @@ export function registerRoutes(deps) {
     const stoppedTask = serialiseTask(task);
     reconcileRuntimeState();
 
-    await publishEvent("task.failed", { task: stoppedTask, reason: "Stopped by operator." });
+    await publishEvent(createEventName("task.failed"), { task: stoppedTask, reason: "Stopped by operator." });
     sendJson(res, 200, { ok: true, task: stoppedTask, runtime: runtimeState });
     return;
   }
