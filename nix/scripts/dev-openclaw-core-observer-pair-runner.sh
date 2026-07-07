@@ -31,25 +31,40 @@ openclaw_run_core_observer_pair() {
   shift 5
 
   local run_id="${OPENCLAW_CORE_OBSERVER_PAIR_RUN_ID:-core-observer-pair-$label-$$}"
+  local event_log_file="${OPENCLAW_CORE_OBSERVER_PAIR_EVENT_LOG_FILE:-$OPENCLAW_CORE_OBSERVER_PAIR_SCRIPT_DIR/../../.artifacts/$run_id-events.jsonl}"
+  local status=0
 
   openclaw_core_observer_pair_down "$run_id" "$port_base"
-  env \
+  if env \
     OPENCLAW_DEV_RUN_ID="$run_id" \
+    OPENCLAW_EVENT_LOG_FILE="$event_log_file" \
     OPENCLAW_DEV_SERVICES_KEEP_UP=true \
     OPENCLAW_DEV_SERVICES_ALREADY_UP=false \
     "$port_var=$port_base" \
     "$observer_var=false" \
     "$@" \
-      bash "$common_script"
+      bash "$common_script"; then
+    :
+  else
+    status=$?
+  fi
 
-  env \
-    OPENCLAW_DEV_RUN_ID="$run_id" \
-    OPENCLAW_DEV_SERVICES_KEEP_UP=true \
-    OPENCLAW_DEV_SERVICES_ALREADY_UP=true \
-    "$port_var=$port_base" \
-    "$observer_var=true" \
-    "$@" \
-      bash "$common_script"
+  if [[ "$status" -eq 0 ]]; then
+    if env \
+      OPENCLAW_DEV_RUN_ID="$run_id" \
+      OPENCLAW_EVENT_LOG_FILE="$event_log_file" \
+      OPENCLAW_DEV_SERVICES_KEEP_UP=true \
+      OPENCLAW_DEV_SERVICES_ALREADY_UP=true \
+      "$port_var=$port_base" \
+      "$observer_var=true" \
+      "$@" \
+        bash "$common_script"; then
+      :
+    else
+      status=$?
+    fi
+  fi
 
   openclaw_core_observer_pair_down "$run_id" "$port_base"
+  return "$status"
 }

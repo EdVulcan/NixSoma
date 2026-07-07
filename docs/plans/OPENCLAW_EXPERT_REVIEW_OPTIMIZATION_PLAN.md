@@ -65,6 +65,7 @@ The expert review items are considered complete only when each item has code-lev
 - `dev-openclaw-core-observer-pair-runner.sh` runs a compatible common-check once for core behavior and once for Observer HTML/client tokens while reusing the same live service lifecycle.
 - `openclaw-core-observer-pair-batch-reuse` covers Phase 59 and Phase 60 cloud-consciousness launch/credential-gate pairs outside the result-envelope lane.
 - The pair runner preserves existing public core and Observer milestone scripts; it adds a faster co-validation path without deleting compatibility wrappers.
+- The pair runner now uses scoped event logs and cleans up its scoped services before returning even when a child core or Observer check fails.
 
 ## Result-Envelope 115-116 Batch Evidence
 
