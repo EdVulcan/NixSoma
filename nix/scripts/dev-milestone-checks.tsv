@@ -3,6 +3,7 @@ milestone-registry	dev-milestone-registry-check.sh	Milestone registry structure,
 milestone-script-audit	dev-milestone-script-audit-check.sh	Milestone script taxonomy, long filename pressure, and registry coverage audit
 openclaw-service-lifecycle-scope	dev-openclaw-service-lifecycle-scope-check.sh	Scoped Unix dev service lifecycle isolation and legacy state compatibility
 openclaw-shared-package-contracts	dev-openclaw-shared-package-contracts-check.sh	Shared package type exports, runtime split shims, and focused unit contracts
+openclaw-core-service-unit-tests	dev-openclaw-core-service-unit-tests-check.sh	Focused openclaw-core service-layer unit tests without starting dev services
 openclaw-http-json-helper	dev-openclaw-http-json-helper-check.sh	Shared shell post_json helper mode compatibility
 openclaw-wait-helper	dev-openclaw-wait-helper-check.sh	Shared shell wait helper polling compatibility
 openclaw-core-observer-pair-batch-reuse	dev-openclaw-core-observer-pair-batch-reuse-check.sh	Core and Observer milestone pair validation with one reusable service lifecycle per pair

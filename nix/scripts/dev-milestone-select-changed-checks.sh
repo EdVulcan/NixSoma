@@ -338,6 +338,7 @@ function selectPhasePlanChecks(file) {
 
 function selectSourceHeuristics(file) {
   const direct = new Map([
+    ["services/openclaw-core/src/policy-evaluator.mjs", ["openclaw-core-service-unit-tests", "policy"]],
     ["services/openclaw-core/src/task-executor.mjs", ["task-executor"]],
     ["services/openclaw-core/src/route-handlers.mjs", ["task-workbench", "operator-loop", "observer-operator"]],
     ["services/openclaw-core/src/cloud-live-provider-result-envelope-routes.mjs", ["openclaw-live-provider-result-envelope-batch-reuse"]],
@@ -351,6 +352,10 @@ function selectSourceHeuristics(file) {
     if (file === prefix || file.startsWith(`${prefix.replace(/\.mjs$/, "")}-`)) {
       for (const name of names) selectName(name);
     }
+  }
+
+  if (file === "services/openclaw-core/package.json" || file.startsWith("services/openclaw-core/test/")) {
+    selectName("openclaw-core-service-unit-tests");
   }
 
   if (file.startsWith("services/openclaw-core/src/cloud-live-provider-runtime")) {

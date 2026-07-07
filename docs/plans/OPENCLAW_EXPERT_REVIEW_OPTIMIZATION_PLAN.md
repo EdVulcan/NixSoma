@@ -18,7 +18,7 @@ The expert review items are considered complete only when each item has code-lev
 | Duplicate policy/risk types C2 | Policy domain and risk literals were duplicated. | Complete | `packages/shared-types/src/policy.ts` is the single source for `OpenClawPolicyDomain`, `PolicyDomain`, and `OpenClawRisk`. |
 | Event schema duplication C2 | `OpenClawEvent<T>` and `EventSchema` described the same event payload contract independently. | Complete | `EventSchema<T>` reuses `OpenClawEvent<T>` payload typing from shared-types. |
 | Shared package engineering E3 | Shared packages lacked independent tsconfig/barrel/type declarations. | Complete | Shared package `tsconfig.json` files, barrel entries, and `shared-utils` declarations added. |
-| Unit tests E2 | No focused unit tests existed for shared packages. | Partial | Node built-in tests added for plugin runtime, shared-events, and shared-utils. Broader service-layer unit tests remain pending. |
+| Unit tests E2 | No focused unit tests existed for shared packages or services. | Partial, core policy service tests complete | Node built-in tests added for plugin runtime, shared-events, shared-utils, and `openclaw-core` policy evaluation. Broader service-layer unit tests remain pending for task execution, route handlers, and service clients. |
 | Shared-client empty shell C5 | `shared-client` only exported tiny service constants. | Complete | `service-descriptors.ts` provides typed service ids, default ports, and env var names while preserving old exports. |
 | Shared-events identity helper C5 | `createEventName` was a no-op identity function. | Complete | Runtime and typed event factory now validate names against `eventNames`. |
 | Root package script redundancy E1/P2 | `package.json` had many hard-coded `dev:*check:unix` milestone scripts. | Complete | Root scripts reduced to one milestone runner plus stable lifecycle/smoke aliases; `dev-milestone-check.sh` accepts milestone names as npm args. |
@@ -66,8 +66,14 @@ The expert review items are considered complete only when each item has code-lev
 - `openclaw-core-observer-pair-batch-reuse` covers Phase 59 and Phase 60 cloud-consciousness launch/credential-gate pairs outside the result-envelope lane.
 - The pair runner preserves existing public core and Observer milestone scripts; it adds a faster co-validation path without deleting compatibility wrappers.
 
+## Core Service Unit Test Evidence
+
+- `services/openclaw-core` now has a workspace `test` script using Node's built-in test runner.
+- `policy-evaluator.test.mjs` covers cross-boundary approval gating, body-internal audit-only decisions, absolute deny boundaries, audit log capping/counts, and task approval creation without starting dev services.
+- `openclaw-core-service-unit-tests` runs the focused service-layer unit tests as a milestone.
+
 ## Next Expert Items After This Slice
 
 1. Broaden safe state reuse for heavy prerequisite chains beyond the existing live-provider result-envelope path.
-2. Add broader service-layer unit tests so routine code edits do not require full-stack shell checks.
+2. Add more service-layer unit tests for task execution, route handler contract helpers, and service clients.
 3. Move shared-client/shared-events descriptors into real service/Observer call sites where doing so reduces duplicated runtime contracts.
