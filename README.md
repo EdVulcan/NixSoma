@@ -104,7 +104,7 @@ npm run dev:milestone-check:unix
 Run the NixOS body-config slice directly:
 
 ```bash
-npm run dev:body-config-check:unix
+npm run dev:milestone-check:unix -- body-config
 ```
 
 To run only a subset:
@@ -116,7 +116,7 @@ OPENCLAW_MILESTONE_CHECKS=body-config,planner,operator-loop,operator-control,pol
 Run the policy governance slice directly:
 
 ```bash
-npm run dev:policy-check:unix
+npm run dev:milestone-check:unix -- policy
 ```
 
 This verifies body-internal actions, ordinary user tasks, cross-boundary approval gates, denial boundaries, audit history, and the operator execution gate.
@@ -124,7 +124,7 @@ This verifies body-internal actions, ordinary user tasks, cross-boundary approva
 Run the sovereign body policy slice directly:
 
 ```bash
-npm run dev:sovereign-body-policy-check:unix
+npm run dev:milestone-check:unix -- sovereign-body-policy
 ```
 
 This verifies `OPENCLAW_AUTONOMY_MODE=sovereign_body`, where body-internal high-risk capability actions run autonomously with audit while cross-boundary and absolute-deny policies remain gated.
@@ -132,7 +132,7 @@ This verifies `OPENCLAW_AUTONOMY_MODE=sovereign_body`, where body-internal high-
 Run the sovereign command execution slice directly:
 
 ```bash
-npm run dev:sovereign-command-execute-check:unix
+npm run dev:milestone-check:unix -- sovereign-command-execute
 ```
 
 This verifies `act.system.command.execute` can run allowlisted body-internal commands in `sovereign_body` mode with cwd limits, timeout/output capture, audit history, and no shell.
@@ -140,7 +140,7 @@ This verifies `act.system.command.execute` can run allowlisted body-internal com
 Run the sovereign command chain slice directly:
 
 ```bash
-npm run dev:sovereign-command-chain-check:unix
+npm run dev:milestone-check:unix -- sovereign-command-chain
 ```
 
 This verifies multi-step body-internal command execution preserves a command transcript across task outcome, execution response, capability history, and audit events.
@@ -148,7 +148,7 @@ This verifies multi-step body-internal command execution preserves a command tra
 Run the sovereign command branch slice directly:
 
 ```bash
-npm run dev:sovereign-command-branch-check:unix
+npm run dev:milestone-check:unix -- sovereign-command-branch
 ```
 
 This verifies command steps can branch on previous transcript output/exit code, executing matching steps and preserving skipped steps in the task transcript.
@@ -156,7 +156,7 @@ This verifies command steps can branch on previous transcript output/exit code, 
 Run the sovereign command recovery slice directly:
 
 ```bash
-npm run dev:sovereign-command-recovery-check:unix
+npm run dev:milestone-check:unix -- sovereign-command-recovery
 ```
 
 This verifies non-zero command exits are persisted in transcripts, can drive explicit recovery branches with `onFailure: "continue"`, and fail the task by default when no recovery policy is declared.
@@ -164,7 +164,7 @@ This verifies non-zero command exits are persisted in transcripts, can drive exp
 Run the sovereign command ledger slice directly:
 
 ```bash
-npm run dev:sovereign-command-ledger-check:unix
+npm run dev:milestone-check:unix -- sovereign-command-ledger
 ```
 
 This verifies `/commands/transcripts` and `/commands/transcripts/summary` expose recovered, failed, executed, and skipped command transcript entries and survive core restart recovery.
@@ -172,7 +172,7 @@ This verifies `/commands/transcripts` and `/commands/transcripts/summary` expose
 Run the sovereign filesystem write slice directly:
 
 ```bash
-npm run dev:sovereign-filesystem-write-check:unix
+npm run dev:milestone-check:unix -- sovereign-filesystem-write
 ```
 
 This verifies `act.filesystem.write_text` can autonomously write bounded UTF-8 text inside allowed body roots in `sovereign_body` mode while rejecting paths outside those roots.
@@ -180,7 +180,7 @@ This verifies `act.filesystem.write_text` can autonomously write bounded UTF-8 t
 Run the sovereign filesystem workspace slice directly:
 
 ```bash
-npm run dev:sovereign-filesystem-workspace-check:unix
+npm run dev:milestone-check:unix -- sovereign-filesystem-workspace
 ```
 
 This verifies `act.filesystem.mkdir`, `act.filesystem.write_text`, and filesystem metadata can form an autonomous workspace creation chain inside allowed body roots.
@@ -188,7 +188,7 @@ This verifies `act.filesystem.mkdir`, `act.filesystem.write_text`, and filesyste
 Run the sovereign filesystem append slice directly:
 
 ```bash
-npm run dev:sovereign-filesystem-append-check:unix
+npm run dev:milestone-check:unix -- sovereign-filesystem-append
 ```
 
 This verifies `act.filesystem.append_text` can autonomously append bounded UTF-8 text to existing files inside allowed body roots, record append metadata in the filesystem change ledger, and reject paths outside those roots.
@@ -196,7 +196,7 @@ This verifies `act.filesystem.append_text` can autonomously append bounded UTF-8
 Run the sovereign filesystem ledger slice directly:
 
 ```bash
-npm run dev:sovereign-filesystem-ledger-check:unix
+npm run dev:milestone-check:unix -- sovereign-filesystem-ledger
 ```
 
 This verifies `/filesystem/changes` and `/filesystem/changes/summary` expose mkdir/write changes and survive core restart recovery.
@@ -204,7 +204,7 @@ This verifies `/filesystem/changes` and `/filesystem/changes/summary` expose mkd
 Run the sovereign filesystem read-text slice directly:
 
 ```bash
-npm run dev:sovereign-filesystem-read-text-check:unix
+npm run dev:milestone-check:unix -- sovereign-filesystem-read-text
 ```
 
 This verifies `sense.filesystem.read` can read bounded UTF-8 text through governed body sense after autonomous mkdir/write chains while rejecting paths outside allowed roots.
@@ -212,7 +212,7 @@ This verifies `sense.filesystem.read` can read bounded UTF-8 text through govern
 Run the sovereign filesystem read ledger slice directly:
 
 ```bash
-npm run dev:sovereign-filesystem-read-ledger-check:unix
+npm run dev:milestone-check:unix -- sovereign-filesystem-read-ledger
 ```
 
 This verifies `/filesystem/reads` and `/filesystem/reads/summary` expose metadata/list/search/read-text access records without leaking file content and survive core restart recovery.
@@ -220,7 +220,7 @@ This verifies `/filesystem/reads` and `/filesystem/reads/summary` expose metadat
 Run the observer command transcript slice directly:
 
 ```bash
-npm run dev:observer-command-transcript-check:unix
+npm run dev:milestone-check:unix -- observer-command-transcript
 ```
 
 This verifies Observer surfaces sovereign command transcripts, including executed, failed, recovered, and skipped command steps.
@@ -228,7 +228,7 @@ This verifies Observer surfaces sovereign command transcripts, including execute
 Run the observer command ledger slice directly:
 
 ```bash
-npm run dev:observer-command-ledger-check:unix
+npm run dev:milestone-check:unix -- observer-command-ledger
 ```
 
 This verifies Observer surfaces the cross-task command transcript ledger summary and recent command records.
@@ -236,7 +236,7 @@ This verifies Observer surfaces the cross-task command transcript ledger summary
 Run the observer filesystem ledger slice directly:
 
 ```bash
-npm run dev:observer-filesystem-ledger-check:unix
+npm run dev:milestone-check:unix -- observer-filesystem-ledger
 ```
 
 This verifies Observer surfaces the cross-task filesystem change ledger summary and recent mkdir/write records.
@@ -244,7 +244,7 @@ This verifies Observer surfaces the cross-task filesystem change ledger summary 
 Run the observer filesystem read ledger slice directly:
 
 ```bash
-npm run dev:observer-filesystem-read-ledger-check:unix
+npm run dev:milestone-check:unix -- observer-filesystem-read-ledger
 ```
 
 This verifies Observer surfaces the filesystem read access ledger summary and recent metadata/list/search/read-text records without displaying file content.
@@ -252,7 +252,7 @@ This verifies Observer surfaces the filesystem read access ledger summary and re
 Run the observer OpenClaw workspace detection slice directly:
 
 ```bash
-npm run dev:observer-workspace-detect-check:unix
+npm run dev:milestone-check:unix -- observer-workspace-detect
 ```
 
 This verifies Observer surfaces the read-only OpenClaw workspace registry, including package metadata, scripts, markers, shallow directories, and governance flags without exposing file contents or enabling mutation/execution.
@@ -260,7 +260,7 @@ This verifies Observer surfaces the read-only OpenClaw workspace registry, inclu
 Run the observer OpenClaw workspace command proposal slice directly:
 
 ```bash
-npm run dev:observer-workspace-command-proposals-check:unix
+npm run dev:milestone-check:unix -- observer-workspace-command-proposals
 ```
 
 This verifies Observer surfaces proposal-only workspace command shapes, risks, and governance flags without exposing script bodies or enabling execution.
@@ -268,7 +268,7 @@ This verifies Observer surfaces proposal-only workspace command shapes, risks, a
 Run the observer OpenClaw source migration map slice directly:
 
 ```bash
-npm run dev:observer-openclaw-source-migration-map-check:unix
+npm run dev:milestone-check:unix -- observer-openclaw-source-migration-map
 ```
 
 This verifies Observer surfaces the read-only source migration candidate map, including target areas, migration kinds, risks, priorities, and governance flags without exposing source file contents, mutating files, or executing source workspace commands.
@@ -276,7 +276,7 @@ This verifies Observer surfaces the read-only source migration candidate map, in
 Run the observer OpenClaw source migration plan slice directly:
 
 ```bash
-npm run dev:observer-openclaw-source-migration-plan-check:unix
+npm run dev:milestone-check:unix -- observer-openclaw-source-migration-plan
 ```
 
 This verifies Observer surfaces the plan-only first-wave migration draft, including first-wave items, backlog counts, acceptance criteria, blockers, risks, priorities, and governance flags without exposing source file contents, creating tasks or approvals, mutating files, or executing source workspace commands.
@@ -284,7 +284,7 @@ This verifies Observer surfaces the plan-only first-wave migration draft, includ
 Run the observer OpenClaw plugin SDK contract review slice directly:
 
 ```bash
-npm run dev:observer-openclaw-plugin-sdk-contract-review-check:unix
+npm run dev:milestone-check:unix -- observer-openclaw-plugin-sdk-contract-review
 ```
 
 This verifies Observer surfaces the read-only plugin SDK contract review, including manifest shape, exports, types, script names, contract surfaces, review blockers, and governance flags without exposing SDK source contents, script bodies, README text, dependency versions, creating tasks or approvals, mutating files, or executing source workspace commands.
@@ -292,7 +292,7 @@ This verifies Observer surfaces the read-only plugin SDK contract review, includ
 Run the observer OpenClaw workspace command plan slice directly:
 
 ```bash
-npm run dev:observer-workspace-command-plan-check:unix
+npm run dev:milestone-check:unix -- observer-workspace-command-plan
 ```
 
 This verifies Observer surfaces the plan-only execution draft for the default workspace command proposal, including command shape, approval gate, and inert governance flags without creating tasks or approvals.
@@ -300,7 +300,7 @@ This verifies Observer surfaces the plan-only execution draft for the default wo
 Run the observer OpenClaw workspace command task slice directly:
 
 ```bash
-npm run dev:observer-workspace-command-task-check:unix
+npm run dev:milestone-check:unix -- observer-workspace-command-task
 ```
 
 This verifies Observer can create an approval-gated workspace command task from the default proposal while preserving the explicit approval gate and avoiding command execution before approval.
@@ -308,7 +308,7 @@ This verifies Observer can create an approval-gated workspace command task from 
 Run the observer OpenClaw workspace command execute slice directly:
 
 ```bash
-npm run dev:observer-workspace-command-execute-check:unix
+npm run dev:milestone-check:unix -- observer-workspace-command-execute
 ```
 
 This verifies Observer exposes the controls and live refresh hooks needed to approve, run, and inspect an allowlisted workspace command execution through task detail, command transcript, command ledger, capability history, and audit events.
@@ -316,7 +316,7 @@ This verifies Observer exposes the controls and live refresh hooks needed to app
 Run the observer OpenClaw workspace command failure slice directly:
 
 ```bash
-npm run dev:observer-workspace-command-failure-check:unix
+npm run dev:milestone-check:unix -- observer-workspace-command-failure
 ```
 
 This verifies Observer exposes failed workspace command execution through task failure state, command transcript failures, command ledger failures, capability history, and audit events after explicit approval.
@@ -324,7 +324,7 @@ This verifies Observer exposes failed workspace command execution through task f
 Run the observer OpenClaw workspace command denial slice directly:
 
 ```bash
-npm run dev:observer-workspace-command-denial-check:unix
+npm run dev:milestone-check:unix -- observer-workspace-command-denial
 ```
 
 This verifies Observer exposes the controls, approval inbox state, task failure state, command ledger emptiness, capability history emptiness, and audit events for denied workspace command approvals.
@@ -332,7 +332,7 @@ This verifies Observer exposes the controls, approval inbox state, task failure 
 Run the observer OpenClaw workspace command denial recovery slice directly:
 
 ```bash
-npm run dev:observer-workspace-command-denial-recovery-check:unix
+npm run dev:milestone-check:unix -- observer-workspace-command-denial-recovery
 ```
 
 This verifies Observer exposes recovery controls and task detail for denied workspace commands while preserving the fresh approval gate before the recovered command can execute.
@@ -340,7 +340,7 @@ This verifies Observer exposes recovery controls and task detail for denied work
 Run the observer OpenClaw workspace command recovery slice directly:
 
 ```bash
-npm run dev:observer-workspace-command-recovery-check:unix
+npm run dev:milestone-check:unix -- observer-workspace-command-recovery
 ```
 
 This verifies Observer exposes controls and refresh hooks for recovering a failed workspace command, while preserving the fresh approval gate before the recovered command can execute.
@@ -348,7 +348,7 @@ This verifies Observer exposes controls and refresh hooks for recovering a faile
 Run the observer OpenClaw workspace command recovery persistence slice directly:
 
 ```bash
-npm run dev:observer-workspace-command-recovery-persistence-check:unix
+npm run dev:milestone-check:unix -- observer-workspace-command-recovery-persistence
 ```
 
 This verifies Observer recovery controls and task detail views remain valid across restarts while recovered workspace command chains preserve pending approval, command transcript ledger, and capability history.
@@ -356,7 +356,7 @@ This verifies Observer recovery controls and task detail views remain valid acro
 Run the approval inbox slice directly:
 
 ```bash
-npm run dev:approval-check:unix
+npm run dev:milestone-check:unix -- approval
 ```
 
 This verifies pending approval creation, operator blocking, user approve/deny decisions, audited continuation after approval, denial failure handling, Observer visibility, and approval audit events.
@@ -364,7 +364,7 @@ This verifies pending approval creation, operator blocking, user approve/deny de
 Run the body capability registry slice directly:
 
 ```bash
-npm run dev:capability-check:unix
+npm run dev:milestone-check:unix -- capability
 ```
 
 This verifies the body capability inventory, service-backed health status, risk/governance metadata, cross-boundary approval boundaries, Observer visibility, and capability refresh events.
@@ -372,7 +372,7 @@ This verifies the body capability inventory, service-backed health status, risk/
 Run the capability-aware planner slice directly:
 
 ```bash
-npm run dev:capability-planner-check:unix
+npm run dev:milestone-check:unix -- capability-planner
 ```
 
 This verifies planner steps are annotated with body capability IDs, risk, governance, approval requirements, and registry-backed mappings for browser, filesystem, process, and conservative command dry-run plans.
@@ -380,7 +380,7 @@ This verifies planner steps are annotated with body capability IDs, risk, govern
 Run the policy-governed capability invocation slice directly:
 
 ```bash
-npm run dev:capability-invoke-check:unix
+npm run dev:milestone-check:unix -- capability-invoke
 ```
 
 This verifies core-routed body capability invocation for system vitals, filesystem search/list, process listing, and approval-gated command dry-run without executing system commands.
@@ -388,7 +388,7 @@ This verifies core-routed body capability invocation for system vitals, filesyst
 Run the persistent capability history slice directly:
 
 ```bash
-npm run dev:capability-history-check:unix
+npm run dev:milestone-check:unix -- capability-history
 ```
 
 This verifies capability invocation records, blocked/invoked summaries, audit events, and restart recovery for core-held body capability history.
@@ -396,7 +396,7 @@ This verifies capability invocation records, blocked/invoked summaries, audit ev
 Run the capability operator execution slice directly:
 
 ```bash
-npm run dev:capability-operator-check:unix
+npm run dev:milestone-check:unix -- capability-operator
 ```
 
 This verifies system-task plans are executed by the operator through governed capability invocation for process listing and approved command dry-run.
@@ -404,7 +404,7 @@ This verifies system-task plans are executed by the operator through governed ca
 Run the capability approval operator slice directly:
 
 ```bash
-npm run dev:capability-approval-operator-check:unix
+npm run dev:milestone-check:unix -- capability-approval-operator
 ```
 
 This verifies high-risk system capability plans wait for user approval, continue after approval through dry-run-only command invocation, and fail cleanly after denial.
@@ -412,7 +412,7 @@ This verifies high-risk system capability plans wait for user approval, continue
 Run the Observer capability-plan visibility slice directly:
 
 ```bash
-npm run dev:observer-capability-plan-check:unix
+npm run dev:milestone-check:unix -- observer-capability-plan
 ```
 
 This verifies Observer exposes planner, capability count, approval-gate count, and per-step capability/risk/governance metadata for capability-aware plans.
@@ -420,7 +420,7 @@ This verifies Observer exposes planner, capability count, approval-gate count, a
 Run the Observer capability invocation controls slice directly:
 
 ```bash
-npm run dev:observer-capability-invoke-check:unix
+npm run dev:milestone-check:unix -- observer-capability-invoke
 ```
 
 This verifies Observer exposes capability invocation controls and result visibility for audited vitals/process calls, blocked command dry-run, and approved dry-run.
@@ -428,7 +428,7 @@ This verifies Observer exposes capability invocation controls and result visibil
 Run the Observer capability history slice directly:
 
 ```bash
-npm run dev:observer-capability-history-check:unix
+npm run dev:milestone-check:unix -- observer-capability-history
 ```
 
 This verifies Observer exposes persistent capability invocation history, invoked/blocked totals, latest timestamp, and restart-restored history entries.
@@ -436,7 +436,7 @@ This verifies Observer exposes persistent capability invocation history, invoked
 Run the conservative system capability slice directly:
 
 ```bash
-npm run dev:system-capability-check:unix
+npm run dev:milestone-check:unix -- system-capability
 ```
 
 This verifies allowed-root filesystem sensing, filename search, process listing, command dry-run risk classification, capability registry exposure, and audit events without executing system commands.
@@ -444,7 +444,7 @@ This verifies allowed-root filesystem sensing, filename search, process listing,
 Run the durable event audit ledger slice directly:
 
 ```bash
-npm run dev:event-audit-check:unix
+npm run dev:milestone-check:unix -- event-audit
 ```
 
 This verifies JSONL event persistence, filtered audit queries, audit summaries, Observer visibility, and restart recovery for the control-plane black box.
@@ -452,7 +452,7 @@ This verifies JSONL event persistence, filtered audit queries, audit summaries, 
 Run the body vitals slice directly:
 
 ```bash
-npm run dev:system-sense-check:unix
+npm run dev:milestone-check:unix -- system-sense
 ```
 
 This verifies host/body identity, uptime, CPU/memory/disk vitals, service latency, network summary, and structured alerts.
@@ -460,7 +460,7 @@ This verifies host/body identity, uptime, CPU/memory/disk vitals, service latenc
 Run the conservative self-heal slice directly:
 
 ```bash
-npm run dev:system-heal-check:unix
+npm run dev:milestone-check:unix -- system-heal
 ```
 
 This verifies diagnosis, repair-plan generation, simulated restart actions, observe-only handling for high-risk resource alerts, and heal history.
@@ -468,7 +468,7 @@ This verifies diagnosis, repair-plan generation, simulated restart actions, obse
 Run the OpenClaw workspace detection slice directly:
 
 ```bash
-npm run dev:openclaw-workspace-detect-check:unix
+npm run dev:milestone-check:unix -- openclaw-workspace-detect
 ```
 
 This verifies core can build a read-only profile for configured OpenClaw workspaces, including package metadata, scripts, workspace globs, markers, and governance flags, without reading file contents, mutating files, or executing commands.
@@ -476,7 +476,7 @@ This verifies core can build a read-only profile for configured OpenClaw workspa
 Run the OpenClaw workspace command proposal slice directly:
 
 ```bash
-npm run dev:openclaw-workspace-command-proposals-check:unix
+npm run dev:milestone-check:unix -- openclaw-workspace-command-proposals
 ```
 
 This verifies core can derive proposal-only `pnpm run <script>` command shapes from detected OpenClaw workspace scripts without exposing script bodies or executing commands.
@@ -484,7 +484,7 @@ This verifies core can derive proposal-only `pnpm run <script>` command shapes f
 Run the OpenClaw source migration map slice directly:
 
 ```bash
-npm run dev:openclaw-source-migration-map-check:unix
+npm run dev:milestone-check:unix -- openclaw-source-migration-map
 ```
 
 This verifies core can turn a profiled OpenClaw source workspace into read-only migration candidates for extension catalogs, SDKs, UI patterns, core source patterns, docs, skills, and verification assets without reading file contents, mutating files, or executing source workspace commands.
@@ -492,7 +492,7 @@ This verifies core can turn a profiled OpenClaw source workspace into read-only 
 Run the OpenClaw source migration plan slice directly:
 
 ```bash
-npm run dev:openclaw-source-migration-plan-check:unix
+npm run dev:milestone-check:unix -- openclaw-source-migration-plan
 ```
 
 This verifies core can turn read-only migration candidates into a plan-only first-wave migration draft, including recommended next steps, acceptance criteria, blockers, and backlog items without creating tasks, approvals, imports, source reads, mutations, or executions.
@@ -500,7 +500,7 @@ This verifies core can turn read-only migration candidates into a plan-only firs
 Run the OpenClaw plugin SDK contract review slice directly:
 
 ```bash
-npm run dev:openclaw-plugin-sdk-contract-review-check:unix
+npm run dev:milestone-check:unix -- openclaw-plugin-sdk-contract-review
 ```
 
 This verifies core can turn the first-wave `plugin_sdk` migration plan item into a read-only contract review draft using only package manifest metadata and SDK directory markers, without exposing source contents, script bodies, dependency versions, README text, mutations, executions, tasks, or approvals.
@@ -508,7 +508,7 @@ This verifies core can turn the first-wave `plugin_sdk` migration plan item into
 Run the OpenClaw workspace command plan slice directly:
 
 ```bash
-npm run dev:openclaw-workspace-command-plan-check:unix
+npm run dev:milestone-check:unix -- openclaw-workspace-command-plan
 ```
 
 This verifies core can render a plan-only execution draft for a selected workspace command proposal, including command shape and explicit approval governance, without creating tasks, approvals, or command executions.
@@ -516,7 +516,7 @@ This verifies core can render a plan-only execution draft for a selected workspa
 Run the OpenClaw workspace command task slice directly:
 
 ```bash
-npm run dev:openclaw-workspace-command-task-check:unix
+npm run dev:milestone-check:unix -- openclaw-workspace-command-task
 ```
 
 This verifies core can materialize a selected workspace command proposal into a queued task with a pending approval, while the operator remains blocked and no command transcript is created before approval.
@@ -524,7 +524,7 @@ This verifies core can materialize a selected workspace command proposal into a 
 Run the OpenClaw workspace command execute slice directly:
 
 ```bash
-npm run dev:openclaw-workspace-command-execute-check:unix
+npm run dev:milestone-check:unix -- openclaw-workspace-command-execute
 ```
 
 This verifies core can execute an allowlisted workspace command only after explicit approval, using the configured workspace root and command allowlist, with command transcripts, capability history, and audit events.
@@ -532,7 +532,7 @@ This verifies core can execute an allowlisted workspace command only after expli
 Run the OpenClaw workspace command failure slice directly:
 
 ```bash
-npm run dev:openclaw-workspace-command-failure-check:unix
+npm run dev:milestone-check:unix -- openclaw-workspace-command-failure
 ```
 
 This verifies an approved workspace command with a non-zero exit code fails the task, preserves stderr and exit code in the command transcript ledger, records capability history, clears pending approvals, and emits failure audit events.
@@ -540,7 +540,7 @@ This verifies an approved workspace command with a non-zero exit code fails the 
 Run the OpenClaw workspace command denial slice directly:
 
 ```bash
-npm run dev:openclaw-workspace-command-denial-check:unix
+npm run dev:milestone-check:unix -- openclaw-workspace-command-denial
 ```
 
 This verifies denying a workspace command approval fails the queued task without executing the command, creating command transcripts, or invoking the command capability.
@@ -548,7 +548,7 @@ This verifies denying a workspace command approval fails the queued task without
 Run the OpenClaw workspace command denial recovery slice directly:
 
 ```bash
-npm run dev:openclaw-workspace-command-denial-recovery-check:unix
+npm run dev:milestone-check:unix -- openclaw-workspace-command-denial-recovery
 ```
 
 This verifies a denied workspace command can only recover into a fresh approval-gated task, does not execute during recovery, and executes only after the new approval.
@@ -556,7 +556,7 @@ This verifies a denied workspace command can only recover into a fresh approval-
 Run the OpenClaw workspace command recovery slice directly:
 
 ```bash
-npm run dev:openclaw-workspace-command-recovery-check:unix
+npm run dev:milestone-check:unix -- openclaw-workspace-command-recovery
 ```
 
 This verifies a failed workspace command is recoverable as a fresh queued system task with the original command plan, a new explicit approval gate, preserved recovery links, and separate failed/successful command transcripts.
@@ -564,7 +564,7 @@ This verifies a failed workspace command is recoverable as a fresh queued system
 Run the OpenClaw workspace command recovery persistence slice directly:
 
 ```bash
-npm run dev:openclaw-workspace-command-recovery-persistence-check:unix
+npm run dev:milestone-check:unix -- openclaw-workspace-command-recovery-persistence
 ```
 
 This verifies recovered workspace command chains survive core restarts before approval and after completion, including pending approval restoration, recovery links, command transcript ledger, and capability invocation history.
@@ -758,59 +758,59 @@ This is based on real NixOS VM validation:
 - `dev:up:unix` works
 - `dev:check:unix` works
 - `dev:state-check:unix` works
-- `dev:body-config-check:unix` covers the first NixOS body module and systemd skeleton
+- `body-config` milestone covers the first NixOS body module and systemd skeleton
 - `dev:command-capture-check:unix` works
 - `dev:milestone-check:unix` is the preferred mainline regression suite
-- `dev:operator-control-check:unix` covers operator dry-run, pause gating, and resume
-- `dev:policy-check:unix` covers the first policy governance and cross-boundary gate
-- `dev:sovereign-body-policy-check:unix` covers body-internal autonomy under `OPENCLAW_AUTONOMY_MODE=sovereign_body`
-- `dev:sovereign-command-execute-check:unix` covers allowlisted body-internal command execution under sovereign body autonomy
-- `dev:sovereign-command-chain-check:unix` covers multi-step command execution transcripts under sovereign body autonomy
-- `dev:sovereign-command-branch-check:unix` covers branching command execution from previous transcript results
-- `dev:sovereign-command-recovery-check:unix` covers non-zero command exit recovery and default command task failure
-- `dev:sovereign-command-ledger-check:unix` covers queryable command transcript ledger and restart recovery
-- `dev:sovereign-filesystem-write-check:unix` covers bounded autonomous filesystem text writes under sovereign body autonomy
-- `dev:sovereign-filesystem-workspace-check:unix` covers autonomous directory creation, file write, and metadata verification chains
-- `dev:sovereign-filesystem-ledger-check:unix` covers queryable filesystem change ledger and restart recovery
-- `dev:observer-command-transcript-check:unix` covers Observer visibility for sovereign command transcripts
-- `dev:observer-command-ledger-check:unix` covers Observer visibility for the cross-task command transcript ledger
-- `dev:observer-filesystem-ledger-check:unix` covers Observer visibility for the cross-task filesystem change ledger
-- `dev:observer-filesystem-read-ledger-check:unix` covers Observer visibility for the cross-task filesystem read access ledger
-- `dev:observer-workspace-detect-check:unix` covers Observer visibility for read-only OpenClaw workspace detection
-- `dev:observer-openclaw-source-migration-map-check:unix` covers Observer visibility for read-only OpenClaw source migration candidates
-- `dev:observer-openclaw-source-migration-plan-check:unix` covers Observer visibility for plan-only OpenClaw source migration drafts
-- `dev:observer-openclaw-plugin-sdk-contract-review-check:unix` covers Observer visibility for read-only OpenClaw plugin SDK contract reviews
-- `dev:observer-workspace-command-proposals-check:unix` covers Observer visibility for OpenClaw workspace command proposals
-- `dev:observer-workspace-command-plan-check:unix` covers Observer visibility for OpenClaw workspace command plan drafts
-- `dev:observer-workspace-command-task-check:unix` covers Observer controls for approval-gated OpenClaw workspace command tasks
-- `dev:observer-workspace-command-execute-check:unix` covers Observer controls and visibility for approved OpenClaw workspace command execution
-- `dev:observer-workspace-command-failure-check:unix` covers Observer visibility for failed OpenClaw workspace command execution
-- `dev:observer-workspace-command-denial-check:unix` covers Observer visibility for denied OpenClaw workspace command approvals
-- `dev:observer-workspace-command-denial-recovery-check:unix` covers Observer visibility for recovered denied OpenClaw workspace commands
-- `dev:observer-workspace-command-recovery-check:unix` covers Observer controls and visibility for recovered OpenClaw workspace commands
-- `dev:observer-workspace-command-recovery-persistence-check:unix` covers Observer visibility for recovered OpenClaw workspace command chains across restarts
-- `dev:capability-planner-check:unix` covers capability-aware plan metadata and approval-gated body capabilities
-- `dev:capability-invoke-check:unix` covers policy-governed capability invocation through core
-- `dev:capability-history-check:unix` covers persistent capability invocation history and restart recovery
-- `dev:capability-operator-check:unix` covers operator execution through governed capability invocation
-- `dev:capability-approval-operator-check:unix` covers operator approval waiting before high-risk capability execution
-- `dev:observer-capability-plan-check:unix` covers Observer visibility for body capability decisions inside plans
-- `dev:observer-capability-invoke-check:unix` covers Observer controls for policy-governed capability invocation
-- `dev:observer-capability-history-check:unix` covers Observer visibility for persistent capability invocation history
-- `dev:system-sense-check:unix` covers real body vitals and service health telemetry
-- `dev:system-heal-check:unix` covers conservative diagnosis, autofix, and heal history
-- `dev:openclaw-source-migration-map-check:unix` covers read-only migration candidate maps for profiled OpenClaw source capabilities
-- `dev:openclaw-source-migration-plan-check:unix` covers plan-only first-wave migration drafts for OpenClaw source capabilities
-- `dev:openclaw-plugin-sdk-contract-review-check:unix` covers read-only plugin SDK contract review drafts derived from first-wave migration plans
-- `dev:openclaw-workspace-command-proposals-check:unix` covers proposal-only command shapes for detected OpenClaw workspaces
-- `dev:openclaw-workspace-command-plan-check:unix` covers plan-only execution drafts for selected OpenClaw workspace commands
-- `dev:openclaw-workspace-command-task-check:unix` covers approval-gated task materialization for selected OpenClaw workspace commands
-- `dev:openclaw-workspace-command-execute-check:unix` covers approved execution of allowlisted OpenClaw workspace commands
-- `dev:openclaw-workspace-command-failure-check:unix` covers failure capture for approved OpenClaw workspace commands
-- `dev:openclaw-workspace-command-denial-check:unix` covers denial safety for approval-gated OpenClaw workspace commands
-- `dev:openclaw-workspace-command-denial-recovery-check:unix` covers recovery of denied OpenClaw workspace commands behind a fresh approval gate
-- `dev:openclaw-workspace-command-recovery-check:unix` covers recovery of failed OpenClaw workspace commands behind a fresh approval gate
-- `dev:openclaw-workspace-command-recovery-persistence-check:unix` covers restart persistence for recovered OpenClaw workspace command chains
+- `operator-control` milestone covers operator dry-run, pause gating, and resume
+- `policy` milestone covers the first policy governance and cross-boundary gate
+- `sovereign-body-policy` milestone covers body-internal autonomy under `OPENCLAW_AUTONOMY_MODE=sovereign_body`
+- `sovereign-command-execute` milestone covers allowlisted body-internal command execution under sovereign body autonomy
+- `sovereign-command-chain` milestone covers multi-step command execution transcripts under sovereign body autonomy
+- `sovereign-command-branch` milestone covers branching command execution from previous transcript results
+- `sovereign-command-recovery` milestone covers non-zero command exit recovery and default command task failure
+- `sovereign-command-ledger` milestone covers queryable command transcript ledger and restart recovery
+- `sovereign-filesystem-write` milestone covers bounded autonomous filesystem text writes under sovereign body autonomy
+- `sovereign-filesystem-workspace` milestone covers autonomous directory creation, file write, and metadata verification chains
+- `sovereign-filesystem-ledger` milestone covers queryable filesystem change ledger and restart recovery
+- `observer-command-transcript` milestone covers Observer visibility for sovereign command transcripts
+- `observer-command-ledger` milestone covers Observer visibility for the cross-task command transcript ledger
+- `observer-filesystem-ledger` milestone covers Observer visibility for the cross-task filesystem change ledger
+- `observer-filesystem-read-ledger` milestone covers Observer visibility for the cross-task filesystem read access ledger
+- `observer-workspace-detect` milestone covers Observer visibility for read-only OpenClaw workspace detection
+- `observer-openclaw-source-migration-map` milestone covers Observer visibility for read-only OpenClaw source migration candidates
+- `observer-openclaw-source-migration-plan` milestone covers Observer visibility for plan-only OpenClaw source migration drafts
+- `observer-openclaw-plugin-sdk-contract-review` milestone covers Observer visibility for read-only OpenClaw plugin SDK contract reviews
+- `observer-workspace-command-proposals` milestone covers Observer visibility for OpenClaw workspace command proposals
+- `observer-workspace-command-plan` milestone covers Observer visibility for OpenClaw workspace command plan drafts
+- `observer-workspace-command-task` milestone covers Observer controls for approval-gated OpenClaw workspace command tasks
+- `observer-workspace-command-execute` milestone covers Observer controls and visibility for approved OpenClaw workspace command execution
+- `observer-workspace-command-failure` milestone covers Observer visibility for failed OpenClaw workspace command execution
+- `observer-workspace-command-denial` milestone covers Observer visibility for denied OpenClaw workspace command approvals
+- `observer-workspace-command-denial-recovery` milestone covers Observer visibility for recovered denied OpenClaw workspace commands
+- `observer-workspace-command-recovery` milestone covers Observer controls and visibility for recovered OpenClaw workspace commands
+- `observer-workspace-command-recovery-persistence` milestone covers Observer visibility for recovered OpenClaw workspace command chains across restarts
+- `capability-planner` milestone covers capability-aware plan metadata and approval-gated body capabilities
+- `capability-invoke` milestone covers policy-governed capability invocation through core
+- `capability-history` milestone covers persistent capability invocation history and restart recovery
+- `capability-operator` milestone covers operator execution through governed capability invocation
+- `capability-approval-operator` milestone covers operator approval waiting before high-risk capability execution
+- `observer-capability-plan` milestone covers Observer visibility for body capability decisions inside plans
+- `observer-capability-invoke` milestone covers Observer controls for policy-governed capability invocation
+- `observer-capability-history` milestone covers Observer visibility for persistent capability invocation history
+- `system-sense` milestone covers real body vitals and service health telemetry
+- `system-heal` milestone covers conservative diagnosis, autofix, and heal history
+- `openclaw-source-migration-map` milestone covers read-only migration candidate maps for profiled OpenClaw source capabilities
+- `openclaw-source-migration-plan` milestone covers plan-only first-wave migration drafts for OpenClaw source capabilities
+- `openclaw-plugin-sdk-contract-review` milestone covers read-only plugin SDK contract review drafts derived from first-wave migration plans
+- `openclaw-workspace-command-proposals` milestone covers proposal-only command shapes for detected OpenClaw workspaces
+- `openclaw-workspace-command-plan` milestone covers plan-only execution drafts for selected OpenClaw workspace commands
+- `openclaw-workspace-command-task` milestone covers approval-gated task materialization for selected OpenClaw workspace commands
+- `openclaw-workspace-command-execute` milestone covers approved execution of allowlisted OpenClaw workspace commands
+- `openclaw-workspace-command-failure` milestone covers failure capture for approved OpenClaw workspace commands
+- `openclaw-workspace-command-denial` milestone covers denial safety for approval-gated OpenClaw workspace commands
+- `openclaw-workspace-command-denial-recovery` milestone covers recovery of denied OpenClaw workspace commands behind a fresh approval gate
+- `openclaw-workspace-command-recovery` milestone covers recovery of failed OpenClaw workspace commands behind a fresh approval gate
+- `openclaw-workspace-command-recovery-persistence` milestone covers restart persistence for recovered OpenClaw workspace command chains
 - direct GNOME/Wayland whole-desktop capture remains inconsistent across:
   - `org.gnome.Shell.Screenshot`
   - `grim`

@@ -80,7 +80,11 @@ resolve_selected_filter() {
 validate_registry
 load_checks
 
-selected_filter="$(resolve_selected_filter "${OPENCLAW_MILESTONE_CHECKS:-}")"
+selection_input="${OPENCLAW_MILESTONE_CHECKS:-}"
+if [[ -z "$selection_input" && "$#" -gt 0 ]]; then
+  selection_input="$(IFS=,; echo "$*")"
+fi
+selected_filter="$(resolve_selected_filter "$selection_input")"
 started_at="$(date -Iseconds)"
 passed=0
 failed=0

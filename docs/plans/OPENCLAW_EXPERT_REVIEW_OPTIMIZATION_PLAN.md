@@ -21,7 +21,7 @@ The expert review items are considered complete only when each item has code-lev
 | Unit tests E2 | No focused unit tests existed for shared packages. | Partial | Node built-in tests added for plugin runtime, shared-events, and shared-utils. Broader service-layer unit tests remain pending. |
 | Shared-client empty shell C5 | `shared-client` only exported tiny service constants. | Complete | `service-descriptors.ts` provides typed service ids, default ports, and env var names while preserving old exports. |
 | Shared-events identity helper C5 | `createEventName` was a no-op identity function. | Complete | Runtime and typed event factory now validate names against `eventNames`. |
-| Root package script redundancy E1/P2 | `package.json` has many hard-coded `dev:*check:unix` milestone scripts. | Pending | Keep one milestone runner plus compatibility strategy still to implement. |
+| Root package script redundancy E1/P2 | `package.json` had many hard-coded `dev:*check:unix` milestone scripts. | Complete | Root scripts reduced to one milestone runner plus stable lifecycle/smoke aliases; `dev-milestone-check.sh` accepts milestone names as npm args. |
 | Shell helper duplication E4 | `post_json()` is copied across many scripts. | Pending | Add shared shell helper and migrate representative lanes before broad rewrite. |
 | Observer mirror test duplication T2 | Observer checks duplicate core setup. | Partial | Result-envelope batch milestone covers core and Observer in one live service lifecycle; broader migration pending. |
 | Fixed sleeps T4 | Scripts use fixed sleeps instead of polling. | Pending | Audit complete; high-impact waits still need helper-based migration. |
@@ -35,6 +35,14 @@ The expert review items are considered complete only when each item has code-lev
 - `npm run build --workspaces --if-present` passed inside a dev shell with TypeScript.
 - `npm run test --workspaces --if-present` passed inside a dev shell with TypeScript.
 - `git diff --check` passed.
+
+## Package Script Reduction Evidence
+
+- Root `package.json` scripts reduced from 229 entries to 14 entries.
+- Unix check aliases reduced to `dev:state-check:unix`, `dev:command-capture-check:unix`, and `dev:milestone-check:unix`.
+- `npm run dev:milestone-check:unix -- openclaw-shared-package-contracts` passed, proving argument-based milestone selection.
+- `OPENCLAW_MILESTONE_CHECKS=@changed bash nix/scripts/dev-milestone-check.sh` passed and selected only static/shared checks for the script reduction slice.
+- `npm run typecheck --workspaces --if-present`, `npm run build --workspaces --if-present`, `npm run test --workspaces --if-present`, and `git diff --check` passed.
 
 ## Next Expert Items After This Slice
 
