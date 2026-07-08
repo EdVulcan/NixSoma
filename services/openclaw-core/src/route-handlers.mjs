@@ -3,11 +3,12 @@ import { createEventName } from "../../../packages/shared-events/src/event-facto
 import { handleCloudLiveProviderCredentialPostRoute } from "./cloud-live-provider-credential-post-routes.mjs";
 import { handleCloudLiveProviderResultEnvelopeGetRoute } from "./cloud-live-provider-result-envelope-routes.mjs";
 import { handleCloudLiveProviderTaskPostRoute } from "./cloud-live-provider-task-post-routes.mjs";
+import { handleObserverReadModelRoute } from "./observer-read-model-routes.mjs";
 
 export function registerRoutes(deps) {
   const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl } = deps;
 
-  const { tasks, approvals, runtimeState, policyAuditLog, capabilityInvocationLog, autonomyMode, updateRuntimeState, persistState, loadPersistentState, getCurrentTask } = state;
+  const { tasks, approvals, runtimeState, policyAuditLog, autonomyMode, updateRuntimeState, persistState, loadPersistentState, getCurrentTask } = state;
   const { fetchJson, postJson, readJsonFileIfPresent, buildSystemSenseUrl } = client;
   const { ensureTaskPolicy, buildPolicyState, evaluatePolicyIntent, recordPolicyDecision } = policyEvaluator;
   const { serialiseApproval, listApprovals, buildApprovalSummary, createApprovalRequestForTask, markApprovalApproved, markApprovalDenied, markApprovalExpired, reconcileApprovalExpirations, findExistingApprovalForTask, publishTaskApprovalIfPending } = approvalEngine;
@@ -51,7 +52,7 @@ export function registerRoutes(deps) {
     selectOpenClawToolCatalogWorkspace,
   } = pluginReview;
   const { resolveOpenClawWorkspaceTarget, buildNativeOpenClawWorkspaceTextWriteDraft, createNativeOpenClawWorkspaceTextWriteTask, readBoundedWorkspaceTextFile, buildNativeOpenClawWorkspacePatchApplyDraft, createNativeOpenClawWorkspacePatchApplyTask, buildOpenClawSourceAuthoredEditDraft, createOpenClawSourceAuthoredEditTask, buildWorkspaceCommandPlanDraft, buildOpenClawSourceCommandPlanDraft, createWorkspaceCommandTask, createOpenClawSourceCommandTask } = workspaceOps;
-  const { buildNativePluginCapabilityInvokePlan, buildNativePluginRuntimePreflight, buildNativePluginRuntimeActivationPlan, buildNativePluginRuntimeAdapterContract, buildNativePluginRuntimeAdapterTaskDraft, buildNativePluginRuntimeActivationTaskDraft, buildNativePluginInvokeTaskPlan, createNativePluginRuntimeActivationTask, createNativePluginRuntimeAdapterTask, createNativePluginInvokeTask, buildSystemdRepairExecutionTaskDraft, createSystemdRepairExecutionTask, createSystemdRepairCandidateTaskShell, createSystemdNextRepairTaskShell, createBodyEvidenceLedgerDirectoryTaskShell, createBodyEvidenceLedgerFirstRecordTaskShell, createBodyEvidenceLedgerFollowupRecordTaskShell, serialisePlanForPublic, buildRulePlan, shouldBuildPlan, updatePlanForPhase, buildCapabilityRegistry, listCapabilityInvocations, buildCapabilityInvocationSummary, invokeCapability, buildMvpRouteAlignment, buildPhase2RepairDemoStatus, buildPhase2NextRepairDemoStatus, buildBodyEvidenceLedgerFollowupRecordReadiness, buildBodyEvidenceLedgerFollowupRecordAppendRouteReview, buildBodyEvidenceLedgerFollowupRecordAppendReadiness, armBodyEvidenceLedgerFollowupRecordAppend, buildPhase2NextCapabilityRouteReview, buildPhase2DemoControlRoom, buildPhase2DemoWalkthrough, buildPhase2DemoReadinessExit, buildPhase2CompletionReadiness, buildPhase2Exit, buildPhase3Plan, buildPhase3BackgroundWorkView, buildPhase3OperatorInterruptControls, buildPhase3CompletionReadiness, buildPhase3Exit, buildPhase4Plan, buildPhase4SelfHealLoop, buildPhase4HealHistoryEvidence, buildPhase4CompletionReadiness, buildPhase4Exit, buildPhase5Plan, buildPhase5DeploymentInventory, buildPhase5RollbackReadiness, buildPhase5ReleaseControlReadiness, buildPhase5Exit, buildMvpFinalReadiness, buildPostMvpPlan, buildPhase6Plan, buildPhase6MemorySubstrateInventory, buildPhase6ConsciousnessContextEnvelope, buildPhase6TaskOrchestrationRecords, buildPhase6MemoryWriteRouteReview, buildPhase6Exit, buildLongTermMemoryWritePlan, buildLongTermMemorySchema, buildLongTermMemoryProposal, buildLongTermMemoryWriteRouteReview, createLongTermMemoryWriteTask, buildLongTermMemoryReadback, buildLongTermMemoryExit } = planBuilder;
+  const { buildNativePluginCapabilityInvokePlan, buildNativePluginRuntimePreflight, buildNativePluginRuntimeActivationPlan, buildNativePluginRuntimeAdapterContract, buildNativePluginRuntimeAdapterTaskDraft, buildNativePluginRuntimeActivationTaskDraft, buildNativePluginInvokeTaskPlan, createNativePluginRuntimeActivationTask, createNativePluginRuntimeAdapterTask, createNativePluginInvokeTask, buildSystemdRepairExecutionTaskDraft, createSystemdRepairExecutionTask, createSystemdRepairCandidateTaskShell, createSystemdNextRepairTaskShell, createBodyEvidenceLedgerDirectoryTaskShell, createBodyEvidenceLedgerFirstRecordTaskShell, createBodyEvidenceLedgerFollowupRecordTaskShell, serialisePlanForPublic, buildRulePlan, shouldBuildPlan, updatePlanForPhase, buildCapabilityRegistry, invokeCapability, buildMvpRouteAlignment, buildPhase2RepairDemoStatus, buildPhase2NextRepairDemoStatus, buildBodyEvidenceLedgerFollowupRecordReadiness, buildBodyEvidenceLedgerFollowupRecordAppendRouteReview, buildBodyEvidenceLedgerFollowupRecordAppendReadiness, armBodyEvidenceLedgerFollowupRecordAppend, buildPhase2NextCapabilityRouteReview, buildPhase2DemoControlRoom, buildPhase2DemoWalkthrough, buildPhase2DemoReadinessExit, buildPhase2CompletionReadiness, buildPhase2Exit, buildPhase3Plan, buildPhase3BackgroundWorkView, buildPhase3OperatorInterruptControls, buildPhase3CompletionReadiness, buildPhase3Exit, buildPhase4Plan, buildPhase4SelfHealLoop, buildPhase4HealHistoryEvidence, buildPhase4CompletionReadiness, buildPhase4Exit, buildPhase5Plan, buildPhase5DeploymentInventory, buildPhase5RollbackReadiness, buildPhase5ReleaseControlReadiness, buildPhase5Exit, buildMvpFinalReadiness, buildPostMvpPlan, buildPhase6Plan, buildPhase6MemorySubstrateInventory, buildPhase6ConsciousnessContextEnvelope, buildPhase6TaskOrchestrationRecords, buildPhase6MemoryWriteRouteReview, buildPhase6Exit, buildLongTermMemoryWritePlan, buildLongTermMemorySchema, buildLongTermMemoryProposal, buildLongTermMemoryWriteRouteReview, createLongTermMemoryWriteTask, buildLongTermMemoryReadback, buildLongTermMemoryExit } = planBuilder;
   const {
     buildCloudConsciousnessContextReview,
     buildCloudConsciousnessEnvelopeSchema,
@@ -149,7 +150,7 @@ export function registerRoutes(deps) {
     buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptFinalReadinessPreflight,
     buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadRoute,
   } = planBuilder;
-  const { executeTask, executeTaskWithRecovery, serialiseExecutionResult, listCommandTranscriptRecords, buildCommandTranscriptSummary, serialiseCommandTranscriptSummary, listFilesystemChangeRecords, buildFilesystemChangeSummary, serialiseFilesystemChangeSummary, listFilesystemReadRecords, buildFilesystemReadSummary, serialiseFilesystemReadSummary, buildOperatorState, buildOperatorOptions, runOperatorStep, runOperatorLoop } = executor;
+  const { executeTask, executeTaskWithRecovery, serialiseExecutionResult, buildOperatorState, buildOperatorOptions, runOperatorStep, runOperatorLoop } = executor;
 
   return async function handleRequest(req, res, requestUrl) {
     // ---- Generic Proxy Routing for observer-ui ----
@@ -2373,24 +2374,7 @@ export function registerRoutes(deps) {
     return;
   }
 
-  if (req.method === "GET" && requestUrl.pathname === "/capabilities") {
-    const registry = await buildCapabilityRegistry();
-    sendJson(res, 200, {
-      ok: true,
-      ...registry,
-    });
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/capabilities/summary") {
-    const registry = await buildCapabilityRegistry();
-    sendJson(res, 200, {
-      ok: true,
-      registry: registry.registry,
-      mode: registry.mode,
-      generatedAt: registry.generatedAt,
-      summary: registry.summary,
-    });
+  if (await handleObserverReadModelRoute({ req, res, requestUrl, state, planBuilder, executor })) {
     return;
   }
 
@@ -2404,92 +2388,6 @@ export function registerRoutes(deps) {
       ok: true,
       refreshed: true,
       ...registry,
-    });
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/capabilities/invocations") {
-    const limit = Number.parseInt(requestUrl.searchParams.get("limit") ?? "20", 10);
-    const capabilityId = requestUrl.searchParams.get("capabilityId") ?? null;
-    sendJson(res, 200, {
-      ok: true,
-      count: capabilityInvocationLog.length,
-      items: listCapabilityInvocations({
-        limit: Number.isNaN(limit) ? 20 : limit,
-        capabilityId,
-      }),
-      summary: buildCapabilityInvocationSummary(),
-    });
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/capabilities/invocations/summary") {
-    sendJson(res, 200, {
-      ok: true,
-      summary: buildCapabilityInvocationSummary(),
-    });
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/commands/transcripts") {
-    const limit = Number.parseInt(requestUrl.searchParams.get("limit") ?? "20", 10);
-    const safeLimit = Number.isNaN(limit) ? 20 : Math.max(1, Math.min(limit, 100));
-    const items = listCommandTranscriptRecords({ limit: safeLimit });
-    sendJson(res, 200, {
-      ok: true,
-      count: items.length,
-      items,
-      summary: serialiseCommandTranscriptSummary(buildCommandTranscriptSummary()),
-    });
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/commands/transcripts/summary") {
-    sendJson(res, 200, {
-      ok: true,
-      summary: serialiseCommandTranscriptSummary(buildCommandTranscriptSummary()),
-    });
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/filesystem/changes") {
-    const limit = Number.parseInt(requestUrl.searchParams.get("limit") ?? "20", 10);
-    const safeLimit = Number.isNaN(limit) ? 20 : Math.max(1, Math.min(limit, 100));
-    const items = listFilesystemChangeRecords({ limit: safeLimit });
-    sendJson(res, 200, {
-      ok: true,
-      count: items.length,
-      items,
-      summary: serialiseFilesystemChangeSummary(buildFilesystemChangeSummary()),
-    });
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/filesystem/changes/summary") {
-    sendJson(res, 200, {
-      ok: true,
-      summary: serialiseFilesystemChangeSummary(buildFilesystemChangeSummary()),
-    });
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/filesystem/reads") {
-    const limit = Number.parseInt(requestUrl.searchParams.get("limit") ?? "20", 10);
-    const safeLimit = Number.isNaN(limit) ? 20 : Math.max(1, Math.min(limit, 100));
-    const items = listFilesystemReadRecords({ limit: safeLimit });
-    sendJson(res, 200, {
-      ok: true,
-      count: items.length,
-      items,
-      summary: serialiseFilesystemReadSummary(buildFilesystemReadSummary()),
-    });
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/filesystem/reads/summary") {
-    sendJson(res, 200, {
-      ok: true,
-      summary: serialiseFilesystemReadSummary(buildFilesystemReadSummary()),
     });
     return;
   }

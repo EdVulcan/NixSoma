@@ -167,6 +167,128 @@ test("executor-backed transcript route clamps limits and returns the public read
   });
 });
 
+test("capability invocation route preserves fallback limit and summary contract", async () => {
+  let observedQuery = null;
+  const deps = createBaseDeps({
+    state: {
+      capabilityInvocationLog: [{ id: "entry-1" }, { id: "entry-2" }, { id: "entry-3" }],
+    },
+    planBuilder: {
+      listCapabilityInvocations: (query) => {
+        observedQuery = query;
+        return [{ id: "entry-2", capabilityId: "sense.filesystem.read" }];
+      },
+      buildCapabilityInvocationSummary: () => ({
+        total: 3,
+        byCapability: { "sense.filesystem.read": 1 },
+      }),
+    },
+  });
+
+  const response = await invokeRoute(deps, "GET", "/capabilities/invocations?limit=bad&capabilityId=sense.filesystem.read");
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.deepEqual(observedQuery, { limit: 20, capabilityId: "sense.filesystem.read" });
+  assert.equal(response.body.ok, true);
+  assert.equal(response.body.count, 3);
+  assert.deepEqual(response.body.items, [{ id: "entry-2", capabilityId: "sense.filesystem.read" }]);
+  assert.deepEqual(response.body.summary, {
+    total: 3,
+    byCapability: { "sense.filesystem.read": 1 },
+  });
+});
+
+test("filesystem change route clamps limits and returns serialised summary", async () => {
+  let observedLimit = null;
+  const deps = createBaseDeps({
+    executor: {
+      listFilesystemChangeRecords: ({ limit }) => {
+        observedLimit = limit;
+        return [{ taskId: "task-write", capabilityId: "act.filesystem.write_text" }];
+      },
+      buildFilesystemChangeSummary: () => ({
+        total: 1,
+        byCapability: { "act.filesystem.write_text": 1 },
+        taskIds: new Set(["task-write"]),
+      }),
+      serialiseFilesystemChangeSummary: (summary) => ({
+        total: summary.total,
+        byCapability: summary.byCapability,
+        taskIds: [...summary.taskIds],
+        taskCount: summary.taskIds.size,
+      }),
+    },
+  });
+
+  const response = await invokeRoute(deps, "GET", "/filesystem/changes?limit=999");
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(observedLimit, 100);
+  assert.equal(response.body.ok, true);
+  assert.equal(response.body.count, 1);
+  assert.deepEqual(response.body.items, [{ taskId: "task-write", capabilityId: "act.filesystem.write_text" }]);
+  assert.deepEqual(response.body.summary, {
+    total: 1,
+    byCapability: { "act.filesystem.write_text": 1 },
+    taskIds: ["task-write"],
+    taskCount: 1,
+  });
+});
+
+test("filesystem read summary route returns serialised executor summary", async () => {
+  const deps = createBaseDeps({
+    executor: {
+      buildFilesystemReadSummary: () => ({
+        total: 2,
+        byIntent: { "filesystem.read_text": 2 },
+        taskIds: new Set(["task-read-a", "task-read-b"]),
+      }),
+      serialiseFilesystemReadSummary: (summary) => ({
+        total: summary.total,
+        byIntent: summary.byIntent,
+        taskIds: [...summary.taskIds],
+        taskCount: summary.taskIds.size,
+      }),
+    },
+  });
+
+  const response = await invokeRoute(deps, "GET", "/filesystem/reads/summary");
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(response.body.ok, true);
+  assert.deepEqual(response.body.summary, {
+    total: 2,
+    byIntent: { "filesystem.read_text": 2 },
+    taskIds: ["task-read-a", "task-read-b"],
+    taskCount: 2,
+  });
+});
+
+test("capability invoke POST remains on the mutable route path", async () => {
+  let observedBody = null;
+  const deps = createBaseDeps({
+    planBuilder: {
+      invokeCapability: async (body) => {
+        observedBody = body;
+        return {
+          statusCode: 202,
+          response: { ok: true, accepted: true, capabilityId: body.capabilityId },
+        };
+      },
+    },
+  });
+
+  const response = await invokeRoute(deps, "POST", "/capabilities/invoke", { capabilityId: "sense.filesystem.read" });
+
+  assert.equal(response.statusCode, 202, JSON.stringify(response.body));
+  assert.deepEqual(observedBody, { capabilityId: "sense.filesystem.read" });
+  assert.deepEqual(response.body, {
+    ok: true,
+    accepted: true,
+    capabilityId: "sense.filesystem.read",
+  });
+});
+
 test("body evidence follow-up task route forwards confirm and serialises task shell contracts", async () => {
   const calls = [];
   const deps = createBaseDeps({
