@@ -6,6 +6,7 @@ import path from "node:path";
 
 import { createBodyEvidenceTaskBuilders } from "../src/body-evidence-task-builders.mjs";
 import { createCloudConsciousnessHandoffBuilders } from "../src/cloud-consciousness-handoff-builders.mjs";
+import { createCloudConsciousnessProviderDryRunBuilders } from "../src/cloud-consciousness-provider-dry-run-builders.mjs";
 import { createLongTermMemoryBuilders } from "../src/long-term-memory-builders.mjs";
 import { createSystemdTaskBuilders } from "../src/systemd-task-builders.mjs";
 
@@ -94,6 +95,7 @@ function createTaskLifecycleHarness(overrides = {}) {
       systemdNextRepair: task.systemdNextRepair ?? null,
       longTermMemoryWrite: task.longTermMemoryWrite ?? null,
       cloudConsciousnessHandoff: task.cloudConsciousnessHandoff ?? null,
+      cloudConsciousnessProviderDryRun: task.cloudConsciousnessProviderDryRun ?? null,
       bodyEvidenceLedgerDirectory: task.bodyEvidenceLedgerDirectory ?? null,
       bodyEvidenceLedgerFirstRecord: task.bodyEvidenceLedgerFirstRecord ?? null,
       bodyEvidenceLedgerFollowupRecord: task.bodyEvidenceLedgerFollowupRecord ?? null,
@@ -156,6 +158,29 @@ function createTaskLifecycleHarness(overrides = {}) {
       status: evidence?.status ?? null,
       summary: evidence?.summary ?? null,
     }),
+    buildCloudConsciousnessExit: async () => ({
+      ok: true,
+      registry: "openclaw-cloud-consciousness-exit-v0",
+      summary: { complete: true },
+      next: { recommendedSlice: "openclaw-cloud-consciousness-provider-adapter-plan" },
+    }),
+    buildCloudConsciousnessHandoffReadback: () => ({
+      ok: true,
+      registry: "openclaw-cloud-consciousness-handoff-readback-v0",
+      handoff: {
+        latest: {
+          id: "cloud-context-handoff-record",
+          packageId: "cloud-context-package",
+          contentHash: "hash-cloud-handoff",
+        },
+      },
+      summary: {
+        ready: true,
+        recordCount: 1,
+        latestRecordId: "cloud-context-handoff-record",
+        latestContentHash: "hash-cloud-handoff",
+      },
+    }),
     SYSTEMD_REPAIR_EXECUTION_TASK_REGISTRY: "openclaw-systemd-repair-execution-task-v0",
     SYSTEMD_NEXT_REPAIR_TASK_SHELL_REGISTRY: "openclaw-systemd-next-repair-task-shell-v0",
     SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_REGISTRY: "openclaw-systemd-next-repair-real-execution-v0",
@@ -167,6 +192,8 @@ function createTaskLifecycleHarness(overrides = {}) {
     LONG_TERM_MEMORY_FILE_DISPLAY_PATH: ".artifacts/openclaw-long-term-memory/long-term-memory.jsonl",
     CLOUD_CONSCIOUSNESS_HANDOFF_TASK_REGISTRY: "openclaw-cloud-consciousness-handoff-task-v0",
     CLOUD_CONSCIOUSNESS_HANDOFF_FILE_DISPLAY_PATH: ".artifacts/openclaw-cloud-consciousness/context-handoff.jsonl",
+    CLOUD_CONSCIOUSNESS_PROVIDER_DRY_RUN_TASK_REGISTRY: "openclaw-cloud-consciousness-provider-dry-run-task-v0",
+    CLOUD_CONSCIOUSNESS_PROVIDER_DRY_RUN_FILE_DISPLAY_PATH: ".artifacts/openclaw-cloud-consciousness/provider-dry-run.jsonl",
     ...overrides.deps,
   };
 
@@ -441,6 +468,103 @@ test("cloud consciousness handoff builders execute approved local handoffs witho
     assert.equal(calls.some((call) => call.name === "setTaskPhase" && call.phase === "cloud_consciousness_local_handoff_write"), true);
     assert.equal(calls.at(-1).name, "completeTask");
     assert.equal(events.at(-1).name, "cloud_consciousness.local_handoff_written");
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("cloud consciousness provider dry-run builders preserve no-network route-review contracts", async () => {
+  const { deps } = createTaskLifecycleHarness();
+  const builders = createCloudConsciousnessProviderDryRunBuilders(deps);
+
+  const plan = await builders.buildCloudConsciousnessProviderAdapterPlan();
+  const envelope = await builders.buildCloudConsciousnessProviderRequestEnvelope();
+  const routeReview = await builders.buildCloudConsciousnessProviderDryRunRouteReview();
+
+  assert.equal(plan.registry, "openclaw-cloud-consciousness-provider-adapter-plan-v0");
+  assert.equal(plan.summary.ready, true);
+  assert.equal(envelope.envelope.sourceHandoff.contentHash, "hash-cloud-handoff");
+  assert.equal(envelope.envelope.governance.networkCall, false);
+  assert.equal(routeReview.decision.selectedSlice, "openclaw-cloud-consciousness-provider-dry-run-task");
+  assert.equal(routeReview.decision.canCallCloudProviderNow, false);
+});
+
+test("cloud consciousness provider dry-run builders create approval-gated dry-run tasks", async () => {
+  const { deps, calls, events } = createTaskLifecycleHarness();
+  const builders = createCloudConsciousnessProviderDryRunBuilders(deps);
+
+  await assert.rejects(
+    () => builders.createCloudConsciousnessProviderDryRunTask({ confirm: false }),
+    /requires confirm=true/,
+  );
+
+  const result = await builders.createCloudConsciousnessProviderDryRunTask({ confirm: true });
+
+  assert.equal(result.registry, "openclaw-cloud-consciousness-provider-dry-run-task-v0");
+  assert.equal(result.task.type, "cloud_consciousness_provider_dry_run_task");
+  assert.equal(result.task.cloudConsciousnessProviderDryRun.artifactWritten, false);
+  assert.equal(result.governance.createsApproval, true);
+  assert.deepEqual(
+    calls.map((call) => call.name),
+    [
+      "createTask",
+      "createApprovalRequestForTask",
+      "supersedeOtherActiveTasks",
+      "reconcileRuntimeState",
+      "persistState",
+    ],
+  );
+  assert.deepEqual(
+    events.map((event) => event.name),
+    ["task.created", "approval.pending", "task.planned", "task.phase_changed"],
+  );
+});
+
+test("cloud consciousness provider dry-run builders execute approved dry-runs without network", async () => {
+  const tempDir = mkdtempSync(path.join(tmpdir(), "openclaw-provider-dry-run-test-"));
+  const dryRunFile = path.join(tempDir, "provider-dry-run.jsonl");
+  const { deps, calls, events } = createTaskLifecycleHarness({
+    deps: {
+      CLOUD_CONSCIOUSNESS_PROVIDER_DRY_RUN_FILE_DISPLAY_PATH: dryRunFile,
+    },
+    postJson: (url, body) => ({
+      ok: true,
+      mode: "append_text",
+      path: body.path,
+      root: tempDir,
+      created: true,
+      createIfMissing: body.createIfMissing,
+      contentBytes: Buffer.byteLength(body.content, "utf8"),
+      previousBytes: 0,
+      totalBytes: Buffer.byteLength(body.content, "utf8"),
+    }),
+  });
+  const builders = createCloudConsciousnessProviderDryRunBuilders(deps);
+  const task = {
+    id: "task-provider-dry-run",
+    type: "cloud_consciousness_provider_dry_run_task",
+    status: "queued",
+    approval: { requestId: "approval-provider-dry-run", status: "approved" },
+    cloudConsciousnessProviderDryRun: {
+      registry: "openclaw-cloud-consciousness-provider-dry-run-task-v0",
+    },
+  };
+
+  try {
+    assert.equal(builders.isCloudConsciousnessProviderDryRunTask(task), true);
+
+    const result = await builders.executeCloudConsciousnessProviderDryRunTask(task);
+
+    assert.equal(result.execution.registry, "openclaw-cloud-consciousness-approved-provider-dry-run-v0");
+    assert.equal(result.execution.hostMutation, true);
+    assert.equal(result.execution.transmittedExternally, false);
+    assert.equal(result.execution.cloudCallExecuted, false);
+    assert.equal(result.execution.providerSdkLoaded, false);
+    assert.equal(result.task.cloudConsciousnessProviderDryRun.artifactWritten, true);
+    assert.equal(calls.find((call) => call.name === "postJson")?.url, "http://127.0.0.1:4106/system/files/append-text");
+    assert.equal(calls.some((call) => call.name === "setTaskPhase" && call.phase === "cloud_consciousness_provider_dry_run_write"), true);
+    assert.equal(calls.at(-1).name, "completeTask");
+    assert.equal(events.at(-1).name, "cloud_consciousness.provider_dry_run_written");
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }
