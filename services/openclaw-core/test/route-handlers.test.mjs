@@ -535,6 +535,87 @@ test("control stop route fails current task and emits task failed event", async 
   });
 });
 
+test("task list route returns capped items with total count and summary", async () => {
+  const tasks = new Map([
+    ["task-1", { id: "task-1", status: "queued" }],
+    ["task-2", { id: "task-2", status: "running" }],
+  ]);
+  const deps = createBaseDeps({
+    state: { tasks },
+    taskManager: {
+      listTasks: () => [...tasks.values()],
+      buildTaskSummary: () => ({ total: 2, queued: 1, running: 1 }),
+    },
+  });
+
+  const response = await invokeRoute(deps, "GET", "/tasks?limit=1");
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.deepEqual(response.body, {
+    ok: true,
+    count: 2,
+    items: [{ id: "task-1", status: "queued" }],
+    summary: { total: 2, queued: 1, running: 1 },
+  });
+});
+
+test("task plan route publishes created, approval, planned, and reclaimed task events", async () => {
+  const events = [];
+  const approvalCalls = [];
+  const createCalls = [];
+  const task = {
+    id: "task-plan",
+    status: "queued",
+    plan: { steps: [{ phase: "acting_on_target", kind: "keyboard.type", params: { text: "hello" } }] },
+  };
+  const reclaimedTask = { id: "task-old", status: "superseded" };
+  const deps = createBaseDeps({
+    taskManager: {
+      createTask: (input) => {
+        createCalls.push(input);
+        return task;
+      },
+      supersedeOtherActiveTasks: (taskId) => (taskId === task.id ? [reclaimedTask] : []),
+      reconcileRuntimeState: () => {},
+      serialiseTask: (item) => ({ id: item.id, status: item.status }),
+      buildTaskSummary: () => ({ total: 2 }),
+    },
+    approvalEngine: {
+      publishTaskApprovalIfPending: async (item) => {
+        approvalCalls.push(item.id);
+      },
+    },
+    planBuilder: {
+      serialisePlanForPublic: (plan) => ({ stepCount: plan.steps.length }),
+    },
+    deps: {
+      publishEvent: async (type, payload) => {
+        events.push({ type, payload });
+      },
+    },
+  });
+
+  const response = await invokeRoute(deps, "POST", "/tasks/plan", {
+    targetUrl: "https://example.test/work",
+  });
+
+  assert.equal(response.statusCode, 201, JSON.stringify(response.body));
+  assert.deepEqual(createCalls, [{
+    targetUrl: "https://example.test/work",
+    goal: "Plan work for https://example.test/work",
+    type: "browser_task",
+    workViewStrategy: "ai-work-view",
+    includePlan: true,
+  }]);
+  assert.deepEqual(approvalCalls, ["task-plan"]);
+  assert.deepEqual(events.map((event) => event.type), ["task.created", "task.planned", "task.phase_changed"]);
+  assert.deepEqual(response.body, {
+    ok: true,
+    task: { id: "task-plan", status: "queued" },
+    plan: { stepCount: 1 },
+  });
+});
+
 test("body evidence follow-up task route forwards confirm and serialises task shell contracts", async () => {
   const calls = [];
   const deps = createBaseDeps({
