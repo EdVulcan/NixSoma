@@ -58,7 +58,6 @@ const registryEntries = readTsv(registryFile, ["name", "script", "description"],
 const registryByName = new Map(registryEntries.map((entry) => [entry.name, entry]));
 const registrySource = readIfExists(registrySourceFile, "source registry");
 const batchScript = readIfExists(path.join(scriptDir, "dev-openclaw-live-provider-pre-credential-pair-batch-reuse-check.sh"), "pre-credential pair batch script");
-const pairRunner = readIfExists(path.join(scriptDir, "dev-openclaw-core-observer-pair-runner.sh"), "core/Observer pair runner");
 const rows = readTsv(manifestFile, [
   "label",
   "phase",
@@ -68,6 +67,7 @@ const rows = readTsv(manifestFile, [
   "portVar",
   "observerVar",
   "extraEnv",
+  "group",
 ], "manifest");
 
 if (rows.length !== 35) {
@@ -80,12 +80,13 @@ if (rows[0]?.label !== "phase24" || rows.at(-1)?.label !== "phase57") {
 requireContains(registrySource, "openclaw-live-provider-pre-credential-pair-milestone-manifest", { file: registrySourceFile });
 requireContains(registrySource, "openclaw-live-provider-pre-credential-pair-batch-reuse", { file: registrySourceFile });
 requireContains(batchScript, "openclaw-live-provider-pre-credential-pair-milestones.tsv", { file: "dev-openclaw-live-provider-pre-credential-pair-batch-reuse-check.sh" });
-requireContains(batchScript, "dev-openclaw-core-observer-pair-runner.sh", { file: "dev-openclaw-live-provider-pre-credential-pair-batch-reuse-check.sh" });
-requireContains(batchScript, "openclaw_run_core_observer_pair", { file: "dev-openclaw-live-provider-pre-credential-pair-batch-reuse-check.sh" });
+requireContains(batchScript, "OPENCLAW_DEV_SERVICES_ALREADY_UP", { file: "dev-openclaw-live-provider-pre-credential-pair-batch-reuse-check.sh" });
+requireContains(batchScript, "OPENCLAW_CORE_STATE_FILE", { file: "dev-openclaw-live-provider-pre-credential-pair-batch-reuse-check.sh" });
+requireContains(batchScript, "PAIR_GROUPS", { file: "dev-openclaw-live-provider-pre-credential-pair-batch-reuse-check.sh" });
+requireContains(batchScript, "groupCount", { file: "dev-openclaw-live-provider-pre-credential-pair-batch-reuse-check.sh" });
 requireContains(batchScript, "openclawLiveProviderPreCredentialPairBatchReuse", { file: "dev-openclaw-live-provider-pre-credential-pair-batch-reuse-check.sh" });
-requireContains(pairRunner, "OPENCLAW_DEV_SERVICES_KEEP_UP=true", { file: "dev-openclaw-core-observer-pair-runner.sh" });
-requireContains(pairRunner, "OPENCLAW_DEV_SERVICES_ALREADY_UP=true", { file: "dev-openclaw-core-observer-pair-runner.sh" });
 
+const groups = new Set();
 for (const row of rows) {
   const phaseNumber = Number.parseInt(row.phase, 10);
   if (!Number.isInteger(phaseNumber) || phaseNumber < 24 || phaseNumber > 57) {
@@ -94,6 +95,10 @@ for (const row of rows) {
   if (!row.observerCheck.startsWith("observer-")) {
     issues.push({ lineNumber: row.lineNumber, issue: "observer check name must use observer prefix", observerCheck: row.observerCheck });
   }
+  if (!/^[a-z0-9-]+$/.test(row.group)) {
+    issues.push({ lineNumber: row.lineNumber, issue: "group must be a stable lowercase token", group: row.group });
+  }
+  groups.add(row.group);
   if (row.publicCheck === row.observerCheck) {
     issues.push({ lineNumber: row.lineNumber, issue: "public and observer check names must be distinct", publicCheck: row.publicCheck });
   }
@@ -132,6 +137,10 @@ for (const row of rows) {
       requireContains(commonScript, name, { lineNumber: row.lineNumber, file: commonPath });
     }
   }
+}
+
+if (groups.size !== 9) {
+  issues.push({ file: manifestFile, issue: "expected 9 adjacent pre-credential lifecycle groups", groupCount: groups.size, groups: [...groups] });
 }
 
 const summary = {

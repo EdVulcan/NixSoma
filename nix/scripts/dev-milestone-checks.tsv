@@ -8,7 +8,7 @@ openclaw-http-json-helper	dev-openclaw-http-json-helper-check.sh	Shared shell po
 openclaw-wait-helper	dev-openclaw-wait-helper-check.sh	Shared shell wait helper polling compatibility
 openclaw-core-observer-pair-batch-reuse	dev-openclaw-core-observer-pair-batch-reuse-check.sh	Core and Observer milestone pair validation with one reusable service lifecycle per pair
 openclaw-live-provider-pre-credential-pair-milestone-manifest	dev-openclaw-live-provider-pre-credential-pair-milestone-manifest-check.sh	Phase 24-57 pre-credential core/Observer pair metadata alignment
-openclaw-live-provider-pre-credential-pair-batch-reuse	dev-openclaw-live-provider-pre-credential-pair-batch-reuse-check.sh	Phase 24-57 pre-credential pair validation with one reusable service lifecycle per pair
+openclaw-live-provider-pre-credential-pair-batch-reuse	dev-openclaw-live-provider-pre-credential-pair-batch-reuse-check.sh	Phase 24-57 pre-credential pair validation with one reusable service lifecycle per adjacent capability group
 openclaw-phase4-fast-prereq-state	dev-openclaw-phase4-fast-prereq-state-check.sh	Phase 4 system-heal prerequisite state reuse for downstream Phase 6 checks
 openclaw-body-evidence-fast-prereq-state	dev-openclaw-body-evidence-fast-prereq-state-check.sh	Body evidence demo-status prerequisite state and ledger reuse for follow-up readiness
 openclaw-live-provider-credential-value-local-read-milestone-manifest	dev-openclaw-live-provider-credential-value-local-read-milestone-manifest-check.sh	Phase 73-90 credential-value local-read prerequisite-chain metadata alignment
