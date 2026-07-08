@@ -23,5 +23,8 @@
     "dev:command-capture-check": "powershell -ExecutionPolicy Bypass -File .\\nix\\scripts\\dev-command-capture-check.ps1",
     "dev:command-capture-check:unix": "bash ./nix/scripts/dev-command-capture-check.sh",
     "dev:milestone-check:unix": "bash ./nix/scripts/dev-milestone-check.sh"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }

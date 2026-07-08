@@ -21,7 +21,7 @@
     }
   },
   "dependencies": {
-    "@openclaw/shared-types": "workspace:*"
+    "@openclaw/shared-types": "0.1.0"
   },
   "scripts": {
     "build": "npm run typecheck && node --check src/event-factory.mjs && node --check src/event-names.mjs && node --check src/index.mjs",
