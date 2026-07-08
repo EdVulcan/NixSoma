@@ -23,8 +23,8 @@ export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-$((PORT_BASE + 8))}"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-result-envelope-batch-$START_PHASE-$END_PHASE-check.json}"
 export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-system-heal-result-envelope-batch-$START_PHASE-$END_PHASE-check.json}"
 
-if (( START_PHASE < 99 || END_PHASE > 117 || START_PHASE > END_PHASE )); then
-  echo "Result-envelope batch phase range must be within 99..117 and non-empty: $START_PHASE..$END_PHASE" >&2
+if (( START_PHASE < 99 || END_PHASE > 118 || START_PHASE > END_PHASE )); then
+  echo "Result-envelope batch phase range must be within 99..118 and non-empty: $START_PHASE..$END_PHASE" >&2
   exit 1
 fi
 

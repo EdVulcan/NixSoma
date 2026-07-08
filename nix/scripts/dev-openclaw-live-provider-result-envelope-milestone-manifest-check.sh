@@ -154,8 +154,12 @@ const milestones = readTsv(manifestFile, [
   "nextSlug",
 ], "manifest").map((entry) => ({ ...entry, phaseNumber: Number.parseInt(entry.phase, 10) }));
 
-if (milestones.length !== 19) {
-  issues.push({ manifestFile, issue: "expected 19 Phase 99-117 milestone rows", count: milestones.length });
+const expectedFirstPhase = 99;
+const expectedLastPhase = 118;
+const expectedMilestoneRows = expectedLastPhase - expectedFirstPhase + 1;
+
+if (milestones.length !== expectedMilestoneRows) {
+  issues.push({ manifestFile, issue: `expected ${expectedMilestoneRows} Phase ${expectedFirstPhase}-${expectedLastPhase} milestone rows`, count: milestones.length });
 }
 
 requireContains(wrapperHelper, "openclaw-live-provider-result-envelope-milestones.tsv", { file: wrapperHelperPath });
@@ -182,7 +186,7 @@ requireContains(registrySourceText, "# @openclaw-generate-live-provider-result-e
 let commonPrereqHelperCalls = 0;
 let commonAssertionHelperCalls = 0;
 for (const [index, milestone] of milestones.entries()) {
-  const expectedPhase = 99 + index;
+  const expectedPhase = expectedFirstPhase + index;
   if (milestone.phaseNumber !== expectedPhase) {
     issues.push({ lineNumber: milestone.lineNumber, issue: "phase sequence mismatch", expectedPhase, actualPhase: milestone.phase });
   }
@@ -328,11 +332,12 @@ for (const [index, milestone] of milestones.entries()) {
   }
 }
 
-if (commonPrereqHelperCalls !== 17) {
+const expectedPrereqHelperCalls = milestones.length - 2;
+if (commonPrereqHelperCalls !== expectedPrereqHelperCalls) {
   issues.push({
     file: commonPrereqHelperPath,
-    issue: "expected 17 Phase 99-117 common checks to use the prerequisite helper",
-    expected: 17,
+    issue: `expected ${expectedPrereqHelperCalls} Phase ${expectedFirstPhase}-${expectedLastPhase} common checks to use the prerequisite helper`,
+    expected: expectedPrereqHelperCalls,
     actual: commonPrereqHelperCalls,
   });
 }
@@ -379,7 +384,7 @@ const summary = {
       commonStateArtifactsChecked: milestones.length * 2,
     },
     issues,
-    nextRecommendedSlice: "Use the manifest-derived registry, status, and artifact inputs to extract shared Phase 99-117 common-check setup helpers without changing service assertions.",
+    nextRecommendedSlice: `Use the manifest-derived registry, status, and artifact inputs to extract shared Phase ${expectedFirstPhase}-${expectedLastPhase} common-check setup helpers without changing service assertions.`,
   },
 };
 

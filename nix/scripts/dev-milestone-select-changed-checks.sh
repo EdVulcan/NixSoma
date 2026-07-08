@@ -523,7 +523,7 @@ function selectPhasePlanChecks(file) {
   if (numericPhase >= 91 && numericPhase <= 98) {
     selectName(credentialValueLocalReadAttemptManifestCheck);
   }
-  if (numericPhase >= 99 && numericPhase <= 117) {
+  if (numericPhase >= 99 && numericPhase <= 118) {
     selectName(resultEnvelopeManifestCheck);
     selectName("openclaw-live-provider-result-envelope-batch-reuse");
     return;
