@@ -8,6 +8,7 @@ PORT_BASE="${OPENCLAW_CORE_OBSERVER_PAIR_BATCH_PORT_BASE:-26800}"
 source "$SCRIPT_DIR/dev-openclaw-core-observer-pair-runner.sh"
 
 PAIR_ROWS=(
+  "phase58|dev-openclaw-cloud-consciousness-approved-live-provider-real-launch-deferred-common-check.sh|PHASE58_PORT_BASE|PHASE58_OBSERVER_CHECK|openclaw-cloud-consciousness-approved-live-provider-real-launch-deferred"
   "phase59|dev-openclaw-cloud-consciousness-live-provider-real-launch-execution-preflight-common-check.sh|PHASE59_PORT_BASE|PHASE59_OBSERVER_CHECK|openclaw-cloud-consciousness-live-provider-real-launch-execution-preflight"
   "phase60|dev-openclaw-cloud-consciousness-live-provider-credential-value-access-gate-common-check.sh|PHASE60_PORT_BASE|PHASE60_OBSERVER_CHECK|openclaw-cloud-consciousness-live-provider-credential-value-access-gate"
   "phase61|dev-openclaw-cloud-consciousness-live-provider-endpoint-network-egress-gate-common-check.sh|PHASE61_PORT_BASE|PHASE61_OBSERVER_CHECK|openclaw-cloud-consciousness-live-provider-endpoint-network-egress-gate"
@@ -66,6 +67,7 @@ const portBases = portBasesRaw.split(/\s+/).filter(Boolean).map((value) => Numbe
 console.log(JSON.stringify({
   openclawCoreObserverPairBatchReuse: {
     status: "passed",
+    phaseRange: "58-72",
     pairCount: labels.length,
     coreChecks: labels.length,
     observerChecks: labels.length,
