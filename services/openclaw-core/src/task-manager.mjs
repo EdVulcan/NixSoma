@@ -1,6 +1,73 @@
 import { randomUUID } from "node:crypto";
 import { createTaskRecovery } from "./task-recovery.mjs";
 
+const TASK_EXTENSION_FIELDS = [
+  { name: "sourceCommand", copyFromCreateInput: true },
+  { name: "systemdRepair", copyFromCreateInput: true },
+  { name: "systemdNextRepair", copyFromCreateInput: true },
+  { name: "systemdRepairCandidate" },
+  { name: "operatorTakeover" },
+  { name: "bodyEvidenceLedgerDirectory" },
+  { name: "bodyEvidenceLedgerFirstRecord" },
+  { name: "bodyEvidenceLedgerFollowupRecord" },
+  { name: "longTermMemoryWrite" },
+  { name: "cloudConsciousnessHandoff" },
+  { name: "cloudConsciousnessProviderDryRun" },
+  { name: "cloudConsciousnessProviderCallRehearsal" },
+  { name: "cloudConsciousnessLiveProviderRunbook" },
+  { name: "cloudConsciousnessLiveProviderExecutionPlan", copyFromCreateInput: true },
+  { name: "cloudConsciousnessLiveProviderRuntimeAdapter" },
+  { name: "cloudConsciousnessLiveProviderRuntimeImplementation" },
+  { name: "cloudConsciousnessLiveProviderRuntimeAdapterImplementation" },
+  { name: "cloudConsciousnessLiveProviderRuntimeAdapterModule" },
+  { name: "cloudConsciousnessLiveProviderRequestBuilder" },
+  { name: "cloudConsciousnessLiveProviderCredentialReferenceResolver" },
+  { name: "cloudConsciousnessLiveProviderNoNetworkSender" },
+  { name: "cloudConsciousnessLiveProviderEgressTranscriptRecorder" },
+  { name: "cloudConsciousnessLiveProviderResponseVerifier" },
+  { name: "cloudConsciousnessLiveProviderRollbackNote" },
+  { name: "cloudConsciousnessLiveProviderRuntimeAdapterClosure" },
+  { name: "cloudConsciousnessLiveProviderRealLaunch" },
+  { name: "cloudConsciousnessLiveProviderEgressExecution" },
+  { name: "cloudConsciousnessLiveProviderCredentialValueAuthorization" },
+  { name: "cloudConsciousnessLiveProviderCredentialValueRead" },
+  { name: "cloudConsciousnessLiveProviderCredentialValueAccessAuthorization" },
+  { name: "cloudConsciousnessLiveProviderCredentialValueAccessAuthorizationDecision" },
+  { name: "cloudConsciousnessLiveProviderCredentialValueLocalRead" },
+  { name: "cloudConsciousnessLiveProviderCredentialValueLocalReadExecution" },
+  { name: "cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalRead" },
+  { name: "cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttempt" },
+  { name: "cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalRead" },
+  { name: "cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelope" },
+  { name: "cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreation" },
+  { name: "cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecution" },
+  { name: "cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttempt" },
+  { name: "cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalRead" },
+];
+
+function serialiseTaskExtensionFields(task) {
+  return Object.fromEntries(
+    TASK_EXTENSION_FIELDS.map(({ name }) => [name, task[name] ?? null]),
+  );
+}
+
+function cloneTaskExtensionFieldsFromCreateInput(body) {
+  const fields = {};
+  for (const { name, copyFromCreateInput } of TASK_EXTENSION_FIELDS) {
+    if (copyFromCreateInput !== true) {
+      continue;
+    }
+    fields[name] = body[name] && typeof body[name] === "object"
+      ? clonePlainObject(body[name])
+      : null;
+  }
+  return fields;
+}
+
+function clonePlainObject(value) {
+  return value && typeof value === "object" ? JSON.parse(JSON.stringify(value)) : {};
+}
+
 export function createTaskManager(deps) {
   const {
     state,
@@ -54,47 +121,7 @@ function serialiseTask(task) {
     workView: task.workView ?? null,
     lastAction: task.lastAction ?? null,
     outcome: task.outcome ?? null,
-    sourceCommand: task.sourceCommand ?? null,
-    systemdRepair: task.systemdRepair ?? null,
-    systemdNextRepair: task.systemdNextRepair ?? null,
-    systemdRepairCandidate: task.systemdRepairCandidate ?? null,
-    operatorTakeover: task.operatorTakeover ?? null,
-    bodyEvidenceLedgerDirectory: task.bodyEvidenceLedgerDirectory ?? null,
-    bodyEvidenceLedgerFirstRecord: task.bodyEvidenceLedgerFirstRecord ?? null,
-    bodyEvidenceLedgerFollowupRecord: task.bodyEvidenceLedgerFollowupRecord ?? null,
-    longTermMemoryWrite: task.longTermMemoryWrite ?? null,
-    cloudConsciousnessHandoff: task.cloudConsciousnessHandoff ?? null,
-    cloudConsciousnessProviderDryRun: task.cloudConsciousnessProviderDryRun ?? null,
-    cloudConsciousnessProviderCallRehearsal: task.cloudConsciousnessProviderCallRehearsal ?? null,
-    cloudConsciousnessLiveProviderRunbook: task.cloudConsciousnessLiveProviderRunbook ?? null,
-    cloudConsciousnessLiveProviderExecutionPlan: task.cloudConsciousnessLiveProviderExecutionPlan ?? null,
-    cloudConsciousnessLiveProviderRuntimeAdapter: task.cloudConsciousnessLiveProviderRuntimeAdapter ?? null,
-    cloudConsciousnessLiveProviderRuntimeImplementation: task.cloudConsciousnessLiveProviderRuntimeImplementation ?? null,
-    cloudConsciousnessLiveProviderRuntimeAdapterImplementation: task.cloudConsciousnessLiveProviderRuntimeAdapterImplementation ?? null,
-    cloudConsciousnessLiveProviderRuntimeAdapterModule: task.cloudConsciousnessLiveProviderRuntimeAdapterModule ?? null,
-    cloudConsciousnessLiveProviderRequestBuilder: task.cloudConsciousnessLiveProviderRequestBuilder ?? null,
-    cloudConsciousnessLiveProviderCredentialReferenceResolver: task.cloudConsciousnessLiveProviderCredentialReferenceResolver ?? null,
-    cloudConsciousnessLiveProviderNoNetworkSender: task.cloudConsciousnessLiveProviderNoNetworkSender ?? null,
-    cloudConsciousnessLiveProviderEgressTranscriptRecorder: task.cloudConsciousnessLiveProviderEgressTranscriptRecorder ?? null,
-    cloudConsciousnessLiveProviderResponseVerifier: task.cloudConsciousnessLiveProviderResponseVerifier ?? null,
-    cloudConsciousnessLiveProviderRollbackNote: task.cloudConsciousnessLiveProviderRollbackNote ?? null,
-    cloudConsciousnessLiveProviderRuntimeAdapterClosure: task.cloudConsciousnessLiveProviderRuntimeAdapterClosure ?? null,
-    cloudConsciousnessLiveProviderRealLaunch: task.cloudConsciousnessLiveProviderRealLaunch ?? null,
-    cloudConsciousnessLiveProviderEgressExecution: task.cloudConsciousnessLiveProviderEgressExecution ?? null,
-    cloudConsciousnessLiveProviderCredentialValueAuthorization: task.cloudConsciousnessLiveProviderCredentialValueAuthorization ?? null,
-    cloudConsciousnessLiveProviderCredentialValueRead: task.cloudConsciousnessLiveProviderCredentialValueRead ?? null,
-    cloudConsciousnessLiveProviderCredentialValueAccessAuthorization: task.cloudConsciousnessLiveProviderCredentialValueAccessAuthorization ?? null,
-    cloudConsciousnessLiveProviderCredentialValueAccessAuthorizationDecision: task.cloudConsciousnessLiveProviderCredentialValueAccessAuthorizationDecision ?? null,
-    cloudConsciousnessLiveProviderCredentialValueLocalRead: task.cloudConsciousnessLiveProviderCredentialValueLocalRead ?? null,
-    cloudConsciousnessLiveProviderCredentialValueLocalReadExecution: task.cloudConsciousnessLiveProviderCredentialValueLocalReadExecution ?? null,
-    cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalRead: task.cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalRead ?? null,
-    cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttempt: task.cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttempt ?? null,
-    cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalRead: task.cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalRead ?? null,
-    cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelope: task.cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelope ?? null,
-    cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreation: task.cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreation ?? null,
-    cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecution: task.cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecution ?? null,
-    cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttempt: task.cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttempt ?? null,
-    cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalRead: task.cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalRead ?? null,
+    ...serialiseTaskExtensionFields(task),
     recovery: task.recovery ?? null,
     recoveredByTaskId: task.recoveredByTaskId ?? null,
     restorable: isRecoverableTask(task),
@@ -239,22 +266,7 @@ function createTask(body, options = {}) {
     workView: null,
     lastAction: null,
     outcome: null,
-    sourceCommand:
-      body.sourceCommand && typeof body.sourceCommand === "object"
-        ? clonePlainObject(body.sourceCommand)
-        : null,
-    systemdRepair:
-      body.systemdRepair && typeof body.systemdRepair === "object"
-        ? clonePlainObject(body.systemdRepair)
-        : null,
-    systemdNextRepair:
-      body.systemdNextRepair && typeof body.systemdNextRepair === "object"
-        ? clonePlainObject(body.systemdNextRepair)
-        : null,
-    cloudConsciousnessLiveProviderExecutionPlan:
-      body.cloudConsciousnessLiveProviderExecutionPlan && typeof body.cloudConsciousnessLiveProviderExecutionPlan === "object"
-        ? clonePlainObject(body.cloudConsciousnessLiveProviderExecutionPlan)
-        : null,
+    ...cloneTaskExtensionFieldsFromCreateInput(body),
     recovery:
       body.recovery && typeof body.recovery === "object"
         ? {
@@ -484,10 +496,6 @@ function failTask(task, reason, details = null) {
   reconcileRuntimeState();
   persistState();
   return task;
-}
-
-function clonePlainObject(value) {
-  return value && typeof value === "object" ? JSON.parse(JSON.stringify(value)) : {};
 }
 
 function buildWorkViewAttachPayload(data, targetUrl) {
