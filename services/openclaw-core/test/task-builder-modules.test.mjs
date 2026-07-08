@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
 import { createBodyEvidenceTaskBuilders } from "../src/body-evidence-task-builders.mjs";
+import { createLongTermMemoryBuilders } from "../src/long-term-memory-builders.mjs";
 import { createSystemdTaskBuilders } from "../src/systemd-task-builders.mjs";
 
 function createTaskLifecycleHarness(overrides = {}) {
@@ -13,6 +17,10 @@ function createTaskLifecycleHarness(overrides = {}) {
     fetchJson: async (url) => {
       fetchUrls.push(url);
       return overrides.fetchJson ? overrides.fetchJson(url) : {};
+    },
+    postJson: async (url, body) => {
+      calls.push({ name: "postJson", url, body });
+      return overrides.postJson ? overrides.postJson(url, body) : {};
     },
     systemSenseUrl: "http://127.0.0.1:4106",
     evaluatePolicyIntent: (input, context) => ({
@@ -56,6 +64,17 @@ function createTaskLifecycleHarness(overrides = {}) {
     persistState: () => {
       calls.push({ name: "persistState" });
     },
+    completeTask: (task, details) => {
+      calls.push({ name: "completeTask", taskId: task.id, details });
+      return {
+        ...task,
+        status: "completed",
+        outcome: {
+          kind: details?.executor ?? "completed",
+          details,
+        },
+      };
+    },
     publishEvent: async (name, body) => {
       events.push({ name, body });
     },
@@ -72,17 +91,38 @@ function createTaskLifecycleHarness(overrides = {}) {
       plan: task.plan ?? null,
       systemdRepair: task.systemdRepair ?? null,
       systemdNextRepair: task.systemdNextRepair ?? null,
+      longTermMemoryWrite: task.longTermMemoryWrite ?? null,
       bodyEvidenceLedgerDirectory: task.bodyEvidenceLedgerDirectory ?? null,
       bodyEvidenceLedgerFirstRecord: task.bodyEvidenceLedgerFirstRecord ?? null,
       bodyEvidenceLedgerFollowupRecord: task.bodyEvidenceLedgerFollowupRecord ?? null,
     }),
     serialisePlanForPublic: (plan) => plan,
+    setTaskPhase: async (task, phase, patch = {}) => {
+      calls.push({ name: "setTaskPhase", taskId: task.id, phase, patch });
+      task.phase = phase;
+      task.status = patch.status ?? task.status;
+    },
+    isTaskPolicyApproved: (task) => task.approval?.status === "approved",
+    buildPhase6Exit: async () => ({
+      ok: true,
+      registry: "openclaw-phase-6-exit-v0",
+      summary: { complete: true },
+      next: { recommendedSlice: "openclaw-long-term-memory-write-plan" },
+    }),
+    buildPhase6ConsciousnessContextEnvelope: async () => ({
+      ok: true,
+      registry: "openclaw-phase-6-consciousness-context-envelope-v0",
+      summary: { memoryPointers: 3 },
+    }),
     SYSTEMD_REPAIR_EXECUTION_TASK_REGISTRY: "openclaw-systemd-repair-execution-task-v0",
     SYSTEMD_NEXT_REPAIR_TASK_SHELL_REGISTRY: "openclaw-systemd-next-repair-task-shell-v0",
     SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_REGISTRY: "openclaw-systemd-next-repair-real-execution-v0",
     SYSTEMD_REPAIR_REAL_EXECUTION_UNIT: "openclaw-browser-runtime.service",
     SYSTEMD_REPAIR_RESTART_HELPER: "/run/current-system/sw/bin/openclaw-systemd-restart-openclaw-browser-runtime",
     SYSTEMD_REPAIR_AUTH_DELEGATION: "sudo-nopasswd-fixed-helper",
+    LONG_TERM_MEMORY_TASK_REGISTRY: "openclaw-long-term-memory-write-task-v0",
+    LONG_TERM_MEMORY_DIR_DISPLAY_PATH: ".artifacts/openclaw-long-term-memory",
+    LONG_TERM_MEMORY_FILE_DISPLAY_PATH: ".artifacts/openclaw-long-term-memory/long-term-memory.jsonl",
     ...overrides.deps,
   };
 
@@ -167,6 +207,103 @@ test("systemd task builders enforce confirm gates and publish task lifecycle eve
     events.map((event) => event.name),
     ["task.created", "approval.pending", "task.planned", "task.phase_changed"],
   );
+});
+
+test("long-term memory builders preserve Phase 7 plan and route-review contracts", async () => {
+  const { deps } = createTaskLifecycleHarness();
+  const builders = createLongTermMemoryBuilders(deps);
+
+  const plan = await builders.buildLongTermMemoryWritePlan();
+  const schema = await builders.buildLongTermMemorySchema();
+  const proposal = await builders.buildLongTermMemoryProposal();
+  const routeReview = await builders.buildLongTermMemoryWriteRouteReview();
+
+  assert.equal(plan.registry, "openclaw-long-term-memory-write-plan-v0");
+  assert.equal(plan.summary.ready, true);
+  assert.equal(schema.schema.id, "openclaw.long_term_memory.v0");
+  assert.equal(proposal.proposal.sourceRegistry, "openclaw-phase-6-consciousness-context-envelope-v0");
+  assert.equal(routeReview.decision.selectedSlice, "openclaw-long-term-memory-write-task");
+  assert.equal(routeReview.governance.callsCloudModel, false);
+});
+
+test("long-term memory builders create approval-gated write tasks", async () => {
+  const { deps, calls, events } = createTaskLifecycleHarness();
+  const builders = createLongTermMemoryBuilders(deps);
+
+  await assert.rejects(
+    () => builders.createLongTermMemoryWriteTask({ confirm: false }),
+    /requires confirm=true/,
+  );
+
+  const result = await builders.createLongTermMemoryWriteTask({ confirm: true });
+
+  assert.equal(result.registry, "openclaw-long-term-memory-write-task-v0");
+  assert.equal(result.task.type, "long_term_memory_write_task");
+  assert.equal(result.task.longTermMemoryWrite.recordAppended, false);
+  assert.equal(result.governance.createsApproval, true);
+  assert.deepEqual(
+    calls.map((call) => call.name),
+    [
+      "createTask",
+      "createApprovalRequestForTask",
+      "supersedeOtherActiveTasks",
+      "reconcileRuntimeState",
+      "persistState",
+    ],
+  );
+  assert.deepEqual(
+    events.map((event) => event.name),
+    ["task.created", "approval.pending", "task.planned", "task.phase_changed"],
+  );
+});
+
+test("long-term memory builders execute approved appends through system-sense", async () => {
+  const tempDir = mkdtempSync(path.join(tmpdir(), "openclaw-ltm-test-"));
+  const ledgerFile = path.join(tempDir, "long-term-memory.jsonl");
+  const { deps, calls, events } = createTaskLifecycleHarness({
+    deps: {
+      LONG_TERM_MEMORY_DIR_DISPLAY_PATH: tempDir,
+      LONG_TERM_MEMORY_FILE_DISPLAY_PATH: ledgerFile,
+    },
+    postJson: (url, body) => ({
+      ok: true,
+      mode: "append_text",
+      path: body.path,
+      root: tempDir,
+      created: true,
+      createIfMissing: body.createIfMissing,
+      contentBytes: Buffer.byteLength(body.content, "utf8"),
+      previousBytes: 0,
+      totalBytes: Buffer.byteLength(body.content, "utf8"),
+    }),
+  });
+  const builders = createLongTermMemoryBuilders(deps);
+  const task = {
+    id: "task-long-term-memory",
+    type: "long_term_memory_write_task",
+    status: "queued",
+    approval: { requestId: "approval-long-term-memory", status: "approved" },
+    longTermMemoryWrite: {
+      registry: "openclaw-long-term-memory-write-task-v0",
+    },
+  };
+
+  try {
+    assert.equal(builders.isLongTermMemoryWriteTask(task), true);
+
+    const result = await builders.executeLongTermMemoryWriteTask(task);
+
+    assert.equal(result.execution.registry, "openclaw-long-term-memory-approved-write-v0");
+    assert.equal(result.execution.hostMutation, true);
+    assert.equal(result.execution.cloudCall, false);
+    assert.equal(result.task.longTermMemoryWrite.recordAppended, true);
+    assert.equal(calls.find((call) => call.name === "postJson")?.url, "http://127.0.0.1:4106/system/files/append-text");
+    assert.equal(calls.some((call) => call.name === "setTaskPhase" && call.phase === "long_term_memory_record_append"), true);
+    assert.equal(calls.at(-1).name, "completeTask");
+    assert.equal(events.at(-1).name, "long_term_memory.record_appended");
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
 });
 
 test("systemd candidate task shell preserves route-review failure boundary", async () => {
