@@ -23,8 +23,8 @@ export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-$((PORT_BASE + 8))}"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-result-envelope-batch-$START_PHASE-$END_PHASE-check.json}"
 export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-system-heal-result-envelope-batch-$START_PHASE-$END_PHASE-check.json}"
 
-if (( START_PHASE < 99 || END_PHASE > 130 || START_PHASE > END_PHASE )); then
-  echo "Result-envelope batch phase range must be within 99..130 and non-empty: $START_PHASE..$END_PHASE" >&2
+if (( START_PHASE < 99 || END_PHASE > 131 || START_PHASE > END_PHASE )); then
+  echo "Result-envelope batch phase range must be within 99..131 and non-empty: $START_PHASE..$END_PHASE" >&2
   exit 1
 fi
 
@@ -63,7 +63,7 @@ run_phase_common_check() {
   core_script="dev-$slug-check.sh"
   observer_script="dev-observer-$slug-check.sh"
   common_script_name="dev-$slug-common-check.sh"
-  if (( ${#core_script} >= 240 || ${#observer_script} >= 240 || ${#common_script_name} >= 240 )); then
+  if (( phase >= 130 || ${#core_script} >= 240 || ${#observer_script} >= 240 || ${#common_script_name} >= 240 )); then
     common_script_name="dev-openclaw-live-provider-result-envelope-phase-$phase-common-check.sh"
   fi
   common_script="$SCRIPT_DIR/$common_script_name"

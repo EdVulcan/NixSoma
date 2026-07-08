@@ -26,7 +26,7 @@ function readManifest(file) {
 const milestones = readManifest(manifestFile);
 
 function usesShortResultEnvelopeScriptAlias(milestone) {
-  return [
+  return Number.parseInt(milestone.phase, 10) >= 130 || [
     `dev-${milestone.slug}-check.sh`,
     `dev-observer-${milestone.slug}-check.sh`,
     `dev-${milestone.slug}-common-check.sh`,
