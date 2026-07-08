@@ -289,6 +289,133 @@ test("capability invoke POST remains on the mutable route path", async () => {
   });
 });
 
+test("approval route group filters inbox items and clamps limits", async () => {
+  const deps = createBaseDeps({
+    approvalEngine: {
+      listApprovals: () => [
+        { id: "approval-1", status: "pending" },
+        { id: "approval-2", status: "pending" },
+        { id: "approval-3", status: "approved" },
+      ],
+      buildApprovalSummary: () => ({
+        counts: { total: 3, pending: 2, approved: 1, denied: 0, expired: 0 },
+      }),
+    },
+  });
+
+  const response = await invokeRoute(deps, "GET", "/approvals?status=pending&limit=1");
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(response.body.ok, true);
+  assert.equal(response.body.count, 1);
+  assert.deepEqual(response.body.items, [{ id: "approval-1", status: "pending" }]);
+  assert.deepEqual(response.body.summary, {
+    counts: { total: 3, pending: 2, approved: 1, denied: 0, expired: 0 },
+  });
+});
+
+test("approval approve route publishes approval event and serialises contracts", async () => {
+  const approval = { id: "approval-approve", status: "pending" };
+  const task = { id: "task-approve", status: "queued" };
+  const events = [];
+  let approveInput = null;
+  const deps = createBaseDeps({
+    state: {
+      approvals: new Map([[approval.id, approval]]),
+    },
+    approvalEngine: {
+      serialiseApproval: (item) => ({ id: item.id, status: item.status, serialised: true }),
+      buildApprovalSummary: () => ({ counts: { approved: 1, pending: 0 } }),
+      markApprovalApproved: (item, input) => {
+        approveInput = { item, input };
+        item.status = "approved";
+        return { approval: item, task };
+      },
+    },
+    taskManager: {
+      serialiseTask: (item) => ({ id: item.id, status: item.status, serialised: true }),
+    },
+    deps: {
+      publishEvent: async (type, payload) => {
+        events.push({ type, payload });
+      },
+    },
+  });
+
+  const response = await invokeRoute(deps, "POST", "/approvals/approval-approve/approve", {
+    approvedBy: " operator ",
+    reason: " approve route extraction ",
+  });
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(approveInput.item, approval);
+  assert.deepEqual(approveInput.input, {
+    approvedBy: "operator",
+    reason: "approve route extraction",
+  });
+  assert.deepEqual(events, [{
+    type: "approval.approved",
+    payload: {
+      approval: { id: "approval-approve", status: "approved", serialised: true },
+      task: { id: "task-approve", status: "queued", serialised: true },
+    },
+  }]);
+  assert.deepEqual(response.body, {
+    ok: true,
+    approval: { id: "approval-approve", status: "approved", serialised: true },
+    task: { id: "task-approve", status: "queued", serialised: true },
+    summary: { counts: { approved: 1, pending: 0 } },
+  });
+});
+
+test("approval deny route publishes task failure when denial fails a task", async () => {
+  const approval = { id: "approval-deny", status: "pending" };
+  const task = { id: "task-deny", status: "queued" };
+  const events = [];
+  const deps = createBaseDeps({
+    state: {
+      approvals: new Map([[approval.id, approval]]),
+    },
+    approvalEngine: {
+      serialiseApproval: (item) => ({ id: item.id, status: item.status, serialised: true }),
+      buildApprovalSummary: () => ({ counts: { denied: 1, pending: 0 } }),
+      markApprovalDenied: (item, input) => {
+        assert.deepEqual(input, {
+          deniedBy: "user",
+          reason: "Denied by user.",
+        });
+        item.status = "denied";
+        task.status = "failed";
+        return { approval: item, task };
+      },
+    },
+    taskManager: {
+      serialiseTask: (item) => ({ id: item.id, status: item.status, serialised: true }),
+    },
+    deps: {
+      publishEvent: async (type, payload) => {
+        events.push({ type, payload });
+      },
+    },
+  });
+
+  const response = await invokeRoute(deps, "POST", "/approvals/approval-deny/deny", {});
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.deepEqual(events.map((event) => event.type), ["approval.denied", "task.failed"]);
+  assert.deepEqual(events[1].payload, {
+    task: { id: "task-deny", status: "failed", serialised: true },
+    reason: "Approval denied by user.",
+    approval: { id: "approval-deny", status: "denied", serialised: true },
+  });
+  assert.deepEqual(response.body, {
+    ok: true,
+    approval: { id: "approval-deny", status: "denied", serialised: true },
+    task: { id: "task-deny", status: "failed", serialised: true },
+    summary: { counts: { denied: 1, pending: 0 } },
+  });
+});
+
 test("body evidence follow-up task route forwards confirm and serialises task shell contracts", async () => {
   const calls = [];
   const deps = createBaseDeps({

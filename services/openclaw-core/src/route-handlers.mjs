@@ -1,5 +1,6 @@
 import { corsHeaders, sendJson, readJsonBody } from "../../../packages/shared-utils/src/http.mjs";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
+import { handleApprovalRoute } from "./approval-routes.mjs";
 import { handleCloudLiveProviderCredentialPostRoute } from "./cloud-live-provider-credential-post-routes.mjs";
 import { handleCloudLiveProviderResultEnvelopeGetRoute } from "./cloud-live-provider-result-envelope-routes.mjs";
 import { handleCloudLiveProviderTaskPostRoute } from "./cloud-live-provider-task-post-routes.mjs";
@@ -8,10 +9,10 @@ import { handleObserverReadModelRoute } from "./observer-read-model-routes.mjs";
 export function registerRoutes(deps) {
   const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl } = deps;
 
-  const { tasks, approvals, runtimeState, policyAuditLog, autonomyMode, updateRuntimeState, persistState, loadPersistentState, getCurrentTask } = state;
+  const { tasks, runtimeState, policyAuditLog, autonomyMode, updateRuntimeState, persistState, loadPersistentState, getCurrentTask } = state;
   const { fetchJson, postJson, readJsonFileIfPresent, buildSystemSenseUrl } = client;
   const { ensureTaskPolicy, buildPolicyState, evaluatePolicyIntent, recordPolicyDecision } = policyEvaluator;
-  const { serialiseApproval, listApprovals, buildApprovalSummary, createApprovalRequestForTask, markApprovalApproved, markApprovalDenied, markApprovalExpired, reconcileApprovalExpirations, findExistingApprovalForTask, publishTaskApprovalIfPending } = approvalEngine;
+  const { serialiseApproval, buildApprovalSummary, createApprovalRequestForTask, markApprovalExpired, reconcileApprovalExpirations, findExistingApprovalForTask, publishTaskApprovalIfPending } = approvalEngine;
   const { createTask, getTaskById, appendTaskPhase, attachTaskToWorkView, completeTask, failTask, recoverTask, isRecoverableTask, supersedeOtherActiveTasks, compareTasksForDisplay, listTasks, getActiveTasks, getNextQueuedTask, getLatestFinishedTask, getLatestFailedTask, buildTaskSummary, serialiseTask, reconcileRuntimeState } = taskManager;
   const {
     buildOpenClawPluginSdkContractReview,
@@ -2421,104 +2422,7 @@ export function registerRoutes(deps) {
     return;
   }
 
-  if (req.method === "GET" && requestUrl.pathname === "/approvals") {
-    const status = requestUrl.searchParams.get("status") || null;
-    const limit = Number.parseInt(requestUrl.searchParams.get("limit") ?? "20", 10);
-    const safeLimit = Number.isNaN(limit) ? 20 : Math.max(1, Math.min(limit, 100));
-    const items = listApprovals()
-      .filter((approval) => !status || approval.status === status)
-      .slice(0, safeLimit);
-    sendJson(res, 200, {
-      ok: true,
-      count: items.length,
-      items,
-      summary: buildApprovalSummary(),
-    });
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/approvals/summary") {
-    sendJson(res, 200, {
-      ok: true,
-      summary: buildApprovalSummary(),
-    });
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname.startsWith("/approvals/") && requestUrl.pathname.endsWith("/approve")) {
-    const approvalId = requestUrl.pathname.slice("/approvals/".length, -"/approve".length);
-    const approval = approvals.get(approvalId);
-    if (!approval) {
-      sendJson(res, 404, { ok: false, error: "Approval request not found." });
-      return;
-    }
-    if (approval.status !== "pending") {
-      sendJson(res, 409, { ok: false, error: `Approval request is already ${approval.status}.` });
-      return;
-    }
-
-    try {
-      const body = await readJsonBody(req);
-      const result = markApprovalApproved(approval, {
-        approvedBy: typeof body.approvedBy === "string" && body.approvedBy.trim() ? body.approvedBy.trim() : "user",
-        reason: typeof body.reason === "string" && body.reason.trim() ? body.reason.trim() : "Approved by user.",
-      });
-      await publishEvent(createEventName("approval.approved"), {
-        approval: serialiseApproval(result.approval),
-        task: result.task ? serialiseTask(result.task) : null,
-      });
-      sendJson(res, 200, {
-        ok: true,
-        approval: serialiseApproval(result.approval),
-        task: result.task ? serialiseTask(result.task) : null,
-        summary: buildApprovalSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname.startsWith("/approvals/") && requestUrl.pathname.endsWith("/deny")) {
-    const approvalId = requestUrl.pathname.slice("/approvals/".length, -"/deny".length);
-    const approval = approvals.get(approvalId);
-    if (!approval) {
-      sendJson(res, 404, { ok: false, error: "Approval request not found." });
-      return;
-    }
-    if (approval.status !== "pending") {
-      sendJson(res, 409, { ok: false, error: `Approval request is already ${approval.status}.` });
-      return;
-    }
-
-    try {
-      const body = await readJsonBody(req);
-      const result = markApprovalDenied(approval, {
-        deniedBy: typeof body.deniedBy === "string" && body.deniedBy.trim() ? body.deniedBy.trim() : "user",
-        reason: typeof body.reason === "string" && body.reason.trim() ? body.reason.trim() : "Denied by user.",
-      });
-      await publishEvent(createEventName("approval.denied"), {
-        approval: serialiseApproval(result.approval),
-        task: result.task ? serialiseTask(result.task) : null,
-      });
-      if (result.task?.status === "failed") {
-        await publishEvent(createEventName("task.failed"), {
-          task: serialiseTask(result.task),
-          reason: "Approval denied by user.",
-          approval: serialiseApproval(result.approval),
-        });
-      }
-      sendJson(res, 200, {
-        ok: true,
-        approval: serialiseApproval(result.approval),
-        task: result.task ? serialiseTask(result.task) : null,
-        summary: buildApprovalSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
+  if (await handleApprovalRoute({ req, res, requestUrl, state, approvalEngine, taskManager, publishEvent })) {
     return;
   }
 
