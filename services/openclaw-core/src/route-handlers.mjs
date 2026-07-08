@@ -4,6 +4,7 @@ import { handleApprovalRoute } from "./approval-routes.mjs";
 import { handleCloudLiveProviderCredentialPostRoute } from "./cloud-live-provider-credential-post-routes.mjs";
 import { handleCloudLiveProviderResultEnvelopeGetRoute } from "./cloud-live-provider-result-envelope-routes.mjs";
 import { handleCloudLiveProviderTaskPostRoute } from "./cloud-live-provider-task-post-routes.mjs";
+import { handleDomainTaskPostRoute } from "./domain-task-post-routes.mjs";
 import { handleObserverReadModelRoute } from "./observer-read-model-routes.mjs";
 import { handleOperatorControlRoute } from "./operator-control-routes.mjs";
 import { handleTaskRoute } from "./task-routes.mjs";
@@ -55,21 +56,19 @@ export function registerRoutes(deps) {
     selectOpenClawToolCatalogWorkspace,
   } = pluginReview;
   const { resolveOpenClawWorkspaceTarget, buildNativeOpenClawWorkspaceTextWriteDraft, createNativeOpenClawWorkspaceTextWriteTask, readBoundedWorkspaceTextFile, buildNativeOpenClawWorkspacePatchApplyDraft, createNativeOpenClawWorkspacePatchApplyTask, buildOpenClawSourceAuthoredEditDraft, createOpenClawSourceAuthoredEditTask, buildWorkspaceCommandPlanDraft, buildOpenClawSourceCommandPlanDraft, createWorkspaceCommandTask, createOpenClawSourceCommandTask } = workspaceOps;
-  const { buildNativePluginCapabilityInvokePlan, buildNativePluginRuntimePreflight, buildNativePluginRuntimeActivationPlan, buildNativePluginRuntimeAdapterContract, buildNativePluginRuntimeAdapterTaskDraft, buildNativePluginRuntimeActivationTaskDraft, buildNativePluginInvokeTaskPlan, createNativePluginRuntimeActivationTask, createNativePluginRuntimeAdapterTask, createNativePluginInvokeTask, buildSystemdRepairExecutionTaskDraft, createSystemdRepairExecutionTask, createSystemdRepairCandidateTaskShell, createSystemdNextRepairTaskShell, createBodyEvidenceLedgerDirectoryTaskShell, createBodyEvidenceLedgerFirstRecordTaskShell, createBodyEvidenceLedgerFollowupRecordTaskShell, serialisePlanForPublic, buildRulePlan, shouldBuildPlan, updatePlanForPhase, buildCapabilityRegistry, invokeCapability, buildMvpRouteAlignment, buildPhase2RepairDemoStatus, buildPhase2NextRepairDemoStatus, buildBodyEvidenceLedgerFollowupRecordReadiness, buildBodyEvidenceLedgerFollowupRecordAppendRouteReview, buildBodyEvidenceLedgerFollowupRecordAppendReadiness, armBodyEvidenceLedgerFollowupRecordAppend, buildPhase2NextCapabilityRouteReview, buildPhase2DemoControlRoom, buildPhase2DemoWalkthrough, buildPhase2DemoReadinessExit, buildPhase2CompletionReadiness, buildPhase2Exit, buildPhase3Plan, buildPhase3BackgroundWorkView, buildPhase3OperatorInterruptControls, buildPhase3CompletionReadiness, buildPhase3Exit, buildPhase4Plan, buildPhase4SelfHealLoop, buildPhase4HealHistoryEvidence, buildPhase4CompletionReadiness, buildPhase4Exit, buildPhase5Plan, buildPhase5DeploymentInventory, buildPhase5RollbackReadiness, buildPhase5ReleaseControlReadiness, buildPhase5Exit, buildMvpFinalReadiness, buildPostMvpPlan, buildPhase6Plan, buildPhase6MemorySubstrateInventory, buildPhase6ConsciousnessContextEnvelope, buildPhase6TaskOrchestrationRecords, buildPhase6MemoryWriteRouteReview, buildPhase6Exit, buildLongTermMemoryWritePlan, buildLongTermMemorySchema, buildLongTermMemoryProposal, buildLongTermMemoryWriteRouteReview, createLongTermMemoryWriteTask, buildLongTermMemoryReadback, buildLongTermMemoryExit } = planBuilder;
+  const { buildNativePluginCapabilityInvokePlan, buildNativePluginRuntimePreflight, buildNativePluginRuntimeActivationPlan, buildNativePluginRuntimeAdapterContract, buildNativePluginRuntimeAdapterTaskDraft, buildNativePluginRuntimeActivationTaskDraft, buildNativePluginInvokeTaskPlan, createNativePluginRuntimeActivationTask, createNativePluginRuntimeAdapterTask, createNativePluginInvokeTask, buildSystemdRepairExecutionTaskDraft, serialisePlanForPublic, buildRulePlan, shouldBuildPlan, updatePlanForPhase, buildCapabilityRegistry, invokeCapability, buildMvpRouteAlignment, buildPhase2RepairDemoStatus, buildPhase2NextRepairDemoStatus, buildBodyEvidenceLedgerFollowupRecordReadiness, buildBodyEvidenceLedgerFollowupRecordAppendRouteReview, buildBodyEvidenceLedgerFollowupRecordAppendReadiness, buildPhase2NextCapabilityRouteReview, buildPhase2DemoControlRoom, buildPhase2DemoWalkthrough, buildPhase2DemoReadinessExit, buildPhase2CompletionReadiness, buildPhase2Exit, buildPhase3Plan, buildPhase3BackgroundWorkView, buildPhase3OperatorInterruptControls, buildPhase3CompletionReadiness, buildPhase3Exit, buildPhase4Plan, buildPhase4SelfHealLoop, buildPhase4HealHistoryEvidence, buildPhase4CompletionReadiness, buildPhase4Exit, buildPhase5Plan, buildPhase5DeploymentInventory, buildPhase5RollbackReadiness, buildPhase5ReleaseControlReadiness, buildPhase5Exit, buildMvpFinalReadiness, buildPostMvpPlan, buildPhase6Plan, buildPhase6MemorySubstrateInventory, buildPhase6ConsciousnessContextEnvelope, buildPhase6TaskOrchestrationRecords, buildPhase6MemoryWriteRouteReview, buildPhase6Exit, buildLongTermMemoryWritePlan, buildLongTermMemorySchema, buildLongTermMemoryProposal, buildLongTermMemoryWriteRouteReview, buildLongTermMemoryReadback, buildLongTermMemoryExit } = planBuilder;
   const {
     buildCloudConsciousnessContextReview,
     buildCloudConsciousnessEnvelopeSchema,
     buildCloudConsciousnessContextPackage,
     buildCloudConsciousnessRedactionReview,
     buildCloudConsciousnessTransmissionRouteReview,
-    createCloudConsciousnessHandoffTask,
     buildCloudConsciousnessHandoffReadback,
     buildCloudConsciousnessExit,
     buildCloudConsciousnessProviderAdapterPlan,
     buildCloudConsciousnessProviderContract,
     buildCloudConsciousnessProviderRequestEnvelope,
     buildCloudConsciousnessProviderDryRunRouteReview,
-    createCloudConsciousnessProviderDryRunTask,
     buildCloudConsciousnessProviderDryRunReadback,
     buildCloudConsciousnessProviderAdapterExit,
     buildCloudConsciousnessRealProviderCallPlan,
@@ -77,7 +76,6 @@ export function registerRoutes(deps) {
     buildCloudConsciousnessProviderCredentialPreflight,
     buildCloudConsciousnessProviderRequestRedactionReview,
     buildCloudConsciousnessRealProviderCallRouteReview,
-    createCloudConsciousnessProviderCallRehearsalTask,
     buildCloudConsciousnessProviderResponseReadback,
     buildCloudConsciousnessRealProviderCallExit,
     buildCloudConsciousnessLiveProviderCallRunbook,
@@ -2045,290 +2043,15 @@ export function registerRoutes(deps) {
     return;
   }
 
-  if (req.method === "POST" && requestUrl.pathname === "/system/systemd/repair-execution-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createSystemdRepairExecutionTask({
-        unit: typeof body.unit === "string" ? body.unit : null,
-        confirm: body.confirm === true,
-        execute: body.execute === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        target: result.target,
-        repairPlan: result.repairPlan,
-        dryRunEnvelope: result.dryRunEnvelope,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/system/systemd/repair-candidate-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createSystemdRepairCandidateTaskShell({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        routeGate: result.routeGate,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/system/systemd/next-repair-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createSystemdNextRepairTaskShell({
-        confirm: body.confirm === true,
-        execute: body.execute === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        routeGate: result.routeGate,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/body/evidence-ledger/directory-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createBodyEvidenceLedgerDirectoryTaskShell({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        routeReview: result.routeReview,
-        ledgerDirectory: result.ledgerDirectory,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/body/evidence-ledger/first-record-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createBodyEvidenceLedgerFirstRecordTaskShell({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        routeReview: result.routeReview,
-        firstRecord: result.firstRecord,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/body/evidence-ledger/followup-record-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createBodyEvidenceLedgerFollowupRecordTaskShell({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        routeReview: result.routeReview,
-        followupRecord: result.followupRecord,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/body/evidence-ledger/followup-record-append") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await armBodyEvidenceLedgerFollowupRecordAppend({
-        confirm: body.confirm === true,
-        taskId: typeof body.taskId === "string" && body.taskId.trim() ? body.taskId.trim() : null,
-      });
-      sendJson(res, 200, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        routeReview: result.routeReview,
-        task: serialiseTask(result.task),
-        approval: result.approval ? serialiseApproval(result.approval) : null,
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/long-term-memory/write-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createLongTermMemoryWriteTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        routeReview: result.routeReview,
-        proposal: result.proposal,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/handoff-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessHandoffTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        routeReview: result.routeReview,
-        contextPackage: result.contextPackage,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/provider-dry-run-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessProviderDryRunTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        routeReview: result.routeReview,
-        envelope: result.envelope,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/real-provider-call-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessProviderCallRehearsalTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        routeReview: result.routeReview,
-        requestEnvelope: result.requestEnvelope,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
+  if (await handleDomainTaskPostRoute({
+    req,
+    res,
+    requestUrl,
+    planBuilder,
+    serialiseTask,
+    serialiseApproval,
+    buildTaskSummary,
+  })) {
     return;
   }
 
