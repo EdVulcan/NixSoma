@@ -37,6 +37,7 @@ source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
 
 "$SCRIPT_DIR/dev-up.sh"
 
+openclaw_guard_systemd_execute_url "$CORE_URL/system/systemd/repair-execution-task-draft?unit=openclaw-browser-runtime.service&execute=true"
 draft="$(curl --silent --fail "$CORE_URL/system/systemd/repair-execution-task-draft?unit=openclaw-browser-runtime.service&execute=true")"
 created="$(post_json "$CORE_URL/system/systemd/repair-execution-tasks" '{"unit":"openclaw-browser-runtime.service","confirm":true,"execute":true}')"
 approval_id="$(node -e 'const data = JSON.parse(process.argv[1]); process.stdout.write(data.approval.id)' "$created")"

@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 
+OPENCLAW_BODY_EVIDENCE_PREREQS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "$OPENCLAW_BODY_EVIDENCE_PREREQS_DIR/dev-openclaw-host-mutation-guard.sh"
+
 prepare_body_evidence_timeline_readiness() {
   local core_url="$1"
   local reason="${2:-Prepare one next repair execution before body evidence ledger checks.}"
   local created_next_repair
   local next_repair_approval_id
+
+  openclaw_require_host_mutation_validation "body evidence timeline readiness prerequisite posts execute:true next-repair task" || return $?
 
   created_next_repair="$(curl --silent --fail -X POST "$core_url/system/systemd/next-repair-tasks" \
     -H 'content-type: application/json' \

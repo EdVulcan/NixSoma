@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+OPENCLAW_HTTP_JSON_HELPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "$OPENCLAW_HTTP_JSON_HELPER_DIR/dev-openclaw-host-mutation-guard.sh"
+
 openclaw_post_json() {
   local url="$1"
   local payload="$2"
@@ -37,6 +41,10 @@ openclaw_post_json() {
       return 2
       ;;
   esac
+
+  if [[ "$payload_mode" == "data" ]]; then
+    openclaw_guard_systemd_execute_payload "$url" "$payload" || return $?
+  fi
 
   curl "${curl_args[@]}"
 }
