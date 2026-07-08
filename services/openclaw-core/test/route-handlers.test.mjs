@@ -416,6 +416,125 @@ test("approval deny route publishes task failure when denial fails a task", asyn
   });
 });
 
+test("operator run route serialises loop steps and next task", async () => {
+  let observedBody = null;
+  const deps = createBaseDeps({
+    executor: {
+      runOperatorLoop: async (body) => {
+        observedBody = body;
+        return {
+          ran: true,
+          blocked: false,
+          dryRun: true,
+          nextTask: { id: "task-next", status: "queued" },
+          steps: [{
+            task: { id: "task-step", status: "completed", policy: { decision: "audit_only" } },
+            execution: { id: "execution-step" },
+          }],
+          operator: { mode: "loop-test" },
+          summary: { completed: 1 },
+        };
+      },
+      serialiseExecutionResult: (result) => ({ id: result.id, serialised: true }),
+    },
+    taskManager: {
+      serialiseTask: (task) => ({ id: task.id, status: task.status, serialised: true }),
+    },
+  });
+
+  const response = await invokeRoute(deps, "POST", "/operator/run", { maxSteps: 2, dryRun: true });
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.deepEqual(observedBody, { maxSteps: 2, dryRun: true });
+  assert.deepEqual(response.body, {
+    ok: true,
+    ran: true,
+    count: 1,
+    blocked: false,
+    reason: null,
+    dryRun: true,
+    nextTask: { id: "task-next", status: "queued", serialised: true },
+    steps: [{
+      task: { id: "task-step", status: "completed", serialised: true },
+      execution: { id: "execution-step", serialised: true },
+      policy: "audit_only",
+    }],
+    operator: { mode: "loop-test" },
+    summary: { completed: 1 },
+  });
+});
+
+test("control stop route fails current task and emits task failed event", async () => {
+  const task = { id: "task-stop", status: "running", updatedAt: "2026-07-08T00:00:00.000Z" };
+  const phases = [];
+  const events = [];
+  let reconciled = false;
+  const runtimeState = { currentTaskId: task.id };
+  const deps = createBaseDeps({
+    state: { runtimeState },
+    taskManager: {
+      getTaskById: (taskId) => (taskId === task.id ? task : null),
+      appendTaskPhase: (item, phase, details) => {
+        phases.push({ item, phase, details });
+        return item;
+      },
+      reconcileRuntimeState: () => {
+        reconciled = true;
+      },
+      serialiseTask: (item) => ({
+        id: item.id,
+        status: item.status,
+        outcome: item.outcome,
+        closedAt: item.closedAt,
+      }),
+    },
+    deps: {
+      publishEvent: async (type, payload) => {
+        events.push({ type, payload });
+      },
+    },
+  });
+
+  const response = await invokeRoute(deps, "POST", "/control/stop", {});
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(task.status, "failed");
+  assert.deepEqual(phases, [{ item: task, phase: "failed", details: { reason: "Stopped by operator." } }]);
+  assert.equal(reconciled, true);
+  assert.deepEqual(events, [{
+    type: "task.failed",
+    payload: {
+      task: {
+        id: "task-stop",
+        status: "failed",
+        outcome: {
+          kind: "failed",
+          summary: "Stopped by operator.",
+          reason: "Stopped by operator.",
+          at: "2026-07-08T00:00:00.000Z",
+        },
+        closedAt: "2026-07-08T00:00:00.000Z",
+      },
+      reason: "Stopped by operator.",
+    },
+  }]);
+  assert.deepEqual(response.body, {
+    ok: true,
+    task: {
+      id: "task-stop",
+      status: "failed",
+      outcome: {
+        kind: "failed",
+        summary: "Stopped by operator.",
+        reason: "Stopped by operator.",
+        at: "2026-07-08T00:00:00.000Z",
+      },
+      closedAt: "2026-07-08T00:00:00.000Z",
+    },
+    runtime: { currentTaskId: "task-stop" },
+  });
+});
+
 test("body evidence follow-up task route forwards confirm and serialises task shell contracts", async () => {
   const calls = [];
   const deps = createBaseDeps({

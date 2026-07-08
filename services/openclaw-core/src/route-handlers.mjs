@@ -5,6 +5,7 @@ import { handleCloudLiveProviderCredentialPostRoute } from "./cloud-live-provide
 import { handleCloudLiveProviderResultEnvelopeGetRoute } from "./cloud-live-provider-result-envelope-routes.mjs";
 import { handleCloudLiveProviderTaskPostRoute } from "./cloud-live-provider-task-post-routes.mjs";
 import { handleObserverReadModelRoute } from "./observer-read-model-routes.mjs";
+import { handleOperatorControlRoute } from "./operator-control-routes.mjs";
 
 export function registerRoutes(deps) {
   const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl } = deps;
@@ -13,7 +14,7 @@ export function registerRoutes(deps) {
   const { fetchJson, postJson, readJsonFileIfPresent, buildSystemSenseUrl } = client;
   const { ensureTaskPolicy, buildPolicyState, evaluatePolicyIntent, recordPolicyDecision } = policyEvaluator;
   const { serialiseApproval, buildApprovalSummary, createApprovalRequestForTask, markApprovalExpired, reconcileApprovalExpirations, findExistingApprovalForTask, publishTaskApprovalIfPending } = approvalEngine;
-  const { createTask, getTaskById, appendTaskPhase, attachTaskToWorkView, completeTask, failTask, recoverTask, isRecoverableTask, supersedeOtherActiveTasks, compareTasksForDisplay, listTasks, getActiveTasks, getNextQueuedTask, getLatestFinishedTask, getLatestFailedTask, buildTaskSummary, serialiseTask, reconcileRuntimeState } = taskManager;
+  const { createTask, getTaskById, appendTaskPhase, attachTaskToWorkView, completeTask, recoverTask, isRecoverableTask, supersedeOtherActiveTasks, listTasks, getActiveTasks, getLatestFinishedTask, getLatestFailedTask, buildTaskSummary, serialiseTask, reconcileRuntimeState } = taskManager;
   const {
     buildOpenClawPluginSdkContractReview,
     buildOpenClawNativePluginContractRegistry,
@@ -151,7 +152,7 @@ export function registerRoutes(deps) {
     buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptFinalReadinessPreflight,
     buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadRoute,
   } = planBuilder;
-  const { executeTask, executeTaskWithRecovery, serialiseExecutionResult, buildOperatorState, buildOperatorOptions, runOperatorStep, runOperatorLoop } = executor;
+  const { executeTask, executeTaskWithRecovery, serialiseExecutionResult } = executor;
 
   return async function handleRequest(req, res, requestUrl) {
     // ---- Generic Proxy Routing for observer-ui ----
@@ -846,11 +847,7 @@ export function registerRoutes(deps) {
     return;
   }
 
-  if (req.method === "GET" && requestUrl.pathname === "/operator/state") {
-    sendJson(res, 200, {
-      ok: true,
-      operator: buildOperatorState(),
-    });
+  if (await handleOperatorControlRoute({ req, res, requestUrl, state, taskManager, executor, publishEvent })) {
     return;
   }
 
@@ -2514,57 +2511,6 @@ export function registerRoutes(deps) {
     return;
   }
 
-  if (req.method === "POST" && requestUrl.pathname === "/operator/step") {
-    try {
-      const body = await readJsonBody(req);
-      const step = await runOperatorStep(body);
-      sendJson(res, 200, {
-        ok: true,
-        ran: step.ran,
-        blocked: step.blocked ?? false,
-        reason: step.reason ?? null,
-        dryRun: step.dryRun ?? false,
-        task: step.task ? serialiseTask(step.task) : null,
-        execution: step.execution ? serialiseExecutionResult(step.execution) : null,
-        policy: step.policy ?? step.task?.policy?.decision ?? null,
-        approval: step.approval ?? step.task?.approval ?? null,
-        operator: step.operator ?? buildOperatorState(),
-        summary: step.summary,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/operator/run") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await runOperatorLoop(body);
-      sendJson(res, 200, {
-        ok: true,
-        ran: result.ran,
-        count: result.steps.length,
-        blocked: result.blocked ?? false,
-        reason: result.reason ?? null,
-        dryRun: result.dryRun ?? false,
-        nextTask: result.nextTask ? serialiseTask(result.nextTask) : null,
-        steps: result.steps.map((step) => ({
-          task: step.task ? serialiseTask(step.task) : null,
-          execution: step.execution ? serialiseExecutionResult(step.execution) : null,
-          policy: step.policy ?? step.task?.policy?.decision ?? null,
-        })),
-        operator: result.operator ?? buildOperatorState(),
-        summary: result.summary,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
   if (req.method === "POST" && requestUrl.pathname === "/tasks/plan") {
     try {
       const body = await readJsonBody(req);
@@ -2887,110 +2833,6 @@ export function registerRoutes(deps) {
       const message = error instanceof Error ? error.message : "Unknown error";
       sendJson(res, 400, { ok: false, error: message });
     }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/control/pause") {
-    if (!runtimeState.currentTaskId) {
-      sendJson(res, 409, { ok: false, error: "No active task to pause." });
-      return;
-    }
-
-    const task = getTaskById(runtimeState.currentTaskId);
-    if (!task) {
-      sendJson(res, 404, { ok: false, error: "Current task not found." });
-      return;
-    }
-
-    task.status = "paused";
-    appendTaskPhase(task, "paused", { reason: "Paused by operator." });
-    reconcileRuntimeState();
-
-    await publishEvent(createEventName("task.paused"), { task: serialiseTask(task) });
-    sendJson(res, 200, { ok: true, task: serialiseTask(task), runtime: runtimeState });
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/control/resume") {
-    const task = getCurrentTask()
-      ?? [...tasks.values()].filter((candidate) => candidate.status === "paused").sort(compareTasksForDisplay)[0]
-      ?? null;
-
-    if (!task || task.status !== "paused") {
-      sendJson(res, 409, { ok: false, error: "No paused task to resume." });
-      return;
-    }
-
-    task.status = "queued";
-    appendTaskPhase(task, "resumed", { reason: "Resumed by operator." });
-    reconcileRuntimeState();
-
-    await publishEvent(createEventName("task.resumed"), { task: serialiseTask(task) });
-    sendJson(res, 200, { ok: true, task: serialiseTask(task), runtime: runtimeState });
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/control/takeover") {
-    if (!runtimeState.currentTaskId) {
-      sendJson(res, 409, { ok: false, error: "No active task to take over." });
-      return;
-    }
-
-    const task = getTaskById(runtimeState.currentTaskId);
-    if (!task) {
-      sendJson(res, 404, { ok: false, error: "Current task not found." });
-      return;
-    }
-
-    const now = new Date().toISOString();
-    task.status = "paused";
-    task.operatorTakeover = {
-      status: "operator_controlled",
-      requestedAt: now,
-      reason: "Taken over by operator.",
-      resumesThrough: "/control/resume",
-      stopsThrough: "/control/stop",
-    };
-    task.workView = {
-      ...(task.workView ?? {}),
-      visibility: "visible",
-      mode: "operator-takeover",
-    };
-    appendTaskPhase(task, "operator_takeover", { reason: "Taken over by operator." });
-    reconcileRuntimeState();
-
-    const takeoverTask = serialiseTask(task);
-    await publishEvent(createEventName("task.operator_takeover"), { task: takeoverTask });
-    sendJson(res, 200, { ok: true, task: takeoverTask, runtime: runtimeState });
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/control/stop") {
-    if (!runtimeState.currentTaskId) {
-      sendJson(res, 409, { ok: false, error: "No active task to stop." });
-      return;
-    }
-
-    const task = getTaskById(runtimeState.currentTaskId);
-    if (!task) {
-      sendJson(res, 404, { ok: false, error: "Current task not found." });
-      return;
-    }
-
-    task.status = "failed";
-    appendTaskPhase(task, "failed", { reason: "Stopped by operator." });
-    task.outcome = {
-      kind: "failed",
-      summary: "Stopped by operator.",
-      reason: "Stopped by operator.",
-      at: task.updatedAt,
-    };
-    task.closedAt = task.updatedAt;
-    const stoppedTask = serialiseTask(task);
-    reconcileRuntimeState();
-
-    await publishEvent(createEventName("task.failed"), { task: stoppedTask, reason: "Stopped by operator." });
-    sendJson(res, 200, { ok: true, task: stoppedTask, runtime: runtimeState });
     return;
   }
 
