@@ -118,6 +118,8 @@ export function createTaskLifecycleHarness(overrides = {}) {
       cloudConsciousnessLiveProviderCredentialValueRead: task.cloudConsciousnessLiveProviderCredentialValueRead ?? null,
       cloudConsciousnessLiveProviderCredentialValueAccessAuthorization: task.cloudConsciousnessLiveProviderCredentialValueAccessAuthorization ?? null,
       cloudConsciousnessLiveProviderCredentialValueAccessAuthorizationDecision: task.cloudConsciousnessLiveProviderCredentialValueAccessAuthorizationDecision ?? null,
+      cloudConsciousnessLiveProviderCredentialValueLocalRead: task.cloudConsciousnessLiveProviderCredentialValueLocalRead ?? null,
+      cloudConsciousnessLiveProviderCredentialValueLocalReadExecution: task.cloudConsciousnessLiveProviderCredentialValueLocalReadExecution ?? null,
       bodyEvidenceLedgerDirectory: task.bodyEvidenceLedgerDirectory ?? null,
       bodyEvidenceLedgerFirstRecord: task.bodyEvidenceLedgerFirstRecord ?? null,
       bodyEvidenceLedgerFollowupRecord: task.bodyEvidenceLedgerFollowupRecord ?? null,
