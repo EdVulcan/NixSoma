@@ -1,5 +1,4 @@
 import { corsHeaders, sendJson, readJsonBody } from "../../../packages/shared-utils/src/http.mjs";
-import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { handleApprovalRoute } from "./approval-routes.mjs";
 import { handleCloudLiveProviderCredentialPostRoute } from "./cloud-live-provider-credential-post-routes.mjs";
 import { handleCloudLiveProviderResultEnvelopeGetRoute } from "./cloud-live-provider-result-envelope-routes.mjs";
@@ -9,6 +8,7 @@ import { handleNativeAdapterPluginRoute } from "./native-adapter-plugin-routes.m
 import { handleNativePluginRuntimeRoute } from "./native-plugin-runtime-routes.mjs";
 import { handleObserverReadModelRoute } from "./observer-read-model-routes.mjs";
 import { handleOperatorControlRoute } from "./operator-control-routes.mjs";
+import { handlePolicyCapabilityRoute } from "./policy-capability-routes.mjs";
 import { handleTaskRoute } from "./task-routes.mjs";
 import { handleWorkspaceNativeOpsRoute } from "./workspace-native-ops-routes.mjs";
 import { handleWorkspacePluginReadRoute } from "./workspace-plugin-read-routes.mjs";
@@ -18,10 +18,9 @@ export function registerRoutes(deps) {
 
   const { tasks, runtimeState, policyAuditLog, autonomyMode, updateRuntimeState, persistState, loadPersistentState } = state;
   const { fetchJson, postJson, readJsonFileIfPresent, buildSystemSenseUrl } = client;
-  const { ensureTaskPolicy, buildPolicyState, evaluatePolicyIntent, recordPolicyDecision } = policyEvaluator;
   const { serialiseApproval, buildApprovalSummary, createApprovalRequestForTask, markApprovalExpired, reconcileApprovalExpirations, findExistingApprovalForTask } = approvalEngine;
   const { getTaskById, buildTaskSummary, serialiseTask, reconcileRuntimeState } = taskManager;
-  const { buildSystemdRepairExecutionTaskDraft, serialisePlanForPublic, buildRulePlan, shouldBuildPlan, updatePlanForPhase, buildCapabilityRegistry, invokeCapability, buildMvpRouteAlignment, buildPhase2RepairDemoStatus, buildPhase2NextRepairDemoStatus, buildBodyEvidenceLedgerFollowupRecordReadiness, buildBodyEvidenceLedgerFollowupRecordAppendRouteReview, buildBodyEvidenceLedgerFollowupRecordAppendReadiness, buildPhase2NextCapabilityRouteReview, buildPhase2DemoControlRoom, buildPhase2DemoWalkthrough, buildPhase2DemoReadinessExit, buildPhase2CompletionReadiness, buildPhase2Exit, buildPhase3Plan, buildPhase3BackgroundWorkView, buildPhase3OperatorInterruptControls, buildPhase3CompletionReadiness, buildPhase3Exit, buildPhase4Plan, buildPhase4SelfHealLoop, buildPhase4HealHistoryEvidence, buildPhase4CompletionReadiness, buildPhase4Exit, buildPhase5Plan, buildPhase5DeploymentInventory, buildPhase5RollbackReadiness, buildPhase5ReleaseControlReadiness, buildPhase5Exit, buildMvpFinalReadiness, buildPostMvpPlan, buildPhase6Plan, buildPhase6MemorySubstrateInventory, buildPhase6ConsciousnessContextEnvelope, buildPhase6TaskOrchestrationRecords, buildPhase6MemoryWriteRouteReview, buildPhase6Exit, buildLongTermMemoryWritePlan, buildLongTermMemorySchema, buildLongTermMemoryProposal, buildLongTermMemoryWriteRouteReview, buildLongTermMemoryReadback, buildLongTermMemoryExit } = planBuilder;
+  const { buildSystemdRepairExecutionTaskDraft, serialisePlanForPublic, buildRulePlan, shouldBuildPlan, updatePlanForPhase, buildMvpRouteAlignment, buildPhase2RepairDemoStatus, buildPhase2NextRepairDemoStatus, buildBodyEvidenceLedgerFollowupRecordReadiness, buildBodyEvidenceLedgerFollowupRecordAppendRouteReview, buildBodyEvidenceLedgerFollowupRecordAppendReadiness, buildPhase2NextCapabilityRouteReview, buildPhase2DemoControlRoom, buildPhase2DemoWalkthrough, buildPhase2DemoReadinessExit, buildPhase2CompletionReadiness, buildPhase2Exit, buildPhase3Plan, buildPhase3BackgroundWorkView, buildPhase3OperatorInterruptControls, buildPhase3CompletionReadiness, buildPhase3Exit, buildPhase4Plan, buildPhase4SelfHealLoop, buildPhase4HealHistoryEvidence, buildPhase4CompletionReadiness, buildPhase4Exit, buildPhase5Plan, buildPhase5DeploymentInventory, buildPhase5RollbackReadiness, buildPhase5ReleaseControlReadiness, buildPhase5Exit, buildMvpFinalReadiness, buildPostMvpPlan, buildPhase6Plan, buildPhase6MemorySubstrateInventory, buildPhase6ConsciousnessContextEnvelope, buildPhase6TaskOrchestrationRecords, buildPhase6MemoryWriteRouteReview, buildPhase6Exit, buildLongTermMemoryWritePlan, buildLongTermMemorySchema, buildLongTermMemoryProposal, buildLongTermMemoryWriteRouteReview, buildLongTermMemoryReadback, buildLongTermMemoryExit } = planBuilder;
   const {
     buildCloudConsciousnessContextReview,
     buildCloudConsciousnessEnvelopeSchema,
@@ -798,11 +797,14 @@ export function registerRoutes(deps) {
     return;
   }
 
-  if (req.method === "GET" && requestUrl.pathname === "/policy/state") {
-    sendJson(res, 200, {
-      ok: true,
-      policy: buildPolicyState(),
-    });
+  if (await handlePolicyCapabilityRoute({
+    req,
+    res,
+    requestUrl,
+    policyEvaluator,
+    planBuilder,
+    publishEvent,
+  })) {
     return;
   }
 
@@ -900,49 +902,6 @@ export function registerRoutes(deps) {
   }
 
   if (await handleObserverReadModelRoute({ req, res, requestUrl, state, planBuilder, executor })) {
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/capabilities/refresh") {
-    const registry = await buildCapabilityRegistry();
-    await publishEvent(createEventName("capability.updated"), {
-      registry: registry.registry,
-      summary: registry.summary,
-    });
-    sendJson(res, 200, {
-      ok: true,
-      refreshed: true,
-      ...registry,
-    });
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/capabilities/invoke") {
-    try {
-      const body = await readJsonBody(req);
-      const invocation = await invokeCapability(body);
-      sendJson(res, invocation.statusCode, invocation.response);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/policy/evaluate") {
-    try {
-      const body = await readJsonBody(req);
-      const decision = recordPolicyDecision(evaluatePolicyIntent(body, { stage: "policy.evaluate" }));
-      await publishEvent(createEventName("policy.evaluated"), { policy: decision });
-      sendJson(res, 200, {
-        ok: true,
-        policy: decision,
-        state: buildPolicyState(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
     return;
   }
 
