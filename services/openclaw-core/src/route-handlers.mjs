@@ -6,6 +6,7 @@ import { handleCloudLiveProviderResultEnvelopeGetRoute } from "./cloud-live-prov
 import { handleCloudLiveProviderTaskPostRoute } from "./cloud-live-provider-task-post-routes.mjs";
 import { handleDomainTaskPostRoute } from "./domain-task-post-routes.mjs";
 import { handleNativeAdapterPluginRoute } from "./native-adapter-plugin-routes.mjs";
+import { handleNativePluginRuntimeRoute } from "./native-plugin-runtime-routes.mjs";
 import { handleObserverReadModelRoute } from "./observer-read-model-routes.mjs";
 import { handleOperatorControlRoute } from "./operator-control-routes.mjs";
 import { handleTaskRoute } from "./task-routes.mjs";
@@ -20,7 +21,7 @@ export function registerRoutes(deps) {
   const { ensureTaskPolicy, buildPolicyState, evaluatePolicyIntent, recordPolicyDecision } = policyEvaluator;
   const { serialiseApproval, buildApprovalSummary, createApprovalRequestForTask, markApprovalExpired, reconcileApprovalExpirations, findExistingApprovalForTask } = approvalEngine;
   const { getTaskById, buildTaskSummary, serialiseTask, reconcileRuntimeState } = taskManager;
-  const { buildNativePluginCapabilityInvokePlan, buildNativePluginRuntimePreflight, buildNativePluginRuntimeActivationPlan, buildNativePluginRuntimeAdapterContract, buildNativePluginRuntimeAdapterTaskDraft, buildNativePluginRuntimeActivationTaskDraft, buildNativePluginInvokeTaskPlan, createNativePluginRuntimeActivationTask, createNativePluginRuntimeAdapterTask, createNativePluginInvokeTask, buildSystemdRepairExecutionTaskDraft, serialisePlanForPublic, buildRulePlan, shouldBuildPlan, updatePlanForPhase, buildCapabilityRegistry, invokeCapability, buildMvpRouteAlignment, buildPhase2RepairDemoStatus, buildPhase2NextRepairDemoStatus, buildBodyEvidenceLedgerFollowupRecordReadiness, buildBodyEvidenceLedgerFollowupRecordAppendRouteReview, buildBodyEvidenceLedgerFollowupRecordAppendReadiness, buildPhase2NextCapabilityRouteReview, buildPhase2DemoControlRoom, buildPhase2DemoWalkthrough, buildPhase2DemoReadinessExit, buildPhase2CompletionReadiness, buildPhase2Exit, buildPhase3Plan, buildPhase3BackgroundWorkView, buildPhase3OperatorInterruptControls, buildPhase3CompletionReadiness, buildPhase3Exit, buildPhase4Plan, buildPhase4SelfHealLoop, buildPhase4HealHistoryEvidence, buildPhase4CompletionReadiness, buildPhase4Exit, buildPhase5Plan, buildPhase5DeploymentInventory, buildPhase5RollbackReadiness, buildPhase5ReleaseControlReadiness, buildPhase5Exit, buildMvpFinalReadiness, buildPostMvpPlan, buildPhase6Plan, buildPhase6MemorySubstrateInventory, buildPhase6ConsciousnessContextEnvelope, buildPhase6TaskOrchestrationRecords, buildPhase6MemoryWriteRouteReview, buildPhase6Exit, buildLongTermMemoryWritePlan, buildLongTermMemorySchema, buildLongTermMemoryProposal, buildLongTermMemoryWriteRouteReview, buildLongTermMemoryReadback, buildLongTermMemoryExit } = planBuilder;
+  const { buildSystemdRepairExecutionTaskDraft, serialisePlanForPublic, buildRulePlan, shouldBuildPlan, updatePlanForPhase, buildCapabilityRegistry, invokeCapability, buildMvpRouteAlignment, buildPhase2RepairDemoStatus, buildPhase2NextRepairDemoStatus, buildBodyEvidenceLedgerFollowupRecordReadiness, buildBodyEvidenceLedgerFollowupRecordAppendRouteReview, buildBodyEvidenceLedgerFollowupRecordAppendReadiness, buildPhase2NextCapabilityRouteReview, buildPhase2DemoControlRoom, buildPhase2DemoWalkthrough, buildPhase2DemoReadinessExit, buildPhase2CompletionReadiness, buildPhase2Exit, buildPhase3Plan, buildPhase3BackgroundWorkView, buildPhase3OperatorInterruptControls, buildPhase3CompletionReadiness, buildPhase3Exit, buildPhase4Plan, buildPhase4SelfHealLoop, buildPhase4HealHistoryEvidence, buildPhase4CompletionReadiness, buildPhase4Exit, buildPhase5Plan, buildPhase5DeploymentInventory, buildPhase5RollbackReadiness, buildPhase5ReleaseControlReadiness, buildPhase5Exit, buildMvpFinalReadiness, buildPostMvpPlan, buildPhase6Plan, buildPhase6MemorySubstrateInventory, buildPhase6ConsciousnessContextEnvelope, buildPhase6TaskOrchestrationRecords, buildPhase6MemoryWriteRouteReview, buildPhase6Exit, buildLongTermMemoryWritePlan, buildLongTermMemorySchema, buildLongTermMemoryProposal, buildLongTermMemoryWriteRouteReview, buildLongTermMemoryReadback, buildLongTermMemoryExit } = planBuilder;
   const {
     buildCloudConsciousnessContextReview,
     buildCloudConsciousnessEnvelopeSchema,
@@ -833,173 +834,15 @@ export function registerRoutes(deps) {
     return;
   }
 
-  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/invoke-plan") {
-    try {
-      sendJson(res, 200, {
-        ok: true,
-        ...buildNativePluginCapabilityInvokePlan({
-          packagePath: requestUrl.searchParams.get("packagePath"),
-          capabilityId: requestUrl.searchParams.get("capabilityId") ?? "act.plugin.capability.invoke",
-        }),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 404, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/runtime-preflight") {
-    try {
-      sendJson(res, 200, buildNativePluginRuntimePreflight({
-        packagePath: requestUrl.searchParams.get("packagePath"),
-        capabilityId: requestUrl.searchParams.get("capabilityId") ?? "act.plugin.capability.invoke",
-      }));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/runtime-activation-plan") {
-    try {
-      sendJson(res, 200, buildNativePluginRuntimeActivationPlan({
-        packagePath: requestUrl.searchParams.get("packagePath"),
-        capabilityId: requestUrl.searchParams.get("capabilityId") ?? "act.plugin.capability.invoke",
-      }));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/runtime-adapter-contract") {
-    try {
-      sendJson(res, 200, buildNativePluginRuntimeAdapterContract({
-        packagePath: requestUrl.searchParams.get("packagePath"),
-        capabilityId: requestUrl.searchParams.get("capabilityId") ?? "act.plugin.capability.invoke",
-      }));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/runtime-adapter-task-draft") {
-    try {
-      sendJson(res, 200, buildNativePluginRuntimeAdapterTaskDraft({
-        packagePath: requestUrl.searchParams.get("packagePath"),
-        capabilityId: requestUrl.searchParams.get("capabilityId") ?? "act.plugin.capability.invoke",
-      }));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/runtime-activation-task-draft") {
-    try {
-      sendJson(res, 200, buildNativePluginRuntimeActivationTaskDraft({
-        packagePath: requestUrl.searchParams.get("packagePath"),
-        capabilityId: requestUrl.searchParams.get("capabilityId") ?? "act.plugin.capability.invoke",
-      }));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/plugins/native-adapter/invoke-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createNativePluginInvokeTask({
-        packagePath: typeof body.packagePath === "string" ? body.packagePath : null,
-        capabilityId: typeof body.capabilityId === "string" ? body.capabilityId : "act.plugin.capability.invoke",
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        sourceMode: result.sourceMode,
-        plugin: result.plugin,
-        capability: result.capability,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/plugins/native-adapter/runtime-adapter-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createNativePluginRuntimeAdapterTask({
-        packagePath: typeof body.packagePath === "string" ? body.packagePath : null,
-        capabilityId: typeof body.capabilityId === "string" ? body.capabilityId : "act.plugin.capability.invoke",
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        sourceMode: result.sourceMode,
-        plugin: result.plugin,
-        capability: result.capability,
-        adapterContract: result.adapterContract,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/plugins/native-adapter/runtime-activation-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createNativePluginRuntimeActivationTask({
-        packagePath: typeof body.packagePath === "string" ? body.packagePath : null,
-        capabilityId: typeof body.capabilityId === "string" ? body.capabilityId : "act.plugin.capability.invoke",
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        sourceMode: result.sourceMode,
-        plugin: result.plugin,
-        capability: result.capability,
-        activationPlan: result.activationPlan,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
+  if (await handleNativePluginRuntimeRoute({
+    req,
+    res,
+    requestUrl,
+    planBuilder,
+    serialiseTask,
+    serialiseApproval,
+    buildTaskSummary,
+  })) {
     return;
   }
 
