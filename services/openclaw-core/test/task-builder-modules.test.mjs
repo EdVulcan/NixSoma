@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { createBodyEvidenceTaskBuilders } from "../src/body-evidence-task-builders.mjs";
+import { createCloudConsciousnessHandoffBuilders } from "../src/cloud-consciousness-handoff-builders.mjs";
 import { createLongTermMemoryBuilders } from "../src/long-term-memory-builders.mjs";
 import { createSystemdTaskBuilders } from "../src/systemd-task-builders.mjs";
 
@@ -92,6 +93,7 @@ function createTaskLifecycleHarness(overrides = {}) {
       systemdRepair: task.systemdRepair ?? null,
       systemdNextRepair: task.systemdNextRepair ?? null,
       longTermMemoryWrite: task.longTermMemoryWrite ?? null,
+      cloudConsciousnessHandoff: task.cloudConsciousnessHandoff ?? null,
       bodyEvidenceLedgerDirectory: task.bodyEvidenceLedgerDirectory ?? null,
       bodyEvidenceLedgerFirstRecord: task.bodyEvidenceLedgerFirstRecord ?? null,
       bodyEvidenceLedgerFollowupRecord: task.bodyEvidenceLedgerFollowupRecord ?? null,
@@ -113,6 +115,46 @@ function createTaskLifecycleHarness(overrides = {}) {
       ok: true,
       registry: "openclaw-phase-6-consciousness-context-envelope-v0",
       summary: { memoryPointers: 3 },
+      envelope: {
+        bodyState: {
+          healthOk: true,
+          serviceCount: 8,
+          alerts: [],
+        },
+      },
+    }),
+    buildLongTermMemoryExit: async () => ({
+      ok: true,
+      registry: "openclaw-long-term-memory-exit-v0",
+      summary: { complete: true },
+      next: { recommendedSlice: "openclaw-cloud-consciousness-context-review" },
+    }),
+    buildLongTermMemoryReadback: () => ({
+      ok: true,
+      registry: "openclaw-long-term-memory-readback-v0",
+      ledger: {
+        latest: {
+          id: "long-term-memory-record",
+          memoryType: "operational_lesson",
+          contentHash: "hash-long-term-memory",
+        },
+      },
+      summary: {
+        ready: true,
+        recordCount: 1,
+        latestRecordId: "long-term-memory-record",
+        latestContentHash: "hash-long-term-memory",
+      },
+    }),
+    buildTaskSummary: () => ({
+      counts: { queued: 1, completed: 2 },
+      currentTaskId: null,
+      currentTaskStatus: null,
+    }),
+    compactCloudConsciousnessEvidenceRef: (evidence) => ({
+      registry: evidence?.registry ?? null,
+      status: evidence?.status ?? null,
+      summary: evidence?.summary ?? null,
     }),
     SYSTEMD_REPAIR_EXECUTION_TASK_REGISTRY: "openclaw-systemd-repair-execution-task-v0",
     SYSTEMD_NEXT_REPAIR_TASK_SHELL_REGISTRY: "openclaw-systemd-next-repair-task-shell-v0",
@@ -123,6 +165,8 @@ function createTaskLifecycleHarness(overrides = {}) {
     LONG_TERM_MEMORY_TASK_REGISTRY: "openclaw-long-term-memory-write-task-v0",
     LONG_TERM_MEMORY_DIR_DISPLAY_PATH: ".artifacts/openclaw-long-term-memory",
     LONG_TERM_MEMORY_FILE_DISPLAY_PATH: ".artifacts/openclaw-long-term-memory/long-term-memory.jsonl",
+    CLOUD_CONSCIOUSNESS_HANDOFF_TASK_REGISTRY: "openclaw-cloud-consciousness-handoff-task-v0",
+    CLOUD_CONSCIOUSNESS_HANDOFF_FILE_DISPLAY_PATH: ".artifacts/openclaw-cloud-consciousness/context-handoff.jsonl",
     ...overrides.deps,
   };
 
@@ -301,6 +345,102 @@ test("long-term memory builders execute approved appends through system-sense", 
     assert.equal(calls.some((call) => call.name === "setTaskPhase" && call.phase === "long_term_memory_record_append"), true);
     assert.equal(calls.at(-1).name, "completeTask");
     assert.equal(events.at(-1).name, "long_term_memory.record_appended");
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("cloud consciousness handoff builders preserve local-only route-review contracts", async () => {
+  const { deps } = createTaskLifecycleHarness();
+  const builders = createCloudConsciousnessHandoffBuilders(deps);
+
+  const contextReview = await builders.buildCloudConsciousnessContextReview();
+  const contextPackage = await builders.buildCloudConsciousnessContextPackage();
+  const routeReview = await builders.buildCloudConsciousnessTransmissionRouteReview();
+
+  assert.equal(contextReview.registry, "openclaw-cloud-consciousness-context-review-v0");
+  assert.equal(contextReview.summary.ready, true);
+  assert.equal(contextPackage.package.memoryContext.latestContentHash, "hash-long-term-memory");
+  assert.equal(contextPackage.package.transmission.networkCall, false);
+  assert.equal(routeReview.decision.selectedSlice, "openclaw-cloud-consciousness-handoff-task");
+  assert.equal(routeReview.decision.canCallCloudProviderNow, false);
+});
+
+test("cloud consciousness handoff builders create approval-gated local handoff tasks", async () => {
+  const { deps, calls, events } = createTaskLifecycleHarness();
+  const builders = createCloudConsciousnessHandoffBuilders(deps);
+
+  await assert.rejects(
+    () => builders.createCloudConsciousnessHandoffTask({ confirm: false }),
+    /requires confirm=true/,
+  );
+
+  const result = await builders.createCloudConsciousnessHandoffTask({ confirm: true });
+
+  assert.equal(result.registry, "openclaw-cloud-consciousness-handoff-task-v0");
+  assert.equal(result.task.type, "cloud_consciousness_handoff_task");
+  assert.equal(result.task.cloudConsciousnessHandoff.artifactWritten, false);
+  assert.equal(result.governance.createsApproval, true);
+  assert.deepEqual(
+    calls.map((call) => call.name),
+    [
+      "createTask",
+      "createApprovalRequestForTask",
+      "supersedeOtherActiveTasks",
+      "reconcileRuntimeState",
+      "persistState",
+    ],
+  );
+  assert.deepEqual(
+    events.map((event) => event.name),
+    ["task.created", "approval.pending", "task.planned", "task.phase_changed"],
+  );
+});
+
+test("cloud consciousness handoff builders execute approved local handoffs without transmission", async () => {
+  const tempDir = mkdtempSync(path.join(tmpdir(), "openclaw-cloud-handoff-test-"));
+  const handoffFile = path.join(tempDir, "context-handoff.jsonl");
+  const { deps, calls, events } = createTaskLifecycleHarness({
+    deps: {
+      CLOUD_CONSCIOUSNESS_HANDOFF_FILE_DISPLAY_PATH: handoffFile,
+    },
+    postJson: (url, body) => ({
+      ok: true,
+      mode: "append_text",
+      path: body.path,
+      root: tempDir,
+      created: true,
+      createIfMissing: body.createIfMissing,
+      contentBytes: Buffer.byteLength(body.content, "utf8"),
+      previousBytes: 0,
+      totalBytes: Buffer.byteLength(body.content, "utf8"),
+    }),
+  });
+  const builders = createCloudConsciousnessHandoffBuilders(deps);
+  const task = {
+    id: "task-cloud-handoff",
+    type: "cloud_consciousness_handoff_task",
+    status: "queued",
+    approval: { requestId: "approval-cloud-handoff", status: "approved" },
+    cloudConsciousnessHandoff: {
+      registry: "openclaw-cloud-consciousness-handoff-task-v0",
+    },
+  };
+
+  try {
+    assert.equal(builders.isCloudConsciousnessHandoffTask(task), true);
+
+    const result = await builders.executeCloudConsciousnessHandoffTask(task);
+
+    assert.equal(result.execution.registry, "openclaw-cloud-consciousness-approved-handoff-v0");
+    assert.equal(result.execution.hostMutation, true);
+    assert.equal(result.execution.transmittedExternally, false);
+    assert.equal(result.execution.cloudCallExecuted, false);
+    assert.equal(result.task.cloudConsciousnessHandoff.artifactWritten, true);
+    assert.equal(calls.find((call) => call.name === "postJson")?.url, "http://127.0.0.1:4106/system/files/append-text");
+    assert.equal(calls.some((call) => call.name === "setTaskPhase" && call.phase === "cloud_consciousness_local_handoff_write"), true);
+    assert.equal(calls.at(-1).name, "completeTask");
+    assert.equal(events.at(-1).name, "cloud_consciousness.local_handoff_written");
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }
