@@ -61,6 +61,7 @@ const resultEnvelopeManifestCheck = "openclaw-live-provider-result-envelope-mile
 const resultEnvelopeScriptNeedle = "credential-value-local-read-execution-local-read-attempt-local-read-result-envelope";
 const resultEnvelopeCommonEnvHelper = "dev-openclaw-live-provider-result-envelope-common-env.sh";
 const resultEnvelopePrereqHelper = "dev-openclaw-live-provider-result-envelope-prereq.sh";
+const resultEnvelopeAssertionsHelper = "dev-openclaw-live-provider-result-envelope-assertions.sh";
 
 function readCredentialValueLocalReadCommonScripts() {
   if (!fs.existsSync(credentialValueLocalReadManifestFile)) return new Set();
@@ -744,16 +745,19 @@ for (const file of changedFiles) {
     if (scriptBasename === "openclaw-live-provider-result-envelope-milestones.tsv"
       || scriptBasename === "dev-openclaw-live-provider-result-envelope-common-env.sh"
       || scriptBasename === "dev-openclaw-live-provider-result-envelope-prereq.sh"
+      || scriptBasename === resultEnvelopeAssertionsHelper
       || scriptBasename === "dev-openclaw-live-provider-result-envelope-wrapper.sh"
       || scriptBasename.includes(resultEnvelopeScriptNeedle)) {
       selectName(resultEnvelopeManifestCheck);
-      if (scriptBasename === "dev-openclaw-live-provider-result-envelope-prereq.sh") {
+      if (scriptBasename === "dev-openclaw-live-provider-result-envelope-prereq.sh"
+        || scriptBasename === resultEnvelopeAssertionsHelper) {
         selectName("openclaw-live-provider-result-envelope-batch-reuse");
       }
     }
     if (scriptBasename === "openclaw-live-provider-result-envelope-milestones.tsv"
       || scriptBasename === "dev-openclaw-live-provider-result-envelope-common-env.sh"
       || scriptBasename === "dev-openclaw-live-provider-result-envelope-prereq.sh"
+      || scriptBasename === resultEnvelopeAssertionsHelper
       || scriptBasename === "dev-openclaw-live-provider-result-envelope-wrapper.sh") {
       continue;
     }

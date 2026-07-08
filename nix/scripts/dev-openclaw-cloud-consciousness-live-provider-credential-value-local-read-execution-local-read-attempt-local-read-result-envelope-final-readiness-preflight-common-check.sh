@@ -30,29 +30,7 @@ if [[ "$OBSERVER_CHECK" == "true" ]]; then
   CLIENT_FILE="$(mktemp)"
   curl --silent --fail "$OBSERVER_URL/" > "$HTML_FILE"
   curl --silent --fail "$OBSERVER_URL/client-v5.js" > "$CLIENT_FILE"
-  node - <<'EOF' "$RESULT_ENVELOPE_APPROVED_DEFERRED_REGISTRY" "$RESULT_ENVELOPE_FINAL_READINESS_PREFLIGHT_REGISTRY" "$HTML_FILE" "$CLIENT_FILE"
-const fs = require("node:fs");
-const approvedDeferredRegistry = process.argv[2];
-const finalReadinessPreflightRegistry = process.argv[3];
-const html = fs.readFileSync(process.argv[4], "utf8");
-const client = fs.readFileSync(process.argv[5], "utf8");
-for (const token of [
-  "Cloud Consciousness Live Provider Credential Value Local Read Execution Local Read Attempt Local Read Result Envelope Final Readiness Preflight",
-  "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-final-readiness-preflight-panel",
-]) {
-  if (!html.includes(token)) throw new Error(`Observer HTML missing ${token}`);
-}
-for (const token of [
-  "/cloud-consciousness/live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-final-readiness-preflight",
-  "refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeFinalReadinessPreflight",
-  "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-route",
-  approvedDeferredRegistry,
-  finalReadinessPreflightRegistry,
-]) {
-  if (!client.includes(token)) throw new Error(`Observer client missing ${token}`);
-}
-console.log(JSON.stringify({ observerOpenClawCloudConsciousnessCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeFinalReadinessPreflight: { status: "passed", approvedDeferredRegistry, finalReadinessPreflightRegistry } }, null, 2));
-EOF
+  openclaw_result_envelope_assert_observer_manifest_surface "$OPENCLAW_RESULT_ENVELOPE_PHASE" "$HTML_FILE" "$CLIENT_FILE"
   exit 0
 fi
 

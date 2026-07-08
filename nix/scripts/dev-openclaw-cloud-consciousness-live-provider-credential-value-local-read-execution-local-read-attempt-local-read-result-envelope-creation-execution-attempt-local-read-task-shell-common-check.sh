@@ -47,29 +47,7 @@ if [[ "$OBSERVER_CHECK" == "true" ]]; then
   CLIENT_FILE="$(mktemp)"
   curl --silent --fail "$OBSERVER_URL/" > "$HTML_FILE"
   curl --silent --fail "$OBSERVER_URL/client-v5.js" > "$CLIENT_FILE"
-  node - <<'EOF' "$LOCAL_READ_ROUTE_REGISTRY" "$LOCAL_READ_TASK_REGISTRY" "$HTML_FILE" "$CLIENT_FILE"
-const fs = require("node:fs");
-const routeRegistry = process.argv[2];
-const taskRegistry = process.argv[3];
-const html = fs.readFileSync(process.argv[4], "utf8");
-const client = fs.readFileSync(process.argv[5], "utf8");
-for (const token of [
-  "Cloud Consciousness Live Provider Credential Value Local Read Execution Local Read Attempt Local Read Result Envelope Creation Execution Attempt Local Read Task Shell",
-  "cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-local-read-task-shell-panel",
-]) {
-  if (!html.includes(token)) throw new Error(`Observer HTML missing ${token}`);
-}
-for (const token of [
-  "/cloud-consciousness/live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-local-read-tasks",
-  "refreshCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadTaskShell",
-  "openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-local-read-approved-deferred",
-  routeRegistry,
-  taskRegistry,
-]) {
-  if (!client.includes(token)) throw new Error(`Observer client missing ${token}`);
-}
-console.log(JSON.stringify({ observerOpenClawCloudConsciousnessCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadTaskShell: { status: "passed", routeRegistry, taskRegistry } }, null, 2));
-EOF
+  openclaw_result_envelope_assert_observer_manifest_surface "$OPENCLAW_RESULT_ENVELOPE_PHASE" "$HTML_FILE" "$CLIENT_FILE"
   exit 0
 fi
 

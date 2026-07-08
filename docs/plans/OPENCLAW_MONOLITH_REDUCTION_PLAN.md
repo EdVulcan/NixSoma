@@ -645,6 +645,14 @@ Audit sources used for this revision:
     and common-check wrapper while keeping the new phase in the existing
     focused local-read module instead of reintroducing route/runtime/Observer
     branches in the core router.
+95. Extracted the repeated Phase 99-117 Observer HTML/client token assertions
+    in result-envelope common checks into
+    `nix/scripts/dev-openclaw-live-provider-result-envelope-assertions.sh`.
+    Each common check now validates the same served Observer evidence through
+    manifest-derived title, panel id, endpoint, refresh function, predecessor
+    registry, current registry, and next-slice tokens instead of hand-copying
+    those strings per phase. The manifest check now covers the assertion helper
+    and all common-check call sites.
 
 These slices reduced live-provider runtime and milestone orchestration coupling
 while preserving the public runtime API and existing milestone entry names.
@@ -653,7 +661,7 @@ while preserving the public runtime API and existing milestone entry names.
 
 | Priority | Area | Coupling Evidence | Safe First Boundary |
 | --- | --- | --- | --- |
-| P0 | `nix/scripts` late credential-value/result-envelope phase chain | Phase number, slug, predecessor, artifact path, registry, status marker, docs token, observer token, endpoint, and `next.recommendedSlice` are now manifest-backed across the Phase 99-117 chain. Remaining repetition lives mostly in phase-specific common-check assertions and Observer endpoint-to-DOM rendering. | Keep extending the manifest lane for adjacent result-envelope phases and extract assertion helpers only when they preserve local service evidence and reduce repeated token wiring. |
+| P0 | `nix/scripts` late credential-value/result-envelope phase chain | Phase number, slug, predecessor, artifact path, registry, status marker, docs token, observer token, endpoint, and `next.recommendedSlice` are now manifest-backed across the Phase 99-117 chain. Observer HTML/client token assertions now use a manifest-derived helper. Remaining repetition lives mostly in phase-specific JSON business assertions. | Keep extending the manifest lane for adjacent result-envelope phases and extract assertion helpers only when they preserve local service evidence and reduce repeated token wiring. |
 | P0 | `services/openclaw-core/src/route-handlers.mjs` | Core HTTP dispatch, proxying, phase route mapping, plugin routes, task POST routes, approval surfaces, and workspace/body routes were all in one request chain. Phase 99-115 result-envelope GET routes, both live-provider POST route groups, the Observer/core read-model GET routes, approval inbox/action routes, operator/control routes, task read/lifecycle routes, system/body/memory/cloud task POST routes, read-only workspace/plugin review routes, workspace-native operation routes, native-adapter plugin/profile/search-web/workspace-index routes, generic native-plugin invocation/runtime task routes, policy/capability mutation routes, MVP/Phase 2-6/long-term-memory read routes, cloud-consciousness read-only GET routes, proxy/health, runtime-state readback, and systemd draft routes are now grouped. | Treat the main router as substantially reduced. Keep `registerRoutes(deps)` as a route-group composition surface, and avoid reintroducing direct feature branches. Next higher-ROI hotspots are `cloud-live-provider-runtime-implementation.mjs` Phase 91+ composition, Observer startup/DOM descriptors, and milestone assertion helpers. |
 | P0 | `services/openclaw-core/src/task-executor.mjs` | Task matching uses a `NON_RECOVERABLE_TASK_HANDLERS` registry instead of an ordered if/else branch chain. System/body execution now lives in `task-executor-system-body-handlers.mjs`, native/search-web deferred runtime handlers now live in `task-executor-native-deferred-handlers.mjs`, and long-term-memory/cloud delegated plan-builder dispatch now uses `task-executor-delegated-plan-handlers.mjs` descriptors. Remaining coupling is generic work-view execution, capability invocation, and read models. | Treat dispatch coupling as substantially reduced; next executor split should target generic work-view/capability/read-model helpers only if they block feature work. |
 | P0 | Observer UI startup and panel synchronization (`client-script-startup.mjs`, `client-script-startup-refreshes.mjs`, `observer-html.mjs`, `client-script-config-dom.mjs`) | Startup initial refresh calls and polling intervals are generated from one grouped descriptor list, `server.mjs` is now a small HTTP shell that delegates static HTML assembly to focused style/foundation/cloud/operations/system panel chunks, and DOM declarations are split into MVP/memory, cloud/provider, system/body, and workspace/source chunks while preserving served `/client.js` bytes. Remaining coupling is HTML ids, DOM constants, refresh function implementation, and milestone token checks still being manually coordinated. | Introduce descriptor-backed DOM binding for one cloud or system/body lane only when it removes HTML/id/refresher drift; preserve legacy aliases, served `/client.js` token compatibility, and byte-for-byte or token-equivalent Observer HTML output. |
@@ -682,9 +690,9 @@ while preserving the public runtime API and existing milestone entry names.
 
 1. Finish reducing active live-provider lane coupling while it remains the
    current development surface.
-2. Use the active credential/result-envelope manifest to extract repeated
-   assertion helpers so validation no longer depends on hand-repeated docs,
-   Observer, and state JSON assertions.
+2. Descriptorize the active Observer result-envelope endpoint-to-DOM rendering
+   pattern, starting with a narrow Phase 99-102 pilot that preserves global
+   refresh names, DOM ids, route tokens, and served `/client.js` compatibility.
 3. Continue splitting `route-handlers.mjs` by domain so future phases do not
    keep editing one router chain.
 4. Split `task-executor.mjs` handler groups only after the current route

@@ -142,6 +142,9 @@ const commonEnvHelper = readIfExists(commonEnvHelperPath, "result-envelope commo
 const commonPrereqHelperScript = "dev-openclaw-live-provider-result-envelope-prereq.sh";
 const commonPrereqHelperPath = path.join(scriptDir, commonPrereqHelperScript);
 const commonPrereqHelper = readIfExists(commonPrereqHelperPath, "result-envelope prerequisite helper");
+const commonAssertionsHelperScript = "dev-openclaw-live-provider-result-envelope-assertions.sh";
+const commonAssertionsHelperPath = path.join(scriptDir, commonAssertionsHelperScript);
+const commonAssertionsHelper = readIfExists(commonAssertionsHelperPath, "result-envelope assertion helper");
 const milestones = readTsv(manifestFile, [
   "phase",
   "slug",
@@ -163,15 +166,21 @@ requireContains(commonEnvHelper, "openclaw-live-provider-result-envelope-milesto
 requireContains(commonEnvHelper, "OPENCLAW_CORE_STATE_FILE", { file: commonEnvHelperPath });
 requireContains(commonEnvHelper, "OPENCLAW_SYSTEM_HEAL_STATE_FILE", { file: commonEnvHelperPath });
 requireContains(commonEnvHelper, "OPENCLAW_RESULT_ENVELOPE_SLUG", { file: commonEnvHelperPath });
+requireContains(commonEnvHelper, commonAssertionsHelperScript, { file: commonEnvHelperPath });
 requireContains(commonPrereqHelper, "openclaw_result_envelope_prepare_prereq_state", { file: commonPrereqHelperPath });
 requireContains(commonPrereqHelper, "dev-openclaw-fast-prereq-state.sh", { file: commonPrereqHelperPath });
 requireContains(commonPrereqHelper, "openclaw_reuse_prereq_state", { file: commonPrereqHelperPath });
 requireContains(commonPrereqHelper, "fallback_port_base_env", { file: commonPrereqHelperPath });
 requireContains(commonPrereqHelper, "fallback_common_check", { file: commonPrereqHelperPath });
+requireContains(commonAssertionsHelper, "openclaw_result_envelope_assert_observer_manifest_surface", { file: commonAssertionsHelperPath });
+requireContains(commonAssertionsHelper, "primaryRegistryForSlug", { file: commonAssertionsHelperPath });
+requireContains(commonAssertionsHelper, "endpointForSlug", { file: commonAssertionsHelperPath });
+requireContains(commonAssertionsHelper, "refreshFunction", { file: commonAssertionsHelperPath });
 requireContains(registrySourceText, "# @openclaw-generate-live-provider-result-envelope core", { file: registrySourceFile });
 requireContains(registrySourceText, "# @openclaw-generate-live-provider-result-envelope observer", { file: registrySourceFile });
 
 let commonPrereqHelperCalls = 0;
+let commonAssertionHelperCalls = 0;
 for (const [index, milestone] of milestones.entries()) {
   const expectedPhase = 99 + index;
   if (milestone.phaseNumber !== expectedPhase) {
@@ -266,6 +275,11 @@ for (const [index, milestone] of milestones.entries()) {
   requireContains(observerWrapper, wrapperHelperScript, { phase: milestone.phase, file: observerWrapperPath });
   requireContains(observerWrapper, `${milestone.phase} observer`, { phase: milestone.phase, file: observerWrapperPath });
   requireContains(commonCheck, commonEnvHelperScript, { phase: milestone.phase, file: commonScriptPath });
+  const usesAssertionHelper = commonCheck.includes("openclaw_result_envelope_assert_observer_manifest_surface");
+  if (usesAssertionHelper) {
+    commonAssertionHelperCalls += 1;
+  }
+  requireContains(commonCheck, "openclaw_result_envelope_assert_observer_manifest_surface", { phase: milestone.phase, file: commonScriptPath });
   requireContains(commonCheck, ` ${milestone.phase}`, { phase: milestone.phase, file: commonScriptPath });
   const usesPrereqHelper = commonCheck.includes("openclaw_result_envelope_prepare_prereq_state");
   if (usesPrereqHelper) {
@@ -322,6 +336,14 @@ if (commonPrereqHelperCalls !== 17) {
     actual: commonPrereqHelperCalls,
   });
 }
+if (commonAssertionHelperCalls !== milestones.length) {
+  issues.push({
+    file: commonAssertionsHelperPath,
+    issue: "expected every Phase 99-117 common check to use the observer assertion helper",
+    expected: milestones.length,
+    actual: commonAssertionHelperCalls,
+  });
+}
 
 const summary = {
   liveProviderResultEnvelopeMilestoneManifest: {
@@ -349,6 +371,8 @@ const summary = {
       commonEnvOutputsChecked: milestones.length,
       commonPrereqHelpersChecked: 1,
       commonPrereqHelperCallsChecked: commonPrereqHelperCalls,
+      commonAssertionHelpersChecked: 1,
+      commonAssertionHelperCallsChecked: commonAssertionHelperCalls,
       commonChecksChecked: milestones.length,
       commonPrimaryRegistriesChecked: milestones.length,
       commonStatusMarkersChecked: milestones.reduce((total, milestone) => total + primaryStatusMarkersForSlug(milestone.slug).length, 0),

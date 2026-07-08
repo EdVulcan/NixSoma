@@ -13,6 +13,12 @@ fi
 
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 OPENCLAW_RESULT_ENVELOPE_MANIFEST_FILE="${OPENCLAW_LIVE_PROVIDER_RESULT_ENVELOPE_MILESTONES_FILE:-$SCRIPT_DIR/openclaw-live-provider-result-envelope-milestones.tsv}"
+OPENCLAW_RESULT_ENVELOPE_ASSERTIONS_HELPER="$SCRIPT_DIR/dev-openclaw-live-provider-result-envelope-assertions.sh"
+if [[ -f "$OPENCLAW_RESULT_ENVELOPE_ASSERTIONS_HELPER" ]]; then
+  # shellcheck source=/dev/null
+  source "$OPENCLAW_RESULT_ENVELOPE_ASSERTIONS_HELPER"
+fi
+
 OPENCLAW_RESULT_ENVELOPE_SLUG="$(
   awk -F '\t' -v phase="$OPENCLAW_RESULT_ENVELOPE_PHASE" '
     $0 !~ /^#/ && NF >= 2 && $1 == phase { print $2; found = 1 }
