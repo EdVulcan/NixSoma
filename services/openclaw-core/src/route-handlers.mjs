@@ -8,6 +8,7 @@ import { handleDomainTaskPostRoute } from "./domain-task-post-routes.mjs";
 import { handleObserverReadModelRoute } from "./observer-read-model-routes.mjs";
 import { handleOperatorControlRoute } from "./operator-control-routes.mjs";
 import { handleTaskRoute } from "./task-routes.mjs";
+import { handleWorkspaceNativeOpsRoute } from "./workspace-native-ops-routes.mjs";
 import { handleWorkspacePluginReadRoute } from "./workspace-plugin-read-routes.mjs";
 
 export function registerRoutes(deps) {
@@ -41,7 +42,6 @@ export function registerRoutes(deps) {
     selectReviewedPluginSdkPackage,
     selectOpenClawToolCatalogWorkspace,
   } = pluginReview;
-  const { resolveOpenClawWorkspaceTarget, buildNativeOpenClawWorkspaceTextWriteDraft, createNativeOpenClawWorkspaceTextWriteTask, readBoundedWorkspaceTextFile, buildNativeOpenClawWorkspacePatchApplyDraft, createNativeOpenClawWorkspacePatchApplyTask, buildOpenClawSourceAuthoredEditDraft, createOpenClawSourceAuthoredEditTask, buildWorkspaceCommandPlanDraft, buildOpenClawSourceCommandPlanDraft, createWorkspaceCommandTask, createOpenClawSourceCommandTask } = workspaceOps;
   const { buildNativePluginCapabilityInvokePlan, buildNativePluginRuntimePreflight, buildNativePluginRuntimeActivationPlan, buildNativePluginRuntimeAdapterContract, buildNativePluginRuntimeAdapterTaskDraft, buildNativePluginRuntimeActivationTaskDraft, buildNativePluginInvokeTaskPlan, createNativePluginRuntimeActivationTask, createNativePluginRuntimeAdapterTask, createNativePluginInvokeTask, buildSystemdRepairExecutionTaskDraft, serialisePlanForPublic, buildRulePlan, shouldBuildPlan, updatePlanForPhase, buildCapabilityRegistry, invokeCapability, buildMvpRouteAlignment, buildPhase2RepairDemoStatus, buildPhase2NextRepairDemoStatus, buildBodyEvidenceLedgerFollowupRecordReadiness, buildBodyEvidenceLedgerFollowupRecordAppendRouteReview, buildBodyEvidenceLedgerFollowupRecordAppendReadiness, buildPhase2NextCapabilityRouteReview, buildPhase2DemoControlRoom, buildPhase2DemoWalkthrough, buildPhase2DemoReadinessExit, buildPhase2CompletionReadiness, buildPhase2Exit, buildPhase3Plan, buildPhase3BackgroundWorkView, buildPhase3OperatorInterruptControls, buildPhase3CompletionReadiness, buildPhase3Exit, buildPhase4Plan, buildPhase4SelfHealLoop, buildPhase4HealHistoryEvidence, buildPhase4CompletionReadiness, buildPhase4Exit, buildPhase5Plan, buildPhase5DeploymentInventory, buildPhase5RollbackReadiness, buildPhase5ReleaseControlReadiness, buildPhase5Exit, buildMvpFinalReadiness, buildPostMvpPlan, buildPhase6Plan, buildPhase6MemorySubstrateInventory, buildPhase6ConsciousnessContextEnvelope, buildPhase6TaskOrchestrationRecords, buildPhase6MemoryWriteRouteReview, buildPhase6Exit, buildLongTermMemoryWritePlan, buildLongTermMemorySchema, buildLongTermMemoryProposal, buildLongTermMemoryWriteRouteReview, buildLongTermMemoryReadback, buildLongTermMemoryExit } = planBuilder;
   const {
     buildCloudConsciousnessContextReview,
@@ -1130,213 +1130,16 @@ export function registerRoutes(deps) {
     return;
   }
 
-  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/workspace-text-write/draft") {
-    try {
-      const draft = buildNativeOpenClawWorkspaceTextWriteDraft({
-        workspacePath: requestUrl.searchParams.get("workspacePath"),
-        relativePath: requestUrl.searchParams.get("relativePath") ?? "scratch/native-write.txt",
-        content: "hello from openclaw native workspace text write\n",
-        overwrite: requestUrl.searchParams.get("overwrite") !== "false",
-      });
-      sendJson(res, 200, {
-        ok: true,
-        ...draft,
-        draft: {
-          ...draft.draft,
-          plan: serialisePlanForPublic(draft.draft.plan),
-        },
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/plugins/native-adapter/workspace-text-write-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createNativeOpenClawWorkspaceTextWriteTask({
-        workspacePath: typeof body.workspacePath === "string" ? body.workspacePath : null,
-        relativePath: typeof body.relativePath === "string" ? body.relativePath : "scratch/native-write.txt",
-        content: typeof body.content === "string" ? body.content : "",
-        overwrite: body.overwrite !== false,
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        capability: result.capability,
-        workspace: result.workspace,
-        target: result.target,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/workspace-patch-apply/draft") {
-    try {
-      const editsParam = requestUrl.searchParams.get("edits");
-      const edits = editsParam ? JSON.parse(editsParam) : null;
-      const proposalParam = requestUrl.searchParams.get("proposal");
-      const proposal = proposalParam ? JSON.parse(proposalParam) : null;
-      const selectTargetFromSource = requestUrl.searchParams.get("selectTargetFromSource") === "true";
-      const draft = buildNativeOpenClawWorkspacePatchApplyDraft({
-        workspacePath: requestUrl.searchParams.get("workspacePath"),
-        relativePath: requestUrl.searchParams.get("relativePath") ?? null,
-        search: requestUrl.searchParams.get("search") ?? "before",
-        replacement: requestUrl.searchParams.get("replacement") ?? "after",
-        occurrence: Number.parseInt(requestUrl.searchParams.get("occurrence") ?? "1", 10),
-        edits,
-        contextLines: Number.parseInt(requestUrl.searchParams.get("contextLines") ?? "1", 10),
-        proposal,
-        deriveProposalFromSource: requestUrl.searchParams.get("deriveProposalFromSource") === "true",
-        proposalQuery: requestUrl.searchParams.get("proposalQuery") ?? "edit",
-        selectTargetFromSource,
-        targetSelectionQuery: requestUrl.searchParams.get("targetSelectionQuery") ?? requestUrl.searchParams.get("proposalQuery") ?? "edit",
-        targetSelectionScope: requestUrl.searchParams.get("targetSelectionScope") ?? "tools",
-      });
-      sendJson(res, 200, {
-        ok: true,
-        ...draft,
-        draft: {
-          ...draft.draft,
-          plan: serialisePlanForPublic(draft.draft.plan),
-        },
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/plugins/native-adapter/workspace-patch-apply-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createNativeOpenClawWorkspacePatchApplyTask({
-        workspacePath: typeof body.workspacePath === "string" ? body.workspacePath : null,
-        relativePath: typeof body.relativePath === "string" ? body.relativePath : null,
-        search: typeof body.search === "string" ? body.search : "",
-        replacement: typeof body.replacement === "string" ? body.replacement : "",
-        occurrence: Number.isInteger(body.occurrence) ? body.occurrence : 1,
-        edits: Array.isArray(body.edits) ? body.edits : null,
-        contextLines: Number.isInteger(body.contextLines) ? body.contextLines : 1,
-        proposal: body.proposal && typeof body.proposal === "object" ? body.proposal : null,
-        deriveProposalFromSource: body.deriveProposalFromSource === true,
-        proposalQuery: typeof body.proposalQuery === "string" ? body.proposalQuery : "edit",
-        selectTargetFromSource: body.selectTargetFromSource === true,
-        targetSelectionQuery: typeof body.targetSelectionQuery === "string" ? body.targetSelectionQuery : typeof body.proposalQuery === "string" ? body.proposalQuery : "edit",
-        targetSelectionScope: typeof body.targetSelectionScope === "string" ? body.targetSelectionScope : "tools",
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        capability: result.capability,
-        workspace: result.workspace,
-        target: result.target,
-        validation: result.validation,
-        proposal: result.proposal,
-        proposalSourceSignals: result.proposalSourceSignals,
-        targetSelection: result.targetSelection,
-        edits: result.edits,
-        diffPreview: result.diffPreview,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/source-authored-edit/draft") {
-    try {
-      const editsParam = requestUrl.searchParams.get("edits");
-      const edits = editsParam ? JSON.parse(editsParam) : null;
-      const draft = buildOpenClawSourceAuthoredEditDraft({
-        workspacePath: requestUrl.searchParams.get("workspacePath"),
-        search: requestUrl.searchParams.get("search") ?? "before",
-        replacement: requestUrl.searchParams.get("replacement") ?? "after",
-        occurrence: Number.parseInt(requestUrl.searchParams.get("occurrence") ?? "1", 10),
-        edits,
-        contextLines: Number.parseInt(requestUrl.searchParams.get("contextLines") ?? "0", 10),
-        proposalQuery: requestUrl.searchParams.get("proposalQuery") ?? "edit",
-        targetSelectionQuery: requestUrl.searchParams.get("targetSelectionQuery") ?? requestUrl.searchParams.get("proposalQuery") ?? "edit",
-        targetSelectionScope: requestUrl.searchParams.get("targetSelectionScope") ?? "tools",
-      });
-      sendJson(res, 200, {
-        ok: true,
-        ...draft,
-        draft: {
-          ...draft.draft,
-          plan: serialisePlanForPublic(draft.draft.plan),
-        },
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/plugins/native-adapter/source-authored-edit-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createOpenClawSourceAuthoredEditTask({
-        workspacePath: typeof body.workspacePath === "string" ? body.workspacePath : null,
-        search: typeof body.search === "string" ? body.search : "",
-        replacement: typeof body.replacement === "string" ? body.replacement : "",
-        occurrence: Number.isInteger(body.occurrence) ? body.occurrence : 1,
-        edits: Array.isArray(body.edits) ? body.edits : null,
-        contextLines: Number.isInteger(body.contextLines) ? body.contextLines : 0,
-        proposalQuery: typeof body.proposalQuery === "string" ? body.proposalQuery : "edit",
-        targetSelectionQuery: typeof body.targetSelectionQuery === "string" ? body.targetSelectionQuery : typeof body.proposalQuery === "string" ? body.proposalQuery : "edit",
-        targetSelectionScope: typeof body.targetSelectionScope === "string" ? body.targetSelectionScope : "tools",
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        sourceAuthoredEdit: result.sourceAuthoredEdit,
-        capability: result.capability,
-        workspace: result.workspace,
-        target: result.target,
-        validation: result.validation,
-        proposal: result.proposal,
-        proposalSourceSignals: result.proposalSourceSignals,
-        targetSelection: result.targetSelection,
-        edits: result.edits,
-        diffPreview: result.diffPreview,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
+  if (await handleWorkspaceNativeOpsRoute({
+    req,
+    res,
+    requestUrl,
+    workspaceOps,
+    serialisePlanForPublic,
+    serialiseTask,
+    serialiseApproval,
+    buildTaskSummary,
+  })) {
     return;
   }
 
@@ -1498,107 +1301,6 @@ export function registerRoutes(deps) {
         plugin: result.plugin,
         capability: result.capability,
         activationPlan: result.activationPlan,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/workspaces/command-proposals/plan") {
-    try {
-      const draft = buildWorkspaceCommandPlanDraft({
-        proposalId: requestUrl.searchParams.get("proposalId"),
-        workspaceId: requestUrl.searchParams.get("workspaceId"),
-        scriptName: requestUrl.searchParams.get("scriptName"),
-      });
-      sendJson(res, 200, {
-        ok: true,
-        ...draft,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 404, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/plugins/native-adapter/source-command-proposals/plan") {
-    try {
-      const draft = buildOpenClawSourceCommandPlanDraft({
-        proposalId: requestUrl.searchParams.get("proposalId"),
-        workspaceId: requestUrl.searchParams.get("workspaceId"),
-        scriptName: requestUrl.searchParams.get("scriptName"),
-        workspacePath: requestUrl.searchParams.get("workspacePath"),
-        query: requestUrl.searchParams.get("query") ?? "command",
-      });
-      sendJson(res, 200, {
-        ok: true,
-        ...draft,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 404, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/plugins/native-adapter/source-command-proposals/tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createOpenClawSourceCommandTask({
-        proposalId: typeof body.proposalId === "string" ? body.proposalId : null,
-        workspaceId: typeof body.workspaceId === "string" ? body.workspaceId : null,
-        scriptName: typeof body.scriptName === "string" ? body.scriptName : null,
-        workspacePath: typeof body.workspacePath === "string" ? body.workspacePath : null,
-        query: typeof body.query === "string" ? body.query : "command",
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        sourceMode: result.sourceMode,
-        sourceCommandProposal: result.sourceCommandProposal,
-        sourceCommandSignals: result.sourceCommandSignals,
-        sourceCommandPlan: result.sourceCommandPlan,
-        sourceCommandTask: result.sourceCommandTask,
-        workspaceCommandTask: result.workspaceCommandTask,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/workspaces/command-proposals/tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createWorkspaceCommandTask({
-        proposalId: typeof body.proposalId === "string" ? body.proposalId : null,
-        workspaceId: typeof body.workspaceId === "string" ? body.workspaceId : null,
-        scriptName: typeof body.scriptName === "string" ? body.scriptName : null,
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        proposal: result.proposal,
         task: serialiseTask(result.task),
         approval: serialiseApproval(result.approval),
         governance: result.governance,
