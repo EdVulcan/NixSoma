@@ -280,3 +280,43 @@ test("credential post route group preserves raw preflight task response contract
   assert.deepEqual(response.body.task, rawTask);
   assert.deepEqual(response.body.summary, { total: 3 });
 });
+
+test("live provider task post route group forwards confirm and preserves task response extras", async () => {
+  const calls = [];
+  const deps = createBaseDeps({
+    planBuilder: {
+      createCloudConsciousnessLiveProviderRuntimeAdapterModuleTask: async (input) => {
+        calls.push(input);
+        return {
+          registry: "openclaw-cloud-consciousness-live-provider-runtime-adapter-module-task-v0",
+          mode: "approval-gated-runtime-adapter-module-task",
+          generatedAt: "2026-07-08T00:00:00.000Z",
+          sourceRegistry: "openclaw-cloud-consciousness-live-provider-runtime-adapter-module-contract-v0",
+          moduleContract: { module: "services/openclaw-core/src/cloud-live-provider-runtime-adapter.mjs" },
+          task: { id: "task-runtime-module", type: "cloud_consciousness_live_provider_runtime_adapter_module_task" },
+          approval: { id: "approval-runtime-module", status: "pending" },
+          governance: { createsTask: true, createsApproval: true, liveProviderCallEnabled: false },
+        };
+      },
+    },
+    taskManager: {
+      serialiseTask: (task) => ({ id: task.id, serialised: true }),
+      buildTaskSummary: () => ({ total: 4, queued: 1 }),
+    },
+    approvalEngine: {
+      serialiseApproval: (approval) => ({ id: approval.id, status: approval.status, serialised: true }),
+    },
+  });
+
+  const response = await invokeRoute(deps, "POST", "/cloud-consciousness/live-provider-runtime-adapter-module-tasks", { confirm: true });
+
+  assert.equal(response.statusCode, 201, JSON.stringify(response.body));
+  assert.deepEqual(calls, [{ confirm: true }]);
+  assert.equal(response.body.registry, "openclaw-cloud-consciousness-live-provider-runtime-adapter-module-task-v0");
+  assert.equal(response.body.sourceRegistry, "openclaw-cloud-consciousness-live-provider-runtime-adapter-module-contract-v0");
+  assert.deepEqual(response.body.moduleContract, { module: "services/openclaw-core/src/cloud-live-provider-runtime-adapter.mjs" });
+  assert.deepEqual(response.body.task, { id: "task-runtime-module", serialised: true });
+  assert.deepEqual(response.body.approval, { id: "approval-runtime-module", status: "pending", serialised: true });
+  assert.deepEqual(response.body.governance, { createsTask: true, createsApproval: true, liveProviderCallEnabled: false });
+  assert.deepEqual(response.body.summary, { total: 4, queued: 1 });
+});

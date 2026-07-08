@@ -1,17 +1,15 @@
-import { sendJson, readJsonBody } from "../../../packages/shared-utils/src/http.mjs";
+import {
+  createConfirmPostRouteHandler,
+  postRoute,
+  serialisedApprovalField,
+  serialisedTaskField,
+} from "./cloud-live-provider-post-route-utils.mjs";
 
-const serialisedTask = { output: "task", source: "task", transform: "task" };
-const serialisedApproval = { output: "approval", source: "approval", transform: "approval" };
-
-const gateFields = ["status", "gate", serialisedTask];
-const serialisedPreflightFields = ["status", "preflight", serialisedTask];
+const gateFields = ["status", "gate", serialisedTaskField];
+const serialisedPreflightFields = ["status", "preflight", serialisedTaskField];
 const rawPreflightFields = ["status", "preflight", "task"];
-const taskRouteFields = ["sourceRegistry", "route", serialisedTask, serialisedApproval];
-const resultEnvelopeTaskRouteFields = ["sourceRegistry", "route", serialisedTask, serialisedApproval];
-
-function postRoute(pathname, action, fields) {
-  return [pathname, { action, fields }];
-}
+const taskRouteFields = ["sourceRegistry", "route", serialisedTaskField, serialisedApprovalField];
+const resultEnvelopeTaskRouteFields = ["sourceRegistry", "route", serialisedTaskField, serialisedApprovalField];
 
 const CREDENTIAL_POST_ROUTES = new Map([
   postRoute(
@@ -32,7 +30,7 @@ const CREDENTIAL_POST_ROUTES = new Map([
   postRoute(
     "/cloud-consciousness/live-provider-egress-execution-tasks",
     "createCloudConsciousnessLiveProviderEgressExecutionTask",
-    ["sourceRegistry", "sourceTaskId", "preflight", serialisedTask, serialisedApproval],
+    ["sourceRegistry", "sourceTaskId", "preflight", serialisedTaskField, serialisedApprovalField],
   ),
   postRoute(
     "/cloud-consciousness/live-provider-credential-value-readiness-preflight",
@@ -62,7 +60,7 @@ const CREDENTIAL_POST_ROUTES = new Map([
   postRoute(
     "/cloud-consciousness/live-provider-credential-value-read-tasks",
     "createCloudConsciousnessLiveProviderCredentialValueReadTask",
-    ["sourceRegistry", "preflight", serialisedTask, serialisedApproval],
+    ["sourceRegistry", "preflight", serialisedTaskField, serialisedApprovalField],
   ),
   postRoute(
     "/cloud-consciousness/live-provider-credential-value-access-authorization-tasks",
@@ -166,77 +164,7 @@ const CREDENTIAL_POST_ROUTES = new Map([
   ),
 ]);
 
-function routeFieldValue(field, result, { serialiseTask, serialiseApproval }) {
-  if (typeof field === "string") {
-    return [field, result[field]];
-  }
-
-  if (field.transform === "task") {
-    return [field.output, serialiseTask(result[field.source])];
-  }
-
-  if (field.transform === "approval") {
-    return [field.output, serialiseApproval(result[field.source])];
-  }
-
-  return [field.output, result[field.source]];
-}
-
-function buildCredentialPostResponse(result, route, context) {
-  const response = {
-    ok: true,
-    registry: result.registry,
-    mode: result.mode,
-    generatedAt: result.generatedAt,
-  };
-
-  for (const field of route.fields) {
-    const [key, value] = routeFieldValue(field, result, context);
-    response[key] = value;
-  }
-
-  response.governance = result.governance;
-  response.summary = context.buildTaskSummary();
-  return response;
-}
-
-export async function handleCloudLiveProviderCredentialPostRoute({
-  req,
-  res,
-  requestUrl,
-  planBuilder,
-  serialiseTask,
-  serialiseApproval,
-  buildTaskSummary,
-}) {
-  if (req.method !== "POST") {
-    return false;
-  }
-
-  const route = CREDENTIAL_POST_ROUTES.get(requestUrl.pathname);
-  if (!route) {
-    return false;
-  }
-
-  try {
-    const body = await readJsonBody(req);
-    const action = planBuilder?.[route.action];
-    if (typeof action !== "function") {
-      throw new Error(`Missing cloud live-provider credential POST handler: ${route.action}`);
-    }
-
-    const result = await action.call(planBuilder, {
-      confirm: body.confirm === true,
-    });
-    sendJson(res, 201, buildCredentialPostResponse(result, route, {
-      serialiseTask,
-      serialiseApproval,
-      buildTaskSummary,
-    }));
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    sendJson(res, 400, { ok: false, error: message });
-  }
-
-  return true;
-}
+export const handleCloudLiveProviderCredentialPostRoute = createConfirmPostRouteHandler({
+  routes: CREDENTIAL_POST_ROUTES,
+  missingHandlerLabel: "cloud live-provider credential",
+});

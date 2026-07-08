@@ -2,6 +2,7 @@ import { corsHeaders, sendJson, readJsonBody } from "../../../packages/shared-ut
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { handleCloudLiveProviderCredentialPostRoute } from "./cloud-live-provider-credential-post-routes.mjs";
 import { handleCloudLiveProviderResultEnvelopeGetRoute } from "./cloud-live-provider-result-envelope-routes.mjs";
+import { handleCloudLiveProviderTaskPostRoute } from "./cloud-live-provider-task-post-routes.mjs";
 
 export function registerRoutes(deps) {
   const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl } = deps;
@@ -80,23 +81,19 @@ export function registerRoutes(deps) {
     buildCloudConsciousnessLiveProviderEgressTranscriptSchema,
     buildCloudConsciousnessLiveProviderFinalAuthorizationReview,
     buildCloudConsciousnessLiveProviderRunbookRouteReview,
-    createCloudConsciousnessLiveProviderRunbookTask,
     buildCloudConsciousnessLiveProviderRunbookReadback,
     buildCloudConsciousnessLiveProviderCallRunbookExit,
     buildCloudConsciousnessLiveProviderCallExecutionPlan,
     buildCloudConsciousnessLiveProviderEndpointCredentialBinding,
     buildCloudConsciousnessLiveProviderExecutionTranscriptSchema,
     buildCloudConsciousnessLiveProviderExecutionRouteReview,
-    createCloudConsciousnessLiveProviderExecutionPlanTask,
     buildCloudConsciousnessLiveProviderExecutionPlanReadback,
     buildCloudConsciousnessLiveProviderCallExecutionPlanExit,
     buildCloudConsciousnessLiveProviderCallRuntimeAdapterPlan,
-    createCloudConsciousnessLiveProviderRuntimeAdapterTask,
     buildCloudConsciousnessLiveProviderRuntimeAdapterExit,
     buildCloudConsciousnessLiveProviderCallFinalAuthorization,
     buildCloudConsciousnessLiveProviderCallOperatorLaunchReview,
     buildCloudConsciousnessLiveProviderCallRuntimeImplementationPlan,
-    createCloudConsciousnessLiveProviderRuntimeImplementationTask,
     buildCloudConsciousnessLiveProviderCallRuntimeAdapterImplementation,
     buildCloudConsciousnessLiveProviderRuntimeAdapterModuleContract,
     buildCloudConsciousnessLiveProviderRequestBuilder,
@@ -108,9 +105,7 @@ export function registerRoutes(deps) {
     buildCloudConsciousnessLiveProviderRuntimeAdapterCompletion,
     buildCloudConsciousnessLiveProviderRuntimeAdapterClosureExit,
     buildCloudConsciousnessLiveProviderRealLaunchRouteReview,
-    createCloudConsciousnessLiveProviderRealLaunchTask,
     buildCloudConsciousnessLiveProviderRealLaunchExecutionPreflight,
-    recordCloudConsciousnessLiveProviderRealLaunchExecutionPreflight,
     buildCloudConsciousnessLiveProviderCredentialValueAccessGate,
     buildCloudConsciousnessLiveProviderEndpointNetworkEgressGate,
     buildCloudConsciousnessLiveProviderEgressExecutionRouteTaskPreflight,
@@ -153,15 +148,6 @@ export function registerRoutes(deps) {
     buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptApprovedDeferred,
     buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptFinalReadinessPreflight,
     buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadRoute,
-    createCloudConsciousnessLiveProviderNoNetworkSenderTask,
-    createCloudConsciousnessLiveProviderEgressTranscriptRecorderTask,
-    createCloudConsciousnessLiveProviderResponseVerifierTask,
-    createCloudConsciousnessLiveProviderRollbackNoteTask,
-    createCloudConsciousnessLiveProviderRuntimeAdapterClosureTask,
-    createCloudConsciousnessLiveProviderCredentialReferenceResolverTask,
-    createCloudConsciousnessLiveProviderRequestBuilderTask,
-    createCloudConsciousnessLiveProviderRuntimeAdapterModuleTask,
-    createCloudConsciousnessLiveProviderRuntimeAdapterImplementationTask,
   } = planBuilder;
   const { executeTask, executeTaskWithRecovery, serialiseExecutionResult, listCommandTranscriptRecords, buildCommandTranscriptSummary, serialiseCommandTranscriptSummary, listFilesystemChangeRecords, buildFilesystemChangeSummary, serialiseFilesystemChangeSummary, listFilesystemReadRecords, buildFilesystemReadSummary, serialiseFilesystemReadSummary, buildOperatorState, buildOperatorOptions, runOperatorStep, runOperatorLoop } = executor;
 
@@ -2363,379 +2349,15 @@ export function registerRoutes(deps) {
     return;
   }
 
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-runbook-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessLiveProviderRunbookTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        routeReview: result.routeReview,
-        authorizationReview: result.authorizationReview,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-execution-plan-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessLiveProviderExecutionPlanTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        routeReview: result.routeReview,
-        transcriptSchema: result.transcriptSchema,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-runtime-adapter-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessLiveProviderRuntimeAdapterTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        adapterPlan: result.adapterPlan,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-runtime-implementation-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessLiveProviderRuntimeImplementationTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        implementationPlan: result.implementationPlan,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-runtime-adapter-implementation-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessLiveProviderRuntimeAdapterImplementationTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        adapterImplementation: result.adapterImplementation,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-runtime-adapter-module-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessLiveProviderRuntimeAdapterModuleTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        moduleContract: result.moduleContract,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-request-builder-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessLiveProviderRequestBuilderTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        requestBuilder: result.requestBuilder,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-credential-reference-resolver-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessLiveProviderCredentialReferenceResolverTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        credentialResolver: result.credentialResolver,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-no-network-sender-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessLiveProviderNoNetworkSenderTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        noNetworkSender: result.noNetworkSender,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-egress-transcript-recorder-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessLiveProviderEgressTranscriptRecorderTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        transcriptRecorder: result.transcriptRecorder,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-response-verifier-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessLiveProviderResponseVerifierTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        responseVerifier: result.responseVerifier,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-rollback-note-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessLiveProviderRollbackNoteTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        rollbackNote: result.rollbackNote,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-runtime-adapter-closure-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessLiveProviderRuntimeAdapterClosureTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        completion: result.completion,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-real-launch-tasks") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await createCloudConsciousnessLiveProviderRealLaunchTask({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        sourceRegistry: result.sourceRegistry,
-        routeReview: result.routeReview,
-        task: serialiseTask(result.task),
-        approval: serialiseApproval(result.approval),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
-    return;
-  }
-
-  if (req.method === "POST" && requestUrl.pathname === "/cloud-consciousness/live-provider-real-launch-execution-preflight") {
-    try {
-      const body = await readJsonBody(req);
-      const result = await recordCloudConsciousnessLiveProviderRealLaunchExecutionPreflight({
-        confirm: body.confirm === true,
-      });
-      sendJson(res, 201, {
-        ok: true,
-        registry: result.registry,
-        mode: result.mode,
-        generatedAt: result.generatedAt,
-        status: result.status,
-        preflight: result.preflight,
-        task: serialiseTask(result.task),
-        governance: result.governance,
-        summary: buildTaskSummary(),
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
-    }
+  if (await handleCloudLiveProviderTaskPostRoute({
+    req,
+    res,
+    requestUrl,
+    planBuilder,
+    serialiseTask,
+    serialiseApproval,
+    buildTaskSummary,
+  })) {
     return;
   }
 
