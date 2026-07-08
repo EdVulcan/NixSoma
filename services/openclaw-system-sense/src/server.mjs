@@ -13,6 +13,7 @@ import { createSystemdInspection } from "./systemd-inspection.mjs";
 import { createSystemdNextRepairPlanning } from "./systemd-next-repair-planning.mjs";
 import { createSystemdRepairCandidatePlanning } from "./systemd-repair-candidate-planning.mjs";
 import { createSystemdRepairProposals } from "./systemd-repair-proposals.mjs";
+import { handleSystemdRoutes } from "./systemd-routes.mjs";
 
 const host = process.env.OPENCLAW_SYSTEM_SENSE_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SYSTEM_SENSE_PORT ?? "4106", 10);
@@ -443,6 +444,24 @@ const {
     systemdRepairDryRun: SYSTEMD_REPAIR_DRY_RUN_REGISTRY,
   },
 });
+
+const systemdRouteBuilders = {
+  buildSystemdUnitInventory,
+  buildSystemdDependencyMap,
+  buildSystemdRepairCandidateAssessment,
+  buildSystemdRepairCandidatePlan,
+  buildSystemdRepairCandidateTaskRoute,
+  buildSystemdRepairCandidateReadiness,
+  buildSystemdRepairCandidateRouteReview,
+  buildSystemdRepairCandidateDemoStatus,
+  buildSystemdNextRepairScopeReview,
+  buildSystemdNextRepairPlan,
+  buildSystemdNextRepairRouteReview,
+  buildSystemdNextRepairDryRun,
+  buildSystemdNextRepairTaskRoute,
+  buildSystemdRepairPlan,
+  buildSystemdRepairDryRun,
+};
 async function refreshSystemState() {
   const entries = await Promise.all(
     Object.entries(serviceTargets).map(async ([name, url]) => [name, await checkService(name, url)]),
@@ -643,109 +662,12 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/units") {
-    const inventory = await buildSystemdUnitInventory();
-    sendJson(res, 200, inventory);
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/dependency-map") {
-    const dependencyMap = await buildSystemdDependencyMap();
-    sendJson(res, 200, dependencyMap);
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-candidates") {
-    const assessment = await buildSystemdRepairCandidateAssessment();
-    sendJson(res, 200, assessment);
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-candidate-plan") {
-    const plan = await buildSystemdRepairCandidatePlan();
-    sendJson(res, 200, plan);
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-candidate-task-route") {
-    const route = await buildSystemdRepairCandidateTaskRoute();
-    sendJson(res, 200, route);
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-candidate-readiness") {
-    const readiness = await buildSystemdRepairCandidateReadiness();
-    sendJson(res, 200, readiness);
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-candidate-route-review") {
-    const review = await buildSystemdRepairCandidateRouteReview();
-    sendJson(res, 200, review);
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-candidate-demo-status") {
-    const status = await buildSystemdRepairCandidateDemoStatus();
-    sendJson(res, 200, status);
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/next-repair-scope-review") {
-    const review = await buildSystemdNextRepairScopeReview();
-    sendJson(res, 200, review);
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/next-repair-plan") {
-    const plan = await buildSystemdNextRepairPlan();
-    sendJson(res, 200, plan);
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/next-repair-route-review") {
-    const review = await buildSystemdNextRepairRouteReview();
-    sendJson(res, 200, review);
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/next-repair-dry-run") {
-    const envelope = await buildSystemdNextRepairDryRun();
-    sendJson(res, 200, envelope);
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/next-repair-task-route") {
-    const route = await buildSystemdNextRepairTaskRoute();
-    sendJson(res, 200, route);
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-plan") {
-    try {
-      const plan = await buildSystemdRepairPlan({
-        unit: requestUrl.searchParams.get("unit") ?? requestUrl.searchParams.get("target"),
-        reason: requestUrl.searchParams.get("reason"),
-      });
-      sendJson(res, 200, plan);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message, code: error.code ?? null, details: error.details ?? null });
-    }
-    return;
-  }
-
-  if (req.method === "GET" && requestUrl.pathname === "/system/systemd/repair-dry-run") {
-    try {
-      const envelope = await buildSystemdRepairDryRun({
-        unit: requestUrl.searchParams.get("unit") ?? requestUrl.searchParams.get("target"),
-        reason: requestUrl.searchParams.get("reason"),
-      });
-      sendJson(res, 200, envelope);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message, code: error.code ?? null, details: error.details ?? null });
-    }
+  if (await handleSystemdRoutes({
+    req,
+    res,
+    requestUrl,
+    builders: systemdRouteBuilders,
+  })) {
     return;
   }
 
