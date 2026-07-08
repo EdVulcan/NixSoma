@@ -53,6 +53,10 @@ const RESULT_ENVELOPE_GET_ROUTES = new Map([
     "/cloud-consciousness/live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-local-read-route",
     "buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadRoute",
   ],
+  [
+    "/cloud-consciousness/live-provider-credential-value-local-read-execution-local-read-attempt-local-read-result-envelope-creation-execution-attempt-local-read-approved-deferred",
+    "buildCloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadApprovedDeferred",
+  ],
 ]);
 
 export async function handleCloudLiveProviderResultEnvelopeGetRoute({ req, res, requestUrl, planBuilder }) {

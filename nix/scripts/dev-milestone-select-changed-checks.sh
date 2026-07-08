@@ -418,6 +418,11 @@ function isCloudLiveProviderLateRuntimeCompositionExtraction(file) {
     && changedText.includes("credentialLocalReadLateBuilders");
 }
 
+function isCloudLiveProviderResultEnvelopeRuntimeLane(file) {
+  return file.startsWith("services/openclaw-core/src/cloud-live-provider-runtime-credential-local-read-result-envelope")
+    || file === "services/openclaw-core/src/cloud-live-provider-runtime-governance-local-read-b.mjs";
+}
+
 function isAllowedHttpJsonHelperExtractionAddition(text) {
   return text === ""
     || /^OPENCLAW_POST_JSON_FAILURE="(allow|fail-with-body)"$/.test(text)
@@ -517,8 +522,10 @@ function selectPhasePlanChecks(file) {
   if (numericPhase >= 91 && numericPhase <= 98) {
     selectName(credentialValueLocalReadAttemptManifestCheck);
   }
-  if (numericPhase >= 99 && numericPhase <= 116) {
+  if (numericPhase >= 99 && numericPhase <= 117) {
     selectName(resultEnvelopeManifestCheck);
+    selectName("openclaw-live-provider-result-envelope-batch-reuse");
+    return;
   }
 
   const phaseNameNeedle = `phase-${phaseNumber}`;
@@ -559,6 +566,12 @@ function selectSourceHeuristics(file) {
   }
 
   if (file.startsWith("services/openclaw-core/src/cloud-live-provider-runtime")) {
+    if (isCloudLiveProviderResultEnvelopeRuntimeLane(file)) {
+      selectName("openclaw-core-service-unit-tests");
+      selectName(resultEnvelopeManifestCheck);
+      selectName("openclaw-live-provider-result-envelope-batch-reuse");
+      return;
+    }
     if (isCloudLiveProviderLateRuntimeCompositionExtraction(file)) {
       selectName("openclaw-core-service-unit-tests");
       selectName(credentialValueLocalReadAttemptManifestCheck);
@@ -758,9 +771,7 @@ for (const file of changedFiles) {
           structurallyCoveredCommonChecks.push(file);
           continue;
         }
-        const coreName = scriptBasename.replace(/^dev-/, "").replace(/-common-check\.sh$/, "");
-        selectName(coreName);
-        selectName(`observer-${coreName}`);
+        selectName("openclaw-live-provider-result-envelope-batch-reuse");
       }
       continue;
     }

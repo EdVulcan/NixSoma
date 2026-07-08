@@ -151,8 +151,8 @@ const milestones = readTsv(manifestFile, [
   "nextSlug",
 ], "manifest").map((entry) => ({ ...entry, phaseNumber: Number.parseInt(entry.phase, 10) }));
 
-if (milestones.length !== 18) {
-  issues.push({ manifestFile, issue: "expected 18 Phase 99-116 milestone rows", count: milestones.length });
+if (milestones.length !== 19) {
+  issues.push({ manifestFile, issue: "expected 19 Phase 99-117 milestone rows", count: milestones.length });
 }
 
 requireContains(wrapperHelper, "openclaw-live-provider-result-envelope-milestones.tsv", { file: wrapperHelperPath });
@@ -314,11 +314,11 @@ for (const [index, milestone] of milestones.entries()) {
   }
 }
 
-if (commonPrereqHelperCalls !== 16) {
+if (commonPrereqHelperCalls !== 17) {
   issues.push({
     file: commonPrereqHelperPath,
-    issue: "expected 16 Phase 99-116 common checks to use the prerequisite helper",
-    expected: 16,
+    issue: "expected 17 Phase 99-117 common checks to use the prerequisite helper",
+    expected: 17,
     actual: commonPrereqHelperCalls,
   });
 }
@@ -355,7 +355,7 @@ const summary = {
       commonStateArtifactsChecked: milestones.length * 2,
     },
     issues,
-    nextRecommendedSlice: "Use the manifest-derived registry, status, and artifact inputs to extract shared Phase 99-116 common-check setup helpers without changing service assertions.",
+    nextRecommendedSlice: "Use the manifest-derived registry, status, and artifact inputs to extract shared Phase 99-117 common-check setup helpers without changing service assertions.",
   },
 };
 
