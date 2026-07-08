@@ -209,3 +209,74 @@ test("body evidence follow-up task route forwards confirm and serialises task sh
   assert.deepEqual(response.body.governance, { createsTask: true, createsApproval: true, canWriteLedger: false });
   assert.deepEqual(response.body.summary, { total: 1, queued: 1 });
 });
+
+test("credential post route group forwards confirm and serialises task approval contracts", async () => {
+  const calls = [];
+  const deps = createBaseDeps({
+    planBuilder: {
+      createCloudConsciousnessLiveProviderCredentialValueLocalReadTask: async (input) => {
+        calls.push(input);
+        return {
+          registry: "openclaw-cloud-consciousness-live-provider-credential-value-local-read-task-v0",
+          mode: "approval-gated-local-read-task",
+          generatedAt: "2026-07-08T00:00:00.000Z",
+          sourceRegistry: "openclaw-cloud-consciousness-live-provider-credential-value-local-read-route-v0",
+          route: { selectedSlice: "openclaw-cloud-consciousness-live-provider-credential-value-local-read-task" },
+          task: { id: "task-local-read", type: "cloud_consciousness_live_provider_credential_value_local_read_task" },
+          approval: { id: "approval-local-read", status: "pending" },
+          governance: { createsTask: true, createsApproval: true, credentialValueRead: false },
+        };
+      },
+    },
+    taskManager: {
+      serialiseTask: (task) => ({ id: task.id, serialised: true }),
+      buildTaskSummary: () => ({ total: 2, queued: 1 }),
+    },
+    approvalEngine: {
+      serialiseApproval: (approval) => ({ id: approval.id, status: approval.status, serialised: true }),
+    },
+  });
+
+  const response = await invokeRoute(deps, "POST", "/cloud-consciousness/live-provider-credential-value-local-read-tasks", { confirm: true });
+
+  assert.equal(response.statusCode, 201, JSON.stringify(response.body));
+  assert.deepEqual(calls, [{ confirm: true }]);
+  assert.equal(response.body.registry, "openclaw-cloud-consciousness-live-provider-credential-value-local-read-task-v0");
+  assert.equal(response.body.sourceRegistry, "openclaw-cloud-consciousness-live-provider-credential-value-local-read-route-v0");
+  assert.deepEqual(response.body.route, { selectedSlice: "openclaw-cloud-consciousness-live-provider-credential-value-local-read-task" });
+  assert.deepEqual(response.body.task, { id: "task-local-read", serialised: true });
+  assert.deepEqual(response.body.approval, { id: "approval-local-read", status: "pending", serialised: true });
+  assert.deepEqual(response.body.governance, { createsTask: true, createsApproval: true, credentialValueRead: false });
+  assert.deepEqual(response.body.summary, { total: 2, queued: 1 });
+});
+
+test("credential post route group preserves raw preflight task response contracts", async () => {
+  const rawTask = { id: "preflight-task", raw: true };
+  const deps = createBaseDeps({
+    planBuilder: {
+      recordCloudConsciousnessLiveProviderCredentialValueFinalReadinessPreflight: async (input) => ({
+        registry: "openclaw-cloud-consciousness-live-provider-credential-value-final-readiness-preflight-v0",
+        mode: "credential_value_final_readiness_preflight",
+        generatedAt: "2026-07-08T00:00:00.000Z",
+        status: input.confirm ? "recorded" : "blocked",
+        preflight: { ready: true },
+        task: rawTask,
+        governance: { createsTask: false, credentialValueRead: false },
+      }),
+    },
+    taskManager: {
+      serialiseTask: () => {
+        throw new Error("raw preflight task should not be serialised");
+      },
+      buildTaskSummary: () => ({ total: 3 }),
+    },
+  });
+
+  const response = await invokeRoute(deps, "POST", "/cloud-consciousness/live-provider-credential-value-final-readiness-preflight", { confirm: true });
+
+  assert.equal(response.statusCode, 201, JSON.stringify(response.body));
+  assert.equal(response.body.status, "recorded");
+  assert.deepEqual(response.body.preflight, { ready: true });
+  assert.deepEqual(response.body.task, rawTask);
+  assert.deepEqual(response.body.summary, { total: 3 });
+});
