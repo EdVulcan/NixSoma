@@ -112,6 +112,7 @@ export function createTaskLifecycleHarness(overrides = {}) {
       cloudConsciousnessLiveProviderResponseVerifier: task.cloudConsciousnessLiveProviderResponseVerifier ?? null,
       cloudConsciousnessLiveProviderRollbackNote: task.cloudConsciousnessLiveProviderRollbackNote ?? null,
       cloudConsciousnessLiveProviderRuntimeAdapterClosure: task.cloudConsciousnessLiveProviderRuntimeAdapterClosure ?? null,
+      cloudConsciousnessLiveProviderRealLaunch: task.cloudConsciousnessLiveProviderRealLaunch ?? null,
       bodyEvidenceLedgerDirectory: task.bodyEvidenceLedgerDirectory ?? null,
       bodyEvidenceLedgerFirstRecord: task.bodyEvidenceLedgerFirstRecord ?? null,
       bodyEvidenceLedgerFollowupRecord: task.bodyEvidenceLedgerFollowupRecord ?? null,
