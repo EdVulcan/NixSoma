@@ -374,6 +374,13 @@ Audit sources used for this revision:
     and edit-target selection while preserving public method names, read-only
     metadata/source-derived outputs, bounded declaration previews, and no
     source-body/no-import/no-execution governance.
+59. Split the Observer runtime action script by extracting runtime/system/body
+    and systemd refreshers from
+    `apps/observer-ui/src/client-script-runtime-actions.mjs` into
+    `apps/observer-ui/src/client-script-refreshers-runtime.mjs`. The served
+    client script remains byte-for-byte identical through `clientScript()`
+    assembly while the action file now owns event streams, button actions,
+    task/work-view control helpers, and task card event delegation only.
 
 These slices reduced live-provider runtime and milestone orchestration coupling
 while preserving the public runtime API and existing milestone entry names.
@@ -392,7 +399,8 @@ while preserving the public runtime API and existing milestone entry names.
 | P1 | `services/openclaw-core/src/plugin-review.mjs` | Now a small composition surface for workspace/source intake, source migration, source command proposals, SDK contracts, manifest/capability planning, search-web planning/tasks, workspace intelligence, formal readiness, and native adapter status. The high-coupling workspace tool catalog/prompt/semantic/symbol/edit-target logic is extracted. | Treat as largely reduced; only split formal readiness/native adapter status if those status summaries start growing again. Next higher-ROI core hotspots are `cloud-live-provider-runtime-implementation.mjs`, `route-handlers.mjs`, and `task-manager.mjs`. |
 | P1 | `services/openclaw-core/src/task-manager.mjs` | Task serialization manually knows domain-specific extension fields, recovery predicates, phase histories, persistence, and lifecycle events. Every new task family risks adding another top-level serialization field by hand. | Add a local `TASK_EXTENSION_FIELDS` descriptor used by serialization and creation while preserving today's top-level output keys. |
 | P1 | `nix/scripts` milestone script taxonomy | The runner registry is externalized, but common/core/observer scripts still grow by hand and include long filenames, unregistered helper checks, and repeated shell wiring. | Use the `milestone-script-audit` artifact as the baseline, then add metadata-generated shims for the repeated Phase 99-116 live-provider chain before deleting or renaming legacy scripts. |
-| P2 | `apps/observer-ui/src/client-script-runtime-actions.mjs` | Runtime action handlers combine form reads, fetch calls, approval flows, command/workspace actions, event-to-refresh fan-out, task focus state, and display updates. | Extract an event-to-refresh map and button-action registration table while preserving global function names. |
+| P2 | `apps/observer-ui/src/client-script-runtime-actions.mjs` | Runtime/system/body/systemd refreshers are extracted into `client-script-refreshers-runtime.mjs`, and the served client script was proven byte-for-byte identical after assembly. Remaining coupling is action/button registration, event stream refresh fan-out, task focus state, work-view helpers, and repeated post-action refresh sequences. | Extract event-to-refresh and button-action descriptor tables while preserving global function names and byte-for-byte or token-equivalent served output where feasible. |
+| P2 | `apps/observer-ui/src/client-script-refreshers-cloud.mjs` | Cloud/live-provider refreshers are now the largest Observer client chunk and mix many phase-specific endpoint reads, DOM writes, and repeated status formatting patterns. | Split by cloud/live-provider phase family or introduce a descriptor-backed refresher group while preserving served `/client.js` tokens and startup refresh names. |
 | P2 | `services/openclaw-core/src/workspace-ops.mjs` | Target resolution, patch parsing, diff preview, proposals, source-derived proposals, policy metadata, task creation, approval, and event publication share one operational surface. | Split pure patch/diff/proposal builders from task materializers. Keep registry strings and task payload shape unchanged. |
 | P2 | Shared plugin contract (`packages/shared-types/src/plugin-registry.mjs`, `plugin-contract.mjs`) | Native capability IDs and validators are small but drive plan-builder capability mapping, plugin review, workspace ops, route behavior, executor handling, and milestone assertions. | Move capability descriptors into a data module while preserving `createOpenClawNativePluginRegistry` and exact capability IDs. |
 

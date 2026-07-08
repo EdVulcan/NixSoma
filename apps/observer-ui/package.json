@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "node --check src/server.mjs && node --check src/client-script.mjs && node --check src/client-script-config-dom.mjs && node --check src/client-script-renderers.mjs && node --check src/client-script-refreshers-app.mjs && node --check src/client-script-refreshers-cloud.mjs && node --check src/client-script-runtime-actions.mjs && node --check src/client-script-startup.mjs",
+    "build": "node --check src/server.mjs && node --check src/client-script.mjs && node --check src/client-script-config-dom.mjs && node --check src/client-script-renderers.mjs && node --check src/client-script-refreshers-app.mjs && node --check src/client-script-refreshers-cloud.mjs && node --check src/client-script-refreshers-runtime.mjs && node --check src/client-script-runtime-actions.mjs && node --check src/client-script-startup.mjs",
     "start": "node src/server.mjs",
-    "typecheck": "node --check src/server.mjs && node --check src/client-script.mjs && node --check src/client-script-config-dom.mjs && node --check src/client-script-renderers.mjs && node --check src/client-script-refreshers-app.mjs && node --check src/client-script-refreshers-cloud.mjs && node --check src/client-script-runtime-actions.mjs && node --check src/client-script-startup.mjs"
+    "typecheck": "node --check src/server.mjs && node --check src/client-script.mjs && node --check src/client-script-config-dom.mjs && node --check src/client-script-renderers.mjs && node --check src/client-script-refreshers-app.mjs && node --check src/client-script-refreshers-cloud.mjs && node --check src/client-script-refreshers-runtime.mjs && node --check src/client-script-runtime-actions.mjs && node --check src/client-script-startup.mjs"
   }
 }
