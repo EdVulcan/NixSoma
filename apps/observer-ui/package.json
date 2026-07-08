@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "node --check src/*.mjs",
+    "build": "node --check src/*.mjs && node scripts/check-client-script.mjs",
     "start": "node src/server.mjs",
-    "typecheck": "node --check src/*.mjs"
+    "typecheck": "node --check src/*.mjs && node scripts/check-client-script.mjs"
   }
 }

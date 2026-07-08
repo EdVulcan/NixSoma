@@ -653,6 +653,14 @@ Audit sources used for this revision:
     registry, current registry, and next-slice tokens instead of hand-copying
     those strings per phase. The manifest check now covers the assertion helper
     and all common-check call sites.
+96. Introduced a descriptor-backed Observer refresher pilot for the Phase
+    99-102 result-envelope route/task-shell/approved-deferred/final-readiness
+    quartet. The pilot preserves the four public refresh function names, DOM
+    ids, endpoint tokens, registry tokens, JSON lines, and fallback behavior
+    while moving repeated endpoint-to-DOM rendering into a shared helper and
+    descriptor table. The same slice fixed escaped newline handling in touched
+    client-template output and added assembled `/client.js` syntax validation
+    as proof.
 
 These slices reduced live-provider runtime and milestone orchestration coupling
 while preserving the public runtime API and existing milestone entry names.
@@ -675,7 +683,7 @@ while preserving the public runtime API and existing milestone entry names.
 | P2 | `apps/observer-ui/src/client-script-renderers.mjs` | Workspace/source/native-adapter renderers now live in `client-script-renderers-workspace-source.mjs`, leaving the main renderer chunk focused on shared formatting, task/policy/capability/ledger renderers, native plugin runtime renderers, and the operator panel. The served client script was proven byte-for-byte identical after extraction. | Treat as largely reduced unless the remaining native plugin runtime renderer group grows; next higher-ROI Observer hotspots are `client-script-refreshers-runtime.mjs` and `client-script-config-dom.mjs`. |
 | P2 | `apps/observer-ui/src/client-script-refreshers-app.mjs` | Workspace/source/native-adapter refreshers now live in `client-script-refreshers-workspace-source.mjs`; MVP/Phase 2-5 refreshers live in `client-script-refreshers-mvp-phases.mjs`; Phase 6 and long-term-memory refreshers live in `client-script-refreshers-memory-phases.mjs`. The main app refresher chunk is now focused on core operator, policy, approval, capability, ledger, health, task summary, fetch, and event helpers. The assembled `/client.js` output was proven byte-for-byte identical. | Treat as largely reduced; keep future phase refreshers in phase-family modules rather than growing the core app refresher chunk. |
 | P2 | `apps/observer-ui/src/client-script-refreshers-runtime.mjs` | Body governance/body-evidence refreshers now live in `client-script-refreshers-body-evidence.mjs`, and systemd repair refreshers now live in `client-script-refreshers-systemd.mjs`. The runtime refresher chunk is now focused on core runtime, task list/history, work-view, screen/action, system state, heal, maintenance, and audit refreshers. The assembled `/client.js` output was proven byte-for-byte identical. | Treat as largely reduced; route future body-evidence and systemd refreshers into their domain chunks rather than growing the core runtime refresher chunk. |
-| P2 | `apps/observer-ui/src/client-script-refreshers-cloud.mjs` | Cloud/live-provider refreshers are now split into context/provider rehearsal, live runbook/runtime adapter, real launch/credential authorization, local-read, and result-envelope chunks, and startup refresh registration is descriptor-backed. Remaining coupling is the repeated endpoint-to-DOM rendering pattern inside each phase-family chunk. | Introduce descriptor-backed endpoint/DOM rendering for one cloud lane only after preserving global function names and served `/client.js` token compatibility. |
+| P2 | `apps/observer-ui/src/client-script-refreshers-cloud.mjs` | Cloud/live-provider refreshers are now split into context/provider rehearsal, live runbook/runtime adapter, real launch/credential authorization, local-read, and result-envelope chunks, and startup refresh registration is descriptor-backed. The Phase 99-102 result-envelope quartet now has a descriptor-backed endpoint-to-DOM pilot. Remaining coupling is the repeated endpoint-to-DOM rendering pattern in later result-envelope quartets and other phase-family chunks. | Extend the proven result-envelope descriptor pattern to adjacent Phase 103-117 quartets while preserving global function names and served `/client.js` token compatibility. |
 | P2 | `services/openclaw-core/src/workspace-ops.mjs` | Target resolution, source signal collection, task creation, approval, and event publication still share one operational surface, but pure patch edit/diff utilities now live in `workspace-patch-utils.mjs`, proposal/rationale/check/risk bundle construction now lives in `workspace-proposal-utils.mjs`, and workspace/source command plan-only builders now live in `workspace-command-plan-builders.mjs` with direct unit coverage. | Treat as substantially reduced for now. Next split should target source-authored edit orchestration only if it grows, or separate approval-gated task materializers if future native workspace work touches this file heavily. |
 | P2 | Shared plugin contract (`packages/shared-types/src/plugin-registry.mjs`, `plugin-contract.mjs`) | Native capability IDs and validators are small but drive plan-builder capability mapping, plugin review, workspace ops, route behavior, executor handling, and milestone assertions. | Move capability descriptors into a data module while preserving `createOpenClawNativePluginRegistry` and exact capability IDs. |
 
@@ -690,9 +698,9 @@ while preserving the public runtime API and existing milestone entry names.
 
 1. Finish reducing active live-provider lane coupling while it remains the
    current development surface.
-2. Descriptorize the active Observer result-envelope endpoint-to-DOM rendering
-   pattern, starting with a narrow Phase 99-102 pilot that preserves global
-   refresh names, DOM ids, route tokens, and served `/client.js` compatibility.
+2. Extend the Observer result-envelope descriptor pilot across the remaining
+   Phase 103-117 quartets in adjacent slices, preserving global refresh names,
+   DOM ids, route tokens, and served `/client.js` compatibility.
 3. Continue splitting `route-handlers.mjs` by domain so future phases do not
    keep editing one router chain.
 4. Split `task-executor.mjs` handler groups only after the current route

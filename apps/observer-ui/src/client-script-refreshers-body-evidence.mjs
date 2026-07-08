@@ -564,7 +564,7 @@ async function refreshBodyEvidenceLedgerFollowupRecordTask() {
       "Approval: creates pending medium-risk approval only after explicit button click",
       "Governance: createsTaskOnClick=true createsApprovalOnClick=true canAppendLedgerRecord=false canWriteLedger=false mutation=false appended=false scheduler=false backgroundWriter=false",
       "Endpoint: /body/evidence-ledger/followup-record-tasks",
-    ].join("\n");
+    ].join("\\n");
   } catch {
     bodyEvidenceLedgerFollowupRecordTaskReady.textContent = "false";
     bodyEvidenceLedgerFollowupRecordTaskType.textContent = "offline";
