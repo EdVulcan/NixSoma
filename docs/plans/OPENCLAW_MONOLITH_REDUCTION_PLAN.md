@@ -431,6 +431,14 @@ Audit sources used for this revision:
     next-action recommendations, conservative recovery policy explanation, body
     governance readiness, and the Phase 2 route review while preserving read-only
     registry names and endpoint payload contracts.
+67. Extracted system-sense body-evidence timeline and ledger route-review
+    builders into `services/openclaw-system-sense/src/system-body-evidence.mjs`.
+    The module now owns body evidence timeline/readiness, ledger plan,
+    storage-root and first-record route reviews, ledger readiness/demo status,
+    and follow-up record planning while the HTTP server injects systemd,
+    health-governance, repair-demo, and next-repair read dependencies. Focused
+    unit tests instantiate the factory directly and prove the read-only
+    timeline and plan-only ledger boundaries without starting services.
 
 These slices reduced live-provider runtime and milestone orchestration coupling
 while preserving the public runtime API and existing milestone entry names.
@@ -445,7 +453,7 @@ while preserving the public runtime API and existing milestone entry names.
 | P0 | Observer UI startup and panel synchronization (`client-script-startup.mjs`, `client-script-startup-refreshes.mjs`, `server.mjs`, `client-script-config-dom.mjs`) | Startup initial refresh calls and polling intervals are generated from one grouped descriptor list, so adding one panel no longer requires synchronized edits to both startup sequences. Remaining coupling is HTML ids, DOM constants, refresh function implementation, and milestone token checks still being manually coordinated. | Add grouped DOM descriptors for one cloud or system/body lane while preserving legacy aliases and served `/client.js` token compatibility. |
 | P1 | `services/openclaw-core/src/plan-builder.mjs` | The file is now mostly a composition root plus operator state, task lifecycle helpers, capability runtime wiring, and extracted factory wiring. The Phase 2/MVP legacy read-model family, capability-aware rule-plan helper cluster, native plugin planning/runtime shell lane, capability registry/invocation slice, systemd/body task-shell builders, body-evidence follow-up readiness lane, Phase 3 work-view read-model family, Phase 4 self-heal read-model family, Phase 5/MVP/Post-MVP/Phase 6 read-only evidence chain, Phase 7 long-term memory lane, Phase 8 cloud handoff lane, Phase 9 provider dry-run lane, Phase 10 provider-call rehearsal lane, Phase 11 live-provider runbook lane, Phase 12 live-provider execution-plan lane, and Phase 13-17 live-provider runtime-readiness lane are now extracted. | Deprioritize as a large-file hotspot unless task lifecycle helpers grow again; next higher-ROI core hotspots are `plugin-review.mjs`, `cloud-live-provider-runtime-implementation.mjs` Phase 91+ composition, `route-handlers.mjs` residual proxy/health/systemd draft surfaces, and `task-manager.mjs` serialization descriptors. |
 | P1 | `services/openclaw-core/src/cloud-live-provider-runtime-implementation.mjs` | Now mostly composes extracted live-provider runtime lanes, but still has a broad dependency/destructure surface and Phase 91+ attempt/result-envelope factory composition. The Phase 18-29, Phase 32-37, Phase 40-48, Phase 52-55, Phase 56-59, Phase 60-64, Phase 65-70, Phase 71-78, Phase 79-86, and Phase 87-90 runtime lanes are now extracted into focused factories. | Continue lane extraction only where it removes cross-phase coupling. Next cohesive target is the Phase 91+ local-read attempt and result-envelope composition surface; separately consider an approved-deferred lifecycle helper that preserves status strings. |
-| P1 | `services/openclaw-system-sense/src/server.mjs` | Bounded filesystem operations, command/process operations, read-only systemd inventory/dependency mapping, and health/body-governance read models are extracted into focused modules. The server still owns service discovery, systemd repair planning chains, body evidence route reviews, and HTTP dispatch. | Continue extracting system-sense domain modules behind stable endpoints: systemd repair planning chains, body-evidence route builders, then route registration. |
+| P1 | `services/openclaw-system-sense/src/server.mjs` | Bounded filesystem operations, command/process operations, read-only systemd inventory/dependency mapping, health/body-governance read models, and body-evidence timeline/ledger route-review builders are extracted into focused modules. The server still owns service discovery, systemd repair planning chains, body-evidence HTTP route dispatch, and broad endpoint registration. | Continue extracting system-sense domain modules behind stable endpoints: systemd repair planning chains, then route registration groups for already-extracted system/body evidence surfaces. |
 | P1 | `services/openclaw-core/src/plugin-review.mjs` | Now a small composition surface for workspace/source intake, source migration, source command proposals, SDK contracts, manifest/capability planning, search-web planning/tasks, workspace intelligence, formal readiness, and native adapter status. The high-coupling workspace tool catalog/prompt/semantic/symbol/edit-target logic is extracted. | Treat as largely reduced; only split formal readiness/native adapter status if those status summaries start growing again. Next higher-ROI core hotspots are `cloud-live-provider-runtime-implementation.mjs`, `route-handlers.mjs`, and `task-manager.mjs`. |
 | P1 | `services/openclaw-core/src/task-manager.mjs` | Task recovery predicates, recovered-plan reset, and recovered-task creation are now extracted into `task-recovery.mjs` and shared by `task-executor.mjs`. Remaining coupling is task serialization manually knowing domain-specific extension fields plus lifecycle/persistence helpers. | Add a local `TASK_EXTENSION_FIELDS` descriptor used by serialization and creation while preserving today's top-level output keys. |
 | P1 | `nix/scripts` milestone script taxonomy | The runner registry is externalized, but common/core/observer scripts still grow by hand and include long filenames, unregistered helper checks, and repeated shell wiring. | Use the `milestone-script-audit` artifact as the baseline, then add metadata-generated shims for the repeated Phase 99-116 live-provider chain before deleting or renaming legacy scripts. |
@@ -477,9 +485,9 @@ while preserving the public runtime API and existing milestone entry names.
    drift.
 6. Add broader milestone phase descriptors and shared assertion helpers to reduce slow,
    recursive, hand-written validation scripts.
-7. Continue splitting remaining `plan-builder.mjs` Phase 3-6 read-model
-   families, `plugin-review.mjs`, and `openclaw-system-sense` after the active
-   provider lane no longer forces changes through the current monoliths.
+7. Continue splitting remaining `openclaw-system-sense` systemd repair planning
+   chains and route registration groups, then return to the highest-coupling
+   core/Observer hotspots that still force broad edits.
 
 ## Minimum Proof For Each Slice
 

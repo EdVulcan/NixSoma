@@ -7,6 +7,6 @@
     "build": "npm run typecheck && npm test",
     "start": "node src/server.mjs",
     "test": "node --test test/*.test.mjs",
-    "typecheck": "node --check src/server.mjs && node --check src/system-file-operations.mjs && node --check src/system-command-operations.mjs && node --check src/systemd-inspection.mjs && node --check src/system-health-governance.mjs"
+    "typecheck": "node --check src/server.mjs && node --check src/system-file-operations.mjs && node --check src/system-command-operations.mjs && node --check src/systemd-inspection.mjs && node --check src/system-health-governance.mjs && node --check src/system-body-evidence.mjs"
   }
 }
