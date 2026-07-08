@@ -6943,9 +6943,9 @@ async function buildCloudConsciousnessContextPackage() {
       includesSecrets: false,
     },
     evidence: {
-      schema,
-      phase6Context,
-      memoryReadback,
+      schema: compactCloudConsciousnessEvidenceRef(schema),
+      phase6Context: compactCloudConsciousnessEvidenceRef(phase6Context),
+      memoryReadback: compactCloudConsciousnessEvidenceRef(memoryReadback),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-redaction-review",
@@ -6954,8 +6954,8 @@ async function buildCloudConsciousnessContextPackage() {
   };
 }
 
-async function buildCloudConsciousnessRedactionReview() {
-  const contextPackage = await buildCloudConsciousnessContextPackage();
+async function buildCloudConsciousnessRedactionReview({ contextPackage: providedContextPackage = null } = {}) {
+  const contextPackage = providedContextPackage ?? await buildCloudConsciousnessContextPackage();
   const redaction = {
     policy: contextPackage.package?.redaction?.policy ?? "metadata_and_summaries_only",
     allowedContent: ["service health summary", "task counts", "long-term memory record ids and hashes", "operator-visible summaries"],
@@ -7004,7 +7004,7 @@ async function buildCloudConsciousnessRedactionReview() {
       transmitsExternally: false,
     },
     evidence: {
-      contextPackage,
+      contextPackage: compactCloudConsciousnessEvidenceRef(contextPackage),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-transmission-route-review",
@@ -7013,8 +7013,8 @@ async function buildCloudConsciousnessRedactionReview() {
   };
 }
 
-async function buildCloudConsciousnessTransmissionRouteReview() {
-  const redactionReview = await buildCloudConsciousnessRedactionReview();
+async function buildCloudConsciousnessTransmissionRouteReview({ redactionReview: providedRedactionReview = null } = {}) {
+  const redactionReview = providedRedactionReview ?? await buildCloudConsciousnessRedactionReview();
   const decision = {
     selectedSlice: "openclaw-cloud-consciousness-handoff-task",
     deferredSlice: "openclaw-cloud-consciousness-provider-adapter-plan",
@@ -7067,7 +7067,7 @@ async function buildCloudConsciousnessTransmissionRouteReview() {
       transmitsExternally: false,
     },
     evidence: {
-      redactionReview,
+      redactionReview: compactCloudConsciousnessEvidenceRef(redactionReview),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-handoff-task",
@@ -7081,12 +7081,14 @@ async function createCloudConsciousnessHandoffTask({ confirm = false } = {}) {
     throw new Error("Cloud consciousness handoff task creation requires confirm=true.");
   }
 
-  const routeReview = await buildCloudConsciousnessTransmissionRouteReview();
+  const contextPackageEnvelope = await buildCloudConsciousnessContextPackage();
+  const redactionReview = await buildCloudConsciousnessRedactionReview({ contextPackage: contextPackageEnvelope });
+  const routeReview = await buildCloudConsciousnessTransmissionRouteReview({ redactionReview });
   if (routeReview.summary?.ready !== true || routeReview.decision?.selectedSlice !== "openclaw-cloud-consciousness-handoff-task") {
     throw new Error("Cloud consciousness handoff task requires a ready transmission route review.");
   }
 
-  const contextPackage = routeReview.evidence?.redactionReview?.evidence?.contextPackage?.package ?? {};
+  const contextPackage = contextPackageEnvelope.package ?? {};
   const policyRequest = {
     intent: "cloud_consciousness.context_handoff.local_write",
     domain: "body_internal",
@@ -7108,7 +7110,7 @@ async function createCloudConsciousnessHandoffTask({ confirm = false } = {}) {
   const cloudConsciousnessHandoff = {
     registry: CLOUD_CONSCIOUSNESS_HANDOFF_TASK_REGISTRY,
     routeReviewRegistry: routeReview.registry,
-    packageRegistry: routeReview.evidence?.redactionReview?.evidence?.contextPackage?.registry ?? null,
+    packageRegistry: contextPackageEnvelope.registry ?? null,
     packageId: contextPackage.id ?? null,
     handoffFileDisplayPath: CLOUD_CONSCIOUSNESS_HANDOFF_FILE_DISPLAY_PATH,
     artifactWritten: false,
@@ -7192,8 +7194,9 @@ function isCloudConsciousnessHandoffTask(task) {
 }
 
 async function executeCloudConsciousnessHandoffTask(task) {
-  const routeReview = await buildCloudConsciousnessTransmissionRouteReview();
-  const contextPackageEnvelope = routeReview.evidence?.redactionReview?.evidence?.contextPackage ?? await buildCloudConsciousnessContextPackage();
+  const contextPackageEnvelope = await buildCloudConsciousnessContextPackage();
+  const redactionReview = await buildCloudConsciousnessRedactionReview({ contextPackage: contextPackageEnvelope });
+  const routeReview = await buildCloudConsciousnessTransmissionRouteReview({ redactionReview });
   const contextPackage = contextPackageEnvelope.package ?? {};
   const handoffFileDisplayPath = CLOUD_CONSCIOUSNESS_HANDOFF_FILE_DISPLAY_PATH;
   const handoffFilePath = cloudConsciousnessHandoffFilePath();
@@ -7385,8 +7388,8 @@ async function buildCloudConsciousnessExit() {
   const contextReview = await buildCloudConsciousnessContextReview();
   const schema = await buildCloudConsciousnessEnvelopeSchema();
   const contextPackage = await buildCloudConsciousnessContextPackage();
-  const redactionReview = await buildCloudConsciousnessRedactionReview();
-  const routeReview = await buildCloudConsciousnessTransmissionRouteReview();
+  const redactionReview = await buildCloudConsciousnessRedactionReview({ contextPackage });
+  const routeReview = await buildCloudConsciousnessTransmissionRouteReview({ redactionReview });
   const readback = buildCloudConsciousnessHandoffReadback();
   const checks = [
     {
@@ -7457,12 +7460,12 @@ async function buildCloudConsciousnessExit() {
       storageScope: CLOUD_CONSCIOUSNESS_HANDOFF_FILE_DISPLAY_PATH,
     },
     evidence: {
-      contextReview,
-      schema,
-      contextPackage,
-      redactionReview,
-      routeReview,
-      readback,
+      contextReview: compactCloudConsciousnessEvidenceRef(contextReview),
+      schema: compactCloudConsciousnessEvidenceRef(schema),
+      contextPackage: compactCloudConsciousnessEvidenceRef(contextPackage),
+      redactionReview: compactCloudConsciousnessEvidenceRef(redactionReview),
+      routeReview: compactCloudConsciousnessEvidenceRef(routeReview),
+      readback: compactCloudConsciousnessEvidenceRef(readback),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-provider-adapter-plan",
@@ -7604,7 +7607,7 @@ async function buildCloudConsciousnessProviderAdapterPlan() {
       writesDryRunArtifact: false,
     },
     evidence: {
-      phase8Exit,
+      phase8Exit: compactCloudConsciousnessEvidenceRef(phase8Exit),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-provider-contract",
@@ -7676,7 +7679,7 @@ async function buildCloudConsciousnessProviderContract() {
       providerSdkLoaded: false,
     },
     evidence: {
-      plan,
+      plan: compactCloudConsciousnessEvidenceRef(plan),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-provider-request-envelope",
@@ -7774,8 +7777,8 @@ async function buildCloudConsciousnessProviderRequestEnvelope() {
       providerCredentialIncluded: false,
     },
     evidence: {
-      contract,
-      handoffReadback,
+      contract: compactCloudConsciousnessEvidenceRef(contract),
+      handoffReadback: compactCloudConsciousnessEvidenceRef(handoffReadback),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-provider-dry-run-route-review",
@@ -7839,7 +7842,7 @@ async function buildCloudConsciousnessProviderDryRunRouteReview() {
       providerSdkLoaded: false,
     },
     evidence: {
-      envelope,
+      envelope: compactCloudConsciousnessEvidenceRef(envelope),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-provider-dry-run-task",
@@ -7858,7 +7861,8 @@ async function createCloudConsciousnessProviderDryRunTask({ confirm = false } = 
     throw new Error("Cloud consciousness provider dry-run task requires a ready route review.");
   }
 
-  const envelope = routeReview.evidence?.envelope?.envelope ?? {};
+  const envelopeReview = await buildCloudConsciousnessProviderRequestEnvelope();
+  const envelope = envelopeReview.envelope ?? {};
   const policyRequest = {
     intent: "cloud_consciousness.provider_adapter.dry_run",
     domain: "body_internal",
@@ -7880,7 +7884,7 @@ async function createCloudConsciousnessProviderDryRunTask({ confirm = false } = 
   const providerDryRun = {
     registry: CLOUD_CONSCIOUSNESS_PROVIDER_DRY_RUN_TASK_REGISTRY,
     routeReviewRegistry: routeReview.registry,
-    requestRegistry: routeReview.evidence?.envelope?.registry ?? null,
+    requestRegistry: envelopeReview.registry ?? null,
     requestId: envelope.id ?? null,
     dryRunFileDisplayPath: CLOUD_CONSCIOUSNESS_PROVIDER_DRY_RUN_FILE_DISPLAY_PATH,
     artifactWritten: false,
@@ -7966,7 +7970,7 @@ function isCloudConsciousnessProviderDryRunTask(task) {
 
 async function executeCloudConsciousnessProviderDryRunTask(task) {
   const routeReview = await buildCloudConsciousnessProviderDryRunRouteReview();
-  const envelopeEnvelope = routeReview.evidence?.envelope ?? await buildCloudConsciousnessProviderRequestEnvelope();
+  const envelopeEnvelope = await buildCloudConsciousnessProviderRequestEnvelope();
   const envelope = envelopeEnvelope.envelope ?? {};
   const dryRunFileDisplayPath = CLOUD_CONSCIOUSNESS_PROVIDER_DRY_RUN_FILE_DISPLAY_PATH;
   const dryRunFilePath = cloudConsciousnessProviderDryRunFilePath();
@@ -8245,11 +8249,11 @@ async function buildCloudConsciousnessProviderAdapterExit() {
       storageScope: CLOUD_CONSCIOUSNESS_PROVIDER_DRY_RUN_FILE_DISPLAY_PATH,
     },
     evidence: {
-      plan,
-      contract,
-      envelope,
-      routeReview,
-      readback,
+      plan: compactCloudConsciousnessEvidenceRef(plan),
+      contract: compactCloudConsciousnessEvidenceRef(contract),
+      envelope: compactCloudConsciousnessEvidenceRef(envelope),
+      routeReview: compactCloudConsciousnessEvidenceRef(routeReview),
+      readback: compactCloudConsciousnessEvidenceRef(readback),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-real-provider-call-plan",
@@ -8393,7 +8397,7 @@ async function buildCloudConsciousnessRealProviderCallPlan() {
       writesResponseArtifact: false,
     },
     evidence: {
-      phase9Exit,
+      phase9Exit: compactCloudConsciousnessEvidenceRef(phase9Exit),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-provider-egress-contract",
@@ -8465,7 +8469,7 @@ async function buildCloudConsciousnessProviderEgressContract() {
       providerCredentialRead: false,
     },
     evidence: {
-      plan,
+      plan: compactCloudConsciousnessEvidenceRef(plan),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-provider-credential-preflight",
@@ -8530,7 +8534,7 @@ async function buildCloudConsciousnessProviderCredentialPreflight() {
       transmitsExternally: false,
     },
     evidence: {
-      egressContract,
+      egressContract: compactCloudConsciousnessEvidenceRef(egressContract),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-provider-request-redaction-review",
@@ -8594,8 +8598,8 @@ async function buildCloudConsciousnessProviderRequestRedactionReview() {
       transmitsExternally: false,
     },
     evidence: {
-      credentialPreflight,
-      requestEnvelope,
+      credentialPreflight: compactCloudConsciousnessEvidenceRef(credentialPreflight),
+      requestEnvelope: compactCloudConsciousnessEvidenceRef(requestEnvelope),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-real-provider-call-route-review",
@@ -8659,7 +8663,7 @@ async function buildCloudConsciousnessRealProviderCallRouteReview() {
       providerCredentialRead: false,
     },
     evidence: {
-      redactionReview,
+      redactionReview: compactCloudConsciousnessEvidenceRef(redactionReview),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-real-provider-call-task",
@@ -8678,8 +8682,9 @@ async function createCloudConsciousnessProviderCallRehearsalTask({ confirm = fal
     throw new Error("Cloud consciousness provider-call rehearsal task requires a ready route review.");
   }
 
-  const redactionReview = routeReview.evidence?.redactionReview ?? {};
-  const requestEnvelope = redactionReview.evidence?.requestEnvelope?.envelope ?? {};
+  const redactionReview = await buildCloudConsciousnessProviderRequestRedactionReview();
+  const requestEnvelopeReview = await buildCloudConsciousnessProviderRequestEnvelope();
+  const requestEnvelope = requestEnvelopeReview.envelope ?? {};
   const policyRequest = {
     intent: "cloud_consciousness.provider_call.rehearsal",
     domain: "body_internal",
@@ -8701,7 +8706,7 @@ async function createCloudConsciousnessProviderCallRehearsalTask({ confirm = fal
   const providerCallRehearsal = {
     registry: CLOUD_CONSCIOUSNESS_PROVIDER_CALL_REHEARSAL_TASK_REGISTRY,
     routeReviewRegistry: routeReview.registry,
-    requestRegistry: redactionReview.evidence?.requestEnvelope?.registry ?? null,
+    requestRegistry: requestEnvelopeReview.registry ?? null,
     requestId: requestEnvelope.id ?? null,
     responseFileDisplayPath: CLOUD_CONSCIOUSNESS_PROVIDER_RESPONSE_FILE_DISPLAY_PATH,
     artifactWritten: false,
@@ -8788,8 +8793,8 @@ function isCloudConsciousnessProviderCallRehearsalTask(task) {
 
 async function executeCloudConsciousnessProviderCallRehearsalTask(task) {
   const routeReview = await buildCloudConsciousnessRealProviderCallRouteReview();
-  const redactionReview = routeReview.evidence?.redactionReview ?? await buildCloudConsciousnessProviderRequestRedactionReview();
-  const requestEnvelopeEnvelope = redactionReview.evidence?.requestEnvelope ?? await buildCloudConsciousnessProviderRequestEnvelope();
+  const redactionReview = await buildCloudConsciousnessProviderRequestRedactionReview();
+  const requestEnvelopeEnvelope = await buildCloudConsciousnessProviderRequestEnvelope();
   const requestEnvelope = requestEnvelopeEnvelope.envelope ?? {};
   const responseFileDisplayPath = CLOUD_CONSCIOUSNESS_PROVIDER_RESPONSE_FILE_DISPLAY_PATH;
   const responseFilePath = cloudConsciousnessProviderResponseFilePath();
@@ -9006,12 +9011,32 @@ function buildCloudConsciousnessProviderResponseReadback() {
   };
 }
 
+function compactCloudConsciousnessEvidenceRef(evidence) {
+  if (!evidence || typeof evidence !== "object") {
+    return null;
+  }
+  return {
+    registry: evidence.registry ?? null,
+    status: evidence.status ?? null,
+    summary: evidence.summary ?? null,
+    next: evidence.next ?? null,
+  };
+}
+
 async function buildCloudConsciousnessRealProviderCallExit() {
-  const plan = await buildCloudConsciousnessRealProviderCallPlan();
-  const egressContract = await buildCloudConsciousnessProviderEgressContract();
-  const credentialPreflight = await buildCloudConsciousnessProviderCredentialPreflight();
-  const redactionReview = await buildCloudConsciousnessProviderRequestRedactionReview();
-  const routeReview = await buildCloudConsciousnessRealProviderCallRouteReview();
+  const [
+    plan,
+    egressContract,
+    credentialPreflight,
+    redactionReview,
+    routeReview,
+  ] = await Promise.all([
+    buildCloudConsciousnessRealProviderCallPlan(),
+    buildCloudConsciousnessProviderEgressContract(),
+    buildCloudConsciousnessProviderCredentialPreflight(),
+    buildCloudConsciousnessProviderRequestRedactionReview(),
+    buildCloudConsciousnessRealProviderCallRouteReview(),
+  ]);
   const readback = buildCloudConsciousnessProviderResponseReadback();
   const checks = [
     {
@@ -9085,12 +9110,12 @@ async function buildCloudConsciousnessRealProviderCallExit() {
       storageScope: CLOUD_CONSCIOUSNESS_PROVIDER_RESPONSE_FILE_DISPLAY_PATH,
     },
     evidence: {
-      plan,
-      egressContract,
-      credentialPreflight,
-      redactionReview,
-      routeReview,
-      readback,
+      plan: compactCloudConsciousnessEvidenceRef(plan),
+      egressContract: compactCloudConsciousnessEvidenceRef(egressContract),
+      credentialPreflight: compactCloudConsciousnessEvidenceRef(credentialPreflight),
+      redactionReview: compactCloudConsciousnessEvidenceRef(redactionReview),
+      routeReview: compactCloudConsciousnessEvidenceRef(routeReview),
+      readback: compactCloudConsciousnessEvidenceRef(readback),
     },
     next: {
       recommendedSlice: "openclaw-cloud-consciousness-live-provider-call-runbook",
@@ -10647,10 +10672,17 @@ function buildCloudConsciousnessLiveProviderExecutionPlanReadback() {
 }
 
 async function buildCloudConsciousnessLiveProviderCallExecutionPlanExit() {
-  const plan = await buildCloudConsciousnessLiveProviderCallExecutionPlan();
-  const binding = await buildCloudConsciousnessLiveProviderEndpointCredentialBinding();
-  const transcriptSchema = await buildCloudConsciousnessLiveProviderExecutionTranscriptSchema();
-  const routeReview = await buildCloudConsciousnessLiveProviderExecutionRouteReview();
+  const [
+    plan,
+    binding,
+    transcriptSchema,
+    routeReview,
+  ] = await Promise.all([
+    buildCloudConsciousnessLiveProviderCallExecutionPlan(),
+    buildCloudConsciousnessLiveProviderEndpointCredentialBinding(),
+    buildCloudConsciousnessLiveProviderExecutionTranscriptSchema(),
+    buildCloudConsciousnessLiveProviderExecutionRouteReview(),
+  ]);
   const readback = buildCloudConsciousnessLiveProviderExecutionPlanReadback();
   const checks = [
     {
@@ -11089,10 +11121,17 @@ function phase15Governance(extra = {}) {
 }
 
 async function buildCloudConsciousnessLiveProviderCallFinalAuthorization() {
-  const phase14Exit = await buildCloudConsciousnessLiveProviderRuntimeAdapterExit();
-  const phase11Review = await buildCloudConsciousnessLiveProviderFinalAuthorizationReview();
-  const executionPlan = await buildCloudConsciousnessLiveProviderCallExecutionPlan();
-  const binding = await buildCloudConsciousnessLiveProviderEndpointCredentialBinding();
+  const [
+    phase14Exit,
+    phase11Review,
+    executionPlan,
+    binding,
+  ] = await Promise.all([
+    buildCloudConsciousnessLiveProviderRuntimeAdapterExit(),
+    buildCloudConsciousnessLiveProviderFinalAuthorizationReview(),
+    buildCloudConsciousnessLiveProviderCallExecutionPlan(),
+    buildCloudConsciousnessLiveProviderEndpointCredentialBinding(),
+  ]);
   const checks = [
     {
       id: "phase-14-complete",
@@ -11199,8 +11238,13 @@ function phase16Governance(extra = {}) {
 }
 
 async function buildCloudConsciousnessLiveProviderCallOperatorLaunchReview() {
-  const finalAuthorization = await buildCloudConsciousnessLiveProviderCallFinalAuthorization();
-  const phase14Exit = await buildCloudConsciousnessLiveProviderRuntimeAdapterExit();
+  const [
+    finalAuthorization,
+    phase14Exit,
+  ] = await Promise.all([
+    buildCloudConsciousnessLiveProviderCallFinalAuthorization(),
+    buildCloudConsciousnessLiveProviderRuntimeAdapterExit(),
+  ]);
   const executionPlanReadback = buildCloudConsciousnessLiveProviderExecutionPlanReadback();
   const launchReview = {
     launchDecision: "not_authorized",
@@ -11304,9 +11348,15 @@ function phase17Governance(extra = {}) {
 }
 
 async function buildCloudConsciousnessLiveProviderCallRuntimeImplementationPlan() {
-  const launchReview = await buildCloudConsciousnessLiveProviderCallOperatorLaunchReview();
-  const executionTranscriptSchema = await buildCloudConsciousnessLiveProviderExecutionTranscriptSchema();
-  const binding = await buildCloudConsciousnessLiveProviderEndpointCredentialBinding();
+  const [
+    launchReview,
+    executionTranscriptSchema,
+    binding,
+  ] = await Promise.all([
+    buildCloudConsciousnessLiveProviderCallOperatorLaunchReview(),
+    buildCloudConsciousnessLiveProviderExecutionTranscriptSchema(),
+    buildCloudConsciousnessLiveProviderEndpointCredentialBinding(),
+  ]);
   const implementationPlan = {
     implementationStatus: "planned_not_implemented",
     adapterModuleStatus: "not_created",

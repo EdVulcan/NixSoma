@@ -49,6 +49,9 @@ const sharedPackageContractsCheck = "openclaw-shared-package-contracts";
 const structurallyCoveredCommonChecks = [];
 const httpJsonHelperCheck = "openclaw-http-json-helper";
 const waitHelperCheck = "openclaw-wait-helper";
+const preCredentialPairManifestCheck = "openclaw-live-provider-pre-credential-pair-milestone-manifest";
+const preCredentialPairBatchCheck = "openclaw-live-provider-pre-credential-pair-batch-reuse";
+const preCredentialPairManifestFile = path.join(scriptDir, "openclaw-live-provider-pre-credential-pair-milestones.tsv");
 const credentialValueLocalReadManifestCheck = "openclaw-live-provider-credential-value-local-read-milestone-manifest";
 const credentialValueLocalReadManifestFile = path.join(scriptDir, "openclaw-live-provider-credential-value-local-read-milestones.tsv");
 const credentialValueLocalReadAttemptManifestCheck = "openclaw-live-provider-credential-value-local-read-attempt-milestone-manifest";
@@ -67,6 +70,38 @@ function readCredentialValueLocalReadCommonScripts() {
     .map((line) => line.split("\t")[1])
     .filter(Boolean)
     .map((slug) => `dev-${slug}-common-check.sh`));
+}
+
+function readPreCredentialPairRows() {
+  if (!fs.existsSync(preCredentialPairManifestFile)) return [];
+  return fs.readFileSync(preCredentialPairManifestFile, "utf8")
+    .split(/\n/)
+    .map((line) => line.replace(/\r$/, ""))
+    .filter((line) => line.trim() && !line.startsWith("#"))
+    .map((line) => {
+      const [label, phase, publicCheck, observerCheck, commonScript] = line.split("\t");
+      return { label, phase, publicCheck, observerCheck, commonScript };
+    });
+}
+
+const preCredentialPairRows = readPreCredentialPairRows();
+const preCredentialPairCommonScripts = new Set(preCredentialPairRows.map((row) => row.commonScript).filter(Boolean));
+const preCredentialPairWrapperScripts = new Set(preCredentialPairRows
+  .flatMap((row) => [byName.get(row.publicCheck)?.script, byName.get(row.observerCheck)?.script])
+  .filter(Boolean));
+const preCredentialPairHelperScripts = new Set([
+  "openclaw-live-provider-pre-credential-pair-milestones.tsv",
+  "dev-openclaw-live-provider-pre-credential-pair-milestone-manifest-check.sh",
+  "dev-openclaw-live-provider-pre-credential-pair-batch-reuse-check.sh",
+]);
+
+function selectPreCredentialPairRowsForCommon(scriptBasename) {
+  for (const row of preCredentialPairRows) {
+    if (row.commonScript === scriptBasename) {
+      selectName(row.publicCheck);
+      selectName(row.observerCheck);
+    }
+  }
 }
 
 const credentialValueLocalReadCommonScripts = readCredentialValueLocalReadCommonScripts();
@@ -456,6 +491,9 @@ function selectPhasePlanChecks(file) {
 
   const phaseNumber = match[1];
   const numericPhase = Number.parseInt(phaseNumber, 10);
+  if (numericPhase >= 24 && numericPhase <= 57) {
+    selectName(preCredentialPairManifestCheck);
+  }
   if (numericPhase >= 73 && numericPhase <= 90) {
     selectName(credentialValueLocalReadManifestCheck);
   }
@@ -547,6 +585,7 @@ for (const file of changedFiles) {
     || file === "nix/scripts/dev-milestone-select-changed-checks.sh") {
     selectName("milestone-registry");
     selectName("milestone-script-audit");
+    selectName(preCredentialPairManifestCheck);
     selectName(credentialValueLocalReadManifestCheck);
     selectName(credentialValueLocalReadAttemptManifestCheck);
     selectName(resultEnvelopeManifestCheck);
@@ -594,7 +633,26 @@ for (const file of changedFiles) {
     }
     if (scriptBasename === "dev-up.sh" || scriptBasename === "dev-down.sh") {
       selectName("openclaw-service-lifecycle-scope");
+      selectName(preCredentialPairBatchCheck);
       selectName("openclaw-live-provider-result-envelope-batch-reuse");
+      continue;
+    }
+    if (preCredentialPairHelperScripts.has(scriptBasename)
+      || scriptBasename === "dev-openclaw-core-observer-pair-runner.sh") {
+      selectName(preCredentialPairManifestCheck);
+      selectName(preCredentialPairBatchCheck);
+      continue;
+    }
+    if (preCredentialPairWrapperScripts.has(scriptBasename)) {
+      selectName(preCredentialPairManifestCheck);
+      if (byScript.has(scriptBasename)) {
+        selected.add(byScript.get(scriptBasename).name);
+      }
+      continue;
+    }
+    if (preCredentialPairCommonScripts.has(scriptBasename)) {
+      selectName(preCredentialPairManifestCheck);
+      selectPreCredentialPairRowsForCommon(scriptBasename);
       continue;
     }
     if (credentialValueLocalReadHelperScripts.has(scriptBasename)

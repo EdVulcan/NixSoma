@@ -54,9 +54,17 @@ find_listener_pid() {
   if command -v ss >/dev/null 2>&1; then
     pid="$(
       {
-        ss -ltnpH "( sport = :$port )" 2>/dev/null
-        if command -v sudo >/dev/null 2>&1; then
-          sudo -n ss -ltnpH "( sport = :$port )" 2>/dev/null || true
+        if command -v timeout >/dev/null 2>&1; then
+          timeout 2 ss -ltnpH "( sport = :$port )" 2>/dev/null || true
+        else
+          ss -ltnpH "( sport = :$port )" 2>/dev/null || true
+        fi
+        if [[ "${OPENCLAW_DEV_DOWN_USE_SUDO_SS:-false}" == "true" ]] && command -v sudo >/dev/null 2>&1; then
+          if command -v timeout >/dev/null 2>&1; then
+            timeout 2 sudo -n ss -ltnpH "( sport = :$port )" 2>/dev/null || true
+          else
+            sudo -n ss -ltnpH "( sport = :$port )" 2>/dev/null || true
+          fi
         fi
       } \
         | sed -n 's/.*pid=\([0-9]\+\).*/\1/p' \
