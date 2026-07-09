@@ -109,12 +109,12 @@ raw credential reads
 
 ## Next Slice
 
-The next highest-density capability slice is:
+The Observer startup auto-restore follow-up was completed as:
 
 ```text
-Native governed engineering workbench state auto-restore on Observer startup
+OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_AUTO_RESTORE_PLAN.md
 ```
 
-That slice should call the read-only restoration flow during Observer startup
-when no local loop state exists, while keeping operator action creation explicit
-and approval-gated.
+It calls the read-only restoration flow during Observer startup when no local
+loop state exists, while keeping operator action creation explicit and
+approval-gated.

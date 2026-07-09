@@ -313,6 +313,7 @@ export function renderObserverClientStartupScript() {
     ...OBSERVER_STARTUP_REFRESH_NAMES.map((name) => `await ${name}();`),
     "await loadRecentEvents();",
     "setControlMessage(\"Controls ready.\");",
+    "await autoRestoreEngineeringLoopStateOnStartup();",
     "subscribeEvents();",
     ...OBSERVER_STARTUP_REFRESH_NAMES.map((name) => `setInterval(${name}, ${OBSERVER_STARTUP_REFRESH_INTERVAL_MS});`),
   ].join("\n");

@@ -147,6 +147,10 @@ governed surfaces:
   Observer can rebuild the latest Engineering Loop State from public core task
   history after reload by classifying edit, write, verification, recovery, and
   planning-workbench task records without creating tasks or executing commands.
+- Native engineering workbench state auto-restore:
+  Observer startup calls the read-only restoration flow when browser-local loop
+  state is empty, preserving continuity after reload without creating tasks,
+  approvals, or execution.
 - Native engineering LSP evidence:
   `sense.openclaw.engineering_tool.lsp_evidence` maps `cc_lsp` `check`,
   `definition`, `references`, and `hover` contracts into bounded workspace
@@ -186,7 +190,7 @@ enhanced `openclaw` modules.
 | ACPX/Codex bridge compatibility | requires source transfer | No ACPX/Codex bridge implementation exists in this repo. | Transfer compatibility lessons only where useful for OpenClaw's NixOS body and ACP bridge model. Do not center Windows wrapper behavior. | Level 1 |
 | Runtime persistence tests | partially absorbed | Main has many task/approval/recovery persistence milestones; enhanced ACPX/runtime persistence tests are not migrated. | Reuse the persistence discipline, and add native tests only when adopting ACPX or live runtime refresh behavior. | Level 1 |
 | Engineering prompt semantics | partially absorbed | Project docs and Codex skills encode evidence-first, precise edits, low coupling, and scoped validation; no product runtime prompt-pack enforcement exists. | Convert useful semantics into Observer-verifiable work standards, not a monolithic prompt wall. | Level 1 |
-| Operator-facing UI refinements | partially absorbed | Observer UI has been decoupled into panels/refreshers/renderers and now exposes parameterized engineering loop controls plus task/approval/evidence guidance, completion readback, explicit recovery action drafts, recovered verification rerun readback, plan/todo workbench state, and read-only loop-state restoration from core task history, but enhanced chat/tool-card styling is not migrated. | Keep product-native controls; next auto-restore loop state on Observer startup when no local state exists. Avoid wholesale CSS import. | Level 1 now, Level 2 when work-view is active |
+| Operator-facing UI refinements | partially absorbed | Observer UI has been decoupled into panels/refreshers/renderers and now exposes parameterized engineering loop controls plus task/approval/evidence guidance, completion readback, explicit recovery action drafts, recovered verification rerun readback, plan/todo workbench state, read-only loop-state restoration from core task history, and startup auto-restore when local state is empty, but enhanced chat/tool-card styling is not migrated. | Keep product-native controls; next draft a governed LSP lifecycle action without starting servers or sending JSON-RPC. Avoid wholesale CSS import. | Level 1 now, Level 2 when work-view is active |
 | `HEARTBEAT.md`, `SOUL.md`, `TOOLS.md` identity notes | should not migrate | Main has mission/docs/skills and fixtures that read `TOOLS.md`, but not these identity files as product authority. | Do not copy persona or local setup notes wholesale. Extract only governed context-file concepts after policy review. | Level 1 |
 
 ## Capability Findings

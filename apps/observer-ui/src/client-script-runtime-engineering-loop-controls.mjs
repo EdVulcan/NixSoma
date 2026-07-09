@@ -347,7 +347,7 @@ function nextStepForRestoredEngineeringLoop(task, restored) {
   return "inspect restored task state";
 }
 
-async function restoreEngineeringLoopStateFromHistory() {
+async function restoreEngineeringLoopStateFromHistory({ startup = false } = {}) {
   const data = await fetchJson(\`\${observerConfig.coreUrl}/tasks?limit=20\`);
   const tasks = Array.isArray(data?.items) ? data.items : [];
   const pair = tasks
@@ -380,9 +380,22 @@ async function restoreEngineeringLoopStateFromHistory() {
     \`Next: \${nextStepForRestoredEngineeringLoop(task, restored)}\`,
     "Boundary: restoration is read-only; no task, approval, operator step, command, mutation, provider call, or result envelope is created.",
   ].filter(Boolean).join("\\n");
-  setControlMessage(\`Restored engineering loop state from core history task \${task.id}.\`);
+  setControlMessage(startup
+    ? \`Auto-restored engineering loop state from core history task \${task.id}.\`
+    : \`Restored engineering loop state from core history task \${task.id}.\`);
   await refreshTaskList();
   await refreshTaskHistoryDetail();
+}
+
+async function autoRestoreEngineeringLoopStateOnStartup() {
+  if (latestEngineeringLoopControlState?.taskId) {
+    return;
+  }
+  try {
+    await restoreEngineeringLoopStateFromHistory({ startup: true });
+  } catch {
+    engineeringLoopStateCompletion.textContent = "no restorable core history";
+  }
 }
 
 async function refreshEngineeringLoopControlSurfaces() {

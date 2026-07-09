@@ -162,12 +162,23 @@ OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_RESTORATION_PLAN.md
 The Observer can now rebuild the latest engineering loop state from core task
 history after reload without creating tasks, approvals, execution, or mutation.
 
+The Observer startup auto-restore follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_AUTO_RESTORE_PLAN.md
+```
+
+Observer startup now calls the read-only restoration flow when no local loop
+state exists, while keeping operator action creation explicit and
+approval-gated.
+
 The current next smallest real capability is:
 
 ```text
-Native governed engineering workbench state auto-restore on Observer startup
+Native governed engineering LSP lifecycle readiness draft
 ```
 
-That slice should call the read-only restoration flow during Observer startup
-when no local loop state exists, while keeping operator action creation explicit
-and approval-gated.
+That slice should move beyond static LSP evidence by drafting a governed,
+workspace-scoped language-server lifecycle action without starting servers,
+reading arbitrary files, or sending JSON-RPC until approval/lifecycle boundaries
+are explicit.
