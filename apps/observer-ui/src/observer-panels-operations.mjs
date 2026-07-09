@@ -357,6 +357,15 @@ export function observerOperationsPanels() {
           <pre id="engineering-read-search-json">Loading native engineering read/search evidence...</pre>
         </section>
         <section class="panel">
+          <h2>OpenClaw Engineering LSP Evidence</h2>
+          <div class="metric"><span>Registry</span><span id="engineering-lsp-registry">openclaw-native-engineering-lsp-evidence-v0</span></div>
+          <div class="metric"><span>Languages</span><span id="engineering-lsp-languages">none</span></div>
+          <div class="metric"><span>Server</span><span id="engineering-lsp-server">not_checked</span></div>
+          <div class="metric"><span>Runtime</span><span id="engineering-lsp-runtime">blocked</span></div>
+          <div class="metric"><span>Mode</span><span id="engineering-lsp-mode">lsp-contract-and-availability-evidence-only</span></div>
+          <pre id="engineering-lsp-json">Loading native engineering LSP evidence...</pre>
+        </section>
+        <section class="panel">
           <h2>OpenClaw Engineering Edit Proposal</h2>
           <div class="metric"><span>Registry</span><span id="engineering-edit-proposal-registry">openclaw-native-engineering-edit-proposal-v0</span></div>
           <div class="metric"><span>Target</span><span id="engineering-edit-proposal-target">none</span></div>

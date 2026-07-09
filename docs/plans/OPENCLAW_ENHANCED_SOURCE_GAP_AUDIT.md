@@ -101,6 +101,11 @@ governed surfaces:
   `cc_plan_enter`, `cc_plan_exit`, and `cc_todo_write` into visible
   task/workbench planning evidence without hidden mode switches, task mutation,
   or `.openclaw/cc-todo.md` writes.
+- Native engineering LSP evidence:
+  `sense.openclaw.engineering_tool.lsp_evidence` maps `cc_lsp` `check`,
+  `definition`, `references`, and `hover` contracts into bounded workspace
+  availability evidence without checking binaries, starting servers, opening
+  files in LSP, reading source contents into LSP, or sending JSON-RPC.
 - Approval-gated workspace mutation:
   `act.openclaw.workspace_text_write` and
   `act.openclaw.workspace_patch_apply`.
@@ -127,7 +132,7 @@ enhanced `openclaw` modules.
 | `cc_write` | partially absorbed | `act.openclaw.workspace_text_write` exists and writes only after approval through native filesystem governance. | Keep write gated and redacted. Do not migrate raw overwrite semantics as an autonomous default. | Level 1 |
 | `cc_glob` | absorbed | `sense.openclaw.engineering_tool.glob` performs bounded workspace file discovery with skipped hidden/generated/cache/dependency directories and result caps. | Continue native bounded discovery; do not execute enhanced `GlobTool.ts`. | Level 1 |
 | `cc_grep` | absorbed | `sense.openclaw.engineering_tool.grep` performs bounded workspace text search with literal/regex mode, include filters, result/output caps, binary skips, audit, and Observer evidence. | Continue native bounded search; do not execute enhanced `GrepTool.ts`. | Level 1 |
-| `cc_lsp` | requires source transfer | `sense.openclaw.workspace_symbol_lookup` approximates navigation but does not start or manage LSP servers. | Transfer the LSP manager idea, rewritten as an optional governed workspace service with lifecycle evidence. | Level 1 now, Level 2 later |
+| `cc_lsp` | partially absorbed as evidence | `sense.openclaw.engineering_tool.lsp_evidence` maps `check`, `definition`, `references`, and `hover` contracts, reports language/config metadata and server hints, and keeps binary checks, server startup, source-content reads, and JSON-RPC blocked. `sense.openclaw.workspace_symbol_lookup` remains separate derived navigation. | Keep the evidence route. Defer full LSP lifecycle to a governed workspace service with explicit server state and recovery evidence. | Level 1 now, Level 2 later |
 | `cc_verify` | absorbed as evidence | `sense.openclaw.engineering_tool.verify_evidence` reads approval-gated command transcripts, capability invocations, and completed task outcomes to produce bounded verification evidence with checks, output budgets, retry-policy metadata, audit evidence, and Observer visibility. `sense.openclaw.engineering_tool.recovery_evidence` adds read-only failed-evidence recovery recommendations. | Keep actual command execution on the existing approval-gated source/workspace command task path. Do not add ungoverned shell execution or automatic retries. | Level 1 |
 | `cc_plan_enter`, `cc_plan_exit`, `cc_todo_write` | absorbed as evidence | `sense.openclaw.engineering_context.plan_todo_evidence` reads visible task/workbench plan state, maps planning/todo tool semantics, reports todo counts, and exposes Observer evidence without hidden mode switches, task mutation, or `.openclaw/cc-todo.md` writes. | Keep hidden mode and todo-file persistence deferred until governed workbench storage exists. | Level 1 |
 | `microcompact` | absorbed as evidence | `sense.openclaw.engineering_context.microcompact_evidence` reads command transcript metadata, protects recent engineering evidence by default, and estimates reclaimable context budget without returning raw output or mutating logs. | Keep actual runtime-message compaction deferred until the evidence surface is stable and governed. Do not silently mutate persisted transcript or hide current verification/recovery evidence. | Level 1 |
@@ -150,17 +155,19 @@ Enhanced source:
 
 Current OpenClaw:
 
+- `sense.openclaw.engineering_tool.read` provides bounded workspace file read
+  with traversal protection, line range controls, file-size/output budgets,
+  binary skips, audit evidence, and Observer visibility.
 - `sense.openclaw.workspace_semantic_index` and
-  `sense.openclaw.workspace_symbol_lookup` perform bounded read-only analysis.
-- The current surfaces intentionally avoid exposing raw source file bodies.
+  `sense.openclaw.workspace_symbol_lookup` remain separate derived read-only
+  analysis surfaces.
 
-Classification: partially absorbed.
+Classification: absorbed.
 
 Recommendation:
 
-- Implement a native governed read contract before adding mutating tools:
-  workspace scope, line range, result budget, content exposure flag, audit
-  ledger entry, Observer evidence, and recovery semantics.
+- Continue using the native governed read surface. Do not import or execute
+  enhanced `FileReadTool.ts`, and do not add unbounded system-path reads.
 
 ### `cc_edit`
 
@@ -242,16 +249,24 @@ Current OpenClaw:
 
 - `sense.openclaw.workspace_symbol_lookup` provides declaration-oriented
   navigation without importing or executing legacy modules.
-- It does not implement Language Server Protocol lifecycle, hover, references,
-  or optional language server installation checks.
+- `sense.openclaw.engineering_tool.lsp_evidence` maps LSP `check`,
+  `definition`, `references`, and `hover` contracts, scans bounded workspace
+  metadata for TypeScript, JavaScript, and Python signals, reports config-file
+  presence without reading config bodies, and reports server binary names and
+  install hints without executing version checks.
+- It does not implement Language Server Protocol lifecycle, open files in an
+  LSP connection, send JSON-RPC requests, or perform optional language server
+  installation checks.
 
-Classification: requires source transfer.
+Classification: partially absorbed as evidence.
 
 Recommendation:
 
-- Rewrite the LSP lifecycle as an optional governed user-space service. It
-  should expose availability checks, server lifecycle state, workspace scope,
-  and failure evidence, rather than becoming a hidden long-lived process.
+- Keep the current evidence route as the Level 1 contract surface. Rewrite any
+  future LSP lifecycle as an optional governed user-space service that exposes
+  availability checks, server lifecycle state, workspace scope, failure
+  evidence, and Observer recovery controls rather than becoming a hidden
+  long-lived process.
 
 ### `cc_verify`
 
@@ -475,10 +490,13 @@ Recommendation:
 
 Deferred:
 
-- Direct raw `cc_read` execution until a native contract maps workspace scope,
-  content exposure, and Observer evidence.
-- General glob/grep execution until inventory and contract mapping exists.
-- Full LSP server lifecycle until a governed service boundary is chosen.
+- Unbounded/raw `cc_read` execution outside the native workspace scope,
+  content budgets, audit evidence, and Observer visibility.
+- Raw enhanced glob/grep execution outside the native bounded read/search
+  surface.
+- Full LSP server lifecycle, server binary checks, file open notifications, and
+  definition/references/hover JSON-RPC until a governed service boundary is
+  chosen. The current absorbed surface is evidence-only.
 - Verification-command execution until command provenance and completion
   evidence attach cleanly to task records.
 - Actual microcompact runtime-message transformation until the evidence route

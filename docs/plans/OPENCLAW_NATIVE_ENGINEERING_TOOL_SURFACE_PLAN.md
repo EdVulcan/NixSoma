@@ -50,7 +50,7 @@ call providers or perform network egress
 | `cc_write` | `act.openclaw.engineering_tool.write_proposal` | `mutation_proposal` | high | approval required before create or overwrite | partially absorbed, proposal contract mapped |
 | `cc_glob` | `sense.openclaw.engineering_tool.glob` | `read_only_path_search` | low | no approval for bounded metadata search | contract mapped, execution deferred |
 | `cc_grep` | `sense.openclaw.engineering_tool.grep` | `read_only_content_search` | low | no approval for bounded search; snippets require budget and audit | contract mapped, execution deferred |
-| `cc_lsp` | `sense.openclaw.engineering_tool.lsp` | `read_only_language_intelligence` | medium | future lifecycle requires explicit availability and lifecycle evidence | source-transfer idea mapped, lifecycle deferred |
+| `cc_lsp` | `sense.openclaw.engineering_tool.lsp_evidence` | `read_only_language_intelligence_evidence` | medium | no approval for evidence; future lifecycle requires explicit availability, state, and recovery evidence | partially absorbed as evidence, lifecycle deferred |
 | `cc_verify` | `act.openclaw.engineering_tool.verify` | `verification_command_evidence` | medium | command execution requires policy or approval | partially absorbed, command execution deferred |
 | `cc_plan_enter` | `plan.openclaw.engineering_tool.plan_enter` | `planning_state` | low | no hidden mode switch without task/workbench evidence | state mutation deferred |
 | `cc_plan_exit` | `plan.openclaw.engineering_tool.plan_exit` | `planning_state` | low | no hidden execution transition without task evidence | state mutation deferred |
@@ -108,11 +108,12 @@ observer-openclaw-native-engineering-tool-surface-inventory
 The following remain intentionally deferred:
 
 ```text
-precise file read with line ranges and content budgets
-glob and grep execution
-surgical edit proposal execution and patch apply
-full file write proposal execution
-LSP lifecycle startup and request handling
+unbounded/raw file reads outside the native read/search surface
+raw enhanced glob/grep execution outside native bounds
+surgical edit proposal apply and patch mutation
+full file write proposal evidence and approved write mutation
+LSP lifecycle startup and request handling; `lsp_evidence` contract and
+availability evidence is absorbed
 verification command execution and task-completion attachment
 planning/todo evidence is absorbed; hidden planning mode and todo state mutation remain deferred
 provider calls, network egress, and result envelopes
@@ -120,13 +121,12 @@ provider calls, network egress, and result envelopes
 
 ## Next Slice
 
-The next smallest real capability is:
+The current next smallest real capability is:
 
 ```text
-Native governed read/search surface
+Native governed source write proposal evidence
 ```
 
-That slice should implement bounded `cc_read`/`cc_glob`/`cc_grep` equivalents as
-OpenClaw-native read-only actions with workspace scope, ignored-directory policy,
-result caps, audit evidence, Observer readback, and no mutation or provider
-execution.
+That slice should move `cc_write` forward as create/overwrite proposal evidence
+with bounded diff/metadata preview only. It should not write files directly;
+approval-gated workspace text write remains the mutation path.

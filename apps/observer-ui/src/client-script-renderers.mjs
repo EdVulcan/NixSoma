@@ -1,5 +1,6 @@
 import { observerClientWorkspaceSourceRenderersScript } from "./client-script-renderers-workspace-source.mjs";
 import { observerClientEngineeringEditRenderersScript } from "./client-script-renderers-engineering-edit.mjs";
+import { observerClientEngineeringLspRenderersScript } from "./client-script-renderers-engineering-lsp.mjs";
 import { observerClientEngineeringMicrocompactRenderersScript } from "./client-script-renderers-engineering-microcompact.mjs";
 import { observerClientEngineeringPlanTodoRenderersScript } from "./client-script-renderers-engineering-plan-todo.mjs";
 import { observerClientEngineeringRecoveryRenderersScript } from "./client-script-renderers-engineering-recovery.mjs";
@@ -366,7 +367,7 @@ function renderFilesystemReadLedger(data) {
   ].join("\\n");
 }
 
-${observerClientWorkspaceSourceRenderersScript}${observerClientEngineeringEditRenderersScript}${observerClientEngineeringVerificationRenderersScript}${observerClientEngineeringRecoveryRenderersScript}${observerClientEngineeringMicrocompactRenderersScript}${observerClientEngineeringPlanTodoRenderersScript}${observerClientNativeRuntimeRefreshRenderersScript}function renderNativePluginContract(data) {
+${observerClientWorkspaceSourceRenderersScript}${observerClientEngineeringEditRenderersScript}${observerClientEngineeringLspRenderersScript}${observerClientEngineeringVerificationRenderersScript}${observerClientEngineeringRecoveryRenderersScript}${observerClientEngineeringMicrocompactRenderersScript}${observerClientEngineeringPlanTodoRenderersScript}${observerClientNativeRuntimeRefreshRenderersScript}function renderNativePluginContract(data) {
   const summary = data?.summary ?? {};
   const contract = data?.contract ?? {};
   const governance = summary.governance ?? contract.governance ?? {};

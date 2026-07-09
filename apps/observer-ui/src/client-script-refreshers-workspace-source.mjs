@@ -312,6 +312,20 @@ async function refreshEngineeringReadSearch() {
   }
 }
 
+async function refreshEngineeringLspEvidence() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-lsp/evidence?action=check&language=typescript&limit=200\`);
+    renderEngineeringLspEvidence(data);
+  } catch {
+    engineeringLspRegistry.textContent = "offline";
+    engineeringLspLanguages.textContent = "none";
+    engineeringLspServer.textContent = "unknown";
+    engineeringLspRuntime.textContent = "unknown";
+    engineeringLspMode.textContent = "unknown";
+    engineeringLspJson.textContent = "Unable to read native engineering LSP evidence.";
+  }
+}
+
 async function refreshEngineeringEditProposal() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-edit-proposal/draft?relativePath=package.json&oldString=OpenClaw%20on%20NixOS%20monorepo%20skeleton&newString=OpenClaw%20on%20NixOS%20native%20agent%20body%20skeleton&contextLines=1&maxOutputChars=8000\`);

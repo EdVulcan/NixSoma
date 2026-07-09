@@ -82,6 +82,18 @@ function engineeringEditProposalInput(requestUrl) {
   };
 }
 
+function engineeringLspEvidenceInput(requestUrl) {
+  return {
+    workspacePath: requestUrl.searchParams.get("workspacePath"),
+    action: requestUrl.searchParams.get("action") ?? "check",
+    language: requestUrl.searchParams.get("language") ?? "typescript",
+    relativePath: queryOrAlias(requestUrl, "relativePath", "path"),
+    line: requestUrl.searchParams.get("line"),
+    character: requestUrl.searchParams.get("character"),
+    limit: requestUrl.searchParams.get("limit"),
+  };
+}
+
 const GET_ROUTES = new Map([
   [
     "/plugins/native-adapter/manifest-profile",
@@ -144,6 +156,14 @@ const GET_ROUTES = new Map([
       builder: "buildNativeEngineeringEditProposal",
       errorStatus: 400,
       input: engineeringEditProposalInput,
+    },
+  ],
+  [
+    "/plugins/native-adapter/engineering-lsp/evidence",
+    {
+      builder: "buildNativeEngineeringLspEvidence",
+      errorStatus: 400,
+      input: engineeringLspEvidenceInput,
     },
   ],
   [

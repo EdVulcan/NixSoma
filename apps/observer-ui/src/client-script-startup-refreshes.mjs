@@ -230,6 +230,7 @@ export const OBSERVER_STARTUP_REFRESH_GROUPS = [
       "refreshToolCatalogAdapter",
       "refreshEngineeringToolSurface",
       "refreshEngineeringReadSearch",
+      "refreshEngineeringLspEvidence",
       "refreshEngineeringEditProposal",
       "refreshSemanticIndex",
       "refreshSymbolLookup",

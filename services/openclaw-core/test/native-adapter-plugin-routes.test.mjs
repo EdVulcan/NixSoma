@@ -186,6 +186,33 @@ test("native adapter engineering read/search routes preserve bounded query input
   });
 });
 
+test("native adapter engineering LSP evidence route preserves action and position inputs", async () => {
+  let observedInput = null;
+  const response = await invokeNativeAdapterPluginRoute({
+    buildNativeEngineeringLspEvidence: (input) => {
+      observedInput = input;
+      return {
+        ok: true,
+        registry: "openclaw-native-engineering-lsp-evidence-v0",
+        mode: "lsp-contract-and-availability-evidence-only",
+      };
+    },
+  }, "GET", "/plugins/native-adapter/engineering-lsp/evidence?workspacePath=/tmp/openclaw&action=definition&language=typescript&relativePath=src/app.ts&line=12&character=4&limit=7");
+
+  assert.equal(response.handled, true);
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(observedInput, {
+    workspacePath: "/tmp/openclaw",
+    action: "definition",
+    language: "typescript",
+    relativePath: "src/app.ts",
+    line: "12",
+    character: "4",
+    limit: "7",
+  });
+  assert.equal(response.body.registry, "openclaw-native-engineering-lsp-evidence-v0");
+});
+
 test("native adapter engineering edit proposal route preserves proposal query inputs", async () => {
   let observedInput = null;
   const response = await invokeNativeAdapterPluginRoute({

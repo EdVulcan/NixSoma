@@ -94,15 +94,18 @@ openclaw-native-engineering-plan-todo-evidence
 observer-openclaw-native-engineering-plan-todo-evidence
 ```
 
-## Next Slice
+## Follow-Up Status
 
-The next recommended real capability is:
+The recommended LSP follow-up was completed as:
 
 ```text
-Native governed LSP availability and contract evidence
+OPENCLAW_NATIVE_ENGINEERING_LSP_EVIDENCE_PLAN.md
 ```
 
-That slice should migrate `cc_lsp` only as governed availability/lifecycle
-evidence first. It should not start language servers until workspace scope,
-server lifecycle, failure evidence, and Observer recovery boundaries are
-explicit.
+That slice migrated `cc_lsp` only as governed availability and contract
+evidence. It still does not start language servers, check server binaries,
+open source files in LSP, or send JSON-RPC.
+
+The next recommended real capability is native governed source write proposal
+evidence for `cc_write`, as a create/overwrite proposal with diff/metadata
+preview only.
