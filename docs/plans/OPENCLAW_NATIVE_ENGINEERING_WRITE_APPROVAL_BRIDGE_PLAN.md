@@ -90,14 +90,14 @@ openclaw-native-engineering-write-approval-bridge
 observer-openclaw-native-engineering-write-approval-bridge
 ```
 
-## Next Slice
+## Follow-Up Status
 
-The next recommended real capability is:
+The recommended execution evidence follow-up was completed as:
 
 ```text
-Native governed engineering write execution evidence
+OPENCLAW_NATIVE_ENGINEERING_WRITE_EXECUTION_EVIDENCE_PLAN.md
 ```
 
-That slice should prove approved write execution through the existing
-workspace_text_write task path, then attach bounded verification and recovery
-evidence. It must not auto-approve or bypass operator approval.
+That slice proves approved write execution through the existing
+workspace_text_write task path and reads the completed task/filesystem ledger as
+evidence. It still does not auto-approve or bypass operator approval.

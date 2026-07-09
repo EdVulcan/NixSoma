@@ -47,7 +47,7 @@ call providers or perform network egress
 | --- | --- | --- | --- | --- | --- |
 | `cc_read` | `sense.openclaw.engineering_tool.read` | `read_only_file_read` | low | no approval for inventory; future content reads require workspace scope, budget, and audit | contract mapped, execution deferred |
 | `cc_edit` | `act.openclaw.engineering_tool.edit_proposal` | `mutation_proposal` | high | approval required before apply | partially absorbed, proposal contract mapped |
-| `cc_write` | `act.openclaw.engineering_tool.write_proposal` | `mutation_proposal` | high | approval required before create or overwrite | partially absorbed as redacted proposal evidence and approval-gated task bridge |
+| `cc_write` | `act.openclaw.engineering_tool.write_proposal` / `sense.openclaw.engineering_tool.write_execution_evidence` | `mutation_proposal_and_execution_evidence` | high | approval required before create or overwrite | absorbed through governed proposal, approval bridge, and execution evidence |
 | `cc_glob` | `sense.openclaw.engineering_tool.glob` | `read_only_path_search` | low | no approval for bounded metadata search | contract mapped, execution deferred |
 | `cc_grep` | `sense.openclaw.engineering_tool.grep` | `read_only_content_search` | low | no approval for bounded search; snippets require budget and audit | contract mapped, execution deferred |
 | `cc_lsp` | `sense.openclaw.engineering_tool.lsp_evidence` | `read_only_language_intelligence_evidence` | medium | no approval for evidence; future lifecycle requires explicit availability, state, and recovery evidence | partially absorbed as evidence, lifecycle deferred |
@@ -111,8 +111,8 @@ The following remain intentionally deferred:
 unbounded/raw file reads outside the native read/search surface
 raw enhanced glob/grep execution outside native bounds
 surgical edit proposal apply and patch mutation
-approved write execution evidence through `workspace_text_write`; write
-proposal evidence and approval bridge are absorbed
+automatic write approval, automatic recovery task creation, and post-write
+verification command execution
 LSP lifecycle startup and request handling; `lsp_evidence` contract and
 availability evidence is absorbed
 verification command execution and task-completion attachment
@@ -125,9 +125,9 @@ provider calls, network egress, and result envelopes
 The current next smallest real capability is:
 
 ```text
-Native governed engineering write execution evidence
+Native governed edit proposal approval bridge
 ```
 
-That slice should prove approved write execution through the existing
-workspace_text_write task path, then attach bounded verification and recovery
-evidence without auto-approval.
+That slice should connect `cc_edit` proposal evidence to the existing
+approval-gated patch apply task path while preserving proposal, approval,
+execution, evidence, and recovery separation.

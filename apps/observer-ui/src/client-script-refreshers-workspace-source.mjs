@@ -356,6 +356,21 @@ async function refreshEngineeringWriteProposal() {
   }
 }
 
+async function refreshEngineeringWriteExecutionEvidence() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-write-execution/evidence?limit=10\`);
+    renderEngineeringWriteExecutionEvidence(data);
+  } catch {
+    engineeringWriteExecutionRegistry.textContent = "offline";
+    engineeringWriteExecutionTotal.textContent = "0";
+    engineeringWriteExecutionPassed.textContent = "0";
+    engineeringWriteExecutionProposal.textContent = "0";
+    engineeringWriteExecutionMutation.textContent = "unknown";
+    engineeringWriteExecutionMode.textContent = "unknown";
+    engineeringWriteExecutionJson.textContent = "Unable to read native engineering write execution evidence.";
+  }
+}
+
 async function refreshSemanticIndex() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/workspace-semantic-index?scope=tools&limit=24\`);

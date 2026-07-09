@@ -312,6 +312,16 @@ async function createNativeEngineeringWriteProposalTask({
     overwrite: engineeringWriteProposal.target.overwriteRequested,
     confirm: true,
   });
+  taskResult.task.engineeringWriteProposal = {
+    registry: engineeringWriteProposal.registry,
+    proposalId: engineeringWriteProposal.proposal.id,
+    proposalKind: engineeringWriteProposal.summary.proposalKind,
+    sourceCapabilityId: engineeringWriteProposal.capability.id,
+    approvedMutationCapabilityId: "act.openclaw.workspace_text_write",
+    target: engineeringWriteProposal.target,
+    contentExposed: false,
+  };
+  persistState();
   const generatedAt = new Date().toISOString();
 
   return {

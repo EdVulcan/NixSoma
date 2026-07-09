@@ -3,6 +3,7 @@ import { createTaskRecovery } from "./task-recovery.mjs";
 
 const TASK_EXTENSION_FIELDS = [
   { name: "sourceCommand", copyFromCreateInput: true },
+  { name: "engineeringWriteProposal" },
   { name: "systemdRepair", copyFromCreateInput: true },
   { name: "systemdNextRepair", copyFromCreateInput: true },
   { name: "systemdRepairCandidate" },

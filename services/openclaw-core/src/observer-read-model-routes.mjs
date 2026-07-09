@@ -3,6 +3,7 @@ import { buildNativeEngineeringMicrocompactEvidence } from "./native-engineering
 import { buildNativeEngineeringPlanTodoEvidence } from "./native-engineering-plan-todo-evidence-builders.mjs";
 import { buildNativeEngineeringRecoveryEvidence } from "./native-engineering-recovery-evidence-builders.mjs";
 import { buildNativeEngineeringVerificationEvidence } from "./native-engineering-verification-evidence-builders.mjs";
+import { buildNativeEngineeringWriteExecutionEvidence } from "./native-engineering-write-execution-evidence-builders.mjs";
 
 function parseLimit(searchParams) {
   return Number.parseInt(searchParams.get("limit") ?? "20", 10);
@@ -163,6 +164,19 @@ export async function handleObserverReadModelRoute({ req, res, requestUrl, state
       planSummary: requestUrl.searchParams.get("planSummary"),
       confirmedPlan: requestUrl.searchParams.get("confirmedPlan"),
       todosJson: requestUrl.searchParams.get("todosJson"),
+      limit: safeLimit,
+    }));
+    return true;
+  }
+
+  if (requestUrl.pathname === "/plugins/native-adapter/engineering-write-execution/evidence") {
+    const safeLimit = clampLedgerLimit(parseLimit(requestUrl.searchParams));
+    const taskId = requestUrl.searchParams.get("taskId") ?? null;
+    const ledgerLimit = taskId ? 100 : safeLimit;
+    sendJson(res, 200, buildNativeEngineeringWriteExecutionEvidence({
+      filesystemChanges: executor.listFilesystemChangeRecords({ limit: ledgerLimit }),
+      tasks: state.tasks,
+      taskId,
       limit: safeLimit,
     }));
     return true;
