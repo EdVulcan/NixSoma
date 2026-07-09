@@ -207,6 +207,84 @@ async function createTrustedSidecarLifecycleTask({
   return { task, approval, trustedSession };
 }
 
+function sidecarTaskIdFromStartProbePath(pathname) {
+  const prefix = "/work-view/trusted-sidecar/lifecycle-tasks/";
+  const suffix = "/start-probe";
+  if (!pathname.startsWith(prefix) || !pathname.endsWith(suffix)) {
+    return null;
+  }
+  return pathname.slice(prefix.length, -suffix.length);
+}
+
+function buildSidecarStartProbeReadback({ task, approval, status, reason }) {
+  return {
+    status,
+    reason,
+    taskId: task.id,
+    approvalStatus: approval?.status ?? task.approval?.status ?? "missing",
+    execution: {
+      processStarted: false,
+      processStartEnabled: false,
+      rootRequired: false,
+      systemDaemonRequired: false,
+      desktopWideCapture: false,
+      hostMutation: false,
+      providerEgress: false,
+    },
+  };
+}
+
+async function handleSidecarStartProbe({
+  res,
+  requestUrl,
+  state,
+  taskManager,
+  serialiseTask,
+  serialiseApproval,
+}) {
+  const taskId = sidecarTaskIdFromStartProbePath(requestUrl.pathname);
+  if (!taskId) {
+    return false;
+  }
+
+  const task = taskManager.getTaskById(taskId);
+  if (!task || task.type !== "work_view_trusted_sidecar_lifecycle") {
+    sendJson(res, 404, { ok: false, error: "Trusted work-view sidecar lifecycle task not found." });
+    return true;
+  }
+
+  const approval = task.approval?.requestId ? state.approvals.get(task.approval.requestId) : null;
+  if (approval?.status !== "approved") {
+    sendJson(res, 409, {
+      ok: false,
+      mode: "trusted-sidecar-start-probe-blocked",
+      readback: buildSidecarStartProbeReadback({
+        task,
+        approval,
+        status: "blocked_before_approval",
+        reason: "approval_required_before_sidecar_start_probe",
+      }),
+      task: serialiseTask(task),
+      approval: approval ? serialiseApproval(approval) : null,
+    });
+    return true;
+  }
+
+  sendJson(res, 200, {
+    ok: true,
+    mode: "trusted-sidecar-start-probe-deferred-after-approval",
+    readback: buildSidecarStartProbeReadback({
+      task,
+      approval,
+      status: "deferred_after_approval",
+      reason: "sidecar_process_start_deferred_to_later_slice",
+    }),
+    task: serialiseTask(task),
+    approval: serialiseApproval(approval),
+  });
+  return true;
+}
+
 export async function handleWorkViewSidecarTaskRoute({
   req,
   res,
@@ -221,6 +299,17 @@ export async function handleWorkViewSidecarTaskRoute({
   serialisePlanForPublic,
   buildTaskSummary,
 }) {
+  if (req.method === "POST" && await handleSidecarStartProbe({
+    res,
+    requestUrl,
+    state,
+    taskManager,
+    serialiseTask,
+    serialiseApproval,
+  })) {
+    return true;
+  }
+
   if (req.method !== "POST" || requestUrl.pathname !== "/work-view/trusted-sidecar/lifecycle-tasks") {
     return false;
   }
@@ -252,4 +341,3 @@ export async function handleWorkViewSidecarTaskRoute({
   }
   return true;
 }
-

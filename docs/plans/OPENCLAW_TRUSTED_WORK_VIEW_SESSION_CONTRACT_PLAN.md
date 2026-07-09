@@ -66,6 +66,21 @@ used in this slice. The lifecycle proposal records the future approval gate and
 keeps execution deferred. The approval task materialization creates an explicit
 task and pending approval while keeping process start disabled.
 
+The materialized lifecycle task now exposes a bounded start-probe readback on
+the same route group:
+
+```text
+POST /work-view/trusted-sidecar/lifecycle-tasks/:taskId/start-probe
+```
+
+Before approval the probe returns `blocked_before_approval` with HTTP 409 and
+records that no process was started, no root/system daemon is required, no
+desktop-wide capture is used, no host mutation occurs, and no provider egress is
+performed. After the operator approves the lifecycle task, the same probe
+returns `deferred_after_approval` while preserving the same non-execution flags.
+This proves the approval bridge and deferred execution boundary without
+starting a helper process.
+
 Every work-view prepare/reveal/hide call now records `lastOperatorAction` in the
 existing work-view state. The record includes:
 
@@ -109,6 +124,7 @@ GET /browser/capture
 GET /screen/current
 GET /phase-3/background-work-view
 POST /work-view/trusted-sidecar/lifecycle-tasks
+POST /work-view/trusted-sidecar/lifecycle-tasks/:taskId/start-probe
 Observer work-view and screen panels
 ```
 
@@ -150,6 +166,7 @@ openclaw-ai-work-view-capture-summary
 observer-openclaw-ai-work-view-capture-summary
 openclaw-phase-3-background-work-view
 observer-openclaw-phase-3-background-work-view
+openclaw-phase-3-operator-interrupt-controls
 observer-openclaw-phase-3-operator-interrupt-controls
 ```
 
@@ -167,19 +184,21 @@ host mutation and input execution beyond existing governed user-space paths
 provider egress or credential access
 automatic recovery execution; the contract recommends existing operator actions
 unreviewed endpoint invocation from recommendation payloads
+actual trusted sidecar process start after approval
 ```
 
 ## Next Slice
 
-The next high-density identity-upgrade slice should move from recovery
-bookkeeping to Level 2 session-helper preparation without starting a sidecar or
-requiring privileges:
+The next high-density identity-upgrade slice should continue toward Level 2
+session-helper preparation while keeping sidecar start disabled until a governed
+runtime owner is selected:
 
 ```text
-AI work-view trusted sidecar approval readback and pre-approval block
+AI work-view trusted sidecar Observer recovery/readback consolidation
 ```
 
-It should show the materialized sidecar lifecycle task and approval in Observer
-and prove any lifecycle execution remains blocked before approval. Actual
-process start, installation, root/system daemon work, and desktop-wide capture
-remain deferred.
+It should reuse existing `/work-view/state`, task phase attachments, and Phase 3
+Observer panels to show the latest lifecycle task, approval status, start-probe
+readback, and recovery recommendation in one operator-visible place. It should
+not add another readiness-only milestone. Actual process start, installation,
+root/system daemon work, and desktop-wide capture remain deferred.

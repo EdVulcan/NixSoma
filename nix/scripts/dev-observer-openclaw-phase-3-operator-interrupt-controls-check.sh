@@ -26,7 +26,7 @@ rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_SYS
 rm -rf "$LEDGER_DIR"
 
 cleanup() {
-  rm -f "${HTML_FILE:-}" "${CLIENT_FILE:-}" "${CONTROLS_FILE:-}"
+  rm -f "${HTML_FILE:-}" "${CLIENT_FILE:-}" "${CONTROLS_FILE:-}" "${START_PROBE_FILE:-}" "${APPROVED_START_PROBE_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -45,13 +45,33 @@ curl --silent --fail "$CORE_URL/phase-3/operator-interrupt-controls" > "$CONTROL
 SIDECAR_TASK="$(curl --silent --fail -X POST "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks" \
   -H 'content-type: application/json' \
   --data '{"confirm":true}')"
+SIDECAR_TASK_ID="$(node -e 'const data = JSON.parse(process.argv[1]); process.stdout.write(data.task.id)' "$SIDECAR_TASK")"
+SIDECAR_APPROVAL_ID="$(node -e 'const data = JSON.parse(process.argv[1]); process.stdout.write(data.approval.id)' "$SIDECAR_TASK")"
+START_PROBE_FILE="$(mktemp)"
+APPROVED_START_PROBE_FILE="$(mktemp)"
+START_PROBE_STATUS="$(curl --silent --output "$START_PROBE_FILE" --write-out "%{http_code}" \
+  -X POST "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks/$SIDECAR_TASK_ID/start-probe" \
+  -H 'content-type: application/json' \
+  --data '{}')"
+APPROVED_SIDECAR="$(curl --silent --fail -X POST "$CORE_URL/approvals/$SIDECAR_APPROVAL_ID/approve" \
+  -H 'content-type: application/json' \
+  --data '{"approvedBy":"observer-phase-3-operator-controls-check","reason":"approve trusted sidecar lifecycle probe while keeping process start deferred"}')"
+APPROVED_START_PROBE_STATUS="$(curl --silent --output "$APPROVED_START_PROBE_FILE" --write-out "%{http_code}" \
+  -X POST "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks/$SIDECAR_TASK_ID/start-probe" \
+  -H 'content-type: application/json' \
+  --data '{}')"
 
-node - <<'EOF' "$HTML_FILE" "$CLIENT_FILE" "$CONTROLS_FILE" "$SIDECAR_TASK"
+node - <<'EOF' "$HTML_FILE" "$CLIENT_FILE" "$CONTROLS_FILE" "$SIDECAR_TASK" "$START_PROBE_STATUS" "$START_PROBE_FILE" "$APPROVED_SIDECAR" "$APPROVED_START_PROBE_STATUS" "$APPROVED_START_PROBE_FILE"
 const fs = require("node:fs");
 const html = fs.readFileSync(process.argv[2], "utf8");
 const client = fs.readFileSync(process.argv[3], "utf8");
 const controls = JSON.parse(fs.readFileSync(process.argv[4], "utf8"));
 const sidecarTask = JSON.parse(process.argv[5]);
+const startProbeStatus = process.argv[6];
+const startProbe = JSON.parse(fs.readFileSync(process.argv[7], "utf8"));
+const approvedSidecar = JSON.parse(process.argv[8]);
+const approvedStartProbeStatus = process.argv[9];
+const approvedStartProbe = JSON.parse(fs.readFileSync(process.argv[10], "utf8"));
 
 for (const token of ["Phase 3 Operator Interrupt Controls", "phase3-operator-interrupt-controls-panel", "phase3-controls-takeover", "create-trusted-sidecar-lifecycle-task-button"]) {
   if (!html.includes(token)) {
@@ -73,6 +93,37 @@ if (!sidecarTask.ok
   || sidecarTask.governance?.rootRequired !== false) {
   throw new Error(`Observer sidecar lifecycle task should be approval-gated and non-executing: ${JSON.stringify(sidecarTask)}`);
 }
+if (startProbeStatus !== "409"
+  || startProbe.ok !== false
+  || startProbe.mode !== "trusted-sidecar-start-probe-blocked"
+  || startProbe.readback?.status !== "blocked_before_approval"
+  || startProbe.readback?.approvalStatus !== "pending"
+  || startProbe.readback?.execution?.processStarted !== false
+  || startProbe.readback?.execution?.processStartEnabled !== false
+  || startProbe.readback?.execution?.rootRequired !== false
+  || startProbe.readback?.execution?.systemDaemonRequired !== false
+  || startProbe.readback?.execution?.desktopWideCapture !== false
+  || startProbe.readback?.execution?.hostMutation !== false
+  || startProbe.readback?.execution?.providerEgress !== false) {
+  throw new Error(`Observer sidecar start probe should be blocked before approval without execution: ${startProbeStatus} ${JSON.stringify(startProbe)}`);
+}
+if (!approvedSidecar.ok || approvedSidecar.approval?.status !== "approved") {
+  throw new Error(`Observer sidecar lifecycle approval should be approved: ${JSON.stringify(approvedSidecar)}`);
+}
+if (approvedStartProbeStatus !== "200"
+  || approvedStartProbe.ok !== true
+  || approvedStartProbe.mode !== "trusted-sidecar-start-probe-deferred-after-approval"
+  || approvedStartProbe.readback?.status !== "deferred_after_approval"
+  || approvedStartProbe.readback?.approvalStatus !== "approved"
+  || approvedStartProbe.readback?.execution?.processStarted !== false
+  || approvedStartProbe.readback?.execution?.processStartEnabled !== false
+  || approvedStartProbe.readback?.execution?.rootRequired !== false
+  || approvedStartProbe.readback?.execution?.systemDaemonRequired !== false
+  || approvedStartProbe.readback?.execution?.desktopWideCapture !== false
+  || approvedStartProbe.readback?.execution?.hostMutation !== false
+  || approvedStartProbe.readback?.execution?.providerEgress !== false) {
+  throw new Error(`Observer approved sidecar start probe should remain deferred without execution: ${approvedStartProbeStatus} ${JSON.stringify(approvedStartProbe)}`);
+}
 
 console.log(JSON.stringify({
   observerOpenClawPhase3OperatorInterruptControls: {
@@ -81,6 +132,8 @@ console.log(JSON.stringify({
     controls: controls.controls.map((control) => control.id),
     sidecarTask: sidecarTask.task.id,
     approval: sidecarTask.approval.id,
+    startProbeBeforeApproval: startProbe.readback.status,
+    startProbeAfterApproval: approvedStartProbe.readback.status,
   },
 }, null, 2));
 EOF
