@@ -865,15 +865,28 @@ It proves:
 - No automatic recovery approval, automatic rerun, provider call, network
   egress, root/system daemon work, or long-lived LSP pool is introduced.
 
+Latest live plugin runtime refresh follow-up completed:
+
+```text
+OPENCLAW_NATIVE_PLUGIN_RUNTIME_REFRESH_TASK_PLAN.md
+```
+
+That slice migrates the enhanced-source runtime refresh idea into an
+OpenClaw-native, approval-gated lifecycle action. It creates an explicit task and
+approval, blocks before approval, recomputes read-model evidence after approval,
+stores execution evidence in task readback, and still avoids module imports,
+plugin code execution, runtime activation, cache mutation, provider egress, and
+root/system daemon work.
+
 Next smallest real capability:
 
 ```text
-Live plugin runtime refresh as a governed lifecycle action
+ACPX/Codex bridge compatibility and runtime persistence evidence
 ```
 
-That should migrate the enhanced-source runtime refresh idea into an
-OpenClaw-native, policy/audit/Observer-visible lifecycle action without
-wholesale importing the reference implementation.
+That should map the enhanced-source bridge and persistence tests into
+OpenClaw-native compatibility evidence without copying the reference runtime,
+reading credentials, or performing provider egress.
 
 Required answer for every following slice:
 

@@ -116,6 +116,18 @@ test("native plugin runtime GET routes preserve defaults, wrappers, and error st
     capabilityId: "act.plugin.capability.invoke",
   });
   assert.equal(refreshEvidence.body.registry, "openclaw-native-plugin-runtime-refresh-evidence-v0");
+
+  const refreshTaskDraft = await invokeNativePluginRuntimeRoute({
+    buildNativePluginRuntimeRefreshTaskDraft: () => ({
+      ok: true,
+      registry: "openclaw-native-plugin-runtime-refresh-task-draft-v0",
+      mode: "approval-gated-native-plugin-runtime-refresh-task-draft",
+      governance: { createsTask: false },
+    }),
+  }, "GET", "/plugins/native-adapter/runtime-refresh-task-draft");
+
+  assert.equal(refreshTaskDraft.statusCode, 200);
+  assert.equal(refreshTaskDraft.body.registry, "openclaw-native-plugin-runtime-refresh-task-draft-v0");
 });
 
 test("native plugin runtime POST routes preserve strict body coercion and route-specific envelopes", async () => {
@@ -137,6 +149,12 @@ test("native plugin runtime POST routes preserve strict body coercion and route-
       builder: "createNativePluginRuntimeActivationTask",
       extraResult: { activationPlan: { id: "activation-plan-a" } },
       expectedExtra: ["sourceMode", "plugin", "capability", "activationPlan"],
+    },
+    {
+      path: "/plugins/native-adapter/runtime-refresh-tasks",
+      builder: "createNativePluginRuntimeRefreshTask",
+      extraResult: { runtimeRefreshEvidence: { id: "runtime-refresh-evidence-a" } },
+      expectedExtra: ["sourceMode", "runtimeRefreshEvidence"],
     },
   ];
 

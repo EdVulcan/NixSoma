@@ -2,6 +2,7 @@ import { createOpenClawNativePluginRegistry } from "../../../packages/plugin-run
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { randomUUID } from "node:crypto";
 import { buildNativePluginRuntimeRefreshEvidence as buildNativePluginRuntimeRefreshEvidenceEnvelope } from "./native-plugin-runtime-refresh-evidence-builders.mjs";
+import { createNativePluginRuntimeRefreshTaskBuilders } from "./native-plugin-runtime-refresh-task-builders.mjs";
 
 export function createNativePluginPlanBuilders(deps) {
   const {
@@ -553,6 +554,24 @@ function buildNativePluginRuntimeRefreshEvidence({ packagePath = null, capabilit
     nativeRegistry: createOpenClawNativePluginRegistry(),
   });
 }
+
+const nativePluginRuntimeRefreshTaskBuilders = createNativePluginRuntimeRefreshTaskBuilders({
+  buildNativePluginRuntimeRefreshEvidence,
+  autonomyMode,
+  createTask,
+  createApprovalRequestForTask,
+  supersedeOtherActiveTasks,
+  reconcileRuntimeState,
+  persistState,
+  publishEvent,
+  publishTaskApprovalIfPending,
+  serialiseTask,
+  serialisePlanForPublic,
+});
+const {
+  buildNativePluginRuntimeRefreshTaskDraft,
+  createNativePluginRuntimeRefreshTask,
+} = nativePluginRuntimeRefreshTaskBuilders;
 
 function buildNativePluginRuntimeAdapterTaskDraft({ packagePath = null, capabilityId = "act.plugin.capability.invoke" } = {}) {
   const adapterContract = buildNativePluginRuntimeAdapterContract({ packagePath, capabilityId });
@@ -1162,12 +1181,14 @@ async function createNativePluginInvokeTask({ packagePath = null, capabilityId =
     buildNativePluginRuntimePreflight,
     buildNativePluginRuntimeActivationPlan,
     buildNativePluginRuntimeRefreshEvidence,
+    buildNativePluginRuntimeRefreshTaskDraft,
     buildNativePluginRuntimeAdapterContract,
     buildNativePluginRuntimeAdapterTaskDraft,
     buildNativePluginRuntimeActivationTaskDraft,
     buildNativePluginInvokeTaskPlan,
     createNativePluginRuntimeActivationTask,
     createNativePluginRuntimeAdapterTask,
+    createNativePluginRuntimeRefreshTask,
     createNativePluginInvokeTask,
   };
 }

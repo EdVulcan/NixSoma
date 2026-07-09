@@ -6,6 +6,7 @@ const TASK_EXTENSION_FIELDS = [
   { name: "engineeringEditProposal" },
   { name: "engineeringWriteProposal" },
   { name: "engineeringLspLifecycle" },
+  { name: "nativePluginRuntimeRefresh" },
   { name: "systemdRepair", copyFromCreateInput: true },
   { name: "systemdNextRepair", copyFromCreateInput: true },
   { name: "systemdRepairCandidate" },

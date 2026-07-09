@@ -33,6 +33,7 @@ test("native plugin plan builders preserve runtime preflight and adapter contrac
   const preflight = builders.buildNativePluginRuntimePreflight();
   const activationPlan = builders.buildNativePluginRuntimeActivationPlan();
   const refreshEvidence = builders.buildNativePluginRuntimeRefreshEvidence();
+  const refreshDraft = builders.buildNativePluginRuntimeRefreshTaskDraft();
   const adapterContract = builders.buildNativePluginRuntimeAdapterContract();
   const adapterDraft = builders.buildNativePluginRuntimeAdapterTaskDraft();
   const activationDraft = builders.buildNativePluginRuntimeActivationTaskDraft();
@@ -45,6 +46,11 @@ test("native plugin plan builders preserve runtime preflight and adapter contrac
   assert.equal(refreshEvidence.summary.readModelRefreshed, true);
   assert.equal(refreshEvidence.governance.canImportModule, false);
   assert.equal(refreshEvidence.governance.canActivateRuntime, false);
+  assert.equal(refreshDraft.registry, "openclaw-native-plugin-runtime-refresh-task-draft-v0");
+  assert.equal(refreshDraft.plan.strategy, "native-plugin-runtime-refresh-v0");
+  assert.equal(refreshDraft.governance.createsTask, false);
+  assert.equal(refreshDraft.governance.canRefreshReadModel, true);
+  assert.equal(refreshDraft.governance.canImportModule, false);
   assert.equal(adapterContract.runtimeContract.execution.canImportModule, false);
   assert.equal(adapterContract.summary.canExecutePluginCode, false);
   assert.equal(adapterDraft.registry, "openclaw-native-plugin-runtime-adapter-task-draft-v0");
@@ -63,6 +69,7 @@ test("native plugin plan builders create approval-gated task shells", async () =
   const invoke = await builders.createNativePluginInvokeTask({ confirm: true });
   const adapter = await builders.createNativePluginRuntimeAdapterTask({ confirm: true });
   const activation = await builders.createNativePluginRuntimeActivationTask({ confirm: true });
+  const refresh = await builders.createNativePluginRuntimeRefreshTask({ confirm: true });
 
   assert.equal(invoke.registry, "openclaw-native-plugin-invoke-task-v0");
   assert.equal(invoke.task.type, "native_plugin_capability");
@@ -70,9 +77,14 @@ test("native plugin plan builders create approval-gated task shells", async () =
   assert.equal(adapter.task.type, "native_plugin_runtime_adapter_implementation");
   assert.equal(activation.registry, "openclaw-native-plugin-runtime-activation-task-v0");
   assert.equal(activation.task.type, "native_plugin_runtime_activation");
-  assert.equal(calls.filter((call) => call.name === "createTask").length, 3);
-  assert.equal(calls.filter((call) => call.name === "createApprovalRequestForTask").length, 3);
-  assert.equal(events.filter((event) => event.name === "task.created").length, 3);
-  assert.equal(events.filter((event) => event.name === "approval.pending").length, 3);
-  assert.equal(events.filter((event) => event.name === "task.planned").length, 3);
+  assert.equal(refresh.registry, "openclaw-native-plugin-runtime-refresh-task-v0");
+  assert.equal(refresh.task.type, "native_plugin_runtime_refresh");
+  assert.equal(refresh.task.nativePluginRuntimeRefresh.execution, null);
+  assert.equal(refresh.governance.canRefreshReadModel, true);
+  assert.equal(refresh.governance.canImportModule, false);
+  assert.equal(calls.filter((call) => call.name === "createTask").length, 4);
+  assert.equal(calls.filter((call) => call.name === "createApprovalRequestForTask").length, 4);
+  assert.equal(events.filter((event) => event.name === "task.created").length, 4);
+  assert.equal(events.filter((event) => event.name === "approval.pending").length, 4);
+  assert.equal(events.filter((event) => event.name === "task.planned").length, 4);
 });

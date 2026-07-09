@@ -22,6 +22,10 @@ export OPENCLAW_EVENT_LOG_FILE="${OPENCLAW_EVENT_LOG_FILE:-$REPO_ROOT/.artifacts
 
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 
+OPENCLAW_POST_JSON_DATA_FLAG="-d"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
+
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -rf "$FIXTURE_DIR"
 mkdir -p "$WORKSPACE_DIR/.git" "$WORKSPACE_DIR/.openclaw" "$WORKSPACE_DIR/extensions/provider-a" "$PLUGIN_SDK_DIR/src" "$PLUGIN_SDK_DIR/types"
@@ -61,7 +65,16 @@ export const RUNTIME_REFRESH_SDK_SECRET_SOURCE_CONTENT = "must-not-leak";
 TS
 
 cleanup() {
-  rm -f "${REFRESH_FILE:-}" "${HISTORY_FILE:-}" "${APPROVALS_FILE:-}" "${ADAPTER_FILE:-}"
+  rm -f \
+    "${REFRESH_FILE:-}" \
+    "${HISTORY_FILE:-}" \
+    "${APPROVALS_FILE:-}" \
+    "${ADAPTER_FILE:-}" \
+    "${TASK_FILE:-}" \
+    "${BLOCKED_FILE:-}" \
+    "${APPROVED_FILE:-}" \
+    "${STEP_FILE:-}" \
+    "${TASK_STATE_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -72,6 +85,11 @@ REFRESH_FILE="$(mktemp)"
 HISTORY_FILE="$(mktemp)"
 APPROVALS_FILE="$(mktemp)"
 ADAPTER_FILE="$(mktemp)"
+TASK_FILE="$(mktemp)"
+BLOCKED_FILE="$(mktemp)"
+APPROVED_FILE="$(mktemp)"
+STEP_FILE="$(mktemp)"
+TASK_STATE_FILE="$(mktemp)"
 
 curl --silent --fail "$CORE_URL/plugins/native-adapter/runtime-refresh-evidence" > "$REFRESH_FILE"
 curl --silent --fail "$CORE_URL/capabilities/invocations?limit=10" > "$HISTORY_FILE"
@@ -149,6 +167,108 @@ console.log(JSON.stringify({
     readModelRefreshed: refresh.summary.readModelRefreshed,
     blockedActions: refresh.summary.blockedActions,
     activationReady: refresh.summary.activationReady,
+  },
+}, null, 2));
+EOF
+
+post_json "$CORE_URL/plugins/native-adapter/runtime-refresh-tasks" '{"confirm":true}' > "$TASK_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$BLOCKED_FILE"
+
+approval_id="$(node - <<'EOF' "$TASK_FILE" "$BLOCKED_FILE"
+const fs = require("node:fs");
+const taskResponse = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const blocked = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+if (
+  !taskResponse.ok
+  || taskResponse.registry !== "openclaw-native-plugin-runtime-refresh-task-v0"
+  || taskResponse.task?.type !== "native_plugin_runtime_refresh"
+  || taskResponse.governance?.createsTask !== true
+  || taskResponse.governance?.createsApproval !== true
+  || taskResponse.governance?.canRefreshReadModel !== true
+  || taskResponse.governance?.canImportModule !== false
+  || taskResponse.governance?.canExecutePluginCode !== false
+  || taskResponse.governance?.canActivateRuntime !== false
+) {
+  throw new Error(`runtime refresh task response mismatch: ${JSON.stringify(taskResponse)}`);
+}
+if (
+  !blocked.ok
+  || blocked.ran !== false
+  || blocked.blocked !== true
+  || blocked.reason !== "policy_requires_approval"
+  || blocked.approval?.id !== taskResponse.approval?.id
+) {
+  throw new Error(`runtime refresh task should block before approval: ${JSON.stringify(blocked)}`);
+}
+process.stdout.write(blocked.approval.id);
+EOF
+)"
+
+task_id="$(node - <<'EOF' "$TASK_FILE"
+const fs = require("node:fs");
+const taskResponse = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+process.stdout.write(taskResponse.task.id);
+EOF
+)"
+
+post_json "$CORE_URL/approvals/$approval_id/approve" '{"approvedBy":"dev-openclaw-native-plugin-runtime-refresh-evidence-check","reason":"Approve read-model-only runtime refresh task."}' > "$APPROVED_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$STEP_FILE"
+curl --silent --fail "$CORE_URL/tasks/$task_id" > "$TASK_STATE_FILE"
+
+node - <<'EOF' "$TASK_FILE" "$APPROVED_FILE" "$STEP_FILE" "$TASK_STATE_FILE"
+const fs = require("node:fs");
+const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
+
+const taskResponse = readJson(2);
+const approved = readJson(3);
+const step = readJson(4);
+const taskState = readJson(5);
+const raw = JSON.stringify({ taskResponse, approved, step, taskState });
+
+if (approved.approval?.status !== "approved" || approved.task?.policy?.decision?.decision !== "audit_only") {
+  throw new Error(`runtime refresh approval should be approved and audited: ${JSON.stringify(approved)}`);
+}
+if (!step.ok || step.ran !== true || step.blocked !== false || step.task?.status !== "completed") {
+  throw new Error(`approved runtime refresh task should run to completion: ${JSON.stringify(step)}`);
+}
+const execution = taskState.task?.nativePluginRuntimeRefresh?.execution;
+if (
+  taskState.task?.id !== taskResponse.task?.id
+  || taskState.task?.status !== "completed"
+  || execution?.registry !== "openclaw-native-plugin-runtime-refresh-task-execution-v0"
+  || execution.readModelRefreshed !== true
+  || execution.governance?.canRefreshReadModel !== true
+  || execution.governance?.canInvalidateModuleCache !== false
+  || execution.governance?.canImportModule !== false
+  || execution.governance?.canExecutePluginCode !== false
+  || execution.governance?.canActivateRuntime !== false
+  || execution.governance?.canMutatePluginInstallState !== false
+  || execution.runtimeRefreshEvidence?.summary?.readModelRefreshed !== true
+) {
+  throw new Error(`runtime refresh task readback mismatch: ${JSON.stringify(taskState)}`);
+}
+if (taskState.task?.outcome?.details?.verification?.ok !== true) {
+  throw new Error(`runtime refresh task should record successful verification: ${JSON.stringify(taskState.task?.outcome)}`);
+}
+for (const secret of [
+  "RUNTIME_REFRESH_ROOT_SECRET_BUILD_BODY",
+  "RUNTIME_REFRESH_SDK_SECRET_BUILD_BODY",
+  "RUNTIME_REFRESH_SDK_SECRET_SOURCE_CONTENT",
+  "0.0.0-runtime-refresh-evidence-fixture",
+]) {
+  if (raw.includes(secret)) {
+    throw new Error(`runtime refresh task leaked source contents, script bodies, or package versions: ${secret}`);
+  }
+}
+
+console.log(JSON.stringify({
+  openclawNativePluginRuntimeRefreshTask: {
+    taskId: taskState.task.id,
+    registry: execution.registry,
+    readModelRefreshed: execution.readModelRefreshed,
+    approvalStatus: approved.approval.status,
+    canImportModule: execution.governance.canImportModule,
+    canActivateRuntime: execution.governance.canActivateRuntime,
   },
 }, null, 2));
 EOF

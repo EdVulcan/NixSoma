@@ -93,6 +93,7 @@ export function createTaskLifecycleHarness(overrides = {}) {
       approval: task.approval ?? null,
       policy: task.policy ?? null,
       plan: task.plan ?? null,
+      nativePluginRuntimeRefresh: task.nativePluginRuntimeRefresh ?? null,
       systemdRepair: task.systemdRepair ?? null,
       systemdNextRepair: task.systemdNextRepair ?? null,
       longTermMemoryWrite: task.longTermMemoryWrite ?? null,

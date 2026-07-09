@@ -502,6 +502,130 @@ for (const { name, task: taskShape, expectedReason, expectedMode } of INTERNAL_D
   });
 }
 
+test("native plugin runtime refresh task waits for approval before execution", async () => {
+  const { executor, state, events } = createExecutorHarness();
+  state.approvals.set("approval-runtime-refresh", {
+    id: "approval-runtime-refresh",
+    status: "pending",
+    taskId: "runtime-refresh-waiting",
+  });
+  const task = {
+    id: "runtime-refresh-waiting",
+    type: "native_plugin_runtime_refresh",
+    goal: "Refresh native plugin runtime read model",
+    status: "queued",
+    approval: {
+      requestId: "approval-runtime-refresh",
+      status: "pending",
+      required: true,
+    },
+    policy: {
+      request: { intent: "plugin.runtime_refresh", requiresApproval: true },
+      decision: { decision: "require_approval", approved: false, reason: "approval_required" },
+    },
+    plan: {
+      strategy: "native-plugin-runtime-refresh-v0",
+    },
+    nativePluginRuntimeRefresh: {
+      registry: "openclaw-native-plugin-runtime-refresh-task-v0",
+      capabilityId: "act.plugin.capability.invoke",
+    },
+  };
+
+  const result = await executor.executeTaskWithRecovery(task);
+
+  assert.equal(result.finalExecution.blocked, true);
+  assert.equal(result.finalExecution.reason, "policy_requires_approval");
+  assert.equal(result.finalExecution.task.status, "queued");
+  assert.equal(result.finalExecution.governance.mode, "native_plugin_runtime_refresh_waiting_for_approval");
+  assert.equal(result.finalExecution.governance.canImportModule, false);
+  assert(events.some((event) => event.name === "task.blocked"));
+});
+
+test("approved native plugin runtime refresh task completes with read-model evidence", async () => {
+  const { executor, state, events } = createExecutorHarness({
+    planBuilder: {
+      buildNativePluginRuntimeRefreshEvidence: () => ({
+        ok: true,
+        registry: "openclaw-native-plugin-runtime-refresh-evidence-v0",
+        mode: "governed-runtime-refresh-evidence-only",
+        generatedAt: "2026-07-10T00:00:00.000Z",
+        capability: {
+          id: "sense.openclaw.plugin_runtime.refresh_evidence",
+          risk: "medium",
+        },
+        runtimeState: {
+          readModelRefreshed: true,
+          validationOk: true,
+          activeLoader: false,
+          loadedPluginModules: 0,
+          moduleCacheInvalidated: false,
+        },
+        summary: {
+          readModelRefreshed: true,
+          validationOk: true,
+          canImportModule: false,
+          canExecutePluginCode: false,
+          canActivateRuntime: false,
+        },
+        governance: {
+          canRefreshReadModel: true,
+          canInvalidateModuleCache: false,
+          canImportModule: false,
+          canExecutePluginCode: false,
+          canActivateRuntime: false,
+        },
+        auditEvidence: {
+          operation: "plugin_runtime_refresh_evidence",
+        },
+        deferredExecutionBoundaries: ["no plugin module import"],
+      }),
+    },
+  });
+  state.approvals.set("approval-runtime-refresh-approved", {
+    id: "approval-runtime-refresh-approved",
+    status: "approved",
+    taskId: "runtime-refresh-approved",
+  });
+  const task = {
+    id: "runtime-refresh-approved",
+    type: "native_plugin_runtime_refresh",
+    goal: "Refresh native plugin runtime read model",
+    status: "queued",
+    approval: {
+      requestId: "approval-runtime-refresh-approved",
+      status: "approved",
+      required: false,
+    },
+    policy: {
+      request: { intent: "plugin.runtime_refresh", requiresApproval: true, approved: true },
+      decision: { decision: "audit_only", approved: true, reason: "approved_unit_test" },
+    },
+    plan: {
+      strategy: "native-plugin-runtime-refresh-v0",
+    },
+    nativePluginRuntimeRefresh: {
+      registry: "openclaw-native-plugin-runtime-refresh-task-v0",
+      packagePath: null,
+      capabilityId: "act.plugin.capability.invoke",
+    },
+  };
+
+  const result = await executor.executeTaskWithRecovery(task);
+  const execution = result.finalExecution.execution;
+
+  assert.equal(result.finalExecution.blocked, false);
+  assert.equal(result.finalExecution.task.status, "completed");
+  assert.equal(execution.registry, "openclaw-native-plugin-runtime-refresh-task-execution-v0");
+  assert.equal(execution.readModelRefreshed, true);
+  assert.equal(execution.governance.canImportModule, false);
+  assert.equal(execution.governance.canExecutePluginCode, false);
+  assert.equal(execution.governance.canActivateRuntime, false);
+  assert.equal(result.finalExecution.task.nativePluginRuntimeRefresh.execution.registry, execution.registry);
+  assert.equal(result.finalExecution.task.outcome.details.verification.ok, true);
+  assert(events.some((event) => event.name === "task.completed"));
+});
+
 test("capability plan task dispatches to capability invocation handler", async () => {
   const invocationBodies = [];
   const { executor, events } = createExecutorHarness({

@@ -27,6 +27,11 @@ export function isNativePluginRuntimeAdapterTask(task) {
     && task?.plan?.strategy === "native-plugin-runtime-adapter-v0";
 }
 
+export function isNativePluginRuntimeRefreshTask(task) {
+  return task?.type === "native_plugin_runtime_refresh"
+    && task?.plan?.strategy === "native-plugin-runtime-refresh-v0";
+}
+
 export function isOpenClawSearchWebAdapterTask(task) {
   return task?.type === "openclaw_search_web_adapter_invocation"
     && task?.plan?.strategy === "openclaw-search-web-adapter-v0";

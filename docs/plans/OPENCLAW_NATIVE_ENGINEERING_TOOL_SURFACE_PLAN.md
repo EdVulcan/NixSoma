@@ -384,9 +384,20 @@ source recovery readback without automatic approval or recovery execution.
 The current next smallest real capability is:
 
 ```text
-Live plugin runtime refresh as a governed lifecycle action
+ACPX/Codex bridge compatibility and runtime persistence evidence
 ```
 
-That slice should migrate the enhanced-source runtime refresh idea into an
-OpenClaw-native, policy/audit/Observer-visible lifecycle action without
-wholesale importing the reference implementation.
+The live plugin runtime refresh follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_PLUGIN_RUNTIME_REFRESH_TASK_PLAN.md
+```
+
+It creates an approval-gated runtime refresh task, blocks before approval,
+recomputes read-model evidence after approval, persists task execution evidence,
+and keeps plugin module import, plugin code execution, runtime activation, cache
+mutation, provider egress, and root work disabled.
+
+The next slice should map the enhanced-source ACPX/Codex bridge and runtime
+persistence tests into OpenClaw-native compatibility evidence without copying
+the reference runtime, reading credentials, or performing provider egress.

@@ -82,6 +82,14 @@ const GET_ROUTES = new Map([
       response: (result) => result,
     },
   ],
+  [
+    "/plugins/native-adapter/runtime-refresh-task-draft",
+    {
+      builder: "buildNativePluginRuntimeRefreshTaskDraft",
+      errorStatus: 400,
+      response: (result) => result,
+    },
+  ],
 ]);
 
 const POST_TASK_ROUTES = new Map([
@@ -104,6 +112,13 @@ const POST_TASK_ROUTES = new Map([
     {
       builder: "createNativePluginRuntimeActivationTask",
       extraFields: ["sourceMode", "plugin", "capability", "activationPlan"],
+    },
+  ],
+  [
+    "/plugins/native-adapter/runtime-refresh-tasks",
+    {
+      builder: "createNativePluginRuntimeRefreshTask",
+      extraFields: ["sourceMode", "runtimeRefreshEvidence"],
     },
   ],
 ]);

@@ -7,9 +7,9 @@ Updated: 2026-07-09
 Live plugin runtime refresh as a governed lifecycle action, implemented first as
 read-model refresh evidence.
 
-This slice transfers the useful enhanced-source runtime refresh idea into
-OpenClaw-native lifecycle evidence. It recomputes the native plugin registry
-read model and reports refresh preconditions, activation gates, cache
+This historical slice transferred the useful enhanced-source runtime refresh
+idea into OpenClaw-native lifecycle evidence. It recomputes the native plugin
+registry read model and reports refresh preconditions, activation gates, cache
 invalidation boundaries, and recovery boundaries.
 
 It does not load plugin modules, execute plugin code, activate runtime, clear a
@@ -118,3 +118,21 @@ The next smallest real capability is:
 ```text
 Native governed LSP availability and contract evidence
 ```
+
+Latest runtime refresh follow-up completed:
+
+```text
+OPENCLAW_NATIVE_PLUGIN_RUNTIME_REFRESH_TASK_PLAN.md
+```
+
+The evidence-only endpoint now has an approval-gated lifecycle bridge:
+
+```text
+POST /plugins/native-adapter/runtime-refresh-tasks
+```
+
+That bridge creates an explicit task and approval, blocks before approval,
+recomputes read-model evidence only after approval, stores execution evidence in
+`nativePluginRuntimeRefresh.execution`, and keeps plugin module import, plugin
+code execution, runtime activation, cache mutation, provider egress, and root
+work disabled.
