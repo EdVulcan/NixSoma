@@ -404,8 +404,9 @@ export function observerOperationsPanels() {
           <div class="control-row">
             <button id="engineering-lsp-lifecycle-task-button" class="secondary" type="button">Create Lifecycle Task</button>
             <button id="engineering-lsp-source-transfer-task-button" class="secondary" type="button">Create Source Transfer Task</button>
+            <button id="engineering-lsp-symbol-request-task-button" class="secondary" type="button">Create Symbol Request Task</button>
           </div>
-          <pre id="engineering-lsp-json">Loading native engineering LSP evidence, lifecycle draft, and source-transfer proposal...</pre>
+          <pre id="engineering-lsp-json">Loading native engineering LSP evidence, lifecycle draft, source-transfer proposal, and symbol request proposal...</pre>
         </section>
         <section class="panel">
           <h2>OpenClaw Engineering Edit Proposal</h2>

@@ -36,7 +36,7 @@ export const observerClientEngineeringLspRenderersScript = `function renderEngin
   engineeringLspJson.textContent = [
     "Native engineering LSP evidence: maps cc_lsp check, definition, references, hover, lifecycle readiness, source transfer, and symbol request proposal into governed OpenClaw evidence.",
     "The source-transfer proposal reads one bounded workspace source file locally for preview/hash only. The symbol-request proposal reads approved didOpen state only. These proposal endpoints do not start language servers, send symbol requests, mutate files, create tasks, create approvals, or call providers.",
-    "Approved source-transfer tasks may send didOpen only after explicit approval; symbol-request proposals still keep operational requests unsent.",
+    "Approved source-transfer tasks may send didOpen only after explicit approval. Approved symbol-request tasks may send exactly one definition/references/hover request through a short-lived LSP process; long-lived pools remain deferred.",
     \`Registry: \${data?.registry ?? "openclaw-native-engineering-lsp-evidence-v0"}\`,
     \`Mode: \${data?.mode ?? "lsp-contract-and-availability-evidence-only"}\`,
     \`Identity: \${data?.identityLevel ?? "Level 1: stable user-space control plane"}\`,

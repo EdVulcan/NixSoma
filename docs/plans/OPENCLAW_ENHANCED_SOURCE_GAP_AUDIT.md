@@ -727,6 +727,33 @@ Why this is real progress:
 - It sets up the next operator-visible slice: Observer controls and readback for
   the approved LSP symbol request task.
 
+Latest LSP Observer symbol request control completed:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_OBSERVER_SYMBOL_REQUEST_CONTROL_PLAN.md
+```
+
+It produces:
+
+- A visible Observer button that creates the existing approval-gated
+  `symbol_request` lifecycle task.
+- Engineering Loop State readback through `/tasks/:taskId` showing approval,
+  action, symbol request sent status, lifecycle result, and recovery guidance.
+- No new route shell, duplicate evidence milestone, automatic approval,
+  automatic operator step, provider call, network egress, or long-lived LSP
+  pool.
+
+Next smallest real capability:
+
+```text
+bounded LSP symbol response summary
+```
+
+That should expose bounded definition/references/hover response metadata from
+the approved single-request execution without returning raw source bodies,
+starting long-lived language-server pools, or adding a standalone readiness
+marker.
+
 Required answer for every following slice:
 
 - What real user/operator-visible capability became more concrete?

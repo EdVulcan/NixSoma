@@ -100,7 +100,9 @@ for (const token of [
   "engineering-lsp-mode",
   "engineering-lsp-lifecycle-task-button",
   "engineering-lsp-source-transfer-task-button",
+  "engineering-lsp-symbol-request-task-button",
   "Create Source Transfer Task",
+  "Create Symbol Request Task",
   "engineering-lsp-json",
 ]) {
   if (!html.includes(token)) {
@@ -118,12 +120,16 @@ for (const token of [
   "renderEngineeringLspEvidence",
   "createEngineeringLspLifecycleLoopTask",
   "createEngineeringLspSourceTransferLoopTask",
+  "createEngineeringLspSymbolRequestLoopTask",
   "renderEngineeringLspLifecycleLoopTaskState",
   "engineeringLspLifecycle",
   "lsp-lifecycle",
   "source_transfer",
-  "approval-gated binary gate",
+  "symbol_request",
+  "approval-gated lifecycle process only",
   "approved execution may send initialize plus didOpen only",
+  "approved execution may send didOpen plus one symbol request only",
+  "symbol=${Boolean",
   "aliveAtProbe",
   "processTerminated",
   "Lifecycle State",
@@ -136,6 +142,7 @@ for (const token of [
   "Source transfer proposal",
   "Symbol request proposal",
   "lsp-symbol-request-proposal-only",
+  "definition/references/hover request through a short-lived LSP process",
   "send didOpen",
 ]) {
   if (!client.includes(token)) {

@@ -253,12 +253,22 @@ through a bounded short-lived LSP process, records lifecycle state, and keeps
 long-lived process pools, provider egress, package installation, and
 root/system daemon work disabled.
 
+The Observer symbol request control follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_OBSERVER_SYMBOL_REQUEST_CONTROL_PLAN.md
+```
+
+That slice exposes creation and completion readback for the existing
+approval-gated symbol request task in the LSP Observer panel without adding a
+new standalone evidence shell.
+
 The current next smallest real capability is:
 
 ```text
-Observer LSP symbol request task control and readback
+bounded LSP symbol response summary
 ```
 
-That slice should expose creation and completion readback for the existing
-approval-gated symbol request task in the LSP Observer panel without adding a
-new standalone evidence shell.
+That slice should expose bounded definition/references/hover response metadata
+from the approved single-request execution without returning raw source bodies
+or starting long-lived language-server pools.

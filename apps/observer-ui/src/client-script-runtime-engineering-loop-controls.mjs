@@ -143,11 +143,15 @@ async function refreshEngineeringLoopCompletionReadback() {
       \`Approval: \${latestEngineeringLoopControlState.approvalId ?? "none"}\`,
       \`Task Status: \${task?.status ?? "unknown"}\`,
       \`Action: \${lifecycle.lifecycleAction ?? execution.lifecycleAction ?? "start"} language=\${lifecycle.language ?? execution.language ?? "typescript"}\`,
-      \`Server: \${lifecycle.server?.serverBinary ?? execution.server?.serverBinary ?? "unknown"} binaryFound=\${Boolean(execution.server?.binaryFound)} processStarted=\${Boolean(execution.server?.processStarted)} aliveAtProbe=\${Boolean(execution.server?.processAliveAtProbe)} terminated=\${Boolean(execution.server?.processTerminated)} jsonRpc=\${Boolean(execution.server?.jsonRpcHandshakeSent)}\`,
+      \`Server: \${lifecycle.server?.serverBinary ?? execution.server?.serverBinary ?? "unknown"} binaryFound=\${Boolean(execution.server?.binaryFound)} processStarted=\${Boolean(execution.server?.processStarted)} aliveAtProbe=\${Boolean(execution.server?.processAliveAtProbe)} terminated=\${Boolean(execution.server?.processTerminated)} jsonRpc=\${Boolean(execution.server?.jsonRpcHandshakeSent)} symbol=\${Boolean(execution.server?.symbolRequestSent)}\`,
       \`Lifecycle State: \${lifecycleState.status ?? "pending"} active=\${Boolean(lifecycleState.process?.longLivedProcessActive)} jsonRpc=\${Boolean(lifecycleState.boundaries?.jsonRpcEnabled)}\`,
       \`Result: \${execution.result?.state ?? task?.outcome?.kind ?? "pending"}\`,
       \`Recovery: \${execution.recoveryRecommendation?.nextAction ?? task?.outcome?.details?.recoveryEvidence?.recommendation?.nextAction ?? "pending operator step"}\`,
-      "Boundary: approval-gated binary gate plus process probe only; no long-lived process state, JSON-RPC, source-content read, mutation, provider call, or result envelope.",
+      lifecycle.lifecycleAction === "symbol_request"
+        ? "Boundary: approved execution may send didOpen plus one symbol request only; no long-lived process pool, mutation, provider call, or result envelope."
+        : lifecycle.lifecycleAction === "source_transfer"
+          ? "Boundary: approved execution may send initialize plus didOpen only; symbol requests require a separate approved task; no long-lived process pool, mutation, provider call, or result envelope."
+          : "Boundary: approval-gated lifecycle process only; no long-lived process pool, source-content transfer, mutation, provider call, or result envelope.",
     ].join("\\n");
     setControlMessage(\`Refreshed LSP lifecycle task readback for \${latestEngineeringLoopControlState.taskId}.\`);
     await refreshEngineeringLoopControlSurfaces();
@@ -194,7 +198,9 @@ function renderEngineeringLspLifecycleLoopTaskState(result) {
     \`Action: \${result.engineeringLspLifecycle?.lifecycleAction ?? "start"}\`,
     \`Server: \${result.engineeringLspLifecycle?.server?.serverBinary ?? "typescript-language-server"}\`,
     "Next: approve pending approval, then run operator step. Missing server binaries become recoverable task evidence.",
-    result.engineeringLspLifecycle?.lifecycleAction === "source_transfer"
+    result.engineeringLspLifecycle?.lifecycleAction === "symbol_request"
+      ? "Boundary: no auto-approval or process start before approval; approved execution may send didOpen plus one symbol request only; long-lived pools and provider calls remain blocked."
+      : result.engineeringLspLifecycle?.lifecycleAction === "source_transfer"
       ? "Boundary: no auto-approval or process start before approval; approved execution may send initialize plus didOpen only; symbol requests, long-lived pools, and provider calls remain blocked."
       : "Boundary: no auto-approval, no process start before approval, no JSON-RPC, no source-content transfer, no provider call.",
   ].join("\\n");
@@ -230,6 +236,26 @@ async function createEngineeringLspSourceTransferLoopTask() {
   focusEngineeringLoopTask(result);
   renderEngineeringLspLifecycleLoopTaskState(result);
   setControlMessage(\`Created LSP source-transfer task \${result.task?.id ?? "unknown"}; approval and operator step are still required.\`);
+  await refreshEngineeringLoopControlSurfaces();
+}
+
+async function createEngineeringLspSymbolRequestLoopTask() {
+  const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-lsp/lifecycle-tasks\`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      language: "typescript",
+      lifecycleAction: "symbol_request",
+      symbolAction: "definition",
+      relativePath: "src/app.ts",
+      line: 2,
+      character: 14,
+      confirm: true,
+    }),
+  });
+  focusEngineeringLoopTask(result);
+  renderEngineeringLspLifecycleLoopTaskState(result);
+  setControlMessage(\`Created LSP symbol request task \${result.task?.id ?? "unknown"}; approval and operator step are still required.\`);
   await refreshEngineeringLoopControlSurfaces();
 }
 
@@ -505,6 +531,7 @@ async function refreshEngineeringLoopControlSurfaces() {
   await refreshEngineeringWriteExecutionEvidence();
   await refreshEngineeringVerificationEvidence();
   await refreshEngineeringRecoveryEvidence();
+  await refreshEngineeringLspEvidence();
 }
 
 async function createEngineeringEditLoopApprovalTask() {

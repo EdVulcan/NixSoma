@@ -102,21 +102,31 @@ long-lived connection reuse
 workspace-wide open-file synchronization
 language-server installation or dependency management
 multi-request symbol navigation sessions
-Observer-side symbol task creation controls and completion readback
+bounded parsed symbol response summary
 Level 2 trusted session/work-view integration
 Level 3 hostd/system daemon integration
 ```
+
+## Follow-up Completed
+
+The Observer control follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_OBSERVER_SYMBOL_REQUEST_CONTROL_PLAN.md
+```
+
+It lets the operator create the existing approval-gated symbol request task from
+the LSP panel and inspect task/approval/completion readback without adding
+another standalone evidence milestone.
 
 ## Next Slice
 
 The next smallest real capability is:
 
 ```text
-Observer LSP symbol request task control and readback
+bounded LSP symbol response summary
 ```
 
-That follow-up should let the operator create the existing approval-gated
-symbol request task from the LSP panel after inspecting the proposal, then show
-task, approval, completion, lifecycle state, recovery recommendation, and
-remaining long-lived-pool deferral without adding another standalone evidence
-milestone.
+That follow-up should expose bounded definition/references/hover result metadata
+from the approved single-request execution without returning raw source bodies
+or starting long-lived language-server pools.
