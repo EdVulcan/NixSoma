@@ -4,6 +4,10 @@ import { accessSync, constants, realpathSync } from "node:fs";
 import path from "node:path";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { recordNativeEngineeringLspLifecycleExecution } from "./native-engineering-lsp-lifecycle-state.mjs";
+import {
+  createLspInitializeShutdownHandshake,
+  shouldRunLspInitializeShutdownHandshake,
+} from "./native-engineering-lsp-protocol-handshake.mjs";
 
 export const NATIVE_ENGINEERING_LSP_LIFECYCLE_TASK_REGISTRY = "openclaw-native-engineering-lsp-lifecycle-task-v0";
 export const NATIVE_ENGINEERING_LSP_LIFECYCLE_EXECUTION_REGISTRY = "openclaw-native-engineering-lsp-lifecycle-execution-v0";
@@ -11,8 +15,8 @@ export const NATIVE_ENGINEERING_LSP_LIFECYCLE_EXECUTION_REGISTRY = "openclaw-nat
 const DEFAULT_PROCESS_PROBE_MS = 300;
 const MAX_PROCESS_PROBE_MS = 2_000;
 const DEFAULT_PROCESS_OUTPUT_CHARS = 4_096;
-const PROCESS_SUPERVISION_ACTIONS = new Set(["start", "restart", "recover"]);
-const BINARY_GATE_ACTIONS = new Set(["start", "restart", "recover"]);
+const PROCESS_SUPERVISION_ACTIONS = new Set(["start", "restart", "recover", "handshake"]);
+const BINARY_GATE_ACTIONS = new Set(["start", "restart", "recover", "handshake"]);
 
 function redactedWorkspace(workspace) {
   return {
@@ -285,6 +289,7 @@ function startSupervisedLifecycleProcess({
   cwd,
   probeMs = DEFAULT_PROCESS_PROBE_MS,
   outputLimit = DEFAULT_PROCESS_OUTPUT_CHARS,
+  protocolHandshake = null,
 } = {}) {
   return new Promise((resolve) => {
     const safeProbeMs = normalisePositiveInteger(probeMs, DEFAULT_PROCESS_PROBE_MS, MAX_PROCESS_PROBE_MS);
@@ -297,6 +302,9 @@ function startSupervisedLifecycleProcess({
     let terminationSent = false;
     let killSent = false;
     let processAliveAtProbe = false;
+    let protocolHandshakeEvidence = protocolHandshake
+      ? { mode: "initialize_shutdown_handshake_only", attempted: false, ok: false }
+      : { mode: "not_attempted", attempted: false };
     let probeTimer = null;
     let killTimer = null;
     let child = null;
@@ -320,6 +328,9 @@ function startSupervisedLifecycleProcess({
         cwd,
         probeMs: safeProbeMs,
         outputLimitChars: outputLimit,
+        protocolHandshake: protocolHandshake
+          ? protocolHandshake.summarise({ stdoutText: stdout.text, stderrText: stderr.text })
+          : protocolHandshakeEvidence,
         startedAt,
         completedAt: new Date().toISOString(),
         terminationSent,
@@ -333,7 +344,7 @@ function startSupervisedLifecycleProcess({
     try {
       child = spawn(executablePath, args, {
         cwd,
-        stdio: ["ignore", "pipe", "pipe"],
+        stdio: ["pipe", "pipe", "pipe"],
         windowsHide: true,
       });
     } catch (error) {
@@ -378,6 +389,17 @@ function startSupervisedLifecycleProcess({
       });
     });
     child.on("spawn", () => {
+      if (protocolHandshake) {
+        protocolHandshakeEvidence = protocolHandshake.write(child.stdin);
+        probeTimer = setTimeout(() => {
+          if (!settled) {
+            processAliveAtProbe = true;
+            terminationSent = true;
+            child.kill("SIGTERM");
+          }
+        }, safeProbeMs);
+        return;
+      }
       probeTimer = setTimeout(() => {
         if (settled) {
           return;
@@ -409,6 +431,20 @@ function resultStateForExecution({ lifecycleAction = "start", binaryChecked, bin
       ok: false,
       state: "server_binary_missing",
       failureKind: "lsp_server_binary_missing",
+    };
+  }
+  if (lifecycleAction === "handshake") {
+    if (processProbe?.protocolHandshake?.ok === true) {
+      return {
+        ok: true,
+        state: "initialize_shutdown_handshake_completed_source_content_deferred",
+        failureKind: null,
+      };
+    }
+    return {
+      ok: false,
+      state: "initialize_shutdown_handshake_failed",
+      failureKind: "lsp_initialize_shutdown_handshake_failed",
     };
   }
   if (!processProbe?.attempted) {
@@ -457,7 +493,7 @@ function buildLifecycleExecution({ task, executablePath, binaryChecked = true, a
       processId: processProbe?.pid ?? null,
       processAliveAtProbe: processProbe?.processAliveAtProbe === true,
       processTerminated: processProbe?.processTerminated === true,
-      jsonRpcHandshakeSent: false,
+      jsonRpcHandshakeSent: processProbe?.protocolHandshake?.attempted === true,
     },
     processSupervision: processProbe ?? {
       mode: "not_attempted",
@@ -473,13 +509,19 @@ function buildLifecycleExecution({ task, executablePath, binaryChecked = true, a
       approved,
       canStartProcessWithoutApproval: false,
       processStarted: processProbe?.started === true,
-      jsonRpcEnabled: false,
+      jsonRpcEnabled: processProbe?.protocolHandshake?.attempted === true,
+      jsonRpcOperationalRequestsEnabled: false,
       contentExposed: false,
     },
     recoveryRecommendation: lifecycleAction === "stop"
       ? {
           recoverable: false,
           nextAction: "stop was recorded against the lifecycle state store; no long-lived LSP process is active in this Level 1 lane",
+        }
+      : result.failureKind === "lsp_initialize_shutdown_handshake_failed"
+      ? {
+          recoverable: true,
+          nextAction: `inspect ${serverBinary ?? "the requested language server"} initialize/shutdown output and rerun the approved handshake task after fixing the server wrapper`,
         }
       : result.failureKind === "lsp_server_process_start_failed"
       ? {
@@ -577,6 +619,12 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
           executablePath,
           args: task.engineeringLspLifecycle?.server?.serverArgs ?? [],
           cwd: resolveSupervisionCwd(task.engineeringLspLifecycle ?? {}, workspaceRoots).cwd,
+          probeMs: shouldRunLspInitializeShutdownHandshake(task.engineeringLspLifecycle ?? {}) ? 1_000 : DEFAULT_PROCESS_PROBE_MS,
+          protocolHandshake: shouldRunLspInitializeShutdownHandshake(task.engineeringLspLifecycle ?? {})
+            ? createLspInitializeShutdownHandshake({
+                workspacePath: task.engineeringLspLifecycle?.workspace?.path ?? null,
+              })
+            : null,
         })
       : null;
     const execution = buildLifecycleExecution({ task, executablePath, binaryChecked, approved: true, processProbe });
@@ -599,7 +647,7 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
         processId: execution.server.processId,
         processAliveAtProbe: execution.server.processAliveAtProbe,
         processTerminated: execution.server.processTerminated,
-        jsonRpcHandshakeSent: false,
+        jsonRpcHandshakeSent: execution.server.jsonRpcHandshakeSent,
       },
       execution,
       lifecycleState,
@@ -634,9 +682,12 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
           checks: [
             { name: "server_binary_present", ok: execution.server.binaryFound === true },
             { name: "process_supervision_probe", ok: execution.processSupervision?.started === true },
+            { name: "initialize_shutdown_handshake", ok: execution.lifecycleAction === "handshake" ? execution.processSupervision?.protocolHandshake?.ok === true : null },
             { name: "lifecycle_state_recorded", ok: Boolean(lifecycleState) },
           ],
-          failedChecks: execution.server.binaryFound ? ["process_supervision_probe"] : ["server_binary_present"],
+          failedChecks: execution.result.failureKind === "lsp_initialize_shutdown_handshake_failed"
+            ? ["initialize_shutdown_handshake"]
+            : execution.server.binaryFound ? ["process_supervision_probe"] : ["server_binary_present"],
         },
         policy: policy.decision,
         approval: approval ? serialiseApproval(approval) : null,
@@ -648,6 +699,8 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
       executor: "native-engineering-lsp-lifecycle-v0",
       summary: execution.lifecycleAction === "stop"
         ? "LSP lifecycle stop state recorded; no long-lived process is active."
+        : execution.lifecycleAction === "handshake"
+        ? "LSP lifecycle initialize/shutdown handshake completed; source-content transfer remains deferred."
         : execution.processSupervision?.attempted
         ? "LSP lifecycle process supervision probe completed; JSON-RPC remains deferred."
         : "LSP lifecycle binary gate passed; process supervision remains deferred.",
@@ -668,6 +721,7 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
         checks: [
           { name: "server_binary_present", ok: execution.server.binaryChecked ? execution.server.binaryFound === true : null },
           { name: "process_supervision_probe", ok: execution.processSupervision?.attempted ? execution.processSupervision?.started === true : null },
+          { name: "initialize_shutdown_handshake", ok: execution.lifecycleAction === "handshake" ? execution.processSupervision?.protocolHandshake?.ok === true : null },
           { name: "lifecycle_state_recorded", ok: Boolean(lifecycleState) },
         ],
         failedChecks: [],

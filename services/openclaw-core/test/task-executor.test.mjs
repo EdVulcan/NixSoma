@@ -751,6 +751,101 @@ test("approved native engineering LSP lifecycle stop records persistent state wi
   assert(events.some((event) => event.name === "task.completed"));
 });
 
+test("approved native engineering LSP lifecycle handshake records initialize shutdown evidence", async () => {
+  const fakeBinDir = mkdtempSync(path.join(tmpdir(), "openclaw-lsp-handshake-bin-"));
+  const fakeBinary = path.join(fakeBinDir, "typescript-language-server");
+  writeFileSync(fakeBinary, `#!/usr/bin/env node
+process.stderr.write("fake-lsp-handshake-ready\\n");
+let input = "";
+let sentInitialize = false;
+let sentShutdown = false;
+function frame(message) {
+  const body = JSON.stringify(message);
+  process.stdout.write(\`Content-Length: \${Buffer.byteLength(body, "utf8")}\\r\\n\\r\\n\${body}\`);
+}
+process.stdin.on("data", (chunk) => {
+  input += chunk.toString("utf8");
+  if (!sentInitialize && input.includes('"method":"initialize"')) {
+    sentInitialize = true;
+    frame({ jsonrpc: "2.0", id: 1, result: { capabilities: {} } });
+  }
+  if (!sentShutdown && input.includes('"method":"shutdown"')) {
+    sentShutdown = true;
+    frame({ jsonrpc: "2.0", id: 2, result: null });
+  }
+  if (input.includes('"method":"exit"')) {
+    setTimeout(() => process.exit(0), 10);
+  }
+});
+setTimeout(() => process.exit(3), 5000);
+`, "utf8");
+  chmodSync(fakeBinary, 0o755);
+  const previousPath = process.env.PATH;
+  process.env.PATH = `${fakeBinDir}${path.delimiter}${previousPath ?? ""}`;
+
+  try {
+    const { executor, state, events } = createExecutorHarness({
+      state: { workspaceRoots: [fakeBinDir] },
+    });
+    state.approvals.set("approval-lsp-handshake", {
+      id: "approval-lsp-handshake",
+      status: "approved",
+      taskId: "lsp-lifecycle-handshake",
+    });
+    const task = {
+      id: "lsp-lifecycle-handshake",
+      type: "native_engineering_lsp_lifecycle",
+      goal: "Handshake TypeScript LSP lifecycle",
+      status: "queued",
+      approval: {
+        requestId: "approval-lsp-handshake",
+        status: "approved",
+        required: false,
+      },
+      policy: {
+        request: { approved: true },
+        decision: { decision: "audit_only", approved: true, reason: "approved_unit_test" },
+      },
+      engineeringLspLifecycle: {
+        registry: "openclaw-native-engineering-lsp-lifecycle-task-v0",
+        lifecycleAction: "handshake",
+        language: "typescript",
+        workspace: { id: "fixture", path: fakeBinDir },
+        server: {
+          serverBinary: "typescript-language-server",
+          serverArgs: ["--stdio"],
+          binaryChecked: false,
+          processStarted: false,
+          jsonRpcHandshakeSent: false,
+        },
+      },
+    };
+
+    const result = await executor.executeTaskWithRecovery(task);
+    const execution = result.finalExecution.execution;
+
+    assert.equal(result.finalExecution.task.status, "completed");
+    assert.equal(execution.result.state, "initialize_shutdown_handshake_completed_source_content_deferred");
+    assert.equal(execution.server.processStarted, true);
+    assert.equal(execution.server.jsonRpcHandshakeSent, true);
+    assert.equal(execution.processSupervision.protocolHandshake.ok, true);
+    assert.deepEqual(execution.processSupervision.protocolHandshake.messagesSent, ["initialize", "shutdown", "exit"]);
+    assert.equal(execution.processSupervision.protocolHandshake.didOpenSent, false);
+    assert.equal(execution.processSupervision.protocolHandshake.symbolRequestsSent, false);
+    assert.equal(execution.processSupervision.protocolHandshake.sourceContentTransferred, false);
+    assert.equal(execution.lifecycleState.status, "initialize_shutdown_handshake_completed");
+    assert.equal(execution.lifecycleState.boundaries.jsonRpcInitializeShutdownOnly, true);
+    assert.equal(execution.lifecycleState.boundaries.jsonRpcOperationalRequestsEnabled, false);
+    assert.equal(execution.lifecycleState.boundaries.sourceContentTransferred, false);
+    assert.equal(result.finalExecution.task.engineeringLspLifecycle.server.jsonRpcHandshakeSent, true);
+    assert.equal(state.nativeEngineeringLspLifecycleRecords.size, 1);
+    assert(events.some((event) => event.name === "task.completed"));
+  } finally {
+    process.env.PATH = previousPath;
+    rmSync(fakeBinDir, { recursive: true, force: true });
+  }
+});
+
 test("systemd repair execution task dispatches to deferred non-recoverable handler", async () => {
   const { executor, events, persistCalls } = createExecutorHarness();
   const task = {

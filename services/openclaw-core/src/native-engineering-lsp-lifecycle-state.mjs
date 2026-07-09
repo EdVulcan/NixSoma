@@ -69,6 +69,12 @@ function statusForExecution(execution = {}) {
   if (execution.result?.state === "process_supervision_probe_completed_json_rpc_deferred") {
     return "probe_completed_no_live_process";
   }
+  if (execution.result?.state === "initialize_shutdown_handshake_completed_source_content_deferred") {
+    return "initialize_shutdown_handshake_completed";
+  }
+  if (execution.result?.state === "initialize_shutdown_handshake_failed") {
+    return "recovery_required_initialize_shutdown_handshake_failed";
+  }
   return execution.result?.state ?? "recorded";
 }
 
@@ -82,6 +88,7 @@ function eventForRecord({ task, execution }) {
     processStarted: execution.server?.processStarted === true,
     processTerminated: execution.server?.processTerminated === true,
     jsonRpcEnabled: false,
+    jsonRpcHandshakeSent: execution.server?.jsonRpcHandshakeSent === true,
   };
 }
 
@@ -136,6 +143,10 @@ export function recordNativeEngineeringLspLifecycleExecution({
       signal: processSupervision.signal ?? null,
       longLivedProcessActive: false,
       reusableProcessState: false,
+      protocolHandshake: processSupervision.protocolHandshake ?? {
+        mode: "not_attempted",
+        attempted: false,
+      },
     },
     output: summariseProcessOutput(processSupervision),
     recoveryRecommendation: execution?.recoveryRecommendation ?? null,
@@ -143,7 +154,9 @@ export function recordNativeEngineeringLspLifecycleExecution({
       approvalRequiredBeforeExecution: true,
       canStartWithoutApproval: false,
       longLivedProcessActive: false,
-      jsonRpcEnabled: false,
+      jsonRpcEnabled: execution?.server?.jsonRpcHandshakeSent === true,
+      jsonRpcInitializeShutdownOnly: execution?.server?.jsonRpcHandshakeSent === true,
+      jsonRpcOperationalRequestsEnabled: false,
       sourceContentTransferred: false,
       providerEgress: false,
       rootOrHostDaemonRequired: false,
@@ -204,7 +217,8 @@ export function createNativeEngineeringLspLifecycleStateBuilders({
       summary: {
         totalRecords: items.length,
         activeLongLivedProcesses: items.filter((item) => item.process?.longLivedProcessActive === true).length,
-        jsonRpcEnabled: false,
+        jsonRpcEnabled: items.some((item) => item.boundaries?.jsonRpcEnabled === true),
+        jsonRpcOperationalRequestsEnabled: false,
         sourceContentTransferred: false,
       },
       items,

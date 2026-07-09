@@ -206,8 +206,9 @@ The first slices should move in this order:
 6. Microcompact as context-management evidence, not hidden transcript mutation.
 7. Live plugin runtime refresh as a governed lifecycle action.
 8. Planning/todo evidence as visible task/workbench state, not hidden mode.
-9. LSP availability, lifecycle evidence, governed process probes, and lifecycle
-   state before JSON-RPC or source-content transfer.
+9. LSP availability, lifecycle evidence, governed process probes, lifecycle
+   state, and initialize/shutdown handshake before any source-content transfer
+   or symbol request.
 
 Only after these are proven should the project continue deeper cloud-provider
 execution work.

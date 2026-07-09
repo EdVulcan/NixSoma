@@ -130,14 +130,14 @@ It creates an approval-gated lifecycle task, blocks operator execution before
 approval, records an approved binary gate after approval, starts and terminates
 a bounded user-space process supervision probe when a mapped server binary
 exists, records read-only lifecycle state for start/stop/restart/recovery
-outcomes, exposes task readback/recovery evidence, and keeps source-content
-transfer, JSON-RPC, mutation, provider calls, and network egress deferred.
+outcomes, records initialize/shutdown-only handshake evidence, exposes task
+readback/recovery evidence, and keeps source-content transfer,
+`textDocument/didOpen`, definition/references/hover requests, mutation,
+provider calls, and network egress deferred.
 
 ## Next Slice
 
 Do not add another standalone LSP evidence/readiness shell. The next meaningful
-LSP step should extend the same lifecycle lane with a governed
-initialize/shutdown handshake probe while keeping source-content transfer,
-textDocument/didOpen, definition/references/hover requests, long-lived process
-pools, provider egress, package installation, and root/system daemon work
-disabled.
+LSP step completed the governed initialize/shutdown handshake in the same
+lifecycle lane. The next step should propose and display the exact
+source-transfer boundary before any `textDocument/didOpen` or symbol request.

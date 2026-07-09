@@ -49,11 +49,32 @@ cat > "$WORKSPACE_DIR/python/agent.py" <<'PY'
 def lsp_agent_marker():
     return "OpenClaw LSP evidence python"
 PY
-cat > "$FAKE_BIN_DIR/typescript-language-server" <<'SH'
-#!/usr/bin/env bash
-printf 'openclaw-fixture-typescript-lsp-ready\n' >&2
-sleep 5
-SH
+cat > "$FAKE_BIN_DIR/typescript-language-server" <<'NODE'
+#!/usr/bin/env node
+process.stderr.write("openclaw-fixture-typescript-lsp-ready\n");
+let input = "";
+let sentInitialize = false;
+let sentShutdown = false;
+function frame(message) {
+  const body = JSON.stringify(message);
+  process.stdout.write(`Content-Length: ${Buffer.byteLength(body, "utf8")}\r\n\r\n${body}`);
+}
+process.stdin.on("data", (chunk) => {
+  input += chunk.toString("utf8");
+  if (!sentInitialize && input.includes('"method":"initialize"')) {
+    sentInitialize = true;
+    frame({ jsonrpc: "2.0", id: 1, result: { capabilities: {} } });
+  }
+  if (!sentShutdown && input.includes('"method":"shutdown"')) {
+    sentShutdown = true;
+    frame({ jsonrpc: "2.0", id: 2, result: null });
+  }
+  if (input.includes('"method":"exit"')) {
+    setTimeout(() => process.exit(0), 10);
+  }
+});
+setTimeout(() => process.exit(3), 5000);
+NODE
 chmod +x "$FAKE_BIN_DIR/typescript-language-server"
 export PATH="$FAKE_BIN_DIR:$PATH"
 rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_EVENT_LOG_FILE"
@@ -88,6 +109,12 @@ cleanup() {
     "${RESTART_STEP_FILE:-}" \
     "${RESTART_TASK_READBACK_FILE:-}" \
     "${LIFECYCLE_STATE_FILE:-}" \
+    "${HANDSHAKE_TASK_FILE:-}" \
+    "${HANDSHAKE_BLOCKED_STEP_FILE:-}" \
+    "${HANDSHAKE_APPROVED_FILE:-}" \
+    "${HANDSHAKE_STEP_FILE:-}" \
+    "${HANDSHAKE_TASK_READBACK_FILE:-}" \
+    "${HANDSHAKE_STATE_FILE:-}" \
     "${EVENTS_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
@@ -127,6 +154,12 @@ RESTART_APPROVED_FILE="$(mktemp)"
 RESTART_STEP_FILE="$(mktemp)"
 RESTART_TASK_READBACK_FILE="$(mktemp)"
 LIFECYCLE_STATE_FILE="$(mktemp)"
+HANDSHAKE_TASK_FILE="$(mktemp)"
+HANDSHAKE_BLOCKED_STEP_FILE="$(mktemp)"
+HANDSHAKE_APPROVED_FILE="$(mktemp)"
+HANDSHAKE_STEP_FILE="$(mktemp)"
+HANDSHAKE_TASK_READBACK_FILE="$(mktemp)"
+HANDSHAKE_STATE_FILE="$(mktemp)"
 EVENTS_FILE="$(mktemp)"
 
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=check&language=typescript&limit=200" > "$CHECK_FILE"
@@ -259,6 +292,28 @@ post_json "$CORE_URL/approvals/$restart_approval_id/approve" '{"approvedBy":"dev
 post_json "$CORE_URL/operator/step" '{}' > "$RESTART_STEP_FILE"
 curl --silent --fail "$CORE_URL/tasks/$restart_task_id" > "$RESTART_TASK_READBACK_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-state?language=typescript&limit=10" > "$LIFECYCLE_STATE_FILE"
+
+post_json "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-tasks" '{"language":"typescript","lifecycleAction":"handshake","confirm":true}' > "$HANDSHAKE_TASK_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$HANDSHAKE_BLOCKED_STEP_FILE"
+read -r handshake_approval_id handshake_task_id < <(node - <<'EOF' "$HANDSHAKE_TASK_FILE" "$HANDSHAKE_BLOCKED_STEP_FILE"
+const fs = require("node:fs");
+const taskResponse = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const blockedStep = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+if (
+  !taskResponse.ok
+  || taskResponse.engineeringLspLifecycle?.language !== "typescript"
+  || taskResponse.engineeringLspLifecycle?.lifecycleAction !== "handshake"
+  || blockedStep.reason !== "policy_requires_approval"
+) {
+  throw new Error(`LSP lifecycle handshake task should be approval-gated: ${JSON.stringify({ taskResponse, blockedStep })}`);
+}
+process.stdout.write(`${blockedStep.approval.id} ${taskResponse.task.id}\n`);
+EOF
+)
+post_json "$CORE_URL/approvals/$handshake_approval_id/approve" '{"approvedBy":"dev-openclaw-native-engineering-lsp-evidence-check","reason":"approve bounded LSP initialize shutdown handshake"}' > "$HANDSHAKE_APPROVED_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$HANDSHAKE_STEP_FILE"
+curl --silent --fail "$CORE_URL/tasks/$handshake_task_id" > "$HANDSHAKE_TASK_READBACK_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-state?language=typescript&limit=10" > "$HANDSHAKE_STATE_FILE"
 curl --silent --fail "$EVENT_HUB_URL/events/audit?limit=120" > "$EVENTS_FILE"
 
 node - <<'EOF' \
@@ -291,6 +346,12 @@ node - <<'EOF' \
   "$RESTART_STEP_FILE" \
   "$RESTART_TASK_READBACK_FILE" \
   "$LIFECYCLE_STATE_FILE" \
+  "$HANDSHAKE_TASK_FILE" \
+  "$HANDSHAKE_BLOCKED_STEP_FILE" \
+  "$HANDSHAKE_APPROVED_FILE" \
+  "$HANDSHAKE_STEP_FILE" \
+  "$HANDSHAKE_TASK_READBACK_FILE" \
+  "$HANDSHAKE_STATE_FILE" \
   "$EVENTS_FILE"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
@@ -324,8 +385,14 @@ const restartApproved = readJson(27);
 const restartStep = readJson(28);
 const restartTaskReadback = readJson(29);
 const lifecycleState = readJson(30);
-const events = readJson(31);
-const raw = JSON.stringify({ check, position, bad, draft, adapter, taskResponse, blockedStep, approved, execStep, taskReadback, processTaskResponse, processBlockedStep, processApproved, processStep, processTaskReadback, lifecycleStateAfterProcess, stopTaskResponse, stopBlockedStep, stopApproved, stopStep, stopTaskReadback, lifecycleStateAfterStop, restartTaskResponse, restartBlockedStep, restartApproved, restartStep, restartTaskReadback, lifecycleState, events });
+const handshakeTaskResponse = readJson(31);
+const handshakeBlockedStep = readJson(32);
+const handshakeApproved = readJson(33);
+const handshakeStep = readJson(34);
+const handshakeTaskReadback = readJson(35);
+const handshakeState = readJson(36);
+const events = readJson(37);
+const raw = JSON.stringify({ check, position, bad, draft, adapter, taskResponse, blockedStep, approved, execStep, taskReadback, processTaskResponse, processBlockedStep, processApproved, processStep, processTaskReadback, lifecycleStateAfterProcess, stopTaskResponse, stopBlockedStep, stopApproved, stopStep, stopTaskReadback, lifecycleStateAfterStop, restartTaskResponse, restartBlockedStep, restartApproved, restartStep, restartTaskReadback, lifecycleState, handshakeTaskResponse, handshakeBlockedStep, handshakeApproved, handshakeStep, handshakeTaskReadback, handshakeState, events });
 
 if (
   !check.ok
@@ -604,6 +671,55 @@ if (
 ) {
   throw new Error(`LSP lifecycle state should record restart readback: ${JSON.stringify({ restartTaskReadback, lifecycleState })}`);
 }
+if (handshakeApproved.approval?.status !== "approved" || handshakeApproved.task?.policy?.decision?.decision !== "audit_only") {
+  throw new Error(`LSP handshake approval should convert task to audited execution: ${JSON.stringify(handshakeApproved)}`);
+}
+if (!handshakeStep.ok || handshakeStep.ran !== true || handshakeStep.blocked !== false) {
+  throw new Error(`approved LSP handshake task should complete: ${JSON.stringify(handshakeStep)}`);
+}
+const handshakeTask = handshakeStep.task;
+const handshakeExecution = handshakeTask?.outcome?.details?.lspLifecycleExecution ?? handshakeTask?.engineeringLspLifecycle?.execution;
+if (
+  handshakeTaskResponse.engineeringLspLifecycle?.lifecycleAction !== "handshake"
+  || handshakeBlockedStep.reason !== "policy_requires_approval"
+  || handshakeTask?.id !== handshakeTaskResponse.task?.id
+  || handshakeTask.status !== "completed"
+  || handshakeExecution?.result?.state !== "initialize_shutdown_handshake_completed_source_content_deferred"
+  || handshakeExecution?.server?.processStarted !== true
+  || handshakeExecution?.server?.jsonRpcHandshakeSent !== true
+  || handshakeExecution?.processSupervision?.protocolHandshake?.ok !== true
+  || !handshakeExecution?.processSupervision?.protocolHandshake?.messagesSent?.includes("initialize")
+  || !handshakeExecution?.processSupervision?.protocolHandshake?.messagesSent?.includes("shutdown")
+  || !handshakeExecution?.processSupervision?.protocolHandshake?.messagesSent?.includes("exit")
+  || handshakeExecution?.processSupervision?.protocolHandshake?.didOpenSent !== false
+  || handshakeExecution?.processSupervision?.protocolHandshake?.symbolRequestsSent !== false
+  || handshakeExecution?.processSupervision?.protocolHandshake?.sourceContentTransferred !== false
+  || handshakeExecution?.lifecycleState?.status !== "initialize_shutdown_handshake_completed"
+  || handshakeExecution?.lifecycleState?.boundaries?.jsonRpcInitializeShutdownOnly !== true
+  || handshakeExecution?.lifecycleState?.boundaries?.jsonRpcOperationalRequestsEnabled !== false
+  || handshakeExecution?.lifecycleState?.boundaries?.sourceContentTransferred !== false
+) {
+  throw new Error(`LSP initialize/shutdown handshake readback mismatch: ${JSON.stringify({ handshakeTask, handshakeExecution })}`);
+}
+const handshakeStateItem = handshakeState.items?.[0];
+if (
+  handshakeTaskReadback.task?.id !== handshakeTask.id
+  || handshakeTaskReadback.task?.engineeringLspLifecycle?.server?.jsonRpcHandshakeSent !== true
+  || handshakeTaskReadback.task?.engineeringLspLifecycle?.lifecycleState?.status !== "initialize_shutdown_handshake_completed"
+  || handshakeState.registry !== "openclaw-native-engineering-lsp-lifecycle-state-v0"
+  || handshakeState.summary?.jsonRpcEnabled !== true
+  || handshakeState.summary?.jsonRpcOperationalRequestsEnabled !== false
+  || handshakeState.summary?.sourceContentTransferred !== false
+  || handshakeStateItem?.sourceTaskId !== handshakeTask.id
+  || handshakeStateItem?.lifecycleAction !== "handshake"
+  || handshakeStateItem?.status !== "initialize_shutdown_handshake_completed"
+  || handshakeStateItem?.process?.protocolHandshake?.ok !== true
+  || handshakeStateItem?.boundaries?.jsonRpcInitializeShutdownOnly !== true
+  || handshakeStateItem?.boundaries?.jsonRpcOperationalRequestsEnabled !== false
+  || handshakeStateItem?.boundaries?.sourceContentTransferred !== false
+) {
+  throw new Error(`LSP lifecycle state should record handshake readback: ${JSON.stringify({ handshakeTaskReadback, handshakeState })}`);
+}
 const eventTypes = new Set((events.items ?? events.events ?? []).map((event) => event.type));
 for (const type of ["approval.created", "approval.approved", "policy.evaluated"]) {
   if (!eventTypes.has(type)) {
@@ -644,7 +760,7 @@ console.log(JSON.stringify({
     lifecycleExecutionRegistry: execution.registry,
     lifecycleStateRegistry: lifecycleState.registry,
     lifecycleProcessState: supervisedExecution.result.state,
-    lifecycleFinalState: finalStateItem.status,
+    lifecycleFinalState: handshakeStateItem.status,
     languages: check.summary.detectedLanguages,
     lifecycleAction: draft.summary.lifecycleAction,
     serverStatus: check.serverReadiness.status,
@@ -657,7 +773,9 @@ console.log(JSON.stringify({
     supervisedJsonRpcSent: supervisedExecution.server.jsonRpcHandshakeSent,
     stopLifecycleState: stopExecution.result.state,
     restartLifecycleState: restartExecution.result.state,
-    lifecycleStateRecords: lifecycleState.summary.totalRecords,
+    handshakeLifecycleState: handshakeExecution.result.state,
+    handshakeJsonRpcSent: handshakeExecution.server.jsonRpcHandshakeSent,
+    lifecycleStateRecords: handshakeState.summary.totalRecords,
     badPathStatus: badStatus,
     lspEvidenceJsonRpcSent: check.summary.jsonRpcSent,
   },

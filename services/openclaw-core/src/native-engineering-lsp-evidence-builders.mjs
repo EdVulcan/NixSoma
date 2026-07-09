@@ -9,7 +9,7 @@ const MAX_LIMIT = 1_000;
 const MAX_DEPTH = 8;
 const SAMPLE_FILES_PER_LANGUAGE = 8;
 const SUPPORTED_ACTIONS = new Set(["check", "definition", "references", "hover"]);
-const SUPPORTED_LIFECYCLE_ACTIONS = new Set(["start", "stop", "restart", "recover"]);
+const SUPPORTED_LIFECYCLE_ACTIONS = new Set(["start", "stop", "restart", "recover", "handshake"]);
 const SUPPORTED_LANGUAGES = new Set(["typescript", "javascript", "python"]);
 const SKIPPED_DIRECTORY_NAMES = new Set([
   ".cache",

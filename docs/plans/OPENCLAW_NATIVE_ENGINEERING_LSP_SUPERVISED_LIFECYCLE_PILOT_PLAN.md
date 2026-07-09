@@ -134,8 +134,6 @@ automatic recovery task creation
 ## Next Slice
 
 Do not add another standalone LSP evidence/readiness shell. The next meaningful
-LSP step is to extend this same lifecycle lane with a governed
-initialize/shutdown handshake probe. Keep source-content transfer,
-textDocument/didOpen, definition/references/hover requests, long-lived process
-pools, package installation, provider egress, and root/system daemon work
-disabled.
+LSP step completed the governed initialize/shutdown handshake in the same
+lifecycle lane. The next step should propose and display the exact
+source-transfer boundary before any `textDocument/didOpen` or symbol request.

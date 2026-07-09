@@ -146,8 +146,10 @@ It creates an approval-gated task, proves pre-approval blocking and approved
 binary-gate execution, records missing-binary recovery evidence, starts and
 terminates a bounded user-space process supervision probe when a mapped server
 binary exists, records explicit stop/restart lifecycle-state readback, and
-exposes the workflow in Observer while still blocking source-content reads,
-JSON-RPC, mutation, provider calls, and network egress.
+records initialize/shutdown-only handshake evidence. It exposes the workflow in
+Observer while still blocking source-content reads, `textDocument/didOpen`,
+definition/references/hover requests, mutation, provider calls, and network
+egress.
 
 The lifecycle-state follow-up was completed as:
 
@@ -158,3 +160,12 @@ OPENCLAW_NATIVE_ENGINEERING_LSP_LIFECYCLE_STATE_PLAN.md
 It adds `GET /plugins/native-adapter/engineering-lsp/lifecycle-state` for
 read-only persisted state records across approved start/restart probes, explicit
 stop actions, and recovery-required outcomes.
+
+The initialize/shutdown handshake follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_HANDSHAKE_PLAN.md
+```
+
+It adds the `handshake` lifecycle action, which sends only initialize,
+shutdown, and exit to an approved short-lived server process.

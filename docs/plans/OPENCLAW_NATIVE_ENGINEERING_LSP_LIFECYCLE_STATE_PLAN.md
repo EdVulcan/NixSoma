@@ -41,8 +41,11 @@ records approved start and restart process probes
 records explicit stop actions without requiring a server binary
 records missing-binary and process-start recovery states
 stores bounded stdout/stderr previews and byte/truncation metadata
+records initialize/shutdown-only handshake status when the approved handshake
+action runs
 keeps long-lived process active=false after every current action
-keeps JSON-RPC, source-content transfer, provider egress, and root/hostd false
+keeps operational JSON-RPC requests, source-content transfer, provider egress,
+and root/hostd false
 exposes read-only lifecycle-state filters by workspacePath, language, and limit
 adds Observer lifecycle-state status readback for LSP tasks
 ```
@@ -53,7 +56,7 @@ The slice still explicitly blocks:
 
 ```text
 long-lived language server process pool
-JSON-RPC initialize / shutdown / textDocument requests
+textDocument/didOpen and symbol JSON-RPC requests
 source-content transfer into a language server
 definition / references / hover LSP responses
 automatic install or PATH mutation
@@ -92,20 +95,19 @@ observer-openclaw-native-engineering-lsp-evidence
 The existing LSP evidence milestones now prove static LSP evidence, lifecycle
 draft, approval-gated task creation, missing-binary recovery, bounded start
 probe, explicit stop readback, restart readback, persisted lifecycle state,
-Observer lifecycle-state tokens, and the continued absence of JSON-RPC and
-source-content transfer.
+Observer lifecycle-state tokens, initialize/shutdown-only handshake evidence,
+and the continued absence of source-content transfer and operational LSP
+requests.
 
 ## Next Slice
 
-Do not add another standalone LSP readiness shell. The next meaningful LSP step
-is a governed initialize/shutdown handshake probe in the same lifecycle lane:
+The governed initialize/shutdown handshake follow-up was completed as:
 
 ```text
-Native governed LSP initialize/shutdown handshake evidence
+OPENCLAW_NATIVE_ENGINEERING_LSP_HANDSHAKE_PLAN.md
 ```
 
-That follow-up should only send bounded protocol initialization and shutdown
-messages to an approved short-lived server process. It must still avoid
-`textDocument/didOpen`, source file content transfer, definition/references/hover
-requests, long-lived process pools, provider egress, package installation, and
-root/system daemon work.
+That slice sends only bounded protocol initialization and shutdown messages to
+an approved short-lived server process. The next step should not jump straight
+to definition/references/hover; it should first propose and display the exact
+source-transfer boundary for `textDocument/didOpen`.
