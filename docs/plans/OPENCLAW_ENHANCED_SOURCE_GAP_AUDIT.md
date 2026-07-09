@@ -189,6 +189,13 @@ governed surfaces:
   `plan.openclaw.engineering_tool.lsp_symbol_request` reads approved didOpen
   lifecycle state and drafts definition/references/hover JSON-RPC metadata with
   `sent=false`, while operational symbol request execution remains blocked.
+- Native engineering LSP symbol request task:
+  `act.openclaw.engineering_tool.lsp_symbol_request_task` creates an
+  approval-gated task from approved didOpen state, re-reads and hash-checks the
+  bounded source file after approval, sends exactly one
+  definition/references/hover request through a short-lived user-space LSP
+  process, records bounded lifecycle state, and keeps long-lived process pools
+  blocked.
 - Approval-gated workspace mutation:
   `act.openclaw.workspace_text_write` and
   `act.openclaw.workspace_patch_apply`.
@@ -215,7 +222,7 @@ enhanced `openclaw` modules.
 | `cc_write` | absorbed through governed proposal/approval/execution evidence | `act.openclaw.engineering_tool.write_proposal` creates redacted create/overwrite proposal evidence; `openclaw-native-engineering-write-proposal-task-v0` bridges confirmed proposals to approval-gated `workspace_text_write` tasks; `sense.openclaw.engineering_tool.write_execution_evidence` reads completed write ledger evidence. | Keep proposal, approval, execution, and recovery separated. Do not migrate raw overwrite semantics as an autonomous default. | Level 1 |
 | `cc_glob` | absorbed | `sense.openclaw.engineering_tool.glob` performs bounded workspace file discovery with skipped hidden/generated/cache/dependency directories and result caps. | Continue native bounded discovery; do not execute enhanced `GlobTool.ts`. | Level 1 |
 | `cc_grep` | absorbed | `sense.openclaw.engineering_tool.grep` performs bounded workspace text search with literal/regex mode, include filters, result/output caps, binary skips, audit, and Observer evidence. | Continue native bounded search; do not execute enhanced `GrepTool.ts`. | Level 1 |
-| `cc_lsp` | partially absorbed as evidence, lifecycle draft, approval-gated binary gate, bounded process supervision probe, lifecycle state readback, initialize/shutdown handshake, didOpen source-transfer proposal, approval-gated didOpen task, and symbol request proposal | `sense.openclaw.engineering_tool.lsp_evidence` maps `check`, `definition`, `references`, and `hover` contracts, reports language/config metadata and server hints, and keeps source-content reads and symbol requests blocked. `plan.openclaw.engineering_tool.lsp_lifecycle` drafts a workspace-scoped lifecycle action and readiness gates. `act.openclaw.engineering_tool.lsp_lifecycle_task` creates an approval-gated lifecycle task, proves pre-approval blocking, checks the mapped server binary after approval, records missing-binary recovery evidence, starts and terminates a bounded user-space process supervision probe when a mapped server binary exists, sends initialize/shutdown-only handshake messages for the `handshake` action, and `sense.openclaw.engineering_tool.lsp_lifecycle_state` persists read-only start/stop/restart/recovery/handshake/didOpen state. `plan.openclaw.engineering_tool.lsp_source_transfer` reads one bounded source file locally for proposal preview/hash and future didOpen metadata. `act.openclaw.engineering_tool.lsp_source_transfer_task` re-reads and hash-checks after approval, sends didOpen to a bounded short-lived server, and records source-transfer state. `plan.openclaw.engineering_tool.lsp_symbol_request` drafts definition/references/hover JSON-RPC metadata from approved didOpen state while operational symbol request execution and long-lived process pools remain blocked. `sense.openclaw.workspace_symbol_lookup` remains separate derived navigation. | Keep the evidence, draft, task bridge, process probe, lifecycle-state readback, handshake evidence, source-transfer proposal, approved didOpen task, and symbol request proposal in one LSP lane. Defer symbol request execution, long-lived process pools, provider egress, package installation, and root/system daemon work. | Level 1 now, Level 2 later |
+| `cc_lsp` | partially absorbed as evidence, lifecycle draft, approval-gated binary gate, bounded process supervision probe, lifecycle state readback, initialize/shutdown handshake, didOpen source-transfer proposal, approval-gated didOpen task, symbol request proposal, and approval-gated single symbol request task | `sense.openclaw.engineering_tool.lsp_evidence` maps `check`, `definition`, `references`, and `hover` contracts, reports language/config metadata and server hints, and keeps source-content reads and symbol requests blocked. `plan.openclaw.engineering_tool.lsp_lifecycle` drafts a workspace-scoped lifecycle action and readiness gates. `act.openclaw.engineering_tool.lsp_lifecycle_task` creates an approval-gated lifecycle task, proves pre-approval blocking, checks the mapped server binary after approval, records missing-binary recovery evidence, starts and terminates a bounded user-space process supervision probe when a mapped server binary exists, sends initialize/shutdown-only handshake messages for the `handshake` action, and `sense.openclaw.engineering_tool.lsp_lifecycle_state` persists read-only start/stop/restart/recovery/handshake/didOpen/symbol-request state. `plan.openclaw.engineering_tool.lsp_source_transfer` reads one bounded source file locally for proposal preview/hash and future didOpen metadata. `act.openclaw.engineering_tool.lsp_source_transfer_task` re-reads and hash-checks after approval, sends didOpen to a bounded short-lived server, and records source-transfer state. `plan.openclaw.engineering_tool.lsp_symbol_request` drafts definition/references/hover JSON-RPC metadata from approved didOpen state. `act.openclaw.engineering_tool.lsp_symbol_request_task` replays approved didOpen setup after approval, sends exactly one selected symbol request, records bounded method/response-observed metadata, and keeps long-lived process pools blocked. `sense.openclaw.workspace_symbol_lookup` remains separate derived navigation. | Keep the evidence, draft, task bridge, process probe, lifecycle-state readback, handshake evidence, source-transfer proposal, approved didOpen task, symbol proposal, and single approved symbol request task in one LSP lane. Defer long-lived process pools, multi-request sessions, provider egress, package installation, and root/system daemon work. | Level 1 now, Level 2 later |
 | `cc_verify` | absorbed as evidence | `sense.openclaw.engineering_tool.verify_evidence` reads approval-gated command transcripts, capability invocations, and completed task outcomes to produce bounded verification evidence with checks, output budgets, retry-policy metadata, audit evidence, and Observer visibility. `sense.openclaw.engineering_tool.recovery_evidence` adds read-only failed-evidence recovery recommendations. | Keep actual command execution on the existing approval-gated source/workspace command task path. Do not add ungoverned shell execution or automatic retries. | Level 1 |
 | `cc_plan_enter`, `cc_plan_exit`, `cc_todo_write` | absorbed as evidence plus operator-visible workbench state | `sense.openclaw.engineering_context.plan_todo_evidence` reads visible task/workbench plan state, maps planning/todo tool semantics, reports todo counts, and exposes Observer evidence without hidden mode switches, task mutation, or `.openclaw/cc-todo.md` writes. `openclaw-native-engineering-planning-workbench-state-v0` bridges that evidence into Engineering Loop State for selected engineering tasks. | Keep hidden mode, todo-file persistence, and task mutation deferred until governed workbench storage exists. | Level 1 |
 | `microcompact` | absorbed as evidence | `sense.openclaw.engineering_context.microcompact_evidence` reads command transcript metadata, protects recent engineering evidence by default, and estimates reclaimable context budget without returning raw output or mutating logs. | Keep actual runtime-message compaction deferred until the evidence surface is stable and governed. Do not silently mutate persisted transcript or hide current verification/recovery evidence. | Level 1 |
@@ -377,22 +384,28 @@ Current OpenClaw:
   approval-gated source-transfer task, blocks before approval, re-reads and
   hash-checks the file after approval, sends only initialize plus
   `textDocument/didOpen`, shutdown, and exit, and records lifecycle state.
+- `act.openclaw.engineering_tool.lsp_symbol_request_task` creates an
+  approval-gated symbol request task from approved didOpen state, blocks before
+  approval, replays approved didOpen setup after approval, sends exactly one
+  selected definition/references/hover request, and records bounded method and
+  response-observed metadata.
 - It does not implement a long-lived Language Server Protocol process pool, open
-  reusable files in an LSP connection, send symbol requests, keep source content
-  in a long-lived server pool, or perform optional language server installation
-  checks.
+  reusable files in a persistent LSP connection, run multi-request symbol
+  navigation sessions, keep source content in a long-lived server pool, or
+  perform optional language server installation checks.
 
 Classification: partially absorbed as evidence plus lifecycle draft plus
-approval-gated binary gate, bounded process supervision probe, and lifecycle
-state readback plus initialize/shutdown handshake evidence plus source-transfer
-proposal plus approval-gated didOpen task.
+approval-gated binary gate, bounded process supervision probe, lifecycle state
+readback, initialize/shutdown handshake evidence, source-transfer proposal,
+approval-gated didOpen task, symbol request proposal, and approval-gated single
+symbol request task.
 
 Recommendation:
 
 - Keep the current evidence, lifecycle draft, and approval-gated task bridge in
-  one Level 1 LSP lane. Extend it next with a governed symbol request proposal
-  and approval boundary rather than creating another static readiness shell,
-  hidden long-lived process, or immediate unapproved symbol request.
+  one Level 1 LSP lane. Extend it next with Observer task controls and readback
+  for the approved symbol request path rather than creating another static
+  readiness shell, hidden long-lived process, or unapproved request path.
 
 ### `cc_verify`
 
@@ -690,29 +703,29 @@ It produces:
 - Explicit proof that no operational symbol request is sent by the proposal
   endpoint.
 
-Next smallest real capability:
+Latest LSP symbol request task completed:
 
 ```text
-approval-gated LSP symbol request task
+OPENCLAW_NATIVE_ENGINEERING_LSP_SYMBOL_REQUEST_TASK_PLAN.md
 ```
 
-That should produce:
+It produces:
 
-- A proposal/readback surface for the exact definition/references/hover request
-  that would be sent after approved didOpen state exists.
+- An approval-gated task for the exact definition/references/hover request
+  selected from approved didOpen state.
 - Explicit approval before any operational symbol request is sent.
-- Continued deferral of definition/references/hover requests, provider calls,
-  network egress, package installation, long-lived process pools, and
-  root/system daemon work.
+- A bounded short-lived LSP process that replays didOpen, sends exactly one
+  selected symbol request, records response-observed metadata, and terminates.
+- Continued deferral of provider calls, network egress, package installation,
+  long-lived process pools, multi-request sessions, and root/system daemon work.
 
 Why this is real progress:
 
 - It advances Level 1, the stable user-space control plane.
 - It makes OpenClaw better at governing its own engineering work rather than
   adding another cloud/provider safety shell.
-- It sets up the next executable slice after planning/todo evidence: ACP/Codex
-  bridge compatibility or governed loader design, depending on the route
-  documents after plan evidence lands.
+- It sets up the next operator-visible slice: Observer controls and readback for
+  the approved LSP symbol request task.
 
 Required answer for every following slice:
 

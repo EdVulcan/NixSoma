@@ -153,6 +153,10 @@ export function createNativeEngineeringLspSymbolRequestProposalBuilders({
         found: ready,
         sourceTaskId: didOpenState?.sourceTaskId ?? null,
         sourceApprovalId: didOpenState?.sourceApprovalId ?? null,
+        server: {
+          serverBinary: didOpenState?.server?.serverBinary ?? null,
+          serverArgs: didOpenState?.server?.serverArgs ?? [],
+        },
         sourceTransfer,
       },
       proposedJsonRpc: {

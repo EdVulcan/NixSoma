@@ -50,7 +50,7 @@ call providers or perform network egress
 | `cc_write` | `act.openclaw.engineering_tool.write_proposal` / `sense.openclaw.engineering_tool.write_execution_evidence` | `mutation_proposal_and_execution_evidence` | high | approval required before create or overwrite | absorbed through governed proposal, approval bridge, and execution evidence |
 | `cc_glob` | `sense.openclaw.engineering_tool.glob` | `read_only_path_search` | low | no approval for bounded metadata search | contract mapped, execution deferred |
 | `cc_grep` | `sense.openclaw.engineering_tool.grep` | `read_only_content_search` | low | no approval for bounded search; snippets require budget and audit | contract mapped, execution deferred |
-| `cc_lsp` | `sense.openclaw.engineering_tool.lsp_evidence` / `act.openclaw.engineering_tool.lsp_lifecycle_task` / `sense.openclaw.engineering_tool.lsp_lifecycle_state` / `plan.openclaw.engineering_tool.lsp_source_transfer` / `act.openclaw.engineering_tool.lsp_source_transfer_task` / `plan.openclaw.engineering_tool.lsp_symbol_request` | `language_intelligence_evidence_governed_lifecycle_source_transfer_and_symbol_boundary` | medium | no approval for evidence/state/proposal readback; approval required before lifecycle/source-transfer/symbol execution | partially absorbed as evidence, lifecycle draft, approval-gated binary gate, bounded process supervision probe, lifecycle state readback, initialize/shutdown handshake, didOpen source-transfer proposal, approval-gated didOpen task, and symbol request proposal |
+| `cc_lsp` | `sense.openclaw.engineering_tool.lsp_evidence` / `act.openclaw.engineering_tool.lsp_lifecycle_task` / `sense.openclaw.engineering_tool.lsp_lifecycle_state` / `plan.openclaw.engineering_tool.lsp_source_transfer` / `act.openclaw.engineering_tool.lsp_source_transfer_task` / `plan.openclaw.engineering_tool.lsp_symbol_request` / `act.openclaw.engineering_tool.lsp_symbol_request_task` | `language_intelligence_evidence_governed_lifecycle_source_transfer_and_symbol_boundary` | medium | no approval for evidence/state/proposal readback; approval required before lifecycle/source-transfer/symbol execution | partially absorbed as evidence, lifecycle draft, approval-gated binary gate, bounded process supervision probe, lifecycle state readback, initialize/shutdown handshake, didOpen source-transfer proposal, approval-gated didOpen task, symbol request proposal, and approval-gated single symbol request task |
 | `cc_verify` | `act.openclaw.engineering_tool.verify` | `verification_command_evidence` | medium | command execution requires policy or approval | partially absorbed, command execution deferred |
 | `cc_plan_enter` | `plan.openclaw.engineering_tool.plan_enter` | `planning_state` | low | no hidden mode switch without task/workbench evidence | state mutation deferred |
 | `cc_plan_exit` | `plan.openclaw.engineering_tool.plan_exit` | `planning_state` | low | no hidden execution transition without task evidence | state mutation deferred |
@@ -113,11 +113,12 @@ raw enhanced glob/grep execution outside native bounds
 automatic edit approval, automatic recovery task creation, and unapproved verification command execution
 automatic write approval, automatic recovery task creation, and post-write
 verification command execution
-long-lived LSP process pool and symbol request execution;
+long-lived LSP process pool and multi-request symbol navigation sessions;
 `lsp_evidence` contract, availability evidence, lifecycle readiness draft,
 approval-gated binary gate, bounded process supervision probe, lifecycle state
 readback, initialize/shutdown handshake, source-transfer proposal, and approved
-didOpen source-transfer task, and symbol request proposal are absorbed
+didOpen source-transfer task, symbol request proposal, and approval-gated single
+symbol request task are absorbed
 verification command execution and task-completion attachment
 planning/todo evidence is absorbed; hidden planning mode and todo state mutation remain deferred
 provider calls, network egress, and result envelopes
@@ -241,13 +242,23 @@ That slice drafts the exact definition/references/hover request that would be
 sent after approved didOpen state exists and keeps operational symbol request
 execution disabled.
 
+The approval-gated symbol request task follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_SYMBOL_REQUEST_TASK_PLAN.md
+```
+
+That slice sends exactly one approved definition/references/hover request
+through a bounded short-lived LSP process, records lifecycle state, and keeps
+long-lived process pools, provider egress, package installation, and
+root/system daemon work disabled.
+
 The current next smallest real capability is:
 
 ```text
-approval-gated LSP symbol request task
+Observer LSP symbol request task control and readback
 ```
 
-That slice should create a task from an inspected proposal, require explicit
-approval before sending the operational symbol request, record bounded response
-metadata, and keep long-lived process pools, provider egress, package
-installation, and root/system daemon work disabled.
+That slice should expose creation and completion readback for the existing
+approval-gated symbol request task in the LSP Observer panel without adding a
+new standalone evidence shell.

@@ -112,16 +112,12 @@ The symbol request proposal follow-up was completed as:
 OPENCLAW_NATIVE_ENGINEERING_LSP_SYMBOL_REQUEST_PROPOSAL_PLAN.md
 ```
 
-## Next Slice
-
-Do not jump to full definition/references/hover. The next meaningful LSP step
-is:
+The symbol request task follow-up was completed as:
 
 ```text
-approval-gated LSP symbol request task
+OPENCLAW_NATIVE_ENGINEERING_LSP_SYMBOL_REQUEST_TASK_PLAN.md
 ```
 
-That follow-up should create a task from an inspected proposal, require explicit
-approval before sending any operational symbol request, record bounded response
-metadata, and keep long-lived process pools, provider egress, and root/system
-daemon work deferred.
+It sends exactly one approved definition/references/hover request through a
+short-lived user-space LSP process and keeps long-lived process pools, provider
+egress, and root/system daemon work deferred.

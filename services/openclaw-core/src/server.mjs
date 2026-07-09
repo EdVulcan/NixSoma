@@ -84,6 +84,7 @@ const workspaceOps = createWorkspaceOps({
   buildNativeEngineeringWriteProposal: (...args) => pluginReview.buildNativeEngineeringWriteProposal(...args),
   buildNativeEngineeringLspLifecycleDraft: (...args) => pluginReview.buildNativeEngineeringLspLifecycleDraft(...args),
   buildNativeEngineeringLspSourceTransferProposal: (...args) => pluginReview.buildNativeEngineeringLspSourceTransferProposal(...args),
+  buildNativeEngineeringLspSymbolRequestProposal: (...args) => pluginReview.buildNativeEngineeringLspSymbolRequestProposal(...args),
   buildRulePlan: (args) => planBuilder.buildRulePlan(args),
   createTask: (...args) => taskManager.createTask(...args),
   supersedeOtherActiveTasks: (taskId) => taskManager.supersedeOtherActiveTasks(taskId),

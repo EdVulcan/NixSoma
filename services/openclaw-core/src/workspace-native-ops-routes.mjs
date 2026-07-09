@@ -126,6 +126,9 @@ function lspLifecycleTaskInputFromBody(body) {
     language: bodyString(body, "language", "typescript"),
     lifecycleAction: bodyString(body, "lifecycleAction", bodyString(body, "action", "start")),
     relativePath: bodyString(body, "relativePath", bodyString(body, "path", "src/app.ts")),
+    symbolAction: bodyString(body, "symbolAction", bodyString(body, "symbolRequestAction", "definition")),
+    line: bodyInteger(body, "line", 1),
+    character: bodyInteger(body, "character", 0),
     maxFileSizeBytes: bodyInteger(body, "maxFileSizeBytes", 128 * 1024),
     maxPreviewChars: bodyInteger(body, "maxPreviewChars", 8_000),
     confirm: body.confirm === true,
@@ -254,6 +257,7 @@ export async function handleWorkspaceNativeOpsRoute({
       sendJson(res, 201, serialiseWorkspaceTaskResponse(result, [
         "lifecycleDraft",
         "sourceTransferProposal",
+        "symbolRequestProposal",
         "engineeringLspLifecycle",
       ], { serialiseTask, serialiseApproval, buildTaskSummary }));
     } catch (error) {

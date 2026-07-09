@@ -81,6 +81,12 @@ function statusForExecution(execution = {}) {
   if (execution.result?.state === "didopen_source_transfer_failed") {
     return "recovery_required_didopen_source_transfer_failed";
   }
+  if (execution.result?.state === "symbol_request_completed_long_lived_pool_deferred") {
+    return "symbol_request_completed";
+  }
+  if (execution.result?.state === "symbol_request_failed") {
+    return "recovery_required_symbol_request_failed";
+  }
   return execution.result?.state ?? "recorded";
 }
 
@@ -97,6 +103,8 @@ function eventForRecord({ task, execution }) {
     jsonRpcHandshakeSent: execution.server?.jsonRpcHandshakeSent === true,
     didOpenSent: execution.server?.didOpenSent === true,
     sourceContentTransferred: execution.server?.sourceContentTransferred === true,
+    symbolRequestSent: execution.server?.symbolRequestSent === true,
+    symbolRequestMethod: execution.server?.symbolRequestMethod ?? null,
   };
 }
 
@@ -141,6 +149,8 @@ export function recordNativeEngineeringLspLifecycleExecution({
       jsonRpcHandshakeSent: execution?.server?.jsonRpcHandshakeSent === true,
       didOpenSent: execution?.server?.didOpenSent === true,
       sourceContentTransferred: execution?.server?.sourceContentTransferred === true,
+      symbolRequestSent: execution?.server?.symbolRequestSent === true,
+      symbolRequestMethod: execution?.server?.symbolRequestMethod ?? null,
     },
     process: {
       supervisionMode: processSupervision.mode ?? "not_attempted",
@@ -167,7 +177,7 @@ export function recordNativeEngineeringLspLifecycleExecution({
       jsonRpcEnabled: execution?.server?.jsonRpcHandshakeSent === true,
       jsonRpcInitializeShutdownOnly: execution?.server?.jsonRpcHandshakeSent === true
         && execution?.server?.didOpenSent !== true,
-      jsonRpcOperationalRequestsEnabled: false,
+      jsonRpcOperationalRequestsEnabled: execution?.server?.symbolRequestSent === true,
       sourceContentTransferred: execution?.server?.sourceContentTransferred === true,
       providerEgress: false,
       rootOrHostDaemonRequired: false,
@@ -229,7 +239,7 @@ export function createNativeEngineeringLspLifecycleStateBuilders({
         totalRecords: items.length,
         activeLongLivedProcesses: items.filter((item) => item.process?.longLivedProcessActive === true).length,
         jsonRpcEnabled: items.some((item) => item.boundaries?.jsonRpcEnabled === true),
-        jsonRpcOperationalRequestsEnabled: false,
+        jsonRpcOperationalRequestsEnabled: items.some((item) => item.boundaries?.jsonRpcOperationalRequestsEnabled === true),
         sourceContentTransferred: items.some((item) => item.boundaries?.sourceContentTransferred === true),
       },
       items,

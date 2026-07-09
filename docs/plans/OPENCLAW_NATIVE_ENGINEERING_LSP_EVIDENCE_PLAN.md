@@ -169,3 +169,16 @@ OPENCLAW_NATIVE_ENGINEERING_LSP_HANDSHAKE_PLAN.md
 
 It adds the `handshake` lifecycle action, which sends only initialize,
 shutdown, and exit to an approved short-lived server process.
+
+The didOpen and symbol request follow-ups were completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_SOURCE_TRANSFER_TASK_PLAN.md
+OPENCLAW_NATIVE_ENGINEERING_LSP_SYMBOL_REQUEST_TASK_PLAN.md
+```
+
+They keep LSP execution in the governed lifecycle lane: first an approved
+didOpen source-transfer task, then an approved single
+definition/references/hover symbol request task. Long-lived process pools,
+package installation, provider egress, network egress, and root/system daemon
+work remain deferred.

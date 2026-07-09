@@ -79,16 +79,16 @@ openclaw-native-engineering-lsp-evidence
 observer-openclaw-native-engineering-lsp-evidence
 ```
 
-## Next Slice
+## Follow-up Completed
 
-The next smallest real capability is:
+The task boundary was completed as:
 
 ```text
-approval-gated LSP symbol request task
+OPENCLAW_NATIVE_ENGINEERING_LSP_SYMBOL_REQUEST_TASK_PLAN.md
 ```
 
-That follow-up should create a task from an inspected proposal, require explicit
-approval, send only the selected operational symbol request to a bounded
-short-lived process after approved didOpen setup, record bounded response
-metadata, and keep long-lived process pools, provider egress, package
-installation, root/system daemon work, and automatic retries deferred.
+That follow-up creates a task from approved didOpen state, requires explicit
+approval, sends exactly one selected operational symbol request through a
+bounded short-lived process, records bounded response metadata, and keeps
+long-lived process pools, provider egress, package installation, root/system
+daemon work, and automatic retries deferred.

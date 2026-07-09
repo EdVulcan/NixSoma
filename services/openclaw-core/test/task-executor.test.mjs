@@ -971,6 +971,126 @@ setTimeout(() => process.exit(3), 5000);
   }
 });
 
+test("approved native engineering LSP symbol request task sends one operational request", async () => {
+  const root = mkdtempSync(path.join(tmpdir(), "openclaw-lsp-symbol-request-"));
+  const fakeBinDir = path.join(root, "bin");
+  mkdirSync(path.join(root, "src"), { recursive: true });
+  mkdirSync(fakeBinDir, { recursive: true });
+  const sourceText = "export const openclawSymbolRequest = 7;\n";
+  writeFileSync(path.join(root, "src", "app.ts"), sourceText, "utf8");
+  const sourceHash = createHash("sha256").update(sourceText, "utf8").digest("hex");
+  const fakeBinary = path.join(fakeBinDir, "typescript-language-server");
+  writeFileSync(fakeBinary, `#!/usr/bin/env node
+process.stderr.write("fake-lsp-symbol-request-ready\\n");
+let input = "";
+let sentInitialize = false;
+let sentSymbol = false;
+let sentShutdown = false;
+function frame(message) {
+  const body = JSON.stringify(message);
+  process.stdout.write(\`Content-Length: \${Buffer.byteLength(body, "utf8")}\\r\\n\\r\\n\${body}\`);
+}
+process.stdin.on("data", (chunk) => {
+  input += chunk.toString("utf8");
+  if (!sentInitialize && input.includes('"method":"initialize"')) {
+    sentInitialize = true;
+    frame({ jsonrpc: "2.0", id: 1, result: { capabilities: { definitionProvider: true } } });
+  }
+  if (!sentSymbol && input.includes('"method":"textDocument/definition"') && input.includes("openclawSymbolRequest")) {
+    sentSymbol = true;
+    process.stderr.write("fake-lsp-symbol-request-observed\\n");
+    frame({ jsonrpc: "2.0", id: 3, result: [] });
+  }
+  if (sentSymbol && !sentShutdown && input.includes('"method":"shutdown"')) {
+    sentShutdown = true;
+    frame({ jsonrpc: "2.0", id: 4, result: null });
+  }
+  if (input.includes('"method":"exit"')) {
+    setTimeout(() => process.exit(0), 10);
+  }
+});
+setTimeout(() => process.exit(3), 5000);
+`, "utf8");
+  chmodSync(fakeBinary, 0o755);
+  const previousPath = process.env.PATH;
+  process.env.PATH = `${fakeBinDir}${path.delimiter}${previousPath ?? ""}`;
+
+  try {
+    const { executor, state } = createExecutorHarness({
+      state: { workspaceRoots: [root] },
+    });
+    state.approvals.set("approval-lsp-symbol", {
+      id: "approval-lsp-symbol",
+      status: "approved",
+      taskId: "lsp-symbol-request",
+    });
+    const task = {
+      id: "lsp-symbol-request",
+      type: "native_engineering_lsp_lifecycle",
+      goal: "Run TypeScript LSP definition request",
+      status: "queued",
+      approval: { requestId: "approval-lsp-symbol", status: "approved", required: false },
+      policy: {
+        request: { approved: true },
+        decision: { decision: "audit_only", approved: true, reason: "approved_unit_test" },
+      },
+      engineeringLspLifecycle: {
+        registry: "openclaw-native-engineering-lsp-lifecycle-task-v0",
+        lifecycleAction: "symbol_request",
+        language: "typescript",
+        workspace: { id: "fixture", path: root },
+        server: {
+          serverBinary: "typescript-language-server",
+          serverArgs: ["--stdio"],
+          binaryChecked: false,
+          processStarted: false,
+          jsonRpcHandshakeSent: false,
+          didOpenSent: false,
+          sourceContentTransferred: false,
+          symbolRequestSent: false,
+        },
+        sourceTransfer: {
+          relativePath: "src/app.ts",
+          languageId: "typescript",
+          textBytes: Buffer.byteLength(sourceText, "utf8"),
+          textSha256: sourceHash,
+          maxFileSizeBytes: 128 * 1024,
+          maxPreviewChars: 8_000,
+        },
+        symbolRequest: {
+          registry: "openclaw-native-engineering-lsp-symbol-request-proposal-v0",
+          action: "definition",
+          method: "textDocument/definition",
+          params: {
+            textDocument: { uri: `file://${path.join(root, "src", "app.ts")}` },
+            position: { line: 0, character: 13 },
+          },
+          sent: false,
+        },
+      },
+    };
+
+    const result = await executor.executeTaskWithRecovery(task);
+    const execution = result.finalExecution.execution;
+
+    assert.equal(result.finalExecution.task.status, "completed");
+    assert.equal(execution.result.state, "symbol_request_completed_long_lived_pool_deferred");
+    assert.equal(execution.server.didOpenSent, true);
+    assert.equal(execution.server.sourceContentTransferred, true);
+    assert.equal(execution.server.symbolRequestSent, true);
+    assert.equal(execution.server.symbolRequestMethod, "textDocument/definition");
+    assert.equal(execution.processSupervision.protocolHandshake.symbolResponseObserved, true);
+    assert.equal(execution.lifecycleState.status, "symbol_request_completed");
+    assert.equal(execution.lifecycleState.boundaries.jsonRpcOperationalRequestsEnabled, true);
+    assert.equal(execution.lifecycleState.boundaries.longLivedProcessActive, false);
+    assert.equal(result.finalExecution.task.engineeringLspLifecycle.symbolRequest.sent, true);
+    assert.equal(JSON.stringify(execution).includes("openclawSymbolRequest = 7"), false);
+  } finally {
+    process.env.PATH = previousPath;
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("systemd repair execution task dispatches to deferred non-recoverable handler", async () => {
   const { executor, events, persistCalls } = createExecutorHarness();
   const task = {

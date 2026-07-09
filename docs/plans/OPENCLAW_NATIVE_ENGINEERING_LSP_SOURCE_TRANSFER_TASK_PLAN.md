@@ -104,16 +104,15 @@ OPENCLAW_NATIVE_ENGINEERING_LSP_SYMBOL_REQUEST_PROPOSAL_PLAN.md
 It drafts definition/references/hover JSON-RPC metadata over approved didOpen
 state without sending an operational symbol request.
 
-## Next Slice
+## Later Follow-up Completed
 
-The next smallest real capability is:
+The symbol request task follow-up was completed as:
 
 ```text
-approval-gated LSP symbol request task
+OPENCLAW_NATIVE_ENGINEERING_LSP_SYMBOL_REQUEST_TASK_PLAN.md
 ```
 
-That follow-up should create a task from an inspected proposal, require explicit
-approval, send only the selected operational symbol request to a bounded
-short-lived process after approved didOpen setup, record bounded response
-metadata, and keep long-lived pools, provider egress, package installation,
-root/system daemon work, and automatic retries deferred.
+It sends exactly one approved definition/references/hover request through a
+bounded short-lived LSP process after rebuilding approved didOpen setup and
+continues to defer long-lived process pools, provider egress, package
+installation, root/system daemon work, and automatic retries.

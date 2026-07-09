@@ -239,6 +239,9 @@ test("workspace native engineering LSP lifecycle task bridge preserves approval-
     language: "python",
     lifecycleAction: "restart",
     relativePath: "src/app.ts",
+    symbolAction: "definition",
+    line: 1,
+    character: 0,
     maxFileSizeBytes: 128 * 1024,
     maxPreviewChars: 8_000,
     confirm: true,
@@ -280,6 +283,9 @@ test("workspace native engineering LSP source-transfer task bridge preserves pro
     language: "typescript",
     lifecycleAction: "source_transfer",
     relativePath: "src/app.ts",
+    symbolAction: "definition",
+    line: 1,
+    character: 0,
     maxFileSizeBytes: 2048,
     maxPreviewChars: 500,
     confirm: true,
@@ -292,6 +298,9 @@ test("workspace native engineering LSP source-transfer task bridge preserves pro
     language: "typescript",
     lifecycleAction: "source_transfer",
     relativePath: "src/app.ts",
+    symbolAction: "definition",
+    line: 1,
+    character: 0,
     maxFileSizeBytes: 2048,
     maxPreviewChars: 500,
     confirm: true,
@@ -300,6 +309,63 @@ test("workspace native engineering LSP source-transfer task bridge preserves pro
   assert.deepEqual(response.body.approval, { id: "approval-lsp-source-transfer", status: "pending" });
   assert.equal(response.body.sourceTransferProposal.proposedDidOpen.sent, false);
   assert.equal(response.body.engineeringLspLifecycle.sourceTransfer.didOpenSent, false);
+});
+
+test("workspace native engineering LSP symbol request task bridge preserves request inputs", async () => {
+  let observedInput = null;
+  const response = await invokeWorkspaceNativeOpsRoute({
+    createNativeEngineeringLspLifecycleTask: async (input) => {
+      observedInput = input;
+      return {
+        registry: "openclaw-native-engineering-lsp-lifecycle-task-v0",
+        mode: "approval-gated-lsp-symbol-request",
+        generatedAt: "2026-07-10T00:00:00.000Z",
+        sourceRegistry: "openclaw-native-engineering-lsp-symbol-request-proposal-v0",
+        lifecycleDraft: null,
+        sourceTransferProposal: null,
+        symbolRequestProposal: {
+          registry: "openclaw-native-engineering-lsp-symbol-request-proposal-v0",
+          proposedJsonRpc: { method: "textDocument/definition", sent: false },
+        },
+        engineeringLspLifecycle: {
+          language: input.language,
+          lifecycleAction: input.lifecycleAction,
+          symbolRequest: { action: input.symbolAction, sent: false },
+          server: { serverBinary: "typescript-language-server", processStarted: false },
+        },
+        task: { id: "task-lsp-symbol", status: "queued" },
+        approval: { id: "approval-lsp-symbol", status: "pending" },
+        governance: { createsTask: true, createsApproval: true, symbolRequestRequiresApproval: true },
+      };
+    },
+  }, "POST", "/plugins/native-adapter/engineering-lsp/lifecycle-tasks", {
+    workspacePath: "/tmp/openclaw",
+    language: "typescript",
+    lifecycleAction: "symbol_request",
+    symbolAction: "definition",
+    relativePath: "src/app.ts",
+    line: 2,
+    character: 14,
+    confirm: true,
+  });
+
+  assert.equal(response.handled, true);
+  assert.equal(response.statusCode, 201);
+  assert.deepEqual(observedInput, {
+    workspacePath: "/tmp/openclaw",
+    language: "typescript",
+    lifecycleAction: "symbol_request",
+    relativePath: "src/app.ts",
+    symbolAction: "definition",
+    line: 2,
+    character: 14,
+    maxFileSizeBytes: 128 * 1024,
+    maxPreviewChars: 8_000,
+    confirm: true,
+  });
+  assert.deepEqual(response.body.task, { id: "task-lsp-symbol", status: "queued" });
+  assert.equal(response.body.symbolRequestProposal.proposedJsonRpc.sent, false);
+  assert.equal(response.body.engineeringLspLifecycle.symbolRequest.sent, false);
 });
 
 test("workspace native source command task serializes task and approval contracts", async () => {
