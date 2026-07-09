@@ -372,6 +372,145 @@ async function createNativeEngineeringWriteProposalTask({
   };
 }
 
+async function createNativeAcpxCodexBridgeWrapperWriteTask({
+  workspacePath = null,
+  sessionKey = null,
+  command = null,
+  wrapperName = null,
+  overwrite = true,
+  confirm = false,
+} = {}) {
+  if (confirm !== true) {
+    throw new Error("ACPX/Codex bridge wrapper write task creation requires confirm=true.");
+  }
+  if (typeof deps.buildNativeAcpxCodexBridgeWrapperWriteProposal !== "function") {
+    throw new Error("ACPX/Codex bridge wrapper write proposal builder is unavailable.");
+  }
+
+  const writeProposal = deps.buildNativeAcpxCodexBridgeWrapperWriteProposal({
+    sessionKey,
+    command,
+    wrapperName,
+  });
+  if (writeProposal.summary?.readyForWriteApproval !== true) {
+    throw new Error("ACPX/Codex bridge wrapper write task requires a ready wrapper write proposal.");
+  }
+
+  const taskResult = await createNativeOpenClawWorkspaceTextWriteTask({
+    workspacePath,
+    relativePath: writeProposal.proposal.wrapper.relativePath,
+    content: writeProposal.proposal.wrapper.contentPreview,
+    overwrite,
+    confirm: true,
+  });
+  taskResult.task.nativeAcpxCodexBridgeWrapper = {
+    registry: "openclaw-native-acpx-codex-bridge-wrapper-write-task-v0",
+    mode: "approval-gated-acpx-codex-bridge-wrapper-write",
+    proposalId: writeProposal.proposal.id,
+    sourceRegistry: writeProposal.registry,
+    sourceCapabilityId: writeProposal.proposal.capabilityId,
+    approvedMutationCapabilityId: "act.openclaw.workspace_text_write",
+    target: {
+      relativePath: writeProposal.proposal.wrapper.relativePath,
+      contentHash: writeProposal.proposal.wrapper.contentHash,
+      contentPreviewBytes: writeProposal.proposal.wrapper.contentPreviewBytes,
+      contentPreviewExposed: false,
+      wrapperWritten: false,
+      chmodApplied: false,
+    },
+    command: {
+      command: writeProposal.proposal.command.command,
+      argsCount: Array.isArray(writeProposal.proposal.command.args) ? writeProposal.proposal.command.args.length : 0,
+      argsExposed: false,
+      commandExecuted: false,
+      processSpawned: false,
+    },
+    governance: {
+      createsTask: true,
+      createsApproval: true,
+      canMutateBeforeApproval: false,
+      delegatesApprovedMutationTo: "act.openclaw.workspace_text_write",
+      canReadCredentialValue: false,
+      canCopyAuthMaterial: false,
+      canExecuteWrapper: false,
+      canSpawnCodexAcp: false,
+      canCallProvider: false,
+      canUseNetwork: false,
+      contentPreviewExposedOnTask: false,
+    },
+  };
+  persistState();
+  const generatedAt = new Date().toISOString();
+
+  return {
+    registry: "openclaw-native-acpx-codex-bridge-wrapper-write-task-v0",
+    mode: "approval-gated-acpx-codex-bridge-wrapper-write",
+    generatedAt,
+    sourceRegistry: writeProposal.registry,
+    capability: {
+      id: "act.openclaw.acpx_codex_bridge.wrapper_write_bridge",
+      delegatesTo: "act.openclaw.workspace_text_write",
+      risk: "high",
+      approvalRequired: true,
+      runtimeOwner: "openclaw_on_nixos",
+    },
+    workspace: taskResult.workspace,
+    target: {
+      relativePath: writeProposal.proposal.wrapper.relativePath,
+      contentHash: writeProposal.proposal.wrapper.contentHash,
+      contentPreviewBytes: writeProposal.proposal.wrapper.contentPreviewBytes,
+      contentPreviewExposed: false,
+      overwrite: overwrite !== false,
+    },
+    wrapperWriteProposal: {
+      registry: writeProposal.registry,
+      mode: writeProposal.mode,
+      proposalId: writeProposal.proposal.id,
+      proposalStatus: writeProposal.proposal.status,
+      capabilityId: writeProposal.proposal.capabilityId,
+      target: {
+        relativePath: writeProposal.proposal.wrapper.relativePath,
+        contentHash: writeProposal.proposal.wrapper.contentHash,
+        contentPreviewBytes: writeProposal.proposal.wrapper.contentPreviewBytes,
+        contentPreviewExposed: false,
+      },
+      writeBoundary: writeProposal.proposal.writeBoundary,
+      governance: writeProposal.governance,
+      auditEvidence: writeProposal.auditEvidence,
+      deferredExecutionBoundaries: writeProposal.deferredExecutionBoundaries,
+    },
+    workspaceTextWrite: {
+      registry: taskResult.registry,
+      mode: taskResult.mode,
+      capability: taskResult.capability,
+      target: taskResult.target,
+      contentExposed: false,
+    },
+    task: taskResult.task,
+    approval: taskResult.approval,
+    governance: {
+      mode: "acpx_codex_bridge_wrapper_write_to_workspace_text_write_approval_bridge",
+      runtimeOwner: "openclaw_on_nixos",
+      createsTask: true,
+      createsApproval: true,
+      canExecuteWithoutApproval: false,
+      executed: false,
+      canMutateBeforeApproval: false,
+      delegatesApprovedMutationTo: "act.openclaw.workspace_text_write",
+      recordsCapabilityHistory: true,
+      recordsFilesystemLedgerAfterApproval: true,
+      canReadCredentialValue: false,
+      canCopyAuthMaterial: false,
+      canExecuteWrapper: false,
+      canSpawnCodexAcp: false,
+      canCallProvider: false,
+      canUseNetwork: false,
+      contentPreviewExposed: false,
+      chmodDeferred: true,
+    },
+  };
+}
+
 async function createNativeEngineeringEditProposalTask({
   workspacePath = null,
   relativePath = "scratch/native-edit.txt",
@@ -1196,6 +1335,7 @@ async function createOpenClawSourceCommandTask({
     createNativeOpenClawWorkspaceTextWriteTask,
     createNativeEngineeringEditProposalTask,
     createNativeEngineeringWriteProposalTask,
+    createNativeAcpxCodexBridgeWrapperWriteTask,
     createNativeEngineeringLspLifecycleTask,
     readBoundedWorkspaceTextFile,
     normaliseWorkspacePatchEdits,

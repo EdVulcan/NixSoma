@@ -229,8 +229,8 @@ enhanced `openclaw` modules.
 | `cc_plan_enter`, `cc_plan_exit`, `cc_todo_write` | absorbed as evidence plus operator-visible workbench state | `sense.openclaw.engineering_context.plan_todo_evidence` reads visible task/workbench plan state, maps planning/todo tool semantics, reports todo counts, and exposes Observer evidence without hidden mode switches, task mutation, or `.openclaw/cc-todo.md` writes. `openclaw-native-engineering-planning-workbench-state-v0` bridges that evidence into Engineering Loop State for selected engineering tasks. | Keep hidden mode, todo-file persistence, and task mutation deferred until governed workbench storage exists. | Level 1 |
 | `microcompact` | absorbed as evidence | `sense.openclaw.engineering_context.microcompact_evidence` reads command transcript metadata, protects recent engineering evidence by default, and estimates reclaimable context budget without returning raw output or mutating logs. | Keep actual runtime-message compaction deferred until the evidence surface is stable and governed. Do not silently mutate persisted transcript or hide current verification/recovery evidence. | Level 1 |
 | Live plugin runtime refresh | absorbed as evidence | `sense.openclaw.plugin_runtime.refresh_evidence` recomputes the native plugin registry read model, reports activation gates, cache invalidation intent, and blocked module-load/runtime-activation boundaries with Observer evidence. | Keep actual module-loader cache invalidation and live activation deferred until a governed loader exists. | Level 1 |
-| ACPX/Codex bridge compatibility | partially absorbed | `sense.openclaw.acpx_codex_bridge.compatibility` maps the enhanced bridge lessons into a native compatibility read model: POSIX `npx`, Windows `npx.cmd`, command override contract, auth isolation boundaries, future NixOS-body ACP bridge scope, Observer visibility, `plan.openclaw.acpx_codex_bridge.wrapper_action` proposal drafts, approval-gated `act.openclaw.acpx_codex_bridge.wrapper_action` tasks that record approved-deferred boundaries, and `plan.openclaw.acpx_codex_bridge.wrapper_write` proposals that preview wrapper content/hash with placeholder auth paths. | Keep live auth copy, actual wrapper write/chmod, `npx` execution, ACP process spawn, and provider egress deferred. Do not copy enhanced ACPX runtime as a dependency. | Level 1 |
-| Runtime persistence tests | partially absorbed | Main has many task/approval/recovery persistence milestones, and `state.openclaw.acpx_codex_bridge.session_metadata` now persists bounded ACPX/Codex session metadata with independent sessions, overwrite revisions, missing-session null behavior, restart recovery, secret-key redaction, Observer-visible readback, wrapper/action draft dependency checks, approval-gated task linkage, and wrapper write proposal dependency checks. | Reuse the persistence discipline; next ACPX work should bridge the wrapper write proposal into an approval-gated workspace text write task before any live bridge execution. | Level 1 |
+| ACPX/Codex bridge compatibility | partially absorbed | `sense.openclaw.acpx_codex_bridge.compatibility` maps the enhanced bridge lessons into a native compatibility read model: POSIX `npx`, Windows `npx.cmd`, command override contract, auth isolation boundaries, future NixOS-body ACP bridge scope, Observer visibility, `plan.openclaw.acpx_codex_bridge.wrapper_action` proposal drafts, approval-gated `act.openclaw.acpx_codex_bridge.wrapper_action` tasks that record approved-deferred boundaries, `plan.openclaw.acpx_codex_bridge.wrapper_write` proposals that preview wrapper content/hash with placeholder auth paths, and `act.openclaw.acpx_codex_bridge.wrapper_write_bridge` tasks that delegate approved previewed wrapper writes to `act.openclaw.workspace_text_write`. | Keep live auth copy, direct unapproved wrapper write/chmod, `npx` execution, ACP process spawn, and provider egress deferred. Do not copy enhanced ACPX runtime as a dependency. | Level 1 |
+| Runtime persistence tests | partially absorbed | Main has many task/approval/recovery persistence milestones, and `state.openclaw.acpx_codex_bridge.session_metadata` now persists bounded ACPX/Codex session metadata with independent sessions, overwrite revisions, missing-session null behavior, restart recovery, secret-key redaction, Observer-visible readback, wrapper/action draft dependency checks, approval-gated task linkage, wrapper write proposal dependency checks, and approved wrapper write task state/ledger evidence through the workspace text-write path. | Reuse the persistence discipline; next ACPX work should stay thin by adding wrapper-write execution readback/recovery evidence before any live bridge execution. | Level 1 |
 | Engineering prompt semantics | partially absorbed | Project docs and Codex skills encode evidence-first, precise edits, low coupling, and scoped validation; no product runtime prompt-pack enforcement exists. | Convert useful semantics into Observer-verifiable work standards, not a monolithic prompt wall. | Level 1 |
 | Operator-facing UI refinements | partially absorbed | Observer UI has been decoupled into panels/refreshers/renderers and now exposes parameterized engineering loop controls plus task/approval/evidence guidance, completion readback, explicit recovery action drafts, recovered verification rerun readback, plan/todo workbench state, read-only loop-state restoration from core task history, startup auto-restore when local state is empty, and LSP lifecycle draft visibility, but enhanced chat/tool-card styling is not migrated. | Keep product-native controls; next LSP work should be a cohesive governed supervised lifecycle pilot, not another static readiness shell. Avoid wholesale CSS import. | Level 1 now, Level 2 when work-view is active |
 | `HEARTBEAT.md`, `SOUL.md`, `TOOLS.md` identity notes | should not migrate | Main has mission/docs/skills and fixtures that read `TOOLS.md`, but not these identity files as product authority. | Do not copy persona or local setup notes wholesale. Extract only governed context-file concepts after policy review. | Level 1 |
@@ -530,14 +530,20 @@ Current OpenClaw:
 - The read model reports command compatibility lessons, auth-isolation
   boundaries, and the future NixOS-body bridge target without reading
   `CODEX_HOME`, copying auth material, writing a wrapper, or starting `npx`.
+- The wrapper write bridge now connects previewed wrapper content to the existing
+  approval-gated `act.openclaw.workspace_text_write` path. It writes only after
+  explicit approval, stores capability history and filesystem ledger evidence,
+  and still avoids credential reads, auth copies, chmod, `npx` execution,
+  ACP/Codex process spawn, provider calls, network egress, and root/system work.
 
 Classification: partially absorbed.
 
 Recommendation:
 
 - Preserve the compatibility and secret-isolation lessons. Next expose the
-  native read model in Observer. Keep live auth copy, wrapper write, ACP process
-  spawn, and provider egress deferred.
+  approved wrapper-write ledger through thin readback/recovery evidence. Keep
+  live auth copy, direct unapproved wrapper write/chmod, ACP process spawn, and
+  provider egress deferred.
 
 ### Runtime Persistence Tests
 
@@ -553,8 +559,9 @@ Current OpenClaw:
 - The main repo has substantial milestone evidence for task, approval, recovery,
   runtime activation, and provider-lane persistence.
 - ACPX/Codex session metadata persistence now covers missing sessions, multiple
-  independent sessions, overwrite behavior, secret-key redaction, and restart
-  recovery through the core state file.
+  independent sessions, overwrite behavior, secret-key redaction, restart
+  recovery through the core state file, and approved wrapper-write linkage to
+  capability history plus filesystem ledger evidence.
 - Live plugin runtime refresh task evidence now persists approved refresh
   execution readback in task state.
 
@@ -562,9 +569,8 @@ Classification: partially absorbed.
 
 Recommendation:
 
-- Keep the existing persistence discipline. Add Observer visibility before live
-  ACPX bridge execution, and add focused tests for any future auth-copy or
-  wrapper-writing task before enabling it.
+- Keep the existing persistence discipline. Add focused tests for any future
+  auth-copy, chmod, wrapper execution, or process-spawn task before enabling it.
 
 ### Engineering Prompt Semantics
 
@@ -893,18 +899,23 @@ OPENCLAW_NATIVE_ACPX_CODEX_BRIDGE_COMPATIBILITY_PLAN.md
 ```
 
 It maps the enhanced-source bridge and persistence tests into OpenClaw-native
-compatibility evidence and a bounded persisted session metadata store without
-copying the reference runtime, reading credentials, writing wrappers, spawning
-ACP processes, or performing provider egress.
+compatibility evidence, a bounded persisted session metadata store, proposal
+drafts, approval-gated wrapper action tasks, wrapper write proposals, and an
+approval-gated wrapper write bridge through the existing workspace text-write
+path without copying the reference runtime, reading credentials, copying auth
+material, running chmod, executing wrappers, spawning ACP processes, or
+performing provider egress.
 
 Next smallest real capability:
 
 ```text
-Observer visibility for ACPX/Codex bridge compatibility and persistence state
+ACPX/Codex bridge wrapper write execution readback and recovery recommendation
 ```
 
-That should expose the existing read model in Observer without enabling live
-auth copy, wrapper execution, ACP process spawn, or provider egress.
+That should read completed approved wrapper-write task state, capability
+history, and filesystem ledger evidence without enabling live auth copy, chmod,
+wrapper execution, ACP process spawn, provider egress, or another readiness
+chain.
 
 Required answer for every following slice:
 

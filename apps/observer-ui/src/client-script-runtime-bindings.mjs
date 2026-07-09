@@ -136,6 +136,12 @@ acpxCodexBridgeWrapperTaskButton.addEventListener("click", () => {
   });
 });
 
+acpxCodexBridgeWrapperWriteTaskButton.addEventListener("click", () => {
+  createAcpxCodexBridgeWrapperWriteApprovalTask().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 pluginSearchWebTaskButton.addEventListener("click", () => {
   createPluginSearchWebApprovalTask().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

@@ -107,6 +107,17 @@ function writeProposalTaskInputFromBody(body) {
   };
 }
 
+function acpxCodexWrapperWriteTaskInputFromBody(body) {
+  return {
+    workspacePath: bodyString(body, "workspacePath", null),
+    sessionKey: bodyString(body, "sessionKey", null),
+    command: bodyString(body, "command", null),
+    wrapperName: bodyString(body, "wrapperName", null),
+    overwrite: body.overwrite !== false,
+    confirm: body.confirm === true,
+  };
+}
+
 function editProposalTaskInputFromBody(body) {
   return {
     workspacePath: bodyString(body, "workspacePath", null),
@@ -221,6 +232,23 @@ export async function handleWorkspaceNativeOpsRoute({
         "workspace",
         "target",
         "engineeringWriteProposal",
+        "workspaceTextWrite",
+      ], { serialiseTask, serialiseApproval, buildTaskSummary }));
+    } catch (error) {
+      sendError(res, 400, error);
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/plugins/native-adapter/acpx-codex-bridge-wrapper-write-tasks") {
+    try {
+      const body = await readJsonBody(req);
+      const result = await workspaceOps.createNativeAcpxCodexBridgeWrapperWriteTask(acpxCodexWrapperWriteTaskInputFromBody(body));
+      sendJson(res, 201, serialiseWorkspaceTaskResponse(result, [
+        "capability",
+        "workspace",
+        "target",
+        "wrapperWriteProposal",
         "workspaceTextWrite",
       ], { serialiseTask, serialiseApproval, buildTaskSummary }));
     } catch (error) {

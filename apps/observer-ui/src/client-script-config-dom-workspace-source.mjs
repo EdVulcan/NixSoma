@@ -246,6 +246,7 @@ const acpxCodexBridgeRuntime = document.querySelector("#acpx-codex-bridge-runtim
 const acpxCodexBridgeMode = document.querySelector("#acpx-codex-bridge-mode");
 const acpxCodexBridgeJson = document.querySelector("#acpx-codex-bridge-json");
 const acpxCodexBridgeWrapperTaskButton = document.querySelector("#acpx-codex-bridge-wrapper-task-button");
+const acpxCodexBridgeWrapperWriteTaskButton = document.querySelector("#acpx-codex-bridge-wrapper-write-task-button");
 const nativePluginRuntimeContractRegistry = document.querySelector("#native-plugin-runtime-contract-registry");
 const nativePluginRuntimeContractStatus = document.querySelector("#native-plugin-runtime-contract-status");
 const nativePluginRuntimeContractRequired = document.querySelector("#native-plugin-runtime-contract-required");

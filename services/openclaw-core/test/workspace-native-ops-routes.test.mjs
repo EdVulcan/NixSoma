@@ -151,6 +151,51 @@ test("workspace native engineering write proposal task bridge preserves approval
   assert.equal(response.body.engineeringWriteProposal.contentExposed, false);
 });
 
+test("workspace native ACPX/Codex wrapper write task bridge preserves approval-gated input", async () => {
+  let observedInput = null;
+  const response = await invokeWorkspaceNativeOpsRoute({
+    createNativeAcpxCodexBridgeWrapperWriteTask: async (input) => {
+      observedInput = input;
+      return {
+        registry: "openclaw-native-acpx-codex-bridge-wrapper-write-task-v0",
+        mode: "approval-gated-acpx-codex-bridge-wrapper-write",
+        generatedAt: "2026-07-10T00:00:00.000Z",
+        sourceRegistry: "openclaw-native-acpx-codex-bridge-wrapper-write-proposal-v0",
+        capability: { id: "act.openclaw.acpx_codex_bridge.wrapper_write_bridge" },
+        workspace: { id: "workspace" },
+        target: { relativePath: ".openclaw/acpx/codex-bridge/codex-acp-test.sh", contentPreviewExposed: false },
+        wrapperWriteProposal: { contentPreviewExposed: false },
+        workspaceTextWrite: { registry: "openclaw-native-workspace-text-write-task-v0", contentExposed: false },
+        task: { id: "task-acpx-write", status: "pending" },
+        approval: { id: "approval-acpx-write", status: "pending" },
+        governance: { createsTask: true, createsApproval: true, contentPreviewExposed: false },
+      };
+    },
+  }, "POST", "/plugins/native-adapter/acpx-codex-bridge-wrapper-write-tasks", {
+    workspacePath: "/tmp/openclaw",
+    sessionKey: "agent:codex:test",
+    command: "npx.cmd",
+    wrapperName: "codex-acp-test",
+    overwrite: false,
+    confirm: true,
+  });
+
+  assert.equal(response.handled, true);
+  assert.equal(response.statusCode, 201);
+  assert.deepEqual(observedInput, {
+    workspacePath: "/tmp/openclaw",
+    sessionKey: "agent:codex:test",
+    command: "npx.cmd",
+    wrapperName: "codex-acp-test",
+    overwrite: false,
+    confirm: true,
+  });
+  assert.deepEqual(response.body.task, { id: "task-acpx-write", status: "pending" });
+  assert.deepEqual(response.body.approval, { id: "approval-acpx-write", status: "pending" });
+  assert.equal(response.body.workspaceTextWrite.contentExposed, false);
+  assert.equal(response.body.governance.contentPreviewExposed, false);
+});
+
 test("workspace native engineering edit proposal task bridge preserves approval-gated input", async () => {
   let observedInput = null;
   const response = await invokeWorkspaceNativeOpsRoute({

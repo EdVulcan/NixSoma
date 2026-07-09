@@ -6,7 +6,8 @@ Updated: 2026-07-10
 
 ACPX/Codex bridge compatibility, runtime persistence evidence, Observer
 visibility, wrapper/action proposal draft, approval-gated wrapper action task
-bridge, and wrapper write proposal/preview.
+bridge, wrapper write proposal/preview, and approval-gated wrapper write bridge
+through the existing workspace text-write path.
 
 This slice migrates the useful enhanced-source ACPX/Codex bridge lessons into
 OpenClaw-native Level 1 behavior:
@@ -17,6 +18,7 @@ POST /plugins/native-adapter/acpx-codex-session-records
 GET /plugins/native-adapter/acpx-codex-bridge-wrapper-draft
 GET /plugins/native-adapter/acpx-codex-bridge-wrapper-write-proposal
 POST /plugins/native-adapter/acpx-codex-bridge-wrapper-tasks
+POST /plugins/native-adapter/acpx-codex-bridge-wrapper-write-tasks
 Observer panel: OpenClaw ACPX/Codex Bridge
 ```
 
@@ -48,8 +50,10 @@ sessions:
 - no `npx` or ACP process spawn
 - no provider/network egress
 
-Observer now exposes the existing read model without creating tasks, approvals,
-wrapper files, ACP/Codex processes, provider calls, or network egress.
+Passive Observer refresh exposes the existing read model without creating tasks,
+approvals, wrapper files, ACP/Codex processes, provider calls, or network egress.
+Explicit operator buttons can create the approval-gated wrapper action task or
+wrapper write task; they still do not approve or execute those tasks.
 
 The wrapper/action draft route creates a proposal-only bridge action shape for a
 selected persisted session. It records the planned wrapper-relative path,
@@ -71,6 +75,16 @@ and future `act.openclaw.workspace_text_write` boundary. It uses an explicit
 directories, write the wrapper file, run `chmod`, execute `npx`, spawn ACP/Codex,
 call providers, or use network.
 
+The wrapper write task route connects that reviewed proposal to the existing
+approval-gated `act.openclaw.workspace_text_write` path. Task creation returns
+only metadata, content hash, and approval state; it does not expose the wrapper
+content preview in the public task response. Operator execution blocks before
+approval. After approval, the normal workspace text-write capability writes the
+previewed user-space wrapper file under the bounded workspace root and records
+capability history plus filesystem ledger evidence. It still does not read real
+Codex credentials, copy auth material, create/chmod the wrapper directory,
+execute `npx`, spawn ACP/Codex, call providers, use network, or require root.
+
 ## Governance
 
 Capability mapping:
@@ -81,6 +95,8 @@ ACPX runtime persistence tests -> state.openclaw.acpx_codex_bridge.session_metad
 ACPX/Codex wrapper/action draft -> plan.openclaw.acpx_codex_bridge.wrapper_action
 ACPX/Codex wrapper/action task -> act.openclaw.acpx_codex_bridge.wrapper_action
 ACPX/Codex wrapper write proposal -> plan.openclaw.acpx_codex_bridge.wrapper_write
+ACPX/Codex wrapper write approval bridge -> act.openclaw.acpx_codex_bridge.wrapper_write_bridge
+Delegated approved write -> act.openclaw.workspace_text_write
 ```
 
 This is intentionally not a live bridge execution path. It creates a native
@@ -95,6 +111,8 @@ Core builder:
 services/openclaw-core/src/native-acpx-codex-bridge-builders.mjs
 services/openclaw-core/src/native-acpx-codex-bridge-task-builders.mjs
 services/openclaw-core/src/task-executor-native-acpx-codex-bridge-handlers.mjs
+services/openclaw-core/src/workspace-ops.mjs
+services/openclaw-core/src/workspace-native-ops-routes.mjs
 ```
 
 State persistence:
@@ -139,7 +157,7 @@ The following remain deferred:
 CODEX_HOME read
 auth.json/config.toml read
 auth material copy
-wrapper file write
+direct unapproved wrapper file write
 wrapper directory creation or chmod
 npx/npx.cmd execution
 ACP/Codex process spawn
@@ -153,12 +171,12 @@ root/system daemon work
 The next smallest useful bridge follow-up is:
 
 ```text
-ACPX/Codex bridge governed wrapper write approval bridge
+ACPX/Codex bridge wrapper write execution readback and recovery recommendation
 ```
 
-That should connect the wrapper write proposal to the existing
-approval-gated `act.openclaw.workspace_text_write` path, write only the
-previewed user-space wrapper file after explicit approval, and attach ledger
-evidence. It must still avoid reading real Codex credential values, copying
-auth material, executing `npx`, spawning an ACP/Codex process, calling
-providers, or using network egress.
+That should stay thin: read completed wrapper-write task state, capability
+history, and filesystem ledger evidence; recommend recovery when the approved
+write did not land. It must not become another readiness chain and must still
+avoid reading real Codex credential values, copying auth material, running
+`chmod`, executing `npx`, spawning an ACP/Codex process, calling providers, or
+using network egress.
