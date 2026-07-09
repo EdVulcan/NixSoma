@@ -7,6 +7,7 @@ import { createPluginReviewSourceCommandProposals } from "./plugin-review-source
 import { createPluginReviewSourceMigration } from "./plugin-review-source-migration.mjs";
 import { createNativeEngineeringToolSurfaceBuilders } from "./native-engineering-tool-surface-builders.mjs";
 import { createNativeEngineeringReadSearchBuilders } from "./native-engineering-read-search-builders.mjs";
+import { createNativeEngineeringEditProposalBuilders } from "./native-engineering-edit-proposal-builders.mjs";
 import {
   createPluginReviewWorkspaceDiscovery,
   safeStat,
@@ -107,6 +108,11 @@ export function createPluginReview(deps) {
   } = createNativeEngineeringReadSearchBuilders({
     safeStat,
     selectOpenClawToolCatalogWorkspace,
+  });
+  const {
+    buildNativeEngineeringEditProposal,
+  } = createNativeEngineeringEditProposalBuilders({
+    buildNativeEngineeringReadFile,
   });
   const {
     buildOpenClawPluginSearchWebAdapterContract,
@@ -259,6 +265,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "sense.openclaw.engineering_tool.read",
       "sense.openclaw.engineering_tool.glob",
       "sense.openclaw.engineering_tool.grep",
+      "act.openclaw.engineering_tool.edit_proposal",
       "sense.openclaw.prompt_pack",
       "sense.openclaw.plugin_manifest_map",
       "plan.openclaw.plugin_capability",
@@ -272,7 +279,7 @@ function buildOpenClawNativePluginAdapterStatus() {
     ],
     pendingCapabilities: ["act.plugin.capability.invoke"],
     summary: {
-      implemented: 19,
+      implemented: 20,
       pending: 1,
       canReadManifestMetadata: true,
       canReadToolCatalogMetadata: true,
@@ -280,6 +287,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       canReadBoundedEngineeringFiles: true,
       canRunBoundedEngineeringGlob: true,
       canRunBoundedEngineeringGrep: true,
+      canBuildSurgicalEngineeringEditProposals: true,
       canReadPluginManifestMapMetadata: true,
       canPlanPluginCapabilityAbsorption: true,
       canPlanSearchWebAdapterContract: true,
@@ -314,6 +322,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "workspace semantic index emits derived counts only and never exposes file contents",
       "engineering tool surface inventory maps cc-tools contracts without importing, executing, mutating, starting LSP, or exposing source file bodies",
       "engineering read/search runs only bounded workspace read, glob, and grep operations with traversal, size, result, binary, hidden, generated, and cache boundaries",
+      "engineering edit proposals create exact-match diff previews only; patch apply, task creation, and approval creation remain separate approval-gated paths",
       "runtime preflight builds a governed execution envelope without loading plugin modules",
       "source contents, README text, script bodies, dependency versions, plugin code execution, and runtime activation remain blocked",
       "mutating plugin invocation remains pending explicit adapter design and approval gates",
@@ -367,5 +376,6 @@ function buildOpenClawNativePluginAdapterStatus() {
     buildNativeEngineeringReadFile,
     buildNativeEngineeringGlob,
     buildNativeEngineeringGrep,
+    buildNativeEngineeringEditProposal,
   };
 }

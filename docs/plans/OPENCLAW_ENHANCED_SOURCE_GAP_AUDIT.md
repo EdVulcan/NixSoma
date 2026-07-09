@@ -74,9 +74,16 @@ governed surfaces:
   `sense.openclaw.workspace_semantic_index`,
   `sense.openclaw.workspace_symbol_lookup`,
   `sense.openclaw.workspace_edit_target_select`,
+  `sense.openclaw.engineering_tool_surface_inventory`,
+  `sense.openclaw.engineering_tool.read`,
+  `sense.openclaw.engineering_tool.glob`,
+  `sense.openclaw.engineering_tool.grep`,
   `sense.openclaw.prompt_pack`,
   `sense.openclaw.plugin_manifest_map`, and
   `plan.openclaw.plugin_capability`.
+- Native engineering proposal surface:
+  `act.openclaw.engineering_tool.edit_proposal` creates exact-match surgical
+  edit proposals and bounded diff previews without applying patches.
 - Approval-gated workspace mutation:
   `act.openclaw.workspace_text_write` and
   `act.openclaw.workspace_patch_apply`.
@@ -98,11 +105,11 @@ enhanced `openclaw` modules.
 
 | Enhanced capability | Classification | Current evidence | Migration call | Identity level |
 | --- | --- | --- | --- | --- |
-| `cc_read` | partially absorbed | Bounded read-only catalog, semantic index, and symbol lookup exist, but no first-class precise file-read tool contract with line ranges. | Build a governed read-only file read surface with workspace scope, line ranges, content budget, audit, and Observer evidence. | Level 1 |
-| `cc_edit` | partially absorbed | `act.openclaw.workspace_patch_apply` has exact replacement, structured line edits, diff previews, approval, and ledgering. | Keep OpenClaw's approval-gated proposal/apply model. Do not migrate immediate raw edit execution. | Level 1 |
+| `cc_read` | absorbed | `sense.openclaw.engineering_tool.read` provides bounded workspace file read with line ranges, content budget, traversal protection, binary/size boundaries, audit, and Observer evidence. | Continue using the native read/search surface; do not import enhanced `FileReadTool.ts`. | Level 1 |
+| `cc_edit` | partially absorbed | `act.openclaw.engineering_tool.edit_proposal` creates exact-match surgical edit proposals with bounded diff previews, while `act.openclaw.workspace_patch_apply` remains the approval-gated apply path. | Keep proposal and apply separated. Do not migrate immediate raw edit execution. | Level 1 |
 | `cc_write` | partially absorbed | `act.openclaw.workspace_text_write` exists and writes only after approval through native filesystem governance. | Keep write gated and redacted. Do not migrate raw overwrite semantics as an autonomous default. | Level 1 |
-| `cc_glob` | not absorbed | Current catalog scans selected roots, but there is no general glob contract for the active workspace. | Add read-only tool inventory and glob/search contracts before execution. | Level 1 |
-| `cc_grep` | not absorbed | Current semantic queries and system file search do not provide a native regex/literal code grep tool with path/line evidence. | Add governed grep/search after inventory mapping. Prefer `rg` when available with bounded results. | Level 1 |
+| `cc_glob` | absorbed | `sense.openclaw.engineering_tool.glob` performs bounded workspace file discovery with skipped hidden/generated/cache/dependency directories and result caps. | Continue native bounded discovery; do not execute enhanced `GlobTool.ts`. | Level 1 |
+| `cc_grep` | absorbed | `sense.openclaw.engineering_tool.grep` performs bounded workspace text search with literal/regex mode, include filters, result/output caps, binary skips, audit, and Observer evidence. | Continue native bounded search; do not execute enhanced `GrepTool.ts`. | Level 1 |
 | `cc_lsp` | requires source transfer | `sense.openclaw.workspace_symbol_lookup` approximates navigation but does not start or manage LSP servers. | Transfer the LSP manager idea, rewritten as an optional governed workspace service with lifecycle evidence. | Level 1 now, Level 2 later |
 | `cc_verify` | partially absorbed | Task execution and source command chains record evidence, but engineering verification is not yet a native tool result attached to task completion. | Add verification command evidence as a governed completion artifact with retry budget and Observer visibility. | Level 1 |
 | `cc_plan_enter`, `cc_plan_exit`, `cc_todo_write` | partially absorbed | Core tasks, plans, approvals, and recovery exist; no lightweight planning mode or `.openclaw/cc-todo.md` equivalent is native. | Treat as plan-state evidence, not hidden agent mode. Integrate with task/workbench state if migrated. | Level 1 |

@@ -70,6 +70,18 @@ function engineeringGrepInput(requestUrl) {
   };
 }
 
+function engineeringEditProposalInput(requestUrl) {
+  return {
+    workspacePath: requestUrl.searchParams.get("workspacePath"),
+    relativePath: queryOrAlias(requestUrl, "relativePath", "path"),
+    oldString: queryOrAlias(requestUrl, "oldString", "search"),
+    newString: queryOrAlias(requestUrl, "newString", "replacement", ""),
+    contextLines: requestUrl.searchParams.get("contextLines"),
+    maxOutputChars: requestUrl.searchParams.get("maxOutputChars"),
+    maxFileSizeBytes: requestUrl.searchParams.get("maxFileSizeBytes"),
+  };
+}
+
 const GET_ROUTES = new Map([
   [
     "/plugins/native-adapter/manifest-profile",
@@ -124,6 +136,14 @@ const GET_ROUTES = new Map([
       builder: "buildNativeEngineeringGrep",
       errorStatus: 400,
       input: engineeringGrepInput,
+    },
+  ],
+  [
+    "/plugins/native-adapter/engineering-edit-proposal/draft",
+    {
+      builder: "buildNativeEngineeringEditProposal",
+      errorStatus: 400,
+      input: engineeringEditProposalInput,
     },
   ],
   [

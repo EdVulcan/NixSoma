@@ -186,6 +186,33 @@ test("native adapter engineering read/search routes preserve bounded query input
   });
 });
 
+test("native adapter engineering edit proposal route preserves proposal query inputs", async () => {
+  let observedInput = null;
+  const response = await invokeNativeAdapterPluginRoute({
+    buildNativeEngineeringEditProposal: (input) => {
+      observedInput = input;
+      return {
+        ok: true,
+        registry: "openclaw-native-engineering-edit-proposal-v0",
+        mode: "surgical-edit-proposal-diff-preview-only",
+      };
+    },
+  }, "GET", "/plugins/native-adapter/engineering-edit-proposal/draft?workspacePath=/tmp/openclaw&path=src/app.ts&search=old&replacement=new&contextLines=0&maxOutputChars=8000&maxFileSizeBytes=4096");
+
+  assert.equal(response.handled, true);
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(observedInput, {
+    workspacePath: "/tmp/openclaw",
+    relativePath: "src/app.ts",
+    oldString: "old",
+    newString: "new",
+    contextLines: "0",
+    maxOutputChars: "8000",
+    maxFileSizeBytes: "4096",
+  });
+  assert.equal(response.body.registry, "openclaw-native-engineering-edit-proposal-v0");
+});
+
 test("native adapter plugin task route preserves raw body values and serializes task approval", async () => {
   let observedInput = null;
   const response = await invokeNativeAdapterPluginRoute({
