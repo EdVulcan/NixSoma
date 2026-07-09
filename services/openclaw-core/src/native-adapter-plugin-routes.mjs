@@ -158,6 +158,19 @@ function engineeringLspSelectedTargetReadBridgeInput(requestUrl) {
   };
 }
 
+function engineeringLspSelectedTargetEditProposalSeedInput(requestUrl) {
+  return {
+    workspacePath: requestUrl.searchParams.get("workspacePath"),
+    language: requestUrl.searchParams.get("language") ?? "typescript",
+    taskId: requestUrl.searchParams.get("taskId"),
+    targetIndex: requestUrl.searchParams.get("targetIndex"),
+    contextLines: requestUrl.searchParams.get("contextLines"),
+    newString: requestUrl.searchParams.has("newString") ? requestUrl.searchParams.get("newString") : null,
+    maxOutputChars: requestUrl.searchParams.get("maxOutputChars"),
+    maxFileSizeBytes: requestUrl.searchParams.get("maxFileSizeBytes"),
+  };
+}
+
 const GET_ROUTES = new Map([
   [
     "/plugins/native-adapter/manifest-profile",
@@ -276,6 +289,14 @@ const GET_ROUTES = new Map([
       builder: "buildNativeEngineeringLspSelectedTargetReadBridge",
       errorStatus: 400,
       input: engineeringLspSelectedTargetReadBridgeInput,
+    },
+  ],
+  [
+    "/plugins/native-adapter/engineering-lsp/selected-target-edit-proposal-seed",
+    {
+      builder: "buildNativeEngineeringLspSelectedTargetEditProposalSeed",
+      errorStatus: 400,
+      input: engineeringLspSelectedTargetEditProposalSeedInput,
     },
   ],
   [

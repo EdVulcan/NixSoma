@@ -50,7 +50,7 @@ call providers or perform network egress
 | `cc_write` | `act.openclaw.engineering_tool.write_proposal` / `sense.openclaw.engineering_tool.write_execution_evidence` | `mutation_proposal_and_execution_evidence` | high | approval required before create or overwrite | absorbed through governed proposal, approval bridge, and execution evidence |
 | `cc_glob` | `sense.openclaw.engineering_tool.glob` | `read_only_path_search` | low | no approval for bounded metadata search | contract mapped, execution deferred |
 | `cc_grep` | `sense.openclaw.engineering_tool.grep` | `read_only_content_search` | low | no approval for bounded search; snippets require budget and audit | contract mapped, execution deferred |
-| `cc_lsp` | `sense.openclaw.engineering_tool.lsp_evidence` / `act.openclaw.engineering_tool.lsp_lifecycle_task` / `sense.openclaw.engineering_tool.lsp_lifecycle_state` / `plan.openclaw.engineering_tool.lsp_source_transfer` / `act.openclaw.engineering_tool.lsp_source_transfer_task` / `plan.openclaw.engineering_tool.lsp_symbol_request` / `act.openclaw.engineering_tool.lsp_symbol_request_task` / `sense.openclaw.engineering_tool.lsp_selected_target_read_bridge` | `language_intelligence_evidence_governed_lifecycle_source_transfer_symbol_boundary_and_read_bridge` | medium | no approval for evidence/state/proposal/read-bridge readback; approval required before lifecycle/source-transfer/symbol execution | partially absorbed as evidence, lifecycle draft, approval-gated binary gate, bounded process supervision probe, lifecycle state readback, initialize/shutdown handshake, didOpen source-transfer proposal, approval-gated didOpen task, symbol request proposal, approval-gated single symbol request task, bounded response target selection, and selected-target native read bridge |
+| `cc_lsp` | `sense.openclaw.engineering_tool.lsp_evidence` / `act.openclaw.engineering_tool.lsp_lifecycle_task` / `sense.openclaw.engineering_tool.lsp_lifecycle_state` / `plan.openclaw.engineering_tool.lsp_source_transfer` / `act.openclaw.engineering_tool.lsp_source_transfer_task` / `plan.openclaw.engineering_tool.lsp_symbol_request` / `act.openclaw.engineering_tool.lsp_symbol_request_task` / `sense.openclaw.engineering_tool.lsp_selected_target_read_bridge` / `plan.openclaw.engineering_tool.lsp_selected_target_edit_proposal_seed` | `language_intelligence_evidence_governed_lifecycle_source_transfer_symbol_boundary_read_bridge_and_edit_seed` | medium | no approval for evidence/state/proposal/read-bridge/edit-seed readback; approval required before lifecycle/source-transfer/symbol execution or edit mutation | partially absorbed as evidence, lifecycle draft, approval-gated binary gate, bounded process supervision probe, lifecycle state readback, initialize/shutdown handshake, didOpen source-transfer proposal, approval-gated didOpen task, symbol request proposal, approval-gated single symbol request task, bounded response target selection, selected-target native read bridge, and selected-target edit proposal seed |
 | `cc_verify` | `act.openclaw.engineering_tool.verify` | `verification_command_evidence` | medium | command execution requires policy or approval | partially absorbed, command execution deferred |
 | `cc_plan_enter` | `plan.openclaw.engineering_tool.plan_enter` | `planning_state` | low | no hidden mode switch without task/workbench evidence | state mutation deferred |
 | `cc_plan_exit` | `plan.openclaw.engineering_tool.plan_exit` | `planning_state` | low | no hidden execution transition without task evidence | state mutation deferred |
@@ -118,8 +118,8 @@ long-lived LSP process pool and multi-request symbol navigation sessions;
 approval-gated binary gate, bounded process supervision probe, lifecycle state
 readback, initialize/shutdown handshake, source-transfer proposal, and approved
 didOpen source-transfer task, symbol request proposal, and approval-gated single
-symbol request task, bounded target selection, and explicit selected-target read
-bridge are absorbed
+symbol request task, bounded target selection, explicit selected-target read
+bridge, and selected-target edit proposal seed are absorbed
 verification command execution and task-completion attachment
 planning/todo evidence is absorbed; hidden planning mode and todo state mutation remain deferred
 provider calls, network egress, and result envelopes
@@ -317,11 +317,22 @@ That slice lets the operator call the selected-target read bridge from
 Engineering Loop State and inspect the bounded read preview without automatic
 task creation or mutation.
 
+The selected-target edit proposal seed follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_SELECTED_TARGET_EDIT_PROPOSAL_SEED_PLAN.md
+```
+
+That slice converts completed LSP selected target reads into edit seeds and can
+build a normal bounded edit proposal when replacement text is explicitly
+provided, while preserving approval-gated mutation.
+
 The current next smallest real capability is:
 
 ```text
-LSP selected-target edit proposal seed
+Observer selected-target edit seed control
 ```
 
-That slice should let the operator turn a bounded selected-target read preview
-into an explicit edit proposal draft while preserving approval-gated mutation.
+That slice should seed the existing Observer edit proposal inputs from a
+completed LSP selected target, without creating an edit task or approval
+automatically.

@@ -65,14 +65,14 @@ npm --workspace @openclaw/observer-ui run typecheck
 observer-openclaw-native-engineering-lsp-evidence
 ```
 
-## Next Slice
+## Follow-up Completed
 
-The next smallest real capability is:
+The selected-target edit proposal seed follow-up was completed as:
 
 ```text
-LSP selected-target edit proposal seed
+OPENCLAW_NATIVE_ENGINEERING_LSP_SELECTED_TARGET_EDIT_PROPOSAL_SEED_PLAN.md
 ```
 
-That follow-up should let the operator turn a bounded selected-target read
-preview into an explicit edit proposal draft, still without automatic approval
-or mutation.
+That slice lets the core turn a completed selected-target read into an edit
+seed and, when replacement text is explicitly provided, a normal bounded edit
+proposal draft without automatic task creation, approval, or mutation.

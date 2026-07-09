@@ -154,10 +154,12 @@ export function createPluginReview(deps) {
   });
   const {
     buildNativeEngineeringLspSelectedTargetReadBridge,
+    buildNativeEngineeringLspSelectedTargetEditProposalSeed,
   } = createNativeEngineeringLspSelectedTargetReadBridgeBuilders({
     records: nativeEngineeringLspLifecycleRecords,
     selectOpenClawToolCatalogWorkspace,
     buildNativeEngineeringReadFile,
+    buildNativeEngineeringEditProposal,
   });
   const {
     buildOpenClawPluginSearchWebAdapterContract,
@@ -324,6 +326,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "plan.openclaw.engineering_tool.lsp_symbol_request",
       "act.openclaw.engineering_tool.lsp_symbol_request_task",
       "sense.openclaw.engineering_tool.lsp_selected_target_read_bridge",
+      "plan.openclaw.engineering_tool.lsp_selected_target_edit_proposal_seed",
       "sense.openclaw.engineering_tool.verify_evidence",
       "sense.openclaw.engineering_tool.recovery_evidence",
       "sense.openclaw.engineering_context.microcompact_evidence",
@@ -342,7 +345,7 @@ function buildOpenClawNativePluginAdapterStatus() {
     ],
     pendingCapabilities: ["act.plugin.capability.invoke"],
     summary: {
-      implemented: 38,
+      implemented: 39,
       pending: 1,
       canReadManifestMetadata: true,
       canReadToolCatalogMetadata: true,
@@ -364,6 +367,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       canDraftEngineeringLspSymbolRequestProposal: true,
       canCreateApprovalGatedEngineeringLspSymbolRequestTasks: true,
       canReadEngineeringLspSelectedTargetBridge: true,
+      canSeedEngineeringLspSelectedTargetEditProposals: true,
       canReadEngineeringVerificationEvidence: true,
       canReadEngineeringRecoveryEvidence: true,
       canReadEngineeringMicrocompactEvidence: true,
@@ -479,5 +483,6 @@ function buildOpenClawNativePluginAdapterStatus() {
     buildNativeEngineeringLspSourceTransferProposal,
     buildNativeEngineeringLspSymbolRequestProposal,
     buildNativeEngineeringLspSelectedTargetReadBridge,
+    buildNativeEngineeringLspSelectedTargetEditProposalSeed,
   };
 }

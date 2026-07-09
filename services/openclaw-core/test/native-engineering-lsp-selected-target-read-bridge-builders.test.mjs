@@ -14,7 +14,9 @@ import { pathToFileURL } from "node:url";
 import {
   createNativeEngineeringLspSelectedTargetReadBridgeBuilders,
   NATIVE_ENGINEERING_LSP_SELECTED_TARGET_READ_BRIDGE_REGISTRY,
+  NATIVE_ENGINEERING_LSP_SELECTED_TARGET_EDIT_PROPOSAL_SEED_REGISTRY,
 } from "../src/native-engineering-lsp-selected-target-read-bridge-builders.mjs";
+import { createNativeEngineeringEditProposalBuilders } from "../src/native-engineering-edit-proposal-builders.mjs";
 import { createNativeEngineeringReadSearchBuilders } from "../src/native-engineering-read-search-builders.mjs";
 
 function safeStat(filePath) {
@@ -49,10 +51,14 @@ function createHarness(root, records) {
     safeStat,
     selectOpenClawToolCatalogWorkspace,
   });
+  const editProposal = createNativeEngineeringEditProposalBuilders({
+    buildNativeEngineeringReadFile: readSearch.buildNativeEngineeringReadFile,
+  });
   return createNativeEngineeringLspSelectedTargetReadBridgeBuilders({
     records,
     selectOpenClawToolCatalogWorkspace,
     buildNativeEngineeringReadFile: readSearch.buildNativeEngineeringReadFile,
+    buildNativeEngineeringEditProposal: editProposal.buildNativeEngineeringEditProposal,
   });
 }
 
@@ -186,4 +192,49 @@ test("LSP selected-target read bridge blocks non-file and outside-workspace targ
   assert.equal(outsideBridge.ok, false);
   assert.equal(outsideBridge.reason, "target_outside_workspace");
   assert.equal(outsideBridge.governance.canReadArbitrarySystemPath, false);
+});
+
+test("LSP selected-target edit proposal seed exposes bounded selected text without mutation", (t) => {
+  const root = createFixture();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const builders = createHarness(root, createRecords(root));
+
+  const seed = builders.buildNativeEngineeringLspSelectedTargetEditProposalSeed({
+    workspacePath: root,
+    language: "typescript",
+    taskId: "task-symbol",
+  });
+
+  assert.equal(seed.ok, true);
+  assert.equal(seed.registry, NATIVE_ENGINEERING_LSP_SELECTED_TARGET_EDIT_PROPOSAL_SEED_REGISTRY);
+  assert.equal(seed.seed.relativePath, "src/app.ts");
+  assert.match(seed.seed.oldString, /OpenClawSelectedTarget/u);
+  assert.equal(seed.seed.newStringProvided, false);
+  assert.equal(seed.editProposal, null);
+  assert.equal(seed.governance.canBuildEditProposal, false);
+  assert.equal(seed.governance.canMutateWorkspace, false);
+  assert.equal(seed.summary.nextRequiredStep, "operator_provides_replacement_text");
+});
+
+test("LSP selected-target edit proposal seed can build existing edit proposal draft with replacement", (t) => {
+  const root = createFixture();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const builders = createHarness(root, createRecords(root));
+
+  const seed = builders.buildNativeEngineeringLspSelectedTargetEditProposalSeed({
+    workspacePath: root,
+    language: "typescript",
+    taskId: "task-symbol",
+    newString: "export const selectedSymbol = 'OpenClawRenamedTarget';",
+  });
+
+  assert.equal(seed.ok, true);
+  assert.equal(seed.seed.newStringProvided, true);
+  assert.equal(seed.editProposal.registry, "openclaw-native-engineering-edit-proposal-v0");
+  assert.equal(seed.editProposal.target.relativePath, "src/app.ts");
+  assert.equal(seed.editProposal.summary.createsTask, false);
+  assert.equal(seed.editProposal.summary.createsApproval, false);
+  assert.equal(seed.editProposal.governance.canApplyPatch, false);
+  assert.equal(seed.editProposal.diffPreview.lines.some((line) => line.type === "add" && line.text.includes("OpenClawRenamedTarget")), true);
+  assert.equal(seed.governance.futureMutationRequiresApproval, true);
 });

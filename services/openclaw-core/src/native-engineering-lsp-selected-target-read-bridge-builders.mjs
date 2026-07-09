@@ -1,9 +1,12 @@
+import { createHash } from "node:crypto";
 import { realpathSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const NATIVE_ENGINEERING_LSP_SELECTED_TARGET_READ_BRIDGE_REGISTRY =
   "openclaw-native-engineering-lsp-selected-target-read-bridge-v0";
+export const NATIVE_ENGINEERING_LSP_SELECTED_TARGET_EDIT_PROPOSAL_SEED_REGISTRY =
+  "openclaw-native-engineering-lsp-selected-target-edit-proposal-seed-v0";
 
 const DEFAULT_CONTEXT_LINES = 2;
 const MAX_CONTEXT_LINES = 20;
@@ -31,6 +34,14 @@ const SKIPPED_DIRECTORY_NAMES = new Set([
 
 function normaliseLanguage(value) {
   return typeof value === "string" && value.trim() ? value.trim().toLowerCase() : "typescript";
+}
+
+function sha256Hex(value) {
+  return createHash("sha256").update(value, "utf8").digest("hex");
+}
+
+function byteLength(value) {
+  return Buffer.byteLength(value, "utf8");
 }
 
 function normalisePositiveInteger(value, fallback, max) {
@@ -269,6 +280,7 @@ export function createNativeEngineeringLspSelectedTargetReadBridgeBuilders({
   records,
   selectOpenClawToolCatalogWorkspace,
   buildNativeEngineeringReadFile,
+  buildNativeEngineeringEditProposal = null,
 } = {}) {
   if (typeof selectOpenClawToolCatalogWorkspace !== "function") {
     throw new Error("selectOpenClawToolCatalogWorkspace is required.");
@@ -471,7 +483,193 @@ export function createNativeEngineeringLspSelectedTargetReadBridgeBuilders({
     };
   }
 
+  function buildNativeEngineeringLspSelectedTargetEditProposalSeed({
+    workspacePath = null,
+    language = "typescript",
+    taskId = null,
+    targetIndex = 0,
+    contextLines = 0,
+    newString = null,
+    maxOutputChars = DEFAULT_MAX_OUTPUT_CHARS,
+    maxFileSizeBytes = DEFAULT_MAX_FILE_SIZE_BYTES,
+  } = {}) {
+    const replacementProvided = typeof newString === "string";
+    const bridge = buildNativeEngineeringLspSelectedTargetReadBridge({
+      workspacePath,
+      language,
+      taskId,
+      targetIndex,
+      contextLines,
+      includeRead: true,
+      maxOutputChars,
+      maxFileSizeBytes,
+    });
+    const generatedAt = new Date().toISOString();
+    if (!bridge.ok || bridge.blocked) {
+      return {
+        ok: false,
+        blocked: true,
+        reason: bridge.reason ?? "selected_target_read_bridge_blocked",
+        registry: NATIVE_ENGINEERING_LSP_SELECTED_TARGET_EDIT_PROPOSAL_SEED_REGISTRY,
+        mode: "lsp-selected-target-edit-proposal-seed",
+        generatedAt,
+        identityLevel: "Level 1: stable user-space control plane",
+        bridge,
+        editProposal: null,
+        governance: {
+          readOnly: true,
+          canReadSelectedTarget: false,
+          canBuildEditProposal: false,
+          canCreateTask: false,
+          canCreateApproval: false,
+          canMutateWorkspace: false,
+          canCallProvider: false,
+        },
+      };
+    }
+    if (bridge.readResult?.summary?.outputTruncated) {
+      return {
+        ok: false,
+        blocked: true,
+        reason: "selected_target_read_truncated",
+        registry: NATIVE_ENGINEERING_LSP_SELECTED_TARGET_EDIT_PROPOSAL_SEED_REGISTRY,
+        mode: "lsp-selected-target-edit-proposal-seed",
+        generatedAt,
+        identityLevel: "Level 1: stable user-space control plane",
+        bridge,
+        editProposal: null,
+        governance: {
+          readOnly: true,
+          canReadSelectedTarget: true,
+          canBuildEditProposal: false,
+          canCreateTask: false,
+          canCreateApproval: false,
+          canMutateWorkspace: false,
+          canCallProvider: false,
+        },
+      };
+    }
+
+    const oldString = bridge.readResult?.content ?? "";
+    const seed = {
+      relativePath: bridge.target.relativePath,
+      oldString,
+      oldStringBytes: byteLength(oldString),
+      oldStringSha256: sha256Hex(oldString),
+      newStringProvided: replacementProvided,
+      newStringBytes: replacementProvided ? byteLength(newString) : 0,
+      sourceTaskId: bridge.sourceRecord?.sourceTaskId ?? null,
+      sourceTargetUri: bridge.selectedTarget?.uri ?? null,
+      contentExposed: true,
+    };
+    const editProposal = replacementProvided
+      ? (() => {
+          if (typeof buildNativeEngineeringEditProposal !== "function") {
+            throw new Error("buildNativeEngineeringEditProposal is required when newString is provided.");
+          }
+          return buildNativeEngineeringEditProposal({
+            workspacePath: bridge.workspace?.path ?? workspacePath,
+            relativePath: bridge.target.relativePath,
+            oldString,
+            newString,
+            contextLines: 1,
+            maxOutputChars,
+            maxFileSizeBytes,
+          });
+        })()
+      : null;
+    const summary = {
+      sourceTaskId: bridge.sourceRecord?.sourceTaskId ?? null,
+      relativePath: bridge.target.relativePath,
+      oldStringBytes: seed.oldStringBytes,
+      newStringProvided: replacementProvided,
+      editProposalBuilt: Boolean(editProposal),
+      createsTask: false,
+      createsApproval: false,
+      canMutate: false,
+      nextRequiredStep: replacementProvided
+        ? "operator_review_then_approval_gated_edit_task"
+        : "operator_provides_replacement_text",
+    };
+
+    return {
+      ok: true,
+      blocked: false,
+      registry: NATIVE_ENGINEERING_LSP_SELECTED_TARGET_EDIT_PROPOSAL_SEED_REGISTRY,
+      mode: "lsp-selected-target-edit-proposal-seed",
+      generatedAt,
+      identityLevel: "Level 1: stable user-space control plane",
+      sourceCapability: {
+        sourceToolName: "cc_lsp+cc_read+cc_edit",
+        intendedNativeCapabilityId: "plan.openclaw.engineering_tool.lsp_selected_target_edit_proposal_seed",
+        migrationMode: "completed_lsp_target_to_bounded_edit_proposal_seed",
+      },
+      capability: {
+        id: "plan.openclaw.engineering_tool.lsp_selected_target_edit_proposal_seed",
+        sourceToolName: "cc_lsp+cc_read+cc_edit",
+        operationClass: "lsp_target_to_edit_proposal_seed",
+        risk: "medium",
+        approvalRequiredForSeed: false,
+        approvalRequiredForMutation: true,
+      },
+      workspace: bridge.workspace,
+      sourceRecord: bridge.sourceRecord,
+      selectedTarget: bridge.selectedTarget,
+      bridge: {
+        registry: bridge.registry,
+        mode: bridge.mode,
+        target: bridge.target,
+        readRequest: bridge.readRequest,
+        summary: bridge.summary,
+      },
+      seed,
+      editProposal,
+      summary,
+      bounds: {
+        ...bridge.bounds,
+        requiresCompletedSymbolRequestState: true,
+        usesSelectedTargetReadBridge: true,
+        replacementRequiredForEditProposal: true,
+        noAutomaticTaskCreation: true,
+        noAutomaticApprovalCreation: true,
+        noWorkspaceMutation: true,
+      },
+      governance: {
+        readOnly: true,
+        canReadSelectedTarget: true,
+        canBuildEditProposal: replacementProvided,
+        canCreateTask: false,
+        canCreateApproval: false,
+        canApplyPatch: false,
+        canMutateWorkspace: false,
+        canCallProvider: false,
+        futureMutationRequiresApproval: true,
+        observerVisible: true,
+      },
+      auditEvidence: {
+        operation: "lsp_selected_target_edit_proposal_seed",
+        capabilityId: "plan.openclaw.engineering_tool.lsp_selected_target_edit_proposal_seed",
+        generatedAt,
+        workspace: bridge.workspace,
+        target: bridge.target,
+        summary,
+        persisted: false,
+        evidenceKind: "response_embedded_selected_target_edit_proposal_seed",
+      },
+      deferredExecutionBoundaries: [
+        "no task creation",
+        "no approval creation",
+        "no patch apply",
+        "no workspace mutation",
+        "no additional JSON-RPC request",
+        "no provider call",
+      ],
+      nextSmallestRealCapability: "Observer selected-target edit seed control that pre-fills the existing edit proposal inputs",
+    };
+  }
+
   return {
     buildNativeEngineeringLspSelectedTargetReadBridge,
+    buildNativeEngineeringLspSelectedTargetEditProposalSeed,
   };
 }

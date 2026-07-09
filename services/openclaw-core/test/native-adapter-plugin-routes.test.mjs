@@ -340,6 +340,34 @@ test("native adapter engineering LSP selected-target read bridge route preserves
   assert.equal(response.body.registry, "openclaw-native-engineering-lsp-selected-target-read-bridge-v0");
 });
 
+test("native adapter engineering LSP selected-target edit proposal seed route preserves seed inputs", async () => {
+  let observedInput = null;
+  const response = await invokeNativeAdapterPluginRoute({
+    buildNativeEngineeringLspSelectedTargetEditProposalSeed: (input) => {
+      observedInput = input;
+      return {
+        ok: true,
+        registry: "openclaw-native-engineering-lsp-selected-target-edit-proposal-seed-v0",
+        mode: "lsp-selected-target-edit-proposal-seed",
+      };
+    },
+  }, "GET", "/plugins/native-adapter/engineering-lsp/selected-target-edit-proposal-seed?workspacePath=/tmp/openclaw&language=typescript&taskId=task-symbol&targetIndex=1&contextLines=0&newString=replacement&maxOutputChars=700&maxFileSizeBytes=2048");
+
+  assert.equal(response.handled, true);
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(observedInput, {
+    workspacePath: "/tmp/openclaw",
+    language: "typescript",
+    taskId: "task-symbol",
+    targetIndex: "1",
+    contextLines: "0",
+    newString: "replacement",
+    maxOutputChars: "700",
+    maxFileSizeBytes: "2048",
+  });
+  assert.equal(response.body.registry, "openclaw-native-engineering-lsp-selected-target-edit-proposal-seed-v0");
+});
+
 test("native adapter engineering write proposal route preserves bounded proposal inputs", async () => {
   let observedInput = null;
   const response = await invokeNativeAdapterPluginRoute({

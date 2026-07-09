@@ -142,6 +142,7 @@ cleanup() {
     "${SYMBOL_REQUEST_TASK_READBACK_FILE:-}" \
     "${SYMBOL_REQUEST_STATE_FILE:-}" \
     "${SYMBOL_TARGET_BRIDGE_FILE:-}" \
+    "${SYMBOL_EDIT_SEED_FILE:-}" \
     "${EVENTS_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
@@ -202,6 +203,7 @@ SYMBOL_REQUEST_STEP_FILE="$(mktemp)"
 SYMBOL_REQUEST_TASK_READBACK_FILE="$(mktemp)"
 SYMBOL_REQUEST_STATE_FILE="$(mktemp)"
 SYMBOL_TARGET_BRIDGE_FILE="$(mktemp)"
+SYMBOL_EDIT_SEED_FILE="$(mktemp)"
 EVENTS_FILE="$(mktemp)"
 
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=check&language=typescript&limit=200" > "$CHECK_FILE"
@@ -420,6 +422,12 @@ post_json "$CORE_URL/operator/step" '{}' > "$SYMBOL_REQUEST_STEP_FILE"
 curl --silent --fail "$CORE_URL/tasks/$symbol_request_task_id" > "$SYMBOL_REQUEST_TASK_READBACK_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-state?language=typescript&limit=10" > "$SYMBOL_REQUEST_STATE_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/selected-target-read-bridge?language=typescript&taskId=$symbol_request_task_id&contextLines=0&includeRead=true&maxOutputChars=800" > "$SYMBOL_TARGET_BRIDGE_FILE"
+curl --silent --fail --get "$CORE_URL/plugins/native-adapter/engineering-lsp/selected-target-edit-proposal-seed" \
+  --data-urlencode "language=typescript" \
+  --data-urlencode "taskId=$symbol_request_task_id" \
+  --data-urlencode "contextLines=0" \
+  --data-urlencode 'newString=export const needle = "OpenClawNeedleSelected";' \
+  > "$SYMBOL_EDIT_SEED_FILE"
 curl --silent --fail "$EVENT_HUB_URL/events/audit?limit=120" > "$EVENTS_FILE"
 
 node - <<'EOF' \
@@ -473,7 +481,8 @@ node - <<'EOF' \
   "$SYMBOL_REQUEST_STEP_FILE" \
   "$SYMBOL_REQUEST_TASK_READBACK_FILE" \
   "$SYMBOL_REQUEST_STATE_FILE" \
-  "$SYMBOL_TARGET_BRIDGE_FILE"
+  "$SYMBOL_TARGET_BRIDGE_FILE" \
+  "$SYMBOL_EDIT_SEED_FILE"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
 
@@ -528,8 +537,9 @@ const symbolRequestStep = readJson(49);
 const symbolRequestTaskReadback = readJson(50);
 const symbolRequestState = readJson(51);
 const symbolTargetBridge = readJson(52);
+const symbolEditSeed = readJson(53);
 const expectedTargetUri = process.env.OPENCLAW_FAKE_LSP_TARGET_URI;
-const raw = JSON.stringify({ check, position, bad, draft, sourceTransfer, sourceTransferTaskResponse, sourceTransferBlockedStep, sourceTransferApproved, sourceTransferStep, sourceTransferTaskReadback, sourceTransferState, symbolRequest, symbolRequestTaskResponse, symbolRequestBlockedStep, symbolRequestApproved, symbolRequestStep, symbolRequestTaskReadback, symbolRequestState, symbolTargetBridge, adapter, taskResponse, blockedStep, approved, execStep, taskReadback, processTaskResponse, processBlockedStep, processApproved, processStep, processTaskReadback, lifecycleStateAfterProcess, stopTaskResponse, stopBlockedStep, stopApproved, stopStep, stopTaskReadback, lifecycleStateAfterStop, restartTaskResponse, restartBlockedStep, restartApproved, restartStep, restartTaskReadback, lifecycleState, handshakeTaskResponse, handshakeBlockedStep, handshakeApproved, handshakeStep, handshakeTaskReadback, handshakeState, events });
+const raw = JSON.stringify({ check, position, bad, draft, sourceTransfer, sourceTransferTaskResponse, sourceTransferBlockedStep, sourceTransferApproved, sourceTransferStep, sourceTransferTaskReadback, sourceTransferState, symbolRequest, symbolRequestTaskResponse, symbolRequestBlockedStep, symbolRequestApproved, symbolRequestStep, symbolRequestTaskReadback, symbolRequestState, symbolTargetBridge, symbolEditSeed, adapter, taskResponse, blockedStep, approved, execStep, taskReadback, processTaskResponse, processBlockedStep, processApproved, processStep, processTaskReadback, lifecycleStateAfterProcess, stopTaskResponse, stopBlockedStep, stopApproved, stopStep, stopTaskReadback, lifecycleStateAfterStop, restartTaskResponse, restartBlockedStep, restartApproved, restartStep, restartTaskReadback, lifecycleState, handshakeTaskResponse, handshakeBlockedStep, handshakeApproved, handshakeStep, handshakeTaskReadback, handshakeState, events });
 
 if (
   !check.ok
@@ -655,6 +665,7 @@ if (
   || !adapter.implementedCapabilities?.includes("plan.openclaw.engineering_tool.lsp_symbol_request")
   || !adapter.implementedCapabilities?.includes("act.openclaw.engineering_tool.lsp_symbol_request_task")
   || !adapter.implementedCapabilities?.includes("sense.openclaw.engineering_tool.lsp_selected_target_read_bridge")
+  || !adapter.implementedCapabilities?.includes("plan.openclaw.engineering_tool.lsp_selected_target_edit_proposal_seed")
   || adapter.summary?.canReadEngineeringLspEvidence !== true
   || adapter.summary?.canDraftEngineeringLspLifecycleAction !== true
   || adapter.summary?.canCreateApprovalGatedEngineeringLspLifecycleTasks !== true
@@ -664,6 +675,7 @@ if (
   || adapter.summary?.canDraftEngineeringLspSymbolRequestProposal !== true
   || adapter.summary?.canCreateApprovalGatedEngineeringLspSymbolRequestTasks !== true
   || adapter.summary?.canReadEngineeringLspSelectedTargetBridge !== true
+  || adapter.summary?.canSeedEngineeringLspSelectedTargetEditProposals !== true
 ) {
   throw new Error(`native adapter missing LSP evidence/lifecycle capability: ${JSON.stringify(adapter)}`);
 }
@@ -1072,6 +1084,32 @@ if (
 ) {
   throw new Error(`LSP selected-target read bridge mismatch: ${JSON.stringify(symbolTargetBridge)}`);
 }
+if (
+  !symbolEditSeed.ok
+  || symbolEditSeed.registry !== "openclaw-native-engineering-lsp-selected-target-edit-proposal-seed-v0"
+  || symbolEditSeed.mode !== "lsp-selected-target-edit-proposal-seed"
+  || symbolEditSeed.seed?.relativePath !== "src/app.ts"
+  || symbolEditSeed.seed?.sourceTaskId !== symbolRequestTask.id
+  || !String(symbolEditSeed.seed?.oldString ?? "").includes("OpenClawNeedle")
+  || symbolEditSeed.seed?.newStringProvided !== true
+  || symbolEditSeed.editProposal?.registry !== "openclaw-native-engineering-edit-proposal-v0"
+  || symbolEditSeed.editProposal?.target?.relativePath !== "src/app.ts"
+  || symbolEditSeed.editProposal?.summary?.createsTask !== false
+  || symbolEditSeed.editProposal?.summary?.createsApproval !== false
+  || symbolEditSeed.editProposal?.summary?.canMutate !== false
+  || symbolEditSeed.editProposal?.governance?.canApplyPatch !== false
+  || symbolEditSeed.editProposal?.governance?.requiresApprovalBeforeApply !== true
+  || !symbolEditSeed.editProposal?.diffPreview?.lines?.some((line) => line.type === "add" && String(line.text).includes("OpenClawNeedleSelected"))
+  || symbolEditSeed.governance?.canBuildEditProposal !== true
+  || symbolEditSeed.governance?.canCreateTask !== false
+  || symbolEditSeed.governance?.canCreateApproval !== false
+  || symbolEditSeed.governance?.canMutateWorkspace !== false
+  || symbolEditSeed.bounds?.usesSelectedTargetReadBridge !== true
+  || symbolEditSeed.bounds?.noAutomaticTaskCreation !== true
+  || symbolEditSeed.bounds?.noWorkspaceMutation !== true
+) {
+  throw new Error(`LSP selected-target edit proposal seed mismatch: ${JSON.stringify(symbolEditSeed)}`);
+}
 const eventTypes = new Set((events.items ?? events.events ?? []).map((event) => event.type));
 for (const type of ["approval.created", "approval.approved", "policy.evaluated"]) {
   if (!eventTypes.has(type)) {
@@ -1094,6 +1132,9 @@ for (const token of [
   "openclaw-native-engineering-lsp-selected-target-read-bridge-v0",
   "lsp-selected-target-to-native-read-bridge",
   "sense.openclaw.engineering_tool.lsp_selected_target_read_bridge",
+  "openclaw-native-engineering-lsp-selected-target-edit-proposal-seed-v0",
+  "lsp-selected-target-edit-proposal-seed",
+  "plan.openclaw.engineering_tool.lsp_selected_target_edit_proposal_seed",
   "no textDocument/didOpen notification sent",
   "approval-gated-lsp-lifecycle-binary-gate",
   "approved-lsp-lifecycle-binary-gate",
@@ -1142,6 +1183,8 @@ console.log(JSON.stringify({
     selectedTargetReadBridgeRegistry: symbolTargetBridge.registry,
     selectedTargetReadBridgePath: symbolTargetBridge.target.relativePath,
     selectedTargetReadBridgeLines: symbolTargetBridge.readResult.summary.lineCount,
+    selectedTargetEditSeedRegistry: symbolEditSeed.registry,
+    selectedTargetEditSeedProposal: symbolEditSeed.editProposal.registry,
     serverStatus: check.serverReadiness.status,
     lifecycleTaskStatus: lifecycleTask.status,
     binaryFound: execution.server.binaryFound,
