@@ -280,6 +280,20 @@ async function refreshToolCatalogAdapter() {
   }
 }
 
+async function refreshEngineeringToolSurface() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-tool-surface\`);
+    renderEngineeringToolSurface(data);
+  } catch {
+    engineeringToolSurfaceRegistry.textContent = "offline";
+    engineeringToolSurfaceTools.textContent = "0";
+    engineeringToolSurfaceDeferred.textContent = "0";
+    engineeringToolSurfaceExecution.textContent = "unknown";
+    engineeringToolSurfaceMode.textContent = "unknown";
+    engineeringToolSurfaceJson.textContent = "Unable to read native engineering tool surface inventory.";
+  }
+}
+
 async function refreshSemanticIndex() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/workspace-semantic-index?scope=tools&limit=24\`);

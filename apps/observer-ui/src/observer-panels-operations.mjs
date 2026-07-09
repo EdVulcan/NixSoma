@@ -303,6 +303,15 @@ export function observerOperationsPanels() {
           <pre id="tool-catalog-adapter-json">Loading native tool catalog adapter...</pre>
         </section>
         <section class="panel">
+          <h2>OpenClaw Engineering Tool Surface</h2>
+          <div class="metric"><span>Registry</span><span id="engineering-tool-surface-registry">openclaw-native-engineering-tool-surface-inventory-v0</span></div>
+          <div class="metric"><span>Tools</span><span id="engineering-tool-surface-tools">0</span></div>
+          <div class="metric"><span>Deferred</span><span id="engineering-tool-surface-deferred">0</span></div>
+          <div class="metric"><span>Execution</span><span id="engineering-tool-surface-execution">blocked</span></div>
+          <div class="metric"><span>Mode</span><span id="engineering-tool-surface-mode">read-only-tool-contract-mapping</span></div>
+          <pre id="engineering-tool-surface-json">Loading native engineering tool surface inventory...</pre>
+        </section>
+        <section class="panel">
           <h2>OpenClaw Semantic Index</h2>
           <div class="metric"><span>Registry</span><span id="semantic-index-registry">openclaw-native-plugin-adapter-v0</span></div>
           <div class="metric"><span>Files</span><span id="semantic-index-files">0</span></div>

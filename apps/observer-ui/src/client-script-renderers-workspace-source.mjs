@@ -525,6 +525,35 @@ function renderToolCatalogAdapter(data) {
   ].join("\\n");
 }
 
+function renderEngineeringToolSurface(data) {
+  const summary = data?.summary ?? {};
+  const governance = data?.governance ?? {};
+  const tools = Array.isArray(data?.tools) ? data.tools : [];
+  const deferredBoundaries = Array.isArray(data?.deferredExecutionBoundaries) ? data.deferredExecutionBoundaries : [];
+  engineeringToolSurfaceRegistry.textContent = data?.registry ?? "openclaw-native-engineering-tool-surface-inventory-v0";
+  engineeringToolSurfaceTools.textContent = String(summary.totalTools ?? tools.length);
+  engineeringToolSurfaceDeferred.textContent = String(deferredBoundaries.length);
+  engineeringToolSurfaceExecution.textContent = governance.canExecuteToolCode ? "enabled" : "blocked";
+  engineeringToolSurfaceMode.textContent = data?.mode ?? "read-only-tool-contract-mapping";
+
+  engineeringToolSurfaceJson.textContent = [
+    "Native governed engineering tool surface inventory: maps enhanced cc-tools into OpenClaw-native contracts without execution.",
+    "This is metadata and contract mapping only; it does not run read, glob, grep, edit, write, LSP, verify, plan, todo, task, or approval flows.",
+    \`Registry: \${data?.registry ?? "openclaw-native-engineering-tool-surface-inventory-v0"}\`,
+    \`Mode: \${data?.mode ?? "read-only-tool-contract-mapping"}\`,
+    \`Identity: \${data?.identityLevel ?? "Level 1: stable user-space control plane"}\`,
+    \`Source: \${data?.sourceReference?.repository ?? "unknown"} commit=\${data?.sourceReference?.commit ?? "unknown"} transfer=\${data?.sourceReference?.contentTransferMode ?? "unknown"}\`,
+    \`Workspace: \${data?.workspace?.name ?? "unknown"} \${data?.workspace?.path ?? ""}\`,
+    \`Counts: tools=\${summary.totalTools ?? tools.length} covered=\${summary.coveredTools ?? 0} sourceFiles=\${summary.sourceFilesPresent ?? 0}/\${summary.sourceFilesExpected ?? 0} readOnly=\${summary.readOnlyContracts ?? 0} mutationProposal=\${summary.mutationProposalContracts ?? 0} planning=\${summary.planningStateContracts ?? 0}\`,
+    \`Governance: metadata=\${Boolean(governance.canReadMetadata)} sourceIndex=\${Boolean(governance.canReadSourceIndex)} sourceBodies=\${Boolean(governance.canReadSourceFileContent)} exposeSource=\${Boolean(governance.exposesSourceFileContent)} importModule=\${Boolean(governance.canImportModule)} executeTool=\${Boolean(governance.canExecuteToolCode)} verify=\${Boolean(governance.canRunVerification)} lsp=\${Boolean(governance.canStartLsp)} mutate=\${Boolean(governance.canMutate)} task=\${Boolean(governance.createsTask)} approval=\${Boolean(governance.createsApproval)}\`,
+    \`Next: \${summary.nextRecommendedSlice ?? "native-governed-read-search-surface"}\`,
+    "",
+    ...tools.slice(0, 16).map((tool) => \`\${tool.sourceToolName ?? "unknown"} -> \${tool.intendedNativeCapabilityId ?? "unknown"} class=\${tool.operationClass ?? "unknown"} risk=\${tool.riskLevel ?? "unknown"} status=\${tool.migrationStatus ?? "unknown"} sourceMentioned=\${Boolean(tool.sourceEvidence?.indexMentioned)} files=\${tool.sourceEvidence?.sourceFilesPresent ?? 0}\`),
+    "",
+    ...deferredBoundaries.map((boundary) => \`deferred: \${boundary}\`),
+  ].join("\\n");
+}
+
 function renderSemanticIndex(data) {
   const summary = data?.summary ?? {};
   const governance = data?.governance ?? {};

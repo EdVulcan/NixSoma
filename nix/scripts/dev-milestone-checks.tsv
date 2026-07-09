@@ -327,6 +327,7 @@ openclaw-native-plugin-registry	dev-openclaw-native-plugin-registry-check.sh	Nat
 openclaw-formal-integration-readiness	dev-openclaw-formal-integration-readiness-check.sh	Governed readiness gate for formal OpenClaw source integration
 openclaw-native-plugin-adapter	dev-openclaw-native-plugin-adapter-check.sh	Native OpenClaw plugin adapter shell for manifest profiling
 openclaw-native-tool-catalog-adapter	dev-openclaw-native-tool-catalog-adapter-check.sh	Native adapter invocation for read-only OpenClaw tool catalog queries
+openclaw-native-engineering-tool-surface-inventory	dev-openclaw-native-engineering-tool-surface-inventory-check.sh	Read-only native engineering tool surface inventory and contract mapping
 openclaw-native-workspace-semantic-index	dev-openclaw-native-workspace-semantic-index-check.sh	Native read-only semantic index for enhanced OpenClaw workspace files
 openclaw-native-workspace-symbol-lookup	dev-openclaw-native-workspace-symbol-lookup-check.sh	Governed read-only executable symbol lookup for enhanced OpenClaw workspace files
 openclaw-native-workspace-text-write	dev-openclaw-native-workspace-text-write-check.sh	Approval-gated native OpenClaw workspace text write adapter
@@ -414,6 +415,7 @@ observer-openclaw-native-plugin-contract	dev-observer-openclaw-native-plugin-con
 observer-openclaw-formal-integration-readiness	dev-observer-openclaw-formal-integration-readiness-check.sh	Observer visibility for formal OpenClaw integration readiness
 observer-openclaw-native-plugin-adapter	dev-observer-openclaw-native-plugin-adapter-check.sh	Observer visibility for native OpenClaw plugin adapter shell
 observer-openclaw-native-tool-catalog-adapter	dev-observer-openclaw-native-tool-catalog-adapter-check.sh	Observer visibility for native OpenClaw tool catalog adapter invocation
+observer-openclaw-native-engineering-tool-surface-inventory	dev-observer-openclaw-native-engineering-tool-surface-inventory-check.sh	Observer visibility for native engineering tool surface inventory
 observer-openclaw-native-workspace-semantic-index	dev-observer-openclaw-native-workspace-semantic-index-check.sh	Observer visibility for native OpenClaw workspace semantic index
 observer-openclaw-native-workspace-symbol-lookup	dev-observer-openclaw-native-workspace-symbol-lookup-check.sh	Observer visibility for governed native OpenClaw workspace symbol lookup
 observer-openclaw-native-workspace-text-write	dev-observer-openclaw-native-workspace-text-write-check.sh	Observer controls for approval-gated native OpenClaw workspace text writes

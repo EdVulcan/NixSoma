@@ -5,6 +5,7 @@ import { createPluginReviewSearchWebPlans } from "./plugin-review-search-web-pla
 import { createPluginReviewSearchWebTasks } from "./plugin-review-search-web-tasks.mjs";
 import { createPluginReviewSourceCommandProposals } from "./plugin-review-source-command-proposals.mjs";
 import { createPluginReviewSourceMigration } from "./plugin-review-source-migration.mjs";
+import { createNativeEngineeringToolSurfaceBuilders } from "./native-engineering-tool-surface-builders.mjs";
 import {
   createPluginReviewWorkspaceDiscovery,
   safeStat,
@@ -91,6 +92,12 @@ export function createPluginReview(deps) {
     selectOpenClawToolCatalogWorkspace,
     selectReviewedPluginSdkPackage,
     toolCatalogIgnoredDirectories: PLUGIN_REVIEW_IGNORED_DIRECTORIES,
+  });
+  const {
+    buildNativeEngineeringToolSurfaceInventory,
+  } = createNativeEngineeringToolSurfaceBuilders({
+    safeStat,
+    selectOpenClawToolCatalogWorkspace,
   });
   const {
     buildOpenClawPluginSearchWebAdapterContract,
@@ -239,6 +246,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "sense.openclaw.workspace_semantic_index",
       "sense.openclaw.workspace_symbol_lookup",
       "sense.openclaw.workspace_edit_target_select",
+      "sense.openclaw.engineering_tool_surface_inventory",
       "sense.openclaw.prompt_pack",
       "sense.openclaw.plugin_manifest_map",
       "plan.openclaw.plugin_capability",
@@ -252,10 +260,11 @@ function buildOpenClawNativePluginAdapterStatus() {
     ],
     pendingCapabilities: ["act.plugin.capability.invoke"],
     summary: {
-      implemented: 15,
+      implemented: 16,
       pending: 1,
       canReadManifestMetadata: true,
       canReadToolCatalogMetadata: true,
+      canReadEngineeringToolSurfaceMetadata: true,
       canReadPluginManifestMapMetadata: true,
       canPlanPluginCapabilityAbsorption: true,
       canPlanSearchWebAdapterContract: true,
@@ -288,6 +297,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "search/web runtime activation planning records the remaining gates before any provider/network execution can be enabled",
       "native plugin runtime adapter contract defines the sandbox loader boundary before any plugin module can be loaded",
       "workspace semantic index emits derived counts only and never exposes file contents",
+      "engineering tool surface inventory maps cc-tools contracts without importing, executing, mutating, starting LSP, or exposing source file bodies",
       "runtime preflight builds a governed execution envelope without loading plugin modules",
       "source contents, README text, script bodies, dependency versions, plugin code execution, and runtime activation remain blocked",
       "mutating plugin invocation remains pending explicit adapter design and approval gates",
@@ -337,5 +347,6 @@ function buildOpenClawNativePluginAdapterStatus() {
     buildNativeOpenClawWorkspaceSemanticIndex,
     buildNativeOpenClawWorkspaceSymbolLookup,
     buildNativeOpenClawWorkspaceEditTargetSelection,
+    buildNativeEngineeringToolSurfaceInventory,
   };
 }

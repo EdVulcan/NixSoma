@@ -103,6 +103,28 @@ test("native adapter search web runtime route parses numeric limit and uses 400 
   assert.deepEqual(failed.body, { ok: false, error: "provider missing" });
 });
 
+test("native adapter engineering tool surface route preserves workspace path", async () => {
+  let observedInput = null;
+  const response = await invokeNativeAdapterPluginRoute({
+    buildNativeEngineeringToolSurfaceInventory: (input) => {
+      observedInput = input;
+      return {
+        ok: true,
+        registry: "openclaw-native-engineering-tool-surface-inventory-v0",
+        mode: "read-only-tool-contract-mapping",
+        summary: { totalTools: 10 },
+      };
+    },
+  }, "GET", "/plugins/native-adapter/engineering-tool-surface?workspacePath=/tmp/openclaw-enhanced-source");
+
+  assert.equal(response.handled, true);
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(observedInput, {
+    workspacePath: "/tmp/openclaw-enhanced-source",
+  });
+  assert.equal(response.body.registry, "openclaw-native-engineering-tool-surface-inventory-v0");
+});
+
 test("native adapter plugin task route preserves raw body values and serializes task approval", async () => {
   let observedInput = null;
   const response = await invokeNativeAdapterPluginRoute({

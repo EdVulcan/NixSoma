@@ -224,6 +224,7 @@ export const OBSERVER_STARTUP_REFRESH_GROUPS = [
       "refreshPluginSearchWebRuntimeActivationPlan",
       "refreshPluginSearchWebProviderRuntimeSandbox",
       "refreshToolCatalogAdapter",
+      "refreshEngineeringToolSurface",
       "refreshSemanticIndex",
       "refreshSymbolLookup",
       "refreshEditTargetSelection",

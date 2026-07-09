@@ -61,6 +61,16 @@ const GET_ROUTES = new Map([
     },
   ],
   [
+    "/plugins/native-adapter/engineering-tool-surface",
+    {
+      builder: "buildNativeEngineeringToolSurfaceInventory",
+      errorStatus: 404,
+      input: (requestUrl) => ({
+        workspacePath: requestUrl.searchParams.get("workspacePath"),
+      }),
+    },
+  ],
+  [
     "/plugins/native-adapter/plugin-manifest-map",
     {
       builder: "buildOpenClawPluginManifestMap",
