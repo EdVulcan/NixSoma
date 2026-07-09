@@ -370,6 +370,7 @@ openclaw-native-plugin-invoke-deferred	dev-openclaw-native-plugin-invoke-deferre
 openclaw-native-plugin-runtime-preflight	dev-openclaw-native-plugin-runtime-preflight-check.sh	Runtime preflight envelope for native OpenClaw plugin invocation
 openclaw-native-plugin-runtime-activation-plan	dev-openclaw-native-plugin-runtime-activation-plan-check.sh	Plan-only runtime activation gates for native OpenClaw plugin invocation
 openclaw-native-plugin-runtime-refresh-evidence	dev-openclaw-native-plugin-runtime-refresh-evidence-check.sh	Native plugin runtime refresh read-model evidence without module loading
+openclaw-native-acpx-codex-bridge-compatibility	dev-openclaw-native-acpx-codex-bridge-compatibility-check.sh	Native ACPX/Codex bridge compatibility and session metadata persistence evidence
 openclaw-native-plugin-runtime-activation-task	dev-openclaw-native-plugin-runtime-activation-task-check.sh	Approval-gated runtime activation task shell for native OpenClaw plugin invocation
 openclaw-native-plugin-runtime-activation-denial-recovery	dev-openclaw-native-plugin-runtime-activation-denial-recovery-check.sh	Denial and fresh-approval recovery for native OpenClaw plugin runtime activation tasks
 openclaw-native-plugin-runtime-activation-hardening	dev-openclaw-native-plugin-runtime-activation-hardening-check.sh	Approval expiry, duplicate clicks, duplicate recovery, and recovery chains for native OpenClaw plugin runtime activation tasks

@@ -14,6 +14,7 @@ import { createNativeEngineeringLspLifecycleStateBuilders } from "./native-engin
 import { createNativeEngineeringLspSourceTransferProposalBuilders } from "./native-engineering-lsp-source-transfer-proposal-builders.mjs";
 import { createNativeEngineeringLspSymbolRequestProposalBuilders } from "./native-engineering-lsp-symbol-request-proposal-builders.mjs";
 import { createNativeEngineeringLspSelectedTargetReadBridgeBuilders } from "./native-engineering-lsp-selected-target-read-bridge-builders.mjs";
+import { createNativeAcpxCodexBridgeBuilders } from "./native-acpx-codex-bridge-builders.mjs";
 import {
   createPluginReviewWorkspaceDiscovery,
   safeStat,
@@ -160,6 +161,13 @@ export function createPluginReview(deps) {
     selectOpenClawToolCatalogWorkspace,
     buildNativeEngineeringReadFile,
     buildNativeEngineeringEditProposal,
+  });
+  const {
+    buildNativeAcpxCodexBridgeCompatibility,
+    recordNativeAcpxCodexSession,
+  } = createNativeAcpxCodexBridgeBuilders({
+    state,
+    publishEvent,
   });
   const {
     buildOpenClawPluginSearchWebAdapterContract,
@@ -333,6 +341,8 @@ function buildOpenClawNativePluginAdapterStatus() {
       "sense.openclaw.engineering_context.plan_todo_evidence",
       "sense.openclaw.plugin_runtime.refresh_evidence",
       "act.openclaw.plugin_runtime.refresh_task",
+      "sense.openclaw.acpx_codex_bridge.compatibility",
+      "state.openclaw.acpx_codex_bridge.session_metadata",
       "sense.openclaw.prompt_pack",
       "sense.openclaw.plugin_manifest_map",
       "plan.openclaw.plugin_capability",
@@ -346,7 +356,7 @@ function buildOpenClawNativePluginAdapterStatus() {
     ],
     pendingCapabilities: ["act.plugin.capability.invoke"],
     summary: {
-      implemented: 40,
+      implemented: 42,
       pending: 1,
       canReadManifestMetadata: true,
       canReadToolCatalogMetadata: true,
@@ -375,6 +385,8 @@ function buildOpenClawNativePluginAdapterStatus() {
       canReadEngineeringPlanTodoEvidence: true,
       canReadPluginRuntimeRefreshEvidence: true,
       canCreateApprovalGatedPluginRuntimeRefreshTasks: true,
+      canReadAcpxCodexBridgeCompatibility: true,
+      canPersistAcpxCodexSessionMetadata: true,
       canReadPluginManifestMapMetadata: true,
       canPlanPluginCapabilityAbsorption: true,
       canPlanSearchWebAdapterContract: true,
@@ -425,6 +437,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "engineering plan/todo evidence reads visible task/workbench planning state without hidden agent mode switches or .openclaw/cc-todo.md writes",
       "native plugin runtime refresh evidence recomputes registry read-model state and reports cache/activation boundaries without importing modules or activating runtime",
       "native plugin runtime refresh tasks require explicit approval before recomputing read-model evidence and still do not import modules, execute plugin code, activate runtime, or mutate caches",
+      "ACPX/Codex bridge compatibility maps command/auth isolation lessons and persists bounded session metadata without reading Codex credentials, writing wrappers, spawning ACP processes, or using network",
       "runtime preflight builds a governed execution envelope without loading plugin modules",
       "source contents, README text, script bodies, dependency versions, plugin code execution, and runtime activation remain blocked",
       "mutating plugin invocation remains pending explicit adapter design and approval gates",
@@ -487,5 +500,7 @@ function buildOpenClawNativePluginAdapterStatus() {
     buildNativeEngineeringLspSymbolRequestProposal,
     buildNativeEngineeringLspSelectedTargetReadBridge,
     buildNativeEngineeringLspSelectedTargetEditProposalSeed,
+    buildNativeAcpxCodexBridgeCompatibility,
+    recordNativeAcpxCodexSession,
   };
 }

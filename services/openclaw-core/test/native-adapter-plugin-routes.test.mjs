@@ -457,6 +457,56 @@ test("native adapter plugin task route preserves raw body values and serializes 
   assert.deepEqual(response.body.approval, { id: "approval-1", status: "pending" });
 });
 
+test("native adapter ACPX/Codex bridge routes preserve query and persistence body", async () => {
+  const observed = {};
+  const getResponse = await invokeNativeAdapterPluginRoute({
+    buildNativeAcpxCodexBridgeCompatibility: (input) => {
+      observed.get = input;
+      return {
+        ok: true,
+        registry: "openclaw-native-acpx-codex-bridge-compatibility-v0",
+        persistence: { totalRecords: 0 },
+      };
+    },
+  }, "GET", "/plugins/native-adapter/acpx-codex-bridge-compatibility?sessionKey=agent:codex:test");
+
+  assert.equal(getResponse.handled, true);
+  assert.equal(getResponse.statusCode, 200);
+  assert.deepEqual(observed.get, {
+    sessionKey: "agent:codex:test",
+  });
+  assert.equal(getResponse.body.registry, "openclaw-native-acpx-codex-bridge-compatibility-v0");
+
+  const postResponse = await invokeNativeAdapterPluginRoute({
+    recordNativeAcpxCodexSession: async (input) => {
+      observed.post = input;
+      return {
+        ok: true,
+        registry: "openclaw-native-acpx-codex-session-persistence-v0",
+        session: { sessionKey: input.sessionKey, acpxRecordId: input.recordId },
+      };
+    },
+  }, "POST", "/plugins/native-adapter/acpx-codex-session-records", {
+    sessionKey: "agent:codex:test",
+    agentId: "codex",
+    recordId: "record-a",
+    metadata: { purpose: "route" },
+    confirm: true,
+  });
+
+  assert.equal(postResponse.handled, true);
+  assert.equal(postResponse.statusCode, 201);
+  assert.deepEqual(observed.post, {
+    sessionKey: "agent:codex:test",
+    agentId: "codex",
+    recordId: "record-a",
+    metadata: { purpose: "route" },
+    confirm: true,
+  });
+  assert.equal(postResponse.body.registry, "openclaw-native-acpx-codex-session-persistence-v0");
+  assert.equal(postResponse.body.session.sessionKey, "agent:codex:test");
+});
+
 test("native adapter plugin route reports misses without writing a response", async () => {
   const missed = await invokeNativeAdapterPluginRoute({}, "GET", "/workspaces");
 

@@ -171,6 +171,22 @@ function engineeringLspSelectedTargetEditProposalSeedInput(requestUrl) {
   };
 }
 
+function acpxCodexBridgeInput(requestUrl) {
+  return {
+    sessionKey: requestUrl.searchParams.get("sessionKey"),
+  };
+}
+
+function acpxCodexSessionInput(body) {
+  return {
+    sessionKey: body.sessionKey,
+    agentId: body.agentId,
+    recordId: body.recordId,
+    metadata: body.metadata,
+    confirm: body.confirm,
+  };
+}
+
 const GET_ROUTES = new Map([
   [
     "/plugins/native-adapter/manifest-profile",
@@ -425,6 +441,24 @@ const GET_ROUTES = new Map([
       }),
     },
   ],
+  [
+    "/plugins/native-adapter/acpx-codex-bridge-compatibility",
+    {
+      builder: "buildNativeAcpxCodexBridgeCompatibility",
+      errorStatus: 400,
+      input: acpxCodexBridgeInput,
+    },
+  ],
+]);
+
+const POST_RECORD_ROUTES = new Map([
+  [
+    "/plugins/native-adapter/acpx-codex-session-records",
+    {
+      builder: "recordNativeAcpxCodexSession",
+      input: acpxCodexSessionInput,
+    },
+  ],
 ]);
 
 const POST_TASK_ROUTES = new Map([
@@ -475,6 +509,18 @@ export async function handleNativeAdapterPluginRoute({
   }
 
   if (req.method === "POST") {
+    const recordRoute = POST_RECORD_ROUTES.get(requestUrl.pathname);
+    if (recordRoute) {
+      try {
+        const body = await readJsonBody(req);
+        const result = await pluginReview[recordRoute.builder](recordRoute.input(body));
+        sendJson(res, 201, result);
+      } catch (error) {
+        sendError(res, 400, error);
+      }
+      return true;
+    }
+
     const builderName = POST_TASK_ROUTES.get(requestUrl.pathname);
     if (!builderName) {
       return false;

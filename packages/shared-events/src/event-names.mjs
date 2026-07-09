@@ -57,6 +57,7 @@ export const eventNames = [
   "cloud_consciousness.provider_call_rehearsal_written",
   "cloud_consciousness.live_provider_runbook_written",
   "cloud_consciousness.live_provider_execution_plan_written",
+  "acpx_codex.session_recorded",
   "systemd.repair.execution_deferred",
   "systemd.repair.execution_completed",
   "systemd.repair.execution_failed",

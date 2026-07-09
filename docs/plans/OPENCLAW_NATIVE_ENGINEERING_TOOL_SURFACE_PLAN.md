@@ -384,7 +384,7 @@ source recovery readback without automatic approval or recovery execution.
 The current next smallest real capability is:
 
 ```text
-ACPX/Codex bridge compatibility and runtime persistence evidence
+Observer visibility for ACPX/Codex bridge compatibility and persistence state
 ```
 
 The live plugin runtime refresh follow-up was completed as:
@@ -398,6 +398,17 @@ recomputes read-model evidence after approval, persists task execution evidence,
 and keeps plugin module import, plugin code execution, runtime activation, cache
 mutation, provider egress, and root work disabled.
 
-The next slice should map the enhanced-source ACPX/Codex bridge and runtime
-persistence tests into OpenClaw-native compatibility evidence without copying
-the reference runtime, reading credentials, or performing provider egress.
+The ACPX/Codex bridge compatibility follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ACPX_CODEX_BRIDGE_COMPATIBILITY_PLAN.md
+```
+
+It maps enhanced-source ACPX/Codex command/auth-isolation lessons into a native
+compatibility read model and persists bounded session metadata with independent
+sessions, overwrite revisions, missing-session null behavior, restart recovery,
+and secret-key redaction. It still does not read `CODEX_HOME`, copy auth
+material, write wrappers, spawn ACP processes, or perform provider egress.
+
+The next slice should expose that read model in Observer without enabling live
+auth copy, wrapper execution, ACP process spawn, or provider egress.
