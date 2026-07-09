@@ -289,6 +289,14 @@ async function postWorkView(path, payload = {}) {
       await updateTaskPhase(currentTaskState.id, phase, {
         visibility: result.workView?.visibility ?? null,
         mode: result.workView?.mode ?? null,
+        workViewRecoveryAction: result.workView?.lastOperatorAction ?? null,
+        trustedSession: result.workView?.trustedSession
+          ? {
+              identityLevel: result.workView.trustedSession.identityLevel ?? null,
+              helperReadiness: result.workView.trustedSession.helperReadiness?.state ?? null,
+              recoveryRecommendation: result.workView.trustedSession.recoveryRecommendation?.action ?? null,
+            }
+          : null,
       });
     }
   }

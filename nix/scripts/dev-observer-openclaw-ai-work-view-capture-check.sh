@@ -66,6 +66,7 @@ const requiredClient = [
   "runRecommendedWorkViewAction",
   "operatorActionSource",
   "lastOperatorAction",
+  "workViewRecoveryAction",
   "prepare_work_view",
   "reveal_work_view",
   "Trusted Boundary",

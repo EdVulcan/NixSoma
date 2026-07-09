@@ -74,6 +74,19 @@ operatorVisible: true
 This makes recovery action results visible through `/work-view/state` and
 `/phase-3/background-work-view` without adding another evidence endpoint.
 
+When an Observer work-view action runs while a task is selected, the existing
+task phase update now carries a compact recovery attachment:
+
+```text
+details.workViewRecoveryAction
+details.trustedSession.identityLevel
+details.trustedSession.helperReadiness
+details.trustedSession.recoveryRecommendation
+```
+
+This keeps task/workbench continuity tied to the same `/tasks/:id/phase` path
+instead of adding a separate recovery-result route.
+
 The contract is emitted through:
 
 ```text
@@ -123,6 +136,7 @@ openclaw-ai-work-view-capture-summary
 observer-openclaw-ai-work-view-capture-summary
 openclaw-phase-3-background-work-view
 observer-openclaw-phase-3-background-work-view
+observer-openclaw-phase-3-operator-interrupt-controls
 ```
 
 ## Deferred
@@ -143,14 +157,15 @@ unreviewed endpoint invocation from recommendation payloads
 
 ## Next Slice
 
-The next high-density identity-upgrade slice should make the work-view recovery
-result useful for task/workbench continuity without expanding into a new
-readiness chain:
+The next high-density identity-upgrade slice should move from recovery
+bookkeeping to Level 2 session-helper preparation without starting a sidecar or
+requiring privileges:
 
 ```text
-AI work-view recovery result attachment to task/workbench state
+AI work-view trusted sidecar contract draft
 ```
 
-That should reuse the existing task attachment or operator state paths. The
-useful increment is connecting a visible work-view recovery result to the task
-or workbench that needed it, not creating another standalone status route.
+It should describe the future helper process boundary, lifecycle, capture/action
+responsibilities, Observer visibility, and recovery behavior while keeping
+actual process start, installation, root/system daemon work, and desktop-wide
+capture deferred.
