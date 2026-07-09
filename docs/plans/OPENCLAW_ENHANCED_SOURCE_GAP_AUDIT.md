@@ -781,30 +781,31 @@ It produces:
 - Continued deferral of raw response payloads, long-lived LSP pools,
   auto-approval, provider calls, and root/system daemon work.
 
-Latest LSP selected-target read bridge completed:
+Latest LSP Observer selected-target read control completed:
 
 ```text
-OPENCLAW_NATIVE_ENGINEERING_LSP_SELECTED_TARGET_READ_BRIDGE_PLAN.md
+OPENCLAW_NATIVE_ENGINEERING_LSP_OBSERVER_SELECTED_TARGET_READ_CONTROL_PLAN.md
 ```
 
 It produces:
 
-- A follow-up native read/search request from capped selected target URI/range
-  metadata.
-- Optional bounded read preview only when `includeRead=true` is explicit.
-- Observer readback guidance for the bridge route.
-- No raw LSP payload, automatic follow-up task/approval, provider call,
-  network egress, mutation, or long-lived LSP pool.
+- A `Read Selected Target` Observer control over completed LSP lifecycle task
+  state.
+- Explicit operator-triggered `includeRead=true` calls to the selected-target
+  read bridge.
+- Bounded target path, line range, governance flags, and native read preview in
+  Engineering Loop State.
+- No automatic follow-up task/approval, JSON-RPC, LSP process start, provider
+  call, network egress, mutation, or long-lived LSP pool.
 
 Next smallest real capability:
 
 ```text
-Observer selected-target read control
+LSP selected-target edit proposal seed
 ```
 
-That should let the operator call the selected-target read bridge from Observer
-task readback without adding another readiness marker or opening a long-lived
-LSP pool.
+That should let the operator turn a selected-target read preview into an
+explicit edit proposal draft without automatic approval or workspace mutation.
 
 Required answer for every following slice:
 

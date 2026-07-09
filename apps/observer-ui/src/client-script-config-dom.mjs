@@ -135,6 +135,7 @@ const engineeringLoopStateEvidence = document.querySelector("#engineering-loop-s
 const engineeringLoopStateCompletion = document.querySelector("#engineering-loop-state-completion");
 const engineeringLoopStateJson = document.querySelector("#engineering-loop-state-json");
 const engineeringLoopCompletionButton = document.querySelector("#engineering-loop-completion-button");
+const engineeringLoopSelectedTargetReadButton = document.querySelector("#engineering-loop-selected-target-read-button");
 const engineeringLoopRestoreButton = document.querySelector("#engineering-loop-restore-button");
 const filesystemLedgerTotal = document.querySelector("#filesystem-ledger-total");
 const filesystemLedgerMkdir = document.querySelector("#filesystem-ledger-mkdir");

@@ -47,6 +47,10 @@ function engineeringLoopEvidenceRoute(kind, taskId) {
   return \`/plugins/native-adapter/engineering-verification/evidence?taskId=\${taskId ?? ""}\`;
 }
 
+function engineeringLspSelectedTargetReadBridgeRoute(taskId, language = "typescript") {
+  return \`/plugins/native-adapter/engineering-lsp/selected-target-read-bridge?taskId=\${encodeURIComponent(taskId ?? "")}&language=\${encodeURIComponent(language ?? "typescript")}&contextLines=2&includeRead=true\`;
+}
+
 function renderEngineeringLoopControlState(kind, result) {
   const taskId = result.task?.id ?? "none";
   const approvalId = result.approval?.id ?? "none";
@@ -138,8 +142,11 @@ async function refreshEngineeringLoopCompletionReadback() {
     const lifecycleState = execution.lifecycleState ?? lifecycle.lifecycleState ?? {};
     const symbolResponse = lifecycle.symbolRequest?.responseSummary ?? execution.server?.symbolResponseSummary ?? {};
     const selectedTargetReadBridgeRoute = lifecycle.lifecycleAction === "symbol_request" && symbolResponse.selectedTarget
-      ? \`/plugins/native-adapter/engineering-lsp/selected-target-read-bridge?taskId=\${encodeURIComponent(latestEngineeringLoopControlState.taskId ?? "")}&language=\${encodeURIComponent(lifecycle.language ?? execution.language ?? "typescript")}&includeRead=true\`
+      ? engineeringLspSelectedTargetReadBridgeRoute(latestEngineeringLoopControlState.taskId, lifecycle.language ?? execution.language ?? "typescript")
       : null;
+    latestEngineeringLoopControlState.language = lifecycle.language ?? execution.language ?? "typescript";
+    latestEngineeringLoopControlState.lifecycleAction = lifecycle.lifecycleAction ?? execution.lifecycleAction ?? "start";
+    latestEngineeringLoopControlState.selectedTargetReadRoute = selectedTargetReadBridgeRoute;
     engineeringLoopStateCompletion.textContent = \`status=\${task?.status ?? "unknown"} lifecycle=\${lifecycleState.status ?? execution.result?.state ?? "unknown"}\`;
     engineeringLoopStateJson.textContent = [
       "Kind: lsp-lifecycle",
@@ -186,6 +193,46 @@ async function refreshEngineeringLoopCompletionReadback() {
   await refreshEngineeringLoopControlSurfaces();
 }
 
+async function readEngineeringLoopSelectedTarget() {
+  if (!latestEngineeringLoopControlState?.taskId || latestEngineeringLoopControlState.kind !== "lsp-lifecycle") {
+    throw new Error("Create or restore an LSP lifecycle task first.");
+  }
+  const route = engineeringLspSelectedTargetReadBridgeRoute(
+    latestEngineeringLoopControlState.taskId,
+    latestEngineeringLoopControlState.language ?? "typescript",
+  );
+  const bridge = await fetchJson(\`\${observerConfig.coreUrl}\${route}\`);
+  if (!bridge.ok) {
+    engineeringLoopStateCompletion.textContent = \`blocked=\${bridge.reason ?? "unknown"}\`;
+    engineeringLoopStateEvidence.textContent = route;
+    engineeringLoopStateJson.textContent = [
+      "Kind: lsp-selected-target-read",
+      \`Task: \${latestEngineeringLoopControlState.taskId}\`,
+      \`Bridge: \${route}\`,
+      \`Blocked: \${bridge.reason ?? "unknown"}\`,
+      "Boundary: explicit read-only bridge; no task, approval, JSON-RPC, LSP process, mutation, provider call, or result envelope.",
+    ].join("\\n");
+    throw new Error(bridge.reason ?? "selected target read bridge blocked");
+  }
+  latestEngineeringLoopControlState.selectedTargetReadRoute = route;
+  engineeringLoopStateNext.textContent = "review selected target read preview";
+  engineeringLoopStateEvidence.textContent = route;
+  engineeringLoopStateCompletion.textContent = \`target=\${bridge.target?.relativePath ?? "unknown"} lines=\${bridge.readResult?.summary?.lineCount ?? 0}\`;
+  engineeringLoopStateJson.textContent = [
+    "Kind: lsp-selected-target-read",
+    \`Task: \${latestEngineeringLoopControlState.taskId}\`,
+    \`Bridge: \${route}\`,
+    \`Registry: \${bridge.registry ?? "unknown"}\`,
+    \`Target: \${bridge.target?.relativePath ?? "unknown"} lines=\${bridge.target?.startLine ?? "n/a"}-\${bridge.target?.endLine ?? "n/a"}\`,
+    \`Read: ok=\${Boolean(bridge.readResult?.ok)} chars=\${bridge.readResult?.summary?.charsReturned ?? 0} truncated=\${Boolean(bridge.readResult?.summary?.outputTruncated)}\`,
+    \`Governance: content=\${Boolean(bridge.governance?.canReadWorkspaceContent)} startLsp=\${Boolean(bridge.governance?.canStartLspServer)} jsonRpc=\${Boolean(bridge.governance?.canSendJsonRpcRequest)} mutate=\${Boolean(bridge.governance?.canMutateWorkspace)} provider=\${Boolean(bridge.governance?.canCallProvider)}\`,
+    \`Preview:\\n\${bridge.readResult?.content ?? ""}\`,
+    "Boundary: explicit read-only bridge; no task, approval, JSON-RPC, LSP process, mutation, provider call, or result envelope.",
+  ].join("\\n");
+  setControlMessage(\`Read selected LSP target \${bridge.target?.relativePath ?? "unknown"} through the bounded native read bridge.\`);
+  await refreshEngineeringLoopControlSurfaces();
+}
+
 function renderEngineeringLspLifecycleLoopTaskState(result) {
   const taskId = result.task?.id ?? null;
   const approvalId = result.approval?.id ?? result.task?.approval?.requestId ?? null;
@@ -194,6 +241,8 @@ function renderEngineeringLspLifecycleLoopTaskState(result) {
     taskId,
     approvalId,
     evidenceRoute: engineeringLoopEvidenceRoute("lsp-lifecycle", taskId),
+    language: result.engineeringLspLifecycle?.language ?? "typescript",
+    lifecycleAction: result.engineeringLspLifecycle?.lifecycleAction ?? "start",
   };
   engineeringLoopStateKind.textContent = "lsp-lifecycle";
   engineeringLoopStateTask.textContent = taskId ? taskId.slice(0, 8) : "none";

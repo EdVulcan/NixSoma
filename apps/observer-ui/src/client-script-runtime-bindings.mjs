@@ -76,6 +76,12 @@ engineeringLoopCompletionButton.addEventListener("click", () => {
   });
 });
 
+engineeringLoopSelectedTargetReadButton.addEventListener("click", () => {
+  readEngineeringLoopSelectedTarget().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 engineeringLoopRestoreButton.addEventListener("click", () => {
   restoreEngineeringLoopStateFromHistory().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

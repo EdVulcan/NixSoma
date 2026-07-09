@@ -80,15 +80,15 @@ openclaw-native-engineering-lsp-evidence
 observer-openclaw-native-engineering-lsp-evidence
 ```
 
-## Next Slice
+## Follow-up Completed
 
-The next smallest real capability is:
+The Observer selected-target read control follow-up was completed as:
 
 ```text
-Observer selected-target read control
+OPENCLAW_NATIVE_ENGINEERING_LSP_OBSERVER_SELECTED_TARGET_READ_CONTROL_PLAN.md
 ```
 
-That follow-up should let the operator call the bridge from the LSP task
-readback after a completed symbol request. It should remain explicit and
-read-only, reuse the existing bridge endpoint, and avoid starting a new evidence
-or readiness chain.
+That slice adds a `Read Selected Target` Observer control that calls the bridge
+only after an explicit operator click and renders bounded read preview evidence
+without automatic task creation, approval creation, JSON-RPC, LSP process start,
+provider egress, or mutation.

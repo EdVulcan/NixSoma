@@ -307,12 +307,21 @@ That slice connects completed LSP selected target metadata to the native bounded
 read/search surface. It returns a follow-up read request by default and returns
 bounded read content only when `includeRead=true` is explicit.
 
+The Observer selected-target read control follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_OBSERVER_SELECTED_TARGET_READ_CONTROL_PLAN.md
+```
+
+That slice lets the operator call the selected-target read bridge from
+Engineering Loop State and inspect the bounded read preview without automatic
+task creation or mutation.
+
 The current next smallest real capability is:
 
 ```text
-Observer selected-target read control
+LSP selected-target edit proposal seed
 ```
 
-That slice should add an explicit operator control or readback action in
-Observer for the selected-target read bridge without creating another standalone
-readiness/evidence lane.
+That slice should let the operator turn a bounded selected-target read preview
+into an explicit edit proposal draft while preserving approval-gated mutation.

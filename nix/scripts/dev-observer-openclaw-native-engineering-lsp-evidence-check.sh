@@ -103,10 +103,12 @@ for (const token of [
   "engineering-lsp-symbol-request-task-button",
   "engineering-lsp-references-task-button",
   "engineering-lsp-hover-task-button",
+  "engineering-loop-selected-target-read-button",
   "Create Definition Task",
   "Create Source Transfer Task",
   "Create References Task",
   "Create Hover Task",
+  "Read Selected Target",
   "engineering-lsp-json",
 ]) {
   if (!html.includes(token)) {
@@ -126,6 +128,8 @@ for (const token of [
   "createEngineeringLspLifecycleLoopTask",
   "createEngineeringLspSourceTransferLoopTask",
   "createEngineeringLspSymbolRequestLoopTask",
+  "readEngineeringLoopSelectedTarget",
+  "engineeringLspSelectedTargetReadBridgeRoute",
   "renderEngineeringLspLifecycleLoopTaskState",
   "engineeringLspLifecycle",
   "lsp-lifecycle",
@@ -143,6 +147,8 @@ for (const token of [
   "Symbol Response",
   "Selected Target",
   "Selected Target Read Bridge",
+  "lsp-selected-target-read",
+  "review selected target read preview",
   "rawTargets",
   "Missing server binaries become recoverable task evidence",
   "Native engineering LSP evidence",
@@ -258,6 +264,7 @@ console.log(JSON.stringify({
     lifecycleAction: draft.summary.lifecycleAction,
     sourceTransferPath: sourceTransfer.file.relativePath,
     sourceTransferDidOpenSent: sourceTransfer.proposedDidOpen.sent,
+    selectedTargetReadControl: "visible",
     serverStatus: evidence.serverReadiness.status,
   },
 }, null, 2));
