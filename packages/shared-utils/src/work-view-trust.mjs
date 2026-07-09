@@ -120,6 +120,22 @@ function buildSidecarContract() {
       taskCreationDeferred: true,
       allowedTransitions: ["drafted_not_started", "approved_user_space_start_probe", "stopped"],
     },
+    approvalTaskDraft: {
+      status: "draft_ready",
+      createsTaskNow: false,
+      createsApprovalNow: false,
+      approvalRequiredBeforeExecution: true,
+      taskType: "work_view_trusted_sidecar_lifecycle",
+      plannedCapabilityId: "act.openclaw.work_view.trusted_sidecar_lifecycle",
+      executionStatus: "deferred",
+      processStartEnabled: false,
+      rootRequired: false,
+      plannedPhases: [
+        "review_sidecar_contract",
+        "wait_for_operator_approval",
+        "deferred_user_space_start_probe",
+      ],
+    },
     responsibilities: {
       capture: "emit_ai_owned_work_view_capture_contract",
       action: "mediate_ai_owned_work_view_reveal_hide_prepare_only",

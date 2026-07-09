@@ -32,6 +32,7 @@ helperReadiness.state: ready | prepared_hidden | needs_prepare | degraded
 recoveryRecommendation.action: none | prepare_work_view | reveal_work_view
 sidecarContract.status: drafted_not_started
 sidecarContract.lifecycleProposal.status: proposal_ready
+sidecarContract.approvalTaskDraft.status: draft_ready
 ```
 
 The helper readiness portion makes the contract actionable without adding a new
@@ -62,7 +63,8 @@ The contract also carries a future Level 2 sidecar draft. It names the helper's
 capture/action/recovery/Observer responsibilities and explicitly records that no
 process is started, no installation is required, and no root/system daemon is
 used in this slice. The lifecycle proposal records the future approval gate and
-keeps execution deferred.
+keeps execution deferred. The approval task draft records the future task shape
+without creating a task or approval yet.
 
 Every work-view prepare/reveal/hide call now records `lastOperatorAction` in the
 existing work-view state. The record includes:
@@ -92,6 +94,7 @@ details.trustedSession.helperReadiness
 details.trustedSession.recoveryRecommendation
 details.trustedSession.sidecarContract.status
 details.trustedSession.sidecarContract.lifecycleProposal.status
+details.trustedSession.sidecarContract.approvalTaskDraft.status
 ```
 
 This keeps task/workbench continuity tied to the same `/tasks/:id/phase` path
@@ -172,9 +175,9 @@ bookkeeping to Level 2 session-helper preparation without starting a sidecar or
 requiring privileges:
 
 ```text
-AI work-view trusted sidecar approval task draft
+AI work-view trusted sidecar approval task materialization
 ```
 
-It should turn the lifecycle proposal into an approval-gated task draft while
-keeping actual process start, installation, root/system daemon work, and
-desktop-wide capture deferred.
+It should turn the draft into an explicit approval-gated task only when doing so
+unlocks operator-visible lifecycle control. Actual process start, installation,
+root/system daemon work, and desktop-wide capture remain deferred.

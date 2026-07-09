@@ -147,6 +147,7 @@ async function refreshWorkView() {
       \`Last Operator Action: \${workView.lastOperatorAction?.action ?? "none"} source=\${workView.lastOperatorAction?.source ?? "none"}\`,
       \`Sidecar Contract: \${trustedSession.sidecarContract?.status ?? "unknown"} processStarted=\${String(Boolean(trustedSession.sidecarContract?.lifecycle?.processStarted))} root=\${String(Boolean(trustedSession.sidecarContract?.lifecycle?.rootRequired))}\`,
       \`Sidecar Lifecycle: \${trustedSession.sidecarContract?.lifecycleProposal?.status ?? "unknown"} execution=\${trustedSession.sidecarContract?.lifecycleProposal?.executionStatus ?? "unknown"} approval=\${trustedSession.sidecarContract?.lifecycleProposal?.approvalGate ?? "unknown"}\`,
+      \`Sidecar Approval Draft: \${trustedSession.sidecarContract?.approvalTaskDraft?.status ?? "unknown"} createsTask=\${String(Boolean(trustedSession.sidecarContract?.approvalTaskDraft?.createsTaskNow))} processStart=\${String(Boolean(trustedSession.sidecarContract?.approvalTaskDraft?.processStartEnabled))}\`,
       \`Reveal Gate: \${trustedSession.operatorGates?.reveal ?? "unknown"}\`,
       \`Entry URL: \${workView.entryUrl ?? "none"}\`,
       \`Active URL: \${workView.activeUrl ?? "none"}\`,
@@ -190,6 +191,7 @@ async function refreshScreen() {
           "Recovery Recommendation: " + (trustedSession.recoveryRecommendation?.action ?? "unknown"),
           "Sidecar Contract: " + (trustedSession.sidecarContract?.status ?? "unknown"),
           "Sidecar Lifecycle: " + (trustedSession.sidecarContract?.lifecycleProposal?.status ?? "unknown"),
+          "Sidecar Approval Draft: " + (trustedSession.sidecarContract?.approvalTaskDraft?.status ?? "unknown"),
           "Visible Text: " + ((workViewSummary.visibleTextBlocks ?? []).join(" | ") || "none"),
           "Recent Input: " + (workViewSummary.recentInteraction?.input ?? "none"),
         ].join("\\n")

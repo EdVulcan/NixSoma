@@ -54,7 +54,7 @@ for (const token of ["Phase 3 Background Work View", "phase3-background-work-vie
     throw new Error(`Observer HTML missing ${token}`);
   }
 }
-for (const token of ["/phase-3/background-work-view", "refreshPhase3BackgroundWorkView", "openclaw-phase-3-background-work-view-v0", "Trusted Session", "trustedSession.identityLevel", "Helper Readiness", "recoveryRecommendation", "Last Operator Action", "lastOperatorAction", "Sidecar Contract", "sidecarContract", "Sidecar Lifecycle", "lifecycleProposal", "runRecommendedWorkViewAction", "reveal_work_view"]) {
+for (const token of ["/phase-3/background-work-view", "refreshPhase3BackgroundWorkView", "openclaw-phase-3-background-work-view-v0", "Trusted Session", "trustedSession.identityLevel", "Helper Readiness", "recoveryRecommendation", "Last Operator Action", "lastOperatorAction", "Sidecar Contract", "sidecarContract", "Sidecar Lifecycle", "lifecycleProposal", "Sidecar Approval Draft", "approvalTaskDraft", "runRecommendedWorkViewAction", "reveal_work_view"]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);
   }
@@ -68,7 +68,8 @@ if (trustedSession?.identityLevel !== "level_2_trusted_session_work_view"
   || trustedSession?.helperReadiness?.state !== "prepared_hidden"
   || trustedSession?.recoveryRecommendation?.action !== "reveal_work_view"
   || trustedSession?.sidecarContract?.status !== "drafted_not_started"
-  || trustedSession?.sidecarContract?.lifecycleProposal?.status !== "proposal_ready") {
+  || trustedSession?.sidecarContract?.lifecycleProposal?.status !== "proposal_ready"
+  || trustedSession?.sidecarContract?.approvalTaskDraft?.status !== "draft_ready") {
   throw new Error(`Observer Phase 3 background work view should expose trusted session boundary: ${JSON.stringify(trustedSession)}`);
 }
 if (background.current?.workView?.lastOperatorAction?.action !== "prepare_work_view"
@@ -88,6 +89,7 @@ console.log(JSON.stringify({
     lastOperatorAction: background.current.workView.lastOperatorAction.action,
     sidecarContract: trustedSession.sidecarContract.status,
     lifecycleProposal: trustedSession.sidecarContract.lifecycleProposal.status,
+    approvalTaskDraft: trustedSession.sidecarContract.approvalTaskDraft.status,
   },
 }, null, 2));
 EOF

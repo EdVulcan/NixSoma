@@ -297,6 +297,7 @@ async function postWorkView(path, payload = {}) {
               recoveryRecommendation: result.workView.trustedSession.recoveryRecommendation?.action ?? null,
               sidecarContract: result.workView.trustedSession.sidecarContract?.status ?? null,
               lifecycleProposal: result.workView.trustedSession.sidecarContract?.lifecycleProposal?.status ?? null,
+              approvalTaskDraft: result.workView.trustedSession.sidecarContract?.approvalTaskDraft?.status ?? null,
             }
           : null,
       });

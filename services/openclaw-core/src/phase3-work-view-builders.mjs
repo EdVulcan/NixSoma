@@ -120,7 +120,10 @@ export function createPhase3WorkViewBuilders(deps) {
       trustedSession?.sidecarContract?.lifecycle?.processStarted === false &&
       trustedSession?.sidecarContract?.lifecycle?.rootRequired === false &&
       trustedSession?.sidecarContract?.lifecycleProposal?.status === "proposal_ready" &&
-      trustedSession?.sidecarContract?.lifecycleProposal?.executionStatus === "deferred";
+      trustedSession?.sidecarContract?.lifecycleProposal?.executionStatus === "deferred" &&
+      trustedSession?.sidecarContract?.approvalTaskDraft?.status === "draft_ready" &&
+      trustedSession?.sidecarContract?.approvalTaskDraft?.createsTaskNow === false &&
+      trustedSession?.sidecarContract?.approvalTaskDraft?.processStartEnabled === false;
     const checks = [
       {
         id: "phase-3-plan-ready",

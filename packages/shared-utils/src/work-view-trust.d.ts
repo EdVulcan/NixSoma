@@ -77,6 +77,18 @@ export type TrustedWorkViewContract = {
       taskCreationDeferred: true;
       allowedTransitions: string[];
     };
+    approvalTaskDraft: {
+      status: "draft_ready";
+      createsTaskNow: false;
+      createsApprovalNow: false;
+      approvalRequiredBeforeExecution: true;
+      taskType: "work_view_trusted_sidecar_lifecycle";
+      plannedCapabilityId: "act.openclaw.work_view.trusted_sidecar_lifecycle";
+      executionStatus: "deferred";
+      processStartEnabled: false;
+      rootRequired: false;
+      plannedPhases: string[];
+    };
     responsibilities: {
       capture: string;
       action: string;

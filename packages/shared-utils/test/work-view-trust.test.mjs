@@ -42,6 +42,9 @@ test("trusted work-view contract records Level 2 boundary without host takeover"
   assert.equal(contract.sidecarContract.lifecycle.processStarted, false);
   assert.equal(contract.sidecarContract.lifecycleProposal.status, "proposal_ready");
   assert.equal(contract.sidecarContract.lifecycleProposal.executionStatus, "deferred");
+  assert.equal(contract.sidecarContract.approvalTaskDraft.status, "draft_ready");
+  assert.equal(contract.sidecarContract.approvalTaskDraft.createsTaskNow, false);
+  assert.equal(contract.sidecarContract.approvalTaskDraft.processStartEnabled, false);
   assert.equal(contract.sidecarContract.forbidden.desktopWideCapture, true);
 });
 
