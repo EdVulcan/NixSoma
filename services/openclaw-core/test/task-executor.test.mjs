@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -843,6 +844,130 @@ setTimeout(() => process.exit(3), 5000);
   } finally {
     process.env.PATH = previousPath;
     rmSync(fakeBinDir, { recursive: true, force: true });
+  }
+});
+
+test("approved native engineering LSP source-transfer task sends didOpen without symbol requests", async () => {
+  const root = mkdtempSync(path.join(tmpdir(), "openclaw-lsp-source-transfer-"));
+  const fakeBinDir = path.join(root, "bin");
+  mkdirSync(path.join(root, "src"), { recursive: true });
+  mkdirSync(fakeBinDir, { recursive: true });
+  const sourceText = "export const openclawSourceTransfer = 42;\n";
+  writeFileSync(path.join(root, "src", "app.ts"), sourceText, "utf8");
+  const sourceHash = createHash("sha256").update(sourceText, "utf8").digest("hex");
+  const fakeBinary = path.join(fakeBinDir, "typescript-language-server");
+  writeFileSync(fakeBinary, `#!/usr/bin/env node
+process.stderr.write("fake-lsp-source-transfer-ready\\n");
+let input = "";
+let sentInitialize = false;
+let sentShutdown = false;
+let sawDidOpen = false;
+function frame(message) {
+  const body = JSON.stringify(message);
+  process.stdout.write(\`Content-Length: \${Buffer.byteLength(body, "utf8")}\\r\\n\\r\\n\${body}\`);
+}
+process.stdin.on("data", (chunk) => {
+  input += chunk.toString("utf8");
+  if (!sentInitialize && input.includes('"method":"initialize"')) {
+    sentInitialize = true;
+    frame({ jsonrpc: "2.0", id: 1, result: { capabilities: { textDocumentSync: 1 } } });
+  }
+  if (input.includes('"method":"textDocument/didOpen"') && input.includes("openclawSourceTransfer")) {
+    sawDidOpen = true;
+  }
+  if (sawDidOpen && !sentShutdown && input.includes('"method":"shutdown"')) {
+    sentShutdown = true;
+    frame({ jsonrpc: "2.0", id: 2, result: null });
+  }
+  if (input.includes('"method":"exit"')) {
+    setTimeout(() => process.exit(0), 10);
+  }
+});
+setTimeout(() => process.exit(3), 5000);
+`, "utf8");
+  chmodSync(fakeBinary, 0o755);
+  const previousPath = process.env.PATH;
+  process.env.PATH = `${fakeBinDir}${path.delimiter}${previousPath ?? ""}`;
+
+  try {
+    const { executor, state, events } = createExecutorHarness({
+      state: { workspaceRoots: [root] },
+    });
+    state.approvals.set("approval-lsp-source-transfer", {
+      id: "approval-lsp-source-transfer",
+      status: "approved",
+      taskId: "lsp-source-transfer",
+    });
+    const task = {
+      id: "lsp-source-transfer",
+      type: "native_engineering_lsp_lifecycle",
+      goal: "Transfer source to TypeScript LSP",
+      status: "queued",
+      approval: {
+        requestId: "approval-lsp-source-transfer",
+        status: "approved",
+        required: false,
+      },
+      policy: {
+        request: { approved: true },
+        decision: { decision: "audit_only", approved: true, reason: "approved_unit_test" },
+      },
+      engineeringLspLifecycle: {
+        registry: "openclaw-native-engineering-lsp-lifecycle-task-v0",
+        lifecycleAction: "source_transfer",
+        language: "typescript",
+        workspace: { id: "fixture", path: root },
+        server: {
+          serverBinary: "typescript-language-server",
+          serverArgs: ["--stdio"],
+          binaryChecked: false,
+          processStarted: false,
+          jsonRpcHandshakeSent: false,
+          didOpenSent: false,
+          sourceContentTransferred: false,
+        },
+        sourceTransfer: {
+          registry: "openclaw-native-engineering-lsp-source-transfer-proposal-v0",
+          relativePath: "src/app.ts",
+          languageId: "typescript",
+          textBytes: Buffer.byteLength(sourceText, "utf8"),
+          lineCount: 2,
+          textSha256: sourceHash,
+          maxFileSizeBytes: 128 * 1024,
+          maxPreviewChars: 8_000,
+          didOpenSent: false,
+          sourceContentTransferred: false,
+          symbolRequestsSent: false,
+        },
+      },
+    };
+
+    const result = await executor.executeTaskWithRecovery(task);
+    const execution = result.finalExecution.execution;
+
+    assert.equal(result.finalExecution.task.status, "completed");
+    assert.equal(execution.result.state, "didopen_source_transfer_completed_symbol_requests_deferred");
+    assert.equal(execution.server.processStarted, true);
+    assert.equal(execution.server.jsonRpcHandshakeSent, true);
+    assert.equal(execution.server.didOpenSent, true);
+    assert.equal(execution.server.sourceContentTransferred, true);
+    assert.equal(execution.processSupervision.protocolHandshake.ok, true);
+    assert.deepEqual(execution.processSupervision.protocolHandshake.messagesSent, ["initialize", "textDocument/didOpen", "shutdown", "exit"]);
+    assert.equal(execution.processSupervision.protocolHandshake.didOpenSent, true);
+    assert.equal(execution.processSupervision.protocolHandshake.symbolRequestsSent, false);
+    assert.equal(execution.processSupervision.protocolHandshake.sourceContentTransferred, true);
+    assert.equal(execution.processSupervision.protocolHandshake.sourceTransfer.textSha256, sourceHash);
+    assert.equal(execution.lifecycleState.status, "didopen_source_transfer_completed");
+    assert.equal(execution.lifecycleState.boundaries.jsonRpcOperationalRequestsEnabled, false);
+    assert.equal(execution.lifecycleState.boundaries.sourceContentTransferred, true);
+    assert.equal(result.finalExecution.task.engineeringLspLifecycle.sourceTransfer.didOpenSent, true);
+    assert.equal(result.finalExecution.task.engineeringLspLifecycle.sourceTransfer.sourceContentTransferred, true);
+    assert.equal(JSON.stringify(execution).includes("openclawSourceTransfer = 42"), false);
+    assert.equal(state.nativeEngineeringLspLifecycleRecords.size, 1);
+    assert(events.some((event) => event.name === "task.completed"));
+  } finally {
+    process.env.PATH = previousPath;
+    rmSync(root, { recursive: true, force: true });
   }
 });
 

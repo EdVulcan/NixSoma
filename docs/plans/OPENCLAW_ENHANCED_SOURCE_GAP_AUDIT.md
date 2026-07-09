@@ -178,6 +178,13 @@ governed surfaces:
   metadata, byte count, line count, sha256, and preview, exposes Observer
   visibility, and keeps `didOpen`, source transfer into a language-server
   process, symbol requests, and long-lived process pools blocked.
+- Native engineering LSP source-transfer task:
+  `act.openclaw.engineering_tool.lsp_source_transfer_task` creates an
+  approval-gated task from an inspected proposal, re-reads and hash-checks the
+  bounded source file after approval, sends initialize plus
+  `textDocument/didOpen`, shutdown, and exit to a bounded short-lived process,
+  records lifecycle state, and keeps operational symbol requests and long-lived
+  process pools blocked.
 - Approval-gated workspace mutation:
   `act.openclaw.workspace_text_write` and
   `act.openclaw.workspace_patch_apply`.
@@ -204,7 +211,7 @@ enhanced `openclaw` modules.
 | `cc_write` | absorbed through governed proposal/approval/execution evidence | `act.openclaw.engineering_tool.write_proposal` creates redacted create/overwrite proposal evidence; `openclaw-native-engineering-write-proposal-task-v0` bridges confirmed proposals to approval-gated `workspace_text_write` tasks; `sense.openclaw.engineering_tool.write_execution_evidence` reads completed write ledger evidence. | Keep proposal, approval, execution, and recovery separated. Do not migrate raw overwrite semantics as an autonomous default. | Level 1 |
 | `cc_glob` | absorbed | `sense.openclaw.engineering_tool.glob` performs bounded workspace file discovery with skipped hidden/generated/cache/dependency directories and result caps. | Continue native bounded discovery; do not execute enhanced `GlobTool.ts`. | Level 1 |
 | `cc_grep` | absorbed | `sense.openclaw.engineering_tool.grep` performs bounded workspace text search with literal/regex mode, include filters, result/output caps, binary skips, audit, and Observer evidence. | Continue native bounded search; do not execute enhanced `GrepTool.ts`. | Level 1 |
-| `cc_lsp` | partially absorbed as evidence, lifecycle draft, approval-gated binary gate, bounded process supervision probe, lifecycle state readback, initialize/shutdown handshake, and didOpen source-transfer proposal | `sense.openclaw.engineering_tool.lsp_evidence` maps `check`, `definition`, `references`, and `hover` contracts, reports language/config metadata and server hints, and keeps source-content reads and symbol requests blocked. `plan.openclaw.engineering_tool.lsp_lifecycle` drafts a workspace-scoped lifecycle action and readiness gates. `act.openclaw.engineering_tool.lsp_lifecycle_task` creates an approval-gated lifecycle task, proves pre-approval blocking, checks the mapped server binary after approval, records missing-binary recovery evidence, starts and terminates a bounded user-space process supervision probe when a mapped server binary exists, sends initialize/shutdown-only handshake messages for the `handshake` action, and `sense.openclaw.engineering_tool.lsp_lifecycle_state` persists read-only start/stop/restart/recovery/handshake state. `plan.openclaw.engineering_tool.lsp_source_transfer` reads one bounded source file locally for proposal preview/hash and future didOpen metadata while actual source transfer into an LSP process, symbol requests, and long-lived process pools remain blocked. `sense.openclaw.workspace_symbol_lookup` remains separate derived navigation. | Keep the evidence, draft, task bridge, process probe, lifecycle-state readback, handshake evidence, and source-transfer proposal in one LSP lane. Defer actual didOpen/source transfer execution, definition/references/hover requests, long-lived process pools, provider egress, package installation, and root/system daemon work. | Level 1 now, Level 2 later |
+| `cc_lsp` | partially absorbed as evidence, lifecycle draft, approval-gated binary gate, bounded process supervision probe, lifecycle state readback, initialize/shutdown handshake, didOpen source-transfer proposal, and approval-gated didOpen task | `sense.openclaw.engineering_tool.lsp_evidence` maps `check`, `definition`, `references`, and `hover` contracts, reports language/config metadata and server hints, and keeps source-content reads and symbol requests blocked. `plan.openclaw.engineering_tool.lsp_lifecycle` drafts a workspace-scoped lifecycle action and readiness gates. `act.openclaw.engineering_tool.lsp_lifecycle_task` creates an approval-gated lifecycle task, proves pre-approval blocking, checks the mapped server binary after approval, records missing-binary recovery evidence, starts and terminates a bounded user-space process supervision probe when a mapped server binary exists, sends initialize/shutdown-only handshake messages for the `handshake` action, and `sense.openclaw.engineering_tool.lsp_lifecycle_state` persists read-only start/stop/restart/recovery/handshake/didOpen state. `plan.openclaw.engineering_tool.lsp_source_transfer` reads one bounded source file locally for proposal preview/hash and future didOpen metadata. `act.openclaw.engineering_tool.lsp_source_transfer_task` re-reads and hash-checks after approval, sends didOpen to a bounded short-lived server, and records source-transfer state while symbol requests and long-lived process pools remain blocked. `sense.openclaw.workspace_symbol_lookup` remains separate derived navigation. | Keep the evidence, draft, task bridge, process probe, lifecycle-state readback, handshake evidence, source-transfer proposal, and approved didOpen task in one LSP lane. Defer definition/references/hover requests, long-lived process pools, provider egress, package installation, and root/system daemon work. | Level 1 now, Level 2 later |
 | `cc_verify` | absorbed as evidence | `sense.openclaw.engineering_tool.verify_evidence` reads approval-gated command transcripts, capability invocations, and completed task outcomes to produce bounded verification evidence with checks, output budgets, retry-policy metadata, audit evidence, and Observer visibility. `sense.openclaw.engineering_tool.recovery_evidence` adds read-only failed-evidence recovery recommendations. | Keep actual command execution on the existing approval-gated source/workspace command task path. Do not add ungoverned shell execution or automatic retries. | Level 1 |
 | `cc_plan_enter`, `cc_plan_exit`, `cc_todo_write` | absorbed as evidence plus operator-visible workbench state | `sense.openclaw.engineering_context.plan_todo_evidence` reads visible task/workbench plan state, maps planning/todo tool semantics, reports todo counts, and exposes Observer evidence without hidden mode switches, task mutation, or `.openclaw/cc-todo.md` writes. `openclaw-native-engineering-planning-workbench-state-v0` bridges that evidence into Engineering Loop State for selected engineering tasks. | Keep hidden mode, todo-file persistence, and task mutation deferred until governed workbench storage exists. | Level 1 |
 | `microcompact` | absorbed as evidence | `sense.openclaw.engineering_context.microcompact_evidence` reads command transcript metadata, protects recent engineering evidence by default, and estimates reclaimable context budget without returning raw output or mutating logs. | Keep actual runtime-message compaction deferred until the evidence surface is stable and governed. Do not silently mutate persisted transcript or hide current verification/recovery evidence. | Level 1 |
@@ -362,21 +369,26 @@ Current OpenClaw:
   workspace source file locally, rejects traversal/skipped-path/binary/oversize
   inputs, returns future `textDocument/didOpen` metadata plus hash and preview,
   and renders in Observer without sending `didOpen`.
+- `act.openclaw.engineering_tool.lsp_source_transfer_task` creates an
+  approval-gated source-transfer task, blocks before approval, re-reads and
+  hash-checks the file after approval, sends only initialize plus
+  `textDocument/didOpen`, shutdown, and exit, and records lifecycle state.
 - It does not implement a long-lived Language Server Protocol process pool, open
-  files in an LSP connection, send symbol requests, transfer source content into
-  a server process, or perform optional language server installation checks.
+  reusable files in an LSP connection, send symbol requests, keep source content
+  in a long-lived server pool, or perform optional language server installation
+  checks.
 
 Classification: partially absorbed as evidence plus lifecycle draft plus
 approval-gated binary gate, bounded process supervision probe, and lifecycle
 state readback plus initialize/shutdown handshake evidence plus source-transfer
-proposal.
+proposal plus approval-gated didOpen task.
 
 Recommendation:
 
 - Keep the current evidence, lifecycle draft, and approval-gated task bridge in
-  one Level 1 LSP lane. Extend it next with an approval-gated didOpen/source-
-  transfer task rather than creating another static readiness shell, hidden
-  long-lived process, or immediate symbol request.
+  one Level 1 LSP lane. Extend it next with a governed symbol request proposal
+  and approval boundary rather than creating another static readiness shell,
+  hidden long-lived process, or immediate unapproved symbol request.
 
 ### `cc_verify`
 
@@ -640,19 +652,20 @@ Selected trunk:
 Native governed engineering tool surface
 ```
 
-Latest LSP source-transfer proposal completed:
+Latest LSP source-transfer task completed:
 
 ```text
-OPENCLAW_NATIVE_ENGINEERING_LSP_SOURCE_TRANSFER_PROPOSAL_PLAN.md
+OPENCLAW_NATIVE_ENGINEERING_LSP_SOURCE_TRANSFER_TASK_PLAN.md
 ```
 
 It produces:
 
-- A draft/readback surface showing the source file, byte budget, hash, preview,
-  and transfer metadata that would be sent in `textDocument/didOpen`.
-- Explicit proof that `didOpen` has not been sent and source content has not
-  entered a language-server process.
-- Continued deferral of definition/references/hover requests, provider calls,
+- A proposal surface showing the source file, byte budget, hash, preview, and
+  transfer metadata.
+- An approval-gated task that re-reads and hash-checks the file after approval,
+  sends only initialize plus `textDocument/didOpen`, shutdown, and exit, and
+  records lifecycle/source-transfer state.
+- Continued deferral of definition/references/hover execution, provider calls,
   network egress, package installation, long-lived process pools, and
   root/system daemon work.
 - No raw file mutation, no provider call, no hidden enhanced-source import, and
@@ -663,15 +676,14 @@ It produces:
 Next smallest real capability:
 
 ```text
-approval-gated LSP didOpen source-transfer task
+governed LSP symbol request proposal and approval boundary
 ```
 
 That should produce:
 
-- A task created from an inspected source-transfer proposal.
-- Explicit approval before any source content enters a language-server process.
-- A bounded short-lived process that sends initialize plus `textDocument/didOpen`
-  only, then records source-transfer state.
+- A proposal/readback surface for the exact definition/references/hover request
+  that would be sent after approved didOpen state exists.
+- Explicit approval before any operational symbol request is sent.
 - Continued deferral of definition/references/hover requests, provider calls,
   network egress, package installation, long-lived process pools, and
   root/system daemon work.

@@ -90,16 +90,30 @@ source-transfer proposal metadata, Observer visibility, and continued blocking
 of actual `didOpen`, source transfer into an LSP process, symbol requests, and
 long-lived process pools.
 
+## Follow-up Completed
+
+The next executable slice was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_SOURCE_TRANSFER_TASK_PLAN.md
+```
+
+That follow-up creates a task from an inspected proposal, requires explicit
+approval, re-reads and hash-checks the file after approval, sends only
+`initialize`, `textDocument/didOpen`, `shutdown`, and `exit` to a bounded
+short-lived process, records lifecycle/source-transfer state, and still keeps
+symbol requests and long-lived process pools deferred.
+
 ## Deferred Work
 
 The next executable slice should not jump straight to definition/references/
-hover. The next smallest real capability is:
+hover execution. The next smallest real capability is:
 
 ```text
-approval-gated LSP didOpen source-transfer task
+governed LSP symbol request proposal and approval boundary
 ```
 
-That follow-up should create a task from an inspected proposal, require explicit
-approval, send only `initialize` plus `textDocument/didOpen` to a bounded
-short-lived process, record lifecycle/source-transfer state, and still keep
-symbol requests and long-lived process pools deferred.
+That follow-up should draft the exact symbol request that would be sent after a
+completed approved `didOpen`, require explicit approval before sending any
+operational symbol request, and keep long-lived pools, provider egress, package
+installation, root/system daemon work, and automatic retries deferred.

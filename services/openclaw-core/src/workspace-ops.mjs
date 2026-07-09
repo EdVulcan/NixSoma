@@ -30,6 +30,7 @@ export function createWorkspaceOps(deps) {
     buildNativeOpenClawWorkspaceEditTargetSelection,
     buildNativeOpenClawPromptSemanticsProfile,
     buildNativeEngineeringLspLifecycleDraft,
+    buildNativeEngineeringLspSourceTransferProposal,
     buildRulePlan,
     createTask,
     supersedeOtherActiveTasks,
@@ -1043,6 +1044,7 @@ const {
 } = createNativeEngineeringLspLifecycleTaskBuilders({
   autonomyMode,
   buildNativeEngineeringLspLifecycleDraft,
+  buildNativeEngineeringLspSourceTransferProposal,
   buildRulePlan,
   createTask,
   createApprovalRequestForTask,

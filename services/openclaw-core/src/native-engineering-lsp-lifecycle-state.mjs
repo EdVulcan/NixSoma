@@ -75,6 +75,12 @@ function statusForExecution(execution = {}) {
   if (execution.result?.state === "initialize_shutdown_handshake_failed") {
     return "recovery_required_initialize_shutdown_handshake_failed";
   }
+  if (execution.result?.state === "didopen_source_transfer_completed_symbol_requests_deferred") {
+    return "didopen_source_transfer_completed";
+  }
+  if (execution.result?.state === "didopen_source_transfer_failed") {
+    return "recovery_required_didopen_source_transfer_failed";
+  }
   return execution.result?.state ?? "recorded";
 }
 
@@ -87,8 +93,10 @@ function eventForRecord({ task, execution }) {
     resultState: execution.result?.state ?? null,
     processStarted: execution.server?.processStarted === true,
     processTerminated: execution.server?.processTerminated === true,
-    jsonRpcEnabled: false,
+    jsonRpcEnabled: execution.server?.jsonRpcHandshakeSent === true,
     jsonRpcHandshakeSent: execution.server?.jsonRpcHandshakeSent === true,
+    didOpenSent: execution.server?.didOpenSent === true,
+    sourceContentTransferred: execution.server?.sourceContentTransferred === true,
   };
 }
 
@@ -130,7 +138,9 @@ export function recordNativeEngineeringLspLifecycleExecution({
       binaryChecked: execution?.server?.binaryChecked === true,
       binaryFound: execution?.server?.binaryFound === true,
       executablePath: execution?.server?.executablePath ?? null,
-      jsonRpcHandshakeSent: false,
+      jsonRpcHandshakeSent: execution?.server?.jsonRpcHandshakeSent === true,
+      didOpenSent: execution?.server?.didOpenSent === true,
+      sourceContentTransferred: execution?.server?.sourceContentTransferred === true,
     },
     process: {
       supervisionMode: processSupervision.mode ?? "not_attempted",
@@ -155,9 +165,10 @@ export function recordNativeEngineeringLspLifecycleExecution({
       canStartWithoutApproval: false,
       longLivedProcessActive: false,
       jsonRpcEnabled: execution?.server?.jsonRpcHandshakeSent === true,
-      jsonRpcInitializeShutdownOnly: execution?.server?.jsonRpcHandshakeSent === true,
+      jsonRpcInitializeShutdownOnly: execution?.server?.jsonRpcHandshakeSent === true
+        && execution?.server?.didOpenSent !== true,
       jsonRpcOperationalRequestsEnabled: false,
-      sourceContentTransferred: false,
+      sourceContentTransferred: execution?.server?.sourceContentTransferred === true,
       providerEgress: false,
       rootOrHostDaemonRequired: false,
     },
@@ -219,7 +230,7 @@ export function createNativeEngineeringLspLifecycleStateBuilders({
         activeLongLivedProcesses: items.filter((item) => item.process?.longLivedProcessActive === true).length,
         jsonRpcEnabled: items.some((item) => item.boundaries?.jsonRpcEnabled === true),
         jsonRpcOperationalRequestsEnabled: false,
-        sourceContentTransferred: false,
+        sourceContentTransferred: items.some((item) => item.boundaries?.sourceContentTransferred === true),
       },
       items,
       governance: {
@@ -229,7 +240,7 @@ export function createNativeEngineeringLspLifecycleStateBuilders({
         canStartProcess: false,
         canStopProcess: false,
         jsonRpcEnabled: false,
-        contentExposed: false,
+        contentExposed: items.some((item) => item.boundaries?.sourceContentTransferred === true),
         providerEgress: false,
       },
     };

@@ -37,16 +37,19 @@ const LANGUAGE_PROFILES = Object.freeze({
     languageId: "typescript",
     extensions: Object.freeze([".ts", ".tsx"]),
     serverBinary: "typescript-language-server",
+    serverArgs: Object.freeze(["--stdio"]),
   }),
   javascript: Object.freeze({
     languageId: "javascript",
     extensions: Object.freeze([".js", ".jsx", ".mjs", ".cjs"]),
     serverBinary: "typescript-language-server",
+    serverArgs: Object.freeze(["--stdio"]),
   }),
   python: Object.freeze({
     languageId: "python",
     extensions: Object.freeze([".py"]),
     serverBinary: "pylsp",
+    serverArgs: Object.freeze([]),
   }),
 });
 
@@ -226,6 +229,161 @@ function buildBounds({ maxFileSizeBytes, maxPreviewChars }) {
   };
 }
 
+export function buildNativeEngineeringLspSourceTransferProposalForWorkspace({
+  workspace,
+  safeStat,
+  language = "typescript",
+  relativePath = "src/app.ts",
+  maxFileSizeBytes = DEFAULT_MAX_FILE_SIZE_BYTES,
+  maxPreviewChars = DEFAULT_MAX_PREVIEW_CHARS,
+  includeSourceTextForExecution = false,
+} = {}) {
+  const safeLanguage = normaliseLanguage(language);
+  const safeMaxFileSizeBytes = normalisePositiveInteger(maxFileSizeBytes, DEFAULT_MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_BYTES);
+  const safeMaxPreviewChars = normalisePositiveInteger(maxPreviewChars, DEFAULT_MAX_PREVIEW_CHARS, MAX_PREVIEW_CHARS);
+  const file = resolveWorkspaceFile({
+    workspace,
+    relativePath,
+    safeStat,
+  });
+  const profile = LANGUAGE_PROFILES[safeLanguage];
+  const extension = path.extname(file.relativePath).toLowerCase();
+  const languageMatchesExtension = profile.extensions.includes(extension);
+  if (!languageMatchesExtension) {
+    throw new Error(`relativePath extension does not match selected LSP language: ${file.relativePath}`);
+  }
+
+  const { buffer, text } = readBoundedSourceFile({
+    file,
+    maxFileSizeBytes: safeMaxFileSizeBytes,
+  });
+  const textHash = sha256Hex(buffer);
+  const preview = truncateText(text, safeMaxPreviewChars);
+  const generatedAt = new Date().toISOString();
+  const fileUri = pathToFileURL(file.realPath).href;
+  const textBytes = Buffer.byteLength(text, "utf8");
+  const lineCount = countLines(text);
+  const summary = {
+    language: safeLanguage,
+    relativePath: file.relativePath,
+    textBytes,
+    lineCount,
+    textSha256: textHash,
+    previewChars: preview.text.length,
+    previewTruncated: preview.truncated,
+    didOpenSent: false,
+    sourceContentTransferred: false,
+    approvalRequiredBeforeTransfer: true,
+  };
+  const response = {
+    ok: true,
+    registry: NATIVE_ENGINEERING_LSP_SOURCE_TRANSFER_PROPOSAL_REGISTRY,
+    mode: "lsp-didopen-source-transfer-proposal-only",
+    generatedAt,
+    identityLevel: "Level 1: stable user-space control plane",
+    sourceCapability: {
+      sourceToolName: "cc_lsp",
+      intendedNativeCapabilityId: "plan.openclaw.engineering_tool.lsp_source_transfer",
+      migrationMode: "bounded_didopen_source_transfer_proposal_without_json_rpc",
+    },
+    capability: {
+      id: "plan.openclaw.engineering_tool.lsp_source_transfer",
+      sourceToolName: "cc_lsp",
+      operationClass: "lsp_source_content_transfer_proposal",
+      risk: "medium",
+      approvalRequiredForTransfer: true,
+      approvalRequiredForProposal: false,
+    },
+    workspace: {
+      id: workspace.item.id,
+      name: workspace.item.name,
+      path: workspace.item.path,
+      sourceRegistry: workspace.registry?.registry ?? null,
+    },
+    file: {
+      relativePath: file.relativePath,
+      uri: fileUri,
+      languageId: profile.languageId,
+      extension,
+      languageMatchesExtension,
+      sizeBytes: file.stats.size,
+      textBytes,
+      lineCount,
+      textSha256: textHash,
+    },
+    proposedDidOpen: {
+      method: "textDocument/didOpen",
+      sent: false,
+      textDocument: {
+        uri: fileUri,
+        languageId: profile.languageId,
+        version: DEFAULT_TEXT_DOCUMENT_VERSION,
+        textBytes,
+        textSha256: textHash,
+        textPreviewChars: preview.text.length,
+        textPreviewTruncated: preview.truncated,
+      },
+    },
+    sourcePreview: {
+      text: preview.text,
+      chars: preview.text.length,
+      truncated: preview.truncated,
+      fullTextReturned: !preview.truncated,
+      hashCoversFullText: true,
+    },
+    serverContract: {
+      language: safeLanguage,
+      serverBinary: profile.serverBinary,
+      serverArgs: [...profile.serverArgs],
+      binaryChecked: false,
+      processStarted: false,
+      jsonRpcSent: false,
+      didOpenSent: false,
+    },
+    bounds: buildBounds({
+      maxFileSizeBytes: safeMaxFileSizeBytes,
+      maxPreviewChars: safeMaxPreviewChars,
+    }),
+    governance: buildGovernance(),
+    auditEvidence: {
+      operation: "lsp_source_transfer_proposal",
+      capabilityId: "plan.openclaw.engineering_tool.lsp_source_transfer",
+      generatedAt,
+      persisted: false,
+      evidenceKind: "response_embedded_source_transfer_proposal",
+      file: {
+        relativePath: file.relativePath,
+        languageId: profile.languageId,
+        textBytes,
+        lineCount,
+        textSha256: textHash,
+      },
+    },
+    summary,
+    deferredExecutionBoundaries: [
+      "no LSP server process start",
+      "no long-lived LSP process pool",
+      "no textDocument/didOpen notification sent",
+      "no source content transferred into a language server process",
+      "no definition/references/hover JSON-RPC request",
+      "no task creation",
+      "no approval creation",
+      "no workspace mutation",
+      "no provider call",
+    ],
+    nextSmallestRealCapability: "approval-gated source transfer task that sends didOpen only after explicit approval",
+  };
+  if (includeSourceTextForExecution === true) {
+    response.executionSourceContent = {
+      text,
+      textBytes,
+      textSha256: textHash,
+      lineCount,
+    };
+  }
+  return response;
+}
+
 export function createNativeEngineeringLspSourceTransferProposalBuilders({
   safeStat,
   selectOpenClawToolCatalogWorkspace,
@@ -237,142 +395,15 @@ export function createNativeEngineeringLspSourceTransferProposalBuilders({
     maxFileSizeBytes = DEFAULT_MAX_FILE_SIZE_BYTES,
     maxPreviewChars = DEFAULT_MAX_PREVIEW_CHARS,
   } = {}) {
-    const safeLanguage = normaliseLanguage(language);
-    const safeMaxFileSizeBytes = normalisePositiveInteger(maxFileSizeBytes, DEFAULT_MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_BYTES);
-    const safeMaxPreviewChars = normalisePositiveInteger(maxPreviewChars, DEFAULT_MAX_PREVIEW_CHARS, MAX_PREVIEW_CHARS);
     const workspace = resolveWorkspace({ selectOpenClawToolCatalogWorkspace, workspacePath });
-    const file = resolveWorkspaceFile({
+    return buildNativeEngineeringLspSourceTransferProposalForWorkspace({
       workspace,
-      relativePath,
       safeStat,
+      language,
+      relativePath,
+      maxFileSizeBytes,
+      maxPreviewChars,
     });
-    const profile = LANGUAGE_PROFILES[safeLanguage];
-    const extension = path.extname(file.relativePath).toLowerCase();
-    const languageMatchesExtension = profile.extensions.includes(extension);
-    if (!languageMatchesExtension) {
-      throw new Error(`relativePath extension does not match selected LSP language: ${file.relativePath}`);
-    }
-
-    const { buffer, text } = readBoundedSourceFile({
-      file,
-      maxFileSizeBytes: safeMaxFileSizeBytes,
-    });
-    const textHash = sha256Hex(buffer);
-    const preview = truncateText(text, safeMaxPreviewChars);
-    const generatedAt = new Date().toISOString();
-    const fileUri = pathToFileURL(file.realPath).href;
-    const textBytes = Buffer.byteLength(text, "utf8");
-    const lineCount = countLines(text);
-    const summary = {
-      language: safeLanguage,
-      relativePath: file.relativePath,
-      textBytes,
-      lineCount,
-      textSha256: textHash,
-      previewChars: preview.text.length,
-      previewTruncated: preview.truncated,
-      didOpenSent: false,
-      sourceContentTransferred: false,
-      approvalRequiredBeforeTransfer: true,
-    };
-
-    return {
-      ok: true,
-      registry: NATIVE_ENGINEERING_LSP_SOURCE_TRANSFER_PROPOSAL_REGISTRY,
-      mode: "lsp-didopen-source-transfer-proposal-only",
-      generatedAt,
-      identityLevel: "Level 1: stable user-space control plane",
-      sourceCapability: {
-        sourceToolName: "cc_lsp",
-        intendedNativeCapabilityId: "plan.openclaw.engineering_tool.lsp_source_transfer",
-        migrationMode: "bounded_didopen_source_transfer_proposal_without_json_rpc",
-      },
-      capability: {
-        id: "plan.openclaw.engineering_tool.lsp_source_transfer",
-        sourceToolName: "cc_lsp",
-        operationClass: "lsp_source_content_transfer_proposal",
-        risk: "medium",
-        approvalRequiredForTransfer: true,
-        approvalRequiredForProposal: false,
-      },
-      workspace: {
-        id: workspace.item.id,
-        name: workspace.item.name,
-        path: workspace.item.path,
-        sourceRegistry: workspace.registry?.registry ?? null,
-      },
-      file: {
-        relativePath: file.relativePath,
-        uri: fileUri,
-        languageId: profile.languageId,
-        extension,
-        languageMatchesExtension,
-        sizeBytes: file.stats.size,
-        textBytes,
-        lineCount,
-        textSha256: textHash,
-      },
-      proposedDidOpen: {
-        method: "textDocument/didOpen",
-        sent: false,
-        textDocument: {
-          uri: fileUri,
-          languageId: profile.languageId,
-          version: DEFAULT_TEXT_DOCUMENT_VERSION,
-          textBytes,
-          textSha256: textHash,
-          textPreviewChars: preview.text.length,
-          textPreviewTruncated: preview.truncated,
-        },
-      },
-      sourcePreview: {
-        text: preview.text,
-        chars: preview.text.length,
-        truncated: preview.truncated,
-        fullTextReturned: !preview.truncated,
-        hashCoversFullText: true,
-      },
-      serverContract: {
-        language: safeLanguage,
-        serverBinary: profile.serverBinary,
-        binaryChecked: false,
-        processStarted: false,
-        jsonRpcSent: false,
-        didOpenSent: false,
-      },
-      bounds: buildBounds({
-        maxFileSizeBytes: safeMaxFileSizeBytes,
-        maxPreviewChars: safeMaxPreviewChars,
-      }),
-      governance: buildGovernance(),
-      auditEvidence: {
-        operation: "lsp_source_transfer_proposal",
-        capabilityId: "plan.openclaw.engineering_tool.lsp_source_transfer",
-        generatedAt,
-        persisted: false,
-        evidenceKind: "response_embedded_source_transfer_proposal",
-        file: {
-          relativePath: file.relativePath,
-          languageId: profile.languageId,
-          textBytes,
-          lineCount,
-          textSha256: textHash,
-        },
-      },
-      summary,
-      deferredExecutionBoundaries: [
-        "no LSP server process start",
-        "no long-lived LSP process pool",
-        "no textDocument/didOpen notification sent",
-        "no source content transferred into a language server process",
-        "no definition/references/hover JSON-RPC request",
-        "no task creation",
-        "no approval creation",
-        "no workspace mutation",
-        "no provider call",
-      ],
-      nextSmallestRealCapability: "approval-gated source transfer task that sends didOpen only after explicit approval",
-    };
   }
 
   return {

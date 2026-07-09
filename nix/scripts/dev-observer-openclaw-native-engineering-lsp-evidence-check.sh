@@ -95,6 +95,8 @@ for (const token of [
   "engineering-lsp-runtime",
   "engineering-lsp-mode",
   "engineering-lsp-lifecycle-task-button",
+  "engineering-lsp-source-transfer-task-button",
+  "Create Source Transfer Task",
   "engineering-lsp-json",
 ]) {
   if (!html.includes(token)) {
@@ -110,10 +112,13 @@ for (const token of [
   "refreshEngineeringLspEvidence",
   "renderEngineeringLspEvidence",
   "createEngineeringLspLifecycleLoopTask",
+  "createEngineeringLspSourceTransferLoopTask",
   "renderEngineeringLspLifecycleLoopTaskState",
   "engineeringLspLifecycle",
   "lsp-lifecycle",
+  "source_transfer",
   "approval-gated binary gate",
+  "approved execution may send initialize plus didOpen only",
   "aliveAtProbe",
   "processTerminated",
   "Lifecycle State",

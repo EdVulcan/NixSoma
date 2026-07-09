@@ -55,6 +55,7 @@ process.stderr.write("openclaw-fixture-typescript-lsp-ready\n");
 let input = "";
 let sentInitialize = false;
 let sentShutdown = false;
+let sawDidOpen = false;
 function frame(message) {
   const body = JSON.stringify(message);
   process.stdout.write(`Content-Length: ${Buffer.byteLength(body, "utf8")}\r\n\r\n${body}`);
@@ -64,6 +65,10 @@ process.stdin.on("data", (chunk) => {
   if (!sentInitialize && input.includes('"method":"initialize"')) {
     sentInitialize = true;
     frame({ jsonrpc: "2.0", id: 1, result: { capabilities: {} } });
+  }
+  if (!sawDidOpen && input.includes('"method":"textDocument/didOpen"') && input.includes("OpenClawNeedle")) {
+    sawDidOpen = true;
+    process.stderr.write("openclaw-fixture-didopen-observed\n");
   }
   if (!sentShutdown && input.includes('"method":"shutdown"')) {
     sentShutdown = true;
@@ -116,6 +121,12 @@ cleanup() {
     "${HANDSHAKE_TASK_READBACK_FILE:-}" \
     "${HANDSHAKE_STATE_FILE:-}" \
     "${SOURCE_TRANSFER_FILE:-}" \
+    "${SOURCE_TRANSFER_TASK_FILE:-}" \
+    "${SOURCE_TRANSFER_BLOCKED_STEP_FILE:-}" \
+    "${SOURCE_TRANSFER_APPROVED_FILE:-}" \
+    "${SOURCE_TRANSFER_STEP_FILE:-}" \
+    "${SOURCE_TRANSFER_TASK_READBACK_FILE:-}" \
+    "${SOURCE_TRANSFER_STATE_FILE:-}" \
     "${EVENTS_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
@@ -162,6 +173,12 @@ HANDSHAKE_STEP_FILE="$(mktemp)"
 HANDSHAKE_TASK_READBACK_FILE="$(mktemp)"
 HANDSHAKE_STATE_FILE="$(mktemp)"
 SOURCE_TRANSFER_FILE="$(mktemp)"
+SOURCE_TRANSFER_TASK_FILE="$(mktemp)"
+SOURCE_TRANSFER_BLOCKED_STEP_FILE="$(mktemp)"
+SOURCE_TRANSFER_APPROVED_FILE="$(mktemp)"
+SOURCE_TRANSFER_STEP_FILE="$(mktemp)"
+SOURCE_TRANSFER_TASK_READBACK_FILE="$(mktemp)"
+SOURCE_TRANSFER_STATE_FILE="$(mktemp)"
 EVENTS_FILE="$(mktemp)"
 
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=check&language=typescript&limit=200" > "$CHECK_FILE"
@@ -317,6 +334,33 @@ post_json "$CORE_URL/approvals/$handshake_approval_id/approve" '{"approvedBy":"d
 post_json "$CORE_URL/operator/step" '{}' > "$HANDSHAKE_STEP_FILE"
 curl --silent --fail "$CORE_URL/tasks/$handshake_task_id" > "$HANDSHAKE_TASK_READBACK_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-state?language=typescript&limit=10" > "$HANDSHAKE_STATE_FILE"
+
+post_json "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-tasks" '{"language":"typescript","lifecycleAction":"source_transfer","relativePath":"src/app.ts","confirm":true}' > "$SOURCE_TRANSFER_TASK_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$SOURCE_TRANSFER_BLOCKED_STEP_FILE"
+read -r source_transfer_approval_id source_transfer_task_id < <(node - <<'EOF' "$SOURCE_TRANSFER_TASK_FILE" "$SOURCE_TRANSFER_BLOCKED_STEP_FILE"
+const fs = require("node:fs");
+const taskResponse = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const blockedStep = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+if (
+  !taskResponse.ok
+  || taskResponse.mode !== "approval-gated-lsp-source-transfer-didopen"
+  || taskResponse.sourceRegistry !== "openclaw-native-engineering-lsp-source-transfer-proposal-v0"
+  || taskResponse.sourceTransferProposal?.proposedDidOpen?.sent !== false
+  || taskResponse.engineeringLspLifecycle?.language !== "typescript"
+  || taskResponse.engineeringLspLifecycle?.lifecycleAction !== "source_transfer"
+  || taskResponse.engineeringLspLifecycle?.sourceTransfer?.relativePath !== "src/app.ts"
+  || taskResponse.engineeringLspLifecycle?.sourceTransfer?.didOpenSent !== false
+  || blockedStep.reason !== "policy_requires_approval"
+) {
+  throw new Error(`LSP source-transfer task should be approval-gated: ${JSON.stringify({ taskResponse, blockedStep })}`);
+}
+process.stdout.write(`${blockedStep.approval.id} ${taskResponse.task.id}\n`);
+EOF
+)
+post_json "$CORE_URL/approvals/$source_transfer_approval_id/approve" '{"approvedBy":"dev-openclaw-native-engineering-lsp-evidence-check","reason":"approve bounded LSP didOpen source transfer"}' > "$SOURCE_TRANSFER_APPROVED_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$SOURCE_TRANSFER_STEP_FILE"
+curl --silent --fail "$CORE_URL/tasks/$source_transfer_task_id" > "$SOURCE_TRANSFER_TASK_READBACK_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-state?language=typescript&limit=10" > "$SOURCE_TRANSFER_STATE_FILE"
 curl --silent --fail "$EVENT_HUB_URL/events/audit?limit=120" > "$EVENTS_FILE"
 
 node - <<'EOF' \
@@ -356,7 +400,13 @@ node - <<'EOF' \
   "$HANDSHAKE_TASK_READBACK_FILE" \
   "$HANDSHAKE_STATE_FILE" \
   "$EVENTS_FILE" \
-  "$SOURCE_TRANSFER_FILE"
+  "$SOURCE_TRANSFER_FILE" \
+  "$SOURCE_TRANSFER_TASK_FILE" \
+  "$SOURCE_TRANSFER_BLOCKED_STEP_FILE" \
+  "$SOURCE_TRANSFER_APPROVED_FILE" \
+  "$SOURCE_TRANSFER_STEP_FILE" \
+  "$SOURCE_TRANSFER_TASK_READBACK_FILE" \
+  "$SOURCE_TRANSFER_STATE_FILE"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
 
@@ -397,7 +447,13 @@ const handshakeTaskReadback = readJson(35);
 const handshakeState = readJson(36);
 const events = readJson(37);
 const sourceTransfer = readJson(38);
-const raw = JSON.stringify({ check, position, bad, draft, sourceTransfer, adapter, taskResponse, blockedStep, approved, execStep, taskReadback, processTaskResponse, processBlockedStep, processApproved, processStep, processTaskReadback, lifecycleStateAfterProcess, stopTaskResponse, stopBlockedStep, stopApproved, stopStep, stopTaskReadback, lifecycleStateAfterStop, restartTaskResponse, restartBlockedStep, restartApproved, restartStep, restartTaskReadback, lifecycleState, handshakeTaskResponse, handshakeBlockedStep, handshakeApproved, handshakeStep, handshakeTaskReadback, handshakeState, events });
+const sourceTransferTaskResponse = readJson(39);
+const sourceTransferBlockedStep = readJson(40);
+const sourceTransferApproved = readJson(41);
+const sourceTransferStep = readJson(42);
+const sourceTransferTaskReadback = readJson(43);
+const sourceTransferState = readJson(44);
+const raw = JSON.stringify({ check, position, bad, draft, sourceTransfer, sourceTransferTaskResponse, sourceTransferBlockedStep, sourceTransferApproved, sourceTransferStep, sourceTransferTaskReadback, sourceTransferState, adapter, taskResponse, blockedStep, approved, execStep, taskReadback, processTaskResponse, processBlockedStep, processApproved, processStep, processTaskReadback, lifecycleStateAfterProcess, stopTaskResponse, stopBlockedStep, stopApproved, stopStep, stopTaskReadback, lifecycleStateAfterStop, restartTaskResponse, restartBlockedStep, restartApproved, restartStep, restartTaskReadback, lifecycleState, handshakeTaskResponse, handshakeBlockedStep, handshakeApproved, handshakeStep, handshakeTaskReadback, handshakeState, events });
 
 if (
   !check.ok
@@ -519,11 +575,13 @@ if (
   || !adapter.implementedCapabilities?.includes("act.openclaw.engineering_tool.lsp_lifecycle_task")
   || !adapter.implementedCapabilities?.includes("sense.openclaw.engineering_tool.lsp_lifecycle_state")
   || !adapter.implementedCapabilities?.includes("plan.openclaw.engineering_tool.lsp_source_transfer")
+  || !adapter.implementedCapabilities?.includes("act.openclaw.engineering_tool.lsp_source_transfer_task")
   || adapter.summary?.canReadEngineeringLspEvidence !== true
   || adapter.summary?.canDraftEngineeringLspLifecycleAction !== true
   || adapter.summary?.canCreateApprovalGatedEngineeringLspLifecycleTasks !== true
   || adapter.summary?.canReadEngineeringLspLifecycleState !== true
   || adapter.summary?.canDraftEngineeringLspSourceTransferProposal !== true
+  || adapter.summary?.canCreateApprovalGatedEngineeringLspSourceTransferTasks !== true
 ) {
   throw new Error(`native adapter missing LSP evidence/lifecycle capability: ${JSON.stringify(adapter)}`);
 }
@@ -761,6 +819,55 @@ if (
 ) {
   throw new Error(`LSP lifecycle state should record handshake readback: ${JSON.stringify({ handshakeTaskReadback, handshakeState })}`);
 }
+if (sourceTransferApproved.approval?.status !== "approved" || sourceTransferApproved.task?.policy?.decision?.decision !== "audit_only") {
+  throw new Error(`LSP source-transfer approval should convert task to audited execution: ${JSON.stringify(sourceTransferApproved)}`);
+}
+if (!sourceTransferStep.ok || sourceTransferStep.ran !== true || sourceTransferStep.blocked !== false) {
+  throw new Error(`approved LSP source-transfer task should complete: ${JSON.stringify(sourceTransferStep)}`);
+}
+const sourceTransferTask = sourceTransferStep.task;
+const sourceTransferExecution = sourceTransferTask?.outcome?.details?.lspLifecycleExecution ?? sourceTransferTask?.engineeringLspLifecycle?.execution;
+if (
+  sourceTransferTaskResponse.mode !== "approval-gated-lsp-source-transfer-didopen"
+  || sourceTransferBlockedStep.reason !== "policy_requires_approval"
+  || sourceTransferTask?.id !== sourceTransferTaskResponse.task?.id
+  || sourceTransferTask.status !== "completed"
+  || sourceTransferExecution?.result?.state !== "didopen_source_transfer_completed_symbol_requests_deferred"
+  || sourceTransferExecution?.server?.processStarted !== true
+  || sourceTransferExecution?.server?.jsonRpcHandshakeSent !== true
+  || sourceTransferExecution?.server?.didOpenSent !== true
+  || sourceTransferExecution?.server?.sourceContentTransferred !== true
+  || sourceTransferExecution?.processSupervision?.protocolHandshake?.ok !== true
+  || !sourceTransferExecution?.processSupervision?.protocolHandshake?.messagesSent?.includes("textDocument/didOpen")
+  || sourceTransferExecution?.processSupervision?.protocolHandshake?.didOpenSent !== true
+  || sourceTransferExecution?.processSupervision?.protocolHandshake?.symbolRequestsSent !== false
+  || sourceTransferExecution?.processSupervision?.protocolHandshake?.sourceContentTransferred !== true
+  || sourceTransferExecution?.processSupervision?.protocolHandshake?.sourceTransfer?.relativePath !== "src/app.ts"
+  || sourceTransferExecution?.lifecycleState?.status !== "didopen_source_transfer_completed"
+  || sourceTransferExecution?.lifecycleState?.boundaries?.sourceContentTransferred !== true
+  || sourceTransferExecution?.lifecycleState?.boundaries?.jsonRpcOperationalRequestsEnabled !== false
+  || !String(sourceTransferExecution?.processSupervision?.stderr?.text ?? "").includes("openclaw-fixture-didopen-observed")
+) {
+  throw new Error(`LSP didOpen source-transfer readback mismatch: ${JSON.stringify({ sourceTransferTask, sourceTransferExecution })}`);
+}
+const sourceTransferStateItem = sourceTransferState.items?.[0];
+if (
+  sourceTransferTaskReadback.task?.id !== sourceTransferTask.id
+  || sourceTransferTaskReadback.task?.engineeringLspLifecycle?.sourceTransfer?.didOpenSent !== true
+  || sourceTransferTaskReadback.task?.engineeringLspLifecycle?.sourceTransfer?.sourceContentTransferred !== true
+  || sourceTransferState.registry !== "openclaw-native-engineering-lsp-lifecycle-state-v0"
+  || sourceTransferState.summary?.jsonRpcEnabled !== true
+  || sourceTransferState.summary?.jsonRpcOperationalRequestsEnabled !== false
+  || sourceTransferState.summary?.sourceContentTransferred !== true
+  || sourceTransferStateItem?.sourceTaskId !== sourceTransferTask.id
+  || sourceTransferStateItem?.lifecycleAction !== "source_transfer"
+  || sourceTransferStateItem?.status !== "didopen_source_transfer_completed"
+  || sourceTransferStateItem?.process?.protocolHandshake?.didOpenSent !== true
+  || sourceTransferStateItem?.boundaries?.sourceContentTransferred !== true
+  || sourceTransferStateItem?.boundaries?.jsonRpcOperationalRequestsEnabled !== false
+) {
+  throw new Error(`LSP lifecycle state should record didOpen source transfer: ${JSON.stringify({ sourceTransferTaskReadback, sourceTransferState })}`);
+}
 const eventTypes = new Set((events.items ?? events.events ?? []).map((event) => event.type));
 for (const type of ["approval.created", "approval.approved", "policy.evaluated"]) {
   if (!eventTypes.has(type)) {
@@ -775,6 +882,8 @@ for (const token of [
   "no LSP server process start",
   "no lifecycle task creation",
   "lsp-didopen-source-transfer-proposal-only",
+  "approval-gated-lsp-source-transfer-didopen",
+  "didopen_source_transfer_completed_symbol_requests_deferred",
   "no textDocument/didOpen notification sent",
   "approval-gated-lsp-lifecycle-binary-gate",
   "approved-lsp-lifecycle-binary-gate",
@@ -804,11 +913,14 @@ console.log(JSON.stringify({
     lifecycleExecutionRegistry: execution.registry,
     lifecycleStateRegistry: lifecycleState.registry,
     lifecycleProcessState: supervisedExecution.result.state,
-    lifecycleFinalState: handshakeStateItem.status,
+    lifecycleFinalState: sourceTransferStateItem.status,
     languages: check.summary.detectedLanguages,
     lifecycleAction: draft.summary.lifecycleAction,
     sourceTransferPath: sourceTransfer.file.relativePath,
     sourceTransferDidOpenSent: sourceTransfer.proposedDidOpen.sent,
+    sourceTransferTaskStatus: sourceTransferTask.status,
+    approvedSourceTransferDidOpenSent: sourceTransferExecution.server.didOpenSent,
+    approvedSourceTransferState: sourceTransferExecution.result.state,
     serverStatus: check.serverReadiness.status,
     lifecycleTaskStatus: lifecycleTask.status,
     binaryFound: execution.server.binaryFound,

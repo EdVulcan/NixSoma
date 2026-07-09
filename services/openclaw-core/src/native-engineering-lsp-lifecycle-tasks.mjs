@@ -1,13 +1,16 @@
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
-import { accessSync, constants, realpathSync } from "node:fs";
+import { accessSync, constants, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { recordNativeEngineeringLspLifecycleExecution } from "./native-engineering-lsp-lifecycle-state.mjs";
 import {
+  createLspInitializeDidOpenShutdownHandshake,
   createLspInitializeShutdownHandshake,
   shouldRunLspInitializeShutdownHandshake,
+  shouldRunLspSourceTransferHandshake,
 } from "./native-engineering-lsp-protocol-handshake.mjs";
+import { buildNativeEngineeringLspSourceTransferProposalForWorkspace } from "./native-engineering-lsp-source-transfer-proposal-builders.mjs";
 
 export const NATIVE_ENGINEERING_LSP_LIFECYCLE_TASK_REGISTRY = "openclaw-native-engineering-lsp-lifecycle-task-v0";
 export const NATIVE_ENGINEERING_LSP_LIFECYCLE_EXECUTION_REGISTRY = "openclaw-native-engineering-lsp-lifecycle-execution-v0";
@@ -15,8 +18,9 @@ export const NATIVE_ENGINEERING_LSP_LIFECYCLE_EXECUTION_REGISTRY = "openclaw-nat
 const DEFAULT_PROCESS_PROBE_MS = 300;
 const MAX_PROCESS_PROBE_MS = 2_000;
 const DEFAULT_PROCESS_OUTPUT_CHARS = 4_096;
-const PROCESS_SUPERVISION_ACTIONS = new Set(["start", "restart", "recover", "handshake"]);
-const BINARY_GATE_ACTIONS = new Set(["start", "restart", "recover", "handshake"]);
+const SOURCE_TRANSFER_ACTION = "source_transfer";
+const PROCESS_SUPERVISION_ACTIONS = new Set(["start", "restart", "recover", "handshake", SOURCE_TRANSFER_ACTION]);
+const BINARY_GATE_ACTIONS = new Set(["start", "restart", "recover", "handshake", SOURCE_TRANSFER_ACTION]);
 
 function redactedWorkspace(workspace) {
   return {
@@ -86,6 +90,37 @@ function buildLifecyclePlan({ buildRulePlan, goal, policyRequest, draft }) {
   });
 }
 
+function buildSourceTransferPlan({ buildRulePlan, goal, policyRequest, proposal }) {
+  const action = {
+    kind: "engineering.lsp.source_transfer",
+    intent: "openclaw.engineering.lsp.source_transfer",
+    params: {
+      language: proposal.summary.language,
+      lifecycleAction: SOURCE_TRANSFER_ACTION,
+      workspaceId: proposal.workspace.id,
+      workspacePath: proposal.workspace.path,
+      relativePath: proposal.file.relativePath,
+      fileUri: proposal.file.uri,
+      languageId: proposal.file.languageId,
+      textBytes: proposal.file.textBytes,
+      textSha256: proposal.file.textSha256,
+      serverBinary: proposal.serverContract.serverBinary,
+      serverArgs: proposal.serverContract.serverArgs,
+      sourceProposalRegistry: proposal.registry,
+      jsonRpcEnabledAfterApproval: true,
+      symbolRequestsEnabled: false,
+    },
+  };
+  return buildRulePlan({
+    goal,
+    type: "native_engineering_lsp_lifecycle",
+    intent: "openclaw.engineering.lsp.source_transfer",
+    policy: policyRequest,
+    targetUrl: null,
+    actions: [action],
+  });
+}
+
 function buildTaskMetadata(draft) {
   const lifecycle = draft.lifecycleDraft;
   return {
@@ -109,9 +144,50 @@ function buildTaskMetadata(draft) {
   };
 }
 
+function buildSourceTransferTaskMetadata(proposal) {
+  return {
+    registry: NATIVE_ENGINEERING_LSP_LIFECYCLE_TASK_REGISTRY,
+    sourceRegistry: proposal.registry,
+    sourceCapabilityId: proposal.capability.id,
+    draftId: `openclaw-lsp-source-transfer-${proposal.summary.language}-${proposal.file.relativePath}`,
+    language: proposal.summary.language,
+    lifecycleAction: SOURCE_TRANSFER_ACTION,
+    workspace: redactedWorkspace(proposal.workspace),
+    server: {
+      serverBinary: proposal.serverContract.serverBinary,
+      serverArgs: proposal.serverContract.serverArgs,
+      binaryChecked: false,
+      processStarted: false,
+      jsonRpcHandshakeSent: false,
+      didOpenSent: false,
+      sourceContentTransferred: false,
+    },
+    sourceTransfer: {
+      registry: proposal.registry,
+      capabilityId: proposal.capability.id,
+      relativePath: proposal.file.relativePath,
+      uri: proposal.file.uri,
+      languageId: proposal.file.languageId,
+      textBytes: proposal.file.textBytes,
+      lineCount: proposal.file.lineCount,
+      textSha256: proposal.file.textSha256,
+      maxFileSizeBytes: proposal.bounds.maxFileSizeBytes,
+      maxPreviewChars: proposal.bounds.maxPreviewChars,
+      proposalPreviewTruncated: proposal.sourcePreview.truncated,
+      didOpenSent: false,
+      sourceContentTransferred: false,
+      symbolRequestsSent: false,
+    },
+    execution: null,
+    approvedMutation: false,
+    contentExposed: false,
+  };
+}
+
 export function createNativeEngineeringLspLifecycleTaskBuilders({
   autonomyMode,
   buildNativeEngineeringLspLifecycleDraft,
+  buildNativeEngineeringLspSourceTransferProposal,
   buildRulePlan,
   createTask,
   createApprovalRequestForTask,
@@ -127,22 +203,41 @@ export function createNativeEngineeringLspLifecycleTaskBuilders({
     workspacePath = null,
     language = "typescript",
     lifecycleAction = "start",
+    relativePath = "src/app.ts",
+    maxFileSizeBytes = null,
+    maxPreviewChars = null,
     confirm = false,
   } = {}) {
     if (confirm !== true) {
       throw new Error("Native engineering LSP lifecycle task creation requires confirm=true.");
     }
 
-    const draft = buildNativeEngineeringLspLifecycleDraft({
-      workspacePath,
-      language,
-      lifecycleAction,
-    });
+    const safeLifecycleAction = lifecycleAction === SOURCE_TRANSFER_ACTION ? SOURCE_TRANSFER_ACTION : lifecycleAction;
+    const sourceTransferProposal = safeLifecycleAction === SOURCE_TRANSFER_ACTION
+      ? buildNativeEngineeringLspSourceTransferProposal({
+          workspacePath,
+          language,
+          relativePath,
+          maxFileSizeBytes,
+          maxPreviewChars,
+        })
+      : null;
+    const draft = sourceTransferProposal
+      ? null
+      : buildNativeEngineeringLspLifecycleDraft({
+          workspacePath,
+          language,
+          lifecycleAction: safeLifecycleAction,
+        });
     const now = new Date().toISOString();
-    const goal = `Run approved OpenClaw LSP lifecycle ${draft.query.lifecycleAction} gate for ${draft.query.language}`;
+    const goal = sourceTransferProposal
+      ? `Run approved OpenClaw LSP source transfer for ${sourceTransferProposal.file.relativePath}`
+      : `Run approved OpenClaw LSP lifecycle ${draft.query.lifecycleAction} gate for ${draft.query.language}`;
     const policyRequest = buildPolicyRequest();
     const policyDecision = buildPolicyDecision({ now, goal, autonomyMode });
-    const plan = buildLifecyclePlan({ buildRulePlan, goal, policyRequest, draft });
+    const plan = sourceTransferProposal
+      ? buildSourceTransferPlan({ buildRulePlan, goal, policyRequest, proposal: sourceTransferProposal })
+      : buildLifecyclePlan({ buildRulePlan, goal, policyRequest, draft });
 
     const task = createTask({
       goal,
@@ -155,7 +250,9 @@ export function createNativeEngineeringLspLifecycleTaskBuilders({
       request: policyRequest,
       decision: policyDecision,
     };
-    task.engineeringLspLifecycle = buildTaskMetadata(draft);
+    task.engineeringLspLifecycle = sourceTransferProposal
+      ? buildSourceTransferTaskMetadata(sourceTransferProposal)
+      : buildTaskMetadata(draft);
     const approval = createApprovalRequestForTask(task, policyDecision);
     const reclaimedTasks = supersedeOtherActiveTasks(task.id);
     reconcileRuntimeState();
@@ -170,15 +267,29 @@ export function createNativeEngineeringLspLifecycleTaskBuilders({
 
     return {
       registry: NATIVE_ENGINEERING_LSP_LIFECYCLE_TASK_REGISTRY,
-      mode: "approval-gated-lsp-lifecycle-binary-gate",
+      mode: sourceTransferProposal
+        ? "approval-gated-lsp-source-transfer-didopen"
+        : "approval-gated-lsp-lifecycle-binary-gate",
       generatedAt: new Date().toISOString(),
-      sourceRegistry: draft.registry,
-      lifecycleDraft: {
-        registry: draft.registry,
-        mode: draft.mode,
-        id: draft.lifecycleDraft.id,
-        readinessGates: draft.readinessGates,
-      },
+      sourceRegistry: sourceTransferProposal?.registry ?? draft.registry,
+      lifecycleDraft: draft
+        ? {
+            registry: draft.registry,
+            mode: draft.mode,
+            id: draft.lifecycleDraft.id,
+            readinessGates: draft.readinessGates,
+          }
+        : null,
+      sourceTransferProposal: sourceTransferProposal
+        ? {
+            registry: sourceTransferProposal.registry,
+            mode: sourceTransferProposal.mode,
+            file: sourceTransferProposal.file,
+            proposedDidOpen: sourceTransferProposal.proposedDidOpen,
+            sourcePreview: sourceTransferProposal.sourcePreview,
+            auditEvidence: sourceTransferProposal.auditEvidence,
+          }
+        : null,
       engineeringLspLifecycle: task.engineeringLspLifecycle,
       task,
       approval,
@@ -187,8 +298,9 @@ export function createNativeEngineeringLspLifecycleTaskBuilders({
         createsApproval: true,
         canExecuteWithoutApproval: false,
         canStartProcessWithoutApproval: false,
-        canSendJsonRpcRequest: false,
+        canSendJsonRpcRequest: sourceTransferProposal ? "after_approval_didopen_only" : false,
         contentExposed: false,
+        sourceTransferRequiresApproval: Boolean(sourceTransferProposal),
       },
     };
   }
@@ -237,6 +349,14 @@ function safeRealpath(value) {
   }
 }
 
+function safeStat(value) {
+  try {
+    return statSync(value);
+  } catch {
+    return null;
+  }
+}
+
 function isInsidePath(rootPath, candidatePath) {
   const relative = path.relative(rootPath, candidatePath);
   return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
@@ -257,6 +377,48 @@ function resolveSupervisionCwd(metadata, workspaceRoots = []) {
     throw new Error("Native engineering LSP lifecycle workspace path is outside configured workspace roots.");
   }
   return { cwd, allowedRoots: roots };
+}
+
+function loadApprovedSourceTransferContent(metadata, workspaceRoots = []) {
+  const sourceTransfer = metadata.sourceTransfer ?? null;
+  if (!sourceTransfer) {
+    return null;
+  }
+  const cwd = resolveSupervisionCwd(metadata, workspaceRoots).cwd;
+  const workspace = {
+    registry: { registry: "openclaw-approved-lsp-source-transfer-workspace-v0" },
+    item: {
+      id: metadata.workspace?.id ?? "approved-lsp-source-transfer-workspace",
+      name: metadata.workspace?.name ?? "Approved LSP Source Transfer Workspace",
+      path: cwd,
+    },
+    rootPath: cwd,
+    rootRealPath: cwd,
+  };
+  const proposal = buildNativeEngineeringLspSourceTransferProposalForWorkspace({
+    workspace,
+    safeStat,
+    language: metadata.language ?? sourceTransfer.languageId ?? "typescript",
+    relativePath: sourceTransfer.relativePath,
+    maxFileSizeBytes: sourceTransfer.maxFileSizeBytes,
+    maxPreviewChars: sourceTransfer.maxPreviewChars,
+    includeSourceTextForExecution: true,
+  });
+  if (proposal.file.textSha256 !== sourceTransfer.textSha256) {
+    throw new Error("Approved LSP source-transfer proposal hash no longer matches workspace file content.");
+  }
+  return {
+    proposal,
+    sourceContent: proposal.executionSourceContent,
+    transfer: {
+      relativePath: proposal.file.relativePath,
+      uri: proposal.file.uri,
+      languageId: proposal.file.languageId,
+      textBytes: proposal.file.textBytes,
+      lineCount: proposal.file.lineCount,
+      textSha256: proposal.file.textSha256,
+    },
+  };
 }
 
 function appendBoundedOutput(current, chunk, limit) {
@@ -447,6 +609,20 @@ function resultStateForExecution({ lifecycleAction = "start", binaryChecked, bin
       failureKind: "lsp_initialize_shutdown_handshake_failed",
     };
   }
+  if (lifecycleAction === SOURCE_TRANSFER_ACTION) {
+    if (processProbe?.protocolHandshake?.ok === true && processProbe?.protocolHandshake?.didOpenSent === true) {
+      return {
+        ok: true,
+        state: "didopen_source_transfer_completed_symbol_requests_deferred",
+        failureKind: null,
+      };
+    }
+    return {
+      ok: false,
+      state: "didopen_source_transfer_failed",
+      failureKind: "lsp_didopen_source_transfer_failed",
+    };
+  }
   if (!processProbe?.attempted) {
     return {
       ok: true,
@@ -494,6 +670,8 @@ function buildLifecycleExecution({ task, executablePath, binaryChecked = true, a
       processAliveAtProbe: processProbe?.processAliveAtProbe === true,
       processTerminated: processProbe?.processTerminated === true,
       jsonRpcHandshakeSent: processProbe?.protocolHandshake?.attempted === true,
+      didOpenSent: processProbe?.protocolHandshake?.didOpenSent === true,
+      sourceContentTransferred: processProbe?.protocolHandshake?.sourceContentTransferred === true,
     },
     processSupervision: processProbe ?? {
       mode: "not_attempted",
@@ -511,7 +689,7 @@ function buildLifecycleExecution({ task, executablePath, binaryChecked = true, a
       processStarted: processProbe?.started === true,
       jsonRpcEnabled: processProbe?.protocolHandshake?.attempted === true,
       jsonRpcOperationalRequestsEnabled: false,
-      contentExposed: false,
+      contentExposed: processProbe?.protocolHandshake?.sourceContentTransferred === true,
     },
     recoveryRecommendation: lifecycleAction === "stop"
       ? {
@@ -522,6 +700,11 @@ function buildLifecycleExecution({ task, executablePath, binaryChecked = true, a
       ? {
           recoverable: true,
           nextAction: `inspect ${serverBinary ?? "the requested language server"} initialize/shutdown output and rerun the approved handshake task after fixing the server wrapper`,
+        }
+      : result.failureKind === "lsp_didopen_source_transfer_failed"
+      ? {
+          recoverable: true,
+          nextAction: `inspect ${serverBinary ?? "the requested language server"} didOpen output and rerun the approved source-transfer task after fixing the server wrapper or source file`,
         }
       : result.failureKind === "lsp_server_process_start_failed"
       ? {
@@ -614,17 +797,27 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
     const executablePath = binaryChecked
       ? resolveExecutablePath(task.engineeringLspLifecycle?.server?.serverBinary)
       : null;
+    const sourceTransferContent = executablePath && shouldRunLspSourceTransferHandshake(task.engineeringLspLifecycle ?? {})
+      ? loadApprovedSourceTransferContent(task.engineeringLspLifecycle ?? {}, workspaceRoots)
+      : null;
+    const protocolHandshake = shouldRunLspSourceTransferHandshake(task.engineeringLspLifecycle ?? {})
+      ? createLspInitializeDidOpenShutdownHandshake({
+          workspacePath: task.engineeringLspLifecycle?.workspace?.path ?? null,
+          sourceTransfer: sourceTransferContent?.transfer ?? task.engineeringLspLifecycle?.sourceTransfer ?? {},
+          sourceContent: sourceTransferContent?.sourceContent ?? {},
+        })
+      : shouldRunLspInitializeShutdownHandshake(task.engineeringLspLifecycle ?? {})
+        ? createLspInitializeShutdownHandshake({
+            workspacePath: task.engineeringLspLifecycle?.workspace?.path ?? null,
+          })
+        : null;
     const processProbe = executablePath && shouldRunProcessSupervisionProbe(task.engineeringLspLifecycle ?? {})
       ? await startSupervisedLifecycleProcess({
           executablePath,
           args: task.engineeringLspLifecycle?.server?.serverArgs ?? [],
           cwd: resolveSupervisionCwd(task.engineeringLspLifecycle ?? {}, workspaceRoots).cwd,
-          probeMs: shouldRunLspInitializeShutdownHandshake(task.engineeringLspLifecycle ?? {}) ? 1_000 : DEFAULT_PROCESS_PROBE_MS,
-          protocolHandshake: shouldRunLspInitializeShutdownHandshake(task.engineeringLspLifecycle ?? {})
-            ? createLspInitializeShutdownHandshake({
-                workspacePath: task.engineeringLspLifecycle?.workspace?.path ?? null,
-              })
-            : null,
+          probeMs: protocolHandshake ? 1_000 : DEFAULT_PROCESS_PROBE_MS,
+          protocolHandshake,
         })
       : null;
     const execution = buildLifecycleExecution({ task, executablePath, binaryChecked, approved: true, processProbe });
@@ -648,7 +841,17 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
         processAliveAtProbe: execution.server.processAliveAtProbe,
         processTerminated: execution.server.processTerminated,
         jsonRpcHandshakeSent: execution.server.jsonRpcHandshakeSent,
+        didOpenSent: execution.server.didOpenSent,
+        sourceContentTransferred: execution.server.sourceContentTransferred,
       },
+      sourceTransfer: task.engineeringLspLifecycle?.sourceTransfer
+        ? {
+            ...(task.engineeringLspLifecycle.sourceTransfer ?? {}),
+            didOpenSent: execution.server.didOpenSent,
+            sourceContentTransferred: execution.server.sourceContentTransferred,
+            symbolRequestsSent: execution.processSupervision?.protocolHandshake?.symbolRequestsSent === true,
+          }
+        : task.engineeringLspLifecycle?.sourceTransfer ?? null,
       execution,
       lifecycleState,
     };
@@ -683,10 +886,13 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
             { name: "server_binary_present", ok: execution.server.binaryFound === true },
             { name: "process_supervision_probe", ok: execution.processSupervision?.started === true },
             { name: "initialize_shutdown_handshake", ok: execution.lifecycleAction === "handshake" ? execution.processSupervision?.protocolHandshake?.ok === true : null },
+            { name: "didopen_source_transfer", ok: execution.lifecycleAction === SOURCE_TRANSFER_ACTION ? execution.processSupervision?.protocolHandshake?.didOpenSent === true : null },
             { name: "lifecycle_state_recorded", ok: Boolean(lifecycleState) },
           ],
           failedChecks: execution.result.failureKind === "lsp_initialize_shutdown_handshake_failed"
             ? ["initialize_shutdown_handshake"]
+            : execution.result.failureKind === "lsp_didopen_source_transfer_failed"
+            ? ["didopen_source_transfer"]
             : execution.server.binaryFound ? ["process_supervision_probe"] : ["server_binary_present"],
         },
         policy: policy.decision,
@@ -701,6 +907,8 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
         ? "LSP lifecycle stop state recorded; no long-lived process is active."
         : execution.lifecycleAction === "handshake"
         ? "LSP lifecycle initialize/shutdown handshake completed; source-content transfer remains deferred."
+        : execution.lifecycleAction === SOURCE_TRANSFER_ACTION
+        ? "LSP didOpen source-transfer completed after approval; symbol requests remain deferred."
         : execution.processSupervision?.attempted
         ? "LSP lifecycle process supervision probe completed; JSON-RPC remains deferred."
         : "LSP lifecycle binary gate passed; process supervision remains deferred.",
@@ -722,6 +930,7 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
           { name: "server_binary_present", ok: execution.server.binaryChecked ? execution.server.binaryFound === true : null },
           { name: "process_supervision_probe", ok: execution.processSupervision?.attempted ? execution.processSupervision?.started === true : null },
           { name: "initialize_shutdown_handshake", ok: execution.lifecycleAction === "handshake" ? execution.processSupervision?.protocolHandshake?.ok === true : null },
+          { name: "didopen_source_transfer", ok: execution.lifecycleAction === SOURCE_TRANSFER_ACTION ? execution.processSupervision?.protocolHandshake?.didOpenSent === true : null },
           { name: "lifecycle_state_recorded", ok: Boolean(lifecycleState) },
         ],
         failedChecks: [],

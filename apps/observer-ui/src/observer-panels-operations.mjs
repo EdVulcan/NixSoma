@@ -403,6 +403,7 @@ export function observerOperationsPanels() {
           <div class="metric"><span>Mode</span><span id="engineering-lsp-mode">lsp-contract-and-availability-evidence-only</span></div>
           <div class="control-row">
             <button id="engineering-lsp-lifecycle-task-button" class="secondary" type="button">Create Lifecycle Task</button>
+            <button id="engineering-lsp-source-transfer-task-button" class="secondary" type="button">Create Source Transfer Task</button>
           </div>
           <pre id="engineering-lsp-json">Loading native engineering LSP evidence, lifecycle draft, and source-transfer proposal...</pre>
         </section>

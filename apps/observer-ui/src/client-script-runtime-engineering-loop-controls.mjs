@@ -194,7 +194,9 @@ function renderEngineeringLspLifecycleLoopTaskState(result) {
     \`Action: \${result.engineeringLspLifecycle?.lifecycleAction ?? "start"}\`,
     \`Server: \${result.engineeringLspLifecycle?.server?.serverBinary ?? "typescript-language-server"}\`,
     "Next: approve pending approval, then run operator step. Missing server binaries become recoverable task evidence.",
-    "Boundary: no auto-approval, no process start before approval, no JSON-RPC, no source-content read, no provider call.",
+    result.engineeringLspLifecycle?.lifecycleAction === "source_transfer"
+      ? "Boundary: no auto-approval or process start before approval; approved execution may send initialize plus didOpen only; symbol requests, long-lived pools, and provider calls remain blocked."
+      : "Boundary: no auto-approval, no process start before approval, no JSON-RPC, no source-content transfer, no provider call.",
   ].join("\\n");
 }
 
@@ -211,6 +213,23 @@ async function createEngineeringLspLifecycleLoopTask() {
   focusEngineeringLoopTask(result);
   renderEngineeringLspLifecycleLoopTaskState(result);
   setControlMessage(\`Created LSP lifecycle task \${result.task?.id ?? "unknown"}; approval and operator step are still required.\`);
+  await refreshEngineeringLoopControlSurfaces();
+}
+
+async function createEngineeringLspSourceTransferLoopTask() {
+  const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-lsp/lifecycle-tasks\`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      language: "typescript",
+      lifecycleAction: "source_transfer",
+      relativePath: "src/app.ts",
+      confirm: true,
+    }),
+  });
+  focusEngineeringLoopTask(result);
+  renderEngineeringLspLifecycleLoopTaskState(result);
+  setControlMessage(\`Created LSP source-transfer task \${result.task?.id ?? "unknown"}; approval and operator step are still required.\`);
   await refreshEngineeringLoopControlSurfaces();
 }
 

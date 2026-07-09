@@ -46,6 +46,12 @@ engineeringLspLifecycleTaskButton.addEventListener("click", () => {
   });
 });
 
+engineeringLspSourceTransferTaskButton.addEventListener("click", () => {
+  createEngineeringLspSourceTransferLoopTask().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 engineeringLoopCompletionButton.addEventListener("click", () => {
   refreshEngineeringLoopCompletionReadback().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

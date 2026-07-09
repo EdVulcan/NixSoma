@@ -125,6 +125,9 @@ function lspLifecycleTaskInputFromBody(body) {
     workspacePath: bodyString(body, "workspacePath", null),
     language: bodyString(body, "language", "typescript"),
     lifecycleAction: bodyString(body, "lifecycleAction", bodyString(body, "action", "start")),
+    relativePath: bodyString(body, "relativePath", bodyString(body, "path", "src/app.ts")),
+    maxFileSizeBytes: bodyInteger(body, "maxFileSizeBytes", 128 * 1024),
+    maxPreviewChars: bodyInteger(body, "maxPreviewChars", 8_000),
     confirm: body.confirm === true,
   };
 }
@@ -250,6 +253,7 @@ export async function handleWorkspaceNativeOpsRoute({
       const result = await workspaceOps.createNativeEngineeringLspLifecycleTask(lspLifecycleTaskInputFromBody(body));
       sendJson(res, 201, serialiseWorkspaceTaskResponse(result, [
         "lifecycleDraft",
+        "sourceTransferProposal",
         "engineeringLspLifecycle",
       ], { serialiseTask, serialiseApproval, buildTaskSummary }));
     } catch (error) {
