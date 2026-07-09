@@ -11,6 +11,7 @@ import { createNativeEngineeringEditProposalBuilders } from "./native-engineerin
 import { createNativeEngineeringWriteProposalBuilders } from "./native-engineering-write-proposal-builders.mjs";
 import { createNativeEngineeringLspEvidenceBuilders } from "./native-engineering-lsp-evidence-builders.mjs";
 import { createNativeEngineeringLspLifecycleStateBuilders } from "./native-engineering-lsp-lifecycle-state.mjs";
+import { createNativeEngineeringLspSourceTransferProposalBuilders } from "./native-engineering-lsp-source-transfer-proposal-builders.mjs";
 import {
   createPluginReviewWorkspaceDiscovery,
   safeStat,
@@ -135,6 +136,12 @@ export function createPluginReview(deps) {
     buildNativeEngineeringLspLifecycleState,
   } = createNativeEngineeringLspLifecycleStateBuilders({
     records: nativeEngineeringLspLifecycleRecords,
+    selectOpenClawToolCatalogWorkspace,
+  });
+  const {
+    buildNativeEngineeringLspSourceTransferProposal,
+  } = createNativeEngineeringLspSourceTransferProposalBuilders({
+    safeStat,
     selectOpenClawToolCatalogWorkspace,
   });
   const {
@@ -297,6 +304,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "plan.openclaw.engineering_tool.lsp_lifecycle",
       "act.openclaw.engineering_tool.lsp_lifecycle_task",
       "sense.openclaw.engineering_tool.lsp_lifecycle_state",
+      "plan.openclaw.engineering_tool.lsp_source_transfer",
       "sense.openclaw.engineering_tool.verify_evidence",
       "sense.openclaw.engineering_tool.recovery_evidence",
       "sense.openclaw.engineering_context.microcompact_evidence",
@@ -315,7 +323,7 @@ function buildOpenClawNativePluginAdapterStatus() {
     ],
     pendingCapabilities: ["act.plugin.capability.invoke"],
     summary: {
-      implemented: 33,
+      implemented: 34,
       pending: 1,
       canReadManifestMetadata: true,
       canReadToolCatalogMetadata: true,
@@ -332,6 +340,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       canDraftEngineeringLspLifecycleAction: true,
       canCreateApprovalGatedEngineeringLspLifecycleTasks: true,
       canReadEngineeringLspLifecycleState: true,
+      canDraftEngineeringLspSourceTransferProposal: true,
       canReadEngineeringVerificationEvidence: true,
       canReadEngineeringRecoveryEvidence: true,
       canReadEngineeringMicrocompactEvidence: true,
@@ -378,6 +387,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "engineering LSP evidence maps definition, references, hover, and server-check contracts without checking binaries, starting servers, opening files, or sending JSON-RPC",
       "engineering LSP lifecycle draft maps a future workspace-scoped server lifecycle action without checking binaries, starting processes, creating tasks, approvals, state, or JSON-RPC",
       "engineering LSP lifecycle tasks create approval-gated binary-gate tasks; approved execution may check server binary availability but still does not start processes or send JSON-RPC",
+      "engineering LSP source-transfer proposals read one bounded workspace source file, report the future didOpen payload metadata and hash, and do not send didOpen or transfer content into a server process",
       "engineering recovery evidence reads failed verification/task outcomes and recommends governed recovery review without creating tasks, approvals, retries, mutations, or provider calls",
       "engineering microcompact evidence calculates context-budget savings from historical command transcripts without returning raw output or mutating runtime messages or persisted logs",
       "engineering plan/todo evidence reads visible task/workbench planning state without hidden agent mode switches or .openclaw/cc-todo.md writes",
@@ -440,5 +450,6 @@ function buildOpenClawNativePluginAdapterStatus() {
     buildNativeEngineeringLspEvidence,
     buildNativeEngineeringLspLifecycleDraft,
     buildNativeEngineeringLspLifecycleState,
+    buildNativeEngineeringLspSourceTransferProposal,
   };
 }

@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering LSP Handshake Plan
 
-Updated: 2026-07-09
+Updated: 2026-07-10
 
 ## Active Slice
 
@@ -86,16 +86,29 @@ process probes, explicit stop readback, lifecycle state, initialize/shutdown
 handshake evidence, and continued blocking of source-content transfer and
 operational LSP requests.
 
+## Follow-up Completed
+
+The next meaningful LSP step was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_SOURCE_TRANSFER_PROPOSAL_PLAN.md
+```
+
+That follow-up drafts and displays the bounded source file, hash, preview, and
+future `textDocument/didOpen` metadata before any source content enters a
+language-server process.
+
 ## Next Slice
 
 Do not jump to full definition/references/hover. The next meaningful LSP step
 is:
 
 ```text
-Native governed LSP didOpen source-transfer proposal
+approval-gated LSP didOpen source-transfer task
 ```
 
-That follow-up should draft and display exactly what source file content would
-be transferred into a language server, require explicit approval, and keep
-definition/references/hover execution deferred until the operator can inspect
-the transfer boundary.
+That follow-up should create an inspected task from the proposal, require
+explicit approval, send only initialize plus `textDocument/didOpen` to a bounded
+short-lived process, record source-transfer state, and keep symbol requests,
+long-lived process pools, provider egress, and root/system daemon work
+deferred.

@@ -1,6 +1,6 @@
 # OpenClaw Documentation Control Room
 
-Updated: 2026-07-09
+Updated: 2026-07-10
 
 This is the active documentation entry point for `OpenClawOnNixOS`.
 
@@ -75,6 +75,7 @@ directive.
 | [OPENCLAW_NATIVE_ENGINEERING_LSP_SUPERVISED_LIFECYCLE_PILOT_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_LSP_SUPERVISED_LIFECYCLE_PILOT_PLAN.md) | Active approval-gated LSP lifecycle task, binary gate, supervised user-space process probe, and state readback with audit events and Observer controls while long-lived process pools and operational LSP requests remain deferred. |
 | [OPENCLAW_NATIVE_ENGINEERING_LSP_LIFECYCLE_STATE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_LSP_LIFECYCLE_STATE_PLAN.md) | Active read-only LSP lifecycle state store for approved start/restart probes, explicit stop readback, recovery states, handshake status, and Observer visibility while source transfer remains deferred. |
 | [OPENCLAW_NATIVE_ENGINEERING_LSP_HANDSHAKE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_LSP_HANDSHAKE_PLAN.md) | Active approval-gated LSP initialize/shutdown handshake evidence while source transfer, didOpen, symbol requests, and long-lived process pools remain deferred. |
+| [OPENCLAW_NATIVE_ENGINEERING_LSP_SOURCE_TRANSFER_PROPOSAL_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_LSP_SOURCE_TRANSFER_PROPOSAL_PLAN.md) | Active read-only `didOpen` source-transfer proposal with bounded workspace source preview/hash and Observer visibility while actual `didOpen`, symbol requests, and long-lived pools remain deferred. |
 | [OPENCLAW_NATIVE_ENGINEERING_PLANNING_WORKBENCH_STATE_BRIDGE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_PLANNING_WORKBENCH_STATE_BRIDGE_PLAN.md) | Active bridge from plan/todo evidence into operator-visible Engineering Loop State. |
 | [OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_RESTORATION_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_RESTORATION_PLAN.md) | Active read-only restoration of Engineering Loop State from core task history after Observer reload. |
 | [OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_AUTO_RESTORE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_AUTO_RESTORE_PLAN.md) | Active startup auto-restore of Engineering Loop State when browser-local state is empty. |

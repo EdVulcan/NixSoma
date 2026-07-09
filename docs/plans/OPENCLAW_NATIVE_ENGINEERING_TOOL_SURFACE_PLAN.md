@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering Tool Surface Plan
 
-Updated: 2026-07-09
+Updated: 2026-07-10
 
 ## Active Slice
 
@@ -50,7 +50,7 @@ call providers or perform network egress
 | `cc_write` | `act.openclaw.engineering_tool.write_proposal` / `sense.openclaw.engineering_tool.write_execution_evidence` | `mutation_proposal_and_execution_evidence` | high | approval required before create or overwrite | absorbed through governed proposal, approval bridge, and execution evidence |
 | `cc_glob` | `sense.openclaw.engineering_tool.glob` | `read_only_path_search` | low | no approval for bounded metadata search | contract mapped, execution deferred |
 | `cc_grep` | `sense.openclaw.engineering_tool.grep` | `read_only_content_search` | low | no approval for bounded search; snippets require budget and audit | contract mapped, execution deferred |
-| `cc_lsp` | `sense.openclaw.engineering_tool.lsp_evidence` / `act.openclaw.engineering_tool.lsp_lifecycle_task` / `sense.openclaw.engineering_tool.lsp_lifecycle_state` | `language_intelligence_evidence_and_governed_lifecycle_state` | medium | no approval for evidence/state readback; approval required before lifecycle execution | partially absorbed as evidence, lifecycle draft, approval-gated binary gate, bounded process supervision probe, lifecycle state readback, and initialize/shutdown handshake |
+| `cc_lsp` | `sense.openclaw.engineering_tool.lsp_evidence` / `act.openclaw.engineering_tool.lsp_lifecycle_task` / `sense.openclaw.engineering_tool.lsp_lifecycle_state` / `plan.openclaw.engineering_tool.lsp_source_transfer` | `language_intelligence_evidence_governed_lifecycle_and_source_transfer_proposal` | medium | no approval for evidence/state/proposal readback; approval required before lifecycle execution or source transfer into LSP | partially absorbed as evidence, lifecycle draft, approval-gated binary gate, bounded process supervision probe, lifecycle state readback, initialize/shutdown handshake, and didOpen source-transfer proposal |
 | `cc_verify` | `act.openclaw.engineering_tool.verify` | `verification_command_evidence` | medium | command execution requires policy or approval | partially absorbed, command execution deferred |
 | `cc_plan_enter` | `plan.openclaw.engineering_tool.plan_enter` | `planning_state` | low | no hidden mode switch without task/workbench evidence | state mutation deferred |
 | `cc_plan_exit` | `plan.openclaw.engineering_tool.plan_exit` | `planning_state` | low | no hidden execution transition without task evidence | state mutation deferred |
@@ -113,10 +113,10 @@ raw enhanced glob/grep execution outside native bounds
 automatic edit approval, automatic recovery task creation, and unapproved verification command execution
 automatic write approval, automatic recovery task creation, and post-write
 verification command execution
-long-lived LSP process pool, source-transfer, and symbol request handling;
+long-lived LSP process pool, actual didOpen source-transfer execution, and symbol request handling;
 `lsp_evidence` contract, availability evidence, lifecycle readiness draft,
 approval-gated binary gate, bounded process supervision probe, lifecycle state
-readback, and initialize/shutdown handshake are absorbed
+readback, initialize/shutdown handshake, and source-transfer proposal are absorbed
 verification command execution and task-completion attachment
 planning/todo evidence is absorbed; hidden planning mode and todo state mutation remain deferred
 provider calls, network egress, and result envelopes
@@ -208,13 +208,24 @@ It adds persisted read-only lifecycle records for approved start/restart probes,
 explicit stop actions, and recovery-required states while keeping JSON-RPC and
 source-content transfer disabled.
 
+The LSP source-transfer proposal follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_SOURCE_TRANSFER_PROPOSAL_PLAN.md
+```
+
+That slice reads one bounded workspace source file locally, shows the future
+`textDocument/didOpen` metadata, hash, and preview in Observer, and keeps actual
+source transfer into an LSP process disabled.
+
 The current next smallest real capability is:
 
 ```text
-Native governed LSP didOpen source-transfer proposal
+approval-gated LSP didOpen source-transfer task
 ```
 
-That slice should draft and display exactly what source content would be
-transferred to a language server before any `textDocument/didOpen`. It must keep
+That slice should create an inspected source-transfer task from the proposal,
+require explicit approval, send only initialize plus `textDocument/didOpen` to a
+bounded short-lived process, record lifecycle/source-transfer state, and keep
 definition/references/hover requests, long-lived process pools, provider egress,
 package installation, and root/system daemon work disabled.

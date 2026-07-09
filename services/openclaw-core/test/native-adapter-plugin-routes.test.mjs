@@ -261,6 +261,31 @@ test("native adapter engineering LSP lifecycle state route preserves readback fi
   assert.equal(response.body.registry, "openclaw-native-engineering-lsp-lifecycle-state-v0");
 });
 
+test("native adapter engineering LSP source-transfer proposal route preserves bounded proposal inputs", async () => {
+  let observedInput = null;
+  const response = await invokeNativeAdapterPluginRoute({
+    buildNativeEngineeringLspSourceTransferProposal: (input) => {
+      observedInput = input;
+      return {
+        ok: true,
+        registry: "openclaw-native-engineering-lsp-source-transfer-proposal-v0",
+        mode: "lsp-didopen-source-transfer-proposal-only",
+      };
+    },
+  }, "GET", "/plugins/native-adapter/engineering-lsp/source-transfer-proposal?workspacePath=/tmp/openclaw&language=typescript&path=src/app.ts&maxFileSizeBytes=2048&maxPreviewChars=500");
+
+  assert.equal(response.handled, true);
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(observedInput, {
+    workspacePath: "/tmp/openclaw",
+    language: "typescript",
+    relativePath: "src/app.ts",
+    maxFileSizeBytes: "2048",
+    maxPreviewChars: "500",
+  });
+  assert.equal(response.body.registry, "openclaw-native-engineering-lsp-source-transfer-proposal-v0");
+});
+
 test("native adapter engineering write proposal route preserves bounded proposal inputs", async () => {
   let observedInput = null;
   const response = await invokeNativeAdapterPluginRoute({

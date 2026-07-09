@@ -115,6 +115,7 @@ cleanup() {
     "${HANDSHAKE_STEP_FILE:-}" \
     "${HANDSHAKE_TASK_READBACK_FILE:-}" \
     "${HANDSHAKE_STATE_FILE:-}" \
+    "${SOURCE_TRANSFER_FILE:-}" \
     "${EVENTS_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
@@ -160,12 +161,14 @@ HANDSHAKE_APPROVED_FILE="$(mktemp)"
 HANDSHAKE_STEP_FILE="$(mktemp)"
 HANDSHAKE_TASK_READBACK_FILE="$(mktemp)"
 HANDSHAKE_STATE_FILE="$(mktemp)"
+SOURCE_TRANSFER_FILE="$(mktemp)"
 EVENTS_FILE="$(mktemp)"
 
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=check&language=typescript&limit=200" > "$CHECK_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=definition&language=typescript&relativePath=src/app.ts&line=2&character=14&limit=200" > "$POSITION_FILE"
 BAD_STATUS="$(curl --silent --output "$BAD_PATH_FILE" --write-out "%{http_code}" "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=hover&language=typescript&relativePath=.cache/leak.ts")"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-draft?language=python&lifecycleAction=restart&limit=200" > "$DRAFT_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/source-transfer-proposal?language=typescript&relativePath=src/app.ts&maxPreviewChars=1200" > "$SOURCE_TRANSFER_FILE"
 curl --silent --fail "$CORE_URL/plugins/openclaw-native-plugin-adapter" > "$ADAPTER_FILE"
 post_json "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-tasks" '{"language":"python","lifecycleAction":"restart","confirm":true}' > "$TASK_FILE"
 post_json "$CORE_URL/operator/step" '{}' > "$BLOCKED_STEP_FILE"
@@ -352,7 +355,8 @@ node - <<'EOF' \
   "$HANDSHAKE_STEP_FILE" \
   "$HANDSHAKE_TASK_READBACK_FILE" \
   "$HANDSHAKE_STATE_FILE" \
-  "$EVENTS_FILE"
+  "$EVENTS_FILE" \
+  "$SOURCE_TRANSFER_FILE"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
 
@@ -392,7 +396,8 @@ const handshakeStep = readJson(34);
 const handshakeTaskReadback = readJson(35);
 const handshakeState = readJson(36);
 const events = readJson(37);
-const raw = JSON.stringify({ check, position, bad, draft, adapter, taskResponse, blockedStep, approved, execStep, taskReadback, processTaskResponse, processBlockedStep, processApproved, processStep, processTaskReadback, lifecycleStateAfterProcess, stopTaskResponse, stopBlockedStep, stopApproved, stopStep, stopTaskReadback, lifecycleStateAfterStop, restartTaskResponse, restartBlockedStep, restartApproved, restartStep, restartTaskReadback, lifecycleState, handshakeTaskResponse, handshakeBlockedStep, handshakeApproved, handshakeStep, handshakeTaskReadback, handshakeState, events });
+const sourceTransfer = readJson(38);
+const raw = JSON.stringify({ check, position, bad, draft, sourceTransfer, adapter, taskResponse, blockedStep, approved, execStep, taskReadback, processTaskResponse, processBlockedStep, processApproved, processStep, processTaskReadback, lifecycleStateAfterProcess, stopTaskResponse, stopBlockedStep, stopApproved, stopStep, stopTaskReadback, lifecycleStateAfterStop, restartTaskResponse, restartBlockedStep, restartApproved, restartStep, restartTaskReadback, lifecycleState, handshakeTaskResponse, handshakeBlockedStep, handshakeApproved, handshakeStep, handshakeTaskReadback, handshakeState, events });
 
 if (
   !check.ok
@@ -475,14 +480,50 @@ if (
   throw new Error(`LSP lifecycle draft mismatch: ${JSON.stringify(draft)}`);
 }
 if (
+  !sourceTransfer.ok
+  || sourceTransfer.registry !== "openclaw-native-engineering-lsp-source-transfer-proposal-v0"
+  || sourceTransfer.mode !== "lsp-didopen-source-transfer-proposal-only"
+  || sourceTransfer.capability?.id !== "plan.openclaw.engineering_tool.lsp_source_transfer"
+  || sourceTransfer.file?.relativePath !== "src/app.ts"
+  || sourceTransfer.file?.languageId !== "typescript"
+  || sourceTransfer.file?.languageMatchesExtension !== true
+  || !String(sourceTransfer.file?.uri ?? "").startsWith("file://")
+  || !/^[a-f0-9]{64}$/.test(String(sourceTransfer.file?.textSha256 ?? ""))
+  || sourceTransfer.proposedDidOpen?.method !== "textDocument/didOpen"
+  || sourceTransfer.proposedDidOpen?.sent !== false
+  || sourceTransfer.proposedDidOpen?.textDocument?.textSha256 !== sourceTransfer.file?.textSha256
+  || sourceTransfer.sourcePreview?.truncated !== false
+  || !String(sourceTransfer.sourcePreview?.text ?? "").includes("OpenClawNeedle")
+  || sourceTransfer.serverContract?.binaryChecked !== false
+  || sourceTransfer.serverContract?.processStarted !== false
+  || sourceTransfer.serverContract?.jsonRpcSent !== false
+  || sourceTransfer.serverContract?.didOpenSent !== false
+  || sourceTransfer.governance?.canReadWorkspaceSourceForProposal !== true
+  || sourceTransfer.governance?.canTransferSourceContentToLsp !== false
+  || sourceTransfer.governance?.canSendDidOpen !== false
+  || sourceTransfer.governance?.canSendSymbolRequests !== false
+  || sourceTransfer.governance?.futureSourceTransferRequiresApproval !== true
+  || sourceTransfer.bounds?.workspaceRootConstrained !== true
+  || sourceTransfer.bounds?.binaryFileSkipped !== true
+  || sourceTransfer.bounds?.noLspServerStart !== true
+  || sourceTransfer.bounds?.noDidOpenSent !== true
+  || sourceTransfer.bounds?.noSymbolRequestSent !== true
+  || sourceTransfer.summary?.sourceContentTransferred !== false
+  || sourceTransfer.auditEvidence?.operation !== "lsp_source_transfer_proposal"
+) {
+  throw new Error(`LSP source-transfer proposal mismatch: ${JSON.stringify(sourceTransfer)}`);
+}
+if (
   !adapter.implementedCapabilities?.includes("sense.openclaw.engineering_tool.lsp_evidence")
   || !adapter.implementedCapabilities?.includes("plan.openclaw.engineering_tool.lsp_lifecycle")
   || !adapter.implementedCapabilities?.includes("act.openclaw.engineering_tool.lsp_lifecycle_task")
   || !adapter.implementedCapabilities?.includes("sense.openclaw.engineering_tool.lsp_lifecycle_state")
+  || !adapter.implementedCapabilities?.includes("plan.openclaw.engineering_tool.lsp_source_transfer")
   || adapter.summary?.canReadEngineeringLspEvidence !== true
   || adapter.summary?.canDraftEngineeringLspLifecycleAction !== true
   || adapter.summary?.canCreateApprovalGatedEngineeringLspLifecycleTasks !== true
   || adapter.summary?.canReadEngineeringLspLifecycleState !== true
+  || adapter.summary?.canDraftEngineeringLspSourceTransferProposal !== true
 ) {
   throw new Error(`native adapter missing LSP evidence/lifecycle capability: ${JSON.stringify(adapter)}`);
 }
@@ -733,6 +774,8 @@ for (const token of [
   "no server binary version check",
   "no LSP server process start",
   "no lifecycle task creation",
+  "lsp-didopen-source-transfer-proposal-only",
+  "no textDocument/didOpen notification sent",
   "approval-gated-lsp-lifecycle-binary-gate",
   "approved-lsp-lifecycle-binary-gate",
   "no file content read into LSP",
@@ -756,6 +799,7 @@ console.log(JSON.stringify({
   openclawNativeEngineeringLspEvidence: {
     registry: check.registry,
     lifecycleRegistry: draft.registry,
+    sourceTransferRegistry: sourceTransfer.registry,
     lifecycleTaskRegistry: taskResponse.registry,
     lifecycleExecutionRegistry: execution.registry,
     lifecycleStateRegistry: lifecycleState.registry,
@@ -763,6 +807,8 @@ console.log(JSON.stringify({
     lifecycleFinalState: handshakeStateItem.status,
     languages: check.summary.detectedLanguages,
     lifecycleAction: draft.summary.lifecycleAction,
+    sourceTransferPath: sourceTransfer.file.relativePath,
+    sourceTransferDidOpenSent: sourceTransfer.proposedDidOpen.sent,
     serverStatus: check.serverReadiness.status,
     lifecycleTaskStatus: lifecycleTask.status,
     binaryFound: execution.server.binaryFound,

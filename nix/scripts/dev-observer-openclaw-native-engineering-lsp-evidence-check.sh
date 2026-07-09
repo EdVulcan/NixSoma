@@ -55,7 +55,8 @@ cleanup() {
     "${HTML_FILE:-}" \
     "${CLIENT_FILE:-}" \
     "${EVIDENCE_FILE:-}" \
-    "${DRAFT_FILE:-}"
+    "${DRAFT_FILE:-}" \
+    "${SOURCE_TRANSFER_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -66,13 +67,15 @@ HTML_FILE="$(mktemp)"
 CLIENT_FILE="$(mktemp)"
 EVIDENCE_FILE="$(mktemp)"
 DRAFT_FILE="$(mktemp)"
+SOURCE_TRANSFER_FILE="$(mktemp)"
 
 curl --silent --fail "$OBSERVER_URL/" > "$HTML_FILE"
 curl --silent --fail "$OBSERVER_URL/client-v5.js" > "$CLIENT_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=check&language=typescript&limit=200" > "$EVIDENCE_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-draft?language=typescript&lifecycleAction=start&limit=200" > "$DRAFT_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/source-transfer-proposal?language=typescript&relativePath=src/app.ts&maxPreviewChars=1200" > "$SOURCE_TRANSFER_FILE"
 
-node - <<'EOF' "$HTML_FILE" "$CLIENT_FILE" "$EVIDENCE_FILE" "$DRAFT_FILE"
+node - <<'EOF' "$HTML_FILE" "$CLIENT_FILE" "$EVIDENCE_FILE" "$DRAFT_FILE" "$SOURCE_TRANSFER_FILE"
 const fs = require("node:fs");
 const readText = (index) => fs.readFileSync(process.argv[index], "utf8");
 const readJson = (index) => JSON.parse(readText(index));
@@ -81,10 +84,11 @@ const html = readText(2);
 const client = readText(3);
 const evidence = readJson(4);
 const draft = readJson(5);
-const raw = JSON.stringify({ evidence, draft });
+const sourceTransfer = readJson(6);
+const raw = JSON.stringify({ evidence, draft, sourceTransfer });
 
 for (const token of [
-  "OpenClaw Engineering LSP Evidence / Lifecycle Draft",
+  "OpenClaw Engineering LSP Evidence / Lifecycle / Source Transfer",
   "engineering-lsp-registry",
   "engineering-lsp-languages",
   "engineering-lsp-server",
@@ -100,6 +104,7 @@ for (const token of [
 for (const token of [
   "/plugins/native-adapter/engineering-lsp/evidence",
   "/plugins/native-adapter/engineering-lsp/lifecycle-draft",
+  "/plugins/native-adapter/engineering-lsp/source-transfer-proposal",
   "/plugins/native-adapter/engineering-lsp/lifecycle-tasks",
   "/tasks/",
   "refreshEngineeringLspEvidence",
@@ -118,7 +123,8 @@ for (const token of [
   "lsp-contract-and-availability-evidence-only",
   "lsp-lifecycle-readiness-draft-only",
   "Lifecycle draft",
-  "send JSON-RPC",
+  "Source transfer proposal",
+  "send didOpen",
 ]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing engineering LSP token: ${token}`);
@@ -164,6 +170,25 @@ if (
 ) {
   throw new Error(`Observer LSP lifecycle draft mismatch: ${JSON.stringify(draft)}`);
 }
+if (
+  !sourceTransfer.ok
+  || sourceTransfer.registry !== "openclaw-native-engineering-lsp-source-transfer-proposal-v0"
+  || sourceTransfer.mode !== "lsp-didopen-source-transfer-proposal-only"
+  || sourceTransfer.summary?.language !== "typescript"
+  || sourceTransfer.file?.relativePath !== "src/app.ts"
+  || sourceTransfer.file?.languageId !== "typescript"
+  || sourceTransfer.proposedDidOpen?.method !== "textDocument/didOpen"
+  || sourceTransfer.proposedDidOpen?.sent !== false
+  || sourceTransfer.governance?.canReadWorkspaceSourceForProposal !== true
+  || sourceTransfer.governance?.canTransferSourceContentToLsp !== false
+  || sourceTransfer.governance?.canSendDidOpen !== false
+  || sourceTransfer.governance?.futureSourceTransferRequiresApproval !== true
+  || sourceTransfer.bounds?.noLspServerStart !== true
+  || sourceTransfer.bounds?.noDidOpenSent !== true
+  || sourceTransfer.summary?.sourceContentTransferred !== false
+) {
+  throw new Error(`Observer LSP source-transfer proposal mismatch: ${JSON.stringify(sourceTransfer)}`);
+}
 for (const secret of [
   "OBSERVER_ENGINEERING_LSP_EVIDENCE_NODE_MODULES_SECRET",
   "OBSERVER_ENGINEERING_LSP_EVIDENCE_CACHE_SECRET",
@@ -180,8 +205,11 @@ console.log(JSON.stringify({
     client: "visible",
     registry: evidence.registry,
     lifecycleRegistry: draft.registry,
+    sourceTransferRegistry: sourceTransfer.registry,
     languages: evidence.summary.detectedLanguages,
     lifecycleAction: draft.summary.lifecycleAction,
+    sourceTransferPath: sourceTransfer.file.relativePath,
+    sourceTransferDidOpenSent: sourceTransfer.proposedDidOpen.sent,
     serverStatus: evidence.serverReadiness.status,
   },
 }, null, 2));

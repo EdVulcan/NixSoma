@@ -314,11 +314,12 @@ async function refreshEngineeringReadSearch() {
 
 async function refreshEngineeringLspEvidence() {
   try {
-    const [evidence, lifecycleDraft] = await Promise.all([
+    const [evidence, lifecycleDraft, sourceTransferProposal] = await Promise.all([
       fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-lsp/evidence?action=check&language=typescript&limit=200\`),
       fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-lsp/lifecycle-draft?language=typescript&lifecycleAction=start&limit=200\`),
+      fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-lsp/source-transfer-proposal?language=typescript&relativePath=src/app.ts&maxPreviewChars=1200\`),
     ]);
-    renderEngineeringLspEvidence({ evidence, lifecycleDraft });
+    renderEngineeringLspEvidence({ evidence, lifecycleDraft, sourceTransferProposal });
   } catch {
     engineeringLspRegistry.textContent = "offline";
     engineeringLspLanguages.textContent = "none";

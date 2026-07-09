@@ -124,6 +124,16 @@ function engineeringLspLifecycleStateInput(requestUrl) {
   };
 }
 
+function engineeringLspSourceTransferProposalInput(requestUrl) {
+  return {
+    workspacePath: requestUrl.searchParams.get("workspacePath"),
+    language: requestUrl.searchParams.get("language") ?? "typescript",
+    relativePath: queryOrAlias(requestUrl, "relativePath", "path", "src/app.ts"),
+    maxFileSizeBytes: requestUrl.searchParams.get("maxFileSizeBytes"),
+    maxPreviewChars: requestUrl.searchParams.get("maxPreviewChars"),
+  };
+}
+
 const GET_ROUTES = new Map([
   [
     "/plugins/native-adapter/manifest-profile",
@@ -218,6 +228,14 @@ const GET_ROUTES = new Map([
       builder: "buildNativeEngineeringLspLifecycleState",
       errorStatus: 400,
       input: engineeringLspLifecycleStateInput,
+    },
+  ],
+  [
+    "/plugins/native-adapter/engineering-lsp/source-transfer-proposal",
+    {
+      builder: "buildNativeEngineeringLspSourceTransferProposal",
+      errorStatus: 400,
+      input: engineeringLspSourceTransferProposalInput,
     },
   ],
   [

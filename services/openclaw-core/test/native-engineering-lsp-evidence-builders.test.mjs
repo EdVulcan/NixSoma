@@ -16,6 +16,10 @@ import {
   NATIVE_ENGINEERING_LSP_EVIDENCE_REGISTRY,
   NATIVE_ENGINEERING_LSP_LIFECYCLE_DRAFT_REGISTRY,
 } from "../src/native-engineering-lsp-evidence-builders.mjs";
+import {
+  createNativeEngineeringLspSourceTransferProposalBuilders,
+  NATIVE_ENGINEERING_LSP_SOURCE_TRANSFER_PROPOSAL_REGISTRY,
+} from "../src/native-engineering-lsp-source-transfer-proposal-builders.mjs";
 
 function safeStat(filePath) {
   try {
@@ -36,6 +40,7 @@ function createFixture() {
   writeFileSync(path.join(root, "package.json"), JSON.stringify({ name: "openclaw-lsp-fixture" }, null, 2));
   writeFileSync(path.join(root, "pyproject.toml"), "[project]\nname = \"openclaw-lsp-fixture\"\n");
   writeFileSync(path.join(root, "src", "app.ts"), "export const openclawSymbol = 1;\n");
+  writeFileSync(path.join(root, "src", "binary.ts"), Buffer.from([0, 1, 2, 3]));
   writeFileSync(path.join(root, "scripts", "tool.mjs"), "export const scriptSymbol = 1;\n");
   writeFileSync(path.join(root, "python", "agent.py"), "def openclaw_symbol():\n    return 1\n");
   writeFileSync(path.join(root, "node_modules", "pkg", "leak.ts"), "export const dependency = 1;\n");
@@ -45,6 +50,20 @@ function createFixture() {
 
 function createHarness(root) {
   return createNativeEngineeringLspEvidenceBuilders({
+    safeStat,
+    selectOpenClawToolCatalogWorkspace: () => ({
+      registry: { registry: "openclaw-source-workspace-v0" },
+      item: {
+        id: "fixture",
+        name: "LSP Fixture",
+        path: root,
+      },
+    }),
+  });
+}
+
+function createSourceTransferHarness(root) {
+  return createNativeEngineeringLspSourceTransferProposalBuilders({
     safeStat,
     selectOpenClawToolCatalogWorkspace: () => ({
       registry: { registry: "openclaw-source-workspace-v0" },
@@ -184,4 +203,95 @@ test("native engineering LSP lifecycle draft maps a workspace-scoped lifecycle a
   assert.equal(draft.readinessGates.some((gate) => gate.id === "process_supervision" && gate.status === "deferred"), true);
   assert.equal(draft.deferredExecutionBoundaries.includes("no LSP server process start"), true);
   assert.equal(JSON.stringify(draft).includes("openclaw_symbol"), false);
+});
+
+test("native engineering LSP source-transfer proposal reads one bounded source file without didOpen", (t) => {
+  const root = createFixture();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const builders = createSourceTransferHarness(root);
+
+  const proposal = builders.buildNativeEngineeringLspSourceTransferProposal({
+    language: "typescript",
+    relativePath: "src/app.ts",
+    maxPreviewChars: 200,
+  });
+
+  assert.equal(proposal.ok, true);
+  assert.equal(proposal.registry, NATIVE_ENGINEERING_LSP_SOURCE_TRANSFER_PROPOSAL_REGISTRY);
+  assert.equal(proposal.mode, "lsp-didopen-source-transfer-proposal-only");
+  assert.equal(proposal.capability.id, "plan.openclaw.engineering_tool.lsp_source_transfer");
+  assert.equal(proposal.file.relativePath, "src/app.ts");
+  assert.equal(proposal.file.languageId, "typescript");
+  assert.equal(proposal.file.languageMatchesExtension, true);
+  assert.match(proposal.file.uri, /^file:\/\//u);
+  assert.match(proposal.file.textSha256, /^[a-f0-9]{64}$/u);
+  assert.equal(proposal.proposedDidOpen.method, "textDocument/didOpen");
+  assert.equal(proposal.proposedDidOpen.sent, false);
+  assert.equal(proposal.proposedDidOpen.textDocument.textSha256, proposal.file.textSha256);
+  assert.equal(proposal.sourcePreview.truncated, false);
+  assert.equal(proposal.sourcePreview.text.includes("openclawSymbol"), true);
+  assert.equal(proposal.serverContract.binaryChecked, false);
+  assert.equal(proposal.serverContract.processStarted, false);
+  assert.equal(proposal.serverContract.jsonRpcSent, false);
+  assert.equal(proposal.serverContract.didOpenSent, false);
+  assert.equal(proposal.governance.canReadWorkspaceSourceForProposal, true);
+  assert.equal(proposal.governance.canTransferSourceContentToLsp, false);
+  assert.equal(proposal.governance.canSendDidOpen, false);
+  assert.equal(proposal.governance.futureSourceTransferRequiresApproval, true);
+  assert.equal(proposal.bounds.noDidOpenSent, true);
+  assert.equal(proposal.bounds.noSymbolRequestSent, true);
+  assert.equal(proposal.auditEvidence.operation, "lsp_source_transfer_proposal");
+  assert.equal(proposal.summary.sourceContentTransferred, false);
+  assert.equal(proposal.deferredExecutionBoundaries.includes("no textDocument/didOpen notification sent"), true);
+});
+
+test("native engineering LSP source-transfer proposal enforces workspace, skip, binary, size, and language bounds", (t) => {
+  const root = createFixture();
+  const outsideRoot = mkdtempSync(path.join(os.tmpdir(), "openclaw-engineering-lsp-source-transfer-outside-"));
+  writeFileSync(path.join(outsideRoot, "outside.ts"), "export const outsideSecret = 1;\n");
+  symlinkSync(path.join(outsideRoot, "outside.ts"), path.join(root, "src", "outside.ts"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  t.after(() => rmSync(outsideRoot, { recursive: true, force: true }));
+  const builders = createSourceTransferHarness(root);
+
+  assert.throws(
+    () => builders.buildNativeEngineeringLspSourceTransferProposal({
+      relativePath: "../package.json",
+    }),
+    /workspace/i,
+  );
+  assert.throws(
+    () => builders.buildNativeEngineeringLspSourceTransferProposal({
+      relativePath: ".cache/leak.py",
+      language: "python",
+    }),
+    /hidden\/generated\/cache/i,
+  );
+  assert.throws(
+    () => builders.buildNativeEngineeringLspSourceTransferProposal({
+      relativePath: "src/outside.ts",
+    }),
+    /real path escapes/i,
+  );
+  assert.throws(
+    () => builders.buildNativeEngineeringLspSourceTransferProposal({
+      relativePath: "src/binary.ts",
+      language: "typescript",
+    }),
+    /binary/i,
+  );
+  assert.throws(
+    () => builders.buildNativeEngineeringLspSourceTransferProposal({
+      relativePath: "scripts/tool.mjs",
+      language: "typescript",
+    }),
+    /does not match/i,
+  );
+  assert.throws(
+    () => builders.buildNativeEngineeringLspSourceTransferProposal({
+      relativePath: "src/app.ts",
+      maxFileSizeBytes: 1,
+    }),
+    /maxFileSizeBytes/i,
+  );
 });
