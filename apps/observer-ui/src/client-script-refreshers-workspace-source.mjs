@@ -575,7 +575,8 @@ async function refreshAcpxCodexBridgeCompatibility() {
       ? \`\${observerConfig.coreUrl}/plugins/native-adapter/acpx-codex-bridge-wrapper-write-proposal?sessionKey=\${encodeURIComponent(selectedSessionKey)}\`
       : \`\${observerConfig.coreUrl}/plugins/native-adapter/acpx-codex-bridge-wrapper-write-proposal\`;
     const wrapperWriteProposal = await fetchJson(writeProposalUrl);
-    renderAcpxCodexBridgeCompatibility({ ...data, wrapperDraft, wrapperWriteProposal });
+    const wrapperWriteExecutionEvidence = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/acpx-codex-bridge-wrapper-write-execution/evidence?limit=5\`);
+    renderAcpxCodexBridgeCompatibility({ ...data, wrapperDraft, wrapperWriteProposal, wrapperWriteExecutionEvidence });
   } catch {
     acpxCodexBridgeRegistry.textContent = "offline";
     acpxCodexBridgeSessions.textContent = "0";
@@ -583,6 +584,8 @@ async function refreshAcpxCodexBridgeCompatibility() {
     acpxCodexBridgeDraft.textContent = "unknown";
     acpxCodexBridgeAuth.textContent = "unknown";
     acpxCodexBridgeRuntime.textContent = "unknown";
+    acpxCodexBridgeWriteEvidence.textContent = "unknown";
+    acpxCodexBridgeRecovery.textContent = "unknown";
     acpxCodexBridgeMode.textContent = "unknown";
     acpxCodexBridgeJson.textContent = "Unable to read ACPX/Codex bridge compatibility evidence.";
   }

@@ -66,6 +66,7 @@ cleanup() {
     "${WRAPPER_WRITE_TASK_STATE_FILE:-}" \
     "${WRAPPER_WRITE_HISTORY_FILE:-}" \
     "${WRAPPER_WRITE_LEDGER_FILE:-}" \
+    "${WRAPPER_WRITE_EXECUTION_FILE:-}" \
     "${AFTER_RESTART_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
@@ -92,6 +93,7 @@ WRAPPER_WRITE_STEP_FILE="$(mktemp)"
 WRAPPER_WRITE_TASK_STATE_FILE="$(mktemp)"
 WRAPPER_WRITE_HISTORY_FILE="$(mktemp)"
 WRAPPER_WRITE_LEDGER_FILE="$(mktemp)"
+WRAPPER_WRITE_EXECUTION_FILE="$(mktemp)"
 AFTER_RESTART_FILE="$(mktemp)"
 
 curl --silent --fail "$CORE_URL/plugins/native-adapter/acpx-codex-bridge-compatibility?sessionKey=agent:codex:missing" > "$INITIAL_FILE"
@@ -365,8 +367,9 @@ post_json "$CORE_URL/operator/step" '{}' > "$WRAPPER_WRITE_STEP_FILE"
 curl --silent --fail "$CORE_URL/tasks/$wrapper_write_task_id" > "$WRAPPER_WRITE_TASK_STATE_FILE"
 curl --silent --fail "$CORE_URL/capabilities/invocations?capabilityId=act.filesystem.write_text&limit=5" > "$WRAPPER_WRITE_HISTORY_FILE"
 curl --silent --fail "$CORE_URL/filesystem/changes?limit=10" > "$WRAPPER_WRITE_LEDGER_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/acpx-codex-bridge-wrapper-write-execution/evidence?taskId=$wrapper_write_task_id" > "$WRAPPER_WRITE_EXECUTION_FILE"
 
-node - <<'EOF' "$WRITE_PROPOSAL_FILE" "$WRAPPER_WRITE_APPROVED_FILE" "$WRAPPER_WRITE_STEP_FILE" "$WRAPPER_WRITE_TASK_STATE_FILE" "$WRAPPER_WRITE_HISTORY_FILE" "$WRAPPER_WRITE_LEDGER_FILE" "$WORKSPACE_DIR"
+node - <<'EOF' "$WRITE_PROPOSAL_FILE" "$WRAPPER_WRITE_APPROVED_FILE" "$WRAPPER_WRITE_STEP_FILE" "$WRAPPER_WRITE_TASK_STATE_FILE" "$WRAPPER_WRITE_HISTORY_FILE" "$WRAPPER_WRITE_LEDGER_FILE" "$WRAPPER_WRITE_EXECUTION_FILE" "$WORKSPACE_DIR"
 const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
@@ -377,7 +380,8 @@ const step = readJson(4);
 const taskState = readJson(5);
 const history = readJson(6);
 const ledger = readJson(7);
-const workspaceDir = process.argv[8];
+const executionEvidence = readJson(8);
+const workspaceDir = process.argv[9];
 const content = proposal.proposal.wrapper.contentPreview;
 const wrapperPath = path.join(workspaceDir, proposal.proposal.wrapper.relativePath);
 const expectedHash = `sha256:${crypto.createHash("sha256").update(content, "utf8").digest("hex")}`;
@@ -422,6 +426,30 @@ if (
   || !ledger.items?.some((entry) => entry.change === "write_text" && entry.path === wrapperPath)
 ) {
   throw new Error(`ACPX/Codex wrapper write filesystem ledger mismatch: ${JSON.stringify(ledger)}`);
+}
+if (
+  executionEvidence.registry !== "openclaw-native-acpx-codex-wrapper-write-execution-evidence-v0"
+  || executionEvidence.capability?.id !== "sense.openclaw.acpx_codex_bridge.wrapper_write_execution_evidence"
+  || executionEvidence.summary?.total !== 1
+  || executionEvidence.summary?.passed !== 1
+  || executionEvidence.summary?.failed !== 0
+  || executionEvidence.summary?.withWrapperProposal !== 1
+  || executionEvidence.evidence?.[0]?.taskId !== taskState.task?.id
+  || executionEvidence.evidence?.[0]?.wrapper?.target?.contentHash !== expectedHash
+  || executionEvidence.evidence?.[0]?.wrapper?.target?.contentPreviewExposed !== false
+  || executionEvidence.evidence?.[0]?.wrapper?.command?.argsExposed !== false
+  || executionEvidence.evidence?.[0]?.wrapper?.command?.processSpawned !== false
+  || executionEvidence.evidence?.[0]?.validation?.ok !== true
+  || executionEvidence.recoveryRecommendation?.needed !== false
+  || executionEvidence.governance?.canWriteFile !== false
+  || executionEvidence.governance?.canCreateTask !== false
+  || executionEvidence.governance?.canReadCredentialValue !== false
+  || executionEvidence.governance?.canCopyAuthMaterial !== false
+  || executionEvidence.governance?.canExecuteWrapper !== false
+  || executionEvidence.governance?.canSpawnCodexAcp !== false
+  || executionEvidence.governance?.canUseNetwork !== false
+) {
+  throw new Error(`ACPX/Codex wrapper write execution evidence mismatch: ${JSON.stringify(executionEvidence)}`);
 }
 EOF
 

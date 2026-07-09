@@ -6,8 +6,9 @@ Updated: 2026-07-10
 
 ACPX/Codex bridge compatibility, runtime persistence evidence, Observer
 visibility, wrapper/action proposal draft, approval-gated wrapper action task
-bridge, wrapper write proposal/preview, and approval-gated wrapper write bridge
-through the existing workspace text-write path.
+bridge, wrapper write proposal/preview, approval-gated wrapper write bridge
+through the existing workspace text-write path, and wrapper write execution
+readback/recovery recommendation.
 
 This slice migrates the useful enhanced-source ACPX/Codex bridge lessons into
 OpenClaw-native Level 1 behavior:
@@ -19,6 +20,7 @@ GET /plugins/native-adapter/acpx-codex-bridge-wrapper-draft
 GET /plugins/native-adapter/acpx-codex-bridge-wrapper-write-proposal
 POST /plugins/native-adapter/acpx-codex-bridge-wrapper-tasks
 POST /plugins/native-adapter/acpx-codex-bridge-wrapper-write-tasks
+GET /plugins/native-adapter/acpx-codex-bridge-wrapper-write-execution/evidence
 Observer panel: OpenClaw ACPX/Codex Bridge
 ```
 
@@ -85,6 +87,13 @@ capability history plus filesystem ledger evidence. It still does not read real
 Codex credentials, copy auth material, create/chmod the wrapper directory,
 execute `npx`, spawn ACP/Codex, call providers, use network, or require root.
 
+The wrapper write execution readback route reads completed wrapper-write task
+metadata plus filesystem ledger records and returns validation checks with a
+recovery recommendation. It does not create recovery tasks, approve work,
+execute operator steps, write files, read credentials, copy auth material,
+chmod wrappers, execute wrappers, spawn ACP/Codex, call providers, or use
+network.
+
 ## Governance
 
 Capability mapping:
@@ -97,6 +106,7 @@ ACPX/Codex wrapper/action task -> act.openclaw.acpx_codex_bridge.wrapper_action
 ACPX/Codex wrapper write proposal -> plan.openclaw.acpx_codex_bridge.wrapper_write
 ACPX/Codex wrapper write approval bridge -> act.openclaw.acpx_codex_bridge.wrapper_write_bridge
 Delegated approved write -> act.openclaw.workspace_text_write
+ACPX/Codex wrapper write execution readback -> sense.openclaw.acpx_codex_bridge.wrapper_write_execution_evidence
 ```
 
 This is intentionally not a live bridge execution path. It creates a native
@@ -113,6 +123,7 @@ services/openclaw-core/src/native-acpx-codex-bridge-task-builders.mjs
 services/openclaw-core/src/task-executor-native-acpx-codex-bridge-handlers.mjs
 services/openclaw-core/src/workspace-ops.mjs
 services/openclaw-core/src/workspace-native-ops-routes.mjs
+services/openclaw-core/src/native-acpx-codex-wrapper-write-execution-evidence-builders.mjs
 ```
 
 State persistence:
@@ -143,6 +154,7 @@ Validation target:
 ```text
 services/openclaw-core/test/native-acpx-codex-bridge-builders.test.mjs
 services/openclaw-core/test/native-acpx-codex-bridge-task-builders.test.mjs
+services/openclaw-core/test/native-acpx-codex-wrapper-write-execution-evidence-builders.test.mjs
 services/openclaw-core/test/native-adapter-plugin-routes.test.mjs
 services/openclaw-core/test/task-executor.test.mjs
 openclaw-native-acpx-codex-bridge-compatibility
@@ -171,12 +183,10 @@ root/system daemon work
 The next smallest useful bridge follow-up is:
 
 ```text
-ACPX/Codex bridge wrapper write execution readback and recovery recommendation
+ACPX/Codex bridge process-spawn proposal contract
 ```
 
-That should stay thin: read completed wrapper-write task state, capability
-history, and filesystem ledger evidence; recommend recovery when the approved
-write did not land. It must not become another readiness chain and must still
-avoid reading real Codex credential values, copying auth material, running
-`chmod`, executing `npx`, spawning an ACP/Codex process, calling providers, or
-using network egress.
+That should be proposal-only: map what a future supervised `npx`/ACP spawn would
+need from the approved wrapper write evidence, but do not execute the wrapper,
+spawn ACP/Codex, read/copy auth material, chmod files, call providers, or use
+network egress.
