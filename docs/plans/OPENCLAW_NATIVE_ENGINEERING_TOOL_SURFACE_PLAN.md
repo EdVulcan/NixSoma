@@ -47,7 +47,7 @@ call providers or perform network egress
 | --- | --- | --- | --- | --- | --- |
 | `cc_read` | `sense.openclaw.engineering_tool.read` | `read_only_file_read` | low | no approval for inventory; future content reads require workspace scope, budget, and audit | contract mapped, execution deferred |
 | `cc_edit` | `act.openclaw.engineering_tool.edit_proposal` | `mutation_proposal` | high | approval required before apply | partially absorbed, proposal contract mapped |
-| `cc_write` | `act.openclaw.engineering_tool.write_proposal` | `mutation_proposal` | high | approval required before create or overwrite | partially absorbed, proposal contract mapped |
+| `cc_write` | `act.openclaw.engineering_tool.write_proposal` | `mutation_proposal` | high | approval required before create or overwrite | partially absorbed as redacted proposal evidence |
 | `cc_glob` | `sense.openclaw.engineering_tool.glob` | `read_only_path_search` | low | no approval for bounded metadata search | contract mapped, execution deferred |
 | `cc_grep` | `sense.openclaw.engineering_tool.grep` | `read_only_content_search` | low | no approval for bounded search; snippets require budget and audit | contract mapped, execution deferred |
 | `cc_lsp` | `sense.openclaw.engineering_tool.lsp_evidence` | `read_only_language_intelligence_evidence` | medium | no approval for evidence; future lifecycle requires explicit availability, state, and recovery evidence | partially absorbed as evidence, lifecycle deferred |
@@ -111,7 +111,8 @@ The following remain intentionally deferred:
 unbounded/raw file reads outside the native read/search surface
 raw enhanced glob/grep execution outside native bounds
 surgical edit proposal apply and patch mutation
-full file write proposal evidence and approved write mutation
+approved write mutation through `workspace_text_write`; write proposal evidence
+is absorbed
 LSP lifecycle startup and request handling; `lsp_evidence` contract and
 availability evidence is absorbed
 verification command execution and task-completion attachment
@@ -124,9 +125,9 @@ provider calls, network egress, and result envelopes
 The current next smallest real capability is:
 
 ```text
-Native governed source write proposal evidence
+Native governed engineering write approval bridge
 ```
 
-That slice should move `cc_write` forward as create/overwrite proposal evidence
-with bounded diff/metadata preview only. It should not write files directly;
-approval-gated workspace text write remains the mutation path.
+That slice should connect a reviewed write proposal to the existing
+approval-gated workspace text write task path while preserving explicit
+confirmation and the proposal/mutation separation.

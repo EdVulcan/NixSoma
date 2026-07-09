@@ -340,6 +340,22 @@ async function refreshEngineeringEditProposal() {
   }
 }
 
+async function refreshEngineeringWriteProposal() {
+  try {
+    const content = encodeURIComponent("OpenClaw engineering write proposal preview\\n");
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-write-proposal/draft?relativePath=scratch/engineering-write-proposal.txt&content=\${content}&overwrite=false&contextLines=1\`);
+    renderEngineeringWriteProposal(data);
+  } catch {
+    engineeringWriteProposalRegistry.textContent = "offline";
+    engineeringWriteProposalKind.textContent = "unknown";
+    engineeringWriteProposalTarget.textContent = "none";
+    engineeringWriteProposalBytes.textContent = "0";
+    engineeringWriteProposalMutation.textContent = "unknown";
+    engineeringWriteProposalMode.textContent = "unknown";
+    engineeringWriteProposalJson.textContent = "Unable to read native engineering write proposal evidence.";
+  }
+}
+
 async function refreshSemanticIndex() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/workspace-semantic-index?scope=tools&limit=24\`);

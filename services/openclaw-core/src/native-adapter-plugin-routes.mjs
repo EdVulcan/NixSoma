@@ -82,6 +82,19 @@ function engineeringEditProposalInput(requestUrl) {
   };
 }
 
+function engineeringWriteProposalInput(requestUrl) {
+  return {
+    workspacePath: requestUrl.searchParams.get("workspacePath"),
+    relativePath: queryOrAlias(requestUrl, "relativePath", "path"),
+    content: requestUrl.searchParams.get("content") ?? "",
+    contentBase64: requestUrl.searchParams.get("contentBase64"),
+    overwrite: requestUrl.searchParams.get("overwrite"),
+    contextLines: requestUrl.searchParams.get("contextLines"),
+    maxContentBytes: requestUrl.searchParams.get("maxContentBytes"),
+    maxExistingFileBytes: requestUrl.searchParams.get("maxExistingFileBytes"),
+  };
+}
+
 function engineeringLspEvidenceInput(requestUrl) {
   return {
     workspacePath: requestUrl.searchParams.get("workspacePath"),
@@ -156,6 +169,14 @@ const GET_ROUTES = new Map([
       builder: "buildNativeEngineeringEditProposal",
       errorStatus: 400,
       input: engineeringEditProposalInput,
+    },
+  ],
+  [
+    "/plugins/native-adapter/engineering-write-proposal/draft",
+    {
+      builder: "buildNativeEngineeringWriteProposal",
+      errorStatus: 400,
+      input: engineeringWriteProposalInput,
     },
   ],
   [

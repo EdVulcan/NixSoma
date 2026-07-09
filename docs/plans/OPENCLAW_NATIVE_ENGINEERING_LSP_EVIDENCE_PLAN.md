@@ -95,14 +95,14 @@ openclaw-native-engineering-lsp-evidence
 observer-openclaw-native-engineering-lsp-evidence
 ```
 
-## Next Slice
+## Follow-Up Status
 
-The next recommended real capability is:
+The recommended source write proposal follow-up was completed as:
 
 ```text
-Native governed source write proposal evidence
+OPENCLAW_NATIVE_ENGINEERING_WRITE_PROPOSAL_PLAN.md
 ```
 
-That slice should move `cc_write` forward as a create/overwrite proposal with
-diff/metadata preview only. It should not write files directly; approval-gated
-workspace text write remains the authoritative mutation path.
+That slice migrates `cc_write` as redacted create/overwrite proposal evidence.
+It still does not write files directly; approval-gated workspace text write
+remains the authoritative mutation path.

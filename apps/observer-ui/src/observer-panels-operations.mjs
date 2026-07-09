@@ -375,6 +375,16 @@ export function observerOperationsPanels() {
           <pre id="engineering-edit-proposal-json">Loading native engineering edit proposal evidence...</pre>
         </section>
         <section class="panel">
+          <h2>OpenClaw Engineering Write Proposal</h2>
+          <div class="metric"><span>Registry</span><span id="engineering-write-proposal-registry">openclaw-native-engineering-write-proposal-v0</span></div>
+          <div class="metric"><span>Kind</span><span id="engineering-write-proposal-kind">create_file_proposal</span></div>
+          <div class="metric"><span>Target</span><span id="engineering-write-proposal-target">none</span></div>
+          <div class="metric"><span>Bytes</span><span id="engineering-write-proposal-bytes">0</span></div>
+          <div class="metric"><span>Mutation</span><span id="engineering-write-proposal-mutation">blocked</span></div>
+          <div class="metric"><span>Mode</span><span id="engineering-write-proposal-mode">source-write-proposal-diff-metadata-preview-only</span></div>
+          <pre id="engineering-write-proposal-json">Loading native engineering write proposal evidence...</pre>
+        </section>
+        <section class="panel">
           <h2>OpenClaw Semantic Index</h2>
           <div class="metric"><span>Registry</span><span id="semantic-index-registry">openclaw-native-plugin-adapter-v0</span></div>
           <div class="metric"><span>Files</span><span id="semantic-index-files">0</span></div>

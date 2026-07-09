@@ -232,6 +232,7 @@ export const OBSERVER_STARTUP_REFRESH_GROUPS = [
       "refreshEngineeringReadSearch",
       "refreshEngineeringLspEvidence",
       "refreshEngineeringEditProposal",
+      "refreshEngineeringWriteProposal",
       "refreshSemanticIndex",
       "refreshSymbolLookup",
       "refreshEditTargetSelection",

@@ -84,6 +84,10 @@ governed surfaces:
 - Native engineering proposal surface:
   `act.openclaw.engineering_tool.edit_proposal` creates exact-match surgical
   edit proposals and bounded diff previews without applying patches.
+- Native engineering write proposal surface:
+  `act.openclaw.engineering_tool.write_proposal` maps `cc_write`
+  create/overwrite intent into bounded workspace proposal evidence with redacted
+  diff metadata, byte counts, content hashes, and no filesystem mutation.
 - Native engineering verification evidence:
   `sense.openclaw.engineering_tool.verify_evidence` converts governed command
   transcripts into bounded verification evidence attached to completed tasks.
@@ -129,7 +133,7 @@ enhanced `openclaw` modules.
 | --- | --- | --- | --- | --- |
 | `cc_read` | absorbed | `sense.openclaw.engineering_tool.read` provides bounded workspace file read with line ranges, content budget, traversal protection, binary/size boundaries, audit, and Observer evidence. | Continue using the native read/search surface; do not import enhanced `FileReadTool.ts`. | Level 1 |
 | `cc_edit` | partially absorbed | `act.openclaw.engineering_tool.edit_proposal` creates exact-match surgical edit proposals with bounded diff previews, while `act.openclaw.workspace_patch_apply` remains the approval-gated apply path. | Keep proposal and apply separated. Do not migrate immediate raw edit execution. | Level 1 |
-| `cc_write` | partially absorbed | `act.openclaw.workspace_text_write` exists and writes only after approval through native filesystem governance. | Keep write gated and redacted. Do not migrate raw overwrite semantics as an autonomous default. | Level 1 |
+| `cc_write` | partially absorbed as proposal evidence | `act.openclaw.engineering_tool.write_proposal` creates redacted create/overwrite proposal evidence, while `act.openclaw.workspace_text_write` remains the approval-gated write path. | Keep proposal and write execution separated. Do not migrate raw overwrite semantics as an autonomous default. | Level 1 |
 | `cc_glob` | absorbed | `sense.openclaw.engineering_tool.glob` performs bounded workspace file discovery with skipped hidden/generated/cache/dependency directories and result caps. | Continue native bounded discovery; do not execute enhanced `GlobTool.ts`. | Level 1 |
 | `cc_grep` | absorbed | `sense.openclaw.engineering_tool.grep` performs bounded workspace text search with literal/regex mode, include filters, result/output caps, binary skips, audit, and Observer evidence. | Continue native bounded search; do not execute enhanced `GrepTool.ts`. | Level 1 |
 | `cc_lsp` | partially absorbed as evidence | `sense.openclaw.engineering_tool.lsp_evidence` maps `check`, `definition`, `references`, and `hover` contracts, reports language/config metadata and server hints, and keeps binary checks, server startup, source-content reads, and JSON-RPC blocked. `sense.openclaw.workspace_symbol_lookup` remains separate derived navigation. | Keep the evidence route. Defer full LSP lifecycle to a governed workspace service with explicit server state and recovery evidence. | Level 1 now, Level 2 later |
@@ -202,16 +206,19 @@ Enhanced source:
 
 Current OpenClaw:
 
+- `act.openclaw.engineering_tool.write_proposal` maps create/overwrite intent
+  into bounded workspace proposal evidence with redacted diff metadata, content
+  hashes, overwrite checks, and Observer visibility.
 - `act.openclaw.workspace_text_write` exists as an approval-gated write path.
 - Public task/approval/Observer surfaces expose hashes and byte counts instead
   of raw content.
 
-Classification: partially absorbed.
+Classification: partially absorbed as proposal evidence.
 
 Recommendation:
 
-- Keep full write as a high-risk action. It should remain task-based, approved,
-  auditable, and recoverable.
+- Keep full write as a high-risk action. Proposal evidence should remain
+  separate from the approved, task-based, auditable, and recoverable write path.
 
 ### `cc_glob` and `cc_grep`
 

@@ -213,6 +213,34 @@ test("native adapter engineering LSP evidence route preserves action and positio
   assert.equal(response.body.registry, "openclaw-native-engineering-lsp-evidence-v0");
 });
 
+test("native adapter engineering write proposal route preserves bounded proposal inputs", async () => {
+  let observedInput = null;
+  const response = await invokeNativeAdapterPluginRoute({
+    buildNativeEngineeringWriteProposal: (input) => {
+      observedInput = input;
+      return {
+        ok: true,
+        registry: "openclaw-native-engineering-write-proposal-v0",
+        mode: "source-write-proposal-diff-metadata-preview-only",
+      };
+    },
+  }, "GET", "/plugins/native-adapter/engineering-write-proposal/draft?workspacePath=/tmp/openclaw&relativePath=src/new.txt&content=hello&overwrite=true&contextLines=2&maxContentBytes=512&maxExistingFileBytes=1024");
+
+  assert.equal(response.handled, true);
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(observedInput, {
+    workspacePath: "/tmp/openclaw",
+    relativePath: "src/new.txt",
+    content: "hello",
+    contentBase64: null,
+    overwrite: "true",
+    contextLines: "2",
+    maxContentBytes: "512",
+    maxExistingFileBytes: "1024",
+  });
+  assert.equal(response.body.registry, "openclaw-native-engineering-write-proposal-v0");
+});
+
 test("native adapter engineering edit proposal route preserves proposal query inputs", async () => {
   let observedInput = null;
   const response = await invokeNativeAdapterPluginRoute({

@@ -8,6 +8,7 @@ import { createPluginReviewSourceMigration } from "./plugin-review-source-migrat
 import { createNativeEngineeringToolSurfaceBuilders } from "./native-engineering-tool-surface-builders.mjs";
 import { createNativeEngineeringReadSearchBuilders } from "./native-engineering-read-search-builders.mjs";
 import { createNativeEngineeringEditProposalBuilders } from "./native-engineering-edit-proposal-builders.mjs";
+import { createNativeEngineeringWriteProposalBuilders } from "./native-engineering-write-proposal-builders.mjs";
 import { createNativeEngineeringLspEvidenceBuilders } from "./native-engineering-lsp-evidence-builders.mjs";
 import {
   createPluginReviewWorkspaceDiscovery,
@@ -114,6 +115,13 @@ export function createPluginReview(deps) {
     buildNativeEngineeringEditProposal,
   } = createNativeEngineeringEditProposalBuilders({
     buildNativeEngineeringReadFile,
+  });
+  const {
+    buildNativeEngineeringWriteProposal,
+  } = createNativeEngineeringWriteProposalBuilders({
+    buildNativeEngineeringReadFile,
+    safeStat,
+    selectOpenClawToolCatalogWorkspace,
   });
   const {
     buildNativeEngineeringLspEvidence,
@@ -273,6 +281,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "sense.openclaw.engineering_tool.glob",
       "sense.openclaw.engineering_tool.grep",
       "act.openclaw.engineering_tool.edit_proposal",
+      "act.openclaw.engineering_tool.write_proposal",
       "sense.openclaw.engineering_tool.lsp_evidence",
       "sense.openclaw.engineering_tool.verify_evidence",
       "sense.openclaw.engineering_tool.recovery_evidence",
@@ -292,7 +301,7 @@ function buildOpenClawNativePluginAdapterStatus() {
     ],
     pendingCapabilities: ["act.plugin.capability.invoke"],
     summary: {
-      implemented: 26,
+      implemented: 27,
       pending: 1,
       canReadManifestMetadata: true,
       canReadToolCatalogMetadata: true,
@@ -301,6 +310,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       canRunBoundedEngineeringGlob: true,
       canRunBoundedEngineeringGrep: true,
       canBuildSurgicalEngineeringEditProposals: true,
+      canBuildEngineeringWriteProposals: true,
       canReadEngineeringLspEvidence: true,
       canReadEngineeringVerificationEvidence: true,
       canReadEngineeringRecoveryEvidence: true,
@@ -342,6 +352,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "engineering tool surface inventory maps cc-tools contracts without importing, executing, mutating, starting LSP, or exposing source file bodies",
       "engineering read/search runs only bounded workspace read, glob, and grep operations with traversal, size, result, binary, hidden, generated, and cache boundaries",
       "engineering edit proposals create exact-match diff previews only; patch apply, task creation, and approval creation remain separate approval-gated paths",
+      "engineering write proposals create redacted create/overwrite diff metadata only; workspace text write, task creation, and approval creation remain separate approval-gated paths",
       "engineering LSP evidence maps definition, references, hover, and server-check contracts without checking binaries, starting servers, opening files, or sending JSON-RPC",
       "engineering recovery evidence reads failed verification/task outcomes and recommends governed recovery review without creating tasks, approvals, retries, mutations, or provider calls",
       "engineering microcompact evidence calculates context-budget savings from historical command transcripts without returning raw output or mutating runtime messages or persisted logs",
@@ -401,6 +412,7 @@ function buildOpenClawNativePluginAdapterStatus() {
     buildNativeEngineeringGlob,
     buildNativeEngineeringGrep,
     buildNativeEngineeringEditProposal,
+    buildNativeEngineeringWriteProposal,
     buildNativeEngineeringLspEvidence,
   };
 }
