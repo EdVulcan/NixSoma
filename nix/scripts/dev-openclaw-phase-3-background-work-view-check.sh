@@ -75,7 +75,9 @@ if (trustedSession?.identityLevel !== "level_2_trusted_session_work_view"
   || trustedSession?.recoveryRecommendation?.rootRequired !== false
   || trustedSession?.sidecarContract?.status !== "drafted_not_started"
   || trustedSession?.sidecarContract?.lifecycle?.processStarted !== false
-  || trustedSession?.sidecarContract?.lifecycle?.rootRequired !== false) {
+  || trustedSession?.sidecarContract?.lifecycle?.rootRequired !== false
+  || trustedSession?.sidecarContract?.lifecycleProposal?.status !== "proposal_ready"
+  || trustedSession?.sidecarContract?.lifecycleProposal?.executionStatus !== "deferred") {
   throw new Error(`background work-view should expose trusted session boundary: ${JSON.stringify(trustedSession)}`);
 }
 
@@ -89,6 +91,7 @@ console.log(JSON.stringify({
     recoveryRecommendation: trustedSession.recoveryRecommendation.action,
     lastOperatorAction: background.current.workView.lastOperatorAction.action,
     sidecarContract: trustedSession.sidecarContract.status,
+    lifecycleProposal: trustedSession.sidecarContract.lifecycleProposal.status,
   },
 }, null, 2));
 EOF

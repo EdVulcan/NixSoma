@@ -69,6 +69,8 @@ const requiredClient = [
   "workViewRecoveryAction",
   "sidecarContract",
   "Sidecar Contract",
+  "Sidecar Lifecycle",
+  "lifecycleProposal",
   "prepare_work_view",
   "reveal_work_view",
   "Trusted Boundary",
@@ -115,7 +117,8 @@ if (trustedSession?.identityLevel !== "level_2_trusted_session_work_view"
   || trustedSession?.operatorGates?.reveal !== "explicit_operator_action"
   || trustedSession?.helperReadiness?.state !== "ready"
   || trustedSession?.sidecarContract?.status !== "drafted_not_started"
-  || trustedSession?.sidecarContract?.lifecycle?.processStarted !== false) {
+  || trustedSession?.sidecarContract?.lifecycle?.processStarted !== false
+  || trustedSession?.sidecarContract?.lifecycleProposal?.status !== "proposal_ready") {
   throw new Error(`Observer-facing screen state should expose trusted session boundary: ${JSON.stringify(trustedSession)}`);
 }
 
@@ -145,6 +148,7 @@ console.log(JSON.stringify({
     trustedSession: trustedSession.identityLevel,
     recoveryRecommendation: trustedSession.recoveryRecommendation.action,
     sidecarContract: trustedSession.sidecarContract?.status ?? null,
+    lifecycleProposal: trustedSession.sidecarContract?.lifecycleProposal?.status ?? null,
   },
 }, null, 2));
 EOF

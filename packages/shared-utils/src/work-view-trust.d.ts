@@ -69,6 +69,14 @@ export type TrustedWorkViewContract = {
       systemDaemonRequired: false;
       approvalRequiredBeforeStart: true;
     };
+    lifecycleProposal: {
+      status: "proposal_ready";
+      capabilityId: "plan.openclaw.work_view.trusted_sidecar_lifecycle";
+      approvalGate: "required_before_process_start";
+      executionStatus: "deferred";
+      taskCreationDeferred: true;
+      allowedTransitions: string[];
+    };
     responsibilities: {
       capture: string;
       action: string;

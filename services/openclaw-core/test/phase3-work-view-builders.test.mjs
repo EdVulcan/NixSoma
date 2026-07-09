@@ -34,6 +34,10 @@ function createPhase3Harness(overrides = {}) {
             processStarted: false,
             rootRequired: false,
           },
+          lifecycleProposal: {
+            status: "proposal_ready",
+            executionStatus: "deferred",
+          },
         },
       },
     },
@@ -81,6 +85,7 @@ test("phase 3 work-view builders preserve plan and background work-view contract
   assert.equal(background.workViewContract.trustedSession.boundary.desktopWideCapture, false);
   assert.equal(background.workViewContract.trustedSession.recoveryRecommendation.action, "reveal_work_view");
   assert.equal(background.workViewContract.trustedSession.sidecarContract.status, "drafted_not_started");
+  assert.equal(background.workViewContract.trustedSession.sidecarContract.lifecycleProposal.status, "proposal_ready");
   assert.equal(background.summary.total, 5);
   assert.deepEqual(fetchUrls, ["http://127.0.0.1:4102/work-view/state"]);
 });

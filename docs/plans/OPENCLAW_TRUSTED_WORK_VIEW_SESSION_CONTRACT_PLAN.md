@@ -31,6 +31,7 @@ boundary.hostMutation: false
 helperReadiness.state: ready | prepared_hidden | needs_prepare | degraded
 recoveryRecommendation.action: none | prepare_work_view | reveal_work_view
 sidecarContract.status: drafted_not_started
+sidecarContract.lifecycleProposal.status: proposal_ready
 ```
 
 The helper readiness portion makes the contract actionable without adding a new
@@ -60,7 +61,8 @@ It does not call arbitrary endpoints returned by the service contract.
 The contract also carries a future Level 2 sidecar draft. It names the helper's
 capture/action/recovery/Observer responsibilities and explicitly records that no
 process is started, no installation is required, and no root/system daemon is
-used in this slice.
+used in this slice. The lifecycle proposal records the future approval gate and
+keeps execution deferred.
 
 Every work-view prepare/reveal/hide call now records `lastOperatorAction` in the
 existing work-view state. The record includes:
@@ -89,6 +91,7 @@ details.trustedSession.identityLevel
 details.trustedSession.helperReadiness
 details.trustedSession.recoveryRecommendation
 details.trustedSession.sidecarContract.status
+details.trustedSession.sidecarContract.lifecycleProposal.status
 ```
 
 This keeps task/workbench continuity tied to the same `/tasks/:id/phase` path
@@ -169,9 +172,9 @@ bookkeeping to Level 2 session-helper preparation without starting a sidecar or
 requiring privileges:
 
 ```text
-AI work-view trusted sidecar lifecycle proposal
+AI work-view trusted sidecar approval task draft
 ```
 
-It should turn the draft into an approval-gated user-space lifecycle proposal
-while keeping actual process start, installation, root/system daemon work, and
+It should turn the lifecycle proposal into an approval-gated task draft while
+keeping actual process start, installation, root/system daemon work, and
 desktop-wide capture deferred.

@@ -112,6 +112,14 @@ function buildSidecarContract() {
       systemDaemonRequired: false,
       approvalRequiredBeforeStart: true,
     },
+    lifecycleProposal: {
+      status: "proposal_ready",
+      capabilityId: "plan.openclaw.work_view.trusted_sidecar_lifecycle",
+      approvalGate: "required_before_process_start",
+      executionStatus: "deferred",
+      taskCreationDeferred: true,
+      allowedTransitions: ["drafted_not_started", "approved_user_space_start_probe", "stopped"],
+    },
     responsibilities: {
       capture: "emit_ai_owned_work_view_capture_contract",
       action: "mediate_ai_owned_work_view_reveal_hide_prepare_only",

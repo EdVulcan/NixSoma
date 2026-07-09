@@ -118,7 +118,9 @@ export function createPhase3WorkViewBuilders(deps) {
       ["none", "reveal_work_view", "prepare_work_view"].includes(trustedSession?.recoveryRecommendation?.action) &&
       trustedSession?.sidecarContract?.status === "drafted_not_started" &&
       trustedSession?.sidecarContract?.lifecycle?.processStarted === false &&
-      trustedSession?.sidecarContract?.lifecycle?.rootRequired === false;
+      trustedSession?.sidecarContract?.lifecycle?.rootRequired === false &&
+      trustedSession?.sidecarContract?.lifecycleProposal?.status === "proposal_ready" &&
+      trustedSession?.sidecarContract?.lifecycleProposal?.executionStatus === "deferred";
     const checks = [
       {
         id: "phase-3-plan-ready",
