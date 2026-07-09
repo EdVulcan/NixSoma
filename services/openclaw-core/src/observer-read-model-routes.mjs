@@ -1,4 +1,5 @@
 import { sendJson } from "../../../packages/shared-utils/src/http.mjs";
+import { buildNativeAcpxCodexLiveExecutionBoundaryReview } from "./native-acpx-codex-live-execution-boundary-review-builders.mjs";
 import { buildNativeAcpxCodexBridgeProcessSpawnProposal } from "./native-acpx-codex-process-spawn-proposal-builders.mjs";
 import { buildNativeAcpxCodexWrapperWriteExecutionEvidence } from "./native-acpx-codex-wrapper-write-execution-evidence-builders.mjs";
 import { buildNativeEngineeringEditExecutionEvidence } from "./native-engineering-edit-execution-evidence-builders.mjs";
@@ -211,6 +212,14 @@ export async function handleObserverReadModelRoute({ req, res, requestUrl, state
     sendJson(res, 200, buildNativeAcpxCodexBridgeProcessSpawnProposal({
       wrapperWriteExecutionEvidence,
       taskId,
+    }));
+    return true;
+  }
+
+  if (requestUrl.pathname === "/plugins/native-adapter/acpx-codex-bridge-live-execution-boundary-review") {
+    sendJson(res, 200, buildNativeAcpxCodexLiveExecutionBoundaryReview({
+      tasks: state.tasks,
+      taskId: requestUrl.searchParams.get("taskId"),
     }));
     return true;
   }

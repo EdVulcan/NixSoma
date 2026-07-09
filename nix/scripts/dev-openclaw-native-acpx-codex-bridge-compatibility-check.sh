@@ -73,6 +73,7 @@ cleanup() {
     "${PROCESS_SPAWN_APPROVED_FILE:-}" \
     "${PROCESS_SPAWN_STEP_FILE:-}" \
     "${PROCESS_SPAWN_TASK_STATE_FILE:-}" \
+    "${LIVE_BOUNDARY_FILE:-}" \
     "${AFTER_RESTART_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
@@ -106,6 +107,7 @@ PROCESS_SPAWN_BLOCKED_FILE="$(mktemp)"
 PROCESS_SPAWN_APPROVED_FILE="$(mktemp)"
 PROCESS_SPAWN_STEP_FILE="$(mktemp)"
 PROCESS_SPAWN_TASK_STATE_FILE="$(mktemp)"
+LIVE_BOUNDARY_FILE="$(mktemp)"
 AFTER_RESTART_FILE="$(mktemp)"
 
 curl --silent --fail "$CORE_URL/plugins/native-adapter/acpx-codex-bridge-compatibility?sessionKey=agent:codex:missing" > "$INITIAL_FILE"
@@ -544,13 +546,15 @@ EOF
 post_json "$CORE_URL/approvals/$process_spawn_approval_id/approve" '{"approvedBy":"dev-openclaw-native-acpx-codex-bridge-compatibility-check","reason":"Approve ACPX/Codex process-spawn preflight only."}' > "$PROCESS_SPAWN_APPROVED_FILE"
 post_json "$CORE_URL/operator/step" '{}' > "$PROCESS_SPAWN_STEP_FILE"
 curl --silent --fail "$CORE_URL/tasks/$process_spawn_task_id" > "$PROCESS_SPAWN_TASK_STATE_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/acpx-codex-bridge-live-execution-boundary-review?taskId=$process_spawn_task_id" > "$LIVE_BOUNDARY_FILE"
 
-node - <<'EOF' "$PROCESS_SPAWN_APPROVED_FILE" "$PROCESS_SPAWN_STEP_FILE" "$PROCESS_SPAWN_TASK_STATE_FILE" "$PROCESS_SPAWN_TASK_FILE"
+node - <<'EOF' "$PROCESS_SPAWN_APPROVED_FILE" "$PROCESS_SPAWN_STEP_FILE" "$PROCESS_SPAWN_TASK_STATE_FILE" "$PROCESS_SPAWN_TASK_FILE" "$LIVE_BOUNDARY_FILE"
 const fs = require("node:fs");
 const approved = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
 const step = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
 const taskState = JSON.parse(fs.readFileSync(process.argv[4], "utf8"));
 const taskResponse = JSON.parse(fs.readFileSync(process.argv[5], "utf8"));
+const liveBoundary = JSON.parse(fs.readFileSync(process.argv[6], "utf8"));
 const preflight = taskState.task?.nativeAcpxCodexBridgeProcessSpawn?.execution;
 if (approved.approval?.status !== "approved" || approved.task?.policy?.decision?.decision !== "audit_only") {
   throw new Error(`ACPX/Codex process-spawn approval mismatch: ${JSON.stringify(approved)}`);
@@ -583,6 +587,28 @@ if (
   || taskResponse.task?.nativeAcpxCodexBridgeProcessSpawn?.processSpawnProposal?.proposal?.wrapper?.contentHash !== preflight?.wrapper?.contentHash
 ) {
   throw new Error(`ACPX/Codex process-spawn preflight task state mismatch: ${JSON.stringify(taskState)}`);
+}
+if (
+  liveBoundary.registry !== "openclaw-native-acpx-codex-live-execution-boundary-review-v0"
+  || liveBoundary.capability?.id !== "govern.openclaw.acpx_codex_bridge.live_execution_boundary_review"
+  || liveBoundary.query?.selectedTaskId !== taskState.task?.id
+  || liveBoundary.decision?.status !== "blocked"
+  || liveBoundary.decision?.canProceedToLiveSpawn !== false
+  || !liveBoundary.decision?.blockers?.includes("live_process_spawn_not_authorized")
+  || !liveBoundary.decision?.blockers?.includes("provider_or_network_egress_not_authorized")
+  || liveBoundary.preflight?.wrapper?.hashMatches !== true
+  || liveBoundary.preflight?.command?.commandExecuted !== false
+  || liveBoundary.preflight?.command?.processSpawned !== false
+  || liveBoundary.requiredAuthorizations?.liveProcessSpawn !== false
+  || liveBoundary.governance?.canCreateTask !== false
+  || liveBoundary.governance?.canExecuteOperatorStep !== false
+  || liveBoundary.governance?.canReadCredentialValue !== false
+  || liveBoundary.governance?.canCopyAuthMaterial !== false
+  || liveBoundary.governance?.canExecuteWrapper !== false
+  || liveBoundary.governance?.canSpawnCodexAcp !== false
+  || liveBoundary.governance?.canUseNetwork !== false
+) {
+  throw new Error(`ACPX/Codex live execution boundary review mismatch: ${JSON.stringify(liveBoundary)}`);
 }
 EOF
 

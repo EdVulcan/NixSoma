@@ -246,6 +246,7 @@ const acpxCodexBridgeRuntime = document.querySelector("#acpx-codex-bridge-runtim
 const acpxCodexBridgeWriteEvidence = document.querySelector("#acpx-codex-bridge-write-evidence");
 const acpxCodexBridgeRecovery = document.querySelector("#acpx-codex-bridge-recovery");
 const acpxCodexBridgeSpawnProposal = document.querySelector("#acpx-codex-bridge-spawn-proposal");
+const acpxCodexBridgeLiveBoundary = document.querySelector("#acpx-codex-bridge-live-boundary");
 const acpxCodexBridgeMode = document.querySelector("#acpx-codex-bridge-mode");
 const acpxCodexBridgeJson = document.querySelector("#acpx-codex-bridge-json");
 const acpxCodexBridgeWrapperTaskButton = document.querySelector("#acpx-codex-bridge-wrapper-task-button");

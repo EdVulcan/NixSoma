@@ -18,6 +18,8 @@ export const observerClientAcpxCodexBridgeRenderersScript = `function renderAcpx
   const spawnProposal = processSpawnProposal?.proposal ?? {};
   const spawnSummary = processSpawnProposal?.summary ?? {};
   const spawnGovernance = processSpawnProposal?.governance ?? {};
+  const liveExecutionBoundaryReview = data?.liveExecutionBoundaryReview ?? null;
+  const liveDecision = liveExecutionBoundaryReview?.decision ?? {};
   const records = Array.isArray(persistence.records) ? persistence.records : [];
   const selected = persistence.selectedRecord ?? null;
   const deferred = Array.isArray(data?.deferredExecutionBoundaries) ? data.deferredExecutionBoundaries : [];
@@ -25,6 +27,7 @@ export const observerClientAcpxCodexBridgeRenderersScript = `function renderAcpx
   const writeDeferred = Array.isArray(wrapperWriteProposal?.deferredExecutionBoundaries) ? wrapperWriteProposal.deferredExecutionBoundaries : [];
   const writeEvidenceDeferred = Array.isArray(wrapperWriteExecutionEvidence?.deferredExecutionBoundaries) ? wrapperWriteExecutionEvidence.deferredExecutionBoundaries : [];
   const spawnDeferred = Array.isArray(processSpawnProposal?.deferredExecutionBoundaries) ? processSpawnProposal.deferredExecutionBoundaries : [];
+  const liveDeferred = Array.isArray(liveExecutionBoundaryReview?.deferredExecutionBoundaries) ? liveExecutionBoundaryReview.deferredExecutionBoundaries : [];
 
   acpxCodexBridgeRegistry.textContent = data?.registry ?? "openclaw-native-acpx-codex-bridge-compatibility-v0";
   acpxCodexBridgeSessions.textContent = String(persistence.totalRecords ?? records.length);
@@ -35,6 +38,7 @@ export const observerClientAcpxCodexBridgeRenderersScript = `function renderAcpx
   acpxCodexBridgeWriteEvidence.textContent = \`\${writeEvidenceSummary.passed ?? 0}/\${writeEvidenceSummary.total ?? 0}\`;
   acpxCodexBridgeRecovery.textContent = writeRecovery.needed ? (writeRecovery.status ?? "review") : "not needed";
   acpxCodexBridgeSpawnProposal.textContent = spawnSummary.readyForSpawnApprovalDesign ? "ready" : (spawnProposal.status ?? "blocked");
+  acpxCodexBridgeLiveBoundary.textContent = liveDecision.status ?? "blocked";
   acpxCodexBridgeMode.textContent = data?.mode ?? "compatibility-and-persistence-evidence";
 
   acpxCodexBridgeJson.textContent = [
@@ -63,6 +67,8 @@ export const observerClientAcpxCodexBridgeRenderersScript = `function renderAcpx
     processSpawnProposal ? \`Process spawn proposal: registry=\${processSpawnProposal.registry ?? "unknown"} status=\${spawnProposal.status ?? "unknown"} ready=\${Boolean(spawnSummary.readyForSpawnApprovalDesign)} wrapper=\${spawnProposal.wrapper?.relativePath ?? "none"} task=\${spawnSummary.selectedWrapperWriteTaskId ?? "none"} invocation=\${spawnSummary.selectedInvocationId ?? "none"}\` : null,
     processSpawnProposal ? \`Process spawn contract: future=\${spawnProposal.commandContract?.futureCapabilityId ?? "none"} command=\${spawnProposal.commandContract?.commandName ?? "node"} argsCount=\${spawnProposal.commandContract?.argsCount ?? 0} argsExposed=\${Boolean(spawnProposal.commandContract?.argsExposed)} executed=\${Boolean(spawnProposal.commandContract?.commandExecuted)} spawned=\${Boolean(spawnProposal.commandContract?.processSpawned)}\` : null,
     processSpawnProposal ? \`Process spawn governance: proposal=\${Boolean(spawnGovernance.canBuildProcessSpawnProposal)} task=\${Boolean(spawnGovernance.createsTask)} approval=\${Boolean(spawnGovernance.createsApproval)} approve=\${Boolean(spawnGovernance.canApproveTask)} operator=\${Boolean(spawnGovernance.canExecuteOperatorStep)} credentialRead=\${Boolean(spawnGovernance.canReadCredentialValue)} authCopy=\${Boolean(spawnGovernance.canCopyAuthMaterial)} chmod=\${Boolean(spawnGovernance.canChmodWrapper)} exec=\${Boolean(spawnGovernance.canExecuteWrapper)} spawn=\${Boolean(spawnGovernance.canSpawnCodexAcp)} provider=\${Boolean(spawnGovernance.canCallProvider)} network=\${Boolean(spawnGovernance.canUseNetwork)}\` : null,
+    liveExecutionBoundaryReview ? \`Live execution boundary: registry=\${liveExecutionBoundaryReview.registry ?? "unknown"} capability=\${liveExecutionBoundaryReview.capability?.id ?? "govern.openclaw.acpx_codex_bridge.live_execution_boundary_review"} decision=\${liveDecision.status ?? "blocked"} canProceed=\${Boolean(liveDecision.canProceedToLiveSpawn)} blockers=\${(liveDecision.blockers ?? []).join(",")}\` : null,
+    liveExecutionBoundaryReview ? \`Live boundary governance: task=\${Boolean(liveExecutionBoundaryReview.governance?.canCreateTask)} approval=\${Boolean(liveExecutionBoundaryReview.governance?.canCreateApproval)} operator=\${Boolean(liveExecutionBoundaryReview.governance?.canExecuteOperatorStep)} credentialRead=\${Boolean(liveExecutionBoundaryReview.governance?.canReadCredentialValue)} authCopy=\${Boolean(liveExecutionBoundaryReview.governance?.canCopyAuthMaterial)} chmod=\${Boolean(liveExecutionBoundaryReview.governance?.canChmodWrapper)} exec=\${Boolean(liveExecutionBoundaryReview.governance?.canExecuteWrapper)} spawn=\${Boolean(liveExecutionBoundaryReview.governance?.canSpawnCodexAcp)} provider=\${Boolean(liveExecutionBoundaryReview.governance?.canCallProvider)} network=\${Boolean(liveExecutionBoundaryReview.governance?.canUseNetwork)}\` : null,
     \`Audit: operation=\${data?.auditEvidence?.operation ?? "acpx_codex_bridge_compatibility_read"} evidence=\${data?.auditEvidence?.evidenceKind ?? "missing"} persisted=\${Boolean(data?.auditEvidence?.persisted)}\`,
     "",
     ...records.slice(0, 8).map((record) => \`\${record.sessionKey ?? "session"} agent=\${record.agentId ?? "unknown"} record=\${record.acpxRecordId ?? "unknown"} revision=\${record.revision ?? 0} credentialRead=\${Boolean(record.credentialValueRead)} copied=\${Boolean(record.authMaterialCopied)} wrapper=\${Boolean(record.wrapperWritten)} spawn=\${Boolean(record.processSpawned)}\`),
@@ -72,6 +78,7 @@ export const observerClientAcpxCodexBridgeRenderersScript = `function renderAcpx
     ...writeDeferred.map((boundary) => \`write proposal deferred: \${boundary}\`),
     ...writeEvidenceDeferred.map((boundary) => \`write evidence deferred: \${boundary}\`),
     ...spawnDeferred.map((boundary) => \`spawn proposal deferred: \${boundary}\`),
+    ...liveDeferred.map((boundary) => \`live boundary deferred: \${boundary}\`),
   ].filter(Boolean).join("\\n");
 }
 

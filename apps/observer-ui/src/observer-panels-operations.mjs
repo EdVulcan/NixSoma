@@ -610,6 +610,7 @@ export function observerOperationsPanels() {
           <div class="metric"><span>Write Evidence</span><span id="acpx-codex-bridge-write-evidence">0/0</span></div>
           <div class="metric"><span>Recovery</span><span id="acpx-codex-bridge-recovery">not needed</span></div>
           <div class="metric"><span>Spawn Proposal</span><span id="acpx-codex-bridge-spawn-proposal">blocked</span></div>
+          <div class="metric"><span>Live Boundary</span><span id="acpx-codex-bridge-live-boundary">blocked</span></div>
           <div class="metric"><span>Mode</span><span id="acpx-codex-bridge-mode">compatibility-and-persistence-evidence</span></div>
           <div class="actions tight">
             <button id="acpx-codex-bridge-wrapper-task-button" type="button">Create Wrapper Task</button>
