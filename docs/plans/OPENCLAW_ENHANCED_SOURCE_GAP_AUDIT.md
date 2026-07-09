@@ -782,30 +782,32 @@ It produces:
 - Continued deferral of raw response payloads, long-lived LSP pools,
   auto-approval, provider calls, and root/system daemon work.
 
-Latest LSP selected-target edit proposal seed completed:
+Latest LSP Observer selected-target edit seed control completed:
 
 ```text
-OPENCLAW_NATIVE_ENGINEERING_LSP_SELECTED_TARGET_EDIT_PROPOSAL_SEED_PLAN.md
+OPENCLAW_NATIVE_ENGINEERING_LSP_OBSERVER_SELECTED_TARGET_EDIT_SEED_CONTROL_PLAN.md
 ```
 
 It produces:
 
-- A core route that turns completed LSP selected-target reads into edit seeds.
-- Optional normal edit proposal diff preview when replacement text is explicitly
-  provided.
-- Reuse of the existing bounded read bridge and edit proposal builder.
+- A `Seed Edit Proposal` Observer control over completed LSP lifecycle task
+  state.
+- Existing edit proposal path/search/replacement inputs populated from the
+  bounded selected target seed.
+- A separate, still-explicit `Create Edit Task` step for the approval-gated
+  mutation path.
 - No automatic follow-up task/approval, JSON-RPC, LSP process start, provider
   call, network egress, mutation, or long-lived LSP pool.
 
 Next smallest real capability:
 
 ```text
-Observer selected-target edit seed control
+LSP selected-target edit closed-loop proof
 ```
 
-That should let the operator seed the existing Observer edit proposal inputs
-from a completed LSP selected target without automatic approval or workspace
-mutation.
+That should prove the operator path from selected target to seeded edit inputs,
+explicit edit task, approval, patch apply, ledger, and existing evidence
+readback without adding another readiness shell.
 
 Required answer for every following slice:
 

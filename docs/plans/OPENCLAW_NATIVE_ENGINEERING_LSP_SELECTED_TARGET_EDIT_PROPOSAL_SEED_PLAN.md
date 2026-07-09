@@ -74,14 +74,14 @@ services/openclaw-core/test/native-adapter-plugin-routes.test.mjs
 openclaw-native-engineering-lsp-evidence
 ```
 
-## Next Slice
+## Follow-up Completed
 
-The next smallest real capability is:
+The Observer selected-target edit seed control follow-up was completed as:
 
 ```text
-Observer selected-target edit seed control
+OPENCLAW_NATIVE_ENGINEERING_LSP_OBSERVER_SELECTED_TARGET_EDIT_SEED_CONTROL_PLAN.md
 ```
 
-That follow-up should let the operator seed the existing Observer edit proposal
-inputs from a completed LSP selected target, while keeping actual mutation on
-the existing approval-gated edit task path.
+That slice lets the operator seed the existing Observer edit proposal inputs
+from a completed LSP selected target, while keeping actual mutation on the
+existing approval-gated edit task path.

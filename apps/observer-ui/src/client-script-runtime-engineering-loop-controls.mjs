@@ -51,6 +51,10 @@ function engineeringLspSelectedTargetReadBridgeRoute(taskId, language = "typescr
   return \`/plugins/native-adapter/engineering-lsp/selected-target-read-bridge?taskId=\${encodeURIComponent(taskId ?? "")}&language=\${encodeURIComponent(language ?? "typescript")}&contextLines=2&includeRead=true\`;
 }
 
+function engineeringLspSelectedTargetEditProposalSeedRoute(taskId, language = "typescript") {
+  return \`/plugins/native-adapter/engineering-lsp/selected-target-edit-proposal-seed?taskId=\${encodeURIComponent(taskId ?? "")}&language=\${encodeURIComponent(language ?? "typescript")}&contextLines=0\`;
+}
+
 function renderEngineeringLoopControlState(kind, result) {
   const taskId = result.task?.id ?? "none";
   const approvalId = result.approval?.id ?? "none";
@@ -230,6 +234,49 @@ async function readEngineeringLoopSelectedTarget() {
     "Boundary: explicit read-only bridge; no task, approval, JSON-RPC, LSP process, mutation, provider call, or result envelope.",
   ].join("\\n");
   setControlMessage(\`Read selected LSP target \${bridge.target?.relativePath ?? "unknown"} through the bounded native read bridge.\`);
+  await refreshEngineeringLoopControlSurfaces();
+}
+
+async function seedEngineeringLoopSelectedTargetEditProposal() {
+  if (!latestEngineeringLoopControlState?.taskId || latestEngineeringLoopControlState.kind !== "lsp-lifecycle") {
+    throw new Error("Create or restore an LSP lifecycle task first.");
+  }
+  const route = engineeringLspSelectedTargetEditProposalSeedRoute(
+    latestEngineeringLoopControlState.taskId,
+    latestEngineeringLoopControlState.language ?? "typescript",
+  );
+  const seed = await fetchJson(\`\${observerConfig.coreUrl}\${route}\`);
+  if (!seed.ok) {
+    engineeringLoopStateCompletion.textContent = \`blocked=\${seed.reason ?? "unknown"}\`;
+    engineeringLoopStateEvidence.textContent = route;
+    engineeringLoopStateJson.textContent = [
+      "Kind: lsp-selected-target-edit-seed",
+      \`Task: \${latestEngineeringLoopControlState.taskId}\`,
+      \`Seed: \${route}\`,
+      \`Blocked: \${seed.reason ?? "unknown"}\`,
+      "Boundary: explicit read-only edit seed; no task, approval, patch apply, mutation, provider call, or result envelope.",
+    ].join("\\n");
+    throw new Error(seed.reason ?? "selected target edit seed blocked");
+  }
+  engineeringEditPathInput.value = seed.seed?.relativePath ?? engineeringEditPathInput.value;
+  engineeringEditOldInput.value = seed.seed?.oldString ?? engineeringEditOldInput.value;
+  engineeringEditNewInput.value = seed.seed?.oldString ?? engineeringEditNewInput.value;
+  latestEngineeringLoopControlState.selectedTargetEditSeedRoute = route;
+  engineeringLoopStateNext.textContent = "edit replacement text, then create edit task";
+  engineeringLoopStateEvidence.textContent = route;
+  engineeringLoopStateCompletion.textContent = \`seed=\${seed.seed?.relativePath ?? "unknown"} bytes=\${seed.seed?.oldStringBytes ?? 0}\`;
+  engineeringLoopStateJson.textContent = [
+    "Kind: lsp-selected-target-edit-seed",
+    \`Task: \${latestEngineeringLoopControlState.taskId}\`,
+    \`Seed: \${route}\`,
+    \`Registry: \${seed.registry ?? "unknown"}\`,
+    \`Target: \${seed.seed?.relativePath ?? "unknown"} oldBytes=\${seed.seed?.oldStringBytes ?? 0}\`,
+    \`Edit Inputs: path=\${engineeringEditPathInput.value} oldBytes=\${String(engineeringEditOldInput.value ?? "").length} replacementPrefilled=true\`,
+    \`Governance: editProposal=\${Boolean(seed.governance?.canBuildEditProposal)} task=\${Boolean(seed.governance?.canCreateTask)} approval=\${Boolean(seed.governance?.canCreateApproval)} mutate=\${Boolean(seed.governance?.canMutateWorkspace)}\`,
+    "Next: modify the Replacement Text field, then use Create Edit Task for the existing approval-gated edit path.",
+    "Boundary: explicit read-only edit seed; no task, approval, patch apply, mutation, provider call, or result envelope.",
+  ].join("\\n");
+  setControlMessage(\`Seeded edit proposal inputs from LSP selected target \${seed.seed?.relativePath ?? "unknown"}.\`);
   await refreshEngineeringLoopControlSurfaces();
 }
 

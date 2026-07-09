@@ -133,6 +133,7 @@ export function observerOperationsPanels() {
           <div class="actions tight">
             <button id="engineering-loop-completion-button" class="secondary" type="button">Refresh Completion</button>
             <button id="engineering-loop-selected-target-read-button" class="secondary" type="button">Read Selected Target</button>
+            <button id="engineering-loop-selected-target-edit-seed-button" class="secondary" type="button">Seed Edit Proposal</button>
             <button id="engineering-loop-restore-button" class="secondary" type="button">Restore Loop State</button>
           </div>
           <pre id="engineering-loop-state-json">No engineering loop task created from Observer controls yet.</pre>

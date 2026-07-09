@@ -327,12 +327,21 @@ That slice converts completed LSP selected target reads into edit seeds and can
 build a normal bounded edit proposal when replacement text is explicitly
 provided, while preserving approval-gated mutation.
 
+The Observer selected-target edit seed control follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_OBSERVER_SELECTED_TARGET_EDIT_SEED_CONTROL_PLAN.md
+```
+
+That slice seeds the existing Observer edit proposal inputs from a completed
+LSP selected target, without creating an edit task or approval automatically.
+
 The current next smallest real capability is:
 
 ```text
-Observer selected-target edit seed control
+LSP selected-target edit closed-loop proof
 ```
 
-That slice should seed the existing Observer edit proposal inputs from a
-completed LSP selected target, without creating an edit task or approval
-automatically.
+That slice should prove the operator path from selected target to seeded edit
+inputs, explicit edit task, approval, patch apply, ledger, and existing
+evidence readback without adding another readiness shell.
