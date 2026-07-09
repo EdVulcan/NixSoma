@@ -133,6 +133,7 @@ for (const token of [
   "aliveAtProbe",
   "processTerminated",
   "Lifecycle State",
+  "Symbol Response",
   "Missing server binaries become recoverable task evidence",
   "Native engineering LSP evidence",
   "sense.openclaw.engineering_tool.lsp_evidence",

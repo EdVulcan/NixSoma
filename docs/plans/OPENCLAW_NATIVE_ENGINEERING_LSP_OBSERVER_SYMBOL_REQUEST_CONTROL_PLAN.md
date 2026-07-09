@@ -93,15 +93,14 @@ The core execution proof remains in:
 openclaw-native-engineering-lsp-evidence
 ```
 
-## Next Slice
+## Follow-up Completed
 
-The next smallest real capability is:
+The bounded response summary follow-up was completed as:
 
 ```text
-bounded LSP symbol response summary
+OPENCLAW_NATIVE_ENGINEERING_LSP_SYMBOL_RESPONSE_SUMMARY_PLAN.md
 ```
 
-That follow-up should parse the selected JSON-RPC response enough to expose
-bounded result metadata for definition/references/hover without returning raw
-source bodies, keeping long-lived process pools, provider egress, package
-installation, and root/system daemon work deferred.
+It parses the selected JSON-RPC response into bounded result metadata for
+definition/references/hover without returning raw source bodies or raw response
+payloads.

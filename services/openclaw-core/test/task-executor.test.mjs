@@ -999,7 +999,7 @@ process.stdin.on("data", (chunk) => {
   if (!sentSymbol && input.includes('"method":"textDocument/definition"') && input.includes("openclawSymbolRequest")) {
     sentSymbol = true;
     process.stderr.write("fake-lsp-symbol-request-observed\\n");
-    frame({ jsonrpc: "2.0", id: 3, result: [] });
+    frame({ jsonrpc: "2.0", id: 3, result: [{ uri: "file:///workspace/src/app.ts", range: { start: { line: 0, character: 13 }, end: { line: 0, character: 34 } } }] });
   }
   if (sentSymbol && !sentShutdown && input.includes('"method":"shutdown"')) {
     sentShutdown = true;
@@ -1080,10 +1080,26 @@ setTimeout(() => process.exit(3), 5000);
     assert.equal(execution.server.symbolRequestSent, true);
     assert.equal(execution.server.symbolRequestMethod, "textDocument/definition");
     assert.equal(execution.processSupervision.protocolHandshake.symbolResponseObserved, true);
+    assert.deepEqual(execution.server.symbolResponseSummary, {
+      observed: true,
+      requestId: 3,
+      method: "textDocument/definition",
+      hasError: false,
+      resultKind: "array",
+      resultCount: 1,
+      uriCount: 1,
+      rangeCount: 1,
+      hoverContentKind: "none",
+      hoverContentChars: 0,
+      rawResultIncluded: false,
+    });
     assert.equal(execution.lifecycleState.status, "symbol_request_completed");
+    assert.equal(execution.lifecycleState.server.symbolResponseObserved, true);
+    assert.equal(execution.lifecycleState.server.symbolResponseSummary.resultCount, 1);
     assert.equal(execution.lifecycleState.boundaries.jsonRpcOperationalRequestsEnabled, true);
     assert.equal(execution.lifecycleState.boundaries.longLivedProcessActive, false);
     assert.equal(result.finalExecution.task.engineeringLspLifecycle.symbolRequest.sent, true);
+    assert.equal(result.finalExecution.task.engineeringLspLifecycle.symbolRequest.responseSummary.resultCount, 1);
     assert.equal(JSON.stringify(execution).includes("openclawSymbolRequest = 7"), false);
   } finally {
     process.env.PATH = previousPath;

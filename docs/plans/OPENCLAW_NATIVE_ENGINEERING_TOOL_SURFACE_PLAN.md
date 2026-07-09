@@ -266,9 +266,18 @@ new standalone evidence shell.
 The current next smallest real capability is:
 
 ```text
-bounded LSP symbol response summary
+governed LSP references/hover variants
 ```
 
-That slice should expose bounded definition/references/hover response metadata
-from the approved single-request execution without returning raw source bodies
-or starting long-lived language-server pools.
+The bounded response summary follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_SYMBOL_RESPONSE_SUMMARY_PLAN.md
+```
+
+That slice records result shape/count metadata from approved single symbol
+requests without returning raw response payloads or source bodies.
+
+Next, exercise the same governed single-request path for `references` and
+`hover` so the response summary is proven across the enhanced-source LSP
+contract shape while long-lived language-server pools remain deferred.

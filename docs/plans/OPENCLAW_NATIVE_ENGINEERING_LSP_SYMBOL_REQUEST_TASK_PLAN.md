@@ -102,7 +102,7 @@ long-lived connection reuse
 workspace-wide open-file synchronization
 language-server installation or dependency management
 multi-request symbol navigation sessions
-bounded parsed symbol response summary
+references/hover variant coverage for the same single-request path
 Level 2 trusted session/work-view integration
 Level 3 hostd/system daemon integration
 ```
@@ -124,9 +124,9 @@ another standalone evidence milestone.
 The next smallest real capability is:
 
 ```text
-bounded LSP symbol response summary
+governed LSP references/hover variants
 ```
 
-That follow-up should expose bounded definition/references/hover result metadata
-from the approved single-request execution without returning raw source bodies
-or starting long-lived language-server pools.
+That follow-up should prove the same approval-gated single-request execution and
+bounded response summary work for references and hover without starting
+long-lived language-server pools.

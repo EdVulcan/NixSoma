@@ -818,6 +818,8 @@ function buildLifecycleExecution({ task, executablePath, binaryChecked = true, a
       sourceContentTransferred: processProbe?.protocolHandshake?.sourceContentTransferred === true,
       symbolRequestSent: processProbe?.protocolHandshake?.symbolRequestsSent === true,
       symbolRequestMethod: processProbe?.protocolHandshake?.symbolRequestMethod ?? null,
+      symbolResponseObserved: processProbe?.protocolHandshake?.symbolResponseSummary?.observed === true,
+      symbolResponseSummary: processProbe?.protocolHandshake?.symbolResponseSummary ?? null,
     },
     processSupervision: processProbe ?? {
       mode: "not_attempted",
@@ -1006,6 +1008,8 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
         sourceContentTransferred: execution.server.sourceContentTransferred,
         symbolRequestSent: execution.server.symbolRequestSent,
         symbolRequestMethod: execution.server.symbolRequestMethod,
+        symbolResponseObserved: execution.server.symbolResponseObserved,
+        symbolResponseSummary: execution.server.symbolResponseSummary,
       },
       sourceTransfer: task.engineeringLspLifecycle?.sourceTransfer
         ? {
@@ -1020,6 +1024,7 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
             ...(task.engineeringLspLifecycle.symbolRequest ?? {}),
             sent: execution.server.symbolRequestSent,
             method: execution.server.symbolRequestMethod ?? task.engineeringLspLifecycle.symbolRequest.method,
+            responseSummary: execution.server.symbolResponseSummary,
           }
         : task.engineeringLspLifecycle?.symbolRequest ?? null,
       execution,

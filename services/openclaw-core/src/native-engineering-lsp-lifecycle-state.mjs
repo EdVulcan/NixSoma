@@ -105,6 +105,7 @@ function eventForRecord({ task, execution }) {
     sourceContentTransferred: execution.server?.sourceContentTransferred === true,
     symbolRequestSent: execution.server?.symbolRequestSent === true,
     symbolRequestMethod: execution.server?.symbolRequestMethod ?? null,
+    symbolResponseObserved: execution.server?.symbolResponseObserved === true,
   };
 }
 
@@ -151,6 +152,8 @@ export function recordNativeEngineeringLspLifecycleExecution({
       sourceContentTransferred: execution?.server?.sourceContentTransferred === true,
       symbolRequestSent: execution?.server?.symbolRequestSent === true,
       symbolRequestMethod: execution?.server?.symbolRequestMethod ?? null,
+      symbolResponseObserved: execution?.server?.symbolResponseObserved === true,
+      symbolResponseSummary: execution?.server?.symbolResponseSummary ?? null,
     },
     process: {
       supervisionMode: processSupervision.mode ?? "not_attempted",

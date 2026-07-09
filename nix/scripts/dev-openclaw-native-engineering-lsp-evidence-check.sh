@@ -74,7 +74,7 @@ process.stdin.on("data", (chunk) => {
   if (!sentSymbol && input.includes('"method":"textDocument/definition"') && input.includes("OpenClawNeedle")) {
     sentSymbol = true;
     process.stderr.write("openclaw-fixture-symbol-request-observed\n");
-    frame({ jsonrpc: "2.0", id: 3, result: [] });
+    frame({ jsonrpc: "2.0", id: 3, result: [{ uri: "file:///openclaw/src/app.ts", range: { start: { line: 1, character: 14 }, end: { line: 1, character: 26 } } }] });
   }
   if (!sentShutdown && input.includes('"method":"shutdown"')) {
     sentShutdown = true;
@@ -979,9 +979,16 @@ if (
   || symbolRequestExecution?.server?.sourceContentTransferred !== true
   || symbolRequestExecution?.server?.symbolRequestSent !== true
   || symbolRequestExecution?.server?.symbolRequestMethod !== "textDocument/definition"
+  || symbolRequestExecution?.server?.symbolResponseObserved !== true
+  || symbolRequestExecution?.server?.symbolResponseSummary?.resultKind !== "array"
+  || symbolRequestExecution?.server?.symbolResponseSummary?.resultCount !== 1
+  || symbolRequestExecution?.server?.symbolResponseSummary?.uriCount !== 1
+  || symbolRequestExecution?.server?.symbolResponseSummary?.rangeCount !== 1
+  || symbolRequestExecution?.server?.symbolResponseSummary?.rawResultIncluded !== false
   || symbolRequestExecution?.processSupervision?.protocolHandshake?.ok !== true
   || !symbolRequestExecution?.processSupervision?.protocolHandshake?.messagesSent?.includes("textDocument/definition")
   || symbolRequestExecution?.processSupervision?.protocolHandshake?.symbolResponseObserved !== true
+  || symbolRequestExecution?.processSupervision?.protocolHandshake?.symbolResponseSummary?.resultCount !== 1
   || symbolRequestExecution?.processSupervision?.protocolHandshake?.symbolRequestsSent !== true
   || symbolRequestExecution?.processSupervision?.protocolHandshake?.symbolRequestMethod !== "textDocument/definition"
   || symbolRequestExecution?.processSupervision?.protocolHandshake?.symbolRequestId !== 3
@@ -999,8 +1006,10 @@ if (
   symbolRequestTaskReadback.task?.id !== symbolRequestTask.id
   || symbolRequestTaskReadback.task?.engineeringLspLifecycle?.symbolRequest?.sent !== true
   || symbolRequestTaskReadback.task?.engineeringLspLifecycle?.symbolRequest?.method !== "textDocument/definition"
+  || symbolRequestTaskReadback.task?.engineeringLspLifecycle?.symbolRequest?.responseSummary?.resultCount !== 1
   || symbolRequestTaskReadback.task?.engineeringLspLifecycle?.server?.symbolRequestSent !== true
   || symbolRequestTaskReadback.task?.engineeringLspLifecycle?.server?.symbolRequestMethod !== "textDocument/definition"
+  || symbolRequestTaskReadback.task?.engineeringLspLifecycle?.server?.symbolResponseSummary?.rangeCount !== 1
   || symbolRequestState.registry !== "openclaw-native-engineering-lsp-lifecycle-state-v0"
   || symbolRequestState.summary?.jsonRpcEnabled !== true
   || symbolRequestState.summary?.jsonRpcOperationalRequestsEnabled !== true
@@ -1011,6 +1020,7 @@ if (
   || symbolRequestStateItem?.status !== "symbol_request_completed"
   || symbolRequestStateItem?.server?.symbolRequestSent !== true
   || symbolRequestStateItem?.server?.symbolRequestMethod !== "textDocument/definition"
+  || symbolRequestStateItem?.server?.symbolResponseSummary?.resultCount !== 1
   || symbolRequestStateItem?.process?.protocolHandshake?.symbolRequestsSent !== true
   || symbolRequestStateItem?.boundaries?.jsonRpcOperationalRequestsEnabled !== true
   || symbolRequestStateItem?.boundaries?.sourceContentTransferred !== true
@@ -1083,6 +1093,7 @@ console.log(JSON.stringify({
     approvedSymbolRequestSent: symbolRequestExecution.server.symbolRequestSent,
     approvedSymbolRequestState: symbolRequestExecution.result.state,
     approvedSymbolRequestMethod: symbolRequestExecution.server.symbolRequestMethod,
+    approvedSymbolResponseResults: symbolRequestExecution.server.symbolResponseSummary.resultCount,
     serverStatus: check.serverReadiness.status,
     lifecycleTaskStatus: lifecycleTask.status,
     binaryFound: execution.server.binaryFound,
