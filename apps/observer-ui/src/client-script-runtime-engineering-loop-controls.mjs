@@ -142,10 +142,10 @@ async function refreshEngineeringLoopCompletionReadback() {
       \`Approval: \${latestEngineeringLoopControlState.approvalId ?? "none"}\`,
       \`Task Status: \${task?.status ?? "unknown"}\`,
       \`Action: \${lifecycle.lifecycleAction ?? execution.lifecycleAction ?? "start"} language=\${lifecycle.language ?? execution.language ?? "typescript"}\`,
-      \`Server: \${lifecycle.server?.serverBinary ?? execution.server?.serverBinary ?? "unknown"} binaryFound=\${Boolean(execution.server?.binaryFound)} processStarted=\${Boolean(execution.server?.processStarted)} jsonRpc=\${Boolean(execution.server?.jsonRpcHandshakeSent)}\`,
+      \`Server: \${lifecycle.server?.serverBinary ?? execution.server?.serverBinary ?? "unknown"} binaryFound=\${Boolean(execution.server?.binaryFound)} processStarted=\${Boolean(execution.server?.processStarted)} aliveAtProbe=\${Boolean(execution.server?.processAliveAtProbe)} terminated=\${Boolean(execution.server?.processTerminated)} jsonRpc=\${Boolean(execution.server?.jsonRpcHandshakeSent)}\`,
       \`Result: \${execution.result?.state ?? task?.outcome?.kind ?? "pending"}\`,
       \`Recovery: \${execution.recoveryRecommendation?.nextAction ?? task?.outcome?.details?.recoveryEvidence?.recommendation?.nextAction ?? "pending operator step"}\`,
-      "Boundary: approval-gated binary gate only; no process start, JSON-RPC, source-content read, mutation, provider call, or result envelope.",
+      "Boundary: approval-gated binary gate plus process probe only; no long-lived process state, JSON-RPC, source-content read, mutation, provider call, or result envelope.",
     ].join("\\n");
     setControlMessage(\`Refreshed LSP lifecycle task readback for \${latestEngineeringLoopControlState.taskId}.\`);
     await refreshEngineeringLoopControlSurfaces();

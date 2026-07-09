@@ -1,10 +1,16 @@
 import { randomUUID } from "node:crypto";
-import { accessSync, constants } from "node:fs";
+import { spawn } from "node:child_process";
+import { accessSync, constants, realpathSync } from "node:fs";
 import path from "node:path";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 
 export const NATIVE_ENGINEERING_LSP_LIFECYCLE_TASK_REGISTRY = "openclaw-native-engineering-lsp-lifecycle-task-v0";
 export const NATIVE_ENGINEERING_LSP_LIFECYCLE_EXECUTION_REGISTRY = "openclaw-native-engineering-lsp-lifecycle-execution-v0";
+
+const DEFAULT_PROCESS_PROBE_MS = 300;
+const MAX_PROCESS_PROBE_MS = 2_000;
+const DEFAULT_PROCESS_OUTPUT_CHARS = 4_096;
+const PROCESS_SUPERVISION_ACTIONS = new Set(["start", "restart", "recover"]);
 
 function redactedWorkspace(workspace) {
   return {
@@ -212,11 +218,213 @@ function resolveExecutablePath(binary, envPath = process.env.PATH ?? "") {
   return null;
 }
 
-function buildLifecycleExecution({ task, executablePath, approved = false }) {
+function normalisePositiveInteger(value, fallback, max) {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, max) : fallback;
+}
+
+function safeRealpath(value) {
+  try {
+    return realpathSync(value);
+  } catch {
+    return path.resolve(value);
+  }
+}
+
+function isInsidePath(rootPath, candidatePath) {
+  const relative = path.relative(rootPath, candidatePath);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+function resolveSupervisionCwd(metadata, workspaceRoots = []) {
+  const workspacePath = typeof metadata.workspace?.path === "string" && metadata.workspace.path.trim()
+    ? metadata.workspace.path.trim()
+    : null;
+  if (!workspacePath) {
+    throw new Error("Native engineering LSP lifecycle task is missing a workspace path.");
+  }
+  const cwd = safeRealpath(workspacePath);
+  const roots = Array.isArray(workspaceRoots) && workspaceRoots.length > 0
+    ? workspaceRoots.map((root) => safeRealpath(root))
+    : [cwd];
+  if (!roots.some((root) => isInsidePath(root, cwd))) {
+    throw new Error("Native engineering LSP lifecycle workspace path is outside configured workspace roots.");
+  }
+  return { cwd, allowedRoots: roots };
+}
+
+function appendBoundedOutput(current, chunk, limit) {
+  const text = current.text + chunk.toString("utf8");
+  if (text.length <= limit) {
+    return {
+      text,
+      truncated: current.truncated,
+      bytes: current.bytes + Buffer.byteLength(chunk),
+    };
+  }
+  return {
+    text: text.slice(0, limit),
+    truncated: true,
+    bytes: current.bytes + Buffer.byteLength(chunk),
+  };
+}
+
+function shouldRunProcessSupervisionProbe(metadata) {
+  return PROCESS_SUPERVISION_ACTIONS.has(metadata.lifecycleAction ?? "start");
+}
+
+function startSupervisedLifecycleProcess({
+  executablePath,
+  args = [],
+  cwd,
+  probeMs = DEFAULT_PROCESS_PROBE_MS,
+  outputLimit = DEFAULT_PROCESS_OUTPUT_CHARS,
+} = {}) {
+  return new Promise((resolve) => {
+    const safeProbeMs = normalisePositiveInteger(probeMs, DEFAULT_PROCESS_PROBE_MS, MAX_PROCESS_PROBE_MS);
+    const startedAt = new Date().toISOString();
+    const stdoutInitial = { text: "", truncated: false, bytes: 0 };
+    const stderrInitial = { text: "", truncated: false, bytes: 0 };
+    let stdout = stdoutInitial;
+    let stderr = stderrInitial;
+    let settled = false;
+    let terminationSent = false;
+    let killSent = false;
+    let processAliveAtProbe = false;
+    let probeTimer = null;
+    let killTimer = null;
+    let child = null;
+
+    function finish(result) {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      if (probeTimer) {
+        clearTimeout(probeTimer);
+      }
+      if (killTimer) {
+        clearTimeout(killTimer);
+      }
+      resolve({
+        mode: "supervised_user_space_process_probe",
+        attempted: true,
+        executablePath,
+        args,
+        cwd,
+        probeMs: safeProbeMs,
+        outputLimitChars: outputLimit,
+        startedAt,
+        completedAt: new Date().toISOString(),
+        terminationSent,
+        killSent,
+        stdout,
+        stderr,
+        ...result,
+      });
+    }
+
+    try {
+      child = spawn(executablePath, args, {
+        cwd,
+        stdio: ["ignore", "pipe", "pipe"],
+        windowsHide: true,
+      });
+    } catch (error) {
+      finish({
+        started: false,
+        pid: null,
+        processAliveAtProbe: false,
+        processTerminated: false,
+        exitCode: null,
+        signal: null,
+        error: error instanceof Error ? error.message : "Unable to start LSP server process.",
+      });
+      return;
+    }
+
+    child.stdout?.on("data", (chunk) => {
+      stdout = appendBoundedOutput(stdout, chunk, outputLimit);
+    });
+    child.stderr?.on("data", (chunk) => {
+      stderr = appendBoundedOutput(stderr, chunk, outputLimit);
+    });
+    child.on("error", (error) => {
+      finish({
+        started: false,
+        pid: child?.pid ?? null,
+        processAliveAtProbe: false,
+        processTerminated: false,
+        exitCode: null,
+        signal: null,
+        error: error instanceof Error ? error.message : "Unable to start LSP server process.",
+      });
+    });
+    child.on("exit", (code, signal) => {
+      finish({
+        started: Boolean(child?.pid),
+        pid: child?.pid ?? null,
+        processAliveAtProbe,
+        processTerminated: terminationSent || killSent,
+        exitCode: Number.isInteger(code) ? code : null,
+        signal: signal ?? null,
+        error: null,
+      });
+    });
+    child.on("spawn", () => {
+      probeTimer = setTimeout(() => {
+        if (settled) {
+          return;
+        }
+        processAliveAtProbe = true;
+        terminationSent = true;
+        child.kill("SIGTERM");
+        killTimer = setTimeout(() => {
+          if (!settled) {
+            killSent = true;
+            child.kill("SIGKILL");
+          }
+        }, 250);
+      }, safeProbeMs);
+    });
+  });
+}
+
+function resultStateForExecution({ binaryFound, processProbe }) {
+  if (!binaryFound) {
+    return {
+      ok: false,
+      state: "server_binary_missing",
+      failureKind: "lsp_server_binary_missing",
+    };
+  }
+  if (!processProbe?.attempted) {
+    return {
+      ok: true,
+      state: "binary_gate_passed_process_supervision_deferred",
+      failureKind: null,
+    };
+  }
+  if (processProbe.started === true) {
+    return {
+      ok: true,
+      state: "process_supervision_probe_completed_json_rpc_deferred",
+      failureKind: null,
+    };
+  }
+  return {
+    ok: false,
+    state: "process_supervision_start_failed",
+    failureKind: "lsp_server_process_start_failed",
+  };
+}
+
+function buildLifecycleExecution({ task, executablePath, approved = false, processProbe = null }) {
   const metadata = task.engineeringLspLifecycle ?? {};
   const now = new Date().toISOString();
   const serverBinary = metadata.server?.serverBinary ?? null;
   const binaryFound = Boolean(executablePath);
+  const result = resultStateForExecution({ binaryFound, processProbe });
   return {
     registry: NATIVE_ENGINEERING_LSP_LIFECYCLE_EXECUTION_REGISTRY,
     mode: "approved-lsp-lifecycle-binary-gate",
@@ -231,26 +439,36 @@ function buildLifecycleExecution({ task, executablePath, approved = false }) {
       binaryChecked: true,
       binaryFound,
       executablePath: executablePath ?? null,
-      processStarted: false,
-      processId: null,
+      processStarted: processProbe?.started === true,
+      processId: processProbe?.pid ?? null,
+      processAliveAtProbe: processProbe?.processAliveAtProbe === true,
+      processTerminated: processProbe?.processTerminated === true,
       jsonRpcHandshakeSent: false,
     },
-    result: {
-      ok: binaryFound,
-      state: binaryFound ? "binary_gate_passed_process_supervision_deferred" : "server_binary_missing",
-      failureKind: binaryFound ? null : "lsp_server_binary_missing",
+    processSupervision: processProbe ?? {
+      mode: "not_attempted",
+      attempted: false,
+      reason: binaryFound ? "process_supervision_deferred" : "server_binary_missing",
     },
+    result,
     governance: {
       approved,
       canStartProcessWithoutApproval: false,
-      processStarted: false,
+      processStarted: processProbe?.started === true,
       jsonRpcEnabled: false,
       contentExposed: false,
     },
-    recoveryRecommendation: binaryFound
+    recoveryRecommendation: result.failureKind === "lsp_server_process_start_failed"
       ? {
           recoverable: true,
-          nextAction: "implement supervised user-space process start/stop/readback before JSON-RPC",
+          nextAction: `inspect ${serverBinary ?? "the requested language server"} process startup output and rerun the approved lifecycle task after fixing the service PATH or binary wrapper`,
+        }
+      : binaryFound
+      ? {
+          recoverable: true,
+          nextAction: processProbe?.attempted
+            ? "process supervision probe is recorded; implement persistent start/stop state before JSON-RPC"
+            : "implement supervised user-space process start/stop/readback before JSON-RPC",
         }
       : {
           recoverable: true,
@@ -271,7 +489,7 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
   policyEvaluator,
   publishEvent,
 }) {
-  const { approvals, persistState } = state;
+  const { approvals, persistState, workspaceRoots } = state;
   const { serialiseTask, isActiveTask, setTaskPhase, completeTask, failTask } = taskManager;
   const { serialiseApproval } = approvalEngine;
   const { ensureTaskPolicy } = policyEvaluator;
@@ -328,7 +546,14 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
       },
     });
     const executablePath = resolveExecutablePath(task.engineeringLspLifecycle?.server?.serverBinary);
-    const execution = buildLifecycleExecution({ task, executablePath, approved: true });
+    const processProbe = executablePath && shouldRunProcessSupervisionProbe(task.engineeringLspLifecycle ?? {})
+      ? await startSupervisedLifecycleProcess({
+          executablePath,
+          args: task.engineeringLspLifecycle?.server?.serverArgs ?? [],
+          cwd: resolveSupervisionCwd(task.engineeringLspLifecycle ?? {}, workspaceRoots).cwd,
+        })
+      : null;
+    const execution = buildLifecycleExecution({ task, executablePath, approved: true, processProbe });
     task.engineeringLspLifecycle = {
       ...(task.engineeringLspLifecycle ?? {}),
       server: {
@@ -336,7 +561,10 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
         binaryChecked: true,
         binaryFound: execution.server.binaryFound,
         executablePath: execution.server.executablePath,
-        processStarted: false,
+        processStarted: execution.server.processStarted,
+        processId: execution.server.processId,
+        processAliveAtProbe: execution.server.processAliveAtProbe,
+        processTerminated: execution.server.processTerminated,
         jsonRpcHandshakeSent: false,
       },
       execution,
@@ -344,7 +572,7 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
     persistState();
 
     if (!execution.result.ok) {
-      const failedTask = failTask(task, `LSP lifecycle ${execution.lifecycleAction ?? "start"} blocked: ${execution.server.serverBinary ?? "server"} binary not found.`, {
+      const failedTask = failTask(task, `LSP lifecycle ${execution.lifecycleAction ?? "start"} blocked: ${execution.result.failureKind ?? "process supervision failed"}.`, {
         executor: "native-engineering-lsp-lifecycle-v0",
         lspLifecycleExecution: execution,
         recoveryEvidence: {
@@ -366,7 +594,14 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
         actions: [],
         capabilityInvocations: [],
         commandTranscript: [],
-        verification: { ok: false, checks: [{ name: "server_binary_present", ok: false }], failedChecks: ["server_binary_present"] },
+        verification: {
+          ok: false,
+          checks: [
+            { name: "server_binary_present", ok: execution.server.binaryFound === true },
+            { name: "process_supervision_probe", ok: execution.processSupervision?.started === true },
+          ],
+          failedChecks: execution.server.binaryFound ? ["process_supervision_probe"] : ["server_binary_present"],
+        },
         policy: policy.decision,
         approval: approval ? serialiseApproval(approval) : null,
         execution,
@@ -375,7 +610,9 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
 
     const completedTask = completeTask(task, {
       executor: "native-engineering-lsp-lifecycle-v0",
-      summary: "LSP lifecycle binary gate passed; process supervision remains deferred.",
+      summary: execution.processSupervision?.attempted
+        ? "LSP lifecycle process supervision probe completed; JSON-RPC remains deferred."
+        : "LSP lifecycle binary gate passed; process supervision remains deferred.",
       lspLifecycleExecution: execution,
     });
     await publishEvent(createEventName("task.completed"), {
@@ -388,7 +625,14 @@ export function createNativeEngineeringLspLifecycleTaskHandlers({
       actions: [],
       capabilityInvocations: [],
       commandTranscript: [],
-      verification: { ok: true, checks: [{ name: "server_binary_present", ok: true }], failedChecks: [] },
+      verification: {
+        ok: true,
+        checks: [
+          { name: "server_binary_present", ok: true },
+          { name: "process_supervision_probe", ok: execution.processSupervision?.attempted ? execution.processSupervision?.started === true : null },
+        ],
+        failedChecks: [],
+      },
       policy: policy.decision,
       approval: approval ? serialiseApproval(approval) : null,
       execution,

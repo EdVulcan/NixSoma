@@ -127,13 +127,16 @@ mode: approval-gated-lsp-lifecycle-binary-gate
 ```
 
 It creates an approval-gated lifecycle task, blocks operator execution before
-approval, records an approved binary gate after approval, exposes task
-readback/recovery evidence, and keeps process start, source-content transfer,
-JSON-RPC, mutation, provider calls, and network egress deferred.
+approval, records an approved binary gate after approval, starts and terminates
+a bounded user-space process supervision probe when a mapped server binary
+exists, exposes task readback/recovery evidence, and keeps long-lived lifecycle
+state, source-content transfer, JSON-RPC, mutation, provider calls, and network
+egress deferred.
 
 ## Next Slice
 
 Do not add another standalone LSP evidence/readiness shell. The next meaningful
-LSP step should extend the same lifecycle lane with supervised user-space
-process state/readback while keeping JSON-RPC disabled until process ownership,
-stdout/stderr budgets, stop/restart recovery, and Observer readback are proven.
+LSP step should extend the same lifecycle lane with persistent lifecycle state
+and explicit stop/restart readback while keeping JSON-RPC disabled until process
+ownership, bounded IO, stale-process recovery, and Observer recovery controls
+are proven.

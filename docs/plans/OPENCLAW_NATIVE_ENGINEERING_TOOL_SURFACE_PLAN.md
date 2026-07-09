@@ -50,7 +50,7 @@ call providers or perform network egress
 | `cc_write` | `act.openclaw.engineering_tool.write_proposal` / `sense.openclaw.engineering_tool.write_execution_evidence` | `mutation_proposal_and_execution_evidence` | high | approval required before create or overwrite | absorbed through governed proposal, approval bridge, and execution evidence |
 | `cc_glob` | `sense.openclaw.engineering_tool.glob` | `read_only_path_search` | low | no approval for bounded metadata search | contract mapped, execution deferred |
 | `cc_grep` | `sense.openclaw.engineering_tool.grep` | `read_only_content_search` | low | no approval for bounded search; snippets require budget and audit | contract mapped, execution deferred |
-| `cc_lsp` | `sense.openclaw.engineering_tool.lsp_evidence` | `read_only_language_intelligence_evidence` | medium | no approval for evidence; future lifecycle requires explicit availability, state, and recovery evidence | partially absorbed as evidence, lifecycle deferred |
+| `cc_lsp` | `sense.openclaw.engineering_tool.lsp_evidence` / `act.openclaw.engineering_tool.lsp_lifecycle_task` | `language_intelligence_evidence_and_governed_lifecycle_probe` | medium | no approval for evidence; approval required before lifecycle execution | partially absorbed as evidence, lifecycle draft, approval-gated binary gate, and bounded process supervision probe |
 | `cc_verify` | `act.openclaw.engineering_tool.verify` | `verification_command_evidence` | medium | command execution requires policy or approval | partially absorbed, command execution deferred |
 | `cc_plan_enter` | `plan.openclaw.engineering_tool.plan_enter` | `planning_state` | low | no hidden mode switch without task/workbench evidence | state mutation deferred |
 | `cc_plan_exit` | `plan.openclaw.engineering_tool.plan_exit` | `planning_state` | low | no hidden execution transition without task evidence | state mutation deferred |
@@ -113,9 +113,9 @@ raw enhanced glob/grep execution outside native bounds
 automatic edit approval, automatic recovery task creation, and unapproved verification command execution
 automatic write approval, automatic recovery task creation, and post-write
 verification command execution
-LSP process startup and request handling; `lsp_evidence` contract, availability
-evidence, lifecycle readiness draft, and approval-gated binary gate pilot are
-absorbed
+long-lived LSP process state and JSON-RPC request handling; `lsp_evidence`
+contract, availability evidence, lifecycle readiness draft, approval-gated
+binary gate, and bounded process supervision probe are absorbed
 verification command execution and task-completion attachment
 planning/todo evidence is absorbed; hidden planning mode and todo state mutation remain deferred
 provider calls, network egress, and result envelopes
@@ -191,17 +191,20 @@ OPENCLAW_NATIVE_ENGINEERING_LSP_SUPERVISED_LIFECYCLE_PILOT_PLAN.md
 ```
 
 That slice creates an approval-gated workspace-scoped lifecycle task, proves
-pre-approval blocking and approved binary-gate execution, records task
-readback/recovery evidence, and exposes the workflow in Observer without
-starting a process or sending JSON-RPC.
+pre-approval blocking and approved binary-gate execution, records missing-binary
+recovery evidence, starts and terminates a bounded user-space process
+supervision probe when the mapped server binary exists, records task readback,
+and exposes the workflow in Observer without long-lived process state or
+JSON-RPC.
 
 The current next smallest real capability is:
 
 ```text
-Native governed LSP user-space process supervision readback
+Native governed LSP persistent lifecycle state and stop/restart readback
 ```
 
-That slice should extend the same lifecycle lane with process ownership,
-bounded stdout/stderr metadata, stop/restart recovery, and Observer readback
-while keeping source-content transfer and JSON-RPC disabled until the lifecycle
-state is proven. Do not add another standalone LSP evidence/readiness shell.
+That slice should extend the same lifecycle lane with an explicit state store,
+reusable stop/restart records, stale-process recovery, and Observer readback
+while keeping source-content transfer and JSON-RPC disabled until lifecycle
+state and recovery behavior are proven. Do not add another standalone LSP
+evidence/readiness shell.

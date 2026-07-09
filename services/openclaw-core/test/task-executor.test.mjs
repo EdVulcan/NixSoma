@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
 import { createTaskExecutor } from "../src/task-executor.mjs";
 import { DELEGATED_PLAN_TASK_HANDLER_DESCRIPTORS } from "../src/task-executor-delegated-plan-handlers.mjs";
@@ -606,6 +609,7 @@ test("approved native engineering LSP lifecycle task records missing binary reco
   assert.equal(result.finalExecution.execution.server.binaryFound, false);
   assert.equal(result.finalExecution.execution.server.processStarted, false);
   assert.equal(result.finalExecution.execution.server.jsonRpcHandshakeSent, false);
+  assert.equal(result.finalExecution.execution.processSupervision.attempted, false);
   assert.equal(result.finalExecution.execution.governance.approved, true);
   assert.equal(result.finalExecution.execution.governance.processStarted, false);
   assert.equal(result.finalExecution.execution.governance.jsonRpcEnabled, false);
@@ -613,6 +617,79 @@ test("approved native engineering LSP lifecycle task records missing binary reco
   assert.equal(result.finalExecution.task.outcome.details.recoveryEvidence.kind, "lsp_lifecycle_recovery");
   assert.equal(result.finalExecution.task.outcome.details.recoveryEvidence.recoverable, true);
   assert(events.some((event) => event.name === "task.failed"));
+});
+
+test("approved native engineering LSP lifecycle task records supervised process probe when binary exists", async () => {
+  const fakeBinDir = mkdtempSync(path.join(tmpdir(), "openclaw-lsp-bin-"));
+  const fakeBinary = path.join(fakeBinDir, "typescript-language-server");
+  writeFileSync(fakeBinary, "#!/usr/bin/env bash\nprintf 'fake-lsp-ready\\n' >&2\nsleep 2\n", "utf8");
+  chmodSync(fakeBinary, 0o755);
+  const previousPath = process.env.PATH;
+  process.env.PATH = `${fakeBinDir}${path.delimiter}${previousPath ?? ""}`;
+
+  try {
+    const { executor, state, events } = createExecutorHarness({
+      state: { workspaceRoots: [fakeBinDir] },
+    });
+    state.approvals.set("approval-lsp-process", {
+      id: "approval-lsp-process",
+      status: "approved",
+      taskId: "lsp-lifecycle-process-probe",
+    });
+    const task = {
+      id: "lsp-lifecycle-process-probe",
+      type: "native_engineering_lsp_lifecycle",
+      goal: "Start TypeScript LSP lifecycle",
+      status: "queued",
+      approval: {
+        requestId: "approval-lsp-process",
+        status: "approved",
+        required: false,
+      },
+      policy: {
+        request: { approved: true },
+        decision: { decision: "audit_only", approved: true, reason: "approved_unit_test" },
+      },
+      engineeringLspLifecycle: {
+        registry: "openclaw-native-engineering-lsp-lifecycle-task-v0",
+        lifecycleAction: "start",
+        language: "typescript",
+        workspace: { id: "fixture", path: fakeBinDir },
+        server: {
+          serverBinary: "typescript-language-server",
+          serverArgs: ["--stdio"],
+          binaryChecked: false,
+          processStarted: false,
+          jsonRpcHandshakeSent: false,
+        },
+      },
+    };
+
+    const result = await executor.executeTaskWithRecovery(task);
+    const execution = result.finalExecution.execution;
+
+    assert.equal(result.finalExecution.task.status, "completed");
+    assert.equal(execution.result.state, "process_supervision_probe_completed_json_rpc_deferred");
+    assert.equal(execution.server.binaryFound, true);
+    assert.equal(execution.server.processStarted, true);
+    assert.equal(execution.server.processAliveAtProbe, true);
+    assert.equal(execution.server.processTerminated, true);
+    assert.equal(execution.server.jsonRpcHandshakeSent, false);
+    assert.equal(execution.processSupervision.attempted, true);
+    assert.equal(execution.processSupervision.started, true);
+    assert.equal(execution.processSupervision.terminationSent, true);
+    assert.equal(execution.processSupervision.cwd, fakeBinDir);
+    assert.match(execution.processSupervision.stderr.text, /fake-lsp-ready/);
+    assert.equal(execution.governance.approved, true);
+    assert.equal(execution.governance.processStarted, true);
+    assert.equal(execution.governance.jsonRpcEnabled, false);
+    assert.equal(result.finalExecution.task.engineeringLspLifecycle.server.processStarted, true);
+    assert.equal(result.finalExecution.task.engineeringLspLifecycle.server.jsonRpcHandshakeSent, false);
+    assert(events.some((event) => event.name === "task.completed"));
+  } finally {
+    process.env.PATH = previousPath;
+    rmSync(fakeBinDir, { recursive: true, force: true });
+  }
 });
 
 test("systemd repair execution task dispatches to deferred non-recoverable handler", async () => {

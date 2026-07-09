@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 FIXTURE_DIR="$REPO_ROOT/.artifacts/openclaw-native-engineering-lsp-evidence-fixture"
 WORKSPACE_DIR="$FIXTURE_DIR/openclaw"
+FAKE_BIN_DIR="$FIXTURE_DIR/bin"
 
 source "$SCRIPT_DIR/openclaw-engineering-read-search-fixture.sh"
 
@@ -28,7 +29,7 @@ EVENT_HUB_URL="http://127.0.0.1:$OPENCLAW_EVENT_HUB_PORT"
 rm -rf "$FIXTURE_DIR"
 mkdir -p "$FIXTURE_DIR"
 prepare_engineering_read_search_fixture "$WORKSPACE_DIR" "ENGINEERING_LSP_EVIDENCE"
-mkdir -p "$WORKSPACE_DIR/scripts" "$WORKSPACE_DIR/python"
+mkdir -p "$WORKSPACE_DIR/scripts" "$WORKSPACE_DIR/python" "$FAKE_BIN_DIR"
 cat > "$WORKSPACE_DIR/tsconfig.json" <<'JSON'
 {
   "compilerOptions": {
@@ -48,6 +49,13 @@ cat > "$WORKSPACE_DIR/python/agent.py" <<'PY'
 def lsp_agent_marker():
     return "OpenClaw LSP evidence python"
 PY
+cat > "$FAKE_BIN_DIR/typescript-language-server" <<'SH'
+#!/usr/bin/env bash
+printf 'openclaw-fixture-typescript-lsp-ready\n' >&2
+sleep 5
+SH
+chmod +x "$FAKE_BIN_DIR/typescript-language-server"
+export PATH="$FAKE_BIN_DIR:$PATH"
 rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_EVENT_LOG_FILE"
 
 cleanup() {
@@ -62,6 +70,11 @@ cleanup() {
     "${APPROVED_FILE:-}" \
     "${EXEC_STEP_FILE:-}" \
     "${TASK_READBACK_FILE:-}" \
+    "${PROCESS_TASK_FILE:-}" \
+    "${PROCESS_BLOCKED_STEP_FILE:-}" \
+    "${PROCESS_APPROVED_FILE:-}" \
+    "${PROCESS_STEP_FILE:-}" \
+    "${PROCESS_TASK_READBACK_FILE:-}" \
     "${EVENTS_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
@@ -83,6 +96,11 @@ BLOCKED_STEP_FILE="$(mktemp)"
 APPROVED_FILE="$(mktemp)"
 EXEC_STEP_FILE="$(mktemp)"
 TASK_READBACK_FILE="$(mktemp)"
+PROCESS_TASK_FILE="$(mktemp)"
+PROCESS_BLOCKED_STEP_FILE="$(mktemp)"
+PROCESS_APPROVED_FILE="$(mktemp)"
+PROCESS_STEP_FILE="$(mktemp)"
+PROCESS_TASK_READBACK_FILE="$(mktemp)"
 EVENTS_FILE="$(mktemp)"
 
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=check&language=typescript&limit=200" > "$CHECK_FILE"
@@ -134,6 +152,42 @@ EOF
 post_json "$CORE_URL/approvals/$approval_id/approve" '{"approvedBy":"dev-openclaw-native-engineering-lsp-evidence-check","reason":"approve bounded LSP lifecycle binary gate"}' > "$APPROVED_FILE"
 post_json "$CORE_URL/operator/step" '{}' > "$EXEC_STEP_FILE"
 curl --silent --fail "$CORE_URL/tasks/$lifecycle_task_id" > "$TASK_READBACK_FILE"
+post_json "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-tasks" '{"language":"typescript","lifecycleAction":"start","confirm":true}' > "$PROCESS_TASK_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$PROCESS_BLOCKED_STEP_FILE"
+
+read -r process_approval_id process_task_id < <(node - <<'EOF' "$PROCESS_TASK_FILE" "$PROCESS_BLOCKED_STEP_FILE"
+const fs = require("node:fs");
+const taskResponse = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const blockedStep = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+
+if (
+  !taskResponse.ok
+  || taskResponse.registry !== "openclaw-native-engineering-lsp-lifecycle-task-v0"
+  || taskResponse.engineeringLspLifecycle?.language !== "typescript"
+  || taskResponse.engineeringLspLifecycle?.lifecycleAction !== "start"
+  || taskResponse.engineeringLspLifecycle?.server?.serverBinary !== "typescript-language-server"
+  || taskResponse.engineeringLspLifecycle?.server?.processStarted !== false
+  || taskResponse.engineeringLspLifecycle?.server?.jsonRpcHandshakeSent !== false
+) {
+  throw new Error(`LSP lifecycle process task creation mismatch: ${JSON.stringify(taskResponse)}`);
+}
+if (
+  !blockedStep.ok
+  || blockedStep.ran !== false
+  || blockedStep.blocked !== true
+  || blockedStep.reason !== "policy_requires_approval"
+  || blockedStep.approval?.id !== taskResponse.approval?.id
+) {
+  throw new Error(`LSP lifecycle process task should block before approval: ${JSON.stringify(blockedStep)}`);
+}
+
+process.stdout.write(`${blockedStep.approval.id} ${taskResponse.task.id}\n`);
+EOF
+)
+
+post_json "$CORE_URL/approvals/$process_approval_id/approve" '{"approvedBy":"dev-openclaw-native-engineering-lsp-evidence-check","reason":"approve bounded LSP lifecycle process supervision probe"}' > "$PROCESS_APPROVED_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$PROCESS_STEP_FILE"
+curl --silent --fail "$CORE_URL/tasks/$process_task_id" > "$PROCESS_TASK_READBACK_FILE"
 curl --silent --fail "$EVENT_HUB_URL/events/audit?limit=120" > "$EVENTS_FILE"
 
 node - <<'EOF' \
@@ -148,6 +202,11 @@ node - <<'EOF' \
   "$APPROVED_FILE" \
   "$EXEC_STEP_FILE" \
   "$TASK_READBACK_FILE" \
+  "$PROCESS_TASK_FILE" \
+  "$PROCESS_BLOCKED_STEP_FILE" \
+  "$PROCESS_APPROVED_FILE" \
+  "$PROCESS_STEP_FILE" \
+  "$PROCESS_TASK_READBACK_FILE" \
   "$EVENTS_FILE"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
@@ -163,8 +222,13 @@ const blockedStep = readJson(9);
 const approved = readJson(10);
 const execStep = readJson(11);
 const taskReadback = readJson(12);
-const events = readJson(13);
-const raw = JSON.stringify({ check, position, bad, draft, adapter, taskResponse, blockedStep, approved, execStep, taskReadback, events });
+const processTaskResponse = readJson(13);
+const processBlockedStep = readJson(14);
+const processApproved = readJson(15);
+const processStep = readJson(16);
+const processTaskReadback = readJson(17);
+const events = readJson(18);
+const raw = JSON.stringify({ check, position, bad, draft, adapter, taskResponse, blockedStep, approved, execStep, taskReadback, processTaskResponse, processBlockedStep, processApproved, processStep, processTaskReadback, events });
 
 if (
   !check.ok
@@ -311,6 +375,43 @@ if (execution.result?.ok === true) {
 if (taskReadback.task?.id !== lifecycleTask.id || taskReadback.task?.engineeringLspLifecycle?.server?.processStarted !== false) {
   throw new Error(`LSP lifecycle task endpoint should preserve execution readback: ${JSON.stringify(taskReadback)}`);
 }
+if (processApproved.approval?.status !== "approved" || processApproved.task?.policy?.decision?.decision !== "audit_only") {
+  throw new Error(`LSP process supervision approval should convert task to audited execution: ${JSON.stringify(processApproved)}`);
+}
+if (!processStep.ok || processStep.ran !== true || processStep.blocked !== false) {
+  throw new Error(`approved LSP process supervision task should complete: ${JSON.stringify(processStep)}`);
+}
+const supervisedTask = processStep.task;
+const supervisedExecution = supervisedTask?.outcome?.details?.lspLifecycleExecution ?? supervisedTask?.engineeringLspLifecycle?.execution;
+if (
+  processTaskResponse.registry !== "openclaw-native-engineering-lsp-lifecycle-task-v0"
+  || processBlockedStep.reason !== "policy_requires_approval"
+  || supervisedTask?.id !== processTaskResponse.task?.id
+  || supervisedTask.status !== "completed"
+  || supervisedExecution?.result?.state !== "process_supervision_probe_completed_json_rpc_deferred"
+  || supervisedExecution?.server?.serverBinary !== "typescript-language-server"
+  || supervisedExecution?.server?.binaryFound !== true
+  || supervisedExecution?.server?.processStarted !== true
+  || supervisedExecution?.server?.processAliveAtProbe !== true
+  || supervisedExecution?.server?.processTerminated !== true
+  || supervisedExecution?.server?.jsonRpcHandshakeSent !== false
+  || supervisedExecution?.processSupervision?.attempted !== true
+  || supervisedExecution?.processSupervision?.started !== true
+  || supervisedExecution?.processSupervision?.terminationSent !== true
+  || !String(supervisedExecution?.processSupervision?.stderr?.text ?? "").includes("openclaw-fixture-typescript-lsp-ready")
+  || supervisedExecution?.governance?.approved !== true
+  || supervisedExecution?.governance?.jsonRpcEnabled !== false
+  || supervisedExecution?.governance?.contentExposed !== false
+) {
+  throw new Error(`LSP process supervision readback mismatch: ${JSON.stringify({ supervisedTask, supervisedExecution })}`);
+}
+if (
+  processTaskReadback.task?.id !== supervisedTask.id
+  || processTaskReadback.task?.engineeringLspLifecycle?.server?.processStarted !== true
+  || processTaskReadback.task?.engineeringLspLifecycle?.server?.jsonRpcHandshakeSent !== false
+) {
+  throw new Error(`LSP process task endpoint should preserve supervision readback: ${JSON.stringify(processTaskReadback)}`);
+}
 const eventTypes = new Set((events.items ?? events.events ?? []).map((event) => event.type));
 for (const type of ["approval.created", "approval.approved", "policy.evaluated"]) {
   if (!eventTypes.has(type)) {
@@ -349,6 +450,7 @@ console.log(JSON.stringify({
     lifecycleRegistry: draft.registry,
     lifecycleTaskRegistry: taskResponse.registry,
     lifecycleExecutionRegistry: execution.registry,
+    lifecycleProcessState: supervisedExecution.result.state,
     languages: check.summary.detectedLanguages,
     lifecycleAction: draft.summary.lifecycleAction,
     serverStatus: check.serverReadiness.status,
@@ -356,6 +458,9 @@ console.log(JSON.stringify({
     binaryFound: execution.server.binaryFound,
     processStarted: execution.server.processStarted,
     jsonRpcSent: execution.server.jsonRpcHandshakeSent,
+    supervisedProcessStarted: supervisedExecution.server.processStarted,
+    supervisedProcessTerminated: supervisedExecution.server.processTerminated,
+    supervisedJsonRpcSent: supervisedExecution.server.jsonRpcHandshakeSent,
     badPathStatus: badStatus,
     lspEvidenceJsonRpcSent: check.summary.jsonRpcSent,
   },

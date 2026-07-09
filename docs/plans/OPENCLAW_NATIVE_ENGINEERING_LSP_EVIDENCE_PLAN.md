@@ -50,20 +50,20 @@ does not persist a new record.
 The following remain deferred:
 
 ```text
-server binary version check
-LSP server process startup
+server binary version check outside the approval-gated lifecycle lane
+long-lived LSP server process startup and pool state
 file content read into LSP
 textDocument/didOpen notification
 definition / references / hover JSON-RPC request
 language server pool lifecycle
-task creation
-approval creation
+task creation outside the approval-gated lifecycle lane
+approval creation outside the approval-gated lifecycle lane
 provider calls, network egress, result envelopes
 ```
 
-Future LSP execution should be a governed workspace lifecycle action with
-workspace scope, server lifecycle state, failure evidence, Observer recovery
-visibility, and explicit boundaries before any long-lived process starts.
+Future LSP execution should continue through the governed workspace lifecycle
+lane with explicit lifecycle state, failure evidence, Observer recovery
+visibility, and boundaries before any long-lived process or JSON-RPC starts.
 
 ## Evidence
 
@@ -122,9 +122,10 @@ mode: lsp-lifecycle-readiness-draft-only
 ```
 
 It drafts a governed workspace-scoped language-server lifecycle action and
-readiness gate list while still blocking binary checks, process start, task
-creation, approval creation, lifecycle state persistence, source-file content
-reads, JSON-RPC, provider calls, and network egress.
+readiness gate list. Later lifecycle slices add approval-gated task execution,
+binary checks, and a bounded process supervision probe while still blocking
+long-lived lifecycle state persistence, source-file content reads, JSON-RPC,
+provider calls, and network egress.
 
 The LSP supervised lifecycle pilot follow-up was completed as:
 
@@ -142,6 +143,8 @@ mode: approval-gated-lsp-lifecycle-binary-gate
 ```
 
 It creates an approval-gated task, proves pre-approval blocking and approved
-binary-gate execution, records task readback/recovery evidence, and exposes the
-workflow in Observer while still blocking process start, source-content reads,
-JSON-RPC, mutation, provider calls, and network egress.
+binary-gate execution, records missing-binary recovery evidence, starts and
+terminates a bounded user-space process supervision probe when a mapped server
+binary exists, records task readback, and exposes the workflow in Observer while
+still blocking long-lived lifecycle state, source-content reads, JSON-RPC,
+mutation, provider calls, and network egress.
