@@ -86,6 +86,14 @@ if (capture.activeUrl !== targetUrl || capture.workView?.activeUrl !== targetUrl
 if (capture.workView?.mode !== "ai-owned-work-view" || capture.workView?.visibility !== "observable") {
   throw new Error(`capture should identify the AI-owned observable work view: ${JSON.stringify(capture.workView)}`);
 }
+const captureTrust = capture.trustedSession ?? capture.workView?.trustedSession;
+if (captureTrust?.identityLevel !== "level_2_trusted_session_work_view"
+  || captureTrust?.boundary?.workViewScope !== "ai_owned_work_view_only"
+  || captureTrust?.boundary?.desktopWideCapture !== false
+  || captureTrust?.boundary?.rootRequired !== false
+  || captureTrust?.operatorGates?.reveal !== "explicit_operator_action") {
+  throw new Error(`capture should expose trusted AI work-view boundary: ${JSON.stringify(captureTrust)}`);
+}
 if (!capture.sessionId || !capture.snapshotText?.includes("Capture Strategy: browser-runtime-backed")) {
   throw new Error(`capture missing session or readable snapshot contract: ${JSON.stringify(capture)}`);
 }
@@ -107,6 +115,11 @@ if (screen.workView?.activeUrl !== targetUrl || screen.captureMetadata?.activeUr
     captureMetadata: screen.captureMetadata,
   })}`);
 }
+const screenTrust = screen.trustedSession ?? screen.workView?.trustedSession ?? screen.captureMetadata?.trustedSession;
+if (screenTrust?.identityLevel !== "level_2_trusted_session_work_view"
+  || screenTrust?.boundary?.workViewScope !== "ai_owned_work_view_only") {
+  throw new Error(`screen-sense should propagate trusted work-view contract: ${JSON.stringify(screenTrust)}`);
+}
 
 console.log(JSON.stringify({
   provider: provider.provider,
@@ -117,12 +130,14 @@ console.log(JSON.stringify({
     activeUrl: capture.activeUrl,
     tabCount: capture.tabCount,
     mode: capture.workView?.mode ?? null,
+    trustedSession: captureTrust.identityLevel,
   },
   screenSense: {
     readiness: screen.readiness,
     captureSource: screen.captureSource,
     captureStrategy: screen.captureStrategy,
     activeUrl: screen.workView?.activeUrl ?? null,
+    trustedSession: screenTrust.identityLevel,
   },
 }, null, 2));
 EOF

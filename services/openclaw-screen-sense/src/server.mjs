@@ -2,6 +2,7 @@ import http from "node:http";
 import { randomUUID } from "node:crypto";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { readCaptureAdapter } from "./capture-adapter.mjs";
+import { buildTrustedWorkViewContract } from "../../../packages/shared-utils/src/work-view-trust.mjs";
 
 const host = process.env.OPENCLAW_SCREEN_SENSE_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SCREEN_SENSE_PORT ?? "4104", 10);
@@ -93,6 +94,30 @@ function deriveScreenPatch({ session, browser, browserCapture, degraded }) {
     browserCapture?.workView?.captureStrategy ??
     (browserCapture ? "browser-runtime-backed" : "browser-state-derived");
   const captureSource = browserCapture?.source ?? "browser";
+  const trustedSession =
+    browserCapture?.trustedSession ??
+    browserCapture?.workView?.trustedSession ??
+    buildTrustedWorkViewContract({
+      source: "screen-sense",
+      trustedComponent: "openclaw-screen-sense",
+      session,
+      workView: {
+        status: readiness === "ready" ? "ready" : "prepared",
+        visibility: browserWindowReady ? "observable" : "warming_up",
+        mode: "ai-owned-work-view",
+        captureStrategy,
+        helperStatus: degraded ? "degraded" : browser?.running ? "active" : "idle",
+        browserStatus: browser?.running ? "running" : "stopped",
+        activeUrl,
+        displayTarget: session?.displayTarget ?? "workspace-2",
+      },
+      browser,
+      browserCapture,
+      captureStrategy,
+      activeUrl,
+      degraded,
+      visibleToObserver: true,
+    });
   const workView =
     browserCapture?.workView ??
     (browser?.running
@@ -105,9 +130,11 @@ function deriveScreenPatch({ session, browser, browserCapture, degraded }) {
           activeTitle,
           activeUrl,
           tabCount: tabs.length,
+          trustedSession,
           updatedAt: browser?.updatedAt ?? null,
         }
       : null);
+  const trustedWorkView = workView ? { ...workView, trustedSession } : null;
   const captureMetadata = {
     source: captureSource,
     strategy: captureStrategy,
@@ -117,6 +144,7 @@ function deriveScreenPatch({ session, browser, browserCapture, degraded }) {
     tabCount: typeof browserCapture?.tabCount === "number" ? browserCapture.tabCount : tabs.length,
     sessionId: browserCapture?.sessionId ?? session?.sessionId ?? browser?.sessionId ?? null,
     browserRunning: Boolean(browserCapture?.browserRunning ?? browser?.running),
+    trustedSession,
     lastInteraction: browserCapture?.lastInteraction ?? {
       input: browser?.lastInput ?? null,
       click: browser?.lastClick ?? null,
@@ -190,7 +218,8 @@ function deriveScreenPatch({ session, browser, browserCapture, degraded }) {
     captureSource,
     captureStrategy,
     captureMetadata,
-    workView,
+    workView: trustedWorkView,
+    trustedSession,
     workViewSummary,
     snapshotPath: browserCapture?.snapshotPath ?? screenState.snapshotPath,
     snapshotText,

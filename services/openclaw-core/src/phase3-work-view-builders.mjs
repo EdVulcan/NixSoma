@@ -104,9 +104,16 @@ export function createPhase3WorkViewBuilders(deps) {
     const plan = await buildPhase3Plan();
     const state = await readSessionWorkViewState();
     const workView = state.workView ?? {};
+    const trustedSession = workView.trustedSession ?? state.trustedSession ?? null;
     const hiddenByDefault = workView.visibility === "hidden";
     const backgroundMode = workView.mode === "background";
     const observableMetadata = Boolean(workView.captureStrategy) && Boolean(workView.displayTarget);
+    const trustedSessionReady =
+      trustedSession?.identityLevel === "level_2_trusted_session_work_view" &&
+      trustedSession?.boundary?.workViewScope === "ai_owned_work_view_only" &&
+      trustedSession?.boundary?.desktopWideCapture === false &&
+      trustedSession?.boundary?.rootRequired === false &&
+      trustedSession?.operatorGates?.reveal === "explicit_operator_action";
     const checks = [
       {
         id: "phase-3-plan-ready",
@@ -132,6 +139,12 @@ export function createPhase3WorkViewBuilders(deps) {
         passed: state.reachable && observableMetadata,
         evidence: workView.captureStrategy ?? "unavailable",
       },
+      {
+        id: "trusted-session-work-view-contract",
+        label: "Work-view state exposes the Level 2 trusted session boundary without root or desktop-wide capture",
+        passed: state.reachable && trustedSessionReady,
+        evidence: trustedSession?.identityLevel ?? "unavailable",
+      },
     ];
     const passed = checks.filter((check) => check.passed).length;
 
@@ -154,6 +167,7 @@ export function createPhase3WorkViewBuilders(deps) {
         independentDisplayTarget: workView.displayTarget ?? "workspace-2",
         captureStrategy: workView.captureStrategy ?? "browser-runtime",
         observerCanInspectWithoutReveal: true,
+        trustedSession,
       },
       current: {
         reachable: state.reachable,

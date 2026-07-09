@@ -2,6 +2,7 @@ import http from "node:http";
 import { randomUUID } from "node:crypto";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { corsHeaders, sendJson, readJsonBody, createEventPublisher, registerService } from "../../../packages/shared-utils/src/http.mjs";
+import { buildTrustedWorkViewContract } from "../../../packages/shared-utils/src/work-view-trust.mjs";
 
 
 const host = process.env.OPENCLAW_BROWSER_RUNTIME_HOST ?? "127.0.0.1";
@@ -109,6 +110,31 @@ function buildBrowserCapture() {
     summaryText: `AI work view is focused on ${activeTitle} at ${activeUrl} with ${tabs.length} tab(s).`,
     updatedAt: browserState.updatedAt,
   };
+  const trustedSession = buildTrustedWorkViewContract({
+    source: "browser-runtime",
+    trustedComponent: "openclaw-browser-runtime",
+    session: {
+      sessionId: browserState.sessionId,
+      status: browserState.running ? "running" : "stopped",
+      displayTarget: "browser-runtime",
+    },
+    workView: {
+      status: browserState.running ? "ready" : "idle",
+      visibility: browserState.running ? "observable" : "hidden",
+      mode: "ai-owned-work-view",
+      captureStrategy: "browser-runtime-backed",
+      helperStatus: browserState.running ? "active" : "idle",
+      browserStatus: browserState.running ? "running" : "stopped",
+      activeUrl,
+      displayTarget: "browser-runtime",
+    },
+    browser: browserState,
+    captureStrategy: "browser-runtime-backed",
+    activeUrl,
+    capturedAt,
+    browserRunning: browserState.running,
+    visibleToObserver: true,
+  });
   const workView = {
     owner: "openclaw-browser-runtime",
     mode: "ai-owned-work-view",
@@ -120,12 +146,15 @@ function buildBrowserCapture() {
     tabCount: tabs.length,
     lastInteraction,
     summary: workViewSummary,
+    trustedSession,
     updatedAt: browserState.updatedAt,
   };
   const lines = [
     "OpenClaw browser work view",
     "Source: browser-runtime",
     "Capture Strategy: browser-runtime-backed",
+    `Trusted Session: ${trustedSession.identityLevel}`,
+    `Trusted Boundary: ${trustedSession.boundary.workViewScope}`,
     `Summary: ${workViewSummary.summaryText}`,
     `Session: ${browserState.sessionId ?? "none"}`,
     `Title: ${activeTitle}`,
@@ -154,6 +183,7 @@ function buildBrowserCapture() {
     lastInteraction,
     workView,
     workViewSummary,
+    trustedSession,
     visibleTextBlocks,
     snapshotText: lines.join("\n"),
     ocrBlocks: [

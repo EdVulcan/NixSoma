@@ -1,6 +1,7 @@
 import http from "node:http";
 import { randomUUID } from "node:crypto";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
+import { buildTrustedWorkViewContract } from "../../../packages/shared-utils/src/work-view-trust.mjs";
 
 const host = process.env.OPENCLAW_SESSION_MANAGER_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SESSION_MANAGER_PORT ?? "4102", 10);
@@ -50,7 +51,19 @@ function updateSessionState(patch) {
 }
 
 function serialiseWorkViewState() {
-  return { ...workViewState };
+  const workView = { ...workViewState };
+  return {
+    ...workView,
+    trustedSession: buildTrustedWorkViewContract({
+      source: "session-manager",
+      trustedComponent: "openclaw-session-manager",
+      session: sessionState,
+      workView,
+      captureStrategy: workView.captureStrategy,
+      browserRunning: workView.browserStatus === "running",
+      visibleToObserver: true,
+    }),
+  };
 }
 
 function updateWorkViewState(patch) {
@@ -62,10 +75,12 @@ function updateWorkViewState(patch) {
 // L-3 Fix: Both /session/state and /work-view/state return identical payloads.
 // Extract a shared builder to keep them consistent and DRY.
 function buildStateResponse() {
+  const workView = serialiseWorkViewState();
   return {
     ok: true,
     session: serialiseSessionState(),
-    workView: serialiseWorkViewState(),
+    workView,
+    trustedSession: workView.trustedSession,
   };
 }
 

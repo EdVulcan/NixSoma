@@ -14,11 +14,15 @@
     "./persist": {
       "types": "./src/persist.d.ts",
       "default": "./src/persist.mjs"
+    },
+    "./work-view-trust": {
+      "types": "./src/work-view-trust.d.ts",
+      "default": "./src/work-view-trust.mjs"
     }
   },
   "scripts": {
     "build": "npm run typecheck && npm test",
-    "typecheck": "tsc -p tsconfig.json --noEmit && node --check src/http.mjs && node --check src/persist.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit && node --check src/http.mjs && node --check src/persist.mjs && node --check src/work-view-trust.mjs",
     "test": "node --test test/*.test.mjs"
   }
 }

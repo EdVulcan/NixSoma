@@ -232,6 +232,9 @@
 目标：
 
 - 先把 AI 自己那块工作画面完全做稳
+- 让 session-manager、browser-runtime、screen-sense、core 与 Observer 共享
+  `level_2_trusted_session_work_view` 契约，明确这只是 AI-owned work view，
+  不需要 root、全桌面 capture 或 host mutation
 
 ### 第二步：加入受信会话 helper
 

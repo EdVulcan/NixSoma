@@ -280,6 +280,7 @@ async function refreshPhase3BackgroundWorkView() {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/phase-3/background-work-view\`);
     const summary = data.summary ?? {};
     const workView = data.current?.workView ?? {};
+    const trustedSession = data.workViewContract?.trustedSession ?? workView.trustedSession ?? {};
     phase3BackgroundReady.textContent = String(Boolean(summary.ready));
     phase3BackgroundVisibility.textContent = workView.visibility ?? data.workViewContract?.defaultVisibility ?? "hidden";
     phase3BackgroundMode.textContent = workView.mode ?? data.workViewContract?.defaultMode ?? "background";
@@ -289,6 +290,8 @@ async function refreshPhase3BackgroundWorkView() {
       "Ready: " + Boolean(summary.ready) + " checks=" + (summary.passed ?? 0) + "/" + (summary.total ?? 0),
       "Default: visibility=" + (data.workViewContract?.defaultVisibility ?? "hidden") + " mode=" + (data.workViewContract?.defaultMode ?? "background"),
       "Current: visibility=" + (workView.visibility ?? "unknown") + " mode=" + (workView.mode ?? "unknown") + " capture=" + (workView.captureStrategy ?? "unknown"),
+      "Trusted Session: " + (trustedSession.identityLevel ?? "unknown") + " readiness=" + (trustedSession.readiness ?? "unknown"),
+      "Trusted Boundary: " + (trustedSession.boundary?.workViewScope ?? "unknown") + " revealGate=" + (trustedSession.operatorGates?.reveal ?? "unknown"),
     ].join("\\n");
   } catch {
     phase3BackgroundReady.textContent = "false";

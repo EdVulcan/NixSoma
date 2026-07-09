@@ -53,6 +53,7 @@ const inputText = process.argv[5];
 
 const captureSummary = captureResponse.capture?.workViewSummary;
 const screenSummary = screenResponse.screen?.workViewSummary;
+const trustedSession = screenResponse.screen?.trustedSession ?? screenResponse.screen?.workView?.trustedSession ?? screenResponse.screen?.captureMetadata?.trustedSession;
 
 if (captureSummary?.kind !== "browser-work-view-summary") {
   throw new Error(`browser capture should expose a browser work view summary: ${JSON.stringify(captureSummary)}`);
@@ -72,6 +73,10 @@ if (screenSummary?.url !== targetUrl || screenSummary?.recentInteraction?.input 
 if (!screenResponse.screen?.snapshotText?.includes("Summary: AI work view is focused")) {
   throw new Error("screen snapshot should include readable work view summary text.");
 }
+if (trustedSession?.identityLevel !== "level_2_trusted_session_work_view"
+  || trustedSession?.boundary?.workViewScope !== "ai_owned_work_view_only") {
+  throw new Error(`screen summary should carry trusted work-view contract: ${JSON.stringify(trustedSession)}`);
+}
 
 console.log(JSON.stringify({
   browserSummary: {
@@ -85,6 +90,7 @@ console.log(JSON.stringify({
     kind: screenSummary.kind,
     url: screenSummary.url,
     recentInput: screenSummary.recentInteraction?.input ?? null,
+    trustedSession: trustedSession.identityLevel,
   },
 }, null, 2));
 EOF

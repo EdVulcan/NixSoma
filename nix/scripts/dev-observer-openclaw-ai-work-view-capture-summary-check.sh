@@ -55,8 +55,10 @@ const requiredHtml = [
 ];
 const requiredClient = [
   "screen.workViewSummary",
+  "screen.trustedSession",
   "workViewSummary.visibleTextBlocks",
   "workViewSummary.recentInteraction?.input",
+  "Trusted Session",
 ];
 
 for (const token of requiredHtml) {
@@ -82,6 +84,7 @@ const data = JSON.parse(process.argv[2]);
 const targetUrl = process.argv[3];
 const inputText = process.argv[4];
 const summary = data.screen?.workViewSummary;
+const trustedSession = data.screen?.trustedSession ?? data.screen?.workView?.trustedSession ?? data.screen?.captureMetadata?.trustedSession;
 
 if (summary?.url !== targetUrl) {
   throw new Error(`Observer-facing summary should expose active URL: ${JSON.stringify(summary)}`);
@@ -92,6 +95,10 @@ if (summary?.recentInteraction?.input !== inputText) {
 if (!summary?.visibleTextBlocks?.includes(inputText)) {
   throw new Error(`Observer-facing summary should expose visible text blocks: ${JSON.stringify(summary?.visibleTextBlocks)}`);
 }
+if (trustedSession?.identityLevel !== "level_2_trusted_session_work_view"
+  || trustedSession?.boundary?.workViewScope !== "ai_owned_work_view_only") {
+  throw new Error(`Observer-facing summary should expose trusted work-view contract: ${JSON.stringify(trustedSession)}`);
+}
 
 console.log(JSON.stringify({
   observerSummary: {
@@ -101,14 +108,16 @@ console.log(JSON.stringify({
     ],
     clientFields: [
       "screen.workViewSummary",
-      "visibleTextBlocks",
-      "recentInteraction.input",
-    ],
-  },
-  screenSummary: {
-    title: summary.title,
-    url: summary.url,
-    recentInput: summary.recentInteraction?.input ?? null,
-  },
+    "visibleTextBlocks",
+    "recentInteraction.input",
+    "trustedSession.identityLevel",
+  ],
+},
+screenSummary: {
+  title: summary.title,
+  url: summary.url,
+  recentInput: summary.recentInteraction?.input ?? null,
+  trustedSession: trustedSession.identityLevel,
+},
 }, null, 2));
 EOF

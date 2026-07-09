@@ -128,6 +128,7 @@ async function refreshWorkView() {
     workViewMode.textContent = workView.mode ?? "unknown";
     workViewHelper.textContent = workView.helperStatus ?? "unknown";
     workViewCapture.textContent = workView.captureStrategy ?? "unknown";
+    const trustedSession = workView.trustedSession ?? data.trustedSession ?? {};
     if (!desiredWorkViewUrlPinned && document.activeElement !== workViewUrlInput) {
       setDesiredWorkViewUrl(workView.activeUrl ?? workView.entryUrl ?? "https://example.com/work-view", {
         pinned: false,
@@ -139,6 +140,9 @@ async function refreshWorkView() {
       \`Session ID: \${data.session?.sessionId ?? "none"}\`,
       \`Display: \${workView.displayTarget ?? "unknown"}\`,
       \`Browser: \${workView.browserStatus ?? "unknown"}\`,
+      \`Trusted Session: \${trustedSession.identityLevel ?? "unknown"} readiness=\${trustedSession.readiness ?? "unknown"}\`,
+      \`Trusted Boundary: \${trustedSession.boundary?.workViewScope ?? "unknown"} root=\${String(Boolean(trustedSession.boundary?.rootRequired))} desktopWide=\${String(Boolean(trustedSession.boundary?.desktopWideCapture))}\`,
+      \`Reveal Gate: \${trustedSession.operatorGates?.reveal ?? "unknown"}\`,
       \`Entry URL: \${workView.entryUrl ?? "none"}\`,
       \`Active URL: \${workView.activeUrl ?? "none"}\`,
       \`Prepared: \${formatTimestamp(workView.preparedAt)}\`,
@@ -169,11 +173,14 @@ async function refreshScreen() {
     screenCaptureStrategy.textContent = screen.captureStrategy ?? "unknown";
     screenWorkViewUrl.textContent = screen.workView?.activeUrl ?? screen.captureMetadata?.activeUrl ?? "none";
     const workViewSummary = screen.workViewSummary ?? screen.workView?.summary ?? null;
+    const trustedSession = screen.trustedSession ?? screen.workView?.trustedSession ?? screen.captureMetadata?.trustedSession ?? {};
     screenWorkViewSummary.textContent = workViewSummary
       ? [
           "Summary: " + (workViewSummary.summaryText ?? "none"),
           "Title: " + (workViewSummary.title ?? "none"),
           "URL: " + (workViewSummary.url ?? "none"),
+          "Trusted Session: " + (trustedSession.identityLevel ?? "unknown") + " readiness=" + (trustedSession.readiness ?? "unknown"),
+          "Trusted Boundary: " + (trustedSession.boundary?.workViewScope ?? "unknown"),
           "Visible Text: " + ((workViewSummary.visibleTextBlocks ?? []).join(" | ") || "none"),
           "Recent Input: " + (workViewSummary.recentInteraction?.input ?? "none"),
         ].join("\\n")

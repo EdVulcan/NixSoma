@@ -14,6 +14,17 @@ function createPhase3Harness(overrides = {}) {
       mode: "background",
       captureStrategy: "browser-runtime",
       displayTarget: "workspace-2",
+      trustedSession: {
+        identityLevel: "level_2_trusted_session_work_view",
+        boundary: {
+          workViewScope: "ai_owned_work_view_only",
+          desktopWideCapture: false,
+          rootRequired: false,
+        },
+        operatorGates: {
+          reveal: "explicit_operator_action",
+        },
+      },
     },
   };
   const builders = createPhase3WorkViewBuilders({
@@ -55,6 +66,9 @@ test("phase 3 work-view builders preserve plan and background work-view contract
   assert.equal(background.summary.defaultForegroundSteal, false);
   assert.equal(background.workViewContract.defaultVisibility, "hidden");
   assert.equal(background.workViewContract.defaultMode, "background");
+  assert.equal(background.workViewContract.trustedSession.identityLevel, "level_2_trusted_session_work_view");
+  assert.equal(background.workViewContract.trustedSession.boundary.desktopWideCapture, false);
+  assert.equal(background.summary.total, 5);
   assert.deepEqual(fetchUrls, ["http://127.0.0.1:4102/work-view/state"]);
 });
 

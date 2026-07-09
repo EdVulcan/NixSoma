@@ -59,6 +59,8 @@ const requiredClient = [
   "screen.captureStrategy",
   "screen.workView?.activeUrl",
   "screen.captureMetadata?.activeUrl",
+  "trustedSession.identityLevel",
+  "Trusted Boundary",
 ];
 
 for (const token of requiredHtml) {
@@ -96,6 +98,12 @@ if (screen.workView?.activeUrl !== targetUrl || screen.captureMetadata?.activeUr
 if (!screen.snapshotText?.includes("OpenClaw browser work view")) {
   throw new Error("Observer-facing snapshot preview should include browser work view text.");
 }
+const trustedSession = screen.trustedSession ?? screen.workView?.trustedSession ?? screen.captureMetadata?.trustedSession;
+if (trustedSession?.identityLevel !== "level_2_trusted_session_work_view"
+  || trustedSession?.boundary?.workViewScope !== "ai_owned_work_view_only"
+  || trustedSession?.operatorGates?.reveal !== "explicit_operator_action") {
+  throw new Error(`Observer-facing screen state should expose trusted session boundary: ${JSON.stringify(trustedSession)}`);
+}
 
 console.log(JSON.stringify({
   observerVisibility: {
@@ -109,6 +117,7 @@ console.log(JSON.stringify({
       "screen.captureStrategy",
       "screen.workView.activeUrl",
       "screen.captureMetadata.activeUrl",
+      "trustedSession.identityLevel",
     ],
   },
   screen: {
@@ -116,6 +125,7 @@ console.log(JSON.stringify({
     captureSource: screen.captureSource,
     captureStrategy: screen.captureStrategy,
     activeUrl: screen.workView?.activeUrl ?? null,
+    trustedSession: trustedSession.identityLevel,
   },
 }, null, 2));
 EOF
