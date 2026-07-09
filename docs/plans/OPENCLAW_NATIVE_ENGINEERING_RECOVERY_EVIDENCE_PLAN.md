@@ -41,6 +41,7 @@ classifies nonzero exit, timeout, incomplete task, and unattached evidence
 marks recoverable tasks by using the existing task-recovery rules
 marks tasks that already have a recovery task
 returns operator-facing recommendations without invoking them
+returns read-only work standards coverage inherited from verification evidence
 returns audit evidence and Observer-visible governance boundaries
 ```
 
@@ -88,6 +89,12 @@ Observer visibility:
 ```text
 apps/observer-ui/src/observer-panels-operations.mjs
 apps/observer-ui/src/client-script-renderers-engineering-recovery.mjs
+```
+
+Work standards coverage:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_RECOVERY_WORK_STANDARDS_COVERAGE_PLAN.md
 ```
 
 Validation target:

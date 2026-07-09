@@ -64,6 +64,15 @@ test("native engineering recovery evidence recommends governed review for failed
         validation: {
           failedChecks: [{ name: "exit_code_zero", ok: false, evidence: "7" }],
         },
+        workStandardsCoverage: {
+          registry: "openclaw-engineering-work-standards-task-coverage-v0",
+          status: "covered",
+          reportReadiness: {
+            canReportWithEvidence: true,
+            commandSucceeded: false,
+            recoveryEvidenceRecommended: true,
+          },
+        },
       }],
     },
     tasks: new Map([[task.id, task]]),
@@ -79,8 +88,14 @@ test("native engineering recovery evidence recommends governed review for failed
   assert.equal(response.governance.canMutate, false);
   assert.equal(response.summary.totalFailures, 1);
   assert.equal(response.summary.recoverableFailures, 1);
+  assert.equal(response.summary.workStandardsCoveredFailures, 1);
+  assert.equal(response.summary.workStandardsRecoveryRecommended, 1);
+  assert.equal(response.workStandardsCoverage.registry, "openclaw-engineering-recovery-work-standards-coverage-v0");
+  assert.equal(response.workStandardsCoverage.status, "covered");
   assert.equal(response.failures[0].kind, "verification_command_exit_nonzero");
   assert.equal(response.failures[0].recoverable, true);
+  assert.equal(response.failures[0].workStandardsCoverage.status, "covered");
+  assert.equal(response.failures[0].workStandardsCoverage.reportReadiness.canReportWithEvidence, true);
   assert.equal(response.failures[0].recommendations.some((item) => item.id === "recover_task_after_review"), true);
   assert.equal(response.deferredExecutionBoundaries.includes("no command execution"), true);
 });
@@ -98,7 +113,10 @@ test("native engineering recovery evidence marks already recovered tasks without
 
   assert.equal(response.summary.totalFailures, 1);
   assert.equal(response.summary.alreadyRecovered, 1);
+  assert.equal(response.summary.workStandardsMissingFailures, 1);
+  assert.equal(response.workStandardsCoverage.status, "missing_verification_evidence");
   assert.equal(response.failures[0].source, "failed_task");
+  assert.equal(response.failures[0].workStandardsCoverage.status, "missing_verification_evidence");
   assert.equal(response.failures[0].alreadyRecovered, true);
   assert.equal(response.failures[0].recoveredByTaskId, "task-recovery-2");
   assert.equal(

@@ -1,6 +1,7 @@
 import { isRecoverableTask } from "./task-recovery.mjs";
 
 export const NATIVE_ENGINEERING_RECOVERY_EVIDENCE_REGISTRY = "openclaw-native-engineering-recovery-evidence-v0";
+const RECOVERY_WORK_STANDARDS_COVERAGE_REGISTRY = "openclaw-engineering-recovery-work-standards-coverage-v0";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
@@ -98,10 +99,33 @@ function buildRecommendations({ task, evidence, failureKind, recoverable }) {
   return recommendations;
 }
 
+function fallbackWorkStandardsCoverage(evidence) {
+  const attached = evidence?.attachment?.attachedToTaskCompletion === true;
+  return {
+    registry: "openclaw-engineering-work-standards-task-coverage-v0",
+    sourceRegistry: "openclaw-engineering-work-standards-v0",
+    status: attached ? "covered" : "missing_task_completion_attachment",
+    standards: [
+      {
+        id: "verification_evidence_before_report",
+        required: true,
+        satisfied: attached,
+        evidence: attached ? "outcome.details.commandTranscript" : "not_attached",
+      },
+    ],
+    reportReadiness: {
+      canReportWithEvidence: attached,
+      commandSucceeded: evidence?.ok === true,
+      recoveryEvidenceRecommended: attached && evidence?.ok !== true,
+    },
+  };
+}
+
 function buildFailureFromVerification(evidence, { tasks }) {
   const task = findTask(tasks, evidence.taskId);
   const failureKind = classifyFailedVerification(evidence);
   const recoverable = task ? isRecoverableTask(task) : false;
+  const workStandardsCoverage = evidence.workStandardsCoverage ?? fallbackWorkStandardsCoverage(evidence);
   return {
     id: `engineering-recovery-${evidence.taskId ?? "no-task"}-${evidence.transcriptIndex ?? 0}`,
     kind: failureKind,
@@ -122,6 +146,7 @@ function buildFailureFromVerification(evidence, { tasks }) {
       outputTruncated: evidence.result?.outputTruncated === true,
     },
     failedChecks: evidence.validation?.failedChecks ?? [],
+    workStandardsCoverage,
     recommendations: buildRecommendations({ task, evidence, failureKind, recoverable }),
   };
 }
@@ -153,6 +178,24 @@ function buildFailuresFromFailedTasks({ tasks, seenTaskIds, taskId }) {
           outputTruncated: false,
         },
         failedChecks: [],
+        workStandardsCoverage: {
+          registry: "openclaw-engineering-work-standards-task-coverage-v0",
+          sourceRegistry: "openclaw-engineering-work-standards-v0",
+          status: "missing_verification_evidence",
+          standards: [
+            {
+              id: "verification_evidence_before_report",
+              required: true,
+              satisfied: false,
+              evidence: "failed_task_without_verification_evidence",
+            },
+          ],
+          reportReadiness: {
+            canReportWithEvidence: false,
+            commandSucceeded: false,
+            recoveryEvidenceRecommended: true,
+          },
+        },
         recommendations: buildRecommendations({
           task,
           evidence: { taskId: task.id, commandShape: null },
@@ -202,14 +245,48 @@ export function buildNativeEngineeringRecoveryEvidence({
     if (failure.alreadyRecovered) {
       accumulator.alreadyRecovered += 1;
     }
+    if (failure.workStandardsCoverage?.reportReadiness?.canReportWithEvidence) {
+      accumulator.workStandardsCoveredFailures += 1;
+    } else {
+      accumulator.workStandardsMissingFailures += 1;
+    }
+    if (failure.workStandardsCoverage?.reportReadiness?.recoveryEvidenceRecommended) {
+      accumulator.workStandardsRecoveryRecommended += 1;
+    }
     accumulator.byKind[failure.kind] = (accumulator.byKind[failure.kind] ?? 0) + 1;
     return accumulator;
   }, {
     totalFailures: 0,
     recoverableFailures: 0,
     alreadyRecovered: 0,
+    workStandardsCoveredFailures: 0,
+    workStandardsMissingFailures: 0,
+    workStandardsRecoveryRecommended: 0,
     byKind: {},
   });
+  const workStandardsCoverage = {
+    registry: RECOVERY_WORK_STANDARDS_COVERAGE_REGISTRY,
+    sourceRegistry: "openclaw-engineering-work-standards-v0",
+    sourceCoverageRegistry: "openclaw-engineering-work-standards-task-coverage-v0",
+    status: summary.totalFailures === 0
+      ? "no_failures"
+      : summary.workStandardsMissingFailures === 0
+        ? "covered"
+        : "missing_verification_evidence",
+    score: {
+      failures: summary.totalFailures,
+      covered: summary.workStandardsCoveredFailures,
+      missing: summary.workStandardsMissingFailures,
+    },
+    coveredStandards: ["verification_evidence_before_report"],
+    governance: {
+      canCreateRecoveryTask: false,
+      canApproveRecovery: false,
+      canExecuteCommand: false,
+      canMutate: false,
+      canCallProvider: false,
+    },
+  };
 
   return {
     ok: true,
@@ -243,6 +320,7 @@ export function buildNativeEngineeringRecoveryEvidence({
       noCommandExecution: true,
     },
     governance: buildGovernance(),
+    workStandardsCoverage,
     failures,
     summary,
     auditEvidence: {

@@ -115,6 +115,11 @@ if (
   || recovery.capability?.id !== "sense.openclaw.engineering_tool.recovery_evidence"
   || recovery.summary?.totalFailures !== 1
   || recovery.summary?.recoverableFailures !== 1
+  || recovery.summary?.workStandardsCoveredFailures !== 1
+  || recovery.summary?.workStandardsRecoveryRecommended !== 1
+  || recovery.workStandardsCoverage?.registry !== "openclaw-engineering-recovery-work-standards-coverage-v0"
+  || recovery.workStandardsCoverage?.status !== "covered"
+  || recovery.workStandardsCoverage?.governance?.canExecuteCommand !== false
   || recovery.governance?.canCreateRecoveryTask !== false
   || recovery.governance?.canExecuteCommand !== false
   || recovery.bounds?.noCommandExecution !== true
@@ -128,6 +133,9 @@ if (
   || failure.kind !== "verification_command_exit_nonzero"
   || failure.recoverable !== true
   || failure.alreadyRecovered !== false
+  || failure.workStandardsCoverage?.status !== "covered"
+  || failure.workStandardsCoverage?.reportReadiness?.canReportWithEvidence !== true
+  || failure.workStandardsCoverage?.reportReadiness?.recoveryEvidenceRecommended !== true
   || failure.result?.exitCode !== 7
   || !failure.recommendations?.some((item) => item.id === "recover_task_after_review" && item.endpoint === `/tasks/${taskResponse.task.id}/recover`)
   || failure.recommendations?.some((item) => item.executesCommand === true)
@@ -152,6 +160,7 @@ console.log(JSON.stringify({
     taskId: taskResponse.task.id,
     failures: recovery.summary.totalFailures,
     recoverable: recovery.summary.recoverableFailures,
+    standardsCovered: recovery.summary.workStandardsCoveredFailures,
     recommendation: failure.recommendations.find((item) => item.id === "recover_task_after_review")?.endpoint,
   },
 }, null, 2));

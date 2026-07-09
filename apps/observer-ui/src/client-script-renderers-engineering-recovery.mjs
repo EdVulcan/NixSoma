@@ -77,6 +77,7 @@ function renderEngineeringRecoveryEvidence(data) {
   const governance = data?.governance ?? {};
   const failures = Array.isArray(data?.failures) ? data.failures : [];
   const deferred = Array.isArray(data?.deferredExecutionBoundaries) ? data.deferredExecutionBoundaries : [];
+  const workStandardsCoverage = data?.workStandardsCoverage ?? {};
   engineeringRecoveryRegistry.textContent = data?.registry ?? "openclaw-native-engineering-recovery-evidence-v0";
   engineeringRecoveryFailures.textContent = String(summary.totalFailures ?? failures.length);
   engineeringRecoveryRecoverable.textContent = String(summary.recoverableFailures ?? 0);
@@ -93,12 +94,14 @@ function renderEngineeringRecoveryEvidence(data) {
     \`Capability: \${data?.capability?.id ?? "sense.openclaw.engineering_tool.recovery_evidence"} risk=\${data?.capability?.risk ?? "medium"} approval=\${Boolean(data?.capability?.approvalRequired)}\`,
     \`Query: taskId=\${data?.query?.taskId ?? "latest"} limit=\${data?.query?.limit ?? 10}\`,
     \`Summary: failures=\${summary.totalFailures ?? failures.length} recoverable=\${summary.recoverableFailures ?? 0} alreadyRecovered=\${summary.alreadyRecovered ?? 0}\`,
+    \`Work Standards Coverage: registry=\${workStandardsCoverage.registry ?? "openclaw-engineering-recovery-work-standards-coverage-v0"} status=\${workStandardsCoverage.status ?? "unknown"} covered=\${workStandardsCoverage.score?.covered ?? 0} missing=\${workStandardsCoverage.score?.missing ?? 0}\`,
     \`Governance: readVerification=\${Boolean(governance.canReadVerificationEvidence)} readTasks=\${Boolean(governance.canReadTaskOutcomes)} createRecovery=\${Boolean(governance.canCreateRecoveryTask)} approve=\${Boolean(governance.canApproveRecovery)} execute=\${Boolean(governance.canExecuteCommand)} mutate=\${Boolean(governance.canMutate)} provider=\${Boolean(governance.canCallProvider)}\`,
     \`Audit: operation=\${data?.auditEvidence?.operation ?? "recovery_evidence"} evidence=\${data?.auditEvidence?.evidenceKind ?? "missing"} persisted=\${Boolean(data?.auditEvidence?.persisted)}\`,
     "",
     ...failures.slice(0, 8).map((failure) => {
       const recommendationIds = (failure.recommendations ?? []).map((item) => \`\${item.id}\${item.createsTask ? "(operator)" : ""}\`).join(",") || "none";
-      return \`\${failure.kind ?? "unknown"} task=\${failure.taskId ?? "none"} source=\${failure.source ?? "unknown"} recoverable=\${Boolean(failure.recoverable)} alreadyRecovered=\${Boolean(failure.alreadyRecovered)} exit=\${failure.result?.exitCode ?? "n/a"} timeout=\${Boolean(failure.result?.timedOut)} recommendations=\${recommendationIds}\`;
+      const coverage = failure.workStandardsCoverage ?? {};
+      return \`\${failure.kind ?? "unknown"} task=\${failure.taskId ?? "none"} source=\${failure.source ?? "unknown"} recoverable=\${Boolean(failure.recoverable)} alreadyRecovered=\${Boolean(failure.alreadyRecovered)} reportReady=\${Boolean(coverage.reportReadiness?.canReportWithEvidence)} coverage=\${coverage.status ?? "unknown"} exit=\${failure.result?.exitCode ?? "n/a"} timeout=\${Boolean(failure.result?.timedOut)} recommendations=\${recommendationIds}\`;
     }),
     "",
     ...deferred.map((boundary) => \`deferred: \${boundary}\`),

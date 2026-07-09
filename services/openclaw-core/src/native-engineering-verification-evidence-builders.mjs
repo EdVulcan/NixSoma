@@ -107,8 +107,12 @@ function buildChecks({ record, task, attachedToTaskCompletion }) {
   };
 }
 
-function buildWorkStandardsCoverage({ ok, attachedToTaskCompletion }) {
-  const verificationEvidenceCovered = attachedToTaskCompletion === true;
+function isTerminalTaskStatus(status) {
+  return status === "completed" || status === "failed";
+}
+
+function buildWorkStandardsCoverage({ ok, attachedToTaskCompletion, attachedToTerminalTask }) {
+  const verificationEvidenceCovered = attachedToTerminalTask === true || attachedToTaskCompletion === true;
   return {
     registry: WORK_STANDARDS_COVERAGE_REGISTRY,
     sourceRegistry: "openclaw-engineering-work-standards-v0",
@@ -118,7 +122,7 @@ function buildWorkStandardsCoverage({ ok, attachedToTaskCompletion }) {
         id: "verification_evidence_before_report",
         required: true,
         satisfied: verificationEvidenceCovered,
-        evidence: verificationEvidenceCovered ? "outcome.details.commandTranscript" : "not_attached",
+        evidence: verificationEvidenceCovered ? "terminal_task.outcome.details.commandTranscript" : "not_attached",
       },
     ],
     reportReadiness: {
@@ -140,6 +144,7 @@ function buildEvidenceRecord(record, { tasks, invocations, maxOutputChars }) {
   const task = findTask(tasks, record.taskId);
   const invocation = findInvocation(invocations, record);
   const attachedToTaskCompletion = task?.status === "completed" && taskHasTranscriptEntry(task, record);
+  const attachedToTerminalTask = isTerminalTaskStatus(task?.status) && taskHasTranscriptEntry(task, record);
   const output = truncateOutputPair(record.stdout, record.stderr, maxOutputChars);
   const { checks, failedChecks } = buildChecks({ record, task, attachedToTaskCompletion });
   const ok = failedChecks.length === 0;
@@ -188,7 +193,7 @@ function buildEvidenceRecord(record, { tasks, invocations, maxOutputChars }) {
       checks,
       failedChecks,
     },
-    workStandardsCoverage: buildWorkStandardsCoverage({ ok, attachedToTaskCompletion }),
+    workStandardsCoverage: buildWorkStandardsCoverage({ ok, attachedToTaskCompletion, attachedToTerminalTask }),
   };
 }
 

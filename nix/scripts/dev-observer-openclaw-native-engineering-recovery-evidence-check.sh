@@ -119,6 +119,9 @@ for (const token of [
   "refreshEngineeringRecoveryEvidence",
   "renderEngineeringRecoveryEvidence",
   "Native engineering recovery evidence",
+  "Work Standards Coverage:",
+  "openclaw-engineering-recovery-work-standards-coverage-v0",
+  "reportReady=",
   "sense.openclaw.engineering_tool.recovery_evidence",
   "failed-native-engineering-tool-recovery-evidence",
 ]) {
@@ -134,6 +137,9 @@ if (
   || recovery.registry !== "openclaw-native-engineering-recovery-evidence-v0"
   || recovery.summary?.totalFailures !== 1
   || recovery.summary?.recoverableFailures !== 1
+  || recovery.summary?.workStandardsCoveredFailures !== 1
+  || recovery.workStandardsCoverage?.registry !== "openclaw-engineering-recovery-work-standards-coverage-v0"
+  || recovery.workStandardsCoverage?.status !== "covered"
   || recovery.governance?.canCreateRecoveryTask !== false
   || recovery.governance?.canExecuteCommand !== false
 ) {
@@ -144,6 +150,7 @@ if (
   failure?.taskId !== taskResponse.task?.id
   || failure.kind !== "verification_command_exit_nonzero"
   || failure.recoverable !== true
+  || failure.workStandardsCoverage?.reportReadiness?.canReportWithEvidence !== true
   || !failure.recommendations?.some((item) => item.id === "recover_task_after_review")
 ) {
   throw new Error(`Observer recovery evidence failure mismatch: ${JSON.stringify(failure)}`);
@@ -161,6 +168,7 @@ console.log(JSON.stringify({
     registry: recovery.registry,
     failures: recovery.summary.totalFailures,
     recoverable: recovery.summary.recoverableFailures,
+    standardsCovered: recovery.summary.workStandardsCoveredFailures,
   },
 }, null, 2));
 EOF
