@@ -1,5 +1,5 @@
 import { sendJson } from "../../../packages/shared-utils/src/http.mjs";
-import { buildNativeAcpxCodexBridgeProcessSpawnProposal } from "./native-acpx-codex-bridge-builders.mjs";
+import { buildNativeAcpxCodexBridgeProcessSpawnProposal } from "./native-acpx-codex-process-spawn-proposal-builders.mjs";
 import { buildNativeAcpxCodexWrapperWriteExecutionEvidence } from "./native-acpx-codex-wrapper-write-execution-evidence-builders.mjs";
 import { buildNativeEngineeringEditExecutionEvidence } from "./native-engineering-edit-execution-evidence-builders.mjs";
 import { buildNativeEngineeringMicrocompactEvidence } from "./native-engineering-microcompact-evidence-builders.mjs";
