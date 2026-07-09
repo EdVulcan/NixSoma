@@ -113,8 +113,8 @@ raw enhanced glob/grep execution outside native bounds
 automatic edit approval, automatic recovery task creation, and unapproved verification command execution
 automatic write approval, automatic recovery task creation, and post-write
 verification command execution
-LSP lifecycle startup and request handling; `lsp_evidence` contract and
-availability evidence is absorbed
+LSP process startup and request handling; `lsp_evidence` contract, availability
+evidence, and lifecycle readiness draft are absorbed
 verification command execution and task-completion attachment
 planning/todo evidence is absorbed; hidden planning mode and todo state mutation remain deferred
 provider calls, network egress, and result envelopes
@@ -172,13 +172,24 @@ Observer startup now calls the read-only restoration flow when no local loop
 state exists, while keeping operator action creation explicit and
 approval-gated.
 
+The LSP lifecycle readiness draft follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_LIFECYCLE_READINESS_DRAFT_PLAN.md
+```
+
+That slice moves beyond static LSP evidence by drafting a governed,
+workspace-scoped language-server lifecycle action without starting servers,
+reading arbitrary files, creating tasks/approvals, persisting lifecycle state, or
+sending JSON-RPC.
+
 The current next smallest real capability is:
 
 ```text
-Native governed engineering LSP lifecycle readiness draft
+Native governed LSP supervised lifecycle pilot
 ```
 
-That slice should move beyond static LSP evidence by drafting a governed,
-workspace-scoped language-server lifecycle action without starting servers,
-reading arbitrary files, or sending JSON-RPC until approval/lifecycle boundaries
-are explicit.
+That slice should only proceed if it closes a meaningful loop: approval-gated
+workspace-scoped lifecycle task, user-space process supervision, state/readback,
+Observer recovery evidence, and JSON-RPC still disabled until the lifecycle
+state is proven. Do not add another standalone LSP evidence/readiness shell.

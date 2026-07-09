@@ -314,8 +314,11 @@ async function refreshEngineeringReadSearch() {
 
 async function refreshEngineeringLspEvidence() {
   try {
-    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-lsp/evidence?action=check&language=typescript&limit=200\`);
-    renderEngineeringLspEvidence(data);
+    const [evidence, lifecycleDraft] = await Promise.all([
+      fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-lsp/evidence?action=check&language=typescript&limit=200\`),
+      fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-lsp/lifecycle-draft?language=typescript&lifecycleAction=start&limit=200\`),
+    ]);
+    renderEngineeringLspEvidence({ evidence, lifecycleDraft });
   } catch {
     engineeringLspRegistry.textContent = "offline";
     engineeringLspLanguages.textContent = "none";

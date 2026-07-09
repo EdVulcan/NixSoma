@@ -14,6 +14,7 @@ import path from "node:path";
 import {
   createNativeEngineeringLspEvidenceBuilders,
   NATIVE_ENGINEERING_LSP_EVIDENCE_REGISTRY,
+  NATIVE_ENGINEERING_LSP_LIFECYCLE_DRAFT_REGISTRY,
 } from "../src/native-engineering-lsp-evidence-builders.mjs";
 
 function safeStat(filePath) {
@@ -142,4 +143,45 @@ test("native engineering LSP evidence rejects traversal and skipped directories"
     }),
     /real path escapes/i,
   );
+});
+
+test("native engineering LSP lifecycle draft maps a workspace-scoped lifecycle action without execution", (t) => {
+  const root = createFixture();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const builders = createHarness(root);
+
+  const draft = builders.buildNativeEngineeringLspLifecycleDraft({
+    language: "python",
+    lifecycleAction: "restart",
+    limit: 100,
+  });
+
+  assert.equal(draft.ok, true);
+  assert.equal(draft.registry, NATIVE_ENGINEERING_LSP_LIFECYCLE_DRAFT_REGISTRY);
+  assert.equal(draft.mode, "lsp-lifecycle-readiness-draft-only");
+  assert.equal(draft.capability.id, "plan.openclaw.engineering_tool.lsp_lifecycle");
+  assert.equal(draft.summary.selectedLanguage, "python");
+  assert.equal(draft.summary.lifecycleAction, "restart");
+  assert.equal(draft.summary.detectedLanguages.includes("python"), true);
+  assert.equal(draft.lifecycleDraft.server.serverBinary, "pylsp");
+  assert.equal(draft.lifecycleDraft.status, "draft_only");
+  assert.equal(draft.lifecycleDraft.workspaceScoped, true);
+  assert.equal(draft.lifecycleDraft.createsTask, false);
+  assert.equal(draft.lifecycleDraft.createsApproval, false);
+  assert.equal(draft.lifecycleDraft.executesCommand, false);
+  assert.equal(draft.lifecycleDraft.server.binaryChecked, false);
+  assert.equal(draft.lifecycleDraft.server.processStarted, false);
+  assert.equal(draft.lifecycleDraft.server.jsonRpcHandshakeSent, false);
+  assert.equal(draft.governance.canDraftLifecycleAction, true);
+  assert.equal(draft.governance.canCheckServerBinary, false);
+  assert.equal(draft.governance.canStartLspServer, false);
+  assert.equal(draft.governance.canSendJsonRpcRequest, false);
+  assert.equal(draft.governance.canCreateTask, false);
+  assert.equal(draft.bounds.noTaskCreation, true);
+  assert.equal(draft.bounds.noApprovalCreation, true);
+  assert.equal(draft.summary.executionReady, false);
+  assert.equal(draft.summary.canCreateTaskNow, false);
+  assert.equal(draft.readinessGates.some((gate) => gate.id === "process_supervision" && gate.status === "deferred"), true);
+  assert.equal(draft.deferredExecutionBoundaries.includes("no LSP server process start"), true);
+  assert.equal(JSON.stringify(draft).includes("openclaw_symbol"), false);
 });

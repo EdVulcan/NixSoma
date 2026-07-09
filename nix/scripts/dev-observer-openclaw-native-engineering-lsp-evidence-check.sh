@@ -54,7 +54,8 @@ cleanup() {
   rm -f \
     "${HTML_FILE:-}" \
     "${CLIENT_FILE:-}" \
-    "${EVIDENCE_FILE:-}"
+    "${EVIDENCE_FILE:-}" \
+    "${DRAFT_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -64,12 +65,14 @@ trap cleanup EXIT
 HTML_FILE="$(mktemp)"
 CLIENT_FILE="$(mktemp)"
 EVIDENCE_FILE="$(mktemp)"
+DRAFT_FILE="$(mktemp)"
 
 curl --silent --fail "$OBSERVER_URL/" > "$HTML_FILE"
 curl --silent --fail "$OBSERVER_URL/client-v5.js" > "$CLIENT_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=check&language=typescript&limit=200" > "$EVIDENCE_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-draft?language=typescript&lifecycleAction=start&limit=200" > "$DRAFT_FILE"
 
-node - <<'EOF' "$HTML_FILE" "$CLIENT_FILE" "$EVIDENCE_FILE"
+node - <<'EOF' "$HTML_FILE" "$CLIENT_FILE" "$EVIDENCE_FILE" "$DRAFT_FILE"
 const fs = require("node:fs");
 const readText = (index) => fs.readFileSync(process.argv[index], "utf8");
 const readJson = (index) => JSON.parse(readText(index));
@@ -77,10 +80,11 @@ const readJson = (index) => JSON.parse(readText(index));
 const html = readText(2);
 const client = readText(3);
 const evidence = readJson(4);
-const raw = JSON.stringify({ evidence });
+const draft = readJson(5);
+const raw = JSON.stringify({ evidence, draft });
 
 for (const token of [
-  "OpenClaw Engineering LSP Evidence",
+  "OpenClaw Engineering LSP Evidence / Lifecycle Draft",
   "engineering-lsp-registry",
   "engineering-lsp-languages",
   "engineering-lsp-server",
@@ -94,11 +98,14 @@ for (const token of [
 }
 for (const token of [
   "/plugins/native-adapter/engineering-lsp/evidence",
+  "/plugins/native-adapter/engineering-lsp/lifecycle-draft",
   "refreshEngineeringLspEvidence",
   "renderEngineeringLspEvidence",
   "Native engineering LSP evidence",
   "sense.openclaw.engineering_tool.lsp_evidence",
   "lsp-contract-and-availability-evidence-only",
+  "lsp-lifecycle-readiness-draft-only",
+  "Lifecycle draft",
   "send JSON-RPC",
 ]) {
   if (!client.includes(token)) {
@@ -124,6 +131,27 @@ if (
 ) {
   throw new Error(`Observer LSP evidence mismatch: ${JSON.stringify(evidence)}`);
 }
+if (
+  !draft.ok
+  || draft.registry !== "openclaw-native-engineering-lsp-lifecycle-draft-v0"
+  || draft.mode !== "lsp-lifecycle-readiness-draft-only"
+  || draft.summary?.selectedLanguage !== "typescript"
+  || draft.summary?.lifecycleAction !== "start"
+  || draft.summary?.executionReady !== false
+  || draft.summary?.canCreateTaskNow !== false
+  || draft.lifecycleDraft?.status !== "draft_only"
+  || draft.lifecycleDraft?.server?.binaryChecked !== false
+  || draft.lifecycleDraft?.server?.processStarted !== false
+  || draft.lifecycleDraft?.server?.jsonRpcHandshakeSent !== false
+  || draft.governance?.canDraftLifecycleAction !== true
+  || draft.governance?.canStartLspServer !== false
+  || draft.governance?.canCreateTask !== false
+  || draft.governance?.canCreateApproval !== false
+  || draft.bounds?.noTaskCreation !== true
+  || draft.bounds?.noApprovalCreation !== true
+) {
+  throw new Error(`Observer LSP lifecycle draft mismatch: ${JSON.stringify(draft)}`);
+}
 for (const secret of [
   "OBSERVER_ENGINEERING_LSP_EVIDENCE_NODE_MODULES_SECRET",
   "OBSERVER_ENGINEERING_LSP_EVIDENCE_CACHE_SECRET",
@@ -139,7 +167,9 @@ console.log(JSON.stringify({
     html: "visible",
     client: "visible",
     registry: evidence.registry,
+    lifecycleRegistry: draft.registry,
     languages: evidence.summary.detectedLanguages,
+    lifecycleAction: draft.summary.lifecycleAction,
     serverStatus: evidence.serverReadiness.status,
   },
 }, null, 2));

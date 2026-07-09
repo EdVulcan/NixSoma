@@ -125,6 +125,7 @@ export function createPluginReview(deps) {
   });
   const {
     buildNativeEngineeringLspEvidence,
+    buildNativeEngineeringLspLifecycleDraft,
   } = createNativeEngineeringLspEvidenceBuilders({
     safeStat,
     selectOpenClawToolCatalogWorkspace,
@@ -286,6 +287,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "act.openclaw.engineering_tool.write_proposal",
       "sense.openclaw.engineering_tool.write_execution_evidence",
       "sense.openclaw.engineering_tool.lsp_evidence",
+      "plan.openclaw.engineering_tool.lsp_lifecycle",
       "sense.openclaw.engineering_tool.verify_evidence",
       "sense.openclaw.engineering_tool.recovery_evidence",
       "sense.openclaw.engineering_context.microcompact_evidence",
@@ -304,7 +306,7 @@ function buildOpenClawNativePluginAdapterStatus() {
     ],
     pendingCapabilities: ["act.plugin.capability.invoke"],
     summary: {
-      implemented: 30,
+      implemented: 31,
       pending: 1,
       canReadManifestMetadata: true,
       canReadToolCatalogMetadata: true,
@@ -318,6 +320,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       canBuildEngineeringWriteProposals: true,
       canReadEngineeringWriteExecutionEvidence: true,
       canReadEngineeringLspEvidence: true,
+      canDraftEngineeringLspLifecycleAction: true,
       canReadEngineeringVerificationEvidence: true,
       canReadEngineeringRecoveryEvidence: true,
       canReadEngineeringMicrocompactEvidence: true,
@@ -362,6 +365,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "engineering write proposals create redacted create/overwrite diff metadata only; workspace text write, task creation, and approval creation remain separate approval-gated paths",
       "engineering write execution evidence reads approved workspace text write task and filesystem ledger outcomes without creating tasks, approvals, writes, or operator steps",
       "engineering LSP evidence maps definition, references, hover, and server-check contracts without checking binaries, starting servers, opening files, or sending JSON-RPC",
+      "engineering LSP lifecycle draft maps a future workspace-scoped server lifecycle action without checking binaries, starting processes, creating tasks, approvals, state, or JSON-RPC",
       "engineering recovery evidence reads failed verification/task outcomes and recommends governed recovery review without creating tasks, approvals, retries, mutations, or provider calls",
       "engineering microcompact evidence calculates context-budget savings from historical command transcripts without returning raw output or mutating runtime messages or persisted logs",
       "engineering plan/todo evidence reads visible task/workbench planning state without hidden agent mode switches or .openclaw/cc-todo.md writes",
@@ -422,5 +426,6 @@ function buildOpenClawNativePluginAdapterStatus() {
     buildNativeEngineeringEditProposal,
     buildNativeEngineeringWriteProposal,
     buildNativeEngineeringLspEvidence,
+    buildNativeEngineeringLspLifecycleDraft,
   };
 }

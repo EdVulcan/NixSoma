@@ -2,12 +2,14 @@ import { readdirSync, realpathSync } from "node:fs";
 import path from "node:path";
 
 export const NATIVE_ENGINEERING_LSP_EVIDENCE_REGISTRY = "openclaw-native-engineering-lsp-evidence-v0";
+export const NATIVE_ENGINEERING_LSP_LIFECYCLE_DRAFT_REGISTRY = "openclaw-native-engineering-lsp-lifecycle-draft-v0";
 
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 1_000;
 const MAX_DEPTH = 8;
 const SAMPLE_FILES_PER_LANGUAGE = 8;
 const SUPPORTED_ACTIONS = new Set(["check", "definition", "references", "hover"]);
+const SUPPORTED_LIFECYCLE_ACTIONS = new Set(["start", "stop", "restart", "recover"]);
 const SUPPORTED_LANGUAGES = new Set(["typescript", "javascript", "python"]);
 const SKIPPED_DIRECTORY_NAMES = new Set([
   ".cache",
@@ -103,6 +105,11 @@ function normaliseLanguage(value) {
 function normaliseAction(value) {
   const action = typeof value === "string" ? value.trim().toLowerCase() : "";
   return SUPPORTED_ACTIONS.has(action) ? action : "check";
+}
+
+function normaliseLifecycleAction(value) {
+  const action = typeof value === "string" ? value.trim().toLowerCase() : "";
+  return SUPPORTED_LIFECYCLE_ACTIONS.has(action) ? action : "start";
 }
 
 function normaliseRelativePath(value) {
@@ -265,6 +272,79 @@ function buildGovernance() {
     canCallProvider: false,
     observerVisible: true,
   };
+}
+
+function buildLifecycleReadinessGates({ profile, selectedLanguageSignal }) {
+  const selectedLanguageFiles = selectedLanguageSignal?.fileCount ?? 0;
+  const configFileCount = selectedLanguageSignal?.configFiles?.length ?? 0;
+  return [
+    {
+      id: "workspace_scope_resolved",
+      status: "passed",
+      requiredForExecution: true,
+      evidence: "workspace root selected from OpenClaw workspace registry",
+    },
+    {
+      id: "language_profile_mapped",
+      status: "passed",
+      requiredForExecution: true,
+      evidence: `${profile.language} maps to ${profile.serverBinary}`,
+    },
+    {
+      id: "language_files_detected",
+      status: selectedLanguageFiles > 0 ? "passed" : "needs_attention",
+      requiredForExecution: true,
+      evidence: `${selectedLanguageFiles} ${profile.language} file metadata records found`,
+    },
+    {
+      id: "config_metadata_detected",
+      status: configFileCount > 0 ? "passed" : "needs_attention",
+      requiredForExecution: false,
+      evidence: `${configFileCount} ${profile.language} config metadata records found`,
+    },
+    {
+      id: "observer_visibility_declared",
+      status: "passed",
+      requiredForExecution: true,
+      evidence: "draft is exposed through the existing Observer LSP panel",
+    },
+    {
+      id: "audit_evidence_declared",
+      status: "passed",
+      requiredForExecution: true,
+      evidence: "response embeds non-persisted lifecycle draft audit evidence",
+    },
+    {
+      id: "server_binary_check",
+      status: "deferred",
+      requiredForExecution: true,
+      evidence: "no binary/version command is executed by this draft",
+    },
+    {
+      id: "process_supervision",
+      status: "deferred",
+      requiredForExecution: true,
+      evidence: "no language server process is started or supervised",
+    },
+    {
+      id: "lifecycle_state_store",
+      status: "deferred",
+      requiredForExecution: true,
+      evidence: "no long-lived server pool or lifecycle state is persisted",
+    },
+    {
+      id: "approval_task_bridge",
+      status: "deferred",
+      requiredForExecution: true,
+      evidence: "no task or approval request is created by this draft",
+    },
+    {
+      id: "json_rpc_handshake",
+      status: "deferred",
+      requiredForExecution: true,
+      evidence: "no initialize, didOpen, definition, references, or hover JSON-RPC is sent",
+    },
+  ];
 }
 
 export function createNativeEngineeringLspEvidenceBuilders({
@@ -444,7 +524,150 @@ export function createNativeEngineeringLspEvidenceBuilders({
     };
   }
 
+  function buildNativeEngineeringLspLifecycleDraft({
+    workspacePath = null,
+    language = "typescript",
+    lifecycleAction = "start",
+    limit = DEFAULT_LIMIT,
+  } = {}) {
+    const safeLanguage = normaliseLanguage(language);
+    const safeLifecycleAction = normaliseLifecycleAction(lifecycleAction);
+    const safeLimit = normalisePositiveInteger(limit, DEFAULT_LIMIT, MAX_LIMIT);
+    const workspace = resolveWorkspace(workspacePath);
+    const languageSignals = collectLanguageSignals({
+      rootRealPath: workspace.rootRealPath,
+      safeStat,
+      limit: safeLimit,
+    });
+    const profile = LANGUAGE_PROFILES[safeLanguage];
+    const selectedLanguageSignal = languageSignals.languages.find((item) => item.language === safeLanguage);
+    const readinessGates = buildLifecycleReadinessGates({ profile, selectedLanguageSignal });
+    const generatedAt = new Date().toISOString();
+    const summary = {
+      selectedLanguage: safeLanguage,
+      lifecycleAction: safeLifecycleAction,
+      detectedLanguages: languageSignals.languages.filter((item) => item.fileCount > 0).map((item) => item.language),
+      selectedLanguageFiles: selectedLanguageSignal?.fileCount ?? 0,
+      configFilesPresent: selectedLanguageSignal?.configFiles?.length ?? 0,
+      gatesPassed: readinessGates.filter((gate) => gate.status === "passed").length,
+      gatesDeferred: readinessGates.filter((gate) => gate.status === "deferred").length,
+      executionReady: false,
+      canCreateTaskNow: false,
+      serverBinaryChecked: false,
+      serverStarted: false,
+      jsonRpcSent: false,
+      sourceContentRead: false,
+    };
+
+    return {
+      ok: true,
+      registry: NATIVE_ENGINEERING_LSP_LIFECYCLE_DRAFT_REGISTRY,
+      mode: "lsp-lifecycle-readiness-draft-only",
+      generatedAt,
+      identityLevel: "Level 1: stable user-space control plane",
+      sourceCapability: {
+        sourceToolName: "cc_lsp",
+        intendedNativeCapabilityId: "plan.openclaw.engineering_tool.lsp_lifecycle",
+        migrationMode: "governed_lifecycle_draft_without_server_start",
+      },
+      capability: {
+        id: "plan.openclaw.engineering_tool.lsp_lifecycle",
+        sourceToolName: "cc_lsp",
+        risk: "medium",
+        approvalRequiredForExecution: true,
+        approvalRequiredForDraft: false,
+      },
+      workspace: {
+        id: workspace.item.id,
+        name: workspace.item.name,
+        path: workspace.item.path,
+        sourceRegistry: workspace.registry?.registry ?? null,
+      },
+      query: {
+        language: safeLanguage,
+        lifecycleAction: safeLifecycleAction,
+        limit: safeLimit,
+      },
+      lifecycleDraft: {
+        id: `openclaw-lsp-${safeLanguage}-${safeLifecycleAction}-draft`,
+        lifecycleAction: safeLifecycleAction,
+        operationClass: "governed_language_server_lifecycle_action",
+        status: "draft_only",
+        workspaceScoped: true,
+        selectedLanguage: safeLanguage,
+        server: {
+          language: safeLanguage,
+          serverBinary: profile.serverBinary,
+          serverArgs: [...profile.serverArgs],
+          installHint: profile.installHint,
+          binaryChecked: false,
+          processStarted: false,
+          jsonRpcHandshakeSent: false,
+        },
+        intendedLifecycleState: {
+          currentStateRead: false,
+          nextState: `${safeLifecycleAction}_requested_after_future_approval`,
+          persisted: false,
+          recoveryEvidenceRequired: true,
+        },
+        createsTask: false,
+        createsApproval: false,
+        mutatesWorkspace: false,
+        executesCommand: false,
+      },
+      readinessGates,
+      languageSignals,
+      recoveryDraft: {
+        observerVisible: true,
+        automaticRecovery: false,
+        recommendation: "future lifecycle failures should attach exit status, bounded stderr/stdout metadata, server state, and a governed recovery recommendation",
+      },
+      bounds: {
+        workspaceRootConstrained: true,
+        maxFilesScanned: MAX_LIMIT,
+        selectedScanLimit: safeLimit,
+        maxDepth: MAX_DEPTH,
+        skippedDirectoryPolicy: "hidden_generated_cache_dependency_directories_skipped",
+        noSourceFileContentRead: true,
+        noServerBinaryCheck: true,
+        noLspServerStart: true,
+        noJsonRpcRequest: true,
+        noCommandExecution: true,
+        noTaskCreation: true,
+        noApprovalCreation: true,
+        noProviderCall: true,
+      },
+      governance: {
+        ...buildGovernance(),
+        mode: "native_engineering_lsp_lifecycle_draft_read_only",
+        canDraftLifecycleAction: true,
+        futureLifecycleExecutionRequiresApproval: true,
+      },
+      summary,
+      auditEvidence: {
+        operation: "lsp_lifecycle_readiness_draft",
+        capabilityId: "plan.openclaw.engineering_tool.lsp_lifecycle",
+        generatedAt,
+        summary,
+        persisted: false,
+        evidenceKind: "response_embedded_lifecycle_draft_audit_evidence",
+      },
+      deferredExecutionBoundaries: [
+        "no server binary version check",
+        "no LSP server process start",
+        "no lifecycle task creation",
+        "no approval creation",
+        "no lifecycle state persistence",
+        "no file content read into LSP",
+        "no textDocument/didOpen notification",
+        "no definition/references/hover JSON-RPC request",
+        "no provider call",
+      ],
+    };
+  }
+
   return {
     buildNativeEngineeringLspEvidence,
+    buildNativeEngineeringLspLifecycleDraft,
   };
 }

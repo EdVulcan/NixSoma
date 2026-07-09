@@ -156,6 +156,12 @@ governed surfaces:
   `definition`, `references`, and `hover` contracts into bounded workspace
   availability evidence without checking binaries, starting servers, opening
   files in LSP, reading source contents into LSP, or sending JSON-RPC.
+- Native engineering LSP lifecycle readiness draft:
+  `plan.openclaw.engineering_tool.lsp_lifecycle` drafts a governed
+  workspace-scoped language-server lifecycle action and readiness gates without
+  checking binaries, starting servers, creating tasks, creating approvals,
+  persisting lifecycle state, reading source contents into LSP, or sending
+  JSON-RPC.
 - Approval-gated workspace mutation:
   `act.openclaw.workspace_text_write` and
   `act.openclaw.workspace_patch_apply`.
@@ -182,7 +188,7 @@ enhanced `openclaw` modules.
 | `cc_write` | absorbed through governed proposal/approval/execution evidence | `act.openclaw.engineering_tool.write_proposal` creates redacted create/overwrite proposal evidence; `openclaw-native-engineering-write-proposal-task-v0` bridges confirmed proposals to approval-gated `workspace_text_write` tasks; `sense.openclaw.engineering_tool.write_execution_evidence` reads completed write ledger evidence. | Keep proposal, approval, execution, and recovery separated. Do not migrate raw overwrite semantics as an autonomous default. | Level 1 |
 | `cc_glob` | absorbed | `sense.openclaw.engineering_tool.glob` performs bounded workspace file discovery with skipped hidden/generated/cache/dependency directories and result caps. | Continue native bounded discovery; do not execute enhanced `GlobTool.ts`. | Level 1 |
 | `cc_grep` | absorbed | `sense.openclaw.engineering_tool.grep` performs bounded workspace text search with literal/regex mode, include filters, result/output caps, binary skips, audit, and Observer evidence. | Continue native bounded search; do not execute enhanced `GrepTool.ts`. | Level 1 |
-| `cc_lsp` | partially absorbed as evidence | `sense.openclaw.engineering_tool.lsp_evidence` maps `check`, `definition`, `references`, and `hover` contracts, reports language/config metadata and server hints, and keeps binary checks, server startup, source-content reads, and JSON-RPC blocked. `sense.openclaw.workspace_symbol_lookup` remains separate derived navigation. | Keep the evidence route. Defer full LSP lifecycle to a governed workspace service with explicit server state and recovery evidence. | Level 1 now, Level 2 later |
+| `cc_lsp` | partially absorbed as evidence plus lifecycle draft | `sense.openclaw.engineering_tool.lsp_evidence` maps `check`, `definition`, `references`, and `hover` contracts, reports language/config metadata and server hints, and keeps binary checks, server startup, source-content reads, and JSON-RPC blocked. `plan.openclaw.engineering_tool.lsp_lifecycle` now drafts a workspace-scoped lifecycle action and readiness gates without creating tasks, approvals, state, processes, or JSON-RPC. `sense.openclaw.workspace_symbol_lookup` remains separate derived navigation. | Keep the evidence route and lifecycle draft. Defer full LSP lifecycle to a governed workspace service with explicit server state, approval/task bridge, process supervision, and recovery evidence. | Level 1 now, Level 2 later |
 | `cc_verify` | absorbed as evidence | `sense.openclaw.engineering_tool.verify_evidence` reads approval-gated command transcripts, capability invocations, and completed task outcomes to produce bounded verification evidence with checks, output budgets, retry-policy metadata, audit evidence, and Observer visibility. `sense.openclaw.engineering_tool.recovery_evidence` adds read-only failed-evidence recovery recommendations. | Keep actual command execution on the existing approval-gated source/workspace command task path. Do not add ungoverned shell execution or automatic retries. | Level 1 |
 | `cc_plan_enter`, `cc_plan_exit`, `cc_todo_write` | absorbed as evidence plus operator-visible workbench state | `sense.openclaw.engineering_context.plan_todo_evidence` reads visible task/workbench plan state, maps planning/todo tool semantics, reports todo counts, and exposes Observer evidence without hidden mode switches, task mutation, or `.openclaw/cc-todo.md` writes. `openclaw-native-engineering-planning-workbench-state-v0` bridges that evidence into Engineering Loop State for selected engineering tasks. | Keep hidden mode, todo-file persistence, and task mutation deferred until governed workbench storage exists. | Level 1 |
 | `microcompact` | absorbed as evidence | `sense.openclaw.engineering_context.microcompact_evidence` reads command transcript metadata, protects recent engineering evidence by default, and estimates reclaimable context budget without returning raw output or mutating logs. | Keep actual runtime-message compaction deferred until the evidence surface is stable and governed. Do not silently mutate persisted transcript or hide current verification/recovery evidence. | Level 1 |
@@ -190,7 +196,7 @@ enhanced `openclaw` modules.
 | ACPX/Codex bridge compatibility | requires source transfer | No ACPX/Codex bridge implementation exists in this repo. | Transfer compatibility lessons only where useful for OpenClaw's NixOS body and ACP bridge model. Do not center Windows wrapper behavior. | Level 1 |
 | Runtime persistence tests | partially absorbed | Main has many task/approval/recovery persistence milestones; enhanced ACPX/runtime persistence tests are not migrated. | Reuse the persistence discipline, and add native tests only when adopting ACPX or live runtime refresh behavior. | Level 1 |
 | Engineering prompt semantics | partially absorbed | Project docs and Codex skills encode evidence-first, precise edits, low coupling, and scoped validation; no product runtime prompt-pack enforcement exists. | Convert useful semantics into Observer-verifiable work standards, not a monolithic prompt wall. | Level 1 |
-| Operator-facing UI refinements | partially absorbed | Observer UI has been decoupled into panels/refreshers/renderers and now exposes parameterized engineering loop controls plus task/approval/evidence guidance, completion readback, explicit recovery action drafts, recovered verification rerun readback, plan/todo workbench state, read-only loop-state restoration from core task history, and startup auto-restore when local state is empty, but enhanced chat/tool-card styling is not migrated. | Keep product-native controls; next draft a governed LSP lifecycle action without starting servers or sending JSON-RPC. Avoid wholesale CSS import. | Level 1 now, Level 2 when work-view is active |
+| Operator-facing UI refinements | partially absorbed | Observer UI has been decoupled into panels/refreshers/renderers and now exposes parameterized engineering loop controls plus task/approval/evidence guidance, completion readback, explicit recovery action drafts, recovered verification rerun readback, plan/todo workbench state, read-only loop-state restoration from core task history, startup auto-restore when local state is empty, and LSP lifecycle draft visibility, but enhanced chat/tool-card styling is not migrated. | Keep product-native controls; next LSP work should be a cohesive governed supervised lifecycle pilot, not another static readiness shell. Avoid wholesale CSS import. | Level 1 now, Level 2 when work-view is active |
 | `HEARTBEAT.md`, `SOUL.md`, `TOOLS.md` identity notes | should not migrate | Main has mission/docs/skills and fixtures that read `TOOLS.md`, but not these identity files as product authority. | Do not copy persona or local setup notes wholesale. Extract only governed context-file concepts after policy review. | Level 1 |
 
 ## Capability Findings
@@ -321,19 +327,24 @@ Current OpenClaw:
   metadata for TypeScript, JavaScript, and Python signals, reports config-file
   presence without reading config bodies, and reports server binary names and
   install hints without executing version checks.
-- It does not implement Language Server Protocol lifecycle, open files in an
-  LSP connection, send JSON-RPC requests, or perform optional language server
+- `plan.openclaw.engineering_tool.lsp_lifecycle` drafts a governed
+  workspace-scoped lifecycle action for start/stop/restart/recover and exposes
+  readiness gates for workspace scope, metadata, Observer visibility, audit,
+  binary checks, process supervision, state, approval/task bridge, and JSON-RPC.
+- It does not implement Language Server Protocol process supervision, open
+  files in an LSP connection, send JSON-RPC requests, create lifecycle tasks or
+  approvals, persist lifecycle state, or perform optional language server
   installation checks.
 
-Classification: partially absorbed as evidence.
+Classification: partially absorbed as evidence plus lifecycle draft.
 
 Recommendation:
 
-- Keep the current evidence route as the Level 1 contract surface. Rewrite any
-  future LSP lifecycle as an optional governed user-space service that exposes
-  availability checks, server lifecycle state, workspace scope, failure
-  evidence, and Observer recovery controls rather than becoming a hidden
-  long-lived process.
+- Keep the current evidence route and lifecycle draft as the Level 1 contract
+  surface. Rewrite any future LSP lifecycle as an optional governed user-space
+  service that exposes availability checks, approval-gated start/stop/recover
+  tasks, server lifecycle state, workspace scope, failure evidence, and Observer
+  recovery controls rather than becoming a hidden long-lived process.
 
 ### `cc_verify`
 
@@ -561,9 +572,10 @@ Deferred:
   content budgets, audit evidence, and Observer visibility.
 - Raw enhanced glob/grep execution outside the native bounded read/search
   surface.
-- Full LSP server lifecycle, server binary checks, file open notifications, and
-  definition/references/hover JSON-RPC until a governed service boundary is
-  chosen. The current absorbed surface is evidence-only.
+- Full LSP server lifecycle, server binary checks, lifecycle tasks/approvals,
+  state persistence, file open notifications, and definition/references/hover
+  JSON-RPC until a governed service boundary is chosen. The current absorbed
+  surface is evidence plus lifecycle readiness draft only.
 - Verification-command execution until command provenance and completion
   evidence attach cleanly to task records.
 - Actual microcompact runtime-message transformation until the evidence route

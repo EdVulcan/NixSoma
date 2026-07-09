@@ -54,6 +54,7 @@ cleanup() {
     "${CHECK_FILE:-}" \
     "${POSITION_FILE:-}" \
     "${BAD_PATH_FILE:-}" \
+    "${DRAFT_FILE:-}" \
     "${ADAPTER_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
@@ -64,14 +65,16 @@ trap cleanup EXIT
 CHECK_FILE="$(mktemp)"
 POSITION_FILE="$(mktemp)"
 BAD_PATH_FILE="$(mktemp)"
+DRAFT_FILE="$(mktemp)"
 ADAPTER_FILE="$(mktemp)"
 
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=check&language=typescript&limit=200" > "$CHECK_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=definition&language=typescript&relativePath=src/app.ts&line=2&character=14&limit=200" > "$POSITION_FILE"
 BAD_STATUS="$(curl --silent --output "$BAD_PATH_FILE" --write-out "%{http_code}" "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=hover&language=typescript&relativePath=.cache/leak.ts")"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-draft?language=python&lifecycleAction=restart&limit=200" > "$DRAFT_FILE"
 curl --silent --fail "$CORE_URL/plugins/openclaw-native-plugin-adapter" > "$ADAPTER_FILE"
 
-node - <<'EOF' "$CHECK_FILE" "$POSITION_FILE" "$BAD_PATH_FILE" "$BAD_STATUS" "$ADAPTER_FILE"
+node - <<'EOF' "$CHECK_FILE" "$POSITION_FILE" "$BAD_PATH_FILE" "$BAD_STATUS" "$DRAFT_FILE" "$ADAPTER_FILE"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
 
@@ -79,8 +82,9 @@ const check = readJson(2);
 const position = readJson(3);
 const bad = readJson(4);
 const badStatus = process.argv[5];
-const adapter = readJson(6);
-const raw = JSON.stringify({ check, position, bad, adapter });
+const draft = readJson(6);
+const adapter = readJson(7);
+const raw = JSON.stringify({ check, position, bad, draft, adapter });
 
 if (
   !check.ok
@@ -131,14 +135,49 @@ if (badStatus !== "400" || bad.ok !== false || !String(bad.error ?? "").includes
   throw new Error(`LSP skipped-directory path should be rejected with 400: status=${badStatus} body=${JSON.stringify(bad)}`);
 }
 if (
-  !adapter.implementedCapabilities?.includes("sense.openclaw.engineering_tool.lsp_evidence")
-  || adapter.summary?.canReadEngineeringLspEvidence !== true
+  !draft.ok
+  || draft.registry !== "openclaw-native-engineering-lsp-lifecycle-draft-v0"
+  || draft.mode !== "lsp-lifecycle-readiness-draft-only"
+  || draft.capability?.id !== "plan.openclaw.engineering_tool.lsp_lifecycle"
+  || draft.summary?.selectedLanguage !== "python"
+  || draft.summary?.lifecycleAction !== "restart"
+  || !draft.summary?.detectedLanguages?.includes("python")
+  || draft.summary?.executionReady !== false
+  || draft.summary?.canCreateTaskNow !== false
+  || draft.lifecycleDraft?.server?.serverBinary !== "pylsp"
+  || draft.lifecycleDraft?.status !== "draft_only"
+  || draft.lifecycleDraft?.workspaceScoped !== true
+  || draft.lifecycleDraft?.createsTask !== false
+  || draft.lifecycleDraft?.createsApproval !== false
+  || draft.lifecycleDraft?.executesCommand !== false
+  || draft.lifecycleDraft?.server?.binaryChecked !== false
+  || draft.lifecycleDraft?.server?.processStarted !== false
+  || draft.lifecycleDraft?.server?.jsonRpcHandshakeSent !== false
+  || draft.governance?.canDraftLifecycleAction !== true
+  || draft.governance?.canCheckServerBinary !== false
+  || draft.governance?.canStartLspServer !== false
+  || draft.governance?.canSendJsonRpcRequest !== false
+  || draft.governance?.canCreateTask !== false
+  || draft.governance?.canCreateApproval !== false
+  || draft.bounds?.noTaskCreation !== true
+  || draft.bounds?.noApprovalCreation !== true
+  || draft.auditEvidence?.operation !== "lsp_lifecycle_readiness_draft"
+  || !draft.readinessGates?.some((gate) => gate.id === "process_supervision" && gate.status === "deferred")
 ) {
-  throw new Error(`native adapter missing LSP evidence capability: ${JSON.stringify(adapter)}`);
+  throw new Error(`LSP lifecycle draft mismatch: ${JSON.stringify(draft)}`);
+}
+if (
+  !adapter.implementedCapabilities?.includes("sense.openclaw.engineering_tool.lsp_evidence")
+  || !adapter.implementedCapabilities?.includes("plan.openclaw.engineering_tool.lsp_lifecycle")
+  || adapter.summary?.canReadEngineeringLspEvidence !== true
+  || adapter.summary?.canDraftEngineeringLspLifecycleAction !== true
+) {
+  throw new Error(`native adapter missing LSP evidence/lifecycle capability: ${JSON.stringify(adapter)}`);
 }
 for (const token of [
   "no server binary version check",
   "no LSP server process start",
+  "no lifecycle task creation",
   "no file content read into LSP",
   "no definition/references/hover JSON-RPC request",
   "ENGINEERING_LSP_EVIDENCE_NODE_MODULES_SECRET",
@@ -158,7 +197,9 @@ for (const token of [
 console.log(JSON.stringify({
   openclawNativeEngineeringLspEvidence: {
     registry: check.registry,
+    lifecycleRegistry: draft.registry,
     languages: check.summary.detectedLanguages,
+    lifecycleAction: draft.summary.lifecycleAction,
     serverStatus: check.serverReadiness.status,
     badPathStatus: badStatus,
     jsonRpcSent: check.summary.jsonRpcSent,

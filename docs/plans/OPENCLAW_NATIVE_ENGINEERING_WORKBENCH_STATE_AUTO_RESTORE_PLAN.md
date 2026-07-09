@@ -85,13 +85,13 @@ raw credential reads
 
 ## Next Slice
 
-The next highest-density capability slice is:
+The LSP lifecycle readiness draft follow-up was completed as:
 
 ```text
-Native governed engineering LSP lifecycle readiness draft
+OPENCLAW_NATIVE_ENGINEERING_LSP_LIFECYCLE_READINESS_DRAFT_PLAN.md
 ```
 
 That slice should move beyond static LSP evidence by drafting a governed,
 workspace-scoped language-server lifecycle action without starting servers,
-reading arbitrary files, or sending JSON-RPC until approval/lifecycle boundaries
-are explicit.
+reading arbitrary files, creating tasks/approvals, persisting lifecycle state,
+or sending JSON-RPC until approval/lifecycle boundaries are explicit.

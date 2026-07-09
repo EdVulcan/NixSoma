@@ -106,3 +106,22 @@ OPENCLAW_NATIVE_ENGINEERING_WRITE_PROPOSAL_PLAN.md
 That slice migrates `cc_write` as redacted create/overwrite proposal evidence.
 It still does not write files directly; approval-gated workspace text write
 remains the authoritative mutation path.
+
+The LSP lifecycle readiness follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_LIFECYCLE_READINESS_DRAFT_PLAN.md
+```
+
+That slice adds:
+
+```text
+GET /plugins/native-adapter/engineering-lsp/lifecycle-draft
+registry: openclaw-native-engineering-lsp-lifecycle-draft-v0
+mode: lsp-lifecycle-readiness-draft-only
+```
+
+It drafts a governed workspace-scoped language-server lifecycle action and
+readiness gate list while still blocking binary checks, process start, task
+creation, approval creation, lifecycle state persistence, source-file content
+reads, JSON-RPC, provider calls, and network egress.

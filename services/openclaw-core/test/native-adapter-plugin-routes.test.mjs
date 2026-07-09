@@ -213,6 +213,30 @@ test("native adapter engineering LSP evidence route preserves action and positio
   assert.equal(response.body.registry, "openclaw-native-engineering-lsp-evidence-v0");
 });
 
+test("native adapter engineering LSP lifecycle draft route preserves bounded draft inputs", async () => {
+  let observedInput = null;
+  const response = await invokeNativeAdapterPluginRoute({
+    buildNativeEngineeringLspLifecycleDraft: (input) => {
+      observedInput = input;
+      return {
+        ok: true,
+        registry: "openclaw-native-engineering-lsp-lifecycle-draft-v0",
+        mode: "lsp-lifecycle-readiness-draft-only",
+      };
+    },
+  }, "GET", "/plugins/native-adapter/engineering-lsp/lifecycle-draft?workspacePath=/tmp/openclaw&language=python&lifecycleAction=restart&limit=9");
+
+  assert.equal(response.handled, true);
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(observedInput, {
+    workspacePath: "/tmp/openclaw",
+    language: "python",
+    lifecycleAction: "restart",
+    limit: "9",
+  });
+  assert.equal(response.body.registry, "openclaw-native-engineering-lsp-lifecycle-draft-v0");
+});
+
 test("native adapter engineering write proposal route preserves bounded proposal inputs", async () => {
   let observedInput = null;
   const response = await invokeNativeAdapterPluginRoute({
