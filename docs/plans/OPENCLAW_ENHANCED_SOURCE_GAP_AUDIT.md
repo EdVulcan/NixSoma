@@ -231,7 +231,7 @@ enhanced `openclaw` modules.
 | Live plugin runtime refresh | absorbed as evidence | `sense.openclaw.plugin_runtime.refresh_evidence` recomputes the native plugin registry read model, reports activation gates, cache invalidation intent, and blocked module-load/runtime-activation boundaries with Observer evidence. | Keep actual module-loader cache invalidation and live activation deferred until a governed loader exists. | Level 1 |
 | ACPX/Codex bridge compatibility | partially absorbed | `sense.openclaw.acpx_codex_bridge.compatibility` maps the enhanced bridge lessons into a native compatibility read model: POSIX `npx`, Windows `npx.cmd`, command override contract, auth isolation boundaries, future NixOS-body ACP bridge scope, Observer visibility, `plan.openclaw.acpx_codex_bridge.wrapper_action` proposal drafts, approval-gated `act.openclaw.acpx_codex_bridge.wrapper_action` tasks that record approved-deferred boundaries, `plan.openclaw.acpx_codex_bridge.wrapper_write` proposals that preview wrapper content/hash with placeholder auth paths, `act.openclaw.acpx_codex_bridge.wrapper_write_bridge` tasks that delegate approved previewed wrapper writes to `act.openclaw.workspace_text_write`, `sense.openclaw.acpx_codex_bridge.wrapper_write_execution_evidence` readback/recovery recommendations over task and ledger evidence, `plan.openclaw.acpx_codex_bridge.process_spawn` proposal contracts from approved wrapper-write evidence, approval-gated `act.openclaw.acpx_codex_bridge.process_spawn_preflight` tasks that check wrapper file/hash without spawning, and `govern.openclaw.acpx_codex_bridge.live_execution_boundary_review` that keeps live spawn blocked without explicit authorization. | Keep live auth copy, direct unapproved wrapper write/chmod, `npx` execution, ACP process spawn, and provider egress deferred. Do not copy enhanced ACPX runtime as a dependency. | Level 1 |
 | Runtime persistence tests | partially absorbed | Main has many task/approval/recovery persistence milestones, and `state.openclaw.acpx_codex_bridge.session_metadata` now persists bounded ACPX/Codex session metadata with independent sessions, overwrite revisions, missing-session null behavior, restart recovery, secret-key redaction, Observer-visible readback, wrapper/action draft dependency checks, approval-gated task linkage, wrapper write proposal dependency checks, approved wrapper write task state/ledger evidence, read-only recovery recommendation status, process-spawn proposal readiness, approved preflight task state, and live boundary review state through the workspace text-write path. | Reuse the persistence discipline; live supervised ACP/Codex process execution now requires explicit operator authorization before implementation continues. | Level 1 |
-| Engineering prompt semantics | partially absorbed | Project docs and Codex skills encode evidence-first, precise edits, low coupling, and scoped validation; no product runtime prompt-pack enforcement exists. | Convert useful semantics into Observer-verifiable work standards, not a monolithic prompt wall. | Level 1 |
+| Engineering prompt semantics | partially absorbed as product-visible standards | Project docs and Codex skills encode evidence-first, precise edits, low coupling, and scoped validation. `openclaw-native-prompt-semantics-v0` now derives `openclaw-engineering-work-standards-v0`, mapping prompt/tool signals into Observer-visible standards for plan-before-mutation, diff preview, approval, ledger evidence, patch validation, verification evidence before report, and prompt-content boundaries without exposing prompt bodies. | Keep prompt semantics as a standards contract feeding the existing engineering loop; do not add a monolithic prompt wall, automatic approvals, or hidden enforcement. | Level 1 |
 | Operator-facing UI refinements | partially absorbed | Observer UI has been decoupled into panels/refreshers/renderers and now exposes parameterized engineering loop controls plus task/approval/evidence guidance, completion readback, explicit recovery action drafts, recovered verification rerun readback, plan/todo workbench state, read-only loop-state restoration from core task history, startup auto-restore when local state is empty, and LSP lifecycle draft visibility, but enhanced chat/tool-card styling is not migrated. | Keep product-native controls; next LSP work should be a cohesive governed supervised lifecycle pilot, not another static readiness shell. Avoid wholesale CSS import. | Level 1 now, Level 2 when work-view is active |
 | `HEARTBEAT.md`, `SOUL.md`, `TOOLS.md` identity notes | should not migrate | Main has mission/docs/skills and fixtures that read `TOOLS.md`, but not these identity files as product authority. | Do not copy persona or local setup notes wholesale. Extract only governed context-file concepts after policy review. | Level 1 |
 
@@ -603,16 +603,16 @@ Current OpenClaw:
 
 - Repository skills and route documents already enforce many of these
   engineering standards for Codex project development.
-- Product runtime enforcement and Observer evidence for these semantics is still
-  incomplete.
+- Product runtime prompt-wall enforcement remains intentionally absent, but
+  Observer-verifiable work standards are now derived from prompt/tool signals.
 
 Classification: partially absorbed.
 
 Recommendation:
 
-- Convert prompt semantics into product-visible work standards: proposal
-  rationale, expected checks, verification evidence, and Observer readback.
-  Avoid adding another large prompt wall as the primary artifact.
+- Continue using prompt semantics as product-visible work standards for
+  proposal rationale, expected checks, verification evidence, and Observer
+  readback. Avoid adding another large prompt wall as the primary artifact.
 
 ### Operator-Facing UI Refinements
 

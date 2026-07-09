@@ -191,6 +191,13 @@ OpenClawOnNixOS target: encode these as agent conduct and observer-verifiable
 work standards, not as an ungoverned prompt wall. They should support the
 whitepaper goal of reliable local autonomy.
 
+Current native status: `openclaw-native-prompt-semantics-v0` derives
+`openclaw-engineering-work-standards-v0`, an Observer-visible read-only
+assessment for plan-before-mutation, diff preview, approval, ledger,
+patch-validation, verification-evidence, and prompt-content boundaries. It does
+not expose prompt bodies, execute prompt code, create tasks, approve work, or
+mutate files.
+
 ### 6. UI And Identity Notes
 
 Observed intent: improve UI styling and add local project notes such as

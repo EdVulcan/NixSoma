@@ -105,6 +105,14 @@ test("plugin review workspace intelligence builds read-only workspace surfaces",
   assert.equal(prompt.summary.exposesPromptContent, false);
   assert.equal(prompt.derivedPlanSemantics.expectedChecks.includes("typecheck"), true);
   assert.equal(prompt.derivedPlanSemantics.expectedChecks.includes("test"), true);
+  assert.equal(prompt.workStandards.registry, "openclaw-engineering-work-standards-v0");
+  assert.equal(prompt.workStandards.status, "ready_for_engineering_loop_guidance");
+  assert.equal(prompt.workStandards.operatorContract.promptWallEnforced, false);
+  assert.equal(prompt.workStandards.governance.canCreateTask, false);
+  assert.equal(prompt.summary.workStandardsSatisfied, prompt.summary.workStandardsRequired);
+  assert(prompt.workStandards.standards.some((standard) => (
+    standard.id === "verification_evidence_before_report" && standard.satisfied === true
+  )));
 
   const semanticIndex = builders.buildNativeOpenClawWorkspaceSemanticIndex({ query: "web", limit: 10 });
   assert.equal(semanticIndex.mode, "workspace-semantic-index-only");

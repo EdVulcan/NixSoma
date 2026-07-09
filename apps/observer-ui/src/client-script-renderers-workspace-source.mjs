@@ -673,6 +673,7 @@ function renderPromptSemantics(data) {
   const files = Array.isArray(data?.files) ? data.files : [];
   const expectedChecks = data?.derivedPlanSemantics?.expectedChecks ?? summary.expectedChecks ?? [];
   const editIntent = data?.derivedPlanSemantics?.editIntent ?? {};
+  const workStandards = data?.workStandards ?? data?.derivedPlanSemantics?.workStandards ?? {};
   promptSemanticsRegistry.textContent = data?.registry ?? "openclaw-native-prompt-semantics-v0";
   promptSemanticsFiles.textContent = String(summary.totalFiles ?? files.length);
   promptSemanticsChecks.textContent = String(expectedChecks.length);
@@ -687,8 +688,11 @@ function renderPromptSemantics(data) {
     \`Capability: \${data?.capability?.id ?? "sense.openclaw.prompt_pack"} risk=\${data?.capability?.risk ?? "low"} approval=\${Boolean(data?.capability?.approvalRequired)} owner=\${data?.capability?.runtimeOwner ?? "unknown"}\`,
     \`Intent: kind=\${editIntent.kind ?? "source_derived_workspace_edit"} planning=\${editIntent.planningStyle ?? "unknown"} safety=\${editIntent.targetSafety ?? "unknown"} verification=\${(editIntent.verificationStyle ?? []).join(",") || "none"}\`,
     \`Expected Checks: \${expectedChecks.join(",") || "none"}\`,
+    \`Work Standards: registry=\${workStandards.registry ?? "openclaw-engineering-work-standards-v0"} status=\${workStandards.status ?? "unknown"} satisfied=\${workStandards.score?.satisfied ?? 0}/\${workStandards.score?.required ?? 0} promptWall=\${Boolean(workStandards.operatorContract?.promptWallEnforced)}\`,
     \`Counts: files=\${summary.totalFiles ?? files.length} read=\${summary.contentRead ?? 0} editFiles=\${summary.editVocabularyFiles ?? 0} verificationFiles=\${summary.verificationVocabularyFiles ?? 0} governanceFiles=\${summary.governanceVocabularyFiles ?? 0}\`,
     \`Governance: readPrompt=\${Boolean(governance.canReadPromptContent)} exposePrompt=\${Boolean(governance.exposesPromptContent)} exposeSource=\${Boolean(governance.exposesSourceFileContent)} importModule=\${Boolean(governance.canImportModule)} executePrompt=\${Boolean(governance.canExecutePromptCode)} executeTool=\${Boolean(governance.canExecuteToolCode)} mutate=\${Boolean(governance.canMutate)} task=\${Boolean(governance.createsTask)} approval=\${Boolean(governance.createsApproval)}\`,
+    "",
+    ...(workStandards.standards ?? []).slice(0, 10).map((standard) => \`\${standard.id ?? "unknown"} status=\${standard.status ?? "unknown"} category=\${standard.category ?? "unknown"} evidence=\${standard.evidence ?? "none"}\`),
     "",
     ...files.slice(0, 12).map((file) => {
       const signals = file.signals ?? {};

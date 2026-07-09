@@ -107,6 +107,8 @@ for (const token of [
   "/plugins/native-adapter/prompt-semantics",
   "Edit Intent:",
   "Expected Checks:",
+  "Work Standards:",
+  "openclaw-engineering-work-standards-v0",
 ]) {
   if (!raw.includes(token)) {
     throw new Error(`Observer prompt semantics missing ${token}`);
@@ -114,6 +116,10 @@ for (const token of [
 }
 if (
   !semantics.ok
+  || semantics.workStandards?.registry !== "openclaw-engineering-work-standards-v0"
+  || semantics.workStandards?.status !== "ready_for_engineering_loop_guidance"
+  || semantics.workStandards?.operatorContract?.promptWallEnforced !== false
+  || semantics.workStandards?.governance?.canCreateTask !== false
   || semantics.governance?.exposesPromptContent !== false
   || !semantics.derivedPlanSemantics?.expectedChecks?.includes("typecheck")
   || !semantics.derivedPlanSemantics?.expectedChecks?.includes("test")
@@ -137,6 +143,7 @@ console.log(JSON.stringify({
   observerOpenClawPromptSemanticsEditPlan: {
     panel: "visible",
     expectedChecks: semantics.derivedPlanSemantics.expectedChecks,
+    workStandards: semantics.workStandards.score,
     proposalChecks: draft.proposal.expectedChecks,
   },
 }, null, 2));

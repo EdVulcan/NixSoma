@@ -111,6 +111,12 @@ if (
   !semantics.ok
   || semantics.registry !== "openclaw-native-prompt-semantics-v0"
   || semantics.capability?.id !== "sense.openclaw.prompt_pack"
+  || semantics.workStandards?.registry !== "openclaw-engineering-work-standards-v0"
+  || semantics.workStandards?.status !== "ready_for_engineering_loop_guidance"
+  || semantics.workStandards?.operatorContract?.promptWallEnforced !== false
+  || semantics.workStandards?.governance?.canCreateTask !== false
+  || semantics.workStandards?.score?.satisfied !== semantics.workStandards?.score?.required
+  || !semantics.workStandards?.standards?.some((standard) => standard.id === "verification_evidence_before_report" && standard.satisfied === true)
   || semantics.governance?.exposesPromptContent !== false
   || semantics.governance?.canExecutePromptCode !== false
   || semantics.summary?.editVocabularyFiles < 1
@@ -144,6 +150,7 @@ console.log(JSON.stringify({
   openclawPromptSemanticsEditPlan: {
     promptFiles: semantics.summary.totalFiles,
     expectedChecks: semantics.derivedPlanSemantics.expectedChecks,
+    workStandards: semantics.workStandards.score,
     proposalChecks: draft.proposal.expectedChecks,
   },
 }, null, 2));

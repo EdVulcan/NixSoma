@@ -1,6 +1,7 @@
 import { createOpenClawNativePluginRegistry } from "../../../packages/plugin-runtime/src/plugin-registry.mjs";
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { buildPromptWorkStandardsAssessment } from "./plugin-review-prompt-work-standards.mjs";
 
 export function createPluginReviewWorkspaceIntelligence({
   buildOpenClawNativePluginSdkContractImplementation,
@@ -698,6 +699,13 @@ export function createPluginReviewWorkspaceIntelligence({
       byCategory: {},
     });
     const expectedChecks = buildExpectedChecksFromPromptTerms(termCounts, scripts);
+    const workStandards = buildPromptWorkStandardsAssessment({
+      expectedChecks,
+      termCounts,
+      files,
+      scripts,
+      contentExposed: false,
+    });
     const nativeRegistry = createOpenClawNativePluginRegistry();
     const capability = nativeRegistry.items[0]?.contract?.capabilities
       ?.find((entry) => entry.id === "sense.openclaw.prompt_pack") ?? null;
@@ -746,12 +754,17 @@ export function createPluginReviewWorkspaceIntelligence({
         },
         expectedChecks,
         promptTermCounts: termCounts,
+        workStandards,
         contentExposed: false,
       },
+      workStandards,
       summary: {
         ...totals,
         expectedChecks,
         promptTermCounts: termCounts,
+        workStandardsStatus: workStandards.status,
+        workStandardsSatisfied: workStandards.score.satisfied,
+        workStandardsRequired: workStandards.score.required,
         canReadPromptContent: true,
         exposesPromptContent: false,
         canImportModule: false,
