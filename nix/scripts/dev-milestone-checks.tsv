@@ -331,6 +331,7 @@ openclaw-native-engineering-tool-surface-inventory	dev-openclaw-native-engineeri
 openclaw-native-engineering-read-search	dev-openclaw-native-engineering-read-search-check.sh	Native governed bounded workspace read, glob, and grep
 openclaw-native-engineering-edit-proposal	dev-openclaw-native-engineering-edit-proposal-check.sh	Native governed surgical edit proposal with diff preview
 openclaw-native-engineering-write-proposal	dev-openclaw-native-engineering-write-proposal-check.sh	Native governed source write proposal evidence without file mutation
+openclaw-native-engineering-write-approval-bridge	dev-openclaw-native-engineering-write-approval-bridge-check.sh	Native governed bridge from engineering write proposals to approval-gated workspace text write tasks
 openclaw-native-engineering-verification-evidence	dev-openclaw-native-engineering-verification-evidence-check.sh	Native governed verification evidence from completed command transcripts
 openclaw-native-engineering-recovery-evidence	dev-openclaw-native-engineering-recovery-evidence-check.sh	Native governed recovery evidence from failed engineering verification outcomes
 openclaw-native-engineering-microcompact-evidence	dev-openclaw-native-engineering-microcompact-evidence-check.sh	Native governed microcompact context-management evidence from command transcripts
@@ -428,6 +429,7 @@ observer-openclaw-native-engineering-tool-surface-inventory	dev-observer-opencla
 observer-openclaw-native-engineering-read-search	dev-observer-openclaw-native-engineering-read-search-check.sh	Observer visibility for native governed engineering read/search
 observer-openclaw-native-engineering-edit-proposal	dev-observer-openclaw-native-engineering-edit-proposal-check.sh	Observer visibility for native governed engineering edit proposal
 observer-openclaw-native-engineering-write-proposal	dev-observer-openclaw-native-engineering-write-proposal-check.sh	Observer visibility for native governed engineering write proposal
+observer-openclaw-native-engineering-write-approval-bridge	dev-observer-openclaw-native-engineering-write-approval-bridge-check.sh	Observer visibility for native governed engineering write approval bridge
 observer-openclaw-native-engineering-verification-evidence	dev-observer-openclaw-native-engineering-verification-evidence-check.sh	Observer visibility for native governed engineering verification evidence
 observer-openclaw-native-engineering-recovery-evidence	dev-observer-openclaw-native-engineering-recovery-evidence-check.sh	Observer visibility for native governed engineering recovery evidence
 observer-openclaw-native-engineering-microcompact-evidence	dev-observer-openclaw-native-engineering-microcompact-evidence-check.sh	Observer visibility for native governed engineering microcompact evidence

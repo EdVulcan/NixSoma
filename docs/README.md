@@ -54,6 +54,7 @@ directive.
 | [OPENCLAW_NATIVE_ENGINEERING_READ_SEARCH_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_READ_SEARCH_PLAN.md) | Active bounded workspace read/search route for `cc_read`, `cc_glob`, and `cc_grep`. |
 | [OPENCLAW_NATIVE_ENGINEERING_EDIT_PROPOSAL_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_EDIT_PROPOSAL_PLAN.md) | Active surgical edit proposal and bounded diff-preview route for `cc_edit`. |
 | [OPENCLAW_NATIVE_ENGINEERING_WRITE_PROPOSAL_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_WRITE_PROPOSAL_PLAN.md) | Active redacted create/overwrite proposal evidence route for `cc_write` without file mutation. |
+| [OPENCLAW_NATIVE_ENGINEERING_WRITE_APPROVAL_BRIDGE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_WRITE_APPROVAL_BRIDGE_PLAN.md) | Active bridge from redacted `cc_write` proposal evidence to approval-gated workspace text write tasks. |
 | [OPENCLAW_NATIVE_ENGINEERING_VERIFICATION_EVIDENCE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_VERIFICATION_EVIDENCE_PLAN.md) | Active verification evidence route for `cc_verify` over governed command transcripts. |
 | [OPENCLAW_NATIVE_ENGINEERING_RECOVERY_EVIDENCE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_RECOVERY_EVIDENCE_PLAN.md) | Active Observer recovery evidence route for failed native engineering verification/source-command outcomes. |
 | [OPENCLAW_NATIVE_ENGINEERING_MICROCOMPACT_EVIDENCE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_MICROCOMPACT_EVIDENCE_PLAN.md) | Active context-management evidence route for `microcompact` without hidden transcript mutation. |

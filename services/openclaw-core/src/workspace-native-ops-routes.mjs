@@ -93,6 +93,20 @@ function patchTaskInputFromBody(body) {
   };
 }
 
+function writeProposalTaskInputFromBody(body) {
+  return {
+    workspacePath: bodyString(body, "workspacePath", null),
+    relativePath: bodyString(body, "relativePath", "scratch/native-engineering-write-proposal.txt"),
+    content: bodyString(body, "content", ""),
+    contentBase64: bodyString(body, "contentBase64", null),
+    overwrite: body.overwrite === true,
+    contextLines: bodyInteger(body, "contextLines", 1),
+    maxContentBytes: bodyInteger(body, "maxContentBytes", 16 * 1024),
+    maxExistingFileBytes: bodyInteger(body, "maxExistingFileBytes", 24 * 1024),
+    confirm: body.confirm === true,
+  };
+}
+
 function sourceAuthoredDraftInputFromQuery(requestUrl) {
   const proposalQuery = requestUrl.searchParams.get("proposalQuery") ?? "edit";
   return {
@@ -164,6 +178,23 @@ export async function handleWorkspaceNativeOpsRoute({
         serialiseApproval,
         buildTaskSummary,
       }));
+    } catch (error) {
+      sendError(res, 400, error);
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/plugins/native-adapter/engineering-write-proposal-tasks") {
+    try {
+      const body = await readJsonBody(req);
+      const result = await workspaceOps.createNativeEngineeringWriteProposalTask(writeProposalTaskInputFromBody(body));
+      sendJson(res, 201, serialiseWorkspaceTaskResponse(result, [
+        "capability",
+        "workspace",
+        "target",
+        "engineeringWriteProposal",
+        "workspaceTextWrite",
+      ], { serialiseTask, serialiseApproval, buildTaskSummary }));
     } catch (error) {
       sendError(res, 400, error);
     }

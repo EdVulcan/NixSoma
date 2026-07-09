@@ -14,6 +14,7 @@ export const observerClientEngineeringWriteRenderersScript = `function renderEng
   engineeringWriteProposalJson.textContent = [
     "Native engineering write proposal: maps cc_write create/overwrite intent into governed OpenClaw proposal evidence.",
     "This endpoint returns redacted diff metadata and content hashes only. It does not write files, overwrite files, create tasks, create approvals, run shell commands, start LSP, call providers, or import enhanced source code.",
+    "Approval-gated task bridge: /plugins/native-adapter/engineering-write-proposal-tasks creates a workspace_text_write task only with explicit confirmation; approval is still required before mutation.",
     \`Registry: \${data?.registry ?? "openclaw-native-engineering-write-proposal-v0"}\`,
     \`Mode: \${data?.mode ?? "source-write-proposal-diff-metadata-preview-only"}\`,
     \`Identity: \${data?.identityLevel ?? "Level 1: stable user-space control plane"}\`,

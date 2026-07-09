@@ -102,6 +102,55 @@ test("workspace native patch draft parses JSON query params and preserves parse 
   assert.equal(failed.body.ok, false);
 });
 
+test("workspace native engineering write proposal task bridge preserves approval-gated input", async () => {
+  let observedInput = null;
+  const response = await invokeWorkspaceNativeOpsRoute({
+    createNativeEngineeringWriteProposalTask: async (input) => {
+      observedInput = input;
+      return {
+        registry: "openclaw-native-engineering-write-proposal-task-v0",
+        mode: "approval-gated-write-proposal-bridge",
+        generatedAt: "2026-07-09T00:00:00.000Z",
+        sourceRegistry: "openclaw-native-engineering-write-proposal-v0",
+        capability: { id: "act.openclaw.engineering_tool.write_proposal" },
+        workspace: { id: "workspace" },
+        target: { relativePath: input.relativePath, contentExposed: false },
+        engineeringWriteProposal: { contentExposed: false },
+        workspaceTextWrite: { contentExposed: false },
+        task: { id: "task-write", status: "pending" },
+        approval: { id: "approval-write", status: "pending" },
+        governance: { createsTask: true, createsApproval: true },
+      };
+    },
+  }, "POST", "/plugins/native-adapter/engineering-write-proposal-tasks", {
+    workspacePath: "/tmp/openclaw",
+    relativePath: "src/new.txt",
+    content: "hello",
+    overwrite: true,
+    contextLines: 2,
+    maxContentBytes: 512,
+    maxExistingFileBytes: 1024,
+    confirm: true,
+  });
+
+  assert.equal(response.handled, true);
+  assert.equal(response.statusCode, 201);
+  assert.deepEqual(observedInput, {
+    workspacePath: "/tmp/openclaw",
+    relativePath: "src/new.txt",
+    content: "hello",
+    contentBase64: null,
+    overwrite: true,
+    contextLines: 2,
+    maxContentBytes: 512,
+    maxExistingFileBytes: 1024,
+    confirm: true,
+  });
+  assert.deepEqual(response.body.task, { id: "task-write", status: "pending" });
+  assert.deepEqual(response.body.approval, { id: "approval-write", status: "pending" });
+  assert.equal(response.body.engineeringWriteProposal.contentExposed, false);
+});
+
 test("workspace native source command task serializes task and approval contracts", async () => {
   let observedInput = null;
   const response = await invokeWorkspaceNativeOpsRoute({

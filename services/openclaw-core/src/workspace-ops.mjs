@@ -68,6 +68,13 @@ function redactPublicParams(params) {
   return redacted;
 }
 
+function normaliseWorkspaceOpsContent({ content = "", contentBase64 = null } = {}) {
+  if (typeof contentBase64 === "string" && contentBase64) {
+    return Buffer.from(contentBase64, "base64").toString("utf8");
+  }
+  return typeof content === "string" ? content : "";
+}
+
 function resolveOpenClawWorkspaceTarget({ workspacePath = null, relativePath = null } = {}) {
   const { item } = selectOpenClawToolCatalogWorkspace({ workspacePath });
   const safeRelativePath = typeof relativePath === "string" && relativePath.trim()
@@ -264,6 +271,89 @@ async function createNativeOpenClawWorkspaceTextWriteTask({
       recordsFilesystemLedger: true,
       exposesContent: false,
       executed: false,
+    },
+  };
+}
+
+async function createNativeEngineeringWriteProposalTask({
+  workspacePath = null,
+  relativePath = "scratch/native-engineering-write-proposal.txt",
+  content = "",
+  contentBase64 = null,
+  overwrite = false,
+  contextLines = 1,
+  maxContentBytes = 16 * 1024,
+  maxExistingFileBytes = 24 * 1024,
+  confirm = false,
+} = {}) {
+  if (confirm !== true) {
+    throw new Error("native engineering write proposal task creation requires confirm=true.");
+  }
+  if (typeof deps.buildNativeEngineeringWriteProposal !== "function") {
+    throw new Error("native engineering write proposal builder is unavailable.");
+  }
+  const safeContent = normaliseWorkspaceOpsContent({ content, contentBase64 });
+  const engineeringWriteProposal = deps.buildNativeEngineeringWriteProposal({
+    workspacePath,
+    relativePath,
+    content: safeContent,
+    overwrite,
+    contextLines,
+    maxContentBytes,
+    maxExistingFileBytes,
+  });
+  if (!engineeringWriteProposal.ok || engineeringWriteProposal.blocked) {
+    throw new Error(`native engineering write proposal task cannot bridge blocked proposal: ${engineeringWriteProposal.target?.blockedReason ?? engineeringWriteProposal.summary?.reason ?? "proposal_blocked"}`);
+  }
+  const taskResult = await createNativeOpenClawWorkspaceTextWriteTask({
+    workspacePath,
+    relativePath: engineeringWriteProposal.target.relativePath,
+    content: safeContent,
+    overwrite: engineeringWriteProposal.target.overwriteRequested,
+    confirm: true,
+  });
+  const generatedAt = new Date().toISOString();
+
+  return {
+    registry: "openclaw-native-engineering-write-proposal-task-v0",
+    mode: "approval-gated-write-proposal-bridge",
+    generatedAt,
+    sourceRegistry: engineeringWriteProposal.registry,
+    capability: engineeringWriteProposal.capability,
+    workspace: engineeringWriteProposal.workspace,
+    target: engineeringWriteProposal.target,
+    engineeringWriteProposal: {
+      registry: engineeringWriteProposal.registry,
+      mode: engineeringWriteProposal.mode,
+      proposal: engineeringWriteProposal.proposal,
+      target: engineeringWriteProposal.target,
+      summary: engineeringWriteProposal.summary,
+      governance: engineeringWriteProposal.governance,
+      auditEvidence: engineeringWriteProposal.auditEvidence,
+      deferredExecutionBoundaries: engineeringWriteProposal.deferredExecutionBoundaries,
+      contentExposed: false,
+    },
+    workspaceTextWrite: {
+      registry: taskResult.registry,
+      mode: taskResult.mode,
+      capability: taskResult.capability,
+      target: taskResult.target,
+      contentExposed: false,
+    },
+    task: taskResult.task,
+    approval: taskResult.approval,
+    governance: {
+      mode: "native_engineering_write_proposal_to_workspace_text_write_approval_bridge",
+      runtimeOwner: "openclaw_on_nixos",
+      createsTask: true,
+      createsApproval: true,
+      canExecuteWithoutApproval: false,
+      executed: false,
+      canMutateBeforeApproval: false,
+      delegatesApprovedMutationTo: "act.openclaw.workspace_text_write",
+      recordsCapabilityHistory: true,
+      recordsFilesystemLedgerAfterApproval: true,
+      exposesContent: false,
     },
   };
 }
@@ -946,6 +1036,7 @@ async function createOpenClawSourceCommandTask({
     resolveOpenClawWorkspaceTarget,
     buildNativeOpenClawWorkspaceTextWriteDraft,
     createNativeOpenClawWorkspaceTextWriteTask,
+    createNativeEngineeringWriteProposalTask,
     readBoundedWorkspaceTextFile,
     normaliseWorkspacePatchEdits,
     applyWorkspacePatchEdits,

@@ -101,15 +101,14 @@ openclaw-native-engineering-write-proposal
 observer-openclaw-native-engineering-write-proposal
 ```
 
-## Next Slice
+## Follow-Up Status
 
-The next recommended real capability is:
+The recommended approval bridge follow-up was completed as:
 
 ```text
-Native governed engineering write approval bridge
+OPENCLAW_NATIVE_ENGINEERING_WRITE_APPROVAL_BRIDGE_PLAN.md
 ```
 
-That slice should connect a reviewed write proposal to the existing
-approval-gated workspace text write task path. It should require explicit
-confirmation and preserve the separation between proposal evidence and
-mutation.
+That slice connects reviewed write proposal evidence to the existing
+approval-gated workspace text write task path. It still does not approve or
+execute the write.
