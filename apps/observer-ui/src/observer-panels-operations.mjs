@@ -164,6 +164,12 @@ export function observerOperationsPanels() {
           <div class="metric"><span>Recoverable</span><span id="engineering-recovery-recoverable">0</span></div>
           <div class="metric"><span>Recovered</span><span id="engineering-recovery-recovered">0</span></div>
           <div class="metric"><span>Execution</span><span id="engineering-recovery-execution">blocked</span></div>
+          <div class="metric"><span>Action Draft</span><span id="engineering-recovery-action">none</span></div>
+          <div class="actions tight">
+            <button id="engineering-recovery-draft-button" class="secondary" type="button">Draft Recovery Action</button>
+            <button id="engineering-recovery-task-button" class="secondary" type="button">Create Recovery Task</button>
+          </div>
+          <pre id="engineering-recovery-action-json">No engineering recovery action drafted yet.</pre>
           <pre id="engineering-recovery-json">Loading native engineering recovery evidence...</pre>
         </section>
         <section class="panel">

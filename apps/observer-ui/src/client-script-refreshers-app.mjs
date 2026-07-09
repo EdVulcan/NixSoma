@@ -108,6 +108,8 @@ async function refreshEngineeringRecoveryEvidence() {
     engineeringRecoveryRecoverable.textContent = "0";
     engineeringRecoveryRecovered.textContent = "0";
     engineeringRecoveryExecution.textContent = "unknown";
+    engineeringRecoveryAction.textContent = "none";
+    engineeringRecoveryActionJson.textContent = "Unable to draft native engineering recovery action.";
     engineeringRecoveryJson.textContent = "Unable to read native engineering recovery evidence.";
   }
 }

@@ -77,6 +77,25 @@ async function refreshEngineeringLoopCompletionReadback() {
     throw new Error("Create an engineering loop task first.");
   }
   const evidence = await fetchJson(\`\${observerConfig.coreUrl}\${latestEngineeringLoopControlState.evidenceRoute}\`);
+  if (latestEngineeringLoopControlState.kind === "recovery" || latestEngineeringLoopControlState.kind === "recovery-draft") {
+    const summary = evidence?.summary ?? {};
+    const failures = summary.totalFailures ?? 0;
+    const recoverable = summary.recoverableFailures ?? 0;
+    const recovered = summary.alreadyRecovered ?? 0;
+    engineeringLoopStateCompletion.textContent = \`failures=\${failures} recoverable=\${recoverable} recovered=\${recovered}\`;
+    engineeringLoopStateJson.textContent = [
+      \`Kind: \${latestEngineeringLoopControlState.kind}\`,
+      \`Task: \${latestEngineeringLoopControlState.taskId}\`,
+      \`Approval: \${latestEngineeringLoopControlState.approvalId ?? "none"}\`,
+      \`Evidence: \${latestEngineeringLoopControlState.evidenceRoute}\`,
+      \`Recovery: failures=\${failures} recoverable=\${recoverable} recovered=\${recovered}\`,
+      \`Registry: \${evidence?.registry ?? "unknown"}\`,
+      "Boundary: readback only; no approval, execution, retry, recovery task, mutation, provider call, or result envelope.",
+    ].join("\\n");
+    setControlMessage(\`Refreshed engineering recovery readback for \${latestEngineeringLoopControlState.taskId}.\`);
+    await refreshEngineeringLoopControlSurfaces();
+    return;
+  }
   const summary = evidence?.summary ?? {};
   const total = summary.total ?? 0;
   const passed = summary.passed ?? 0;
@@ -92,6 +111,79 @@ async function refreshEngineeringLoopCompletionReadback() {
     "Boundary: readback only; no approval, execution, retry, recovery task, mutation, provider call, or result envelope.",
   ].join("\\n");
   setControlMessage(\`Refreshed engineering loop completion evidence for \${latestEngineeringLoopControlState.taskId}.\`);
+  await refreshEngineeringLoopControlSurfaces();
+}
+
+function renderEngineeringRecoveryLoopDraftState(draft) {
+  latestEngineeringLoopControlState = {
+    kind: "recovery-draft",
+    taskId: draft.sourceTaskId,
+    approvalId: null,
+    evidenceRoute: \`/plugins/native-adapter/engineering-recovery/evidence?taskId=\${draft.sourceTaskId}\`,
+  };
+  engineeringLoopStateKind.textContent = "recovery-draft";
+  engineeringLoopStateTask.textContent = draft.sourceTaskId ? draft.sourceTaskId.slice(0, 8) : "none";
+  engineeringLoopStateApproval.textContent = "none";
+  engineeringLoopStateNext.textContent = "operator may create recovery task after review";
+  engineeringLoopStateEvidence.textContent = latestEngineeringLoopControlState.evidenceRoute;
+  engineeringLoopStateCompletion.textContent = "draft ready";
+  engineeringLoopStateJson.textContent = [
+    "Kind: recovery-draft",
+    \`Source Task: \${draft.sourceTaskId}\`,
+    \`Failure: \${draft.failureKind}\`,
+    \`Endpoint: \${draft.endpoint}\`,
+    "Next: click Create Recovery Task only after reviewing failed evidence.",
+    "Boundary: draft only; no recovery task, approval, operator step, command rerun, mutation, provider call, or result envelope.",
+  ].join("\\n");
+}
+
+function renderEngineeringRecoveryLoopTaskState(draft, result) {
+  const recoveredTaskId = result.task?.id ?? null;
+  const approvalId = result.task?.approval?.requestId ?? result.task?.approval?.id ?? result.approval?.id ?? null;
+  latestEngineeringLoopControlState = {
+    kind: "recovery",
+    taskId: recoveredTaskId,
+    approvalId,
+    evidenceRoute: \`/plugins/native-adapter/engineering-recovery/evidence?taskId=\${draft.sourceTaskId}\`,
+  };
+  engineeringLoopStateKind.textContent = "recovery";
+  engineeringLoopStateTask.textContent = recoveredTaskId ? recoveredTaskId.slice(0, 8) : "none";
+  engineeringLoopStateApproval.textContent = approvalId ? approvalId.slice(0, 8) : "none";
+  engineeringLoopStateNext.textContent = "approve recovered task if pending, then run operator step";
+  engineeringLoopStateEvidence.textContent = latestEngineeringLoopControlState.evidenceRoute;
+  engineeringLoopStateCompletion.textContent = "recovery task queued";
+  engineeringLoopStateJson.textContent = [
+    "Kind: recovery",
+    \`Source Task: \${draft.sourceTaskId}\`,
+    \`Recovered Task: \${recoveredTaskId ?? "none"}\`,
+    \`Approval: \${approvalId ?? "none"}\`,
+    \`Failure: \${draft.failureKind}\`,
+    "Next: approval and operator step are still required before any command rerun.",
+    "Boundary: created recovery task only; no auto-approval, no automatic command rerun, no mutation by the UI.",
+  ].join("\\n");
+}
+
+async function draftEngineeringRecoveryLoopAction() {
+  const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-recovery/evidence?limit=8&maxOutputChars=2000\`);
+  renderEngineeringRecoveryEvidence(data);
+  if (!latestEngineeringRecoveryActionDraft) {
+    throw new Error("No recoverable engineering failure is available for a recovery action draft.");
+  }
+  renderEngineeringRecoveryLoopDraftState(latestEngineeringRecoveryActionDraft);
+  setControlMessage(\`Drafted recovery action for failed task \${latestEngineeringRecoveryActionDraft.sourceTaskId}; creation still requires an explicit operator click.\`);
+}
+
+async function createEngineeringRecoveryLoopTask() {
+  if (!latestEngineeringRecoveryActionDraft) {
+    await draftEngineeringRecoveryLoopAction();
+  }
+  const draft = latestEngineeringRecoveryActionDraft;
+  const result = await fetchJson(\`\${observerConfig.coreUrl}\${draft.endpoint}\`, {
+    method: "POST",
+  });
+  focusEngineeringLoopTask(result);
+  renderEngineeringRecoveryLoopTaskState(draft, result);
+  setControlMessage(\`Created recovery task \${result.task?.id ?? "unknown"} from failed engineering task \${draft.sourceTaskId}; approval and operator step are still required.\`);
   await refreshEngineeringLoopControlSurfaces();
 }
 

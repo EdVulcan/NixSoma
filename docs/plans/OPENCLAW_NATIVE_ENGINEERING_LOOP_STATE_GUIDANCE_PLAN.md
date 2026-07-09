@@ -74,5 +74,11 @@ The completion-readback follow-up was completed as:
 OPENCLAW_NATIVE_ENGINEERING_LOOP_COMPLETION_READBACK_PLAN.md
 ```
 
-The next slice should improve recovery ergonomics for failed verification
-outcomes without introducing automatic execution.
+The recovery ergonomics follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LOOP_RECOVERY_ACTION_DRAFT_PLAN.md
+```
+
+It turns failed verification recovery evidence into an explicit Observer action
+draft without automatic execution.

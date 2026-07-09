@@ -122,13 +122,23 @@ provider calls, network egress, and result envelopes
 
 ## Next Slice
 
+The recovery action draft follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LOOP_RECOVERY_ACTION_DRAFT_PLAN.md
+```
+
+The operator-control bridge is now visible, parameterized, guided in Observer,
+can read completion evidence after manual approval/execution, and can draft and
+explicitly create a recovery task from failed verification evidence without
+automatic execution.
+
 The current next smallest real capability is:
 
 ```text
-Native governed engineering loop recovery action draft
+Native governed engineering recovery rerun readback
 ```
 
-The operator-control bridge is now visible, parameterized, and guided in
-Observer, and it can read completion evidence after manual approval/execution.
-The next slice should improve failed-verification recovery ergonomics without
-adding automatic execution or another readiness chain.
+That slice should approve and run a recovered verification task through the
+existing approval/operator path, then attach rerun verification and recovery
+readback to the Observer loop state.

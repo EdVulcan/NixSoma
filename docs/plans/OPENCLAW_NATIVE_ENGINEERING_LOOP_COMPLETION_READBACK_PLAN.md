@@ -75,12 +75,11 @@ raw credential reads
 
 ## Next Slice
 
-The next highest-density capability slice should improve recovery ergonomics
-for failed verification outcomes:
+The recovery ergonomics follow-up was completed as:
 
 ```text
-Native governed engineering loop recovery action draft
+OPENCLAW_NATIVE_ENGINEERING_LOOP_RECOVERY_ACTION_DRAFT_PLAN.md
 ```
 
-That slice should keep recovery action creation explicit and approval-gated;
-it should not auto-rerun verification or mutate files.
+It keeps recovery action creation explicit and approval-gated; it does not
+auto-rerun verification or mutate files.

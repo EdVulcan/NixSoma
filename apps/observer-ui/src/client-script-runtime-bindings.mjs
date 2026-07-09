@@ -46,6 +46,18 @@ engineeringLoopCompletionButton.addEventListener("click", () => {
   });
 });
 
+engineeringRecoveryDraftButton.addEventListener("click", () => {
+  draftEngineeringRecoveryLoopAction().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
+engineeringRecoveryTaskButton.addEventListener("click", () => {
+  createEngineeringRecoveryLoopTask().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 nativePluginInvokeTaskButton.addEventListener("click", () => {
   createNativePluginInvokeApprovalTask().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

@@ -10,6 +10,8 @@ WRITE_RELATIVE_PATH="scratch/operator-selected-engineering-loop.txt"
 WRITE_TARGET="$WORKSPACE_DIR/$WRITE_RELATIVE_PATH"
 OLD_TEXT="OpenClaw on NixOS monorepo skeleton"
 NEW_TEXT="OpenClaw on NixOS parameterized workbench skeleton"
+FAIL_SCRIPT_NAME="verify:fail"
+FAIL_OUTPUT="engineering-loop-recovery-action-failed"
 
 export OPENCLAW_CORE_PORT="${OPENCLAW_CORE_PORT:-10440}"
 export OPENCLAW_EVENT_HUB_PORT="${OPENCLAW_EVENT_HUB_PORT:-10441}"
@@ -55,7 +57,14 @@ cleanup() {
     "${APPROVALS_FILE:-}" \
     "${EDIT_APPROVE_FILE:-}" \
     "${EDIT_STEP_FILE:-}" \
-    "${EDIT_EVIDENCE_FILE:-}"
+    "${EDIT_EVIDENCE_FILE:-}" \
+    "${FAIL_TASK_FILE:-}" \
+    "${FAIL_APPROVE_FILE:-}" \
+    "${FAIL_STEP_FILE:-}" \
+    "${RECOVERY_EVIDENCE_FILE:-}" \
+    "${RECOVERED_TASK_FILE:-}" \
+    "${RECOVERED_BLOCKED_FILE:-}" \
+    "${RECOVERY_AFTER_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -76,6 +85,13 @@ APPROVALS_FILE="$(mktemp)"
 EDIT_APPROVE_FILE="$(mktemp)"
 EDIT_STEP_FILE="$(mktemp)"
 EDIT_EVIDENCE_FILE="$(mktemp)"
+FAIL_TASK_FILE="$(mktemp)"
+FAIL_APPROVE_FILE="$(mktemp)"
+FAIL_STEP_FILE="$(mktemp)"
+RECOVERY_EVIDENCE_FILE="$(mktemp)"
+RECOVERED_TASK_FILE="$(mktemp)"
+RECOVERED_BLOCKED_FILE="$(mktemp)"
+RECOVERY_AFTER_FILE="$(mktemp)"
 
 curl --silent --fail "$OBSERVER_URL/" > "$HTML_FILE"
 curl --silent --fail "$OBSERVER_URL/client-v5.js" > "$CLIENT_FILE"
@@ -129,6 +145,10 @@ for (const token of [
   "engineering-loop-state-completion",
   "engineering-loop-state-json",
   "engineering-loop-completion-button",
+  "engineering-recovery-action",
+  "engineering-recovery-draft-button",
+  "engineering-recovery-task-button",
+  "engineering-recovery-action-json",
 ]) {
   if (!html.includes(token)) {
     throw new Error(`Observer HTML missing engineering loop operator control/input: ${token}`);
@@ -144,6 +164,14 @@ for (const token of [
   "renderEngineeringLoopControlState",
   "refreshEngineeringLoopCompletionReadback",
   "latestEngineeringLoopControlState",
+  "latestEngineeringRecoveryActionDraft",
+  "buildEngineeringRecoveryActionDraft",
+  "renderEngineeringRecoveryActionDraft",
+  "draftEngineeringRecoveryLoopAction",
+  "createEngineeringRecoveryLoopTask",
+  "operator-confirmed-recovery-task-draft",
+  "explicit operator click required before recovery task creation",
+  "approve recovered task if pending, then run operator step",
   "readback only; no approval, execution, retry, recovery task, mutation, provider call, or result envelope",
   "approve pending approval, then run operator step",
   "createEngineeringEditLoopApprovalTask",
@@ -253,6 +281,139 @@ console.log(JSON.stringify({
     evidenceRegistry: evidence.registry,
     passed: evidence.summary.passed,
     unapprovedWriteStillBlocked: true,
+  },
+}, null, 2));
+EOF
+
+node - <<'EOF' "$TARGET_FILE" "$FAIL_SCRIPT_NAME" "$FAIL_OUTPUT"
+const fs = require("node:fs");
+const targetFile = process.argv[2];
+const scriptName = process.argv[3];
+const output = process.argv[4];
+const pkg = JSON.parse(fs.readFileSync(targetFile, "utf8"));
+pkg.scripts = pkg.scripts ?? {};
+pkg.scripts[scriptName] = `printf ${output} && exit 7`;
+fs.writeFileSync(targetFile, `${JSON.stringify(pkg, null, 2)}\n`);
+EOF
+
+post_json "$CORE_URL/plugins/native-adapter/source-command-proposals/tasks" "{\"workspaceId\":\"openclaw\",\"scriptName\":\"$FAIL_SCRIPT_NAME\",\"query\":\"verify fail\",\"confirm\":true}" > "$FAIL_TASK_FILE"
+
+read -r fail_approval_id fail_task_id < <(node - <<'EOF' "$FAIL_TASK_FILE" "$FAIL_SCRIPT_NAME"
+const fs = require("node:fs");
+const taskResponse = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const scriptName = process.argv[3];
+
+if (
+  !taskResponse.ok
+  || taskResponse.registry !== "openclaw-source-command-task-v0"
+  || taskResponse.task?.status !== "queued"
+  || taskResponse.approval?.status !== "pending"
+  || taskResponse.sourceCommandProposal?.scriptName !== scriptName
+) {
+  throw new Error(`failed verification task should be queued behind approval: ${JSON.stringify(taskResponse)}`);
+}
+process.stdout.write(`${taskResponse.approval.id} ${taskResponse.task.id}\n`);
+EOF
+)
+
+post_json "$CORE_URL/approvals/$fail_approval_id/approve" '{"approvedBy":"dev-openclaw-native-engineering-loop-operator-controls-check","reason":"approve failing recovery action draft fixture"}' > "$FAIL_APPROVE_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$FAIL_STEP_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-recovery/evidence?taskId=$fail_task_id&maxOutputChars=1000" > "$RECOVERY_EVIDENCE_FILE"
+post_json "$CORE_URL/tasks/$fail_task_id/recover" '{}' > "$RECOVERED_TASK_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$RECOVERED_BLOCKED_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-recovery/evidence?taskId=$fail_task_id&maxOutputChars=1000" > "$RECOVERY_AFTER_FILE"
+
+node - <<'EOF' \
+  "$FAIL_TASK_FILE" \
+  "$FAIL_APPROVE_FILE" \
+  "$FAIL_STEP_FILE" \
+  "$RECOVERY_EVIDENCE_FILE" \
+  "$RECOVERED_TASK_FILE" \
+  "$RECOVERED_BLOCKED_FILE" \
+  "$RECOVERY_AFTER_FILE" \
+  "$FAIL_OUTPUT" \
+  "$fail_task_id"
+const fs = require("node:fs");
+const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
+
+const taskResponse = readJson(2);
+const approved = readJson(3);
+const failedStep = readJson(4);
+const recovery = readJson(5);
+const recovered = readJson(6);
+const recoveredBlocked = readJson(7);
+const recoveryAfter = readJson(8);
+const failOutput = process.argv[9];
+const failTaskId = process.argv[10];
+
+if (approved.approval?.status !== "approved" || approved.task?.policy?.decision?.decision !== "audit_only") {
+  throw new Error(`failing verification approval mismatch: ${JSON.stringify(approved)}`);
+}
+if (
+  !failedStep.ok
+  || failedStep.ran !== true
+  || failedStep.task?.id !== failTaskId
+  || failedStep.task?.status !== "failed"
+  || !String(failedStep.execution?.commandTranscript?.[0]?.stdout ?? "").includes(failOutput)
+) {
+  throw new Error(`failing verification should execute and fail before recovery draft: ${JSON.stringify(failedStep)}`);
+}
+
+const failure = recovery.failures?.[0];
+const recommendation = failure?.recommendations?.find((item) => item.id === "recover_task_after_review");
+const recoveredApprovalId = recovered.task?.approval?.requestId ?? recovered.task?.approval?.id ?? null;
+if (
+  !recovery.ok
+  || recovery.registry !== "openclaw-native-engineering-recovery-evidence-v0"
+  || recovery.summary?.totalFailures !== 1
+  || recovery.summary?.recoverableFailures !== 1
+  || recovery.governance?.canCreateRecoveryTask !== false
+  || recovery.governance?.canExecuteCommand !== false
+  || failure?.taskId !== failTaskId
+  || failure?.recoverable !== true
+  || failure?.alreadyRecovered !== false
+  || recommendation?.endpoint !== `/tasks/${failTaskId}/recover`
+  || recommendation?.createsTask !== true
+) {
+  throw new Error(`recovery action draft source evidence mismatch: ${JSON.stringify(recovery)}`);
+}
+if (
+  !recovered.ok
+  || recovered.recoveredFromTask?.id !== failTaskId
+  || recovered.task?.status !== "queued"
+  || recovered.task?.recovery?.recoveredFromTaskId !== failTaskId
+  || recovered.task?.sourceCommand?.registry !== "openclaw-source-command-task-v0"
+  || recovered.task?.approval?.required !== true
+) {
+  throw new Error(`explicit recovery action should create queued approval-gated task: ${JSON.stringify(recovered)}`);
+}
+if (
+  !recoveredBlocked.ok
+  || recoveredBlocked.ran !== false
+  || recoveredBlocked.blocked !== true
+  || recoveredBlocked.reason !== "policy_requires_approval"
+  || (
+    recoveredBlocked.approval?.taskId !== recovered.task?.id
+    && recoveredBlocked.approval?.id !== recoveredApprovalId
+  )
+) {
+  throw new Error(`recovered task should remain blocked before approval: ${JSON.stringify(recoveredBlocked)}`);
+}
+if (
+  recoveryAfter.summary?.alreadyRecovered !== 1
+  || recoveryAfter.failures?.[0]?.alreadyRecovered !== true
+  || recoveryAfter.failures?.[0]?.recoveredByTaskId !== recovered.task?.id
+) {
+  throw new Error(`recovery evidence should read back created recovery task: ${JSON.stringify(recoveryAfter)}`);
+}
+
+console.log(JSON.stringify({
+  openclawNativeEngineeringLoopRecoveryActionDraft: {
+    sourceTaskId: taskResponse.task.id,
+    recoveredTaskId: recovered.task.id,
+    recommendation: recommendation.endpoint,
+    approvalGatePreserved: true,
+    alreadyRecoveredReadback: recoveryAfter.summary.alreadyRecovered,
   },
 }, null, 2));
 EOF

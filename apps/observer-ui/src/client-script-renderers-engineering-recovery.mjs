@@ -1,4 +1,78 @@
-export const observerClientEngineeringRecoveryRenderersScript = `function renderEngineeringRecoveryEvidence(data) {
+export const observerClientEngineeringRecoveryRenderersScript = `let latestEngineeringRecoveryEvidence = null;
+let latestEngineeringRecoveryActionDraft = null;
+
+function selectEngineeringRecoveryFailure(data) {
+  const failures = Array.isArray(data?.failures) ? data.failures : [];
+  return failures.find((failure) => {
+    const recommendations = Array.isArray(failure?.recommendations) ? failure.recommendations : [];
+    return failure?.recoverable === true
+      && failure?.alreadyRecovered !== true
+      && typeof failure?.taskId === "string"
+      && recommendations.some((item) => item?.id === "recover_task_after_review" && item?.createsTask === true);
+  }) ?? null;
+}
+
+function buildEngineeringRecoveryActionDraft(data) {
+  const failure = selectEngineeringRecoveryFailure(data);
+  if (!failure) {
+    return null;
+  }
+  const recommendation = (failure.recommendations ?? []).find((item) => item.id === "recover_task_after_review") ?? null;
+  if (!recommendation?.endpoint) {
+    return null;
+  }
+
+  return {
+    registry: "openclaw-native-engineering-loop-recovery-action-draft-v0",
+    mode: "operator-confirmed-recovery-task-draft",
+    identityLevel: data?.identityLevel ?? "Level 1: stable user-space control plane",
+    sourceRegistry: data?.registry ?? "openclaw-native-engineering-recovery-evidence-v0",
+    sourceTaskId: failure.taskId,
+    failureKind: failure.kind ?? "unknown",
+    endpoint: recommendation.endpoint,
+    createsTask: true,
+    createsApproval: "from recovered task policy when required",
+    executesCommand: false,
+    mutatesWorkspace: false,
+    callsProvider: false,
+    requiresOperatorAction: true,
+    requiresApprovalBeforeAnyCommandRerun: recommendation.requiresApprovalBeforeAnyCommandRerun === true,
+    deferredExecutionBoundaries: [
+      "draft does not call recovery endpoint",
+      "explicit operator click required before recovery task creation",
+      "recovered task remains queued behind existing approval policy",
+      "no automatic operator step or command rerun",
+      "no filesystem mutation, provider egress, credential read, or result envelope",
+    ],
+  };
+}
+
+function renderEngineeringRecoveryActionDraft(draft) {
+  latestEngineeringRecoveryActionDraft = draft ?? null;
+  if (!draft) {
+    engineeringRecoveryAction.textContent = "none";
+    engineeringRecoveryActionJson.textContent = "No recoverable engineering failure available for a recovery action draft.";
+    return;
+  }
+
+  engineeringRecoveryAction.textContent = draft.sourceTaskId ? draft.sourceTaskId.slice(0, 8) : "ready";
+  engineeringRecoveryActionJson.textContent = [
+    "Native engineering recovery action draft: converts recovery evidence into an explicit operator-confirmed recovery task action.",
+    \`Registry: \${draft.registry}\`,
+    \`Mode: \${draft.mode}\`,
+    \`Identity: \${draft.identityLevel}\`,
+    \`Source Task: \${draft.sourceTaskId}\`,
+    \`Failure: \${draft.failureKind}\`,
+    \`Endpoint: \${draft.endpoint}\`,
+    \`Creates Task: \${Boolean(draft.createsTask)} approval=\${draft.createsApproval}\`,
+    \`Boundary: executesCommand=\${Boolean(draft.executesCommand)} mutatesWorkspace=\${Boolean(draft.mutatesWorkspace)} provider=\${Boolean(draft.callsProvider)}\`,
+    "",
+    ...draft.deferredExecutionBoundaries.map((boundary) => \`deferred: \${boundary}\`),
+  ].join("\\n");
+}
+
+function renderEngineeringRecoveryEvidence(data) {
+  latestEngineeringRecoveryEvidence = data ?? null;
   const summary = data?.summary ?? {};
   const governance = data?.governance ?? {};
   const failures = Array.isArray(data?.failures) ? data.failures : [];
@@ -8,6 +82,7 @@ export const observerClientEngineeringRecoveryRenderersScript = `function render
   engineeringRecoveryRecoverable.textContent = String(summary.recoverableFailures ?? 0);
   engineeringRecoveryRecovered.textContent = String(summary.alreadyRecovered ?? 0);
   engineeringRecoveryExecution.textContent = governance.canExecuteCommand ? "enabled" : "blocked";
+  renderEngineeringRecoveryActionDraft(buildEngineeringRecoveryActionDraft(data));
 
   engineeringRecoveryJson.textContent = [
     "Native engineering recovery evidence: reads failed engineering verification and source-command task outcomes, then exposes governed recovery review hints.",

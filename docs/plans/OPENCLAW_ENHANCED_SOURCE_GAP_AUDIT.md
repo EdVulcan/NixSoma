@@ -100,6 +100,11 @@ governed surfaces:
   approval and operator-step gates; the controls now accept bounded
   operator-selected edit/write/verification inputs and display task, approval,
   next-step, evidence-route guidance, and completion evidence readback.
+- Native engineering loop recovery action draft:
+  Observer reads failed verification recovery evidence, drafts an explicit
+  `/tasks/:taskId/recover` operator action, and can create a queued recovered
+  task through the existing recovery route while preserving approval and
+  operator-step gates before any command rerun.
 - Native engineering write proposal surface:
   `act.openclaw.engineering_tool.write_proposal` maps `cc_write`
   create/overwrite intent into bounded workspace proposal evidence with redacted
@@ -168,7 +173,7 @@ enhanced `openclaw` modules.
 | ACPX/Codex bridge compatibility | requires source transfer | No ACPX/Codex bridge implementation exists in this repo. | Transfer compatibility lessons only where useful for OpenClaw's NixOS body and ACP bridge model. Do not center Windows wrapper behavior. | Level 1 |
 | Runtime persistence tests | partially absorbed | Main has many task/approval/recovery persistence milestones; enhanced ACPX/runtime persistence tests are not migrated. | Reuse the persistence discipline, and add native tests only when adopting ACPX or live runtime refresh behavior. | Level 1 |
 | Engineering prompt semantics | partially absorbed | Project docs and Codex skills encode evidence-first, precise edits, low coupling, and scoped validation; no product runtime prompt-pack enforcement exists. | Convert useful semantics into Observer-verifiable work standards, not a monolithic prompt wall. | Level 1 |
-| Operator-facing UI refinements | partially absorbed | Observer UI has been decoupled into panels/refreshers/renderers and now exposes parameterized engineering loop controls plus task/approval/evidence guidance and completion readback for edit/write/verification approval tasks, but enhanced chat/tool-card styling is not migrated. | Keep product-native controls; next improve recovery ergonomics from failed verification evidence. Avoid wholesale CSS import. | Level 1 now, Level 2 when work-view is active |
+| Operator-facing UI refinements | partially absorbed | Observer UI has been decoupled into panels/refreshers/renderers and now exposes parameterized engineering loop controls plus task/approval/evidence guidance, completion readback, and explicit recovery action drafts for failed verification evidence, but enhanced chat/tool-card styling is not migrated. | Keep product-native controls; next prove recovered verification rerun readback through the existing approval/operator path. Avoid wholesale CSS import. | Level 1 now, Level 2 when work-view is active |
 | `HEARTBEAT.md`, `SOUL.md`, `TOOLS.md` identity notes | should not migrate | Main has mission/docs/skills and fixtures that read `TOOLS.md`, but not these identity files as product authority. | Do not copy persona or local setup notes wholesale. Extract only governed context-file concepts after policy review. | Level 1 |
 
 ## Capability Findings
