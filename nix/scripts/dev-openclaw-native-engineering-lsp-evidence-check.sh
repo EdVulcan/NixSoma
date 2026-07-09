@@ -10,6 +10,7 @@ SELECTED_TARGET_OLD_TEXT='export const needle = "OpenClawNeedle";'
 SELECTED_TARGET_NEW_TEXT='export const needle = "OpenClawNeedleSelected";'
 SELECTED_TARGET_RECOVERY_FAIL_SCRIPT="verify:selected-target-fail"
 SELECTED_TARGET_RECOVERY_FAIL_OUTPUT="lsp-selected-target-recovery-failed"
+SELECTED_TARGET_RECOVERY_RERUN_OUTPUT="lsp-selected-target-recovery-rerun-ok"
 
 source "$SCRIPT_DIR/openclaw-engineering-read-search-fixture.sh"
 
@@ -181,6 +182,10 @@ cleanup() {
     "${SYMBOL_RECOVERED_TASK_FILE:-}" \
     "${SYMBOL_RECOVERED_BLOCKED_FILE:-}" \
     "${SYMBOL_RECOVERY_AFTER_FILE:-}" \
+    "${SYMBOL_RECOVERED_APPROVED_FILE:-}" \
+    "${SYMBOL_RECOVERED_STEP_FILE:-}" \
+    "${SYMBOL_RECOVERED_VERIFY_FILE:-}" \
+    "${SYMBOL_RECOVERY_RERUN_FILE:-}" \
     "${EVENTS_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
@@ -263,6 +268,10 @@ SYMBOL_RECOVERY_EVIDENCE_FILE="$(mktemp)"
 SYMBOL_RECOVERED_TASK_FILE="$(mktemp)"
 SYMBOL_RECOVERED_BLOCKED_FILE="$(mktemp)"
 SYMBOL_RECOVERY_AFTER_FILE="$(mktemp)"
+SYMBOL_RECOVERED_APPROVED_FILE="$(mktemp)"
+SYMBOL_RECOVERED_STEP_FILE="$(mktemp)"
+SYMBOL_RECOVERED_VERIFY_FILE="$(mktemp)"
+SYMBOL_RECOVERY_RERUN_FILE="$(mktemp)"
 EVENTS_FILE="$(mktemp)"
 
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=check&language=typescript&limit=200" > "$CHECK_FILE"
@@ -643,6 +652,34 @@ curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-recovery/evid
 post_json "$CORE_URL/tasks/$symbol_recovery_fail_task_id/recover" '{}' > "$SYMBOL_RECOVERED_TASK_FILE"
 post_json "$CORE_URL/operator/step" '{}' > "$SYMBOL_RECOVERED_BLOCKED_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-recovery/evidence?taskId=$symbol_recovery_fail_task_id&maxOutputChars=1000" > "$SYMBOL_RECOVERY_AFTER_FILE"
+
+read -r symbol_recovered_approval_id symbol_recovered_task_id < <(node - <<'EOF' "$SYMBOL_RECOVERED_TASK_FILE"
+const fs = require("node:fs");
+const recovered = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const approvalId = recovered.task?.approval?.requestId ?? recovered.task?.approval?.id ?? "";
+const taskId = recovered.task?.id ?? "";
+if (!approvalId || !taskId) {
+  throw new Error(`selected-target recovered task should expose approval and task ids: ${JSON.stringify(recovered)}`);
+}
+process.stdout.write(`${approvalId} ${taskId}\n`);
+EOF
+)
+
+node - <<'EOF' "$WORKSPACE_DIR/package.json" "$SELECTED_TARGET_RECOVERY_FAIL_SCRIPT" "$SELECTED_TARGET_RECOVERY_RERUN_OUTPUT"
+const fs = require("node:fs");
+const packagePath = process.argv[2];
+const scriptName = process.argv[3];
+const output = process.argv[4];
+const pkg = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+pkg.scripts = pkg.scripts ?? {};
+pkg.scripts[scriptName] = `printf ${output}`;
+fs.writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
+EOF
+
+post_json "$CORE_URL/approvals/$symbol_recovered_approval_id/approve" '{"approvedBy":"dev-openclaw-native-engineering-lsp-evidence-check","reason":"approve selected-target recovered verification rerun"}' > "$SYMBOL_RECOVERED_APPROVED_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$SYMBOL_RECOVERED_STEP_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-verification/evidence?taskId=$symbol_recovered_task_id&maxOutputChars=1000" > "$SYMBOL_RECOVERED_VERIFY_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-recovery/evidence?taskId=$symbol_recovery_fail_task_id&maxOutputChars=1000" > "$SYMBOL_RECOVERY_RERUN_FILE"
 curl --silent --fail "$EVENT_HUB_URL/events/audit?limit=120" > "$EVENTS_FILE"
 
 node - <<'EOF' \
@@ -718,10 +755,15 @@ node - <<'EOF' \
   "$SYMBOL_RECOVERED_TASK_FILE" \
   "$SYMBOL_RECOVERED_BLOCKED_FILE" \
   "$SYMBOL_RECOVERY_AFTER_FILE" \
+  "$SYMBOL_RECOVERED_APPROVED_FILE" \
+  "$SYMBOL_RECOVERED_STEP_FILE" \
+  "$SYMBOL_RECOVERED_VERIFY_FILE" \
+  "$SYMBOL_RECOVERY_RERUN_FILE" \
   "$WORKSPACE_DIR/src/app.ts" \
   "$SELECTED_TARGET_OLD_TEXT" \
   "$SELECTED_TARGET_NEW_TEXT" \
-  "$SELECTED_TARGET_RECOVERY_FAIL_OUTPUT"
+  "$SELECTED_TARGET_RECOVERY_FAIL_OUTPUT" \
+  "$SELECTED_TARGET_RECOVERY_RERUN_OUTPUT"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
 
@@ -797,12 +839,17 @@ const symbolRecoveryEvidence = readJson(70);
 const symbolRecoveredTaskResponse = readJson(71);
 const symbolRecoveredBlockedStep = readJson(72);
 const symbolRecoveryAfter = readJson(73);
-const selectedTargetFile = process.argv[74];
-const selectedTargetOldText = process.argv[75];
-const selectedTargetNewText = process.argv[76];
-const selectedTargetRecoveryFailOutput = process.argv[77];
+const symbolRecoveredApproved = readJson(74);
+const symbolRecoveredStep = readJson(75);
+const symbolRecoveredVerify = readJson(76);
+const symbolRecoveryRerun = readJson(77);
+const selectedTargetFile = process.argv[78];
+const selectedTargetOldText = process.argv[79];
+const selectedTargetNewText = process.argv[80];
+const selectedTargetRecoveryFailOutput = process.argv[81];
+const selectedTargetRecoveryRerunOutput = process.argv[82];
 const expectedTargetUri = process.env.OPENCLAW_FAKE_LSP_TARGET_URI;
-const raw = JSON.stringify({ check, position, bad, draft, sourceTransfer, sourceTransferTaskResponse, sourceTransferBlockedStep, sourceTransferApproved, sourceTransferStep, sourceTransferTaskReadback, sourceTransferState, symbolRequest, symbolRequestTaskResponse, symbolRequestBlockedStep, symbolRequestApproved, symbolRequestStep, symbolRequestTaskReadback, symbolRequestState, symbolTargetBridge, symbolEditSeed, symbolEditTaskResponse, symbolEditBlockedStep, symbolEditApproved, symbolEditStep, symbolEditTaskReadback, symbolEditLedger, symbolEditEvidence, symbolEditReadback, symbolVerifyTaskResponse, symbolVerifyBlockedStep, symbolVerifyApproved, symbolVerifyStep, symbolVerifyEvidence, symbolRecoveryFailTaskResponse, symbolRecoveryFailApproved, symbolRecoveryFailStep, symbolRecoveryEvidence, symbolRecoveredTaskResponse, symbolRecoveredBlockedStep, symbolRecoveryAfter, adapter, taskResponse, blockedStep, approved, execStep, taskReadback, processTaskResponse, processBlockedStep, processApproved, processStep, processTaskReadback, lifecycleStateAfterProcess, stopTaskResponse, stopBlockedStep, stopApproved, stopStep, stopTaskReadback, lifecycleStateAfterStop, restartTaskResponse, restartBlockedStep, restartApproved, restartStep, restartTaskReadback, lifecycleState, handshakeTaskResponse, handshakeBlockedStep, handshakeApproved, handshakeStep, handshakeTaskReadback, handshakeState, events });
+const raw = JSON.stringify({ check, position, bad, draft, sourceTransfer, sourceTransferTaskResponse, sourceTransferBlockedStep, sourceTransferApproved, sourceTransferStep, sourceTransferTaskReadback, sourceTransferState, symbolRequest, symbolRequestTaskResponse, symbolRequestBlockedStep, symbolRequestApproved, symbolRequestStep, symbolRequestTaskReadback, symbolRequestState, symbolTargetBridge, symbolEditSeed, symbolEditTaskResponse, symbolEditBlockedStep, symbolEditApproved, symbolEditStep, symbolEditTaskReadback, symbolEditLedger, symbolEditEvidence, symbolEditReadback, symbolVerifyTaskResponse, symbolVerifyBlockedStep, symbolVerifyApproved, symbolVerifyStep, symbolVerifyEvidence, symbolRecoveryFailTaskResponse, symbolRecoveryFailApproved, symbolRecoveryFailStep, symbolRecoveryEvidence, symbolRecoveredTaskResponse, symbolRecoveredBlockedStep, symbolRecoveryAfter, symbolRecoveredApproved, symbolRecoveredStep, symbolRecoveredVerify, symbolRecoveryRerun, adapter, taskResponse, blockedStep, approved, execStep, taskReadback, processTaskResponse, processBlockedStep, processApproved, processStep, processTaskReadback, lifecycleStateAfterProcess, stopTaskResponse, stopBlockedStep, stopApproved, stopStep, stopTaskReadback, lifecycleStateAfterStop, restartTaskResponse, restartBlockedStep, restartApproved, restartStep, restartTaskReadback, lifecycleState, handshakeTaskResponse, handshakeBlockedStep, handshakeApproved, handshakeStep, handshakeTaskReadback, handshakeState, events });
 
 if (
   !check.ok
@@ -1563,6 +1610,41 @@ if (
 ) {
   throw new Error(`LSP selected-target recovery readback mismatch: ${JSON.stringify(symbolRecoveryAfter)}`);
 }
+if (
+  symbolRecoveredApproved.approval?.status !== "approved"
+  || symbolRecoveredApproved.task?.id !== symbolRecoveredTaskResponse.task?.id
+) {
+  throw new Error(`LSP selected-target recovered task approval mismatch: ${JSON.stringify(symbolRecoveredApproved)}`);
+}
+if (
+  !symbolRecoveredStep.ok
+  || symbolRecoveredStep.ran !== true
+  || symbolRecoveredStep.task?.id !== symbolRecoveredTaskResponse.task?.id
+  || symbolRecoveredStep.task?.status !== "completed"
+  || !String(symbolRecoveredStep.execution?.commandTranscript?.[0]?.stdout ?? "").includes(selectedTargetRecoveryRerunOutput)
+) {
+  throw new Error(`LSP selected-target recovered task should rerun and complete: ${JSON.stringify(symbolRecoveredStep)}`);
+}
+if (
+  !symbolRecoveredVerify.ok
+  || symbolRecoveredVerify.registry !== "openclaw-native-engineering-verification-evidence-v0"
+  || symbolRecoveredVerify.summary?.total !== 1
+  || symbolRecoveredVerify.summary?.passed !== 1
+  || symbolRecoveredVerify.summary?.failed !== 0
+  || symbolRecoveredVerify.evidence?.[0]?.taskId !== symbolRecoveredTaskResponse.task?.id
+  || symbolRecoveredVerify.evidence?.[0]?.ok !== true
+  || !String(symbolRecoveredVerify.evidence?.[0]?.result?.stdout ?? "").includes(selectedTargetRecoveryRerunOutput)
+  || symbolRecoveredVerify.governance?.canExecuteCommand !== false
+) {
+  throw new Error(`LSP selected-target recovered verification evidence mismatch: ${JSON.stringify(symbolRecoveredVerify)}`);
+}
+if (
+  symbolRecoveryRerun.summary?.alreadyRecovered !== 1
+  || symbolRecoveryRerun.failures?.[0]?.taskId !== symbolRecoveryFailTaskResponse.task?.id
+  || symbolRecoveryRerun.failures?.[0]?.recoveredByTaskId !== symbolRecoveredTaskResponse.task?.id
+) {
+  throw new Error(`LSP selected-target recovery rerun readback mismatch: ${JSON.stringify(symbolRecoveryRerun)}`);
+}
 const eventTypes = new Set((events.items ?? events.events ?? []).map((event) => event.type));
 for (const type of ["approval.created", "approval.approved", "policy.evaluated"]) {
   if (!eventTypes.has(type)) {
@@ -1598,6 +1680,7 @@ for (const token of [
   "openclaw-native-engineering-recovery-evidence-v0",
   "recover_task_after_review",
   "lsp-selected-target-recovery-failed",
+  "lsp-selected-target-recovery-rerun-ok",
   "no textDocument/didOpen notification sent",
   "approval-gated-lsp-lifecycle-binary-gate",
   "approved-lsp-lifecycle-binary-gate",
@@ -1659,6 +1742,9 @@ console.log(JSON.stringify({
     selectedTargetRecoveryRecommendation: symbolRecoveryRecommendation.endpoint,
     selectedTargetRecoveredTaskStatus: symbolRecoveredTaskResponse.task.status,
     selectedTargetRecoveryReadbackAlreadyRecovered: symbolRecoveryAfter.summary.alreadyRecovered,
+    selectedTargetRecoveredRerunTaskStatus: symbolRecoveredStep.task.status,
+    selectedTargetRecoveredRerunPassed: symbolRecoveredVerify.summary.passed,
+    selectedTargetRecoveryRerunReadback: symbolRecoveryRerun.summary.alreadyRecovered,
     serverStatus: check.serverReadiness.status,
     lifecycleTaskStatus: lifecycleTask.status,
     binaryFound: execution.server.binaryFound,

@@ -73,14 +73,15 @@ nix/scripts/dev-openclaw-native-engineering-lsp-evidence-check.sh
 openclaw-native-engineering-lsp-evidence
 ```
 
-## Next Slice
+## Follow-up Completed
 
-The next smallest real capability is:
+The selected-target recovered verification rerun follow-up was completed as:
 
 ```text
-LSP selected-target recovered verification rerun proof
+OPENCLAW_NATIVE_ENGINEERING_LSP_SELECTED_TARGET_RECOVERED_VERIFICATION_RERUN_PLAN.md
 ```
 
-That follow-up should approve and run the recovered verification task through
-the existing operator path, then prove successful rerun verification evidence
-and recovery readback without adding automatic approval or recovery execution.
+That slice approves and runs the recovered verification task through the
+existing operator path, then proves successful rerun verification evidence and
+source recovery readback without adding automatic approval or recovery
+execution.
