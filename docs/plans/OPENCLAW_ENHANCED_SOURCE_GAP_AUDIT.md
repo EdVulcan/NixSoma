@@ -88,6 +88,12 @@ governed surfaces:
   `openclaw-native-engineering-edit-proposal-task-v0` connects reviewed
   `cc_edit` proposal evidence to approval-gated `workspace_patch_apply` tasks
   without approving or executing the patch.
+- Native engineering edit execution evidence and closed-loop proof:
+  `sense.openclaw.engineering_tool.edit_execution_evidence` links approved
+  `workspace_patch_apply` task completion and filesystem write ledger records
+  back to `cc_edit` proposal metadata; the closed-loop milestone proves
+  read/search, proposal, approval, patch apply, ledger, Observer,
+  verification, and recovery together.
 - Native engineering write proposal surface:
   `act.openclaw.engineering_tool.write_proposal` maps `cc_write`
   create/overwrite intent into bounded workspace proposal evidence with redacted
@@ -144,7 +150,7 @@ enhanced `openclaw` modules.
 | Enhanced capability | Classification | Current evidence | Migration call | Identity level |
 | --- | --- | --- | --- | --- |
 | `cc_read` | absorbed | `sense.openclaw.engineering_tool.read` provides bounded workspace file read with line ranges, content budget, traversal protection, binary/size boundaries, audit, and Observer evidence. | Continue using the native read/search surface; do not import enhanced `FileReadTool.ts`. | Level 1 |
-| `cc_edit` | absorbed through governed proposal and approval bridge | `act.openclaw.engineering_tool.edit_proposal` creates exact-match surgical edit proposals with bounded diff previews; `openclaw-native-engineering-edit-proposal-task-v0` bridges confirmed proposals to approval-gated `workspace_patch_apply` tasks. | Keep proposal, approval, execution, and evidence separated. Do not migrate immediate raw edit execution. | Level 1 |
+| `cc_edit` | absorbed through governed proposal/approval/execution evidence and closed-loop proof | `act.openclaw.engineering_tool.edit_proposal` creates exact-match surgical edit proposals with bounded diff previews; `openclaw-native-engineering-edit-proposal-task-v0` bridges confirmed proposals to approval-gated `workspace_patch_apply` tasks; `sense.openclaw.engineering_tool.edit_execution_evidence` reads completed patch ledger evidence; `openclaw-native-engineering-edit-closed-loop` proves read/search -> proposal -> approval -> apply -> ledger -> verification/recovery -> Observer. | Keep proposal, approval, execution evidence, verification, and recovery separated. Do not migrate immediate raw edit execution or auto-approval. | Level 1 |
 | `cc_write` | absorbed through governed proposal/approval/execution evidence | `act.openclaw.engineering_tool.write_proposal` creates redacted create/overwrite proposal evidence; `openclaw-native-engineering-write-proposal-task-v0` bridges confirmed proposals to approval-gated `workspace_text_write` tasks; `sense.openclaw.engineering_tool.write_execution_evidence` reads completed write ledger evidence. | Keep proposal, approval, execution, and recovery separated. Do not migrate raw overwrite semantics as an autonomous default. | Level 1 |
 | `cc_glob` | absorbed | `sense.openclaw.engineering_tool.glob` performs bounded workspace file discovery with skipped hidden/generated/cache/dependency directories and result caps. | Continue native bounded discovery; do not execute enhanced `GlobTool.ts`. | Level 1 |
 | `cc_grep` | absorbed | `sense.openclaw.engineering_tool.grep` performs bounded workspace text search with literal/regex mode, include filters, result/output caps, binary skips, audit, and Observer evidence. | Continue native bounded search; do not execute enhanced `GrepTool.ts`. | Level 1 |
@@ -203,15 +209,19 @@ Current OpenClaw:
 - `openclaw-native-engineering-edit-proposal-task-v0` rebuilds proposal
   evidence, verifies hashes against the patch task draft, and creates a queued
   approval-gated `workspace_patch_apply` task without approving or executing it.
+- `sense.openclaw.engineering_tool.edit_execution_evidence` reads completed
+  approved patch task outcomes and filesystem ledger records without applying
+  edits or creating approvals.
 
-Classification: absorbed through governed proposal and approval bridge.
+Classification: absorbed through governed proposal/approval/execution evidence
+and closed-loop proof.
 
 Recommendation:
 
 - Do not migrate immediate edit execution. The useful part is the uniqueness
   check and surgical edit ergonomics; OpenClaw's existing approval and ledger
-  path should remain authoritative. Add read-only edit execution evidence after
-  approved patch task completion.
+  path should remain authoritative. Future work should improve operator controls
+  for the closed loop rather than adding more readiness shells.
 
 ### `cc_write`
 

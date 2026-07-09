@@ -1,4 +1,5 @@
 import { sendJson } from "../../../packages/shared-utils/src/http.mjs";
+import { buildNativeEngineeringEditExecutionEvidence } from "./native-engineering-edit-execution-evidence-builders.mjs";
 import { buildNativeEngineeringMicrocompactEvidence } from "./native-engineering-microcompact-evidence-builders.mjs";
 import { buildNativeEngineeringPlanTodoEvidence } from "./native-engineering-plan-todo-evidence-builders.mjs";
 import { buildNativeEngineeringRecoveryEvidence } from "./native-engineering-recovery-evidence-builders.mjs";
@@ -174,6 +175,19 @@ export async function handleObserverReadModelRoute({ req, res, requestUrl, state
     const taskId = requestUrl.searchParams.get("taskId") ?? null;
     const ledgerLimit = taskId ? 100 : safeLimit;
     sendJson(res, 200, buildNativeEngineeringWriteExecutionEvidence({
+      filesystemChanges: executor.listFilesystemChangeRecords({ limit: ledgerLimit }),
+      tasks: state.tasks,
+      taskId,
+      limit: safeLimit,
+    }));
+    return true;
+  }
+
+  if (requestUrl.pathname === "/plugins/native-adapter/engineering-edit-execution/evidence") {
+    const safeLimit = clampLedgerLimit(parseLimit(requestUrl.searchParams));
+    const taskId = requestUrl.searchParams.get("taskId") ?? null;
+    const ledgerLimit = taskId ? 100 : safeLimit;
+    sendJson(res, 200, buildNativeEngineeringEditExecutionEvidence({
       filesystemChanges: executor.listFilesystemChangeRecords({ limit: ledgerLimit }),
       tasks: state.tasks,
       taskId,

@@ -53,16 +53,14 @@ The following remain deferred:
 automatic approval
 filesystem patch apply before approval
 operator execution in this bridge route
-edit execution evidence after approval
-verification command execution after edit
+automatic verification command execution after edit
 automatic recovery task creation
 provider calls, network egress, result envelopes
 ```
 
 Approved edit execution remains the existing `workspace_patch_apply` task
-capability. Future engineering-specific execution evidence should prove the
-approved patch outcome, filesystem ledger, task transcript, Observer recovery,
-and targeted verification without weakening the approval gate.
+capability. The follow-up closed-loop proof adds thin execution readback and
+verification/recovery proof without weakening the approval gate.
 
 ## Evidence
 
@@ -93,16 +91,24 @@ openclaw-native-engineering-edit-approval-bridge
 observer-openclaw-native-engineering-edit-approval-bridge
 ```
 
+## Follow-Up Status
+
+The recommended closed-loop follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_EDIT_CLOSED_LOOP_PLAN.md
+```
+
+That slice includes a thin execution readback and proves read/search, proposal,
+approval-gated patch apply, ledger, Observer, verification, and recovery.
+
 ## Next Slice
 
 The next recommended real capability is:
 
 ```text
-Native governed engineering edit closed-loop proof
+Native governed engineering loop operator controls
 ```
 
-That slice may include a thin edit execution evidence readback, but it should
-prove the full path: bounded read/search, edit proposal, approval-gated
-workspace_patch_apply, filesystem ledger, Observer visibility, verification
-command evidence, and recovery recommendation. It should not auto-approve or
-bypass operator approval.
+That slice should make the proven write/edit loops easier to operate from
+Observer/workbench without bypassing approval or adding another readiness chain.

@@ -84,15 +84,25 @@ provider calls, network egress, result envelopes
 raw credential reads
 ```
 
-## Next Slice
+## Follow-Up Status
 
-The next highest-density capability slice should extend the same closed-loop
-pattern to `cc_edit`:
+The recommended edit closed-loop follow-up was completed as:
 
 ```text
-Native governed engineering edit closed-loop proof
+OPENCLAW_NATIVE_ENGINEERING_EDIT_CLOSED_LOOP_PLAN.md
 ```
 
-That slice should prove edit proposal -> approval-gated workspace_patch_apply ->
-ledger -> Observer -> verification/recovery, without adding another standalone
-readiness or evidence-only shell.
+That slice proves edit proposal -> approval-gated workspace_patch_apply ->
+ledger -> Observer -> verification/recovery, with only a thin execution
+readback and no readiness chain.
+
+## Next Slice
+
+The next highest-density capability slice should improve operator ergonomics:
+
+```text
+Native governed engineering loop operator controls
+```
+
+That slice should make the proven write/edit loops easier to operate from
+Observer/workbench without bypassing approval.

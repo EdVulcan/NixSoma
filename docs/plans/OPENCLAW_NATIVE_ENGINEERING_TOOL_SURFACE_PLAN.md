@@ -46,7 +46,7 @@ call providers or perform network egress
 | Source tool | Native capability id | Operation class | Risk | Approval expectation | Migration status |
 | --- | --- | --- | --- | --- | --- |
 | `cc_read` | `sense.openclaw.engineering_tool.read` | `read_only_file_read` | low | no approval for inventory; future content reads require workspace scope, budget, and audit | contract mapped, execution deferred |
-| `cc_edit` | `act.openclaw.engineering_tool.edit_proposal` / `act.openclaw.engineering_tool.edit_proposal_task` | `mutation_proposal_and_approval_bridge` | high | approval required before apply | absorbed through governed proposal and approval bridge; execution evidence deferred |
+| `cc_edit` | `act.openclaw.engineering_tool.edit_proposal` / `act.openclaw.engineering_tool.edit_proposal_task` / `sense.openclaw.engineering_tool.edit_execution_evidence` | `mutation_proposal_approval_execution_evidence` | high | approval required before apply | absorbed through governed proposal, approval bridge, thin execution evidence, and closed-loop proof |
 | `cc_write` | `act.openclaw.engineering_tool.write_proposal` / `sense.openclaw.engineering_tool.write_execution_evidence` | `mutation_proposal_and_execution_evidence` | high | approval required before create or overwrite | absorbed through governed proposal, approval bridge, and execution evidence |
 | `cc_glob` | `sense.openclaw.engineering_tool.glob` | `read_only_path_search` | low | no approval for bounded metadata search | contract mapped, execution deferred |
 | `cc_grep` | `sense.openclaw.engineering_tool.grep` | `read_only_content_search` | low | no approval for bounded search; snippets require budget and audit | contract mapped, execution deferred |
@@ -110,7 +110,7 @@ The following remain intentionally deferred:
 ```text
 unbounded/raw file reads outside the native read/search surface
 raw enhanced glob/grep execution outside native bounds
-surgical edit execution evidence after approved workspace_patch_apply task completion
+automatic edit approval, automatic recovery task creation, and unapproved verification command execution
 automatic write approval, automatic recovery task creation, and post-write
 verification command execution
 LSP lifecycle startup and request handling; `lsp_evidence` contract and
@@ -125,10 +125,8 @@ provider calls, network egress, and result envelopes
 The current next smallest real capability is:
 
 ```text
-Native governed engineering edit closed-loop proof
+Native governed engineering loop operator controls
 ```
 
-That slice may add a thin `cc_edit` execution-evidence readback if needed, but
-it should aim at the full loop: read/search -> proposal -> approval-gated
-workspace_patch_apply -> ledger -> Observer -> verification/recovery, not a
-new readiness chain.
+That slice should make the proven write/edit loops easier to operate from
+Observer/workbench without bypassing approval or adding another readiness chain.

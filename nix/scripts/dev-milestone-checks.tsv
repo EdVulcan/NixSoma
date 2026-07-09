@@ -331,6 +331,7 @@ openclaw-native-engineering-tool-surface-inventory	dev-openclaw-native-engineeri
 openclaw-native-engineering-read-search	dev-openclaw-native-engineering-read-search-check.sh	Native governed bounded workspace read, glob, and grep
 openclaw-native-engineering-edit-proposal	dev-openclaw-native-engineering-edit-proposal-check.sh	Native governed surgical edit proposal with diff preview
 openclaw-native-engineering-edit-approval-bridge	dev-openclaw-native-engineering-edit-approval-bridge-check.sh	Native governed bridge from engineering edit proposals to approval-gated workspace patch tasks
+openclaw-native-engineering-edit-closed-loop	dev-openclaw-native-engineering-edit-closed-loop-check.sh	Native governed engineering edit closed loop from read/search to verification and recovery
 openclaw-native-engineering-write-proposal	dev-openclaw-native-engineering-write-proposal-check.sh	Native governed source write proposal evidence without file mutation
 openclaw-native-engineering-write-approval-bridge	dev-openclaw-native-engineering-write-approval-bridge-check.sh	Native governed bridge from engineering write proposals to approval-gated workspace text write tasks
 openclaw-native-engineering-write-execution-evidence	dev-openclaw-native-engineering-write-execution-evidence-check.sh	Native governed execution evidence for approved engineering write proposal tasks
