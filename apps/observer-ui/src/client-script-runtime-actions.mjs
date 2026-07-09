@@ -359,6 +359,25 @@ async function runRecommendedWorkViewAction() {
   setControlMessage(\`Unsupported work view recommendation: \${action}\`);
 }
 
+async function createTrustedSidecarLifecycleTask() {
+  const result = await fetchJson(\`\${observerConfig.coreUrl}/work-view/trusted-sidecar/lifecycle-tasks\`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ confirm: true }),
+  });
+  taskHistoryFocus = "selected-task";
+  selectedHistoryTaskId = result.task?.id ?? null;
+  taskDetailIdInput.value = result.task?.id ?? "";
+  renderPlanPanel(result.task);
+  setControlMessage(\`Created trusted work-view sidecar lifecycle task \${result.task?.id ?? "unknown"}; process start remains deferred.\`);
+  await refreshRuntime();
+  await refreshTaskList();
+  await refreshTaskHistoryDetail();
+  await refreshApprovalState();
+  await refreshOperatorState();
+  await refreshWorkView();
+}
+
 async function openWorkViewUrl(taskId = null) {
   const entryUrl = getDesiredWorkViewUrl();
   if (taskId) {

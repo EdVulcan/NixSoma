@@ -43,14 +43,16 @@ prepared_state="$(curl --silent --fail "$SESSION_MANAGER_URL/work-view/state")"
 attach_body="$(node -e 'const data=JSON.parse(process.argv[1]); const workView=data.workView??{}; process.stdout.write(JSON.stringify({sessionId:data.session?.sessionId??null,status:"ready",visibility:workView.visibility??"hidden",mode:workView.mode??"background",helperStatus:workView.helperStatus??"active",displayTarget:workView.displayTarget??"workspace-2",activeUrl:workView.activeUrl??"https://example.com/phase-3-controls"}));' "$prepared_state")"
 post_json "$CORE_URL/tasks/$task_id/attach-work-view" "$attach_body" >/dev/null
 takeover="$(post_json "$CORE_URL/control/takeover" '{}')"
+sidecar_task="$(post_json "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks" '{"confirm":true}')"
 
 CONTROLS_FILE="$(mktemp)"
 curl --silent --fail "$CORE_URL/phase-3/operator-interrupt-controls" > "$CONTROLS_FILE"
 
-node - <<'EOF' "$CONTROLS_FILE" "$takeover"
+node - <<'EOF' "$CONTROLS_FILE" "$takeover" "$sidecar_task"
 const fs = require("node:fs");
 const controls = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
 const takeover = JSON.parse(process.argv[3]);
+const sidecarTask = JSON.parse(process.argv[4]);
 
 if (!controls.ok
   || controls.registry !== "openclaw-phase-3-operator-interrupt-controls-v0"
@@ -71,6 +73,14 @@ if (!takeover.ok
   || takeover.task?.workView?.mode !== "operator-takeover") {
   throw new Error(`takeover should pause task and mark operator control: ${JSON.stringify(takeover.task)}`);
 }
+if (!sidecarTask.ok
+  || sidecarTask.registry !== "openclaw-work-view-trusted-sidecar-lifecycle-task-v0"
+  || sidecarTask.task?.type !== "work_view_trusted_sidecar_lifecycle"
+  || sidecarTask.approval?.status !== "pending"
+  || sidecarTask.governance?.processStartEnabled !== false
+  || sidecarTask.task?.workViewTrustedSidecarLifecycle?.execution !== null) {
+  throw new Error(`sidecar lifecycle task should be approval-gated and non-executing: ${JSON.stringify(sidecarTask)}`);
+}
 
 console.log(JSON.stringify({
   openclawPhase3OperatorInterruptControls: {
@@ -78,6 +88,8 @@ console.log(JSON.stringify({
     registry: controls.registry,
     controls: controls.controls.map((control) => control.id),
     takeoverTaskStatus: takeover.task.status,
+    sidecarTask: sidecarTask.task.id,
+    approval: sidecarTask.approval.id,
   },
 }, null, 2));
 EOF

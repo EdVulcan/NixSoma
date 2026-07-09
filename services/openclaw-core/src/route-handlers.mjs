@@ -16,6 +16,7 @@ import { handlePhaseMemoryReadRoute } from "./phase-memory-read-routes.mjs";
 import { handlePolicyCapabilityRoute } from "./policy-capability-routes.mjs";
 import { handleSystemdDraftRoute } from "./systemd-draft-routes.mjs";
 import { handleTaskRoute } from "./task-routes.mjs";
+import { handleWorkViewSidecarTaskRoute } from "./work-view-sidecar-task-routes.mjs";
 import { handleWorkspaceNativeOpsRoute } from "./workspace-native-ops-routes.mjs";
 import { handleWorkspacePluginReadRoute } from "./workspace-plugin-read-routes.mjs";
 
@@ -129,6 +130,23 @@ export function registerRoutes(deps) {
       publishEvent,
       serialiseTask,
       serialiseApproval,
+      buildTaskSummary,
+    })) {
+      return;
+    }
+
+    if (await handleWorkViewSidecarTaskRoute({
+      req,
+      res,
+      requestUrl,
+      sessionManagerUrl,
+      state,
+      taskManager,
+      approvalEngine,
+      publishEvent,
+      serialiseTask,
+      serialiseApproval,
+      serialisePlanForPublic,
       buildTaskSummary,
     })) {
       return;

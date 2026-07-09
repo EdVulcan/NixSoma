@@ -42,19 +42,23 @@ CONTROLS_FILE="$(mktemp)"
 curl --silent --fail "$OBSERVER_URL/" > "$HTML_FILE"
 curl --silent --fail "$OBSERVER_URL/client-v5.js" > "$CLIENT_FILE"
 curl --silent --fail "$CORE_URL/phase-3/operator-interrupt-controls" > "$CONTROLS_FILE"
+SIDECAR_TASK="$(curl --silent --fail -X POST "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks" \
+  -H 'content-type: application/json' \
+  --data '{"confirm":true}')"
 
-node - <<'EOF' "$HTML_FILE" "$CLIENT_FILE" "$CONTROLS_FILE"
+node - <<'EOF' "$HTML_FILE" "$CLIENT_FILE" "$CONTROLS_FILE" "$SIDECAR_TASK"
 const fs = require("node:fs");
 const html = fs.readFileSync(process.argv[2], "utf8");
 const client = fs.readFileSync(process.argv[3], "utf8");
 const controls = JSON.parse(fs.readFileSync(process.argv[4], "utf8"));
+const sidecarTask = JSON.parse(process.argv[5]);
 
-for (const token of ["Phase 3 Operator Interrupt Controls", "phase3-operator-interrupt-controls-panel", "phase3-controls-takeover"]) {
+for (const token of ["Phase 3 Operator Interrupt Controls", "phase3-operator-interrupt-controls-panel", "phase3-controls-takeover", "create-trusted-sidecar-lifecycle-task-button"]) {
   if (!html.includes(token)) {
     throw new Error(`Observer HTML missing ${token}`);
   }
 }
-for (const token of ["/phase-3/operator-interrupt-controls", "refreshPhase3OperatorInterruptControls", "openclaw-phase-3-operator-interrupt-controls-v0", "/control/takeover", "workViewRecoveryAction", "trustedSession.helperReadiness"]) {
+for (const token of ["/phase-3/operator-interrupt-controls", "refreshPhase3OperatorInterruptControls", "openclaw-phase-3-operator-interrupt-controls-v0", "/control/takeover", "/work-view/trusted-sidecar/lifecycle-tasks", "createTrustedSidecarLifecycleTask", "workViewRecoveryAction", "trustedSession.helperReadiness"]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);
   }
@@ -62,12 +66,21 @@ for (const token of ["/phase-3/operator-interrupt-controls", "refreshPhase3Opera
 if (!controls.ok || controls.summary?.ready !== true || controls.summary?.takeoverSupported !== true) {
   throw new Error(`Observer Phase 3 operator controls should be ready: ${JSON.stringify(controls.summary)}`);
 }
+if (!sidecarTask.ok
+  || sidecarTask.task?.type !== "work_view_trusted_sidecar_lifecycle"
+  || sidecarTask.approval?.status !== "pending"
+  || sidecarTask.governance?.processStartEnabled !== false
+  || sidecarTask.governance?.rootRequired !== false) {
+  throw new Error(`Observer sidecar lifecycle task should be approval-gated and non-executing: ${JSON.stringify(sidecarTask)}`);
+}
 
 console.log(JSON.stringify({
   observerOpenClawPhase3OperatorInterruptControls: {
     status: "passed",
     panel: "Phase 3 Operator Interrupt Controls",
     controls: controls.controls.map((control) => control.id),
+    sidecarTask: sidecarTask.task.id,
+    approval: sidecarTask.approval.id,
   },
 }, null, 2));
 EOF

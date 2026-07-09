@@ -9,6 +9,7 @@ const TASK_EXTENSION_FIELDS = [
   { name: "nativePluginRuntimeRefresh" },
   { name: "nativeAcpxCodexBridgeWrapper" },
   { name: "nativeAcpxCodexBridgeProcessSpawn" },
+  { name: "workViewTrustedSidecarLifecycle" },
   { name: "systemdRepair", copyFromCreateInput: true },
   { name: "systemdNextRepair", copyFromCreateInput: true },
   { name: "systemdRepairCandidate" },

@@ -63,8 +63,8 @@ The contract also carries a future Level 2 sidecar draft. It names the helper's
 capture/action/recovery/Observer responsibilities and explicitly records that no
 process is started, no installation is required, and no root/system daemon is
 used in this slice. The lifecycle proposal records the future approval gate and
-keeps execution deferred. The approval task draft records the future task shape
-without creating a task or approval yet.
+keeps execution deferred. The approval task materialization creates an explicit
+task and pending approval while keeping process start disabled.
 
 Every work-view prepare/reveal/hide call now records `lastOperatorAction` in the
 existing work-view state. The record includes:
@@ -108,6 +108,7 @@ GET /session/state
 GET /browser/capture
 GET /screen/current
 GET /phase-3/background-work-view
+POST /work-view/trusted-sidecar/lifecycle-tasks
 Observer work-view and screen panels
 ```
 
@@ -175,9 +176,10 @@ bookkeeping to Level 2 session-helper preparation without starting a sidecar or
 requiring privileges:
 
 ```text
-AI work-view trusted sidecar approval task materialization
+AI work-view trusted sidecar approval readback and pre-approval block
 ```
 
-It should turn the draft into an explicit approval-gated task only when doing so
-unlocks operator-visible lifecycle control. Actual process start, installation,
-root/system daemon work, and desktop-wide capture remain deferred.
+It should show the materialized sidecar lifecycle task and approval in Observer
+and prove any lifecycle execution remains blocked before approval. Actual
+process start, installation, root/system daemon work, and desktop-wide capture
+remain deferred.

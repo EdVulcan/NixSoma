@@ -261,6 +261,12 @@ runRecommendedWorkViewActionButton.addEventListener("click", () => {
   });
 });
 
+createTrustedSidecarLifecycleTaskButton.addEventListener("click", () => {
+  createTrustedSidecarLifecycleTask().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 refreshScreenButton.addEventListener("click", () => {
   refreshScreenNow().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);
