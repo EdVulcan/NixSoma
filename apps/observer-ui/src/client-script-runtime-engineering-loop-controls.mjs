@@ -243,14 +243,14 @@ async function createEngineeringLspSourceTransferLoopTask() {
   await refreshEngineeringLoopControlSurfaces();
 }
 
-async function createEngineeringLspSymbolRequestLoopTask() {
+async function createEngineeringLspSymbolRequestLoopTask(symbolAction = "definition") {
   const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-lsp/lifecycle-tasks\`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       language: "typescript",
       lifecycleAction: "symbol_request",
-      symbolAction: "definition",
+      symbolAction,
       relativePath: "src/app.ts",
       line: 2,
       character: 14,
@@ -259,7 +259,7 @@ async function createEngineeringLspSymbolRequestLoopTask() {
   });
   focusEngineeringLoopTask(result);
   renderEngineeringLspLifecycleLoopTaskState(result);
-  setControlMessage(\`Created LSP symbol request task \${result.task?.id ?? "unknown"}; approval and operator step are still required.\`);
+  setControlMessage(\`Created LSP \${symbolAction} request task \${result.task?.id ?? "unknown"}; approval and operator step are still required.\`);
   await refreshEngineeringLoopControlSurfaces();
 }
 

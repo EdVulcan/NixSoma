@@ -278,6 +278,21 @@ OPENCLAW_NATIVE_ENGINEERING_LSP_SYMBOL_RESPONSE_SUMMARY_PLAN.md
 That slice records result shape/count metadata from approved single symbol
 requests without returning raw response payloads or source bodies.
 
-Next, exercise the same governed single-request path for `references` and
-`hover` so the response summary is proven across the enhanced-source LSP
-contract shape while long-lived language-server pools remain deferred.
+The references/hover variant follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_VARIANT_REQUESTS_PLAN.md
+```
+
+That slice proves `definition`, `references`, and `hover` use the same
+approval-gated single-request path and bounded response summary.
+
+The current next smallest real capability is:
+
+```text
+governed LSP response target selection
+```
+
+That slice should let the operator select one bounded definition/reference
+target for a future read/search action without opening a long-lived LSP pool,
+returning raw response payloads, or mutating the workspace.

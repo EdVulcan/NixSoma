@@ -101,8 +101,12 @@ for (const token of [
   "engineering-lsp-lifecycle-task-button",
   "engineering-lsp-source-transfer-task-button",
   "engineering-lsp-symbol-request-task-button",
+  "engineering-lsp-references-task-button",
+  "engineering-lsp-hover-task-button",
+  "Create Definition Task",
   "Create Source Transfer Task",
-  "Create Symbol Request Task",
+  "Create References Task",
+  "Create Hover Task",
   "engineering-lsp-json",
 ]) {
   if (!html.includes(token)) {
@@ -126,6 +130,8 @@ for (const token of [
   "lsp-lifecycle",
   "source_transfer",
   "symbol_request",
+  "references",
+  "hover",
   "approval-gated lifecycle process only",
   "approved execution may send initialize plus didOpen only",
   "approved execution may send didOpen plus one symbol request only",

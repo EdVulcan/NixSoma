@@ -764,8 +764,31 @@ It produces:
 - No raw response payload exposure, raw source body exposure, long-lived pool,
   provider call, network egress, or root/system daemon work.
 
-Next, exercise `references` and `hover` through the same governed single-request
-task path rather than adding another readiness marker.
+Latest LSP references/hover variant coverage completed:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_VARIANT_REQUESTS_PLAN.md
+```
+
+It produces:
+
+- Proposal mapping for `references` and `hover`.
+- Observer controls for definition, references, and hover tasks through the same
+  governed route.
+- Bounded response-summary unit coverage for references arrays and hover
+  content metadata.
+- Continued deferral of raw response payloads, long-lived LSP pools,
+  auto-approval, provider calls, and root/system daemon work.
+
+Next smallest real capability:
+
+```text
+governed LSP response target selection
+```
+
+That should let the operator select one bounded definition/reference target for
+a future read/search action without adding another readiness marker or opening a
+long-lived LSP pool.
 
 Required answer for every following slice:
 

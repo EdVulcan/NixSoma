@@ -75,15 +75,15 @@ openclaw-native-engineering-lsp-evidence
 observer-openclaw-native-engineering-lsp-evidence
 ```
 
-## Next Slice
+## Follow-up Completed
 
-The next smallest real capability is:
+The variant request follow-up was completed as:
 
 ```text
-governed LSP references/hover variants
+OPENCLAW_NATIVE_ENGINEERING_LSP_VARIANT_REQUESTS_PLAN.md
 ```
 
-That follow-up should exercise the same approval-gated single-request path for
-`references` and `hover`, prove the bounded response summary handles both
-shapes, and keep long-lived process pools, package installation, provider
-egress, network egress, and root/system daemon work deferred.
+It exercises the same approval-gated single-request path for `references` and
+`hover`, proves the bounded response summary handles both shapes, and keeps
+long-lived process pools, package installation, provider egress, network egress,
+and root/system daemon work deferred.

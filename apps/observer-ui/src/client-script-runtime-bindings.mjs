@@ -53,7 +53,19 @@ engineeringLspSourceTransferTaskButton.addEventListener("click", () => {
 });
 
 engineeringLspSymbolRequestTaskButton.addEventListener("click", () => {
-  createEngineeringLspSymbolRequestLoopTask().catch((error) => {
+  createEngineeringLspSymbolRequestLoopTask("definition").catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
+engineeringLspReferencesTaskButton.addEventListener("click", () => {
+  createEngineeringLspSymbolRequestLoopTask("references").catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
+engineeringLspHoverTaskButton.addEventListener("click", () => {
+  createEngineeringLspSymbolRequestLoopTask("hover").catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);
   });
 });

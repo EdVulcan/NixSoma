@@ -365,6 +365,28 @@ test("native engineering LSP symbol request proposal requires approved didOpen s
   assert.equal(proposal.governance.futureSymbolRequestRequiresApproval, true);
   assert.equal(proposal.bounds.noSymbolRequestSent, true);
   assert.equal(proposal.summary.symbolRequestSent, false);
+
+  const references = builders.buildNativeEngineeringLspSymbolRequestProposal({
+    workspacePath: "/tmp/openclaw",
+    language: "typescript",
+    action: "references",
+    relativePath: "src/app.ts",
+    line: 2,
+    character: 14,
+  });
+  assert.equal(references.proposedJsonRpc.method, "textDocument/references");
+  assert.equal(references.proposedJsonRpc.params.context.includeDeclaration, true);
+
+  const hover = builders.buildNativeEngineeringLspSymbolRequestProposal({
+    workspacePath: "/tmp/openclaw",
+    language: "typescript",
+    action: "hover",
+    relativePath: "src/app.ts",
+    line: 2,
+    character: 14,
+  });
+  assert.equal(hover.proposedJsonRpc.method, "textDocument/hover");
+  assert.equal(hover.proposedJsonRpc.params.context, undefined);
 });
 
 test("native engineering LSP symbol request proposal stays blocked without didOpen state", () => {
