@@ -740,6 +740,134 @@ test("approved ACPX/Codex bridge wrapper task records deferred boundary without 
   assert(events.some((event) => event.name === "task.completed"));
 });
 
+test("ACPX/Codex process-spawn task waits for approval before preflight", async () => {
+  const { executor, state, events } = createExecutorHarness();
+  state.approvals.set("approval-acpx-spawn-pending", {
+    id: "approval-acpx-spawn-pending",
+    status: "pending",
+    taskId: "acpx-spawn-pending",
+  });
+  const task = {
+    id: "acpx-spawn-pending",
+    type: "native_acpx_codex_bridge_process_spawn",
+    goal: "Approve ACPX/Codex process spawn preflight",
+    status: "queued",
+    approval: {
+      requestId: "approval-acpx-spawn-pending",
+      status: "pending",
+      required: true,
+    },
+    policy: {
+      request: { intent: "acpx_codex_bridge.process_spawn_preflight", requiresApproval: true },
+      decision: { decision: "require_approval", approved: false, reason: "unit_test" },
+    },
+    plan: {
+      strategy: "acpx-codex-bridge-process-spawn-v0",
+    },
+    nativeAcpxCodexBridgeProcessSpawn: {
+      registry: "openclaw-native-acpx-codex-bridge-process-spawn-task-v0",
+      processSpawnProposal: {
+        proposal: {
+          wrapper: {
+            relativePath: ".openclaw/acpx/codex-bridge/codex-acp-one.sh",
+          },
+        },
+      },
+    },
+  };
+
+  const result = await executor.executeTaskWithRecovery(task);
+
+  assert.equal(result.finalExecution.blocked, true);
+  assert.equal(result.finalExecution.reason, "policy_requires_approval");
+  assert.equal(result.finalExecution.governance.mode, "acpx_codex_bridge_process_spawn_waiting_for_approval");
+  assert.equal(result.finalExecution.governance.canExecuteWrapper, false);
+  assert.equal(result.finalExecution.governance.canSpawnCodexAcp, false);
+  assert(events.some((event) => event.name === "task.blocked"));
+});
+
+test("approved ACPX/Codex process-spawn task records preflight without spawning", async () => {
+  const fixtureDir = mkdtempSync(path.join(tmpdir(), "openclaw-acpx-spawn-"));
+  try {
+    const wrapperPath = path.join(fixtureDir, ".openclaw/acpx/codex-bridge/codex-acp-one.sh");
+    mkdirSync(path.dirname(wrapperPath), { recursive: true });
+    const wrapperContent = "#!/usr/bin/env node\nconsole.log('preflight only');\n";
+    writeFileSync(wrapperPath, wrapperContent);
+    const wrapperHash = `sha256:${createHash("sha256").update(wrapperContent).digest("hex")}`;
+    const { executor, state, events } = createExecutorHarness();
+    state.approvals.set("approval-acpx-spawn-approved", {
+      id: "approval-acpx-spawn-approved",
+      status: "approved",
+      taskId: "acpx-spawn-approved",
+    });
+    const task = {
+      id: "acpx-spawn-approved",
+      type: "native_acpx_codex_bridge_process_spawn",
+      goal: "Approve ACPX/Codex process spawn preflight",
+      status: "queued",
+      approval: {
+        requestId: "approval-acpx-spawn-approved",
+        status: "approved",
+        required: false,
+      },
+      policy: {
+        request: { intent: "acpx_codex_bridge.process_spawn_preflight", requiresApproval: true, approved: true },
+        decision: { decision: "audit_only", approved: true, reason: "approved_unit_test" },
+      },
+      plan: {
+        strategy: "acpx-codex-bridge-process-spawn-v0",
+      },
+      nativeAcpxCodexBridgeProcessSpawn: {
+        registry: "openclaw-native-acpx-codex-bridge-process-spawn-task-v0",
+        processSpawnProposal: {
+          registry: "openclaw-native-acpx-codex-bridge-process-spawn-proposal-v0",
+          proposal: {
+            id: "spawn-proposal-one",
+            status: "ready_for_spawn_approval_design",
+            wrapper: {
+              relativePath: ".openclaw/acpx/codex-bridge/codex-acp-one.sh",
+              ledgerPath: wrapperPath,
+              contentHash: wrapperHash,
+              contentPreviewExposed: false,
+            },
+            commandContract: {
+              futureCapabilityId: "act.system.command.execute",
+              commandName: "node",
+              argsCount: 1,
+              argsExposed: false,
+              commandExecuted: false,
+              processSpawned: false,
+            },
+          },
+          summary: {
+            readyForSpawnApprovalDesign: true,
+          },
+        },
+      },
+    };
+
+    const result = await executor.executeTaskWithRecovery(task);
+    const execution = result.finalExecution.execution;
+
+    assert.equal(result.finalExecution.blocked, false);
+    assert.equal(result.finalExecution.task.status, "completed");
+    assert.equal(execution.registry, "openclaw-native-acpx-codex-bridge-process-spawn-preflight-v0");
+    assert.equal(execution.wrapper.exists, true);
+    assert.equal(execution.wrapper.hashMatches, true);
+    assert.equal(execution.command.argsExposed, false);
+    assert.equal(execution.command.commandExecuted, false);
+    assert.equal(execution.command.processSpawned, false);
+    assert.equal(execution.governance.canExecuteWrapper, false);
+    assert.equal(execution.governance.canSpawnCodexAcp, false);
+    assert.equal(execution.governance.canUseNetwork, false);
+    assert.equal(result.finalExecution.task.nativeAcpxCodexBridgeProcessSpawn.execution.registry, execution.registry);
+    assert.equal(result.finalExecution.task.outcome.details.verification.ok, true);
+    assert(events.some((event) => event.name === "task.completed"));
+  } finally {
+    rmSync(fixtureDir, { recursive: true, force: true });
+  }
+});
+
 test("capability plan task dispatches to capability invocation handler", async () => {
   const invocationBodies = [];
   const { executor, events } = createExecutorHarness({

@@ -106,6 +106,7 @@ for (const token of [
   "acpx-codex-bridge-mode",
   "acpx-codex-bridge-wrapper-task-button",
   "acpx-codex-bridge-wrapper-write-task-button",
+  "acpx-codex-bridge-process-spawn-task-button",
   "acpx-codex-bridge-json",
 ]) {
   if (!html.includes(token)) {
@@ -118,12 +119,14 @@ for (const token of [
   "/plugins/native-adapter/acpx-codex-bridge-wrapper-write-proposal",
   "/plugins/native-adapter/acpx-codex-bridge-wrapper-write-execution/evidence",
   "/plugins/native-adapter/acpx-codex-bridge-process-spawn-proposal",
+  "/plugins/native-adapter/acpx-codex-bridge-process-spawn-tasks",
   "/plugins/native-adapter/acpx-codex-bridge-wrapper-tasks",
   "/plugins/native-adapter/acpx-codex-bridge-wrapper-write-tasks",
   "refreshAcpxCodexBridgeCompatibility",
   "renderAcpxCodexBridgeCompatibility",
   "createAcpxCodexBridgeWrapperApprovalTask",
   "createAcpxCodexBridgeWrapperWriteApprovalTask",
+  "createAcpxCodexBridgeProcessSpawnPreflightTask",
   "ACPX/Codex bridge compatibility",
   "Wrapper draft",
   "Wrapper write proposal",

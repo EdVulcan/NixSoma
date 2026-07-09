@@ -614,6 +614,7 @@ export function observerOperationsPanels() {
           <div class="actions tight">
             <button id="acpx-codex-bridge-wrapper-task-button" type="button">Create Wrapper Task</button>
             <button id="acpx-codex-bridge-wrapper-write-task-button" type="button">Create Wrapper Write Task</button>
+            <button id="acpx-codex-bridge-process-spawn-task-button" type="button">Create Spawn Preflight Task</button>
           </div>
           <pre id="acpx-codex-bridge-json">Loading ACPX/Codex bridge compatibility evidence...</pre>
         </section>

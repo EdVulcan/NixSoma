@@ -68,6 +68,11 @@ cleanup() {
     "${WRAPPER_WRITE_LEDGER_FILE:-}" \
     "${WRAPPER_WRITE_EXECUTION_FILE:-}" \
     "${PROCESS_SPAWN_PROPOSAL_FILE:-}" \
+    "${PROCESS_SPAWN_TASK_FILE:-}" \
+    "${PROCESS_SPAWN_BLOCKED_FILE:-}" \
+    "${PROCESS_SPAWN_APPROVED_FILE:-}" \
+    "${PROCESS_SPAWN_STEP_FILE:-}" \
+    "${PROCESS_SPAWN_TASK_STATE_FILE:-}" \
     "${AFTER_RESTART_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
@@ -96,6 +101,11 @@ WRAPPER_WRITE_HISTORY_FILE="$(mktemp)"
 WRAPPER_WRITE_LEDGER_FILE="$(mktemp)"
 WRAPPER_WRITE_EXECUTION_FILE="$(mktemp)"
 PROCESS_SPAWN_PROPOSAL_FILE="$(mktemp)"
+PROCESS_SPAWN_TASK_FILE="$(mktemp)"
+PROCESS_SPAWN_BLOCKED_FILE="$(mktemp)"
+PROCESS_SPAWN_APPROVED_FILE="$(mktemp)"
+PROCESS_SPAWN_STEP_FILE="$(mktemp)"
+PROCESS_SPAWN_TASK_STATE_FILE="$(mktemp)"
 AFTER_RESTART_FILE="$(mktemp)"
 
 curl --silent --fail "$CORE_URL/plugins/native-adapter/acpx-codex-bridge-compatibility?sessionKey=agent:codex:missing" > "$INITIAL_FILE"
@@ -480,6 +490,99 @@ if (
   || processSpawnProposal.governance?.canUseNetwork !== false
 ) {
   throw new Error(`ACPX/Codex process spawn proposal mismatch: ${JSON.stringify(processSpawnProposal)}`);
+}
+EOF
+
+post_json "$CORE_URL/plugins/native-adapter/acpx-codex-bridge-process-spawn-tasks" "{\"taskId\":\"$wrapper_write_task_id\",\"confirm\":true}" > "$PROCESS_SPAWN_TASK_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$PROCESS_SPAWN_BLOCKED_FILE"
+
+process_spawn_approval_id="$(node - <<'EOF' "$PROCESS_SPAWN_TASK_FILE" "$PROCESS_SPAWN_BLOCKED_FILE"
+const fs = require("node:fs");
+const taskResponse = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const blocked = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+const raw = JSON.stringify({ taskResponse, blocked });
+if (
+  !taskResponse.ok
+  || taskResponse.registry !== "openclaw-native-acpx-codex-bridge-process-spawn-task-v0"
+  || taskResponse.processSpawnProposal?.proposal?.status !== "ready_for_spawn_approval_design"
+  || taskResponse.task?.type !== "native_acpx_codex_bridge_process_spawn"
+  || taskResponse.task?.nativeAcpxCodexBridgeProcessSpawn?.registry !== "openclaw-native-acpx-codex-bridge-process-spawn-task-v0"
+  || taskResponse.task?.nativeAcpxCodexBridgeProcessSpawn?.processSpawnProposal?.proposal?.commandContract?.argsExposed !== false
+  || taskResponse.approval?.status !== "pending"
+  || taskResponse.governance?.createsTask !== true
+  || taskResponse.governance?.createsApproval !== true
+  || taskResponse.governance?.canReadCredentialValue !== false
+  || taskResponse.governance?.canCopyAuthMaterial !== false
+  || taskResponse.governance?.canExecuteWrapper !== false
+  || taskResponse.governance?.canSpawnCodexAcp !== false
+  || taskResponse.governance?.canUseNetwork !== false
+) {
+  throw new Error(`ACPX/Codex process-spawn task response mismatch: ${JSON.stringify(taskResponse)}`);
+}
+if (
+  blocked.ran !== false
+  || blocked.blocked !== true
+  || blocked.reason !== "policy_requires_approval"
+  || blocked.approval?.id !== taskResponse.approval?.id
+) {
+  throw new Error(`ACPX/Codex process-spawn task should block before approval: ${JSON.stringify(blocked)}`);
+}
+if (raw.includes("@zed-industries/codex-acp@^0.11.1") || raw.includes("__OPENCLAW_APPROVED_CODEX_HOME__")) {
+  throw new Error("ACPX/Codex process-spawn task leaked wrapper command material");
+}
+process.stdout.write(blocked.approval.id);
+EOF
+)"
+
+process_spawn_task_id="$(node - <<'EOF' "$PROCESS_SPAWN_TASK_FILE"
+const fs = require("node:fs");
+const taskResponse = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+process.stdout.write(taskResponse.task.id);
+EOF
+)"
+
+post_json "$CORE_URL/approvals/$process_spawn_approval_id/approve" '{"approvedBy":"dev-openclaw-native-acpx-codex-bridge-compatibility-check","reason":"Approve ACPX/Codex process-spawn preflight only."}' > "$PROCESS_SPAWN_APPROVED_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$PROCESS_SPAWN_STEP_FILE"
+curl --silent --fail "$CORE_URL/tasks/$process_spawn_task_id" > "$PROCESS_SPAWN_TASK_STATE_FILE"
+
+node - <<'EOF' "$PROCESS_SPAWN_APPROVED_FILE" "$PROCESS_SPAWN_STEP_FILE" "$PROCESS_SPAWN_TASK_STATE_FILE" "$PROCESS_SPAWN_TASK_FILE"
+const fs = require("node:fs");
+const approved = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const step = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+const taskState = JSON.parse(fs.readFileSync(process.argv[4], "utf8"));
+const taskResponse = JSON.parse(fs.readFileSync(process.argv[5], "utf8"));
+const preflight = taskState.task?.nativeAcpxCodexBridgeProcessSpawn?.execution;
+if (approved.approval?.status !== "approved" || approved.task?.policy?.decision?.decision !== "audit_only") {
+  throw new Error(`ACPX/Codex process-spawn approval mismatch: ${JSON.stringify(approved)}`);
+}
+if (
+  step.ran !== true
+  || step.blocked !== false
+  || step.task?.status !== "completed"
+  || (step.execution?.capabilityInvocations ?? []).length !== 0
+  || (step.execution?.commandTranscript ?? []).length !== 0
+) {
+  throw new Error(`approved ACPX/Codex process-spawn preflight should not invoke capabilities or commands: ${JSON.stringify(step)}`);
+}
+if (
+  taskState.task?.status !== "completed"
+  || preflight?.registry !== "openclaw-native-acpx-codex-bridge-process-spawn-preflight-v0"
+  || preflight?.wrapper?.exists !== true
+  || preflight?.wrapper?.isFile !== true
+  || preflight?.wrapper?.hashMatches !== true
+  || preflight?.wrapper?.contentPreviewExposed !== false
+  || preflight?.command?.argsExposed !== false
+  || preflight?.command?.commandExecuted !== false
+  || preflight?.command?.processSpawned !== false
+  || preflight?.governance?.canReadCredentialValue !== false
+  || preflight?.governance?.canCopyAuthMaterial !== false
+  || preflight?.governance?.canExecuteWrapper !== false
+  || preflight?.governance?.canSpawnCodexAcp !== false
+  || preflight?.governance?.canUseNetwork !== false
+  || taskState.task?.outcome?.details?.verification?.ok !== true
+  || taskResponse.task?.nativeAcpxCodexBridgeProcessSpawn?.processSpawnProposal?.proposal?.wrapper?.contentHash !== preflight?.wrapper?.contentHash
+) {
+  throw new Error(`ACPX/Codex process-spawn preflight task state mismatch: ${JSON.stringify(taskState)}`);
 }
 EOF
 

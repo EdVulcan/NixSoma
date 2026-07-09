@@ -8,7 +8,8 @@ ACPX/Codex bridge compatibility, runtime persistence evidence, Observer
 visibility, wrapper/action proposal draft, approval-gated wrapper action task
 bridge, wrapper write proposal/preview, approval-gated wrapper write bridge
 through the existing workspace text-write path, and wrapper write execution
-readback/recovery recommendation, and process-spawn proposal contract.
+readback/recovery recommendation, process-spawn proposal contract, and
+approval-gated process-spawn preflight task.
 
 This slice migrates the useful enhanced-source ACPX/Codex bridge lessons into
 OpenClaw-native Level 1 behavior:
@@ -22,6 +23,7 @@ POST /plugins/native-adapter/acpx-codex-bridge-wrapper-tasks
 POST /plugins/native-adapter/acpx-codex-bridge-wrapper-write-tasks
 GET /plugins/native-adapter/acpx-codex-bridge-wrapper-write-execution/evidence
 GET /plugins/native-adapter/acpx-codex-bridge-process-spawn-proposal
+POST /plugins/native-adapter/acpx-codex-bridge-process-spawn-tasks
 Observer panel: OpenClaw ACPX/Codex Bridge
 ```
 
@@ -102,6 +104,13 @@ requirement, and preconditions. It does not create tasks or approvals, execute
 the wrapper, run `node`/`npx`, spawn ACP/Codex, read/copy auth material, call
 providers, or use network.
 
+The process-spawn task route creates an approval-gated preflight task from that
+proposal. Operator execution blocks before approval. After approval, the
+executor checks the approved wrapper file exists, is a file, and matches the
+recorded content hash, then records Node runtime availability. It still does
+not run `node`, execute the wrapper, run `npx`, spawn ACP/Codex, read/copy auth
+material, chmod files, call providers, or use network.
+
 ## Governance
 
 Capability mapping:
@@ -116,6 +125,7 @@ ACPX/Codex wrapper write approval bridge -> act.openclaw.acpx_codex_bridge.wrapp
 Delegated approved write -> act.openclaw.workspace_text_write
 ACPX/Codex wrapper write execution readback -> sense.openclaw.acpx_codex_bridge.wrapper_write_execution_evidence
 ACPX/Codex process-spawn proposal -> plan.openclaw.acpx_codex_bridge.process_spawn
+ACPX/Codex process-spawn preflight task -> act.openclaw.acpx_codex_bridge.process_spawn_preflight
 ```
 
 This is intentionally not a live bridge execution path. It creates a native
@@ -133,6 +143,9 @@ services/openclaw-core/src/task-executor-native-acpx-codex-bridge-handlers.mjs
 services/openclaw-core/src/workspace-ops.mjs
 services/openclaw-core/src/workspace-native-ops-routes.mjs
 services/openclaw-core/src/native-acpx-codex-wrapper-write-execution-evidence-builders.mjs
+services/openclaw-core/src/native-acpx-codex-process-spawn-proposal-builders.mjs
+services/openclaw-core/src/native-acpx-codex-process-spawn-task-routes.mjs
+services/openclaw-core/src/task-executor-native-acpx-codex-bridge-handlers.mjs
 ```
 
 State persistence:
@@ -192,10 +205,10 @@ root/system daemon work
 The next smallest useful bridge follow-up is:
 
 ```text
-ACPX/Codex bridge process-spawn approval task design
+ACPX/Codex bridge live process-spawn execution boundary review
 ```
 
-That should remain approval-gated and may initially record an approved-deferred
-or preflight-only boundary. It must not execute the wrapper, spawn ACP/Codex,
-read/copy auth material, chmod files, call providers, or use network egress
-until the execution boundary is explicitly selected and validated.
+That should decide whether a live supervised user-space process launch is
+allowed yet. It must remain behind explicit approval and must not read/copy
+auth material, chmod files, call providers, or use network egress unless those
+boundaries are separately selected and validated.

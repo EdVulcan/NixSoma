@@ -37,6 +37,11 @@ export function isNativeAcpxCodexBridgeWrapperTask(task) {
     && task?.plan?.strategy === "acpx-codex-bridge-wrapper-action-v0";
 }
 
+export function isNativeAcpxCodexBridgeProcessSpawnTask(task) {
+  return task?.type === "native_acpx_codex_bridge_process_spawn"
+    && task?.plan?.strategy === "acpx-codex-bridge-process-spawn-v0";
+}
+
 export function isOpenClawSearchWebAdapterTask(task) {
   return task?.type === "openclaw_search_web_adapter_invocation"
     && task?.plan?.strategy === "openclaw-search-web-adapter-v0";

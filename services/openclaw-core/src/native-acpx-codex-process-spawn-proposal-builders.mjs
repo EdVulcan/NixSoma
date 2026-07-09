@@ -75,6 +75,7 @@ export function buildNativeAcpxCodexBridgeProcessSpawnProposal({
       selectedInvocationId: selectedEvidence?.invocationId ?? null,
       wrapper: {
         relativePath: wrapperRelativePath,
+        ledgerPath: selectedEvidence?.path ?? null,
         contentHash: selectedEvidence?.wrapper?.target?.contentHash ?? null,
         contentPreviewBytes: selectedEvidence?.wrapper?.target?.contentPreviewBytes ?? null,
         contentPreviewExposed: false,

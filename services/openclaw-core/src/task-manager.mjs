@@ -8,6 +8,7 @@ const TASK_EXTENSION_FIELDS = [
   { name: "engineeringLspLifecycle" },
   { name: "nativePluginRuntimeRefresh" },
   { name: "nativeAcpxCodexBridgeWrapper" },
+  { name: "nativeAcpxCodexBridgeProcessSpawn" },
   { name: "systemdRepair", copyFromCreateInput: true },
   { name: "systemdNextRepair", copyFromCreateInput: true },
   { name: "systemdRepairCandidate" },

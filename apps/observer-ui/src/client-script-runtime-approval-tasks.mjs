@@ -172,6 +172,34 @@ async function createAcpxCodexBridgeWrapperWriteApprovalTask() {
   await refreshAcpxCodexBridgeCompatibility();
 }
 
+async function createAcpxCodexBridgeProcessSpawnPreflightTask() {
+  const proposal = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/acpx-codex-bridge-process-spawn-proposal?limit=5\`);
+  const taskId = proposal?.summary?.selectedWrapperWriteTaskId ?? null;
+  if (!proposal?.summary?.readyForSpawnApprovalDesign || !taskId) {
+    throw new Error("No approved ACPX/Codex wrapper write evidence is available for process-spawn preflight.");
+  }
+  const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/acpx-codex-bridge-process-spawn-tasks\`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      taskId,
+      confirm: true,
+    }),
+  });
+
+  taskHistoryFocus = "selected-task";
+  selectedHistoryTaskId = result.task?.id ?? null;
+  taskDetailIdInput.value = result.task?.id ?? "";
+  renderPlanPanel(result.task);
+  setControlMessage(\`Created approval-gated ACPX/Codex process-spawn preflight task \${result.task?.id ?? "unknown"}; wrapper execution and ACP spawn remain deferred.\`);
+  await refreshRuntime();
+  await refreshTaskList();
+  await refreshTaskHistoryDetail();
+  await refreshApprovalState();
+  await refreshOperatorState();
+  await refreshAcpxCodexBridgeCompatibility();
+}
+
 async function createPluginSearchWebApprovalTask() {
   const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/plugin-search-web-adapter-tasks\`, {
     method: "POST",
