@@ -252,15 +252,25 @@ GitHub-visible reference, not as a direct dump into `OpenClawOnNixOS`.
 Current preservation status as of 2026-07-09:
 
 ```text
-pending
+preserved
 ```
 
-Observed constraints from the Windows host:
+Source reference:
 
 ```text
-https://github.com/EdVulcan/openclaw.git was not found.
-GitHub CLI (`gh`) was not installed in the Windows shell.
-The enhanced source still exists only in D:\OpenclawAndClaudecode\openclaw.
+repository: https://github.com/EdVulcan/openclaw-enhanced-source
+branch: main
+commit: d90b253b0c03191613e45c36b1434078b8788bed
+commit title: Preserve enhanced OpenClaw source prototype
+```
+
+Preservation note:
+
+```text
+The first push preserved the full enhanced-source branch history from the local
+openclaw checkout. GitHub reported one large historical cache file warning:
+.serena/cache/typescript/document_symbols.pkl is 83.22 MB. Treat the repository
+as a source reference for migration, not as the final vendored dependency.
 ```
 
 Recommended shape:

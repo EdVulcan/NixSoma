@@ -81,12 +81,20 @@ observer mirror
 Those patterns are allowed only when they are the smallest necessary slice for a
 new product capability.
 
-## First Required Work: Preserve Enhanced Source
+## First Required Work: Use Preserved Enhanced Source
 
-The optimized Windows-host `openclaw` source is not currently on GitHub. Before
-real migration work proceeds, preserve it as a GitHub-visible source reference.
+The optimized Windows-host `openclaw` source is now preserved on GitHub as a
+source reference for migration.
 
-Source working tree:
+```text
+repository: https://github.com/EdVulcan/openclaw-enhanced-source
+branch: main
+commit: d90b253b0c03191613e45c36b1434078b8788bed
+```
+
+This repository is a reference source, not a dependency to wholesale import.
+
+Original Windows source working tree:
 
 ```text
 D:\OpenclawAndClaudecode\openclaw
@@ -123,37 +131,25 @@ help.txt
 temp_test.txt
 ```
 
-Preferred GitHub preservation target:
+Preferred VM inspection command:
 
-```text
-EdVulcan/openclaw-enhanced-source
+```bash
+rm -rf /tmp/openclaw-enhanced-source
+git clone https://github.com/EdVulcan/openclaw-enhanced-source.git /tmp/openclaw-enhanced-source
+cd /tmp/openclaw-enhanced-source
+git checkout d90b253b0c03191613e45c36b1434078b8788bed
 ```
 
-Acceptable alternative:
+Preservation note:
 
 ```text
-an EdVulcan fork of openclaw with branch:
-edvulcan/enhanced-cc-tools-source-2026-07-09
+The first push preserved the full enhanced-source branch history from the local
+openclaw checkout. GitHub reported one large historical cache file warning:
+.serena/cache/typescript/document_symbols.pkl is 83.22 MB. Do not treat that
+cache file as migration material.
 ```
 
-Do not push this branch to `openclaw/openclaw` unless the human explicitly wants
-an upstream PR flow.
-
-After the enhanced source is pushed, update:
-
-```text
-docs/plans/OPENCLAW_ENHANCED_SOURCE_MIGRATION_BRIEF.md
-```
-
-with:
-
-```text
-source repository URL
-branch name
-commit hash
-intended migration scope
-excluded local files
-```
+The next step is not more preservation. The next step is the gap audit.
 
 ## Second Required Work: Enhanced Source Gap Audit
 
@@ -289,9 +285,10 @@ sed -n '1,260p' docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md
 Then report:
 
 ```text
-1. Is the enhanced openclaw source preserved on GitHub?
-2. If yes, what source URL and commit hash?
-3. If no, stop source migration and preserve it first.
-4. Which active trunk is selected next?
-5. Why is it real capability progress instead of another safety wrapper?
+1. Did the VM clone and checkout the preserved source reference?
+2. Does the checked-out commit match `d90b253b0c03191613e45c36b1434078b8788bed`?
+3. Which enhanced capabilities are already absorbed?
+4. Which enhanced capabilities require migration?
+5. Which active trunk is selected next, and why is it real capability progress
+   instead of another safety wrapper?
 ```
