@@ -111,6 +111,20 @@ const INTERNAL_DEFERRED_TASK_CASES = [
     expectedReason: "search_web_provider_runtime_sandbox_deferred",
     expectedMode: "openclaw_search_web_provider_runtime_sandbox_deferred",
   },
+  {
+    name: "native engineering LSP lifecycle approval gate",
+    task: {
+      type: "native_engineering_lsp_lifecycle",
+      engineeringLspLifecycle: {
+        registry: "openclaw-native-engineering-lsp-lifecycle-task-v0",
+        lifecycleAction: "start",
+        language: "typescript",
+        server: { serverBinary: "typescript-language-server" },
+      },
+    },
+    expectedReason: "policy_requires_approval",
+    expectedMode: "native_engineering_lsp_lifecycle_waiting_for_approval",
+  },
 ];
 
 function buildDefaultPlanBuilder() {
@@ -547,6 +561,58 @@ test("capability plan task dispatches to capability invocation handler", async (
   assert.deepEqual(invocationBodies.map((body) => body.capabilityId), ["act.system.command.execute"]);
   assert.equal(invocationBodies[0].approved, true);
   assert(events.some((event) => event.name === "task.completed"));
+});
+
+test("approved native engineering LSP lifecycle task records missing binary recovery evidence", async () => {
+  const { executor, state, events } = createExecutorHarness();
+  state.approvals.set("approval-lsp", {
+    id: "approval-lsp",
+    status: "approved",
+    taskId: "lsp-lifecycle-missing-binary",
+  });
+  const task = {
+    id: "lsp-lifecycle-missing-binary",
+    type: "native_engineering_lsp_lifecycle",
+    goal: "Start TypeScript LSP lifecycle",
+    status: "queued",
+    approval: {
+      requestId: "approval-lsp",
+      status: "approved",
+      required: false,
+    },
+    policy: {
+      request: { approved: true },
+      decision: { decision: "audit_only", approved: true, reason: "approved_unit_test" },
+    },
+    engineeringLspLifecycle: {
+      registry: "openclaw-native-engineering-lsp-lifecycle-task-v0",
+      lifecycleAction: "start",
+      language: "typescript",
+      workspace: { id: "fixture", path: "/tmp/openclaw" },
+      server: {
+        serverBinary: "openclaw-definitely-missing-lsp-server",
+        serverArgs: ["--stdio"],
+        binaryChecked: false,
+        processStarted: false,
+        jsonRpcHandshakeSent: false,
+      },
+    },
+  };
+
+  const result = await executor.executeTaskWithRecovery(task);
+
+  assert.equal(result.finalExecution.task.status, "failed");
+  assert.equal(result.finalExecution.reason, "lsp_server_binary_missing");
+  assert.equal(result.finalExecution.execution.server.binaryFound, false);
+  assert.equal(result.finalExecution.execution.server.processStarted, false);
+  assert.equal(result.finalExecution.execution.server.jsonRpcHandshakeSent, false);
+  assert.equal(result.finalExecution.execution.governance.approved, true);
+  assert.equal(result.finalExecution.execution.governance.processStarted, false);
+  assert.equal(result.finalExecution.execution.governance.jsonRpcEnabled, false);
+  assert.equal(result.finalExecution.task.engineeringLspLifecycle.server.binaryChecked, true);
+  assert.equal(result.finalExecution.task.outcome.details.recoveryEvidence.kind, "lsp_lifecycle_recovery");
+  assert.equal(result.finalExecution.task.outcome.details.recoveryEvidence.recoverable, true);
+  assert(events.some((event) => event.name === "task.failed"));
 });
 
 test("systemd repair execution task dispatches to deferred non-recoverable handler", async () => {

@@ -41,6 +41,9 @@ function engineeringLoopEvidenceRoute(kind, taskId) {
   if (kind === "write") {
     return \`/plugins/native-adapter/engineering-write-execution/evidence?taskId=\${taskId ?? ""}\`;
   }
+  if (kind === "lsp-lifecycle") {
+    return \`/tasks/\${taskId ?? ""}\`;
+  }
   return \`/plugins/native-adapter/engineering-verification/evidence?taskId=\${taskId ?? ""}\`;
 }
 
@@ -128,6 +131,26 @@ async function refreshEngineeringLoopCompletionReadback() {
     await refreshEngineeringLoopControlSurfaces();
     return;
   }
+  if (latestEngineeringLoopControlState.kind === "lsp-lifecycle") {
+    const task = evidence?.task ?? evidence;
+    const lifecycle = task?.engineeringLspLifecycle ?? {};
+    const execution = task?.outcome?.details?.lspLifecycleExecution ?? lifecycle.execution ?? {};
+    engineeringLoopStateCompletion.textContent = \`status=\${task?.status ?? "unknown"} binary=\${execution?.server?.binaryFound === true ? "found" : "missing"}\`;
+    engineeringLoopStateJson.textContent = [
+      "Kind: lsp-lifecycle",
+      \`Task: \${latestEngineeringLoopControlState.taskId}\`,
+      \`Approval: \${latestEngineeringLoopControlState.approvalId ?? "none"}\`,
+      \`Task Status: \${task?.status ?? "unknown"}\`,
+      \`Action: \${lifecycle.lifecycleAction ?? execution.lifecycleAction ?? "start"} language=\${lifecycle.language ?? execution.language ?? "typescript"}\`,
+      \`Server: \${lifecycle.server?.serverBinary ?? execution.server?.serverBinary ?? "unknown"} binaryFound=\${Boolean(execution.server?.binaryFound)} processStarted=\${Boolean(execution.server?.processStarted)} jsonRpc=\${Boolean(execution.server?.jsonRpcHandshakeSent)}\`,
+      \`Result: \${execution.result?.state ?? task?.outcome?.kind ?? "pending"}\`,
+      \`Recovery: \${execution.recoveryRecommendation?.nextAction ?? task?.outcome?.details?.recoveryEvidence?.recommendation?.nextAction ?? "pending operator step"}\`,
+      "Boundary: approval-gated binary gate only; no process start, JSON-RPC, source-content read, mutation, provider call, or result envelope.",
+    ].join("\\n");
+    setControlMessage(\`Refreshed LSP lifecycle task readback for \${latestEngineeringLoopControlState.taskId}.\`);
+    await refreshEngineeringLoopControlSurfaces();
+    return;
+  }
   const summary = evidence?.summary ?? {};
   const total = summary.total ?? 0;
   const passed = summary.passed ?? 0;
@@ -143,6 +166,49 @@ async function refreshEngineeringLoopCompletionReadback() {
     "Boundary: readback only; no approval, execution, retry, recovery task, mutation, provider call, or result envelope.",
   ].join("\\n");
   setControlMessage(\`Refreshed engineering loop completion evidence for \${latestEngineeringLoopControlState.taskId}.\`);
+  await refreshEngineeringLoopControlSurfaces();
+}
+
+function renderEngineeringLspLifecycleLoopTaskState(result) {
+  const taskId = result.task?.id ?? null;
+  const approvalId = result.approval?.id ?? result.task?.approval?.requestId ?? null;
+  latestEngineeringLoopControlState = {
+    kind: "lsp-lifecycle",
+    taskId,
+    approvalId,
+    evidenceRoute: engineeringLoopEvidenceRoute("lsp-lifecycle", taskId),
+  };
+  engineeringLoopStateKind.textContent = "lsp-lifecycle";
+  engineeringLoopStateTask.textContent = taskId ? taskId.slice(0, 8) : "none";
+  engineeringLoopStateApproval.textContent = approvalId ? approvalId.slice(0, 8) : "none";
+  engineeringLoopStateNext.textContent = "approve pending approval, then run operator step";
+  engineeringLoopStateEvidence.textContent = latestEngineeringLoopControlState.evidenceRoute;
+  engineeringLoopStateCompletion.textContent = "pending approval";
+  engineeringLoopStateJson.textContent = [
+    "Kind: lsp-lifecycle",
+    \`Task: \${taskId ?? "none"}\`,
+    \`Approval: \${approvalId ?? "none"}\`,
+    \`Language: \${result.engineeringLspLifecycle?.language ?? "typescript"}\`,
+    \`Action: \${result.engineeringLspLifecycle?.lifecycleAction ?? "start"}\`,
+    \`Server: \${result.engineeringLspLifecycle?.server?.serverBinary ?? "typescript-language-server"}\`,
+    "Next: approve pending approval, then run operator step. Missing server binaries become recoverable task evidence.",
+    "Boundary: no auto-approval, no process start before approval, no JSON-RPC, no source-content read, no provider call.",
+  ].join("\\n");
+}
+
+async function createEngineeringLspLifecycleLoopTask() {
+  const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-lsp/lifecycle-tasks\`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      language: "typescript",
+      lifecycleAction: "start",
+      confirm: true,
+    }),
+  });
+  focusEngineeringLoopTask(result);
+  renderEngineeringLspLifecycleLoopTaskState(result);
+  setControlMessage(\`Created LSP lifecycle task \${result.task?.id ?? "unknown"}; approval and operator step are still required.\`);
   await refreshEngineeringLoopControlSurfaces();
 }
 
@@ -312,6 +378,15 @@ function classifyRestorableEngineeringLoopTask(task) {
       approvalId,
       evidenceRoute: engineeringLoopEvidenceRoute("write", task.id),
       restoredFrom: "engineering_write_proposal_task",
+    };
+  }
+  if (task.engineeringLspLifecycle) {
+    return {
+      kind: "lsp-lifecycle",
+      taskId: task.id,
+      approvalId,
+      evidenceRoute: engineeringLoopEvidenceRoute("lsp-lifecycle", task.id),
+      restoredFrom: "engineering_lsp_lifecycle_task",
     };
   }
   if (task.sourceCommand?.registry === "openclaw-source-command-task-v0") {

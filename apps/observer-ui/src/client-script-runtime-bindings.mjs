@@ -40,6 +40,12 @@ engineeringVerificationTaskButton.addEventListener("click", () => {
   });
 });
 
+engineeringLspLifecycleTaskButton.addEventListener("click", () => {
+  createEngineeringLspLifecycleLoopTask().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 engineeringLoopCompletionButton.addEventListener("click", () => {
   refreshEngineeringLoopCompletionReadback().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

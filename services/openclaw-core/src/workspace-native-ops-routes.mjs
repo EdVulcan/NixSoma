@@ -120,6 +120,15 @@ function editProposalTaskInputFromBody(body) {
   };
 }
 
+function lspLifecycleTaskInputFromBody(body) {
+  return {
+    workspacePath: bodyString(body, "workspacePath", null),
+    language: bodyString(body, "language", "typescript"),
+    lifecycleAction: bodyString(body, "lifecycleAction", bodyString(body, "action", "start")),
+    confirm: body.confirm === true,
+  };
+}
+
 function sourceAuthoredDraftInputFromQuery(requestUrl) {
   const proposalQuery = requestUrl.searchParams.get("proposalQuery") ?? "edit";
   return {
@@ -228,6 +237,20 @@ export async function handleWorkspaceNativeOpsRoute({
         "diffPreview",
         "engineeringEditProposal",
         "workspacePatchApply",
+      ], { serialiseTask, serialiseApproval, buildTaskSummary }));
+    } catch (error) {
+      sendError(res, 400, error);
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/plugins/native-adapter/engineering-lsp/lifecycle-tasks") {
+    try {
+      const body = await readJsonBody(req);
+      const result = await workspaceOps.createNativeEngineeringLspLifecycleTask(lspLifecycleTaskInputFromBody(body));
+      sendJson(res, 201, serialiseWorkspaceTaskResponse(result, [
+        "lifecycleDraft",
+        "engineeringLspLifecycle",
       ], { serialiseTask, serialiseApproval, buildTaskSummary }));
     } catch (error) {
       sendError(res, 400, error);

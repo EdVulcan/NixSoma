@@ -5,6 +5,7 @@ const TASK_EXTENSION_FIELDS = [
   { name: "sourceCommand", copyFromCreateInput: true },
   { name: "engineeringEditProposal" },
   { name: "engineeringWriteProposal" },
+  { name: "engineeringLspLifecycle" },
   { name: "systemdRepair", copyFromCreateInput: true },
   { name: "systemdNextRepair", copyFromCreateInput: true },
   { name: "systemdRepairCandidate" },

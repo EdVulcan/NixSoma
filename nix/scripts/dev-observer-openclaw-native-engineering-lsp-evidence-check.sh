@@ -90,6 +90,7 @@ for (const token of [
   "engineering-lsp-server",
   "engineering-lsp-runtime",
   "engineering-lsp-mode",
+  "engineering-lsp-lifecycle-task-button",
   "engineering-lsp-json",
 ]) {
   if (!html.includes(token)) {
@@ -99,8 +100,16 @@ for (const token of [
 for (const token of [
   "/plugins/native-adapter/engineering-lsp/evidence",
   "/plugins/native-adapter/engineering-lsp/lifecycle-draft",
+  "/plugins/native-adapter/engineering-lsp/lifecycle-tasks",
+  "/tasks/",
   "refreshEngineeringLspEvidence",
   "renderEngineeringLspEvidence",
+  "createEngineeringLspLifecycleLoopTask",
+  "renderEngineeringLspLifecycleLoopTaskState",
+  "engineeringLspLifecycle",
+  "lsp-lifecycle",
+  "approval-gated binary gate",
+  "Missing server binaries become recoverable task evidence",
   "Native engineering LSP evidence",
   "sense.openclaw.engineering_tool.lsp_evidence",
   "lsp-contract-and-availability-evidence-only",

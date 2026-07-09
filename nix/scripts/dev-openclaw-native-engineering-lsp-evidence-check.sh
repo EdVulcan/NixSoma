@@ -22,6 +22,7 @@ export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifac
 export OPENCLAW_EVENT_LOG_FILE="${OPENCLAW_EVENT_LOG_FILE:-$REPO_ROOT/.artifacts/openclaw-engineering-lsp-evidence-check-events.jsonl}"
 
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
+EVENT_HUB_URL="http://127.0.0.1:$OPENCLAW_EVENT_HUB_PORT"
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -rf "$FIXTURE_DIR"
@@ -55,10 +56,20 @@ cleanup() {
     "${POSITION_FILE:-}" \
     "${BAD_PATH_FILE:-}" \
     "${DRAFT_FILE:-}" \
-    "${ADAPTER_FILE:-}"
+    "${ADAPTER_FILE:-}" \
+    "${TASK_FILE:-}" \
+    "${BLOCKED_STEP_FILE:-}" \
+    "${APPROVED_FILE:-}" \
+    "${EXEC_STEP_FILE:-}" \
+    "${TASK_READBACK_FILE:-}" \
+    "${EVENTS_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
+
+OPENCLAW_POST_JSON_DATA_FLAG="-d"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
 
 "$SCRIPT_DIR/dev-up.sh"
 
@@ -67,14 +78,77 @@ POSITION_FILE="$(mktemp)"
 BAD_PATH_FILE="$(mktemp)"
 DRAFT_FILE="$(mktemp)"
 ADAPTER_FILE="$(mktemp)"
+TASK_FILE="$(mktemp)"
+BLOCKED_STEP_FILE="$(mktemp)"
+APPROVED_FILE="$(mktemp)"
+EXEC_STEP_FILE="$(mktemp)"
+TASK_READBACK_FILE="$(mktemp)"
+EVENTS_FILE="$(mktemp)"
 
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=check&language=typescript&limit=200" > "$CHECK_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=definition&language=typescript&relativePath=src/app.ts&line=2&character=14&limit=200" > "$POSITION_FILE"
 BAD_STATUS="$(curl --silent --output "$BAD_PATH_FILE" --write-out "%{http_code}" "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=hover&language=typescript&relativePath=.cache/leak.ts")"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-draft?language=python&lifecycleAction=restart&limit=200" > "$DRAFT_FILE"
 curl --silent --fail "$CORE_URL/plugins/openclaw-native-plugin-adapter" > "$ADAPTER_FILE"
+post_json "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-tasks" '{"language":"python","lifecycleAction":"restart","confirm":true}' > "$TASK_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$BLOCKED_STEP_FILE"
 
-node - <<'EOF' "$CHECK_FILE" "$POSITION_FILE" "$BAD_PATH_FILE" "$BAD_STATUS" "$DRAFT_FILE" "$ADAPTER_FILE"
+read -r approval_id lifecycle_task_id < <(node - <<'EOF' "$TASK_FILE" "$BLOCKED_STEP_FILE"
+const fs = require("node:fs");
+const taskResponse = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const blockedStep = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+
+if (
+  !taskResponse.ok
+  || taskResponse.registry !== "openclaw-native-engineering-lsp-lifecycle-task-v0"
+  || taskResponse.mode !== "approval-gated-lsp-lifecycle-binary-gate"
+  || taskResponse.engineeringLspLifecycle?.language !== "python"
+  || taskResponse.engineeringLspLifecycle?.lifecycleAction !== "restart"
+  || taskResponse.engineeringLspLifecycle?.server?.serverBinary !== "pylsp"
+  || taskResponse.engineeringLspLifecycle?.server?.processStarted !== false
+  || taskResponse.engineeringLspLifecycle?.server?.jsonRpcHandshakeSent !== false
+  || taskResponse.governance?.createsTask !== true
+  || taskResponse.governance?.createsApproval !== true
+  || taskResponse.governance?.canExecuteWithoutApproval !== false
+  || taskResponse.governance?.canStartProcessWithoutApproval !== false
+  || taskResponse.governance?.canSendJsonRpcRequest !== false
+) {
+  throw new Error(`LSP lifecycle task creation mismatch: ${JSON.stringify(taskResponse)}`);
+}
+if (
+  !blockedStep.ok
+  || blockedStep.ran !== false
+  || blockedStep.blocked !== true
+  || blockedStep.reason !== "policy_requires_approval"
+  || blockedStep.approval?.id !== taskResponse.approval?.id
+  || blockedStep.task?.engineeringLspLifecycle?.server?.processStarted !== false
+  || blockedStep.task?.engineeringLspLifecycle?.server?.jsonRpcHandshakeSent !== false
+) {
+  throw new Error(`LSP lifecycle task should block before approval: ${JSON.stringify(blockedStep)}`);
+}
+
+process.stdout.write(`${blockedStep.approval.id} ${taskResponse.task.id}\n`);
+EOF
+)
+
+post_json "$CORE_URL/approvals/$approval_id/approve" '{"approvedBy":"dev-openclaw-native-engineering-lsp-evidence-check","reason":"approve bounded LSP lifecycle binary gate"}' > "$APPROVED_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$EXEC_STEP_FILE"
+curl --silent --fail "$CORE_URL/tasks/$lifecycle_task_id" > "$TASK_READBACK_FILE"
+curl --silent --fail "$EVENT_HUB_URL/events/audit?limit=120" > "$EVENTS_FILE"
+
+node - <<'EOF' \
+  "$CHECK_FILE" \
+  "$POSITION_FILE" \
+  "$BAD_PATH_FILE" \
+  "$BAD_STATUS" \
+  "$DRAFT_FILE" \
+  "$ADAPTER_FILE" \
+  "$TASK_FILE" \
+  "$BLOCKED_STEP_FILE" \
+  "$APPROVED_FILE" \
+  "$EXEC_STEP_FILE" \
+  "$TASK_READBACK_FILE" \
+  "$EVENTS_FILE"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
 
@@ -84,7 +158,13 @@ const bad = readJson(4);
 const badStatus = process.argv[5];
 const draft = readJson(6);
 const adapter = readJson(7);
-const raw = JSON.stringify({ check, position, bad, draft, adapter });
+const taskResponse = readJson(8);
+const blockedStep = readJson(9);
+const approved = readJson(10);
+const execStep = readJson(11);
+const taskReadback = readJson(12);
+const events = readJson(13);
+const raw = JSON.stringify({ check, position, bad, draft, adapter, taskResponse, blockedStep, approved, execStep, taskReadback, events });
 
 if (
   !check.ok
@@ -169,27 +249,96 @@ if (
 if (
   !adapter.implementedCapabilities?.includes("sense.openclaw.engineering_tool.lsp_evidence")
   || !adapter.implementedCapabilities?.includes("plan.openclaw.engineering_tool.lsp_lifecycle")
+  || !adapter.implementedCapabilities?.includes("act.openclaw.engineering_tool.lsp_lifecycle_task")
   || adapter.summary?.canReadEngineeringLspEvidence !== true
   || adapter.summary?.canDraftEngineeringLspLifecycleAction !== true
+  || adapter.summary?.canCreateApprovalGatedEngineeringLspLifecycleTasks !== true
 ) {
   throw new Error(`native adapter missing LSP evidence/lifecycle capability: ${JSON.stringify(adapter)}`);
+}
+if (approved.approval?.status !== "approved" || approved.task?.policy?.decision?.decision !== "audit_only") {
+  throw new Error(`LSP lifecycle approval should convert task to audited execution: ${JSON.stringify(approved)}`);
+}
+if (
+  !execStep.ok
+  || !(
+    (execStep.ran === true && execStep.blocked === false)
+    || (execStep.ran === false && execStep.blocked === true && execStep.reason === "lsp_server_binary_missing")
+  )
+) {
+  throw new Error(`approved LSP lifecycle task should run its binary gate: ${JSON.stringify(execStep)}`);
+}
+const lifecycleTask = execStep.task;
+const lifecycle = lifecycleTask?.engineeringLspLifecycle ?? {};
+const execution = execStep.execution?.execution ?? lifecycle.execution ?? lifecycleTask?.outcome?.details?.lspLifecycleExecution;
+if (
+  lifecycleTask?.id !== taskResponse.task?.id
+  || lifecycle.language !== "python"
+  || lifecycle.lifecycleAction !== "restart"
+  || lifecycle.server?.binaryChecked !== true
+  || lifecycle.server?.processStarted !== false
+  || lifecycle.server?.jsonRpcHandshakeSent !== false
+  || execution?.registry !== "openclaw-native-engineering-lsp-lifecycle-execution-v0"
+  || execution?.mode !== "approved-lsp-lifecycle-binary-gate"
+  || execution?.governance?.approved !== true
+  || execution?.governance?.canStartProcessWithoutApproval !== false
+  || execution?.governance?.processStarted !== false
+  || execution?.governance?.jsonRpcEnabled !== false
+  || execution?.governance?.contentExposed !== false
+  || execution?.server?.binaryChecked !== true
+  || execution?.server?.processStarted !== false
+  || execution?.server?.jsonRpcHandshakeSent !== false
+  || execution?.server?.serverBinary !== "pylsp"
+) {
+  throw new Error(`LSP lifecycle binary gate readback mismatch: ${JSON.stringify({ lifecycleTask, execution })}`);
+}
+if (execution.result?.ok === true) {
+  if (lifecycleTask.status !== "completed" || execution.result?.state !== "binary_gate_passed_process_supervision_deferred") {
+    throw new Error(`LSP lifecycle binary-present path should complete without process start: ${JSON.stringify({ lifecycleTask, execution })}`);
+  }
+} else if (execution.result?.failureKind === "lsp_server_binary_missing") {
+  if (
+    lifecycleTask.status !== "failed"
+    || lifecycleTask.outcome?.details?.recoveryEvidence?.kind !== "lsp_lifecycle_recovery"
+    || lifecycleTask.outcome?.details?.recoveryEvidence?.recoverable !== true
+    || !String(execution.recoveryRecommendation?.nextAction ?? "").includes("pylsp")
+  ) {
+    throw new Error(`LSP lifecycle missing-binary path should attach recovery evidence: ${JSON.stringify({ lifecycleTask, execution })}`);
+  }
+} else {
+  throw new Error(`LSP lifecycle binary gate returned unexpected result: ${JSON.stringify(execution)}`);
+}
+if (taskReadback.task?.id !== lifecycleTask.id || taskReadback.task?.engineeringLspLifecycle?.server?.processStarted !== false) {
+  throw new Error(`LSP lifecycle task endpoint should preserve execution readback: ${JSON.stringify(taskReadback)}`);
+}
+const eventTypes = new Set((events.items ?? events.events ?? []).map((event) => event.type));
+for (const type of ["approval.created", "approval.approved", "policy.evaluated"]) {
+  if (!eventTypes.has(type)) {
+    throw new Error(`LSP lifecycle audit trail missing ${type}: ${JSON.stringify([...eventTypes])}`);
+  }
+}
+if (!eventTypes.has("task.failed") && !eventTypes.has("task.completed")) {
+  throw new Error(`LSP lifecycle audit trail should record terminal task event: ${JSON.stringify([...eventTypes])}`);
 }
 for (const token of [
   "no server binary version check",
   "no LSP server process start",
   "no lifecycle task creation",
+  "approval-gated-lsp-lifecycle-binary-gate",
+  "approved-lsp-lifecycle-binary-gate",
   "no file content read into LSP",
   "no definition/references/hover JSON-RPC request",
+]) {
+  if (!raw.includes(token)) {
+    throw new Error(`LSP evidence missing boundary token: ${token}`);
+  }
+}
+for (const token of [
   "ENGINEERING_LSP_EVIDENCE_NODE_MODULES_SECRET",
   "ENGINEERING_LSP_EVIDENCE_CACHE_SECRET",
   "ENGINEERING_LSP_EVIDENCE_GENERATED_SECRET",
 ]) {
-  const shouldExist = token.startsWith("no ");
-  const exists = raw.includes(token);
-  if (shouldExist && !exists) {
-    throw new Error(`LSP evidence missing boundary token: ${token}`);
-  }
-  if (!shouldExist && exists) {
+  if (raw.includes(token)) {
     throw new Error(`LSP evidence leaked skipped fixture secret: ${token}`);
   }
 }
@@ -198,11 +347,17 @@ console.log(JSON.stringify({
   openclawNativeEngineeringLspEvidence: {
     registry: check.registry,
     lifecycleRegistry: draft.registry,
+    lifecycleTaskRegistry: taskResponse.registry,
+    lifecycleExecutionRegistry: execution.registry,
     languages: check.summary.detectedLanguages,
     lifecycleAction: draft.summary.lifecycleAction,
     serverStatus: check.serverReadiness.status,
+    lifecycleTaskStatus: lifecycleTask.status,
+    binaryFound: execution.server.binaryFound,
+    processStarted: execution.server.processStarted,
+    jsonRpcSent: execution.server.jsonRpcHandshakeSent,
     badPathStatus: badStatus,
-    jsonRpcSent: check.summary.jsonRpcSent,
+    lspEvidenceJsonRpcSent: check.summary.jsonRpcSent,
   },
 }, null, 2));
 EOF

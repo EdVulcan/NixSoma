@@ -109,12 +109,31 @@ file open notifications and JSON-RPC symbol requests
 automatic installation or provider/network access
 ```
 
+## Follow-Up Status
+
+The governed lifecycle pilot follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_SUPERVISED_LIFECYCLE_PILOT_PLAN.md
+```
+
+That slice adds:
+
+```text
+POST /plugins/native-adapter/engineering-lsp/lifecycle-tasks
+task registry: openclaw-native-engineering-lsp-lifecycle-task-v0
+execution registry: openclaw-native-engineering-lsp-lifecycle-execution-v0
+mode: approval-gated-lsp-lifecycle-binary-gate
+```
+
+It creates an approval-gated lifecycle task, blocks operator execution before
+approval, records an approved binary gate after approval, exposes task
+readback/recovery evidence, and keeps process start, source-content transfer,
+JSON-RPC, mutation, provider calls, and network egress deferred.
+
 ## Next Slice
 
 Do not add another standalone LSP evidence/readiness shell. The next meaningful
-LSP step should be a cohesive governed lifecycle pilot: approval-gated
-workspace-scoped start/stop/recover task, user-space process supervision,
-state/readback, Observer recovery evidence, and bounded JSON-RPC disabled until
-the server state is proven. If that is too large for one slice, split only at a
-boundary that still closes an operator-visible lifecycle, not at another static
-status marker.
+LSP step should extend the same lifecycle lane with supervised user-space
+process state/readback while keeping JSON-RPC disabled until process ownership,
+stdout/stderr budgets, stop/restart recovery, and Observer readback are proven.

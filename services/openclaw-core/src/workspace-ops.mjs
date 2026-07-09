@@ -16,6 +16,7 @@ import {
   truncatePatchMetadata,
 } from "./workspace-proposal-utils.mjs";
 import { createWorkspaceCommandPlanBuilders } from "./workspace-command-plan-builders.mjs";
+import { createNativeEngineeringLspLifecycleTaskBuilders } from "./native-engineering-lsp-lifecycle-tasks.mjs";
 
 export function createWorkspaceOps(deps) {
   const {
@@ -28,6 +29,7 @@ export function createWorkspaceOps(deps) {
     buildNativeOpenClawWorkspaceSemanticIndex,
     buildNativeOpenClawWorkspaceEditTargetSelection,
     buildNativeOpenClawPromptSemanticsProfile,
+    buildNativeEngineeringLspLifecycleDraft,
     buildRulePlan,
     createTask,
     supersedeOtherActiveTasks,
@@ -1036,6 +1038,23 @@ const {
   autonomyMode,
 });
 
+const {
+  createNativeEngineeringLspLifecycleTask,
+} = createNativeEngineeringLspLifecycleTaskBuilders({
+  autonomyMode,
+  buildNativeEngineeringLspLifecycleDraft,
+  buildRulePlan,
+  createTask,
+  createApprovalRequestForTask,
+  persistState,
+  publishEvent,
+  publishTaskApprovalIfPending,
+  reconcileRuntimeState,
+  serialisePlanForPublic,
+  serialiseTask,
+  supersedeOtherActiveTasks,
+});
+
 async function createWorkspaceCommandTask({ proposalId = null, workspaceId = null, scriptName = null, confirm = false } = {}) {
   if (confirm !== true) {
     throw new Error("Workspace command task creation requires confirm=true.");
@@ -1173,6 +1192,7 @@ async function createOpenClawSourceCommandTask({
     createNativeOpenClawWorkspaceTextWriteTask,
     createNativeEngineeringEditProposalTask,
     createNativeEngineeringWriteProposalTask,
+    createNativeEngineeringLspLifecycleTask,
     readBoundedWorkspaceTextFile,
     normaliseWorkspacePatchEdits,
     applyWorkspacePatchEdits,

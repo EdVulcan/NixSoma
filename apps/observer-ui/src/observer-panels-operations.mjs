@@ -401,6 +401,9 @@ export function observerOperationsPanels() {
           <div class="metric"><span>Server</span><span id="engineering-lsp-server">not_checked</span></div>
           <div class="metric"><span>Runtime</span><span id="engineering-lsp-runtime">blocked</span></div>
           <div class="metric"><span>Mode</span><span id="engineering-lsp-mode">lsp-contract-and-availability-evidence-only</span></div>
+          <div class="control-row">
+            <button id="engineering-lsp-lifecycle-task-button" class="secondary" type="button">Create Lifecycle Task</button>
+          </div>
           <pre id="engineering-lsp-json">Loading native engineering LSP evidence and lifecycle draft...</pre>
         </section>
         <section class="panel">

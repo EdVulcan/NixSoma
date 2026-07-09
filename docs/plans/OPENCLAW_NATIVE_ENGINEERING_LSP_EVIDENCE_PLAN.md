@@ -125,3 +125,23 @@ It drafts a governed workspace-scoped language-server lifecycle action and
 readiness gate list while still blocking binary checks, process start, task
 creation, approval creation, lifecycle state persistence, source-file content
 reads, JSON-RPC, provider calls, and network egress.
+
+The LSP supervised lifecycle pilot follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_SUPERVISED_LIFECYCLE_PILOT_PLAN.md
+```
+
+That slice adds:
+
+```text
+POST /plugins/native-adapter/engineering-lsp/lifecycle-tasks
+task registry: openclaw-native-engineering-lsp-lifecycle-task-v0
+execution registry: openclaw-native-engineering-lsp-lifecycle-execution-v0
+mode: approval-gated-lsp-lifecycle-binary-gate
+```
+
+It creates an approval-gated task, proves pre-approval blocking and approved
+binary-gate execution, records task readback/recovery evidence, and exposes the
+workflow in Observer while still blocking process start, source-content reads,
+JSON-RPC, mutation, provider calls, and network egress.

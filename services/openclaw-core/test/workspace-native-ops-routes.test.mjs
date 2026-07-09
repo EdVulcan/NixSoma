@@ -204,6 +204,47 @@ test("workspace native engineering edit proposal task bridge preserves approval-
   assert.equal(response.body.workspacePatchApply.registry, "openclaw-native-workspace-patch-apply-task-v0");
 });
 
+test("workspace native engineering LSP lifecycle task bridge preserves approval-gated input", async () => {
+  let observedInput = null;
+  const response = await invokeWorkspaceNativeOpsRoute({
+    createNativeEngineeringLspLifecycleTask: async (input) => {
+      observedInput = input;
+      return {
+        registry: "openclaw-native-engineering-lsp-lifecycle-task-v0",
+        mode: "approval-gated-lsp-lifecycle-binary-gate",
+        generatedAt: "2026-07-09T00:00:00.000Z",
+        sourceRegistry: "openclaw-native-engineering-lsp-lifecycle-draft-v0",
+        lifecycleDraft: { id: "lsp-draft" },
+        engineeringLspLifecycle: {
+          language: input.language,
+          lifecycleAction: input.lifecycleAction,
+          server: { serverBinary: "typescript-language-server", processStarted: false },
+        },
+        task: { id: "task-lsp", status: "queued" },
+        approval: { id: "approval-lsp", status: "pending" },
+        governance: { createsTask: true, createsApproval: true },
+      };
+    },
+  }, "POST", "/plugins/native-adapter/engineering-lsp/lifecycle-tasks", {
+    workspacePath: "/tmp/openclaw",
+    language: "python",
+    lifecycleAction: "restart",
+    confirm: true,
+  });
+
+  assert.equal(response.handled, true);
+  assert.equal(response.statusCode, 201);
+  assert.deepEqual(observedInput, {
+    workspacePath: "/tmp/openclaw",
+    language: "python",
+    lifecycleAction: "restart",
+    confirm: true,
+  });
+  assert.deepEqual(response.body.task, { id: "task-lsp", status: "queued" });
+  assert.deepEqual(response.body.approval, { id: "approval-lsp", status: "pending" });
+  assert.equal(response.body.engineeringLspLifecycle.server.processStarted, false);
+});
+
 test("workspace native source command task serializes task and approval contracts", async () => {
   let observedInput = null;
   const response = await invokeWorkspaceNativeOpsRoute({

@@ -1,6 +1,7 @@
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { createDelegatedPlanTaskHandlers } from "./task-executor-delegated-plan-handlers.mjs";
 import { createNativeDeferredTaskHandlers } from "./task-executor-native-deferred-handlers.mjs";
+import { createNativeEngineeringLspLifecycleTaskHandlers } from "./native-engineering-lsp-lifecycle-tasks.mjs";
 import { createSystemBodyTaskHandlers } from "./task-executor-system-body-handlers.mjs";
 import { planCapabilityActionSteps } from "./task-recovery.mjs";
 
@@ -1078,6 +1079,7 @@ function buildNonRecoverableExecutionResult(finalExecution) {
 }
 
 const NON_RECOVERABLE_TASK_HANDLERS = [
+  ...createNativeEngineeringLspLifecycleTaskHandlers({ state, taskManager, approvalEngine, policyEvaluator, publishEvent }),
   ...createNativeDeferredTaskHandlers({ state, taskManager, approvalEngine, policyEvaluator, publishEvent }),
   ...createSystemBodyTaskHandlers({ client, state, taskManager, publishEvent }),
   ...createDelegatedPlanTaskHandlers(planBuilder),

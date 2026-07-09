@@ -114,7 +114,8 @@ automatic edit approval, automatic recovery task creation, and unapproved verifi
 automatic write approval, automatic recovery task creation, and post-write
 verification command execution
 LSP process startup and request handling; `lsp_evidence` contract, availability
-evidence, and lifecycle readiness draft are absorbed
+evidence, lifecycle readiness draft, and approval-gated binary gate pilot are
+absorbed
 verification command execution and task-completion attachment
 planning/todo evidence is absorbed; hidden planning mode and todo state mutation remain deferred
 provider calls, network egress, and result envelopes
@@ -183,13 +184,24 @@ workspace-scoped language-server lifecycle action without starting servers,
 reading arbitrary files, creating tasks/approvals, persisting lifecycle state, or
 sending JSON-RPC.
 
+The LSP supervised lifecycle pilot follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_SUPERVISED_LIFECYCLE_PILOT_PLAN.md
+```
+
+That slice creates an approval-gated workspace-scoped lifecycle task, proves
+pre-approval blocking and approved binary-gate execution, records task
+readback/recovery evidence, and exposes the workflow in Observer without
+starting a process or sending JSON-RPC.
+
 The current next smallest real capability is:
 
 ```text
-Native governed LSP supervised lifecycle pilot
+Native governed LSP user-space process supervision readback
 ```
 
-That slice should only proceed if it closes a meaningful loop: approval-gated
-workspace-scoped lifecycle task, user-space process supervision, state/readback,
-Observer recovery evidence, and JSON-RPC still disabled until the lifecycle
+That slice should extend the same lifecycle lane with process ownership,
+bounded stdout/stderr metadata, stop/restart recovery, and Observer readback
+while keeping source-content transfer and JSON-RPC disabled until the lifecycle
 state is proven. Do not add another standalone LSP evidence/readiness shell.

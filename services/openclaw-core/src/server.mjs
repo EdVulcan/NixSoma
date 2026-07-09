@@ -82,6 +82,7 @@ const workspaceOps = createWorkspaceOps({
   buildNativeOpenClawPromptSemanticsProfile: (...args) => pluginReview.buildNativeOpenClawPromptSemanticsProfile(...args),
   buildNativeEngineeringEditProposal: (...args) => pluginReview.buildNativeEngineeringEditProposal(...args),
   buildNativeEngineeringWriteProposal: (...args) => pluginReview.buildNativeEngineeringWriteProposal(...args),
+  buildNativeEngineeringLspLifecycleDraft: (...args) => pluginReview.buildNativeEngineeringLspLifecycleDraft(...args),
   buildRulePlan: (args) => planBuilder.buildRulePlan(args),
   createTask: (...args) => taskManager.createTask(...args),
   supersedeOtherActiveTasks: (taskId) => taskManager.supersedeOtherActiveTasks(taskId),

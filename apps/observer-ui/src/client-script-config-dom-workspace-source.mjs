@@ -121,6 +121,7 @@ const engineeringLspLanguages = document.querySelector("#engineering-lsp-languag
 const engineeringLspServer = document.querySelector("#engineering-lsp-server");
 const engineeringLspRuntime = document.querySelector("#engineering-lsp-runtime");
 const engineeringLspMode = document.querySelector("#engineering-lsp-mode");
+const engineeringLspLifecycleTaskButton = document.querySelector("#engineering-lsp-lifecycle-task-button");
 const engineeringLspJson = document.querySelector("#engineering-lsp-json");
 const engineeringEditProposalRegistry = document.querySelector("#engineering-edit-proposal-registry");
 const engineeringEditProposalTarget = document.querySelector("#engineering-edit-proposal-target");
