@@ -427,6 +427,7 @@ function isCloudLiveProviderLateRuntimeCompositionExtraction(file) {
 
 function isCloudLiveProviderResultEnvelopeRuntimeLane(file) {
   return file.startsWith("services/openclaw-core/src/cloud-live-provider-runtime-credential-local-read-result-envelope")
+    || file === "services/openclaw-core/src/cloud-live-provider-runtime-result-envelope-task-shell-factory.mjs"
     || file === "services/openclaw-core/src/cloud-live-provider-runtime-governance-local-read-b.mjs";
 }
 
@@ -529,7 +530,7 @@ function selectPhasePlanChecks(file) {
   if (numericPhase >= 91 && numericPhase <= 98) {
     selectName(credentialValueLocalReadAttemptManifestCheck);
   }
-  if (numericPhase >= 99 && numericPhase <= 135) {
+  if (numericPhase >= 99 && numericPhase <= 136) {
     selectName(resultEnvelopeManifestCheck);
     selectName("openclaw-live-provider-result-envelope-batch-reuse");
     return;

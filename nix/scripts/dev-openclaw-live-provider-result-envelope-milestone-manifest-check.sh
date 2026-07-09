@@ -182,7 +182,7 @@ const milestones = readTsv(manifestFile, [
 ], "manifest").map((entry) => ({ ...entry, phaseNumber: Number.parseInt(entry.phase, 10) }));
 
 const expectedFirstPhase = 99;
-const expectedLastPhase = 135;
+const expectedLastPhase = 136;
 const expectedMilestoneRows = expectedLastPhase - expectedFirstPhase + 1;
 
 if (milestones.length !== expectedMilestoneRows) {
@@ -199,6 +199,9 @@ requireContains(commonEnvHelper, "OPENCLAW_SYSTEM_HEAL_STATE_FILE", { file: comm
 requireContains(commonEnvHelper, "OPENCLAW_RESULT_ENVELOPE_SLUG", { file: commonEnvHelperPath });
 requireContains(commonEnvHelper, commonAssertionsHelperScript, { file: commonEnvHelperPath });
 requireContains(commonPrereqHelper, "openclaw_result_envelope_prepare_prereq_state", { file: commonPrereqHelperPath });
+requireContains(commonPrereqHelper, "openclaw_result_envelope_durable_fast_source", { file: commonPrereqHelperPath });
+requireContains(commonPrereqHelper, "openclaw_result_envelope_find_reusable_core_state", { file: commonPrereqHelperPath });
+requireContains(commonPrereqHelper, "openclaw-core-result-envelope-batch-", { file: commonPrereqHelperPath });
 requireContains(commonPrereqHelper, "dev-openclaw-fast-prereq-state.sh", { file: commonPrereqHelperPath });
 requireContains(commonPrereqHelper, "openclaw_reuse_prereq_state", { file: commonPrereqHelperPath });
 requireContains(commonPrereqHelper, "fallback_port_base_env", { file: commonPrereqHelperPath });
