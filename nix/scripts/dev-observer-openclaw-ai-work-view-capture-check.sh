@@ -64,6 +64,8 @@ const requiredClient = [
   "trustedSession.helperReadiness",
   "trustedSession.recoveryRecommendation",
   "runRecommendedWorkViewAction",
+  "operatorActionSource",
+  "lastOperatorAction",
   "prepare_work_view",
   "reveal_work_view",
   "Trusted Boundary",

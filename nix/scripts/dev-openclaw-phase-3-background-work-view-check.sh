@@ -33,7 +33,7 @@ trap cleanup EXIT
 "$SCRIPT_DIR/dev-up.sh"
 curl --silent --fail -X POST "$SESSION_MANAGER_URL/work-view/prepare" \
   -H 'content-type: application/json' \
-  --data '{"displayTarget":"workspace-2","entryUrl":"https://example.com/phase-3-background"}' >/dev/null
+  --data '{"displayTarget":"workspace-2","entryUrl":"https://example.com/phase-3-background","operatorActionSource":"phase_3_background_milestone","recommendedAction":"prepare_work_view"}' >/dev/null
 
 BACKGROUND_FILE="$(mktemp)"
 curl --silent --fail "$CORE_URL/phase-3/background-work-view" > "$BACKGROUND_FILE"
@@ -58,6 +58,12 @@ if (background.current?.workView?.visibility !== "hidden"
   || background.current?.workView?.mode !== "background") {
   throw new Error(`current work view should remain hidden/background: ${JSON.stringify(background.current?.workView)}`);
 }
+if (background.current?.workView?.lastOperatorAction?.action !== "prepare_work_view"
+  || background.current?.workView?.lastOperatorAction?.source !== "phase_3_background_milestone"
+  || background.current?.workView?.lastOperatorAction?.next?.visibility !== "hidden"
+  || background.current?.workView?.lastOperatorAction?.rootRequired !== false) {
+  throw new Error(`current work view should record prepare action evidence: ${JSON.stringify(background.current?.workView?.lastOperatorAction)}`);
+}
 const trustedSession = background.workViewContract?.trustedSession ?? background.current?.workView?.trustedSession;
 if (trustedSession?.identityLevel !== "level_2_trusted_session_work_view"
   || trustedSession?.boundary?.workViewScope !== "ai_owned_work_view_only"
@@ -78,6 +84,7 @@ console.log(JSON.stringify({
     mode: background.current.workView.mode,
     trustedSession: trustedSession.identityLevel,
     recoveryRecommendation: trustedSession.recoveryRecommendation.action,
+    lastOperatorAction: background.current.workView.lastOperatorAction.action,
   },
 }, null, 2));
 EOF

@@ -30,6 +30,7 @@ const workViewState = {
   displayTarget: "workspace-2",
   entryUrl: defaultWorkViewUrl,
   activeUrl: null,
+  lastOperatorAction: null,
   preparedAt: null,
   lastRevealedAt: null,
   lastHiddenAt: null,
@@ -69,6 +70,39 @@ function serialiseWorkViewState() {
 function updateWorkViewState(patch) {
   Object.assign(workViewState, patch, {
     updatedAt: new Date().toISOString(),
+  });
+}
+
+function workViewActionSnapshot(source = workViewState) {
+  return {
+    status: source.status ?? null,
+    visibility: source.visibility ?? null,
+    mode: source.mode ?? null,
+    helperStatus: source.helperStatus ?? null,
+    browserStatus: source.browserStatus ?? null,
+    displayTarget: source.displayTarget ?? null,
+    activeUrl: source.activeUrl ?? null,
+  };
+}
+
+function stringOrNull(value) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function recordWorkViewOperatorAction(action, metadata = {}) {
+  updateWorkViewState({
+    lastOperatorAction: {
+      action,
+      source: stringOrNull(metadata.source) ?? "direct_endpoint",
+      recommendedAction: stringOrNull(metadata.recommendedAction),
+      endpoint: stringOrNull(metadata.endpoint),
+      previous: metadata.previous ?? null,
+      next: workViewActionSnapshot(),
+      rootRequired: false,
+      hostMutation: false,
+      operatorVisible: true,
+      invokedAt: new Date().toISOString(),
+    },
   });
 }
 
@@ -306,7 +340,14 @@ const server = http.createServer(async (req, res) => {
           ? body.entryUrl.trim()
           : workViewState.entryUrl;
 
+      const previous = workViewActionSnapshot();
       const browser = await prepareWorkView(displayTarget, entryUrl);
+      recordWorkViewOperatorAction("prepare_work_view", {
+        source: body.operatorActionSource,
+        recommendedAction: body.recommendedAction,
+        endpoint: "/work-view/prepare",
+        previous,
+      });
       const session = serialiseSessionState();
       const workView = serialiseWorkViewState();
       // M-1 Fix: Use screen.updated instead of service.started for work-view
@@ -338,7 +379,14 @@ const server = http.createServer(async (req, res) => {
         await prepareWorkView(workViewState.displayTarget, entryUrl);
       }
 
+      const previous = workViewActionSnapshot();
       const browser = await revealWorkView(entryUrl);
+      recordWorkViewOperatorAction("reveal_work_view", {
+        source: body.operatorActionSource,
+        recommendedAction: body.recommendedAction,
+        endpoint: "/work-view/reveal",
+        previous,
+      });
       const session = serialiseSessionState();
       const workView = serialiseWorkViewState();
       // M-1 Fix: Use screen.updated for visibility change events.
@@ -359,7 +407,15 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && requestUrl.pathname === "/work-view/hide") {
     try {
+      const body = await readJsonBody(req);
+      const previous = workViewActionSnapshot();
       hideWorkView();
+      recordWorkViewOperatorAction("hide_work_view", {
+        source: body.operatorActionSource,
+        recommendedAction: body.recommendedAction,
+        endpoint: "/work-view/hide",
+        previous,
+      });
       const session = serialiseSessionState();
       const workView = serialiseWorkViewState();
       // M-1 Fix: Use screen.updated for visibility change events.

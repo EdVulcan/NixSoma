@@ -5,7 +5,8 @@ Updated: 2026-07-10
 ## Active Slice
 
 Identity-upgrade bridge: trusted AI work-view session contract, helper
-readiness recommendation, and explicit Observer recovery bridge.
+readiness recommendation, explicit Observer recovery bridge, and operator action
+result evidence.
 
 This slice moves OpenClaw from a plain Level 1 user-space work-view readback
 toward Level 2 trusted session/work-view behavior by making the AI-owned work
@@ -55,6 +56,24 @@ none -> no mutation
 
 It does not call arbitrary endpoints returned by the service contract.
 
+Every work-view prepare/reveal/hide call now records `lastOperatorAction` in the
+existing work-view state. The record includes:
+
+```text
+action
+source
+recommendedAction
+endpoint
+previous status/visibility/mode/helper/browser/URL
+next status/visibility/mode/helper/browser/URL
+rootRequired: false
+hostMutation: false
+operatorVisible: true
+```
+
+This makes recovery action results visible through `/work-view/state` and
+`/phase-3/background-work-view` without adding another evidence endpoint.
+
 The contract is emitted through:
 
 ```text
@@ -92,6 +111,7 @@ apps/observer-ui/src/client-script-refreshers-mvp-phases.mjs
 apps/observer-ui/src/client-script-runtime-actions.mjs
 apps/observer-ui/src/client-script-runtime-bindings.mjs
 apps/observer-ui/src/observer-panels-operations.mjs
+services/openclaw-session-manager/src/server.mjs
 ```
 
 Targeted milestone coverage:
@@ -123,14 +143,14 @@ unreviewed endpoint invocation from recommendation payloads
 
 ## Next Slice
 
-The next high-density identity-upgrade slice should add recovery evidence after
-an explicit operator action without expanding into a new readiness chain:
+The next high-density identity-upgrade slice should make the work-view recovery
+result useful for task/workbench continuity without expanding into a new
+readiness chain:
 
 ```text
-AI work-view recovery action result evidence
+AI work-view recovery result attachment to task/workbench state
 ```
 
-That should reuse the existing work-view state, screen state, control-result
-message, and targeted work-view milestones. The useful increment is confirming
-which recommended action was explicitly invoked and what state changed, not
-creating another standalone readiness surface.
+That should reuse the existing task attachment or operator state paths. The
+useful increment is connecting a visible work-view recovery result to the task
+or workbench that needed it, not creating another standalone status route.

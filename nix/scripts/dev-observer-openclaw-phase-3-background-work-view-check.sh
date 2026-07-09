@@ -34,7 +34,7 @@ trap cleanup EXIT
 "$SCRIPT_DIR/dev-up.sh"
 curl --silent --fail -X POST "$SESSION_MANAGER_URL/work-view/prepare" \
   -H 'content-type: application/json' \
-  --data '{"displayTarget":"workspace-2","entryUrl":"https://example.com/observer-phase-3-background"}' >/dev/null
+  --data '{"displayTarget":"workspace-2","entryUrl":"https://example.com/observer-phase-3-background","operatorActionSource":"observer_phase_3_background_milestone","recommendedAction":"prepare_work_view"}' >/dev/null
 
 HTML_FILE="$(mktemp)"
 CLIENT_FILE="$(mktemp)"
@@ -54,7 +54,7 @@ for (const token of ["Phase 3 Background Work View", "phase3-background-work-vie
     throw new Error(`Observer HTML missing ${token}`);
   }
 }
-for (const token of ["/phase-3/background-work-view", "refreshPhase3BackgroundWorkView", "openclaw-phase-3-background-work-view-v0", "Trusted Session", "trustedSession.identityLevel", "Helper Readiness", "recoveryRecommendation", "runRecommendedWorkViewAction", "reveal_work_view"]) {
+for (const token of ["/phase-3/background-work-view", "refreshPhase3BackgroundWorkView", "openclaw-phase-3-background-work-view-v0", "Trusted Session", "trustedSession.identityLevel", "Helper Readiness", "recoveryRecommendation", "Last Operator Action", "lastOperatorAction", "runRecommendedWorkViewAction", "reveal_work_view"]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);
   }
@@ -69,6 +69,11 @@ if (trustedSession?.identityLevel !== "level_2_trusted_session_work_view"
   || trustedSession?.recoveryRecommendation?.action !== "reveal_work_view") {
   throw new Error(`Observer Phase 3 background work view should expose trusted session boundary: ${JSON.stringify(trustedSession)}`);
 }
+if (background.current?.workView?.lastOperatorAction?.action !== "prepare_work_view"
+  || background.current?.workView?.lastOperatorAction?.source !== "observer_phase_3_background_milestone"
+  || background.current?.workView?.lastOperatorAction?.next?.visibility !== "hidden") {
+  throw new Error(`Observer Phase 3 background work view should expose operator action result: ${JSON.stringify(background.current?.workView?.lastOperatorAction)}`);
+}
 
 console.log(JSON.stringify({
   observerOpenClawPhase3BackgroundWorkView: {
@@ -78,6 +83,7 @@ console.log(JSON.stringify({
     mode: background.current.workView.mode,
     trustedSession: trustedSession.identityLevel,
     recoveryRecommendation: trustedSession.recoveryRecommendation.action,
+    lastOperatorAction: background.current.workView.lastOperatorAction.action,
   },
 }, null, 2));
 EOF

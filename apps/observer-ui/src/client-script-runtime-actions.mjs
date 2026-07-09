@@ -322,6 +322,8 @@ async function runRecommendedWorkViewAction() {
     await postWorkView("/work-view/prepare", {
       displayTarget: workView?.displayTarget ?? "workspace-2",
       entryUrl: getDesiredWorkViewUrl(),
+      operatorActionSource: "trusted_session_recovery_recommendation",
+      recommendedAction: action,
     });
     return;
   }
@@ -329,12 +331,17 @@ async function runRecommendedWorkViewAction() {
   if (action === "reveal_work_view") {
     await postWorkView("/work-view/reveal", {
       entryUrl: workView?.activeUrl ?? workView?.entryUrl ?? getDesiredWorkViewUrl(),
+      operatorActionSource: "trusted_session_recovery_recommendation",
+      recommendedAction: action,
     });
     return;
   }
 
   if (action === "hide_work_view") {
-    await postWorkView("/work-view/hide");
+    await postWorkView("/work-view/hide", {
+      operatorActionSource: "trusted_session_recovery_recommendation",
+      recommendedAction: action,
+    });
     return;
   }
 

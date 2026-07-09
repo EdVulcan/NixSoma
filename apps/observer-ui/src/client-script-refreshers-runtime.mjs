@@ -144,6 +144,7 @@ async function refreshWorkView() {
       \`Trusted Boundary: \${trustedSession.boundary?.workViewScope ?? "unknown"} root=\${String(Boolean(trustedSession.boundary?.rootRequired))} desktopWide=\${String(Boolean(trustedSession.boundary?.desktopWideCapture))}\`,
       \`Helper Readiness: \${trustedSession.helperReadiness?.state ?? "unknown"} reason=\${trustedSession.helperReadiness?.reason ?? "unknown"}\`,
       \`Recovery Recommendation: \${trustedSession.recoveryRecommendation?.action ?? "unknown"} endpoint=\${trustedSession.recoveryRecommendation?.endpoint ?? "none"}\`,
+      \`Last Operator Action: \${workView.lastOperatorAction?.action ?? "none"} source=\${workView.lastOperatorAction?.source ?? "none"}\`,
       \`Reveal Gate: \${trustedSession.operatorGates?.reveal ?? "unknown"}\`,
       \`Entry URL: \${workView.entryUrl ?? "none"}\`,
       \`Active URL: \${workView.activeUrl ?? "none"}\`,
