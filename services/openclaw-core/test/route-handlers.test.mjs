@@ -335,6 +335,91 @@ test("native engineering verification evidence route derives bounded command evi
   assert.equal(response.body.governance.canExecuteCommand, false);
 });
 
+test("native engineering recovery evidence route derives read-only recovery recommendations", async () => {
+  let observedTranscriptLimit = null;
+  let observedInvocationQuery = null;
+  const transcriptEntry = {
+    invocationId: "invocation-recovery-1",
+    command: "npm",
+    exitCode: 9,
+    timedOut: false,
+    stdout: "verify failed\n",
+    stderr: "failure details\n",
+  };
+  const task = {
+    id: "task-recovery-1",
+    status: "failed",
+    type: "system_task",
+    closedAt: "2026-07-09T06:00:00.000Z",
+    outcome: {
+      kind: "failed",
+      details: {
+        commandTranscript: [transcriptEntry],
+        failedCommand: transcriptEntry,
+      },
+    },
+    sourceCommand: { registry: "openclaw-source-command-task-v0" },
+    plan: {
+      steps: [{
+        phase: "acting_on_target",
+        capabilityId: "act.system.command.execute",
+      }],
+    },
+  };
+  const deps = createBaseDeps({
+    state: {
+      tasks: new Map([[task.id, task]]),
+    },
+    executor: {
+      listCommandTranscriptRecords: ({ limit }) => {
+        observedTranscriptLimit = limit;
+        return [{
+          ...transcriptEntry,
+          taskId: task.id,
+          taskStatus: "failed",
+          taskClosedAt: task.closedAt,
+          sourceCommand: task.sourceCommand,
+          taskOutcome: "failed",
+          index: 0,
+          state: "failed",
+          capabilityId: "act.system.command.execute",
+        }];
+      },
+    },
+    planBuilder: {
+      listCapabilityInvocations: (query) => {
+        observedInvocationQuery = query;
+        return [{
+          id: "invocation-recovery-1",
+          capability: { id: "act.system.command.execute" },
+          request: { taskId: task.id, command: "npm", cwd: "/tmp/openclaw" },
+          summary: { exitCode: 9, timedOut: false },
+        }];
+      },
+    },
+  });
+
+  const response = await invokeRoute(
+    deps,
+    "GET",
+    "/plugins/native-adapter/engineering-recovery/evidence?taskId=task-recovery-1&limit=999&maxOutputChars=64",
+  );
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(observedTranscriptLimit, 100);
+  assert.deepEqual(observedInvocationQuery, { limit: 100, capabilityId: "act.system.command.execute" });
+  assert.equal(response.body.registry, "openclaw-native-engineering-recovery-evidence-v0");
+  assert.equal(response.body.capability.id, "sense.openclaw.engineering_tool.recovery_evidence");
+  assert.equal(response.body.summary.totalFailures, 1);
+  assert.equal(response.body.summary.recoverableFailures, 1);
+  assert.equal(response.body.failures[0].taskId, task.id);
+  assert.equal(response.body.failures[0].kind, "verification_command_exit_nonzero");
+  assert.equal(response.body.failures[0].recommendations.some((item) => item.id === "recover_task_after_review"), true);
+  assert.equal(response.body.governance.canCreateRecoveryTask, false);
+  assert.equal(response.body.governance.canExecuteCommand, false);
+  assert.equal(response.body.bounds.noCommandExecution, true);
+});
+
 test("capability invocation route preserves fallback limit and summary contract", async () => {
   let observedQuery = null;
   const deps = createBaseDeps({

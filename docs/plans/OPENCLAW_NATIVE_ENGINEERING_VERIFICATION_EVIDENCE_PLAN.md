@@ -96,14 +96,16 @@ npm --workspace @openclaw/observer-ui run typecheck
 OPENCLAW_MILESTONE_CHECKS=openclaw-native-engineering-verification-evidence,observer-openclaw-native-engineering-verification-evidence bash nix/scripts/dev-milestone-check.sh
 ```
 
-## Next Slice
+## Follow-On Slice
 
-The next recommended real capability is:
+The direct follow-on slice is:
 
 ```text
 Observer visibility and recovery evidence for native engineering tool failures
 ```
 
-That slice should make failed engineering tool proposals, verification evidence,
-and existing approval-gated command failures easier to recover from without
-creating ungoverned execution paths.
+It is tracked in:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_RECOVERY_EVIDENCE_PLAN.md
+```

@@ -201,6 +201,7 @@ export const OBSERVER_STARTUP_REFRESH_GROUPS = [
       "refreshCapabilityHistory",
       "refreshCommandLedger",
       "refreshEngineeringVerificationEvidence",
+      "refreshEngineeringRecoveryEvidence",
       "refreshFilesystemLedger",
       "refreshFilesystemReadLedger",
     ],

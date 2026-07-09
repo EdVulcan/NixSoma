@@ -98,6 +98,20 @@ async function refreshEngineeringVerificationEvidence() {
   }
 }
 
+async function refreshEngineeringRecoveryEvidence() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-recovery/evidence?limit=8&maxOutputChars=2000\`);
+    renderEngineeringRecoveryEvidence(data);
+  } catch {
+    engineeringRecoveryRegistry.textContent = "offline";
+    engineeringRecoveryFailures.textContent = "0";
+    engineeringRecoveryRecoverable.textContent = "0";
+    engineeringRecoveryRecovered.textContent = "0";
+    engineeringRecoveryExecution.textContent = "unknown";
+    engineeringRecoveryJson.textContent = "Unable to read native engineering recovery evidence.";
+  }
+}
+
 async function refreshFilesystemLedger() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/filesystem/changes?limit=8\`);

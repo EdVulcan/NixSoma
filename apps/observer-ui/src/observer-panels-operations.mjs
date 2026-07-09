@@ -132,6 +132,15 @@ export function observerOperationsPanels() {
           <pre id="engineering-verification-json">Loading native engineering verification evidence...</pre>
         </section>
         <section class="panel">
+          <h2>Engineering Recovery Evidence</h2>
+          <div class="metric"><span>Registry</span><span id="engineering-recovery-registry">openclaw-native-engineering-recovery-evidence-v0</span></div>
+          <div class="metric"><span>Failures</span><span id="engineering-recovery-failures">0</span></div>
+          <div class="metric"><span>Recoverable</span><span id="engineering-recovery-recoverable">0</span></div>
+          <div class="metric"><span>Recovered</span><span id="engineering-recovery-recovered">0</span></div>
+          <div class="metric"><span>Execution</span><span id="engineering-recovery-execution">blocked</span></div>
+          <pre id="engineering-recovery-json">Loading native engineering recovery evidence...</pre>
+        </section>
+        <section class="panel">
           <h2>Filesystem Ledger</h2>
           <div class="metric"><span>Total</span><span id="filesystem-ledger-total">0</span></div>
           <div class="metric"><span>Mkdir</span><span id="filesystem-ledger-mkdir">0</span></div>

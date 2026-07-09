@@ -1,4 +1,5 @@
 import { sendJson } from "../../../packages/shared-utils/src/http.mjs";
+import { buildNativeEngineeringRecoveryEvidence } from "./native-engineering-recovery-evidence-builders.mjs";
 import { buildNativeEngineeringVerificationEvidence } from "./native-engineering-verification-evidence-builders.mjs";
 
 function parseLimit(searchParams) {
@@ -93,6 +94,30 @@ export async function handleObserverReadModelRoute({ req, res, requestUrl, state
       taskId,
       limit: safeLimit,
       maxOutputChars,
+    }));
+    return true;
+  }
+
+  if (requestUrl.pathname === "/plugins/native-adapter/engineering-recovery/evidence") {
+    const safeLimit = clampLedgerLimit(parseLimit(requestUrl.searchParams));
+    const taskId = requestUrl.searchParams.get("taskId") ?? null;
+    const transcriptLimit = taskId ? 100 : safeLimit;
+    const verificationEvidence = buildNativeEngineeringVerificationEvidence({
+      transcriptRecords: executor.listCommandTranscriptRecords({ limit: transcriptLimit }),
+      capabilityInvocations: planBuilder.listCapabilityInvocations({
+        limit: 100,
+        capabilityId: "act.system.command.execute",
+      }),
+      tasks: state.tasks,
+      taskId,
+      limit: safeLimit,
+      maxOutputChars: requestUrl.searchParams.get("maxOutputChars"),
+    });
+    sendJson(res, 200, buildNativeEngineeringRecoveryEvidence({
+      verificationEvidence,
+      tasks: state.tasks,
+      taskId,
+      limit: safeLimit,
     }));
     return true;
   }
