@@ -269,6 +269,122 @@ async function bridgeEngineeringPlanningWorkbenchState() {
   await refreshEngineeringLoopControlSurfaces();
 }
 
+function classifyRestorableEngineeringLoopTask(task) {
+  if (!task?.id) {
+    return null;
+  }
+  const approvalId = task.approval?.requestId ?? task.approval?.id ?? null;
+  if (task.recovery?.recoveredFromTaskId && task.sourceCommand?.registry === "openclaw-source-command-task-v0") {
+    return {
+      kind: "recovery",
+      taskId: task.id,
+      sourceTaskId: task.recovery.recoveredFromTaskId,
+      approvalId,
+      evidenceRoute: \`/plugins/native-adapter/engineering-recovery/evidence?taskId=\${task.recovery.recoveredFromTaskId}\`,
+      verificationRoute: \`/plugins/native-adapter/engineering-verification/evidence?taskId=\${task.id}&maxOutputChars=2000\`,
+      restoredFrom: "recovered_source_command_task",
+    };
+  }
+  if (task.recoveredByTaskId && task.sourceCommand?.registry === "openclaw-source-command-task-v0") {
+    return {
+      kind: "recovery",
+      taskId: task.recoveredByTaskId,
+      sourceTaskId: task.id,
+      approvalId: null,
+      evidenceRoute: \`/plugins/native-adapter/engineering-recovery/evidence?taskId=\${task.id}\`,
+      verificationRoute: \`/plugins/native-adapter/engineering-verification/evidence?taskId=\${task.recoveredByTaskId}&maxOutputChars=2000\`,
+      restoredFrom: "source_command_recovery_link",
+    };
+  }
+  if (task.engineeringEditProposal) {
+    return {
+      kind: "edit",
+      taskId: task.id,
+      approvalId,
+      evidenceRoute: engineeringLoopEvidenceRoute("edit", task.id),
+      restoredFrom: "engineering_edit_proposal_task",
+    };
+  }
+  if (task.engineeringWriteProposal) {
+    return {
+      kind: "write",
+      taskId: task.id,
+      approvalId,
+      evidenceRoute: engineeringLoopEvidenceRoute("write", task.id),
+      restoredFrom: "engineering_write_proposal_task",
+    };
+  }
+  if (task.sourceCommand?.registry === "openclaw-source-command-task-v0") {
+    return {
+      kind: "verification",
+      taskId: task.id,
+      approvalId,
+      evidenceRoute: engineeringLoopEvidenceRoute("verification", task.id),
+      restoredFrom: "source_command_verification_task",
+    };
+  }
+  if (Array.isArray(task.plan?.steps) && task.plan.steps.length > 0) {
+    return {
+      kind: "planning-workbench",
+      taskId: task.id,
+      approvalId,
+      evidenceRoute: \`/plugins/native-adapter/engineering-plan-todo/evidence?taskId=\${task.id}&limit=8\`,
+      restoredFrom: "task_plan_steps",
+    };
+  }
+  return null;
+}
+
+function nextStepForRestoredEngineeringLoop(task, restored) {
+  if (task?.approval?.required === true || task?.status === "queued") {
+    return restored.kind === "planning-workbench"
+      ? "use visible todo state to guide next governed action"
+      : "approve pending approval if required, then run operator step";
+  }
+  if (task?.status === "completed" || task?.status === "failed") {
+    return "refresh completion evidence and decide the next governed action";
+  }
+  return "inspect restored task state";
+}
+
+async function restoreEngineeringLoopStateFromHistory() {
+  const data = await fetchJson(\`\${observerConfig.coreUrl}/tasks?limit=20\`);
+  const tasks = Array.isArray(data?.items) ? data.items : [];
+  const pair = tasks
+    .map((task) => ({ task, restored: classifyRestorableEngineeringLoopTask(task) }))
+    .find((item) => item.restored);
+  if (!pair?.restored) {
+    throw new Error("No engineering loop task was found in core task history.");
+  }
+
+  const { task, restored } = pair;
+  latestEngineeringLoopControlState = restored;
+  taskHistoryFocus = "selected-task";
+  selectedHistoryTaskId = task.id;
+  taskDetailIdInput.value = task.id;
+  engineeringLoopStateKind.textContent = restored.kind;
+  engineeringLoopStateTask.textContent = restored.taskId ? restored.taskId.slice(0, 8) : "none";
+  engineeringLoopStateApproval.textContent = restored.approvalId ? restored.approvalId.slice(0, 8) : "none";
+  engineeringLoopStateNext.textContent = nextStepForRestoredEngineeringLoop(task, restored);
+  engineeringLoopStateEvidence.textContent = restored.evidenceRoute;
+  engineeringLoopStateCompletion.textContent = "restored from core history";
+  engineeringLoopStateJson.textContent = [
+    \`Kind: \${restored.kind}\`,
+    \`Task: \${restored.taskId}\`,
+    restored.sourceTaskId ? \`Source Task: \${restored.sourceTaskId}\` : null,
+    \`Approval: \${restored.approvalId ?? "none"}\`,
+    \`Task Status: \${task.status ?? "unknown"}\`,
+    \`Restored From: \${restored.restoredFrom}\`,
+    \`Evidence: \${restored.evidenceRoute}\`,
+    restored.verificationRoute ? \`Rerun Evidence: \${restored.verificationRoute}\` : null,
+    \`Next: \${nextStepForRestoredEngineeringLoop(task, restored)}\`,
+    "Boundary: restoration is read-only; no task, approval, operator step, command, mutation, provider call, or result envelope is created.",
+  ].filter(Boolean).join("\\n");
+  setControlMessage(\`Restored engineering loop state from core history task \${task.id}.\`);
+  await refreshTaskList();
+  await refreshTaskHistoryDetail();
+}
+
 async function refreshEngineeringLoopControlSurfaces() {
   await refreshRuntime();
   await refreshTaskList();

@@ -106,12 +106,12 @@ raw credential reads
 
 ## Next Slice
 
-The next highest-density capability slice is:
+The workbench state restoration follow-up was completed as:
 
 ```text
-Native governed engineering workbench state restoration
+OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_RESTORATION_PLAN.md
 ```
 
-That slice should rebuild the latest engineering loop state from core
-task/approval/evidence history after Observer reload, without relying only on
-browser-local state and without creating new execution paths.
+It rebuilds the latest engineering loop state from core task history after
+Observer reload without relying only on browser-local state and without creating
+new execution paths.

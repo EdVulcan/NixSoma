@@ -70,7 +70,8 @@ cleanup() {
     "${RECOVERED_APPROVE_FILE:-}" \
     "${RECOVERED_STEP_FILE:-}" \
     "${RECOVERED_VERIFY_FILE:-}" \
-    "${RECOVERY_RERUN_FILE:-}"
+    "${RECOVERY_RERUN_FILE:-}" \
+    "${TASK_RESTORE_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -103,6 +104,7 @@ RECOVERED_APPROVE_FILE="$(mktemp)"
 RECOVERED_STEP_FILE="$(mktemp)"
 RECOVERED_VERIFY_FILE="$(mktemp)"
 RECOVERY_RERUN_FILE="$(mktemp)"
+TASK_RESTORE_FILE="$(mktemp)"
 
 curl --silent --fail "$OBSERVER_URL/" > "$HTML_FILE"
 curl --silent --fail "$OBSERVER_URL/client-v5.js" > "$CLIENT_FILE"
@@ -156,6 +158,7 @@ for (const token of [
   "engineering-loop-state-completion",
   "engineering-loop-state-json",
   "engineering-loop-completion-button",
+  "engineering-loop-restore-button",
   "engineering-recovery-action",
   "engineering-recovery-draft-button",
   "engineering-recovery-task-button",
@@ -194,6 +197,11 @@ for (const token of [
   "bridgeEngineeringPlanningWorkbenchState",
   "operator-visible-planning-workbench-state",
   "planning-workbench",
+  "classifyRestorableEngineeringLoopTask",
+  "restoreEngineeringLoopStateFromHistory",
+  "recovered_source_command_task",
+  "source_command_recovery_link",
+  "restoration is read-only",
   "readback only; no approval, execution, retry, recovery task, mutation, provider call, or result envelope",
   "approve pending approval, then run operator step",
   "createEngineeringEditLoopApprovalTask",
@@ -625,6 +633,80 @@ console.log(JSON.stringify({
     verificationTaskId: verifyTask.task.id,
     pendingApprovals: approvals.summary.pendingCount,
     approvalGatePreserved: true,
+  },
+}, null, 2));
+EOF
+
+curl --silent --fail "$CORE_URL/tasks?limit=20" > "$TASK_RESTORE_FILE"
+
+node - <<'EOF' \
+  "$TASK_RESTORE_FILE" \
+  "$edit_task_id" \
+  "$fail_task_id" \
+  "$recovered_task_id"
+const fs = require("node:fs");
+const tasksResponse = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const editTaskId = process.argv[3];
+const failedTaskId = process.argv[4];
+const recoveredTaskId = process.argv[5];
+const tasks = tasksResponse.items ?? [];
+
+function classify(task) {
+  if (task.recovery?.recoveredFromTaskId && task.sourceCommand?.registry === "openclaw-source-command-task-v0") {
+    return { kind: "recovery", taskId: task.id, sourceTaskId: task.recovery.recoveredFromTaskId };
+  }
+  if (task.recoveredByTaskId && task.sourceCommand?.registry === "openclaw-source-command-task-v0") {
+    return { kind: "recovery", taskId: task.recoveredByTaskId, sourceTaskId: task.id };
+  }
+  if (task.engineeringEditProposal) {
+    return { kind: "edit", taskId: task.id };
+  }
+  if (task.engineeringWriteProposal) {
+    return { kind: "write", taskId: task.id };
+  }
+  if (task.sourceCommand?.registry === "openclaw-source-command-task-v0") {
+    return { kind: "verification", taskId: task.id };
+  }
+  if (Array.isArray(task.plan?.steps) && task.plan.steps.length > 0) {
+    return { kind: "planning-workbench", taskId: task.id };
+  }
+  return null;
+}
+
+const restored = tasks.map(classify).find(Boolean);
+const editTask = tasks.find((task) => task.id === editTaskId);
+const failedTask = tasks.find((task) => task.id === failedTaskId);
+const recoveredTask = tasks.find((task) => task.id === recoveredTaskId);
+
+if (!tasksResponse.ok || tasks.length < 4 || !restored) {
+  throw new Error(`task history should expose restorable engineering loop state: ${JSON.stringify(tasksResponse)}`);
+}
+if (!editTask?.engineeringEditProposal || editTask.engineeringEditProposal.contentExposed !== false) {
+  throw new Error(`task history should expose redacted engineering edit metadata: ${JSON.stringify(editTask)}`);
+}
+if (
+  !failedTask?.sourceCommand
+  || failedTask.recoveredByTaskId !== recoveredTaskId
+  || failedTask.restorable !== true
+) {
+  throw new Error(`failed source-command task should expose recovery link: ${JSON.stringify(failedTask)}`);
+}
+if (
+  !recoveredTask?.recovery
+  || recoveredTask.recovery.recoveredFromTaskId !== failedTaskId
+  || recoveredTask.sourceCommand?.registry !== "openclaw-source-command-task-v0"
+  || recoveredTask.status !== "completed"
+) {
+  throw new Error(`recovered task should expose source-command recovery state: ${JSON.stringify(recoveredTask)}`);
+}
+
+console.log(JSON.stringify({
+  openclawNativeEngineeringWorkbenchStateRestoration: {
+    restoredKind: restored.kind,
+    restoredTaskId: restored.taskId,
+    sourceTaskId: restored.sourceTaskId ?? null,
+    editTaskRestorable: Boolean(editTask.engineeringEditProposal),
+    recoveredTaskLinked: recoveredTask.recovery.recoveredFromTaskId === failedTaskId,
   },
 }, null, 2));
 EOF

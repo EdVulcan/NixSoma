@@ -153,12 +153,21 @@ It turns existing plan/todo evidence into operator-visible Engineering Loop
 State for selected engineering tasks without hidden planning modes, todo-file
 writes, or task mutation.
 
+The workbench state restoration follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_RESTORATION_PLAN.md
+```
+
+The Observer can now rebuild the latest engineering loop state from core task
+history after reload without creating tasks, approvals, execution, or mutation.
+
 The current next smallest real capability is:
 
 ```text
-Native governed engineering workbench state restoration
+Native governed engineering workbench state auto-restore on Observer startup
 ```
 
-That slice should rebuild the latest engineering loop state from core
-task/approval/evidence history after Observer reload, without relying only on
-browser-local state and without creating new execution paths.
+That slice should call the read-only restoration flow during Observer startup
+when no local loop state exists, while keeping operator action creation explicit
+and approval-gated.
