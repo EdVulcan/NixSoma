@@ -141,6 +141,15 @@ export function observerOperationsPanels() {
           <pre id="engineering-recovery-json">Loading native engineering recovery evidence...</pre>
         </section>
         <section class="panel">
+          <h2>Engineering Microcompact Evidence</h2>
+          <div class="metric"><span>Registry</span><span id="engineering-microcompact-registry">openclaw-native-engineering-microcompact-evidence-v0</span></div>
+          <div class="metric"><span>Items</span><span id="engineering-microcompact-items">0</span></div>
+          <div class="metric"><span>Compactable</span><span id="engineering-microcompact-compactable">0</span></div>
+          <div class="metric"><span>Reclaimed</span><span id="engineering-microcompact-reclaimed">0</span></div>
+          <div class="metric"><span>Mutation</span><span id="engineering-microcompact-mutation">blocked</span></div>
+          <pre id="engineering-microcompact-json">Loading native engineering microcompact evidence...</pre>
+        </section>
+        <section class="panel">
           <h2>Filesystem Ledger</h2>
           <div class="metric"><span>Total</span><span id="filesystem-ledger-total">0</span></div>
           <div class="metric"><span>Mkdir</span><span id="filesystem-ledger-mkdir">0</span></div>

@@ -420,6 +420,76 @@ test("native engineering recovery evidence route derives read-only recovery reco
   assert.equal(response.body.bounds.noCommandExecution, true);
 });
 
+test("native engineering microcompact evidence route previews context budget without mutation", async () => {
+  let observedTranscriptLimit = null;
+  let observedInvocationQuery = null;
+  const task = {
+    id: "task-microcompact-1",
+    status: "completed",
+    type: "system_task",
+    closedAt: "2026-07-09T06:00:00.000Z",
+    outcome: {
+      kind: "completed",
+      details: {},
+    },
+  };
+  const deps = createBaseDeps({
+    state: {
+      tasks: new Map([[task.id, task]]),
+    },
+    executor: {
+      listCommandTranscriptRecords: ({ limit }) => {
+        observedTranscriptLimit = limit;
+        return [{
+          invocationId: "invocation-microcompact-1",
+          command: "npm",
+          exitCode: 0,
+          timedOut: false,
+          stdout: "X".repeat(1_200),
+          stderr: "",
+          taskId: task.id,
+          taskStatus: "completed",
+          taskClosedAt: task.closedAt,
+          taskOutcome: "completed",
+          index: 0,
+          state: "executed",
+          capabilityId: "act.system.command.execute",
+        }];
+      },
+    },
+    planBuilder: {
+      listCapabilityInvocations: (query) => {
+        observedInvocationQuery = query;
+        return [{
+          id: "invocation-microcompact-1",
+          capability: { id: "act.system.command.execute" },
+          request: { taskId: task.id, command: "npm", cwd: "/tmp/openclaw" },
+          summary: { exitCode: 0, timedOut: false },
+        }];
+      },
+    },
+  });
+
+  const response = await invokeRoute(
+    deps,
+    "GET",
+    "/plugins/native-adapter/engineering-microcompact/evidence?limit=999&thresholdChars=256&protectRecentItems=0",
+  );
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(observedTranscriptLimit, 100);
+  assert.deepEqual(observedInvocationQuery, { limit: 100, capabilityId: "act.system.command.execute" });
+  assert.equal(response.body.registry, "openclaw-native-engineering-microcompact-evidence-v0");
+  assert.equal(response.body.capability.id, "sense.openclaw.engineering_context.microcompact_evidence");
+  assert.equal(response.body.summary.totalItems, 1);
+  assert.equal(response.body.summary.compactableItems, 1);
+  assert.equal(response.body.summary.reclaimedChars > 0, true);
+  assert.equal(response.body.candidates[0].output.sourceTextExposed, false);
+  assert.equal(response.body.governance.canMutatePersistedLogs, false);
+  assert.equal(response.body.governance.canExecuteCommand, false);
+  assert.equal(response.body.bounds.noRawOutputText, true);
+});
+
 test("capability invocation route preserves fallback limit and summary contract", async () => {
   let observedQuery = null;
   const deps = createBaseDeps({

@@ -92,6 +92,10 @@ governed surfaces:
   evidence and failed source-command task outcomes, classifies recoverability,
   and exposes operator recovery recommendations without creating tasks or
   rerunning commands.
+- Native engineering microcompact evidence:
+  `sense.openclaw.engineering_context.microcompact_evidence` estimates
+  context-budget savings from historical command transcripts without returning
+  raw output or mutating runtime messages or persisted logs.
 - Approval-gated workspace mutation:
   `act.openclaw.workspace_text_write` and
   `act.openclaw.workspace_patch_apply`.
@@ -121,7 +125,7 @@ enhanced `openclaw` modules.
 | `cc_lsp` | requires source transfer | `sense.openclaw.workspace_symbol_lookup` approximates navigation but does not start or manage LSP servers. | Transfer the LSP manager idea, rewritten as an optional governed workspace service with lifecycle evidence. | Level 1 now, Level 2 later |
 | `cc_verify` | absorbed as evidence | `sense.openclaw.engineering_tool.verify_evidence` reads approval-gated command transcripts, capability invocations, and completed task outcomes to produce bounded verification evidence with checks, output budgets, retry-policy metadata, audit evidence, and Observer visibility. `sense.openclaw.engineering_tool.recovery_evidence` adds read-only failed-evidence recovery recommendations. | Keep actual command execution on the existing approval-gated source/workspace command task path. Do not add ungoverned shell execution or automatic retries. | Level 1 |
 | `cc_plan_enter`, `cc_plan_exit`, `cc_todo_write` | partially absorbed | Core tasks, plans, approvals, and recovery exist; no lightweight planning mode or `.openclaw/cc-todo.md` equivalent is native. | Treat as plan-state evidence, not hidden agent mode. Integrate with task/workbench state if migrated. | Level 1 |
-| `microcompact` | not absorbed | Only docs mention microcompaction; no context-management runtime exists in this repo. | Add as explicit context-management evidence. Do not silently mutate persisted transcript or hide current verification evidence. | Level 1 |
+| `microcompact` | absorbed as evidence | `sense.openclaw.engineering_context.microcompact_evidence` reads command transcript metadata, protects recent engineering evidence by default, and estimates reclaimable context budget without returning raw output or mutating logs. | Keep actual runtime-message compaction deferred until the evidence surface is stable and governed. Do not silently mutate persisted transcript or hide current verification/recovery evidence. | Level 1 |
 | Live plugin runtime refresh | requires source transfer | Main has runtime activation tasks and deferred gates, but not live in-process refresh after install/enable/disable. | Transfer the refresh semantics into a governed lifecycle action with cache invalidation, status, recovery, and Observer evidence. | Level 1 |
 | ACPX/Codex bridge compatibility | requires source transfer | No ACPX/Codex bridge implementation exists in this repo. | Transfer compatibility lessons only where useful for OpenClaw's NixOS body and ACP bridge model. Do not center Windows wrapper behavior. | Level 1 |
 | Runtime persistence tests | partially absorbed | Main has many task/approval/recovery persistence milestones; enhanced ACPX/runtime persistence tests are not migrated. | Reuse the persistence discipline, and add native tests only when adopting ACPX or live runtime refresh behavior. | Level 1 |
@@ -304,16 +308,19 @@ Enhanced source:
 
 Current OpenClaw:
 
-- No runtime microcompact feature exists. The current repo only records it in
-  the enhanced source migration brief and forward directive.
+- `sense.openclaw.engineering_context.microcompact_evidence` reads command
+  transcript metadata and output lengths without returning raw output.
+- The evidence surface protects recent command evidence by default, links
+  verification/recovery read models, estimates reclaimable context budget, and
+  keeps runtime-message and persisted-log mutation disabled.
 
-Classification: not absorbed.
+Classification: absorbed as evidence.
 
 Recommendation:
 
-- Migrate as an explicit context-management capability with reclaimed-budget
-  evidence. It must not silently hide current task evidence, approval context,
-  or verification output.
+- Keep the evidence route as the authority before adding any actual LLM-context
+  transformation. It must not silently hide current task evidence, approval
+  context, recovery context, or verification output.
 
 ### Live Plugin Runtime Refresh
 
@@ -463,7 +470,8 @@ Deferred:
 - Full LSP server lifecycle until a governed service boundary is chosen.
 - Verification-command execution until command provenance and completion
   evidence attach cleanly to task records.
-- Microcompact until it emits auditable context-management evidence.
+- Actual microcompact runtime-message transformation until the evidence route
+  proves safe context boundaries.
 - Live plugin runtime refresh until runtime lifecycle state, cache invalidation,
   and recovery are visible.
 - ACPX/Codex bridge work until it is scoped to OpenClaw's NixOS body and ACP
@@ -491,17 +499,17 @@ Native governed engineering tool surface
 Next smallest real capability:
 
 ```text
-Microcompact context-management evidence
+Live plugin runtime refresh as a governed lifecycle action
 ```
 
 This should produce:
 
-- An explicit OpenClaw context-management evidence route that summarizes
-  bounded engineering context without mutating hidden transcript state.
-- Observer-visible context budget, included evidence sources, omitted sections,
-  and recovery/verification links needed to continue the task safely.
-- No prompt-wall replacement, no silent transcript rewrite, no provider call,
-  no file mutation, and no hidden enhanced-source import.
+- An explicit OpenClaw runtime refresh evidence/control surface that reports
+  current plugin runtime state, refresh preconditions, cache invalidation intent,
+  and recovery boundaries.
+- Observer-visible lifecycle state for install/enable/disable refresh decisions.
+- No unreviewed plugin module load, no provider call, no network egress, no
+  hidden enhanced-source import, and no automatic activation.
 - Evidence through focused unit tests plus a targeted local milestone if an
   endpoint or Observer surface is added.
 
@@ -510,9 +518,9 @@ Why this is real progress:
 - It advances Level 1, the stable user-space control plane.
 - It makes OpenClaw better at governing its own engineering work rather than
   adding another cloud/provider safety shell.
-- It sets up the next executable slice: governed live plugin runtime refresh or
-  a planning/todo evidence surface, depending on the route documents after
-  microcompact evidence lands.
+- It sets up the next executable slice after context evidence: planning/todo
+  evidence or ACP/Codex bridge compatibility, depending on the route documents
+  after runtime refresh evidence lands.
 
 Required answer for every following slice:
 

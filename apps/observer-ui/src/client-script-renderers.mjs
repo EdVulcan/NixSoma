@@ -1,5 +1,6 @@
 import { observerClientWorkspaceSourceRenderersScript } from "./client-script-renderers-workspace-source.mjs";
 import { observerClientEngineeringEditRenderersScript } from "./client-script-renderers-engineering-edit.mjs";
+import { observerClientEngineeringMicrocompactRenderersScript } from "./client-script-renderers-engineering-microcompact.mjs";
 import { observerClientEngineeringRecoveryRenderersScript } from "./client-script-renderers-engineering-recovery.mjs";
 import { observerClientEngineeringVerificationRenderersScript } from "./client-script-renderers-engineering-verification.mjs";
 export const observerClientRenderersScript = `function setHealthPill(target, ok, text) {
@@ -363,7 +364,7 @@ function renderFilesystemReadLedger(data) {
   ].join("\\n");
 }
 
-${observerClientWorkspaceSourceRenderersScript}${observerClientEngineeringEditRenderersScript}${observerClientEngineeringVerificationRenderersScript}${observerClientEngineeringRecoveryRenderersScript}function renderNativePluginContract(data) {
+${observerClientWorkspaceSourceRenderersScript}${observerClientEngineeringEditRenderersScript}${observerClientEngineeringVerificationRenderersScript}${observerClientEngineeringRecoveryRenderersScript}${observerClientEngineeringMicrocompactRenderersScript}function renderNativePluginContract(data) {
   const summary = data?.summary ?? {};
   const contract = data?.contract ?? {};
   const governance = summary.governance ?? contract.governance ?? {};

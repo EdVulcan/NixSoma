@@ -107,15 +107,16 @@ npm --workspace @openclaw/observer-ui run typecheck
 OPENCLAW_MILESTONE_CHECKS=openclaw-native-engineering-recovery-evidence,observer-openclaw-native-engineering-recovery-evidence bash nix/scripts/dev-milestone-check.sh
 ```
 
-## Next Slice
+## Follow-On Slice
 
-The next recommended real capability is:
+The direct follow-on slice is:
 
 ```text
 Microcompact context-management evidence
 ```
 
-That slice should migrate the useful microcompact idea as explicit,
-Observer-visible context evidence. It should not silently rewrite persisted
-conversation state or hide the verification/recovery evidence needed for the
-current task.
+It is tracked in:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_MICROCOMPACT_EVIDENCE_PLAN.md
+```

@@ -112,6 +112,20 @@ async function refreshEngineeringRecoveryEvidence() {
   }
 }
 
+async function refreshEngineeringMicrocompactEvidence() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-microcompact/evidence?limit=8&thresholdChars=1000&protectRecentItems=3\`);
+    renderEngineeringMicrocompactEvidence(data);
+  } catch {
+    engineeringMicrocompactRegistry.textContent = "offline";
+    engineeringMicrocompactItems.textContent = "0";
+    engineeringMicrocompactCompactable.textContent = "0";
+    engineeringMicrocompactReclaimed.textContent = "0";
+    engineeringMicrocompactMutation.textContent = "unknown";
+    engineeringMicrocompactJson.textContent = "Unable to read native engineering microcompact evidence.";
+  }
+}
+
 async function refreshFilesystemLedger() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/filesystem/changes?limit=8\`);

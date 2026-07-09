@@ -332,6 +332,7 @@ openclaw-native-engineering-read-search	dev-openclaw-native-engineering-read-sea
 openclaw-native-engineering-edit-proposal	dev-openclaw-native-engineering-edit-proposal-check.sh	Native governed surgical edit proposal with diff preview
 openclaw-native-engineering-verification-evidence	dev-openclaw-native-engineering-verification-evidence-check.sh	Native governed verification evidence from completed command transcripts
 openclaw-native-engineering-recovery-evidence	dev-openclaw-native-engineering-recovery-evidence-check.sh	Native governed recovery evidence from failed engineering verification outcomes
+openclaw-native-engineering-microcompact-evidence	dev-openclaw-native-engineering-microcompact-evidence-check.sh	Native governed microcompact context-management evidence from command transcripts
 openclaw-native-workspace-semantic-index	dev-openclaw-native-workspace-semantic-index-check.sh	Native read-only semantic index for enhanced OpenClaw workspace files
 openclaw-native-workspace-symbol-lookup	dev-openclaw-native-workspace-symbol-lookup-check.sh	Governed read-only executable symbol lookup for enhanced OpenClaw workspace files
 openclaw-native-workspace-text-write	dev-openclaw-native-workspace-text-write-check.sh	Approval-gated native OpenClaw workspace text write adapter
@@ -424,6 +425,7 @@ observer-openclaw-native-engineering-read-search	dev-observer-openclaw-native-en
 observer-openclaw-native-engineering-edit-proposal	dev-observer-openclaw-native-engineering-edit-proposal-check.sh	Observer visibility for native governed engineering edit proposal
 observer-openclaw-native-engineering-verification-evidence	dev-observer-openclaw-native-engineering-verification-evidence-check.sh	Observer visibility for native governed engineering verification evidence
 observer-openclaw-native-engineering-recovery-evidence	dev-observer-openclaw-native-engineering-recovery-evidence-check.sh	Observer visibility for native governed engineering recovery evidence
+observer-openclaw-native-engineering-microcompact-evidence	dev-observer-openclaw-native-engineering-microcompact-evidence-check.sh	Observer visibility for native governed engineering microcompact evidence
 observer-openclaw-native-workspace-semantic-index	dev-observer-openclaw-native-workspace-semantic-index-check.sh	Observer visibility for native OpenClaw workspace semantic index
 observer-openclaw-native-workspace-symbol-lookup	dev-observer-openclaw-native-workspace-symbol-lookup-check.sh	Observer visibility for governed native OpenClaw workspace symbol lookup
 observer-openclaw-native-workspace-text-write	dev-observer-openclaw-native-workspace-text-write-check.sh	Observer controls for approval-gated native OpenClaw workspace text writes

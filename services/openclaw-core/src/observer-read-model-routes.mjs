@@ -1,4 +1,5 @@
 import { sendJson } from "../../../packages/shared-utils/src/http.mjs";
+import { buildNativeEngineeringMicrocompactEvidence } from "./native-engineering-microcompact-evidence-builders.mjs";
 import { buildNativeEngineeringRecoveryEvidence } from "./native-engineering-recovery-evidence-builders.mjs";
 import { buildNativeEngineeringVerificationEvidence } from "./native-engineering-verification-evidence-builders.mjs";
 
@@ -118,6 +119,36 @@ export async function handleObserverReadModelRoute({ req, res, requestUrl, state
       tasks: state.tasks,
       taskId,
       limit: safeLimit,
+    }));
+    return true;
+  }
+
+  if (requestUrl.pathname === "/plugins/native-adapter/engineering-microcompact/evidence") {
+    const safeLimit = clampLedgerLimit(parseLimit(requestUrl.searchParams));
+    const transcriptRecords = executor.listCommandTranscriptRecords({ limit: safeLimit });
+    const verificationEvidence = buildNativeEngineeringVerificationEvidence({
+      transcriptRecords,
+      capabilityInvocations: planBuilder.listCapabilityInvocations({
+        limit: 100,
+        capabilityId: "act.system.command.execute",
+      }),
+      tasks: state.tasks,
+      limit: safeLimit,
+      maxOutputChars: requestUrl.searchParams.get("maxOutputChars"),
+    });
+    const recoveryEvidence = buildNativeEngineeringRecoveryEvidence({
+      verificationEvidence,
+      tasks: state.tasks,
+      limit: safeLimit,
+    });
+    sendJson(res, 200, buildNativeEngineeringMicrocompactEvidence({
+      transcriptRecords,
+      verificationEvidence,
+      recoveryEvidence,
+      tasks: state.tasks,
+      limit: safeLimit,
+      thresholdChars: requestUrl.searchParams.get("thresholdChars"),
+      protectRecentItems: requestUrl.searchParams.get("protectRecentItems"),
     }));
     return true;
   }
