@@ -8,6 +8,8 @@ WORKSPACE_DIR="$FIXTURE_DIR/openclaw"
 FAKE_BIN_DIR="$FIXTURE_DIR/bin"
 SELECTED_TARGET_OLD_TEXT='export const needle = "OpenClawNeedle";'
 SELECTED_TARGET_NEW_TEXT='export const needle = "OpenClawNeedleSelected";'
+SELECTED_TARGET_RECOVERY_FAIL_SCRIPT="verify:selected-target-fail"
+SELECTED_TARGET_RECOVERY_FAIL_OUTPUT="lsp-selected-target-recovery-failed"
 
 source "$SCRIPT_DIR/openclaw-engineering-read-search-fixture.sh"
 
@@ -172,6 +174,13 @@ cleanup() {
     "${SYMBOL_VERIFY_APPROVED_FILE:-}" \
     "${SYMBOL_VERIFY_STEP_FILE:-}" \
     "${SYMBOL_VERIFY_EVIDENCE_FILE:-}" \
+    "${SYMBOL_RECOVERY_FAIL_TASK_FILE:-}" \
+    "${SYMBOL_RECOVERY_FAIL_APPROVED_FILE:-}" \
+    "${SYMBOL_RECOVERY_FAIL_STEP_FILE:-}" \
+    "${SYMBOL_RECOVERY_EVIDENCE_FILE:-}" \
+    "${SYMBOL_RECOVERED_TASK_FILE:-}" \
+    "${SYMBOL_RECOVERED_BLOCKED_FILE:-}" \
+    "${SYMBOL_RECOVERY_AFTER_FILE:-}" \
     "${EVENTS_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
@@ -247,6 +256,13 @@ SYMBOL_VERIFY_BLOCKED_FILE="$(mktemp)"
 SYMBOL_VERIFY_APPROVED_FILE="$(mktemp)"
 SYMBOL_VERIFY_STEP_FILE="$(mktemp)"
 SYMBOL_VERIFY_EVIDENCE_FILE="$(mktemp)"
+SYMBOL_RECOVERY_FAIL_TASK_FILE="$(mktemp)"
+SYMBOL_RECOVERY_FAIL_APPROVED_FILE="$(mktemp)"
+SYMBOL_RECOVERY_FAIL_STEP_FILE="$(mktemp)"
+SYMBOL_RECOVERY_EVIDENCE_FILE="$(mktemp)"
+SYMBOL_RECOVERED_TASK_FILE="$(mktemp)"
+SYMBOL_RECOVERED_BLOCKED_FILE="$(mktemp)"
+SYMBOL_RECOVERY_AFTER_FILE="$(mktemp)"
 EVENTS_FILE="$(mktemp)"
 
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?action=check&language=typescript&limit=200" > "$CHECK_FILE"
@@ -588,6 +604,45 @@ EOF
 post_json "$CORE_URL/approvals/$symbol_verify_approval_id/approve" '{"approvedBy":"dev-openclaw-native-engineering-lsp-evidence-check","reason":"approve selected-target edit verification handoff"}' > "$SYMBOL_VERIFY_APPROVED_FILE"
 post_json "$CORE_URL/operator/step" '{}' > "$SYMBOL_VERIFY_STEP_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-verification/evidence?taskId=$symbol_verify_task_id&maxOutputChars=1000" > "$SYMBOL_VERIFY_EVIDENCE_FILE"
+
+node - <<'EOF' "$WORKSPACE_DIR/package.json" "$SELECTED_TARGET_RECOVERY_FAIL_SCRIPT" "$SELECTED_TARGET_RECOVERY_FAIL_OUTPUT"
+const fs = require("node:fs");
+const packagePath = process.argv[2];
+const scriptName = process.argv[3];
+const output = process.argv[4];
+const pkg = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+pkg.scripts = pkg.scripts ?? {};
+pkg.scripts[scriptName] = `printf ${output} && exit 7`;
+fs.writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
+EOF
+
+post_json "$CORE_URL/plugins/native-adapter/source-command-proposals/tasks" "{\"workspaceId\":\"openclaw\",\"scriptName\":\"$SELECTED_TARGET_RECOVERY_FAIL_SCRIPT\",\"query\":\"selected target recovery\",\"confirm\":true}" > "$SYMBOL_RECOVERY_FAIL_TASK_FILE"
+
+read -r symbol_recovery_fail_approval_id symbol_recovery_fail_task_id < <(node - <<'EOF' "$SYMBOL_RECOVERY_FAIL_TASK_FILE" "$SELECTED_TARGET_RECOVERY_FAIL_SCRIPT"
+const fs = require("node:fs");
+const taskResponse = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const scriptName = process.argv[3];
+
+if (
+  !taskResponse.ok
+  || taskResponse.registry !== "openclaw-source-command-task-v0"
+  || taskResponse.task?.status !== "queued"
+  || taskResponse.approval?.status !== "pending"
+  || taskResponse.sourceCommandProposal?.scriptName !== scriptName
+) {
+  throw new Error(`selected-target recovery failing verification should be queued behind approval: ${JSON.stringify(taskResponse)}`);
+}
+
+process.stdout.write(`${taskResponse.approval.id} ${taskResponse.task.id}\n`);
+EOF
+)
+
+post_json "$CORE_URL/approvals/$symbol_recovery_fail_approval_id/approve" '{"approvedBy":"dev-openclaw-native-engineering-lsp-evidence-check","reason":"approve selected-target recovery failing verification"}' > "$SYMBOL_RECOVERY_FAIL_APPROVED_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$SYMBOL_RECOVERY_FAIL_STEP_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-recovery/evidence?taskId=$symbol_recovery_fail_task_id&maxOutputChars=1000" > "$SYMBOL_RECOVERY_EVIDENCE_FILE"
+post_json "$CORE_URL/tasks/$symbol_recovery_fail_task_id/recover" '{}' > "$SYMBOL_RECOVERED_TASK_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$SYMBOL_RECOVERED_BLOCKED_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-recovery/evidence?taskId=$symbol_recovery_fail_task_id&maxOutputChars=1000" > "$SYMBOL_RECOVERY_AFTER_FILE"
 curl --silent --fail "$EVENT_HUB_URL/events/audit?limit=120" > "$EVENTS_FILE"
 
 node - <<'EOF' \
@@ -656,9 +711,17 @@ node - <<'EOF' \
   "$SYMBOL_VERIFY_APPROVED_FILE" \
   "$SYMBOL_VERIFY_STEP_FILE" \
   "$SYMBOL_VERIFY_EVIDENCE_FILE" \
+  "$SYMBOL_RECOVERY_FAIL_TASK_FILE" \
+  "$SYMBOL_RECOVERY_FAIL_APPROVED_FILE" \
+  "$SYMBOL_RECOVERY_FAIL_STEP_FILE" \
+  "$SYMBOL_RECOVERY_EVIDENCE_FILE" \
+  "$SYMBOL_RECOVERED_TASK_FILE" \
+  "$SYMBOL_RECOVERED_BLOCKED_FILE" \
+  "$SYMBOL_RECOVERY_AFTER_FILE" \
   "$WORKSPACE_DIR/src/app.ts" \
   "$SELECTED_TARGET_OLD_TEXT" \
-  "$SELECTED_TARGET_NEW_TEXT"
+  "$SELECTED_TARGET_NEW_TEXT" \
+  "$SELECTED_TARGET_RECOVERY_FAIL_OUTPUT"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
 
@@ -727,11 +790,19 @@ const symbolVerifyBlockedStep = readJson(63);
 const symbolVerifyApproved = readJson(64);
 const symbolVerifyStep = readJson(65);
 const symbolVerifyEvidence = readJson(66);
-const selectedTargetFile = process.argv[67];
-const selectedTargetOldText = process.argv[68];
-const selectedTargetNewText = process.argv[69];
+const symbolRecoveryFailTaskResponse = readJson(67);
+const symbolRecoveryFailApproved = readJson(68);
+const symbolRecoveryFailStep = readJson(69);
+const symbolRecoveryEvidence = readJson(70);
+const symbolRecoveredTaskResponse = readJson(71);
+const symbolRecoveredBlockedStep = readJson(72);
+const symbolRecoveryAfter = readJson(73);
+const selectedTargetFile = process.argv[74];
+const selectedTargetOldText = process.argv[75];
+const selectedTargetNewText = process.argv[76];
+const selectedTargetRecoveryFailOutput = process.argv[77];
 const expectedTargetUri = process.env.OPENCLAW_FAKE_LSP_TARGET_URI;
-const raw = JSON.stringify({ check, position, bad, draft, sourceTransfer, sourceTransferTaskResponse, sourceTransferBlockedStep, sourceTransferApproved, sourceTransferStep, sourceTransferTaskReadback, sourceTransferState, symbolRequest, symbolRequestTaskResponse, symbolRequestBlockedStep, symbolRequestApproved, symbolRequestStep, symbolRequestTaskReadback, symbolRequestState, symbolTargetBridge, symbolEditSeed, symbolEditTaskResponse, symbolEditBlockedStep, symbolEditApproved, symbolEditStep, symbolEditTaskReadback, symbolEditLedger, symbolEditEvidence, symbolEditReadback, symbolVerifyTaskResponse, symbolVerifyBlockedStep, symbolVerifyApproved, symbolVerifyStep, symbolVerifyEvidence, adapter, taskResponse, blockedStep, approved, execStep, taskReadback, processTaskResponse, processBlockedStep, processApproved, processStep, processTaskReadback, lifecycleStateAfterProcess, stopTaskResponse, stopBlockedStep, stopApproved, stopStep, stopTaskReadback, lifecycleStateAfterStop, restartTaskResponse, restartBlockedStep, restartApproved, restartStep, restartTaskReadback, lifecycleState, handshakeTaskResponse, handshakeBlockedStep, handshakeApproved, handshakeStep, handshakeTaskReadback, handshakeState, events });
+const raw = JSON.stringify({ check, position, bad, draft, sourceTransfer, sourceTransferTaskResponse, sourceTransferBlockedStep, sourceTransferApproved, sourceTransferStep, sourceTransferTaskReadback, sourceTransferState, symbolRequest, symbolRequestTaskResponse, symbolRequestBlockedStep, symbolRequestApproved, symbolRequestStep, symbolRequestTaskReadback, symbolRequestState, symbolTargetBridge, symbolEditSeed, symbolEditTaskResponse, symbolEditBlockedStep, symbolEditApproved, symbolEditStep, symbolEditTaskReadback, symbolEditLedger, symbolEditEvidence, symbolEditReadback, symbolVerifyTaskResponse, symbolVerifyBlockedStep, symbolVerifyApproved, symbolVerifyStep, symbolVerifyEvidence, symbolRecoveryFailTaskResponse, symbolRecoveryFailApproved, symbolRecoveryFailStep, symbolRecoveryEvidence, symbolRecoveredTaskResponse, symbolRecoveredBlockedStep, symbolRecoveryAfter, adapter, taskResponse, blockedStep, approved, execStep, taskReadback, processTaskResponse, processBlockedStep, processApproved, processStep, processTaskReadback, lifecycleStateAfterProcess, stopTaskResponse, stopBlockedStep, stopApproved, stopStep, stopTaskReadback, lifecycleStateAfterStop, restartTaskResponse, restartBlockedStep, restartApproved, restartStep, restartTaskReadback, lifecycleState, handshakeTaskResponse, handshakeBlockedStep, handshakeApproved, handshakeStep, handshakeTaskReadback, handshakeState, events });
 
 if (
   !check.ok
@@ -1417,6 +1488,81 @@ if (
 ) {
   throw new Error(`LSP selected-target verification evidence mismatch: ${JSON.stringify(symbolVerifyEvidence)}`);
 }
+const symbolRecoveryFailure = symbolRecoveryEvidence.failures?.[0];
+const symbolRecoveryRecommendation = symbolRecoveryFailure?.recommendations?.find((item) => item.id === "recover_task_after_review");
+const symbolRecoveredApprovalId = symbolRecoveredTaskResponse.task?.approval?.requestId ?? symbolRecoveredTaskResponse.task?.approval?.id ?? null;
+if (
+  !symbolRecoveryFailTaskResponse.ok
+  || symbolRecoveryFailTaskResponse.registry !== "openclaw-source-command-task-v0"
+  || symbolRecoveryFailTaskResponse.task?.status !== "queued"
+  || symbolRecoveryFailTaskResponse.sourceCommandProposal?.scriptName !== "verify:selected-target-fail"
+) {
+  throw new Error(`LSP selected-target recovery failing task mismatch: ${JSON.stringify(symbolRecoveryFailTaskResponse)}`);
+}
+if (
+  symbolRecoveryFailApproved.approval?.status !== "approved"
+  || symbolRecoveryFailApproved.task?.policy?.decision?.decision !== "audit_only"
+) {
+  throw new Error(`LSP selected-target recovery failing task approval mismatch: ${JSON.stringify(symbolRecoveryFailApproved)}`);
+}
+if (
+  !symbolRecoveryFailStep.ok
+  || symbolRecoveryFailStep.ran !== true
+  || symbolRecoveryFailStep.task?.id !== symbolRecoveryFailTaskResponse.task?.id
+  || symbolRecoveryFailStep.task?.status !== "failed"
+  || !String(symbolRecoveryFailStep.execution?.commandTranscript?.[0]?.stdout ?? "").includes(selectedTargetRecoveryFailOutput)
+) {
+  throw new Error(`LSP selected-target recovery failing task should execute and fail: ${JSON.stringify(symbolRecoveryFailStep)}`);
+}
+if (
+  !symbolRecoveryEvidence.ok
+  || symbolRecoveryEvidence.registry !== "openclaw-native-engineering-recovery-evidence-v0"
+  || symbolRecoveryEvidence.summary?.totalFailures !== 1
+  || symbolRecoveryEvidence.summary?.recoverableFailures !== 1
+  || symbolRecoveryEvidence.governance?.canCreateRecoveryTask !== false
+  || symbolRecoveryEvidence.governance?.canExecuteCommand !== false
+  || symbolRecoveryEvidence.bounds?.noCommandExecution !== true
+  || symbolRecoveryFailure?.taskId !== symbolRecoveryFailTaskResponse.task?.id
+  || symbolRecoveryFailure?.kind !== "verification_command_exit_nonzero"
+  || symbolRecoveryFailure?.recoverable !== true
+  || symbolRecoveryFailure?.alreadyRecovered !== false
+  || !String(symbolRecoveryFailure?.result?.stdout ?? "").includes(selectedTargetRecoveryFailOutput)
+  || symbolRecoveryRecommendation?.endpoint !== `/tasks/${symbolRecoveryFailTaskResponse.task.id}/recover`
+  || symbolRecoveryRecommendation?.createsTask !== true
+  || symbolRecoveryRecommendation?.requiresApprovalBeforeAnyCommandRerun !== true
+) {
+  throw new Error(`LSP selected-target recovery evidence mismatch: ${JSON.stringify(symbolRecoveryEvidence)}`);
+}
+if (
+  !symbolRecoveredTaskResponse.ok
+  || symbolRecoveredTaskResponse.recoveredFromTask?.id !== symbolRecoveryFailTaskResponse.task?.id
+  || symbolRecoveredTaskResponse.task?.status !== "queued"
+  || symbolRecoveredTaskResponse.task?.recovery?.recoveredFromTaskId !== symbolRecoveryFailTaskResponse.task?.id
+  || symbolRecoveredTaskResponse.task?.sourceCommand?.registry !== "openclaw-source-command-task-v0"
+  || symbolRecoveredTaskResponse.task?.approval?.required !== true
+) {
+  throw new Error(`LSP selected-target recovery task creation mismatch: ${JSON.stringify(symbolRecoveredTaskResponse)}`);
+}
+if (
+  !symbolRecoveredBlockedStep.ok
+  || symbolRecoveredBlockedStep.ran !== false
+  || symbolRecoveredBlockedStep.blocked !== true
+  || symbolRecoveredBlockedStep.reason !== "policy_requires_approval"
+  || (
+    symbolRecoveredBlockedStep.approval?.taskId !== symbolRecoveredTaskResponse.task?.id
+    && symbolRecoveredBlockedStep.approval?.id !== symbolRecoveredApprovalId
+  )
+) {
+  throw new Error(`LSP selected-target recovered task should remain blocked before approval: ${JSON.stringify(symbolRecoveredBlockedStep)}`);
+}
+if (
+  symbolRecoveryAfter.summary?.alreadyRecovered !== 1
+  || symbolRecoveryAfter.failures?.[0]?.taskId !== symbolRecoveryFailTaskResponse.task?.id
+  || symbolRecoveryAfter.failures?.[0]?.alreadyRecovered !== true
+  || symbolRecoveryAfter.failures?.[0]?.recoveredByTaskId !== symbolRecoveredTaskResponse.task?.id
+) {
+  throw new Error(`LSP selected-target recovery readback mismatch: ${JSON.stringify(symbolRecoveryAfter)}`);
+}
 const eventTypes = new Set((events.items ?? events.events ?? []).map((event) => event.type));
 for (const type of ["approval.created", "approval.approved", "policy.evaluated"]) {
   if (!eventTypes.has(type)) {
@@ -1449,6 +1595,9 @@ for (const token of [
   "openclaw-source-command-task-v0",
   "openclaw-native-engineering-verification-evidence-v0",
   "lsp-selected-target-edit-verification-ok",
+  "openclaw-native-engineering-recovery-evidence-v0",
+  "recover_task_after_review",
+  "lsp-selected-target-recovery-failed",
   "no textDocument/didOpen notification sent",
   "approval-gated-lsp-lifecycle-binary-gate",
   "approved-lsp-lifecycle-binary-gate",
@@ -1506,6 +1655,10 @@ console.log(JSON.stringify({
     selectedTargetVerificationTaskStatus: symbolVerifyStep.task.status,
     selectedTargetVerificationPassed: symbolVerifyEvidence.summary.passed,
     selectedTargetVerificationAttachedToCompletedTasks: symbolVerifyEvidence.summary.attachedToCompletedTasks,
+    selectedTargetRecoveryFailures: symbolRecoveryEvidence.summary.totalFailures,
+    selectedTargetRecoveryRecommendation: symbolRecoveryRecommendation.endpoint,
+    selectedTargetRecoveredTaskStatus: symbolRecoveredTaskResponse.task.status,
+    selectedTargetRecoveryReadbackAlreadyRecovered: symbolRecoveryAfter.summary.alreadyRecovered,
     serverStatus: check.serverReadiness.status,
     lifecycleTaskStatus: lifecycleTask.status,
     binaryFound: execution.server.binaryFound,

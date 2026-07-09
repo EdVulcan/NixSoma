@@ -76,15 +76,14 @@ nix/scripts/dev-openclaw-native-engineering-lsp-evidence-check.sh
 openclaw-native-engineering-lsp-evidence
 ```
 
-## Next Slice
+## Follow-up Completed
 
-The next smallest real capability is:
+The selected-target recovery recommendation handoff follow-up was completed as:
 
 ```text
-LSP selected-target recovery recommendation handoff
+OPENCLAW_NATIVE_ENGINEERING_LSP_SELECTED_TARGET_RECOVERY_RECOMMENDATION_HANDOFF_PLAN.md
 ```
 
-That follow-up should prove failed verification after a selected-target edit
-can be read as recovery evidence and turned into an explicit recovery draft or
-task through the existing recovery controls, without automatic recovery
-execution.
+That slice proves failed verification after a selected-target edit can be read
+as recovery evidence and turned into an explicit recovery task through the
+existing recovery controls, without automatic approval or recovery execution.
