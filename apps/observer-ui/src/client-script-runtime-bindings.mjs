@@ -118,6 +118,12 @@ engineeringPlanTodoSaveButton.addEventListener("click", () => {
   });
 });
 
+engineeringPlanTodoUseSuggestionButton.addEventListener("click", () => {
+  useEngineeringPlanningSuggestedAction().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 nativePluginInvokeTaskButton.addEventListener("click", () => {
   createNativePluginInvokeApprovalTask().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

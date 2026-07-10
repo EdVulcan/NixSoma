@@ -1,5 +1,6 @@
 import { observerClientRuntimeApprovalTasksScript } from "./client-script-runtime-approval-tasks.mjs";
 import { observerClientRuntimeEngineeringLoopControlsScript } from "./client-script-runtime-engineering-loop-controls.mjs";
+import { observerClientRuntimeEngineeringSuggestedActionScript } from "./client-script-runtime-engineering-suggested-action.mjs";
 import { observerClientRuntimeSystemBodyTasksScript } from "./client-script-runtime-system-body-tasks.mjs";
 import { observerClientRuntimeBindingsScript } from "./client-script-runtime-bindings.mjs";
 
@@ -67,7 +68,7 @@ async function createPlannedTask() {
   await refreshOperatorState();
 }
 
-${observerClientRuntimeApprovalTasksScript}${observerClientRuntimeEngineeringLoopControlsScript}async function runOperatorStepFromUi() {
+${observerClientRuntimeApprovalTasksScript}${observerClientRuntimeEngineeringLoopControlsScript}${observerClientRuntimeEngineeringSuggestedActionScript}async function runOperatorStepFromUi() {
   const result = await fetchJson(\`\${observerConfig.coreUrl}/operator/step\`, {
     method: "POST",
     headers: { "content-type": "application/json" },

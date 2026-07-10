@@ -199,6 +199,11 @@ as guidance-only readback over the stored/current todo. It points to existing
 Observer controls and governed capabilities but does not create tasks,
 approvals, execution, provider calls, workspace mutation, or result envelopes.
 
+Observer now has a `Use Suggested Action` bridge for that readback. It dispatches
+only through a local whitelist of existing governed controls after the suggested
+control id matches the expected control, so the readback remains guidance rather
+than an arbitrary endpoint, command, provider, or workspace mutation channel.
+
 The LSP lifecycle readiness draft follow-up was completed as:
 
 ```text

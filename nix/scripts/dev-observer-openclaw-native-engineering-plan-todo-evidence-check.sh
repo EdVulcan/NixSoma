@@ -113,6 +113,7 @@ for (const token of [
   "engineering-plan-todo-done",
   "engineering-plan-todo-mutation",
   "engineering-plan-todo-save-button",
+  "engineering-plan-todo-use-suggestion-button",
   "engineering-plan-todo-json",
 ]) {
   if (!html.includes(token)) {
@@ -125,6 +126,11 @@ for (const token of [
   "refreshEngineeringPlanTodoEvidence",
   "renderEngineeringPlanTodoEvidence",
   "saveEngineeringPlanningWorkbenchState",
+  "useEngineeringPlanningSuggestedAction",
+  "currentEngineeringPlanTodoSuggestion",
+  "GOVERNED_PLAN_TODO_SUGGESTION_CONTROLS",
+  "create_verification_task",
+  "engineering-verification-task-button",
   "Native engineering plan/todo evidence",
   "workbench_storage",
   "Next Governed Action",

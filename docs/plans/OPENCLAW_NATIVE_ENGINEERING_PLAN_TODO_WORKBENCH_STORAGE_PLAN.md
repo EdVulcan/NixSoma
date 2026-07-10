@@ -43,6 +43,8 @@ Observer adds:
 ```text
 engineering-plan-todo-save-button
 Save Workbench State
+engineering-plan-todo-use-suggestion-button
+Use Suggested Action
 ```
 
 The button saves the currently visible planning workbench state and refreshes
@@ -60,6 +62,20 @@ governed Observer control when possible, and records the recommended control
 and capability id. It is not an endpoint and does not create tasks, approvals,
 commands, workspace mutations, provider calls, or result envelopes.
 
+Observer can now explicitly use the suggestion through a local whitelist:
+
+```text
+review_current_todo -> engineering-plan-todo-bridge-button
+save_workbench_state -> engineering-plan-todo-save-button
+create_edit_proposal_task -> engineering-edit-proposal-task-button
+create_write_proposal_task -> engineering-write-proposal-task-button
+create_verification_task -> engineering-verification-task-button
+```
+
+The UI dispatches only to those existing controls after the suggested control id
+matches the expected whitelist entry. It does not execute arbitrary endpoints,
+command text, provider payloads, or file paths from a suggestion object.
+
 ## Boundaries
 
 This slice does not:
@@ -72,6 +88,7 @@ create tasks or approvals
 execute verification commands
 call providers or perform network egress
 create result envelopes
+execute arbitrary endpoints or command payloads returned by suggestion readback
 ```
 
 The stored record is an OpenClaw core-state workbench record, not a direct copy
@@ -100,6 +117,7 @@ Observer:
 ```text
 apps/observer-ui/src/observer-panels-operations.mjs
 apps/observer-ui/src/client-script-runtime-engineering-loop-controls.mjs
+apps/observer-ui/src/client-script-runtime-engineering-suggested-action.mjs
 ```
 
 Validation targets:
@@ -136,3 +154,11 @@ stored workbench suggestion -> explicit governed task creation through existing 
 
 Do not create a new readiness chain for this. Reuse the existing edit, write,
 verification, and recovery task controls.
+
+That operator-visible bridge is now present in Observer through `Use Suggested
+Action`. The next slice should continue toward richer task/readback linkage only
+when it strengthens the existing engineering loop:
+
+```text
+suggested action -> existing governed task creation -> approval/operator step -> readback linkage
+```

@@ -97,6 +97,7 @@ const engineeringPlanTodoWorkbench = document.querySelector("#engineering-plan-t
 const engineeringPlanTodoWorkbenchJson = document.querySelector("#engineering-plan-todo-workbench-json");
 const engineeringPlanTodoBridgeButton = document.querySelector("#engineering-plan-todo-bridge-button");
 const engineeringPlanTodoSaveButton = document.querySelector("#engineering-plan-todo-save-button");
+const engineeringPlanTodoUseSuggestionButton = document.querySelector("#engineering-plan-todo-use-suggestion-button");
 const engineeringPlanTodoJson = document.querySelector("#engineering-plan-todo-json");
 const policyEngine = document.querySelector("#policy-engine");
 const policyDecision = document.querySelector("#policy-decision");

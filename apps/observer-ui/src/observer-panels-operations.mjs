@@ -199,6 +199,7 @@ export function observerOperationsPanels() {
           <div class="actions tight">
             <button id="engineering-plan-todo-bridge-button" class="secondary" type="button">Bridge Workbench State</button>
             <button id="engineering-plan-todo-save-button" class="secondary" type="button">Save Workbench State</button>
+            <button id="engineering-plan-todo-use-suggestion-button" class="secondary" type="button">Use Suggested Action</button>
           </div>
           <pre id="engineering-plan-todo-workbench-json">No engineering planning workbench state bridged yet.</pre>
           <pre id="engineering-plan-todo-json">Loading native engineering plan/todo evidence...</pre>
