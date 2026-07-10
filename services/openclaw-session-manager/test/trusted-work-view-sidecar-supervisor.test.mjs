@@ -124,3 +124,32 @@ test("trusted work-view sidecar reports heartbeat timeout without automatic reco
   assert.equal(explicitlyReconnected.pid, running.pid);
   await supervisor.stop({ taskId: "task-timeout" });
 });
+
+test("trusted work-view sidecar process exit fails closed until explicit replacement", async (t) => {
+  let resolveFailure;
+  const failed = new Promise((resolve) => {
+    resolveFailure = resolve;
+  });
+  const supervisor = createTrustedWorkViewSidecarSupervisor({
+    socketDirectory: createSocketDirectory(t),
+    heartbeatIntervalMs: 25,
+    onFailure: resolveFailure,
+  });
+  const running = await supervisor.start(lifecycleInput({ taskId: "task-exit", approvalId: "approval-exit" }));
+
+  process.kill(running.pid, "SIGTERM");
+  const failure = await failed;
+  assert.equal(failure.running, false);
+  assert.match(failure.degradedReason, /trusted_sidecar_stopped_sigterm|trusted_sidecar_exited/u);
+
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  const replacement = await supervisor.start(lifecycleInput({
+    taskId: "task-exit",
+    approvalId: "approval-exit",
+    leaseId: "lease-exit-replacement",
+  }));
+  assert.equal(replacement.reconnected, false);
+  assert.notEqual(replacement.pid, running.pid);
+  assert.equal(replacement.status, "running");
+  await supervisor.stop({ taskId: "task-exit" });
+});

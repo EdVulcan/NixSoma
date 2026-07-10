@@ -142,6 +142,13 @@ session exists. The next real reliability slice is explicit approved
 replacement after the sidecar process itself exits; no automatic replacement,
 new panel, or readiness chain is needed.
 
+That replacement slice is complete: unexpected PID exit suspends action
+authority and the existing approved lifecycle starts a different PID before
+capture/actions resume. The remaining Level 2 ownership slice is a declarative,
+non-auto-started `systemd --user` unit path for the same sidecar process. It must
+reuse the current approval/socket/recovery contracts and must not create a root
+service or parallel lifecycle API.
+
 ## Historical Phase Plans
 
 `OPENCLAW_PHASE_2_PLAN.md` through `OPENCLAW_PHASE_136_PLAN.md` are retained

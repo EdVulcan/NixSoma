@@ -290,6 +290,13 @@ next Level 2 reliability gap is explicit replacement after the sidecar process
 itself exits unexpectedly; it must reuse the existing lifecycle and must not
 auto-start a replacement.
 
+That replacement gap is now complete. Unexpected sidecar exit suspends action
+authority, reports recovery without automatic replacement, and the existing
+approved lifecycle starts a different PID before capture/actions resume. The
+remaining Level 2 runtime-ownership step is a declarative, non-auto-started
+`systemd --user` unit path for this same sidecar contract. Do not turn it into a
+root service, login auto-start, or a second lifecycle API.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

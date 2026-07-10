@@ -47,6 +47,8 @@ cleanup() {
   rm -f "${AUTONOMOUS_NEW_TAB_RESULT_FILE:-}"
   rm -f "${AUTHORITY_INTERRUPTED_TASK_FILE:-}" "${AUTHORITY_RECOVERED_TASK_FILE:-}" \
     "${AUTHORITY_RECOVERED_EXECUTION_FILE:-}"
+  rm -f "${SIDECAR_FAILURE_STATE_FILE:-}" "${SIDECAR_FAILURE_ACTION_FILE:-}" \
+    "${REPLACE_SIDECAR_FILE:-}" "${REPLACED_STATE_FILE:-}" "${REPLACED_ACTION_FILE:-}"
   rm -f "${CORE_RESTART_TASK_FILE:-}" "${CORE_RESTART_PHASE_FILE:-}" \
     "${CORE_RESTART_INTERRUPTED_FILE:-}" "${CORE_RESTART_RECOVERED_FILE:-}" \
     "${CORE_RESTART_EXECUTION_FILE:-}"
@@ -267,7 +269,78 @@ post_json "$CORE_URL/tasks/$authority_interrupted_task_id/recover" '{}' > "$AUTH
 authority_recovered_task_id="$(node -e 'const data=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(data.task.id);' "$AUTHORITY_RECOVERED_TASK_FILE")"
 AUTHORITY_RECOVERED_EXECUTION_FILE="$(mktemp)"
 post_json "$CORE_URL/tasks/$authority_recovered_task_id/execute" "{\"expectedUrl\":\"$AUTHORITY_INTERRUPTED_NEW_TAB_URL\",\"hideOnComplete\":false}" > "$AUTHORITY_RECOVERED_EXECUTION_FILE"
-restarted_capture_sequence="$(node -e 'const data=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(String(data.workView.helperRuntime.sidecar.captureObservation.sequence));' "$RESTARTED_STATE_FILE")"
+reconnected_sidecar_pid="$(node -e 'const data=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(String(data.workView.helperRuntime.sidecar.pid));' "$RESTARTED_STATE_FILE")"
+kill -TERM "$reconnected_sidecar_pid"
+for _ in $(seq 1 50); do
+  if ! kill -0 "$reconnected_sidecar_pid" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.1
+done
+if kill -0 "$reconnected_sidecar_pid" >/dev/null 2>&1; then
+  echo "trusted user-session sidecar did not exit during replacement check" >&2
+  exit 1
+fi
+SIDECAR_FAILURE_STATE_FILE="$(mktemp)"
+for _ in $(seq 1 50); do
+  curl --silent --fail "$SESSION_MANAGER_URL/work-view/state" > "$SIDECAR_FAILURE_STATE_FILE"
+  if node -e 'const data=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); const r=data.workView?.helperRuntime??{}; process.exit(r.sidecar?.recoveryRequired===true && r.actionAuthority==="suspended" ? 0 : 1);' "$SIDECAR_FAILURE_STATE_FILE"; then
+    break
+  fi
+  sleep 0.1
+done
+SIDECAR_FAILURE_ACTION_FILE="$(mktemp)"
+curl --silent --fail -X POST "$SCREEN_ACT_URL/act/keyboard/type" \
+  -H 'content-type: application/json' --data '{"text":"must-block-after-sidecar-process-exit"}' > "$SIDECAR_FAILURE_ACTION_FILE"
+REPLACE_SIDECAR_FILE="$(mktemp)"
+curl --silent --fail -X POST "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks/$sidecar_task_id/start-probe" \
+  -H 'content-type: application/json' --data '{}' > "$REPLACE_SIDECAR_FILE"
+REPLACED_STATE_FILE="$(mktemp)"
+curl --silent --fail "$SESSION_MANAGER_URL/work-view/state" > "$REPLACED_STATE_FILE"
+REPLACED_ACTION_FILE="$(mktemp)"
+curl --silent --fail -X POST "$SCREEN_ACT_URL/act/keyboard/type" \
+  -H 'content-type: application/json' --data '{"text":"allowed-after-explicit-sidecar-replacement"}' > "$REPLACED_ACTION_FILE"
+node - <<'EOF' "$SIDECAR_FAILURE_STATE_FILE" "$SIDECAR_FAILURE_ACTION_FILE" "$REPLACE_SIDECAR_FILE" "$REPLACED_STATE_FILE" "$REPLACED_ACTION_FILE" "$reconnected_sidecar_pid"
+const fs = require("node:fs");
+const failureState = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const failureAction = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+const replacement = JSON.parse(fs.readFileSync(process.argv[4], "utf8"));
+const replacedState = JSON.parse(fs.readFileSync(process.argv[5], "utf8"));
+const replacedAction = JSON.parse(fs.readFileSync(process.argv[6], "utf8"));
+const oldPid = Number(process.argv[7]);
+const failedRuntime = failureState.workView?.helperRuntime ?? {};
+const replacementExecution = replacement.readback?.execution ?? {};
+const replacedRuntime = replacedState.workView?.helperRuntime ?? {};
+const blockedMediation = failureAction.action?.mediation ?? {};
+const replacedMediation = replacedAction.action?.mediation ?? {};
+if (failedRuntime.sidecar?.recoveryRequired !== true
+  || failedRuntime.sidecar?.automaticRestart !== false
+  || failedRuntime.sidecar?.running !== false
+  || failedRuntime.actionAuthority !== "suspended"
+  || failureState.workView?.trustedSession?.recoveryRecommendation?.action !== "restart_approved_trusted_sidecar"
+  || blockedMediation.accepted !== false
+  || replacementExecution.pid === oldPid
+  || replacementExecution.userSessionOwned !== true
+  || replacementExecution.authorityConnected !== true
+  || replacementExecution.reconnected !== false
+  || replacedRuntime.sidecar?.pid !== replacementExecution.pid
+  || replacedRuntime.actionAuthority !== "active"
+  || replacedRuntime.leaseMatched !== true
+  || replacedAction.action?.result !== "executed-browser-runtime"
+  || replacedMediation.accepted !== true
+  || replacedMediation.transport !== "trusted-sidecar-ipc") {
+  throw new Error(`sidecar process failure should stay blocked until explicit approved replacement: ${JSON.stringify({ failureState, failureAction, replacement, replacedState, replacedAction })}`);
+}
+console.log(JSON.stringify({
+  sidecarProcessReplacement: {
+    failedPid: oldPid,
+    replacementPid: replacementExecution.pid,
+    automaticRestart: failedRuntime.sidecar.automaticRestart,
+    transport: replacedMediation.transport,
+  },
+}, null, 2));
+EOF
+restarted_capture_sequence="$(node -e 'const data=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(String(data.workView.helperRuntime.sidecar.captureObservation.sequence));' "$REPLACED_STATE_FILE")"
 old_browser_runtime_pid="$(cat "$BROWSER_RUNTIME_PID_FILE")"
 kill -TERM "$old_browser_runtime_pid"
 for _ in $(seq 1 50); do
@@ -346,7 +419,7 @@ curl --silent --fail \
   --data '{}' > "$STOP_SIDECAR_FILE"
 curl --silent --fail "$CORE_URL/phase-3/operator-interrupt-controls" > "$CONTROLS_AFTER_STOP_FILE"
 
-node - <<'EOF' "$CONTROLS_FILE" "$takeover" "$sidecar_task" "$start_probe_status" "$START_PROBE_FILE" "$approved_sidecar" "$approved_start_probe_status" "$APPROVED_START_PROBE_FILE" "$CONTROLS_AFTER_PROBE_FILE" "$SUSPENDED_STATE_FILE" "$old_browser_action_status" "$OLD_BROWSER_ACTION_FILE" "$resume" "$RESUMED_STATE_FILE" "$RESUMED_BROWSER_ACTION_FILE" "$STOP_SIDECAR_FILE" "$CONTROLS_AFTER_STOP_FILE" "$RECOVERY_REQUIRED_STATE_FILE" "$recovery_action_status" "$RECOVERY_BROWSER_ACTION_FILE" "$RESTART_SIDECAR_FILE" "$RESTARTED_STATE_FILE" "$CAPTURE_REFRESH_STATE_FILE" "$BROWSER_FAILURE_STATE_FILE" "$BROWSER_FAILURE_ACTION_FILE" "$BROWSER_RECOVERED_STATE_FILE" "$BROWSER_RECOVERED_ACTION_FILE" "$NEW_TAB_ACTION_FILE" "$NEW_TAB_BROWSER_STATE_FILE" "$NEW_TAB_CAPTURE_STATE_FILE" "$NEW_TAB_URL" "$AUTONOMOUS_NEW_TAB_RESULT_FILE" "$AUTONOMOUS_NEW_TAB_URL" "$AUTHORITY_INTERRUPTED_TASK_FILE" "$AUTHORITY_RECOVERED_TASK_FILE" "$AUTHORITY_RECOVERED_EXECUTION_FILE" "$AUTHORITY_INTERRUPTED_NEW_TAB_URL"
+node - <<'EOF' "$CONTROLS_FILE" "$takeover" "$sidecar_task" "$start_probe_status" "$START_PROBE_FILE" "$approved_sidecar" "$approved_start_probe_status" "$APPROVED_START_PROBE_FILE" "$CONTROLS_AFTER_PROBE_FILE" "$SUSPENDED_STATE_FILE" "$old_browser_action_status" "$OLD_BROWSER_ACTION_FILE" "$resume" "$RESUMED_STATE_FILE" "$RESUMED_BROWSER_ACTION_FILE" "$STOP_SIDECAR_FILE" "$CONTROLS_AFTER_STOP_FILE" "$RECOVERY_REQUIRED_STATE_FILE" "$recovery_action_status" "$RECOVERY_BROWSER_ACTION_FILE" "$RESTART_SIDECAR_FILE" "$RESTARTED_STATE_FILE" "$CAPTURE_REFRESH_STATE_FILE" "$BROWSER_FAILURE_STATE_FILE" "$BROWSER_FAILURE_ACTION_FILE" "$BROWSER_RECOVERED_STATE_FILE" "$BROWSER_RECOVERED_ACTION_FILE" "$NEW_TAB_ACTION_FILE" "$NEW_TAB_BROWSER_STATE_FILE" "$NEW_TAB_CAPTURE_STATE_FILE" "$NEW_TAB_URL" "$AUTONOMOUS_NEW_TAB_RESULT_FILE" "$AUTONOMOUS_NEW_TAB_URL" "$AUTHORITY_INTERRUPTED_TASK_FILE" "$AUTHORITY_RECOVERED_TASK_FILE" "$AUTHORITY_RECOVERED_EXECUTION_FILE" "$AUTHORITY_INTERRUPTED_NEW_TAB_URL" "$REPLACED_STATE_FILE"
 const fs = require("node:fs");
 const controls = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
 const takeover = JSON.parse(process.argv[3]);
@@ -385,6 +458,7 @@ const authorityInterruptedTask = JSON.parse(fs.readFileSync(process.argv[35], "u
 const authorityRecoveredTask = JSON.parse(fs.readFileSync(process.argv[36], "utf8"));
 const authorityRecoveredExecution = JSON.parse(fs.readFileSync(process.argv[37], "utf8"));
 const authorityInterruptedNewTabUrl = process.argv[38];
+const replacedState = JSON.parse(fs.readFileSync(process.argv[39], "utf8"));
 
 if (!controls.ok
   || controls.registry !== "openclaw-phase-3-operator-interrupt-controls-v0"
@@ -541,6 +615,7 @@ if (recoveryRuntime.sidecar?.status !== "recovery_required"
   throw new Error(`session-manager restart should require explicit recovery and revoke the old browser lease: ${JSON.stringify({ recoveryRuntime, recoveryActionStatus, recoveryAction })}`);
 }
 const restartedRuntime = restartedState.workView?.helperRuntime ?? {};
+const replacementRuntime = replacedState.workView?.helperRuntime ?? {};
 if (!restartedSidecar.ok
   || restartedSidecar.readback?.status !== "running_after_approval"
   || restartedSidecar.readback?.execution?.pid !== approvedStartProbe.readback.execution.pid
@@ -597,8 +672,8 @@ if (browserRecoveredSidecar.status !== "running"
   || browserRecoveredSidecar.captureRecoveryRequired !== false
   || browserRecoveredSidecar.captureFailure !== null
   || browserRecoveredSidecar.captureFreshness !== "fresh"
-  || browserRecoveredSidecar.captureObservation?.sequence <= restartedRuntime.sidecar.captureObservation.sequence
-  || browserRecoveredSidecar.pid !== restartedRuntime.sidecar.pid
+  || browserRecoveredSidecar.captureObservation?.sequence <= replacementRuntime.sidecar.captureObservation.sequence
+  || browserRecoveredSidecar.pid !== replacementRuntime.sidecar.pid
   || browserRecoveredState.workView?.lastOperatorAction?.source !== "trusted_session_recovery_recommendation"
   || browserRecoveredState.workView?.lastOperatorAction?.recommendedAction !== "prepare_work_view"
   || browserRecoveredAction.action?.result !== "executed-browser-runtime"
@@ -671,6 +746,7 @@ console.log(JSON.stringify({
     restartRecoveryStatus: recoveryRuntime.sidecar.status,
     staleLeaseActionStatus: recoveryActionStatus,
     restartPid: restartedSidecar.readback.execution.pid,
+    replacementPid: replacementRuntime.sidecar.pid,
     browserCaptureFailure: browserFailureSidecar.captureFailure,
     browserRecoveredSequence: browserRecoveredSidecar.captureObservation.sequence,
     browserRecoveryTransport: recoveredBrowserMediation.transport,

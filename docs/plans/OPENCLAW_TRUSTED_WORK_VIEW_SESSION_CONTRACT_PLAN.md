@@ -531,3 +531,25 @@ running user-session sidecar process exits unexpectedly
 -> existing approved lifecycle action starts one replacement PID
 -> fresh capture and trusted actions resume under a rotated lease
 ```
+
+This process-failure replacement slice is now complete. Only a lifecycle
+`/stop` request is treated as normal termination; SIGTERM, unexpected exit, and
+heartbeat loss suspend helper action authority and record recovery. The real
+Phase 3 milestone kills the running sidecar PID, proves actions remain blocked
+with `automaticRestart:false`, then reuses the approved lifecycle action to
+start a different PID with fresh capture and trusted action evidence.
+
+The final Level 2 runtime-ownership step should replace ad hoc process spawning
+with a declarative, non-enabled-by-default `systemd --user` unit contract:
+
+```text
+approved lifecycle action
+-> explicitly start or connect to the user service instance
+-> keep socket/session/lease binding governed by the existing supervisor
+-> explicit stop disables the runtime instance
+-> no login auto-start, root unit, or action auto-resume
+```
+
+This is user-session packaging, not Level 3 hostd work. It must preserve the
+same approval, fail-closed disconnect, bounded reconnect, audit, and Observer
+contracts before Level 2 can be considered ready to exit.

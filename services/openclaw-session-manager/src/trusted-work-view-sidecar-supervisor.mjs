@@ -130,6 +130,8 @@ export function createTrustedWorkViewSidecarSupervisor({
       registry: SIDECAR_REGISTRY,
       status,
       running: status === "running" && Boolean(transport),
+      recoveryRequired: status === "recovery_required" || status === "degraded",
+      automaticRestart: false,
       authorityConnected: Boolean(transport),
       pid,
       sessionId: owner?.sessionId ?? null,
@@ -213,9 +215,15 @@ export function createTrustedWorkViewSidecarSupervisor({
         pending.resolve(message.result ?? { ok: false, reason: "missing_action_result" });
       }
     } else if (message.type === "stopped") {
-      status = "stopped";
       exitCode = 0;
       stoppedAt = message.emittedAt ?? now();
+      if (status === "stopping") {
+        status = "stopped";
+      } else {
+        status = "degraded";
+        degradedReason = `trusted_sidecar_stopped_${message.reason ?? "unexpectedly"}`;
+        reportFailure();
+      }
       stopResolver?.();
     }
   }
@@ -289,7 +297,8 @@ export function createTrustedWorkViewSidecarSupervisor({
         degradedReason ??= `trusted_sidecar_exited_${code ?? signal ?? "unknown"}`;
         reportFailure();
       }
-      spawnedProcess = null;
+      if (spawnedProcess === processHandle) spawnedProcess = null;
+      if (pid === processHandle.pid) pid = null;
     });
     processHandle.unref?.();
 
