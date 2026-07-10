@@ -1707,3 +1707,38 @@ test("browser task executor prepares once and retries an in-flight capture inter
   assert.equal(evidenceAction.mediation.effect.url, recoveredUrl);
   assert.equal(result.finalExecution.verification.activeUrl, recoveredUrl);
 });
+
+test("browser task executor returns recoverable evidence when session authority is unavailable", async () => {
+  const { executor } = createExecutorHarness({
+    deps: {
+      client: {
+        sessionManagerUrl: "http://session-manager",
+        screenSenseUrl: "http://screen-sense",
+        screenActUrl: "http://screen-act",
+        systemSenseUrl: "http://system-sense",
+        fetchJson: async () => ({ ok: true }),
+        postJson: async (url) => {
+          if (url === "http://session-manager/work-view/prepare") {
+            throw new Error("connect ECONNREFUSED");
+          }
+          return { ok: true };
+        },
+      },
+    },
+  });
+  const task = {
+    id: "browser-authority-interruption-task",
+    type: "browser_task",
+    goal: "Preserve task state across authority loss",
+    status: "queued",
+    targetUrl: "https://example.com/authority-loss",
+  };
+
+  const result = await executor.executeTaskWithRecovery(task);
+  const failed = result.finalExecution;
+
+  assert.equal(failed.task.status, "failed");
+  assert.equal(failed.authorityInterruption.stage, "prepare");
+  assert.equal(failed.authorityInterruption.automaticRestart, false);
+  assert.equal(failed.task.outcome.details.authorityInterruption.recoveryAction, "restore_trusted_work_view_then_recover_task");
+});

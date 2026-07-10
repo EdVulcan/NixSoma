@@ -7,9 +7,15 @@ import { createNativeEngineeringLspLifecycleTaskHandlers } from "./native-engine
 import { createSystemBodyTaskHandlers } from "./task-executor-system-body-handlers.mjs";
 import { planCapabilityActionSteps } from "./task-recovery.mjs";
 import {
+  browserTaskActionsForExecution,
   executeBrowserTaskActionWithCaptureRecovery,
   observedBrowserTaskUrl,
 } from "./browser-task-action-contract.mjs";
+import {
+  invokeWorkViewAuthority,
+  isWorkViewAuthorityInterruption,
+  serialiseWorkViewAuthorityInterruption,
+} from "./work-view-authority-continuity.mjs";
 
 export function createTaskExecutor(deps) {
   const { client, state, taskManager, planBuilder, approvalEngine, workspaceOps, policyEvaluator, publishEvent } = deps;
@@ -82,23 +88,6 @@ function buildOperatorState() {
   };
 }
 
-
-  // L19586-22450
-function normaliseExecutorActions(actions) {
-  if (!Array.isArray(actions) || actions.length === 0) {
-    return [
-      { kind: "keyboard.type", params: { text: "hello from openclaw-task-executor" } },
-      { kind: "mouse.click", params: { x: 640, y: 360, button: "left" } },
-    ];
-  }
-
-  return actions
-    .filter((action) => action && typeof action === "object")
-    .map((action) => ({
-      kind: typeof action.kind === "string" && action.kind.trim() ? action.kind.trim() : "mouse.click",
-      params: action.params && typeof action.params === "object" ? action.params : {},
-    }));
-}
 
 function shouldExecuteCapabilityPlan(task) {
   return task?.type === "system_task" && planCapabilityActionSteps(task).length > 0;
@@ -652,26 +641,31 @@ async function executeTask(task, options = {}) {
     typeof options.displayTarget === "string" && options.displayTarget.trim()
       ? options.displayTarget.trim()
       : "workspace-2";
-  const actions = normaliseExecutorActions(options.actions);
+  const actions = browserTaskActionsForExecution(task, options.actions);
   const actionResults = [];
+  let prepare = null;
+  let reveal = null;
+  let initialScreen = null;
+  let verifiedScreen = null;
+  let preCompletionWorkViewState = null;
 
   try {
     await setTaskPhase(task, "preparing_work_view", {
       status: "running",
       details: { targetUrl, displayTarget, executor: "core-v1" },
     });
-    const prepare = await postJson(`${sessionManagerUrl}/work-view/prepare`, {
+    prepare = await invokeWorkViewAuthority("prepare", () => postJson(`${sessionManagerUrl}/work-view/prepare`, {
       displayTarget,
       entryUrl: targetUrl,
-    });
+    }));
 
     await setTaskPhase(task, "opening_target", {
       status: "running",
       details: { targetUrl, executor: "core-v1" },
     });
-    const reveal = await postJson(`${sessionManagerUrl}/work-view/reveal`, {
+    reveal = await invokeWorkViewAuthority("reveal", () => postJson(`${sessionManagerUrl}/work-view/reveal`, {
       entryUrl: targetUrl,
-    });
+    }));
     const attachedTask = attachTaskToWorkView(task, buildWorkViewAttachPayload(reveal, targetUrl));
     await publishEvent(createEventName("task.running"), { task: serialiseTask(attachedTask) });
 
@@ -679,19 +673,19 @@ async function executeTask(task, options = {}) {
       status: "running",
       details: { targetUrl, executor: "core-v1" },
     });
-    const initialScreen = await fetchJson(`${screenSenseUrl}/screen/current`);
+    initialScreen = await fetchJson(`${screenSenseUrl}/screen/current`);
 
     for (const action of actions) {
       const actionData = await executeBrowserTaskActionWithCaptureRecovery({
         action,
         recoveryEnabled: options.recoverCaptureInterruptions !== false,
         postAction: (endpoint, params) => postJson(`${screenActUrl}${endpoint}`, params),
-        prepareWorkView: () => postJson(`${sessionManagerUrl}/work-view/prepare`, {
+        prepareWorkView: () => invokeWorkViewAuthority("capture_recovery_prepare", () => postJson(`${sessionManagerUrl}/work-view/prepare`, {
           displayTarget,
           entryUrl: targetUrl,
           operatorActionSource: "task_capture_interruption_recovery",
           recommendedAction: "prepare_work_view",
-        }),
+        })),
       });
       actionResults.push(actionData.action);
       await setTaskPhase(task, "acting_on_target", {
@@ -710,9 +704,12 @@ async function executeTask(task, options = {}) {
       status: "running",
       details: { targetUrl, executor: "core-v1" },
     });
-    const verifiedScreen = await fetchJson(`${screenSenseUrl}/screen/current`);
+    verifiedScreen = await fetchJson(`${screenSenseUrl}/screen/current`);
 
-    const preCompletionWorkViewState = await fetchJson(`${sessionManagerUrl}/work-view/state`);
+    preCompletionWorkViewState = await invokeWorkViewAuthority(
+      "verification_state",
+      () => fetchJson(`${sessionManagerUrl}/work-view/state`),
+    );
     const verificationWorkView = preCompletionWorkViewState?.workView ?? reveal?.workView ?? {};
     const verification = buildExecutionVerification({
       targetUrl,
@@ -751,7 +748,10 @@ async function executeTask(task, options = {}) {
 
     let finalWorkViewState = preCompletionWorkViewState;
     if (options.hideOnComplete !== false) {
-      finalWorkViewState = await postJson(`${sessionManagerUrl}/work-view/hide`, {});
+      finalWorkViewState = await invokeWorkViewAuthority(
+        "hide_after_completion",
+        () => postJson(`${sessionManagerUrl}/work-view/hide`, {}),
+      );
     }
 
     const workView = finalWorkViewState?.workView ?? verificationWorkView;
@@ -811,12 +811,27 @@ async function executeTask(task, options = {}) {
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Task execution failed.";
+    const authorityInterruption = serialiseWorkViewAuthorityInterruption(error);
     const failedTask = failTask(task, message, {
       targetUrl,
       executor: "core-v1",
       actionCount: actionResults.length,
+      authorityInterruption,
     });
     await publishEvent(createEventName("task.failed"), { task: serialiseTask(failedTask), reason: message, executor: "core-v1" });
+    if (isWorkViewAuthorityInterruption(error)) {
+      return {
+        task: failedTask,
+        prepare,
+        reveal,
+        initialScreen,
+        verifiedScreen,
+        actions: actionResults,
+        finalWorkViewState: preCompletionWorkViewState,
+        verification: null,
+        authorityInterruption,
+      };
+    }
     throw error;
   }
 }

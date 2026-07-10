@@ -43,6 +43,8 @@ cleanup() {
     "${BROWSER_RECOVERED_STATE_FILE:-}" "${BROWSER_RECOVERED_ACTION_FILE:-}"
   rm -f "${NEW_TAB_ACTION_FILE:-}" "${NEW_TAB_BROWSER_STATE_FILE:-}" "${NEW_TAB_CAPTURE_STATE_FILE:-}"
   rm -f "${AUTONOMOUS_NEW_TAB_RESULT_FILE:-}"
+  rm -f "${AUTHORITY_INTERRUPTED_TASK_FILE:-}" "${AUTHORITY_RECOVERED_TASK_FILE:-}" \
+    "${AUTHORITY_RECOVERED_EXECUTION_FILE:-}"
   if [[ -n "${RESTARTED_SESSION_MANAGER_PID:-}" ]]; then
     kill -TERM "$RESTARTED_SESSION_MANAGER_PID" >/dev/null 2>&1 || true
   fi
@@ -140,6 +142,10 @@ if kill -0 "$sidecar_pid" >/dev/null 2>&1; then
   echo "trusted sidecar survived its owning session-manager" >&2
   exit 1
 fi
+AUTHORITY_INTERRUPTED_NEW_TAB_URL="https://example.com/phase-3-authority-recovered-new-tab"
+AUTHORITY_INTERRUPTED_TASK_FILE="$(mktemp)"
+post_json "$CORE_URL/tasks/execute" "{\"goal\":\"Preserve an active browser task across work-view authority interruption\",\"type\":\"browser_task\",\"targetUrl\":\"https://example.com/phase-3-authority-interrupted-origin\",\"workViewStrategy\":\"ai-work-view\",\"planStrategy\":\"rule-v1\",\"actions\":[{\"kind\":\"browser.new_tab\",\"params\":{\"url\":\"$AUTHORITY_INTERRUPTED_NEW_TAB_URL\"}}]}" > "$AUTHORITY_INTERRUPTED_TASK_FILE"
+authority_interrupted_task_id="$(node -e 'const data=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(data.task.id);' "$AUTHORITY_INTERRUPTED_TASK_FILE")"
 (
   cd "$REPO_ROOT/services/openclaw-session-manager"
   nohup env \
@@ -171,6 +177,11 @@ RESTARTED_STATE_FILE="$(mktemp)"
 curl --silent --fail -X POST "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks/$sidecar_task_id/start-probe" \
   -H 'content-type: application/json' --data '{}' > "$RESTART_SIDECAR_FILE"
 curl --silent --fail "$SESSION_MANAGER_URL/work-view/state" > "$RESTARTED_STATE_FILE"
+AUTHORITY_RECOVERED_TASK_FILE="$(mktemp)"
+post_json "$CORE_URL/tasks/$authority_interrupted_task_id/recover" '{}' > "$AUTHORITY_RECOVERED_TASK_FILE"
+authority_recovered_task_id="$(node -e 'const data=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(data.task.id);' "$AUTHORITY_RECOVERED_TASK_FILE")"
+AUTHORITY_RECOVERED_EXECUTION_FILE="$(mktemp)"
+post_json "$CORE_URL/tasks/$authority_recovered_task_id/execute" "{\"expectedUrl\":\"$AUTHORITY_INTERRUPTED_NEW_TAB_URL\",\"hideOnComplete\":false}" > "$AUTHORITY_RECOVERED_EXECUTION_FILE"
 restarted_capture_sequence="$(node -e 'const data=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(String(data.workView.helperRuntime.sidecar.captureObservation.sequence));' "$RESTARTED_STATE_FILE")"
 old_browser_runtime_pid="$(cat "$BROWSER_RUNTIME_PID_FILE")"
 kill -TERM "$old_browser_runtime_pid"
@@ -250,7 +261,7 @@ curl --silent --fail \
   --data '{}' > "$STOP_SIDECAR_FILE"
 curl --silent --fail "$CORE_URL/phase-3/operator-interrupt-controls" > "$CONTROLS_AFTER_STOP_FILE"
 
-node - <<'EOF' "$CONTROLS_FILE" "$takeover" "$sidecar_task" "$start_probe_status" "$START_PROBE_FILE" "$approved_sidecar" "$approved_start_probe_status" "$APPROVED_START_PROBE_FILE" "$CONTROLS_AFTER_PROBE_FILE" "$SUSPENDED_STATE_FILE" "$old_browser_action_status" "$OLD_BROWSER_ACTION_FILE" "$resume" "$RESUMED_STATE_FILE" "$RESUMED_BROWSER_ACTION_FILE" "$STOP_SIDECAR_FILE" "$CONTROLS_AFTER_STOP_FILE" "$RECOVERY_REQUIRED_STATE_FILE" "$recovery_action_status" "$RECOVERY_BROWSER_ACTION_FILE" "$RESTART_SIDECAR_FILE" "$RESTARTED_STATE_FILE" "$CAPTURE_REFRESH_STATE_FILE" "$BROWSER_FAILURE_STATE_FILE" "$BROWSER_FAILURE_ACTION_FILE" "$BROWSER_RECOVERED_STATE_FILE" "$BROWSER_RECOVERED_ACTION_FILE" "$NEW_TAB_ACTION_FILE" "$NEW_TAB_BROWSER_STATE_FILE" "$NEW_TAB_CAPTURE_STATE_FILE" "$NEW_TAB_URL" "$AUTONOMOUS_NEW_TAB_RESULT_FILE" "$AUTONOMOUS_NEW_TAB_URL"
+node - <<'EOF' "$CONTROLS_FILE" "$takeover" "$sidecar_task" "$start_probe_status" "$START_PROBE_FILE" "$approved_sidecar" "$approved_start_probe_status" "$APPROVED_START_PROBE_FILE" "$CONTROLS_AFTER_PROBE_FILE" "$SUSPENDED_STATE_FILE" "$old_browser_action_status" "$OLD_BROWSER_ACTION_FILE" "$resume" "$RESUMED_STATE_FILE" "$RESUMED_BROWSER_ACTION_FILE" "$STOP_SIDECAR_FILE" "$CONTROLS_AFTER_STOP_FILE" "$RECOVERY_REQUIRED_STATE_FILE" "$recovery_action_status" "$RECOVERY_BROWSER_ACTION_FILE" "$RESTART_SIDECAR_FILE" "$RESTARTED_STATE_FILE" "$CAPTURE_REFRESH_STATE_FILE" "$BROWSER_FAILURE_STATE_FILE" "$BROWSER_FAILURE_ACTION_FILE" "$BROWSER_RECOVERED_STATE_FILE" "$BROWSER_RECOVERED_ACTION_FILE" "$NEW_TAB_ACTION_FILE" "$NEW_TAB_BROWSER_STATE_FILE" "$NEW_TAB_CAPTURE_STATE_FILE" "$NEW_TAB_URL" "$AUTONOMOUS_NEW_TAB_RESULT_FILE" "$AUTONOMOUS_NEW_TAB_URL" "$AUTHORITY_INTERRUPTED_TASK_FILE" "$AUTHORITY_RECOVERED_TASK_FILE" "$AUTHORITY_RECOVERED_EXECUTION_FILE" "$AUTHORITY_INTERRUPTED_NEW_TAB_URL"
 const fs = require("node:fs");
 const controls = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
 const takeover = JSON.parse(process.argv[3]);
@@ -285,6 +296,10 @@ const newTabCaptureState = JSON.parse(fs.readFileSync(process.argv[31], "utf8"))
 const newTabUrl = process.argv[32];
 const autonomousNewTabResult = JSON.parse(fs.readFileSync(process.argv[33], "utf8"));
 const autonomousNewTabUrl = process.argv[34];
+const authorityInterruptedTask = JSON.parse(fs.readFileSync(process.argv[35], "utf8"));
+const authorityRecoveredTask = JSON.parse(fs.readFileSync(process.argv[36], "utf8"));
+const authorityRecoveredExecution = JSON.parse(fs.readFileSync(process.argv[37], "utf8"));
+const authorityInterruptedNewTabUrl = process.argv[38];
 
 if (!controls.ok
   || controls.registry !== "openclaw-phase-3-operator-interrupt-controls-v0"
@@ -415,6 +430,17 @@ if (controlsAfterProbe.sidecarLifecycle?.taskId !== sidecarTask.task.id
   throw new Error(`operator controls should consolidate sidecar lifecycle readback: ${JSON.stringify(controlsAfterProbe.sidecarLifecycle)}`);
 }
 const recoveryRuntime = recoveryState.workView?.helperRuntime ?? {};
+const authorityInterruption = authorityInterruptedTask.task?.outcome?.details?.authorityInterruption ?? {};
+const authorityRecoveryEvidence = authorityInterruptedTask.task?.outcome?.details?.recoveryEvidence ?? {};
+if (authorityInterruptedTask.task?.status !== "failed"
+  || authorityInterruption.stage !== "prepare"
+  || authorityInterruption.recoverable !== true
+  || authorityInterruption.automaticRestart !== false
+  || authorityRecoveryEvidence.kind !== "work-view-authority-recovery-evidence"
+  || authorityRecoveryEvidence.recommendation?.strategy !== "restore_trusted_work_view_then_recover_task"
+  || authorityRecoveryEvidence.recommendation?.automaticRestart !== false) {
+  throw new Error(`active browser task should persist recoverable authority interruption evidence: ${JSON.stringify(authorityInterruptedTask)}`);
+}
 if (recoveryRuntime.sidecar?.status !== "recovery_required"
   || recoveryRuntime.sidecar?.taskId !== sidecarTask.task.id
   || recoveryRuntime.sidecar?.approvalId !== sidecarTask.approval.id
@@ -435,6 +461,28 @@ if (!restartedSidecar.ok
   || restartedRuntime.leaseMatched !== true
   || restartedRuntime.leaseId === resumedRuntime.leaseId) {
   throw new Error(`explicit approved recovery should launch a new process under a new session lease: ${JSON.stringify({ restartedSidecar, restartedRuntime, resumedRuntime })}`);
+}
+const recoveredPlanStep = authorityRecoveredTask.task?.plan?.steps?.find((step) => step.phase === "acting_on_target");
+const recoveredExecutionPlanStep = authorityRecoveredExecution.task?.plan?.steps?.find((step) => step.phase === "acting_on_target");
+const recoveredActionEvidence = authorityRecoveredExecution.execution?.actionEvidence;
+const recoveredAction = recoveredActionEvidence?.actions?.[0] ?? {};
+if (authorityRecoveredTask.task?.status !== "queued"
+  || recoveredPlanStep?.kind !== "browser.new_tab"
+  || recoveredPlanStep?.params?.url !== authorityInterruptedNewTabUrl
+  || recoveredPlanStep?.status !== "pending"
+  || authorityRecoveredTask.task?.recovery?.recoveredFromTaskId !== authorityInterruptedTask.task?.id
+  || authorityRecoveredTask.recoveredFromTask?.recoveredByTaskId !== authorityRecoveredTask.task?.id
+  || authorityRecoveredExecution.task?.status !== "completed"
+  || recoveredExecutionPlanStep?.kind !== "browser.new_tab"
+  || recoveredExecutionPlanStep?.status !== "completed"
+  || authorityRecoveredExecution.task?.recovery?.recoveredFromTaskId !== authorityInterruptedTask.task?.id
+  || recoveredActionEvidence?.kind !== "eye-hand-action-evidence"
+  || recoveredAction.kind !== "browser.new_tab"
+  || recoveredAction.mediation?.accepted !== true
+  || recoveredAction.mediation?.transport !== "trusted-sidecar-ipc"
+  || recoveredAction.mediation?.effect?.url !== authorityInterruptedNewTabUrl
+  || recoveredActionEvidence.observedAfterActions?.url !== authorityInterruptedNewTabUrl) {
+  throw new Error(`explicit authority restoration should recover and execute the preserved browser plan: ${JSON.stringify({ authorityRecoveredTask, authorityRecoveredExecution })}`);
 }
 const browserFailureSidecar = browserFailureState.workView?.helperRuntime?.sidecar ?? {};
 const blockedBrowserRecoveryMediation = browserFailureAction.action?.mediation ?? {};
@@ -539,6 +587,10 @@ console.log(JSON.stringify({
     newTabCaptureSequence: newTabCapture.sequence,
     autonomousNewTabTask: autonomousNewTabResult.task.id,
     autonomousNewTabCapability: autonomousPlanStep.capabilityId,
+    authorityInterruptedTask: authorityInterruptedTask.task.id,
+    authorityRecoveryEvidence: authorityRecoveryEvidence.kind,
+    authorityRecoveredTask: authorityRecoveredTask.task.id,
+    authorityRecoveredTransport: recoveredAction.mediation.transport,
     stoppedSidecar: stoppedSidecar.readback.status,
   },
 }, null, 2));

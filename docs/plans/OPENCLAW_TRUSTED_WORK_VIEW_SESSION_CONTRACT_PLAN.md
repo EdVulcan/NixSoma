@@ -305,6 +305,9 @@ services/openclaw-screen-act/src/trusted-work-view-action-mediation.mjs
 services/openclaw-screen-act/src/server.mjs
 services/openclaw-screen-sense/src/server.mjs
 services/openclaw-core/src/phase3-work-view-builders.mjs
+services/openclaw-core/src/work-view-authority-continuity.mjs
+services/openclaw-core/src/browser-task-action-contract.mjs
+services/openclaw-core/src/task-recovery.mjs
 ```
 
 Observer visibility:
@@ -365,10 +368,12 @@ trusted-lease mediation for keyboard hotkey/window-focus paths that do not yet
 mutate browser-runtime state
 automatic sidecar restart after crash or heartbeat timeout; recovery remains an
 explicit approved operator action
-session-manager process restart while a browser task is active; sidecar
-lifecycle recovery is durable and action-level capture recovery is bounded, but
-an in-flight core request still needs task-aware continuation across loss of the
-session authority service
+automatic task or sidecar restart after session authority loss; recovery remains
+an explicit operator action using the existing approved lifecycle and task
+recovery routes
+core process restart while a browser task is active; task state is durable, but
+startup reconciliation does not yet turn an interrupted running task into an
+explicit recoverable outcome
 ```
 
 ## Next Slice
@@ -446,7 +451,30 @@ active browser task
 -> the existing task recovery chain continues from fresh observation
 ```
 
-It should extend the existing task recovery loop and restart contract
-rather than add another readiness chain. Root/system daemon work, desktop-wide
-capture, graphics-stack integration, broader input,
-automatic restart, and provider egress remain deferred.
+This authority-interruption slice is now complete. Session-manager dependency
+failures at prepare, reveal, bounded capture recovery, verification-state read,
+or completion hide are classified without swallowing unrelated errors. Core
+persists a failed task with `work-view-authority-recovery-evidence`; after the
+operator restores the session and approved sidecar, the existing recovery route
+preserves the browser plan and the existing execute route runs only unfinished
+action steps. Completed side-effecting steps are not replayed. The real Phase 3
+milestone stops session-manager and its sidecar, creates the interrupted task,
+restores both explicitly, and proves the recovered `browser.new_tab` completes
+through `trusted-sidecar-ipc` with linked task ids.
+
+The next smallest continuity gap is a Level 1/Level 2 exit-gate behavior across
+core process restart:
+
+```text
+persisted active browser task
+-> core process exits and returns
+-> startup reconciliation records an explicit recoverable interruption
+-> the trusted work-view state remains inspectable
+-> operator recovers the task
+-> only unfinished planned actions execute
+```
+
+This should reuse task persistence, recovery, trusted work-view state, and the
+existing Phase 3 milestone family rather than add another readiness endpoint.
+Root/system daemon work, desktop-wide capture, graphics-stack integration,
+broader input, automatic restart, and provider egress remain deferred.

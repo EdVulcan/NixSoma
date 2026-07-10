@@ -267,10 +267,14 @@ metadata. The next slice should make an in-flight browser task recover across a
 capture-source interruption using the existing recovery loop. That bounded
 action-level recovery is now complete: only sidecar capture reasons trigger one
 prepare and one retry, and compact interruption/retry evidence is attached to
-the task. The next slice should preserve task continuity when session-manager
-itself restarts during active browser work. Do not add horizontal navigation
-variants, a readiness-only chain, fault-injection endpoints, or desktop-wide
-capture.
+the task. Active-task continuity across session-manager restart is now complete:
+authority dependency loss becomes a persisted recoverable task, explicit
+session/sidecar restoration reuses the existing recovery route, and only
+unfinished browser plan actions execute through the trusted sidecar. The next
+continuity gap is startup reconciliation for a persisted active task after the
+core process itself restarts. Do not add horizontal navigation variants, a
+readiness-only chain, fault-injection endpoints, automatic restart, or
+desktop-wide capture.
 
 ## Identity-Upgrade Alignment
 

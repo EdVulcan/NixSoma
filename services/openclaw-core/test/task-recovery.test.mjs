@@ -5,6 +5,7 @@ import {
   buildEyeHandRecoveryEvidence,
   createTaskRecovery,
   hasRecoverableCapabilityPlan,
+  hasRecoverableBrowserPlan,
   hasRecoverableNativePluginRuntimeActivationPlan,
   hasRecoverableSearchWebAdapterPlan,
   isRecoverableTask,
@@ -143,6 +144,53 @@ test("task recovery classifies capability and native runtime plans", () => {
   assert.equal(isRecoverableTask({ ...capabilityTask, status: "queued" }), false);
 });
 
+test("task recovery preserves a failed browser rule plan after authority interruption", () => {
+  const { recovery, tasks } = createRecoveryHarness();
+  const sourceTask = {
+    id: "browser-source",
+    type: "browser_task",
+    goal: "Recover browser work",
+    status: "failed",
+    targetUrl: "https://example.com/origin",
+    plan: {
+      planId: "plan-browser-old",
+      strategy: "rule-v1",
+      status: "failed",
+      steps: [{
+        id: "step-browser-new-tab",
+        phase: "acting_on_target",
+        kind: "browser.new_tab",
+        params: { url: "https://example.com/recovered" },
+        status: "completed",
+        completedAt: "old",
+      }, {
+        id: "step-browser-second-tab",
+        phase: "acting_on_target",
+        kind: "browser.new_tab",
+        params: { url: "https://example.com/still-pending" },
+        status: "pending",
+      }],
+    },
+    outcome: {
+      kind: "failed",
+      details: {
+        recoveryEvidence: { kind: "work-view-authority-recovery-evidence" },
+      },
+    },
+  };
+  tasks.set(sourceTask.id, sourceTask);
+  assert.equal(hasRecoverableBrowserPlan(sourceTask), true);
+
+  const recovered = recovery.recoverTask(sourceTask);
+
+  assert.equal(recovered.plan.strategy, "rule-v1");
+  assert.equal(recovered.plan.steps[0].kind, "browser.new_tab");
+  assert.equal(recovered.plan.steps[0].params.url, "https://example.com/recovered");
+  assert.equal(recovered.plan.steps[0].status, "completed");
+  assert.equal(recovered.plan.steps[0].completedAt, "old");
+  assert.equal(recovered.plan.steps[1].status, "pending");
+});
+
 test("task recovery builds eye-hand evidence without exposing unrelated failures", () => {
   const evidence = buildEyeHandRecoveryEvidence(
     {
@@ -174,4 +222,24 @@ test("task recovery builds eye-hand evidence without exposing unrelated failures
   assert.equal(evidence.recommendation.targetUrl, "https://example.test/other");
   assert.equal(evidence.failedChecks[0].name, "url");
   assert.equal(buildEyeHandRecoveryEvidence({ id: "task-2" }, "No evidence", {}), null);
+});
+
+test("task recovery builds work-view authority interruption evidence", () => {
+  const evidence = buildEyeHandRecoveryEvidence(
+    { id: "authority-task", targetUrl: "https://example.com/work" },
+    "Work-view authority unavailable during prepare",
+    {
+      targetUrl: "https://example.com/work",
+      authorityInterruption: {
+        kind: "work-view-authority-interruption",
+        stage: "prepare",
+        recoverable: true,
+        automaticRestart: false,
+      },
+    },
+  );
+  assert.equal(evidence.kind, "work-view-authority-recovery-evidence");
+  assert.equal(evidence.interruption.stage, "prepare");
+  assert.equal(evidence.recommendation.strategy, "restore_trusted_work_view_then_recover_task");
+  assert.equal(evidence.recommendation.automaticRestart, false);
 });

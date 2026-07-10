@@ -123,9 +123,13 @@ production descriptors, compact sidecar
 effect evidence, and post-action capture verification. The next real slice is
 in-flight browser task recovery across capture-source interruption. That
 bounded recovery now performs one prepare and one retry only for sidecar capture
-reasons and records compact action evidence. The next real slice is active-task
-continuity across session-manager restart. Do not add a readiness milestone,
-automatic restart loop, fault-injection endpoint, or desktop-wide capture.
+reasons and records compact action evidence. Active-task continuity across
+session-manager restart now persists recoverable authority-interruption
+evidence, explicitly restores the session and approved sidecar, and executes
+only unfinished steps from the preserved browser plan. The next real continuity
+slice is active-task startup reconciliation across core process restart. Do not
+add a readiness milestone, automatic restart loop, fault-injection endpoint, or
+desktop-wide capture.
 
 ## Historical Phase Plans
 

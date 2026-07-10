@@ -3,11 +3,44 @@ import assert from "node:assert/strict";
 
 import {
   BROWSER_TASK_ACTION_DESCRIPTORS,
+  browserTaskActionsForExecution,
   capabilityIdForBrowserTaskAction,
   executeBrowserTaskActionWithCaptureRecovery,
   observedBrowserTaskUrl,
   screenActEndpointForBrowserTaskAction,
 } from "../src/browser-task-action-contract.mjs";
+
+test("browser task action contract executes a recovered pending rule plan without duplicated request actions", () => {
+  const planned = browserTaskActionsForExecution({
+    type: "browser_task",
+    plan: {
+      strategy: "rule-v1",
+      steps: [
+        { phase: "preparing_work_view", kind: "work_view.prepare", status: "pending" },
+        { phase: "acting_on_target", kind: "browser.new_tab", params: { url: "https://example.com/recovered" }, status: "pending" },
+      ],
+    },
+  });
+  assert.deepEqual(planned, [{
+    kind: "browser.new_tab",
+    params: { url: "https://example.com/recovered" },
+  }]);
+
+  const explicit = browserTaskActionsForExecution({
+    type: "browser_task",
+    plan: { strategy: "rule-v1", steps: planned },
+  }, [{ kind: "keyboard.hotkey", params: { keys: ["CTRL", "L"] } }]);
+  assert.deepEqual(explicit, [{ kind: "keyboard.hotkey", params: { keys: ["CTRL", "L"] } }]);
+
+  const completed = browserTaskActionsForExecution({
+    type: "browser_task",
+    plan: {
+      strategy: "rule-v1",
+      steps: [{ phase: "acting_on_target", kind: "browser.new_tab", status: "completed" }],
+    },
+  });
+  assert.deepEqual(completed, []);
+});
 
 test("browser task action contract maps new-tab to the existing governed transport", () => {
   assert.equal(screenActEndpointForBrowserTaskAction("browser.new_tab"), "/act/browser/new-tab");

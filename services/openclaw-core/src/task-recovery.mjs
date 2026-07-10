@@ -97,9 +97,30 @@ export function isRecoverableTask(task) {
     || hasRecoverableSearchWebAdapterPlan(task);
 }
 
+export function hasRecoverableBrowserPlan(task) {
+  return task?.type === "browser_task"
+    && task?.plan?.strategy === "rule-v1"
+    && (task.plan.steps ?? []).some((step) => step.phase === "acting_on_target");
+}
+
 export function buildEyeHandRecoveryEvidence(task, reason, details = null) {
   if (!details || typeof details !== "object") {
     return null;
+  }
+
+  if (details.authorityInterruption?.recoverable === true) {
+    return {
+      kind: "work-view-authority-recovery-evidence",
+      sourceTaskId: task.id,
+      reason,
+      interruption: { ...details.authorityInterruption },
+      targetUrl: details.targetUrl ?? task.targetUrl ?? null,
+      recommendation: {
+        strategy: "restore_trusted_work_view_then_recover_task",
+        targetUrl: details.targetUrl ?? task.targetUrl ?? null,
+        automaticRestart: false,
+      },
+    };
   }
 
   const verification = details.verification ?? null;
@@ -146,7 +167,11 @@ export function buildRecoveredPolicyRequest(sourceTask) {
   return request;
 }
 
-export function resetRecoveredPlan(plan, { now = () => new Date().toISOString(), createId = randomUUID } = {}) {
+export function resetRecoveredPlan(plan, {
+  now = () => new Date().toISOString(),
+  createId = randomUUID,
+  preserveCompletedActionSteps = false,
+} = {}) {
   const timestamp = now();
   const recoveredPlan = clonePlainObject(plan);
   recoveredPlan.planId = `plan-${createId()}`;
@@ -157,6 +182,9 @@ export function resetRecoveredPlan(plan, { now = () => new Date().toISOString(),
 
   if (Array.isArray(recoveredPlan.steps)) {
     recoveredPlan.steps = recoveredPlan.steps.map((step) => {
+      if (preserveCompletedActionSteps && step.phase === "acting_on_target" && step.status === "completed") {
+        return step;
+      }
       const recoveredStep = {
         ...step,
         status: "pending",
@@ -186,9 +214,11 @@ export function createTaskRecovery({
     const recoverableCapabilityPlan = hasRecoverableCapabilityPlan(sourceTask);
     const recoverableNativePluginRuntimeActivationPlan = hasRecoverableNativePluginRuntimeActivationPlan(sourceTask);
     const recoverableSearchWebAdapterPlan = hasRecoverableSearchWebAdapterPlan(sourceTask);
+    const recoverableBrowserPlan = hasRecoverableBrowserPlan(sourceTask);
     const shouldRecoverExistingPlan = recoverableCapabilityPlan
       || recoverableNativePluginRuntimeActivationPlan
-      || recoverableSearchWebAdapterPlan;
+      || recoverableSearchWebAdapterPlan
+      || recoverableBrowserPlan;
     const recoveryBody = {
       goal: sourceTask.goal,
       type: sourceTask.type,
@@ -204,7 +234,11 @@ export function createTaskRecovery({
     };
 
     if (shouldRecoverExistingPlan) {
-      recoveryBody.plan = resetRecoveredPlan(sourceTask.plan, { now, createId });
+      recoveryBody.plan = resetRecoveredPlan(sourceTask.plan, {
+        now,
+        createId,
+        preserveCompletedActionSteps: recoverableBrowserPlan,
+      });
       recoveryBody.policy = buildRecoveredPolicyRequest(sourceTask);
     }
     if (sourceTask.sourceCommand && typeof sourceTask.sourceCommand === "object") {
@@ -228,6 +262,7 @@ export function createTaskRecovery({
     hasRecoverableCapabilityPlan,
     hasRecoverableNativePluginRuntimeActivationPlan,
     hasRecoverableSearchWebAdapterPlan,
+    hasRecoverableBrowserPlan,
     buildEyeHandRecoveryEvidence,
   };
 }
