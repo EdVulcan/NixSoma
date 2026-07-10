@@ -660,6 +660,7 @@ const server = http.createServer(async (req, res) => {
         taskId: body.taskId,
         approvalId: body.approvalId,
         approvalStatus: body.approvalStatus,
+        browserRuntimeUrl,
       });
       let authority = null;
       if (trustedWorkViewHelperRuntime.snapshot().actionAuthority === "suspended") {

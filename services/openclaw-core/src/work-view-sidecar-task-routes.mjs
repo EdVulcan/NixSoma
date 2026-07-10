@@ -246,6 +246,8 @@ function buildSidecarStartProbeReadback({
       installRequired: false,
       credentialEnvironmentInherited: sidecar?.credentialEnvironmentInherited === true,
       networkAccessRequired: sidecar?.networkAccessRequired === true,
+      networkScope: sidecar?.networkScope ?? "none",
+      captureObservation: sidecar?.captureObservation ?? null,
       filesystemAccessRequired: sidecar?.filesystemAccessRequired === true,
       rootRequired: false,
       systemDaemonRequired: false,

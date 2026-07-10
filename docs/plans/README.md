@@ -110,9 +110,10 @@ OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md
 It now closes browser action mediation through operator takeover suspension and
 explicit resume/rebind, then runs a bounded approval-gated user-space helper
 heartbeat process under the existing sidecar lifecycle. The next real slice is
-now sidecar-owned bounded browser capture observation; fail-closed heartbeat
-loss and explicit approved restart are complete. Do not add a new readiness
-milestone, automatic restart loop, or desktop-wide capture.
+now bounded capture freshness/refresh; sidecar-owned initial browser capture,
+fail-closed heartbeat loss, and explicit approved restart are complete. Do not
+add a new readiness milestone, polling storm, automatic restart loop, or
+desktop-wide capture.
 
 ## Historical Phase Plans
 

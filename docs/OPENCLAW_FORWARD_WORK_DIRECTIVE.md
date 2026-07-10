@@ -241,10 +241,12 @@ continue. The existing approved sidecar lifecycle now starts and stops one
 bounded session-manager-owned user-space process whose IPC heartbeat backs lease
 readiness. Unexpected exit and heartbeat timeout now fail closed by suspending
 browser action authority; the same approved lifecycle action explicitly starts
-a new process and rebinds a new lease, with no automatic restart. The next Level
-2 slice should move bounded browser capture observation into the sidecar over a
-loopback-only source while preserving the same trusted-session contract. Do not
-add a readiness-only chain or desktop-wide capture.
+a new process and rebinds a new lease, with no automatic restart. The Level 2
+sidecar now performs one bounded browser capture observation over an
+allowlisted loopback-only source without retaining the full payload. The next
+slice should refresh that observation on bounded browser updates and expose
+fresh/stale state, without a polling storm, readiness-only chain, or desktop-wide
+capture.
 
 ## Identity-Upgrade Alignment
 

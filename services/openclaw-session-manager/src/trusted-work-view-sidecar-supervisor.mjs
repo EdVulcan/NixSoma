@@ -34,6 +34,9 @@ export function createTrustedWorkViewSidecarSupervisor({
   let degradedReason = null;
   let heartbeatTimer = null;
   let failureReported = false;
+  let captureObservation = null;
+  let captureFailure = null;
+  let captureResolver = null;
 
   function clearHeartbeatTimer() {
     if (heartbeatTimer) {
@@ -79,12 +82,15 @@ export function createTrustedWorkViewSidecarSupervisor({
       exitCode,
       exitSignal,
       degradedReason,
+      captureObservation,
+      captureFailure,
       mode: "supervised_user_space_ipc_heartbeat",
       sessionManagerOwned: true,
       boundedProcess: true,
       installRequired: false,
       credentialEnvironmentInherited: false,
-      networkAccessRequired: false,
+      networkAccessRequired: Boolean(owner?.browserRuntimeUrl),
+      networkScope: owner?.browserRuntimeUrl ? "loopback_browser_runtime_only" : "none",
       filesystemAccessRequired: false,
       rootRequired: false,
       systemDaemonRequired: false,
@@ -112,6 +118,15 @@ export function createTrustedWorkViewSidecarSupervisor({
       degradedReason = null;
       onHeartbeat({ ...message, leaseId: owner.leaseId });
       armHeartbeatTimer(child);
+    } else if (message.type === "capture_observation") {
+      captureObservation = message.observation ?? null;
+      captureFailure = null;
+      captureResolver?.();
+      captureResolver = null;
+    } else if (message.type === "capture_failed") {
+      captureFailure = message.reason ?? "capture_failed";
+      captureResolver?.();
+      captureResolver = null;
     }
   }
 
@@ -122,7 +137,15 @@ export function createTrustedWorkViewSidecarSupervisor({
       leaseId: requiredString(input.leaseId, "leaseId"),
       taskId: requiredString(input.taskId, "taskId"),
       approvalId: requiredString(input.approvalId, "approvalId"),
+      browserRuntimeUrl: null,
     };
+    if (input.browserRuntimeUrl) {
+      const browserUrl = new URL(input.browserRuntimeUrl);
+      if (!["127.0.0.1", "localhost"].includes(browserUrl.hostname)) {
+        throw new Error("Trusted work-view sidecar capture source must be loopback-only.");
+      }
+      nextOwner.browserRuntimeUrl = browserUrl.origin;
+    }
     if (input.approvalStatus !== "approved") {
       throw new Error("Trusted work-view sidecar requires approved lifecycle authority.");
     }
@@ -143,6 +166,8 @@ export function createTrustedWorkViewSidecarSupervisor({
     exitSignal = null;
     degradedReason = null;
     failureReported = false;
+    captureObservation = null;
+    captureFailure = null;
 
     const processHandle = spawnProcess(process.execPath, [sidecarPath.pathname], {
       stdio: ["ignore", "ignore", "ignore", "ipc"],
@@ -151,6 +176,9 @@ export function createTrustedWorkViewSidecarSupervisor({
         OPENCLAW_SIDECAR_SESSION_ID: nextOwner.sessionId,
         OPENCLAW_SIDECAR_WORK_VIEW_ID: nextOwner.workViewId,
         OPENCLAW_SIDECAR_HEARTBEAT_INTERVAL_MS: String(heartbeatIntervalMs),
+        ...(nextOwner.browserRuntimeUrl
+          ? { OPENCLAW_SIDECAR_BROWSER_RUNTIME_URL: nextOwner.browserRuntimeUrl }
+          : {}),
       },
     });
     child = processHandle;
@@ -197,6 +225,15 @@ export function createTrustedWorkViewSidecarSupervisor({
       throw error;
     });
 
+    if (nextOwner.browserRuntimeUrl && !captureObservation && !captureFailure) {
+      await new Promise((resolve) => {
+        const timeout = setTimeout(resolve, startTimeoutMs);
+        captureResolver = () => {
+          clearTimeout(timeout);
+          resolve();
+        };
+      });
+    }
     return { ...snapshot(), reused: false };
   }
 

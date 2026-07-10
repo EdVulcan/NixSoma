@@ -251,6 +251,15 @@ action launches a new child, rotates and rebinds the helper lease, and only then
 restores browser action authority. Explicit stop also suspends action authority,
 so stopping the heartbeat process cannot leave AI actions enabled accidentally.
 
+## Sidecar-Owned Bounded Capture
+
+On approved start, the sidecar itself reads `/browser/capture` from an
+allowlisted loopback-only browser-runtime origin. It projects the response to
+session id, bounded title/URL, tab count, visible-text block count, and capture
+time. It does not retain visible text, recent input, click details, browser
+payloads, screenshots, or desktop-wide data. The bounded observation is carried
+through the existing lifecycle task and Observer readback.
+
 ## Evidence
 
 Runtime contract builder:
@@ -315,25 +324,25 @@ automatic recovery execution; the contract recommends existing operator actions
 unreviewed endpoint invocation from recommendation payloads
 trusted-lease mediation for keyboard hotkey/window-focus paths that do not yet
 mutate browser-runtime state
-sidecar-owned browser capture/action transport; the process currently owns
-heartbeat and liveness only
+continuous sidecar capture refresh and freshness expiry; the current bounded
+observation is taken on approved start
+sidecar-owned browser action transport
 automatic sidecar restart after crash or heartbeat timeout; recovery remains an
 explicit approved operator action
 ```
 
 ## Next Slice
 
-The approved user-space sidecar now backs helper readiness with a real IPC
-heartbeat, fails closed on liveness loss, and supports explicit approved
-restart. The next Level 2 slice should move bounded capture observation into the
-sidecar process:
+The approved user-space sidecar now owns heartbeat, fail-closed liveness, and
+one bounded loopback browser capture observation. The next Level 2 slice should
+keep that observation current:
 
 ```text
-sidecar-owned browser capture observation
--> loopback-only bounded capture source
--> session/work-view/lease identity attached by the sidecar
--> Observer reads the same trusted-session contract
--> no desktop-wide capture or input authority expansion
+browser update
+-> sidecar refreshes the bounded observation
+-> freshness and stale state become explicit
+-> stale capture fails closed for future sidecar-owned actions
+-> no desktop-wide capture or polling storm
 ```
 
 It should extend the same supervisor, lifecycle task, work-view contract, and

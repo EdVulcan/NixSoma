@@ -57,6 +57,7 @@ export function createPhase3WorkViewBuilders(deps) {
           boundedProcess: false,
           credentialEnvironmentInherited: false,
           networkAccessRequired: false,
+          networkScope: "none",
           filesystemAccessRequired: false,
           rootRequired: false,
           systemDaemonRequired: false,
@@ -96,6 +97,8 @@ export function createPhase3WorkViewBuilders(deps) {
         boundedProcess: Boolean(execution.boundedProcess),
         credentialEnvironmentInherited: Boolean(execution.credentialEnvironmentInherited),
         networkAccessRequired: Boolean(execution.networkAccessRequired),
+        networkScope: execution.networkScope ?? "none",
+        captureObservation: execution.captureObservation ?? null,
         filesystemAccessRequired: Boolean(execution.filesystemAccessRequired),
         rootRequired: Boolean(execution.rootRequired),
         systemDaemonRequired: Boolean(execution.systemDaemonRequired),
@@ -304,7 +307,8 @@ export function createPhase3WorkViewBuilders(deps) {
         && sidecarLifecycle.safety.sessionManagerOwned === true
         && sidecarLifecycle.safety.boundedProcess === true
         && sidecarLifecycle.safety.credentialEnvironmentInherited === false
-        && sidecarLifecycle.safety.networkAccessRequired === false
+        && sidecarLifecycle.safety.networkAccessRequired === true
+        && sidecarLifecycle.safety.networkScope === "loopback_browser_runtime_only"
         && sidecarLifecycle.safety.filesystemAccessRequired === false
       );
     const controls = [

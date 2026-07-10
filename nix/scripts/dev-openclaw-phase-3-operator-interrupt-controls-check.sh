@@ -226,8 +226,14 @@ if (approvedStartProbeStatus !== "200"
   || approvedStartProbe.readback?.execution?.sessionManagerOwned !== true
   || approvedStartProbe.readback?.execution?.boundedProcess !== true
   || approvedStartProbe.readback?.execution?.credentialEnvironmentInherited !== false
-  || approvedStartProbe.readback?.execution?.networkAccessRequired !== false
+  || approvedStartProbe.readback?.execution?.networkAccessRequired !== true
+  || approvedStartProbe.readback?.execution?.networkScope !== "loopback_browser_runtime_only"
   || approvedStartProbe.readback?.execution?.filesystemAccessRequired !== false
+  || approvedStartProbe.readback?.execution?.captureObservation?.registry !== "openclaw-trusted-work-view-sidecar-capture-observation-v0"
+  || approvedStartProbe.readback?.execution?.captureObservation?.sessionId !== resumedRuntime.sessionId
+  || approvedStartProbe.readback?.execution?.captureObservation?.activeUrl !== "https://example.com/phase-3-controls"
+  || approvedStartProbe.readback?.execution?.captureObservation?.fullPayloadRetained !== false
+  || approvedStartProbe.readback?.execution?.captureObservation?.desktopWideCapture !== false
   || approvedStartProbe.readback?.execution?.rootRequired !== false
   || approvedStartProbe.readback?.execution?.systemDaemonRequired !== false
   || approvedStartProbe.readback?.execution?.desktopWideCapture !== false
