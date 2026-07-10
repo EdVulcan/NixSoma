@@ -264,8 +264,12 @@ planner and executor use
 one production action descriptor, task evidence retains the bounded sidecar
 effect, and verification prefers the post-action capture URL over stale session
 metadata. The next slice should make an in-flight browser task recover across a
-capture-source interruption using the existing recovery loop. Do not add
-horizontal navigation variants, a readiness-only chain, or desktop-wide
+capture-source interruption using the existing recovery loop. That bounded
+action-level recovery is now complete: only sidecar capture reasons trigger one
+prepare and one retry, and compact interruption/retry evidence is attached to
+the task. The next slice should preserve task continuity when session-manager
+itself restarts during active browser work. Do not add horizontal navigation
+variants, a readiness-only chain, fault-injection endpoints, or desktop-wide
 capture.
 
 ## Identity-Upgrade Alignment

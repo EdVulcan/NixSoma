@@ -1580,3 +1580,130 @@ test("body evidence followup record task dispatches to deferred append shell whe
   assert.deepEqual(result.attempts.map((attempt) => attempt.task.id), ["body-evidence-followup-dispatch-1"]);
   assert(events.some((event) => event.name === "body_evidence_ledger.followup_record_deferred"));
 });
+
+test("browser task executor prepares once and retries an in-flight capture interruption", async () => {
+  const targetUrl = "https://example.com/capture-origin";
+  const recoveredUrl = "https://example.com/capture-recovered";
+  const postCalls = [];
+  let screenActionCalls = 0;
+  let observedUrl = targetUrl;
+  const { executor } = createExecutorHarness({
+    taskManager: {
+      buildWorkViewAttachPayload: (reveal, fallbackUrl) => ({
+        sessionId: reveal.session?.sessionId ?? null,
+        status: "ready",
+        activeUrl: reveal.workView?.activeUrl ?? fallbackUrl,
+      }),
+      attachTaskToWorkView: (candidate, workView) => {
+        candidate.workView = workView;
+        return candidate;
+      },
+    },
+    deps: {
+      client: {
+        sessionManagerUrl: "http://session-manager",
+        screenSenseUrl: "http://screen-sense",
+        screenActUrl: "http://screen-act",
+        systemSenseUrl: "http://system-sense",
+        fetchJson: async (url) => {
+          if (url === "http://screen-sense/screen/current") {
+            return {
+              ok: true,
+              screen: {
+                readiness: "ready",
+                focusedWindow: { title: "AI work view", pid: 4103 },
+                workViewSummary: {
+                  url: observedUrl,
+                  visibleTextBlocks: [observedUrl],
+                  summaryText: observedUrl,
+                },
+              },
+            };
+          }
+          if (url === "http://session-manager/work-view/state") {
+            return {
+              ok: true,
+              workView: {
+                status: "ready",
+                visibility: "visible",
+                helperStatus: "active",
+                browserStatus: "running",
+                activeUrl: targetUrl,
+              },
+            };
+          }
+          return { ok: true };
+        },
+        postJson: async (url, body) => {
+          postCalls.push({ url, body });
+          if (url === "http://screen-act/act/browser/new-tab") {
+            screenActionCalls += 1;
+            if (screenActionCalls === 1) {
+              return {
+                ok: true,
+                action: {
+                  kind: "browser.new_tab",
+                  params: body,
+                  degraded: true,
+                  result: "blocked-or-degraded",
+                  mediation: { accepted: false, reason: "trusted_sidecar_capture_source_unavailable" },
+                },
+              };
+            }
+            observedUrl = recoveredUrl;
+            return {
+              ok: true,
+              action: {
+                kind: "browser.new_tab",
+                params: body,
+                degraded: false,
+                result: "executed-browser-runtime",
+                mediation: {
+                  accepted: true,
+                  transport: "trusted-sidecar-ipc",
+                  effect: { url: recoveredUrl, tabCount: 2 },
+                },
+              },
+            };
+          }
+          return {
+            ok: true,
+            session: { sessionId: "session-recovered" },
+            workView: {
+              status: "ready",
+              visibility: "visible",
+              mode: "foreground-observable",
+              helperStatus: "active",
+              browserStatus: "running",
+              activeUrl: targetUrl,
+              displayTarget: "workspace-2",
+            },
+          };
+        },
+      },
+    },
+  });
+  const task = {
+    id: "browser-capture-recovery-task",
+    type: "browser_task",
+    goal: "Recover an interrupted browser action",
+    status: "queued",
+    targetUrl,
+  };
+
+  const result = await executor.executeTaskWithRecovery(task, {
+    expectedUrl: recoveredUrl,
+    actions: [{ kind: "browser.new_tab", params: { url: recoveredUrl } }],
+    hideOnComplete: false,
+  });
+
+  const evidenceAction = result.finalExecution.verification.actionEvidence.actions[0];
+  const recoveryPrepare = postCalls.find((call) => call.body?.operatorActionSource === "task_capture_interruption_recovery");
+  assert.equal(result.finalExecution.task.status, "completed");
+  assert.equal(screenActionCalls, 2);
+  assert.equal(recoveryPrepare.url, "http://session-manager/work-view/prepare");
+  assert.equal(evidenceAction.recovery.attempted, true);
+  assert.equal(evidenceAction.recovery.boundedAttempts, 1);
+  assert.equal(evidenceAction.mediation.effect.url, recoveredUrl);
+  assert.equal(result.finalExecution.verification.activeUrl, recoveredUrl);
+});

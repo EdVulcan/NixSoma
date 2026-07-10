@@ -365,9 +365,10 @@ trusted-lease mediation for keyboard hotkey/window-focus paths that do not yet
 mutate browser-runtime state
 automatic sidecar restart after crash or heartbeat timeout; recovery remains an
 explicit approved operator action
-in-flight browser task continuity when the capture source becomes unavailable;
-the runtime can recover before or between tasks, but a task interrupted during
-its action loop still completes through the generic failure/retry path
+session-manager process restart while a browser task is active; sidecar
+lifecycle recovery is durable and action-level capture recovery is bounded, but
+an in-flight core request still needs task-aware continuation across loss of the
+session authority service
 ```
 
 ## Next Slice
@@ -424,7 +425,28 @@ in-flight browser task
 -> completion evidence links both interruption and recovered action
 ```
 
-It should extend the existing task recovery loop and the same sidecar transport
+This action-level recovery is now complete. The executor recognizes only the
+three sidecar capture interruption reasons, invokes the existing bounded
+`prepare_work_view` action once, retries the original action once, and records
+the first result, recovery reason, prepare result, and retry result in task
+evidence. Unrelated failures are not retried. Production-shape tests prove the
+executor dependency sequence; the real Phase 3 milestone separately proves the
+same capture failure, prepare recovery, and post-recovery sidecar action states
+without adding a fault-injection endpoint.
+
+The next Level 2 slice should preserve task continuity when the authority
+service itself restarts during work:
+
+```text
+active browser task
+-> session-manager process exits and sidecar exits with it
+-> core records a recoverable authority interruption
+-> session-manager returns as recovery_required
+-> approved sidecar and fresh session are explicitly restored
+-> the existing task recovery chain continues from fresh observation
+```
+
+It should extend the existing task recovery loop and restart contract
 rather than add another readiness chain. Root/system daemon work, desktop-wide
 capture, graphics-stack integration, broader input,
 automatic restart, and provider egress remain deferred.

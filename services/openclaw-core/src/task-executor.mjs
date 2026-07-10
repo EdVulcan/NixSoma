@@ -6,7 +6,10 @@ import { createNativeAcpxCodexBridgeTaskHandlers } from "./task-executor-native-
 import { createNativeEngineeringLspLifecycleTaskHandlers } from "./native-engineering-lsp-lifecycle-tasks.mjs";
 import { createSystemBodyTaskHandlers } from "./task-executor-system-body-handlers.mjs";
 import { planCapabilityActionSteps } from "./task-recovery.mjs";
-import { observedBrowserTaskUrl, screenActEndpointForBrowserTaskAction } from "./browser-task-action-contract.mjs";
+import {
+  executeBrowserTaskActionWithCaptureRecovery,
+  observedBrowserTaskUrl,
+} from "./browser-task-action-contract.mjs";
 
 export function createTaskExecutor(deps) {
   const { client, state, taskManager, planBuilder, approvalEngine, workspaceOps, policyEvaluator, publishEvent } = deps;
@@ -519,6 +522,7 @@ function buildActionEvidence(actionResults, workViewSummary) {
       transport: action.mediation.transport ?? null,
       effect: action.mediation.effect ?? null,
     } : null,
+    recovery: action?.recovery ?? null,
   }));
 
   return {
@@ -678,8 +682,17 @@ async function executeTask(task, options = {}) {
     const initialScreen = await fetchJson(`${screenSenseUrl}/screen/current`);
 
     for (const action of actions) {
-      const endpoint = screenActEndpointForBrowserTaskAction(action.kind);
-      const actionData = await postJson(`${screenActUrl}${endpoint}`, action.params);
+      const actionData = await executeBrowserTaskActionWithCaptureRecovery({
+        action,
+        recoveryEnabled: options.recoverCaptureInterruptions !== false,
+        postAction: (endpoint, params) => postJson(`${screenActUrl}${endpoint}`, params),
+        prepareWorkView: () => postJson(`${sessionManagerUrl}/work-view/prepare`, {
+          displayTarget,
+          entryUrl: targetUrl,
+          operatorActionSource: "task_capture_interruption_recovery",
+          recommendedAction: "prepare_work_view",
+        }),
+      });
       actionResults.push(actionData.action);
       await setTaskPhase(task, "acting_on_target", {
         status: "running",
@@ -687,6 +700,7 @@ async function executeTask(task, options = {}) {
           actionKind: action.kind,
           degraded: Boolean(actionData.action?.degraded),
           result: actionData.action?.result ?? null,
+          captureRecoveryAttempted: actionData.action?.recovery?.attempted === true,
           executor: "core-v1",
         },
       });
@@ -771,6 +785,7 @@ async function executeTask(task, options = {}) {
           transport: action.mediation.transport ?? null,
           effect: action.mediation.effect ?? null,
         } : null,
+        recovery: action?.recovery ?? null,
       })),
       workView: {
         status: workView.status ?? null,
