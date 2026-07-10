@@ -86,12 +86,12 @@ const controlsAfterProbe = JSON.parse(fs.readFileSync(process.argv[11], "utf8"))
 const stoppedSidecar = JSON.parse(fs.readFileSync(process.argv[12], "utf8"));
 const controlsAfterStop = JSON.parse(fs.readFileSync(process.argv[13], "utf8"));
 
-for (const token of ["Phase 3 Operator Interrupt Controls", "phase3-operator-interrupt-controls-panel", "phase3-controls-takeover", "create-trusted-sidecar-lifecycle-task-button", "start-trusted-sidecar-probe-button", "stop-trusted-sidecar-button"]) {
+for (const token of ["Phase 3 Operator Interrupt Controls", "phase3-operator-interrupt-controls-panel", "phase3-controls-takeover", "create-trusted-sidecar-lifecycle-task-button", "start-trusted-sidecar-probe-button", "stop-trusted-sidecar-button", "new-tab-action-button", "Open New Tab"]) {
   if (!html.includes(token)) {
     throw new Error(`Observer HTML missing ${token}`);
   }
 }
-for (const token of ["/phase-3/operator-interrupt-controls", "refreshPhase3OperatorInterruptControls", "openclaw-phase-3-operator-interrupt-controls-v0", "/control/takeover", "/control/resume", "/work-view/trusted-sidecar/lifecycle-tasks", "/start-probe", "/stop", "createTrustedSidecarLifecycleTask", "startTrustedSidecarLifecycleProbe", "stopTrustedSidecarLifecycle", "sidecarLifecycle", "latestProbe", "workViewRecoveryAction", "trustedSession.helperReadiness", "Action Authority", "actionAuthoritySuspended", "helperRuntime.actionAuthority", "safety.supervisorStatus", "safety.heartbeatCount", "Sidecar Failure", "Sidecar Recovery", "Capture Source", "captureRecoveryRequired", "recoveryRequired", "lastSidecarFailure", "automaticRestart"]) {
+for (const token of ["/phase-3/operator-interrupt-controls", "refreshPhase3OperatorInterruptControls", "openclaw-phase-3-operator-interrupt-controls-v0", "/control/takeover", "/control/resume", "/work-view/trusted-sidecar/lifecycle-tasks", "/start-probe", "/stop", "/act/browser/new-tab", "newTabActionButton", "createTrustedSidecarLifecycleTask", "startTrustedSidecarLifecycleProbe", "stopTrustedSidecarLifecycle", "sidecarLifecycle", "latestProbe", "workViewRecoveryAction", "trustedSession.helperReadiness", "Action Authority", "actionAuthoritySuspended", "helperRuntime.actionAuthority", "safety.supervisorStatus", "safety.heartbeatCount", "Sidecar Failure", "Sidecar Recovery", "Capture Source", "captureRecoveryRequired", "recoveryRequired", "lastSidecarFailure", "automaticRestart"]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);
   }

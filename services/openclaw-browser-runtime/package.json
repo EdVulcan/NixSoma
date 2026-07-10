@@ -4,8 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "node --check src/server.mjs",
+    "build": "node --check src/*.mjs",
     "start": "node src/server.mjs",
-    "typecheck": "node --check src/server.mjs"
+    "test": "node --test test/*.test.mjs",
+    "typecheck": "node --check src/*.mjs"
   }
 }

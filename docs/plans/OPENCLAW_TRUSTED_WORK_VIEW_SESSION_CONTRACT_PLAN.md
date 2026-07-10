@@ -365,9 +365,9 @@ trusted-lease mediation for keyboard hotkey/window-focus paths that do not yet
 mutate browser-runtime state
 automatic sidecar restart after crash or heartbeat timeout; recovery remains an
 explicit approved operator action
-browser navigation/new-tab transport beyond existing input and click; broader
-navigation remains deferred until it uses the same sidecar lease, capture gate,
-audit, and AI-owned work-view boundary
+core planner/task-executor selection of `browser.new_tab`; the operator-facing
+action is real, but autonomous tasks do not yet map this action to the new
+screen-act route and capability descriptor
 ```
 
 ## Next Slice
@@ -378,7 +378,7 @@ and explicit recovery across session-manager and browser-runtime restarts.
 Browser-runtime loss marks the capture source `recovery_required`, blocks
 screen-act before dispatch, recommends the existing `prepare_work_view`
 operator action, and resumes capture and IPC actions on the same sidecar after
-prepare. The next Level 2 slice should add one new real work-view action:
+prepare. The next real work-view action is also complete:
 
 ```text
 bounded browser navigation/new-tab request
@@ -389,7 +389,23 @@ bounded browser navigation/new-tab request
 -> refresh bounded capture and expose the result in Observer/audit
 ```
 
-It should extend the same sidecar action transport, work-view contract, capture
-gate, and Observer readback rather than add another readiness chain. Root/system
+This action is now complete. HTTP(S) URLs are bounded to 2048 characters,
+embedded credentials and non-network schemes are rejected, browser-runtime
+requires the current trusted lease, and Observer exposes an `Open New Tab`
+control. The real milestone proves the tab count and active URL changed and a
+newer sidecar capture observed the result.
+
+The next slice should make the capability usable by autonomous browser tasks:
+
+```text
+browser task action kind browser.new_tab
+-> planner capability mapping
+-> task-executor screen-act route selection
+-> existing lease/capture/sidecar transport
+-> task action evidence includes the bounded effect summary
+```
+
+It should extend the existing planner/executor action dispatch and the same
+sidecar transport rather than add another readiness chain. Root/system
 daemon work, desktop-wide capture, graphics-stack integration, broader input,
 automatic restart, and provider egress remain deferred.

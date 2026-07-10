@@ -116,8 +116,11 @@ task for explicit restart. Browser-runtime restart continuity now blocks actions
 on capture-source loss, recommends prepare through the existing Observer path,
 and recovers capture plus sidecar IPC without restarting the helper. The next
 real slice is bounded browser navigation/new-tab through the same trusted
-transport. Do not add a readiness milestone, automatic restart loop, or
-desktop-wide capture.
+transport. That operator-facing action is now complete with bounded URL
+validation, lease/capture gates, real tab mutation, refreshed capture, and an
+Observer control. The next slice should map `browser.new_tab` into the existing
+core planner/task-executor path instead of adding more navigation variants. Do
+not add a readiness milestone, automatic restart loop, or desktop-wide capture.
 
 ## Historical Phase Plans
 

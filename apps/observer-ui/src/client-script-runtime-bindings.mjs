@@ -315,6 +315,14 @@ typeActionButton.addEventListener("click", () => {
   });
 });
 
+newTabActionButton.addEventListener("click", () => {
+  runAction("/act/browser/new-tab", {
+    url: getDesiredWorkViewUrl(),
+  }).catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 healBrowserButton.addEventListener("click", () => {
   runHeal("openclaw-browser-runtime").catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

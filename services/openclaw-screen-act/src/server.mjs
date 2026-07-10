@@ -80,7 +80,7 @@ async function executeBrowserAction(kind, params, screen) {
     ? "/browser/click"
     : kind === "keyboard.type"
       ? "/browser/input"
-      : null;
+      : kind === "browser.new_tab" ? "/browser/new-tab" : null;
   if (!endpoint) {
     return {
       registry: "openclaw-trusted-work-view-action-mediation-v0",
@@ -109,7 +109,9 @@ async function executeBrowserAction(kind, params, screen) {
   try {
     const payload = kind === "mouse.click"
       ? { x: params.x, y: params.y }
-      : { text: params.text ?? "" };
+      : kind === "browser.new_tab"
+        ? { url: params.url }
+        : { text: params.text ?? "" };
     const sidecarActive = Boolean(
       screen?.trustedSession?.helperRuntime?.sidecar?.taskId
       && screen.trustedSession.helperRuntime.sidecar.status === "running"
@@ -137,6 +139,11 @@ async function executeBrowserAction(kind, params, screen) {
       leaseId: mediation.leaseId ?? leaseContext.trustedHelperLease?.leaseId ?? null,
       leaseMatched: mediation.leaseMatched === true,
       transport: data?.transport ?? "browser-runtime-direct",
+      effect: data?.effect ?? (data?.tab ? {
+        tabId: data.tab.id ?? null,
+        url: data.tab.url ?? null,
+        tabCount: Array.isArray(data.browser?.tabs) ? data.browser.tabs.length : null,
+      } : null),
     };
   } catch (error) {
     return {
@@ -270,6 +277,20 @@ const server = http.createServer(async (req, res) => {
       const body = await readJsonBody(req);
       const action = await executeAction("keyboard.type", {
         text: typeof body.text === "string" ? body.text : "",
+      });
+      sendJson(res, 200, { ok: true, action });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/act/browser/new-tab") {
+    try {
+      const body = await readJsonBody(req);
+      const action = await executeAction("browser.new_tab", {
+        url: typeof body.url === "string" ? body.url : "",
       });
       sendJson(res, 200, { ok: true, action });
     } catch (error) {

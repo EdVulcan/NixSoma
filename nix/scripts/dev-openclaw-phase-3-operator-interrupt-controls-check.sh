@@ -41,6 +41,7 @@ cleanup() {
   rm -f "${FRESH_CAPTURE_ACTION_FILE:-}"
   rm -f "${BROWSER_FAILURE_STATE_FILE:-}" "${BROWSER_FAILURE_ACTION_FILE:-}" \
     "${BROWSER_RECOVERED_STATE_FILE:-}" "${BROWSER_RECOVERED_ACTION_FILE:-}"
+  rm -f "${NEW_TAB_ACTION_FILE:-}" "${NEW_TAB_BROWSER_STATE_FILE:-}" "${NEW_TAB_CAPTURE_STATE_FILE:-}"
   if [[ -n "${RESTARTED_SESSION_MANAGER_PID:-}" ]]; then
     kill -TERM "$RESTARTED_SESSION_MANAGER_PID" >/dev/null 2>&1 || true
   fi
@@ -223,6 +224,20 @@ done
 BROWSER_RECOVERED_ACTION_FILE="$(mktemp)"
 curl --silent --fail -X POST "$SCREEN_ACT_URL/act/keyboard/type" \
   -H 'content-type: application/json' --data '{"text":"allowed-after-explicit-browser-prepare"}' > "$BROWSER_RECOVERED_ACTION_FILE"
+NEW_TAB_URL="https://example.com/phase-3-sidecar-new-tab"
+NEW_TAB_ACTION_FILE="$(mktemp)"
+curl --silent --fail -X POST "$SCREEN_ACT_URL/act/browser/new-tab" \
+  -H 'content-type: application/json' --data "{\"url\":\"$NEW_TAB_URL\"}" > "$NEW_TAB_ACTION_FILE"
+NEW_TAB_BROWSER_STATE_FILE="$(mktemp)"
+curl --silent --fail "$BROWSER_RUNTIME_URL/browser/state" > "$NEW_TAB_BROWSER_STATE_FILE"
+NEW_TAB_CAPTURE_STATE_FILE="$(mktemp)"
+for _ in $(seq 1 50); do
+  curl --silent --fail "$SESSION_MANAGER_URL/work-view/state" > "$NEW_TAB_CAPTURE_STATE_FILE"
+  if node -e 'const data=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); const s=data.workView?.helperRuntime?.sidecar??{}; process.exit(s.captureObservation?.activeUrl===process.argv[2] && (s.captureObservation?.sequence??0)>Number(process.argv[3]) ? 0 : 1);' "$NEW_TAB_CAPTURE_STATE_FILE" "$NEW_TAB_URL" "$(node -e 'const data=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(String(data.workView.helperRuntime.sidecar.captureObservation.sequence));' "$BROWSER_RECOVERED_STATE_FILE")"; then
+    break
+  fi
+  sleep 0.1
+done
 STOP_SIDECAR_FILE="$(mktemp)"
 CONTROLS_AFTER_STOP_FILE="$(mktemp)"
 curl --silent --fail \
@@ -231,7 +246,7 @@ curl --silent --fail \
   --data '{}' > "$STOP_SIDECAR_FILE"
 curl --silent --fail "$CORE_URL/phase-3/operator-interrupt-controls" > "$CONTROLS_AFTER_STOP_FILE"
 
-node - <<'EOF' "$CONTROLS_FILE" "$takeover" "$sidecar_task" "$start_probe_status" "$START_PROBE_FILE" "$approved_sidecar" "$approved_start_probe_status" "$APPROVED_START_PROBE_FILE" "$CONTROLS_AFTER_PROBE_FILE" "$SUSPENDED_STATE_FILE" "$old_browser_action_status" "$OLD_BROWSER_ACTION_FILE" "$resume" "$RESUMED_STATE_FILE" "$RESUMED_BROWSER_ACTION_FILE" "$STOP_SIDECAR_FILE" "$CONTROLS_AFTER_STOP_FILE" "$RECOVERY_REQUIRED_STATE_FILE" "$recovery_action_status" "$RECOVERY_BROWSER_ACTION_FILE" "$RESTART_SIDECAR_FILE" "$RESTARTED_STATE_FILE" "$CAPTURE_REFRESH_STATE_FILE" "$BROWSER_FAILURE_STATE_FILE" "$BROWSER_FAILURE_ACTION_FILE" "$BROWSER_RECOVERED_STATE_FILE" "$BROWSER_RECOVERED_ACTION_FILE"
+node - <<'EOF' "$CONTROLS_FILE" "$takeover" "$sidecar_task" "$start_probe_status" "$START_PROBE_FILE" "$approved_sidecar" "$approved_start_probe_status" "$APPROVED_START_PROBE_FILE" "$CONTROLS_AFTER_PROBE_FILE" "$SUSPENDED_STATE_FILE" "$old_browser_action_status" "$OLD_BROWSER_ACTION_FILE" "$resume" "$RESUMED_STATE_FILE" "$RESUMED_BROWSER_ACTION_FILE" "$STOP_SIDECAR_FILE" "$CONTROLS_AFTER_STOP_FILE" "$RECOVERY_REQUIRED_STATE_FILE" "$recovery_action_status" "$RECOVERY_BROWSER_ACTION_FILE" "$RESTART_SIDECAR_FILE" "$RESTARTED_STATE_FILE" "$CAPTURE_REFRESH_STATE_FILE" "$BROWSER_FAILURE_STATE_FILE" "$BROWSER_FAILURE_ACTION_FILE" "$BROWSER_RECOVERED_STATE_FILE" "$BROWSER_RECOVERED_ACTION_FILE" "$NEW_TAB_ACTION_FILE" "$NEW_TAB_BROWSER_STATE_FILE" "$NEW_TAB_CAPTURE_STATE_FILE" "$NEW_TAB_URL"
 const fs = require("node:fs");
 const controls = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
 const takeover = JSON.parse(process.argv[3]);
@@ -260,6 +275,10 @@ const browserFailureState = JSON.parse(fs.readFileSync(process.argv[25], "utf8")
 const browserFailureAction = JSON.parse(fs.readFileSync(process.argv[26], "utf8"));
 const browserRecoveredState = JSON.parse(fs.readFileSync(process.argv[27], "utf8"));
 const browserRecoveredAction = JSON.parse(fs.readFileSync(process.argv[28], "utf8"));
+const newTabAction = JSON.parse(fs.readFileSync(process.argv[29], "utf8"));
+const newTabBrowserState = JSON.parse(fs.readFileSync(process.argv[30], "utf8"));
+const newTabCaptureState = JSON.parse(fs.readFileSync(process.argv[31], "utf8"));
+const newTabUrl = process.argv[32];
 
 if (!controls.ok
   || controls.registry !== "openclaw-phase-3-operator-interrupt-controls-v0"
@@ -441,6 +460,23 @@ if (browserRecoveredSidecar.status !== "running"
   || recoveredBrowserMediation.transport !== "trusted-sidecar-ipc") {
   throw new Error(`explicit work-view prepare should recover capture and actions without restarting the sidecar: ${JSON.stringify({ browserRecoveredSidecar, browserRecoveredAction })}`);
 }
+const newTabMediation = newTabAction.action?.mediation ?? {};
+const newTabCapture = newTabCaptureState.workView?.helperRuntime?.sidecar?.captureObservation ?? {};
+if (newTabAction.action?.kind !== "browser.new_tab"
+  || newTabAction.action?.result !== "executed-browser-runtime"
+  || newTabMediation.accepted !== true
+  || newTabMediation.leaseMatched !== true
+  || newTabMediation.transport !== "trusted-sidecar-ipc"
+  || newTabMediation.effect?.url !== newTabUrl
+  || newTabMediation.effect?.tabCount !== 2
+  || newTabBrowserState.browser?.activeUrl !== newTabUrl
+  || newTabBrowserState.browser?.tabs?.length !== 2
+  || !newTabBrowserState.browser.tabs.some((tab) => tab.url === newTabUrl)
+  || newTabCapture.activeUrl !== newTabUrl
+  || newTabCapture.tabCount !== 2
+  || newTabCapture.sequence <= browserRecoveredSidecar.captureObservation.sequence) {
+  throw new Error(`bounded new-tab action should mutate only the trusted AI browser and refresh capture: ${JSON.stringify({ newTabAction, browser: newTabBrowserState.browser, newTabCapture })}`);
+}
 if (!stoppedSidecar.ok
   || stoppedSidecar.mode !== "trusted-sidecar-stopped-after-operator-action"
   || stoppedSidecar.readback?.status !== "stopped_after_operator_action"
@@ -477,6 +513,9 @@ console.log(JSON.stringify({
     browserCaptureFailure: browserFailureSidecar.captureFailure,
     browserRecoveredSequence: browserRecoveredSidecar.captureObservation.sequence,
     browserRecoveryTransport: recoveredBrowserMediation.transport,
+    newTabUrl,
+    newTabCount: newTabMediation.effect.tabCount,
+    newTabCaptureSequence: newTabCapture.sequence,
     stoppedSidecar: stoppedSidecar.readback.status,
   },
 }, null, 2));

@@ -251,6 +251,7 @@ const workViewSessionIdentity = document.querySelector("#work-view-session-ident
 const refreshScreenButton = document.querySelector("#refresh-screen-button");
 const clickActionButton = document.querySelector("#click-action-button");
 const typeActionButton = document.querySelector("#type-action-button");
+const newTabActionButton = document.querySelector("#new-tab-action-button");
 const healBrowserButton = document.querySelector("#heal-browser-button");
 const runMaintenanceButton = document.querySelector("#run-maintenance-button");
 const completeTaskButton = document.querySelector("#complete-task-button");

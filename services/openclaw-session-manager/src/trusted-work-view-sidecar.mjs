@@ -101,7 +101,9 @@ async function executeBrowserAction(message) {
   }
   const endpoint = message.kind === "keyboard.type"
     ? "/browser/input"
-    : message.kind === "mouse.click" ? "/browser/click" : null;
+    : message.kind === "mouse.click"
+      ? "/browser/click"
+      : message.kind === "browser.new_tab" ? "/browser/new-tab" : null;
   if (!endpoint) {
     send("action_result", { requestId: message.requestId, result: { ok: false, reason: "unsupported_action" } });
     return;
@@ -119,6 +121,11 @@ async function executeBrowserAction(message) {
         ok: response.ok && data?.ok === true,
         reason: data?.mediation?.reason ?? data?.error ?? null,
         mediation: data?.mediation ?? null,
+        effect: data?.tab ? {
+          tabId: data.tab.id ?? null,
+          url: data.tab.url ?? null,
+          tabCount: Array.isArray(data.browser?.tabs) ? data.browser.tabs.length : null,
+        } : null,
       },
     });
   } catch (error) {

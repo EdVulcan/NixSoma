@@ -7,6 +7,7 @@ import {
   normaliseTrustedWorkViewHelperLease,
   validateTrustedWorkViewActionLease,
 } from "../../../packages/shared-utils/src/work-view-trust.mjs";
+import { normaliseBoundedBrowserUrl } from "./browser-navigation.mjs";
 
 
 const host = process.env.OPENCLAW_BROWSER_RUNTIME_HOST ?? "127.0.0.1";
@@ -305,11 +306,16 @@ const server = http.createServer(async (req, res) => {
       }
 
       const body = await readJsonBody(req);
-      const url = typeof body.url === "string" && body.url.trim() ? body.url.trim() : "https://example.com/docs";
+      const url = normaliseBoundedBrowserUrl(body.url ?? "https://example.com/docs");
+      const mediation = validateBrowserActionMediation(body);
+      if (!mediation.accepted) {
+        sendJson(res, 409, { ok: false, error: mediation.reason, mediation });
+        return;
+      }
       const tab = addTab(url);
       const browser = serialiseBrowserState();
       await publishEvent(createEventName("browser.updated"), { browser, tab, action: "new-tab" });
-      sendJson(res, 201, { ok: true, browser, tab });
+      sendJson(res, 201, { ok: true, browser, tab, mediation });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       sendJson(res, 400, { ok: false, error: message });

@@ -257,8 +257,13 @@ unavailable browser capture source becomes
 `recovery_required`, screen-act blocks before dispatch, Observer recommends the
 existing prepare action, and a fresh bounded capture restores sidecar IPC
 without restarting the helper. The next slice should carry one bounded browser
-navigation/new-tab action through the same trusted sidecar transport. Do not add
-a readiness-only chain or desktop-wide capture.
+navigation/new-tab action through the same trusted sidecar transport. That
+operator-facing action is now complete with bounded HTTP(S) URL validation,
+lease/capture gates, sidecar IPC, browser mutation, refreshed capture, audit,
+and an Observer control. The next slice should map `browser.new_tab` into the
+existing core planner/task-executor action path so autonomous browser tasks can
+use the proven transport. Do not add horizontal navigation variants, a
+readiness-only chain, or desktop-wide capture.
 
 ## Identity-Upgrade Alignment
 
