@@ -244,10 +244,11 @@ browser action authority; the same approved lifecycle action explicitly starts
 a new process and rebinds a new lease, with no automatic restart. The Level 2
 sidecar now continuously refreshes a bounded browser observation over an
 allowlisted loopback-only source, with single-flight polling, sequence, and
-fresh/stale state but no retained full payload. The next slice should require a
-fresh same-session sidecar observation alongside the existing helper lease
-before screen-act browser mutation. Do not add a readiness-only chain or
-desktop-wide capture.
+fresh/stale state but no retained full payload. Screen-act now requires a fresh
+same-session sidecar observation alongside the helper lease after sidecar
+lifecycle activation. The next slice should move the final bounded browser
+input/click loopback transport into sidecar IPC while preserving screen-act
+audit. Do not add a readiness-only chain or desktop-wide capture.
 
 ## Identity-Upgrade Alignment
 

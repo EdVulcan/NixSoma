@@ -19,6 +19,7 @@ export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 SESSION_MANAGER_URL="http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT"
 BROWSER_RUNTIME_URL="http://127.0.0.1:$OPENCLAW_BROWSER_RUNTIME_PORT"
+SCREEN_ACT_URL="http://127.0.0.1:$OPENCLAW_SCREEN_ACT_PORT"
 LEDGER_DIR="$REPO_ROOT/.artifacts/openclaw-body-evidence-ledger"
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
@@ -31,6 +32,7 @@ cleanup() {
   rm -f "${STOP_SIDECAR_FILE:-}" "${CONTROLS_AFTER_STOP_FILE:-}"
   rm -f "${SIDECAR_FAILURE_STATE_FILE:-}" "${SIDECAR_FAILURE_ACTION_FILE:-}" "${RESTART_SIDECAR_FILE:-}" "${RESTARTED_STATE_FILE:-}"
   rm -f "${CAPTURE_REFRESH_STATE_FILE:-}"
+  rm -f "${FRESH_CAPTURE_ACTION_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -85,8 +87,10 @@ approved_start_probe_status="$(curl --silent --output "$APPROVED_START_PROBE_FIL
   --data '{}')"
 curl --silent --fail "$CORE_URL/phase-3/operator-interrupt-controls" > "$CONTROLS_AFTER_PROBE_FILE"
 initial_capture_sequence="$(node -e 'const data=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(String(data.readback.execution.captureObservation.sequence));' "$APPROVED_START_PROBE_FILE")"
-curl --silent --fail -X POST "$BROWSER_RUNTIME_URL/browser/input" \
-  -H 'content-type: application/json' --data "$resumed_browser_action_body" >/dev/null
+FRESH_CAPTURE_ACTION_FILE="$(mktemp)"
+curl --silent --fail -X POST "$SCREEN_ACT_URL/act/keyboard/type" \
+  -H 'content-type: application/json' --data '{"text":"fresh sidecar capture mediated action"}' > "$FRESH_CAPTURE_ACTION_FILE"
+node -e 'const data=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); const mediation=data.action?.mediation??{}; if(data.action?.result!=="executed-browser-runtime" || mediation.accepted!==true || mediation.leaseMatched!==true){throw new Error(`fresh capture action was not mediated: ${JSON.stringify(data)}`);}' "$FRESH_CAPTURE_ACTION_FILE"
 CAPTURE_REFRESH_STATE_FILE="$(mktemp)"
 for _ in $(seq 1 40); do
   curl --silent --fail "$SESSION_MANAGER_URL/work-view/state" > "$CAPTURE_REFRESH_STATE_FILE"

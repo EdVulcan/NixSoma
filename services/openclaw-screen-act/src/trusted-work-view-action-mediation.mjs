@@ -33,6 +33,24 @@ export function buildTrustedWorkViewActionLease(screen) {
     };
   }
 
+  const sidecar = helperRuntime.sidecar ?? null;
+  if (sidecar?.taskId && (
+    sidecar.status !== "running"
+    || sidecar.captureFreshness !== "fresh"
+    || sidecar.captureObservation?.sessionId !== sessionIdentity.authoritativeSessionId
+  )) {
+    return {
+      registry: "openclaw-trusted-work-view-action-mediation-v0",
+      required: true,
+      ready: false,
+      status: "blocked",
+      reason: sidecar.captureFreshness === "stale"
+        ? "trusted_sidecar_capture_stale"
+        : "trusted_sidecar_capture_not_ready",
+      trustedHelperLease: null,
+    };
+  }
+
   if (
     helperRuntime.registry !== "openclaw-trusted-work-view-helper-runtime-v0"
     || helperRuntime.owner !== "openclaw-session-manager"

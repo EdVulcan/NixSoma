@@ -266,6 +266,14 @@ supervisor derives `fresh`, `stale`, or `missing` from a three-second freshness
 budget. The milestone proves a browser update advances the observation sequence
 without retaining the updated input text.
 
+Screen-sense now preserves the session-manager helper runtime instead of
+reconstructing only browser lease metadata. When a sidecar lifecycle is active,
+screen-act requires the sidecar to be running with a fresh capture observation
+for the authoritative session before forwarding browser input/click. Stale,
+missing, or cross-session observations block before browser mutation. The
+legacy helper-lease path remains compatible until a sidecar lifecycle is
+activated.
+
 ## Evidence
 
 Runtime contract builder:
@@ -330,23 +338,25 @@ automatic recovery execution; the contract recommends existing operator actions
 unreviewed endpoint invocation from recommendation payloads
 trusted-lease mediation for keyboard hotkey/window-focus paths that do not yet
 mutate browser-runtime state
-sidecar-owned browser action transport
+sidecar-owned browser action transport; screen-act currently performs the final
+loopback mutation after checking sidecar freshness
 automatic sidecar restart after crash or heartbeat timeout; recovery remains an
 explicit approved operator action
 ```
 
 ## Next Slice
 
-The approved user-space sidecar now owns heartbeat, fail-closed liveness, and a
-continuously refreshed bounded loopback browser observation. The next Level 2
-slice should bind that freshness to the existing action path:
+The approved user-space sidecar now owns heartbeat, fail-closed liveness, a
+continuously refreshed bounded loopback browser observation, and the freshness
+gate for existing browser actions. The next Level 2 slice should move the final
+bounded transport into the sidecar:
 
 ```text
-screen-act browser mutation
--> matching helper lease
--> fresh sidecar capture observation for the same session
--> browser input/click
--> stale or missing capture blocks before mutation
+screen-act approved browser mutation
+-> sidecar receives bounded action envelope over IPC
+-> sidecar rechecks session and capture freshness
+-> loopback browser input/click
+-> bounded action result returns through screen-act audit
 ```
 
 It should extend the same supervisor, lifecycle task, work-view contract, and

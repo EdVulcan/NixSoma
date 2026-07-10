@@ -79,7 +79,7 @@ function computeReadiness({ session, browser, browserCapture, degraded }) {
   return "warming_up";
 }
 
-function deriveScreenPatch({ session, browser, browserCapture, degraded }) {
+function deriveScreenPatch({ session, sessionWorkView, browser, browserCapture, degraded }) {
   const tabs = Array.isArray(browser?.tabs) ? browser.tabs : [];
   const browserWindowReady = Boolean(browser?.running && session?.sessionId);
   const browserFocusedTitle =
@@ -102,6 +102,7 @@ function deriveScreenPatch({ session, browser, browserCapture, degraded }) {
     authoritativeSessionId: session?.sessionId ?? null,
     componentSessionId: browserCapture?.sessionId ?? browser?.sessionId ?? session?.sessionId ?? null,
     browserRuntimeSessionId: browserCapture?.sessionId ?? browser?.sessionId ?? null,
+    helperRuntime: sessionWorkView?.helperRuntime ?? null,
     workView: {
       status: readiness === "ready" ? "ready" : "prepared",
       visibility: browserWindowReady ? "observable" : "warming_up",
@@ -263,7 +264,13 @@ async function readUpstreamState() {
     const browserCaptureData = browserCaptureResponse ? await browserCaptureResponse.json() : null;
     return browserCaptureData?.capture ?? null;
   });
-  return { session, browser, browserCapture: adapter.capture, captureAdapter: adapter.adapter };
+  return {
+    session,
+    sessionWorkView: sessionData?.workView ?? null,
+    browser,
+    browserCapture: adapter.capture,
+    captureAdapter: adapter.adapter,
+  };
 }
 
 async function collectStableScreenState() {

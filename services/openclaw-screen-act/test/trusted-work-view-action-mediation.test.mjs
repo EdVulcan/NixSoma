@@ -58,3 +58,37 @@ test("screen-act blocks helper action while operator takeover is active", () => 
   assert.equal(mediation.reason, "operator_takeover_active");
   assert.equal(mediation.trustedHelperLease, null);
 });
+
+test("screen-act requires fresh same-session capture after sidecar lifecycle activation", () => {
+  const fresh = buildTrustedWorkViewActionLease(trustedScreen({
+    sidecar: {
+      taskId: "task-sidecar",
+      status: "running",
+      captureFreshness: "fresh",
+      captureObservation: { sessionId: "session-1" },
+    },
+  }));
+  assert.equal(fresh.ready, true);
+
+  const stale = buildTrustedWorkViewActionLease(trustedScreen({
+    sidecar: {
+      taskId: "task-sidecar",
+      status: "running",
+      captureFreshness: "stale",
+      captureObservation: { sessionId: "session-1" },
+    },
+  }));
+  assert.equal(stale.ready, false);
+  assert.equal(stale.reason, "trusted_sidecar_capture_stale");
+
+  const divergent = buildTrustedWorkViewActionLease(trustedScreen({
+    sidecar: {
+      taskId: "task-sidecar",
+      status: "running",
+      captureFreshness: "fresh",
+      captureObservation: { sessionId: "session-other" },
+    },
+  }));
+  assert.equal(divergent.ready, false);
+  assert.equal(divergent.reason, "trusted_sidecar_capture_not_ready");
+});
