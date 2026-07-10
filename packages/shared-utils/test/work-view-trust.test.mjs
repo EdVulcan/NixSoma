@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildTrustedWorkViewContract } from "../src/work-view-trust.mjs";
+import {
+  buildTrustedWorkViewContract,
+  normaliseTrustedWorkViewHelperLease,
+} from "../src/work-view-trust.mjs";
 
 test("trusted work-view contract records Level 2 boundary without host takeover", () => {
   const contract = buildTrustedWorkViewContract({
@@ -27,6 +30,17 @@ test("trusted work-view contract records Level 2 boundary without host takeover"
     },
     browser: {
       running: true,
+      trustedHelperLease: {
+        registry: "openclaw-trusted-work-view-helper-lease-v0",
+        owner: "openclaw-session-manager",
+        mode: "in_process_session_helper",
+        scope: "ai_owned_work_view_only",
+        leaseId: "lease-1",
+        sessionId: "session-1",
+        workViewId: "work-view-primary",
+        issuedAt: "2026-07-10T10:00:00.000Z",
+        heartbeatAt: "2026-07-10T10:00:01.000Z",
+      },
     },
   });
 
@@ -44,6 +58,11 @@ test("trusted work-view contract records Level 2 boundary without host takeover"
   assert.equal(contract.sessionIdentity.authoritativeSessionId, "session-1");
   assert.equal(contract.sessionIdentity.browserRuntimeSessionId, "session-1");
   assert.equal(contract.sessionIdentity.alignment.browserRuntime, "matched");
+  assert.equal(contract.helperRuntime.status, "active");
+  assert.equal(contract.helperRuntime.leaseId, "lease-1");
+  assert.equal(contract.helperRuntime.browserLeaseId, "lease-1");
+  assert.equal(contract.helperRuntime.leaseMatched, true);
+  assert.equal(contract.helperRuntime.externalProcessStarted, false);
   assert.equal(contract.captureProvenance.activeUrl, "https://example.com/work-view");
   assert.equal(contract.helperReadiness.state, "ready");
   assert.equal(contract.recoveryRecommendation.action, "none");
@@ -55,6 +74,18 @@ test("trusted work-view contract records Level 2 boundary without host takeover"
   assert.equal(contract.sidecarContract.approvalTaskDraft.createsTaskNow, false);
   assert.equal(contract.sidecarContract.approvalTaskDraft.processStartEnabled, false);
   assert.equal(contract.sidecarContract.forbidden.desktopWideCapture, true);
+});
+
+test("trusted work-view helper lease rejects a mismatched session", () => {
+  assert.throws(() => normaliseTrustedWorkViewHelperLease({
+    registry: "openclaw-trusted-work-view-helper-lease-v0",
+    owner: "openclaw-session-manager",
+    mode: "in_process_session_helper",
+    scope: "ai_owned_work_view_only",
+    leaseId: "lease-2",
+    sessionId: "session-other",
+    workViewId: "work-view-primary",
+  }, { expectedSessionId: "session-expected" }), /session mismatch/u);
 });
 
 test("trusted work-view contract detects divergent browser runtime session identity", () => {

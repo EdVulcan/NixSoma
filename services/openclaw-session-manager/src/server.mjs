@@ -2,6 +2,7 @@ import http from "node:http";
 import { randomUUID } from "node:crypto";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { buildTrustedWorkViewContract } from "../../../packages/shared-utils/src/work-view-trust.mjs";
+import { createTrustedWorkViewHelperRuntime } from "./trusted-work-view-helper-runtime.mjs";
 
 const host = process.env.OPENCLAW_SESSION_MANAGER_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SESSION_MANAGER_PORT ?? "4102", 10);
@@ -9,6 +10,7 @@ const eventHubUrl = process.env.OPENCLAW_EVENT_HUB_URL ?? "http://127.0.0.1:4101
 const browserRuntimeUrl = process.env.OPENCLAW_BROWSER_RUNTIME_URL ?? "http://127.0.0.1:4103";
 const startDelayMs = Number.parseInt(process.env.OPENCLAW_SESSION_START_DELAY_MS ?? "0", 10);
 const defaultWorkViewUrl = process.env.OPENCLAW_WORK_VIEW_URL ?? "https://example.com/work-view";
+const trustedWorkViewHelperRuntime = createTrustedWorkViewHelperRuntime();
 
 const sessionState = {
   sessionId: null,
@@ -53,7 +55,8 @@ function updateSessionState(patch) {
 }
 
 function serialiseWorkViewState() {
-  const workView = { ...workViewState };
+  const helperRuntime = trustedWorkViewHelperRuntime.snapshot();
+  const workView = { ...workViewState, helperRuntime };
   return {
     ...workView,
     trustedSession: buildTrustedWorkViewContract({
@@ -63,6 +66,7 @@ function serialiseWorkViewState() {
       authoritativeSessionId: sessionState.sessionId,
       componentSessionId: sessionState.sessionId,
       browserRuntimeSessionId: workView.browserSessionId,
+      helperRuntime,
       session: sessionState,
       workView,
       captureStrategy: workView.captureStrategy,
@@ -134,6 +138,11 @@ const publishEvent = createEventPublisher(eventHubUrl, "openclaw-session-manager
 
 async function ensureBrowserWorkView(url = workViewState.entryUrl || defaultWorkViewUrl) {
   try {
+    trustedWorkViewHelperRuntime.heartbeat({
+      sessionId: sessionState.sessionId,
+      visibility: workViewState.visibility,
+      action: "ensure_browser_work_view",
+    });
     const response = await fetch(`${browserRuntimeUrl}/browser/open`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -141,6 +150,7 @@ async function ensureBrowserWorkView(url = workViewState.entryUrl || defaultWork
         url,
         sessionId: sessionState.sessionId,
         sessionAuthority: "openclaw-session-manager",
+        trustedHelperLease: trustedWorkViewHelperRuntime.leaseEnvelope(),
       }),
     });
     const data = await response.json();
@@ -148,9 +158,13 @@ async function ensureBrowserWorkView(url = workViewState.entryUrl || defaultWork
     if (!response.ok || !data?.ok) {
       throw new Error(data?.error ?? "browser open failed");
     }
+    const helperRuntime = trustedWorkViewHelperRuntime.observeBrowserLease({
+      sessionId: data.browser?.sessionId,
+      trustedHelperLease: data.browser?.trustedHelperLease,
+    });
 
     updateWorkViewState({
-      helperStatus: "active",
+      helperStatus: helperRuntime.status === "active" ? "active" : "degraded",
       browserStatus: data.browser?.running ? "running" : "unknown",
       browserSessionId: data.browser?.sessionId ?? null,
       entryUrl: url,
@@ -163,6 +177,7 @@ async function ensureBrowserWorkView(url = workViewState.entryUrl || defaultWork
       tab: data.tab ?? null,
     };
   } catch (error) {
+    trustedWorkViewHelperRuntime.markDegraded(error instanceof Error ? error.message : "browser open failed");
     updateWorkViewState({
       helperStatus: "degraded",
       browserStatus: "unavailable",
@@ -188,6 +203,11 @@ async function startSession(displayTarget) {
     status: "running",
     displayTarget,
     createdAt: now,
+  });
+  trustedWorkViewHelperRuntime.start({
+    sessionId: sessionState.sessionId,
+    workViewId: workViewState.workViewId,
+    displayTarget,
   });
   updateWorkViewState({
     status: "prepared",
@@ -236,6 +256,11 @@ async function revealWorkView(entryUrl = workViewState.entryUrl || defaultWorkVi
 }
 
 function hideWorkView() {
+  trustedWorkViewHelperRuntime.heartbeat({
+    sessionId: sessionState.sessionId,
+    visibility: "hidden",
+    action: "hide_work_view",
+  });
   updateWorkViewState({
     status: "prepared",
     visibility: "hidden",

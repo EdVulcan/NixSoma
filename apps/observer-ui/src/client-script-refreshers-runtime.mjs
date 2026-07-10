@@ -130,6 +130,7 @@ async function refreshWorkView() {
     workViewCapture.textContent = workView.captureStrategy ?? "unknown";
     const trustedSession = workView.trustedSession ?? data.trustedSession ?? {};
     const sessionIdentity = trustedSession.sessionIdentity ?? {};
+    const helperRuntime = trustedSession.helperRuntime ?? {};
     workViewSessionIdentity.textContent = sessionIdentity.status ?? "unknown";
     if (!desiredWorkViewUrlPinned && document.activeElement !== workViewUrlInput) {
       setDesiredWorkViewUrl(workView.activeUrl ?? workView.entryUrl ?? "https://example.com/work-view", {
@@ -138,6 +139,8 @@ async function refreshWorkView() {
     }
     updateDesiredUrlHint(workView.activeUrl ?? workView.entryUrl ?? null);
     workViewJson.textContent = [
+      "Helper Runtime: " + (helperRuntime.status ?? "unknown") + " owner=" + (helperRuntime.owner ?? "unknown") + " lease=" + (helperRuntime.leaseId ?? "none") + " browserLease=" + (helperRuntime.browserLeaseId ?? "none") + " matched=" + Boolean(helperRuntime.leaseMatched),
+      "Helper Runtime Boundary: inProcess=" + (helperRuntime.mode === "in_process_session_helper") + " externalProcess=" + Boolean(helperRuntime.externalProcessStarted) + " root=" + Boolean(helperRuntime.rootRequired) + " desktopWide=" + Boolean(helperRuntime.desktopWideCapture),
       \`Session: \${data.session?.status ?? "unknown"}\`,
       \`Session ID: \${data.session?.sessionId ?? "none"}\`,
       \`Display: \${workView.displayTarget ?? "unknown"}\`,
@@ -185,8 +188,10 @@ async function refreshScreen() {
     const workViewSummary = screen.workViewSummary ?? screen.workView?.summary ?? null;
     const trustedSession = screen.trustedSession ?? screen.workView?.trustedSession ?? screen.captureMetadata?.trustedSession ?? {};
     const sessionIdentity = trustedSession.sessionIdentity ?? {};
+    const helperRuntime = trustedSession.helperRuntime ?? {};
     screenWorkViewSummary.textContent = workViewSummary
       ? [
+          "Helper Runtime: " + (helperRuntime.status ?? "unknown") + " owner=" + (helperRuntime.owner ?? "unknown") + " lease=" + (helperRuntime.leaseId ?? "none") + " browserLease=" + (helperRuntime.browserLeaseId ?? "none") + " matched=" + Boolean(helperRuntime.leaseMatched),
           "Summary: " + (workViewSummary.summaryText ?? "none"),
           "Title: " + (workViewSummary.title ?? "none"),
           "URL: " + (workViewSummary.url ?? "none"),

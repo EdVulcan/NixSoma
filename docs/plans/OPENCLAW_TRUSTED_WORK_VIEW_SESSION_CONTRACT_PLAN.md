@@ -4,9 +4,9 @@ Updated: 2026-07-10
 
 ## Active Slice
 
-Identity-upgrade bridge: trusted AI work-view session contract, helper
-readiness recommendation, explicit Observer recovery bridge, and operator action
-result evidence.
+Identity-upgrade bridge: trusted AI work-view session contract, session-manager
+owned in-process helper lease, helper readiness recommendation, explicit
+Observer recovery bridge, and operator action result evidence.
 
 This slice moves OpenClaw from a plain Level 1 user-space work-view readback
 toward Level 2 trusted session/work-view behavior by making the AI-owned work
@@ -35,7 +35,25 @@ sidecarContract.lifecycleProposal.status: proposal_ready
 sidecarContract.approvalTaskDraft.status: draft_ready
 sessionIdentity.status: authoritative | local_fallback | divergent | pending_authority
 sessionIdentity.authority: openclaw-session-manager
+helperRuntime.registry: openclaw-trusted-work-view-helper-runtime-v0
+helperRuntime.owner: openclaw-session-manager
+helperRuntime.mode: in_process_session_helper
+helperRuntime.status: inactive | awaiting_browser | active | degraded | divergent
+helperRuntime.leaseMatched: true | false
 ```
+
+Session-manager now owns a real user-space helper lease for every prepared AI
+work-view session. It rotates the lease when a new session starts, heartbeats it
+on work-view actions, sends the compact lease to browser-runtime during
+`/browser/open`, and records whether browser-runtime observed the same session
+and lease. The shared trust contract marks the helper runtime `active` only when
+the authoritative session id, browser session id, lease id, and browser lease id
+match.
+
+This is an in-process Level 2 runtime owner, not the future external sidecar.
+It starts no extra process and performs no installation, root action,
+desktop-wide capture, host mutation, or provider egress. Divergence is visible
+and degrades trust; it is not silently repaired.
 
 The helper readiness portion makes the contract actionable without adding a new
 execution path. A visible work view reports `ready` with no recovery action. A
@@ -167,6 +185,8 @@ Runtime contract builder:
 ```text
 packages/shared-utils/src/work-view-trust.mjs
 packages/shared-utils/test/work-view-trust.test.mjs
+services/openclaw-session-manager/src/trusted-work-view-helper-runtime.mjs
+services/openclaw-session-manager/test/trusted-work-view-helper-runtime.test.mjs
 ```
 
 Service propagation:
@@ -208,27 +228,29 @@ The following remain intentionally deferred:
 
 ```text
 desktop-wide GNOME/Wayland capture
-session helper process or sidecar installation
+external session helper process or sidecar installation
 root/system daemon or polkit integration
 nested compositor or graphics-stack-native workspace
 host mutation and input execution beyond existing governed user-space paths
 provider egress or credential access
 automatic recovery execution; the contract recommends existing operator actions
 unreviewed endpoint invocation from recommendation payloads
-actual trusted sidecar process start after approval
+actual external trusted sidecar process start after approval
+lease enforcement on browser input/click actions; the current slice binds and
+observes the work-view open/capture session only
 ```
 
 ## Next Slice
 
-The next high-density identity-upgrade slice should continue toward Level 2
-session-helper preparation while keeping sidecar start disabled until a governed
-runtime owner is selected:
+The next high-density identity-upgrade slice should carry the matched helper
+lease into the existing browser action mediation path:
 
 ```text
-AI work-view trusted sidecar Observer recovery/readback consolidation
+trusted helper lease -> screen-act/browser input and click mediation
 ```
 
-It should connect this readback to the complete engineering loop only when there
-is a governed runtime owner for a user-space helper. It should not add another
-readiness-only milestone. Actual process start, installation, root/system daemon
-work, and desktop-wide capture remain deferred.
+It should reject mismatched session-manager leases for AI-owned browser actions,
+reuse existing screen-act/browser routes and milestones, and preserve explicit
+operator takeover. It should not add another readiness-only milestone. External
+process start, installation, root/system daemon work, desktop-wide capture, and
+provider egress remain deferred.

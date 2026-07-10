@@ -227,6 +227,12 @@ start, root/system daemon work, desktop-wide capture, provider egress, and
 arbitrary endpoint execution deferred until their runtime owner and authority
 boundary are explicit.
 
+The first Level 2 runtime slice is now active: session-manager owns an in-process
+AI work-view helper lease and browser-runtime must echo the same session/lease
+before the helper contract reports `active`. Continue by carrying that lease
+through existing browser action mediation; do not replace it with another
+readiness endpoint.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

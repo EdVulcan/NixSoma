@@ -74,6 +74,15 @@ if (trustedSession?.identityLevel !== "level_2_trusted_session_work_view"
   || trustedSession?.sessionIdentity?.authoritativeSessionId !== background.current?.session?.sessionId
   || trustedSession?.sessionIdentity?.browserRuntimeSessionId !== background.current?.session?.sessionId
   || trustedSession?.sessionIdentity?.alignment?.browserRuntime !== "matched"
+  || trustedSession?.helperRuntime?.registry !== "openclaw-trusted-work-view-helper-runtime-v0"
+  || trustedSession?.helperRuntime?.owner !== "openclaw-session-manager"
+  || trustedSession?.helperRuntime?.status !== "active"
+  || !trustedSession?.helperRuntime?.leaseId
+  || trustedSession?.helperRuntime?.browserLeaseId !== trustedSession?.helperRuntime?.leaseId
+  || trustedSession?.helperRuntime?.leaseMatched !== true
+  || trustedSession?.helperRuntime?.externalProcessStarted !== false
+  || trustedSession?.helperRuntime?.rootRequired !== false
+  || trustedSession?.helperRuntime?.desktopWideCapture !== false
   || trustedSession?.operatorGates?.reveal !== "explicit_operator_action"
   || trustedSession?.helperReadiness?.state !== "prepared_hidden"
   || trustedSession?.recoveryRecommendation?.action !== "reveal_work_view"
@@ -96,6 +105,8 @@ console.log(JSON.stringify({
     mode: background.current.workView.mode,
     trustedSession: trustedSession.identityLevel,
     sessionIdentity: trustedSession.sessionIdentity.status,
+    helperRuntime: trustedSession.helperRuntime.status,
+    helperLeaseMatched: trustedSession.helperRuntime.leaseMatched,
     recoveryRecommendation: trustedSession.recoveryRecommendation.action,
     lastOperatorAction: background.current.workView.lastOperatorAction.action,
     sidecarContract: trustedSession.sidecarContract.status,

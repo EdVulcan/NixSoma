@@ -170,6 +170,13 @@ export function createPhase3WorkViewBuilders(deps) {
       trustedSession?.sessionIdentity?.status === "authoritative" &&
       trustedSession?.sessionIdentity?.authority === "openclaw-session-manager" &&
       trustedSession?.sessionIdentity?.alignment?.browserRuntime === "matched" &&
+      trustedSession?.helperRuntime?.registry === "openclaw-trusted-work-view-helper-runtime-v0" &&
+      trustedSession?.helperRuntime?.owner === "openclaw-session-manager" &&
+      trustedSession?.helperRuntime?.status === "active" &&
+      trustedSession?.helperRuntime?.leaseMatched === true &&
+      trustedSession?.helperRuntime?.externalProcessStarted === false &&
+      trustedSession?.helperRuntime?.rootRequired === false &&
+      trustedSession?.helperRuntime?.desktopWideCapture === false &&
       trustedSession?.operatorGates?.reveal === "explicit_operator_action" &&
       trustedSession?.recoveryRecommendation?.rootRequired === false &&
       ["none", "reveal_work_view", "prepare_work_view"].includes(trustedSession?.recoveryRecommendation?.action) &&
@@ -249,6 +256,8 @@ export function createPhase3WorkViewBuilders(deps) {
         total: checks.length,
         completionPercent: Math.round((passed / checks.length) * 100),
         defaultForegroundSteal: false,
+        helperRuntimeStatus: trustedSession?.helperRuntime?.status ?? "unavailable",
+        helperLeaseMatched: trustedSession?.helperRuntime?.leaseMatched === true,
       },
       next: {
         recommendedSlice: "openclaw-phase-3-operator-interrupt-controls",

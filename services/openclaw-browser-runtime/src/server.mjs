@@ -2,7 +2,10 @@ import http from "node:http";
 import { randomUUID } from "node:crypto";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { corsHeaders, sendJson, readJsonBody, createEventPublisher, registerService } from "../../../packages/shared-utils/src/http.mjs";
-import { buildTrustedWorkViewContract } from "../../../packages/shared-utils/src/work-view-trust.mjs";
+import {
+  buildTrustedWorkViewContract,
+  normaliseTrustedWorkViewHelperLease,
+} from "../../../packages/shared-utils/src/work-view-trust.mjs";
 
 
 const host = process.env.OPENCLAW_BROWSER_RUNTIME_HOST ?? "127.0.0.1";
@@ -20,6 +23,7 @@ const browserState = {
   activeUrl: null,
   sessionId: null,
   sessionAuthority: "browser-runtime-local",
+  trustedHelperLease: null,
   tabs: [],
   lastInput: null,
   lastClick: null,
@@ -35,6 +39,9 @@ function updateBrowserState(patch) {
 function serialiseBrowserState() {
   return {
     ...browserState,
+    trustedHelperLease: browserState.trustedHelperLease
+      ? { ...browserState.trustedHelperLease }
+      : null,
     tabs: browserState.tabs.map((tab) => ({ ...tab })),
   };
 }
@@ -239,16 +246,24 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readJsonBody(req);
       const url = typeof body.url === "string" && body.url.trim() ? body.url.trim() : "https://example.com";
+      const requestedSessionId = typeof body.sessionId === "string" && body.sessionId.trim()
+        ? body.sessionId.trim()
+        : browserState.sessionId ?? `session-${randomUUID()}`;
+      const trustedHelperLease = normaliseTrustedWorkViewHelperLease(body.trustedHelperLease, {
+        expectedSessionId: requestedSessionId,
+      });
+      const sessionChanged = Boolean(browserState.sessionId && browserState.sessionId !== requestedSessionId);
 
       if (!browserState.running) {
         updateBrowserState({
           running: true,
           browserPid: Math.floor(Math.random() * 90000) + 10000,
-          sessionId: body.sessionId ?? browserState.sessionId ?? `session-${randomUUID()}`,
+          sessionId: requestedSessionId,
           sessionAuthority:
             typeof body.sessionAuthority === "string" && body.sessionAuthority.trim()
               ? body.sessionAuthority.trim()
               : browserState.sessionAuthority,
+          trustedHelperLease,
         });
       } else if (typeof body.sessionId === "string" && body.sessionId.trim()) {
         updateBrowserState({
@@ -257,6 +272,7 @@ const server = http.createServer(async (req, res) => {
             typeof body.sessionAuthority === "string" && body.sessionAuthority.trim()
               ? body.sessionAuthority.trim()
               : browserState.sessionAuthority,
+          trustedHelperLease: trustedHelperLease ?? (sessionChanged ? null : browserState.trustedHelperLease),
         });
       }
 

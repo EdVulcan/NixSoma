@@ -459,3 +459,8 @@ and advance the smallest real Level 2 trusted AI work-view/session-helper
 behavior. Stay within existing governed local body and Observer surfaces unless
 the operator explicitly authorizes helper process start, root, desktop-wide
 capture, provider egress, or another blocked boundary above.
+
+That transition has started with a session-manager owned in-process helper lease
+that browser-runtime matches for the AI-owned work-view session. The next Level
+2 slice should enforce the same lease through existing browser action mediation,
+not return to another native engineering evidence shell.

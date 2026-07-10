@@ -54,7 +54,7 @@ for (const token of ["Phase 3 Background Work View", "phase3-background-work-vie
     throw new Error(`Observer HTML missing ${token}`);
   }
 }
-for (const token of ["/phase-3/background-work-view", "refreshPhase3BackgroundWorkView", "openclaw-phase-3-background-work-view-v0", "Trusted Session", "trustedSession.identityLevel", "Session Identity", "sessionIdentity", "Helper Readiness", "recoveryRecommendation", "Last Operator Action", "lastOperatorAction", "Sidecar Contract", "sidecarContract", "Sidecar Lifecycle", "lifecycleProposal", "Sidecar Approval Draft", "approvalTaskDraft", "runRecommendedWorkViewAction", "reveal_work_view"]) {
+for (const token of ["/phase-3/background-work-view", "refreshPhase3BackgroundWorkView", "openclaw-phase-3-background-work-view-v0", "Trusted Session", "trustedSession.identityLevel", "Session Identity", "sessionIdentity", "Helper Runtime", "helperRuntime", "Helper Runtime Boundary", "Helper Readiness", "recoveryRecommendation", "Last Operator Action", "lastOperatorAction", "Sidecar Contract", "sidecarContract", "Sidecar Lifecycle", "lifecycleProposal", "Sidecar Approval Draft", "approvalTaskDraft", "runRecommendedWorkViewAction", "reveal_work_view"]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);
   }
@@ -70,6 +70,14 @@ if (trustedSession?.identityLevel !== "level_2_trusted_session_work_view"
   || trustedSession?.sessionIdentity?.authoritativeSessionId !== background.current?.session?.sessionId
   || trustedSession?.sessionIdentity?.browserRuntimeSessionId !== background.current?.session?.sessionId
   || trustedSession?.sessionIdentity?.alignment?.browserRuntime !== "matched"
+  || trustedSession?.helperRuntime?.registry !== "openclaw-trusted-work-view-helper-runtime-v0"
+  || trustedSession?.helperRuntime?.owner !== "openclaw-session-manager"
+  || trustedSession?.helperRuntime?.status !== "active"
+  || trustedSession?.helperRuntime?.browserLeaseId !== trustedSession?.helperRuntime?.leaseId
+  || trustedSession?.helperRuntime?.leaseMatched !== true
+  || trustedSession?.helperRuntime?.externalProcessStarted !== false
+  || trustedSession?.helperRuntime?.rootRequired !== false
+  || trustedSession?.helperRuntime?.desktopWideCapture !== false
   || trustedSession?.helperReadiness?.state !== "prepared_hidden"
   || trustedSession?.recoveryRecommendation?.action !== "reveal_work_view"
   || trustedSession?.sidecarContract?.status !== "drafted_not_started"
@@ -91,6 +99,8 @@ console.log(JSON.stringify({
     mode: background.current.workView.mode,
     trustedSession: trustedSession.identityLevel,
     sessionIdentity: trustedSession.sessionIdentity.status,
+    helperRuntime: trustedSession.helperRuntime.status,
+    helperLeaseMatched: trustedSession.helperRuntime.leaseMatched,
     recoveryRecommendation: trustedSession.recoveryRecommendation.action,
     lastOperatorAction: background.current.workView.lastOperatorAction.action,
     sidecarContract: trustedSession.sidecarContract.status,

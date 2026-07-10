@@ -20,6 +20,28 @@ export type TrustedWorkViewContract = {
     recordsCaptureProvenance: boolean;
     supportsRevealHide: boolean;
     supportsOperatorTakeover: boolean;
+    maintainsTrustedHelperLease: boolean;
+  };
+  helperRuntime: {
+    registry: "openclaw-trusted-work-view-helper-runtime-v0";
+    owner: string;
+    mode: "in_process_session_helper";
+    status: "inactive" | "awaiting_browser" | "active" | "degraded" | "divergent";
+    leaseId: string | null;
+    sessionId: string | null;
+    workViewId: string | null;
+    browserLeaseId: string | null;
+    leaseMatched: boolean;
+    heartbeatAt: string | null;
+    heartbeatCount: number;
+    browserObservedAt: string | null;
+    scope: "ai_owned_work_view_only";
+    observerVisible: true;
+    rootRequired: false;
+    externalProcessStarted: false;
+    desktopWideCapture: false;
+    hostMutation: false;
+    providerEgress: false;
   };
   operatorGates: {
     prepare: string;
@@ -117,6 +139,7 @@ export type TrustedWorkViewContract = {
     helperStatus: string;
     browserStatus: string;
     displayTarget: string;
+    helperRuntimeStatus: string;
   };
   deferred: {
     desktopWideCapture: true;
@@ -127,3 +150,11 @@ export type TrustedWorkViewContract = {
 };
 
 export function buildTrustedWorkViewContract(input?: Record<string, unknown>): TrustedWorkViewContract;
+
+export const TRUSTED_WORK_VIEW_HELPER_LEASE_REGISTRY: "openclaw-trusted-work-view-helper-lease-v0";
+export const TRUSTED_WORK_VIEW_HELPER_RUNTIME_REGISTRY: "openclaw-trusted-work-view-helper-runtime-v0";
+
+export function normaliseTrustedWorkViewHelperLease(
+  value: unknown,
+  options?: { expectedSessionId?: string | null },
+): Record<string, unknown> | null;

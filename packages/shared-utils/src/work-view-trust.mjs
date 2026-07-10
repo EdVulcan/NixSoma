@@ -1,6 +1,10 @@
 const TRUSTED_WORK_VIEW_KIND = "openclaw-trusted-session-work-view-contract";
 const TRUSTED_WORK_VIEW_IDENTITY_LEVEL = "level_2_trusted_session_work_view";
 const TRUSTED_WORK_VIEW_SCOPE = "ai_owned_work_view_only";
+export const TRUSTED_WORK_VIEW_HELPER_LEASE_REGISTRY =
+  "openclaw-trusted-work-view-helper-lease-v0";
+export const TRUSTED_WORK_VIEW_HELPER_RUNTIME_REGISTRY =
+  "openclaw-trusted-work-view-helper-runtime-v0";
 
 function firstString(...values) {
   for (const value of values) {
@@ -18,6 +22,98 @@ function firstBoolean(...values) {
     }
   }
   return false;
+}
+
+export function normaliseTrustedWorkViewHelperLease(value, { expectedSessionId = null } = {}) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Trusted work-view helper lease must be an object.");
+  }
+  const leaseId = firstString(value.leaseId);
+  const sessionId = firstString(value.sessionId);
+  const workViewId = firstString(value.workViewId);
+  if (
+    value.registry !== TRUSTED_WORK_VIEW_HELPER_LEASE_REGISTRY
+    || value.owner !== "openclaw-session-manager"
+    || value.mode !== "in_process_session_helper"
+    || value.scope !== TRUSTED_WORK_VIEW_SCOPE
+    || !leaseId
+    || !sessionId
+    || !workViewId
+  ) {
+    throw new Error("Trusted work-view helper lease contract is invalid.");
+  }
+  if (expectedSessionId && sessionId !== expectedSessionId) {
+    throw new Error("Trusted work-view helper lease session mismatch.");
+  }
+  return {
+    registry: TRUSTED_WORK_VIEW_HELPER_LEASE_REGISTRY,
+    owner: "openclaw-session-manager",
+    mode: "in_process_session_helper",
+    scope: TRUSTED_WORK_VIEW_SCOPE,
+    leaseId,
+    sessionId,
+    workViewId,
+    issuedAt: firstString(value.issuedAt),
+    heartbeatAt: firstString(value.heartbeatAt),
+    rootRequired: false,
+    externalProcessStarted: false,
+    desktopWideCapture: false,
+    providerEgress: false,
+  };
+}
+
+function deriveHelperRuntime({ input, workView, browser, capture, authoritativeSessionId, browserRuntimeSessionId }) {
+  const supplied = input.helperRuntime
+    ?? workView.helperRuntime
+    ?? capture.helperRuntime
+    ?? capture.trustedSession?.helperRuntime
+    ?? null;
+  const browserLease = browser.trustedHelperLease
+    ?? capture.browser?.trustedHelperLease
+    ?? capture.trustedHelperLease
+    ?? null;
+  const leaseId = firstString(supplied?.leaseId, browserLease?.leaseId);
+  const browserLeaseId = firstString(supplied?.browserLeaseId, browserLease?.leaseId);
+  const leaseSessionId = firstString(supplied?.sessionId, browserLease?.sessionId);
+  const sessionAligned = !authoritativeSessionId || !leaseSessionId || leaseSessionId === authoritativeSessionId;
+  const browserSessionAligned = !browserRuntimeSessionId || !leaseSessionId || leaseSessionId === browserRuntimeSessionId;
+  const leaseMatched = Boolean(leaseId && browserLeaseId && leaseId === browserLeaseId && sessionAligned && browserSessionAligned);
+  const explicitlyDivergent = supplied?.status === "divergent" || supplied?.leaseMatched === false;
+  const explicitlyDegraded = supplied?.status === "degraded";
+  const status = explicitlyDivergent || (leaseId && browserLeaseId && !leaseMatched)
+    ? "divergent"
+    : explicitlyDegraded
+      ? "degraded"
+      : leaseMatched
+        ? "active"
+        : leaseId
+          ? "awaiting_browser"
+          : "inactive";
+
+  return {
+    registry: TRUSTED_WORK_VIEW_HELPER_RUNTIME_REGISTRY,
+    owner: firstString(supplied?.owner, browserLease?.owner, "openclaw-session-manager"),
+    mode: "in_process_session_helper",
+    status,
+    leaseId,
+    sessionId: leaseSessionId,
+    workViewId: firstString(supplied?.workViewId, browserLease?.workViewId),
+    browserLeaseId,
+    leaseMatched,
+    heartbeatAt: firstString(supplied?.heartbeatAt, browserLease?.heartbeatAt),
+    heartbeatCount: Number.isInteger(supplied?.heartbeatCount) ? supplied.heartbeatCount : 0,
+    browserObservedAt: firstString(supplied?.browserObservedAt),
+    scope: TRUSTED_WORK_VIEW_SCOPE,
+    observerVisible: true,
+    rootRequired: false,
+    externalProcessStarted: false,
+    desktopWideCapture: false,
+    hostMutation: false,
+    providerEgress: false,
+  };
 }
 
 function deriveReadiness({ degraded, helperStatus, sessionStatus, browserRunning, workViewStatus, activeUrl }) {
@@ -45,11 +141,25 @@ function helperActions() {
   ];
 }
 
-function deriveHelperReadiness({ readiness, helperStatus, browserStatus, browserRunning, activeUrl, visibility, sessionIdentityStatus }) {
+function deriveHelperReadiness({ readiness, helperStatus, browserStatus, browserRunning, activeUrl, visibility, sessionIdentityStatus, helperRuntimeStatus }) {
   if (sessionIdentityStatus === "divergent") {
     return {
       state: "degraded",
       reason: "session_identity_divergent",
+      recommendedOperatorAction: "prepare_work_view",
+      recoveryEndpoint: "/work-view/prepare",
+      approvalRequired: false,
+      rootRequired: false,
+      canRecoverWithoutRoot: true,
+      observerVisible: true,
+      availableOperatorActions: helperActions(),
+    };
+  }
+
+  if (helperRuntimeStatus === "divergent") {
+    return {
+      state: "degraded",
+      reason: "trusted_helper_lease_divergent",
       recommendedOperatorAction: "prepare_work_view",
       recoveryEndpoint: "/work-view/prepare",
       approvalRequired: false,
@@ -235,6 +345,14 @@ export function buildTrustedWorkViewContract(input = {}) {
     componentSessionId,
     browserRuntimeSessionId,
   });
+  const helperRuntime = deriveHelperRuntime({
+    input,
+    workView,
+    browser,
+    capture,
+    authoritativeSessionId,
+    browserRuntimeSessionId,
+  });
   const activeUrl = firstString(input.activeUrl, capture.activeUrl, capture.workView?.activeUrl, workView.activeUrl, browser.activeUrl);
   const displayTarget = firstString(input.displayTarget, session.displayTarget, workView.displayTarget, "workspace-2");
   const helperStatus = firstString(input.helperStatus, workView.helperStatus, browser.running ? "active" : "idle");
@@ -255,7 +373,9 @@ export function buildTrustedWorkViewContract(input = {}) {
     workViewStatus: workView.status,
     activeUrl,
   });
-  const readiness = sessionIdentity.status === "divergent" ? "degraded" : baseReadiness;
+  const readiness = sessionIdentity.status === "divergent" || ["divergent", "degraded"].includes(helperRuntime.status)
+    ? "degraded"
+    : baseReadiness;
   const helperReadiness = deriveHelperReadiness({
     readiness,
     helperStatus,
@@ -264,6 +384,7 @@ export function buildTrustedWorkViewContract(input = {}) {
     activeUrl,
     visibility,
     sessionIdentityStatus: sessionIdentity.status,
+    helperRuntimeStatus: helperRuntime.status,
   });
 
   return {
@@ -286,6 +407,7 @@ export function buildTrustedWorkViewContract(input = {}) {
       recordsCaptureProvenance: true,
       supportsRevealHide: true,
       supportsOperatorTakeover: true,
+      maintainsTrustedHelperLease: helperRuntime.status !== "inactive",
     },
     operatorGates: {
       prepare: "user_space_control_plane",
@@ -304,6 +426,7 @@ export function buildTrustedWorkViewContract(input = {}) {
       visibleToObserver: input.visibleToObserver !== false,
     },
     sessionIdentity,
+    helperRuntime,
     helperReadiness,
     recoveryRecommendation: {
       action: helperReadiness.recommendedOperatorAction,
@@ -322,6 +445,7 @@ export function buildTrustedWorkViewContract(input = {}) {
       helperStatus,
       browserStatus,
       displayTarget,
+      helperRuntimeStatus: helperRuntime.status,
     },
     deferred: {
       desktopWideCapture: true,
