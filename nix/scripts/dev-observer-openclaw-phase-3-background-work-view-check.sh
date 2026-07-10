@@ -54,7 +54,7 @@ for (const token of ["Phase 3 Background Work View", "phase3-background-work-vie
     throw new Error(`Observer HTML missing ${token}`);
   }
 }
-for (const token of ["/phase-3/background-work-view", "refreshPhase3BackgroundWorkView", "openclaw-phase-3-background-work-view-v0", "Trusted Session", "trustedSession.identityLevel", "Helper Readiness", "recoveryRecommendation", "Last Operator Action", "lastOperatorAction", "Sidecar Contract", "sidecarContract", "Sidecar Lifecycle", "lifecycleProposal", "Sidecar Approval Draft", "approvalTaskDraft", "runRecommendedWorkViewAction", "reveal_work_view"]) {
+for (const token of ["/phase-3/background-work-view", "refreshPhase3BackgroundWorkView", "openclaw-phase-3-background-work-view-v0", "Trusted Session", "trustedSession.identityLevel", "Session Identity", "sessionIdentity", "Helper Readiness", "recoveryRecommendation", "Last Operator Action", "lastOperatorAction", "Sidecar Contract", "sidecarContract", "Sidecar Lifecycle", "lifecycleProposal", "Sidecar Approval Draft", "approvalTaskDraft", "runRecommendedWorkViewAction", "reveal_work_view"]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);
   }
@@ -65,6 +65,11 @@ if (!background.ok || background.summary?.ready !== true || background.current?.
 const trustedSession = background.workViewContract?.trustedSession ?? background.current?.workView?.trustedSession;
 if (trustedSession?.identityLevel !== "level_2_trusted_session_work_view"
   || trustedSession?.boundary?.workViewScope !== "ai_owned_work_view_only"
+  || trustedSession?.sessionIdentity?.status !== "authoritative"
+  || trustedSession?.sessionIdentity?.authority !== "openclaw-session-manager"
+  || trustedSession?.sessionIdentity?.authoritativeSessionId !== background.current?.session?.sessionId
+  || trustedSession?.sessionIdentity?.browserRuntimeSessionId !== background.current?.session?.sessionId
+  || trustedSession?.sessionIdentity?.alignment?.browserRuntime !== "matched"
   || trustedSession?.helperReadiness?.state !== "prepared_hidden"
   || trustedSession?.recoveryRecommendation?.action !== "reveal_work_view"
   || trustedSession?.sidecarContract?.status !== "drafted_not_started"
@@ -85,6 +90,7 @@ console.log(JSON.stringify({
     visibility: background.current.workView.visibility,
     mode: background.current.workView.mode,
     trustedSession: trustedSession.identityLevel,
+    sessionIdentity: trustedSession.sessionIdentity.status,
     recoveryRecommendation: trustedSession.recoveryRecommendation.action,
     lastOperatorAction: background.current.workView.lastOperatorAction.action,
     sidecarContract: trustedSession.sidecarContract.status,

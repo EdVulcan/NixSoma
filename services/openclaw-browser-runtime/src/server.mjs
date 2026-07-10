@@ -19,6 +19,7 @@ const browserState = {
   activeTitle: null,
   activeUrl: null,
   sessionId: null,
+  sessionAuthority: "browser-runtime-local",
   tabs: [],
   lastInput: null,
   lastClick: null,
@@ -118,6 +119,10 @@ function buildBrowserCapture() {
       status: browserState.running ? "running" : "stopped",
       displayTarget: "browser-runtime",
     },
+    sessionAuthority: browserState.sessionAuthority,
+    authoritativeSessionId: browserState.sessionAuthority === "openclaw-session-manager" ? browserState.sessionId : null,
+    componentSessionId: browserState.sessionId,
+    browserRuntimeSessionId: browserState.sessionId,
     workView: {
       status: browserState.running ? "ready" : "idle",
       visibility: browserState.running ? "observable" : "hidden",
@@ -240,6 +245,18 @@ const server = http.createServer(async (req, res) => {
           running: true,
           browserPid: Math.floor(Math.random() * 90000) + 10000,
           sessionId: body.sessionId ?? browserState.sessionId ?? `session-${randomUUID()}`,
+          sessionAuthority:
+            typeof body.sessionAuthority === "string" && body.sessionAuthority.trim()
+              ? body.sessionAuthority.trim()
+              : browserState.sessionAuthority,
+        });
+      } else if (typeof body.sessionId === "string" && body.sessionId.trim()) {
+        updateBrowserState({
+          sessionId: body.sessionId.trim(),
+          sessionAuthority:
+            typeof body.sessionAuthority === "string" && body.sessionAuthority.trim()
+              ? body.sessionAuthority.trim()
+              : browserState.sessionAuthority,
         });
       }
 

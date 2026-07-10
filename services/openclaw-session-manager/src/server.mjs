@@ -26,6 +26,7 @@ const workViewState = {
   captureStrategy: "browser-runtime",
   helperStatus: "idle",
   browserStatus: "stopped",
+  browserSessionId: null,
   mode: "background",
   displayTarget: "workspace-2",
   entryUrl: defaultWorkViewUrl,
@@ -58,6 +59,10 @@ function serialiseWorkViewState() {
     trustedSession: buildTrustedWorkViewContract({
       source: "session-manager",
       trustedComponent: "openclaw-session-manager",
+      sessionAuthority: "openclaw-session-manager",
+      authoritativeSessionId: sessionState.sessionId,
+      componentSessionId: sessionState.sessionId,
+      browserRuntimeSessionId: workView.browserSessionId,
       session: sessionState,
       workView,
       captureStrategy: workView.captureStrategy,
@@ -132,7 +137,11 @@ async function ensureBrowserWorkView(url = workViewState.entryUrl || defaultWork
     const response = await fetch(`${browserRuntimeUrl}/browser/open`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({
+        url,
+        sessionId: sessionState.sessionId,
+        sessionAuthority: "openclaw-session-manager",
+      }),
     });
     const data = await response.json();
 
@@ -143,6 +152,7 @@ async function ensureBrowserWorkView(url = workViewState.entryUrl || defaultWork
     updateWorkViewState({
       helperStatus: "active",
       browserStatus: data.browser?.running ? "running" : "unknown",
+      browserSessionId: data.browser?.sessionId ?? null,
       entryUrl: url,
       activeUrl: data.browser?.activeUrl ?? data.tab?.url ?? url,
     });
@@ -156,6 +166,7 @@ async function ensureBrowserWorkView(url = workViewState.entryUrl || defaultWork
     updateWorkViewState({
       helperStatus: "degraded",
       browserStatus: "unavailable",
+      browserSessionId: null,
       entryUrl: url,
     });
 
@@ -183,6 +194,7 @@ async function startSession(displayTarget) {
     visibility: "hidden",
     helperStatus: "active",
     browserStatus: "stopped",
+    browserSessionId: null,
     displayTarget,
     preparedAt: workViewState.preparedAt ?? now,
     mode: "background",

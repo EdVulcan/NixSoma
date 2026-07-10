@@ -135,12 +135,14 @@ async function refreshWorkView() {
       });
     }
     updateDesiredUrlHint(workView.activeUrl ?? workView.entryUrl ?? null);
+    const sessionIdentity = trustedSession.sessionIdentity ?? {};
     workViewJson.textContent = [
       \`Session: \${data.session?.status ?? "unknown"}\`,
       \`Session ID: \${data.session?.sessionId ?? "none"}\`,
       \`Display: \${workView.displayTarget ?? "unknown"}\`,
       \`Browser: \${workView.browserStatus ?? "unknown"}\`,
       \`Trusted Session: \${trustedSession.identityLevel ?? "unknown"} readiness=\${trustedSession.readiness ?? "unknown"}\`,
+      \`Session Identity: \${sessionIdentity.status ?? "unknown"} authority=\${sessionIdentity.authority ?? "unknown"} authoritative=\${sessionIdentity.authoritativeSessionId ?? "none"} browser=\${sessionIdentity.browserRuntimeSessionId ?? "none"}\`,
       \`Trusted Boundary: \${trustedSession.boundary?.workViewScope ?? "unknown"} root=\${String(Boolean(trustedSession.boundary?.rootRequired))} desktopWide=\${String(Boolean(trustedSession.boundary?.desktopWideCapture))}\`,
       \`Helper Readiness: \${trustedSession.helperReadiness?.state ?? "unknown"} reason=\${trustedSession.helperReadiness?.reason ?? "unknown"}\`,
       \`Recovery Recommendation: \${trustedSession.recoveryRecommendation?.action ?? "unknown"} endpoint=\${trustedSession.recoveryRecommendation?.endpoint ?? "none"}\`,
@@ -180,12 +182,14 @@ async function refreshScreen() {
     screenWorkViewUrl.textContent = screen.workView?.activeUrl ?? screen.captureMetadata?.activeUrl ?? "none";
     const workViewSummary = screen.workViewSummary ?? screen.workView?.summary ?? null;
     const trustedSession = screen.trustedSession ?? screen.workView?.trustedSession ?? screen.captureMetadata?.trustedSession ?? {};
+    const sessionIdentity = trustedSession.sessionIdentity ?? {};
     screenWorkViewSummary.textContent = workViewSummary
       ? [
           "Summary: " + (workViewSummary.summaryText ?? "none"),
           "Title: " + (workViewSummary.title ?? "none"),
           "URL: " + (workViewSummary.url ?? "none"),
           "Trusted Session: " + (trustedSession.identityLevel ?? "unknown") + " readiness=" + (trustedSession.readiness ?? "unknown"),
+          "Session Identity: " + (sessionIdentity.status ?? "unknown") + " authority=" + (sessionIdentity.authority ?? "unknown") + " authoritative=" + (sessionIdentity.authoritativeSessionId ?? "none") + " browser=" + (sessionIdentity.browserRuntimeSessionId ?? "none"),
           "Trusted Boundary: " + (trustedSession.boundary?.workViewScope ?? "unknown"),
           "Helper Readiness: " + (trustedSession.helperReadiness?.state ?? "unknown"),
           "Recovery Recommendation: " + (trustedSession.recoveryRecommendation?.action ?? "unknown"),

@@ -158,6 +158,40 @@ function buildSidecarContract() {
   };
 }
 
+function deriveSessionIdentity({
+  source,
+  authoritativeSessionId,
+  sessionAuthority,
+  componentSessionId,
+  browserRuntimeSessionId,
+}) {
+  const authority = firstString(sessionAuthority, authoritativeSessionId ? "openclaw-session-manager" : null, "component-local");
+  const sessionManagerBacked = Boolean(authoritativeSessionId);
+  const componentAligned = !authoritativeSessionId || !componentSessionId || componentSessionId === authoritativeSessionId;
+  const browserRuntimeAligned = !authoritativeSessionId || !browserRuntimeSessionId || browserRuntimeSessionId === authoritativeSessionId;
+  const status = !authoritativeSessionId
+    ? componentSessionId ? "local_fallback" : "pending_authority"
+    : componentAligned && browserRuntimeAligned ? "authoritative" : "divergent";
+
+  return {
+    authority,
+    status,
+    source,
+    authoritativeSessionId,
+    componentSessionId,
+    browserRuntimeSessionId,
+    sessionManagerBacked,
+    browserRuntimeBacked: Boolean(browserRuntimeSessionId),
+    alignment: {
+      component: componentAligned ? componentSessionId ? "matched" : "pending" : "divergent",
+      browserRuntime: browserRuntimeAligned ? browserRuntimeSessionId ? "matched" : "pending" : "divergent",
+    },
+    observerVisible: true,
+    rootRequired: false,
+    hostMutation: false,
+  };
+}
+
 export function buildTrustedWorkViewContract(input = {}) {
   const session = input.session ?? {};
   const workView = input.workView ?? {};
@@ -173,6 +207,20 @@ export function buildTrustedWorkViewContract(input = {}) {
     "browser-runtime"
   );
   const sessionId = firstString(input.sessionId, capture.sessionId, session.sessionId, browser.sessionId, workView.sessionId);
+  const authoritativeSessionId = firstString(
+    input.authoritativeSessionId,
+    input.sessionAuthority === "openclaw-session-manager" ? session.sessionId : null,
+    source === "session-manager" ? session.sessionId : null,
+  );
+  const componentSessionId = firstString(input.componentSessionId, sessionId);
+  const browserRuntimeSessionId = firstString(input.browserRuntimeSessionId, capture.browserRuntimeSessionId, capture.sessionId, browser.sessionId, workView.browserSessionId);
+  const sessionIdentity = deriveSessionIdentity({
+    source,
+    authoritativeSessionId,
+    sessionAuthority: input.sessionAuthority,
+    componentSessionId,
+    browserRuntimeSessionId,
+  });
   const activeUrl = firstString(input.activeUrl, capture.activeUrl, capture.workView?.activeUrl, workView.activeUrl, browser.activeUrl);
   const displayTarget = firstString(input.displayTarget, session.displayTarget, workView.displayTarget, "workspace-2");
   const helperStatus = firstString(input.helperStatus, workView.helperStatus, browser.running ? "active" : "idle");
@@ -234,10 +282,12 @@ export function buildTrustedWorkViewContract(input = {}) {
       strategy,
       browserRuntimeBacked: strategy === "browser-runtime-backed" || strategy === "browser-runtime",
       sessionId,
+      authoritativeSessionId,
       activeUrl,
       capturedAt: firstString(input.capturedAt, capture.capturedAt),
       visibleToObserver: input.visibleToObserver !== false,
     },
+    sessionIdentity,
     helperReadiness,
     recoveryRecommendation: {
       action: helperReadiness.recommendedOperatorAction,

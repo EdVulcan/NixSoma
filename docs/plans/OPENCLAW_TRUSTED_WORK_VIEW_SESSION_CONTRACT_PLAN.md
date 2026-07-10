@@ -33,6 +33,8 @@ recoveryRecommendation.action: none | prepare_work_view | reveal_work_view
 sidecarContract.status: drafted_not_started
 sidecarContract.lifecycleProposal.status: proposal_ready
 sidecarContract.approvalTaskDraft.status: draft_ready
+sessionIdentity.status: authoritative | local_fallback | divergent | pending_authority
+sessionIdentity.authority: openclaw-session-manager
 ```
 
 The helper readiness portion makes the contract actionable without adding a new
@@ -40,6 +42,14 @@ execution path. A visible work view reports `ready` with no recovery action. A
 prepared hidden work view recommends `/work-view/reveal`. A missing or degraded
 browser-runtime-backed work view recommends `/work-view/prepare`. All recovery
 recommendations remain user-space, Observer-visible, and root-free.
+
+The contract now carries an explicit `sessionIdentity` block. Session-manager
+is the authority for prepared/revealed work views and passes its session id into
+browser-runtime when opening the AI-owned work view. Browser, screen, Phase 3,
+and Observer readbacks report whether browser-runtime is matched, pending, or
+divergent from that authority. This makes Level 2 work-view identity auditable
+without introducing a sidecar process, daemon, root boundary, or desktop-wide
+capture.
 
 Observer now exposes a single explicit recovery bridge:
 
@@ -179,7 +189,6 @@ observer-openclaw-phase-3-operator-interrupt-controls
 The following remain intentionally deferred:
 
 ```text
-single authoritative session identity across session-manager and browser-runtime
 desktop-wide GNOME/Wayland capture
 session helper process or sidecar installation
 root/system daemon or polkit integration

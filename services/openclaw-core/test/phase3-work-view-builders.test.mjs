@@ -16,6 +16,17 @@ function createPhase3Harness(overrides = {}) {
       displayTarget: "workspace-2",
       trustedSession: {
         identityLevel: "level_2_trusted_session_work_view",
+        sessionIdentity: {
+          status: "authoritative",
+          authority: "openclaw-session-manager",
+          authoritativeSessionId: "session-1",
+          componentSessionId: "session-1",
+          browserRuntimeSessionId: "session-1",
+          alignment: {
+            component: "matched",
+            browserRuntime: "matched",
+          },
+        },
         boundary: {
           workViewScope: "ai_owned_work_view_only",
           desktopWideCapture: false,
@@ -87,6 +98,8 @@ test("phase 3 work-view builders preserve plan and background work-view contract
   assert.equal(background.workViewContract.defaultVisibility, "hidden");
   assert.equal(background.workViewContract.defaultMode, "background");
   assert.equal(background.workViewContract.trustedSession.identityLevel, "level_2_trusted_session_work_view");
+  assert.equal(background.workViewContract.trustedSession.sessionIdentity.status, "authoritative");
+  assert.equal(background.workViewContract.trustedSession.sessionIdentity.alignment.browserRuntime, "matched");
   assert.equal(background.workViewContract.trustedSession.boundary.desktopWideCapture, false);
   assert.equal(background.workViewContract.trustedSession.recoveryRecommendation.action, "reveal_work_view");
   assert.equal(background.workViewContract.trustedSession.sidecarContract.status, "drafted_not_started");

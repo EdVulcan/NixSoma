@@ -7,6 +7,10 @@ test("trusted work-view contract records Level 2 boundary without host takeover"
   const contract = buildTrustedWorkViewContract({
     source: "browser-runtime",
     trustedComponent: "openclaw-browser-runtime",
+    sessionAuthority: "openclaw-session-manager",
+    authoritativeSessionId: "session-1",
+    componentSessionId: "session-1",
+    browserRuntimeSessionId: "session-1",
     session: {
       sessionId: "session-1",
       status: "running",
@@ -35,6 +39,11 @@ test("trusted work-view contract records Level 2 boundary without host takeover"
   assert.equal(contract.boundary.hostMutation, false);
   assert.equal(contract.operatorGates.reveal, "explicit_operator_action");
   assert.equal(contract.captureProvenance.browserRuntimeBacked, true);
+  assert.equal(contract.sessionIdentity.status, "authoritative");
+  assert.equal(contract.sessionIdentity.authority, "openclaw-session-manager");
+  assert.equal(contract.sessionIdentity.authoritativeSessionId, "session-1");
+  assert.equal(contract.sessionIdentity.browserRuntimeSessionId, "session-1");
+  assert.equal(contract.sessionIdentity.alignment.browserRuntime, "matched");
   assert.equal(contract.captureProvenance.activeUrl, "https://example.com/work-view");
   assert.equal(contract.helperReadiness.state, "ready");
   assert.equal(contract.recoveryRecommendation.action, "none");
@@ -46,6 +55,37 @@ test("trusted work-view contract records Level 2 boundary without host takeover"
   assert.equal(contract.sidecarContract.approvalTaskDraft.createsTaskNow, false);
   assert.equal(contract.sidecarContract.approvalTaskDraft.processStartEnabled, false);
   assert.equal(contract.sidecarContract.forbidden.desktopWideCapture, true);
+});
+
+test("trusted work-view contract detects divergent browser runtime session identity", () => {
+  const contract = buildTrustedWorkViewContract({
+    source: "screen-sense",
+    sessionAuthority: "openclaw-session-manager",
+    authoritativeSessionId: "session-manager-1",
+    componentSessionId: "browser-local-2",
+    browserRuntimeSessionId: "browser-local-2",
+    session: {
+      sessionId: "session-manager-1",
+      status: "running",
+    },
+    workView: {
+      status: "ready",
+      helperStatus: "active",
+      browserStatus: "running",
+      activeUrl: "https://example.com/work-view",
+    },
+    browser: {
+      running: true,
+      sessionId: "browser-local-2",
+    },
+  });
+
+  assert.equal(contract.sessionIdentity.status, "divergent");
+  assert.equal(contract.sessionIdentity.authority, "openclaw-session-manager");
+  assert.equal(contract.sessionIdentity.alignment.component, "divergent");
+  assert.equal(contract.sessionIdentity.alignment.browserRuntime, "divergent");
+  assert.equal(contract.sessionIdentity.rootRequired, false);
+  assert.equal(contract.sessionIdentity.hostMutation, false);
 });
 
 test("trusted work-view contract reports degraded helper state", () => {

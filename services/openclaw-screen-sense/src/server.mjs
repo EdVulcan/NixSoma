@@ -94,30 +94,31 @@ function deriveScreenPatch({ session, browser, browserCapture, degraded }) {
     browserCapture?.workView?.captureStrategy ??
     (browserCapture ? "browser-runtime-backed" : "browser-state-derived");
   const captureSource = browserCapture?.source ?? "browser";
-  const trustedSession =
-    browserCapture?.trustedSession ??
-    browserCapture?.workView?.trustedSession ??
-    buildTrustedWorkViewContract({
-      source: "screen-sense",
-      trustedComponent: "openclaw-screen-sense",
-      session,
-      workView: {
-        status: readiness === "ready" ? "ready" : "prepared",
-        visibility: browserWindowReady ? "observable" : "warming_up",
-        mode: "ai-owned-work-view",
-        captureStrategy,
-        helperStatus: degraded ? "degraded" : browser?.running ? "active" : "idle",
-        browserStatus: browser?.running ? "running" : "stopped",
-        activeUrl,
-        displayTarget: session?.displayTarget ?? "workspace-2",
-      },
-      browser,
-      browserCapture,
+  const trustedSession = buildTrustedWorkViewContract({
+    source: "screen-sense",
+    trustedComponent: "openclaw-screen-sense",
+    session,
+    sessionAuthority: session?.sessionId ? "openclaw-session-manager" : browserCapture?.trustedSession?.sessionIdentity?.authority,
+    authoritativeSessionId: session?.sessionId ?? null,
+    componentSessionId: browserCapture?.sessionId ?? browser?.sessionId ?? session?.sessionId ?? null,
+    browserRuntimeSessionId: browserCapture?.sessionId ?? browser?.sessionId ?? null,
+    workView: {
+      status: readiness === "ready" ? "ready" : "prepared",
+      visibility: browserWindowReady ? "observable" : "warming_up",
+      mode: "ai-owned-work-view",
       captureStrategy,
+      helperStatus: degraded ? "degraded" : browser?.running ? "active" : "idle",
+      browserStatus: browser?.running ? "running" : "stopped",
       activeUrl,
-      degraded,
-      visibleToObserver: true,
-    });
+      displayTarget: session?.displayTarget ?? "workspace-2",
+    },
+    browser,
+    browserCapture,
+    captureStrategy,
+    activeUrl,
+    degraded,
+    visibleToObserver: true,
+  });
   const workView =
     browserCapture?.workView ??
     (browser?.running

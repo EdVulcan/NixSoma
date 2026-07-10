@@ -167,6 +167,9 @@ export function createPhase3WorkViewBuilders(deps) {
       trustedSession?.boundary?.workViewScope === "ai_owned_work_view_only" &&
       trustedSession?.boundary?.desktopWideCapture === false &&
       trustedSession?.boundary?.rootRequired === false &&
+      trustedSession?.sessionIdentity?.status === "authoritative" &&
+      trustedSession?.sessionIdentity?.authority === "openclaw-session-manager" &&
+      trustedSession?.sessionIdentity?.alignment?.browserRuntime === "matched" &&
       trustedSession?.operatorGates?.reveal === "explicit_operator_action" &&
       trustedSession?.recoveryRecommendation?.rootRequired === false &&
       ["none", "reveal_work_view", "prepare_work_view"].includes(trustedSession?.recoveryRecommendation?.action) &&

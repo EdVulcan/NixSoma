@@ -281,6 +281,7 @@ async function refreshPhase3BackgroundWorkView() {
     const summary = data.summary ?? {};
     const workView = data.current?.workView ?? {};
     const trustedSession = data.workViewContract?.trustedSession ?? workView.trustedSession ?? {};
+    const sessionIdentity = trustedSession.sessionIdentity ?? {};
     phase3BackgroundReady.textContent = String(Boolean(summary.ready));
     phase3BackgroundVisibility.textContent = workView.visibility ?? data.workViewContract?.defaultVisibility ?? "hidden";
     phase3BackgroundMode.textContent = workView.mode ?? data.workViewContract?.defaultMode ?? "background";
@@ -291,6 +292,7 @@ async function refreshPhase3BackgroundWorkView() {
       "Default: visibility=" + (data.workViewContract?.defaultVisibility ?? "hidden") + " mode=" + (data.workViewContract?.defaultMode ?? "background"),
       "Current: visibility=" + (workView.visibility ?? "unknown") + " mode=" + (workView.mode ?? "unknown") + " capture=" + (workView.captureStrategy ?? "unknown"),
       "Trusted Session: " + (trustedSession.identityLevel ?? "unknown") + " readiness=" + (trustedSession.readiness ?? "unknown"),
+      "Session Identity: " + (sessionIdentity.status ?? "unknown") + " authority=" + (sessionIdentity.authority ?? "unknown") + " authoritative=" + (sessionIdentity.authoritativeSessionId ?? "none") + " browser=" + (sessionIdentity.browserRuntimeSessionId ?? "none"),
       "Trusted Boundary: " + (trustedSession.boundary?.workViewScope ?? "unknown") + " revealGate=" + (trustedSession.operatorGates?.reveal ?? "unknown"),
       "Helper Readiness: " + (trustedSession.helperReadiness?.state ?? "unknown") + " recovery=" + (trustedSession.recoveryRecommendation?.action ?? "unknown"),
       "Last Operator Action: " + (workView.lastOperatorAction?.action ?? "none") + " source=" + (workView.lastOperatorAction?.source ?? "none"),
