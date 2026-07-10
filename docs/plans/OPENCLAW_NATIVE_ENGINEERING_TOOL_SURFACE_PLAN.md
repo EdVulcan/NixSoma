@@ -449,6 +449,13 @@ identity visibility. It still does not start a sidecar process, install a
 helper, capture the desktop, require root, copy credentials, call providers, or
 spawn ACP/Codex.
 
-The next autonomous slice should stay within existing governed local body and
-Observer surfaces unless the operator explicitly authorizes one of the blocked
-boundaries above.
+The plan/todo suggested-action task/readback linkage is now complete through the
+existing edit/write/verification controls. The core recomputes the action from
+persisted workbench state and exposes only compact provenance in task and
+Observer readback.
+
+The next autonomous slice should leave Level 1 horizontal engineering expansion
+and advance the smallest real Level 2 trusted AI work-view/session-helper
+behavior. Stay within existing governed local body and Observer surfaces unless
+the operator explicitly authorizes helper process start, root, desktop-wide
+capture, provider egress, or another blocked boundary above.

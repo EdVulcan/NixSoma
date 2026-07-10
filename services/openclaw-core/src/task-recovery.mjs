@@ -210,6 +210,9 @@ export function createTaskRecovery({
     if (sourceTask.sourceCommand && typeof sourceTask.sourceCommand === "object") {
       recoveryBody.sourceCommand = sourceTask.sourceCommand;
     }
+    if (sourceTask.engineeringPlanTodoSuggestionLink && typeof sourceTask.engineeringPlanTodoSuggestionLink === "object") {
+      recoveryBody.engineeringPlanTodoSuggestionLink = sourceTask.engineeringPlanTodoSuggestionLink;
+    }
 
     const recoveredTask = createTask(recoveryBody);
 

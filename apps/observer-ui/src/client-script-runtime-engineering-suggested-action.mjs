@@ -27,6 +27,39 @@ function currentEngineeringPlanTodoSuggestion() {
     ?? null;
 }
 
+function buildEngineeringPlanTodoSuggestionLinkInput(suggestion, control) {
+  const workbench = latestEngineeringPlanTodoWorkbenchState;
+  const currentTodo = suggestion?.currentTodo ?? null;
+  if (workbench?.todoSource !== "workbench_storage") {
+    throw new Error("Save the visible workbench state before creating a task from its suggestion.");
+  }
+  if (!workbench.taskId || !currentTodo?.id || !currentTodo?.status) {
+    throw new Error("The governed plan/todo suggestion is missing durable source state.");
+  }
+  return {
+    sourceRegistry: suggestion.registry,
+    sourceTaskId: workbench.taskId,
+    sourceWorkbenchRevision: latestEngineeringPlanTodoEvidence?.workbenchStorage?.revision ?? undefined,
+    currentTodoId: currentTodo.id,
+    currentTodoStatus: currentTodo.status,
+    actionId: suggestion.suggestion.actionId,
+    expectedObserverControlId: control.controlId,
+    existingCapabilityId: suggestion.suggestion.existingCapabilityId,
+  };
+}
+
+function engineeringPlanTodoSuggestionLinkLines(link) {
+  if (!link?.source?.taskId || !link?.action?.actionId) {
+    return [];
+  }
+  return [
+    "Suggestion Link: " + link.action.actionId + " capability=" + (link.action.capabilityId ?? "unknown"),
+    "Suggestion Source: task=" + link.source.taskId + " todo=" + (link.source.todoId ?? "none") + " status=" + (link.source.todoStatus ?? "unknown") + " revision=" + (link.source.workbenchRevision ?? 0),
+    "Suggestion Evidence: " + (link.source.evidenceRoute ?? "none"),
+    "Suggestion Governance: arbitraryEndpoint=" + Boolean(link.governance?.arbitraryEndpointAllowed) + " autoApproval=" + Boolean(link.governance?.automaticApprovalAllowed) + " autoExecution=" + Boolean(link.governance?.automaticExecutionAllowed) + " provider=" + Boolean(link.governance?.providerCallAllowed) + " resultEnvelope=" + Boolean(link.governance?.resultEnvelopeAllowed),
+  ];
+}
+
 async function useEngineeringPlanningSuggestedAction() {
   if (!currentEngineeringPlanTodoSuggestion()) {
     await bridgeEngineeringPlanningWorkbenchState();
@@ -51,7 +84,10 @@ async function useEngineeringPlanningSuggestedAction() {
     return;
   }
 
-  await control.run();
+  const suggestionLink = actionId === "save_workbench_state"
+    ? null
+    : buildEngineeringPlanTodoSuggestionLinkInput(suggestion, control);
+  await control.run(suggestionLink);
 }
 
 `;

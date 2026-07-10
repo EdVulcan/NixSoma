@@ -4,7 +4,8 @@ Updated: 2026-07-10
 
 ## Active Slice
 
-Native governed engineering plan/todo workbench storage.
+Native governed engineering plan/todo workbench storage and suggested-action
+task/readback linkage.
 
 This slice moves the `cc_plan_enter`, `cc_plan_exit`, and `cc_todo_write`
 migration beyond read-only evidence by giving OpenClaw a small, explicit,
@@ -76,6 +77,25 @@ The UI dispatches only to those existing controls after the suggested control id
 matches the expected whitelist entry. It does not execute arbitrary endpoints,
 command text, provider payloads, or file paths from a suggestion object.
 
+When the explicit action creates an edit, write, or verification task, the core
+now recomputes the suggestion from the persisted workbench record and attaches:
+
+```text
+registry: openclaw-native-engineering-plan-todo-suggestion-link-v0
+source task id and status
+workbench record id and revision
+current todo id and status
+suggested action and capability id
+expected whitelisted Observer control id
+source evidence route
+```
+
+The link is visible in task readback, Engineering Loop State, restoration, and
+completion readback. It excludes todo descriptions, workspace content, edit or
+write payloads, commands, provider payloads, credential material, and arbitrary
+endpoint strings. Recovered verification tasks retain the same compact source
+link.
+
 ## Boundaries
 
 This slice does not:
@@ -84,7 +104,7 @@ This slice does not:
 switch hidden planning modes
 write .openclaw/cc-todo.md
 mutate task status or task plan steps
-create tasks or approvals
+automatically create tasks or approvals without the explicit suggested-action click
 execute verification commands
 call providers or perform network egress
 create result envelopes
@@ -102,7 +122,10 @@ Runtime storage:
 services/openclaw-core/src/native-engineering-plan-todo-workbench-storage.mjs
 services/openclaw-core/src/native-engineering-plan-todo-workbench-routes.mjs
 services/openclaw-core/src/native-engineering-plan-todo-next-action.mjs
+services/openclaw-core/src/native-engineering-plan-todo-suggestion-link.mjs
 services/openclaw-core/src/runtime-state.mjs
+services/openclaw-core/src/task-manager.mjs
+services/openclaw-core/src/task-recovery.mjs
 ```
 
 Evidence integration:
@@ -124,6 +147,7 @@ Validation targets:
 
 ```text
 services/openclaw-core/test/native-engineering-plan-todo-evidence-builders.test.mjs
+services/openclaw-core/test/native-engineering-plan-todo-suggestion-link.test.mjs
 services/openclaw-core/test/route-handlers.test.mjs
 openclaw-native-engineering-plan-todo-evidence
 observer-openclaw-native-engineering-plan-todo-evidence
@@ -144,21 +168,15 @@ provider calls, network egress, result envelopes
 
 ## Next Slice
 
-The next high-density slice should use stored visible workbench state to guide
-the existing engineering loop through an existing approval-gated creation path
-when the operator explicitly asks:
+The Level 1 engineering continuity loop is now complete enough to stop
+horizontal evidence expansion:
 
 ```text
-stored workbench suggestion -> explicit governed task creation through existing controls
+stored suggestion -> governed task -> approval/operator path -> linked readback
 ```
 
-Do not create a new readiness chain for this. Reuse the existing edit, write,
-verification, and recovery task controls.
-
-That operator-visible bridge is now present in Observer through `Use Suggested
-Action`. The next slice should continue toward richer task/readback linkage only
-when it strengthens the existing engineering loop:
-
-```text
-suggested action -> existing governed task creation -> approval/operator step -> readback linkage
-```
+The next autonomous slice should advance the Level 2 trusted AI work-view and
+session-helper boundary through an existing work-view owner. Do not add another
+plan/todo evidence endpoint or milestone. Actual helper process start, root,
+desktop-wide capture, provider egress, and arbitrary recommendation execution
+remain deferred.

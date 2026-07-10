@@ -104,6 +104,10 @@ test("workspace native patch draft parses JSON query params and preserves parse 
 
 test("workspace native engineering write proposal task bridge preserves approval-gated input", async () => {
   let observedInput = null;
+  const engineeringPlanTodoSuggestionLink = {
+    sourceTaskId: "plan-task-write",
+    actionId: "create_write_proposal_task",
+  };
   const response = await invokeWorkspaceNativeOpsRoute({
     createNativeEngineeringWriteProposalTask: async (input) => {
       observedInput = input;
@@ -130,6 +134,7 @@ test("workspace native engineering write proposal task bridge preserves approval
     contextLines: 2,
     maxContentBytes: 512,
     maxExistingFileBytes: 1024,
+    engineeringPlanTodoSuggestionLink,
     confirm: true,
   });
 
@@ -144,6 +149,7 @@ test("workspace native engineering write proposal task bridge preserves approval
     contextLines: 2,
     maxContentBytes: 512,
     maxExistingFileBytes: 1024,
+    engineeringPlanTodoSuggestionLink,
     confirm: true,
   });
   assert.deepEqual(response.body.task, { id: "task-write", status: "pending" });
@@ -198,6 +204,10 @@ test("workspace native ACPX/Codex wrapper write task bridge preserves approval-g
 
 test("workspace native engineering edit proposal task bridge preserves approval-gated input", async () => {
   let observedInput = null;
+  const engineeringPlanTodoSuggestionLink = {
+    sourceTaskId: "plan-task-edit",
+    actionId: "create_edit_proposal_task",
+  };
   const response = await invokeWorkspaceNativeOpsRoute({
     createNativeEngineeringEditProposalTask: async (input) => {
       observedInput = input;
@@ -228,6 +238,7 @@ test("workspace native engineering edit proposal task bridge preserves approval-
     contextLines: 2,
     maxOutputChars: 512,
     maxFileSizeBytes: 1024,
+    engineeringPlanTodoSuggestionLink,
     confirm: true,
   });
 
@@ -241,6 +252,7 @@ test("workspace native engineering edit proposal task bridge preserves approval-
     contextLines: 2,
     maxOutputChars: 512,
     maxFileSizeBytes: 1024,
+    engineeringPlanTodoSuggestionLink,
     confirm: true,
   });
   assert.deepEqual(response.body.task, { id: "task-edit", status: "pending" });
@@ -415,6 +427,10 @@ test("workspace native engineering LSP symbol request task bridge preserves requ
 
 test("workspace native source command task serializes task and approval contracts", async () => {
   let observedInput = null;
+  const engineeringPlanTodoSuggestionLink = {
+    sourceTaskId: "plan-task-verify",
+    actionId: "create_verification_task",
+  };
   const response = await invokeWorkspaceNativeOpsRoute({
     createOpenClawSourceCommandTask: async (input) => {
       observedInput = input;
@@ -440,6 +456,7 @@ test("workspace native source command task serializes task and approval contract
     scriptName: "typecheck",
     workspacePath: "/tmp/openclaw",
     query: "command",
+    engineeringPlanTodoSuggestionLink,
     confirm: true,
   });
 
@@ -451,6 +468,7 @@ test("workspace native source command task serializes task and approval contract
     scriptName: "typecheck",
     workspacePath: "/tmp/openclaw",
     query: "command",
+    engineeringPlanTodoSuggestionLink,
     confirm: true,
   });
   assert.deepEqual(response.body.task, { id: "task-a", status: "pending" });

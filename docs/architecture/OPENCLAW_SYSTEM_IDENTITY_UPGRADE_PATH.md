@@ -291,7 +291,33 @@
 
 ---
 
-## 六、结论
+## 六、当前证据化进度基线（2026-07-10）
+
+进度不能再按历史 Phase 数量计算。以下比例是根据当前运行时代码、NixOS
+模块、任务闭环、Observer、测试证据和仍缺失的架构组件估算的能力成熟度，
+不是测试覆盖率：
+
+| 身份层级 | 当前成熟度 | 证据与主要缺口 |
+| --- | --- | --- |
+| Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
+| Level 2 受信会话组件 | 约 35% | trusted-session 契约、身份一致性、work-view recovery/readback 已有；真实 session helper/sidecar owner、稳定 capture/action runtime 尚未落地。 |
+| Level 3 系统级特权组件 | 约 10-15% | 已有 systemd 感知、提案和有限执行证据；独立 `openclaw-hostd`、D-Bus/Polkit RPC 和受控特权边界尚未建立。 |
+| Level 4 图形栈内生组件 | 约 0-5% | 只有 AI-owned work-view 方向与接口预留；专属 session、nested compositor、原生图形输入输出尚未实现。 |
+
+按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
+**35-40%**。内核白皮书中的 Phase A Nix 纯净化仍受 `/opt/openclaw`
+源码运行模式影响；Phase B 仍主要使用 `systemctl` 包装；Phase C eBPF
+神经网尚未开始；Phase D 声明式 Nix 自进化与自动回滚仍主要是设计和
+边界证据。因此旧阶段路线的“接近 90%”只能描述早期里程碑清单，不能代表
+最终白皮书完成度。
+
+当前最高收益主线是：收口 Level 1 工程连续性后，建设真实的 Level 2
+trusted session helper/work-view runtime；在进入 Level 3 前不 root 化整个
+控制平面。
+
+---
+
+## 七、结论
 
 OpenClaw 从用户态工具升级到系统级主体，正确路径不是：
 

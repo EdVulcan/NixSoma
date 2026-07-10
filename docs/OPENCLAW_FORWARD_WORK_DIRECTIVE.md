@@ -1,6 +1,6 @@
 # OpenClaw Forward Work Directive
 
-Updated: 2026-07-09
+Updated: 2026-07-10
 
 This is the active guidance document for continuing OpenClaw development after
 the Phase 136 checkpoint and the discovery that the locally optimized
@@ -212,6 +212,20 @@ The first slices should move in this order:
 
 Only after these are proven should the project continue deeper cloud-provider
 execution work.
+
+## Current Evidence-Based Frontier
+
+The Level 1 native engineering route now has bounded read/search, proposal,
+approval-gated edit/write, ledger, verification, recovery, LSP selected-target,
+planning workbench, governed suggested-action creation, and compact linked task
+readback. Do not reopen completed LSP symbol-request slices or add another
+standalone engineering evidence/readiness shell without a concrete operator gap.
+
+The next autonomous product route is the smallest real Level 2 trusted AI
+work-view/session-helper behavior. Keep actual helper installation or process
+start, root/system daemon work, desktop-wide capture, provider egress, and
+arbitrary endpoint execution deferred until their runtime owner and authority
+boundary are explicit.
 
 ## Identity-Upgrade Alignment
 

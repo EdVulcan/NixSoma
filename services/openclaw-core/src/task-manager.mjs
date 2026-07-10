@@ -3,6 +3,7 @@ import { createTaskRecovery } from "./task-recovery.mjs";
 
 const TASK_EXTENSION_FIELDS = [
   { name: "sourceCommand", copyFromCreateInput: true },
+  { name: "engineeringPlanTodoSuggestionLink", copyFromCreateInput: true },
   { name: "engineeringEditProposal" },
   { name: "engineeringWriteProposal" },
   { name: "engineeringLspLifecycle" },

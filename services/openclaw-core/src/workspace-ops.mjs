@@ -17,6 +17,7 @@ import {
 } from "./workspace-proposal-utils.mjs";
 import { createWorkspaceCommandPlanBuilders } from "./workspace-command-plan-builders.mjs";
 import { createNativeEngineeringLspLifecycleTaskBuilders } from "./native-engineering-lsp-lifecycle-tasks.mjs";
+import { buildNativeEngineeringPlanTodoSuggestionLink } from "./native-engineering-plan-todo-suggestion-link.mjs";
 
 export function createWorkspaceOps(deps) {
   const {
@@ -44,7 +45,13 @@ export function createWorkspaceOps(deps) {
     publishEvent,
   } = deps;
   const { postJson } = client;
-  const { tasks, persistState, workspaceRoots, autonomyMode } = state;
+  const {
+    tasks,
+    persistState,
+    workspaceRoots,
+    autonomyMode,
+    nativeEngineeringPlanTodoWorkbenchRecords,
+  } = state;
 
   // L5977-7324
 function sha256Hex(value) {
@@ -221,6 +228,7 @@ async function createNativeOpenClawWorkspaceTextWriteTask({
   relativePath = "scratch/native-write.txt",
   content = "",
   overwrite = true,
+  engineeringPlanTodoSuggestionLink = null,
   confirm = false,
 } = {}) {
   if (confirm !== true) {
@@ -240,6 +248,7 @@ async function createNativeOpenClawWorkspaceTextWriteTask({
     workViewStrategy: "openclaw-native-workspace-text-write",
     plan: draft.plan,
     policy: draft.policy.request,
+    engineeringPlanTodoSuggestionLink,
   }, { skipInitialPolicy: true });
   task.policy = draft.policy;
   const approval = createApprovalRequestForTask(task, draft.policy.decision);
@@ -288,6 +297,7 @@ async function createNativeEngineeringWriteProposalTask({
   contextLines = 1,
   maxContentBytes = 16 * 1024,
   maxExistingFileBytes = 24 * 1024,
+  engineeringPlanTodoSuggestionLink = null,
   confirm = false,
 } = {}) {
   if (confirm !== true) {
@@ -296,6 +306,12 @@ async function createNativeEngineeringWriteProposalTask({
   if (typeof deps.buildNativeEngineeringWriteProposal !== "function") {
     throw new Error("native engineering write proposal builder is unavailable.");
   }
+  const suggestionLink = buildNativeEngineeringPlanTodoSuggestionLink({
+    input: engineeringPlanTodoSuggestionLink,
+    records: nativeEngineeringPlanTodoWorkbenchRecords,
+    tasks,
+    expectedActionId: "create_write_proposal_task",
+  });
   const safeContent = normaliseWorkspaceOpsContent({ content, contentBase64 });
   const engineeringWriteProposal = deps.buildNativeEngineeringWriteProposal({
     workspacePath,
@@ -314,6 +330,7 @@ async function createNativeEngineeringWriteProposalTask({
     relativePath: engineeringWriteProposal.target.relativePath,
     content: safeContent,
     overwrite: engineeringWriteProposal.target.overwriteRequested,
+    engineeringPlanTodoSuggestionLink: suggestionLink,
     confirm: true,
   });
   taskResult.task.engineeringWriteProposal = {
@@ -519,6 +536,7 @@ async function createNativeEngineeringEditProposalTask({
   contextLines = 1,
   maxOutputChars = 24_000,
   maxFileSizeBytes = 128 * 1024,
+  engineeringPlanTodoSuggestionLink = null,
   confirm = false,
 } = {}) {
   if (confirm !== true) {
@@ -527,6 +545,12 @@ async function createNativeEngineeringEditProposalTask({
   if (typeof deps.buildNativeEngineeringEditProposal !== "function") {
     throw new Error("native engineering edit proposal builder is unavailable.");
   }
+  const suggestionLink = buildNativeEngineeringPlanTodoSuggestionLink({
+    input: engineeringPlanTodoSuggestionLink,
+    records: nativeEngineeringPlanTodoWorkbenchRecords,
+    tasks,
+    expectedActionId: "create_edit_proposal_task",
+  });
 
   const engineeringEditProposal = deps.buildNativeEngineeringEditProposal({
     workspacePath,
@@ -561,6 +585,7 @@ async function createNativeEngineeringEditProposalTask({
         "approval-required-before-apply",
       ],
     },
+    engineeringPlanTodoSuggestionLink: suggestionLink,
     confirm: true,
   });
   if (
@@ -971,6 +996,7 @@ async function createNativeOpenClawWorkspacePatchApplyTask({
   selectTargetFromSource = false,
   targetSelectionQuery = null,
   targetSelectionScope = "tools",
+  engineeringPlanTodoSuggestionLink = null,
   confirm = false,
 } = {}) {
   if (confirm !== true) {
@@ -999,6 +1025,7 @@ async function createNativeOpenClawWorkspacePatchApplyTask({
     workViewStrategy: "openclaw-native-workspace-patch-apply",
     plan: draft.plan,
     policy: draft.policy.request,
+    engineeringPlanTodoSuggestionLink,
   }, { skipInitialPolicy: true });
   task.policy = draft.policy;
   const approval = createApprovalRequestForTask(task, draft.policy.decision);
@@ -1198,7 +1225,13 @@ const {
   supersedeOtherActiveTasks,
 });
 
-async function createWorkspaceCommandTask({ proposalId = null, workspaceId = null, scriptName = null, confirm = false } = {}) {
+async function createWorkspaceCommandTask({
+  proposalId = null,
+  workspaceId = null,
+  scriptName = null,
+  engineeringPlanTodoSuggestionLink = null,
+  confirm = false,
+} = {}) {
   if (confirm !== true) {
     throw new Error("Workspace command task creation requires confirm=true.");
   }
@@ -1211,6 +1244,7 @@ async function createWorkspaceCommandTask({ proposalId = null, workspaceId = nul
     workViewStrategy: "workspace-command",
     plan: draft.plan,
     policy: draft.policy.request,
+    engineeringPlanTodoSuggestionLink,
   }, { skipInitialPolicy: true });
   task.policy = draft.policy;
   const approval = createApprovalRequestForTask(task, draft.policy.decision);
@@ -1250,11 +1284,18 @@ async function createOpenClawSourceCommandTask({
   scriptName = null,
   workspacePath = null,
   query = "command",
+  engineeringPlanTodoSuggestionLink = null,
   confirm = false,
 } = {}) {
   if (confirm !== true) {
     throw new Error("OpenClaw source command task creation requires confirm=true.");
   }
+  const suggestionLink = buildNativeEngineeringPlanTodoSuggestionLink({
+    input: engineeringPlanTodoSuggestionLink,
+    records: nativeEngineeringPlanTodoWorkbenchRecords,
+    tasks,
+    expectedActionId: "create_verification_task",
+  });
 
   const sourceDraft = buildOpenClawSourceCommandPlanDraft({
     proposalId,
@@ -1266,6 +1307,7 @@ async function createOpenClawSourceCommandTask({
   const sourceProposal = sourceDraft.sourceCommandProposal;
   const workspaceTask = await createWorkspaceCommandTask({
     proposalId: sourceProposal.id,
+    engineeringPlanTodoSuggestionLink: suggestionLink,
     confirm: true,
   });
   workspaceTask.task.sourceCommand = {

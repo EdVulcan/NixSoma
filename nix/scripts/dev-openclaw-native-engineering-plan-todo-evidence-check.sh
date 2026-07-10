@@ -24,6 +24,7 @@ CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -rf "$FIXTURE_DIR"
 mkdir -p "$WORKSPACE_DIR"
+printf '%s\n' '{"name":"openclaw","private":true,"scripts":{"typecheck":"node --check src/index.mjs"}}' > "$WORKSPACE_DIR/package.json"
 rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_EVENT_LOG_FILE"
 
 cleanup() {
@@ -34,7 +35,9 @@ cleanup() {
     "${STORAGE_FILE:-}" \
     "${STORED_EVIDENCE_FILE:-}" \
     "${AFTER_FILE:-}" \
-    "${ADAPTER_FILE:-}"
+    "${ADAPTER_FILE:-}" \
+    "${LINKED_TASK_FILE:-}" \
+    "${LINKED_TASK_READBACK_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -52,6 +55,8 @@ STORAGE_FILE="$(mktemp)"
 STORED_EVIDENCE_FILE="$(mktemp)"
 AFTER_FILE="$(mktemp)"
 ADAPTER_FILE="$(mktemp)"
+LINKED_TASK_FILE="$(mktemp)"
+LINKED_TASK_READBACK_FILE="$(mktemp)"
 
 post_json "$CORE_URL/tasks/plan" '{
   "goal": "Expose native engineering plan todo evidence",
@@ -110,8 +115,34 @@ curl --silent --fail \
   > "$STORED_EVIDENCE_FILE"
 curl --silent --fail "$CORE_URL/tasks/summary" > "$AFTER_FILE"
 curl --silent --fail "$CORE_URL/plugins/openclaw-native-plugin-adapter" > "$ADAPTER_FILE"
+linked_task_body="$(node - <<'EOF' "$task_id" "$STORAGE_FILE"
+const fs = require("node:fs");
+const taskId = process.argv[2];
+const storage = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+process.stdout.write(JSON.stringify({
+  proposalId: "openclaw:typecheck",
+  workspaceId: "openclaw",
+  scriptName: "typecheck",
+  query: "verify",
+  engineeringPlanTodoSuggestionLink: {
+    sourceRegistry: "openclaw-native-engineering-plan-todo-next-action-v0",
+    sourceTaskId: taskId,
+    sourceWorkbenchRevision: storage.record.revision,
+    currentTodoId: "stored-use",
+    currentTodoStatus: "in_progress",
+    actionId: "create_verification_task",
+    expectedObserverControlId: "engineering-verification-task-button",
+    existingCapabilityId: "act.openclaw.engineering_tool.verify"
+  },
+  confirm: true
+}));
+EOF
+)"
+post_json "$CORE_URL/plugins/native-adapter/source-command-proposals/tasks" "$linked_task_body" > "$LINKED_TASK_FILE"
+linked_task_id="$(node -e 'const fs=require("node:fs"); const data=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); process.stdout.write(data.task.id);' "$LINKED_TASK_FILE")"
+curl --silent --fail "$CORE_URL/tasks/$linked_task_id" > "$LINKED_TASK_READBACK_FILE"
 
-node - <<'EOF' "$TASK_FILE" "$BEFORE_FILE" "$EVIDENCE_FILE" "$STORAGE_FILE" "$STORED_EVIDENCE_FILE" "$AFTER_FILE" "$ADAPTER_FILE" "$WORKSPACE_DIR"
+node - <<'EOF' "$TASK_FILE" "$BEFORE_FILE" "$EVIDENCE_FILE" "$STORAGE_FILE" "$STORED_EVIDENCE_FILE" "$AFTER_FILE" "$ADAPTER_FILE" "$LINKED_TASK_FILE" "$LINKED_TASK_READBACK_FILE" "$WORKSPACE_DIR"
 const fs = require("node:fs");
 const path = require("node:path");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
@@ -123,7 +154,9 @@ const storage = readJson(5);
 const storedEvidence = readJson(6);
 const after = readJson(7);
 const adapter = readJson(8);
-const workspaceDir = process.argv[9];
+const linkedTask = readJson(9);
+const linkedTaskReadback = readJson(10);
+const workspaceDir = process.argv[11];
 const todoPath = path.join(workspaceDir, ".openclaw", "cc-todo.md");
 const raw = JSON.stringify({ evidence, storage, storedEvidence, adapter });
 
@@ -210,6 +243,34 @@ if (
 ) {
   throw new Error(`native adapter missing plan/todo evidence capability: ${JSON.stringify(adapter)}`);
 }
+const suggestionLink = linkedTask.task?.engineeringPlanTodoSuggestionLink;
+const readbackLink = linkedTaskReadback.task?.engineeringPlanTodoSuggestionLink;
+if (
+  !linkedTask.ok
+  || linkedTask.task?.status !== "queued"
+  || linkedTask.approval?.status !== "pending"
+  || linkedTask.summary?.counts?.total !== 2
+  || suggestionLink?.registry !== "openclaw-native-engineering-plan-todo-suggestion-link-v0"
+  || suggestionLink?.source?.taskId !== taskResponse.task.id
+  || suggestionLink?.source?.workbenchRevision !== storage.record.revision
+  || suggestionLink?.source?.todoId !== "stored-use"
+  || suggestionLink?.source?.todoStatus !== "in_progress"
+  || suggestionLink?.action?.actionId !== "create_verification_task"
+  || suggestionLink?.action?.expectedObserverControlId !== "engineering-verification-task-button"
+  || suggestionLink?.action?.capabilityId !== "act.openclaw.engineering_tool.verify"
+  || suggestionLink?.governance?.sourceRecomputedFromPersistedWorkbench !== true
+  || suggestionLink?.governance?.arbitraryEndpointAllowed !== false
+  || suggestionLink?.governance?.automaticApprovalAllowed !== false
+  || suggestionLink?.governance?.automaticExecutionAllowed !== false
+  || suggestionLink?.governance?.providerCallAllowed !== false
+  || suggestionLink?.governance?.resultEnvelopeAllowed !== false
+  || suggestionLink?.source?.description !== undefined
+  || suggestionLink?.command !== undefined
+  || suggestionLink?.endpoint !== undefined
+  || JSON.stringify(readbackLink) !== JSON.stringify(suggestionLink)
+) {
+  throw new Error(`governed plan/todo suggestion task linkage mismatch: ${JSON.stringify({ linkedTask, linkedTaskReadback })}`);
+}
 for (const token of [
   "no hidden planning mode switch",
   "no .openclaw/cc-todo.md write",
@@ -228,6 +289,8 @@ console.log(JSON.stringify({
     taskId: taskResponse.task.id,
     todos: storedEvidence.summary.evidenceTodoCounts.total,
     todoSource: storedEvidence.summary.todoSource,
+    linkedTaskId: linkedTask.task.id,
+    linkedAction: suggestionLink.action.actionId,
     todoFileWritten: fs.existsSync(todoPath),
   },
 }, null, 2));

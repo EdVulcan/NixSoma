@@ -80,6 +80,10 @@ test("task recovery preserves public recovered task contracts and resets deferre
         },
       },
     },
+    engineeringPlanTodoSuggestionLink: {
+      registry: "openclaw-native-engineering-plan-todo-suggestion-link-v0",
+      source: { taskId: "plan-task-1" },
+    },
   };
   tasks.set(sourceTask.id, sourceTask);
 
@@ -92,6 +96,7 @@ test("task recovery preserves public recovered task contracts and resets deferre
   assert.equal(recovered.recovery.recoveredFromTaskId, sourceTask.id);
   assert.equal(recovered.recovery.recoveredFromOutcome, "failed");
   assert.equal(recovered.recovery.attempt, 1);
+  assert.equal(recovered.engineeringPlanTodoSuggestionLink.source.taskId, "plan-task-1");
   assert.equal(recovered.plan.planId, "plan-id-1");
   assert.equal(recovered.plan.status, "planned");
   assert.equal(recovered.plan.createdAt, "2026-01-02T03:04:05.000Z");

@@ -113,11 +113,13 @@ function renderEngineeringLoopControlState(kind, result) {
   const taskId = result.task?.id ?? "none";
   const approvalId = result.approval?.id ?? "none";
   const evidenceRoute = engineeringLoopEvidenceRoute(kind, result.task?.id ?? null);
+  const suggestionLink = result.task?.engineeringPlanTodoSuggestionLink ?? null;
   latestEngineeringLoopControlState = {
     kind,
     taskId: result.task?.id ?? null,
     approvalId: result.approval?.id ?? null,
     evidenceRoute,
+    suggestionLink,
   };
   engineeringLoopStateKind.textContent = kind;
   engineeringLoopStateTask.textContent = taskId === "none" ? "none" : taskId.slice(0, 8);
@@ -133,6 +135,7 @@ function renderEngineeringLoopControlState(kind, result) {
     \`Approval Status: \${result.approval?.status ?? "unknown"}\`,
     "Next: approve pending approval, then run operator step",
     \`Evidence: \${evidenceRoute}\`,
+    ...engineeringPlanTodoSuggestionLinkLines(suggestionLink),
     "Boundary: no auto-approval, no automatic operator step, no unapproved mutation.",
   ].join("\\n");
 }
@@ -245,6 +248,7 @@ async function refreshEngineeringLoopCompletionReadback() {
     \`Evidence: \${latestEngineeringLoopControlState.evidenceRoute}\`,
     \`Completion: total=\${total} passed=\${passed} failed=\${failed}\`,
     \`Registry: \${evidence?.registry ?? "unknown"}\`,
+    ...engineeringPlanTodoSuggestionLinkLines(latestEngineeringLoopControlState.suggestionLink),
     "Boundary: readback only; no approval, execution, retry, recovery task, mutation, provider call, or result envelope.",
   ].join("\\n");
   setControlMessage(\`Refreshed engineering loop completion evidence for \${latestEngineeringLoopControlState.taskId}.\`);
@@ -686,6 +690,7 @@ async function restoreEngineeringLoopStateFromHistory({ startup = false } = {}) 
   }
 
   const { task, restored } = pair;
+  restored.suggestionLink = task.engineeringPlanTodoSuggestionLink ?? null;
   latestEngineeringLoopControlState = restored;
   taskHistoryFocus = "selected-task";
   selectedHistoryTaskId = task.id;
@@ -706,6 +711,7 @@ async function restoreEngineeringLoopStateFromHistory({ startup = false } = {}) 
     \`Evidence: \${restored.evidenceRoute}\`,
     restored.verificationRoute ? \`Rerun Evidence: \${restored.verificationRoute}\` : null,
     \`Next: \${nextStepForRestoredEngineeringLoop(task, restored)}\`,
+    ...engineeringPlanTodoSuggestionLinkLines(restored.suggestionLink),
     "Boundary: restoration is read-only; no task, approval, operator step, command, mutation, provider call, or result envelope is created.",
   ].filter(Boolean).join("\\n");
   setControlMessage(startup
@@ -741,7 +747,7 @@ async function refreshEngineeringLoopControlSurfaces() {
   await refreshEngineeringLoopWorkStandards();
 }
 
-async function createEngineeringEditLoopApprovalTask() {
+async function createEngineeringEditLoopApprovalTask(engineeringPlanTodoSuggestionLink = null) {
   const input = readEngineeringEditLoopInput();
   const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-edit-proposal-tasks\`, {
     method: "POST",
@@ -752,6 +758,7 @@ async function createEngineeringEditLoopApprovalTask() {
       newString: input.newString,
       contextLines: 1,
       maxOutputChars: 8000,
+      engineeringPlanTodoSuggestionLink,
       confirm: true,
     }),
   });
@@ -763,7 +770,7 @@ async function createEngineeringEditLoopApprovalTask() {
   await refreshWorkspacePatchApplyDraft();
 }
 
-async function createEngineeringWriteLoopApprovalTask() {
+async function createEngineeringWriteLoopApprovalTask(engineeringPlanTodoSuggestionLink = null) {
   const input = readEngineeringWriteLoopInput();
   const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-write-proposal-tasks\`, {
     method: "POST",
@@ -773,6 +780,7 @@ async function createEngineeringWriteLoopApprovalTask() {
       content: \`\${input.content}\\n\`,
       overwrite: true,
       contextLines: 1,
+      engineeringPlanTodoSuggestionLink,
       confirm: true,
     }),
   });
@@ -784,7 +792,7 @@ async function createEngineeringWriteLoopApprovalTask() {
   await refreshWorkspaceTextWriteDraft();
 }
 
-async function createEngineeringVerificationLoopApprovalTask() {
+async function createEngineeringVerificationLoopApprovalTask(engineeringPlanTodoSuggestionLink = null) {
   const input = readEngineeringVerificationLoopInput();
   const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/source-command-proposals/tasks\`, {
     method: "POST",
@@ -792,6 +800,7 @@ async function createEngineeringVerificationLoopApprovalTask() {
     body: JSON.stringify({
       proposalId: input.proposalId,
       query: input.query,
+      engineeringPlanTodoSuggestionLink,
       confirm: true,
     }),
   });

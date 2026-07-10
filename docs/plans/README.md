@@ -96,6 +96,11 @@ bridge evidence is documented in:
 OPENCLAW_NATIVE_ENGINEERING_PLAN_TODO_WORKBENCH_STORAGE_PLAN.md
 ```
 
+That lane now preserves compact persisted-workbench provenance through existing
+edit/write/verification task readback. The Level 1 engineering loop should not
+grow another evidence/readiness shell; continue with the smallest real Level 2
+trusted work-view/session-helper capability.
+
 ## Historical Phase Plans
 
 `OPENCLAW_PHASE_2_PLAN.md` through `OPENCLAW_PHASE_136_PLAN.md` are retained

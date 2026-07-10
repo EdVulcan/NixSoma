@@ -36,6 +36,12 @@ function bodyInteger(body, key, fallback) {
   return Number.isInteger(body[key]) ? body[key] : fallback;
 }
 
+function bodyObject(body, key) {
+  return body[key] && typeof body[key] === "object" && !Array.isArray(body[key])
+    ? body[key]
+    : null;
+}
+
 function serialiseWorkspaceTaskResponse(result, extraFields, { serialiseTask, serialiseApproval, buildTaskSummary }) {
   const payload = {
     ok: true,
@@ -103,6 +109,7 @@ function writeProposalTaskInputFromBody(body) {
     contextLines: bodyInteger(body, "contextLines", 1),
     maxContentBytes: bodyInteger(body, "maxContentBytes", 16 * 1024),
     maxExistingFileBytes: bodyInteger(body, "maxExistingFileBytes", 24 * 1024),
+    engineeringPlanTodoSuggestionLink: bodyObject(body, "engineeringPlanTodoSuggestionLink"),
     confirm: body.confirm === true,
   };
 }
@@ -127,6 +134,7 @@ function editProposalTaskInputFromBody(body) {
     contextLines: bodyInteger(body, "contextLines", 1),
     maxOutputChars: bodyInteger(body, "maxOutputChars", 24_000),
     maxFileSizeBytes: bodyInteger(body, "maxFileSizeBytes", 128 * 1024),
+    engineeringPlanTodoSuggestionLink: bodyObject(body, "engineeringPlanTodoSuggestionLink"),
     confirm: body.confirm === true,
   };
 }
@@ -396,6 +404,7 @@ export async function handleWorkspaceNativeOpsRoute({
         scriptName: bodyString(body, "scriptName", null),
         workspacePath: bodyString(body, "workspacePath", null),
         query: bodyString(body, "query", "command"),
+        engineeringPlanTodoSuggestionLink: bodyObject(body, "engineeringPlanTodoSuggestionLink"),
         confirm: body.confirm === true,
       });
       sendJson(res, 201, serialiseWorkspaceTaskResponse(result, [
