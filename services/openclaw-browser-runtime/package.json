@@ -8,5 +8,8 @@
     "start": "node src/server.mjs",
     "test": "node --test test/*.test.mjs",
     "typecheck": "node --check src/*.mjs"
+  },
+  "dependencies": {
+    "puppeteer-core": "^25.3.0"
   }
 }

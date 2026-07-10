@@ -169,6 +169,13 @@ restoring lease or actions, and explicit prepare rebinds fresh authority. The
 next real slice is a local real-browser-engine adapter behind the existing
 browser API and sidecar, replacing the synthetic PID/in-memory capture model.
 
+The real browser-engine adapter is now complete and proven with NixOS Firefox,
+Puppeteer, a loopback fixture, fresh helper authority, real PID/page metadata,
+screen-sense projection, and ephemeral profile cleanup. The next Level 2 slice
+is declarative login-user ownership for session-manager and browser-runtime so
+desktop deployment can enable the real engine without a root browser or
+duplicate system/user instances.
+
 ## Historical Phase Plans
 
 `OPENCLAW_PHASE_2_PLAN.md` through `OPENCLAW_PHASE_136_PLAN.md` are retained

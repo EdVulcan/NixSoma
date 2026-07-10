@@ -196,6 +196,7 @@ async function refreshScreen() {
           "Summary: " + (workViewSummary.summaryText ?? "none"),
           "Title: " + (workViewSummary.title ?? "none"),
           "URL: " + (workViewSummary.url ?? "none"),
+          "Browser Engine: " + (workViewSummary.engine?.mode ?? "unknown") + " real=" + Boolean(workViewSummary.engine?.realEngine) + " registry=" + (workViewSummary.engine?.registry ?? "none"),
           "Trusted Session: " + (trustedSession.identityLevel ?? "unknown") + " readiness=" + (trustedSession.readiness ?? "unknown"),
           "Session Identity: " + (sessionIdentity.status ?? "unknown") + " authority=" + (sessionIdentity.authority ?? "unknown") + " authoritative=" + (sessionIdentity.authoritativeSessionId ?? "none") + " browser=" + (sessionIdentity.browserRuntimeSessionId ?? "none"),
           "Trusted Boundary: " + (trustedSession.boundary?.workViewScope ?? "unknown"),

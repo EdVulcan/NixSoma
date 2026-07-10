@@ -9,6 +9,7 @@ import {
 } from "../../../packages/shared-utils/src/work-view-trust.mjs";
 import { normaliseBoundedBrowserUrl } from "./browser-navigation.mjs";
 import { createBrowserWorkspaceStore } from "./browser-workspace-store.mjs";
+import { createBrowserEngineAdapter } from "./browser-engine-adapter.mjs";
 
 
 const host = process.env.OPENCLAW_BROWSER_RUNTIME_HOST ?? "127.0.0.1";
@@ -16,12 +17,18 @@ const port = Number.parseInt(process.env.OPENCLAW_BROWSER_RUNTIME_PORT ?? "4103"
 const eventHubUrl = process.env.OPENCLAW_EVENT_HUB_URL ?? "http://127.0.0.1:4101";
 const sessionManagerUrl = process.env.OPENCLAW_SESSION_MANAGER_URL ?? "http://127.0.0.1:4102";
 const stateFilePath = process.env.OPENCLAW_BROWSER_RUNTIME_STATE_FILE ?? `/tmp/openclaw-browser-runtime-${port}.json`;
+const engineMode = process.env.OPENCLAW_BROWSER_ENGINE_MODE ?? "simulated";
+const engineProfileDirectory = process.env.OPENCLAW_BROWSER_PROFILE_DIR ?? `/tmp/openclaw-browser-profile-${port}`;
+if (!["firefox", "simulated"].includes(engineMode)) {
+  throw new Error(`Unsupported browser engine mode: ${engineMode}.`);
+}
 
 const publishEvent = createEventPublisher(eventHubUrl, "openclaw-browser-runtime");
 
 const workspaceStore = createBrowserWorkspaceStore({ stateFilePath });
 const restoredWorkspace = workspaceStore.restore();
 const restoredIntent = restoredWorkspace.intent?.workspace ?? null;
+let browserEngine = null;
 const browserState = {
   running: false,
   browserPid: null,
@@ -44,8 +51,32 @@ const browserState = {
     automaticActionReplay: false,
     sensitiveInteractionRestored: false,
   },
+  engine: {
+    mode: engineMode,
+    registry: engineMode === "firefox" ? "openclaw-browser-engine-adapter-v0" : "openclaw-browser-simulated-engine-v0",
+    realEngine: false,
+    profileEphemeral: engineMode === "firefox",
+    desktopWideCapture: false,
+    rootRequired: false,
+  },
   updatedAt: new Date().toISOString(),
 };
+
+if (engineMode === "firefox") {
+  browserEngine = createBrowserEngineAdapter({
+    executablePath: process.env.OPENCLAW_BROWSER_EXECUTABLE,
+    profileDirectory: engineProfileDirectory,
+    browserFamily: "firefox",
+    onDisconnected() {
+      updateBrowserState({
+        running: false,
+        browserPid: null,
+        trustedHelperLease: null,
+        engine: { ...browserState.engine, realEngine: false },
+      });
+    },
+  });
+}
 
 function updateBrowserState(patch) {
   Object.assign(browserState, patch, {
@@ -61,6 +92,24 @@ function serialiseBrowserState() {
       : null,
     tabs: browserState.tabs.map((tab) => ({ ...tab })),
   };
+}
+
+function applyEngineSnapshot(snapshot) {
+  updateBrowserState({
+    running: snapshot.realEngine === true,
+    browserPid: snapshot.browserPid,
+    activeTitle: snapshot.activeTitle,
+    activeUrl: snapshot.activeUrl,
+    tabs: snapshot.tabs,
+    engine: {
+      mode: snapshot.mode,
+      registry: snapshot.registry,
+      realEngine: snapshot.realEngine,
+      profileEphemeral: snapshot.profileEphemeral,
+      desktopWideCapture: snapshot.desktopWideCapture,
+      rootRequired: snapshot.rootRequired,
+    },
+  });
 }
 
 function validateBrowserActionMediation(body) {
@@ -145,6 +194,7 @@ function buildBrowserCapture() {
     summaryText: `AI work view is focused on ${activeTitle} at ${activeUrl} with ${tabs.length} tab(s).`,
     updatedAt: browserState.updatedAt,
     workspaceRecovery: { ...browserState.workspaceRecovery },
+    engine: { ...browserState.engine },
   };
   const trustedSession = buildTrustedWorkViewContract({
     source: "browser-runtime",
@@ -188,6 +238,7 @@ function buildBrowserCapture() {
     summary: workViewSummary,
     trustedSession,
     updatedAt: browserState.updatedAt,
+    engine: { ...browserState.engine },
   };
   const lines = [
     "OpenClaw browser work view",
@@ -224,6 +275,7 @@ function buildBrowserCapture() {
     workView,
     workViewSummary,
     trustedSession,
+    engine: { ...browserState.engine },
     visibleTextBlocks,
     snapshotText: lines.join("\n"),
     ocrBlocks: [
@@ -258,6 +310,7 @@ const server = http.createServer(async (req, res) => {
       port,
       eventHubUrl,
       sessionManagerUrl,
+      engineMode,
     });
     return;
   }
@@ -273,7 +326,9 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "POST" && requestUrl.pathname === "/browser/open") {
     try {
       const body = await readJsonBody(req);
-      const url = typeof body.url === "string" && body.url.trim() ? body.url.trim() : "https://example.com";
+      const url = normaliseBoundedBrowserUrl(
+        typeof body.url === "string" && body.url.trim() ? body.url.trim() : "https://example.com",
+      );
       const requestedSessionId = typeof body.sessionId === "string" && body.sessionId.trim()
         ? body.sessionId.trim()
         : browserState.sessionId ?? `session-${randomUUID()}`;
@@ -281,26 +336,20 @@ const server = http.createServer(async (req, res) => {
         expectedSessionId: requestedSessionId,
       });
       const sessionChanged = Boolean(browserState.sessionId && browserState.sessionId !== requestedSessionId);
+      const restoreUrls = browserState.workspaceRecovery.restored
+        ? browserState.tabs.map((tab) => tab.url)
+        : [];
 
       if (!browserState.running) {
         updateBrowserState({
-          running: true,
-          browserPid: Math.floor(Math.random() * 90000) + 10000,
+          running: browserEngine ? false : true,
+          browserPid: browserEngine ? null : Math.floor(Math.random() * 90000) + 10000,
           sessionId: requestedSessionId,
           sessionAuthority:
             typeof body.sessionAuthority === "string" && body.sessionAuthority.trim()
               ? body.sessionAuthority.trim()
               : browserState.sessionAuthority,
           trustedHelperLease,
-          workspaceRecovery: browserState.workspaceRecovery.restored ? {
-            ...browserState.workspaceRecovery,
-            status: trustedHelperLease
-              ? "rebound_after_explicit_prepare"
-              : "restored_without_action_authority",
-            freshAuthorityBound: Boolean(trustedHelperLease),
-            actionAuthorityRestored: false,
-            reboundAt: new Date().toISOString(),
-          } : browserState.workspaceRecovery,
         });
       } else if (typeof body.sessionId === "string" && body.sessionId.trim()) {
         updateBrowserState({
@@ -313,7 +362,27 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      const tab = addTab(url);
+      let tab;
+      if (browserEngine) {
+        applyEngineSnapshot(await browserEngine.open({ url, restoreUrls }));
+        tab = browserState.tabs.find((candidate) => candidate.url === browserState.activeUrl) ?? browserState.tabs.at(-1);
+      } else {
+        tab = addTab(url);
+      }
+      if (browserState.workspaceRecovery.restored) {
+        updateBrowserState({
+          workspaceRecovery: {
+            ...browserState.workspaceRecovery,
+            status: trustedHelperLease
+              ? "rebound_after_explicit_prepare"
+              : "restored_without_action_authority",
+            freshAuthorityBound: Boolean(trustedHelperLease),
+            actionAuthorityRestored: false,
+            reboundAt: new Date().toISOString(),
+          },
+        });
+      }
+      workspaceStore.persist(browserState);
       const browser = serialiseBrowserState();
       await publishEvent(createEventName("browser.started"), { browser, tab });
       sendJson(res, 201, { ok: true, browser, tab });
@@ -338,7 +407,14 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 409, { ok: false, error: mediation.reason, mediation });
         return;
       }
-      const tab = addTab(url);
+      let tab;
+      if (browserEngine) {
+        applyEngineSnapshot(await browserEngine.newTab(url));
+        workspaceStore.persist(browserState);
+        tab = browserState.tabs.find((candidate) => candidate.url === browserState.activeUrl) ?? browserState.tabs.at(-1);
+      } else {
+        tab = addTab(url);
+      }
       const browser = serialiseBrowserState();
       await publishEvent(createEventName("browser.updated"), { browser, tab, action: "new-tab" });
       sendJson(res, 201, { ok: true, browser, tab, mediation });
@@ -424,6 +500,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       const text = typeof body.text === "string" ? body.text : "";
+      if (browserEngine) applyEngineSnapshot(await browserEngine.type(text));
       updateBrowserState({
         lastInput: text,
       });
@@ -454,6 +531,7 @@ const server = http.createServer(async (req, res) => {
         x: typeof body.x === "number" ? body.x : null,
         y: typeof body.y === "number" ? body.y : null,
       };
+      if (browserEngine) applyEngineSnapshot(await browserEngine.click(action));
       updateBrowserState({
         lastClick: action,
       });
@@ -468,6 +546,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && requestUrl.pathname === "/browser/capture") {
+    if (browserEngine && browserState.running) applyEngineSnapshot(await browserEngine.snapshot());
     if (!browserState.running) {
       sendJson(res, 200, {
         ok: true,
@@ -488,6 +567,14 @@ const server = http.createServer(async (req, res) => {
 
   sendJson(res, 404, { ok: false, error: "Route not found." });
 });
+
+async function shutdown() {
+  await browserEngine?.close();
+  server.close(() => process.exit(0));
+}
+
+process.once("SIGTERM", shutdown);
+process.once("SIGINT", shutdown);
 
 server.listen(port, host, async () => {
   console.log(`openclaw-browser-runtime listening on http://${host}:${port}`);

@@ -80,6 +80,9 @@ const envNames = [
   "OPENCLAW_CORE_STATE_FILE",
   "OPENCLAW_SYSTEM_HEAL_STATE_FILE",
   "OPENCLAW_BROWSER_RUNTIME_STATE_FILE",
+  "OPENCLAW_BROWSER_ENGINE_MODE",
+  "OPENCLAW_BROWSER_EXECUTABLE",
+  "OPENCLAW_BROWSER_PROFILE_DIR",
   "OPENCLAW_BODY_PROFILE",
 ];
 
@@ -153,6 +156,7 @@ requireIncludes("flake", flake, [
   "nixosModules.openclaw-body",
   "nixosModules.default",
   "nixosConfigurations.openclaw-local-dev",
+  "packages.${system}.firefox",
 ]);
 
 console.log(JSON.stringify({

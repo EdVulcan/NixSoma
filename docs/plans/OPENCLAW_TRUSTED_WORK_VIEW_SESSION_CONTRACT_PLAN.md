@@ -634,3 +634,26 @@ launch one bounded user-space profile, prove one HTTP(S) navigation and compact
 capture, and keep the existing lease/sidecar/Observer/recovery contracts. Do not
 expand to desktop-wide capture, arbitrary executable launch, automatic action
 replay, root ownership, or a parallel browser API.
+
+That first real-engine slice is now complete. `puppeteer-core` controls a
+NixOS-managed Firefox executable without downloading a hidden browser. The
+existing open, new-tab, input, click, capture, lease, sidecar, and Observer
+contracts now support `firefox` mode, return the real browser process PID and
+real page title/URL/tab metadata, and fail closed on engine disconnect. The
+AI-owned profile is ephemeral: it is cleared before launch, on disconnect, and
+on service shutdown, while durable tab continuity remains in the separate
+bounded workspace intent.
+
+The existing `openclaw-ai-work-view-capture` milestone starts a loopback HTML
+fixture, prepares the work view through session-manager, launches the current
+NixOS Firefox through Puppeteer, performs lease-mediated input/click, and proves
+real engine metadata in browser capture and screen-sense. It also proves no
+profile or Firefox process remains after shutdown. `dev-up` keeps `simulated`
+as an explicit development fallback; the Nix module exposes a pinned Firefox
+package and only adds it to the service closure in `firefox` mode.
+
+The next Level 2 deployment slice is to place session-manager and browser-runtime
+in the same selected login-user manager as the trusted sidecar, so the desktop
+profile can select the real engine without running a browser from a root system
+service. This must be a declarative component ownership move, not duplicate
+system and user instances, a hardcoded UID, `--no-sandbox`, or a root proxy.

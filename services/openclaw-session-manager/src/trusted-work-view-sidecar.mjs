@@ -139,6 +139,9 @@ async function observeBrowserCapture() {
         : 0,
       freshAuthorityBound: summary.workspaceRecovery?.freshAuthorityBound === true,
       automaticActionReplay: false,
+      browserEngineMode: typeof summary.engine?.mode === "string" ? summary.engine.mode.slice(0, 40) : "unknown",
+      realBrowserEngine: summary.engine?.realEngine === true,
+      browserEngineRegistry: typeof summary.engine?.registry === "string" ? summary.engine.registry.slice(0, 100) : null,
       fullPayloadRetained: false,
       desktopWideCapture: false,
     };

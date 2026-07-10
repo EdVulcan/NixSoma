@@ -28,5 +28,7 @@
           typescript
         ];
       };
+
+      packages.${system}.firefox = pkgs.firefox;
     };
 }

@@ -18,6 +18,7 @@ export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-5780}"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-observer-ai-work-view-capture-check.json}"
 
 BROWSER_URL="http://127.0.0.1:$OPENCLAW_BROWSER_RUNTIME_PORT"
+SESSION_MANAGER_URL="http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT"
 SCREEN_URL="http://127.0.0.1:$OPENCLAW_SCREEN_SENSE_PORT"
 OBSERVER_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
 
@@ -79,6 +80,8 @@ const requiredClient = [
   "prepare_work_view",
   "reveal_work_view",
   "Trusted Boundary",
+  "Browser Engine:",
+  "workViewSummary.engine",
 ];
 
 for (const token of requiredHtml) {
@@ -93,9 +96,8 @@ for (const token of requiredClient) {
 }
 EOF
 
-open_result="$(post_json "$BROWSER_URL/browser/open" "{\"url\":\"$TARGET_URL\"}")"
-node -e 'const data=JSON.parse(process.argv[1]); if(!data.ok || !data.browser?.sessionId){throw new Error(`observer work view open failed: ${JSON.stringify(data)}`);}' "$open_result"
-post_json "$BROWSER_URL/browser/input" '{"text":"observer can see the AI work view capture"}' >/dev/null
+prepare_result="$(post_json "$SESSION_MANAGER_URL/work-view/prepare" "{\"displayTarget\":\"workspace-2\",\"entryUrl\":\"$TARGET_URL\"}")"
+node -e 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.workView?.helperRuntime?.status!=="active"){throw new Error(`observer work view prepare failed: ${JSON.stringify(data)}`);}' "$prepare_result"
 
 screen="$(curl --silent "$SCREEN_URL/screen/current")"
 
@@ -112,6 +114,10 @@ if (screen.captureStrategy !== "browser-runtime-backed") {
 }
 if (screen.workView?.activeUrl !== targetUrl || screen.captureMetadata?.activeUrl !== targetUrl) {
   throw new Error(`Observer-facing screen state should include active work view URL: ${JSON.stringify(screen)}`);
+}
+if (screen.workViewSummary?.engine?.mode !== "simulated"
+  || screen.workViewSummary?.engine?.realEngine !== false) {
+  throw new Error(`Observer-facing screen state should expose browser engine mode: ${JSON.stringify(screen.workViewSummary?.engine)}`);
 }
 if (!screen.snapshotText?.includes("OpenClaw browser work view")) {
   throw new Error("Observer-facing snapshot preview should include browser work view text.");

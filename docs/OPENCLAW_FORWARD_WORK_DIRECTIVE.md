@@ -341,6 +341,22 @@ sidecar contract, starting with one user-space profile, one governed HTTP(S)
 navigation, and compact real-engine capture. Do not add a readiness endpoint or
 broaden into desktop capture.
 
+That real-engine slice is complete. Browser runtime can now launch a
+NixOS-managed Firefox through `puppeteer-core`, expose its real PID/title/URL/tab
+state, execute existing lease-gated page input/click/new-tab operations, feed
+real page metadata through capture and screen-sense, and remove its ephemeral
+AI profile on disconnect/shutdown. The targeted milestone uses a loopback page
+and the production prepare/lease path; no hidden browser download, external
+fixture, root launch, desktop capture, or `--no-sandbox` bypass is involved.
+
+The remaining Level 2 deployment gap is component ownership: the Nix body
+skeleton still defines session-manager and browser-runtime as system services,
+so its desktop profile cannot truthfully default to the real user browser. Move
+those two components into the selected login user's manager alongside the
+sidecar without creating duplicate instances or hardcoding a UID. Until then,
+real engine mode remains explicit and simulated mode remains the default Nix
+fallback.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

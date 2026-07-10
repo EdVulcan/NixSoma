@@ -44,6 +44,12 @@ let
       portEnv = "OPENCLAW_BROWSER_RUNTIME_PORT";
       port = cfg.ports.browserRuntime;
       after = [ "openclaw-event-hub" "openclaw-session-manager" ];
+      extraEnvironment = {
+        OPENCLAW_BROWSER_ENGINE_MODE = cfg.browserEngine.mode;
+        OPENCLAW_BROWSER_PROFILE_DIR = cfg.browserEngine.profileDir;
+      } // optionalAttrs (cfg.browserEngine.mode == "firefox") {
+        OPENCLAW_BROWSER_EXECUTABLE = "${cfg.browserEngine.package}/bin/firefox";
+      };
     }
     {
       key = "screenSense";
@@ -142,7 +148,7 @@ let
       OPENCLAW_BODY_PROFILE = cfg.profile;
       OPENCLAW_BODY_STATE_DIR = cfg.stateDir;
       OPENCLAW_BODY_LOG_DIR = cfg.logDir;
-    };
+    } // (spec.extraEnvironment or { });
     serviceConfig = {
       Type = "simple";
       WorkingDirectory = "${cfg.repoRoot}/${spec.path}";
@@ -220,6 +226,24 @@ in
       type = types.package;
       default = pkgs.nodejs;
       description = "Node.js package used to run OpenClaw services.";
+    };
+
+    browserEngine = {
+      mode = mkOption {
+        type = types.enum [ "simulated" "firefox" ];
+        default = "simulated";
+        description = "Browser engine mode; firefox uses the fixed Nix browser package behind the governed runtime API.";
+      };
+      package = mkOption {
+        type = types.package;
+        default = pkgs.firefox;
+        description = "Nix browser package used by the real browser engine adapter.";
+      };
+      profileDir = mkOption {
+        type = types.str;
+        default = "${cfg.stateDir}/browser-profile";
+        description = "Ephemeral AI-owned browser profile directory cleared by the adapter lifecycle.";
+      };
     };
 
     host = mkOption {

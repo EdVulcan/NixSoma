@@ -305,6 +305,7 @@ async function refreshPhase3BackgroundWorkView() {
       "Sidecar Authority: owner=" + (sidecar.userSessionOwned ? "user-session" : sidecar.sessionManagerOwned ? "session-manager" : "none") + " connected=" + Boolean(sidecar.authorityConnected) + " reconnectable=" + Boolean(sidecar.reconnectable),
       "Capture Source: status=" + (sidecar.captureSourceStatus ?? "waiting") + " recoveryRequired=" + Boolean(sidecar.captureRecoveryRequired) + " failure=" + (sidecar.captureFailure ?? "none"),
       "Workspace Recovery: status=" + (sidecar.captureObservation?.workspaceRecoveryStatus ?? "none") + " restoredTabs=" + (sidecar.captureObservation?.restoredTabCount ?? 0) + " freshAuthority=" + Boolean(sidecar.captureObservation?.freshAuthorityBound) + " automaticReplay=" + Boolean(sidecar.captureObservation?.automaticActionReplay),
+      "Browser Engine: mode=" + (sidecar.captureObservation?.browserEngineMode ?? "unknown") + " real=" + Boolean(sidecar.captureObservation?.realBrowserEngine) + " registry=" + (sidecar.captureObservation?.browserEngineRegistry ?? "none"),
       "Sidecar Lifecycle: " + (trustedSession.sidecarContract?.lifecycleProposal?.status ?? "unknown") + " execution=" + (trustedSession.sidecarContract?.lifecycleProposal?.executionStatus ?? "unknown"),
       "Sidecar Approval Draft: " + (trustedSession.sidecarContract?.approvalTaskDraft?.status ?? "unknown") + " createsTask=" + String(Boolean(trustedSession.sidecarContract?.approvalTaskDraft?.createsTaskNow)),
     ].join("\\n");
