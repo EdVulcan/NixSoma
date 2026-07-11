@@ -17,10 +17,12 @@ unit, and runs representative behavior from each store path.
 
 ## Existing Command Seams
 
-- `openclaw-system-sense/src/systemd-inspection.mjs` invokes `systemctl show`
-  for read-only unit inventory.
-- Core repair execution still delegates a fixed `systemctl restart` command to
-  a Nix-generated helper, optionally through narrowly scoped sudo.
+- Read-only inventory no longer invokes `systemctl`; native D-Bus is the only
+  transport and bus loss fails closed.
+- The running VM generation still contains the historical fixed browser-runtime
+  `systemctl`/sudo helper in `/etc/nixos/configuration.nix`. The repository
+  profile no longer generates that path, but runtime removal requires a NixOS
+  generation switch.
 - Existing repair proposals, approvals, audit evidence, Observer routes, and
   fail-closed behavior must remain stable while transport changes underneath.
 
@@ -59,7 +61,7 @@ unit, and runs representative behavior from each store path.
   a real `loaded/active/running` core unit through `dbus_native` transport.
 - `dev-observer-openclaw-systemd-unit-inventory-check.sh` proves the same native
   evidence remains visible through the existing Observer panel.
-- The system-sense Nix closure contains 20 reviewed runtime source files plus
+- The system-sense Nix closure contains 22 reviewed runtime source files plus
   the lockfile-pinned production D-Bus dependency and excludes Puppeteer and
   workspace development packages.
 
@@ -74,18 +76,49 @@ Observer contract are unchanged, while response evidence identifies
 If the system bus is unavailable, inventory remains planned and unobserved; it
 does not shell out to `systemctl`.
 
+## Second Slice: Fixed Native Restart
+
+The repository implementation is complete but not yet loaded into the running
+VM generation:
+
+1. Desktop system services run as the dedicated `openclaw-service` account
+   instead of root; session-manager and browser-runtime remain user-manager
+   services.
+2. A no-argument store-native helper invokes only
+   `org.freedesktop.systemd1.Manager.RestartUnit` for
+   `openclaw-system-sense.service` with mode `replace`.
+3. The helper waits for the unit to return to `active/running` with a different
+   main PID, then returns compact job and before/after evidence.
+4. Polkit grants only `org.freedesktop.systemd1.manage-units` when unit,
+   verb, and subject match that fixed restart and service account.
+5. Core reuses the existing next-repair proposal, high-risk approval, operator
+   step, audit, post-verification, and Observer path. There is no direct
+   `systemctl` or sudo fallback; unmatched targets fail closed.
+6. Store-native core execution resolves body-ledger readiness and writes through
+   `OPENCLAW_BODY_EVIDENCE_LEDGER_DIR` at
+   `/var/lib/openclaw/body-evidence-ledger`; public evidence continues to use
+   the stable `.artifacts/openclaw-body-evidence-ledger` display path.
+
+Focused tests prove the exact D-Bus message, no-argument boundary, PID-change
+verification, production helper subprocess bridge, and negative fallback. The
+auth-delegation and full body-config gates prove Nix/Polkit evaluation and all
+store closures. The existing core and Observer real-execution milestones now
+require successful native transport rather than accepting a failed attempt.
+
 ## Deferred
 
-- D-Bus start/stop/restart/reload operations.
-- Polkit policy and authorization-agent integration.
+- D-Bus start/stop/reload operations and any restart target other than the fixed
+  system-sense unit.
+- Loading and proving the repository Polkit rule in the running VM generation.
 - Dedicated `openclaw-hostd` ownership boundary.
-- Removal of the fixed sudo repair helper.
+- Removal of the historical fixed sudo repair helper from the active host
+  configuration/generation.
 - eBPF kernel event transport and declarative Nix self-evolution.
 
 ## Next Slice
 
-Design and authorize the smallest native systemd mutation behind the existing
-repair proposal, approval, audit, and recovery path. This requires an explicit
-Polkit/privilege decision before implementation. Do not invoke `RestartUnit`,
-change host policy, or remove the existing fixed repair helper without that
-authority and a real VM recovery proof.
+Switch a host generation that imports this profile, remove the historical
+browser-runtime sudo helper from the host configuration, and run the existing
+core plus Observer next-repair real-execution milestones. Completion requires
+`dbus_native`, Polkit mode, exit zero, a systemd job path, changed PID, restored
+health, no password prompt, and no sudo/systemctl execution evidence.

@@ -158,6 +158,8 @@ requireIncludes("dev-body profile", devProfile, [
 requireIncludes("desktop-body profile", desktopProfile, [
   "./dev-body.nix",
   "profile = \"desktop-body\"",
+  "user = \"openclaw-service\"",
+  "systemdRepairAuthDelegation.enable = true",
   "trustedSidecarUserUnit.enable = true",
   "componentOwnership.user",
   "browserEngine.mode = \"firefox\"",
@@ -220,6 +222,8 @@ if command -v nix >/dev/null 2>&1; then
     in {
       system = builtins.attrNames config.systemd.services;
       user = builtins.attrNames config.systemd.user.services;
+      polkitEnabled = config.security.polkit.enable;
+      polkitExtraConfig = config.security.polkit.extraConfig;
       session = project config.systemd.user.services.openclaw-session-manager;
       browser = project config.systemd.user.services.openclaw-browser-runtime;
       core = project config.systemd.services.openclaw-core;
@@ -237,6 +241,22 @@ for (const name of userOwned) {
   if (!ownership.user.includes(name) || ownership.system.includes(name)) {
     throw new Error(`${name} must exist exclusively in the user manager: ${JSON.stringify(ownership)}`);
   }
+}
+for (const [name, unit] of Object.entries(ownership).filter(([name]) =>
+  ["core", "eventHub", "screenSense", "screenAct", "systemSense", "systemHeal", "observerUi"].includes(name)
+)) {
+  if (unit.serviceConfig?.User !== "openclaw-service") {
+    throw new Error(`${name} must run as the dedicated openclaw service user: ${JSON.stringify(unit)}`);
+  }
+}
+if (ownership.polkitEnabled !== true
+  || !ownership.polkitExtraConfig.includes('action.lookup("unit") == "openclaw-system-sense.service"')
+  || !ownership.polkitExtraConfig.includes('action.lookup("verb") == "restart"')
+  || !ownership.polkitExtraConfig.includes('subject.user == "openclaw-service"')) {
+  throw new Error(`desktop body must expose fixed native systemd Polkit delegation: ${JSON.stringify({
+    enabled: ownership.polkitEnabled,
+    config: ownership.polkitExtraConfig,
+  })}`);
 }
 for (const [name, unit] of [["session", ownership.session], ["browser", ownership.browser]]) {
   if (!unit.wantedBy?.includes("graphical-session.target")
@@ -277,6 +297,9 @@ if (ownership.eventHub.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
 }
 if (ownership.core.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || ownership.core.environment?.OPENCLAW_CORE_STATE_FILE !== "/var/lib/openclaw/openclaw-core-state.json"
+  || ownership.core.environment?.OPENCLAW_BODY_EVIDENCE_LEDGER_DIR !== "/var/lib/openclaw/body-evidence-ledger"
+  || ownership.core.environment?.OPENCLAW_SYSTEMD_REPAIR_AUTH_DELEGATION !== "polkit-dbus-fixed-unit"
+  || !String(ownership.core.environment?.OPENCLAW_SYSTEMD_REPAIR_RESTART_HELPER ?? "").startsWith("/nix/store/")
   || !String(ownership.core.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
   || !String(ownership.core.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-core")
   || ownership.core.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
@@ -534,8 +557,11 @@ EOF
       -H 'content-type: application/json' \
       --data '{"type":"phase_a_nix_store_probe","goal":"Persist a queued control-plane task without execution","intent":"task.observe"}' \
       >"$runtime_dir/created.json"
+    task_id="$(node -e 'const fs = require("node:fs"); const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); process.stdout.write(data.task.id)' "$runtime_dir/created.json")"
     for _ in $(seq 1 50); do
-      [[ -s "$state_file" ]] && break
+      if node -e 'const fs = require("node:fs"); try { const state = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); process.exit(state.tasks?.some((task) => task.id === process.argv[2] && task.status === "queued") ? 0 : 1); } catch { process.exit(1); }' "$state_file" "$task_id"; then
+        break
+      fi
       sleep 0.1
     done
     kill -TERM "$core_pid"
@@ -991,7 +1017,9 @@ EOF
     || -e "$system_sense_working_dir/node_modules/@openclaw"
     || -e "$system_sense_working_dir/node_modules/puppeteer-core"
     || -e "$system_sense_working_dir/node_modules/typescript"
-    || "$system_sense_source_count" -ne 20 ]]; then
+    || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-dbus-restart-helper.mjs"
+    || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-dbus-transport.mjs"
+    || "$system_sense_source_count" -ne 22 ]]; then
     echo "system-sense Nix closure is not exact, production-only, and read-only: $system_sense_out" >&2
     exit 1
   fi

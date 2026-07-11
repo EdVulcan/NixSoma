@@ -74,6 +74,57 @@ test("systemd task builders enforce confirm gates and publish task lifecycle eve
   );
 });
 
+test("native systemd execution task uses observed inventory without historical ledger prerequisites", async () => {
+  const { deps, fetchUrls } = createTaskLifecycleHarness({
+    fetchJson: () => ({
+      registry: "openclaw-systemd-unit-inventory-v0",
+      observedAt: "2026-07-11T12:00:00.000Z",
+      source: { transport: "dbus_native" },
+      units: [{
+        unit: "openclaw-system-sense.service",
+        loadState: "loaded",
+        activeState: "active",
+        systemdObserved: true,
+      }],
+    }),
+  });
+  const builders = createSystemdTaskBuilders(deps);
+
+  const result = await builders.createSystemdNextRepairTaskShell({ confirm: true, execute: true });
+
+  assert.deepEqual(fetchUrls, ["http://127.0.0.1:4106/system/systemd/units"]);
+  assert.equal(result.registry, "openclaw-systemd-next-repair-real-execution-v0");
+  assert.equal(result.sourceRegistry, "openclaw-systemd-unit-inventory-v0");
+  assert.equal(result.task.systemdNextRepair.target.unit, "openclaw-system-sense.service");
+  assert.equal(result.task.systemdNextRepair.evidence.dryRun.transport, "dbus_native");
+  assert.equal(result.task.systemdNextRepair.evidence.dryRun.method, "org.freedesktop.systemd1.Manager.RestartUnit");
+  assert.equal(result.approval.status, "pending");
+  assert.equal(result.task.policy.request.risk, "high");
+  assert.equal(result.governance.hostMutation, false);
+});
+
+test("native systemd execution task fails closed without the fixed helper authorization", async () => {
+  const { deps, fetchUrls } = createTaskLifecycleHarness();
+  const buildersWithoutHelper = createSystemdTaskBuilders({
+    ...deps,
+    SYSTEMD_REPAIR_RESTART_HELPER: null,
+  });
+  const buildersWithoutPolkit = createSystemdTaskBuilders({
+    ...deps,
+    SYSTEMD_REPAIR_AUTH_DELEGATION: null,
+  });
+
+  await assert.rejects(
+    buildersWithoutHelper.createSystemdNextRepairTaskShell({ confirm: true, execute: true }),
+    /requires the fixed Polkit D-Bus helper/u,
+  );
+  await assert.rejects(
+    buildersWithoutPolkit.createSystemdNextRepairTaskShell({ confirm: true, execute: true }),
+    /requires the fixed Polkit D-Bus helper/u,
+  );
+  assert.deepEqual(fetchUrls, []);
+});
+
 test("long-term memory builders preserve Phase 7 plan and route-review contracts", async () => {
   const { deps } = createTaskLifecycleHarness();
   const builders = createLongTermMemoryBuilders(deps);

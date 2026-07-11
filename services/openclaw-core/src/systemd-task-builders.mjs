@@ -18,6 +18,7 @@ export function createSystemdTaskBuilders(deps) {
     SYSTEMD_NEXT_REPAIR_TASK_SHELL_REGISTRY,
     SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_REGISTRY,
     SYSTEMD_REPAIR_REAL_EXECUTION_UNIT,
+    SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_UNIT,
     SYSTEMD_REPAIR_RESTART_HELPER,
     SYSTEMD_REPAIR_AUTH_DELEGATION,
   } = deps;
@@ -134,19 +135,12 @@ export function createSystemdTaskBuilders(deps) {
             hostMutationAttempted: false,
             futureExecutionRequiresSeparateMilestone: !realExecution,
             selectedRealExecutionUnit: realExecution ? SYSTEMD_REPAIR_REAL_EXECUTION_UNIT : null,
-            authDelegation: SYSTEMD_REPAIR_RESTART_HELPER
-              ? {
-                  mode: SYSTEMD_REPAIR_AUTH_DELEGATION ?? "external-fixed-helper",
-                  helperConfigured: true,
-                  passwordlessExpected: SYSTEMD_REPAIR_AUTH_DELEGATION === "sudo-nopasswd-fixed-helper",
-                  scope: "restart openclaw-browser-runtime.service only",
-                }
-              : {
-                  mode: "direct-systemctl",
-                  helperConfigured: false,
-                  passwordlessExpected: false,
-                  scope: "host policy decides whether authentication is required",
-                },
+            authDelegation: {
+              mode: "native-dbus-helper-required",
+              helperConfigured: false,
+              passwordlessExpected: false,
+              scope: "legacy browser system-unit mutation is disabled",
+            },
           },
         },
       },
@@ -264,15 +258,47 @@ export function createSystemdTaskBuilders(deps) {
       throw new Error("Next systemd repair task shell creation requires confirm=true.");
     }
 
-    const routeGate = await fetchJson(`${systemSenseUrl}/system/systemd/next-repair-task-route`);
-    if (routeGate.routeDecision?.taskShellAllowed !== true
-      || routeGate.routeDecision?.selectedSlice !== "openclaw-systemd-next-repair-task-shell"
-      || routeGate.routeDecision?.targetUnit !== "openclaw-system-sense.service") {
-      throw new Error("Next systemd repair task shell requires the approved task route for openclaw-system-sense.service.");
+    let routeGate;
+    let dryRunEvidence;
+    let targetUnit;
+    if (execute === true) {
+      if (!SYSTEMD_REPAIR_RESTART_HELPER || SYSTEMD_REPAIR_AUTH_DELEGATION !== "polkit-dbus-fixed-unit") {
+        throw new Error("Native systemd repair execution requires the fixed Polkit D-Bus helper.");
+      }
+      const inventory = await fetchJson(`${systemSenseUrl}/system/systemd/units`);
+      const target = inventory.units?.find((unit) => unit.unit === SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_UNIT);
+      if (inventory.source?.transport !== "dbus_native"
+        || target?.systemdObserved !== true
+        || target?.loadState !== "loaded") {
+        throw new Error("Native systemd repair execution requires an observed system-sense unit inventory.");
+      }
+      targetUnit = SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_UNIT;
+      dryRunEvidence = {
+        command: "systemctl",
+        args: ["restart", targetUnit],
+        transport: "dbus_native",
+        method: "org.freedesktop.systemd1.Manager.RestartUnit",
+      };
+      routeGate = {
+        registry: inventory.registry,
+        routeDecision: {
+          taskShellAllowed: true,
+          selectedSlice: "openclaw-systemd-next-repair-real-execution",
+          targetUnit,
+        },
+        evidence: dryRunEvidence,
+        inventoryObservedAt: inventory.observedAt ?? null,
+      };
+    } else {
+      routeGate = await fetchJson(`${systemSenseUrl}/system/systemd/next-repair-task-route`);
+      if (routeGate.routeDecision?.taskShellAllowed !== true
+        || routeGate.routeDecision?.selectedSlice !== "openclaw-systemd-next-repair-task-shell"
+        || routeGate.routeDecision?.targetUnit !== SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_UNIT) {
+        throw new Error("Next systemd repair task shell requires the approved task route for openclaw-system-sense.service.");
+      }
+      dryRunEvidence = routeGate.evidence ?? {};
+      targetUnit = routeGate.routeDecision.targetUnit;
     }
-
-    const dryRunEvidence = routeGate.evidence ?? {};
-    const targetUnit = routeGate.routeDecision.targetUnit;
     const command = {
       command: dryRunEvidence.command ?? "systemctl",
       args: Array.isArray(dryRunEvidence.args) && dryRunEvidence.args.length > 0

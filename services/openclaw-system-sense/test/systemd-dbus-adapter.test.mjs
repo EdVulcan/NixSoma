@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { createSystemdDbusAdapter } from "../src/systemd-dbus-adapter.mjs";
+import { createSystemdDbusTransport } from "../src/systemd-dbus-transport.mjs";
 
 function variant(value) {
   return [[{ type: typeof value === "number" ? "u" : "s", child: [] }], [value]];
@@ -69,4 +70,31 @@ test("native systemd adapter rejects non-service unit names before bus invocatio
     /rejects invalid service unit/u,
   );
   assert.equal(busCreated, false);
+});
+
+test("native systemd transport emits only the fixed restart method shape", async () => {
+  let closed = false;
+  const calls = [];
+  const bus = {
+    connection: { stream: { end: () => { closed = true; } } },
+    invoke(message, callback) {
+      calls.push(message);
+      callback(null, "/org/freedesktop/systemd1/job/42");
+    },
+  };
+  const transport = createSystemdDbusTransport({ createSystemBus: () => bus });
+
+  const jobPath = await transport.restartUnit("openclaw-system-sense.service");
+  transport.close();
+
+  assert.equal(jobPath, "/org/freedesktop/systemd1/job/42");
+  assert.deepEqual(calls, [{
+    destination: "org.freedesktop.systemd1",
+    path: "/org/freedesktop/systemd1",
+    interface: "org.freedesktop.systemd1.Manager",
+    member: "RestartUnit",
+    signature: "ss",
+    body: ["openclaw-system-sense.service", "replace"],
+  }]);
+  assert.equal(closed, true);
 });

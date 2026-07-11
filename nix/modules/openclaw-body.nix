@@ -122,17 +122,22 @@ let
     then "${cfg.runtimePackages.sessionManager}/share/openclaw"
     else cfg.repoRoot;
 
+  systemSenseRuntimeRoot =
+    if cfg.runtimePackages.systemSense != null
+    then "${cfg.runtimePackages.systemSense}/share/openclaw/services/openclaw-system-sense"
+    else "${cfg.repoRoot}/services/openclaw-system-sense";
+
   urlFor = port: "http://${cfg.connectHost}:${toString port}";
 
-  systemdRepairRestartHelper = pkgs.writeShellScriptBin "openclaw-systemd-repair-restart-browser-runtime" ''
+  systemdRepairRestartHelper = pkgs.writeShellScriptBin "openclaw-systemd-native-restart-system-sense" ''
     set -euo pipefail
 
     if [ "$#" -ne 0 ]; then
-      echo "openclaw-systemd-repair-restart-browser-runtime accepts no arguments" >&2
+      echo "openclaw-systemd-native-restart-system-sense accepts no arguments" >&2
       exit 64
     fi
 
-    exec ${pkgs.systemd}/bin/systemctl restart openclaw-browser-runtime.service
+    exec ${pkgs.nodejs}/bin/node ${systemSenseRuntimeRoot}/src/systemd-dbus-restart-helper.mjs
   '';
 
   commonEnvironment = stateDir: {
@@ -149,10 +154,10 @@ let
     OPENCLAW_SYSTEM_HEAL_STATE_FILE = "${stateDir}/openclaw-system-heal-state.json";
     OPENCLAW_BROWSER_RUNTIME_STATE_FILE = "${stateDir}/openclaw-browser-runtime-state.json";
     OPENCLAW_EVENT_LOG_FILE = "${stateDir}/openclaw-events.jsonl";
+    OPENCLAW_BODY_EVIDENCE_LEDGER_DIR = "${stateDir}/body-evidence-ledger";
   } // optionalAttrs cfg.systemdRepairAuthDelegation.enable {
-    OPENCLAW_SYSTEMD_REPAIR_RESTART_HELPER = "${systemdRepairRestartHelper}/bin/openclaw-systemd-repair-restart-browser-runtime";
-    OPENCLAW_SYSTEMD_REPAIR_RESTART_HELPER_SUDO = "/run/wrappers/bin/sudo";
-    OPENCLAW_SYSTEMD_REPAIR_AUTH_DELEGATION = "sudo-nopasswd-fixed-helper";
+    OPENCLAW_SYSTEMD_REPAIR_RESTART_HELPER = "${systemdRepairRestartHelper}/bin/openclaw-systemd-native-restart-system-sense";
+    OPENCLAW_SYSTEMD_REPAIR_AUTH_DELEGATION = "polkit-dbus-fixed-unit";
   };
 
   mkService = scope: spec:
@@ -413,7 +418,7 @@ in
     };
 
     systemdRepairAuthDelegation = {
-      enable = mkEnableOption "passwordless OpenClaw-owned systemd repair delegation";
+      enable = mkEnableOption "Polkit-authorized native D-Bus repair of one OpenClaw-owned systemd unit";
     };
 
     trustedSidecarUserUnit = {
@@ -459,8 +464,11 @@ in
         message = "services.openclaw.systemdRepairAuthDelegation.enable requires services.openclaw.user so delegation is scoped to one OpenClaw service account.";
       }
       {
-        assertion = !cfg.systemdRepairAuthDelegation.enable || !builtins.elem "browserRuntime" cfg.componentOwnership.user;
-        message = "systemd repair delegation targets the system browser unit and cannot be combined with user-owned browserRuntime.";
+        assertion = !cfg.systemdRepairAuthDelegation.enable
+          || (builtins.elem "systemSense" cfg.components
+            && !builtins.elem "systemSense" cfg.componentOwnership.user
+            && cfg.runtimePackages.systemSense != null);
+        message = "systemd repair delegation requires a store-native system-owned systemSense component.";
       }
     ];
 
@@ -499,16 +507,16 @@ in
       "openclaw-trusted-sidecar@" = trustedSidecarUserService;
     };
 
-    security.sudo.extraRules = mkIf cfg.systemdRepairAuthDelegation.enable [
-      {
-        users = [ delegationUser ];
-        commands = [
-          {
-            command = "${systemdRepairRestartHelper}/bin/openclaw-systemd-repair-restart-browser-runtime";
-            options = [ "NOPASSWD" ];
-          }
-        ];
-      }
-    ];
+    security.polkit.enable = mkIf cfg.systemdRepairAuthDelegation.enable true;
+    security.polkit.extraConfig = mkIf cfg.systemdRepairAuthDelegation.enable ''
+      polkit.addRule(function(action, subject) {
+        if (action.id == "org.freedesktop.systemd1.manage-units"
+            && action.lookup("unit") == "openclaw-system-sense.service"
+            && action.lookup("verb") == "restart"
+            && subject.user == "${delegationUser}") {
+          return polkit.Result.YES;
+        }
+      });
+    '';
   };
 }

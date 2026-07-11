@@ -1549,6 +1549,86 @@ test("systemd next repair task dispatches to deferred non-recoverable handler", 
   assert(events.some((event) => event.name === "systemd.next_repair.execution_deferred"));
 });
 
+test("approved next systemd repair executes only the native fixed-unit helper", async () => {
+  const root = mkdtempSync(path.join(tmpdir(), "openclaw-systemd-helper-"));
+  const helper = path.join(root, "restart-system-sense");
+  writeFileSync(helper, `#!/bin/sh
+test "$#" -eq 0
+printf '%s\\n' '{"ok":true,"transport":"dbus_native","method":"org.freedesktop.systemd1.Manager.RestartUnit","unit":"openclaw-system-sense.service","jobPath":"/org/freedesktop/systemd1/job/42","before":{"activeState":"active","subState":"running","mainPid":100},"after":{"activeState":"active","subState":"running","mainPid":200}}'
+`);
+  chmodSync(helper, 0o755);
+
+  try {
+    const { executor, events } = createExecutorHarness({
+      state: {
+        SYSTEMD_REPAIR_EXECUTION_TIMEOUT_MS: 3000,
+        SYSTEMD_REPAIR_RESTART_HELPER: helper,
+        SYSTEMD_REPAIR_AUTH_DELEGATION: "polkit-dbus-fixed-unit",
+      },
+      deps: {
+        client: {
+          sessionManagerUrl: "http://127.0.0.1:4102",
+          screenSenseUrl: "http://127.0.0.1:4104",
+          screenActUrl: "http://127.0.0.1:4105",
+          systemSenseUrl: "http://127.0.0.1:4106",
+          fetchJson: async (url) => url.endsWith("/system/systemd/units")
+            ? {
+                registry: "openclaw-systemd-unit-inventory-v0",
+                observedAt: new Date().toISOString(),
+                units: [{
+                  unit: "openclaw-system-sense.service",
+                  loadState: "loaded",
+                  activeState: "active",
+                  subState: "running",
+                  mainPid: 200,
+                  systemdObserved: true,
+                  observation: "dbus_properties_read_only",
+                }],
+              }
+            : {
+                system: {
+                  timestamp: new Date().toISOString(),
+                  alerts: [],
+                  network: { online: true, checkedTargets: 7 },
+                  services: { browserRuntime: { name: "browserRuntime", ok: true } },
+                },
+              },
+          postJson: async () => ({ ok: true }),
+        },
+      },
+    });
+    const task = {
+      id: "systemd-next-native-repair-1",
+      type: "systemd_next_repair_task",
+      goal: "Execute approved native systemd repair",
+      status: "queued",
+      systemdNextRepair: {
+        registry: "openclaw-systemd-next-repair-real-execution-v0",
+        target: { unit: "openclaw-system-sense.service" },
+        command: { command: "systemctl", args: ["restart", "openclaw-system-sense.service"] },
+        execution: { realExecutionEnabled: true },
+      },
+    };
+
+    const result = await executor.executeTaskWithRecovery(task, { autoRecover: false });
+    const finalTask = result.finalExecution.task;
+    const transcript = finalTask.outcome.details.commandTranscript[0];
+
+    assert.equal(finalTask.outcome.kind, "systemd_next_repair_execution_completed");
+    assert.equal(transcript.actualCommand, helper);
+    assert.equal(transcript.transport, "dbus_native");
+    assert.equal(transcript.method, "org.freedesktop.systemd1.Manager.RestartUnit");
+    assert.equal(transcript.jobPath, "/org/freedesktop/systemd1/job/42");
+    assert.equal(transcript.beforeMainPid, 100);
+    assert.equal(transcript.afterMainPid, 200);
+    assert.equal(transcript.authDelegation.mode, "polkit-dbus-fixed-unit");
+    assert.equal(transcript.authDelegation.sudo, null);
+    assert(events.some((event) => event.name === "systemd.next_repair.execution_completed"));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("body evidence followup record task dispatches to deferred append shell when append is disabled", async () => {
   const { executor, events } = createExecutorHarness();
   const task = {

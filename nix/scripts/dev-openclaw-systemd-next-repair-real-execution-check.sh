@@ -3,54 +3,24 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-PLAN_FILE="$REPO_ROOT/docs/plans/OPENCLAW_PHASE_2_PLAN.md"
+PLAN_FILE="$REPO_ROOT/docs/plans/OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md"
+CORE_URL="${OPENCLAW_INSTALLED_CORE_URL:-http://127.0.0.1:4100}"
 
-export OPENCLAW_CORE_PORT="${OPENCLAW_CORE_PORT:-6650}"
-export OPENCLAW_EVENT_HUB_PORT="${OPENCLAW_EVENT_HUB_PORT:-6651}"
-export OPENCLAW_SESSION_MANAGER_PORT="${OPENCLAW_SESSION_MANAGER_PORT:-6652}"
-export OPENCLAW_BROWSER_RUNTIME_PORT="${OPENCLAW_BROWSER_RUNTIME_PORT:-6653}"
-export OPENCLAW_SCREEN_SENSE_PORT="${OPENCLAW_SCREEN_SENSE_PORT:-6654}"
-export OPENCLAW_SCREEN_ACT_PORT="${OPENCLAW_SCREEN_ACT_PORT:-6655}"
-export OPENCLAW_SYSTEM_SENSE_PORT="${OPENCLAW_SYSTEM_SENSE_PORT:-6656}"
-export OPENCLAW_SYSTEM_HEAL_PORT="${OPENCLAW_SYSTEM_HEAL_PORT:-6657}"
-export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-6720}"
-export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-systemd-next-repair-real-execution-check.json}"
-export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-system-heal-systemd-next-repair-real-execution-check.json}"
-
-CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
-LEDGER_DIR="$REPO_ROOT/.artifacts/openclaw-body-evidence-ledger"
-. "$SCRIPT_DIR/dev-body-evidence-prereqs.sh"
-
-"$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
-rm -f \
-  "$OPENCLAW_CORE_STATE_FILE" \
-  "$OPENCLAW_CORE_STATE_FILE.tmp" \
-  "$OPENCLAW_SYSTEM_HEAL_STATE_FILE" \
-  "$OPENCLAW_SYSTEM_HEAL_STATE_FILE.tmp"
-rm -rf "$LEDGER_DIR"
-
-cleanup() {
-  "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
-}
-trap cleanup EXIT
+core_user="$(systemctl show openclaw-core.service --property=User --value)"
+core_environment="$(systemctl show openclaw-core.service --property=Environment --value)"
+if [[ "$core_user" != "openclaw-service"
+  || "$core_environment" != *"OPENCLAW_SYSTEMD_REPAIR_AUTH_DELEGATION=polkit-dbus-fixed-unit"*
+  || "$core_environment" != *"OPENCLAW_SYSTEMD_REPAIR_RESTART_HELPER=/nix/store/"*
+  || "$core_environment" == *"OPENCLAW_SYSTEMD_REPAIR_RESTART_HELPER_SUDO"*
+  || "$core_environment" == *"sudo-nopasswd-fixed-helper"* ]]; then
+  echo "installed OpenClaw core has not loaded the native Polkit D-Bus generation" >&2
+  exit 65
+fi
+systemctl is-active --quiet openclaw-core.service openclaw-system-sense.service
+curl --silent --fail "$CORE_URL/health" >/dev/null
 
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
-
-
-"$SCRIPT_DIR/dev-up.sh"
-
-prepare_body_evidence_timeline_readiness "$CORE_URL" "Approve one next repair execution before next repair real execution."
-
-created_directory="$(post_json "$CORE_URL/body/evidence-ledger/directory-tasks" '{"confirm":true}')"
-directory_approval_id="$(node -e 'const data = JSON.parse(process.argv[1]); process.stdout.write(data.approval.id)' "$created_directory")"
-post_json "$CORE_URL/approvals/$directory_approval_id/approve" '{"approvedBy":"milestone-check","reason":"Approve bounded ledger directory creation before next repair real execution."}' >/dev/null
-post_json "$CORE_URL/operator/step" '{}' >/dev/null
-
-created_record_task="$(post_json "$CORE_URL/body/evidence-ledger/first-record-tasks" '{"confirm":true}')"
-record_approval_id="$(node -e 'const data = JSON.parse(process.argv[1]); process.stdout.write(data.approval.id)' "$created_record_task")"
-post_json "$CORE_URL/approvals/$record_approval_id/approve" '{"approvedBy":"milestone-check","reason":"Approve one bounded bootstrap append before next repair real execution."}' >/dev/null
-post_json "$CORE_URL/operator/step" '{}' >/dev/null
 
 created="$(post_json "$CORE_URL/system/systemd/next-repair-tasks" '{"confirm":true,"execute":true}')"
 approval_id="$(node -e 'const data = JSON.parse(process.argv[1]); process.stdout.write(data.approval.id)' "$created")"
@@ -68,10 +38,10 @@ const step = JSON.parse(process.argv[5]);
 const taskState = JSON.parse(process.argv[6]);
 
 for (const token of [
-  "openclaw-systemd-next-repair-real-execution",
-  "Executes only `systemctl restart openclaw-system-sense.service`",
-  "Records command, target, exit code, stdout/stderr, result, rollback note",
-  "Must not add automatic repair, retries, denial recovery",
+  "Second Slice: Fixed Native Restart",
+  "org.freedesktop.systemd1.Manager.RestartUnit",
+  "There is no direct",
+  "changed PID",
 ]) {
   if (!plan.includes(token)) {
     throw new Error(`Phase 2 plan missing next real-execution token: ${token}`);
@@ -109,8 +79,8 @@ if (!step.ok || step.ran !== true || step.blocked !== false) {
 
 const finalTask = step.task ?? taskState.task;
 const outcomeKind = finalTask?.outcome?.kind;
-if (!["systemd_next_repair_execution_completed", "systemd_next_repair_execution_failed"].includes(outcomeKind)) {
-  throw new Error(`next real execution task should finish with execution evidence: ${JSON.stringify(finalTask)}`);
+if (outcomeKind !== "systemd_next_repair_execution_completed") {
+  throw new Error(`next real execution task should complete through native D-Bus: ${JSON.stringify(finalTask)}`);
 }
 const details = finalTask.outcome?.details ?? {};
 if (details.hostMutation !== true || details.hostMutationAttempted !== true || details.executed !== true) {
@@ -120,8 +90,18 @@ const transcript = details.commandTranscript?.[0];
 if (!transcript || transcript.command !== "systemctl restart openclaw-system-sense.service") {
   throw new Error(`next real execution should record command transcript: ${JSON.stringify(details.commandTranscript)}`);
 }
-if (!Number.isInteger(transcript.exitCode) || transcript.skipped === true) {
-  throw new Error(`next real execution transcript should include a real exit code: ${JSON.stringify(transcript)}`);
+if (transcript.exitCode !== 0
+  || transcript.skipped === true
+  || transcript.transport !== "dbus_native"
+  || transcript.method !== "org.freedesktop.systemd1.Manager.RestartUnit"
+  || !String(transcript.jobPath).startsWith("/org/freedesktop/systemd1/job/")
+  || !Number.isInteger(transcript.beforeMainPid)
+  || !Number.isInteger(transcript.afterMainPid)
+  || transcript.beforeMainPid === transcript.afterMainPid
+  || transcript.authDelegation?.mode !== "polkit-dbus-fixed-unit"
+  || transcript.authDelegation?.sudo !== null
+  || details.executionSucceeded !== true) {
+  throw new Error(`next real execution transcript should prove native Polkit-authorized restart: ${JSON.stringify(transcript)}`);
 }
 if (typeof details.rollbackNote !== "string" || !details.rollbackNote.includes("verify health")) {
   throw new Error(`next real execution should carry rollback note: ${JSON.stringify(details.rollbackNote)}`);
@@ -137,6 +117,12 @@ console.log(JSON.stringify({
     approvalId: approved.approval.id,
     outcome: outcomeKind,
     command: transcript.command,
+    actualCommand: transcript.actualCommand,
+    transport: transcript.transport,
+    method: transcript.method,
+    jobPath: transcript.jobPath,
+    beforeMainPid: transcript.beforeMainPid,
+    afterMainPid: transcript.afterMainPid,
     exitCode: transcript.exitCode,
     hostMutationAttempted: details.hostMutationAttempted,
     executionSucceeded: details.executionSucceeded,

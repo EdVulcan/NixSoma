@@ -301,7 +301,7 @@
 | --- | --- | --- |
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
-| Level 3 系统级特权组件 | 约 15-20% | 固定 OpenClaw unit inventory 已通过原生只读 systemd D-Bus 和 Observer/VM 证据建立；提案和有限命令执行证据仍保留。独立 `openclaw-hostd`、D-Bus mutation、Polkit RPC 和受控特权边界尚未建立。 |
+| Level 3 系统级特权组件 | 约 15-20% | 固定 OpenClaw unit inventory 已通过原生只读 systemd D-Bus 和 Observer/VM 证据建立；固定 system-sense restart、专用服务账户和精确 Polkit 规则已在仓库实现但尚未完成 switched-VM 证明。独立 `openclaw-hostd`、广义 D-Bus mutation 和更完整受控特权边界尚未建立。 |
 | Level 4 图形栈内生组件 | 约 0-5% | 只有 AI-owned work-view 方向与接口预留；专属 session、nested compositor、原生图形输入输出尚未实现。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成

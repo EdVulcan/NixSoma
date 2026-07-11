@@ -48,8 +48,10 @@ export function createPlanBuilder(deps) {
     SYSTEMD_NEXT_REPAIR_TASK_SHELL_REGISTRY,
     SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_REGISTRY,
     SYSTEMD_REPAIR_REAL_EXECUTION_UNIT,
+    SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_UNIT,
     SYSTEMD_REPAIR_RESTART_HELPER,
     SYSTEMD_REPAIR_AUTH_DELEGATION,
+    BODY_EVIDENCE_LEDGER_FILE_PATH,
     LONG_TERM_MEMORY_TASK_REGISTRY,
     LONG_TERM_MEMORY_DIR_DISPLAY_PATH,
     LONG_TERM_MEMORY_FILE_DISPLAY_PATH,
@@ -171,6 +173,7 @@ export function createPlanBuilder(deps) {
     SYSTEMD_NEXT_REPAIR_TASK_SHELL_REGISTRY,
     SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_REGISTRY,
     SYSTEMD_REPAIR_REAL_EXECUTION_UNIT,
+    SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_UNIT,
     SYSTEMD_REPAIR_RESTART_HELPER,
     SYSTEMD_REPAIR_AUTH_DELEGATION,
   });
@@ -219,6 +222,9 @@ export function createPlanBuilder(deps) {
     publishEvent,
     serialiseTask,
     buildPhase2NextCapabilityRouteReview: (...args) => buildPhase2NextCapabilityRouteReview(...args),
+    ...(BODY_EVIDENCE_LEDGER_FILE_PATH
+      ? { resolveLedgerFilePath: () => BODY_EVIDENCE_LEDGER_FILE_PATH }
+      : {}),
   });
   const {
     buildBodyEvidenceLedgerFollowupRecordReadiness,

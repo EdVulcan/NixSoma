@@ -13,14 +13,19 @@ export function createSystemBodyTaskHandlers({ client, state, taskManager, publi
     persistState,
     SYSTEMD_REPAIR_EXECUTION_TIMEOUT_MS,
     SYSTEMD_REPAIR_RESTART_HELPER,
-    SYSTEMD_REPAIR_RESTART_HELPER_SUDO,
     SYSTEMD_REPAIR_AUTH_DELEGATION,
     SYSTEMD_REPAIR_EXECUTION_TASK_REGISTRY,
     SYSTEMD_NEXT_REPAIR_TASK_SHELL_REGISTRY,
     SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_REGISTRY,
     SYSTEMD_REPAIR_REAL_EXECUTION_UNIT,
     SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_UNIT,
+    BODY_EVIDENCE_LEDGER_DIR,
+    BODY_EVIDENCE_LEDGER_FILE_PATH,
   } = state;
+  const bodyEvidenceLedgerDir = BODY_EVIDENCE_LEDGER_DIR
+    ?? path.resolve(process.cwd(), "../..", ".artifacts/openclaw-body-evidence-ledger");
+  const bodyEvidenceLedgerFilePath = BODY_EVIDENCE_LEDGER_FILE_PATH
+    ?? path.join(bodyEvidenceLedgerDir, "body-evidence-ledger.jsonl");
   const {
     serialiseTask,
     setTaskPhase,
@@ -55,7 +60,7 @@ export function createSystemBodyTaskHandlers({ client, state, taskManager, publi
 
   function readBodyEvidenceLedgerLines() {
     const ledgerFileDisplayPath = ".artifacts/openclaw-body-evidence-ledger/body-evidence-ledger.jsonl";
-    const ledgerFilePath = path.resolve(process.cwd(), "../..", ledgerFileDisplayPath);
+    const ledgerFilePath = bodyEvidenceLedgerFilePath;
     if (!existsSync(ledgerFilePath)) {
       return {
         ledgerFileDisplayPath,
@@ -151,6 +156,11 @@ export function createSystemBodyTaskHandlers({ client, state, taskManager, publi
       command: [command.command ?? "systemctl", ...args].join(" "),
       actualCommand: [result.command ?? command.command ?? "systemctl", ...actualArgs].join(" "),
       authDelegation: result.authDelegation ?? null,
+      transport: result.nativeMutation?.transport ?? result.authDelegation?.transport ?? null,
+      method: result.nativeMutation?.method ?? result.authDelegation?.method ?? null,
+      jobPath: result.nativeMutation?.jobPath ?? null,
+      beforeMainPid: result.nativeMutation?.before?.mainPid ?? null,
+      afterMainPid: result.nativeMutation?.after?.mainPid ?? null,
       skipped: false,
       skipReason: null,
       condition: null,
@@ -165,30 +175,53 @@ export function createSystemBodyTaskHandlers({ client, state, taskManager, publi
     const repair = task.systemdRepair ?? task.systemdNextRepair ?? {};
     const command = repair.command ?? {};
     const requestedArgs = Array.isArray(command.args) ? command.args : ["restart", repair.target?.unit ?? SYSTEMD_REPAIR_REAL_EXECUTION_UNIT];
-    const useRestartHelper =
+    const useRestartHelper = Boolean(
       SYSTEMD_REPAIR_RESTART_HELPER
-      && repair.target?.unit === SYSTEMD_REPAIR_REAL_EXECUTION_UNIT
+      && repair.target?.unit === SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_UNIT
       && command.command === "systemctl"
       && requestedArgs[0] === "restart"
-      && requestedArgs[1] === SYSTEMD_REPAIR_REAL_EXECUTION_UNIT;
-    const executable = useRestartHelper ? SYSTEMD_REPAIR_RESTART_HELPER_SUDO : command.command ?? "systemctl";
-    const args = useRestartHelper ? ["-n", SYSTEMD_REPAIR_RESTART_HELPER] : requestedArgs;
+      && requestedArgs[1] === SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_UNIT
+    );
+    const executable = useRestartHelper ? SYSTEMD_REPAIR_RESTART_HELPER : null;
+    const args = [];
     const authDelegation = useRestartHelper
       ? {
-          mode: SYSTEMD_REPAIR_AUTH_DELEGATION ?? "external-fixed-helper",
+          mode: SYSTEMD_REPAIR_AUTH_DELEGATION ?? "polkit-dbus-fixed-unit",
           helper: SYSTEMD_REPAIR_RESTART_HELPER,
-          sudo: SYSTEMD_REPAIR_RESTART_HELPER_SUDO,
+          sudo: null,
+          transport: "dbus_native",
+          method: "org.freedesktop.systemd1.Manager.RestartUnit",
           passwordPromptAllowed: false,
-          scope: "restart openclaw-browser-runtime.service only",
+          scope: "restart openclaw-system-sense.service only",
         }
       : {
-          mode: "direct-systemctl",
+          mode: "native-dbus-helper-required",
           helper: null,
           sudo: null,
-          passwordPromptAllowed: true,
-          scope: "host policy decides whether authentication is required",
+          transport: null,
+          method: null,
+          passwordPromptAllowed: false,
+          scope: "no command fallback",
         };
     const startedAt = new Date().toISOString();
+
+    if (!useRestartHelper) {
+      return {
+        invocationId: randomUUID(),
+        command: "not-executed",
+        args: [],
+        requestedCommand: command.command ?? "systemctl",
+        requestedArgs,
+        authDelegation,
+        startedAt,
+        completedAt: new Date().toISOString(),
+        exitCode: 126,
+        timedOut: false,
+        stdout: "",
+        stderr: "Native D-Bus fixed-unit restart helper is not configured for this target.",
+        ok: false,
+      };
+    }
 
     try {
       const result = await execFileAsync(executable, args, {
@@ -196,6 +229,19 @@ export function createSystemBodyTaskHandlers({ client, state, taskManager, publi
         windowsHide: true,
         maxBuffer: 16384,
       });
+      const nativeMutation = JSON.parse((result.stdout ?? "").trim());
+      if (nativeMutation.ok !== true
+        || nativeMutation.transport !== "dbus_native"
+        || nativeMutation.method !== "org.freedesktop.systemd1.Manager.RestartUnit"
+        || nativeMutation.unit !== SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_UNIT
+        || !String(nativeMutation.jobPath).startsWith("/org/freedesktop/systemd1/job/")
+        || !Number.isInteger(nativeMutation.before?.mainPid)
+        || !Number.isInteger(nativeMutation.after?.mainPid)
+        || nativeMutation.before.mainPid === nativeMutation.after.mainPid
+        || nativeMutation.after.activeState !== "active"
+        || nativeMutation.after.subState !== "running") {
+        throw new Error("Native D-Bus restart helper returned invalid mutation evidence.");
+      }
       return {
         invocationId: randomUUID(),
         command: executable,
@@ -209,6 +255,7 @@ export function createSystemBodyTaskHandlers({ client, state, taskManager, publi
         timedOut: false,
         stdout: result.stdout ?? "",
         stderr: result.stderr ?? "",
+        nativeMutation,
         ok: true,
       };
     } catch (error) {
@@ -229,7 +276,7 @@ export function createSystemBodyTaskHandlers({ client, state, taskManager, publi
           ? error.stderr
           : error instanceof Error
             ? error.message
-            : "systemctl restart failed.",
+            : "Native systemd restart failed.",
         ok: false,
       };
     }
@@ -240,9 +287,7 @@ export function createSystemBodyTaskHandlers({ client, state, taskManager, publi
     const displayPath = typeof directory.displayPath === "string" && directory.displayPath.trim()
       ? directory.displayPath.trim()
       : ".artifacts/openclaw-body-evidence-ledger";
-    const executionPath = path.isAbsolute(displayPath)
-      ? displayPath
-      : path.resolve(process.cwd(), "../..", displayPath);
+    const executionPath = bodyEvidenceLedgerDir;
 
     await setTaskPhase(task, "body_evidence_ledger_directory_create", {
       status: "running",
@@ -320,7 +365,7 @@ export function createSystemBodyTaskHandlers({ client, state, taskManager, publi
       ? firstRecord.plannedRecordType.trim()
       : "body_evidence_ledger_bootstrap";
     const ledgerFileDisplayPath = ".artifacts/openclaw-body-evidence-ledger/body-evidence-ledger.jsonl";
-    const ledgerFilePath = path.resolve(process.cwd(), "../..", ledgerFileDisplayPath);
+    const ledgerFilePath = bodyEvidenceLedgerFilePath;
     const timelineReadiness = await fetchJson(`${systemSenseUrl}/system/route/body-evidence-timeline-readiness`);
     const recordedAt = new Date().toISOString();
     const recordBase = {
@@ -522,7 +567,7 @@ export function createSystemBodyTaskHandlers({ client, state, taskManager, publi
       : "body_evidence_timeline_followup";
     const plannedSequence = Number.isInteger(followupRecord.plannedSequence) ? followupRecord.plannedSequence : 2;
     const ledgerFileDisplayPath = ".artifacts/openclaw-body-evidence-ledger/body-evidence-ledger.jsonl";
-    const ledgerFilePath = path.resolve(process.cwd(), "../..", ledgerFileDisplayPath);
+    const ledgerFilePath = bodyEvidenceLedgerFilePath;
     const ledger = readBodyEvidenceLedgerLines();
     if (!ledger.exists || ledger.lineCount !== 1 || ledger.records?.[0]?.ok !== true) {
       throw new Error("Follow-up ledger append requires exactly one existing valid ledger record.");
@@ -870,7 +915,7 @@ export function createSystemBodyTaskHandlers({ client, state, taskManager, publi
       blocked: false,
       reason: null,
       commandTranscript,
-      verification: { ok: result.ok, checks: [], failedChecks: result.ok ? [] : [{ name: "systemctl_restart_exit_code", expected: 0, actual: result.exitCode }] },
+      verification: { ok: result.ok, checks: [], failedChecks: result.ok ? [] : [{ name: "native_dbus_restart_exit_code", expected: 0, actual: result.exitCode }] },
       execution: {
         mode: "operator_reviewed_real_systemd_restart",
         target: updatedTask.systemdRepair?.target ?? null,
