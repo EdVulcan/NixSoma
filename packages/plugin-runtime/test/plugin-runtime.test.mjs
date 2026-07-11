@@ -10,6 +10,7 @@ import {
   validateOpenClawNativePluginRegistry,
 } from "../src/plugin-registry.mjs";
 import { OPENCLAW_NATIVE_PLUGIN_CAPABILITY_IDS } from "../src/plugin-capability-descriptors.mjs";
+import { createOpenClawNativePluginRegistryGenerationStore } from "../src/plugin-registry-generation-store.mjs";
 
 test("creates and validates a governed native plugin contract", () => {
   const contract = createOpenClawNativePluginContract({
@@ -73,4 +74,37 @@ test("preserves the native plugin capability id surface", () => {
     "act.plugin.capability.invoke",
   ]);
   assert.deepEqual(capabilityIds, [...OPENCLAW_NATIVE_PLUGIN_CAPABILITY_IDS]);
+});
+
+test("atomically swaps valid registry generations and retains the previous generation", () => {
+  let tick = 0;
+  const store = createOpenClawNativePluginRegistryGenerationStore({
+    now: () => `2026-07-11T00:00:0${tick++}.000Z`,
+  });
+  const initial = store.getActiveGeneration();
+  const result = store.refresh();
+
+  assert.equal(result.ok, true);
+  assert.equal(result.swapped, true);
+  assert.equal(result.previous.id, initial.id);
+  assert.equal(result.active.sequence, initial.sequence + 1);
+  assert.equal(store.describe().retainedGenerations, 2);
+});
+
+test("keeps the active generation when candidate validation fails", () => {
+  let builds = 0;
+  const store = createOpenClawNativePluginRegistryGenerationStore({
+    registryFactory: (options) => {
+      const registry = createOpenClawNativePluginRegistry(options);
+      builds += 1;
+      return builds === 1 ? registry : { ...registry, runtimeOwner: "external" };
+    },
+  });
+  const initial = store.getActiveGeneration();
+  const result = store.refresh();
+
+  assert.equal(result.ok, false);
+  assert.equal(result.swapped, false);
+  assert.equal(store.getActiveGeneration(), initial);
+  assert.equal(store.describe().previous, null);
 });

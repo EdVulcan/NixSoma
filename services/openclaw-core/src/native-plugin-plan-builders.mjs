@@ -1,4 +1,4 @@
-import { createOpenClawNativePluginRegistry } from "../../../packages/plugin-runtime/src/plugin-registry.mjs";
+import { createOpenClawNativePluginRegistryGenerationStore } from "../../../packages/plugin-runtime/src/plugin-registry-generation-store.mjs";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { randomUUID } from "node:crypto";
 import { buildNativePluginRuntimeRefreshEvidence as buildNativePluginRuntimeRefreshEvidenceEnvelope } from "./native-plugin-runtime-refresh-evidence-builders.mjs";
@@ -6,6 +6,7 @@ import { createNativePluginRuntimeRefreshTaskBuilders } from "./native-plugin-ru
 
 export function createNativePluginPlanBuilders(deps) {
   const {
+    nativePluginRegistryStore = createOpenClawNativePluginRegistryGenerationStore(),
     buildNativePluginManifestProfile,
     autonomyMode,
     createTask,
@@ -21,7 +22,8 @@ export function createNativePluginPlanBuilders(deps) {
 
 function buildNativePluginCapabilityInvokePlan({ packagePath = null, capabilityId = "act.plugin.capability.invoke" } = {}) {
   const manifestProfile = buildNativePluginManifestProfile({ packagePath });
-  const nativeRegistry = createOpenClawNativePluginRegistry();
+  const activeGeneration = nativePluginRegistryStore.getActiveGeneration();
+  const nativeRegistry = activeGeneration.registry;
   const pluginItem = nativeRegistry.items.find((entry) => entry.id === manifestProfile.plugin.id) ?? null;
   const capability = pluginItem?.contract?.capabilities?.find((entry) => entry.id === capabilityId) ?? null;
   if (!capability) {
@@ -61,6 +63,11 @@ function buildNativePluginCapabilityInvokePlan({ packagePath = null, capabilityI
     registry: "openclaw-native-plugin-invoke-plan-v0",
     mode: "plan-only",
     generatedAt: now,
+    registryGeneration: {
+      id: activeGeneration.id,
+      sequence: activeGeneration.sequence,
+      hash: activeGeneration.hash,
+    },
     sourceRegistry: manifestProfile.registry,
     sourceMode: manifestProfile.mode,
     plugin: {
@@ -549,10 +556,16 @@ function buildNativePluginRuntimeAdapterContract({ packagePath = null, capabilit
 }
 
 function buildNativePluginRuntimeRefreshEvidence({ packagePath = null, capabilityId = "act.plugin.capability.invoke" } = {}) {
+  const activeGeneration = nativePluginRegistryStore.getActiveGeneration();
   return buildNativePluginRuntimeRefreshEvidenceEnvelope({
     activationPlan: buildNativePluginRuntimeActivationPlan({ packagePath, capabilityId }),
-    nativeRegistry: createOpenClawNativePluginRegistry(),
+    nativeRegistry: activeGeneration.registry,
+    registryGeneration: activeGeneration,
   });
+}
+
+function refreshNativePluginRuntimeRegistry() {
+  return nativePluginRegistryStore.refresh();
 }
 
 const nativePluginRuntimeRefreshTaskBuilders = createNativePluginRuntimeRefreshTaskBuilders({
@@ -1177,6 +1190,7 @@ async function createNativePluginInvokeTask({ packagePath = null, capabilityId =
 }
 
   return {
+    refreshNativePluginRuntimeRegistry,
     buildNativePluginCapabilityInvokePlan,
     buildNativePluginRuntimePreflight,
     buildNativePluginRuntimeActivationPlan,

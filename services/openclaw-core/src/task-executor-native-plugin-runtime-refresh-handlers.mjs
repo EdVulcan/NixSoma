@@ -135,11 +135,24 @@ export function createNativePluginRuntimeRefreshTaskHandlers({
       },
     });
     const metadata = task.nativePluginRuntimeRefresh ?? {};
+    const refresh = planBuilder.refreshNativePluginRuntimeRegistry();
+    if (!refresh.ok || !refresh.swapped) {
+      throw new Error("Native plugin registry generation refresh validation failed.");
+    }
     const evidence = planBuilder.buildNativePluginRuntimeRefreshEvidence({
       packagePath: metadata.packagePath ?? null,
       capabilityId: metadata.capabilityId ?? "act.plugin.capability.invoke",
     });
-    const execution = buildRuntimeRefreshExecutionRecord({ task, evidence, approval });
+    const execution = {
+      ...buildRuntimeRefreshExecutionRecord({ task, evidence, approval }),
+      generation: {
+        previousId: refresh.previous?.id ?? null,
+        currentId: refresh.active.id,
+        previousHash: refresh.previous?.hash ?? null,
+        currentHash: refresh.active.hash,
+        swapped: true,
+      },
+    };
     task.nativePluginRuntimeRefresh = {
       ...metadata,
       registry: metadata.registry ?? "openclaw-native-plugin-runtime-refresh-task-v0",

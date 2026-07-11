@@ -596,6 +596,15 @@ declarative-generation recovery and never issue an automatic second restart.
 It uses a bounded read-only readiness poll because systemd process readiness can
 precede the restarted service's HTTP-listener readiness.
 
+The Level 1 live-plugin-refresh migration now owns a real fixed-registry
+generation lifecycle. An approved existing refresh task builds and validates a
+new built-in registry generation, atomically swaps the shared native plugin
+plan owner, retains the previous process-lifetime generation, and causes later
+capability plans to report the active generation id, sequence, and hash. It
+still performs no arbitrary module discovery/import, plugin code execution,
+loader-cache invalidation, provider egress, or persisted generation rollback.
+Do not expand this into another readiness chain.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

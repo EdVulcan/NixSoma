@@ -5,11 +5,12 @@
   "type": "module",
   "exports": {
     "./plugin-contract": "./src/plugin-contract.mjs",
-    "./plugin-registry": "./src/plugin-registry.mjs"
+    "./plugin-registry": "./src/plugin-registry.mjs",
+    "./plugin-registry-generation-store": "./src/plugin-registry-generation-store.mjs"
   },
   "scripts": {
     "build": "npm run typecheck && npm test",
-    "typecheck": "node --check src/plugin-contract.mjs && node --check src/plugin-capability-descriptors.mjs && node --check src/plugin-registry.mjs",
+    "typecheck": "node --check src/plugin-contract.mjs && node --check src/plugin-capability-descriptors.mjs && node --check src/plugin-registry.mjs && node --check src/plugin-registry-generation-store.mjs",
     "test": "node --test test/*.test.mjs"
   }
 }

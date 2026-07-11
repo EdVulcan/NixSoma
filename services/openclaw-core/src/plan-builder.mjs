@@ -1,4 +1,5 @@
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
+import { createOpenClawNativePluginRegistryGenerationStore } from "../../../packages/plugin-runtime/src/plugin-registry-generation-store.mjs";
 import { createCapabilityRuntime } from "./capability-runtime.mjs";
 import { createBodyEvidenceReadinessBuilders } from "./body-evidence-readiness-builders.mjs";
 import { createBodyEvidenceTaskBuilders } from "./body-evidence-task-builders.mjs";
@@ -126,8 +127,10 @@ export function createPlanBuilder(deps) {
     shouldBuildPlan,
     updatePlanForPhase,
   } = rulePlanBuilders;
+  const nativePluginRegistryStore = createOpenClawNativePluginRegistryGenerationStore();
 
   const nativePluginPlanBuilders = createNativePluginPlanBuilders({
+    nativePluginRegistryStore,
     buildNativePluginManifestProfile,
     autonomyMode,
     createTask,
@@ -141,6 +144,7 @@ export function createPlanBuilder(deps) {
     serialisePlanForPublic,
   });
   const {
+    refreshNativePluginRuntimeRegistry,
     buildNativePluginCapabilityInvokePlan,
     buildNativePluginRuntimePreflight,
     buildNativePluginRuntimeActivationPlan,
@@ -625,6 +629,7 @@ function compactCloudConsciousnessEvidenceRef(evidence) {
 
 
   return {
+    refreshNativePluginRuntimeRegistry,
     buildNativePluginCapabilityInvokePlan,
     buildNativePluginRuntimePreflight,
     buildNativePluginRuntimeActivationPlan,

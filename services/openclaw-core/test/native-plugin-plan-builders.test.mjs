@@ -39,6 +39,7 @@ test("native plugin plan builders preserve runtime preflight and adapter contrac
   const activationDraft = builders.buildNativePluginRuntimeActivationTaskDraft();
 
   assert.equal(plan.registry, "openclaw-native-plugin-invoke-plan-v0");
+  assert.equal(plan.registryGeneration.sequence, 1);
   assert.equal(plan.capability.id, "act.plugin.capability.invoke");
   assert.equal(preflight.governance.canExecutePluginCode, false);
   assert.equal(activationPlan.summary.activationReady, false);
@@ -55,6 +56,13 @@ test("native plugin plan builders preserve runtime preflight and adapter contrac
   assert.equal(adapterContract.summary.canExecutePluginCode, false);
   assert.equal(adapterDraft.registry, "openclaw-native-plugin-runtime-adapter-task-draft-v0");
   assert.equal(activationDraft.registry, "openclaw-native-plugin-runtime-activation-task-draft-v0");
+
+  const refresh = builders.refreshNativePluginRuntimeRegistry();
+  const refreshedPlan = builders.buildNativePluginCapabilityInvokePlan();
+  const refreshedEvidence = builders.buildNativePluginRuntimeRefreshEvidence();
+  assert.equal(refresh.swapped, true);
+  assert.equal(refreshedPlan.registryGeneration.sequence, 2);
+  assert.equal(refreshedEvidence.runtimeState.activeGenerationId, refresh.active.id);
 });
 
 test("native plugin plan builders create approval-gated task shells", async () => {

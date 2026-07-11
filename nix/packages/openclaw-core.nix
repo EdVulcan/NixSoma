@@ -17,6 +17,7 @@ mkOpenClawSourceClosure {
     ../../packages/plugin-runtime/src/plugin-capability-descriptors.mjs
     ../../packages/plugin-runtime/src/plugin-contract.mjs
     ../../packages/plugin-runtime/src/plugin-registry.mjs
+    ../../packages/plugin-runtime/src/plugin-registry-generation-store.mjs
     ../../packages/shared-client/package.json
     ../../packages/shared-client/src/service-descriptors.mjs
     ../../packages/shared-events/src/event-factory.mjs

@@ -1,13 +1,13 @@
 # OpenClaw Native Plugin Runtime Refresh Task Plan
 
-Updated: 2026-07-10
+Updated: 2026-07-11
 
 ## Active Slice
 
 Live plugin runtime refresh as a governed lifecycle action.
 
 This slice upgrades the existing read-model refresh evidence into an
-approval-gated OpenClaw-native task:
+approval-gated OpenClaw-native fixed-registry generation lifecycle:
 
 ```text
 POST /plugins/native-adapter/runtime-refresh-tasks
@@ -26,20 +26,26 @@ The runtime refresh task now proves:
 - explicit approval request creation
 - `/operator/step` blocks before approval with `policy_requires_approval`
 - approval converts the policy decision to audited execution
-- approved operator execution recomputes the native plugin runtime read model
+- approved operator execution builds and validates a new fixed native registry
+  generation and atomically swaps it into the shared plan/runtime owner
+- failed candidate validation leaves the old generation active
+- the immediately previous generation remains available in memory
+- subsequent native plugin capability plans resolve against the active
+  generation and expose its id, sequence, and content hash
 - task outcome stores refresh execution evidence and verification checks
 - `/tasks/:taskId` readback exposes the persisted refresh execution evidence
 - Observer milestone coverage keeps the runtime refresh panel visible while
   proving the same approval-gated lifecycle
 
-The executor recomputes the same native registry read model used by:
+The executor refreshes the same active native registry generation used by:
 
 ```text
 GET /plugins/native-adapter/runtime-refresh-evidence
 ```
 
-It records that the read model refreshed while keeping every runtime mutation
-boundary disabled.
+This is a real process-lifetime lifecycle state change, not module-loader
+activation. The fixed built-in descriptor set is rebuilt and validated before
+swap; no workspace or external module path is accepted.
 
 ## Governance
 
@@ -56,7 +62,7 @@ requires explicit approval: true
 creates task: true
 creates approval: true
 operator step before approval: blocked
-approved execution: audit-only read-model recomputation
+approved execution: validated atomic fixed-registry generation swap
 audit evidence: task outcome embedded execution record
 Observer visibility: runtime refresh panel plus task/readback milestone proof
 ```
@@ -73,6 +79,7 @@ no install/enable/disable state mutation
 no provider call
 no network egress
 no root/system daemon escalation
+no generation persistence or automatic rollback
 ```
 
 ## Evidence
@@ -93,6 +100,7 @@ Task executor:
 
 ```text
 services/openclaw-core/src/task-executor-native-plugin-runtime-refresh-handlers.mjs
+packages/plugin-runtime/src/plugin-registry-generation-store.mjs
 ```
 
 Task readback field:
@@ -119,21 +127,23 @@ The following remain deferred:
 plugin module import
 plugin code execution
 runtime activation
-real loader cache invalidation
+dynamic module discovery/import and loader cache invalidation
 plugin install/enable/disable mutation
 provider egress
 result envelopes
 root/system daemon work
+generation persistence and explicit rollback action
 ```
 
 ## Next Smallest Real Capability
 
-The next high-density migration target is:
+The next high-density product target is:
 
 ```text
-ACPX/Codex bridge compatibility and runtime persistence evidence
+consume the governed Engineering Context Packet at an explicitly authorized
+local model/provider boundary
 ```
 
-That slice should map the enhanced-source bridge/persistence tests into
-OpenClaw-native compatibility evidence without adopting the enhanced source as a
-runtime dependency, reading real credentials, or performing provider egress.
+Do not start provider egress or credential reads without explicit operator
+authorization. If that boundary remains deferred, choose another real local
+capability rather than extending plugin refresh with more readiness shells.

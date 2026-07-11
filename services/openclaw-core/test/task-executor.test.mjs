@@ -132,7 +132,14 @@ const INTERNAL_DEFERRED_TASK_CASES = [
 ];
 
 function buildDefaultPlanBuilder() {
-  const planBuilder = {};
+  const planBuilder = {
+    refreshNativePluginRuntimeRegistry: () => ({
+      ok: true,
+      swapped: true,
+      previous: { id: "native-registry-generation-1", hash: "hash-1" },
+      active: { id: "native-registry-generation-2", hash: "hash-2" },
+    }),
+  };
   for (const [name, predicate, execute] of DELEGATED_NON_RECOVERABLE_TASK_HANDLERS) {
     planBuilder[predicate] = () => false;
     planBuilder[execute] = async () => {
@@ -618,6 +625,9 @@ test("approved native plugin runtime refresh task completes with read-model evid
   assert.equal(result.finalExecution.task.status, "completed");
   assert.equal(execution.registry, "openclaw-native-plugin-runtime-refresh-task-execution-v0");
   assert.equal(execution.readModelRefreshed, true);
+  assert.equal(execution.generation.previousId, "native-registry-generation-1");
+  assert.equal(execution.generation.currentId, "native-registry-generation-2");
+  assert.equal(execution.generation.swapped, true);
   assert.equal(execution.governance.canImportModule, false);
   assert.equal(execution.governance.canExecutePluginCode, false);
   assert.equal(execution.governance.canActivateRuntime, false);

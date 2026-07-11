@@ -77,6 +77,7 @@ function buildGovernance() {
 export function buildNativePluginRuntimeRefreshEvidence({
   activationPlan = null,
   nativeRegistry = createOpenClawNativePluginRegistry(),
+  registryGeneration = null,
 } = {}) {
   const registrySummary = summariseOpenClawNativePluginRegistry(nativeRegistry);
   const generatedAt = new Date().toISOString();
@@ -106,6 +107,9 @@ export function buildNativePluginRuntimeRefreshEvidence({
       activationPlan?.registry ?? "openclaw-native-plugin-runtime-activation-plan-v0",
     ],
     runtimeState: {
+      activeGenerationId: registryGeneration?.id ?? null,
+      activeGenerationSequence: registryGeneration?.sequence ?? null,
+      activeGenerationHash: registryGeneration?.hash ?? null,
       runtimeOwner: nativeRegistry.runtimeOwner,
       registryMode: nativeRegistry.mode,
       activationMode: nativeRegistry.activationMode,
