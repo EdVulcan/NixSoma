@@ -291,7 +291,7 @@
 
 ---
 
-## 六、当前证据化进度基线（2026-07-10）
+## 六、当前证据化进度基线（2026-07-11）
 
 进度不能再按历史 Phase 数量计算。以下比例是根据当前运行时代码、NixOS
 模块、任务闭环、Observer、测试证据和仍缺失的架构组件估算的能力成熟度，
@@ -301,22 +301,22 @@
 | --- | --- | --- |
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
-| Level 3 系统级特权组件 | 约 15-20% | 固定 OpenClaw unit inventory 已通过原生只读 systemd D-Bus 和 Observer/VM 证据建立；固定 system-sense restart、专用服务账户和精确 Polkit 规则已在仓库实现但尚未完成 switched-VM 证明。独立 `openclaw-hostd`、广义 D-Bus mutation 和更完整受控特权边界尚未建立。 |
+| Level 3 系统级特权组件 | 约 20-25% | 固定 OpenClaw unit inventory 已通过原生只读 systemd D-Bus 建立；固定 system-sense restart、专用服务账户和精确 Polkit 规则已通过 core/Observer 真实 VM mutation 与恢复证据。独立 `openclaw-hostd`、广义 D-Bus mutation 和更完整受控特权边界尚未建立。 |
 | Level 4 图形栈内生组件 | 约 0-5% | 只有 AI-owned work-view 方向与接口预留；专属 session、nested compositor、原生图形输入输出尚未实现。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
-**约 40%**。内核白皮书中的 Phase A Nix 纯净化已完成全部 9 个服务
+**约 42%**。内核白皮书中的 Phase A Nix 纯净化已完成全部 9 个服务
 closure 与 trusted sidecar store 运行路径；
-Phase B 已完成原生只读 D-Bus inventory，但特权 mutation 仍使用固定
-helper；Phase C eBPF 神经网尚未开始；Phase D 声明式 Nix 自进化与自动
+Phase B 已完成原生只读 D-Bus inventory 和一个由精确 Polkit 管理的固定
+native restart；Phase C eBPF 神经网尚未开始；Phase D 声明式 Nix 自进化与自动
 回滚仍主要是设计和边界证据。因此旧阶段路线的“接近 90%”只能描述早期
 里程碑清单，不能代表最终白皮书完成度。
 
 当前 bounded Level 2 browser 眼手闭环与内核白皮书 Phase A 已收口。
-Phase B D-Bus 控制原生化的非特权只读入口已经完成：systemd unit
-inventory 已替换 `systemctl` 读取包装并通过真实 VM/Observer 证明。下一步
-必须单独设计受 policy、Polkit、audit 与 recovery 管理的最小 mutation，
-且需要明确的提权授权；不要直接 root 化整个控制平面。
+Phase B 的固定 D-Bus 控制切片已经完成：systemd unit inventory 已替换
+`systemctl` 读取包装，system-sense restart 也已通过 policy、approval、精确
+Polkit、audit、恢复检查和真实 VM/Observer 证明。不要把该固定授权扩展成
+任意 systemd API；后续 Level 3 工作需先形成独立 hostd 所有权边界。
 
 ---
 

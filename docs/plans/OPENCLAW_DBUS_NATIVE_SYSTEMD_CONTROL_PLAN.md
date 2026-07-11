@@ -4,8 +4,8 @@
 
 Advance kernel-whitepaper Phase B by replacing command-line `systemctl`
 wrappers with a native Node.js D-Bus boundary. Start with real read-only systemd
-unit inventory from the local system bus; privileged mutation and Polkit policy
-remain separate later slices.
+unit inventory from the local system bus, then prove one fixed Polkit-authorized
+restart through the existing governed repair lifecycle.
 
 ## Phase A Prerequisite
 
@@ -19,10 +19,8 @@ unit, and runs representative behavior from each store path.
 
 - Read-only inventory no longer invokes `systemctl`; native D-Bus is the only
   transport and bus loss fails closed.
-- The running VM generation still contains the historical fixed browser-runtime
-  `systemctl`/sudo helper in `/etc/nixos/configuration.nix`. The repository
-  profile no longer generates that path, but runtime removal requires a NixOS
-  generation switch.
+- The historical host-local browser-runtime `systemctl`/sudo helper and global
+  environment overrides have been removed from the switched VM generation.
 - Existing repair proposals, approvals, audit evidence, Observer routes, and
   fail-closed behavior must remain stable while transport changes underneath.
 
@@ -78,8 +76,7 @@ does not shell out to `systemctl`.
 
 ## Second Slice: Fixed Native Restart
 
-The repository implementation is complete but not yet loaded into the running
-VM generation:
+The fixed native restart slice is complete in the running VM generation:
 
 1. Desktop system services run as the dedicated `openclaw-service` account
    instead of root; session-manager and browser-runtime remain user-manager
@@ -115,20 +112,22 @@ auth-delegation and full body-config gates prove Nix/Polkit evaluation and all
 store closures. The existing core and Observer real-execution milestones now
 require successful native transport rather than accepting a failed attempt.
 
+Real VM evidence proves two separately approved executions, one through the
+core milestone and one through the Observer milestone. Both returned exit zero,
+an `org.freedesktop.systemd1` job path, changed positive main PIDs, restored
+readiness, `polkit-dbus-fixed-unit`, and the fixed store helper with no sudo or
+direct systemctl execution.
+
 ## Deferred
 
 - D-Bus start/stop/reload operations and any restart target other than the fixed
   system-sense unit.
-- Loading and proving the repository Polkit rule in the running VM generation.
 - Dedicated `openclaw-hostd` ownership boundary.
-- Removal of the historical fixed sudo repair helper from the active host
-  configuration/generation.
 - eBPF kernel event transport and declarative Nix self-evolution.
 
 ## Next Slice
 
-Switch a host generation that imports this profile, remove the historical
-browser-runtime sudo helper from the host configuration, and run the existing
-core plus Observer next-repair real-execution milestones. Completion requires
-`dbus_native`, Polkit mode, exit zero, a systemd job path, changed PID, restored
-health, no password prompt, and no sudo/systemctl execution evidence.
+Return to the Level 1 native governed engineering capability route. Any future
+Level 3 slice must introduce a cohesive hostd ownership boundary or another
+whitepaper capability, not broaden this fixed helper into an arbitrary systemd
+control API.

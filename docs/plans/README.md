@@ -123,9 +123,9 @@ behavior evidence. Phase B's first slice is also complete: system-sense now
 reads all fixed OpenClaw unit inventory through native systemd D-Bus, fails
 closed without a `systemctl` fallback, and preserves the existing Observer
 contract. The fixed system-sense restart and exact Polkit rule are now
-implemented behind the existing approved next-repair lifecycle, but the running
-VM generation has not loaded them yet. Switched-VM mutation/recovery proof and
-removal of the host's historical sudo helper remain the completion gate.
+proven in a switched VM behind the existing approved next-repair lifecycle.
+Core and Observer milestones prove exit zero, native D-Bus job paths, changed
+PIDs, restored readiness, and removal of the host's historical sudo helper.
 
 It now closes browser action mediation through operator takeover suspension and
 explicit resume/rebind, then runs a bounded approval-gated user-space helper
@@ -252,9 +252,9 @@ only, execution supplies transient text, the runtime accepts only a current
 enabled textbox, and Firefox evidence proves frame change with no value in
 response, state, or events. The current bounded Level 2 browser eye-hand exit
 gate and kernel-whitepaper Phase A are closed. Phase B now has a proven native
-read-only D-Bus inventory and a repository-complete fixed-unit mutation bridge.
-Its next real step is switched-VM Polkit/restart/recovery proof, not another
-readiness surface or broader systemd API.
+read-only D-Bus inventory and a VM-proven fixed-unit mutation bridge. Work now
+returns to the Level 1 native governed engineering route; broader systemd APIs
+remain deferred until a cohesive hostd boundary is justified.
 
 ## Historical Phase Plans
 

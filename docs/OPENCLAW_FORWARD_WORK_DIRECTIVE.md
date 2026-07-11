@@ -574,22 +574,18 @@ store closure, exposes only an eight-property inventory allowlist, and reports
 the transport through the existing route and Observer panel. VM milestones
 prove a real `loaded/active/running` core unit and no command evidence. The
 temporary read-only `systemctl` fallback has been removed; bus failure is
-fail-closed. Phase B is not complete: native mutation, Polkit policy, hostd,
-removal of the fixed repair helper, and recovery proof remain deferred and
-require an explicit privilege decision before implementation.
+fail-closed. Broader Phase B hostd and mutation work remains separate from this
+first inventory slice.
 
-The second Phase B implementation is now staged in the repository but is not
-yet loaded into the running VM generation. Desktop system services move from
-root to a dedicated `openclaw-service` account; a no-argument store helper can
+The second fixed Phase B slice is now complete in the running VM generation.
+Desktop system services run under the dedicated `openclaw-service` account; a
+no-argument store helper can
 restart only `openclaw-system-sense.service` through native D-Bus; and Polkit
 matches the exact manage-units action, restart verb, unit, and service subject.
 Core reuses the existing approved next-repair lifecycle and has no direct
-systemctl/sudo fallback. Unit tests, production helper subprocess tests, Nix
-evaluation, auth-delegation checks, and the full body closure gate pass. Do not
-mark this mutation complete until a switched VM generation proves exit zero,
-job path, changed PID, restored health, Observer evidence, and no password
-prompt. The active host's historical browser-runtime sudo helper must be removed
-during that deployment rather than treated as current architecture.
+systemctl/sudo fallback. The switched generation removed the historical host
+sudo helper. Core and Observer real-execution milestones prove exit zero, D-Bus
+job paths, changed PIDs, restored health, and no password prompt.
 Post-verification now derives restored health from the selected unit's native
 inventory state and helper PID evidence; failures recommend operator-reviewed
 declarative-generation recovery and never issue an automatic second restart.
