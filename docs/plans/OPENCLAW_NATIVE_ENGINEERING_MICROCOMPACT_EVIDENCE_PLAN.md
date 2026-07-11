@@ -99,7 +99,17 @@ OPENCLAW_MILESTONE_CHECKS=milestone-registry,milestone-script-audit bash nix/scr
 
 ## Follow-On Slice
 
-The direct follow-on slice is:
+The bounded in-memory projection follow-up is complete:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_MICROCOMPACT_PROJECTION_PLAN.md
+```
+
+It transforms only a caller-owned message copy, protects recent assistant turns
+and verification/recovery evidence, and does not mutate persisted transcripts,
+tasks, or provider state.
+
+The later route remains:
 
 ```text
 Live plugin runtime refresh as a governed lifecycle action

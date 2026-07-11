@@ -490,6 +490,36 @@ test("native engineering microcompact evidence route previews context budget wit
   assert.equal(response.body.bounds.noRawOutputText, true);
 });
 
+test("native engineering microcompact projection route transforms a bounded request copy", async () => {
+  const events = [];
+  const response = await invokeRoute(
+    createBaseDeps({
+      deps: {
+        publishEvent: async (name, payload) => events.push({ name, payload }),
+      },
+    }),
+    "POST",
+    "/plugins/native-adapter/engineering-microcompact/projection",
+    {
+      thresholdChars: 100,
+      protectRecentAssistantTurns: 0,
+      messages: [
+        { role: "assistant", content: [{ type: "text", text: "old" }] },
+        { role: "toolResult", toolName: "cc_read", content: [{ type: "text", text: "X".repeat(500) }] },
+        { role: "assistant", content: [{ type: "text", text: "new" }] },
+      ],
+    },
+  );
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(response.body.registry, "openclaw-native-engineering-microcompact-projection-v0");
+  assert.equal(response.body.summary.compactedMessages, 1);
+  assert.equal(response.body.governance.mutatesPersistedLogs, false);
+  assert.equal(response.body.governance.callsProvider, false);
+  assert.equal(events[0].name, "native_engineering.microcompact_projection_built");
+  assert.equal(JSON.stringify(events).includes("XXXXX"), false);
+});
+
 test("native engineering plan/todo evidence route reads task workbench state without mutation", async () => {
   const task = {
     id: "task-plan-todo-1",

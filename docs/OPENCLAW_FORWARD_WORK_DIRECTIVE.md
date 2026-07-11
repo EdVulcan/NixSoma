@@ -218,7 +218,9 @@ execution work.
 The Level 1 native engineering route now has bounded read/search, proposal,
 approval-gated edit/write, ledger, verification, recovery, LSP selected-target,
 planning workbench, governed suggested-action creation, and compact linked task
-readback. Do not reopen completed LSP symbol-request slices or add another
+readback. It also has a bounded microcompact transformation for caller-owned
+in-memory message copies, with recent verification/recovery context protected
+and no persisted transcript mutation. Do not reopen completed LSP symbol-request slices or add another
 standalone engineering evidence/readiness shell without a concrete operator gap.
 
 The next autonomous product route is the smallest real Level 2 trusted AI
