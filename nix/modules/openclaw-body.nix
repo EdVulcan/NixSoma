@@ -46,6 +46,7 @@ let
       portEnv = "OPENCLAW_BROWSER_RUNTIME_PORT";
       port = cfg.ports.browserRuntime;
       after = [ "openclaw-event-hub" "openclaw-session-manager" ];
+      runtimePackage = cfg.runtimePackages.browserRuntime;
       extraEnvironment = profileDir: {
         OPENCLAW_BROWSER_ENGINE_MODE = cfg.browserEngine.mode;
         OPENCLAW_BROWSER_PROFILE_DIR = profileDir;
@@ -297,6 +298,12 @@ in
       type = types.nullOr types.package;
       default = pkgs.callPackage ../packages/openclaw-session-manager.nix { };
       description = "Read-only Nix package used by session-manager; null keeps the mutable repository fallback.";
+    };
+
+    runtimePackages.browserRuntime = mkOption {
+      type = types.nullOr types.package;
+      default = pkgs.callPackage ../packages/openclaw-browser-runtime.nix { };
+      description = "Read-only Nix package with production dependencies used by browser-runtime; null keeps the mutable repository fallback.";
     };
 
     runtimePackages.screenSense = mkOption {

@@ -114,10 +114,10 @@ kernel-whitepaper Phase A route is documented in:
 OPENCLAW_NIX_STORE_RUNTIME_PACKAGING_PLAN.md
 ```
 
-Seven of nine services are now proven from minimal read-only Nix closures,
-including login-user session ownership and Observer's complete served runtime
-composition. The next slice packages browser-runtime with reproducible
-Puppeteer dependencies and the existing Nix-managed Firefox executable.
+Eight of nine services are now proven from read-only Nix closures. Browser
+runtime adds lockfile-pinned production Puppeteer dependencies while preserving
+login-user ownership and fail-closed workspace restoration. The final Phase A
+slice packages the 134-module core control plane.
 
 It now closes browser action mediation through operator takeover suspension and
 explicit resume/rebind, then runs a bounded approval-gated user-space helper

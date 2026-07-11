@@ -115,6 +115,7 @@ requireIncludes("openclaw-body module", bodyModule, [
   "ExecStart = \"${cfg.nodePackage}/bin/node src/server.mjs\"",
   "runtimePackages.eventHub",
   "runtimePackages.sessionManager",
+  "runtimePackages.browserRuntime",
   "runtimePackages.screenSense",
   "runtimePackages.screenAct",
   "runtimePackages.systemSense",
@@ -175,6 +176,7 @@ requireIncludes("flake", flake, [
   "firefox = pkgs.firefox",
   "openclaw-event-hub = pkgs.callPackage",
   "openclaw-session-manager = pkgs.callPackage",
+  "openclaw-browser-runtime = pkgs.callPackage",
   "openclaw-screen-sense = pkgs.callPackage",
   "openclaw-screen-act = pkgs.callPackage",
   "openclaw-system-sense = pkgs.callPackage",
@@ -248,6 +250,12 @@ if (ownership.browser.environment?.OPENCLAW_BROWSER_ENGINE_MODE !== "firefox"
   || !String(ownership.browser.environment?.OPENCLAW_BROWSER_EXECUTABLE ?? "").endsWith("/bin/firefox")) {
   throw new Error(`desktop browser runtime must use the Nix-managed Firefox user profile: ${JSON.stringify(ownership.browser)}`);
 }
+if (ownership.browser.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
+  || !String(ownership.browser.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
+  || !String(ownership.browser.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-browser-runtime")
+  || ownership.browser.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
+  throw new Error(`browser-runtime must execute from its read-only Nix closure: ${JSON.stringify(ownership.browser)}`);
+}
 if (!ownership.browser.after?.includes("openclaw-session-manager.service")) {
   throw new Error(`browser runtime must retain same-scope session-manager ordering: ${JSON.stringify(ownership.browser.after)}`);
 }
@@ -300,6 +308,8 @@ console.log(JSON.stringify({
     duplicated: userOwned.filter((name) => ownership.system.includes(name)),
     browserEngine: ownership.browser.environment.OPENCLAW_BROWSER_ENGINE_MODE,
     browserProfile: ownership.browser.environment.OPENCLAW_BROWSER_PROFILE_DIR,
+    browserRuntimeSource: ownership.browser.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
+    browserWorkingDirectory: ownership.browser.serviceConfig.WorkingDirectory,
     sessionManagerRuntimeSource: ownership.session.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
     sessionManagerWorkingDirectory: ownership.session.serviceConfig.WorkingDirectory,
     sessionManagerStateFile: ownership.session.environment.OPENCLAW_SESSION_MANAGER_STATE_FILE,
@@ -529,6 +539,120 @@ console.log(JSON.stringify({
     externalSidecarStarted: helper.externalProcessStarted,
     recoveryStatePath,
     recoveryIntentWritten: false,
+  },
+}, null, 2));
+EOF
+  )
+
+  browser_runtime_out="$(nix --extra-experimental-features 'nix-command flakes' build \
+    --no-update-lock-file --no-link --print-out-paths .#openclaw-browser-runtime)"
+  browser_runtime_working_dir="$browser_runtime_out/share/openclaw/services/openclaw-browser-runtime"
+  browser_runtime_server="$browser_runtime_working_dir/src/server.mjs"
+  browser_runtime_source_count="$(find "$browser_runtime_out/share/openclaw" \
+    -path '*/node_modules' -prune -o -type f -print | wc -l)"
+  if [[ "$browser_runtime_out" != /nix/store/*
+    || ! -f "$browser_runtime_server"
+    || ! -f "$browser_runtime_working_dir/node_modules/puppeteer-core/package.json"
+    || ! -f "$browser_runtime_out/share/openclaw/packages/shared-utils/src/work-view-input-evidence.mjs"
+    || -w "$browser_runtime_server"
+    || -e "$browser_runtime_working_dir/node_modules/@openclaw"
+    || -e "$browser_runtime_working_dir/node_modules/typescript"
+    || "$browser_runtime_source_count" -ne 13 ]]; then
+    echo "browser-runtime Nix closure is not exact, production-only, and read-only: $browser_runtime_out" >&2
+    exit 1
+  fi
+
+  (
+    runtime_dir="$(mktemp -d)"
+    runtime_port=5849
+    upstream_port=5843
+    runtime_url="http://127.0.0.1:$runtime_port"
+    upstream_url="http://127.0.0.1:$upstream_port"
+    state_file="$runtime_dir/browser-runtime-state.json"
+    cleanup_runtime() {
+      for pid in "${browser_runtime_pid:-}" "${upstream_pid:-}"; do
+        if [[ -n "$pid" ]]; then
+          kill -TERM "$pid" >/dev/null 2>&1 || true
+          wait "$pid" >/dev/null 2>&1 || true
+        fi
+      done
+      rm -rf "$runtime_dir"
+    }
+    trap cleanup_runtime EXIT
+
+    node "$REPO_ROOT/nix/scripts/dev-body-config-store-upstream.mjs" "$upstream_port" \
+      >"$runtime_dir/upstream.log" 2>&1 &
+    upstream_pid=$!
+    for _ in $(seq 1 50); do
+      if curl --silent --fail "$upstream_url/health" >/dev/null; then
+        break
+      fi
+      sleep 0.1
+    done
+
+    start_browser_runtime() {
+      cd "$browser_runtime_working_dir"
+      OPENCLAW_BROWSER_RUNTIME_HOST=127.0.0.1 \
+      OPENCLAW_BROWSER_RUNTIME_PORT="$runtime_port" \
+      OPENCLAW_EVENT_HUB_URL="$upstream_url" \
+      OPENCLAW_SESSION_MANAGER_URL="$upstream_url" \
+      OPENCLAW_BROWSER_RUNTIME_STATE_FILE="$state_file" \
+      OPENCLAW_BROWSER_ENGINE_MODE=simulated \
+      OPENCLAW_BROWSER_PROFILE_DIR="$runtime_dir/profile" \
+      OPENCLAW_BODY_RUNTIME_SOURCE=nix-store \
+        node src/server.mjs >"$runtime_dir/browser-runtime.log" 2>&1 &
+      browser_runtime_pid=$!
+      for _ in $(seq 1 50); do
+        if curl --silent --fail "$runtime_url/health" >/dev/null; then
+          return 0
+        fi
+        sleep 0.1
+      done
+      return 1
+    }
+
+    start_browser_runtime
+    curl --silent --fail -X POST "$runtime_url/browser/open" \
+      -H 'content-type: application/json' \
+      --data "{\"url\":\"$upstream_url/health\",\"sessionId\":\"nix-store-browser-session\",\"sessionAuthority\":\"openclaw-session-manager\"}" \
+      >"$runtime_dir/open.json"
+    kill -TERM "$browser_runtime_pid"
+    wait "$browser_runtime_pid" >/dev/null 2>&1 || true
+    browser_runtime_pid=""
+    start_browser_runtime
+    curl --silent --fail "$runtime_url/browser/state" >"$runtime_dir/restored.json"
+
+    node - <<'EOF' "$runtime_dir/open.json" "$runtime_dir/restored.json" "$state_file" "$browser_runtime_out"
+const fs = require("node:fs");
+const opened = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const restored = JSON.parse(fs.readFileSync(process.argv[3], "utf8")).browser ?? {};
+const persisted = JSON.parse(fs.readFileSync(process.argv[4], "utf8"));
+const storePath = process.argv[5];
+if (opened.ok !== true
+  || opened.browser?.engine?.mode !== "simulated"
+  || opened.browser?.engine?.realEngine !== false
+  || opened.browser?.activeUrl !== "http://127.0.0.1:5843/health"
+  || restored.running !== false
+  || restored.activeUrl !== opened.browser.activeUrl
+  || restored.sessionId !== "nix-store-browser-session"
+  || restored.workspaceRecovery?.restored !== true
+  || restored.workspaceRecovery?.automaticActionReplay !== false
+  || restored.trustedHelperLease !== null
+  || persisted.safety?.trustedHelperLeasePersisted !== false
+  || persisted.safety?.inputPersisted !== false
+  || persisted.safety?.clickPersisted !== false) {
+  throw new Error(`store-native browser-runtime did not preserve fail-closed workspace intent: ${JSON.stringify({ opened, restored, persisted })}`);
+}
+console.log(JSON.stringify({
+  nixStoreBrowserRuntime: {
+    storePath,
+    readOnlySource: true,
+    puppeteerResolvedFromStore: true,
+    engineMode: opened.browser.engine.mode,
+    activeUrl: opened.browser.activeUrl,
+    restoredIntent: restored.workspaceRecovery.restored,
+    browserAutoRestarted: restored.running,
+    authorityRestored: restored.trustedHelperLease !== null,
   },
 }, null, 2));
 EOF

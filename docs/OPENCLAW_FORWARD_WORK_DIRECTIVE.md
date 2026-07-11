@@ -545,6 +545,17 @@ The next closure is browser-runtime. Its Puppeteer dependencies must be a
 reproducible Nix closure with downloads disabled, while login-user ownership,
 the Nix-managed Firefox executable, and real browser behavior remain intact.
 
+That eighth closure is now complete. Browser-runtime has a lockfile-pinned
+production Puppeteer closure beside 13 explicit runtime source files, its
+generated login-user unit points into the store, and a real packaged process
+proves bounded open plus fail-closed workspace restoration. The heavyweight
+real Firefox launch remains in its dedicated browser/release gate rather than
+the normal package iteration loop. Phase A is 8/9 services, not complete.
+
+The final Phase A closure is core. Package its 134 runtime modules and exact
+shared imports without tests/artifacts, preserve writable control-plane state,
+and prove representative persisted behavior from the store.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

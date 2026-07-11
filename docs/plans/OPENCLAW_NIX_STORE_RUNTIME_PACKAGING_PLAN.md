@@ -22,7 +22,7 @@ root daemon, hostd, D-Bus, eBPF, or self-rebuild capability.
 - Introduce a shared packaging factory only after two concrete service
   closures prove the same file-selection and unit-wiring shape.
 
-## Completed: Seven Store-Native Services
+## Completed: Eight Store-Native Services
 
 `openclaw-event-hub` is the first store-native service closure:
 
@@ -122,6 +122,20 @@ their output content and runtime behavior.
 - the real packaged process serves the complete 270,892-character HTML and
   1,118,194-character client bundle with the engineering loop DOM visible.
 
+`openclaw-browser-runtime` is the eighth store-native service closure:
+
+- `buildNpmPackage` uses the pinned root lockfile, workspace-aware dependency
+  fetching, disabled install scripts/browser downloads, and a fixed dependency
+  hash,
+- its runtime source remains an explicit 13-file manifest while production
+  `puppeteer-core` dependencies live beside the service in the store; workspace
+  links and the root TypeScript dev dependency are excluded,
+- its generated login-user unit points into the store and retains the
+  Nix-managed Firefox executable/profile contract, and
+- the real packaged Node process resolves Puppeteer, performs a bounded
+  simulated open, persists workspace intent, and restarts fail-closed without
+  restoring browser execution, helper authority, input, or click state.
+
 ## Evidence
 
 - Packages: `nix/packages/openclaw-event-hub.nix`,
@@ -130,7 +144,8 @@ their output content and runtime behavior.
   `nix/packages/openclaw-system-heal.nix` and
   `nix/packages/openclaw-system-sense.nix`, plus
   `nix/packages/openclaw-session-manager.nix` and
-  `nix/packages/observer-ui.nix`
+  `nix/packages/observer-ui.nix`, plus
+  `nix/packages/openclaw-browser-runtime.nix`
 - Shared packaging mechanism: `nix/lib/mk-openclaw-source-closure.nix`
 - Module: `nix/modules/openclaw-body.nix`
 - Flake exports: `packages.x86_64-linux.openclaw-event-hub`,
@@ -139,23 +154,24 @@ their output content and runtime behavior.
   `packages.x86_64-linux.openclaw-system-heal` and
   `packages.x86_64-linux.openclaw-system-sense`, plus
   `packages.x86_64-linux.openclaw-session-manager` and
-  `packages.x86_64-linux.observer-ui`
+  `packages.x86_64-linux.observer-ui`, plus
+  `packages.x86_64-linux.openclaw-browser-runtime`
 - Targeted milestone: `nix/scripts/dev-body-config-check.sh`
 - Identity route: kernel whitepaper Phase A, before privileged Level 3 work
 
 ## Deferred
 
-- Two remaining OpenClaw services still execute from `repoRoot`.
-- npm dependency closure handling for browser-runtime and Observer is not yet
-  designed.
+- Only `openclaw-core` still executes from `repoRoot`.
+- The store-native browser package has not repeated the heavyweight real
+  Firefox gate during normal iteration; keep that proof in the dedicated real
+  browser milestone/release gate once the Firefox closure is locally cached.
 - No root service, hostd, D-Bus control, eBPF probe, Nix self-edit, rebuild, or
   rollback action is enabled.
 
 ## Next Slice
 
-Package `openclaw-browser-runtime` as the eighth store-native service. Build a
-reproducible npm dependency closure for `puppeteer-core` without browser
-downloads or mutable repository `node_modules`, preserve login-user ownership
-and the Nix-managed Firefox executable, and prove representative simulated plus
-real-engine startup behavior. Keep the 134-module core closure as the final
-separate packaging problem.
+Package `openclaw-core` as the ninth and final store-native service. Derive an
+explicit runtime import closure from its 134 local modules and exact shared
+package imports, preserve writable core state and all upstream contracts, and
+prove representative health plus persisted control-plane behavior from the
+store. Do not copy tests, historical artifacts, or unrelated workspace source.
