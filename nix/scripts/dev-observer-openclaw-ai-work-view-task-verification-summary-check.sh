@@ -79,7 +79,10 @@ for (const [label, summary] of [
   ["task detail", taskSummary],
   ["latest finished", latestSummary],
 ]) {
-  if (summary?.url !== targetUrl || !summary?.visibleTextBlocks?.includes(inputText)) {
+  if (summary?.url !== targetUrl
+    || summary?.recentInteraction?.input?.charCount !== inputText.length
+    || summary?.recentInteraction?.input?.textExposed !== false
+    || JSON.stringify(summary).includes(inputText)) {
     throw new Error(`${label} should expose observer-visible verification work view summary: ${JSON.stringify(summary)}`);
   }
 }

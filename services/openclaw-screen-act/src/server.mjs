@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { buildTrustedWorkViewActionLease } from "./trusted-work-view-action-mediation.mjs";
 import { normaliseWorkViewSemanticTargetReference } from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
+import { redactWriteOnlyInputParams } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 
 const host = process.env.OPENCLAW_SCREEN_ACT_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_PORT ?? "4105", 10);
@@ -165,10 +166,11 @@ async function executeBrowserAction(kind, params, screen) {
 async function executeAction(kind, params) {
   const actionId = randomUUID();
   const startedAt = new Date().toISOString();
+  const publicParams = kind === "keyboard.type" ? redactWriteOnlyInputParams(params) : params;
 
   // Audit: Record action started
   await publishEvent(createEventName("screen_act.action_started"), {
-    actionId, kind, params, startedAt,
+    actionId, kind, params: publicParams, startedAt,
   });
 
   const { screen, degraded } = await getScreenContext();
@@ -192,7 +194,7 @@ async function executeAction(kind, params) {
   const action = {
     id: actionId,
     kind,
-    params,
+    params: publicParams,
     executedAt: new Date().toISOString(),
     screenContext: screen
         ? {
@@ -216,7 +218,7 @@ async function executeAction(kind, params) {
   await publishEvent(createEventName("screen_act.action_completed"), {
     actionId,
     kind,
-    params,
+    params: publicParams,
     startedAt,
     completedAt: new Date().toISOString(),
     action,

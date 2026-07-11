@@ -61,16 +61,18 @@ for (const [label, summary] of [
   if (summary?.url !== targetUrl) {
     throw new Error(`${label} summary should expose target URL: ${JSON.stringify(summary)}`);
   }
-  if (!summary?.visibleTextBlocks?.includes(inputText)) {
-    throw new Error(`${label} summary should include observed input text: ${JSON.stringify(summary?.visibleTextBlocks)}`);
+  if (summary?.recentInteraction?.input?.registry !== "openclaw-write-only-input-evidence-v0"
+    || summary.recentInteraction.input.charCount !== inputText.length
+    || JSON.stringify(summary).includes(inputText)) {
+    throw new Error(`${label} summary should include redacted input evidence: ${JSON.stringify(summary)}`);
   }
 }
 
 if (execution.execution?.verification?.ok !== true) {
   throw new Error("verification should pass for summary task.");
 }
-if (!execution.execution?.observedTextBlocks?.includes(inputText)) {
-  throw new Error(`execution should expose observed text blocks: ${JSON.stringify(execution.execution?.observedTextBlocks)}`);
+if (JSON.stringify(execution.execution?.observedTextBlocks).includes(inputText)) {
+  throw new Error(`execution observed text blocks must not expose input: ${JSON.stringify(execution.execution?.observedTextBlocks)}`);
 }
 if (taskDetail.task?.outcome?.details?.verifiedScreen?.workViewSummary?.url !== targetUrl) {
   throw new Error(`verifiedScreen details should retain work view summary: ${JSON.stringify(taskDetail.task?.outcome?.details?.verifiedScreen)}`);

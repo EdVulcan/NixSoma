@@ -26,11 +26,15 @@
     "./work-view-semantic-targets": {
       "types": "./src/work-view-semantic-targets.d.ts",
       "default": "./src/work-view-semantic-targets.mjs"
+    },
+    "./work-view-input-evidence": {
+      "types": "./src/work-view-input-evidence.d.ts",
+      "default": "./src/work-view-input-evidence.mjs"
     }
   },
   "scripts": {
     "build": "npm run typecheck && npm test",
-    "typecheck": "tsc -p tsconfig.json --noEmit && node --check src/http.mjs && node --check src/persist.mjs && node --check src/work-view-trust.mjs && node --check src/work-view-visual-frame.mjs && node --check src/work-view-semantic-targets.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit && node --check src/http.mjs && node --check src/persist.mjs && node --check src/work-view-trust.mjs && node --check src/work-view-visual-frame.mjs && node --check src/work-view-semantic-targets.mjs && node --check src/work-view-input-evidence.mjs",
     "test": "node --test test/*.test.mjs"
   }
 }

@@ -65,8 +65,11 @@ for (const [label, evidence] of [
   if (evidence.observedUrl !== targetUrl || evidence.recommendation?.targetUrl !== targetUrl) {
     throw new Error(`${label} should recommend retrying the observed work view URL: ${JSON.stringify(evidence)}`);
   }
-  if (!evidence.actionEvidence?.observedAfterActions?.visibleTextBlocks?.includes(inputText)) {
-    throw new Error(`${label} should retain observed input text: ${JSON.stringify(evidence.actionEvidence?.observedAfterActions)}`);
+  const inputEvidence = evidence.actionEvidence?.actions?.find((action) => action.kind === "keyboard.type")?.params?.inputEvidence;
+  if (inputEvidence?.charCount !== inputText.length
+    || inputEvidence.textExposed !== false
+    || JSON.stringify(evidence).includes(inputText)) {
+    throw new Error(`${label} should retain redacted input evidence: ${JSON.stringify(evidence)}`);
   }
   if (!evidence.failedChecks?.some((check) => check.name === "target_url" && check.expected === expectedUrl && check.actual === targetUrl)) {
     throw new Error(`${label} should retain target_url failure check: ${JSON.stringify(evidence.failedChecks)}`);

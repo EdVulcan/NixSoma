@@ -80,8 +80,11 @@ const failedEvidence = latestFailed.task?.outcome?.details?.recoveryEvidence;
 if (failedEvidence?.observedUrl !== targetUrl || failedEvidence?.recommendation?.targetUrl !== targetUrl) {
   throw new Error(`Observer latest failed should expose recovery evidence: ${JSON.stringify(failedEvidence)}`);
 }
-if (!failedEvidence?.actionEvidence?.observedAfterActions?.visibleTextBlocks?.includes(inputText)) {
-  throw new Error(`Observer latest failed evidence should retain observed text: ${JSON.stringify(failedEvidence?.actionEvidence?.observedAfterActions)}`);
+const inputEvidence = failedEvidence?.actionEvidence?.actions?.find((action) => action.kind === "keyboard.type")?.params?.inputEvidence;
+if (inputEvidence?.charCount !== inputText.length
+  || inputEvidence.textExposed !== false
+  || JSON.stringify(failedEvidence).includes(inputText)) {
+  throw new Error(`Observer latest failed evidence should retain redacted input: ${JSON.stringify(failedEvidence)}`);
 }
 if (execution.execution?.verification?.expectedUrl !== targetUrl) {
   throw new Error(`Observer final verification should use recommendation target URL: ${JSON.stringify(execution.execution?.verification)}`);

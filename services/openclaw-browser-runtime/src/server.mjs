@@ -15,6 +15,7 @@ import {
   summariseWorkViewSemanticTargets,
   unavailableWorkViewSemanticTargets,
 } from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
+import { buildWriteOnlyInputEvidence } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 import { normaliseBoundedBrowserUrl } from "./browser-navigation.mjs";
 import { createBrowserWorkspaceStore } from "./browser-workspace-store.mjs";
 import { createBrowserEngineAdapter } from "./browser-engine-adapter.mjs";
@@ -173,6 +174,12 @@ function addTab(url) {
   return tab;
 }
 
+function inputEvidenceText(evidence) {
+  return evidence?.registry === "openclaw-write-only-input-evidence-v0"
+    ? `Last input: redacted (${evidence.charCount} chars, ${evidence.byteLength} bytes)`
+    : null;
+}
+
 function buildBrowserCapture(
   visualFrame = unavailableWorkViewVisualFrame("not_captured"),
   semanticTargets = unavailableWorkViewSemanticTargets("not_captured"),
@@ -186,12 +193,13 @@ function buildBrowserCapture(
     input: browserState.lastInput,
     click: browserState.lastClick ? { ...browserState.lastClick } : null,
   };
+  const redactedInputText = inputEvidenceText(browserState.lastInput);
   const visibleTextBlocks = [
     "AI-owned work view",
     activeTitle,
     activeUrl,
     `Tabs ${tabs.length}`,
-    ...(browserState.lastInput ? [browserState.lastInput, `Last input: ${browserState.lastInput}`] : []),
+    ...(redactedInputText ? [redactedInputText] : []),
     ...(browserState.lastClick
       ? [`Last click: ${browserState.lastClick.x ?? "?"},${browserState.lastClick.y ?? "?"}`]
       : []),
@@ -268,7 +276,7 @@ function buildBrowserCapture(
   ];
 
   if (browserState.lastInput) {
-    lines.push(`Last Input: ${browserState.lastInput}`);
+    lines.push(inputEvidenceText(browserState.lastInput));
   }
 
   if (browserState.lastClick) {
@@ -299,7 +307,7 @@ function buildBrowserCapture(
       { text: activeTitle, confidence: 0.99 },
       { text: activeUrl, confidence: 0.96 },
       { text: `Tabs ${tabs.length}`, confidence: 0.92 },
-      ...(browserState.lastInput ? [{ text: browserState.lastInput, confidence: 0.87 }] : []),
+      ...(redactedInputText ? [{ text: redactedInputText, confidence: 0.87 }] : []),
     ],
     ocrSource: "runtime_state_projection",
     viewport: {
@@ -516,14 +524,14 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 409, { ok: false, error: mediation.reason, mediation });
         return;
       }
-      const text = typeof body.text === "string" ? body.text : "";
+      const { text, evidence: inputEvidence } = buildWriteOnlyInputEvidence(body.text);
       if (browserEngine) applyEngineSnapshot(await browserEngine.type(text));
       updateBrowserState({
-        lastInput: text,
+        lastInput: inputEvidence,
       });
       const browser = serialiseBrowserState();
-      await publishEvent(createEventName("browser.updated"), { browser, action: "input", text });
-      sendJson(res, 200, { ok: true, browser, echoedInput: text, mediation });
+      await publishEvent(createEventName("browser.updated"), { browser, action: "input", inputEvidence });
+      sendJson(res, 200, { ok: true, browser, inputEvidence, mediation });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       sendJson(res, 400, { ok: false, error: message });

@@ -80,8 +80,11 @@ if (finalVerification?.expectedUrl !== targetUrl || finalVerification?.activeUrl
 if (finalVerification.expectedUrl === staleRecoveryExpectedUrl || finalVerification.expectedUrl === initialExpectedUrl) {
   throw new Error("final verification should not use stale expected URLs.");
 }
-if (!execution.execution?.actionEvidence?.observedAfterActions?.visibleTextBlocks?.includes(inputText)) {
-  throw new Error(`final action evidence should retain observed input text: ${JSON.stringify(execution.execution?.actionEvidence)}`);
+const finalInputEvidence = execution.execution?.actionEvidence?.actions?.find((action) => action.kind === "keyboard.type")?.params?.inputEvidence;
+if (finalInputEvidence?.charCount !== inputText.length
+  || finalInputEvidence.textExposed !== false
+  || JSON.stringify(execution.execution?.actionEvidence).includes(inputText)) {
+  throw new Error(`final action evidence should retain redacted input evidence: ${JSON.stringify(execution.execution?.actionEvidence)}`);
 }
 if (latestFinished.task?.id !== execution.task?.id || latestFinished.task?.status !== "completed") {
   throw new Error(`latest finished should be recovered completed task: ${JSON.stringify(latestFinished.task)}`);

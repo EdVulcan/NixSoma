@@ -19,6 +19,8 @@ export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-5790}"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-ai-work-view-capture-summary-check.json}"
 
 BROWSER_URL="http://127.0.0.1:$OPENCLAW_BROWSER_RUNTIME_PORT"
+SESSION_MANAGER_URL="http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT"
+SCREEN_ACT_URL="http://127.0.0.1:$OPENCLAW_SCREEN_ACT_PORT"
 SCREEN_URL="http://127.0.0.1:$OPENCLAW_SCREEN_SENSE_PORT"
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
@@ -37,10 +39,10 @@ source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
 
 "$SCRIPT_DIR/dev-up.sh"
 
-open_result="$(post_json "$BROWSER_URL/browser/open" "{\"url\":\"$TARGET_URL\"}")"
-node -e 'const data=JSON.parse(process.argv[1]); if(!data.ok || !data.browser?.sessionId){throw new Error(`browser open failed: ${JSON.stringify(data)}`);}' "$open_result"
-post_json "$BROWSER_URL/browser/input" "{\"text\":\"$INPUT_TEXT\"}" >/dev/null
-post_json "$BROWSER_URL/browser/click" '{"x":640,"y":360}' >/dev/null
+prepare_result="$(post_json "$SESSION_MANAGER_URL/work-view/prepare" "{\"displayTarget\":\"workspace-2\",\"entryUrl\":\"$TARGET_URL\"}")"
+node -e 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.workView?.helperRuntime?.status!=="active"){throw new Error(`work view prepare failed: ${JSON.stringify(data)}`);}' "$prepare_result"
+post_json "$SCREEN_ACT_URL/act/keyboard/type" "{\"text\":\"$INPUT_TEXT\"}" >/dev/null
+post_json "$SCREEN_ACT_URL/act/mouse/click" '{"x":640,"y":360}' >/dev/null
 
 capture="$(curl --silent "$BROWSER_URL/browser/capture")"
 screen="$(curl --silent "$SCREEN_URL/screen/current")"
@@ -61,13 +63,17 @@ if (captureSummary?.kind !== "browser-work-view-summary") {
 if (captureSummary.url !== targetUrl || !captureSummary.summaryText?.includes(targetUrl)) {
   throw new Error(`browser summary should describe the active URL: ${JSON.stringify(captureSummary)}`);
 }
-if (!captureSummary.visibleTextBlocks?.includes(inputText)) {
-  throw new Error(`browser summary should include recent input in visible text blocks: ${JSON.stringify(captureSummary.visibleTextBlocks)}`);
+const captureInput = captureSummary.recentInteraction?.input;
+if (captureInput?.registry !== "openclaw-write-only-input-evidence-v0"
+  || captureInput.charCount !== inputText.length
+  || captureInput.textExposed !== false
+  || captureSummary.recentInteraction?.click?.x !== 640
+  || JSON.stringify(captureSummary).includes(inputText)) {
+  throw new Error(`browser summary should retain redacted input evidence: ${JSON.stringify(captureSummary)}`);
 }
-if (captureSummary.recentInteraction?.input !== inputText || captureSummary.recentInteraction?.click?.x !== 640) {
-  throw new Error(`browser summary should include recent interaction: ${JSON.stringify(captureSummary.recentInteraction)}`);
-}
-if (screenSummary?.url !== targetUrl || screenSummary?.recentInteraction?.input !== inputText) {
+if (screenSummary?.url !== targetUrl
+  || screenSummary?.recentInteraction?.input?.registry !== "openclaw-write-only-input-evidence-v0"
+  || JSON.stringify(screenSummary).includes(inputText)) {
   throw new Error(`screen-sense should propagate work view summary: ${JSON.stringify(screenSummary)}`);
 }
 if (!screenResponse.screen?.snapshotText?.includes("Summary: AI work view is focused")) {
@@ -86,7 +92,7 @@ console.log(JSON.stringify({
     title: captureSummary.title,
     url: captureSummary.url,
     visibleTextBlocks: captureSummary.visibleTextBlocks,
-    recentInput: captureSummary.recentInteraction?.input ?? null,
+    recentInput: captureInput,
   },
   screenSummary: {
     kind: screenSummary.kind,

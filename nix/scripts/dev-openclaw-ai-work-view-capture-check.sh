@@ -9,6 +9,7 @@ TARGET_URL="http://127.0.0.1:$FIXTURE_PORT/openclaw-ai-work-view-capture"
 GROUNDING_URL="http://127.0.0.1:$FIXTURE_PORT/grounded-action"
 AUTONOMOUS_GROUNDING_URL="http://127.0.0.1:$FIXTURE_PORT/autonomous-grounded-action"
 SEMANTIC_CLICK_URL="http://127.0.0.1:$FIXTURE_PORT/semantic-click-target"
+INPUT_TEXT="openclaw sees its own work view"
 
 export OPENCLAW_CORE_PORT="${OPENCLAW_CORE_PORT:-5700}"
 export OPENCLAW_EVENT_HUB_PORT="${OPENCLAW_EVENT_HUB_PORT:-5701}"
@@ -94,7 +95,7 @@ engine_pid="$(node -e 'const data=JSON.parse(process.argv[1]); process.stdout.wr
 kill -0 "$engine_pid"
 
 session_state="$(curl --silent --fail "$SESSION_MANAGER_URL/work-view/state")"
-input_body="$(node -e 'const data=JSON.parse(process.argv[1]); const r=data.workView?.helperRuntime??{}; const trustedHelperLease={registry:"openclaw-trusted-work-view-helper-lease-v0",owner:r.owner,mode:r.mode,scope:r.scope,leaseId:r.leaseId,sessionId:r.sessionId,workViewId:r.workViewId,heartbeatAt:r.heartbeatAt,actionAuthority:r.actionAuthority}; process.stdout.write(JSON.stringify({text:"openclaw sees its own work view",trustedHelperLease}));' "$session_state")"
+input_body="$(node -e 'const data=JSON.parse(process.argv[1]); const r=data.workView?.helperRuntime??{}; const trustedHelperLease={registry:"openclaw-trusted-work-view-helper-lease-v0",owner:r.owner,mode:r.mode,scope:r.scope,leaseId:r.leaseId,sessionId:r.sessionId,workViewId:r.workViewId,heartbeatAt:r.heartbeatAt,actionAuthority:r.actionAuthority}; process.stdout.write(JSON.stringify({text:process.argv[2],trustedHelperLease}));' "$session_state" "$INPUT_TEXT")"
 click_body="$(node -e 'const body=JSON.parse(process.argv[1]); process.stdout.write(JSON.stringify({x:512,y:256,trustedHelperLease:body.trustedHelperLease}));' "$input_body")"
 post_json "$BROWSER_URL/browser/input" "$input_body" >/dev/null
 post_json "$BROWSER_URL/browser/click" "$click_body" >/dev/null
@@ -242,6 +243,12 @@ provider="$(curl --silent "$SCREEN_URL/screen/provider")"
 capture="$(curl --silent "$BROWSER_URL/browser/capture")"
 screen="$(curl --silent "$SCREEN_URL/screen/current")"
 metadata_capture="$(curl --silent "$BROWSER_URL/browser/capture?visual=metadata")"
+for readback in "$capture" "$screen" "$metadata_capture"; do
+  if [[ "$readback" == *"$INPUT_TEXT"* ]]; then
+    echo "write-only browser input leaked into capture readback" >&2
+    exit 1
+  fi
+done
 
 node - <<'EOF' "$provider" "$capture" "$screen" "$AUTONOMOUS_GROUNDING_URL" "$engine_pid" "$metadata_capture"
 const { createHash } = require("node:crypto");
@@ -477,10 +484,11 @@ EOF
 post_json "$SCREEN_URL/screen/refresh" '{}' >/dev/null
 SCREEN_EVENTS_FILE="$(mktemp)"
 curl --silent --fail "$EVENT_HUB_URL/events/audit?type=screen.updated&source=openclaw-screen-sense&limit=1" > "$SCREEN_EVENTS_FILE"
-node - <<'EOF' "$SCREEN_EVENTS_FILE" "$OPENCLAW_EVENT_LOG_FILE"
+node - <<'EOF' "$SCREEN_EVENTS_FILE" "$OPENCLAW_EVENT_LOG_FILE" "$INPUT_TEXT"
 const { readFileSync } = require("node:fs");
 const events = JSON.parse(readFileSync(process.argv[2], "utf8"));
 const persistedEvents = readFileSync(process.argv[3], "utf8");
+const inputText = process.argv[4];
 const latest = events.items?.at(-1);
 const frame = latest?.payload?.screen?.visualFrame;
 const semanticTargets = latest?.payload?.screen?.semanticTargets;
@@ -495,7 +503,8 @@ if (!latest
   || "dataUrl" in frame
   || JSON.stringify(latest).includes("data:image/jpeg;base64,")
   || JSON.stringify(latest).includes("fixture-password-secret")
-  || persistedEvents.includes("data:image/jpeg;base64,")) {
+  || persistedEvents.includes("data:image/jpeg;base64,")
+  || persistedEvents.includes(inputText)) {
   throw new Error(`screen audit event must retain frame metadata without image data: ${JSON.stringify(latest)}`);
 }
 console.log(JSON.stringify({

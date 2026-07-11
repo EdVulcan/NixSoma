@@ -19,6 +19,8 @@ export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-5800}"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-observer-ai-work-view-capture-summary-check.json}"
 
 BROWSER_URL="http://127.0.0.1:$OPENCLAW_BROWSER_RUNTIME_PORT"
+SESSION_MANAGER_URL="http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT"
+SCREEN_ACT_URL="http://127.0.0.1:$OPENCLAW_SCREEN_ACT_PORT"
 SCREEN_URL="http://127.0.0.1:$OPENCLAW_SCREEN_SENSE_PORT"
 OBSERVER_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
 
@@ -57,7 +59,7 @@ const requiredClient = [
   "screen.workViewSummary",
   "screen.trustedSession",
   "workViewSummary.visibleTextBlocks",
-  "workViewSummary.recentInteraction?.input",
+  "workViewSummary.recentInteraction?.input?.registry",
   "Trusted Session",
   "Helper Readiness",
   "Recovery Recommendation",
@@ -75,9 +77,9 @@ for (const token of requiredClient) {
 }
 EOF
 
-open_result="$(post_json "$BROWSER_URL/browser/open" "{\"url\":\"$TARGET_URL\"}")"
-node -e 'const data=JSON.parse(process.argv[1]); if(!data.ok || !data.browser?.sessionId){throw new Error(`observer summary browser open failed: ${JSON.stringify(data)}`);}' "$open_result"
-post_json "$BROWSER_URL/browser/input" "{\"text\":\"$INPUT_TEXT\"}" >/dev/null
+prepare_result="$(post_json "$SESSION_MANAGER_URL/work-view/prepare" "{\"displayTarget\":\"workspace-2\",\"entryUrl\":\"$TARGET_URL\"}")"
+node -e 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.workView?.helperRuntime?.status!=="active"){throw new Error(`observer summary work view prepare failed: ${JSON.stringify(data)}`);}' "$prepare_result"
+post_json "$SCREEN_ACT_URL/act/keyboard/type" "{\"text\":\"$INPUT_TEXT\"}" >/dev/null
 
 screen="$(curl --silent "$SCREEN_URL/screen/current")"
 
@@ -91,11 +93,11 @@ const trustedSession = data.screen?.trustedSession ?? data.screen?.workView?.tru
 if (summary?.url !== targetUrl) {
   throw new Error(`Observer-facing summary should expose active URL: ${JSON.stringify(summary)}`);
 }
-if (summary?.recentInteraction?.input !== inputText) {
-  throw new Error(`Observer-facing summary should expose recent input: ${JSON.stringify(summary)}`);
-}
-if (!summary?.visibleTextBlocks?.includes(inputText)) {
-  throw new Error(`Observer-facing summary should expose visible text blocks: ${JSON.stringify(summary?.visibleTextBlocks)}`);
+if (summary?.recentInteraction?.input?.registry !== "openclaw-write-only-input-evidence-v0"
+  || summary.recentInteraction.input.charCount !== inputText.length
+  || summary.recentInteraction.input.textExposed !== false
+  || JSON.stringify(summary).includes(inputText)) {
+  throw new Error(`Observer-facing summary should expose redacted input evidence: ${JSON.stringify(summary)}`);
 }
 if (trustedSession?.identityLevel !== "level_2_trusted_session_work_view"
   || trustedSession?.boundary?.workViewScope !== "ai_owned_work_view_only"

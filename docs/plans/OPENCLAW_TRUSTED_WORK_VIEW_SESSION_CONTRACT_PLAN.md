@@ -811,6 +811,30 @@ only bounded target/effect evidence.
 The next Level 2 slice should make semantic text input write-only and
 frame-bound. First replace legacy plaintext input echoes in browser state,
 work-view summaries, screen-act action parameters, task evidence, and audit
-events with bounded length/hash/redaction metadata. Then add one semantic type
+events with bounded length/redaction metadata. Then add one semantic type
 operation through the same current-target, lease, sidecar refresh, visual
 grounding, task, and Observer path. Do not persist or read back the typed value.
+
+The plaintext input debt is now closed before adding semantic type. A shared
+`openclaw-write-only-input-evidence-v0` projection bounds input to 2,000
+characters and retains only character count, byte count, truncation, and
+negative exposure/persistence flags. Browser state, capture/OCR/snapshot text,
+screen readback, Observer, browser events, screen-act started/completed events,
+core public plans, action/verification/recovery evidence, and persisted core
+task state no longer carry the input text.
+
+Core may retain the transient value in memory only long enough to execute the
+current action. Persistence projects every keyboard/semantic type action to
+input evidence. If core restarts while such an active task awaits execution,
+the restored task fails closed as `input_reentry_required` with automatic replay
+disabled; it never types a redaction marker. Runtime-state tests write and reload
+a real state file, while existing capture, task verification, eye-hand,
+recovery, auto-recovery, Observer, and real Firefox milestones now assert both
+evidence presence and plaintext absence.
+
+The next real Level 2 slice is one frame-bound semantic type operation. Extend
+the semantic reference operation allowlist to `type`, require a unique enabled
+textbox target selected after observation, pass the text only in the execution
+request, and return write-only input evidence plus pre/post visual grounding.
+Reuse `/act/keyboard/type`, sidecar refresh, task and Observer paths; do not
+persist the value or add a selector/endpoint family.

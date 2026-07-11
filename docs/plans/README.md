@@ -219,6 +219,14 @@ proves the autonomous task. The next Level 2 slice is write-only semantic text
 input after replacing all legacy plaintext input echoes with bounded redaction
 metadata.
 
+That redaction prerequisite is now complete. Browser, screen, Observer,
+screen-act, task/verification/recovery evidence, events, and core persistence
+retain bounded input evidence rather than text. Core restart fails active
+redacted-input tasks as `input_reentry_required` with no replay. The next Level
+2 slice is one semantic type operation selected from the current inventory and
+executed through the existing keyboard/sidecar/grounding path with a transient
+execution-only value.
+
 ## Historical Phase Plans
 
 `OPENCLAW_PHASE_2_PLAN.md` through `OPENCLAW_PHASE_136_PLAN.md` are retained

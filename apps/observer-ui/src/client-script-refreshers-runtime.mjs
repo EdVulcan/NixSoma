@@ -206,7 +206,7 @@ async function refreshScreen() {
           "Sidecar Lifecycle: " + (trustedSession.sidecarContract?.lifecycleProposal?.status ?? "unknown"),
           "Sidecar Approval Draft: " + (trustedSession.sidecarContract?.approvalTaskDraft?.status ?? "unknown"),
           "Visible Text: " + ((workViewSummary.visibleTextBlocks ?? []).join(" | ") || "none"),
-          "Recent Input: " + (workViewSummary.recentInteraction?.input ?? "none"),
+          "Recent Input: " + (workViewSummary.recentInteraction?.input?.registry === "openclaw-write-only-input-evidence-v0" ? "redacted chars=" + workViewSummary.recentInteraction.input.charCount + " bytes=" + workViewSummary.recentInteraction.input.byteLength : "none"),
         ].join("\\n")
       : "No work view summary yet.";
     screenSummary.textContent = screen.summary;

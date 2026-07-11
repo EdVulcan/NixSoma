@@ -64,8 +64,12 @@ for (const [label, item] of [
   if (item.observedAfterActions?.url !== targetUrl) {
     throw new Error(`${label} should link actions to final observed work view URL: ${JSON.stringify(item.observedAfterActions)}`);
   }
-  if (!item.observedAfterActions?.visibleTextBlocks?.includes(inputText)) {
-    throw new Error(`${label} should link actions to observed input text: ${JSON.stringify(item.observedAfterActions?.visibleTextBlocks)}`);
+  const inputEvidence = item.actions?.find((action) => action.kind === "keyboard.type")?.params?.inputEvidence;
+  if (inputEvidence?.registry !== "openclaw-write-only-input-evidence-v0"
+    || inputEvidence.charCount !== inputText.length
+    || inputEvidence.textExposed !== false
+    || JSON.stringify(item).includes(inputText)) {
+    throw new Error(`${label} should retain redacted input evidence: ${JSON.stringify(item)}`);
   }
 }
 
@@ -73,8 +77,8 @@ const kinds = evidence.actions.map((action) => action.kind);
 if (kinds.join(",") !== "keyboard.type,mouse.click") {
   throw new Error(`expected keyboard then mouse action evidence: ${JSON.stringify(kinds)}`);
 }
-if (evidence.actions[0]?.params?.text !== inputText || evidence.actions[1]?.params?.x !== 700) {
-  throw new Error(`action evidence should retain action params: ${JSON.stringify(evidence.actions)}`);
+if ("text" in (evidence.actions[0]?.params ?? {}) || evidence.actions[1]?.params?.x !== 700) {
+  throw new Error(`action evidence should retain only bounded action params: ${JSON.stringify(evidence.actions)}`);
 }
 if (!evidence.actions.every((action) => action.screenContext?.readiness === "ready")) {
   throw new Error(`action evidence should retain ready screen context: ${JSON.stringify(evidence.actions)}`);

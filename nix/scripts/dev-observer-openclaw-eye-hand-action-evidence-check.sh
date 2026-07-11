@@ -81,8 +81,11 @@ for (const [label, evidence] of [
   if (evidence?.actionCount !== 2 || evidence?.observedAfterActions?.url !== targetUrl) {
     throw new Error(`${label} should expose observer-visible action evidence: ${JSON.stringify(evidence)}`);
   }
-  if (!evidence?.observedAfterActions?.visibleTextBlocks?.includes(inputText)) {
-    throw new Error(`${label} should include observed text evidence: ${JSON.stringify(evidence?.observedAfterActions)}`);
+  const inputEvidence = evidence?.actions?.find((action) => action.kind === "keyboard.type")?.params?.inputEvidence;
+  if (inputEvidence?.charCount !== inputText.length
+    || inputEvidence.textExposed !== false
+    || JSON.stringify(evidence).includes(inputText)) {
+    throw new Error(`${label} should include redacted input evidence: ${JSON.stringify(evidence)}`);
   }
 }
 

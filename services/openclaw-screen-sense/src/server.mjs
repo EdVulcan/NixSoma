@@ -9,6 +9,12 @@ import {
   summariseWorkViewSemanticTargets,
 } from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
 
+function inputEvidenceText(evidence) {
+  return evidence?.registry === "openclaw-write-only-input-evidence-v0"
+    ? `Last input: redacted (${evidence.charCount} chars, ${evidence.byteLength} bytes)`
+    : null;
+}
+
 const host = process.env.OPENCLAW_SCREEN_SENSE_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SCREEN_SENSE_PORT ?? "4104", 10);
 const eventHubUrl = process.env.OPENCLAW_EVENT_HUB_URL ?? "http://127.0.0.1:4101";
@@ -182,7 +188,7 @@ function deriveScreenPatch({ session, sessionWorkView, browser, browserCapture, 
           activeTitle,
           activeUrl,
           `Tabs ${tabs.length}`,
-          ...(browser?.lastInput ? [browser.lastInput, `Last input: ${browser.lastInput}`] : []),
+          ...(inputEvidenceText(browser?.lastInput) ? [inputEvidenceText(browser.lastInput)] : []),
         ]
       : ["OpenClaw AI Work View", readiness === "warming_up" ? "Warming up" : "No active work view"]);
   const workViewSummary = browserCapture?.workViewSummary ?? {

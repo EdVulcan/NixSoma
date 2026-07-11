@@ -1,6 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createDebouncedPersist } from "../../../packages/shared-utils/src/persist.mjs";
+import {
+  hasRedactedWriteOnlyInputAction,
+  redactWriteOnlyInputActionTree,
+} from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 
 export function createRuntimeState(config) {
   const { stateFilePath, getTaskById } = config;
@@ -136,7 +140,7 @@ function updateRuntimeState(patch) {
     version: 1,
     savedAt: new Date().toISOString(),
     runtime: runtimeState,
-    tasks: [...tasks.values()],
+    tasks: [...tasks.values()].map(redactWriteOnlyInputActionTree),
     approvals: [...approvals.values()],
     policyAuditLog,
     capabilityInvocationLog,
@@ -167,6 +171,19 @@ function loadPersistentState() {
         if (task?.id) {
           if (typeof task.status === "string" && !VALID_TASK_STATUSES.has(task.status)) {
             task.status = "failed";
+          }
+          if (ACTIVE_TASK_STATUSES.has(task.status) && hasRedactedWriteOnlyInputAction(task)) {
+            task.status = "failed";
+            task.executionPhase = "input_reentry_required";
+            task.outcome = {
+              status: "failed",
+              summary: "Write-only input expired across core restart.",
+              details: {
+                reason: "write_only_input_reentry_required",
+                inputTextPersisted: false,
+                automaticReplay: false,
+              },
+            };
           }
           tasks.set(task.id, task);
         }

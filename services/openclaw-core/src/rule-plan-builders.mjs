@@ -1,11 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { capabilityIdForBrowserTaskAction } from "./browser-task-action-contract.mjs";
+import { redactWriteOnlyInputParams } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 
-function redactPublicParams(params) {
+function redactPublicParams(params, kind) {
   if (!params || typeof params !== "object" || Array.isArray(params)) {
     return params ?? {};
   }
-  const redacted = { ...params };
+  const redacted = ["keyboard.type", "browser.semantic_type"].includes(kind)
+    ? redactWriteOnlyInputParams(params)
+    : { ...params };
   for (const key of ["content", "body", "data"]) {
     if (typeof redacted[key] === "string") {
       redacted[key] = `[redacted:${Buffer.byteLength(redacted[key], "utf8")} bytes]`;
@@ -93,7 +96,7 @@ export function createRulePlanBuilders(deps) {
       steps: Array.isArray(plan.steps)
         ? plan.steps.map((step) => ({
             ...step,
-            params: redactPublicParams(step.params),
+            params: redactPublicParams(step.params, step.kind),
           }))
         : plan.steps,
     };

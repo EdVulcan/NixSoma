@@ -82,8 +82,11 @@ for (const [label, evidence] of [
   if (evidence?.observedUrl !== targetUrl || evidence?.recommendation?.strategy !== "retry_with_fresh_observation") {
     throw new Error(`${label} should expose observer-visible recovery evidence: ${JSON.stringify(evidence)}`);
   }
-  if (!evidence?.actionEvidence?.observedAfterActions?.visibleTextBlocks?.includes(inputText)) {
-    throw new Error(`${label} should retain observed text context: ${JSON.stringify(evidence?.actionEvidence?.observedAfterActions)}`);
+  const inputEvidence = evidence?.actionEvidence?.actions?.find((action) => action.kind === "keyboard.type")?.params?.inputEvidence;
+  if (inputEvidence?.charCount !== inputText.length
+    || inputEvidence.textExposed !== false
+    || JSON.stringify(evidence).includes(inputText)) {
+    throw new Error(`${label} should retain redacted input context: ${JSON.stringify(evidence)}`);
   }
 }
 

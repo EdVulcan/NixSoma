@@ -300,7 +300,7 @@
 | 身份层级 | 当前成熟度 | 证据与主要缺口 |
 | --- | --- | --- |
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
-| Level 2 受信会话组件 | 约 99% | trusted-session 契约、takeover suspend/resume-rebind、独立 user-session sidecar、fail-closed reconnect/replacement、受治理 browser input/click/new-tab、autonomous dispatch、跨服务重启、`systemd --user` ownership、bounded workspace continuity、真实 NixOS Firefox、登录用户组件归属、bounded 页面像素帧、fresh pre/post frame-grounded 动作证据、帧绑定交互目标清单、拒绝 stale inventory 的 semantic click，以及 core 观察后自主 target selection 已有；主要产品缺口是先清除输入文本在公开状态、任务证据与审计中的回显，再将 write-only semantic type 纳入同一眼手、租约、sidecar refresh、审计与 Observer 合同。 |
+| Level 2 受信会话组件 | 约 99% | trusted-session 契约、takeover suspend/resume-rebind、独立 user-session sidecar、fail-closed reconnect/replacement、受治理 browser input/click/new-tab、autonomous dispatch、跨服务重启、`systemd --user` ownership、bounded workspace continuity、真实 NixOS Firefox、bounded 页面像素帧、frame-grounded 动作、帧绑定目标清单、semantic click、core 观察后自主 target selection，以及不回显/不持久化原文的 write-only input evidence 已有；主要产品缺口是将 semantic type 纳入同一当前 target、租约、sidecar refresh、视觉 grounding、审计与 Observer 合同，其文本只能作为单次执行的瞬态 payload。 |
 | Level 3 系统级特权组件 | 约 10-15% | 已有 systemd 感知、提案和有限执行证据；独立 `openclaw-hostd`、D-Bus/Polkit RPC 和受控特权边界尚未建立。 |
 | Level 4 图形栈内生组件 | 约 0-5% | 只有 AI-owned work-view 方向与接口预留；专属 session、nested compositor、原生图形输入输出尚未实现。 |
 

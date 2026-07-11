@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { createTaskRecovery } from "./task-recovery.mjs";
+import { redactWriteOnlyInputActionTree } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 
 const TASK_EXTENSION_FIELDS = [
   { name: "sourceCommand", copyFromCreateInput: true },
@@ -121,7 +122,7 @@ export function createTaskManager(deps) {
   // L9571-9611
 function serialiseTask(task) {
   const currentTask = getCurrentTask();
-  return {
+  return redactWriteOnlyInputActionTree({
     id: task.id,
     type: task.type,
     goal: task.goal,
@@ -145,7 +146,7 @@ function serialiseTask(task) {
     updatedAt: task.updatedAt,
     isCurrentTask: currentTask?.id === task.id,
     isActive: isActiveTask(task),
-  };
+  });
 }
 
 

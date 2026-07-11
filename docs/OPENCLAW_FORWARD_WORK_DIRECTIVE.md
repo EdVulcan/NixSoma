@@ -436,10 +436,24 @@ post-frame advance, and expected navigation.
 
 The next smallest Level 2 capability is write-only semantic text input. Remove
 legacy plaintext input echoes from browser state, summaries, action/task
-evidence, and audit events first; retain only bounded length/hash/redaction
+evidence, and audit events first; retain only bounded length/redaction
 evidence. Then reuse the same current-target selection, sidecar refresh, lease,
 visual grounding, and Observer path for one semantic type operation without
 persisting or reading back the value.
+
+The plaintext-removal prerequisite is now complete. Inputs are bounded to 2,000
+characters and all browser/screen/Observer/event/task/recovery/persistence
+readbacks retain only count/truncation and negative exposure evidence. Core
+state persistence strips action text; an active task restored without its
+transient value becomes `input_reentry_required` and cannot replay. Existing
+core, Observer, recovery, and real Firefox milestones prove the new contract.
+
+The next smallest Level 2 capability is frame-bound semantic type through the
+existing keyboard route. Select one current enabled textbox after observation,
+carry text only in the execution request, revalidate the same inventory/frame
+at sidecar and browser-runtime, and return write-only input evidence with
+pre/post visual grounding. Do not add selectors, a parallel route, text
+persistence, or readback of the typed value.
 
 ## Identity-Upgrade Alignment
 
