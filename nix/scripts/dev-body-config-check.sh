@@ -119,6 +119,7 @@ requireIncludes("openclaw-body module", bodyModule, [
   "runtimePackages.screenAct",
   "runtimePackages.systemSense",
   "runtimePackages.systemHeal",
+  "runtimePackages.observerUi",
   ...serviceNames,
   ...componentKeys,
   ...envNames,
@@ -178,6 +179,7 @@ requireIncludes("flake", flake, [
   "openclaw-screen-act = pkgs.callPackage",
   "openclaw-system-sense = pkgs.callPackage",
   "openclaw-system-heal = pkgs.callPackage",
+  "observer-ui = pkgs.callPackage",
 ]);
 
 console.log(JSON.stringify({
@@ -221,6 +223,7 @@ if command -v nix >/dev/null 2>&1; then
       screenAct = project config.systemd.services.openclaw-screen-act;
       systemSense = project config.systemd.services.openclaw-system-sense;
       systemHeal = project config.systemd.services.openclaw-system-heal;
+      observerUi = project config.systemd.services.observer-ui;
     }')"
   node - <<'EOF' "$ownership_json"
 const ownership = JSON.parse(process.argv[2]);
@@ -285,6 +288,12 @@ if (ownership.systemSense.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-sto
   || ownership.systemSense.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
   throw new Error(`system-sense must execute from its read-only Nix closure: ${JSON.stringify(ownership.systemSense)}`);
 }
+if (ownership.observerUi.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
+  || !String(ownership.observerUi.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
+  || !String(ownership.observerUi.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/apps/observer-ui")
+  || ownership.observerUi.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
+  throw new Error(`observer-ui must execute from its read-only Nix closure: ${JSON.stringify(ownership.observerUi)}`);
+}
 console.log(JSON.stringify({
   componentOwnership: {
     userOwned,
@@ -304,6 +313,8 @@ console.log(JSON.stringify({
     systemSenseWorkingDirectory: ownership.systemSense.serviceConfig.WorkingDirectory,
     systemHealRuntimeSource: ownership.systemHeal.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
     systemHealWorkingDirectory: ownership.systemHeal.serviceConfig.WorkingDirectory,
+    observerUiRuntimeSource: ownership.observerUi.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
+    observerUiWorkingDirectory: ownership.observerUi.serviceConfig.WorkingDirectory,
   },
 }, null, 2));
 EOF
@@ -900,6 +911,90 @@ console.log(JSON.stringify({
     executionMode: diagnosed.plan.steps[0].mode,
     restoredAfterRestart: true,
     realRepairExecuted: false,
+  },
+}, null, 2));
+EOF
+  )
+
+  observer_ui_out="$(nix --extra-experimental-features 'nix-command flakes' build \
+    --no-update-lock-file --no-link --print-out-paths .#observer-ui)"
+  observer_ui_working_dir="$observer_ui_out/share/openclaw/apps/observer-ui"
+  observer_ui_server="$observer_ui_working_dir/src/server.mjs"
+  if [[ "$observer_ui_out" != /nix/store/*
+    || ! -f "$observer_ui_server"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-html.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/packages/shared-client/src/service-descriptors.mjs"
+    || -w "$observer_ui_server"
+    || -e "$observer_ui_out/share/openclaw/apps/observer-ui/scripts"
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 49 ]]; then
+    echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
+    exit 1
+  fi
+
+  (
+    runtime_dir="$(mktemp -d)"
+    runtime_port=5848
+    runtime_url="http://127.0.0.1:$runtime_port"
+    upstream_url="http://127.0.0.1:5843"
+    cleanup_runtime() {
+      if [[ -n "${observer_ui_pid:-}" ]]; then
+        kill -TERM "$observer_ui_pid" >/dev/null 2>&1 || true
+        wait "$observer_ui_pid" >/dev/null 2>&1 || true
+      fi
+      rm -rf "$runtime_dir"
+    }
+    trap cleanup_runtime EXIT
+
+    cd "$observer_ui_working_dir"
+    OBSERVER_UI_HOST=127.0.0.1 \
+    OBSERVER_UI_PORT="$runtime_port" \
+    OPENCLAW_CORE_URL="$upstream_url" \
+    OPENCLAW_EVENT_HUB_URL="$upstream_url" \
+    OPENCLAW_SESSION_MANAGER_URL="$upstream_url" \
+    OPENCLAW_SCREEN_SENSE_URL="$upstream_url" \
+    OPENCLAW_SCREEN_ACT_URL="$upstream_url" \
+    OPENCLAW_SYSTEM_SENSE_URL="$upstream_url" \
+    OPENCLAW_SYSTEM_HEAL_URL="$upstream_url" \
+    OPENCLAW_BODY_RUNTIME_SOURCE=nix-store \
+      node src/server.mjs >"$runtime_dir/observer-ui.log" 2>&1 &
+    observer_ui_pid=$!
+
+    for _ in $(seq 1 50); do
+      if curl --silent --fail "$runtime_url/health" >"$runtime_dir/health.json"; then
+        break
+      fi
+      sleep 0.1
+    done
+    curl --silent --fail "$runtime_url/" >"$runtime_dir/index.html"
+    curl --silent --fail "$runtime_url/client.js" >"$runtime_dir/client.js"
+
+    node - <<'EOF' "$runtime_dir/health.json" "$runtime_dir/index.html" "$runtime_dir/client.js" "$observer_ui_out" "$upstream_url"
+const fs = require("node:fs");
+const health = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const html = fs.readFileSync(process.argv[3], "utf8");
+const client = fs.readFileSync(process.argv[4], "utf8");
+const storePath = process.argv[5];
+const upstreamUrl = process.argv[6];
+if (health.ok !== true
+  || health.service !== "observer-ui"
+  || health.coreUrl !== upstreamUrl
+  || !html.includes("<title>OpenClaw Observer UI</title>")
+  || !html.includes('id="engineering-loop-state-kind"')
+  || !client.includes("engineering-loop-state")
+  || html.length < 250_000
+  || client.length < 1_000_000) {
+  throw new Error(`store-native observer-ui did not serve complete operator assets: ${JSON.stringify({ health, htmlChars: html.length, clientChars: client.length })}`);
+}
+console.log(JSON.stringify({
+  nixStoreObserverUi: {
+    storePath,
+    readOnlySource: true,
+    health: health.service,
+    upstreamUrl: health.coreUrl,
+    htmlChars: html.length,
+    clientChars: client.length,
+    engineeringLoopVisible: true,
   },
 }, null, 2));
 EOF

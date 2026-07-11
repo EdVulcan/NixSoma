@@ -102,7 +102,7 @@ directive.
 | [OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_RESTORATION_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_RESTORATION_PLAN.md) | Active read-only restoration of Engineering Loop State from core task history after Observer reload. |
 | [OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_AUTO_RESTORE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_AUTO_RESTORE_PLAN.md) | Active startup auto-restore of Engineering Loop State when browser-local state is empty. |
 | [OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md](./plans/OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md) | Completed bounded Level 2 browser eye-hand bridge with real Firefox, semantic click/type, autonomous selection, write-only input, recovery, and Observer evidence. |
-| [OPENCLAW_NIX_STORE_RUNTIME_PACKAGING_PLAN.md](./plans/OPENCLAW_NIX_STORE_RUNTIME_PACKAGING_PLAN.md) | Active kernel-whitepaper Phase A route; six services are store-native (6/9), with observer-ui next. |
+| [OPENCLAW_NIX_STORE_RUNTIME_PACKAGING_PLAN.md](./plans/OPENCLAW_NIX_STORE_RUNTIME_PACKAGING_PLAN.md) | Active kernel-whitepaper Phase A route; seven services are store-native (7/9), with browser-runtime next. |
 | [OPENCLAW_MONOLITH_REDUCTION_PLAN.md](./plans/OPENCLAW_MONOLITH_REDUCTION_PLAN.md) | Tracks current coupling reduction and milestone-batch improvements. |
 | [OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md](./plans/OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md) | Tracks expert-review fixes around test lifecycle, shared packages, helpers, batching, and profiling. |
 | [OPENCLAW_SOURCE_INTEGRATION_STAGE_PLAN.md](./plans/OPENCLAW_SOURCE_INTEGRATION_STAGE_PLAN.md) | Historical source-integration stage log; use with the enhanced migration brief, not as the sole roadmap. |

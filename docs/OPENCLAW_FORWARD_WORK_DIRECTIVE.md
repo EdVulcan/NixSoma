@@ -535,6 +535,16 @@ The next closure is observer-ui. Package its runtime client composition and
 served assets without npm runtime dependencies, preserve upstream contracts,
 and prove real HTML/client responses from the store.
 
+That seventh closure is now complete. Observer-ui contains exactly 49 runtime
+files, its generated system unit points into the store, and a real packaged
+process serves the complete HTML/client composition with engineering-loop DOM
+evidence. The shared source-closure helper now supports reviewed app roots
+without copying whole source directories. Phase A is 7/9 services, not complete.
+
+The next closure is browser-runtime. Its Puppeteer dependencies must be a
+reproducible Nix closure with downloads disabled, while login-user ownership,
+the Nix-managed Firefox executable, and real browser behavior remain intact.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

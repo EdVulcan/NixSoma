@@ -106,6 +106,7 @@ let
       portEnv = "OBSERVER_UI_PORT";
       port = cfg.ports.observerUi;
       after = [ "openclaw-core" "openclaw-event-hub" "openclaw-session-manager" ];
+      runtimePackage = cfg.runtimePackages.observerUi;
     }
   ];
 
@@ -320,6 +321,12 @@ in
       type = types.nullOr types.package;
       default = pkgs.callPackage ../packages/openclaw-system-heal.nix { };
       description = "Read-only Nix package used by system-heal; null keeps the mutable repository fallback.";
+    };
+
+    runtimePackages.observerUi = mkOption {
+      type = types.nullOr types.package;
+      default = pkgs.callPackage ../packages/observer-ui.nix { };
+      description = "Read-only Nix package used by observer-ui; null keeps the mutable repository fallback.";
     };
 
     nodePackage = mkOption {

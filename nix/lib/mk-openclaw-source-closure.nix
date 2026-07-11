@@ -15,7 +15,11 @@ stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
     mkdir -p "$out/share/openclaw"
-    cp -R services packages "$out/share/openclaw/"
+    for sourceRoot in apps services packages; do
+      if [ -d "$sourceRoot" ]; then
+        cp -R "$sourceRoot" "$out/share/openclaw/"
+      fi
+    done
     runHook postInstall
   '';
 }
