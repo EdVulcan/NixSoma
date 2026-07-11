@@ -114,10 +114,12 @@ kernel-whitepaper Phase A route is documented in:
 OPENCLAW_NIX_STORE_RUNTIME_PACKAGING_PLAN.md
 ```
 
-Event-hub and screen-sense are the first two of nine services proven from
-minimal read-only Nix closures. Their common installation mechanism now uses a
-small helper while service file manifests remain explicit. The next slice
-packages screen-act and proves real lease-mediated behavior from the store.
+Event-hub, screen-sense, and screen-act are the first three of nine services
+proven from minimal read-only Nix closures. Their common installation mechanism
+uses a small helper while service file manifests remain explicit. Screen-act
+preserves trusted lease mediation and write-only input evidence from the store.
+The next slice packages the smaller system-heal closure before the broader
+system-sense service.
 
 It now closes browser action mediation through operator takeover suspension and
 explicit resume/rebind, then runs a bounded approval-gated user-space helper

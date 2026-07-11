@@ -305,8 +305,8 @@
 | Level 4 图形栈内生组件 | 约 0-5% | 只有 AI-owned work-view 方向与接口预留；专属 session、nested compositor、原生图形输入输出尚未实现。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
-**35-40%**。内核白皮书中的 Phase A Nix 纯净化已完成 event-hub 与
-screen-sense 两个服务 closure，其余 7 个服务仍受 `/opt/openclaw`
+**35-40%**。内核白皮书中的 Phase A Nix 纯净化已完成 event-hub、
+screen-sense 与 screen-act 三个服务 closure，其余 6 个服务仍受 `/opt/openclaw`
 源码运行模式影响；
 Phase B 仍主要使用 `systemctl` 包装；Phase C eBPF
 神经网尚未开始；Phase D 声明式 Nix 自进化与自动回滚仍主要是设计和

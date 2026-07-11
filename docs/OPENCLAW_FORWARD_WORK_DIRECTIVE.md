@@ -487,11 +487,22 @@ files, its generated system unit points into the store, and a real packaged
 process produces browser-backed `/screen/current` readback against bounded
 loopback upstreams. With two matching derivations, the common fileset install
 mechanism now lives in a small helper while both service runtime manifests stay
-explicit. Phase A is 2/9 services, not complete.
+explicit. Phase A is 2/9 services at this checkpoint, not complete.
 
 The next closure is screen-act. Preserve its current ownership and upstream
 URLs, include only its mediation module plus exact shared imports, and prove one
 real lease-mediated action from the store path without exposing input payloads.
+
+That third closure is now complete. Screen-act contains exactly 11 runtime
+files, its generated system unit points into the store, and a real packaged
+process performs a trusted lease-mediated browser input action against bounded
+loopback upstreams. Only write-only input evidence is retained; plaintext does
+not enter the response or action state. Phase A is 3/9 services, not complete.
+
+The next closure is system-heal. Preserve its system ownership, event-hub and
+system-sense URLs, and writable state path while proving representative
+persisted diagnosis or simulated maintenance behavior from the read-only store
+source. Defer the broader system-sense closure to its own explicit slice.
 
 ## Identity-Upgrade Alignment
 

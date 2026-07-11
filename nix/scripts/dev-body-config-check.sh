@@ -114,6 +114,7 @@ requireIncludes("openclaw-body module", bodyModule, [
   "ExecStart = \"${cfg.nodePackage}/bin/node src/server.mjs\"",
   "runtimePackages.eventHub",
   "runtimePackages.screenSense",
+  "runtimePackages.screenAct",
   ...serviceNames,
   ...componentKeys,
   ...envNames,
@@ -169,6 +170,7 @@ requireIncludes("flake", flake, [
   "firefox = pkgs.firefox",
   "openclaw-event-hub = pkgs.callPackage",
   "openclaw-screen-sense = pkgs.callPackage",
+  "openclaw-screen-act = pkgs.callPackage",
 ]);
 
 console.log(JSON.stringify({
@@ -209,6 +211,7 @@ if command -v nix >/dev/null 2>&1; then
       browser = project config.systemd.user.services.openclaw-browser-runtime;
       eventHub = project config.systemd.services.openclaw-event-hub;
       screenSense = project config.systemd.services.openclaw-screen-sense;
+      screenAct = project config.systemd.services.openclaw-screen-act;
     }')"
   node - <<'EOF' "$ownership_json"
 const ownership = JSON.parse(process.argv[2]);
@@ -248,6 +251,12 @@ if (ownership.screenSense.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-sto
   || ownership.screenSense.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
   throw new Error(`screen-sense must execute from its read-only Nix closure: ${JSON.stringify(ownership.screenSense)}`);
 }
+if (ownership.screenAct.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
+  || !String(ownership.screenAct.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
+  || !String(ownership.screenAct.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-screen-act")
+  || ownership.screenAct.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
+  throw new Error(`screen-act must execute from its read-only Nix closure: ${JSON.stringify(ownership.screenAct)}`);
+}
 console.log(JSON.stringify({
   componentOwnership: {
     userOwned,
@@ -258,6 +267,8 @@ console.log(JSON.stringify({
     eventHubWorkingDirectory: ownership.eventHub.serviceConfig.WorkingDirectory,
     screenSenseRuntimeSource: ownership.screenSense.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
     screenSenseWorkingDirectory: ownership.screenSense.serviceConfig.WorkingDirectory,
+    screenActRuntimeSource: ownership.screenAct.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
+    screenActWorkingDirectory: ownership.screenAct.serviceConfig.WorkingDirectory,
   },
 }, null, 2));
 EOF
@@ -450,6 +461,103 @@ console.log(JSON.stringify({
     captureSource: screen.captureSource,
     activeUrl: screen.workViewSummary.url,
     snapshotText: screen.snapshotText,
+  },
+}, null, 2));
+EOF
+  )
+
+  screen_act_out="$(nix --extra-experimental-features 'nix-command flakes' build \
+    --no-update-lock-file --no-link --print-out-paths .#openclaw-screen-act)"
+  screen_act_working_dir="$screen_act_out/share/openclaw/services/openclaw-screen-act"
+  screen_act_server="$screen_act_working_dir/src/server.mjs"
+  if [[ "$screen_act_out" != /nix/store/*
+    || ! -f "$screen_act_server"
+    || ! -f "$screen_act_out/share/openclaw/services/openclaw-screen-act/src/trusted-work-view-action-mediation.mjs"
+    || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/work-view-input-evidence.mjs"
+    || -w "$screen_act_server"
+    || -e "$screen_act_out/share/openclaw/packages/shared-utils/test/http.test.mjs"
+    || "$(find "$screen_act_out" -type f | wc -l)" -ne 11 ]]; then
+    echo "screen-act Nix closure is not exact and read-only: $screen_act_out" >&2
+    exit 1
+  fi
+
+  (
+    runtime_dir="$(mktemp -d)"
+    runtime_port=5844
+    upstream_port=5843
+    runtime_url="http://127.0.0.1:$runtime_port"
+    upstream_url="http://127.0.0.1:$upstream_port"
+    input_text="nix store action remains write only"
+    cleanup_runtime() {
+      for pid in "${screen_act_pid:-}" "${upstream_pid:-}"; do
+        if [[ -n "$pid" ]]; then
+          kill -TERM "$pid" >/dev/null 2>&1 || true
+          wait "$pid" >/dev/null 2>&1 || true
+        fi
+      done
+      rm -rf "$runtime_dir"
+    }
+    trap cleanup_runtime EXIT
+
+    node "$REPO_ROOT/nix/scripts/dev-body-config-store-upstream.mjs" "$upstream_port" \
+      >"$runtime_dir/upstream.log" 2>&1 &
+    upstream_pid=$!
+    for _ in $(seq 1 50); do
+      if curl --silent --fail "$upstream_url/health" >/dev/null; then
+        break
+      fi
+      sleep 0.1
+    done
+    cd "$screen_act_working_dir"
+    OPENCLAW_SCREEN_ACT_HOST=127.0.0.1 \
+    OPENCLAW_SCREEN_ACT_PORT="$runtime_port" \
+    OPENCLAW_EVENT_HUB_URL="$upstream_url" \
+    OPENCLAW_SCREEN_SENSE_URL="$upstream_url" \
+    OPENCLAW_SESSION_MANAGER_URL="$upstream_url" \
+    OPENCLAW_BROWSER_RUNTIME_URL="$upstream_url" \
+    OPENCLAW_BODY_RUNTIME_SOURCE=nix-store \
+      node src/server.mjs >"$runtime_dir/screen-act.log" 2>&1 &
+    screen_act_pid=$!
+
+    for _ in $(seq 1 50); do
+      if curl --silent --fail "$runtime_url/health" >/dev/null; then
+        break
+      fi
+      sleep 0.1
+    done
+    curl --silent --fail -X POST "$runtime_url/act/keyboard/type" \
+      -H 'content-type: application/json' \
+      --data "{\"text\":\"$input_text\"}" >"$runtime_dir/action.json"
+    curl --silent --fail "$runtime_url/act/state" >"$runtime_dir/action-state.json"
+
+    node - <<'EOF' "$runtime_dir/action.json" "$runtime_dir/action-state.json" "$screen_act_out" "$input_text"
+const fs = require("node:fs");
+const actionText = fs.readFileSync(process.argv[2], "utf8");
+const stateText = fs.readFileSync(process.argv[3], "utf8");
+const action = JSON.parse(actionText).action ?? {};
+const storePath = process.argv[4];
+const inputText = process.argv[5];
+if (action.result !== "executed-browser-runtime"
+  || action.mediation?.accepted !== true
+  || action.mediation?.leaseMatched !== true
+  || action.mediation?.transport !== "browser-runtime-direct"
+  || action.params?.inputEvidence?.registry !== "openclaw-write-only-input-evidence-v0"
+  || action.params.inputEvidence.charCount !== inputText.length
+  || action.params.inputEvidence.textExposed !== false
+  || "text" in (action.params ?? {})
+  || actionText.includes(inputText)
+  || stateText.includes(inputText)) {
+  throw new Error(`store-native screen-act did not mediate write-only input: ${actionText}`);
+}
+console.log(JSON.stringify({
+  nixStoreScreenAct: {
+    storePath,
+    readOnlySource: true,
+    result: action.result,
+    transport: action.mediation.transport,
+    leaseMatched: action.mediation.leaseMatched,
+    inputChars: action.params.inputEvidence.charCount,
+    textExposed: action.params.inputEvidence.textExposed,
   },
 }, null, 2));
 EOF
