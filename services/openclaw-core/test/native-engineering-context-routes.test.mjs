@@ -53,3 +53,15 @@ test("microcompact projection route rejects invalid input and other methods", as
   const method = await invoke({ method: "GET" });
   assert.equal(method.statusCode, 405);
 });
+
+test("microcompact projection route fails closed when audit publication fails", async () => {
+  const response = await invoke({
+    body: { messages: [] },
+    publishEvent: async () => ({ ok: false, error: "event-hub unavailable" }),
+  });
+
+  assert.equal(response.statusCode, 503);
+  assert.equal(response.body.ok, false);
+  assert.match(response.body.error, /audit is unavailable/u);
+  assert.equal("messages" in response.body, false);
+});

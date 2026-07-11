@@ -34,6 +34,7 @@ replaces only large historical toolResult text blocks
 preserves message, tool, call, and non-text structural metadata
 returns compacted/reclaimed character counts
 publishes a summary-only audit event with no input or output content
+fails closed with HTTP 503 when that audit event cannot be persisted
 ```
 
 The route is a real transformation, not an estimate. The existing evidence
@@ -50,6 +51,7 @@ no command execution
 no provider call or network egress
 no credential read
 no raw input/output content in audit events
+service-user migration repairs ownership of the existing event JSONL
 ```
 
 No approval is required because the operation transforms an ephemeral request

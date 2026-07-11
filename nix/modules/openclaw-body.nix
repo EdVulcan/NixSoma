@@ -488,6 +488,7 @@ in
     systemd.tmpfiles.rules = [
       "d ${cfg.stateDir} 0750 ${owner} ${group} - -"
       "d ${cfg.logDir} 0750 ${owner} ${group} - -"
+      "z ${cfg.stateDir}/openclaw-events.jsonl 0640 ${owner} ${group} - -"
     ];
 
     systemd.services = builtins.listToAttrs (map

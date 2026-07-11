@@ -20,8 +20,9 @@ export function readJsonBody<T = Record<string, unknown>>(
 
 export function createEventPublisher(
   eventHubUrl: string,
-  serviceName: string
-): (type: string, payload?: Record<string, unknown>) => Promise<void>;
+  serviceName: string,
+  fetchFn?: typeof fetch
+): (type: string, payload?: Record<string, unknown>) => Promise<{ ok: boolean; error?: string }>;
 
 export function registerService(eventHubUrl: string, name: string, url: string): Promise<void>;
 

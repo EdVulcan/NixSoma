@@ -40,16 +40,24 @@ export function readJsonBody(req, maxBytes = MAX_REQUEST_BODY_BYTES) {
   });
 }
 
-export function createEventPublisher(eventHubUrl, serviceName) {
+export function createEventPublisher(eventHubUrl, serviceName, fetchFn = fetch) {
   return async function publishEvent(type, payload = {}) {
     try {
-      await fetch(`${eventHubUrl}/events`, {
+      const response = await fetchFn(`${eventHubUrl}/events`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ type, source: serviceName, payload }),
       });
+      if (!response.ok) {
+        throw new Error(`event-hub returned HTTP ${response.status}`);
+      }
+      return { ok: true };
     } catch (error) {
       console.error(`Failed to publish ${serviceName} event:`, error);
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : "event publish failed",
+      };
     }
   };
 }

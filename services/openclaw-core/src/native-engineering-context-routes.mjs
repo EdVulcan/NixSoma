@@ -17,7 +17,11 @@ export async function handleNativeEngineeringContextRoute({ req, res, requestUrl
       thresholdChars: body.thresholdChars,
       protectRecentAssistantTurns: body.protectRecentAssistantTurns,
     });
-    await publishEvent?.("native_engineering.microcompact_projection_built", projection.auditEvidence);
+    const auditResult = await publishEvent?.("native_engineering.microcompact_projection_built", projection.auditEvidence);
+    if (auditResult?.ok === false) {
+      sendJson(res, 503, { ok: false, error: "Microcompact projection audit is unavailable." });
+      return true;
+    }
     sendJson(res, 200, projection);
   } catch (error) {
     sendJson(res, 400, { ok: false, error: error instanceof Error ? error.message : String(error) });
