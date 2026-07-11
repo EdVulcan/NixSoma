@@ -113,6 +113,7 @@ requireIncludes("openclaw-body module", bodyModule, [
   "LogsDirectory = \"openclaw\"",
   "ExecStart = \"${cfg.nodePackage}/bin/node src/server.mjs\"",
   "runtimePackages.eventHub",
+  "runtimePackages.screenSense",
   ...serviceNames,
   ...componentKeys,
   ...envNames,
@@ -167,6 +168,7 @@ requireIncludes("flake", flake, [
   "packages.${system} =",
   "firefox = pkgs.firefox",
   "openclaw-event-hub = pkgs.callPackage",
+  "openclaw-screen-sense = pkgs.callPackage",
 ]);
 
 console.log(JSON.stringify({
@@ -206,6 +208,7 @@ if command -v nix >/dev/null 2>&1; then
       session = project config.systemd.user.services.openclaw-session-manager;
       browser = project config.systemd.user.services.openclaw-browser-runtime;
       eventHub = project config.systemd.services.openclaw-event-hub;
+      screenSense = project config.systemd.services.openclaw-screen-sense;
     }')"
   node - <<'EOF' "$ownership_json"
 const ownership = JSON.parse(process.argv[2]);
@@ -239,6 +242,12 @@ if (ownership.eventHub.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || ownership.eventHub.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
   throw new Error(`event hub must execute from its read-only Nix closure: ${JSON.stringify(ownership.eventHub)}`);
 }
+if (ownership.screenSense.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
+  || !String(ownership.screenSense.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
+  || !String(ownership.screenSense.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-screen-sense")
+  || ownership.screenSense.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
+  throw new Error(`screen-sense must execute from its read-only Nix closure: ${JSON.stringify(ownership.screenSense)}`);
+}
 console.log(JSON.stringify({
   componentOwnership: {
     userOwned,
@@ -247,6 +256,8 @@ console.log(JSON.stringify({
     browserProfile: ownership.browser.environment.OPENCLAW_BROWSER_PROFILE_DIR,
     eventHubRuntimeSource: ownership.eventHub.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
     eventHubWorkingDirectory: ownership.eventHub.serviceConfig.WorkingDirectory,
+    screenSenseRuntimeSource: ownership.screenSense.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
+    screenSenseWorkingDirectory: ownership.screenSense.serviceConfig.WorkingDirectory,
   },
 }, null, 2));
 EOF
@@ -358,6 +369,87 @@ console.log(JSON.stringify({
     health: health.service,
     auditEvent: audit.items[0].type,
     runtimeSource: audit.items[0].payload.runtimeSource,
+  },
+}, null, 2));
+EOF
+  )
+
+  screen_sense_out="$(nix --extra-experimental-features 'nix-command flakes' build \
+    --no-update-lock-file --no-link --print-out-paths .#openclaw-screen-sense)"
+  screen_sense_working_dir="$screen_sense_out/share/openclaw/services/openclaw-screen-sense"
+  screen_sense_server="$screen_sense_working_dir/src/server.mjs"
+  if [[ "$screen_sense_out" != /nix/store/*
+    || ! -f "$screen_sense_server"
+    || ! -f "$screen_sense_out/share/openclaw/packages/shared-events/src/event-factory.mjs"
+    || ! -f "$screen_sense_out/share/openclaw/packages/shared-utils/src/work-view-semantic-targets.mjs"
+    || -w "$screen_sense_server"
+    || -e "$screen_sense_out/share/openclaw/packages/shared-utils/test/work-view-trust.test.mjs"
+    || "$(find "$screen_sense_out" -type f | wc -l)" -ne 10 ]]; then
+    echo "screen-sense Nix closure is not exact and read-only: $screen_sense_out" >&2
+    exit 1
+  fi
+
+  (
+    runtime_dir="$(mktemp -d)"
+    runtime_port=5842
+    upstream_port=5843
+    runtime_url="http://127.0.0.1:$runtime_port"
+    upstream_url="http://127.0.0.1:$upstream_port"
+    cleanup_runtime() {
+      for pid in "${screen_sense_pid:-}" "${upstream_pid:-}"; do
+        if [[ -n "$pid" ]]; then
+          kill -TERM "$pid" >/dev/null 2>&1 || true
+          wait "$pid" >/dev/null 2>&1 || true
+        fi
+      done
+      rm -rf "$runtime_dir"
+    }
+    trap cleanup_runtime EXIT
+
+    node "$REPO_ROOT/nix/scripts/dev-body-config-store-upstream.mjs" "$upstream_port" \
+      >"$runtime_dir/upstream.log" 2>&1 &
+    upstream_pid=$!
+    for _ in $(seq 1 50); do
+      if curl --silent --fail "$upstream_url/health" >/dev/null; then
+        break
+      fi
+      sleep 0.1
+    done
+    cd "$screen_sense_working_dir"
+    OPENCLAW_SCREEN_SENSE_HOST=127.0.0.1 \
+    OPENCLAW_SCREEN_SENSE_PORT="$runtime_port" \
+    OPENCLAW_EVENT_HUB_URL="$upstream_url" \
+    OPENCLAW_SESSION_MANAGER_URL="$upstream_url" \
+    OPENCLAW_BROWSER_RUNTIME_URL="$upstream_url" \
+    OPENCLAW_BODY_RUNTIME_SOURCE=nix-store \
+      node src/server.mjs >"$runtime_dir/screen-sense.log" 2>&1 &
+    screen_sense_pid=$!
+
+    for _ in $(seq 1 50); do
+      if curl --silent --fail "$runtime_url/screen/current" >"$runtime_dir/screen.json"; then
+        break
+      fi
+      sleep 0.1
+    done
+    node - <<'EOF' "$runtime_dir/screen.json" "$screen_sense_out"
+const fs = require("node:fs");
+const data = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const storePath = process.argv[3];
+const screen = data.screen ?? {};
+if (data.ok !== true
+  || screen.captureSource !== "browser-runtime"
+  || screen.captureStrategy !== "browser-runtime-backed"
+  || screen.workViewSummary?.url !== "https://example.com/nix-store-screen-sense"
+  || screen.snapshotText !== "Nix store screen capture") {
+  throw new Error(`store-native screen-sense did not produce real readback: ${JSON.stringify(data)}`);
+}
+console.log(JSON.stringify({
+  nixStoreScreenSense: {
+    storePath,
+    readOnlySource: true,
+    captureSource: screen.captureSource,
+    activeUrl: screen.workViewSummary.url,
+    snapshotText: screen.snapshotText,
   },
 }, null, 2));
 EOF

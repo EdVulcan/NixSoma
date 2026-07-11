@@ -61,6 +61,7 @@ let
       portEnv = "OPENCLAW_SCREEN_SENSE_PORT";
       port = cfg.ports.screenSense;
       after = [ "openclaw-event-hub" "openclaw-session-manager" "openclaw-browser-runtime" ];
+      runtimePackage = cfg.runtimePackages.screenSense;
     }
     {
       key = "screenAct";
@@ -284,6 +285,12 @@ in
       type = types.nullOr types.package;
       default = pkgs.callPackage ../packages/openclaw-event-hub.nix { };
       description = "Read-only Nix package used by event-hub; null keeps the mutable repository fallback.";
+    };
+
+    runtimePackages.screenSense = mkOption {
+      type = types.nullOr types.package;
+      default = pkgs.callPackage ../packages/openclaw-screen-sense.nix { };
+      description = "Read-only Nix package used by screen-sense; null keeps the mutable repository fallback.";
     };
 
     nodePackage = mkOption {

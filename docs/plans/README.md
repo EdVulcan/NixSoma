@@ -114,9 +114,10 @@ kernel-whitepaper Phase A route is documented in:
 OPENCLAW_NIX_STORE_RUNTIME_PACKAGING_PLAN.md
 ```
 
-Event-hub is the first of nine services proven from a minimal read-only Nix
-closure. The next slice packages screen-sense as the second concrete closure
-before considering a shared packaging helper.
+Event-hub and screen-sense are the first two of nine services proven from
+minimal read-only Nix closures. Their common installation mechanism now uses a
+small helper while service file manifests remain explicit. The next slice
+packages screen-act and proves real lease-mediated behavior from the store.
 
 It now closes browser action mediation through operator takeover suspension and
 explicit resume/rebind, then runs a bounded approval-gated user-space helper

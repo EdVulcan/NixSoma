@@ -482,6 +482,17 @@ contracts, evaluate the unit, and prove a real screen readback from the store
 path. Only then consider a small packaging helper based on demonstrated
 duplication.
 
+That second closure is now complete. Screen-sense contains exactly 10 runtime
+files, its generated system unit points into the store, and a real packaged
+process produces browser-backed `/screen/current` readback against bounded
+loopback upstreams. With two matching derivations, the common fileset install
+mechanism now lives in a small helper while both service runtime manifests stay
+explicit. Phase A is 2/9 services, not complete.
+
+The next closure is screen-act. Preserve its current ownership and upstream
+URLs, include only its mediation module plus exact shared imports, and prove one
+real lease-mediated action from the store path without exposing input payloads.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

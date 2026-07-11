@@ -22,7 +22,7 @@ root daemon, hostd, D-Bus, eBPF, or self-rebuild capability.
 - Introduce a shared packaging factory only after two concrete service
   closures prove the same file-selection and unit-wiring shape.
 
-## Completed: Event Hub
+## Completed: Event Hub And Screen Sense
 
 `openclaw-event-hub` is the first store-native service closure:
 
@@ -48,9 +48,27 @@ The existing `dev-body-config-check.sh` milestone now:
 6. proves real health plus persisted audit event write/read behavior using a
    separate writable state directory.
 
+`openclaw-screen-sense` is the second store-native service closure:
+
+- its 10-file closure contains only the service server/capture adapter and the
+  exact shared-events/shared-utils imports reached at runtime,
+- its generated unit preserves system ownership and upstream URL environment,
+- the milestone starts the store process against a bounded loopback
+  session/browser/capture fixture, and
+- `/screen/current` returns the expected browser-backed snapshot and URL from
+  the real packaged code.
+
+After both concrete closures produced the same package mechanics, the shared
+`nix/lib/mk-openclaw-source-closure.nix` helper was extracted. It owns only the
+fileset-to-store installation shape; each service package continues to expose
+its explicit reviewable runtime file list. Rebuilding both packages preserves
+their output content and runtime behavior.
+
 ## Evidence
 
-- Package: `nix/packages/openclaw-event-hub.nix`
+- Packages: `nix/packages/openclaw-event-hub.nix` and
+  `nix/packages/openclaw-screen-sense.nix`
+- Shared packaging mechanism: `nix/lib/mk-openclaw-source-closure.nix`
 - Module: `nix/modules/openclaw-body.nix`
 - Flake export: `packages.x86_64-linux.openclaw-event-hub`
 - Targeted milestone: `nix/scripts/dev-body-config-check.sh`
@@ -58,8 +76,7 @@ The existing `dev-body-config-check.sh` milestone now:
 
 ## Deferred
 
-- Eight remaining OpenClaw services still execute from `repoRoot`.
-- No shared closure factory exists yet; one service is insufficient evidence.
+- Seven remaining OpenClaw services still execute from `repoRoot`.
 - npm dependency closure handling for browser-runtime and Observer is not yet
   designed.
 - No root service, hostd, D-Bus control, eBPF probe, Nix self-edit, rebuild, or
@@ -67,10 +84,8 @@ The existing `dev-body-config-check.sh` milestone now:
 
 ## Next Slice
 
-Package `openclaw-screen-sense` as the second store-native service. Include its
-exact `shared-events` and `shared-utils` runtime imports, preserve its current
-system ownership and upstream URLs, evaluate the generated unit, and run a real
-screen readback against bounded mock or existing local upstream services from
-the store path. After both closures pass, assess whether a small manifest-driven
-packaging helper removes real duplication without hiding each service's runtime
-files.
+Package `openclaw-screen-act` as the third store-native service. Preserve its
+current system ownership and existing screen/session/browser URLs, include only
+its local mediation module plus exact shared imports, and prove one real
+lease-mediated action against bounded loopback upstream contracts. Keep action
+payloads transient and retain current write-only input evidence.
