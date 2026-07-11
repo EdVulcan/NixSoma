@@ -127,7 +127,7 @@ and explicit recovery task creation; recovered verification rerun proof is
 absorbed through the existing approval/operator/verification readback path
 verification command execution and task-completion attachment
 planning/todo evidence and governed core-state workbench storage are absorbed; hidden planning mode, `.openclaw/cc-todo.md` persistence, task mutation, and plan_exit execution transition remain deferred
-microcompact evidence and bounded in-memory context projection are absorbed; automatic provider-request integration and persisted transcript rewriting remain deferred
+microcompact evidence, bounded in-memory projection, and local governed engineering context packets are absorbed; automatic provider-request integration and persisted transcript rewriting remain deferred
 provider calls, network egress, and result envelopes
 ```
 

@@ -141,7 +141,15 @@ export function registerRoutes(deps) {
       return;
     }
 
-    if (await handleNativeEngineeringContextRoute({ req, res, requestUrl, publishEvent })) {
+    if (await handleNativeEngineeringContextRoute({
+      req,
+      res,
+      requestUrl,
+      state,
+      executor,
+      planBuilder,
+      publishEvent,
+    })) {
       return;
     }
 

@@ -90,7 +90,13 @@ unbounded message/context inputs
 
 ## Next Slice
 
-Connect this pure projection to the first cohesive OpenClaw context assembly
-owner when that owner prepares a local or explicitly authorized model request.
-Do not add another projection/evidence route or reactivate the historical
+The cohesive local context assembly follow-up is complete:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PACKET_PLAN.md
+```
+
+It combines bounded task/transcript evidence, credential-like redaction,
+verification/recovery summaries, and this projection without provider use. Do
+not add another projection/evidence route or reactivate the historical
 provider-wrapper chain solely to consume it.

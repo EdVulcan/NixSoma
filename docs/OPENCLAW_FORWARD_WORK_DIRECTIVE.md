@@ -220,7 +220,9 @@ approval-gated edit/write, ledger, verification, recovery, LSP selected-target,
 planning workbench, governed suggested-action creation, and compact linked task
 readback. It also has a bounded microcompact transformation for caller-owned
 in-memory message copies, with recent verification/recovery context protected
-and no persisted transcript mutation. Do not reopen completed LSP symbol-request slices or add another
+and no persisted transcript mutation. A local Engineering Context Packet now
+assembles bounded task/transcript context with credential-like redaction and
+protected verification/recovery summaries without provider use. Do not reopen completed LSP symbol-request slices or add another
 standalone engineering evidence/readiness shell without a concrete operator gap.
 
 The next autonomous product route is the smallest real Level 2 trusted AI
