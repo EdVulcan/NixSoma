@@ -11,6 +11,10 @@ import {
   projectWorkViewVisualFrame,
   unavailableWorkViewVisualFrame,
 } from "../../../packages/shared-utils/src/work-view-visual-frame.mjs";
+import {
+  summariseWorkViewSemanticTargets,
+  unavailableWorkViewSemanticTargets,
+} from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
 import { normaliseBoundedBrowserUrl } from "./browser-navigation.mjs";
 import { createBrowserWorkspaceStore } from "./browser-workspace-store.mjs";
 import { createBrowserEngineAdapter } from "./browser-engine-adapter.mjs";
@@ -169,7 +173,11 @@ function addTab(url) {
   return tab;
 }
 
-function buildBrowserCapture(visualFrame = unavailableWorkViewVisualFrame("not_captured")) {
+function buildBrowserCapture(
+  visualFrame = unavailableWorkViewVisualFrame("not_captured"),
+  semanticTargets = unavailableWorkViewSemanticTargets("not_captured"),
+  { includeSemanticItems = true } = {},
+) {
   const tabs = Array.isArray(browserState.tabs) ? browserState.tabs : [];
   const activeTitle = browserState.activeTitle ?? "OpenClaw AI Browser";
   const activeUrl = browserState.activeUrl ?? "about:blank";
@@ -200,6 +208,7 @@ function buildBrowserCapture(visualFrame = unavailableWorkViewVisualFrame("not_c
     workspaceRecovery: { ...browserState.workspaceRecovery },
     engine: { ...browserState.engine },
     visualFrame: projectWorkViewVisualFrame(visualFrame, { includeData: false }),
+    semanticTargets: summariseWorkViewSemanticTargets(semanticTargets),
   };
   const trustedSession = buildTrustedWorkViewContract({
     source: "browser-runtime",
@@ -282,6 +291,7 @@ function buildBrowserCapture(visualFrame = unavailableWorkViewVisualFrame("not_c
     trustedSession,
     engine: { ...browserState.engine },
     visualFrame,
+    semanticTargets: includeSemanticItems ? semanticTargets : summariseWorkViewSemanticTargets(semanticTargets),
     visibleTextBlocks,
     snapshotText: lines.join("\n"),
     ocrBlocks: [
@@ -559,14 +569,17 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     let visualFrame = unavailableWorkViewVisualFrame(engineMode === "simulated" ? "simulated_engine" : "browser_not_running");
+    let semanticTargets = unavailableWorkViewSemanticTargets(engineMode === "simulated" ? "simulated_engine" : "browser_not_running");
     if (browserEngine && browserState.running) {
       applyEngineSnapshot(await browserEngine.snapshot());
       try {
         visualFrame = visualMode === "full"
           ? await browserEngine.captureVisualFrame({ includeData: true })
           : await browserEngine.captureVisualFrame({ includeData: false });
+        semanticTargets = browserEngine.semanticTargetInventory();
       } catch {
         visualFrame = unavailableWorkViewVisualFrame("visual_capture_failed");
+        semanticTargets = unavailableWorkViewSemanticTargets("visual_capture_failed");
       }
     }
     if (!browserState.running) {
@@ -581,7 +594,9 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, {
       ok: true,
       running: true,
-      capture: buildBrowserCapture(visualFrame),
+      capture: buildBrowserCapture(visualFrame, semanticTargets, {
+        includeSemanticItems: visualMode === "full",
+      }),
       browser: serialiseBrowserState(),
     });
     return;

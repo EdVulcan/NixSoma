@@ -192,6 +192,14 @@ simulated fallback stays explicit. The next Level 2 slice is bounded read-only
 semantic target inventory for visible interactive elements in the AI-owned
 page, tied to the current frame and exposed through the existing lane.
 
+The bounded semantic inventory is now complete through that same lane. Current
+browser/screen/Observer readback carries frame-scoped visible target metadata;
+sidecar, task, summary, metadata, and audit paths retain only count/digest/frame
+evidence, with no values or selectors. The next Level 2 slice is a governed
+semantic target action selected by `targetId` plus matching frame/inventory
+digest, reusing the current lease, grounding, autonomous task, and Observer
+contracts rather than adding a route or readiness family.
+
 ## Historical Phase Plans
 
 `OPENCLAW_PHASE_2_PLAN.md` through `OPENCLAW_PHASE_136_PLAN.md` are retained

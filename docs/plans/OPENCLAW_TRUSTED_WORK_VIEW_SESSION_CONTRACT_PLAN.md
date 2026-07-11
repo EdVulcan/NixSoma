@@ -746,3 +746,25 @@ to the current frame digest/sequence, with strict item/text/bounds limits and no
 input values, arbitrary page script, mutation, or desktop capture. Reuse the
 existing capture/screen/Observer lane; semantic click/type execution remains a
 later governed action.
+
+That read-only semantic inventory is now complete through the existing capture
+lane. The fixed browser-owned collector returns at most 64 visible interactive
+targets with bounded role, tag, accessible name, input type, disabled state,
+and `960x540`-clamped bounds. Each target id and inventory digest is scoped to
+the current visual frame sequence and SHA-256. It never reads form values,
+returns selectors, accepts caller-supplied page script, mutates the page, or
+captures outside the active AI-owned browser page.
+
+The full inventory exists only in current browser capture, screen readback, and
+the existing Observer Snapshot Preview. Work-view summaries, sidecar capture,
+autonomous task evidence, capture metadata, and persisted audit events retain
+only item count, inventory digest, frame reference, and negative exposure
+flags. The real Firefox milestone proves four visible fixture targets, excludes
+a hidden target, and proves ordinary and password input values do not survive.
+
+The next real Level 2 slice is one governed semantic target action through the
+existing lease, sidecar, visual-grounding, audit, autonomous-task, and Observer
+chain. It must address a target by frame-scoped `targetId`, reject stale frame
+or inventory digests, and accept no arbitrary CSS/XPath selector or page
+script. Start with one bounded click or input operation and prove the resulting
+post-action frame; do not create another route family or readiness milestone.

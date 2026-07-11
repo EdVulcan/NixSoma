@@ -396,6 +396,21 @@ no form values or mutation through the existing capture/screen/Observer lane.
 Do not jump directly to arbitrary selectors, page-script execution, or another
 readiness endpoint.
 
+That inventory is now complete. The real Firefox path exposes at most 64
+visible interactive targets with bounded names and viewport-clamped bounds,
+ties target ids plus an inventory digest to the current visual frame, and keeps
+values, selectors, arbitrary page script, mutation, desktop capture, and
+persistence absent. Full items remain in current browser/screen/Observer
+readback; sidecar, task, summary, metadata, and audit paths retain only compact
+inventory evidence. The existing capture and Phase 3 milestones prove the real
+fixture behavior and unchanged lease/recovery controls.
+
+The next smallest Level 2 capability is governed semantic target action through
+the existing trusted action lane. Resolve only a frame-scoped `targetId`, bind
+the request to the matching frame and inventory digest, reject stale evidence,
+and prove the post-action frame. Do not accept CSS/XPath selectors or arbitrary
+page scripts, and do not add a parallel endpoint or readiness chain.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

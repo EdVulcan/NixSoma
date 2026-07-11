@@ -71,7 +71,7 @@ if [[ -z "${OPENCLAW_BROWSER_EXECUTABLE:-}" ]]; then
   fi
 fi
 
-node -e 'const http=require("node:http"); const port=Number(process.argv[1]); http.createServer((req,res)=>{const autonomous=req.url.includes("autonomous-grounded-action"); const grounded=req.url.includes("grounded-action"); const title=autonomous?"Autonomous Grounded Fixture":grounded?"Grounded Action Fixture":"OpenClaw Engine Fixture"; const heading=autonomous?"Autonomous visual action observed":grounded?"Visual action observed":"AI-owned work view"; res.writeHead(200,{"content-type":"text/html; charset=utf-8"}); res.end(`<!doctype html><title>${title}</title><main><h1>${heading}</h1><input autofocus aria-label=work-input><button>Observe</button></main>`);}).listen(port,"127.0.0.1");' "$FIXTURE_PORT" &
+node -e 'const http=require("node:http"); const port=Number(process.argv[1]); http.createServer((req,res)=>{const autonomous=req.url.includes("autonomous-grounded-action"); const grounded=req.url.includes("grounded-action"); const title=autonomous?"Autonomous Grounded Fixture":grounded?"Grounded Action Fixture":"OpenClaw Engine Fixture"; const heading=autonomous?"Autonomous visual action observed":grounded?"Visual action observed":"AI-owned work view"; res.writeHead(200,{"content-type":"text/html; charset=utf-8"}); res.end(`<!doctype html><title>${title}</title><main><h1>${heading}</h1><label>Work <input autofocus aria-label="work-input" value="fixture-private-value"></label><label>Account <input type="password" aria-label="account-password" value="fixture-password-secret"></label><button>Observe</button><a href="/inspect">Inspect target</a><button hidden>Hidden target</button></main>`);}).listen(port,"127.0.0.1");' "$FIXTURE_PORT" &
 FIXTURE_PID=$!
 openclaw_wait_for_http_up "$TARGET_URL" 10 0.2
 
@@ -103,6 +103,7 @@ sidecar_approval_id="$(node -e 'const data=JSON.parse(process.argv[1]); process.
 post_json "$CORE_URL/approvals/$sidecar_approval_id/approve" '{"approvedBy":"ai-work-view-capture-check","reason":"prove bounded visual grounding through the existing trusted sidecar"}' >/dev/null
 sidecar_start="$(post_json "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks/$SIDECAR_TASK_ID/start-probe" '{}')"
 node -e 'const data=JSON.parse(process.argv[1]); const frame=data.readback?.execution?.captureObservation?.visualFrame??{}; if(!data.ok || data.readback?.status!=="running_after_approval" || frame.available!==true || frame.fresh!==true || frame.dataExposed!==false || frame.sourceScope!=="ai_owned_active_page_only" || JSON.stringify(frame).includes("data:image/")){throw new Error(`real sidecar did not receive bounded frame metadata: ${JSON.stringify(data)}`);}' "$sidecar_start"
+node -e 'const data=JSON.parse(process.argv[1]); const targets=data.readback?.execution?.captureObservation?.semanticTargets??{}; if(targets.available!==true || targets.itemCount<4 || targets.itemsRetained!==false || targets.inputValuesExposed!==false || targets.selectorsExposed!==false || targets.mutation!==false || !targets.inventorySha256 || JSON.stringify(targets).includes("fixture-password-secret")){throw new Error(`real sidecar did not retain semantic target summary safely: ${JSON.stringify(targets)}`);}' "$sidecar_start"
 
 grounded_action="$(post_json "$SCREEN_ACT_URL/act/browser/new-tab" "{\"url\":\"$GROUNDING_URL\"}")"
 node - <<'EOF' "$grounded_action" "$GROUNDING_URL"
@@ -155,6 +156,7 @@ const expectedUrl = process.argv[3];
 const evidence = data.execution?.actionEvidence;
 const action = evidence?.actions?.[0];
 const grounding = action?.mediation?.visualGrounding ?? {};
+const semanticTargets = data.execution?.workViewSummary?.semanticTargets ?? {};
 if (data.task?.status !== "completed"
   || evidence?.kind !== "eye-hand-action-evidence"
   || action?.kind !== "browser.new_tab"
@@ -167,6 +169,11 @@ if (data.task?.status !== "completed"
   || grounding.after?.sha256 === grounding.before?.sha256
   || grounding.after?.pageUrl !== expectedUrl
   || grounding.imageDataRetained !== false
+  || semanticTargets.itemCount < 4
+  || "items" in semanticTargets
+  || semanticTargets.inputValuesExposed !== false
+  || semanticTargets.selectorsExposed !== false
+  || JSON.stringify(data.execution?.actionEvidence).includes("fixture-password-secret")
   || JSON.stringify(evidence).includes("data:image/")) {
   throw new Error(`autonomous task did not retain compact visual grounding evidence: ${JSON.stringify(data)}`);
 }
@@ -229,6 +236,38 @@ function assertVisualFrame(frame, label) {
   }
 }
 
+function assertSemanticTargets(inventory, frame, label) {
+  const serialised = JSON.stringify(inventory);
+  const names = (inventory?.items ?? []).map((item) => item.name);
+  if (inventory?.registry !== "openclaw-browser-semantic-target-inventory-v0"
+    || inventory.available !== true
+    || inventory.sourceScope !== "ai_owned_active_page_only"
+    || inventory.frame?.sha256 !== frame.sha256
+    || inventory.frame?.sequence !== frame.sequence
+    || inventory.itemCount !== inventory.items?.length
+    || inventory.itemCount < 4
+    || inventory.itemCount > 64
+    || inventory.maxItems !== 64
+    || inventory.maxNameChars !== 120
+    || inventory.inputValuesExposed !== false
+    || inventory.selectorsExposed !== false
+    || inventory.arbitraryPageScript !== false
+    || inventory.mutation !== false
+    || inventory.desktopWideCapture !== false
+    || inventory.persisted !== false
+    || !names.includes("work-input")
+    || !names.includes("account-password")
+    || !names.includes("Observe")
+    || !names.includes("Inspect target")
+    || names.includes("Hidden target")
+    || inventory.items.some((item) => item.valueExposed !== false || item.selectorExposed !== false)
+    || serialised.includes("fixture-private-value")
+    || serialised.includes("fixture-password-secret")
+    || serialised.includes("openclaw sees its own work view")) {
+    throw new Error(`${label} missing bounded frame-linked semantic targets: ${serialised}`);
+  }
+}
+
 if (provider.provider?.mode !== "browser" || provider.provider?.ready !== true) {
   throw new Error(`expected ready browser capture provider: ${JSON.stringify(provider.provider)}`);
 }
@@ -252,6 +291,8 @@ if (capture.captureStrategy !== "browser-runtime-backed") {
 }
 assertVisualFrame(capture.visualFrame, "browser capture");
 assertVisualFrame(screen.visualFrame, "screen-sense");
+assertSemanticTargets(capture.semanticTargets, capture.visualFrame, "browser capture");
+assertSemanticTargets(screen.semanticTargets, screen.visualFrame, "screen-sense");
 if (capture.visualFrame.pageUrl !== targetUrl || screen.visualFrame.pageUrl !== targetUrl) {
   throw new Error(`visual frame must belong to the active AI-owned page: ${JSON.stringify({
     capture: capture.visualFrame.pageUrl,
@@ -265,12 +306,22 @@ if (capture.workViewSummary?.visualFrame?.dataExposed !== false
   || "dataUrl" in (screen.captureMetadata?.visualFrame ?? {})) {
   throw new Error("task/read-model visual frame metadata must not retain image data.");
 }
+if (capture.workViewSummary?.semanticTargets?.itemCount !== capture.semanticTargets.itemCount
+  || "items" in (capture.workViewSummary?.semanticTargets ?? {})
+  || screen.captureMetadata?.semanticTargets?.itemCount !== screen.semanticTargets.itemCount
+  || "items" in (screen.captureMetadata?.semanticTargets ?? {})) {
+  throw new Error("task/read-model semantic target metadata must not retain target items.");
+}
 const metadataFrame = metadataCaptureResponse.capture?.visualFrame;
 if (metadataFrame?.available !== true
   || metadataFrame.dataExposed !== false
   || "dataUrl" in metadataFrame
   || metadataFrame.sha256 !== capture.visualFrame.sha256) {
   throw new Error(`metadata capture must reuse evidence without image data: ${JSON.stringify(metadataFrame)}`);
+}
+if (metadataCaptureResponse.capture?.semanticTargets?.itemCount !== capture.semanticTargets.itemCount
+  || "items" in (metadataCaptureResponse.capture?.semanticTargets ?? {})) {
+  throw new Error(`metadata capture must omit semantic target items: ${JSON.stringify(metadataCaptureResponse.capture?.semanticTargets)}`);
 }
 if (capture.activeUrl !== targetUrl || capture.workView?.activeUrl !== targetUrl) {
   throw new Error(`capture should expose active work view URL ${targetUrl}: ${JSON.stringify(capture.workView)}`);
@@ -353,6 +404,13 @@ console.log(JSON.stringify({
       sourceScope: capture.visualFrame.sourceScope,
       persisted: capture.visualFrame.persisted,
     },
+    semanticTargets: {
+      itemCount: capture.semanticTargets.itemCount,
+      inventorySha256: capture.semanticTargets.inventorySha256,
+      frameSequence: capture.semanticTargets.frame.sequence,
+      valuesExposed: capture.semanticTargets.inputValuesExposed,
+      selectorsExposed: capture.semanticTargets.selectorsExposed,
+    },
   },
   screenSense: {
     readiness: screen.readiness,
@@ -363,6 +421,7 @@ console.log(JSON.stringify({
     recoveryRecommendation: screenTrust.recoveryRecommendation.action,
     browserEngine: screen.workViewSummary.engine.mode,
     visualFrame: screen.visualFrame.available,
+    semanticTargetCount: screen.semanticTargets.itemCount,
   },
 }, null, 2));
 EOF
@@ -376,12 +435,18 @@ const events = JSON.parse(readFileSync(process.argv[2], "utf8"));
 const persistedEvents = readFileSync(process.argv[3], "utf8");
 const latest = events.items?.at(-1);
 const frame = latest?.payload?.screen?.visualFrame;
+const semanticTargets = latest?.payload?.screen?.semanticTargets;
 if (!latest
   || frame?.registry !== "openclaw-browser-visual-frame-v0"
   || frame.available !== true
   || frame.dataExposed !== false
+  || semanticTargets?.itemCount < 4
+  || "items" in (semanticTargets ?? {})
+  || semanticTargets?.inputValuesExposed !== false
+  || semanticTargets?.selectorsExposed !== false
   || "dataUrl" in frame
   || JSON.stringify(latest).includes("data:image/jpeg;base64,")
+  || JSON.stringify(latest).includes("fixture-password-secret")
   || persistedEvents.includes("data:image/jpeg;base64,")) {
   throw new Error(`screen audit event must retain frame metadata without image data: ${JSON.stringify(latest)}`);
 }

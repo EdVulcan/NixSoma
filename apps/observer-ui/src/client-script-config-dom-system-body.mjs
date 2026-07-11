@@ -9,6 +9,7 @@ const screenSummary = document.querySelector("#screen-summary");
 const screenSnapshot = document.querySelector("#screen-snapshot");
 const screenVisualFrame = document.querySelector("#screen-visual-frame");
 const screenVisualFrameStatus = document.querySelector("#screen-visual-frame-status");
+const screenSemanticTargets = document.querySelector("#screen-semantic-targets");
 const actionKind = document.querySelector("#action-kind");
 const actionCount = document.querySelector("#action-count");
 const actionDegraded = document.querySelector("#action-degraded");

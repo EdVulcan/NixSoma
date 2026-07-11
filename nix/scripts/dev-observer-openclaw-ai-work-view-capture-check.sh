@@ -57,6 +57,7 @@ const requiredHtml = [
   "screen-snapshot",
   "screen-visual-frame-status",
   "screen-visual-frame",
+  "screen-semantic-targets",
   "run-recommended-work-view-action-button",
 ];
 const requiredClient = [
@@ -88,6 +89,9 @@ const requiredClient = [
   "visualFrame.dataUrl",
   "data:image/jpeg;base64,",
   "screenVisualFrame.hidden",
+  "screen.semanticTargets",
+  "inventorySha256",
+  "Semantic Targets:",
 ];
 
 for (const token of requiredHtml) {
@@ -137,6 +141,15 @@ if (screen.visualFrame?.registry !== "openclaw-browser-visual-frame-v0"
   || "dataUrl" in (screen.visualFrame ?? {})) {
   throw new Error(`simulated Observer state must fail closed without image data: ${JSON.stringify(screen.visualFrame)}`);
 }
+if (screen.semanticTargets?.registry !== "openclaw-browser-semantic-target-inventory-v0"
+  || screen.semanticTargets?.available !== false
+  || screen.semanticTargets?.reason !== "simulated_engine"
+  || screen.semanticTargets?.itemCount !== 0
+  || screen.semanticTargets?.inputValuesExposed !== false
+  || screen.semanticTargets?.selectorsExposed !== false
+  || screen.semanticTargets?.mutation !== false) {
+  throw new Error(`simulated Observer state must fail closed without semantic targets: ${JSON.stringify(screen.semanticTargets)}`);
+}
 const trustedSession = screen.trustedSession ?? screen.workView?.trustedSession ?? screen.captureMetadata?.trustedSession;
 if (trustedSession?.identityLevel !== "level_2_trusted_session_work_view"
   || trustedSession?.boundary?.workViewScope !== "ai_owned_work_view_only"
@@ -156,6 +169,7 @@ console.log(JSON.stringify({
       "screen-capture-strategy",
       "screen-work-view-url",
       "screen-visual-frame",
+      "screen-semantic-targets",
       "run-recommended-work-view-action-button",
     ],
     clientFields: [
@@ -167,6 +181,7 @@ console.log(JSON.stringify({
       "trustedSession.helperReadiness",
       "runRecommendedWorkViewAction",
       "screen.visualFrame.dataUrl",
+      "screen.semanticTargets.items",
     ],
   },
   screen: {
@@ -180,6 +195,7 @@ console.log(JSON.stringify({
     lifecycleProposal: trustedSession.sidecarContract?.lifecycleProposal?.status ?? null,
     approvalTaskDraft: trustedSession.sidecarContract?.approvalTaskDraft?.status ?? null,
     visualFrame: screen.visualFrame?.reason ?? null,
+    semanticTargets: screen.semanticTargets?.reason ?? null,
   },
 }, null, 2));
 EOF

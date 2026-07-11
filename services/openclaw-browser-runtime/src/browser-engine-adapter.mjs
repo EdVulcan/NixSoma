@@ -12,6 +12,12 @@ import {
   projectWorkViewVisualFrame,
   unavailableWorkViewVisualFrame,
 } from "../../../packages/shared-utils/src/work-view-visual-frame.mjs";
+import {
+  WORK_VIEW_SEMANTIC_TARGET_MAX_ITEMS,
+  WORK_VIEW_SEMANTIC_TARGET_MAX_NAME_CHARS,
+  projectWorkViewSemanticTargets,
+  unavailableWorkViewSemanticTargets,
+} from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
 
 const ENGINE_REGISTRY = "openclaw-browser-engine-adapter-v0";
 const MAX_RESTORED_TABS = 32;
@@ -46,6 +52,7 @@ export function createBrowserEngineAdapter({
   let browser = null;
   let activePage = null;
   let visualFrame = null;
+  let semanticTargets = unavailableWorkViewSemanticTargets("not_captured");
   let visualFrameEpoch = 0;
   let visualFrameSequence = 0;
   let visualFramePromise = null;
@@ -54,6 +61,82 @@ export function createBrowserEngineAdapter({
   function invalidateVisualFrame() {
     visualFrameEpoch += 1;
     visualFrame = null;
+    semanticTargets = unavailableWorkViewSemanticTargets("frame_invalidated");
+  }
+
+  async function collectSemanticTargets(page) {
+    return page.evaluate((limits) => {
+      const selector = [
+        "a[href]", "button", "input:not([type=hidden])", "select", "textarea",
+        "[role=button]", "[role=link]", "[role=textbox]", "[role=checkbox]",
+        "[role=radio]", "[role=combobox]", "[contenteditable=true]",
+      ].join(",");
+      const text = (value) => typeof value === "string"
+        ? value.replace(/\s+/gu, " ").trim().slice(0, limits.maxNameChars)
+        : "";
+      const roleFor = (element) => {
+        const explicit = text(element.getAttribute("role"));
+        if (explicit) return explicit;
+        const tag = element.tagName.toLowerCase();
+        if (tag === "a") return "link";
+        if (tag === "button") return "button";
+        if (tag === "select") return "combobox";
+        if (tag === "textarea" || element.isContentEditable) return "textbox";
+        const inputType = text(element.getAttribute("type") || "text").toLowerCase();
+        if (["button", "submit", "reset"].includes(inputType)) return "button";
+        if (["checkbox", "radio"].includes(inputType)) return inputType;
+        return "textbox";
+      };
+      const nameFor = (element) => {
+        const labelledBy = text(element.getAttribute("aria-labelledby"));
+        const labelledText = labelledBy
+          ? labelledBy.split(/\s+/u).map((id) => document.getElementById(id)?.textContent ?? "").join(" ")
+          : "";
+        const labelText = Array.from(element.labels ?? []).map((label) => label.textContent ?? "").join(" ");
+        return text(
+          element.getAttribute("aria-label")
+          || labelledText
+          || labelText
+          || element.getAttribute("alt")
+          || element.getAttribute("placeholder")
+          || element.getAttribute("title")
+          || element.innerText
+          || element.textContent,
+        );
+      };
+      const items = [];
+      for (const element of document.querySelectorAll(selector)) {
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        const x = Math.max(0, rect.left);
+        const y = Math.max(0, rect.top);
+        const right = Math.min(limits.viewportWidth, rect.right);
+        const bottom = Math.min(limits.viewportHeight, rect.bottom);
+        if (style.display === "none"
+          || style.visibility === "hidden"
+          || Number.parseFloat(style.opacity || "1") <= 0
+          || right <= x
+          || bottom <= y) {
+          continue;
+        }
+        const tag = element.tagName.toLowerCase();
+        items.push({
+          role: roleFor(element),
+          tag,
+          name: nameFor(element),
+          inputType: tag === "input" ? text(element.getAttribute("type") || "text").toLowerCase() : null,
+          disabled: element.disabled === true || element.getAttribute("aria-disabled") === "true",
+          bounds: { x, y, width: right - x, height: bottom - y },
+        });
+        if (items.length > limits.maxItems) break;
+      }
+      return { items, truncated: items.length > limits.maxItems };
+    }, {
+      maxItems: WORK_VIEW_SEMANTIC_TARGET_MAX_ITEMS,
+      maxNameChars: WORK_VIEW_SEMANTIC_TARGET_MAX_NAME_CHARS,
+      viewportWidth: WORK_VIEW_VISUAL_FRAME_WIDTH,
+      viewportHeight: WORK_VIEW_VISUAL_FRAME_HEIGHT,
+    });
   }
 
   async function configurePage(page) {
@@ -215,8 +298,8 @@ export function createBrowserEngineAdapter({
           return visualFrame;
         }
         const capturedAt = new Date().toISOString();
-        visualFrameSequence += 1;
-        visualFrame = {
+        const nextSequence = visualFrameSequence + 1;
+        const candidateFrame = {
           registry: WORK_VIEW_VISUAL_FRAME_REGISTRY,
           available: true,
           reason: null,
@@ -231,11 +314,33 @@ export function createBrowserEngineAdapter({
           maxBytes: WORK_VIEW_VISUAL_FRAME_MAX_BYTES,
           sha256: createHash("sha256").update(bytes).digest("hex"),
           capturedAt,
-          sequence: visualFrameSequence,
+          sequence: nextSequence,
           desktopWideCapture: false,
           persisted: false,
           dataUrl: `data:image/jpeg;base64,${bytes.toString("base64")}`,
         };
+        let candidateTargets;
+        try {
+          const collected = await collectSemanticTargets(page);
+          candidateTargets = projectWorkViewSemanticTargets({
+            available: true,
+            pageUrl: page.url(),
+            frame: candidateFrame,
+            items: collected.items,
+            truncated: collected.truncated,
+          });
+        } catch {
+          candidateTargets = unavailableWorkViewSemanticTargets("semantic_target_collection_failed");
+        }
+        if (captureEpoch !== visualFrameEpoch || page.url() !== candidateFrame.pageUrl) {
+          return unavailableWorkViewVisualFrame("frame_invalidated_during_semantic_collection", {
+            capturedAt,
+            byteLength: bytes.length,
+          });
+        }
+        visualFrameSequence = nextSequence;
+        visualFrame = candidateFrame;
+        semanticTargets = candidateTargets;
         return visualFrame;
       })().finally(() => {
         visualFramePromise = null;
@@ -253,5 +358,9 @@ export function createBrowserEngineAdapter({
     rmSync(boundedProfileDirectory, { recursive: true, force: true });
   }
 
-  return { captureVisualFrame, click, close, newTab, open, snapshot, type };
+  function semanticTargetInventory() {
+    return projectWorkViewSemanticTargets(semanticTargets);
+  }
+
+  return { captureVisualFrame, click, close, newTab, open, semanticTargetInventory, snapshot, type };
 }

@@ -739,6 +739,7 @@ export function observerOperationsPanels() {
           <h2>Snapshot Preview</h2>
           <div class="metric"><span>Visual Frame</span><span id="screen-visual-frame-status">unavailable</span></div>
           <img id="screen-visual-frame" class="work-view-frame" alt="AI-owned browser work view" hidden />
+          <pre id="screen-semantic-targets">No semantic targets available.</pre>
           <pre id="screen-snapshot">No screen preview yet.</pre>
         </section>
         <section class="panel">

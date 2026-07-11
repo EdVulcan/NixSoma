@@ -124,6 +124,7 @@ async function observeBrowserCapture({ afterMutation = false } = {}) {
       const capture = data.capture;
       const summary = capture.workViewSummary ?? {};
       const visualFrame = projectWorkViewVisualFrame(capture.visualFrame, { includeData: false });
+      const semanticTargetSummary = summary.semanticTargets ?? {};
       captureSequence += 1;
       latestCaptureObservation = {
         registry: "openclaw-trusted-work-view-sidecar-capture-observation-v0",
@@ -148,6 +149,22 @@ async function observeBrowserCapture({ afterMutation = false } = {}) {
         realBrowserEngine: summary.engine?.realEngine === true,
         browserEngineRegistry: typeof summary.engine?.registry === "string" ? summary.engine.registry.slice(0, 100) : null,
         visualFrame,
+        semanticTargets: {
+          registry: semanticTargetSummary.registry ?? "openclaw-browser-semantic-target-inventory-v0",
+          available: semanticTargetSummary.available === true,
+          itemCount: Number.isInteger(semanticTargetSummary.itemCount) ? semanticTargetSummary.itemCount : 0,
+          truncated: semanticTargetSummary.truncated === true,
+          inventorySha256: typeof semanticTargetSummary.inventorySha256 === "string"
+            ? semanticTargetSummary.inventorySha256.slice(0, 64)
+            : null,
+          frameSequence: Number.isInteger(semanticTargetSummary.frame?.sequence)
+            ? semanticTargetSummary.frame.sequence
+            : null,
+          itemsRetained: false,
+          inputValuesExposed: false,
+          selectorsExposed: false,
+          mutation: false,
+        },
         visualGroundingReady: summary.engine?.realEngine !== true || (visualFrame.available && visualFrame.fresh),
         fullPayloadRetained: false,
         desktopWideCapture: false,

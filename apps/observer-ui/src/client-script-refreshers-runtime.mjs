@@ -226,6 +226,13 @@ async function refreshScreen() {
       screenVisualFrame.removeAttribute("src");
       screenVisualFrame.hidden = true;
     }
+    const semanticTargets = screen.semanticTargets ?? {};
+    screenSemanticTargets.textContent = semanticTargets.available
+      ? [
+          "Semantic Targets: " + semanticTargets.itemCount + " frame=" + (semanticTargets.frame?.sequence ?? "none") + " digest=" + (semanticTargets.inventorySha256 ?? "none"),
+          ...(semanticTargets.items ?? []).slice(0, 24).map((target) => target.targetId + " " + target.role + " " + (target.name || "unnamed") + " @ " + target.bounds.x + "," + target.bounds.y + " " + target.bounds.width + "x" + target.bounds.height),
+        ].join("\\n")
+      : "Semantic Targets: " + (semanticTargets.reason ?? "unavailable");
   } catch {
     screenWindow.textContent = "offline";
     screenSession.textContent = "unknown";
@@ -239,6 +246,7 @@ async function refreshScreen() {
     screenVisualFrameStatus.textContent = "unavailable";
     screenVisualFrame.removeAttribute("src");
     screenVisualFrame.hidden = true;
+    screenSemanticTargets.textContent = "Semantic Targets: unavailable";
   }
 }
 

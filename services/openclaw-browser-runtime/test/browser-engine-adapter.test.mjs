@@ -10,6 +10,14 @@ import { WORK_VIEW_VISUAL_FRAME_MAX_BYTES } from "../../../packages/shared-utils
 function createFakePuppeteer(t, {
   screenshotBytes = Buffer.from([0xff, 0xd8, 0xff, 0xdb]),
   screenshotImpl = null,
+  semanticItems = [{
+    role: "textbox",
+    tag: "input",
+    name: "work-input",
+    inputType: "text",
+    disabled: false,
+    bounds: { x: 20, y: 30, width: 180, height: 32 },
+  }],
 } = {}) {
   const root = mkdtempSync(path.join(tmpdir(), "openclaw-browser-engine-test-"));
   const executablePath = path.join(root, "browser");
@@ -51,6 +59,10 @@ function createFakePuppeteer(t, {
     async screenshot() {
       this.screenshotCalls += 1;
       return screenshotImpl ? screenshotImpl() : screenshotBytes;
+    }
+
+    async evaluate() {
+      return { items: semanticItems, truncated: semanticItems.length > 64 };
     }
 
     async close() {
@@ -152,6 +164,14 @@ test("browser engine adapter launches a bounded profile and delegates real page 
   assert.equal(frame.height, 540);
   assert.equal(frame.dataExposed, true);
   assert.match(frame.dataUrl, /^data:image\/jpeg;base64,/u);
+  const targets = adapter.semanticTargetInventory();
+  assert.equal(targets.available, true);
+  assert.equal(targets.frame.sha256, frame.sha256);
+  assert.equal(targets.frame.sequence, frame.sequence);
+  assert.equal(targets.itemCount, 1);
+  assert.equal(targets.items[0].name, "work-input");
+  assert.equal(targets.inputValuesExposed, false);
+  assert.equal(targets.selectorsExposed, false);
   const cached = await adapter.captureVisualFrame();
   assert.equal(cached.sequence, frame.sequence);
   assert.equal(fake.browser.pageList.at(-1).screenshotCalls, 1);
@@ -160,6 +180,7 @@ test("browser engine adapter launches a bounded profile and delegates real page 
   assert.equal("dataUrl" in metadata, false);
 
   await adapter.type("invalidate visual frame");
+  assert.equal(adapter.semanticTargetInventory().available, false);
   const refreshed = await adapter.captureVisualFrame();
   assert.equal(refreshed.sequence, frame.sequence + 1);
   assert.equal(fake.browser.pageList.at(-1).screenshotCalls, 2);
@@ -185,6 +206,7 @@ test("browser engine adapter fails closed when an AI-owned frame exceeds the byt
   assert.equal(frame.reason, "frame_exceeds_byte_limit");
   assert.equal(frame.dataExposed, false);
   assert.equal("dataUrl" in frame, false);
+  assert.equal(adapter.semanticTargetInventory().available, false);
   await adapter.close();
 });
 

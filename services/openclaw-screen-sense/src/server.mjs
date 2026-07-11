@@ -4,6 +4,10 @@ import { createEventName } from "../../../packages/shared-events/src/event-facto
 import { readCaptureAdapter } from "./capture-adapter.mjs";
 import { buildTrustedWorkViewContract } from "../../../packages/shared-utils/src/work-view-trust.mjs";
 import { projectWorkViewVisualFrame } from "../../../packages/shared-utils/src/work-view-visual-frame.mjs";
+import {
+  projectWorkViewSemanticTargets,
+  summariseWorkViewSemanticTargets,
+} from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
 
 const host = process.env.OPENCLAW_SCREEN_SENSE_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SCREEN_SENSE_PORT ?? "4104", 10);
@@ -38,6 +42,7 @@ const screenState = {
   captureStrategy: "browser-state-derived",
   captureMetadata: null,
   visualFrame: null,
+  semanticTargets: null,
   workView: null,
   workViewSummary: null,
 };
@@ -59,6 +64,7 @@ function screenEventEvidence(screen) {
   return {
     ...screen,
     visualFrame: projectWorkViewVisualFrame(screen?.visualFrame, { includeData: false }),
+    semanticTargets: summariseWorkViewSemanticTargets(screen?.semanticTargets),
   };
 }
 
@@ -105,6 +111,8 @@ function deriveScreenPatch({ session, sessionWorkView, browser, browserCapture, 
   const captureSource = browserCapture?.source ?? "browser";
   const visualFrame = projectWorkViewVisualFrame(browserCapture?.visualFrame, { includeData: true });
   const visualFrameMetadata = projectWorkViewVisualFrame(browserCapture?.visualFrame, { includeData: false });
+  const semanticTargets = projectWorkViewSemanticTargets(browserCapture?.semanticTargets);
+  const semanticTargetSummary = summariseWorkViewSemanticTargets(semanticTargets);
   const trustedSession = buildTrustedWorkViewContract({
     source: "screen-sense",
     trustedComponent: "openclaw-screen-sense",
@@ -158,6 +166,7 @@ function deriveScreenPatch({ session, sessionWorkView, browser, browserCapture, 
     sessionId: browserCapture?.sessionId ?? session?.sessionId ?? browser?.sessionId ?? null,
     browserRunning: Boolean(browserCapture?.browserRunning ?? browser?.running),
     visualFrame: visualFrameMetadata,
+    semanticTargets: semanticTargetSummary,
     trustedSession,
     lastInteraction: browserCapture?.lastInteraction ?? {
       input: browser?.lastInput ?? null,
@@ -233,6 +242,7 @@ function deriveScreenPatch({ session, sessionWorkView, browser, browserCapture, 
     captureStrategy,
     captureMetadata,
     visualFrame,
+    semanticTargets,
     workView: trustedWorkView,
     trustedSession,
     workViewSummary,

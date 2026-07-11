@@ -698,6 +698,11 @@ if (approvedStartProbeStatus !== "200"
   || approvedStartProbe.readback?.execution?.captureObservation?.visualFrame?.reason !== "simulated_engine"
   || approvedStartProbe.readback?.execution?.captureObservation?.visualFrame?.dataExposed !== false
   || approvedStartProbe.readback?.execution?.captureObservation?.visualGroundingReady !== true
+  || approvedStartProbe.readback?.execution?.captureObservation?.semanticTargets?.available !== false
+  || approvedStartProbe.readback?.execution?.captureObservation?.semanticTargets?.itemCount !== 0
+  || approvedStartProbe.readback?.execution?.captureObservation?.semanticTargets?.itemsRetained !== false
+  || approvedStartProbe.readback?.execution?.captureObservation?.semanticTargets?.inputValuesExposed !== false
+  || approvedStartProbe.readback?.execution?.captureObservation?.semanticTargets?.selectorsExposed !== false
   || approvedStartProbe.readback?.execution?.captureObservation?.fullPayloadRetained !== false
   || approvedStartProbe.readback?.execution?.captureObservation?.desktopWideCapture !== false
   || approvedStartProbe.readback?.execution?.captureFreshness !== "fresh"
