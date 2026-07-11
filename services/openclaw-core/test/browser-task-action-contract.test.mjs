@@ -5,10 +5,40 @@ import {
   BROWSER_TASK_ACTION_DESCRIPTORS,
   browserTaskActionsForExecution,
   capabilityIdForBrowserTaskAction,
+  compactBrowserTaskVisualGrounding,
   executeBrowserTaskActionWithCaptureRecovery,
   observedBrowserTaskUrl,
   screenActEndpointForBrowserTaskAction,
 } from "../src/browser-task-action-contract.mjs";
+
+test("browser task action contract retains compact visual grounding without frame data", () => {
+  const frame = (sha256, sequence, pageUrl) => ({
+    registry: "openclaw-browser-visual-frame-v0",
+    sha256,
+    sequence,
+    pageUrl,
+    capturedAt: "2026-07-11T01:00:00.000Z",
+    fresh: true,
+    width: 960,
+    height: 540,
+    byteLength: 12000,
+    sourceScope: "ai_owned_active_page_only",
+    dataUrl: "data:image/jpeg;base64,forbidden",
+  });
+  const evidence = compactBrowserTaskVisualGrounding({
+    registry: "openclaw-trusted-work-view-visual-action-grounding-v0",
+    required: true,
+    status: "grounded",
+    before: frame("a".repeat(64), 1, "https://example.com/before"),
+    after: frame("b".repeat(64), 2, "https://example.com/after"),
+    sequenceAdvanced: true,
+  });
+  assert.equal(evidence.status, "grounded");
+  assert.equal(evidence.before.sequence, 1);
+  assert.equal(evidence.after.sequence, 2);
+  assert.equal(evidence.imageDataRetained, false);
+  assert.equal(JSON.stringify(evidence).includes("data:image/"), false);
+});
 
 test("browser task action contract executes a recovered pending rule plan without duplicated request actions", () => {
   const planned = browserTaskActionsForExecution({

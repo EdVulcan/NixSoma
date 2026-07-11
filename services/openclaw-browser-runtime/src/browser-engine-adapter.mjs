@@ -46,11 +46,13 @@ export function createBrowserEngineAdapter({
   let browser = null;
   let activePage = null;
   let visualFrame = null;
+  let visualFrameEpoch = 0;
   let visualFrameSequence = 0;
   let visualFramePromise = null;
   const pageIds = new WeakMap();
 
   function invalidateVisualFrame() {
+    visualFrameEpoch += 1;
     visualFrame = null;
   }
 
@@ -190,6 +192,7 @@ export function createBrowserEngineAdapter({
       return projectWorkViewVisualFrame(visualFrame, { includeData });
     }
     if (!visualFramePromise) {
+      const captureEpoch = visualFrameEpoch;
       visualFramePromise = (async () => {
         const page = activePage;
         const bytes = Buffer.from(await page.screenshot({
@@ -198,6 +201,12 @@ export function createBrowserEngineAdapter({
           captureBeyondViewport: false,
           encoding: "binary",
         }));
+        if (captureEpoch !== visualFrameEpoch) {
+          return unavailableWorkViewVisualFrame("frame_invalidated_during_capture", {
+            capturedAt: new Date().toISOString(),
+            byteLength: bytes.length,
+          });
+        }
         if (bytes.length > WORK_VIEW_VISUAL_FRAME_MAX_BYTES) {
           visualFrame = unavailableWorkViewVisualFrame("frame_exceeds_byte_limit", {
             capturedAt: new Date().toISOString(),
@@ -235,10 +244,6 @@ export function createBrowserEngineAdapter({
     return projectWorkViewVisualFrame(await visualFramePromise, { includeData });
   }
 
-  function visualFrameMetadata() {
-    return projectWorkViewVisualFrame(visualFrame, { includeData: false });
-  }
-
   async function close() {
     const current = browser;
     browser = null;
@@ -248,5 +253,5 @@ export function createBrowserEngineAdapter({
     rmSync(boundedProfileDirectory, { recursive: true, force: true });
   }
 
-  return { captureVisualFrame, click, close, newTab, open, snapshot, type, visualFrameMetadata };
+  return { captureVisualFrame, click, close, newTab, open, snapshot, type };
 }

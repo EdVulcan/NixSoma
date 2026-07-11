@@ -166,7 +166,7 @@ initial_capture_sequence="$(node -e 'const data=JSON.parse(require("node:fs").re
 FRESH_CAPTURE_ACTION_FILE="$(mktemp)"
 curl --silent --fail -X POST "$SCREEN_ACT_URL/act/keyboard/type" \
   -H 'content-type: application/json' --data '{"text":"fresh sidecar capture mediated action"}' > "$FRESH_CAPTURE_ACTION_FILE"
-node -e 'const data=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); const mediation=data.action?.mediation??{}; if(data.action?.result!=="executed-browser-runtime" || mediation.accepted!==true || mediation.leaseMatched!==true || mediation.transport!=="trusted-sidecar-ipc"){throw new Error(`fresh capture action was not sidecar mediated: ${JSON.stringify(data)}`);}' "$FRESH_CAPTURE_ACTION_FILE"
+node -e 'const data=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); const mediation=data.action?.mediation??{}; const grounding=mediation.visualGrounding??{}; if(data.action?.result!=="executed-browser-runtime" || mediation.accepted!==true || mediation.leaseMatched!==true || mediation.transport!=="trusted-sidecar-ipc" || grounding.registry!=="openclaw-trusted-work-view-visual-action-grounding-v0" || grounding.required!==false || grounding.status!=="simulated_not_required" || grounding.imageDataRetained!==false || JSON.stringify(grounding).includes("data:image/")){throw new Error(`fresh capture action was not compactly sidecar mediated: ${JSON.stringify(data)}`);}' "$FRESH_CAPTURE_ACTION_FILE"
 CAPTURE_REFRESH_STATE_FILE="$(mktemp)"
 for _ in $(seq 1 40); do
   curl --silent --fail "$SESSION_MANAGER_URL/work-view/state" > "$CAPTURE_REFRESH_STATE_FILE"
@@ -694,6 +694,10 @@ if (approvedStartProbeStatus !== "200"
   || approvedStartProbe.readback?.execution?.captureObservation?.registry !== "openclaw-trusted-work-view-sidecar-capture-observation-v0"
   || approvedStartProbe.readback?.execution?.captureObservation?.sessionId !== resumedRuntime.sessionId
   || approvedStartProbe.readback?.execution?.captureObservation?.activeUrl !== "https://example.com/phase-3-controls"
+  || approvedStartProbe.readback?.execution?.captureObservation?.visualFrame?.available !== false
+  || approvedStartProbe.readback?.execution?.captureObservation?.visualFrame?.reason !== "simulated_engine"
+  || approvedStartProbe.readback?.execution?.captureObservation?.visualFrame?.dataExposed !== false
+  || approvedStartProbe.readback?.execution?.captureObservation?.visualGroundingReady !== true
   || approvedStartProbe.readback?.execution?.captureObservation?.fullPayloadRetained !== false
   || approvedStartProbe.readback?.execution?.captureObservation?.desktopWideCapture !== false
   || approvedStartProbe.readback?.execution?.captureFreshness !== "fresh"
@@ -826,6 +830,8 @@ if (newTabAction.action?.kind !== "browser.new_tab"
   || newTabMediation.accepted !== true
   || newTabMediation.leaseMatched !== true
   || newTabMediation.transport !== "trusted-sidecar-ipc"
+  || newTabMediation.visualGrounding?.status !== "simulated_not_required"
+  || newTabMediation.visualGrounding?.imageDataRetained !== false
   || newTabMediation.effect?.url !== newTabUrl
   || newTabMediation.effect?.tabCount !== newTabBrowserState.browser?.tabs?.length
   || newTabBrowserState.browser?.activeUrl !== newTabUrl
@@ -833,7 +839,8 @@ if (newTabAction.action?.kind !== "browser.new_tab"
   || !newTabBrowserState.browser.tabs.some((tab) => tab.url === newTabUrl)
   || newTabCapture.activeUrl !== newTabUrl
   || newTabCapture.tabCount !== newTabBrowserState.browser.tabs.length
-  || newTabCapture.sequence <= browserRecoveredSidecar.captureObservation.sequence) {
+  || newTabCapture.sequence <= browserRecoveredSidecar.captureObservation.sequence
+  || JSON.stringify(newTabMediation.visualGrounding).includes("data:image/")) {
   throw new Error(`bounded new-tab action should mutate only the trusted AI browser and refresh capture: ${JSON.stringify({ newTabAction, browser: newTabBrowserState.browser, newTabCapture })}`);
 }
 const autonomousPlanStep = autonomousNewTabResult.task?.plan?.steps?.find((step) => step.kind === "browser.new_tab");

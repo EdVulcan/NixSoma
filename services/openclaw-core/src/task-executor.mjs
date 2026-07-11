@@ -8,6 +8,7 @@ import { createSystemBodyTaskHandlers } from "./task-executor-system-body-handle
 import { planCapabilityActionSteps } from "./task-recovery.mjs";
 import {
   browserTaskActionsForExecution,
+  compactBrowserTaskVisualGrounding,
   executeBrowserTaskActionWithCaptureRecovery,
   observedBrowserTaskUrl,
 } from "./browser-task-action-contract.mjs";
@@ -510,6 +511,7 @@ function buildActionEvidence(actionResults, workViewSummary) {
       accepted: action.mediation.accepted === true,
       transport: action.mediation.transport ?? null,
       effect: action.mediation.effect ?? null,
+      visualGrounding: compactBrowserTaskVisualGrounding(action.mediation.visualGrounding),
     } : null,
     recovery: action?.recovery ?? null,
   }));

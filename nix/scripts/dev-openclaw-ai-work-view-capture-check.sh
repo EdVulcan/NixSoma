@@ -6,6 +6,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 FIXTURE_PORT="${OPENCLAW_BROWSER_FIXTURE_PORT:-5799}"
 TARGET_URL="http://127.0.0.1:$FIXTURE_PORT/openclaw-ai-work-view-capture"
+GROUNDING_URL="http://127.0.0.1:$FIXTURE_PORT/grounded-action"
+AUTONOMOUS_GROUNDING_URL="http://127.0.0.1:$FIXTURE_PORT/autonomous-grounded-action"
 
 export OPENCLAW_CORE_PORT="${OPENCLAW_CORE_PORT:-5700}"
 export OPENCLAW_EVENT_HUB_PORT="${OPENCLAW_EVENT_HUB_PORT:-5701}"
@@ -23,8 +25,10 @@ export OPENCLAW_BROWSER_ENGINE_MODE="firefox"
 export OPENCLAW_BROWSER_PROFILE_DIR="${OPENCLAW_BROWSER_PROFILE_DIR:-$REPO_ROOT/.artifacts/openclaw-browser-profile-ai-work-view-capture-check}"
 
 BROWSER_URL="http://127.0.0.1:$OPENCLAW_BROWSER_RUNTIME_PORT"
+CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 SESSION_MANAGER_URL="http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT"
 SCREEN_URL="http://127.0.0.1:$OPENCLAW_SCREEN_SENSE_PORT"
+SCREEN_ACT_URL="http://127.0.0.1:$OPENCLAW_SCREEN_ACT_PORT"
 EVENT_HUB_URL="http://127.0.0.1:$OPENCLAW_EVENT_HUB_PORT"
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
@@ -32,6 +36,10 @@ rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_BRO
 rm -rf "$OPENCLAW_BROWSER_PROFILE_DIR"
 
 cleanup() {
+  if [[ -n "${SIDECAR_TASK_ID:-}" && "${SIDECAR_STOPPED:-false}" != "true" ]]; then
+    curl --silent -X POST "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks/$SIDECAR_TASK_ID/stop" \
+      -H 'content-type: application/json' --data '{}' >/dev/null 2>&1 || true
+  fi
   if [[ -n "${FIXTURE_PID:-}" ]]; then
     kill -TERM "$FIXTURE_PID" >/dev/null 2>&1 || true
   fi
@@ -63,7 +71,7 @@ if [[ -z "${OPENCLAW_BROWSER_EXECUTABLE:-}" ]]; then
   fi
 fi
 
-node -e 'const http=require("node:http"); const port=Number(process.argv[1]); http.createServer((_req,res)=>{res.writeHead(200,{"content-type":"text/html; charset=utf-8"}); res.end("<!doctype html><title>OpenClaw Engine Fixture</title><main><h1>AI-owned work view</h1><input autofocus aria-label=work-input><button>Observe</button></main>");}).listen(port,"127.0.0.1");' "$FIXTURE_PORT" &
+node -e 'const http=require("node:http"); const port=Number(process.argv[1]); http.createServer((req,res)=>{const autonomous=req.url.includes("autonomous-grounded-action"); const grounded=req.url.includes("grounded-action"); const title=autonomous?"Autonomous Grounded Fixture":grounded?"Grounded Action Fixture":"OpenClaw Engine Fixture"; const heading=autonomous?"Autonomous visual action observed":grounded?"Visual action observed":"AI-owned work view"; res.writeHead(200,{"content-type":"text/html; charset=utf-8"}); res.end(`<!doctype html><title>${title}</title><main><h1>${heading}</h1><input autofocus aria-label=work-input><button>Observe</button></main>`);}).listen(port,"127.0.0.1");' "$FIXTURE_PORT" &
 FIXTURE_PID=$!
 openclaw_wait_for_http_up "$TARGET_URL" 10 0.2
 
@@ -89,12 +97,98 @@ click_body="$(node -e 'const body=JSON.parse(process.argv[1]); process.stdout.wr
 post_json "$BROWSER_URL/browser/input" "$input_body" >/dev/null
 post_json "$BROWSER_URL/browser/click" "$click_body" >/dev/null
 
+sidecar_task="$(post_json "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks" '{"confirm":true}')"
+SIDECAR_TASK_ID="$(node -e 'const data=JSON.parse(process.argv[1]); process.stdout.write(data.task.id);' "$sidecar_task")"
+sidecar_approval_id="$(node -e 'const data=JSON.parse(process.argv[1]); process.stdout.write(data.approval.id);' "$sidecar_task")"
+post_json "$CORE_URL/approvals/$sidecar_approval_id/approve" '{"approvedBy":"ai-work-view-capture-check","reason":"prove bounded visual grounding through the existing trusted sidecar"}' >/dev/null
+sidecar_start="$(post_json "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks/$SIDECAR_TASK_ID/start-probe" '{}')"
+node -e 'const data=JSON.parse(process.argv[1]); const frame=data.readback?.execution?.captureObservation?.visualFrame??{}; if(!data.ok || data.readback?.status!=="running_after_approval" || frame.available!==true || frame.fresh!==true || frame.dataExposed!==false || frame.sourceScope!=="ai_owned_active_page_only" || JSON.stringify(frame).includes("data:image/")){throw new Error(`real sidecar did not receive bounded frame metadata: ${JSON.stringify(data)}`);}' "$sidecar_start"
+
+grounded_action="$(post_json "$SCREEN_ACT_URL/act/browser/new-tab" "{\"url\":\"$GROUNDING_URL\"}")"
+node - <<'EOF' "$grounded_action" "$GROUNDING_URL"
+const data = JSON.parse(process.argv[2]);
+const expectedUrl = process.argv[3];
+const mediation = data.action?.mediation ?? {};
+const grounding = mediation.visualGrounding ?? {};
+if (data.action?.result !== "executed-browser-runtime"
+  || mediation.accepted !== true
+  || mediation.transport !== "trusted-sidecar-ipc"
+  || grounding.registry !== "openclaw-trusted-work-view-visual-action-grounding-v0"
+  || grounding.required !== true
+  || grounding.status !== "grounded"
+  || mediation.effect?.url !== expectedUrl
+  || grounding.sequenceAdvanced !== true
+  || grounding.before?.fresh !== true
+  || grounding.after?.fresh !== true
+  || grounding.after?.sequence <= grounding.before?.sequence
+  || grounding.after?.sha256 === grounding.before?.sha256
+  || grounding.after?.pageUrl !== expectedUrl
+  || grounding.before?.sourceScope !== "ai_owned_active_page_only"
+  || grounding.after?.sourceScope !== "ai_owned_active_page_only"
+  || grounding.before?.dataExposed !== false
+  || grounding.after?.dataExposed !== false
+  || grounding.imageDataRetained !== false
+  || grounding.desktopWideCapture !== false
+  || grounding.persisted !== false
+  || JSON.stringify(grounding).includes("data:image/")) {
+  throw new Error(`real browser action was not grounded in compact pre/post frame evidence: ${JSON.stringify(data)}`);
+}
+console.log(JSON.stringify({
+  visualActionGrounding: {
+    status: grounding.status,
+    transport: mediation.transport,
+    beforeSequence: grounding.before.sequence,
+    afterSequence: grounding.after.sequence,
+    beforeSha256: grounding.before.sha256,
+    afterSha256: grounding.after.sha256,
+    imageDataRetained: grounding.imageDataRetained,
+  },
+}, null, 2));
+EOF
+
+grounded_task="$(post_json "$CORE_URL/tasks" "{\"goal\":\"Prove autonomous visual grounding\",\"type\":\"browser_task\",\"targetUrl\":\"$GROUNDING_URL\",\"workViewStrategy\":\"ai-work-view\",\"planStrategy\":\"rule-v1\",\"actions\":[{\"kind\":\"browser.new_tab\",\"params\":{\"url\":\"$AUTONOMOUS_GROUNDING_URL\"}}]}")"
+grounded_task_id="$(node -e 'const data=JSON.parse(process.argv[1]); process.stdout.write(data.task.id);' "$grounded_task")"
+grounded_execution="$(post_json "$CORE_URL/tasks/$grounded_task_id/execute" "{\"expectedUrl\":\"$AUTONOMOUS_GROUNDING_URL\",\"hideOnComplete\":false}")"
+node - <<'EOF' "$grounded_execution" "$AUTONOMOUS_GROUNDING_URL"
+const data = JSON.parse(process.argv[2]);
+const expectedUrl = process.argv[3];
+const evidence = data.execution?.actionEvidence;
+const action = evidence?.actions?.[0];
+const grounding = action?.mediation?.visualGrounding ?? {};
+if (data.task?.status !== "completed"
+  || evidence?.kind !== "eye-hand-action-evidence"
+  || action?.kind !== "browser.new_tab"
+  || action.mediation?.transport !== "trusted-sidecar-ipc"
+  || action.mediation?.effect?.url !== expectedUrl
+  || grounding.required !== true
+  || grounding.status !== "grounded"
+  || grounding.sequenceAdvanced !== true
+  || grounding.after?.sequence <= grounding.before?.sequence
+  || grounding.after?.sha256 === grounding.before?.sha256
+  || grounding.after?.pageUrl !== expectedUrl
+  || grounding.imageDataRetained !== false
+  || JSON.stringify(evidence).includes("data:image/")) {
+  throw new Error(`autonomous task did not retain compact visual grounding evidence: ${JSON.stringify(data)}`);
+}
+console.log(JSON.stringify({
+  autonomousVisualGrounding: {
+    taskId: data.task.id,
+    status: data.task.status,
+    transport: action.mediation.transport,
+    beforeSequence: grounding.before.sequence,
+    afterSequence: grounding.after.sequence,
+    observedUrl: evidence.observedAfterActions?.url,
+    imageDataRetained: grounding.imageDataRetained,
+  },
+}, null, 2));
+EOF
+
 provider="$(curl --silent "$SCREEN_URL/screen/provider")"
 capture="$(curl --silent "$BROWSER_URL/browser/capture")"
 screen="$(curl --silent "$SCREEN_URL/screen/current")"
 metadata_capture="$(curl --silent "$BROWSER_URL/browser/capture?visual=metadata")"
 
-node - <<'EOF' "$provider" "$capture" "$screen" "$TARGET_URL" "$engine_pid" "$metadata_capture"
+node - <<'EOF' "$provider" "$capture" "$screen" "$AUTONOMOUS_GROUNDING_URL" "$engine_pid" "$metadata_capture"
 const { createHash } = require("node:crypto");
 const provider = JSON.parse(process.argv[2]);
 const captureResponse = JSON.parse(process.argv[3]);
@@ -141,7 +235,7 @@ if (provider.provider?.mode !== "browser" || provider.provider?.ready !== true) 
 if (capture?.source !== "browser-runtime") {
   throw new Error(`expected browser-runtime capture source: ${JSON.stringify(capture)}`);
 }
-if (capture.activeTitle !== "OpenClaw Engine Fixture"
+if (capture.activeTitle !== "Autonomous Grounded Fixture"
   || capture.engine?.mode !== "firefox"
   || capture.engine?.realEngine !== true
   || capture.engine?.registry !== "openclaw-browser-engine-adapter-v0"
@@ -300,3 +394,6 @@ console.log(JSON.stringify({
   },
 }, null, 2));
 EOF
+
+post_json "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks/$SIDECAR_TASK_ID/stop" '{}' >/dev/null
+SIDECAR_STOPPED=true

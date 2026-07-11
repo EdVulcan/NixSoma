@@ -744,6 +744,7 @@ const server = http.createServer(async (req, res) => {
         transport: "trusted-sidecar-ipc",
         mediation: result.mediation ?? { accepted: false, reason: result.reason },
         effect: result.effect ?? null,
+        visualGrounding: result.visualGrounding ?? null,
         error: result.ok ? null : result.reason,
       });
     } catch (error) {

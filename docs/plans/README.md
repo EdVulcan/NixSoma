@@ -185,6 +185,13 @@ audit/sidecar projections. The next Level 2 slice is to link fresh frame
 digest/sequence evidence to trusted action dispatch and post-action refresh,
 without moving image bytes into task or sidecar state.
 
+Visual-frame-grounded actions are now complete for the real Firefox path:
+sidecar metadata observations provide fresh digest/sequence references,
+operator and autonomous navigation retain compact pre/post evidence, and
+simulated fallback stays explicit. The next Level 2 slice is bounded read-only
+semantic target inventory for visible interactive elements in the AI-owned
+page, tied to the current frame and exposed through the existing lane.
+
 ## Historical Phase Plans
 
 `OPENCLAW_PHASE_2_PLAN.md` through `OPENCLAW_PHASE_136_PLAN.md` are retained

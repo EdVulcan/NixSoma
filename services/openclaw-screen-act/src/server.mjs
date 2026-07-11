@@ -139,6 +139,7 @@ async function executeBrowserAction(kind, params, screen) {
       leaseId: mediation.leaseId ?? leaseContext.trustedHelperLease?.leaseId ?? null,
       leaseMatched: mediation.leaseMatched === true,
       transport: data?.transport ?? "browser-runtime-direct",
+      visualGrounding: data?.visualGrounding ?? null,
       effect: data?.effect ?? (data?.tab ? {
         tabId: data.tab.id ?? null,
         url: data.tab.url ?? null,

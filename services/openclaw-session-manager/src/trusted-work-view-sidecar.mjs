@@ -5,6 +5,7 @@ import {
   createSidecarMessageDecoder,
   encodeSidecarMessage,
 } from "./trusted-work-view-sidecar-channel.mjs";
+import { projectWorkViewVisualFrame } from "../../../packages/shared-utils/src/work-view-visual-frame.mjs";
 
 const HEARTBEAT_REGISTRY = "openclaw-trusted-work-view-sidecar-heartbeat-v0";
 const socketPath = process.env.OPENCLAW_SIDECAR_SOCKET_PATH ?? null;
@@ -26,7 +27,7 @@ const lifecycleIdentity = {
 };
 let heartbeatCount = 0;
 let captureSequence = 0;
-let captureInFlight = false;
+let capturePromise = null;
 let latestCaptureObservation = null;
 let heartbeatTimer = null;
 let captureTimer = null;
@@ -91,7 +92,7 @@ function bindAuthority(message) {
   };
   heartbeatCount += 1;
   latestCaptureObservation = null;
-  captureInFlight = false;
+  capturePromise = null;
   clearReconnectTimer();
   clearRuntimeTimers();
   send("ready", { heartbeatCount });
@@ -103,63 +104,102 @@ function bindAuthority(message) {
   captureTimer = setInterval(observeBrowserCapture, captureIntervalMs);
 }
 
-async function observeBrowserCapture() {
-  if (!binding?.browserRuntimeUrl || captureInFlight) {
-    return;
-  }
-  captureInFlight = true;
-  try {
-    const response = await fetch(`${binding.browserRuntimeUrl}/browser/capture?visual=metadata`);
-    const data = await response.json();
-    if (!response.ok || data?.ok !== true) {
-      throw new Error(data?.error ?? "browser_capture_request_failed");
+async function observeBrowserCapture({ afterMutation = false } = {}) {
+  if (!binding?.browserRuntimeUrl) return null;
+  if (afterMutation && capturePromise) await capturePromise;
+  if (capturePromise) return capturePromise;
+  const boundSessionId = binding.sessionId;
+  const browserRuntimeUrl = binding.browserRuntimeUrl;
+  capturePromise = (async () => {
+    try {
+      const response = await fetch(`${browserRuntimeUrl}/browser/capture?visual=metadata`);
+      const data = await response.json();
+      if (!response.ok || data?.ok !== true) {
+        throw new Error(data?.error ?? "browser_capture_request_failed");
+      }
+      if (data.running !== true || !data.capture) {
+        throw new Error("browser_runtime_not_running");
+      }
+      if (binding?.sessionId !== boundSessionId) return null;
+      const capture = data.capture;
+      const summary = capture.workViewSummary ?? {};
+      const visualFrame = projectWorkViewVisualFrame(capture.visualFrame, { includeData: false });
+      captureSequence += 1;
+      latestCaptureObservation = {
+        registry: "openclaw-trusted-work-view-sidecar-capture-observation-v0",
+        source: "browser-runtime-loopback",
+        sessionId: capture.sessionId ?? data.browser?.sessionId ?? null,
+        title: typeof summary.title === "string" ? summary.title.slice(0, 200) : null,
+        activeUrl: typeof summary.url === "string" ? summary.url.slice(0, 2048) : null,
+        tabCount: Number.isInteger(summary.tabCount) ? summary.tabCount : 0,
+        visibleTextBlockCount: Array.isArray(summary.visibleTextBlocks) ? summary.visibleTextBlocks.length : 0,
+        capturedAt: capture.capturedAt ?? new Date().toISOString(),
+        observedAt: new Date().toISOString(),
+        sequence: captureSequence,
+        workspaceRecoveryStatus: typeof summary.workspaceRecovery?.status === "string"
+          ? summary.workspaceRecovery.status.slice(0, 80)
+          : null,
+        restoredTabCount: Number.isInteger(summary.workspaceRecovery?.restoredTabCount)
+          ? summary.workspaceRecovery.restoredTabCount
+          : 0,
+        freshAuthorityBound: summary.workspaceRecovery?.freshAuthorityBound === true,
+        automaticActionReplay: false,
+        browserEngineMode: typeof summary.engine?.mode === "string" ? summary.engine.mode.slice(0, 40) : "unknown",
+        realBrowserEngine: summary.engine?.realEngine === true,
+        browserEngineRegistry: typeof summary.engine?.registry === "string" ? summary.engine.registry.slice(0, 100) : null,
+        visualFrame,
+        visualGroundingReady: summary.engine?.realEngine !== true || (visualFrame.available && visualFrame.fresh),
+        fullPayloadRetained: false,
+        desktopWideCapture: false,
+      };
+      send("capture_observation", { observation: latestCaptureObservation });
+      return latestCaptureObservation;
+    } catch (error) {
+      send("capture_failed", { reason: error instanceof Error ? error.message : "capture_failed" });
+      return null;
     }
-    if (data.running !== true || !data.capture) {
-      throw new Error("browser_runtime_not_running");
-    }
-    const capture = data.capture;
-    const summary = capture.workViewSummary ?? {};
-    captureSequence += 1;
-    latestCaptureObservation = {
-      registry: "openclaw-trusted-work-view-sidecar-capture-observation-v0",
-      source: "browser-runtime-loopback",
-      sessionId: capture.sessionId ?? data.browser?.sessionId ?? null,
-      title: typeof summary.title === "string" ? summary.title.slice(0, 200) : null,
-      activeUrl: typeof summary.url === "string" ? summary.url.slice(0, 2048) : null,
-      tabCount: Number.isInteger(summary.tabCount) ? summary.tabCount : 0,
-      visibleTextBlockCount: Array.isArray(summary.visibleTextBlocks) ? summary.visibleTextBlocks.length : 0,
-      capturedAt: capture.capturedAt ?? new Date().toISOString(),
-      observedAt: new Date().toISOString(),
-      sequence: captureSequence,
-      workspaceRecoveryStatus: typeof summary.workspaceRecovery?.status === "string"
-        ? summary.workspaceRecovery.status.slice(0, 80)
-        : null,
-      restoredTabCount: Number.isInteger(summary.workspaceRecovery?.restoredTabCount)
-        ? summary.workspaceRecovery.restoredTabCount
-        : 0,
-      freshAuthorityBound: summary.workspaceRecovery?.freshAuthorityBound === true,
-      automaticActionReplay: false,
-      browserEngineMode: typeof summary.engine?.mode === "string" ? summary.engine.mode.slice(0, 40) : "unknown",
-      realBrowserEngine: summary.engine?.realEngine === true,
-      browserEngineRegistry: typeof summary.engine?.registry === "string" ? summary.engine.registry.slice(0, 100) : null,
-      fullPayloadRetained: false,
-      desktopWideCapture: false,
-    };
-    send("capture_observation", { observation: latestCaptureObservation });
-  } catch (error) {
-    send("capture_failed", { reason: error instanceof Error ? error.message : "capture_failed" });
-  } finally {
-    captureInFlight = false;
-  }
+  })().finally(() => {
+    capturePromise = null;
+  });
+  return capturePromise;
+}
+
+function frameReference(observation) {
+  const frame = observation?.visualFrame;
+  if (!frame?.available) return null;
+  return {
+    registry: frame.registry,
+    sha256: frame.sha256,
+    sequence: frame.sequence,
+    pageUrl: frame.pageUrl,
+    capturedAt: frame.capturedAt,
+    fresh: frame.fresh === true,
+    width: frame.width,
+    height: frame.height,
+    byteLength: frame.byteLength,
+    sourceScope: frame.sourceScope,
+    dataExposed: false,
+    persisted: false,
+  };
 }
 
 async function executeBrowserAction(message) {
+  const beforeObservation = latestCaptureObservation;
   const observedAt = Date.parse(latestCaptureObservation?.observedAt ?? "");
   const fresh = Number.isFinite(observedAt) && Date.now() - observedAt <= 3_000;
   if (!fresh || latestCaptureObservation?.sessionId !== binding?.sessionId) {
     send("action_result", {
       requestId: message.requestId,
       result: { ok: false, reason: fresh ? "capture_session_mismatch" : "capture_stale" },
+    });
+    return;
+  }
+  const visualGroundingRequired = beforeObservation.realBrowserEngine === true;
+  const beforeFrame = frameReference(beforeObservation);
+  if (visualGroundingRequired && (!beforeFrame || beforeFrame.fresh !== true)) {
+    send("action_result", {
+      requestId: message.requestId,
+      result: { ok: false, reason: "visual_frame_not_ready" },
     });
     return;
   }
@@ -179,10 +219,27 @@ async function executeBrowserAction(message) {
       body: JSON.stringify({ ...message.payload, trustedHelperLease: message.trustedHelperLease }),
     });
     const data = await response.json();
+    const actionAccepted = response.ok && data?.ok === true;
+    const afterObservation = actionAccepted ? await observeBrowserCapture({ afterMutation: true }) : null;
+    const afterFrame = frameReference(afterObservation);
+    const sequenceAdvanced = Boolean(beforeFrame && afterFrame && afterFrame.sequence > beforeFrame.sequence);
+    const visualGrounding = {
+      registry: "openclaw-trusted-work-view-visual-action-grounding-v0",
+      required: visualGroundingRequired,
+      status: !visualGroundingRequired
+        ? "simulated_not_required"
+        : actionAccepted && sequenceAdvanced ? "grounded" : actionAccepted ? "post_action_frame_unverified" : "action_rejected",
+      before: beforeFrame,
+      after: afterFrame,
+      sequenceAdvanced,
+      imageDataRetained: false,
+      desktopWideCapture: false,
+      persisted: false,
+    };
     send("action_result", {
       requestId: message.requestId,
       result: {
-        ok: response.ok && data?.ok === true,
+        ok: actionAccepted,
         reason: data?.mediation?.reason ?? data?.error ?? null,
         mediation: data?.mediation ?? null,
         effect: data?.tab ? {
@@ -190,6 +247,7 @@ async function executeBrowserAction(message) {
           url: data.tab.url ?? null,
           tabCount: Array.isArray(data.browser?.tabs) ? data.browser.tabs.length : null,
         } : null,
+        visualGrounding,
       },
     });
   } catch (error) {
@@ -206,7 +264,7 @@ function detachAuthority(socket) {
   authoritySocket = null;
   binding = null;
   latestCaptureObservation = null;
-  captureInFlight = false;
+  capturePromise = null;
   clearReconnectTimer();
   reconnectTimer = setTimeout(() => stop("authority_reconnect_timeout"), reconnectTimeoutMs);
 }

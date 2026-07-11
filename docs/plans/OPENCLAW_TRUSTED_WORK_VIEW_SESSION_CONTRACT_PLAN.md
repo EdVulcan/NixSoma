@@ -715,3 +715,34 @@ carry only the fresh frame digest/sequence in its observation, bind that compact
 provenance to the next trusted input/click/navigation result, and refresh the
 frame after mutation. Do not persist image data, make OCR claims, add a new
 capture route, or create a readiness-only milestone.
+
+That visual grounding slice is now complete. In real-engine mode the sidecar's
+existing metadata capture triggers the bounded screenshot but receives only
+validated frame metadata. Its observation carries the active-page digest,
+frame sequence, dimensions, byte count, URL, and freshness with
+`dataExposed:false`. A trusted action requires a fresh pre-action frame, then
+forces one post-mutation refresh and returns
+`openclaw-trusted-work-view-visual-action-grounding-v0` with compact before and
+after references. Simulated development mode remains explicit and reports
+`simulated_not_required` rather than pretending pixels exist.
+
+The browser adapter uses a mutation epoch so a screenshot that overlaps
+navigation/input/click cannot overwrite the invalidated cache. If an action is
+accepted but post-action capture is unavailable, the result records
+`post_action_frame_unverified` without turning the completed side effect into a
+retryable failure. Core's browser action contract strips any frame data again
+before attaching grounding to task evidence.
+
+The real Firefox milestone proves an approved sidecar-grounded navigation
+changes frame URL and SHA-256, then proves an autonomous browser task retains
+the advancing pre/post sequence in `eye-hand-action-evidence`. The Phase 3
+milestone proves simulated fallback and recovery remain compatible, and the
+Observer Last Action panel exposes compact grounding status. Audit and task
+payloads remain free of image data.
+
+The next Level 2 product gap is bounded semantic target observation inside the
+AI-owned page. Add a read-only inventory of visible interactive elements tied
+to the current frame digest/sequence, with strict item/text/bounds limits and no
+input values, arbitrary page script, mutation, or desktop capture. Reuse the
+existing capture/screen/Observer lane; semantic click/type execution remains a
+later governed action.

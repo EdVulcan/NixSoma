@@ -564,7 +564,7 @@ const server = http.createServer(async (req, res) => {
       try {
         visualFrame = visualMode === "full"
           ? await browserEngine.captureVisualFrame({ includeData: true })
-          : browserEngine.visualFrameMetadata();
+          : await browserEngine.captureVisualFrame({ includeData: false });
       } catch {
         visualFrame = unavailableWorkViewVisualFrame("visual_capture_failed");
       }

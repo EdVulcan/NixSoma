@@ -381,6 +381,21 @@ provenance, and post-action capture should advance it. Keep image bytes out of
 sidecar state, task evidence, and logs; do not add another endpoint or readiness
 wrapper.
 
+That grounding behavior is now complete. Real-engine sidecar observations
+carry only fresh frame digest/sequence metadata; trusted actions bind compact
+pre/post frame references, force post-mutation refresh, survive concurrent
+capture invalidation, and propagate through screen-act plus autonomous task
+evidence without image data. Simulated mode remains an explicit non-grounded
+fallback. The real milestone proves both operator and autonomous navigation
+change the observed frame and URL.
+
+The next smallest Level 2 capability is a bounded read-only semantic target
+inventory for the active AI-owned page, linked to the current visual frame.
+Expose only visible interactive role/name/bounds metadata with hard limits and
+no form values or mutation through the existing capture/screen/Observer lane.
+Do not jump directly to arbitrary selectors, page-script execution, or another
+readiness endpoint.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

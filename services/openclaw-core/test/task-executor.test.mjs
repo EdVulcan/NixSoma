@@ -1662,6 +1662,39 @@ test("browser task executor prepares once and retries an in-flight capture inter
                   accepted: true,
                   transport: "trusted-sidecar-ipc",
                   effect: { url: recoveredUrl, tabCount: 2 },
+                  visualGrounding: {
+                    registry: "openclaw-trusted-work-view-visual-action-grounding-v0",
+                    required: true,
+                    status: "grounded",
+                    before: {
+                      registry: "openclaw-browser-visual-frame-v0",
+                      sha256: "a".repeat(64),
+                      sequence: 1,
+                      pageUrl: targetUrl,
+                      capturedAt: "2026-07-11T01:00:00.000Z",
+                      fresh: true,
+                      width: 960,
+                      height: 540,
+                      byteLength: 12000,
+                      sourceScope: "ai_owned_active_page_only",
+                      dataUrl: "data:image/jpeg;base64,forbidden-before",
+                    },
+                    after: {
+                      registry: "openclaw-browser-visual-frame-v0",
+                      sha256: "b".repeat(64),
+                      sequence: 2,
+                      pageUrl: recoveredUrl,
+                      capturedAt: "2026-07-11T01:00:01.000Z",
+                      fresh: true,
+                      width: 960,
+                      height: 540,
+                      byteLength: 13000,
+                      sourceScope: "ai_owned_active_page_only",
+                      dataUrl: "data:image/jpeg;base64,forbidden-after",
+                    },
+                    sequenceAdvanced: true,
+                    imageDataRetained: false,
+                  },
                 },
               },
             };
@@ -1705,6 +1738,11 @@ test("browser task executor prepares once and retries an in-flight capture inter
   assert.equal(evidenceAction.recovery.attempted, true);
   assert.equal(evidenceAction.recovery.boundedAttempts, 1);
   assert.equal(evidenceAction.mediation.effect.url, recoveredUrl);
+  assert.equal(evidenceAction.mediation.visualGrounding.status, "grounded");
+  assert.equal(evidenceAction.mediation.visualGrounding.before.sequence, 1);
+  assert.equal(evidenceAction.mediation.visualGrounding.after.sequence, 2);
+  assert.equal(evidenceAction.mediation.visualGrounding.imageDataRetained, false);
+  assert.equal(JSON.stringify(evidenceAction).includes("data:image/"), false);
   assert.equal(result.finalExecution.verification.activeUrl, recoveredUrl);
 });
 

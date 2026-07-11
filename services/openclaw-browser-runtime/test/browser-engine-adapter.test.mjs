@@ -7,7 +7,10 @@ import path from "node:path";
 import { createBrowserEngineAdapter } from "../src/browser-engine-adapter.mjs";
 import { WORK_VIEW_VISUAL_FRAME_MAX_BYTES } from "../../../packages/shared-utils/src/work-view-visual-frame.mjs";
 
-function createFakePuppeteer(t, { screenshotBytes = Buffer.from([0xff, 0xd8, 0xff, 0xdb]) } = {}) {
+function createFakePuppeteer(t, {
+  screenshotBytes = Buffer.from([0xff, 0xd8, 0xff, 0xdb]),
+  screenshotImpl = null,
+} = {}) {
   const root = mkdtempSync(path.join(tmpdir(), "openclaw-browser-engine-test-"));
   const executablePath = path.join(root, "browser");
   const profileDirectory = path.join(root, "profile");
@@ -47,7 +50,7 @@ function createFakePuppeteer(t, { screenshotBytes = Buffer.from([0xff, 0xd8, 0xf
 
     async screenshot() {
       this.screenshotCalls += 1;
-      return screenshotBytes;
+      return screenshotImpl ? screenshotImpl() : screenshotBytes;
     }
 
     async close() {
@@ -152,7 +155,7 @@ test("browser engine adapter launches a bounded profile and delegates real page 
   const cached = await adapter.captureVisualFrame();
   assert.equal(cached.sequence, frame.sequence);
   assert.equal(fake.browser.pageList.at(-1).screenshotCalls, 1);
-  const metadata = adapter.visualFrameMetadata();
+  const metadata = await adapter.captureVisualFrame({ includeData: false });
   assert.equal(metadata.dataExposed, false);
   assert.equal("dataUrl" in metadata, false);
 
@@ -182,6 +185,39 @@ test("browser engine adapter fails closed when an AI-owned frame exceeds the byt
   assert.equal(frame.reason, "frame_exceeds_byte_limit");
   assert.equal(frame.dataExposed, false);
   assert.equal("dataUrl" in frame, false);
+  await adapter.close();
+});
+
+test("browser engine adapter does not publish a frame captured across a page mutation", async (t) => {
+  let releaseScreenshot;
+  let screenshotStarted;
+  const started = new Promise((resolve) => { screenshotStarted = resolve; });
+  const screenshot = new Promise((resolve) => { releaseScreenshot = resolve; });
+  const bytes = Buffer.from([0xff, 0xd8, 0xff, 0xdb]);
+  const fake = createFakePuppeteer(t, {
+    screenshotImpl: async () => {
+      screenshotStarted();
+      return screenshot;
+    },
+  });
+  const adapter = createBrowserEngineAdapter({
+    executablePath: fake.executablePath,
+    profileDirectory: fake.profileDirectory,
+    puppeteerApi: fake.puppeteerApi,
+  });
+
+  await adapter.open({ url: "http://127.0.0.1/mutable" });
+  const pendingFrame = adapter.captureVisualFrame();
+  await started;
+  await adapter.type("mutation during capture");
+  releaseScreenshot(bytes);
+  const invalidated = await pendingFrame;
+  assert.equal(invalidated.available, false);
+  assert.equal(invalidated.reason, "frame_invalidated_during_capture");
+
+  const refreshed = await adapter.captureVisualFrame();
+  assert.equal(refreshed.available, true);
+  assert.equal(refreshed.sequence, 1);
   await adapter.close();
 });
 

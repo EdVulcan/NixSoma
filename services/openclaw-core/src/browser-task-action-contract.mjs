@@ -48,6 +48,45 @@ export function observedBrowserTaskUrl({ workViewSummary, workView, snapshotText
     ?? null;
 }
 
+function compactVisualFrameReference(frame) {
+  if (!frame
+    || typeof frame.sha256 !== "string"
+    || !/^[a-f0-9]{64}$/u.test(frame.sha256)
+    || !Number.isInteger(frame.sequence)
+    || frame.sequence < 1) {
+    return null;
+  }
+  return {
+    registry: frame.registry === "openclaw-browser-visual-frame-v0" ? frame.registry : null,
+    sha256: frame.sha256,
+    sequence: frame.sequence,
+    pageUrl: typeof frame.pageUrl === "string" ? frame.pageUrl.slice(0, 2048) : null,
+    capturedAt: typeof frame.capturedAt === "string" ? frame.capturedAt : null,
+    fresh: frame.fresh === true,
+    width: frame.width === 960 ? 960 : null,
+    height: frame.height === 540 ? 540 : null,
+    byteLength: Number.isInteger(frame.byteLength) ? frame.byteLength : null,
+    sourceScope: frame.sourceScope === "ai_owned_active_page_only" ? frame.sourceScope : null,
+    dataExposed: false,
+    persisted: false,
+  };
+}
+
+export function compactBrowserTaskVisualGrounding(grounding) {
+  if (grounding?.registry !== "openclaw-trusted-work-view-visual-action-grounding-v0") return null;
+  return {
+    registry: grounding.registry,
+    required: grounding.required === true,
+    status: typeof grounding.status === "string" ? grounding.status.slice(0, 80) : "unknown",
+    before: compactVisualFrameReference(grounding.before),
+    after: compactVisualFrameReference(grounding.after),
+    sequenceAdvanced: grounding.sequenceAdvanced === true,
+    imageDataRetained: false,
+    desktopWideCapture: false,
+    persisted: false,
+  };
+}
+
 const CAPTURE_INTERRUPTION_REASONS = new Set([
   "trusted_sidecar_capture_source_unavailable",
   "trusted_sidecar_capture_stale",

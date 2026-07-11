@@ -250,9 +250,11 @@ async function refreshActionState() {
     actionKind.textContent = state.lastAction?.kind ?? "none";
     actionCount.textContent = String(state.actionCount ?? 0);
     actionDegraded.textContent = String(state.lastAction?.degraded ?? false);
+    const visualGrounding = state.lastAction?.mediation?.visualGrounding ?? null;
     actionJson.textContent = state.lastAction
       ? [
           "Action Mediation: " + (state.lastAction.mediation?.status ?? "unknown") + " required=" + Boolean(state.lastAction.mediation?.required) + " accepted=" + Boolean(state.lastAction.mediation?.accepted) + " leaseMatched=" + Boolean(state.lastAction.mediation?.leaseMatched),
+          "Visual Grounding: " + (visualGrounding?.status ?? "not_available") + " required=" + Boolean(visualGrounding?.required) + " before=" + (visualGrounding?.before?.sequence ?? "none") + " after=" + (visualGrounding?.after?.sequence ?? "none"),
           \`Result: \${state.lastAction.result}\`,
           \`Executed: \${formatTimestamp(state.lastAction.executedAt)}\`,
           \`Window: \${state.lastAction.screenContext?.focusedWindow?.title ?? "none"}\`,
