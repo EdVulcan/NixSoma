@@ -65,6 +65,8 @@ OPENCLAW_NATIVE_ENGINEERING_PLANNING_WORKBENCH_STATE_BRIDGE_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_RESTORATION_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_AUTO_RESTORE_PLAN.md
 OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md
+OPENCLAW_NIX_STORE_RUNTIME_PACKAGING_PLAN.md
+OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md
 ../architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md
 ../architecture/KERNEL_LEVEL_EVOLUTION_WHITEPAPER.md
 ```
@@ -107,17 +109,19 @@ The active Level 2 bridge is documented in:
 OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md
 ```
 
-The bounded Level 2 browser eye-hand exit gate is complete. The current active
-kernel-whitepaper Phase A route is documented in:
+The bounded Level 2 browser eye-hand exit gate and kernel-whitepaper Phase A are
+complete. The active Phase B route is documented alongside the Phase A record:
 
 ```text
 OPENCLAW_NIX_STORE_RUNTIME_PACKAGING_PLAN.md
+OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md
 ```
 
-Eight of nine services are now proven from read-only Nix closures. Browser
-runtime adds lockfile-pinned production Puppeteer dependencies while preserving
-login-user ownership and fail-closed workspace restoration. The final Phase A
-slice packages the 134-module core control plane.
+Kernel-whitepaper Phase A is complete: all nine services and the trusted
+sidecar template run from reviewed read-only Nix closures with real targeted
+behavior evidence. The active Phase B plan starts by replacing read-only
+`systemctl` inventory with native systemd D-Bus transport behind the existing
+system-sense and Observer contracts.
 
 It now closes browser action mediation through operator takeover suspension and
 explicit resume/rebind, then runs a bounded approval-gated user-space helper

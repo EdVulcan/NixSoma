@@ -114,6 +114,7 @@ requireIncludes("openclaw-body module", bodyModule, [
   "LogsDirectory = \"openclaw\"",
   "ExecStart = \"${cfg.nodePackage}/bin/node src/server.mjs\"",
   "runtimePackages.eventHub",
+  "runtimePackages.core",
   "runtimePackages.sessionManager",
   "runtimePackages.browserRuntime",
   "runtimePackages.screenSense",
@@ -175,6 +176,7 @@ requireIncludes("flake", flake, [
   "packages.${system} =",
   "firefox = pkgs.firefox",
   "openclaw-event-hub = pkgs.callPackage",
+  "openclaw-core = pkgs.callPackage",
   "openclaw-session-manager = pkgs.callPackage",
   "openclaw-browser-runtime = pkgs.callPackage",
   "openclaw-screen-sense = pkgs.callPackage",
@@ -220,6 +222,7 @@ if command -v nix >/dev/null 2>&1; then
       user = builtins.attrNames config.systemd.user.services;
       session = project config.systemd.user.services.openclaw-session-manager;
       browser = project config.systemd.user.services.openclaw-browser-runtime;
+      core = project config.systemd.services.openclaw-core;
       eventHub = project config.systemd.services.openclaw-event-hub;
       screenSense = project config.systemd.services.openclaw-screen-sense;
       screenAct = project config.systemd.services.openclaw-screen-act;
@@ -272,6 +275,13 @@ if (ownership.eventHub.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || ownership.eventHub.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
   throw new Error(`event hub must execute from its read-only Nix closure: ${JSON.stringify(ownership.eventHub)}`);
 }
+if (ownership.core.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
+  || ownership.core.environment?.OPENCLAW_CORE_STATE_FILE !== "/var/lib/openclaw/openclaw-core-state.json"
+  || !String(ownership.core.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
+  || !String(ownership.core.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-core")
+  || ownership.core.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
+  throw new Error(`core must execute from its read-only Nix closure with writable state: ${JSON.stringify(ownership.core)}`);
+}
 if (ownership.screenSense.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || !String(ownership.screenSense.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
   || !String(ownership.screenSense.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-screen-sense")
@@ -315,6 +325,9 @@ console.log(JSON.stringify({
     sessionManagerStateFile: ownership.session.environment.OPENCLAW_SESSION_MANAGER_STATE_FILE,
     eventHubRuntimeSource: ownership.eventHub.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
     eventHubWorkingDirectory: ownership.eventHub.serviceConfig.WorkingDirectory,
+    coreRuntimeSource: ownership.core.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
+    coreWorkingDirectory: ownership.core.serviceConfig.WorkingDirectory,
+    coreStateFile: ownership.core.environment.OPENCLAW_CORE_STATE_FILE,
     screenSenseRuntimeSource: ownership.screenSense.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
     screenSenseWorkingDirectory: ownership.screenSense.serviceConfig.WorkingDirectory,
     screenActRuntimeSource: ownership.screenAct.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
@@ -334,8 +347,9 @@ EOF
     .#nixosConfigurations.openclaw-local-dev.config.systemd.user.services \
     --apply 'services: let unit = services."openclaw-trusted-sidecar@"; service = unit.serviceConfig; in {
       wantedBy = unit.wantedBy;
+      environment = unit.environment;
       serviceConfig = {
-        inherit (service) Restart EnvironmentFile ExecStart NoNewPrivileges PrivateTmp ProtectSystem ProtectHome ReadWritePaths RestrictAddressFamilies;
+        inherit (service) Restart EnvironmentFile WorkingDirectory ExecStart NoNewPrivileges PrivateTmp ProtectSystem ProtectHome ReadWritePaths RestrictAddressFamilies;
       };
     }')"
   node - <<'EOF' "$user_unit_json"
@@ -344,6 +358,10 @@ const service = unit.serviceConfig ?? {};
 if ((unit.wantedBy ?? []).length !== 0
   || service.Restart !== "no"
   || service.EnvironmentFile !== "%t/openclaw-sidecars/%i.env"
+  || unit.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
+  || !String(service.WorkingDirectory ?? "").startsWith("/nix/store/")
+  || !String(service.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-session-manager")
+  || service.WorkingDirectory?.includes("/opt/openclaw")
   || !String(service.ExecStart ?? "").endsWith("/bin/node src/trusted-work-view-sidecar.mjs")
   || service.NoNewPrivileges !== true
   || service.PrivateTmp !== true
@@ -362,6 +380,8 @@ console.log(JSON.stringify({
     autoStarted: false,
     restart: service.Restart,
     environmentFile: service.EnvironmentFile,
+    runtimeSource: unit.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
+    workingDirectory: service.WorkingDirectory,
     noNewPrivileges: service.NoNewPrivileges,
     readWritePaths: service.ReadWritePaths,
     addressFamilies: service.RestrictAddressFamilies,
@@ -436,6 +456,123 @@ console.log(JSON.stringify({
     health: health.service,
     auditEvent: audit.items[0].type,
     runtimeSource: audit.items[0].payload.runtimeSource,
+  },
+}, null, 2));
+EOF
+  )
+
+  core_out="$(nix --extra-experimental-features 'nix-command flakes' build \
+    --no-update-lock-file --no-link --print-out-paths .#openclaw-core)"
+  core_working_dir="$core_out/share/openclaw/services/openclaw-core"
+  core_server="$core_working_dir/src/server.mjs"
+  if [[ "$core_out" != /nix/store/*
+    || ! -f "$core_server"
+    || ! -f "$core_out/share/openclaw/packages/plugin-runtime/src/plugin-registry.mjs"
+    || ! -f "$core_out/share/openclaw/packages/shared-utils/src/persist.mjs"
+    || -w "$core_server"
+    || -e "$core_out/share/openclaw/services/openclaw-core/test"
+    || "$(find "$core_out" -type f | wc -l)" -ne 149 ]]; then
+    echo "core Nix closure is not exact and read-only: $core_out" >&2
+    exit 1
+  fi
+
+  (
+    runtime_dir="$(mktemp -d)"
+    runtime_port=5852
+    upstream_port=5843
+    runtime_url="http://127.0.0.1:$runtime_port"
+    upstream_url="http://127.0.0.1:$upstream_port"
+    state_file="$runtime_dir/core-state.json"
+    cleanup_runtime() {
+      for pid in "${core_pid:-}" "${upstream_pid:-}"; do
+        if [[ -n "$pid" ]]; then
+          kill -TERM "$pid" >/dev/null 2>&1 || true
+          wait "$pid" >/dev/null 2>&1 || true
+        fi
+      done
+      rm -rf "$runtime_dir"
+    }
+    trap cleanup_runtime EXIT
+
+    node "$REPO_ROOT/nix/scripts/dev-body-config-store-upstream.mjs" "$upstream_port" \
+      >"$runtime_dir/upstream.log" 2>&1 &
+    upstream_pid=$!
+    for _ in $(seq 1 50); do
+      if curl --silent --fail "$upstream_url/health" >/dev/null; then
+        break
+      fi
+      sleep 0.1
+    done
+
+    start_core() {
+      cd "$core_working_dir"
+      OPENCLAW_CORE_HOST=127.0.0.1 \
+      OPENCLAW_CORE_PORT="$runtime_port" \
+      OPENCLAW_EVENT_HUB_URL="$upstream_url" \
+      OPENCLAW_SESSION_MANAGER_URL="$upstream_url" \
+      OPENCLAW_BROWSER_RUNTIME_URL="$upstream_url" \
+      OPENCLAW_SCREEN_SENSE_URL="$upstream_url" \
+      OPENCLAW_SCREEN_ACT_URL="$upstream_url" \
+      OPENCLAW_SYSTEM_SENSE_URL="$upstream_url" \
+      OPENCLAW_SYSTEM_HEAL_URL="$upstream_url" \
+      OPENCLAW_CORE_STATE_FILE="$state_file" \
+      OPENCLAW_WORKSPACE_ROOTS="$runtime_dir" \
+      OPENCLAW_BODY_RUNTIME_SOURCE=nix-store \
+        node src/server.mjs >"$runtime_dir/core.log" 2>&1 &
+      core_pid=$!
+      for _ in $(seq 1 50); do
+        if curl --silent --fail "$runtime_url/health" >"$runtime_dir/health.json"; then
+          return 0
+        fi
+        sleep 0.1
+      done
+      return 1
+    }
+
+    start_core
+    curl --silent --fail -X POST "$runtime_url/tasks" \
+      -H 'content-type: application/json' \
+      --data '{"type":"phase_a_nix_store_probe","goal":"Persist a queued control-plane task without execution","intent":"task.observe"}' \
+      >"$runtime_dir/created.json"
+    for _ in $(seq 1 50); do
+      [[ -s "$state_file" ]] && break
+      sleep 0.1
+    done
+    kill -TERM "$core_pid"
+    wait "$core_pid" >/dev/null 2>&1 || true
+    core_pid=""
+    start_core
+    curl --silent --fail "$runtime_url/tasks?limit=5" >"$runtime_dir/restored.json"
+
+    node - <<'EOF' "$runtime_dir/health.json" "$runtime_dir/created.json" "$runtime_dir/restored.json" "$state_file" "$core_out"
+const fs = require("node:fs");
+const health = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const created = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+const restored = JSON.parse(fs.readFileSync(process.argv[4], "utf8"));
+const persisted = JSON.parse(fs.readFileSync(process.argv[5], "utf8"));
+const storePath = process.argv[6];
+const taskId = created.task?.id;
+const restoredTask = restored.items?.find((task) => task.id === taskId);
+if (health.service !== "openclaw-core"
+  || health.stateFilePath !== process.argv[5]
+  || created.ok !== true
+  || created.task?.status !== "queued"
+  || restored.count !== 1
+  || restoredTask?.status !== "queued"
+  || persisted.tasks?.[0]?.id !== taskId
+  || persisted.tasks[0].status !== "queued"
+  || restoredTask?.outcome !== null) {
+  throw new Error(`store-native core did not persist queued control-plane state: ${JSON.stringify({ health, created, restored, persisted })}`);
+}
+console.log(JSON.stringify({
+  nixStoreCore: {
+    storePath,
+    readOnlySource: true,
+    writableStatePath: health.stateFilePath,
+    taskId,
+    taskStatus: restoredTask.status,
+    restoredAfterRestart: true,
+    taskExecuted: restoredTask.outcome !== null,
   },
 }, null, 2));
 EOF

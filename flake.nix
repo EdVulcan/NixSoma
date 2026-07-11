@@ -33,6 +33,7 @@
       packages.${system} = {
         firefox = pkgs.firefox;
         openclaw-browser-runtime = pkgs.callPackage ./nix/packages/openclaw-browser-runtime.nix { };
+        openclaw-core = pkgs.callPackage ./nix/packages/openclaw-core.nix { };
         openclaw-event-hub = pkgs.callPackage ./nix/packages/openclaw-event-hub.nix { };
         openclaw-session-manager = pkgs.callPackage ./nix/packages/openclaw-session-manager.nix { };
         openclaw-screen-sense = pkgs.callPackage ./nix/packages/openclaw-screen-sense.nix { };

@@ -25,6 +25,7 @@ let
       portEnv = "OPENCLAW_CORE_PORT";
       port = cfg.ports.core;
       after = [ "openclaw-event-hub" ];
+      runtimePackage = cfg.runtimePackages.core;
     }
     {
       key = "sessionManager";
@@ -116,6 +117,11 @@ let
   systemOwnedSpecs = builtins.filter (spec: !builtins.elem spec.key cfg.componentOwnership.user) enabledSpecs;
   userOwnedServiceNames = map (spec: spec.name) userOwnedSpecs;
 
+  trustedSidecarRuntimeRoot =
+    if cfg.runtimePackages.sessionManager != null
+    then "${cfg.runtimePackages.sessionManager}/share/openclaw"
+    else cfg.repoRoot;
+
   urlFor = port: "http://${cfg.connectHost}:${toString port}";
 
   systemdRepairRestartHelper = pkgs.writeShellScriptBin "openclaw-systemd-repair-restart-browser-runtime" ''
@@ -204,10 +210,14 @@ let
     description = "OpenClaw trusted work-view sidecar instance %i";
     environment = {
       NODE_NO_WARNINGS = "1";
+      OPENCLAW_BODY_RUNTIME_SOURCE =
+        if cfg.runtimePackages.sessionManager != null
+        then "nix-store"
+        else "mutable-repo";
     };
     serviceConfig = {
       Type = "simple";
-      WorkingDirectory = "${cfg.repoRoot}/services/openclaw-session-manager";
+      WorkingDirectory = "${trustedSidecarRuntimeRoot}/services/openclaw-session-manager";
       EnvironmentFile = "%t/openclaw-sidecars/%i.env";
       ExecStart = "${cfg.nodePackage}/bin/node src/trusted-work-view-sidecar.mjs";
       Restart = "no";
@@ -292,6 +302,12 @@ in
       type = types.nullOr types.package;
       default = pkgs.callPackage ../packages/openclaw-event-hub.nix { };
       description = "Read-only Nix package used by event-hub; null keeps the mutable repository fallback.";
+    };
+
+    runtimePackages.core = mkOption {
+      type = types.nullOr types.package;
+      default = pkgs.callPackage ../packages/openclaw-core.nix { };
+      description = "Read-only Nix package used by core; null keeps the mutable repository fallback.";
     };
 
     runtimePackages.sessionManager = mkOption {

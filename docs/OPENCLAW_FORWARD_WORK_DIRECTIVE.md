@@ -556,6 +556,18 @@ The final Phase A closure is core. Package its 134 runtime modules and exact
 shared imports without tests/artifacts, preserve writable control-plane state,
 and prove representative persisted behavior from the store.
 
+That final closure is now complete. Core contains exactly 149 runtime files,
+its generated system unit points into the store, and a real packaged process
+persists and restores an unexecuted queued task. The trusted sidecar template
+also runs from the session-manager store closure. Phase A is complete at 9/9
+services with no default desktop-body process WorkingDirectory under
+`/opt/openclaw`.
+
+The active route now advances to kernel-whitepaper Phase B through
+`docs/plans/OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md`. Start with native
+read-only systemd unit inventory behind the existing system-sense/Observer
+contract. Do not add privileged mutation, hostd, Polkit, or a readiness shell.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

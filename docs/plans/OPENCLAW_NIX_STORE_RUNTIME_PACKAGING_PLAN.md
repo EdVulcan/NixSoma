@@ -22,7 +22,7 @@ root daemon, hostd, D-Bus, eBPF, or self-rebuild capability.
 - Introduce a shared packaging factory only after two concrete service
   closures prove the same file-selection and unit-wiring shape.
 
-## Completed: Eight Store-Native Services
+## Completed: All Runtime Services
 
 `openclaw-event-hub` is the first store-native service closure:
 
@@ -136,6 +136,17 @@ their output content and runtime behavior.
   simulated open, persists workspace intent, and restarts fail-closed without
   restoring browser execution, helper authority, input, or click state.
 
+`openclaw-core` is the ninth and final store-native service closure:
+
+- its 149-file closure contains the service package, all 134 top-level runtime
+  modules, and 14 exact plugin/shared files including transitive imports,
+- its generated system unit points into the store while core state remains on
+  the explicit writable state path,
+- the real packaged process creates and persists a queued control-plane task,
+  then restores the same unexecuted task after process restart, and
+- the non-auto-started trusted sidecar template also uses the session-manager
+  store closure, removing the last helper `repoRoot` execution path.
+
 ## Evidence
 
 - Packages: `nix/packages/openclaw-event-hub.nix`,
@@ -145,7 +156,8 @@ their output content and runtime behavior.
   `nix/packages/openclaw-system-sense.nix`, plus
   `nix/packages/openclaw-session-manager.nix` and
   `nix/packages/observer-ui.nix`, plus
-  `nix/packages/openclaw-browser-runtime.nix`
+  `nix/packages/openclaw-browser-runtime.nix` and
+  `nix/packages/openclaw-core.nix`
 - Shared packaging mechanism: `nix/lib/mk-openclaw-source-closure.nix`
 - Module: `nix/modules/openclaw-body.nix`
 - Flake exports: `packages.x86_64-linux.openclaw-event-hub`,
@@ -155,13 +167,13 @@ their output content and runtime behavior.
   `packages.x86_64-linux.openclaw-system-sense`, plus
   `packages.x86_64-linux.openclaw-session-manager` and
   `packages.x86_64-linux.observer-ui`, plus
-  `packages.x86_64-linux.openclaw-browser-runtime`
+  `packages.x86_64-linux.openclaw-browser-runtime` and
+  `packages.x86_64-linux.openclaw-core`
 - Targeted milestone: `nix/scripts/dev-body-config-check.sh`
 - Identity route: kernel whitepaper Phase A, before privileged Level 3 work
 
 ## Deferred
 
-- Only `openclaw-core` still executes from `repoRoot`.
 - The store-native browser package has not repeated the heavyweight real
   Firefox gate during normal iteration; keep that proof in the dedicated real
   browser milestone/release gate once the Firefox closure is locally cached.
@@ -170,8 +182,7 @@ their output content and runtime behavior.
 
 ## Next Slice
 
-Package `openclaw-core` as the ninth and final store-native service. Derive an
-explicit runtime import closure from its 134 local modules and exact shared
-package imports, preserve writable core state and all upstream contracts, and
-prove representative health plus persisted control-plane behavior from the
-store. Do not copy tests, historical artifacts, or unrelated workspace source.
+Proceed to kernel-whitepaper Phase B through
+`OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md`. The first slice is real read-only
+systemd unit inventory through a native Node D-Bus client behind the existing
+system-sense route. Do not add a readiness endpoint or privileged mutation yet.

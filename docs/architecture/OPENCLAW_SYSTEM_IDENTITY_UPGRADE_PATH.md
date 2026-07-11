@@ -305,18 +305,17 @@
 | Level 4 图形栈内生组件 | 约 0-5% | 只有 AI-owned work-view 方向与接口预留；专属 session、nested compositor、原生图形输入输出尚未实现。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
-**35-40%**。内核白皮书中的 Phase A Nix 纯净化已完成 8 个服务 closure，
-仅 core 仍受 `/opt/openclaw`
-源码运行模式影响；
+**约 40%**。内核白皮书中的 Phase A Nix 纯净化已完成全部 9 个服务
+closure 与 trusted sidecar store 运行路径；
 Phase B 仍主要使用 `systemctl` 包装；Phase C eBPF
 神经网尚未开始；Phase D 声明式 Nix 自进化与自动回滚仍主要是设计和
 边界证据。因此旧阶段路线的“接近 90%”只能描述早期里程碑清单，不能代表
 最终白皮书完成度。
 
-当前 bounded Level 2 browser 眼手闭环已收口。下一高收益非 root 主线是
-内核白皮书 Phase A Nix 纯净化：先让一个真实服务 closure 从
-`/nix/store` 而不是 `/opt/openclaw` 运行，再扩展至其余服务。在进入
-Level 3 前不 root 化整个控制平面。
+当前 bounded Level 2 browser 眼手闭环与内核白皮书 Phase A 已收口。
+下一主线是 Phase B D-Bus 控制原生化：先以非特权、只读 systemd unit
+inventory 替换 `systemctl` 读取包装，再单独设计受 policy、Polkit、audit
+与 recovery 管理的最小 mutation。不要直接 root 化整个控制平面。
 
 ---
 
