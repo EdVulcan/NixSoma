@@ -109,7 +109,7 @@ async function observeBrowserCapture() {
   }
   captureInFlight = true;
   try {
-    const response = await fetch(`${binding.browserRuntimeUrl}/browser/capture`);
+    const response = await fetch(`${binding.browserRuntimeUrl}/browser/capture?visual=metadata`);
     const data = await response.json();
     if (!response.ok || data?.ok !== true) {
       throw new Error(data?.error ?? "browser_capture_request_failed");

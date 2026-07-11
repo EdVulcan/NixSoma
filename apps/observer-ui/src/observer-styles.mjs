@@ -106,6 +106,19 @@ export function observerStyles() {
         color: var(--muted);
         font-size: 13px;
       }
+      .work-view-frame {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        object-fit: contain;
+        margin: 12px 0;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #070b15;
+      }
+      .work-view-frame[hidden] {
+        display: none;
+      }
       ul {
         margin: 0;
         padding-left: 18px;

@@ -1,11 +1,21 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { accessSync, constants, mkdirSync, rmSync } from "node:fs";
 import path from "node:path";
 
 import puppeteer from "puppeteer-core";
+import {
+  WORK_VIEW_VISUAL_FRAME_HEIGHT,
+  WORK_VIEW_VISUAL_FRAME_FRESHNESS_MS,
+  WORK_VIEW_VISUAL_FRAME_MAX_BYTES,
+  WORK_VIEW_VISUAL_FRAME_REGISTRY,
+  WORK_VIEW_VISUAL_FRAME_WIDTH,
+  projectWorkViewVisualFrame,
+  unavailableWorkViewVisualFrame,
+} from "../../../packages/shared-utils/src/work-view-visual-frame.mjs";
 
 const ENGINE_REGISTRY = "openclaw-browser-engine-adapter-v0";
 const MAX_RESTORED_TABS = 32;
+const FRAME_JPEG_QUALITY = 55;
 
 function requiredAbsolutePath(value, label) {
   const resolved = typeof value === "string" && value.trim() ? path.resolve(value) : null;
@@ -35,7 +45,23 @@ export function createBrowserEngineAdapter({
   const boundedProfileDirectory = requiredAbsolutePath(profileDirectory, "profile directory");
   let browser = null;
   let activePage = null;
+  let visualFrame = null;
+  let visualFrameSequence = 0;
+  let visualFramePromise = null;
   const pageIds = new WeakMap();
+
+  function invalidateVisualFrame() {
+    visualFrame = null;
+  }
+
+  async function configurePage(page) {
+    await page.setViewport({
+      width: WORK_VIEW_VISUAL_FRAME_WIDTH,
+      height: WORK_VIEW_VISUAL_FRAME_HEIGHT,
+      deviceScaleFactor: 1,
+    });
+    return page;
+  }
 
   function pageId(page) {
     if (!pageIds.has(page)) pageIds.set(page, `engine-tab-${randomUUID()}`);
@@ -97,6 +123,7 @@ export function createBrowserEngineAdapter({
     browser.once("disconnected", () => {
       browser = null;
       activePage = null;
+      invalidateVisualFrame();
       rmSync(boundedProfileDirectory, { recursive: true, force: true });
       onDisconnected();
     });
@@ -112,10 +139,10 @@ export function createBrowserEngineAdapter({
     const started = await ensureBrowser();
     const existingPages = await browser.pages();
     if (started) {
-      const initialPage = existingPages[0] ?? await browser.newPage();
+      const initialPage = await configurePage(existingPages[0] ?? await browser.newPage());
       const restored = uniqueUrls(restoreUrls).filter((candidate) => candidate !== url);
       for (const restoredUrl of restored) {
-        const page = await browser.newPage();
+        const page = await configurePage(await browser.newPage());
         try {
           await navigatePage(page, restoredUrl);
         } catch {
@@ -124,22 +151,25 @@ export function createBrowserEngineAdapter({
       }
       activePage = await navigatePage(initialPage, url);
     } else {
-      activePage = await navigatePage(await browser.newPage(), url);
+      activePage = await navigatePage(await configurePage(await browser.newPage()), url);
     }
     await activePage.bringToFront();
+    invalidateVisualFrame();
     return snapshot();
   }
 
   async function newTab(url) {
     await ensureBrowser();
-    activePage = await navigatePage(await browser.newPage(), url);
+    activePage = await navigatePage(await configurePage(await browser.newPage()), url);
     await activePage.bringToFront();
+    invalidateVisualFrame();
     return snapshot();
   }
 
   async function type(text) {
     if (!activePage) throw new Error("Real browser engine has no active page.");
     await activePage.keyboard.type(String(text).slice(0, 2_000));
+    invalidateVisualFrame();
     return snapshot();
   }
 
@@ -149,16 +179,74 @@ export function createBrowserEngineAdapter({
       throw new Error("Real browser click requires finite coordinates.");
     }
     await activePage.mouse.click(x, y);
+    invalidateVisualFrame();
     return snapshot();
+  }
+
+  async function captureVisualFrame({ includeData = true } = {}) {
+    if (!activePage || !browser?.connected) return unavailableWorkViewVisualFrame("browser_not_running");
+    const capturedAtMs = Date.parse(visualFrame?.capturedAt ?? "");
+    if (visualFrame && Number.isFinite(capturedAtMs) && Date.now() - capturedAtMs <= WORK_VIEW_VISUAL_FRAME_FRESHNESS_MS) {
+      return projectWorkViewVisualFrame(visualFrame, { includeData });
+    }
+    if (!visualFramePromise) {
+      visualFramePromise = (async () => {
+        const page = activePage;
+        const bytes = Buffer.from(await page.screenshot({
+          type: "jpeg",
+          quality: FRAME_JPEG_QUALITY,
+          captureBeyondViewport: false,
+          encoding: "binary",
+        }));
+        if (bytes.length > WORK_VIEW_VISUAL_FRAME_MAX_BYTES) {
+          visualFrame = unavailableWorkViewVisualFrame("frame_exceeds_byte_limit", {
+            capturedAt: new Date().toISOString(),
+            byteLength: bytes.length,
+          });
+          return visualFrame;
+        }
+        const capturedAt = new Date().toISOString();
+        visualFrameSequence += 1;
+        visualFrame = {
+          registry: WORK_VIEW_VISUAL_FRAME_REGISTRY,
+          available: true,
+          reason: null,
+          sourceScope: "ai_owned_active_page_only",
+          pageId: pageId(page),
+          pageUrl: page.url().slice(0, 2048),
+          mediaType: "image/jpeg",
+          encoding: "base64_data_url",
+          width: WORK_VIEW_VISUAL_FRAME_WIDTH,
+          height: WORK_VIEW_VISUAL_FRAME_HEIGHT,
+          byteLength: bytes.length,
+          maxBytes: WORK_VIEW_VISUAL_FRAME_MAX_BYTES,
+          sha256: createHash("sha256").update(bytes).digest("hex"),
+          capturedAt,
+          sequence: visualFrameSequence,
+          desktopWideCapture: false,
+          persisted: false,
+          dataUrl: `data:image/jpeg;base64,${bytes.toString("base64")}`,
+        };
+        return visualFrame;
+      })().finally(() => {
+        visualFramePromise = null;
+      });
+    }
+    return projectWorkViewVisualFrame(await visualFramePromise, { includeData });
+  }
+
+  function visualFrameMetadata() {
+    return projectWorkViewVisualFrame(visualFrame, { includeData: false });
   }
 
   async function close() {
     const current = browser;
     browser = null;
     activePage = null;
+    invalidateVisualFrame();
     await current?.close().catch(() => {});
     rmSync(boundedProfileDirectory, { recursive: true, force: true });
   }
 
-  return { click, close, newTab, open, snapshot, type };
+  return { captureVisualFrame, click, close, newTab, open, snapshot, type, visualFrameMetadata };
 }

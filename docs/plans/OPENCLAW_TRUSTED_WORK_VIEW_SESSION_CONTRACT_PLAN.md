@@ -1,6 +1,6 @@
 # OpenClaw Trusted Work-View Session Contract Plan
 
-Updated: 2026-07-10
+Updated: 2026-07-11
 
 ## Active Slice
 
@@ -686,3 +686,32 @@ capture behind the existing route and trust contract, with strict dimensions,
 byte limits, freshness, cleanup, and no desktop-wide source. Do not add a
 parallel capture API, arbitrary filesystem output, root ownership, or a new
 readiness milestone.
+
+That bounded visual-capture slice is now complete. The Firefox adapter acquires
+only the active AI-owned page at a fixed `960x540` viewport as JPEG, rejects
+frames larger than 256 KiB, caches a frame for at most two seconds, and
+invalidates it after navigation, input, or click. The frame contract carries a
+SHA-256 digest, sequence, dimensions, byte count, active page URL, freshness,
+and explicit `desktopWideCapture:false` / `persisted:false` evidence. No image
+file is written and simulated mode fails closed with no image data.
+
+The existing `/browser/capture` and `/screen/current` routes carry the bounded
+data URL for the current Observer view. Work-view summaries, capture metadata,
+sidecar polling, and persisted `screen.updated` audit events carry metadata
+only. Runtime-state text remains explicitly labeled
+`ocrSource:runtime_state_projection`; this slice does not claim that OCR was
+derived from pixels. The Observer Snapshot Preview renders the validated frame
+inside its existing panel and removes the image when unavailable.
+
+The existing real Firefox milestone decodes the returned JPEG, verifies its
+magic bytes, dimensions, byte limit, digest, active-page URL, freshness, and
+screen-sense projection, then proves the metadata query and persisted event log
+contain no data URL. Unit coverage also proves cache invalidation and
+fail-closed oversized/tampered frame handling.
+
+The next real Level 2 slice is visual-frame-grounded action mediation. The
+sidecar should trigger a bounded frame capture without receiving image bytes,
+carry only the fresh frame digest/sequence in its observation, bind that compact
+provenance to the next trusted input/click/navigation result, and refresh the
+frame after mutation. Do not persist image data, make OCR claims, add a new
+capture route, or create a readiness-only milestone.

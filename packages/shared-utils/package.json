@@ -18,11 +18,15 @@
     "./work-view-trust": {
       "types": "./src/work-view-trust.d.ts",
       "default": "./src/work-view-trust.mjs"
+    },
+    "./work-view-visual-frame": {
+      "types": "./src/work-view-visual-frame.d.ts",
+      "default": "./src/work-view-visual-frame.mjs"
     }
   },
   "scripts": {
     "build": "npm run typecheck && npm test",
-    "typecheck": "tsc -p tsconfig.json --noEmit && node --check src/http.mjs && node --check src/persist.mjs && node --check src/work-view-trust.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit && node --check src/http.mjs && node --check src/persist.mjs && node --check src/work-view-trust.mjs && node --check src/work-view-visual-frame.mjs",
     "test": "node --test test/*.test.mjs"
   }
 }

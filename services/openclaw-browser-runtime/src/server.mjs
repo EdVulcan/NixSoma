@@ -7,6 +7,10 @@ import {
   normaliseTrustedWorkViewHelperLease,
   validateTrustedWorkViewActionLease,
 } from "../../../packages/shared-utils/src/work-view-trust.mjs";
+import {
+  projectWorkViewVisualFrame,
+  unavailableWorkViewVisualFrame,
+} from "../../../packages/shared-utils/src/work-view-visual-frame.mjs";
 import { normaliseBoundedBrowserUrl } from "./browser-navigation.mjs";
 import { createBrowserWorkspaceStore } from "./browser-workspace-store.mjs";
 import { createBrowserEngineAdapter } from "./browser-engine-adapter.mjs";
@@ -165,7 +169,7 @@ function addTab(url) {
   return tab;
 }
 
-function buildBrowserCapture() {
+function buildBrowserCapture(visualFrame = unavailableWorkViewVisualFrame("not_captured")) {
   const tabs = Array.isArray(browserState.tabs) ? browserState.tabs : [];
   const activeTitle = browserState.activeTitle ?? "OpenClaw AI Browser";
   const activeUrl = browserState.activeUrl ?? "about:blank";
@@ -195,6 +199,7 @@ function buildBrowserCapture() {
     updatedAt: browserState.updatedAt,
     workspaceRecovery: { ...browserState.workspaceRecovery },
     engine: { ...browserState.engine },
+    visualFrame: projectWorkViewVisualFrame(visualFrame, { includeData: false }),
   };
   const trustedSession = buildTrustedWorkViewContract({
     source: "browser-runtime",
@@ -276,6 +281,7 @@ function buildBrowserCapture() {
     workViewSummary,
     trustedSession,
     engine: { ...browserState.engine },
+    visualFrame,
     visibleTextBlocks,
     snapshotText: lines.join("\n"),
     ocrBlocks: [
@@ -285,6 +291,7 @@ function buildBrowserCapture() {
       { text: `Tabs ${tabs.length}`, confidence: 0.92 },
       ...(browserState.lastInput ? [{ text: browserState.lastInput, confidence: 0.87 }] : []),
     ],
+    ocrSource: "runtime_state_projection",
     viewport: {
       width: 1280,
       height: 720,
@@ -546,7 +553,22 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && requestUrl.pathname === "/browser/capture") {
-    if (browserEngine && browserState.running) applyEngineSnapshot(await browserEngine.snapshot());
+    const visualMode = requestUrl.searchParams.get("visual") ?? "full";
+    if (!["full", "metadata"].includes(visualMode)) {
+      sendJson(res, 400, { ok: false, error: "Browser capture visual mode must be full or metadata." });
+      return;
+    }
+    let visualFrame = unavailableWorkViewVisualFrame(engineMode === "simulated" ? "simulated_engine" : "browser_not_running");
+    if (browserEngine && browserState.running) {
+      applyEngineSnapshot(await browserEngine.snapshot());
+      try {
+        visualFrame = visualMode === "full"
+          ? await browserEngine.captureVisualFrame({ includeData: true })
+          : browserEngine.visualFrameMetadata();
+      } catch {
+        visualFrame = unavailableWorkViewVisualFrame("visual_capture_failed");
+      }
+    }
     if (!browserState.running) {
       sendJson(res, 200, {
         ok: true,
@@ -559,7 +581,7 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, {
       ok: true,
       running: true,
-      capture: buildBrowserCapture(),
+      capture: buildBrowserCapture(visualFrame),
       browser: serialiseBrowserState(),
     });
     return;

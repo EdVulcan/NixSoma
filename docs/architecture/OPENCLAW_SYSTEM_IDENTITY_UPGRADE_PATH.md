@@ -300,7 +300,7 @@
 | 身份层级 | 当前成熟度 | 证据与主要缺口 |
 | --- | --- | --- |
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
-| Level 2 受信会话组件 | 约 98% | trusted-session 契约、takeover suspend/resume-rebind、独立 user-session sidecar、fail-closed reconnect/replacement、受治理 browser input/click/new-tab、autonomous dispatch、跨服务重启、`systemd --user` sidecar ownership、bounded workspace continuity、真实 NixOS Firefox，以及 session-manager/browser-runtime 独占登录用户 manager 已有；主要缺口是当前 browser capture 的 PID/page/tab 元数据虽真实，但尚未获取严格有界的 AI-owned 页面像素帧。 |
+| Level 2 受信会话组件 | 约 99% | trusted-session 契约、takeover suspend/resume-rebind、独立 user-session sidecar、fail-closed reconnect/replacement、受治理 browser input/click/new-tab、autonomous dispatch、跨服务重启、`systemd --user` ownership、bounded workspace continuity、真实 NixOS Firefox、登录用户组件归属，以及有 byte/hash/freshness 边界的 AI-owned 页面像素帧已有；主要缺口是把 fresh frame digest/sequence 绑定到动作前置与 post-action 证据，形成视觉 grounding 的完整眼手闭环。 |
 | Level 3 系统级特权组件 | 约 10-15% | 已有 systemd 感知、提案和有限执行证据；独立 `openclaw-hostd`、D-Bus/Polkit RPC 和受控特权边界尚未建立。 |
 | Level 4 图形栈内生组件 | 约 0-5% | 只有 AI-owned work-view 方向与接口预留；专属 session、nested compositor、原生图形输入输出尚未实现。 |
 

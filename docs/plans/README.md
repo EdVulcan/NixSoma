@@ -1,6 +1,6 @@
 # OpenClaw Plans Directory
 
-Updated: 2026-07-10
+Updated: 2026-07-11
 
 This directory contains both active route documents and historical milestone
 evidence. Do not infer the next development task from the highest numbered phase
@@ -177,6 +177,13 @@ system units. The next Level 2 slice is bounded pixel capture of the AI-owned
 browser page through the existing capture/trust/Observer lane; current capture
 metadata is real, but its readable blocks are not yet derived from an acquired
 browser frame.
+
+Bounded visual capture is now complete through the same browser/screen/Observer
+lane: the active AI-owned Firefox page produces a validated `960x540` JPEG with
+a 256 KiB ceiling, digest, freshness, no filesystem write, and metadata-only
+audit/sidecar projections. The next Level 2 slice is to link fresh frame
+digest/sequence evidence to trusted action dispatch and post-action refresh,
+without moving image bytes into task or sidecar state.
 
 ## Historical Phase Plans
 

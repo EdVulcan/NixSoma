@@ -211,6 +211,21 @@ async function refreshScreen() {
       : "No work view summary yet.";
     screenSummary.textContent = screen.summary;
     screenSnapshot.textContent = screen.snapshotText ?? "No snapshot text.";
+    const visualFrame = screen.visualFrame ?? screen.captureMetadata?.visualFrame ?? {};
+    const visualFrameReady = visualFrame.available === true
+      && visualFrame.dataExposed === true
+      && typeof visualFrame.dataUrl === "string"
+      && visualFrame.dataUrl.startsWith("data:image/jpeg;base64,");
+    screenVisualFrameStatus.textContent = visualFrameReady
+      ? (visualFrame.fresh ? "fresh" : "stale") + " " + visualFrame.width + "x" + visualFrame.height + " " + visualFrame.byteLength + "B"
+      : visualFrame.reason ?? "unavailable";
+    if (visualFrameReady) {
+      screenVisualFrame.src = visualFrame.dataUrl;
+      screenVisualFrame.hidden = false;
+    } else {
+      screenVisualFrame.removeAttribute("src");
+      screenVisualFrame.hidden = true;
+    }
   } catch {
     screenWindow.textContent = "offline";
     screenSession.textContent = "unknown";
@@ -221,6 +236,9 @@ async function refreshScreen() {
     screenWorkViewSummary.textContent = "No work view summary available.";
     screenSummary.textContent = "Unable to read screen state.";
     screenSnapshot.textContent = "No screen preview available.";
+    screenVisualFrameStatus.textContent = "unavailable";
+    screenVisualFrame.removeAttribute("src");
+    screenVisualFrame.hidden = true;
   }
 }
 

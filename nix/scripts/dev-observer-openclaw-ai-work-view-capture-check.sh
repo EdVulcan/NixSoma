@@ -55,6 +55,8 @@ const requiredHtml = [
   "screen-work-view-url",
   "work-view-session-identity",
   "screen-snapshot",
+  "screen-visual-frame-status",
+  "screen-visual-frame",
   "run-recommended-work-view-action-button",
 ];
 const requiredClient = [
@@ -82,6 +84,10 @@ const requiredClient = [
   "Trusted Boundary",
   "Browser Engine:",
   "workViewSummary.engine",
+  "screen.visualFrame",
+  "visualFrame.dataUrl",
+  "data:image/jpeg;base64,",
+  "screenVisualFrame.hidden",
 ];
 
 for (const token of requiredHtml) {
@@ -122,6 +128,15 @@ if (screen.workViewSummary?.engine?.mode !== "simulated"
 if (!screen.snapshotText?.includes("OpenClaw browser work view")) {
   throw new Error("Observer-facing snapshot preview should include browser work view text.");
 }
+if (screen.visualFrame?.registry !== "openclaw-browser-visual-frame-v0"
+  || screen.visualFrame?.available !== false
+  || screen.visualFrame?.reason !== "simulated_engine"
+  || screen.visualFrame?.dataExposed !== false
+  || screen.visualFrame?.desktopWideCapture !== false
+  || screen.visualFrame?.persisted !== false
+  || "dataUrl" in (screen.visualFrame ?? {})) {
+  throw new Error(`simulated Observer state must fail closed without image data: ${JSON.stringify(screen.visualFrame)}`);
+}
 const trustedSession = screen.trustedSession ?? screen.workView?.trustedSession ?? screen.captureMetadata?.trustedSession;
 if (trustedSession?.identityLevel !== "level_2_trusted_session_work_view"
   || trustedSession?.boundary?.workViewScope !== "ai_owned_work_view_only"
@@ -140,6 +155,7 @@ console.log(JSON.stringify({
       "screen-capture-source",
       "screen-capture-strategy",
       "screen-work-view-url",
+      "screen-visual-frame",
       "run-recommended-work-view-action-button",
     ],
     clientFields: [
@@ -150,6 +166,7 @@ console.log(JSON.stringify({
       "trustedSession.identityLevel",
       "trustedSession.helperReadiness",
       "runRecommendedWorkViewAction",
+      "screen.visualFrame.dataUrl",
     ],
   },
   screen: {
@@ -162,6 +179,7 @@ console.log(JSON.stringify({
     sidecarContract: trustedSession.sidecarContract?.status ?? null,
     lifecycleProposal: trustedSession.sidecarContract?.lifecycleProposal?.status ?? null,
     approvalTaskDraft: trustedSession.sidecarContract?.approvalTaskDraft?.status ?? null,
+    visualFrame: screen.visualFrame?.reason ?? null,
   },
 }, null, 2));
 EOF

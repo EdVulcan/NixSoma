@@ -5,8 +5,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { createBrowserEngineAdapter } from "../src/browser-engine-adapter.mjs";
+import { WORK_VIEW_VISUAL_FRAME_MAX_BYTES } from "../../../packages/shared-utils/src/work-view-visual-frame.mjs";
 
-function createFakePuppeteer(t) {
+function createFakePuppeteer(t, { screenshotBytes = Buffer.from([0xff, 0xd8, 0xff, 0xdb]) } = {}) {
   const root = mkdtempSync(path.join(tmpdir(), "openclaw-browser-engine-test-"));
   const executablePath = path.join(root, "browser");
   const profileDirectory = path.join(root, "profile");
@@ -20,6 +21,8 @@ function createFakePuppeteer(t) {
       this.currentUrl = "about:blank";
       this.typed = [];
       this.clicked = [];
+      this.viewport = null;
+      this.screenshotCalls = 0;
       this.keyboard = { type: async (text) => this.typed.push(text) };
       this.mouse = { click: async (x, y) => this.clicked.push({ x, y }) };
     }
@@ -37,6 +40,15 @@ function createFakePuppeteer(t) {
     }
 
     async bringToFront() {}
+
+    async setViewport(viewport) {
+      this.viewport = viewport;
+    }
+
+    async screenshot() {
+      this.screenshotCalls += 1;
+      return screenshotBytes;
+    }
 
     async close() {
       this.owner.pageList = this.owner.pageList.filter((page) => page !== this);
@@ -115,6 +127,11 @@ test("browser engine adapter launches a bounded profile and delegates real page 
   assert.equal(fake.launches[0].userDataDir, fake.profileDirectory);
   assert.equal(fake.launches[0].headless, true);
   assert.equal(existsSync(fake.profileDirectory), true);
+  assert.deepEqual(fake.browser.pageList.map((page) => page.viewport), [
+    { width: 960, height: 540, deviceScaleFactor: 1 },
+    { width: 960, height: 540, deviceScaleFactor: 1 },
+    { width: 960, height: 540, deviceScaleFactor: 1 },
+  ]);
 
   await adapter.type("bounded input");
   await adapter.click({ x: 10, y: 20 });
@@ -125,9 +142,47 @@ test("browser engine adapter launches a bounded profile and delegates real page 
   assert.deepEqual(previousActivePage.typed, ["bounded input"]);
   assert.deepEqual(previousActivePage.clicked, [{ x: 10, y: 20 }]);
 
+  const frame = await adapter.captureVisualFrame();
+  assert.equal(frame.available, true);
+  assert.equal(frame.sourceScope, "ai_owned_active_page_only");
+  assert.equal(frame.width, 960);
+  assert.equal(frame.height, 540);
+  assert.equal(frame.dataExposed, true);
+  assert.match(frame.dataUrl, /^data:image\/jpeg;base64,/u);
+  const cached = await adapter.captureVisualFrame();
+  assert.equal(cached.sequence, frame.sequence);
+  assert.equal(fake.browser.pageList.at(-1).screenshotCalls, 1);
+  const metadata = adapter.visualFrameMetadata();
+  assert.equal(metadata.dataExposed, false);
+  assert.equal("dataUrl" in metadata, false);
+
+  await adapter.type("invalidate visual frame");
+  const refreshed = await adapter.captureVisualFrame();
+  assert.equal(refreshed.sequence, frame.sequence + 1);
+  assert.equal(fake.browser.pageList.at(-1).screenshotCalls, 2);
+
   await adapter.close();
   assert.equal(disconnected, 1);
   assert.equal(existsSync(fake.profileDirectory), false);
+});
+
+test("browser engine adapter fails closed when an AI-owned frame exceeds the byte limit", async (t) => {
+  const fake = createFakePuppeteer(t, {
+    screenshotBytes: Buffer.alloc(WORK_VIEW_VISUAL_FRAME_MAX_BYTES + 1),
+  });
+  const adapter = createBrowserEngineAdapter({
+    executablePath: fake.executablePath,
+    profileDirectory: fake.profileDirectory,
+    puppeteerApi: fake.puppeteerApi,
+  });
+
+  await adapter.open({ url: "http://127.0.0.1/oversized" });
+  const frame = await adapter.captureVisualFrame();
+  assert.equal(frame.available, false);
+  assert.equal(frame.reason, "frame_exceeds_byte_limit");
+  assert.equal(frame.dataExposed, false);
+  assert.equal("dataUrl" in frame, false);
+  await adapter.close();
 });
 
 test("browser engine adapter rejects unsupported families and unbounded paths", () => {

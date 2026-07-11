@@ -1,6 +1,6 @@
 # OpenClaw Forward Work Directive
 
-Updated: 2026-07-10
+Updated: 2026-07-11
 
 This is the active guidance document for continuing OpenClaw development after
 the Phase 136 checkpoint and the discovery that the locally optimized
@@ -365,6 +365,21 @@ than a browser pixel frame. Extend the existing capture/trust/Observer lane with
 strictly bounded frame acquisition and freshness evidence. Do not capture the
 desktop, write arbitrary image paths, add a parallel route, or create another
 readiness shell.
+
+That visual-capture gap is now closed through the existing route. Firefox
+captures only its active AI-owned page as a fixed `960x540` bounded JPEG;
+shared validation enforces dimensions, a 256 KiB ceiling, digest, freshness,
+page scope, no desktop capture, and no persistence. Observer receives the
+validated data URL, while sidecar polling, task/read-model summaries, and audit
+events retain metadata only. The real milestone verifies actual JPEG bytes and
+proves persisted events contain no image data.
+
+The next smallest Level 2 behavior is to ground trusted browser actions in that
+visual evidence: sidecar metadata capture should produce a fresh frame digest
+and sequence before dispatch, action evidence should link that compact
+provenance, and post-action capture should advance it. Keep image bytes out of
+sidecar state, task evidence, and logs; do not add another endpoint or readiness
+wrapper.
 
 ## Identity-Upgrade Alignment
 

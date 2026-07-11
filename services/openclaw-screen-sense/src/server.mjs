@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { readCaptureAdapter } from "./capture-adapter.mjs";
 import { buildTrustedWorkViewContract } from "../../../packages/shared-utils/src/work-view-trust.mjs";
+import { projectWorkViewVisualFrame } from "../../../packages/shared-utils/src/work-view-visual-frame.mjs";
 
 const host = process.env.OPENCLAW_SCREEN_SENSE_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SCREEN_SENSE_PORT ?? "4104", 10);
@@ -36,6 +37,7 @@ const screenState = {
   captureSource: "browser",
   captureStrategy: "browser-state-derived",
   captureMetadata: null,
+  visualFrame: null,
   workView: null,
   workViewSummary: null,
 };
@@ -51,6 +53,13 @@ function updateScreenState(patch) {
     captureId: `capture-${randomUUID()}`,
     timestamp: new Date().toISOString(),
   });
+}
+
+function screenEventEvidence(screen) {
+  return {
+    ...screen,
+    visualFrame: projectWorkViewVisualFrame(screen?.visualFrame, { includeData: false }),
+  };
 }
 
 function sleep(ms) {
@@ -94,6 +103,8 @@ function deriveScreenPatch({ session, sessionWorkView, browser, browserCapture, 
     browserCapture?.workView?.captureStrategy ??
     (browserCapture ? "browser-runtime-backed" : "browser-state-derived");
   const captureSource = browserCapture?.source ?? "browser";
+  const visualFrame = projectWorkViewVisualFrame(browserCapture?.visualFrame, { includeData: true });
+  const visualFrameMetadata = projectWorkViewVisualFrame(browserCapture?.visualFrame, { includeData: false });
   const trustedSession = buildTrustedWorkViewContract({
     source: "screen-sense",
     trustedComponent: "openclaw-screen-sense",
@@ -146,6 +157,7 @@ function deriveScreenPatch({ session, sessionWorkView, browser, browserCapture, 
     tabCount: typeof browserCapture?.tabCount === "number" ? browserCapture.tabCount : tabs.length,
     sessionId: browserCapture?.sessionId ?? session?.sessionId ?? browser?.sessionId ?? null,
     browserRunning: Boolean(browserCapture?.browserRunning ?? browser?.running),
+    visualFrame: visualFrameMetadata,
     trustedSession,
     lastInteraction: browserCapture?.lastInteraction ?? {
       input: browser?.lastInput ?? null,
@@ -220,10 +232,11 @@ function deriveScreenPatch({ session, sessionWorkView, browser, browserCapture, 
     captureSource,
     captureStrategy,
     captureMetadata,
+    visualFrame,
     workView: trustedWorkView,
     trustedSession,
     workViewSummary,
-    snapshotPath: browserCapture?.snapshotPath ?? screenState.snapshotPath,
+    snapshotPath: visualFrame.available ? null : browserCapture?.snapshotPath ?? screenState.snapshotPath,
     snapshotText,
     focusedWindow:
       browserCapture?.focusedWindow ??
@@ -396,7 +409,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && requestUrl.pathname === "/screen/refresh") {
     const screen = await collectStableScreenState();
-    await publishEvent(createEventName("screen.updated"), { screen });
+    await publishEvent(createEventName("screen.updated"), { screen: screenEventEvidence(screen) });
     sendJson(res, 200, { ok: true, screen });
     return;
   }
