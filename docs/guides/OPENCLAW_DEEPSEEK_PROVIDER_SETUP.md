@@ -32,5 +32,33 @@ unset OPENCLAW_CLOUD_PROVIDER_API_KEY
 unset OPENCLAW_CLOUD_PROVIDER_LIVE_EGRESS
 ```
 
-This one-shot lane does not turn on automatic provider calls for OpenClaw
-tasks. The existing task and Observer lanes remain approval-gated and deferred.
+For the existing approval-gated egress execution task, provide the request only
+on the operator execution call so the prompt is not persisted in task state:
+
+```json
+{
+  "liveProviderExecution": {
+    "requested": true,
+    "taskId": "<approved-egress-task-id>",
+    "credentialReference": "openclaw://credential/deepseek-api-key",
+    "requestEnvelope": {
+      "model": "deepseek-chat",
+      "messages": [{"role": "user", "content": "<bounded prompt>"}]
+    },
+    "authorization": {
+      "confirmed": true,
+      "credentialValueAccessAuthorized": true,
+      "endpointNetworkEgressAuthorized": true,
+      "liveProviderCallEnabled": true
+    }
+  }
+}
+```
+
+Send that object as the body of `POST /operator/step` after the task approval
+is recorded. The response content is returned only in that execution response;
+the durable task record keeps hashes, status, usage, and endpoint evidence.
+
+Neither path turns on automatic provider calls for OpenClaw tasks. The existing
+task and Observer lanes remain approval-gated, and the live branch requires the
+explicit operator request above.

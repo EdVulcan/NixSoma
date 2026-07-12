@@ -1102,6 +1102,7 @@ function serialiseExecutionResult(executionResult) {
       finalExecution.verification?.actionEvidence
       ?? finalExecution.task?.outcome?.details?.actionEvidence
       ?? null,
+    liveProvider: finalExecution.liveProvider ?? null,
     capabilityInvocations: (finalExecution.capabilityInvocations ?? []).map((response) => ({
       id: response.invocation?.id ?? null,
       capabilityId: response.capability?.id ?? null,

@@ -579,6 +579,7 @@ export function createPlanBuilder(deps) {
     serialiseTask,
     appendTaskPhase,
     completeTask,
+    failTask,
     approvals,
     getTaskById,
     listTasks,

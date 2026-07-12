@@ -39,9 +39,11 @@ export function createCloudLiveProviderRuntimeCredentialEgressGateBuilders(deps)
     serialiseTask,
     appendTaskPhase,
     completeTask,
+    failTask,
     approvals,
     getTaskById,
     listTasks,
+    executeGovernedLiveProviderRequest,
   } = deps;
 
   function findLatestRealLaunchExecutionPreflightTask() {
@@ -1132,7 +1134,7 @@ export function createCloudLiveProviderRuntimeCredentialEgressGateBuilders(deps)
   }
 
 
-  async function executeCloudConsciousnessLiveProviderEgressExecutionTask(task) {
+  async function executeCloudConsciousnessLiveProviderEgressExecutionTask(task, options = {}) {
     const approval = task.approval?.requestId ? approvals.get(task.approval.requestId) : null;
     if (approval?.status !== "approved") {
       return {
@@ -1141,6 +1143,29 @@ export function createCloudLiveProviderRuntimeCredentialEgressGateBuilders(deps)
         task,
         approval: approval ? { ...approval } : null,
       };
+    }
+
+    if (options.liveProviderExecution?.requested === true) {
+      if (typeof executeGovernedLiveProviderRequest !== "function") {
+        return {
+          blocked: true,
+          reason: "live_provider_execution_not_wired",
+          task,
+          approval: { ...approval },
+        };
+      }
+      return executeGovernedLiveProviderRequest({
+        task,
+        options,
+        approvals,
+        appendTaskPhase,
+        completeTask,
+        failTask,
+        reconcileRuntimeState,
+        persistState,
+        publishEvent,
+        serialiseTask,
+      });
     }
 
     const recordedAt = new Date().toISOString();

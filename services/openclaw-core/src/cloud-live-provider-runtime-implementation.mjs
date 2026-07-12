@@ -24,6 +24,7 @@ import {
 import {
   createCloudLiveProviderRuntimeCredentialLocalReadLateBuilders,
 } from "./cloud-live-provider-runtime-credential-local-read-late-builders.mjs";
+import { executeCloudConsciousnessLiveProviderRequest } from "./cloud-live-provider-runtime-live-execution.mjs";
 
 export function createCloudLiveProviderRuntimeImplementation(deps) {
   const profiler = createRuntimeProfiler("cloud-live-provider-runtime-implementation");
@@ -40,6 +41,7 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     serialiseTask,
     appendTaskPhase,
     completeTask,
+    failTask,
     approvals,
     getTaskById,
     listTasks,
@@ -197,9 +199,11 @@ export function createCloudLiveProviderRuntimeImplementation(deps) {
     serialiseTask,
     appendTaskPhase,
     completeTask,
+    failTask,
     approvals,
     getTaskById,
     listTasks,
+    executeGovernedLiveProviderRequest: executeCloudConsciousnessLiveProviderRequest,
   });
   const {
     buildCloudConsciousnessLiveProviderCredentialValueAccessGate,

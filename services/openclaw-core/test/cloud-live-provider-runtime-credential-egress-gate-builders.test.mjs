@@ -269,6 +269,44 @@ test("credential egress gate builders create and execute Phase 63 egress executi
   assert.equal(approvedHarness.calls.filter((call) => call.name === "completeTask").length, 1);
 });
 
+test("credential egress execution dispatches an explicitly bound live request", async () => {
+  const approvedHarness = createCredentialEgressHarness({
+    approvals: new Map([
+      ["approval-egress-execution", {
+        id: "approval-egress-execution",
+        status: "approved",
+        updatedAt: "2026-07-08T00:00:00.000Z",
+      }],
+    ]),
+    executeGovernedLiveProviderRequest: async ({ task, options }) => ({
+      ok: true,
+      status: "live_provider_call_completed",
+      task,
+      options,
+    }),
+  });
+  const builders = createCloudLiveProviderRuntimeCredentialEgressGateBuilders(approvedHarness.deps);
+  const task = {
+    id: "task-egress-execution",
+    type: "cloud_consciousness_live_provider_egress_execution_task",
+    approval: { requestId: "approval-egress-execution" },
+    cloudConsciousnessLiveProviderEgressExecution: {
+      registry: EGRESS_EXECUTION_TASK_REGISTRY,
+    },
+  };
+
+  const executed = await builders.executeCloudConsciousnessLiveProviderEgressExecutionTask(task, {
+    liveProviderExecution: {
+      requested: true,
+      taskId: task.id,
+    },
+  });
+
+  assert.equal(executed.status, "live_provider_call_completed");
+  assert.equal(executed.options.liveProviderExecution.taskId, task.id);
+  assert.equal(approvedHarness.calls.filter((call) => call.name === "completeTask").length, 0);
+});
+
 test("credential egress gate builders preserve Phase 64 approved deferred readback", async () => {
   const sourceTask = createApprovedDeferredEgressExecutionTask();
   const { deps } = createCredentialEgressHarness({ tasks: [sourceTask] });
