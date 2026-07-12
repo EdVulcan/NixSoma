@@ -617,6 +617,10 @@ automatic restart, or new permission surface.
 Observer task history now renders the compact revoked/authority state from that
 outcome so the stop result is visible after refresh as well as in the API
 response.
+All operator authority transitions now include the task's bound work-view
+session id when one exists. Session-manager rejects stale-session suspend or
+resume requests before mutating the current lease, keeping the current session
+active and non-degraded on that mismatch.
 
 ## Identity-Upgrade Alignment
 

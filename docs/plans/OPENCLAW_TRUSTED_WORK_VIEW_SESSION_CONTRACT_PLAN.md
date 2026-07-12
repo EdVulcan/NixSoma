@@ -876,3 +876,10 @@ revoked-state evidence, and the existing Observer task summary renders that
 state after refresh. Tasks without a trusted work-view session preserve the
 existing stop behavior. No new route, process, automatic restart, desktop-wide
 capture, provider call, or root/system mutation is introduced.
+
+Operator authority transitions now carry the task's bound work-view session id
+through the existing suspend/resume calls. Session-manager rejects a stale or
+divergent session id with `409` before changing the current helper lease, and
+does not mark the current session degraded for that mismatch. This prevents a
+persisted task from pausing or resuming a different active work-view session
+after a restart while preserving the existing lease rotation and recovery path.

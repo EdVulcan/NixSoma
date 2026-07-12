@@ -263,7 +263,17 @@ async function syncBrowserHelperLease() {
   return { ok: true, synced: true, browser: data.browser ?? null, helperRuntime };
 }
 
-async function suspendHelperActionAuthority(reason) {
+function assertExpectedSession(expectedSessionId) {
+  const expected = stringOrNull(expectedSessionId);
+  if (expected && expected !== sessionState.sessionId) {
+    const error = new Error("Trusted work-view helper runtime session mismatch.");
+    error.code = "trusted_work_view_session_mismatch";
+    throw error;
+  }
+}
+
+async function suspendHelperActionAuthority(reason, expectedSessionId = null) {
+  assertExpectedSession(expectedSessionId);
   const helperRuntime = trustedWorkViewHelperRuntime.suspend({
     sessionId: sessionState.sessionId,
     reason,
@@ -310,7 +320,8 @@ async function handleTrustedSidecarFailure(failure) {
   }
 }
 
-async function resumeHelperActionAuthority(reason) {
+async function resumeHelperActionAuthority(reason, expectedSessionId = null) {
+  assertExpectedSession(expectedSessionId);
   const previousLeaseId = trustedWorkViewHelperRuntime.snapshot().leaseId;
   const helperRuntime = trustedWorkViewHelperRuntime.rebind({
     sessionId: sessionState.sessionId,
@@ -619,6 +630,7 @@ const server = http.createServer(async (req, res) => {
       const previous = workViewActionSnapshot();
       const authority = await suspendHelperActionAuthority(
         stringOrNull(body.reason) ?? "operator_takeover",
+        stringOrNull(body.sessionId),
       );
       recordWorkViewOperatorAction("suspend_helper_action_authority", {
         source: body.operatorActionSource,
@@ -633,7 +645,9 @@ const server = http.createServer(async (req, res) => {
       });
       sendJson(res, 200, { ok: true, authority, session: serialiseSessionState(), workView });
     } catch (error) {
-      trustedWorkViewHelperRuntime.markDegraded(error instanceof Error ? error.message : "helper authority suspend failed");
+      if (error?.code !== "trusted_work_view_session_mismatch") {
+        trustedWorkViewHelperRuntime.markDegraded(error instanceof Error ? error.message : "helper authority suspend failed");
+      }
       const message = error instanceof Error ? error.message : "Unknown error";
       sendJson(res, 409, { ok: false, error: message, workView: serialiseWorkViewState() });
     }
@@ -646,6 +660,7 @@ const server = http.createServer(async (req, res) => {
       const previous = workViewActionSnapshot();
       const authority = await resumeHelperActionAuthority(
         stringOrNull(body.reason) ?? "operator_resume",
+        stringOrNull(body.sessionId),
       );
       recordWorkViewOperatorAction("resume_helper_action_authority", {
         source: body.operatorActionSource,
@@ -660,7 +675,9 @@ const server = http.createServer(async (req, res) => {
       });
       sendJson(res, 200, { ok: true, authority, session: serialiseSessionState(), workView });
     } catch (error) {
-      trustedWorkViewHelperRuntime.markDegraded(error instanceof Error ? error.message : "helper authority resume failed");
+      if (error?.code !== "trusted_work_view_session_mismatch") {
+        trustedWorkViewHelperRuntime.markDegraded(error instanceof Error ? error.message : "helper authority resume failed");
+      }
       const message = error instanceof Error ? error.message : "Unknown error";
       sendJson(res, 409, { ok: false, error: message, workView: serialiseWorkViewState() });
     }

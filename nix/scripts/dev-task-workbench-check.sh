@@ -21,11 +21,13 @@ export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifac
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 SESSION_MANAGER_URL="http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT"
 SCREEN_ACT_URL="http://127.0.0.1:$OPENCLAW_SCREEN_ACT_PORT"
+STALE_AUTHORITY_FILE="$(mktemp)"
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp"
 
 cleanup() {
+  rm -f "$STALE_AUTHORITY_FILE"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -121,6 +123,17 @@ recovered_latest="$(post_json "$CORE_URL/tasks/$finished_task_id/recover" '{}')"
 assert_json "$recovered_latest" 'const data=JSON.parse(process.argv[1]); const task=data.task; if(!task || task.recovery?.recoveredFromTaskId!==data.recoveredFromTask?.id){throw new Error("latest finished recovery failed");}'
 recovered_latest_id="$(json_value "$recovered_latest" 'const data=JSON.parse(process.argv[1]); process.stdout.write(data.task.id);')"
 launch_task_into_work_view "$recovered_latest_id" "$TARGET_ONE"
+
+stale_authority_status="$(curl --silent --output "$STALE_AUTHORITY_FILE" --write-out "%{http_code}" \
+  -X POST "$SESSION_MANAGER_URL/work-view/helper-authority/suspend" \
+  -H 'content-type: application/json' \
+  -d '{"reason":"stale_operator_stop","sessionId":"stale-session-id"}')"
+if [[ "$stale_authority_status" != "409" ]]; then
+  echo "stale work-view authority request should fail with 409, got $stale_authority_status" >&2
+  exit 1
+fi
+stale_authority="$(cat "$STALE_AUTHORITY_FILE")"
+assert_json "$stale_authority" 'const data=JSON.parse(process.argv[1]); if(data.error!=="Trusted work-view helper runtime session mismatch." || data.workView?.helperRuntime?.actionAuthority!=="active" || data.workView?.helperRuntime?.status!=="active"){throw new Error(`stale authority request changed the active session: ${JSON.stringify(data)}`);}'
 
 stop_result="$(post_json "$CORE_URL/control/stop" '{}')"
 assert_json "$stop_result" 'const data=JSON.parse(process.argv[1]); const evidence=data.task?.outcome?.details?.trustedWorkViewAuthority; if(!data.ok || data.task?.status!=="failed" || data.task?.outcome?.reason!=="Stopped by operator." || evidence?.authorityRevoked!==true || evidence?.actionAuthority!=="suspended" || data.workViewAuthority?.workView?.helperRuntime?.actionAuthority!=="suspended") {throw new Error(`stop did not revoke trusted work-view authority: ${JSON.stringify(data)}`);}'

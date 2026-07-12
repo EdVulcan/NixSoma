@@ -1075,6 +1075,7 @@ test("control stop route suspends trusted work-view authority before failing the
     body: {
       reason: "operator_stop",
       operatorActionSource: "openclaw-core-control-stop",
+      sessionId: "session-stop-trusted",
     },
   }]);
   assert.equal(task.status, "failed");
@@ -1118,6 +1119,72 @@ test("control stop route fails closed when trusted authority cannot be revoked",
   assert.equal(response.statusCode, 409, JSON.stringify(response.body));
   assert.equal(task.status, "running");
   assert.equal(response.body.error, "session-manager unavailable");
+});
+
+test("operator authority transitions carry the bound work-view session", async () => {
+  const task = {
+    id: "task-operator-authority-session",
+    status: "running",
+    workView: { sessionId: "session-operator-authority" },
+  };
+  const calls = [];
+  const runtimeState = { currentTaskId: task.id };
+  const deps = createBaseDeps({
+    state: {
+      runtimeState,
+      getCurrentTask: () => task,
+    },
+    client: {
+      postJson: async (url, body) => {
+        calls.push({ url, body });
+        return {
+          ok: true,
+          workView: {
+            helperRuntime: {
+              actionAuthority: body.reason === "operator_takeover" ? "suspended" : "active",
+            },
+          },
+        };
+      },
+    },
+    taskManager: {
+      getTaskById: (taskId) => (taskId === task.id ? task : null),
+      appendTaskPhase: () => {},
+      reconcileRuntimeState: () => {},
+      serialiseTask: (item) => ({
+        id: item.id,
+        status: item.status,
+        operatorTakeover: item.operatorTakeover ?? null,
+      }),
+      compareTasksForDisplay: () => 0,
+    },
+  });
+
+  const takeover = await invokeRoute(deps, "POST", "/control/takeover", {});
+  const resume = await invokeRoute(deps, "POST", "/control/resume", {});
+
+  assert.equal(takeover.statusCode, 200, JSON.stringify(takeover.body));
+  assert.equal(resume.statusCode, 200, JSON.stringify(resume.body));
+  assert.deepEqual(calls, [
+    {
+      url: "http://127.0.0.1:4102/work-view/helper-authority/suspend",
+      body: {
+        reason: "operator_takeover",
+        operatorActionSource: "openclaw-core-control-takeover",
+        sessionId: "session-operator-authority",
+      },
+    },
+    {
+      url: "http://127.0.0.1:4102/work-view/helper-authority/resume",
+      body: {
+        reason: "operator_resume",
+        operatorActionSource: "openclaw-core-control-resume",
+        sessionId: "session-operator-authority",
+      },
+    },
+  ]);
+  assert.equal(task.status, "queued");
+  assert.equal(task.operatorTakeover.status, "resumed");
 });
 
 test("task list route returns capped items with total count and summary", async () => {

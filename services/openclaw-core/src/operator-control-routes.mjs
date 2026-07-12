@@ -17,8 +17,23 @@ function serialiseOperatorStep(step, { serialiseTask, serialiseExecutionResult, 
   };
 }
 
+function trustedWorkViewSessionId(task) {
+  return typeof task?.workView?.sessionId === "string" && task.workView.sessionId.trim().length > 0
+    ? task.workView.sessionId.trim()
+    : null;
+}
+
 function hasTrustedWorkViewSession(task) {
-  return typeof task?.workView?.sessionId === "string" && task.workView.sessionId.trim().length > 0;
+  return trustedWorkViewSessionId(task) !== null;
+}
+
+function buildWorkViewAuthorityRequest(task, reason, operatorActionSource) {
+  const sessionId = trustedWorkViewSessionId(task);
+  return {
+    reason,
+    operatorActionSource,
+    ...(sessionId ? { sessionId } : {}),
+  };
 }
 
 function buildTrustedWorkViewStopEvidence(authorityResponse) {
@@ -148,10 +163,10 @@ export async function handleOperatorControlRoute({
     let workViewAuthority = null;
     if (task.operatorTakeover?.status === "operator_controlled") {
       try {
-        workViewAuthority = await postJson(`${sessionManagerUrl}/work-view/helper-authority/resume`, {
-          reason: "operator_resume",
-          operatorActionSource: "openclaw-core-control-resume",
-        });
+        workViewAuthority = await postJson(
+          `${sessionManagerUrl}/work-view/helper-authority/resume`,
+          buildWorkViewAuthorityRequest(task, "operator_resume", "openclaw-core-control-resume"),
+        );
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unable to resume trusted work-view action authority.";
         sendJson(res, 409, { ok: false, error: message, task: serialiseTask(task) });
@@ -195,10 +210,10 @@ export async function handleOperatorControlRoute({
 
     let workViewAuthority;
     try {
-      workViewAuthority = await postJson(`${sessionManagerUrl}/work-view/helper-authority/suspend`, {
-        reason: "operator_takeover",
-        operatorActionSource: "openclaw-core-control-takeover",
-      });
+      workViewAuthority = await postJson(
+        `${sessionManagerUrl}/work-view/helper-authority/suspend`,
+        buildWorkViewAuthorityRequest(task, "operator_takeover", "openclaw-core-control-takeover"),
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to suspend trusted work-view action authority.";
       sendJson(res, 409, { ok: false, error: message, task: serialiseTask(task) });
@@ -250,10 +265,10 @@ export async function handleOperatorControlRoute({
     let trustedWorkViewStopEvidence = null;
     if (hasTrustedWorkViewSession(task)) {
       try {
-        workViewAuthority = await postJson(`${sessionManagerUrl}/work-view/helper-authority/suspend`, {
-          reason: "operator_stop",
-          operatorActionSource: "openclaw-core-control-stop",
-        });
+        workViewAuthority = await postJson(
+          `${sessionManagerUrl}/work-view/helper-authority/suspend`,
+          buildWorkViewAuthorityRequest(task, "operator_stop", "openclaw-core-control-stop"),
+        );
         trustedWorkViewStopEvidence = buildTrustedWorkViewStopEvidence(workViewAuthority);
         if (!trustedWorkViewStopEvidence.authorityRevoked) {
           throw new Error("Trusted work-view action authority did not report a revoked state.");
