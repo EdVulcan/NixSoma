@@ -3,6 +3,7 @@ import { observerClientRuntimeEngineeringLoopControlsScript } from "./client-scr
 import { observerClientRuntimeEngineeringSuggestedActionScript } from "./client-script-runtime-engineering-suggested-action.mjs";
 import { observerClientRuntimeSystemBodyTasksScript } from "./client-script-runtime-system-body-tasks.mjs";
 import { observerClientRuntimeBindingsScript } from "./client-script-runtime-bindings.mjs";
+import { observerClientNativeRuntimeRefreshTasksScript } from "./client-script-runtime-native-runtime-refresh.mjs";
 
 export const observerClientRuntimeActionsScript = `async function loadRecentEvents() {
   try {
@@ -68,7 +69,7 @@ async function createPlannedTask() {
   await refreshOperatorState();
 }
 
-${observerClientRuntimeApprovalTasksScript}${observerClientRuntimeEngineeringLoopControlsScript}${observerClientRuntimeEngineeringSuggestedActionScript}async function runOperatorStepFromUi() {
+${observerClientRuntimeApprovalTasksScript}${observerClientRuntimeEngineeringLoopControlsScript}${observerClientRuntimeEngineeringSuggestedActionScript}${observerClientNativeRuntimeRefreshTasksScript}async function runOperatorStepFromUi() {
   const result = await fetchJson(\`\${observerConfig.coreUrl}/operator/step\`, {
     method: "POST",
     headers: { "content-type": "application/json" },

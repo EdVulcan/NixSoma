@@ -3,6 +3,7 @@ import { observerClientConfigDomCloudProviderScript } from "./client-script-conf
 import { observerClientConfigDomSystemBodyScript } from "./client-script-config-dom-system-body.mjs";
 import { observerClientConfigDomWorkspaceSourceScript } from "./client-script-config-dom-workspace-source.mjs";
 import { observerClientConfigDomEngineeringContextScript } from "./client-script-config-dom-engineering-context.mjs";
+import { observerClientConfigDomNativeRuntimeRefreshScript } from "./client-script-config-dom-native-runtime-refresh.mjs";
 
 export const observerClientConfigDomScript = `const observerBase = \`\${window.location.protocol}//\${window.location.hostname}\`;
 const observerConfig = {
@@ -152,7 +153,7 @@ const filesystemReadLedgerQuery = document.querySelector("#filesystem-read-ledge
 const filesystemReadLedgerReadText = document.querySelector("#filesystem-read-ledger-read-text");
 const filesystemReadLedgerTasks = document.querySelector("#filesystem-read-ledger-tasks");
 const filesystemReadLedgerJson = document.querySelector("#filesystem-read-ledger-json");
-${observerClientConfigDomWorkspaceSourceScript}${observerClientConfigDomEngineeringContextScript}let currentTaskState = null;
+${observerClientConfigDomWorkspaceSourceScript}${observerClientConfigDomEngineeringContextScript}${observerClientConfigDomNativeRuntimeRefreshScript}let currentTaskState = null;
 let latestActionState = null;
 let latestHistoryTask = null;
 let selectedHistoryTaskId = null;

@@ -41,6 +41,9 @@ The runtime refresh task now proves:
 - `/tasks/:taskId` readback exposes the persisted refresh execution evidence
 - Observer milestone coverage keeps the runtime refresh panel visible while
   proving the same approval-gated lifecycle
+- Observer now exposes an explicit `Create Refresh Task` control that reuses the
+  existing approval inbox and operator-step path; it does not approve or execute
+  the task automatically
 
 The executor refreshes the same active native registry generation used by:
 
@@ -69,7 +72,8 @@ creates approval: true
 operator step before approval: blocked
 approved execution: validated atomic fixed-registry generation swap
 audit evidence: task outcome embedded execution record
-Observer visibility: runtime refresh panel plus task/readback milestone proof
+Observer visibility: runtime refresh panel, explicit task control, and
+task/readback milestone proof
 ```
 
 Disabled boundaries:

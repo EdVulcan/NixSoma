@@ -142,6 +142,12 @@ nativePluginRuntimeAdapterTaskButton.addEventListener("click", () => {
   });
 });
 
+nativePluginRuntimeRefreshTaskButton.addEventListener("click", () => {
+  createNativePluginRuntimeRefreshTask().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 acpxCodexBridgeWrapperTaskButton.addEventListener("click", () => {
   createAcpxCodexBridgeWrapperApprovalTask().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

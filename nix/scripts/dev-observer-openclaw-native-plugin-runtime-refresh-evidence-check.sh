@@ -81,6 +81,7 @@ for (const token of [
   "native-plugin-runtime-refresh-state",
   "native-plugin-runtime-refresh-blocked",
   "native-plugin-runtime-refresh-runtime",
+  "native-plugin-runtime-refresh-task-button",
   "native-plugin-runtime-refresh-json",
 ]) {
   if (!html.includes(token)) {
@@ -92,6 +93,8 @@ for (const token of [
   "refreshNativePluginRuntimeRefreshEvidence",
   "renderNativePluginRuntimeRefreshEvidence",
   "Native plugin runtime refresh evidence",
+  "createNativePluginRuntimeRefreshTask",
+  "nativePluginRuntimeRefreshTaskButton",
   "sense.openclaw.plugin_runtime.refresh_evidence",
   "governed-runtime-refresh-evidence-only",
 ]) {

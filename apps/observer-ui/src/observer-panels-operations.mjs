@@ -605,6 +605,9 @@ export function observerOperationsPanels() {
           <div class="metric"><span>Blocked</span><span id="native-plugin-runtime-refresh-blocked">0</span></div>
           <div class="metric"><span>Runtime</span><span id="native-plugin-runtime-refresh-runtime">blocked</span></div>
           <div class="metric"><span>Mode</span><span id="native-plugin-runtime-refresh-mode">governed-runtime-refresh-evidence-only</span></div>
+          <div class="actions tight">
+            <button id="native-plugin-runtime-refresh-task-button" class="secondary" type="button">Create Refresh Task</button>
+          </div>
           <pre id="native-plugin-runtime-refresh-json">Loading native plugin runtime refresh evidence...</pre>
         </section>
         <section class="panel">
