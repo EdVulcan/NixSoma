@@ -8,6 +8,7 @@ import {
   compactBrowserTaskVisualGrounding,
   executeBrowserTaskActionWithCaptureRecovery,
   materialiseBrowserTaskAction,
+  normaliseBrowserTaskVerificationUrl,
   observedBrowserTaskUrl,
   screenActEndpointForBrowserTaskAction,
 } from "../src/browser-task-action-contract.mjs";
@@ -238,6 +239,16 @@ test("browser task verification prefers the post-action observed URL over stale 
   assert.equal(observedBrowserTaskUrl({
     workView: { activeUrl: "https://example.com/session-only" },
   }), "https://example.com/session-only");
+});
+
+test("browser task verification canonicalises only the HTTP(S) origin slash", () => {
+  assert.equal(normaliseBrowserTaskVerificationUrl("https://www.baidu.com"), "https://www.baidu.com");
+  assert.equal(normaliseBrowserTaskVerificationUrl("https://www.baidu.com/"), "https://www.baidu.com");
+  assert.equal(normaliseBrowserTaskVerificationUrl("https://www.baidu.com?tab=home"), "https://www.baidu.com?tab=home");
+  assert.equal(normaliseBrowserTaskVerificationUrl("https://www.baidu.com/?tab=home"), "https://www.baidu.com?tab=home");
+  assert.equal(normaliseBrowserTaskVerificationUrl("https://www.baidu.com/search/"), "https://www.baidu.com/search/");
+  assert.equal(normaliseBrowserTaskVerificationUrl("file:///tmp/secret"), "file:///tmp/secret");
+  assert.equal(normaliseBrowserTaskVerificationUrl("not a url"), "not a url");
 });
 
 test("browser task action contract preserves the legacy unknown-action click fallback", () => {

@@ -159,7 +159,7 @@ if (latestFinished.task?.id !== autoRecoveredExecution.task?.id || latestFinishe
 if (latestFailed.task?.restorable !== true || latestFailed.task?.outcome?.reason !== "Executor verification failed.") {
   throw new Error("Expected latest failed task to be a restorable verification failure.");
 }
-if (workViewState.workView?.activeUrl !== "https://www.baidu.com" || workViewState.workView?.visibility !== "hidden") {
+if (workViewState.workView?.activeUrl !== "https://www.baidu.com/" || workViewState.workView?.visibility !== "hidden") {
   throw new Error("Expected work view to be hidden after successful auto recovery.");
 }
 if (actionState.state?.actionCount !== 7 || actionState.state?.lastAction?.degraded !== false) {

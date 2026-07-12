@@ -11,6 +11,7 @@ import {
   compactBrowserTaskVisualGrounding,
   executeBrowserTaskActionWithCaptureRecovery,
   materialiseBrowserTaskAction,
+  normaliseBrowserTaskVerificationUrl,
   observedBrowserTaskUrl,
 } from "./browser-task-action-contract.mjs";
 import {
@@ -548,6 +549,8 @@ function buildExecutionVerification({ targetUrl, options, verifiedScreen, action
     workView,
     snapshotText: verifiedScreen?.screen?.snapshotText,
   });
+  const expectedUrlForComparison = normaliseBrowserTaskVerificationUrl(expectedUrl);
+  const activeUrlForComparison = normaliseBrowserTaskVerificationUrl(activeUrl);
   const readiness = verifiedScreen?.screen?.readiness ?? null;
   const actionEvidence = buildActionEvidence(actionResults, workViewSummary);
   const degradedActions = actionResults.filter((action) => action?.degraded);
@@ -556,7 +559,9 @@ function buildExecutionVerification({ targetUrl, options, verifiedScreen, action
       name: "target_url",
       expected: expectedUrl,
       actual: activeUrl,
-      passed: activeUrl === expectedUrl,
+      passed: expectedUrlForComparison !== null
+        && activeUrlForComparison !== null
+        && activeUrlForComparison === expectedUrlForComparison,
     },
     {
       name: "screen_readiness",

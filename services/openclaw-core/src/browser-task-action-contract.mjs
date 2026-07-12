@@ -107,6 +107,26 @@ export function observedBrowserTaskUrl({ workViewSummary, workView, snapshotText
     ?? null;
 }
 
+export function normaliseBrowserTaskVerificationUrl(value) {
+  const text = typeof value === "string" ? value.trim() : "";
+  if (!text) return null;
+
+  let url;
+  try {
+    url = new URL(text);
+  } catch {
+    return text;
+  }
+  if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) {
+    return text;
+  }
+
+  if (url.pathname === "/") {
+    return `${url.protocol}//${url.host}${url.search}${url.hash}`;
+  }
+  return text;
+}
+
 function compactVisualFrameReference(frame) {
   if (!frame
     || typeof frame.sha256 !== "string"
