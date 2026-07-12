@@ -70,6 +70,7 @@ export async function handleOperatorControlRoute({
     reconcileRuntimeState,
     serialiseTask,
     compareTasksForDisplay,
+    buildEyeHandRecoveryEvidence,
   } = taskManager;
   const {
     serialiseExecutionResult,
@@ -281,7 +282,22 @@ export async function handleOperatorControlRoute({
     }
 
     const stopDetails = trustedWorkViewStopEvidence
-      ? { reason: "Stopped by operator.", trustedWorkViewAuthority: trustedWorkViewStopEvidence }
+      ? {
+          reason: "Stopped by operator.",
+          trustedWorkViewAuthority: trustedWorkViewStopEvidence,
+          recoveryEvidence: buildEyeHandRecoveryEvidence(task, "Stopped by operator.", {
+            targetUrl: task.targetUrl ?? null,
+            authorityInterruption: {
+              kind: "work-view-authority-interruption",
+              stage: "operator_stop",
+              recoverable: true,
+              automaticRestart: false,
+              authorityRevoked: trustedWorkViewStopEvidence.authorityRevoked,
+              actionAuthority: trustedWorkViewStopEvidence.actionAuthority,
+              helperStatus: trustedWorkViewStopEvidence.helperStatus,
+            },
+          }),
+        }
       : { reason: "Stopped by operator." };
     task.status = "failed";
     appendTaskPhase(task, "failed", stopDetails);

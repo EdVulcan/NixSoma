@@ -621,6 +621,12 @@ All operator authority transitions now include the task's bound work-view
 session id when one exists. Session-manager rejects stale-session suspend or
 resume requests before mutating the current lease, keeping the current session
 active and non-degraded on that mismatch.
+When an attached task is stopped successfully, its outcome also carries the
+existing compact work-view recovery evidence with an `operator_stop` stage and
+the recommendation to restore/rebind the trusted work view before recovery.
+The recovery task receives that provenance without the session lease id and
+does not restart or replay the task automatically; the existing Observer task
+history path renders the same recovery recommendation after refresh.
 
 ## Identity-Upgrade Alignment
 

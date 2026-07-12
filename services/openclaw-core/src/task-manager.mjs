@@ -557,6 +557,7 @@ function buildWorkViewAttachPayload(data, targetUrl) {
     hasRecoverableCapabilityPlan,
     hasRecoverableNativePluginRuntimeActivationPlan,
     hasRecoverableSearchWebAdapterPlan,
+    buildEyeHandRecoveryEvidence,
     isRecoverableTask,
     compareTasksForDisplay,
     listTasks,

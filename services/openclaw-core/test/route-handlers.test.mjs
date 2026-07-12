@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { Readable } from "node:stream";
 
 import { registerRoutes } from "../src/route-handlers.mjs";
+import { buildEyeHandRecoveryEvidence } from "../src/task-recovery.mjs";
 
 function createBaseDeps(overrides = {}) {
   const state = {
@@ -1058,6 +1059,7 @@ test("control stop route suspends trusted work-view authority before failing the
         return item;
       },
       reconcileRuntimeState: () => {},
+      buildEyeHandRecoveryEvidence,
       serialiseTask: (item) => ({
         id: item.id,
         status: item.status,
@@ -1079,18 +1081,22 @@ test("control stop route suspends trusted work-view authority before failing the
     },
   }]);
   assert.equal(task.status, "failed");
-  assert.deepEqual(phases[0].details, {
-    reason: "Stopped by operator.",
-    trustedWorkViewAuthority: {
-      registry: "openclaw-trusted-work-view-helper-runtime-v0",
-      endpoint: "/work-view/helper-authority/suspend",
-      actionAuthority: "suspended",
-      helperStatus: "suspended",
-      authorityRevoked: true,
-    },
+  assert.equal(phases[0].details.reason, "Stopped by operator.");
+  assert.deepEqual(phases[0].details.trustedWorkViewAuthority, {
+    registry: "openclaw-trusted-work-view-helper-runtime-v0",
+    endpoint: "/work-view/helper-authority/suspend",
+    actionAuthority: "suspended",
+    helperStatus: "suspended",
+    authorityRevoked: true,
   });
+  assert.equal(phases[0].details.recoveryEvidence.kind, "work-view-authority-recovery-evidence");
+  assert.equal(phases[0].details.recoveryEvidence.sourceTaskId, task.id);
+  assert.equal(phases[0].details.recoveryEvidence.interruption.stage, "operator_stop");
+  assert.equal(phases[0].details.recoveryEvidence.interruption.actionAuthority, "suspended");
+  assert.equal(phases[0].details.recoveryEvidence.recommendation.strategy, "restore_trusted_work_view_then_recover_task");
   assert.equal(response.body.workViewAuthority.workView.helperRuntime.actionAuthority, "suspended");
   assert.equal(response.body.task.outcome.details.trustedWorkViewAuthority.authorityRevoked, true);
+  assert.equal(response.body.task.outcome.details.recoveryEvidence.interruption.authorityRevoked, true);
 });
 
 test("control stop route fails closed when trusted authority cannot be revoked", async () => {

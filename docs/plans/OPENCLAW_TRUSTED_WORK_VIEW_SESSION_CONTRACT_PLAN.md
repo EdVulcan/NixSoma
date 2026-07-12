@@ -883,3 +883,12 @@ divergent session id with `409` before changing the current helper lease, and
 does not mark the current session degraded for that mismatch. This prevents a
 persisted task from pausing or resuming a different active work-view session
 after a restart while preserving the existing lease rotation and recovery path.
+
+An operator stop on an attached task now also reuses the existing eye-hand
+recovery evidence contract. The failed outcome records a compact
+`operator_stop` authority interruption and recommends restoring/rebinding the
+trusted work view before creating a recovery task. `recoverTask()` copies that
+evidence into the recovered task while omitting the session lease id; recovery
+remains explicit and does not automatically restart or replay browser work.
+The task-workbench and Observer recovery checks cover the stop, recovery, and
+post-refresh readback path.

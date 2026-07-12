@@ -235,11 +235,16 @@ test("task recovery builds work-view authority interruption evidence", () => {
         stage: "prepare",
         recoverable: true,
         automaticRestart: false,
+        authorityRevoked: false,
+        actionAuthority: "inactive",
+        helperStatus: "stopped",
       },
     },
   );
   assert.equal(evidence.kind, "work-view-authority-recovery-evidence");
   assert.equal(evidence.interruption.stage, "prepare");
+  assert.equal(evidence.interruption.authorityRevoked, false);
+  assert.equal(evidence.interruption.actionAuthority, "inactive");
   assert.equal(evidence.recommendation.strategy, "restore_trusted_work_view_then_recover_task");
   assert.equal(evidence.recommendation.automaticRestart, false);
 });
