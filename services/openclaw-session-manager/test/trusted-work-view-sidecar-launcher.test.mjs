@@ -80,4 +80,3 @@ test("trusted sidecar launcher rejects authority values outside its environment 
     /single-line text/u,
   );
 });
-

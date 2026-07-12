@@ -131,4 +131,3 @@ export function createTrustedWorkViewSidecarLauncher({
 
   return { describe, launch, stop };
 }
-
