@@ -84,8 +84,8 @@ does not shell out to `systemctl`.
 
 ## Second Slice: Fixed Native Restart
 
-The fixed native restart behavior was proven in the running VM generation. This
-follow-up tightens its owner split before the next generation is switched:
+The fixed native restart behavior and its owner split are proven in the switched
+VM generation:
 
 1. Desktop system services run as the dedicated `openclaw-service` account
    instead of root; session-manager and browser-runtime remain user-manager
@@ -129,13 +129,12 @@ full body-config gates prove Nix/Polkit evaluation and all store closures. The
 existing core and Observer real-execution milestones now require successful
 native transport rather than accepting a failed attempt.
 
-Existing real VM evidence proves two separately approved executions, one through
-the core milestone and one through the Observer milestone. Both returned exit
-zero, an `org.freedesktop.systemd1` job path, changed positive main PIDs,
+The switched generation now proves two separately approved executions, one
+through the core milestone and one through the Observer milestone. Both returned
+exit zero, an `org.freedesktop.systemd1` job path, changed positive main PIDs,
 restored readiness, `polkit-dbus-fixed-unit`, and the fixed hostd store closure
-with no sudo or direct systemctl execution. That evidence predates the owner
-split below; the switched generation must rerun the real-execution checks before
-the new service-account combination is called VM-proven.
+with no sudo or direct systemctl execution. Core ran as `openclaw-service` while
+the Polkit subject and hostd process ran as `openclaw-hostd`.
 
 ## Completed Hostd Boundary
 
@@ -150,10 +149,9 @@ truthful group-socket caller boundary; the core client rejects a response whose
 request id does not match the request it sent.
 
 Focused hostd tests, core executor tests, auth-delegation checks, Nix closure
-builds, and the body configuration check prove the local owner/socket contract.
-The next switched VM must additionally prove that `openclaw-hostd` is the live
-Polkit subject while core remains `openclaw-service`. No new public route or
-arbitrary privileged API was added.
+builds, body configuration, and the switched core/Observer milestones prove the
+owner/socket contract. No new public route or arbitrary privileged API was
+added.
 
 ## Deferred
 
