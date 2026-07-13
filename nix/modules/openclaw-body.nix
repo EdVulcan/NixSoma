@@ -153,7 +153,7 @@ let
       ProtectHome = true;
       RestrictAddressFamilies = [ "AF_UNIX" ];
     } // optionalAttrs (cfg.user != null) {
-      User = cfg.user;
+      User = cfg.hostdUser;
       Group = cfg.group;
     };
   };
@@ -269,7 +269,7 @@ let
 
   owner = if cfg.user == null then "root" else cfg.user;
   group = if cfg.user == null then "root" else cfg.group;
-  delegationUser = if cfg.user == null then "openclaw" else cfg.user;
+  delegationUser = cfg.hostdUser;
 in
 {
   options.services.openclaw = {
@@ -434,6 +434,12 @@ in
       description = "Optional user for OpenClaw services. Null keeps systemd's default user.";
     };
 
+    hostdUser = mkOption {
+      type = types.str;
+      default = "openclaw-hostd";
+      description = "Dedicated system user for the fixed host control boundary and its Polkit subject.";
+    };
+
     group = mkOption {
       type = types.str;
       default = "openclaw";
@@ -499,6 +505,10 @@ in
         message = "services.openclaw.systemdRepairAuthDelegation.enable requires services.openclaw.user so delegation is scoped to one OpenClaw service account.";
       }
       {
+        assertion = !cfg.systemdRepairAuthDelegation.enable || cfg.hostdUser != cfg.user;
+        message = "services.openclaw.hostdUser must be distinct from services.openclaw.user so the host control boundary has an independent Polkit subject.";
+      }
+      {
         assertion = !cfg.systemdRepairAuthDelegation.enable
           || (builtins.elem "systemSense" cfg.components
             && !builtins.elem "systemSense" cfg.componentOwnership.user
@@ -512,14 +522,23 @@ in
       ${cfg.group} = { };
     };
 
-    users.users = optionalAttrs (cfg.user != null) {
-      ${cfg.user} = {
-        isSystemUser = true;
-        group = cfg.group;
-        home = cfg.stateDir;
-        createHome = true;
-      };
-    };
+    users.users = optionalAttrs (cfg.user != null) (
+      {
+        ${cfg.user} = {
+          isSystemUser = true;
+          group = cfg.group;
+          home = cfg.stateDir;
+          createHome = true;
+        };
+      } // optionalAttrs cfg.systemdRepairAuthDelegation.enable {
+        ${cfg.hostdUser} = {
+          isSystemUser = true;
+          group = cfg.group;
+          home = "/var/empty";
+          createHome = false;
+        };
+      }
+    );
 
     systemd.tmpfiles.rules = [
       "d ${cfg.stateDir} 0750 ${owner} ${group} - -"

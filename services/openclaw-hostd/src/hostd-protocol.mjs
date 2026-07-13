@@ -23,6 +23,8 @@ function errorResponse({ requestId = null, code, error }) {
     owner: "openclaw-hostd",
     error: { code, message: error },
     governance: {
+      callerBoundary: "openclaw-service-group-socket",
+      socketPeerIdentityVerified: false,
       arbitraryUnit: false,
       arbitraryMethod: false,
       automaticRestart: false,
@@ -96,7 +98,8 @@ export function createHostdRequestHandler({ runRestart = runFixedSystemdRestart 
         unit: HOSTD_TARGET_UNIT,
         nativeMutation,
         governance: {
-          approvedCallerBoundary: "openclaw-core-task-executor",
+          callerBoundary: "openclaw-service-group-socket",
+          socketPeerIdentityVerified: false,
           arbitraryUnit: false,
           arbitraryMethod: false,
           automaticRestart: false,

@@ -25,6 +25,8 @@ test("hostd protocol accepts only the fixed system-sense restart capability", ()
   }));
   assert.equal(arbitrary.ok, false);
   assert.equal(arbitrary.response.error.code, "unsupported_capability");
+  assert.equal(arbitrary.response.governance.callerBoundary, "openclaw-service-group-socket");
+  assert.equal(arbitrary.response.governance.socketPeerIdentityVerified, false);
 
   const extraField = parseHostdRequest(JSON.stringify({
     version: 1,
@@ -102,6 +104,8 @@ test("hostd socket boundary carries compact owner evidence to the core client", 
     assert.equal(response.nativeMutation.owner, "openclaw-hostd");
     assert.equal(response.nativeMutation.before.mainPid, 100);
     assert.equal(response.nativeMutation.after.mainPid, 200);
+    assert.equal(response.governance.callerBoundary, "openclaw-service-group-socket");
+    assert.equal(response.governance.socketPeerIdentityVerified, false);
   } finally {
     await runtime.close();
   }

@@ -8,8 +8,10 @@ CORE_URL="${OPENCLAW_INSTALLED_CORE_URL:-http://127.0.0.1:4100}"
 OBSERVER_URL="${OPENCLAW_INSTALLED_OBSERVER_URL:-http://127.0.0.1:4170}"
 
 core_user="$(systemctl show openclaw-core.service --property=User --value)"
+hostd_user="$(systemctl show openclaw-hostd.service --property=User --value)"
 core_environment="$(systemctl show openclaw-core.service --property=Environment --value)"
 if [[ "$core_user" != "openclaw-service"
+  || "$hostd_user" != "openclaw-hostd"
   || "$core_environment" != *"OPENCLAW_SYSTEMD_REPAIR_AUTH_DELEGATION=polkit-dbus-fixed-unit"*
   || "$core_environment" != *"OPENCLAW_HOSTD_SOCKET_PATH=/run/openclaw/hostd.sock"*
   || "$core_environment" == *"sudo-nopasswd-fixed-helper"* ]]; then

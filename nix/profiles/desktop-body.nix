@@ -6,6 +6,7 @@
   services.openclaw = {
     profile = "desktop-body";
     user = "openclaw-service";
+    hostdUser = "openclaw-hostd";
     systemdRepairAuthDelegation.enable = true;
     trustedSidecarUserUnit.enable = true;
     componentOwnership.user = [

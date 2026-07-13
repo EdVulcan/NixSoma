@@ -103,6 +103,7 @@ requireIncludes("openclaw-body module", bodyModule, [
   "openclaw-trusted-sidecar@",
   "trustedSidecarUserUnit",
   "componentOwnership.user",
+  "hostdUser",
   "userService.stateDir",
   "userService.logDir",
   "EnvironmentFile = \"%t/openclaw-sidecars/%i.env\"",
@@ -123,6 +124,7 @@ requireIncludes("openclaw-body module", bodyModule, [
   "runtimePackages.screenSense",
   "runtimePackages.screenAct",
   "runtimePackages.systemSense",
+  "runtimePackages.hostd",
   "runtimePackages.systemHeal",
   "runtimePackages.observerUi",
   ...serviceNames,
@@ -162,6 +164,7 @@ requireIncludes("desktop-body profile", desktopProfile, [
   "./dev-body.nix",
   "profile = \"desktop-body\"",
   "user = \"openclaw-service\"",
+  "hostdUser = \"openclaw-hostd\"",
   "systemdRepairAuthDelegation.enable = true",
   "trustedSidecarUserUnit.enable = true",
   "componentOwnership.user",
@@ -218,6 +221,7 @@ if command -v nix >/dev/null 2>&1; then
         inherit (unit) wantedBy partOf after environment;
         serviceConfig = {
           User = unit.serviceConfig.User or null;
+          Group = unit.serviceConfig.Group or null;
           WorkingDirectory = unit.serviceConfig.WorkingDirectory;
           ExecStart = unit.serviceConfig.ExecStart;
           RuntimeDirectory = unit.serviceConfig.RuntimeDirectory or null;
@@ -260,7 +264,7 @@ for (const [name, unit] of Object.entries(ownership).filter(([name]) =>
 if (ownership.polkitEnabled !== true
   || !ownership.polkitExtraConfig.includes('action.lookup("unit") == "openclaw-system-sense.service"')
   || !ownership.polkitExtraConfig.includes('action.lookup("verb") == "restart"')
-  || !ownership.polkitExtraConfig.includes('subject.user == "openclaw-service"')) {
+  || !ownership.polkitExtraConfig.includes('subject.user == "openclaw-hostd"')) {
   throw new Error(`desktop body must expose fixed native systemd Polkit delegation: ${JSON.stringify({
     enabled: ownership.polkitEnabled,
     config: ownership.polkitExtraConfig,
@@ -316,7 +320,8 @@ if (ownership.core.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
 if (ownership.hostd == null
   || ownership.hostd.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || ownership.hostd.environment?.OPENCLAW_HOSTD_SOCKET_PATH !== "/run/openclaw/hostd.sock"
-  || ownership.hostd.serviceConfig?.User !== "openclaw-service"
+  || ownership.hostd.serviceConfig?.User !== "openclaw-hostd"
+  || ownership.hostd.serviceConfig?.Group !== "openclaw"
   || ownership.hostd.serviceConfig?.RuntimeDirectory !== "openclaw"
   || !String(ownership.hostd.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
   || !String(ownership.hostd.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-hostd")
@@ -357,6 +362,8 @@ console.log(JSON.stringify({
   componentOwnership: {
     userOwned,
     duplicated: userOwned.filter((name) => ownership.system.includes(name)),
+    hostdServiceUser: ownership.hostd.serviceConfig.User,
+    hostdSocketGroup: ownership.hostd.serviceConfig.Group,
     browserEngine: ownership.browser.environment.OPENCLAW_BROWSER_ENGINE_MODE,
     browserProfile: ownership.browser.environment.OPENCLAW_BROWSER_PROFILE_DIR,
     browserRuntimeSource: ownership.browser.environment.OPENCLAW_BODY_RUNTIME_SOURCE,

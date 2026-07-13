@@ -128,10 +128,14 @@ sidecar template run from reviewed read-only Nix closures with real targeted
 behavior evidence. Phase B's first slice is also complete: system-sense now
 reads all fixed OpenClaw unit inventory through native systemd D-Bus, fails
 closed without a `systemctl` fallback, and preserves the existing Observer
-contract. The fixed system-sense restart and exact Polkit rule are now
-proven in a switched VM behind the existing approved next-repair lifecycle.
-Core and Observer milestones prove exit zero, native D-Bus job paths, changed
-PIDs, restored readiness, and removal of the host's historical sudo helper.
+contract. The fixed system-sense restart and exact Polkit rule were proven in a
+switched VM behind the existing approved next-repair lifecycle. The current
+follow-up separates the hostd service account from core and keeps the socket
+group-bound; local Nix evaluation and focused tests prove that contract, while
+the next switched VM must repeat the real-execution checks for the new account
+identity. Core and Observer milestones remain the required proof of exit zero,
+native D-Bus job paths, changed PIDs, restored readiness, and removal of the
+host's historical sudo helper.
 
 It now closes browser action mediation through operator takeover suspension and
 explicit resume/rebind, then runs a bounded approval-gated user-space helper

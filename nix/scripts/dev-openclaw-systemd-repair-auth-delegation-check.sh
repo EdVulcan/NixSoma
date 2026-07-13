@@ -43,7 +43,8 @@ for (const token of [
   'action.id == "org.freedesktop.systemd1.manage-units"',
   'action.lookup("unit") == "openclaw-system-sense.service"',
   'action.lookup("verb") == "restart"',
-  "delegationUser = if cfg.user == null then \"openclaw\" else cfg.user",
+  "hostdUser",
+  "delegationUser = cfg.hostdUser",
   'subject.user == "${delegationUser}"',
 ]) {
   if (!bodyModule.includes(token)) {
@@ -85,7 +86,7 @@ if (!core.includes("command: [command.command ?? \"systemctl\", ...args].join(\"
 if (!milestone.includes("openclaw-systemd-repair-auth-delegation")) {
   throw new Error("Milestone registry missing openclaw-systemd-repair-auth-delegation.");
 }
-for (const token of ['user = "openclaw-service"', "systemdRepairAuthDelegation.enable = true"]) {
+for (const token of ['user = "openclaw-service"', 'hostdUser = "openclaw-hostd"', "systemdRepairAuthDelegation.enable = true"]) {
   if (!desktopProfile.includes(token)) {
     throw new Error(`Desktop profile missing unprivileged Polkit ownership token: ${token}`);
   }
@@ -96,7 +97,9 @@ console.log(JSON.stringify({
     status: "passed",
     route: "phase-b-native-systemd-mutation",
     desktopProfileEnabled: true,
-    serviceUser: "openclaw-service",
+    coreServiceUser: "openclaw-service",
+    hostdServiceUser: "openclaw-hostd",
+    socketGroup: "openclaw",
     delegatedUnit: "openclaw-system-sense.service",
     delegatedAction: "restart",
     transport: "unix_socket->dbus_native",

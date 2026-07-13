@@ -591,11 +591,14 @@ temporary read-only `systemctl` fallback has been removed; bus failure is
 fail-closed. This first inventory slice intentionally excluded privileged
 mutation; the separately governed fixed hostd restart is recorded below.
 
-The second fixed Phase B slice is now complete in the running VM generation.
-Desktop system services run under the dedicated `openclaw-service` account; a
-dedicated `openclaw-hostd` store closure accepts only a no-argument request to
-restart `openclaw-system-sense.service` through native D-Bus; and Polkit
-matches the exact manage-units action, restart verb, unit, and service subject.
+The second fixed Phase B slice remains functionally proven in the running VM
+generation. Its owner-separation follow-up now makes desktop system services run
+under `openclaw-service`, gives the fixed store-native hostd its independent
+`openclaw-hostd` service account and Polkit subject, and keeps core submission on
+the shared `openclaw` socket group. The response keeps the remaining lack of
+kernel-level peer credential verification explicit. The switched VM must rerun
+the existing core and Observer real-execution checks before this new account
+combination is treated as deployed evidence.
 Core reaches hostd only through its bounded Unix socket, reuses the existing
 approved next-repair lifecycle, and has no direct systemctl/sudo fallback. The
 switched generation removed the historical host sudo helper. Core and Observer
