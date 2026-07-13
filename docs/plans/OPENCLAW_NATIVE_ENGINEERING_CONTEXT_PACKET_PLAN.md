@@ -166,10 +166,26 @@ accept an endpoint, command, path, or provider payload from the model.
 Evidence is served through the existing `/operator/step` and `/operator/run`
 response serialization paths. No new provider route or task type was added.
 
+## Operator Route Fixture Follow-Up Complete
+
+The production-shaped route test now supplies a local valid recommendation to
+both existing operator response paths:
+
+```text
+POST /operator/step
+POST /operator/run
+```
+
+It proves the full recommendation remains transient in `execution.recommendation`
+while `recommendationEvidence` retains only compact action/status data and no
+reason. The fixture uses no provider sender, credential, endpoint, or network
+egress.
+
 ## Next Slice
 
-The next smallest provider-related slice, if selected, should add a focused
-operator fixture that supplies a valid transient recommendation to the existing
-execution response and proves the Observer control handoff without contacting
-an external provider. Keep provider response content transient and do not
-resume the historical Phase 59-136 wrapper chain.
+The Level 1 context-packet -> structured recommendation -> Observer review ->
+existing governed control loop is now closed with local route and UI evidence.
+The next autonomous product slice should advance the Level 2 trusted
+work-view/session-helper boundary through an existing work-view owner. Keep
+provider response content transient and do not resume the historical Phase
+59-136 wrapper chain.

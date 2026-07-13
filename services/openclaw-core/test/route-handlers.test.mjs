@@ -4,6 +4,10 @@ import { Readable } from "node:stream";
 
 import { registerRoutes } from "../src/route-handlers.mjs";
 import { buildEyeHandRecoveryEvidence } from "../src/task-recovery.mjs";
+import {
+  CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
+  CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_REGISTRY,
+} from "../src/cloud-live-provider-runtime-response-contract.mjs";
 
 function createBaseDeps(overrides = {}) {
   const state = {
@@ -118,6 +122,24 @@ async function invokeRoute(deps, method, path, body = null) {
     statusCode,
     headers,
     body: payload ? JSON.parse(payload) : null,
+  };
+}
+
+function transientEngineeringRecommendation() {
+  return {
+    registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_REGISTRY,
+    contract: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
+    actionId: "create_verification_task",
+    label: "Create governed verification task",
+    reason: "Transient route fixture recommendation reason.",
+    confidence: 0.87,
+    existingObserverControlId: "engineering-verification-task-button",
+    existingCapabilityId: "act.openclaw.engineering_tool.verify",
+    requiresOperatorReview: true,
+    requiresApproval: true,
+    createsTaskAutomatically: false,
+    createsApprovalAutomatically: false,
+    executesAutomatically: false,
   };
 }
 
@@ -902,6 +924,7 @@ test("approval deny route publishes task failure when denial fails a task", asyn
 
 test("operator run route serialises loop steps and next task", async () => {
   let observedBody = null;
+  const recommendation = transientEngineeringRecommendation();
   const deps = createBaseDeps({
     executor: {
       runOperatorLoop: async (body) => {
@@ -913,13 +936,26 @@ test("operator run route serialises loop steps and next task", async () => {
           nextTask: { id: "task-next", status: "queued" },
           steps: [{
             task: { id: "task-step", status: "completed", policy: { decision: "audit_only" } },
-            execution: { id: "execution-step" },
+            execution: {
+              id: "execution-step",
+              recommendation,
+              recommendationEvidence: {
+                status: "valid_recommendation",
+                actionId: recommendation.actionId,
+                reason: null,
+              },
+            },
           }],
           operator: { mode: "loop-test" },
           summary: { completed: 1 },
         };
       },
-      serialiseExecutionResult: (result) => ({ id: result.id, serialised: true }),
+      serialiseExecutionResult: (result) => ({
+        id: result.id,
+        recommendation: result.recommendation,
+        recommendationEvidence: result.recommendationEvidence,
+        serialised: true,
+      }),
     },
     taskManager: {
       serialiseTask: (task) => ({ id: task.id, status: task.status, serialised: true }),
@@ -940,12 +976,54 @@ test("operator run route serialises loop steps and next task", async () => {
     nextTask: { id: "task-next", status: "queued", serialised: true },
     steps: [{
       task: { id: "task-step", status: "completed", serialised: true },
-      execution: { id: "execution-step", serialised: true },
+      execution: {
+        id: "execution-step",
+        recommendation,
+        recommendationEvidence: {
+          status: "valid_recommendation",
+          actionId: recommendation.actionId,
+          reason: null,
+        },
+        serialised: true,
+      },
       policy: "audit_only",
     }],
     operator: { mode: "loop-test" },
     summary: { completed: 1 },
   });
+});
+
+test("operator step route preserves transient recommendation and compact evidence boundaries", async () => {
+  const recommendation = transientEngineeringRecommendation();
+  const deps = createBaseDeps({
+    executor: {
+      runOperatorStep: async () => ({
+        ran: true,
+        blocked: false,
+        task: { id: "task-step-recommendation", status: "completed" },
+        execution: {
+          recommendation,
+          recommendationEvidence: {
+            status: "valid_recommendation",
+            actionId: recommendation.actionId,
+            reason: null,
+          },
+        },
+        summary: { completed: 1 },
+      }),
+      serialiseExecutionResult: (result) => ({
+        recommendation: result.recommendation,
+        recommendationEvidence: result.recommendationEvidence,
+      }),
+    },
+  });
+
+  const response = await invokeRoute(deps, "POST", "/operator/step", { contextPacket: true });
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.deepEqual(response.body.execution.recommendation, recommendation);
+  assert.equal(response.body.execution.recommendationEvidence.reason, null);
+  assert.doesNotMatch(JSON.stringify(response.body.execution.recommendationEvidence), /Transient route fixture recommendation reason/);
 });
 
 test("control stop route fails current task and emits task failed event", async () => {
