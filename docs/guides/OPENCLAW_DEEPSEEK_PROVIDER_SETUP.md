@@ -70,6 +70,7 @@ manual prompt, replace `requestEnvelope` with this bounded context request:
     "contextPacket": {
       "requested": true,
       "taskId": "<approved-egress-task-id>",
+      "responseContract": "engineering_recommendation_v0",
       "limit": 6,
       "maxOutputChars": 1800,
       "instruction": "Review the local engineering evidence and recommend the next verification step."
@@ -87,7 +88,13 @@ manual prompt, replace `requestEnvelope` with this bounded context request:
 The context packet is assembled in memory for that operator call. Existing
 command output is bounded, credential-like text is redacted, and only packet
 counts, hashes, and truncation evidence are retained on the task. Do not send
-both `contextPacket` and `requestEnvelope` in the same request.
+both `contextPacket` and `requestEnvelope` in the same request. The context
+packet defaults to `engineering_recommendation_v0`; the provider must return
+JSON that selects one existing allowlisted Observer action and sets
+`requiresOperatorReview` to `true`. The response cannot create a task, approval,
+or execution automatically. The full recommendation reason is transient; the
+task keeps only action, control, capability, contract, hash, and governance
+evidence.
 
 Neither path turns on automatic provider calls for OpenClaw tasks. The existing
 task and Observer lanes remain approval-gated, and the live branch requires the

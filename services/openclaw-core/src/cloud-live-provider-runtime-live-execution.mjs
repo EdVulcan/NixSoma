@@ -4,6 +4,10 @@ import {
   sendLiveProviderRequest,
 } from "./cloud-live-provider-network-sender.mjs";
 import { CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE } from "./cloud-live-provider-runtime-context-packet.mjs";
+import {
+  CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
+  parseCloudLiveProviderEngineeringRecommendation,
+} from "./cloud-live-provider-runtime-response-contract.mjs";
 
 export const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_LIVE_EXECUTION_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-live-execution-v0";
@@ -37,6 +41,10 @@ function compactContextPacketEvidence(evidence) {
     registry: evidence.registry ?? CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_LIVE_EXECUTION_REGISTRY,
     sourceRegistry: evidence.sourceRegistry ?? null,
     taskId: evidence.taskId ?? null,
+    responseContract: evidence.responseContract
+      === CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT
+      ? evidence.responseContract
+      : null,
     sourceTranscriptRecords: Number.isInteger(evidence.sourceTranscriptRecords)
       ? evidence.sourceTranscriptRecords
       : 0,
@@ -57,13 +65,13 @@ function compactContextPacketEvidence(evidence) {
   };
 }
 
-function transientProviderResponse(result) {
+function transientProviderResponse(result, { includeAssistantContent = true } = {}) {
   if (!result?.response) return null;
   return {
     transient: true,
     id: result.response.id ?? null,
     model: result.response.model ?? null,
-    assistantContent: result.response.assistantContent ?? null,
+    ...(includeAssistantContent ? { assistantContent: result.response.assistantContent ?? null } : {}),
     responseContentHash: result.response.responseContentHash ?? null,
     responseTruncated: result.response.responseTruncated === true,
     usage: result.response.usage ?? null,
@@ -87,13 +95,41 @@ function buildOperatorAuthorization(task, approval, request) {
   };
 }
 
-function buildTaskExecutionState(result, authorization, approval, contextPacketEvidence) {
+function compactRecommendationEvidence(evidence) {
+  if (!evidence || typeof evidence !== "object") return null;
+  return {
+    registry: evidence.registry ?? null,
+    contract: evidence.contract ?? null,
+    status: evidence.status ?? null,
+    valid: evidence.valid === true,
+    reason: evidence.reason ?? null,
+    actionId: evidence.actionId ?? null,
+    existingObserverControlId: evidence.existingObserverControlId ?? null,
+    existingCapabilityId: evidence.existingCapabilityId ?? null,
+    requiresOperatorReview: evidence.requiresOperatorReview === true,
+    requiresApproval: evidence.requiresApproval === true,
+    reasonIncluded: false,
+    responseContentHash: evidence.responseContentHash ?? null,
+  };
+}
+
+function buildTaskExecutionState(
+  result,
+  authorization,
+  approval,
+  contextPacketEvidence,
+  recommendationEvidence,
+  responseContract,
+  responseContractFailed,
+) {
   const credentialRead = result?.governance?.credentialValueRead === true;
   const endpointContacted = result?.audit?.endpointContacted === true;
   const networkEgress = result?.audit?.networkEgress === true;
   return {
     registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_LIVE_EXECUTION_REGISTRY,
-    implementationStatus: result?.ok === true ? "live_provider_call_completed" : "live_provider_call_failed",
+    implementationStatus: result?.ok === true
+      ? responseContractFailed ? "live_provider_response_contract_failed" : "live_provider_call_completed"
+      : "live_provider_call_failed",
     approvedAt: approval?.updatedAt ?? null,
     liveProviderCallRequested: true,
     liveProviderCallAuthorized: authorization.state === "authorized",
@@ -121,6 +157,8 @@ function buildTaskExecutionState(result, authorization, approval, contextPacketE
     liveProviderCallEnabled: result?.governance?.liveProviderCallEnabled === true,
     evidence: compactProviderEvidence(result),
     contextPacket: compactContextPacketEvidence(contextPacketEvidence),
+    responseContract: responseContract ?? null,
+    recommendation: recommendationEvidence,
   };
 }
 
@@ -213,15 +251,40 @@ export async function executeCloudConsciousnessLiveProviderRequest({
   const contextPacketEvidence = compactContextPacketEvidence(
     options[CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE],
   );
-  const taskState = buildTaskExecutionState(result, authorization, approval, contextPacketEvidence);
+  const requestedResponseContract = request.responseContract ?? request.contextPacket?.responseContract ?? null;
+  const responseContract = requestedResponseContract
+    === CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT
+    ? requestedResponseContract
+    : requestedResponseContract === null
+      ? null
+      : "unsupported";
+  const recommendationResult = result.ok === true
+    ? parseCloudLiveProviderEngineeringRecommendation({
+      contract: requestedResponseContract,
+      assistantContent: result.response?.assistantContent,
+      responseContentHash: result.response?.responseContentHash ?? result.audit?.responseContentHash ?? null,
+    })
+    : { ok: true, recommendation: null, evidence: null };
+  const recommendationEvidence = compactRecommendationEvidence(recommendationResult.evidence);
+  const responseContractFailed = result.ok === true && recommendationResult.ok === false;
+  const taskState = buildTaskExecutionState(
+    result,
+    authorization,
+    approval,
+    contextPacketEvidence,
+    recommendationEvidence,
+    responseContract,
+    responseContractFailed,
+  );
   task.cloudConsciousnessLiveProviderEgressExecution = {
     ...(task.cloudConsciousnessLiveProviderEgressExecution ?? {}),
     ...taskState,
   };
 
-  if (result.ok === true) {
+  if (result.ok === true && !responseContractFailed) {
     appendTaskPhase(task, "cloud_consciousness_live_provider_call_completed", {
       liveProvider: evidence,
+      recommendation: recommendationEvidence,
     });
     const completedTask = completeTask(task, {
       summary: "Approved live provider request completed; response content remains transient and is not persisted.",
@@ -229,6 +292,7 @@ export async function executeCloudConsciousnessLiveProviderRequest({
       phase: "cloud_consciousness_live_provider_call_completed",
       liveProvider: evidence,
       contextPacket: taskState.contextPacket,
+      recommendation: recommendationEvidence,
     });
     await publishTaskState({
       task: completedTask,
@@ -243,20 +307,29 @@ export async function executeCloudConsciousnessLiveProviderRequest({
       status: "live_provider_call_completed",
       task: completedTask,
       liveProvider: transientProviderResponse(result),
+      recommendation: recommendationResult.recommendation,
       contextPacket: taskState.contextPacket,
       governance: result.governance,
       summary: taskState,
     };
   }
 
-  appendTaskPhase(task, "cloud_consciousness_live_provider_call_failed", {
+  const failurePhase = responseContractFailed
+    ? "cloud_consciousness_live_provider_response_contract_failed"
+    : "cloud_consciousness_live_provider_call_failed";
+  const failureReason = responseContractFailed
+    ? recommendationResult.reason
+    : result.reason ?? "live_provider_request_failed";
+  appendTaskPhase(task, failurePhase, {
     liveProvider: evidence,
+    recommendation: recommendationEvidence,
   });
-  const failedTask = failTask(task, `Live provider request did not complete: ${result.reason ?? "unknown_error"}.`, {
+  const failedTask = failTask(task, `Live provider request did not complete: ${failureReason ?? "unknown_error"}.`, {
     taskRegistry: taskState.registry,
-    phase: "cloud_consciousness_live_provider_call_failed",
+    phase: failurePhase,
     liveProvider: evidence,
     contextPacket: taskState.contextPacket,
+    recommendation: recommendationEvidence,
   });
   await publishTaskState({
     task: failedTask,
@@ -268,10 +341,13 @@ export async function executeCloudConsciousnessLiveProviderRequest({
   return {
     ok: false,
     executor: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_LIVE_EXECUTION_REGISTRY,
-    status: "live_provider_call_failed",
-    reason: result.reason ?? "live_provider_request_failed",
+    status: responseContractFailed
+      ? "live_provider_response_contract_failed"
+      : "live_provider_call_failed",
+    reason: failureReason,
     task: failedTask,
-    liveProvider: transientProviderResponse(result),
+    liveProvider: transientProviderResponse(result, { includeAssistantContent: !responseContractFailed }),
+    recommendation: recommendationResult.recommendation,
     contextPacket: taskState.contextPacket,
     governance: result.governance,
     summary: taskState,

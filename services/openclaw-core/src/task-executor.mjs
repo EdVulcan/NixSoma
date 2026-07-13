@@ -1107,6 +1107,11 @@ function serialiseExecutionResult(executionResult) {
       ?? finalExecution.task?.outcome?.details?.actionEvidence
       ?? null,
     liveProvider: finalExecution.liveProvider ?? null,
+    recommendation: finalExecution.recommendation ?? null,
+    recommendationEvidence:
+      finalExecution.summary?.recommendation
+      ?? finalExecution.task?.outcome?.details?.recommendation
+      ?? null,
     contextPacket: finalExecution.contextPacket
       ?? finalExecution.task?.outcome?.details?.contextPacket
       ?? null,

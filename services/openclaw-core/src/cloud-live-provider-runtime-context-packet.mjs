@@ -2,6 +2,10 @@ import { createHash } from "node:crypto";
 import { buildNativeEngineeringContextPacket } from "./native-engineering-context-packet.mjs";
 import { buildNativeEngineeringRecoveryEvidence } from "./native-engineering-recovery-evidence-builders.mjs";
 import { buildNativeEngineeringVerificationEvidence } from "./native-engineering-verification-evidence-builders.mjs";
+import {
+  CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
+  buildCloudLiveProviderEngineeringRecommendationInstruction,
+} from "./cloud-live-provider-runtime-response-contract.mjs";
 
 export const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-context-packet-v0";
@@ -58,11 +62,18 @@ function packetMessageText(message) {
   return [label ? `[${label}]` : "", commandLine, text].filter(Boolean).join("\n");
 }
 
-function compactPacketEvidence(packet, { taskId, contextText, providerMessageChars, contextTruncated } = {}) {
+function compactPacketEvidence(packet, {
+  taskId,
+  contextText,
+  providerMessageChars,
+  contextTruncated,
+  responseContract,
+} = {}) {
   return {
     registry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_REGISTRY,
     sourceRegistry: packet.registry,
     taskId,
+    responseContract,
     sourceTranscriptRecords: packet.summary?.sourceTranscriptRecords ?? 0,
     messageCount: packet.summary?.messageCount ?? 0,
     redactions: packet.summary?.redactions ?? 0,
@@ -110,6 +121,16 @@ export function materialiseCloudLiveProviderContextPacketExecution({
     };
   }
 
+  const responseContract = contextRequest.responseContract === undefined
+    ? CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT
+    : contextRequest.responseContract;
+  if (responseContract !== CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT) {
+    return {
+      ok: false,
+      reason: "live_provider_context_response_contract_not_supported",
+    };
+  }
+
   const limit = boundedPositiveInteger(contextRequest.limit, DEFAULT_TRANSCRIPT_LIMIT, MAX_TRANSCRIPT_LIMIT);
   const maxOutputChars = boundedPositiveInteger(
     contextRequest.maxOutputChars,
@@ -142,10 +163,18 @@ export function materialiseCloudLiveProviderContextPacketExecution({
     protectRecentAssistantTurns: contextRequest.protectRecentAssistantTurns,
   });
   const fullContextText = packet.messages.map(packetMessageText).filter(Boolean).join("\n\n");
-  const instruction = boundedText(
+  const requestedInstruction = boundedText(
     contextRequest.instruction,
     MAX_INSTRUCTION_CHARS,
   ) || "Review this bounded local engineering context and provide a concise next-step recommendation. Do not propose uncontrolled execution.";
+  const responseContractInstruction = buildCloudLiveProviderEngineeringRecommendationInstruction();
+  const instruction = [
+    boundedText(
+      requestedInstruction,
+      Math.max(0, MAX_INSTRUCTION_CHARS - responseContractInstruction.length - 1),
+    ),
+    responseContractInstruction,
+  ].filter(Boolean).join(" ");
   const header = "OpenClaw local engineering context, explicitly included for this one approved provider call:";
   const truncationMarker = "\n[local context truncated to the provider request bound]";
   const contextBudget = Math.max(
@@ -165,6 +194,7 @@ export function materialiseCloudLiveProviderContextPacketExecution({
     contextText: fullContextText,
     providerMessageChars: content.length,
     contextTruncated,
+    responseContract,
   });
   const requestEnvelope = {
     messages: [{ role: "user", content }],
@@ -179,7 +209,9 @@ export function materialiseCloudLiveProviderContextPacketExecution({
       contextPacket: {
         requested: true,
         taskId,
+        responseContract,
       },
+      responseContract,
       requestEnvelope,
     },
     evidence,

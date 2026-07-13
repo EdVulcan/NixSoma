@@ -1995,3 +1995,36 @@ test("operator options materialise the existing context packet for live provider
   assert.match(options.liveProviderExecution.requestEnvelope.messages[0].content, /npm test/);
   assert.match(options.liveProviderExecution.requestEnvelope.messages[0].content, /provider context evidence/);
 });
+
+test("execution serializer exposes transient recommendation separately from compact task evidence", () => {
+  const { executor } = createExecutorHarness();
+  const recommendation = {
+    registry: "openclaw-cloud-consciousness-live-provider-engineering-recommendation-v0",
+    contract: "engineering_recommendation_v0",
+    actionId: "create_verification_task",
+    reason: "Transient operator-facing recommendation reason.",
+    requiresOperatorReview: true,
+  };
+  const evidence = {
+    registry: recommendation.registry,
+    contract: recommendation.contract,
+    status: "valid_recommendation",
+    valid: true,
+    reason: null,
+    actionId: recommendation.actionId,
+    reasonIncluded: false,
+  };
+
+  const serialized = executor.serialiseExecutionResult({
+    finalExecution: {
+      task: {
+        outcome: { details: { recommendation: evidence } },
+      },
+      recommendation,
+      summary: { recommendation: evidence },
+    },
+  });
+
+  assert.deepEqual(serialized.recommendation, recommendation);
+  assert.deepEqual(serialized.recommendationEvidence, evidence);
+});

@@ -128,9 +128,11 @@ absorbed through the existing approval/operator/verification readback path
 verification command execution and task-completion attachment
 planning/todo evidence and governed core-state workbench storage are absorbed; hidden planning mode, `.openclaw/cc-todo.md` persistence, task mutation, and plan_exit execution transition remain deferred
 microcompact evidence, bounded in-memory projection, local governed engineering
-context packets, and the explicitly approved DeepSeek context-packet handoff
-are absorbed; automatic provider-request creation, persisted transcript
-rewriting, and result-envelope creation remain deferred
+context packets, the explicitly approved DeepSeek context-packet handoff, and
+the bounded `engineering_recommendation_v0` response contract are absorbed;
+automatic provider-request creation, automatic task/approval/execution from a
+recommendation, persisted transcript rewriting, and result-envelope creation
+remain deferred
 unapproved provider calls and network egress
 ```
 
@@ -481,6 +483,8 @@ and process-spawn preflight; and the local Engineering Context Packet.
 The remaining ACPX live process/auth boundary and any provider/model boundary
 outside the explicit DeepSeek handoff require explicit operator authorization.
 The context-packet handoff consumes the local packet only for the current
-approved operator call; preserve that boundary and select only concrete local
-capabilities that close a user-visible gap. Do not create another readiness or
-evidence-only shell.
+approved operator call and returns only a review-required recommendation;
+preserve that boundary and select only concrete local capabilities that close a
+user-visible gap. The next slice is an existing Observer readback bridge for a
+valid recommendation, not automatic task creation or execution. Do not create
+another readiness or evidence-only shell.

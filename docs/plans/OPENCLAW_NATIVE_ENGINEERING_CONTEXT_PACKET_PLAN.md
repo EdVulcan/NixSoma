@@ -127,9 +127,29 @@ This advances the Level 1 cloud-consciousness boundary from local context
 assembly to an explicitly approved provider handoff while preserving local
 operator control.
 
+## Structured Recommendation Follow-Up Complete
+
+The approved context-packet handoff now appends the bounded
+`engineering_recommendation_v0` response contract. The contract derives its
+action ids from the existing plan/todo allowlist and accepts only a bounded JSON
+recommendation that points to an existing Observer control and capability while
+requiring operator review.
+
+```text
+local context packet -> structured provider recommendation -> operator review
+-> existing governed Observer/task/approval path
+```
+
+Unknown action ids, unknown response keys, malformed fields, and automatic task,
+approval, or execution flags fail closed. A valid recommendation is returned in
+the current execution response only. The durable live-provider task stores
+compact contract evidence and hashes, never the assistant reason or raw response.
+This is an initial Level 1 governance loop; it does not auto-create a task,
+auto-approve, auto-execute, mutate the workspace, or add a provider transcript.
+
 ## Next Slice
 
-The next provider-related slice, if selected, should define an explicit local
-response transcript/readback retention policy before persisting any assistant
-content. Until that policy is chosen, keep provider response content transient
-and do not resume the historical Phase 59-136 wrapper chain.
+The next smallest provider-related slice, if selected, should expose the valid
+transient recommendation through the existing Observer state/readback surface
+and let an operator choose the existing control there. Keep provider response
+content transient and do not resume the historical Phase 59-136 wrapper chain.

@@ -39,6 +39,15 @@ const ACTIONS = {
   },
 };
 
+export function getNativeEngineeringPlanTodoActionById(actionId) {
+  const action = Object.values(ACTIONS).find((candidate) => candidate.actionId === actionId);
+  return action ? { ...action } : null;
+}
+
+export function listNativeEngineeringPlanTodoActions() {
+  return Object.values(ACTIONS).map((action) => ({ ...action }));
+}
+
 function selectCurrentTodo(todos = []) {
   return todos.find((todo) => todo?.status === "in_progress")
     ?? todos.find((todo) => todo?.status === "pending")

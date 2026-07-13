@@ -69,11 +69,14 @@ test("context packet handoff materialises one bounded provider message with comp
 
   assert.equal(result.ok, true);
   assert.equal(result.evidence.registry, CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_REGISTRY);
+  assert.equal(result.evidence.responseContract, "engineering_recommendation_v0");
   assert.equal(result.evidence.sourceTranscriptRecords, 1);
   assert.equal(result.evidence.contextContentIncluded, false);
   assert.equal(result.evidence.requestEnvelopeMaterialized, true);
   assert.equal(result.liveProviderExecution.requestEnvelope.messages.length, 1);
   assert.match(result.liveProviderExecution.requestEnvelope.messages[0].content, /npm test/);
+  assert.match(result.liveProviderExecution.requestEnvelope.messages[0].content, /Return only a JSON object/);
+  assert.equal(result.liveProviderExecution.responseContract, "engineering_recommendation_v0");
   assert.doesNotMatch(result.liveProviderExecution.requestEnvelope.messages[0].content, /should-be-redacted/);
   assert.doesNotMatch(JSON.stringify(result.evidence), /tests passed/);
 });
@@ -102,4 +105,19 @@ test("context packet handoff rejects a different task and an ambiguous request e
   });
   assert.equal(conflict.ok, false);
   assert.equal(conflict.reason, "live_provider_context_request_envelope_conflict");
+
+  const unsupportedContract = materialiseCloudLiveProviderContextPacketExecution({
+    ...input,
+    liveProviderExecution: {
+      requested: true,
+      taskId: input.task.id,
+      contextPacket: {
+        requested: true,
+        taskId: input.task.id,
+        responseContract: "unrecognized_contract_v99",
+      },
+    },
+  });
+  assert.equal(unsupportedContract.ok, false);
+  assert.equal(unsupportedContract.reason, "live_provider_context_response_contract_not_supported");
 });

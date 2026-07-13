@@ -5,6 +5,7 @@ import {
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_LIVE_EXECUTION_REGISTRY,
   executeCloudConsciousnessLiveProviderRequest,
 } from "../src/cloud-live-provider-runtime-live-execution.mjs";
+import { CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT } from "../src/cloud-live-provider-runtime-response-contract.mjs";
 
 function createHarness() {
   const calls = [];
@@ -212,6 +213,110 @@ test("a blocked sender result fails the task without creating response evidence"
   assert.equal(task.outcome.details.liveProvider.assistantContent, undefined);
   assert.equal(result.summary.endpointContacted, false);
   assert.equal(result.summary.networkEgress, false);
+});
+
+test("valid structured recommendation is transient while task state keeps compact evidence", async () => {
+  const harness = createHarness();
+  const task = createTask();
+  const reason = "The bounded todo evidence supports a manual verification task.";
+  const result = await executeCloudConsciousnessLiveProviderRequest({
+    ...harness.deps,
+    task,
+    options: liveOptions({
+      responseContract: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
+    }),
+    sendLiveProviderRequestImpl: async () => ({
+      ok: true,
+      audit: {
+        responseContentHash: "recommendation-response-hash",
+        providerResponseCreated: true,
+        endpointContacted: true,
+        networkEgress: true,
+        transmitsExternally: true,
+      },
+      governance: {
+        providerCredentialRead: true,
+        credentialValueRead: true,
+        providerResponseCreated: true,
+        endpointContacted: true,
+        networkEgress: true,
+        transmitsExternally: true,
+        liveProviderCallEnabled: true,
+      },
+      response: {
+        id: "recommendation-response-1",
+        model: "deepseek-chat",
+        assistantContent: JSON.stringify({
+          actionId: "create_verification_task",
+          reason,
+          confidence: 0.88,
+          requiresOperatorReview: true,
+        }),
+        responseContentHash: "recommendation-response-hash",
+        usage: { total_tokens: 12 },
+      },
+    }),
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.recommendation.reason, reason);
+  assert.equal(result.task.cloudConsciousnessLiveProviderEgressExecution.recommendation.reason, null);
+  assert.equal(result.task.cloudConsciousnessLiveProviderEgressExecution.recommendation.reasonIncluded, false);
+  assert.doesNotMatch(JSON.stringify(result.task), /bounded todo evidence supports/);
+  assert.equal(result.summary.recommendation.actionId, "create_verification_task");
+});
+
+test("invalid structured recommendation fails the task without persisting assistant content", async () => {
+  const harness = createHarness();
+  const task = createTask();
+  const rawContent = JSON.stringify({
+    actionId: "run_arbitrary_command",
+    reason: "Run a command without review.",
+    confidence: 0.99,
+    requiresOperatorReview: true,
+  });
+  const result = await executeCloudConsciousnessLiveProviderRequest({
+    ...harness.deps,
+    task,
+    options: liveOptions({
+      responseContract: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
+    }),
+    sendLiveProviderRequestImpl: async () => ({
+      ok: true,
+      audit: {
+        responseContentHash: "invalid-recommendation-hash",
+        providerResponseCreated: true,
+        endpointContacted: true,
+        networkEgress: true,
+        transmitsExternally: true,
+      },
+      governance: {
+        providerCredentialRead: true,
+        credentialValueRead: true,
+        providerResponseCreated: true,
+        endpointContacted: true,
+        networkEgress: true,
+        transmitsExternally: true,
+        liveProviderCallEnabled: true,
+      },
+      response: {
+        id: "invalid-recommendation-response",
+        model: "deepseek-chat",
+        assistantContent: rawContent,
+        responseContentHash: "invalid-recommendation-hash",
+      },
+    }),
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.status, "live_provider_response_contract_failed");
+  assert.equal(result.reason, "provider_recommendation_action_not_allowed");
+  assert.equal(result.recommendation, null);
+  assert.equal(result.liveProvider.assistantContent, undefined);
+  assert.equal(task.status, "failed");
+  assert.equal(task.cloudConsciousnessLiveProviderEgressExecution.recommendation.reason, "action_not_allowed");
+  assert.doesNotMatch(JSON.stringify(task), /run_arbitrary_command/);
+  assert.doesNotMatch(JSON.stringify(task), /Run a command without review/);
 });
 
 test("live execution ignores caller-supplied context evidence without internal materialisation", async () => {
