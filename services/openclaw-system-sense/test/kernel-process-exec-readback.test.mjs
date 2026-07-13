@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 
 import {
   buildKernelProcessExecReadback,
+  createKernelProcessExecReadback,
+  KERNEL_PROCESS_EXEC_CONTINUITY_REGISTRY,
   KERNEL_PROCESS_EXEC_READBACK_REGISTRY,
 } from "../src/kernel-process-exec-readback.mjs";
 
@@ -50,4 +52,44 @@ test("kernel process exec readback caps command summary entries", () => {
   assert.equal(readback.commCounts.length, 16);
   assert.equal(readback.commCountsTruncated, true);
   assert.equal(readback.persisted, false);
+});
+
+test("kernel process exec continuity reports new comm activity without persistence", () => {
+  const buildReadback = createKernelProcessExecReadback();
+
+  const first = buildReadback({
+    events: [
+      { timestampNs: "10", pid: 10, uid: 1000, comm: "node" },
+      { timestampNs: "11", pid: 11, uid: 1000, comm: "node" },
+    ],
+    captureStatus: "captured",
+  });
+  const second = buildReadback({
+    events: [
+      { timestampNs: "12", pid: 12, uid: 1000, comm: "node" },
+      { timestampNs: "13", pid: 13, uid: 1000, comm: "true" },
+    ],
+    captureStatus: "captured",
+  });
+  const unavailable = buildReadback({
+    events: [],
+    captureStatus: "permission_denied",
+  });
+
+  assert.equal(first.continuity.registry, KERNEL_PROCESS_EXEC_CONTINUITY_REGISTRY);
+  assert.equal(first.continuity.status, "first_capture");
+  assert.equal(first.continuity.captureSequence, 1);
+  assert.equal(first.continuity.currentActivity, "events_observed");
+  assert.deepEqual(first.continuity.newCommNames, ["node"]);
+  assert.equal(first.continuity.persisted, false);
+  assert.equal(second.continuity.status, "continued");
+  assert.equal(second.continuity.captureSequence, 2);
+  assert.equal(second.continuity.previousCaptureSequence, 1);
+  assert.deepEqual(second.continuity.newCommNames, ["true"]);
+  assert.equal(second.continuity.newCommCount, 1);
+  assert.equal(second.continuity.persisted, false);
+  assert.equal(unavailable.continuity.status, "not_available");
+  assert.equal(unavailable.continuity.reason, "permission_denied");
+  assert.equal(unavailable.continuity.captureSequence, null);
+  assert.equal(unavailable.continuity.lastCaptureSequence, 2);
 });

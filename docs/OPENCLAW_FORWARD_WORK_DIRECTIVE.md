@@ -672,6 +672,14 @@ does not survive restart. Select the next eBPF-adjacent capability from a
 specific operator need exposed by this readback before adding another event
 class.
 
+The continuity refinement is also complete on the same route. Successful
+captures receive a sequence and activity state plus a bounded list of newly
+seen comm names; disabled, busy, and failed captures report continuity as
+unavailable without changing the last successful baseline. This remains
+in-memory only and is not a process event ledger. Continue from an explicit
+operator need shown by this continuity evidence before adding another event
+class.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

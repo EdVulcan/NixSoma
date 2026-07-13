@@ -8,6 +8,11 @@ export const observerClientKernelEventRefreshersScript = `async function refresh
     kernelProcessExecUniqueCommCount.textContent = String(readback.uniqueCommCount ?? 0);
     kernelProcessExecUniquePidCount.textContent = String(readback.uniquePidCount ?? 0);
     kernelProcessExecUniqueUidCount.textContent = String(readback.uniqueUidCount ?? 0);
+    const continuity = readback.continuity ?? {};
+    kernelProcessExecContinuityStatus.textContent = continuity.status ?? "unknown";
+    kernelProcessExecCaptureSequence.textContent = String(continuity.captureSequence ?? "none");
+    kernelProcessExecActivity.textContent = continuity.currentActivity ?? "unknown";
+    kernelProcessExecNewCommCount.textContent = String(continuity.newCommCount ?? 0);
     kernelProcessExecReadbackJson.textContent = JSON.stringify(readback, null, 2);
     kernelProcessExecJson.textContent = JSON.stringify(data, null, 2);
   } catch {
@@ -17,6 +22,10 @@ export const observerClientKernelEventRefreshersScript = `async function refresh
     kernelProcessExecUniqueCommCount.textContent = "0";
     kernelProcessExecUniquePidCount.textContent = "0";
     kernelProcessExecUniqueUidCount.textContent = "0";
+    kernelProcessExecContinuityStatus.textContent = "offline";
+    kernelProcessExecCaptureSequence.textContent = "none";
+    kernelProcessExecActivity.textContent = "unknown";
+    kernelProcessExecNewCommCount.textContent = "0";
     kernelProcessExecReadbackJson.textContent = "Unable to read kernel process-exec summary.";
     kernelProcessExecJson.textContent = "Unable to read kernel process-exec events.";
   }

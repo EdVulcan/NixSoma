@@ -52,6 +52,10 @@ for (const token of [
   "kernel-process-exec-unique-comm-count",
   "kernel-process-exec-unique-pid-count",
   "kernel-process-exec-unique-uid-count",
+  "kernel-process-exec-continuity-status",
+  "kernel-process-exec-capture-sequence",
+  "kernel-process-exec-activity",
+  "kernel-process-exec-new-comm-count",
   "kernel-process-exec-readback-json",
   "kernel-process-exec-json",
 ]) {
@@ -68,6 +72,10 @@ for (const token of [
   "kernelProcessExecUniqueCommCount",
   "kernelProcessExecUniquePidCount",
   "kernelProcessExecUniqueUidCount",
+  "kernelProcessExecContinuityStatus",
+  "kernelProcessExecCaptureSequence",
+  "kernelProcessExecActivity",
+  "kernelProcessExecNewCommCount",
   "kernelProcessExecReadbackJson",
 ]) {
   if (!client.includes(token)) {
@@ -86,6 +94,12 @@ if (capture.ok !== true
   || capture.readback?.persisted !== false
   || capture.readback?.uniqueCommCount < 1
   || !capture.readback?.commCounts?.some((entry) => entry.comm === "true")
+  || capture.readback?.continuity?.registry !== "openclaw-kernel-process-exec-continuity-v0"
+  || !["first_capture", "continued"].includes(capture.readback?.continuity?.status)
+  || !Number.isInteger(capture.readback?.continuity?.captureSequence)
+  || capture.readback.continuity.captureSequence < 1
+  || capture.readback.continuity.currentActivity !== "events_observed"
+  || capture.readback.continuity.persisted !== false
   || !capture.events?.some((event) => event.comm === "true")) {
   throw new Error(`Observer source should expose real bounded kernel events: ${JSON.stringify(capture)}`);
 }
@@ -100,6 +114,8 @@ console.log(JSON.stringify({
     eventCount: capture.eventCount,
     uniqueCommCount: capture.readback.uniqueCommCount,
     readbackRegistry: capture.readback.registry,
+    continuityStatus: capture.readback.continuity.status,
+    captureSequence: capture.readback.continuity.captureSequence,
     observedValidationProcess: true,
   },
 }, null, 2));

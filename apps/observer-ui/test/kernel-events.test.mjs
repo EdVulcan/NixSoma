@@ -11,6 +11,10 @@ test("Observer exposes bounded process-exec readback metrics", () => {
     "kernel-process-exec-unique-comm-count",
     "kernel-process-exec-unique-pid-count",
     "kernel-process-exec-unique-uid-count",
+    "kernel-process-exec-continuity-status",
+    "kernel-process-exec-capture-sequence",
+    "kernel-process-exec-activity",
+    "kernel-process-exec-new-comm-count",
     "kernel-process-exec-readback-json",
   ]) {
     assert.equal(panel.includes(token), true, "panel is missing " + token);
@@ -20,6 +24,10 @@ test("Observer exposes bounded process-exec readback metrics", () => {
     "kernelProcessExecUniqueCommCount",
     "kernelProcessExecUniquePidCount",
     "kernelProcessExecUniqueUidCount",
+    "kernelProcessExecContinuityStatus",
+    "kernelProcessExecCaptureSequence",
+    "kernelProcessExecActivity",
+    "kernelProcessExecNewCommCount",
     "kernelProcessExecReadbackJson",
   ]) {
     assert.equal(

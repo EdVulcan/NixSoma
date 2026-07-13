@@ -41,6 +41,9 @@ bounded read model through the existing core system-sense proxy and Observer.
   fixed 16-entry comm count list, unique comm/PID/UID counts, event timestamp
   endpoints, capture window, event limit, and an explicit persisted: false
   marker.
+- Continuity: successful captures also carry an in-memory sequence, quiet or
+  observed activity state, and at most 16 newly seen comm names from a tracked
+  set of 64; disabled, busy, and failed captures do not advance the baseline.
 - Failure behavior: permission and execution failures become explicit bounded
   status values without exposing raw stderr, command paths, argv, or file
   content.
@@ -64,7 +67,7 @@ bounded read model through the existing core system-sense proxy and Observer.
   for an explicit source and the locked flake input as the fallback.
 
 Local implementation, Nix evaluation/parse, shell validation, system-sense
-tests (47/47), core route tests (32/32), and Observer served-source assembly
+tests (48/48), core route tests (32/32), and Observer served-source assembly
 checks pass. The corrected derivation compiled in the switched system, which
 loaded the raw tracepoint probe with only `CAP_BPF`, `CAP_PERFMON`, and
 `LimitMEMLOCK=infinity`. The core acceptance check captured 8 events and the
@@ -79,6 +82,10 @@ tests prove the served panel, DOM bindings, and refresh wiring expose the same
 summary. The switched-VM Observer acceptance also checks the readback registry,
 non-persistence marker, and the validation process name.
 
+The continuity evidence proves first-capture and continued-capture sequencing,
+new comm detection, and non-advancing unavailable/busy states. It retains no
+event ledger and does not survive service restart.
+
 ## Deliberately Deferred
 
 - command-line, executable path, file-content, environment, and network
@@ -90,8 +97,8 @@ non-persistence marker, and the validation process name.
 
 ## Next Slice
 
-The first bounded readback requirement is now complete: operators can inspect a
-compact summary of the current capture without losing the raw allowlisted
-events. The summary is derived in memory for that response only; it is not an
-event ledger and does not survive restart. Before adding another eBPF event
-kind, select a concrete follow-up operator need from this readback evidence.
+The bounded readback and continuity requirements are now complete: operators
+can inspect the current capture, distinguish quiet from observed activity, and
+see newly observed comm names without losing the raw allowlisted events. All
+state is derived in memory and resets on restart. Before adding another eBPF
+event kind, select a concrete follow-up operator need from this evidence.

@@ -196,6 +196,11 @@ test("core infrastructure proxy route forwards read-only system kernel event rou
             registry: "openclaw-kernel-process-exec-readback-v0",
             mode: "bounded_in_memory_summary",
             persisted: false,
+            continuity: {
+              registry: "openclaw-kernel-process-exec-continuity-v0",
+              status: "first_capture",
+              persisted: false,
+            },
           },
         };
       },
@@ -210,6 +215,8 @@ test("core infrastructure proxy route forwards read-only system kernel event rou
   assert.equal(response.body.mode, "read_only");
   assert.equal(response.body.readback.registry, "openclaw-kernel-process-exec-readback-v0");
   assert.equal(response.body.readback.persisted, false);
+  assert.equal(response.body.readback.continuity.registry, "openclaw-kernel-process-exec-continuity-v0");
+  assert.equal(response.body.readback.continuity.status, "first_capture");
 });
 
 test("core runtime read route reconciles and serialises current task", async () => {

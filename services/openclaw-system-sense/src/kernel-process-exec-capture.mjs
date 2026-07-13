@@ -1,4 +1,4 @@
-import { buildKernelProcessExecReadback } from "./kernel-process-exec-readback.mjs";
+import { createKernelProcessExecReadback } from "./kernel-process-exec-readback.mjs";
 
 const REGISTRY = "openclaw-kernel-process-exec-v0";
 const TRACEPOINT = "sched_process_exec";
@@ -27,8 +27,7 @@ function baseReadModel({
   captureOk,
   events = [],
   error = null,
-  captureWindowMs = null,
-  eventLimit = null,
+  readback,
 }) {
   return {
     ok: true,
@@ -40,7 +39,7 @@ function baseReadModel({
     status,
     eventCount: events.length,
     events,
-    readback: buildKernelProcessExecReadback({ events, captureWindowMs, eventLimit }),
+    readback,
     source: {
       transport: "libbpf_ring_buffer",
       tracepoint: TRACEPOINT,
@@ -128,10 +127,15 @@ export function createKernelProcessExecCapture({
   const boundedDurationMs = boundedInteger(durationMs, 1000, MAX_DURATION_MS);
   const boundedMaxEvents = boundedInteger(maxEvents, 128, MAX_EVENTS);
   let activeCapture = null;
+  const buildReadback = createKernelProcessExecReadback();
   const buildReadModel = (params) => baseReadModel({
     ...params,
-    captureWindowMs: boundedDurationMs,
-    eventLimit: boundedMaxEvents,
+    readback: buildReadback({
+      events: params.events ?? [],
+      captureWindowMs: boundedDurationMs,
+      eventLimit: boundedMaxEvents,
+      captureStatus: params.status,
+    }),
   });
 
   async function captureNow() {

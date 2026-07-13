@@ -90,7 +90,13 @@ if (capture.readback?.registry !== "openclaw-kernel-process-exec-readback-v0"
   || capture.readback?.mode !== "bounded_in_memory_summary"
   || capture.readback?.persisted !== false
   || capture.readback?.uniqueCommCount < 1
-  || !capture.readback?.commCounts?.some((entry) => entry.comm === "true")) {
+  || !capture.readback?.commCounts?.some((entry) => entry.comm === "true")
+  || capture.readback?.continuity?.registry !== "openclaw-kernel-process-exec-continuity-v0"
+  || !["first_capture", "continued"].includes(capture.readback?.continuity?.status)
+  || !Number.isInteger(capture.readback?.continuity?.captureSequence)
+  || capture.readback.continuity.captureSequence < 1
+  || capture.readback.continuity.currentActivity !== "events_observed"
+  || capture.readback.continuity.persisted !== false) {
   throw new Error(`kernel process-exec readback summary violated its bounded contract: ${JSON.stringify(capture.readback)}`);
 }
 
@@ -103,6 +109,8 @@ console.log(JSON.stringify({
     eventCount: capture.eventCount,
     uniqueCommCount: capture.readback.uniqueCommCount,
     readbackRegistry: capture.readback.registry,
+    continuityStatus: capture.readback.continuity.status,
+    captureSequence: capture.readback.continuity.captureSequence,
     observedValidationProcess: true,
     commandLineCaptured: capture.source.commandLineCaptured,
     persisted: capture.source.persisted,
