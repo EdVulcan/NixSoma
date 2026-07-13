@@ -16,6 +16,7 @@ mkOpenClawNpmRuntimeClosure {
     ../../services/openclaw-system-sense/package-lock.json
     ../../services/openclaw-system-sense/src/server.mjs
     ../../services/openclaw-system-sense/src/kernel-process-exec-capture.mjs
+    ../../services/openclaw-system-sense/src/kernel-process-exec-readback.mjs
     ../../services/openclaw-system-sense/src/system-body-evidence-routes.mjs
     ../../services/openclaw-system-sense/src/system-body-evidence.mjs
     ../../services/openclaw-system-sense/src/system-command-operations.mjs

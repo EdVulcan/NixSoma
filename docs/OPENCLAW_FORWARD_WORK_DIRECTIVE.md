@@ -661,8 +661,16 @@ explicit permission/unavailable states.
 This slice deliberately does not capture command lines, paths, file content,
 environment, or network traffic; it does not persist events, enforce policy,
 block processes, mutate the host, expand hostd, or start declarative Nix
-self-evolution. After the VM proof, choose a concrete readback/ledger need
-before adding another eBPF event class.
+self-evolution.
+
+The first concrete operator gap is now closed on the same route: each bounded
+capture also returns a deterministic in-memory readback summary with unique
+comm/PID/UID counts, a fixed 16-entry command-count bound, timestamp endpoints,
+capture window, event limit, and explicit non-persistence. Observer renders the
+summary alongside the raw four-field events. This is not an event ledger and it
+does not survive restart. Select the next eBPF-adjacent capability from a
+specific operator need exposed by this readback before adding another event
+class.
 
 ## Identity-Upgrade Alignment
 

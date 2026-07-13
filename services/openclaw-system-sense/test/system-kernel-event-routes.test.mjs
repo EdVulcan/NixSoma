@@ -29,6 +29,11 @@ test("system kernel event route exposes the read-only process exec read model", 
         status: "captured",
         mode: "read_only",
         events: [],
+        readback: {
+          registry: "openclaw-kernel-process-exec-readback-v0",
+          mode: "bounded_in_memory_summary",
+          persisted: false,
+        },
       }),
     },
   });
@@ -41,6 +46,11 @@ test("system kernel event route exposes the read-only process exec read model", 
     status: "captured",
     mode: "read_only",
     events: [],
+    readback: {
+      registry: "openclaw-kernel-process-exec-readback-v0",
+      mode: "bounded_in_memory_summary",
+      persisted: false,
+    },
   });
 });
 

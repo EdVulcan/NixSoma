@@ -86,6 +86,13 @@ for (const event of capture.events) {
 if (!capture.events.some((event) => event.comm === "true")) {
   throw new Error(`kernel process-exec capture did not observe the validation child process: ${JSON.stringify(capture.events)}`);
 }
+if (capture.readback?.registry !== "openclaw-kernel-process-exec-readback-v0"
+  || capture.readback?.mode !== "bounded_in_memory_summary"
+  || capture.readback?.persisted !== false
+  || capture.readback?.uniqueCommCount < 1
+  || !capture.readback?.commCounts?.some((entry) => entry.comm === "true")) {
+  throw new Error(`kernel process-exec readback summary violated its bounded contract: ${JSON.stringify(capture.readback)}`);
+}
 
 console.log(JSON.stringify({
   openclawKernelProcessExecCapture: {
@@ -94,6 +101,8 @@ console.log(JSON.stringify({
     transport: capture.source.transport,
     tracepoint: capture.source.tracepoint,
     eventCount: capture.eventCount,
+    uniqueCommCount: capture.readback.uniqueCommCount,
+    readbackRegistry: capture.readback.registry,
     observedValidationProcess: true,
     commandLineCaptured: capture.source.commandLineCaptured,
     persisted: capture.source.persisted,

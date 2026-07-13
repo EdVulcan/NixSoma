@@ -26,6 +26,9 @@ test("kernel process exec capture stays disabled without invoking a probe", asyn
   assert.equal(result.status, "disabled");
   assert.equal(result.mode, "read_only");
   assert.deepEqual(result.events, []);
+  assert.equal(result.readback.mode, "bounded_in_memory_summary");
+  assert.equal(result.readback.captureWindowMs, 1000);
+  assert.equal(result.readback.eventLimit, 128);
   assert.equal(result.source.commandLineCaptured, false);
   assert.equal(result.source.persisted, false);
 });
@@ -49,6 +52,8 @@ test("kernel process exec capture validates bounded JSON Lines output", async ()
   assert.equal(result.available, true);
   assert.equal(result.eventCount, 1);
   assert.deepEqual(result.events, [event]);
+  assert.deepEqual(result.readback.commCounts, [{ comm: "node", count: 1 }]);
+  assert.equal(result.readback.persisted, false);
   assert.deepEqual(observed[1], ["--duration-ms", "5000", "--max-events", "4096"]);
   assert.equal(observed[2].timeout, 6000);
   assert.equal(observed[2].killSignal, "SIGTERM");
@@ -91,6 +96,7 @@ test("kernel process exec capture rejects output outside the field contract", as
 
   assert.equal(result.status, "invalid_output");
   assert.equal(result.error.code, "invalid_output");
+  assert.equal(result.readback.eventCount, 0);
 });
 
 test("kernel process exec capture serialises concurrent requests as busy", async () => {

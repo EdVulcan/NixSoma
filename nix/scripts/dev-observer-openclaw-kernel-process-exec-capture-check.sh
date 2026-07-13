@@ -49,6 +49,10 @@ for (const token of [
   "kernel-process-exec-status",
   "kernel-process-exec-available",
   "kernel-process-exec-event-count",
+  "kernel-process-exec-unique-comm-count",
+  "kernel-process-exec-unique-pid-count",
+  "kernel-process-exec-unique-uid-count",
+  "kernel-process-exec-readback-json",
   "kernel-process-exec-json",
 ]) {
   if (!html.includes(token)) {
@@ -61,6 +65,10 @@ for (const token of [
   "kernelProcessExecStatus",
   "kernelProcessExecAvailable",
   "kernelProcessExecEventCount",
+  "kernelProcessExecUniqueCommCount",
+  "kernelProcessExecUniquePidCount",
+  "kernelProcessExecUniqueUidCount",
+  "kernelProcessExecReadbackJson",
 ]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);
@@ -73,6 +81,11 @@ if (capture.ok !== true
   || capture.source?.transport !== "libbpf_ring_buffer"
   || capture.source?.tracepoint !== "sched_process_exec"
   || capture.source?.persisted !== false
+  || capture.readback?.registry !== "openclaw-kernel-process-exec-readback-v0"
+  || capture.readback?.mode !== "bounded_in_memory_summary"
+  || capture.readback?.persisted !== false
+  || capture.readback?.uniqueCommCount < 1
+  || !capture.readback?.commCounts?.some((entry) => entry.comm === "true")
   || !capture.events?.some((event) => event.comm === "true")) {
   throw new Error(`Observer source should expose real bounded kernel events: ${JSON.stringify(capture)}`);
 }
@@ -85,6 +98,8 @@ console.log(JSON.stringify({
     transport: capture.source.transport,
     tracepoint: capture.source.tracepoint,
     eventCount: capture.eventCount,
+    uniqueCommCount: capture.readback.uniqueCommCount,
+    readbackRegistry: capture.readback.registry,
     observedValidationProcess: true,
   },
 }, null, 2));

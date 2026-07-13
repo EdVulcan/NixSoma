@@ -1,3 +1,5 @@
+import { buildKernelProcessExecReadback } from "./kernel-process-exec-readback.mjs";
+
 const REGISTRY = "openclaw-kernel-process-exec-v0";
 const TRACEPOINT = "sched_process_exec";
 const MAX_DURATION_MS = 5000;
@@ -18,7 +20,16 @@ function boundedInteger(value, fallback, maximum) {
   return Math.min(parsed, maximum);
 }
 
-function baseReadModel({ enabled, status, available, captureOk, events = [], error = null }) {
+function baseReadModel({
+  enabled,
+  status,
+  available,
+  captureOk,
+  events = [],
+  error = null,
+  captureWindowMs = null,
+  eventLimit = null,
+}) {
   return {
     ok: true,
     registry: REGISTRY,
@@ -29,6 +40,7 @@ function baseReadModel({ enabled, status, available, captureOk, events = [], err
     status,
     eventCount: events.length,
     events,
+    readback: buildKernelProcessExecReadback({ events, captureWindowMs, eventLimit }),
     source: {
       transport: "libbpf_ring_buffer",
       tracepoint: TRACEPOINT,
@@ -116,10 +128,15 @@ export function createKernelProcessExecCapture({
   const boundedDurationMs = boundedInteger(durationMs, 1000, MAX_DURATION_MS);
   const boundedMaxEvents = boundedInteger(maxEvents, 128, MAX_EVENTS);
   let activeCapture = null;
+  const buildReadModel = (params) => baseReadModel({
+    ...params,
+    captureWindowMs: boundedDurationMs,
+    eventLimit: boundedMaxEvents,
+  });
 
   async function captureNow() {
     if (!enabled) {
-      return baseReadModel({
+      return buildReadModel({
         enabled: false,
         status: "disabled",
         available: false,
@@ -127,7 +144,7 @@ export function createKernelProcessExecCapture({
       });
     }
     if (typeof probeCommand !== "string" || probeCommand.trim() === "" || typeof runProbe !== "function") {
-      return baseReadModel({
+      return buildReadModel({
         enabled: true,
         status: "unavailable",
         available: false,
@@ -151,7 +168,7 @@ export function createKernelProcessExecCapture({
         killSignal: "SIGTERM",
       });
       const events = parseEvents(result?.stdout, boundedMaxEvents);
-      return baseReadModel({
+      return buildReadModel({
         enabled: true,
         status: "captured",
         available: true,
@@ -162,7 +179,7 @@ export function createKernelProcessExecCapture({
       const classified = error?.code === "invalid_output"
         ? { code: "invalid_output", message: "Kernel process-exec probe returned invalid event data." }
         : classifyProbeError(error);
-      return baseReadModel({
+      return buildReadModel({
         enabled: true,
         status: classified.code,
         available: false,
@@ -174,7 +191,7 @@ export function createKernelProcessExecCapture({
 
   async function capture() {
     if (activeCapture) {
-      return baseReadModel({
+      return buildReadModel({
         enabled,
         status: "busy",
         available: false,

@@ -1,7 +1,7 @@
 # Phase C Kernel Process-Exec Capture Plan
 
-Status: implementation, switched-VM acceptance, and full body-config passed,
-2026-07-13
+Status: implementation, switched-VM acceptance, full body-config, and bounded
+readback passed, 2026-07-13
 
 ## Purpose
 
@@ -37,6 +37,10 @@ bounded read model through the existing core system-sense proxy and Observer.
 - Output fields: `timestampNs`, `pid`, `uid`, `comm` only.
 - Runtime behavior: one capture at a time, no automatic retry, no persistence,
   no policy execution, and no host mutation.
+- Readback: the existing response includes a bounded in-memory summary with a
+  fixed 16-entry comm count list, unique comm/PID/UID counts, event timestamp
+  endpoints, capture window, event limit, and an explicit persisted: false
+  marker.
 - Failure behavior: permission and execution failures become explicit bounded
   status values without exposing raw stderr, command paths, argv, or file
   content.
@@ -60,7 +64,7 @@ bounded read model through the existing core system-sense proxy and Observer.
   for an explicit source and the locked flake input as the fallback.
 
 Local implementation, Nix evaluation/parse, shell validation, system-sense
-tests (45/45), core route tests (32/32), and Observer served-source assembly
+tests (47/47), core route tests (32/32), and Observer served-source assembly
 checks pass. The corrected derivation compiled in the switched system, which
 loaded the raw tracepoint probe with only `CAP_BPF`, `CAP_PERFMON`, and
 `LimitMEMLOCK=infinity`. The core acceptance check captured 8 events and the
@@ -68,6 +72,12 @@ Observer acceptance check captured 8 events including the external `true`
   validation process. The full `body-config` check then passed while reusing
   the installed NixOS 25.11 channel, so it did not redownload the separate
   unstable clang closure.
+
+The bounded readback evidence includes deterministic summary ordering, identity
+counts, and the fixed command summary bound in the system-sense tests. Observer
+tests prove the served panel, DOM bindings, and refresh wiring expose the same
+summary. The switched-VM Observer acceptance also checks the readback registry,
+non-persistence marker, and the validation process name.
 
 ## Deliberately Deferred
 
@@ -80,6 +90,8 @@ Observer acceptance check captured 8 events including the external `true`
 
 ## Next Slice
 
-After the real capture and Observer proof, select the smallest useful event
-readback or bounded event ledger requirement. Do not add more eBPF event kinds
-until the process-exec read model demonstrates a concrete operator gap.
+The first bounded readback requirement is now complete: operators can inspect a
+compact summary of the current capture without losing the raw allowlisted
+events. The summary is derived in memory for that response only; it is not an
+event ledger and does not survive restart. Before adding another eBPF event
+kind, select a concrete follow-up operator need from this readback evidence.
