@@ -26,9 +26,9 @@ curl --silent --fail "$OBSERVER_URL/" >"$html_file"
 curl --silent --fail "$OBSERVER_URL/client-v5.js" >"$client_file"
 
 (
-  sleep 0.2
-  for _ in 1 2 3 4 5 6 7 8; do
+  for _ in $(seq 1 20); do
     "$true_binary"
+    sleep 0.1
   done
 ) &
 generator_pid=$!
@@ -52,6 +52,7 @@ for (const token of [
   "kernel-process-exec-unique-comm-count",
   "kernel-process-exec-unique-pid-count",
   "kernel-process-exec-unique-uid-count",
+  "kernel-process-exec-executable-identity-count",
   "kernel-process-exec-continuity-status",
   "kernel-process-exec-capture-sequence",
   "kernel-process-exec-activity",
@@ -72,6 +73,7 @@ for (const token of [
   "kernelProcessExecUniqueCommCount",
   "kernelProcessExecUniquePidCount",
   "kernelProcessExecUniqueUidCount",
+  "kernelProcessExecExecutableIdentityCount",
   "kernelProcessExecContinuityStatus",
   "kernelProcessExecCaptureSequence",
   "kernelProcessExecActivity",
@@ -100,6 +102,16 @@ if (capture.ok !== true
   || capture.readback.continuity.captureSequence < 1
   || capture.readback.continuity.currentActivity !== "events_observed"
   || capture.readback.continuity.persisted !== false
+  || capture.source?.executableIdentityCaptured !== true
+  || capture.source?.executableIdentityLimit !== 16
+  || capture.source?.executableMaxLength !== 255
+  || capture.readback?.executableIdentity?.registry !== "openclaw-kernel-process-exec-executable-identity-v0"
+  || capture.readback?.executableIdentity?.mode !== "bounded_in_memory_executable_identity"
+  || capture.readback?.executableIdentity?.persisted !== false
+  || capture.readback?.executableIdentity?.identityCount < 1
+  || !capture.readback?.executableIdentity?.entries?.some((entry) => (
+    entry.comm === "true" && typeof entry.executable === "string" && entry.executable.endsWith("/true")
+  ))
   || !capture.events?.some((event) => event.comm === "true")) {
   throw new Error(`Observer source should expose real bounded kernel events: ${JSON.stringify(capture)}`);
 }
@@ -117,6 +129,7 @@ console.log(JSON.stringify({
     continuityStatus: capture.readback.continuity.status,
     captureSequence: capture.readback.continuity.captureSequence,
     observedValidationProcess: true,
+    observedExecutableIdentity: capture.readback.executableIdentity.entries.find((entry) => entry.comm === "true")?.executable,
   },
 }, null, 2));
 EOF

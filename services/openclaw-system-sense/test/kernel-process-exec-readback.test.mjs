@@ -3,8 +3,10 @@ import assert from "node:assert/strict";
 
 import {
   buildKernelProcessExecReadback,
+  buildKernelProcessExecExecutableIdentityReadback,
   createKernelProcessExecReadback,
   KERNEL_PROCESS_EXEC_CONTINUITY_REGISTRY,
+  KERNEL_PROCESS_EXEC_EXECUTABLE_IDENTITY_REGISTRY,
   KERNEL_PROCESS_EXEC_READBACK_REGISTRY,
 } from "../src/kernel-process-exec-readback.mjs";
 
@@ -14,6 +16,9 @@ test("kernel process exec readback summarizes bounded identity fields", () => {
       { timestampNs: "10", pid: 10, uid: 1000, comm: "node" },
       { timestampNs: "11", pid: 11, uid: 1000, comm: "true" },
       { timestampNs: "12", pid: 12, uid: 1001, comm: "node" },
+    ],
+    executableIdentities: [
+      { timestampNs: "10", pid: 10, uid: 1000, comm: "node", executable: "/usr/bin/node" },
     ],
     captureWindowMs: 1000,
     eventLimit: 128,
@@ -36,6 +41,11 @@ test("kernel process exec readback summarizes bounded identity fields", () => {
   assert.equal(readback.lastTimestampNs, "12");
   assert.equal(readback.captureWindowMs, 1000);
   assert.equal(readback.eventLimit, 128);
+  assert.equal(readback.executableIdentity.registry, KERNEL_PROCESS_EXEC_EXECUTABLE_IDENTITY_REGISTRY);
+  assert.equal(readback.executableIdentity.identityCount, 1);
+  assert.deepEqual(readback.executableIdentity.entries, [
+    { timestampNs: "10", pid: 10, uid: 1000, comm: "node", executable: "/usr/bin/node" },
+  ]);
 });
 
 test("kernel process exec readback caps command summary entries", () => {
@@ -52,6 +62,24 @@ test("kernel process exec readback caps command summary entries", () => {
   assert.equal(readback.commCounts.length, 16);
   assert.equal(readback.commCountsTruncated, true);
   assert.equal(readback.persisted, false);
+});
+
+test("kernel process exec executable identity readback stays bounded and in memory", () => {
+  const identities = Array.from({ length: 17 }, (_, index) => ({
+    timestampNs: String(index + 1),
+    pid: index + 1,
+    uid: 1000,
+    comm: "proc",
+    executable: "/nix/store/proc-" + String(index),
+  }));
+  const readback = buildKernelProcessExecExecutableIdentityReadback({ identities });
+
+  assert.equal(readback.registry, KERNEL_PROCESS_EXEC_EXECUTABLE_IDENTITY_REGISTRY);
+  assert.equal(readback.mode, "bounded_in_memory_executable_identity");
+  assert.equal(readback.persisted, false);
+  assert.equal(readback.identityCount, 17);
+  assert.equal(readback.entries.length, 16);
+  assert.equal(readback.entriesTruncated, true);
 });
 
 test("kernel process exec continuity reports new comm activity without persistence", () => {

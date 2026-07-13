@@ -5,6 +5,10 @@ const TRACEPOINT = "sched_process_exec";
 const MAX_DURATION_MS = 5000;
 const MAX_EVENTS = 4096;
 const EVENT_KEYS = ["timestampNs", "pid", "uid", "comm"];
+const PROBE_EVENT_KEYS = [...EVENT_KEYS, "executable"];
+const MAX_EXECUTABLE_LENGTH = 255;
+const MAX_EXECUTABLE_IDENTITY_ENTRIES = 16;
+const MAX_PROBE_OUTPUT_BYTES = 2 * 1024 * 1024;
 
 function invalidOutput(message) {
   const error = new Error(message);
@@ -26,6 +30,7 @@ function baseReadModel({
   available,
   captureOk,
   events = [],
+  executableIdentities = [],
   error = null,
   readback,
 }) {
@@ -38,14 +43,19 @@ function baseReadModel({
     captureOk,
     status,
     eventCount: events.length,
+    executableIdentityCount: executableIdentities.length,
     events,
     readback,
     source: {
       transport: "libbpf_ring_buffer",
       tracepoint: TRACEPOINT,
       fields: EVENT_KEYS,
+      executableIdentityFields: PROBE_EVENT_KEYS,
       commandLineCaptured: false,
       pathCaptured: false,
+      executableIdentityCaptured: true,
+      executableIdentityLimit: MAX_EXECUTABLE_IDENTITY_ENTRIES,
+      executableMaxLength: MAX_EXECUTABLE_LENGTH,
       fileContentCaptured: false,
       networkCaptured: false,
       persisted: false,
@@ -96,7 +106,7 @@ function parseEvents(stdout, maxEvents) {
       throw invalidOutput("probe output event was not an object");
     }
     const keys = Object.keys(value);
-    if (keys.length !== EVENT_KEYS.length || EVENT_KEYS.some((key) => !keys.includes(key))) {
+    if (keys.length !== PROBE_EVENT_KEYS.length || PROBE_EVENT_KEYS.some((key) => !keys.includes(key))) {
       throw invalidOutput("probe output event fields were outside the allowlist");
     }
     if (typeof value.timestampNs !== "string" || !/^\d+$/.test(value.timestampNs)) {
@@ -108,11 +118,26 @@ function parseEvents(stdout, maxEvents) {
     if (typeof value.comm !== "string" || value.comm.length === 0 || value.comm.length > 15 || /[\r\n]/.test(value.comm)) {
       throw invalidOutput("probe output command name was invalid");
     }
+    if (typeof value.executable !== "string"
+      || value.executable.length === 0
+      || value.executable.length > MAX_EXECUTABLE_LENGTH
+      || /[\u0000\r\n]/.test(value.executable)) {
+      throw invalidOutput("probe output executable identity was invalid");
+    }
     return {
-      timestampNs: value.timestampNs,
-      pid: value.pid,
-      uid: value.uid,
-      comm: value.comm,
+      event: {
+        timestampNs: value.timestampNs,
+        pid: value.pid,
+        uid: value.uid,
+        comm: value.comm,
+      },
+      executableIdentity: {
+        timestampNs: value.timestampNs,
+        pid: value.pid,
+        uid: value.uid,
+        comm: value.comm,
+        executable: value.executable,
+      },
     };
   });
 }
@@ -132,6 +157,7 @@ export function createKernelProcessExecCapture({
     ...params,
     readback: buildReadback({
       events: params.events ?? [],
+      executableIdentities: params.executableIdentities ?? [],
       captureWindowMs: boundedDurationMs,
       eventLimit: boundedMaxEvents,
       captureStatus: params.status,
@@ -168,16 +194,19 @@ export function createKernelProcessExecCapture({
         String(boundedMaxEvents),
       ], {
         timeout: boundedDurationMs + 1000,
-        maxBuffer: Math.min(1024 * 1024, 8192 + (boundedMaxEvents * 128)),
+        maxBuffer: Math.min(MAX_PROBE_OUTPUT_BYTES, 8192 + (boundedMaxEvents * 512)),
         killSignal: "SIGTERM",
       });
-      const events = parseEvents(result?.stdout, boundedMaxEvents);
+      const parsedEvents = parseEvents(result?.stdout, boundedMaxEvents);
+      const events = parsedEvents.map(({ event }) => event);
+      const executableIdentities = parsedEvents.map(({ executableIdentity }) => executableIdentity);
       return buildReadModel({
         enabled: true,
         status: "captured",
         available: true,
         captureOk: true,
         events,
+        executableIdentities,
       });
     } catch (error) {
       const classified = error?.code === "invalid_output"

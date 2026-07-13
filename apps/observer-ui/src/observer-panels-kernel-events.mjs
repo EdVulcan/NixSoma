@@ -7,6 +7,7 @@ export function observerKernelEventPanels() {
           <div class="metric"><span>Unique comm</span><span id="kernel-process-exec-unique-comm-count">0</span></div>
           <div class="metric"><span>Unique PID</span><span id="kernel-process-exec-unique-pid-count">0</span></div>
           <div class="metric"><span>Unique UID</span><span id="kernel-process-exec-unique-uid-count">0</span></div>
+          <div class="metric"><span>Executable identities</span><span id="kernel-process-exec-executable-identity-count">0</span></div>
           <div class="metric"><span>Continuity</span><span id="kernel-process-exec-continuity-status">not_available</span></div>
           <div class="metric"><span>Capture sequence</span><span id="kernel-process-exec-capture-sequence">none</span></div>
           <div class="metric"><span>Activity</span><span id="kernel-process-exec-activity">unknown</span></div>

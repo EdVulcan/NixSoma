@@ -32,9 +32,9 @@ cleanup() {
 trap cleanup EXIT
 
 (
-  sleep 0.2
-  for _ in 1 2 3 4 5 6 7 8; do
+  for _ in $(seq 1 20); do
     "$true_binary"
+    sleep 0.1
   done
 ) &
 generator_pid=$!
@@ -48,6 +48,7 @@ const fs = require("node:fs");
 
 const capture = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
 const expectedFields = ["timestampNs", "pid", "uid", "comm"];
+const expectedExecutableIdentityFields = [...expectedFields, "executable"];
 if (capture.ok !== true
   || capture.registry !== "openclaw-kernel-process-exec-v0"
   || capture.mode !== "read_only"
@@ -63,8 +64,12 @@ if (capture.ok !== true
 if (capture.source?.transport !== "libbpf_ring_buffer"
   || capture.source?.tracepoint !== "sched_process_exec"
   || JSON.stringify(capture.source?.fields) !== JSON.stringify(expectedFields)
+  || JSON.stringify(capture.source?.executableIdentityFields) !== JSON.stringify(expectedExecutableIdentityFields)
   || capture.source?.commandLineCaptured !== false
   || capture.source?.pathCaptured !== false
+  || capture.source?.executableIdentityCaptured !== true
+  || capture.source?.executableIdentityLimit !== 16
+  || capture.source?.executableMaxLength !== 255
   || capture.source?.fileContentCaptured !== false
   || capture.source?.networkCaptured !== false
   || capture.source?.persisted !== false
@@ -96,7 +101,14 @@ if (capture.readback?.registry !== "openclaw-kernel-process-exec-readback-v0"
   || !Number.isInteger(capture.readback?.continuity?.captureSequence)
   || capture.readback.continuity.captureSequence < 1
   || capture.readback.continuity.currentActivity !== "events_observed"
-  || capture.readback.continuity.persisted !== false) {
+  || capture.readback.continuity.persisted !== false
+  || capture.readback.executableIdentity?.registry !== "openclaw-kernel-process-exec-executable-identity-v0"
+  || capture.readback.executableIdentity?.mode !== "bounded_in_memory_executable_identity"
+  || capture.readback.executableIdentity?.persisted !== false
+  || capture.readback.executableIdentity?.identityCount < 1
+  || !capture.readback.executableIdentity?.entries?.some((entry) => (
+    entry.comm === "true" && typeof entry.executable === "string" && entry.executable.endsWith("/true")
+  ))) {
   throw new Error(`kernel process-exec readback summary violated its bounded contract: ${JSON.stringify(capture.readback)}`);
 }
 
@@ -112,6 +124,7 @@ console.log(JSON.stringify({
     continuityStatus: capture.readback.continuity.status,
     captureSequence: capture.readback.continuity.captureSequence,
     observedValidationProcess: true,
+    observedExecutableIdentity: capture.readback.executableIdentity.entries.find((entry) => entry.comm === "true")?.executable,
     commandLineCaptured: capture.source.commandLineCaptured,
     persisted: capture.source.persisted,
   },

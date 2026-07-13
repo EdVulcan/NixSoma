@@ -4,6 +4,7 @@ const kernelProcessExecEventCount = document.querySelector("#kernel-process-exec
 const kernelProcessExecUniqueCommCount = document.querySelector("#kernel-process-exec-unique-comm-count");
 const kernelProcessExecUniquePidCount = document.querySelector("#kernel-process-exec-unique-pid-count");
 const kernelProcessExecUniqueUidCount = document.querySelector("#kernel-process-exec-unique-uid-count");
+const kernelProcessExecExecutableIdentityCount = document.querySelector("#kernel-process-exec-executable-identity-count");
 const kernelProcessExecContinuityStatus = document.querySelector("#kernel-process-exec-continuity-status");
 const kernelProcessExecCaptureSequence = document.querySelector("#kernel-process-exec-capture-sequence");
 const kernelProcessExecActivity = document.querySelector("#kernel-process-exec-activity");

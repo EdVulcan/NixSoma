@@ -13,6 +13,7 @@ struct openclaw_process_exec_event {
   uint32_t pid;
   uint32_t uid;
   char comm[16];
+  char executable[256];
 };
 
 struct capture_context {
@@ -74,6 +75,8 @@ static int handle_event(void *raw_context, void *raw_data, size_t data_size) {
     event->pid,
     event->uid);
   print_json_string(event->comm);
+  fputs(",\"executable\":", stdout);
+  print_json_string(event->executable);
   puts("}");
   context->event_count += 1;
   if (context->event_count >= context->max_events) context->stop = 1;

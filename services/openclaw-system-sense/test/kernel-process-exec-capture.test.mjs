@@ -8,6 +8,14 @@ const event = {
   pid: 42,
   uid: 1000,
   comm: "node",
+  executable: "/nix/store/example/bin/node",
+};
+
+const rawEvent = {
+  timestampNs: event.timestampNs,
+  pid: event.pid,
+  uid: event.uid,
+  comm: event.comm,
 };
 
 test("kernel process exec capture stays disabled without invoking a probe", async () => {
@@ -53,7 +61,10 @@ test("kernel process exec capture validates bounded JSON Lines output", async ()
   assert.equal(result.status, "captured");
   assert.equal(result.available, true);
   assert.equal(result.eventCount, 1);
-  assert.deepEqual(result.events, [event]);
+  assert.deepEqual(result.events, [rawEvent]);
+  assert.equal(result.executableIdentityCount, 1);
+  assert.deepEqual(result.readback.executableIdentity.entries, [event]);
+  assert.equal(result.readback.executableIdentity.identityCount, 1);
   assert.deepEqual(result.readback.commCounts, [{ comm: "node", count: 1 }]);
   assert.equal(result.readback.persisted, false);
   assert.equal(result.readback.continuity.status, "first_capture");

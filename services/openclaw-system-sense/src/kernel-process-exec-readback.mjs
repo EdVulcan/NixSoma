@@ -1,11 +1,14 @@
 const REGISTRY = "openclaw-kernel-process-exec-readback-v0";
 const CONTINUITY_REGISTRY = "openclaw-kernel-process-exec-continuity-v0";
+const EXECUTABLE_IDENTITY_REGISTRY = "openclaw-kernel-process-exec-executable-identity-v0";
 const MAX_COMMAND_SUMMARY_ENTRIES = 16;
+const MAX_EXECUTABLE_IDENTITY_ENTRIES = 16;
 const MAX_NEW_COMM_NAMES = 16;
 const MAX_TRACKED_COMM_NAMES = 64;
 
 export function buildKernelProcessExecReadback({
   events = [],
+  executableIdentities = [],
   captureWindowMs = null,
   eventLimit = null,
 } = {}) {
@@ -50,6 +53,9 @@ export function buildKernelProcessExecReadback({
     lastTimestampNs: events.at(-1)?.timestampNs ?? null,
     captureWindowMs,
     eventLimit,
+    executableIdentity: buildKernelProcessExecExecutableIdentityReadback({
+      identities: executableIdentities,
+    }),
   };
 }
 
@@ -58,6 +64,21 @@ function sortedUniqueCommNames(events) {
     .filter((event) => event && typeof event.comm === "string")
     .map((event) => event.comm))]
     .sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
+}
+
+export function buildKernelProcessExecExecutableIdentityReadback({ identities = [] } = {}) {
+  const boundedIdentities = Array.isArray(identities)
+    ? identities.slice(0, MAX_EXECUTABLE_IDENTITY_ENTRIES)
+    : [];
+  return {
+    registry: EXECUTABLE_IDENTITY_REGISTRY,
+    mode: "bounded_in_memory_executable_identity",
+    persisted: false,
+    identityCount: Array.isArray(identities) ? identities.length : 0,
+    entries: boundedIdentities,
+    entriesTruncated: Array.isArray(identities) && identities.length > MAX_EXECUTABLE_IDENTITY_ENTRIES,
+    entryLimit: MAX_EXECUTABLE_IDENTITY_ENTRIES,
+  };
 }
 
 function buildUnavailableContinuity({ captureStatus, previous }) {
@@ -96,11 +117,17 @@ export function createKernelProcessExecReadback({
 
   return ({
     events = [],
+    executableIdentities = [],
     captureWindowMs = null,
     eventLimit = null,
     captureStatus = "captured",
   } = {}) => {
-    const readback = buildKernelProcessExecReadback({ events, captureWindowMs, eventLimit });
+    const readback = buildKernelProcessExecReadback({
+      events,
+      executableIdentities,
+      captureWindowMs,
+      eventLimit,
+    });
     if (captureStatus !== "captured") {
       return {
         ...readback,
@@ -147,3 +174,4 @@ export function createKernelProcessExecReadback({
 
 export const KERNEL_PROCESS_EXEC_READBACK_REGISTRY = REGISTRY;
 export const KERNEL_PROCESS_EXEC_CONTINUITY_REGISTRY = CONTINUITY_REGISTRY;
+export const KERNEL_PROCESS_EXEC_EXECUTABLE_IDENTITY_REGISTRY = EXECUTABLE_IDENTITY_REGISTRY;
