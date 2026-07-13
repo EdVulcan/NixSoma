@@ -172,6 +172,8 @@ requireIncludes("dev-body profile", devProfile, [
 
 requireIncludes("desktop-body profile", desktopProfile, [
   "./dev-body.nix",
+  "nix.settings = {",
+  "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store",
   "profile = \"desktop-body\"",
   "user = \"openclaw-service\"",
   "hostdUser = \"openclaw-hostd\"",
@@ -245,6 +247,10 @@ if command -v nix >/dev/null 2>&1; then
     in {
       system = builtins.attrNames config.systemd.services;
       user = builtins.attrNames config.systemd.user.services;
+      nixSettings = {
+        substituters = config.nix.settings.substituters;
+        trustedPublicKeys = config.nix.settings."trusted-public-keys";
+      };
       polkitEnabled = config.security.polkit.enable;
       polkitExtraConfig = config.security.polkit.extraConfig;
       session = project config.systemd.user.services.openclaw-session-manager;
@@ -262,6 +268,17 @@ if command -v nix >/dev/null 2>&1; then
     }')"
   node - <<'EOF' "$ownership_json"
 const ownership = JSON.parse(process.argv[2]);
+const expectedSubstituters = [
+  "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store",
+  "https://cache.nixos.org/",
+];
+const expectedTrustedPublicKeys = [
+  "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=",
+];
+if (JSON.stringify(ownership.nixSettings?.substituters) !== JSON.stringify(expectedSubstituters)
+  || JSON.stringify(ownership.nixSettings?.trustedPublicKeys) !== JSON.stringify(expectedTrustedPublicKeys)) {
+  throw new Error(`desktop body must expose the domestic-first Nix cache configuration: ${JSON.stringify(ownership.nixSettings)}`);
+}
 const userOwned = ["openclaw-session-manager", "openclaw-browser-runtime"];
 for (const name of userOwned) {
   if (!ownership.user.includes(name) || ownership.system.includes(name)) {

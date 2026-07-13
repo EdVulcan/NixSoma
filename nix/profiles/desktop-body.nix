@@ -3,6 +3,12 @@
     ./dev-body.nix
   ];
 
+  nix.settings = {
+    substituters = [
+      "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
+    ];
+  };
+
   services.openclaw = {
     profile = "desktop-body";
     user = "openclaw-service";
