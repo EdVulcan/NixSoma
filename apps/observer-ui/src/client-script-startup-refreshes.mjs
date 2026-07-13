@@ -260,6 +260,7 @@ export const OBSERVER_STARTUP_REFRESH_GROUPS = [
     group: "systemBodySystemdAudit",
     refreshNames: [
       "refreshSystemState",
+      "refreshKernelProcessExecEvents",
       "refreshHealthTrends",
       "refreshRouteAwareNextAction",
       "refreshConservativeRecoveryPolicy",

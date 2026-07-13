@@ -558,9 +558,19 @@ function selectSourceHeuristics(file) {
     ["services/openclaw-screen-act/src/server.mjs", ["task-executor"]],
     ["services/openclaw-session-manager/src/server.mjs", ["state-settling"]],
     ["services/openclaw-system-sense/src/server.mjs", ["system-sense"]],
+    ["services/openclaw-system-sense/src/kernel-process-exec-capture.mjs", ["openclaw-kernel-process-exec-capture"]],
+    ["services/openclaw-system-sense/src/system-kernel-event-routes.mjs", ["openclaw-kernel-process-exec-capture"]],
     ["services/openclaw-system-heal/src/server.mjs", ["system-heal"]],
+    ["nix/modules/openclaw-body.nix", ["body-config", "openclaw-kernel-process-exec-capture", "observer-openclaw-kernel-process-exec-capture"]],
+    ["nix/packages/openclaw-kernel-event-probe.nix", ["body-config", "openclaw-kernel-process-exec-capture", "observer-openclaw-kernel-process-exec-capture"]],
+    ["nix/packages/openclaw-system-sense.nix", ["body-config", "openclaw-kernel-process-exec-capture", "observer-openclaw-kernel-process-exec-capture"]],
+    ["nix/packages/observer-ui.nix", ["body-config", "observer-openclaw-kernel-process-exec-capture"]],
+    ["nix/profiles/desktop-body.nix", ["body-config", "openclaw-kernel-process-exec-capture", "observer-openclaw-kernel-process-exec-capture"]],
     ["apps/observer-ui/src/server.mjs", ["observer-operator"]],
     ["apps/observer-ui/src/client-script.mjs", ["observer-operator"]],
+    ["apps/observer-ui/src/client-script-config-dom-kernel-events.mjs", ["observer-openclaw-kernel-process-exec-capture"]],
+    ["apps/observer-ui/src/client-script-refreshers-kernel-events.mjs", ["observer-openclaw-kernel-process-exec-capture"]],
+    ["apps/observer-ui/src/observer-panels-kernel-events.mjs", ["observer-openclaw-kernel-process-exec-capture"]],
   ]);
 
   for (const [prefix, names] of direct.entries()) {

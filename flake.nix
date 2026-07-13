@@ -39,6 +39,7 @@
         openclaw-screen-sense = pkgs.callPackage ./nix/packages/openclaw-screen-sense.nix { };
         openclaw-screen-act = pkgs.callPackage ./nix/packages/openclaw-screen-act.nix { };
         openclaw-system-sense = pkgs.callPackage ./nix/packages/openclaw-system-sense.nix { };
+        openclaw-kernel-event-probe = pkgs.callPackage ./nix/packages/openclaw-kernel-event-probe.nix { };
         openclaw-hostd = pkgs.callPackage ./nix/packages/openclaw-hostd.nix { };
         openclaw-system-heal = pkgs.callPackage ./nix/packages/openclaw-system-heal.nix { };
         observer-ui = pkgs.callPackage ./nix/packages/observer-ui.nix { };

@@ -293,6 +293,7 @@ capability-approval-operator	dev-capability-approval-operator-check.sh	Operator 
 event-audit	dev-event-audit-check.sh	Durable event audit ledger, filters, summary, and restart recovery
 system-capability	dev-system-capability-check.sh	Conservative filesystem, process, and command dry-run capabilities
 system-sense	dev-system-sense-check.sh	Real body vitals, service latency, resources, and alerts
+openclaw-kernel-process-exec-capture	dev-openclaw-kernel-process-exec-capture-check.sh	Real read-only eBPF sched_process_exec events through the system-sense proxy
 system-heal	dev-system-heal-check.sh	Conservative diagnosis, repair plan, autofix, and heal history
 openclaw-workspace-detect	dev-openclaw-workspace-detect-check.sh	Read-only detection of configured OpenClaw workspaces
 openclaw-real-workspace-profile	dev-openclaw-real-workspace-profile-check.sh	Read-only profile of the real OpenClaw source workspace
@@ -644,6 +645,7 @@ observer-openclaw-cloud-consciousness-live-provider-credential-value-local-read-
 observer-openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-final-readiness-preflight	dev-observer-openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-final-readiness-preflight-check.sh	Observer visibility for Phase 98 credential value local read execution local read attempt local read final readiness preflight
 # @openclaw-generate-live-provider-result-envelope observer
 observer-openclaw-systemd-unit-inventory	dev-observer-openclaw-systemd-unit-inventory-check.sh	Observer visibility for read-only OpenClaw systemd unit inventory
+observer-openclaw-kernel-process-exec-capture	dev-observer-openclaw-kernel-process-exec-capture-check.sh	Observer visibility for real read-only eBPF process-exec events
 observer-openclaw-systemd-repair-plan	dev-observer-openclaw-systemd-repair-plan-check.sh	Observer visibility for plan-only OpenClaw systemd repair proposals
 observer-openclaw-systemd-repair-dry-run	dev-observer-openclaw-systemd-repair-dry-run-check.sh	Observer visibility for OpenClaw systemd repair dry-run envelopes
 observer-openclaw-systemd-repair-execution-task	dev-observer-openclaw-systemd-repair-execution-task-check.sh	Observer controls for approval-gated OpenClaw systemd repair execution task shells

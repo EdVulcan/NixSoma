@@ -87,6 +87,10 @@ const envNames = [
   "OPENCLAW_BODY_PROFILE",
   "OPENCLAW_BODY_COMPONENT_SCOPE",
   "OPENCLAW_BODY_RUNTIME_SOURCE",
+  "OPENCLAW_KERNEL_EVENT_CAPTURE_ENABLED",
+  "OPENCLAW_KERNEL_EVENT_PROBE",
+  "OPENCLAW_KERNEL_EVENT_CAPTURE_DURATION_MS",
+  "OPENCLAW_KERNEL_EVENT_CAPTURE_MAX_EVENTS",
 ];
 
 function requireIncludes(label, content, tokens) {
@@ -124,6 +128,12 @@ requireIncludes("openclaw-body module", bodyModule, [
   "runtimePackages.screenSense",
   "runtimePackages.screenAct",
   "runtimePackages.systemSense",
+  "kernelEventCapture",
+  "probePackage",
+  "AmbientCapabilities",
+  "CapabilityBoundingSet",
+  "CAP_BPF",
+  "CAP_PERFMON",
   "runtimePackages.hostd",
   "runtimePackages.systemHeal",
   "runtimePackages.observerUi",
@@ -169,6 +179,7 @@ requireIncludes("desktop-body profile", desktopProfile, [
   "trustedSidecarUserUnit.enable = true",
   "componentOwnership.user",
   "browserEngine.mode = \"firefox\"",
+  "kernelEventCapture.enable = true",
   ...componentKeys,
 ]);
 
@@ -190,6 +201,7 @@ requireIncludes("flake", flake, [
   "openclaw-screen-sense = pkgs.callPackage",
   "openclaw-screen-act = pkgs.callPackage",
   "openclaw-system-sense = pkgs.callPackage",
+  "openclaw-kernel-event-probe = pkgs.callPackage",
   "openclaw-system-heal = pkgs.callPackage",
   "observer-ui = pkgs.callPackage",
 ]);
@@ -226,6 +238,8 @@ if command -v nix >/dev/null 2>&1; then
           ExecStart = unit.serviceConfig.ExecStart;
           RuntimeDirectory = unit.serviceConfig.RuntimeDirectory or null;
           RuntimeDirectoryMode = unit.serviceConfig.RuntimeDirectoryMode or null;
+          AmbientCapabilities = unit.serviceConfig.AmbientCapabilities or [ ];
+          CapabilityBoundingSet = unit.serviceConfig.CapabilityBoundingSet or [ ];
         };
       };
     in {
@@ -351,6 +365,16 @@ if (ownership.systemSense.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-sto
   || !String(ownership.systemSense.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-system-sense")
   || ownership.systemSense.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
   throw new Error(`system-sense must execute from its read-only Nix closure: ${JSON.stringify(ownership.systemSense)}`);
+}
+if (ownership.systemSense.environment?.OPENCLAW_KERNEL_EVENT_CAPTURE_ENABLED !== "1"
+  || !String(ownership.systemSense.environment?.OPENCLAW_KERNEL_EVENT_PROBE ?? "").startsWith("/nix/store/")
+  || ownership.systemSense.environment?.OPENCLAW_KERNEL_EVENT_CAPTURE_DURATION_MS !== "1000"
+  || ownership.systemSense.environment?.OPENCLAW_KERNEL_EVENT_CAPTURE_MAX_EVENTS !== "128"
+  || !ownership.systemSense.serviceConfig?.AmbientCapabilities?.includes("CAP_BPF")
+  || !ownership.systemSense.serviceConfig?.AmbientCapabilities?.includes("CAP_PERFMON")
+  || !ownership.systemSense.serviceConfig?.CapabilityBoundingSet?.includes("CAP_BPF")
+  || !ownership.systemSense.serviceConfig?.CapabilityBoundingSet?.includes("CAP_PERFMON")) {
+  throw new Error(`desktop system-sense must expose only the bounded eBPF capabilities: ${JSON.stringify(ownership.systemSense)}`);
 }
 if (ownership.observerUi.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || !String(ownership.observerUi.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
@@ -1038,6 +1062,8 @@ EOF
   if [[ "$system_sense_out" != /nix/store/*
     || ! -f "$system_sense_server"
     || ! -f "$system_sense_working_dir/node_modules/@homebridge/dbus-native/package.json"
+    || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-process-exec-capture.mjs"
+    || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/system-kernel-event-routes.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/system-health-governance.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-dbus-adapter.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-routes.mjs"
@@ -1049,8 +1075,18 @@ EOF
     || -e "$system_sense_working_dir/node_modules/typescript"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-dbus-transport.mjs"
     || ! -f "$system_sense_out/share/openclaw/packages/shared-systemd/src/systemd-dbus-transport.mjs"
-    || "$system_sense_source_count" -ne 22 ]]; then
+    || "$system_sense_source_count" -ne 24 ]]; then
     echo "system-sense Nix closure is not exact, production-only, and read-only: $system_sense_out" >&2
+    exit 1
+  fi
+
+  kernel_probe_out="$(nix --extra-experimental-features 'nix-command flakes' build \
+    --no-update-lock-file --no-link --print-out-paths .#openclaw-kernel-event-probe)"
+  if [[ "$kernel_probe_out" != /nix/store/*
+    || ! -x "$kernel_probe_out/bin/openclaw-kernel-process-exec"
+    || ! -f "$kernel_probe_out/lib/openclaw-kernel-process-exec.bpf.o"
+    || ! -x "$kernel_probe_out/libexec/openclaw-kernel-process-exec-loader" ]]; then
+    echo "kernel process-exec probe package is incomplete: $kernel_probe_out" >&2
     exit 1
   fi
 

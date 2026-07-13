@@ -1,5 +1,6 @@
 import { observerClientConfigDomMvpMemoryScript } from "./client-script-config-dom-mvp-memory.mjs";
 import { observerClientConfigDomCloudProviderScript } from "./client-script-config-dom-cloud-provider.mjs";
+import { observerClientConfigDomKernelEventsScript } from "./client-script-config-dom-kernel-events.mjs";
 import { observerClientConfigDomSystemBodyScript } from "./client-script-config-dom-system-body.mjs";
 import { observerClientConfigDomWorkspaceSourceScript } from "./client-script-config-dom-workspace-source.mjs";
 import { observerClientConfigDomEngineeringContextScript } from "./client-script-config-dom-engineering-context.mjs";
@@ -51,7 +52,7 @@ const screenHealth = document.querySelector("#screen-health");
 const screenActHealth = document.querySelector("#screen-act-health");
 const systemHealthPill = document.querySelector("#system-health-pill");
 const systemHealHealth = document.querySelector("#system-heal-health");
-${observerClientConfigDomMvpMemoryScript}${observerClientConfigDomCloudProviderScript}${observerClientConfigDomSystemBodyScript}const taskPlanStatus = document.querySelector("#task-plan-status");
+${observerClientConfigDomMvpMemoryScript}${observerClientConfigDomCloudProviderScript}${observerClientConfigDomSystemBodyScript}${observerClientConfigDomKernelEventsScript}const taskPlanStatus = document.querySelector("#task-plan-status");
 const taskPlanCount = document.querySelector("#task-plan-count");
 const taskPlanPlanner = document.querySelector("#task-plan-planner");
 const taskPlanCapabilityCount = document.querySelector("#task-plan-capability-count");

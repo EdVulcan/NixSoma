@@ -309,7 +309,8 @@
 **约 43%**。内核白皮书中的 Phase A Nix 纯净化已完成全部 9 个服务
 closure 与 trusted sidecar store 运行路径；
 Phase B 已完成原生只读 D-Bus inventory、一个由精确 Polkit 管理且由独立
-hostd 所有的固定 native restart；Phase C eBPF 神经网尚未开始；Phase D 声明式 Nix 自进化与自动
+hostd 所有的固定 native restart；Phase C 已启动首个只读 `sched_process_exec`
+eBPF 探针切片，真实 VM 事件采集仍待新 generation 验证；Phase D 声明式 Nix 自进化与自动
 回滚仍主要是设计和边界证据。因此旧阶段路线的“接近 90%”只能描述早期
 里程碑清单，不能代表最终白皮书完成度。
 

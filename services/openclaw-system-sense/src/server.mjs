@@ -11,6 +11,8 @@ import { handleSystemFileRoutes } from "./system-file-routes.mjs";
 import { createSystemFileOperations } from "./system-file-operations.mjs";
 import { createSystemHealthGovernance } from "./system-health-governance.mjs";
 import { handleSystemHealthRoutes } from "./system-health-routes.mjs";
+import { createKernelProcessExecCapture } from "./kernel-process-exec-capture.mjs";
+import { handleSystemKernelEventRoutes } from "./system-kernel-event-routes.mjs";
 import { createSystemdDbusAdapter } from "./systemd-dbus-adapter.mjs";
 import { createSystemdInspection } from "./systemd-inspection.mjs";
 import { createSystemdNextRepairPlanning } from "./systemd-next-repair-planning.mjs";
@@ -43,6 +45,13 @@ const commandAllowlist = (process.env.OPENCLAW_SYSTEM_COMMAND_ALLOWLIST ?? "echo
 const commandTimeoutMs = Number.parseInt(process.env.OPENCLAW_SYSTEM_COMMAND_TIMEOUT_MS ?? "3000", 10);
 const commandOutputLimit = Number.parseInt(process.env.OPENCLAW_SYSTEM_COMMAND_OUTPUT_LIMIT ?? "8192", 10);
 const execFileAsync = promisify(execFile);
+const kernelProcessExecCapture = createKernelProcessExecCapture({
+  enabled: process.env.OPENCLAW_KERNEL_EVENT_CAPTURE_ENABLED === "1",
+  probeCommand: process.env.OPENCLAW_KERNEL_EVENT_PROBE ?? "",
+  durationMs: process.env.OPENCLAW_KERNEL_EVENT_CAPTURE_DURATION_MS ?? "1000",
+  maxEvents: process.env.OPENCLAW_KERNEL_EVENT_CAPTURE_MAX_EVENTS ?? "128",
+  execFile: execFileAsync,
+});
 const SYSTEMD_UNIT_INVENTORY_REGISTRY = "openclaw-systemd-unit-inventory-v0";
 const SYSTEMD_DEPENDENCY_MAP_REGISTRY = "openclaw-systemd-dependency-map-v0";
 const HEALTH_TREND_SUMMARY_REGISTRY = "openclaw-health-trend-summary-v0";
@@ -428,6 +437,10 @@ const bodyEvidenceRouteBuilders = {
   buildBodyEvidenceLedgerFollowupRecordRouteReview,
 };
 
+const kernelEventRouteBuilders = {
+  buildKernelProcessExecEvents: () => kernelProcessExecCapture.capture(),
+};
+
 const {
   buildSystemdNextRepairScopeReview,
   buildSystemdNextRepairPlan,
@@ -573,6 +586,15 @@ const server = http.createServer(async (req, res) => {
     res,
     requestUrl,
     builders: bodyEvidenceRouteBuilders,
+  })) {
+    return;
+  }
+
+  if (await handleSystemKernelEventRoutes({
+    req,
+    res,
+    requestUrl,
+    builders: kernelEventRouteBuilders,
   })) {
     return;
   }

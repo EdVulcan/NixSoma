@@ -8,6 +8,7 @@
     user = "openclaw-service";
     hostdUser = "openclaw-hostd";
     systemdRepairAuthDelegation.enable = true;
+    kernelEventCapture.enable = true;
     trustedSidecarUserUnit.enable = true;
     componentOwnership.user = [
       "sessionManager"

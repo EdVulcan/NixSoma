@@ -10,6 +10,7 @@ mkOpenClawSourceClosure {
   files = [
     ../../apps/observer-ui/package.json
     ../../apps/observer-ui/src/client-script-config-dom-cloud-provider.mjs
+    ../../apps/observer-ui/src/client-script-config-dom-kernel-events.mjs
     ../../apps/observer-ui/src/client-script-config-dom-engineering-context.mjs
     ../../apps/observer-ui/src/client-script-config-dom-mvp-memory.mjs
     ../../apps/observer-ui/src/client-script-config-dom-native-runtime-refresh.mjs
@@ -25,6 +26,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-refreshers-cloud-live-runbook.mjs
     ../../apps/observer-ui/src/client-script-refreshers-cloud.mjs
     ../../apps/observer-ui/src/client-script-refreshers-engineering-context.mjs
+    ../../apps/observer-ui/src/client-script-refreshers-kernel-events.mjs
     ../../apps/observer-ui/src/client-script-refreshers-memory-phases.mjs
     ../../apps/observer-ui/src/client-script-refreshers-mvp-phases.mjs
     ../../apps/observer-ui/src/client-script-refreshers-runtime.mjs
@@ -58,6 +60,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/observer-panels-cloud.mjs
     ../../apps/observer-ui/src/observer-panels-engineering-context.mjs
     ../../apps/observer-ui/src/observer-panels-foundation.mjs
+    ../../apps/observer-ui/src/observer-panels-kernel-events.mjs
     ../../apps/observer-ui/src/observer-panels-operations.mjs
     ../../apps/observer-ui/src/observer-panels-system.mjs
     ../../apps/observer-ui/src/observer-styles.mjs

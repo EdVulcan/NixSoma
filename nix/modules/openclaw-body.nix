@@ -87,6 +87,12 @@ let
       port = cfg.ports.systemSense;
       after = [ "openclaw-event-hub" "openclaw-core" ];
       runtimePackage = cfg.runtimePackages.systemSense;
+      extraEnvironment = _: optionalAttrs cfg.kernelEventCapture.enable {
+        OPENCLAW_KERNEL_EVENT_CAPTURE_ENABLED = "1";
+        OPENCLAW_KERNEL_EVENT_PROBE = "${cfg.kernelEventCapture.probePackage}/bin/openclaw-kernel-process-exec";
+        OPENCLAW_KERNEL_EVENT_CAPTURE_DURATION_MS = toString cfg.kernelEventCapture.durationMs;
+        OPENCLAW_KERNEL_EVENT_CAPTURE_MAX_EVENTS = toString cfg.kernelEventCapture.maxEvents;
+      };
     }
     {
       key = "systemHeal";
@@ -237,6 +243,9 @@ let
         Group = cfg.group;
       } // optionalAttrs (!userScope && cfg.user != null && spec.key == "eventHub") {
         ExecStartPre = [ "+${eventLogOwnershipMigration}" ];
+      } // optionalAttrs (!userScope && spec.key == "systemSense" && cfg.kernelEventCapture.enable) {
+        AmbientCapabilities = [ "CAP_BPF" "CAP_PERFMON" ];
+        CapabilityBoundingSet = [ "CAP_BPF" "CAP_PERFMON" ];
       };
     };
 
@@ -462,6 +471,25 @@ in
       enable = mkEnableOption "Polkit-authorized native D-Bus repair of one OpenClaw-owned systemd unit";
     };
 
+    kernelEventCapture = {
+      enable = mkEnableOption "read-only eBPF process-exec event capture for system-sense";
+      probePackage = mkOption {
+        type = types.nullOr types.package;
+        default = pkgs.callPackage ../packages/openclaw-kernel-event-probe.nix { };
+        description = "Nix package containing the bounded libbpf process-exec probe.";
+      };
+      durationMs = mkOption {
+        type = types.ints.between 1 5000;
+        default = 1000;
+        description = "Maximum duration of one process-exec capture request.";
+      };
+      maxEvents = mkOption {
+        type = types.ints.between 1 4096;
+        default = 128;
+        description = "Maximum process-exec events returned by one capture request.";
+      };
+    };
+
     trustedSidecarUserUnit = {
       enable = mkEnableOption "non-auto-started trusted work-view sidecar user unit";
     };
@@ -515,6 +543,14 @@ in
             && cfg.runtimePackages.systemSense != null
             && cfg.runtimePackages.hostd != null);
         message = "systemd repair delegation requires store-native system-sense and hostd components.";
+      }
+      {
+        assertion = !cfg.kernelEventCapture.enable
+          || (builtins.elem "systemSense" cfg.components
+            && !builtins.elem "systemSense" cfg.componentOwnership.user
+            && cfg.user != null
+            && cfg.kernelEventCapture.probePackage != null);
+        message = "kernel event capture requires a non-root system-owned system-sense service and a probe package.";
       }
     ];
 

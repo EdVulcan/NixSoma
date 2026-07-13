@@ -180,6 +180,31 @@ test("core infrastructure proxy route forwards JSON bodies to configured service
   assert.deepEqual(response.body, { ok: true, proxied: true });
 });
 
+test("core infrastructure proxy route forwards read-only system kernel event routes", async () => {
+  let observedUrl = null;
+  const deps = createBaseDeps({
+    client: {
+      fetchJson: async (url) => {
+        observedUrl = url;
+        return {
+          ok: true,
+          registry: "openclaw-kernel-process-exec-v0",
+          status: "captured",
+          mode: "read_only",
+          events: [],
+        };
+      },
+    },
+  });
+
+  const response = await invokeRoute(deps, "GET", "/proxy/system-sense/system/kernel/process-exec-events");
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(observedUrl, "http://127.0.0.1:4106/system/kernel/process-exec-events");
+  assert.equal(response.body.registry, "openclaw-kernel-process-exec-v0");
+  assert.equal(response.body.mode, "read_only");
+});
+
 test("core runtime read route reconciles and serialises current task", async () => {
   const task = { id: "task-current", status: "running" };
   let reconciled = false;

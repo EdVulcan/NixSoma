@@ -264,6 +264,15 @@ read-only D-Bus inventory and a VM-proven fixed-unit mutation bridge. Work now
 returns to the Level 1 native governed engineering route; broader systemd APIs
 remain deferred until a cohesive hostd boundary is justified.
 
+The active kernel-whitepaper route now starts Phase C with one bounded eBPF
+process-exec nerve. Store-native system-sense owns a `sched_process_exec`
+tracepoint and libbpf ring buffer, returns only four identity fields, and
+projects explicit disabled/captured/permission failure state through the
+existing core proxy and Observer. The active plan is
+`OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md`; network/VFS capture,
+interception, persistence, policy execution, and Nix self-evolution remain
+deferred.
+
 ## Historical Phase Plans
 
 `OPENCLAW_PHASE_2_PLAN.md` through `OPENCLAW_PHASE_136_PLAN.md` are retained

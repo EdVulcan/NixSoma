@@ -644,6 +644,24 @@ The recovery task receives that provenance without the session lease id and
 does not restart or replay the task automatically; the existing Observer task
 history path renders the same recovery recommendation after refresh.
 
+## Active Phase C Slice
+
+The next real kernel-whitepaper capability is the first bounded eBPF process
+execution observation, documented in
+`docs/plans/OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md`. Store-native
+system-sense attaches only the `sched_process_exec` tracepoint through a
+libbpf ring buffer and returns only `timestampNs`, `pid`, `uid`, and `comm`.
+The capability is opt-in in the Nix body module; the desktop profile grants
+only `CAP_BPF` and `CAP_PERFMON` to the non-root system-sense service when it is
+enabled. The existing core system-sense proxy and Observer expose the bounded
+read model and explicit permission/unavailable states.
+
+This slice deliberately does not capture command lines, paths, file content,
+environment, or network traffic; it does not persist events, enforce policy,
+block processes, mutate the host, expand hostd, or start declarative Nix
+self-evolution. After the VM proof, choose a concrete readback/ledger need
+before adding another eBPF event class.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:
