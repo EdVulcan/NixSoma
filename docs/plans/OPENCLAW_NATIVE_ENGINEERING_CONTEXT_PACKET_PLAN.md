@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering Context Packet Plan
 
-Updated: 2026-07-13
+Updated: 2026-07-14
 
 ## Active Slice
 
@@ -181,12 +181,13 @@ provider calls, and external egress remain excluded. Session-manager failure
 returns an explicit unavailable association while preserving the local packet
 readback.
 
-The live association can now carry the existing `prepare_work_view` recovery
-recommendation into the packet Observer panel. The panel shows the recovery
-status and reveals a contextual prepare control only for that allowlisted
-recommendation. The control revalidates through the existing work-view recovery
-action and refreshes the packet; it does not accept arbitrary endpoint data or
-automatically run during packet assembly.
+The live association can now carry the existing `prepare_work_view` and
+`reveal_work_view` recovery recommendations into the packet Observer panel.
+The panel shows the recovery status and reveals a contextual Prepare or Reveal
+control only for those exact allowlisted recommendations. The control
+revalidates through the existing work-view recovery action and refreshes the
+packet; it does not accept arbitrary endpoint data or automatically run during
+packet assembly.
 
 ## Operator Route Fixture Follow-Up Complete
 
@@ -211,7 +212,8 @@ The first concrete Level 2 context bridge and its unbound-task follow-up are
 also closed through the existing session-manager owner. The bind route
 revalidates authoritative state, preserves task status, rejects stale identity,
 and does not dispatch an action or resume work automatically. Its concrete
-`prepare_work_view` recovery recommendation is now bridged through the existing
-Observer recovery control and refreshed packet readback. The dedicated work-view
-bind plan records the boundary and evidence. Keep provider response content
-transient and do not resume the historical Phase 59-136 wrapper chain.
+`prepare_work_view` and post-prepare `reveal_work_view` recovery recommendations
+are now bridged through the existing Observer recovery control and refreshed
+packet readback. The dedicated work-view bind plan records the boundary and
+evidence. Keep provider response content transient and do not resume the
+historical Phase 59-136 wrapper chain.

@@ -37,7 +37,7 @@ function rendererContext() {
   };
 }
 
-test("Observer exposes only the allowlisted trusted work-view recovery action", () => {
+test("Observer exposes only the allowlisted trusted work-view recovery actions", () => {
   const panel = observerEngineeringContextPanels();
   for (const token of [
     "engineering-context-packet-recovery",
@@ -66,9 +66,20 @@ test("Observer exposes only the allowlisted trusted work-view recovery action", 
   });
 
   assert.equal(context.engineeringContextPacketRecovery.textContent, "prepare_work_view");
+  assert.equal(context.engineeringContextPacketRecoveryButton.textContent, "Prepare Trusted Work View");
   assert.equal(context.engineeringContextPacketRecoveryButton.hidden, false);
   assert.equal(context.engineeringContextPacketRecoveryButton.disabled, false);
   assert.match(context.engineeringContextPacketJson.textContent, /recovery=prepare_work_view/);
+
+  context.renderEngineeringContextPacket({
+    summary: { workViewAssociationIncluded: true, messageCount: 1 },
+    governance: { callsProvider: false },
+    workViewAssociation: { summary: { recoveryAction: "reveal_work_view" } },
+    messages: [],
+  });
+  assert.equal(context.engineeringContextPacketRecoveryButton.textContent, "Reveal Trusted Work View");
+  assert.equal(context.engineeringContextPacketRecoveryButton.hidden, false);
+  assert.equal(context.engineeringContextPacketRecoveryButton.disabled, false);
 
   context.renderEngineeringContextPacket({
     summary: { workViewAssociationIncluded: true, messageCount: 1 },
@@ -107,6 +118,6 @@ test("context packet recovery button reuses the existing reviewed action and ref
   assert.deepEqual(calls.map(([kind]) => kind), ["recommended-action", "fetch", "render", "message", "message"]);
   assert.equal(calls[1][1], "http://core.invalid/plugins/native-adapter/engineering-context/packet");
   assert.equal(JSON.parse(calls[1][2].body).includeWorkView, true);
-  assert.match(calls.at(-1)[1], /Prepared the trusted work view/);
+  assert.match(calls.at(-1)[1], /Completed the trusted work-view recovery action/);
   assert.equal(context.engineeringContextPacketRecoveryButton.disabled, false);
 });

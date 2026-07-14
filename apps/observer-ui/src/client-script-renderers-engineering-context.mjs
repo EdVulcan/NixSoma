@@ -16,11 +16,16 @@ export const observerClientEngineeringContextRenderersScript = `function renderE
   engineeringContextPacketBinding.textContent = workViewSummary.bindingStatus ?? "none";
   engineeringContextPacketAuthority.textContent = workViewSummary.actionAuthority ?? "inactive";
   const recoveryAction = workViewSummary.recoveryAction ?? "none";
+  const recoveryButtonLabels = {
+    prepare_work_view: "Prepare Trusted Work View",
+    reveal_work_view: "Reveal Trusted Work View",
+  };
+  const recoveryButtonLabel = recoveryButtonLabels[recoveryAction] ?? null;
   engineeringContextPacketRecovery.textContent = recoveryAction;
   if (engineeringContextPacketRecoveryButton) {
-    const canPrepare = recoveryAction === "prepare_work_view";
-    engineeringContextPacketRecoveryButton.hidden = !canPrepare;
-    engineeringContextPacketRecoveryButton.disabled = !canPrepare;
+    engineeringContextPacketRecoveryButton.textContent = recoveryButtonLabel ?? "Prepare Trusted Work View";
+    engineeringContextPacketRecoveryButton.hidden = recoveryButtonLabel === null;
+    engineeringContextPacketRecoveryButton.disabled = recoveryButtonLabel === null;
   }
   engineeringContextPacketJson.textContent = [
     "Local governed engineering context packet: bounded task and transcript evidence for later explicit consumption.",

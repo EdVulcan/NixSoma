@@ -52,12 +52,14 @@ readback routes.
 ## Operator Recovery Bridge Follow-Up
 
 The live trusted work-view readback can recommend the existing
-`prepare_work_view` action when helper authority is inactive or divergent. The
-Engineering Context Packet Observer panel now renders that recovery action and
-exposes a contextual `Prepare Trusted Work View` control only for that exact
-allowlisted action. The control re-reads the current session-manager state
-through the existing `runRecommendedWorkViewAction` path, calls the existing
-`/work-view/prepare` route, and rebuilds the context packet afterward.
+`prepare_work_view` action when helper authority is inactive or divergent, or
+`reveal_work_view` when a prepared work view remains hidden. The Engineering
+Context Packet Observer panel now renders that recovery action and exposes a
+contextual `Prepare Trusted Work View` or `Reveal Trusted Work View` control
+only for those exact allowlisted actions. The control re-reads the current
+session-manager state through the existing `runRecommendedWorkViewAction` path,
+calls the existing prepare or reveal route, and rebuilds the context packet
+afterward.
 
 This is an operator-visible bridge to an existing recovery contract, not a new
 bind variant. It does not accept an endpoint from readback, auto-run on packet
@@ -117,13 +119,13 @@ root/system daemon ownership
 provider egress or ACPX/Codex live process execution
 ```
 
-The recovery bridge reuses the existing operator-reviewed prepare action and
-does not change these deferred boundaries.
+The recovery bridge reuses the existing operator-reviewed prepare/reveal
+actions and does not change these deferred boundaries.
 
 ## Next Smallest Capability
 
 The bound-task context workflow now includes the concrete
-`prepare_work_view` recovery bridge. Select the next Level 2 capability only
-from a new operator-visible gap in the refreshed readback. Do not add another
-bind variant or a readiness-only endpoint; authority loss must continue through
-the existing fail-closed recovery paths.
+`prepare_work_view`/`reveal_work_view` recovery bridge. Select the next Level 2
+capability only from a new operator-visible gap in the refreshed readback. Do
+not add another bind variant or a readiness-only endpoint; authority loss must
+continue through the existing fail-closed recovery paths.

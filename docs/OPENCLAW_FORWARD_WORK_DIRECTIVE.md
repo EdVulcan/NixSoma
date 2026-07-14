@@ -1,6 +1,6 @@
 # OpenClaw Forward Work Directive
 
-Updated: 2026-07-13
+Updated: 2026-07-14
 
 This is the active guidance document for continuing OpenClaw development after
 the Phase 136 checkpoint and the discovery that the locally optimized
@@ -726,11 +726,14 @@ boundaries.
 The next concrete operator gap was the recovery decision shown by that same
 readback: a divergent or inactive trusted helper recommends the existing
 `prepare_work_view` action, but the context packet panel previously exposed only
-status. The panel now renders the recovery action and, only for that exact
+status. The panel now renders that recovery action and, only for the exact
 allowlisted recommendation, bridges to the existing reviewed Prepare Work View
-control before rebuilding the packet. It revalidates current state, does not
-rebind tasks or replay actions, and does not create a new endpoint or automatic
-recovery path.
+control before rebuilding the packet. A follow-up readback after preparation
+can recommend `reveal_work_view` because the AI work view is prepared but
+hidden; the same panel now exposes a contextual Reveal Trusted Work View
+control through the existing action runner. Both controls revalidate current
+state, do not rebind tasks or replay actions, and do not create a new endpoint
+or automatic recovery path.
 
 ## Identity-Upgrade Alignment
 

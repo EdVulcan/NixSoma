@@ -68,7 +68,7 @@ async function prepareEngineeringContextWorkView() {
   try {
     await runRecommendedWorkViewAction();
     await refreshEngineeringContextPacket();
-    setControlMessage("Prepared the trusted work view from the context packet recovery recommendation.");
+    setControlMessage("Completed the trusted work-view recovery action from the context packet recommendation.");
   } catch (error) {
     setControlMessage(\`Trusted work-view recovery was blocked: \${formatError(error)}.\`);
     throw error;

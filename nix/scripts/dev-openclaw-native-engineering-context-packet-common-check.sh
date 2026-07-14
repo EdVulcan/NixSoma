@@ -198,6 +198,7 @@ if (
   || packet.summary?.recoveryEvidenceProtected !== true
   || packet.summary?.workViewAssociationIncluded !== true
   || !packet.workViewAssociation?.registry
+  || packet.workViewAssociation?.summary?.recoveryAction !== "reveal_work_view"
   || packet.workViewAssociation?.source?.owner !== "openclaw-session-manager"
   || packet.workViewAssociation?.governance?.exposesLeaseId !== false
   || packet.workViewAssociation?.governance?.exposesActiveUrl !== false
@@ -268,6 +269,7 @@ if (observerCheck) {
     "engineeringContextPacketBindWorkViewButton",
     "engineeringContextPacketRecovery",
     "engineeringContextPacketRecoveryButton",
+    "Reveal Trusted Work View",
     "/plugins/native-adapter/engineering-context/work-view/bind",
     "bindEngineeringContextTaskToWorkView",
     "prepareEngineeringContextWorkView",
