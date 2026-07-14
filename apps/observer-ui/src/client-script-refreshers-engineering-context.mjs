@@ -31,8 +31,40 @@ export const observerClientEngineeringContextRefreshersScript = `async function 
   }
 }
 
+async function bindEngineeringContextTaskToWorkView() {
+  const taskId = typeof taskDetailIdInput?.value === "string" && taskDetailIdInput.value.trim()
+    ? taskDetailIdInput.value.trim()
+    : null;
+  if (!taskId) {
+    setControlMessage("Select a task before binding it to the trusted work view.");
+    return;
+  }
+
+  engineeringContextPacketBindWorkViewButton.disabled = true;
+  try {
+    const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-context/work-view/bind\`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ taskId, confirm: true }),
+    });
+    await refreshEngineeringContextPacket();
+    setControlMessage(\`Bound task \${taskId} to the current trusted work view; task execution was not started.\`);
+    return result;
+  } catch (error) {
+    engineeringContextPacketBinding.textContent = "blocked";
+    setControlMessage(\`Trusted work-view bind was blocked: \${formatError(error)}.\`);
+    throw error;
+  } finally {
+    engineeringContextPacketBindWorkViewButton.disabled = false;
+  }
+}
+
 engineeringContextPacketBuildButton?.addEventListener("click", () => {
   void refreshEngineeringContextPacket();
+});
+
+engineeringContextPacketBindWorkViewButton?.addEventListener("click", () => {
+  void bindEngineeringContextTaskToWorkView().catch(() => {});
 });
 
 `;

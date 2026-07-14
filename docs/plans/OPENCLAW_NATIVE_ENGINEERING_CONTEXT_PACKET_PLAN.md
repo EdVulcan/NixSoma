@@ -200,9 +200,9 @@ egress.
 
 The Level 1 context-packet -> structured recommendation -> Observer review ->
 existing governed control loop is now closed with local route and UI evidence.
-The first concrete Level 2 context bridge is also closed through the existing
-session-manager owner. The next slice, if a real unbound-task workflow is
-observed, is an explicit operator-reviewed task bind; it must revalidate the
-authoritative session before changing task metadata and must not dispatch an
-action or resume work automatically. Keep provider response content transient
-and do not resume the historical Phase 59-136 wrapper chain.
+The first concrete Level 2 context bridge and its unbound-task follow-up are
+also closed through the existing session-manager owner. The bind route
+revalidates authoritative state, preserves task status, rejects stale identity,
+and does not dispatch an action or resume work automatically. The dedicated
+work-view bind plan records the boundary and evidence. Keep provider response
+content transient and do not resume the historical Phase 59-136 wrapper chain.

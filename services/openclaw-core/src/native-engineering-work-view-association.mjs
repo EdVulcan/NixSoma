@@ -1,6 +1,24 @@
 export const NATIVE_ENGINEERING_WORK_VIEW_ASSOCIATION_REGISTRY =
   "openclaw-native-engineering-work-view-association-v0";
 
+export async function readNativeEngineeringWorkViewState({
+  sessionManagerUrl,
+  fetchImpl = fetch,
+} = {}) {
+  if (typeof sessionManagerUrl !== "string" || !sessionManagerUrl.trim()) {
+    return { ok: false, data: null };
+  }
+  try {
+    const response = await fetchImpl(`${sessionManagerUrl}/work-view/state`);
+    const data = await response.json().catch(() => null);
+    return response.ok && data?.ok === true
+      ? { ok: true, data }
+      : { ok: false, data: null };
+  } catch {
+    return { ok: false, data: null };
+  }
+}
+
 function hasText(value) {
   return typeof value === "string" && value.trim().length > 0;
 }

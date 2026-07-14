@@ -496,6 +496,38 @@ function attachTaskToWorkView(task, body) {
   return task;
 }
 
+function bindTaskToTrustedWorkView(task, binding) {
+  if (!task || !binding || typeof binding !== "object") {
+    throw new Error("Trusted work-view binding requires a task and authoritative binding.");
+  }
+
+  const now = new Date().toISOString();
+  const operatorActionSource = typeof binding.operatorActionSource === "string" && binding.operatorActionSource.trim()
+    ? binding.operatorActionSource.trim().slice(0, 120)
+    : "observer_engineering_context_packet";
+  task.workView = {
+    ...(task.workView ?? {}),
+    workViewId: binding.workViewId,
+    sessionId: binding.sessionId,
+    status: binding.status ?? task.workView?.status ?? "ready",
+    visibility: binding.visibility ?? task.workView?.visibility ?? "hidden",
+    mode: binding.mode ?? task.workView?.mode ?? "background",
+    helperStatus: binding.helperStatus ?? task.workView?.helperStatus ?? "active",
+    displayTarget: binding.displayTarget ?? task.workView?.displayTarget ?? null,
+    trustedBinding: {
+      registry: "openclaw-native-engineering-work-view-bind-v0",
+      mode: "operator_reviewed",
+      source: operatorActionSource,
+      authorityStatus: "authoritative",
+      leaseMatched: true,
+      boundAt: now,
+    },
+  };
+  task.updatedAt = now;
+  persistState();
+  return task;
+}
+
 function completeTask(task, details = null) {
   if (details?.workView && typeof details.workView === "object") {
     task.workView = {
@@ -576,6 +608,7 @@ function buildWorkViewAttachPayload(data, targetUrl) {
     appendTaskPhase,
     setTaskPhase,
     attachTaskToWorkView,
+    bindTaskToTrustedWorkView,
     buildWorkViewAttachPayload,
     completeTask,
     failTask,

@@ -179,3 +179,43 @@ test("task manager reconciles only running browser rule plans after core restart
   assert.equal(queuedTask.status, "queued");
   assert.equal(pausedTask.status, "paused");
 });
+
+test("task manager binds trusted work-view metadata without changing task execution state", () => {
+  const { manager } = createHarness();
+  const task = manager.createTask({
+    goal: "Bind an engineering task to the current work view",
+    type: "native_engineering_lsp_lifecycle",
+    includePlan: true,
+  });
+  manager.completeTask(task, { summary: "Completed before binding." });
+  const before = {
+    status: task.status,
+    executionPhase: task.executionPhase,
+    planStatus: task.plan?.status,
+    phaseHistoryLength: task.phaseHistory.length,
+  };
+
+  const bound = manager.bindTaskToTrustedWorkView(task, {
+    workViewId: "work-view-primary",
+    sessionId: "session-current",
+    status: "ready",
+    visibility: "hidden",
+    mode: "background",
+    helperStatus: "active",
+    displayTarget: "workspace-2",
+    operatorActionSource: "test_operator_bind",
+  });
+
+  assert.equal(bound.status, before.status);
+  assert.equal(bound.executionPhase, before.executionPhase);
+  assert.equal(bound.plan?.status, before.planStatus);
+  assert.equal(bound.phaseHistory.length, before.phaseHistoryLength);
+  assert.deepEqual(bound.workView.trustedBinding, {
+    registry: "openclaw-native-engineering-work-view-bind-v0",
+    mode: "operator_reviewed",
+    source: "test_operator_bind",
+    authorityStatus: "authoritative",
+    leaseMatched: true,
+    boundAt: bound.updatedAt,
+  });
+});

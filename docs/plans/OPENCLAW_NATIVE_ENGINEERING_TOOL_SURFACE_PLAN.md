@@ -2,14 +2,20 @@
 
 Updated: 2026-07-14
 
-## Active Slice
+## Current Frontier
 
-Native governed engineering tool surface: read-only tool inventory and contract
-mapping.
+The original read-only inventory and the subsequent Level 1 engineering loop
+are complete through LSP selected-target edit, verification, recovery/rerun,
+plugin refresh, ACPX/Codex boundary evidence, and local context-packet
+assembly. The current frontier is the Level 2 trusted work-view/session-helper
+boundary.
 
-This slice turns the preserved enhanced `openclaw` `cc-tools` source into an
-OpenClaw-native contract directory. It does not migrate or execute the
-standalone tool implementations.
+The latest completed slices are the compact work-view association and the
+explicit operator-reviewed task bind documented in
+`OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_ASSOCIATION_PLAN.md` and
+`OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_BIND_PLAN.md`.
+
+Do not select historical inventory or LSP variant text below as a new slice.
 
 Identity alignment: Level 1, stable user-space control plane.
 
@@ -510,10 +516,11 @@ association is compact and excludes lease ids, active URLs, capture payloads,
 automatic binding, and action dispatch; Observer renders the work-view id,
 binding status, and authority state beside the packet.
 
-The next route should be selected from the resulting unbound-task workflow. If
-that workflow is real, add one explicit operator-reviewed bind action that
-re-reads authoritative session state before changing task metadata. Do not
-infer another browser action variant or create another Level 1
-readiness/evidence-only shell from historical plan text; preserve the existing
-provider, root, desktop-wide capture, and arbitrary endpoint execution
-boundaries.
+The resulting unbound-task workflow is now closed by the explicit
+operator-reviewed bind route documented in
+`OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_BIND_PLAN.md`. It re-reads
+authoritative session-manager state, preserves task status, rejects stale
+identity, and remains separate from action execution. Do not infer another
+browser action variant or create another Level 1 readiness/evidence-only shell
+from historical plan text; preserve the existing provider, root, desktop-wide
+capture, and arbitrary endpoint execution boundaries.

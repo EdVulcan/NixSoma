@@ -712,9 +712,12 @@ content, or external egress. Observer renders the association beside the
 packet, and unavailable session-manager state fails closed without inventing a
 binding.
 
-The next route should be selected from the resulting unbound-task workflow. If
-that workflow is real, add one explicit operator-reviewed bind action that
-re-reads authoritative session state before changing task metadata. Do not
+The resulting unbound-task workflow is now closed by one explicit
+operator-reviewed bind action at
+`/plugins/native-adapter/engineering-context/work-view/bind`. It re-reads
+authoritative session-manager state, preserves the task status, rejects stale
+session/work-view identity, and does not dispatch work. The existing context
+packet milestone proves the real local route and Observer control. Do not
 infer another browser action variant or create another Level 1
 readiness/evidence-only shell from historical plan text; preserve the existing
 provider, root, desktop-wide capture, and arbitrary endpoint execution

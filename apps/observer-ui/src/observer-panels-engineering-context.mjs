@@ -12,6 +12,7 @@ export function observerEngineeringContextPanels() {
           <div class="metric"><span>Authority</span><span id="engineering-context-packet-authority">inactive</span></div>
           <div class="actions tight">
             <button id="engineering-context-packet-build-button" class="secondary" type="button">Build Context Packet</button>
+            <button id="engineering-context-packet-bind-work-view-button" class="secondary" type="button">Bind Task to Work View</button>
           </div>
           <pre id="engineering-context-packet-json">No local engineering context packet built yet.</pre>
         </section>

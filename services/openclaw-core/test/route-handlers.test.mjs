@@ -82,12 +82,13 @@ function createBaseDeps(overrides = {}) {
       buildOperatorOptions: () => ({}),
       ...overrides.executor,
     },
-    publishEvent: async () => {},
+    publishEvent: overrides.publishEvent ?? (async () => {}),
     host: "127.0.0.1",
     port: 4100,
     stateFilePath: "/tmp/openclaw-core-test-state.json",
     eventHubUrl: "http://127.0.0.1:4101",
     sessionManagerUrl: "http://127.0.0.1:4102",
+    readWorkViewState: overrides.readWorkViewState,
     browserRuntimeUrl: "http://127.0.0.1:4103",
     screenSenseUrl: "http://127.0.0.1:4104",
     screenActUrl: "http://127.0.0.1:4105",
@@ -1583,4 +1584,119 @@ test("live provider task post route group forwards confirm and preserves task re
   assert.deepEqual(response.body.approval, { id: "approval-runtime-module", status: "pending", serialised: true });
   assert.deepEqual(response.body.governance, { createsTask: true, createsApproval: true, liveProviderCallEnabled: false });
   assert.deepEqual(response.body.summary, { total: 4, queued: 1 });
+});
+
+test("engineering work-view bind route revalidates authority and preserves the task status", async () => {
+  const task = { id: "task-bind-1", status: "completed", workView: null };
+  const events = [];
+  let stateReads = 0;
+  let bindCalls = 0;
+  const deps = createBaseDeps({
+    state: {
+      tasks: new Map([[task.id, task]]),
+    },
+    taskManager: {
+      getTaskById: (taskId) => (taskId === task.id ? task : null),
+      bindTaskToTrustedWorkView: (candidate, binding) => {
+        bindCalls += 1;
+        candidate.workView = { ...binding };
+        return candidate;
+      },
+      serialiseTask: (candidate) => ({
+        id: candidate.id,
+        status: candidate.status,
+        workView: candidate.workView,
+      }),
+      buildTaskSummary: () => ({ total: 1 }),
+    },
+    readWorkViewState: async () => {
+      stateReads += 1;
+      return {
+        ok: true,
+        data: {
+          session: { sessionId: "session-current", status: "running" },
+          workView: {
+            workViewId: "work-view-primary",
+            status: "ready",
+            visibility: "hidden",
+            mode: "background",
+            displayTarget: "workspace-2",
+            trustedSession: {
+              sessionIdentity: { status: "authoritative" },
+              helperRuntime: { status: "active", actionAuthority: "active", leaseMatched: true },
+              recoveryRecommendation: { action: "none" },
+            },
+          },
+        },
+      };
+    },
+    publishEvent: async (name, payload) => events.push({ name, payload }),
+  });
+
+  const unconfirmed = await invokeRoute(deps, "POST", "/plugins/native-adapter/engineering-context/work-view/bind", {
+    taskId: task.id,
+  });
+  assert.equal(unconfirmed.statusCode, 409);
+  assert.equal(stateReads, 0);
+  assert.equal(bindCalls, 0);
+
+  const response = await invokeRoute(deps, "POST", "/plugins/native-adapter/engineering-context/work-view/bind", {
+    taskId: task.id,
+    confirm: true,
+  });
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(stateReads, 1);
+  assert.equal(bindCalls, 1);
+  assert.equal(response.body.changed, true);
+  assert.equal(response.body.bind.registry, "openclaw-native-engineering-work-view-bind-v0");
+  assert.equal(response.body.bind.summary.status, "bound");
+  assert.equal(response.body.association.summary.status, "bound");
+  assert.equal(response.body.task.status, "completed");
+  assert.equal(response.body.task.workView.sessionId, "session-current");
+  assert.equal(response.body.task.workView.workViewId, "work-view-primary");
+  assert.equal(events[0].name, "task.work_view_bound");
+  assert.equal(JSON.stringify(response.body.bind).includes("session-current"), false);
+  assert.equal(JSON.stringify(response.body.bind).includes("leaseId"), false);
+  assert.equal(JSON.stringify(response.body.bind).includes("activeUrl"), false);
+});
+
+test("engineering work-view bind route fails closed when the current authority is stale", async () => {
+  const task = { id: "task-bind-stale", status: "queued", workView: null };
+  let bindCalls = 0;
+  const deps = createBaseDeps({
+    state: { tasks: new Map([[task.id, task]]) },
+    taskManager: {
+      getTaskById: () => task,
+      bindTaskToTrustedWorkView: () => {
+        bindCalls += 1;
+        return task;
+      },
+      serialiseTask: (candidate) => ({ id: candidate.id, status: candidate.status }),
+      buildTaskSummary: () => ({ total: 1 }),
+    },
+    readWorkViewState: async () => ({
+      ok: true,
+      data: {
+        session: { sessionId: "session-current", status: "running" },
+        workView: {
+          workViewId: "work-view-primary",
+          status: "ready",
+          trustedSession: {
+            sessionIdentity: { status: "authoritative" },
+            helperRuntime: { status: "active", actionAuthority: "suspended", leaseMatched: false },
+          },
+        },
+      },
+    }),
+  });
+
+  const response = await invokeRoute(deps, "POST", "/plugins/native-adapter/engineering-context/work-view/bind", {
+    taskId: task.id,
+    confirm: true,
+  });
+
+  assert.equal(response.statusCode, 409, JSON.stringify(response.body));
+  assert.equal(response.body.bind.summary.status, "authority_not_ready");
+  assert.equal(bindCalls, 0);
 });

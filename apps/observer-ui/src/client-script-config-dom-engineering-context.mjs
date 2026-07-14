@@ -8,5 +8,6 @@ const engineeringContextPacketWorkView = document.querySelector("#engineering-co
 const engineeringContextPacketBinding = document.querySelector("#engineering-context-packet-binding");
 const engineeringContextPacketAuthority = document.querySelector("#engineering-context-packet-authority");
 const engineeringContextPacketBuildButton = document.querySelector("#engineering-context-packet-build-button");
+const engineeringContextPacketBindWorkViewButton = document.querySelector("#engineering-context-packet-bind-work-view-button");
 const engineeringContextPacketJson = document.querySelector("#engineering-context-packet-json");
 `;

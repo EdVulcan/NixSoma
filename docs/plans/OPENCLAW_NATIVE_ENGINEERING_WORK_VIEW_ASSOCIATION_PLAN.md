@@ -106,10 +106,17 @@ root/system daemon ownership
 provider egress or ACPX/Codex live process execution
 ```
 
+## Follow-Up Complete
+
+The resulting unbound-task workflow is now closed by the dedicated
+operator-reviewed bind route documented in
+`OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_BIND_PLAN.md`. It re-reads the
+authoritative session-manager state, rejects stale task/session identity, and
+preserves task status while remaining separate from action execution and
+automatic recovery.
+
 ## Next Smallest Capability
 
-Use the resulting Observer state to determine whether an explicit
-operator-reviewed bind action is needed for a real task workflow. Any future
-bind must re-read the authoritative session-manager state, reject stale task
-or session identity, and remain separate from action execution and automatic
-recovery.
+Select the next Level 2 capability only from a concrete missing operator
+workflow shown by the bound-task readback. Do not add another association or
+bind variant without new evidence.

@@ -4,6 +4,7 @@ export const eventNames = [
   "task.started",
   "task.planned",
   "task.phase_changed",
+  "task.work_view_bound",
   "task.running",
   "task.paused",
   "task.resumed",

@@ -3,25 +3,13 @@ import { buildNativeEngineeringMicrocompactProjection } from "./native-engineeri
 import { buildNativeEngineeringContextPacket } from "./native-engineering-context-packet.mjs";
 import { buildNativeEngineeringRecoveryEvidence } from "./native-engineering-recovery-evidence-builders.mjs";
 import { buildNativeEngineeringVerificationEvidence } from "./native-engineering-verification-evidence-builders.mjs";
-import { buildNativeEngineeringWorkViewAssociation } from "./native-engineering-work-view-association.mjs";
+import {
+  buildNativeEngineeringWorkViewAssociation,
+  readNativeEngineeringWorkViewState,
+} from "./native-engineering-work-view-association.mjs";
 
 const MICROCOMPACT_PROJECTION_PATH = "/plugins/native-adapter/engineering-microcompact/projection";
 const ENGINEERING_CONTEXT_PACKET_PATH = "/plugins/native-adapter/engineering-context/packet";
-
-async function readWorkViewStateFromSessionManager(sessionManagerUrl) {
-  if (typeof sessionManagerUrl !== "string" || !sessionManagerUrl.trim()) {
-    return { ok: false, data: null };
-  }
-  try {
-    const response = await fetch(`${sessionManagerUrl}/work-view/state`);
-    const data = await response.json().catch(() => null);
-    return response.ok && data?.ok === true
-      ? { ok: true, data }
-      : { ok: false, data: null };
-  } catch {
-    return { ok: false, data: null };
-  }
-}
 
 function taskForId(tasks, taskId) {
   if (!taskId) return null;
@@ -52,7 +40,7 @@ export async function handleNativeEngineeringContextRoute({
   planBuilder,
   publishEvent,
   sessionManagerUrl,
-  readWorkViewState = readWorkViewStateFromSessionManager,
+  readWorkViewState = readNativeEngineeringWorkViewState,
 }) {
   if (![MICROCOMPACT_PROJECTION_PATH, ENGINEERING_CONTEXT_PACKET_PATH].includes(requestUrl.pathname)) return false;
   if (req.method !== "POST") {

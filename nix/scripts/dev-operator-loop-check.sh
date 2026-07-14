@@ -99,14 +99,29 @@ const tasksList = readJson(process.argv[8]);
 
 const beforeCounts = beforeSummary.summary?.counts ?? {};
 const afterCounts = afterSummary.summary?.counts ?? {};
-if (JSON.stringify(beforeCounts) !== JSON.stringify(afterCounts)) {
-  throw new Error(`operator counts changed across restart: before=${JSON.stringify(beforeCounts)} after=${JSON.stringify(afterCounts)}`);
+if (
+  afterCounts.total !== beforeCounts.total
+  || afterCounts.active !== 0
+  || afterCounts.queued !== 0
+  || afterCounts.running !== 0
+  || afterCounts.paused !== 0
+  || afterCounts.completed !== 1
+  || afterCounts.failed !== 1
+) {
+  throw new Error(`operator restart lifecycle mismatch: before=${JSON.stringify(beforeCounts)} after=${JSON.stringify(afterCounts)}`);
 }
 if (!restoredOne || restoredOne.status !== "completed" || restoredOne.plan?.status !== "completed") {
   throw new Error("operator step task did not persist as completed planned task");
 }
-if (!restoredTwo || restoredTwo.status !== "completed" || restoredTwo.plan?.status !== "completed") {
-  throw new Error("operator run task did not persist as completed planned task");
+if (
+  !restoredTwo
+  || restoredTwo.status !== "failed"
+  || restoredTwo.executionPhase !== "input_reentry_required"
+  || restoredTwo.plan?.status !== "planned"
+  || restoredTwo.outcome?.details?.reason !== "write_only_input_reentry_required"
+  || restoredTwo.outcome?.details?.automaticReplay !== false
+) {
+  throw new Error("operator run task did not preserve the write-only input re-entry boundary after restart");
 }
 if (afterSummary.summary?.counts?.active !== 0 || afterSummary.summary?.currentTaskId !== null) {
   throw new Error("operator loop should leave no active tasks");
@@ -146,6 +161,8 @@ console.log(JSON.stringify({
       id: restoredTwo.id,
       status: restoredTwo.status,
       planStatus: restoredTwo.plan?.status ?? null,
+      executionPhase: restoredTwo.executionPhase ?? null,
+      reentryRequired: restoredTwo.outcome?.details?.reason === "write_only_input_reentry_required",
     },
   ],
 }, null, 2));
