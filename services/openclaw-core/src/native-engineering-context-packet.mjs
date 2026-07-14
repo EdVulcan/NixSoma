@@ -105,6 +105,19 @@ function protectedSummaryMessage(kind, summary) {
   };
 }
 
+function planTodoContextSummary(planTodoEvidence) {
+  if (!planTodoEvidence) {
+    return null;
+  }
+  return {
+    registry: planTodoEvidence.registry,
+    summary: planTodoEvidence.summary ?? null,
+    taskPlanEvidence: planTodoEvidence.taskPlanEvidence ?? null,
+    workbenchStorage: planTodoEvidence.workbenchStorage ?? null,
+    nextGovernedActionSuggestion: planTodoEvidence.nextGovernedActionSuggestion ?? null,
+  };
+}
+
 export function buildNativeEngineeringContextPacket({
   transcriptRecords = [],
   tasks = new Map(),
@@ -116,6 +129,7 @@ export function buildNativeEngineeringContextPacket({
   thresholdChars,
   protectRecentAssistantTurns,
   workViewAssociation = null,
+  planTodoEvidence = null,
 } = {}) {
   const safeLimit = boundedPositiveInteger(limit, DEFAULT_LIMIT, MAX_LIMIT);
   const safeMaxOutputChars = boundedPositiveInteger(maxOutputChars, DEFAULT_MAX_OUTPUT_CHARS, MAX_OUTPUT_CHARS);
@@ -136,6 +150,9 @@ export function buildNativeEngineeringContextPacket({
   }
   if (workViewAssociation) {
     sourceMessages.push(protectedSummaryMessage("trusted_work_view", workViewAssociation.summary));
+  }
+  if (planTodoEvidence) {
+    sourceMessages.push(protectedSummaryMessage("engineering_plan_todo", planTodoContextSummary(planTodoEvidence)));
   }
   sourceMessages.push(protectedSummaryMessage("verification", verificationEvidence?.summary));
   sourceMessages.push(protectedSummaryMessage("recovery", recoveryEvidence?.summary));
@@ -175,6 +192,9 @@ export function buildNativeEngineeringContextPacket({
       workViewObservationFreshness: workViewAssociation?.summary?.workViewObservationFreshness ?? null,
       workViewObservationSequence: workViewAssociation?.summary?.workViewObservationSequence ?? null,
       semanticTargetCount: workViewAssociation?.summary?.semanticTargetCount ?? null,
+      planTodoEvidenceIncluded: Boolean(planTodoEvidence),
+      planTodoTodoSource: planTodoEvidence?.summary?.todoSource ?? null,
+      planTodoCurrentAction: planTodoEvidence?.nextGovernedActionSuggestion?.suggestion?.actionId ?? null,
     },
     bounds: {
       maxTranscriptRecords: MAX_LIMIT,
@@ -201,6 +221,7 @@ export function buildNativeEngineeringContextPacket({
       createsApproval: false,
       readsTrustedWorkViewState: Boolean(workViewAssociation),
       readsTrustedWorkViewObservation: workViewAssociation?.observation != null,
+      readsPlanTodoEvidence: Boolean(planTodoEvidence),
       localServiceReadOnly: Boolean(workViewAssociation),
     },
     auditEvidence: {

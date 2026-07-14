@@ -1,6 +1,7 @@
 import { readJsonBody, sendJson } from "../../../packages/shared-utils/src/http.mjs";
 import { buildNativeEngineeringMicrocompactProjection } from "./native-engineering-microcompact-projection.mjs";
 import { buildNativeEngineeringContextPacket } from "./native-engineering-context-packet.mjs";
+import { buildNativeEngineeringPlanTodoEvidence } from "./native-engineering-plan-todo-evidence-builders.mjs";
 import { buildNativeEngineeringRecoveryEvidence } from "./native-engineering-recovery-evidence-builders.mjs";
 import { buildNativeEngineeringVerificationEvidence } from "./native-engineering-verification-evidence-builders.mjs";
 import {
@@ -83,6 +84,15 @@ export async function handleNativeEngineeringContextRoute({
           includeWorkViewObservation: body.includeWorkViewObservation === true,
         });
       }
+      const planTodoEvidence = body.includePlanTodo === true
+        ? buildNativeEngineeringPlanTodoEvidence({
+            tasks: state.tasks,
+            runtimeState: state.runtimeState,
+            workbenchRecords: state.nativeEngineeringPlanTodoWorkbenchRecords,
+            taskId,
+            limit,
+          })
+        : null;
       const packet = buildNativeEngineeringContextPacket({
         transcriptRecords,
         tasks: state.tasks,
@@ -94,6 +104,7 @@ export async function handleNativeEngineeringContextRoute({
         thresholdChars: body.thresholdChars,
         protectRecentAssistantTurns: body.protectRecentAssistantTurns,
         workViewAssociation,
+        planTodoEvidence,
       });
       if (!await publishAuditOrFail({
         res,

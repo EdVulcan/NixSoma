@@ -26,6 +26,11 @@ export const observerClientEngineeringContextRenderersScript = `function renderE
       ? String(workViewObservation.semanticTargets?.itemCount ?? 0)
       : "none";
   }
+  if (engineeringContextPacketPlanTodo) {
+    engineeringContextPacketPlanTodo.textContent = summary.planTodoEvidenceIncluded
+      ? \`\${summary.planTodoTodoSource ?? "unknown"}/\${summary.planTodoCurrentAction ?? "review_current_todo"}\`
+      : "none";
+  }
   const recoveryAction = workViewSummary.recoveryAction ?? "none";
   const recoveryButtonLabels = {
     prepare_work_view: "Prepare Trusted Work View",
@@ -52,7 +57,7 @@ export const observerClientEngineeringContextRenderersScript = `function renderE
     \`Mode: \${data?.mode ?? "local_governed_engineering_context_assembly"}\`,
     \`Capability: \${data?.capability?.id ?? "sense.openclaw.engineering_context.packet"} risk=\${data?.capability?.risk ?? "medium"} approval=\${Boolean(data?.capability?.approvalRequired)}\`,
     \`Summary: records=\${summary.sourceTranscriptRecords ?? 0} messages=\${summary.messageCount ?? messages.length} redactions=\${summary.redactions ?? 0} compacted=\${summary.compactedMessages ?? 0} reclaimedChars=\${summary.reclaimedChars ?? 0}\`,
-    \`Protection: verification=\${Boolean(summary.verificationEvidenceProtected)} recovery=\${Boolean(summary.recoveryEvidenceProtected)}\`,
+    \`Protection: verification=\${Boolean(summary.verificationEvidenceProtected)} recovery=\${Boolean(summary.recoveryEvidenceProtected)} planTodo=\${Boolean(summary.planTodoEvidenceIncluded)}\`,
     \`Trusted Work View (\${workViewAssociationToolName}): included=\${Boolean(summary.workViewAssociationIncluded)} status=\${workViewSummary.status ?? "none"} workView=\${workViewSummary.workViewId ?? "none"} binding=\${workViewSummary.bindingStatus ?? "none"} authority=\${workViewSummary.actionAuthority ?? "inactive"} recovery=\${recoveryAction} leaseMatched=\${Boolean(workViewSummary.leaseMatched)} observationRegistry=\${workViewObservation?.registry ?? "openclaw-native-engineering-work-view-observation-v0"} observation=\${workViewSummary.workViewObservationStatus ?? "none"}/\${workViewSummary.workViewObservationFreshness ?? "none"} sequence=\${workViewSummary.workViewObservationSequence ?? "none"} semanticTargets=\${workViewSummary.semanticTargetCount ?? "none"}\`,
     \`Governance: local=\${Boolean(governance.localAssemblyOnly)} credentialStore=\${Boolean(governance.readsCredentialStore)} taskMutation=\${Boolean(governance.mutatesTaskState)} provider=\${Boolean(governance.callsProvider)} network=\${Boolean(governance.networkEgress)}\`,
     \`Audit: operation=\${data?.auditEvidence?.operation ?? "missing"} inputContent=\${Boolean(data?.auditEvidence?.inputContentRecorded)} outputContent=\${Boolean(data?.auditEvidence?.outputContentRecorded)}\`,

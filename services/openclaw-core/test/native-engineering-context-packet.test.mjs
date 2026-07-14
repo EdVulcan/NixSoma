@@ -117,3 +117,41 @@ test("engineering context packet carries compact trusted work-view association w
   assert.equal(JSON.stringify(packet).includes("activeUrl"), false);
   assert.equal(packet.governance.readsTrustedWorkViewState, true);
 });
+
+test("engineering context packet protects explicit plan/todo guidance", () => {
+  const packet = buildNativeEngineeringContextPacket({
+    transcriptRecords: [],
+    taskId: "task-plan-context",
+    planTodoEvidence: {
+      registry: "openclaw-native-engineering-plan-todo-evidence-v0",
+      summary: {
+        taskPlanCount: 1,
+        todoSource: "workbench_storage",
+        evidenceTodoCounts: { total: 1, pending: 1, in_progress: 0, done: 0 },
+      },
+      taskPlanEvidence: {
+        selectedTaskId: "task-plan-context",
+        count: 1,
+        items: [{ taskId: "task-plan-context", todos: [{ id: "todo-1", description: "Run bounded verification", status: "pending" }] }],
+      },
+      workbenchStorage: { persisted: true, revision: 2, todoCount: 1 },
+      nextGovernedActionSuggestion: {
+        registry: "openclaw-native-engineering-plan-todo-next-action-v0",
+        currentTodo: { id: "todo-1", status: "pending", descriptionPreview: "Run bounded verification" },
+        suggestion: { actionId: "create_verification_task", existingObserverControlId: "engineering-verification-task-button" },
+        governance: { guidanceOnly: true, executesAutomatically: false },
+      },
+    },
+    thresholdChars: 1,
+    protectRecentAssistantTurns: 0,
+  });
+
+  const planMessage = packet.messages.find((message) => message.evidenceKind === "engineering_plan_todo_evidence");
+  assert.equal(planMessage?.toolName, "engineering_plan_todo");
+  assert.equal(packet.summary.planTodoEvidenceIncluded, true);
+  assert.equal(packet.summary.planTodoTodoSource, "workbench_storage");
+  assert.equal(packet.summary.planTodoCurrentAction, "create_verification_task");
+  assert.equal(packet.governance.readsPlanTodoEvidence, true);
+  assert.equal(packet.summary.compactedMessages, 0);
+  assert.equal(JSON.stringify(packet).includes('"executesAutomatically":true'), false);
+});

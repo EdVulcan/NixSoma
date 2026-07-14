@@ -19,6 +19,7 @@ export const observerClientEngineeringContextRefreshersScript = `async function 
         protectRecentAssistantTurns: 3,
         includeWorkView: true,
         includeWorkViewObservation: true,
+        includePlanTodo: true,
       }),
     });
     renderEngineeringContextPacket(data);

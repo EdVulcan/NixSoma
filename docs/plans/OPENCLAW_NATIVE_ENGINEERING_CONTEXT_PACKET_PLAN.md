@@ -226,3 +226,9 @@ observation bridge from
 capture status/freshness, frame provenance, and semantic-target counts without
 transferring page URLs, pixels, text blocks, target items, input values, or
 selectors. It remains read-only and does not select or dispatch an action.
+
+The packet can also explicitly request the existing plan/todo workbench bridge
+with `includePlanTodo: true`. It carries bounded task-plan/workbench summaries
+and the existing guidance-only next action as protected context; it does not
+switch planning mode, write a todo file, create a task, or execute the
+suggestion.

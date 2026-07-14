@@ -130,6 +130,12 @@ test("engineering context packet route reads the existing session-manager owner 
     status: "running",
     goal: "Use the trusted work view for engineering context",
     workViewStrategy: "openclaw-native-engineering-lsp-lifecycle",
+    plan: {
+      planner: "capability-aware-v1",
+      strategy: "rule-v1",
+      status: "running",
+      steps: [{ id: "verify-step", title: "Run bounded verification", status: "pending", phase: "verifying_result" }],
+    },
     workView: {
       sessionId: "session-current",
       workViewId: "work-view-primary",
@@ -137,8 +143,8 @@ test("engineering context packet route reads the existing session-manager owner 
   };
   const response = await invoke({
     path: "/plugins/native-adapter/engineering-context/packet",
-    body: { taskId: task.id, includeWorkView: true, includeWorkViewObservation: true },
-    state: { tasks: new Map([[task.id, task]]), runtimeState: {} },
+    body: { taskId: task.id, includeWorkView: true, includeWorkViewObservation: true, includePlanTodo: true },
+    state: { tasks: new Map([[task.id, task]]), runtimeState: {}, nativeEngineeringPlanTodoWorkbenchRecords: new Map() },
     readWorkViewState: async () => ({
       ok: true,
       data: {
@@ -177,6 +183,10 @@ test("engineering context packet route reads the existing session-manager owner 
   assert.equal(response.body.workViewAssociation.observation.status, "ready");
   assert.equal(response.body.workViewAssociation.observation.semanticTargets.itemCount, 1);
   assert.equal(response.body.summary.workViewObservationIncluded, true);
+  assert.equal(response.body.summary.planTodoEvidenceIncluded, true);
+  assert.equal(response.body.summary.planTodoCurrentAction, "create_verification_task");
+  assert.equal(response.body.governance.readsPlanTodoEvidence, true);
+  assert.equal(response.body.messages.some((message) => message.evidenceKind === "engineering_plan_todo_evidence"), true);
   assert.equal(response.body.governance.readsTrustedWorkViewObservation, true);
   assert.equal(response.body.governance.readsTrustedWorkViewState, true);
   assert.equal(JSON.stringify(response.body).includes("leaseId"), false);

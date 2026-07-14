@@ -33,6 +33,7 @@ function rendererContext() {
     engineeringContextPacketAuthority: element(),
     engineeringContextPacketCapture: element(),
     engineeringContextPacketTargets: element(),
+    engineeringContextPacketPlanTodo: element(),
     engineeringContextPacketRecovery: element(),
     engineeringContextPacketBindWorkViewButton: element(),
     engineeringContextPacketRecoveryButton: element({ hidden: true }),
@@ -47,6 +48,7 @@ test("Observer exposes only the allowlisted trusted work-view recovery actions",
     "engineering-context-packet-recovery-button",
     "engineering-context-packet-capture",
     "engineering-context-packet-targets",
+    "engineering-context-packet-plan-todo",
   ]) {
     assert.equal(panel.includes(token), true, `panel is missing ${token}`);
   }
@@ -56,7 +58,13 @@ test("Observer exposes only the allowlisted trusted work-view recovery actions",
   const context = rendererContext();
   vm.runInNewContext(observerClientEngineeringContextRenderersScript, context);
   context.renderEngineeringContextPacket({
-    summary: { workViewAssociationIncluded: true, messageCount: 1 },
+    summary: {
+      workViewAssociationIncluded: true,
+      messageCount: 1,
+      planTodoEvidenceIncluded: true,
+      planTodoTodoSource: "workbench_storage",
+      planTodoCurrentAction: "create_verification_task",
+    },
     governance: { callsProvider: false },
     workViewAssociation: {
       summary: {
@@ -77,6 +85,7 @@ test("Observer exposes only the allowlisted trusted work-view recovery actions",
   assert.equal(context.engineeringContextPacketRecoveryButton.disabled, false);
   assert.equal(context.engineeringContextPacketCapture.textContent, "ready/fresh");
   assert.equal(context.engineeringContextPacketTargets.textContent, "3");
+  assert.equal(context.engineeringContextPacketPlanTodo.textContent, "workbench_storage/create_verification_task");
   assert.match(context.engineeringContextPacketJson.textContent, /recovery=prepare_work_view/);
 
   context.renderEngineeringContextPacket({

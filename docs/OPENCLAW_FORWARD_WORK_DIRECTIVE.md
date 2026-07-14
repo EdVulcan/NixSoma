@@ -742,6 +742,9 @@ work-view observation bridge, which reports capture freshness, frame
 provenance, and semantic-target counts without transferring page URLs, pixels,
 page text, target items, input values, or selectors. Use that metadata to close
 a demonstrated operator decision before adding another Level 2 action.
+The packet can likewise request the existing bounded plan/todo workbench
+summary and guidance-only next action; that context remains read-only and does
+not create or execute a task.
 
 ## Identity-Upgrade Alignment
 

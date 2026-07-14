@@ -533,6 +533,11 @@ pixels, page URLs, page text, target items, input values, or selectors. Use this
 metadata to close a demonstrated operator decision before adding another
 Level 2 action.
 
+The packet also explicitly reuses the existing plan/todo workbench evidence
+through `OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PLAN_TODO_BRIDGE_PLAN.md`. The
+protected context includes only bounded plan/workbench state and the existing
+guidance-only next action; it does not create or execute a plan transition.
+
 The bound-task context workflow now also exposes the concrete trusted-session
 recovery recommendation in the existing Observer packet panel. When the
 authoritative readback recommends `prepare_work_view`, the operator can invoke
