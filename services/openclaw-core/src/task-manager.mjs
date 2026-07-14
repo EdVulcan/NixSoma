@@ -456,6 +456,10 @@ function attachTaskToWorkView(task, body) {
 
   task.status = "running";
   task.workView = {
+    workViewId:
+      typeof body.workViewId === "string" && body.workViewId.trim()
+        ? body.workViewId.trim()
+        : null,
     sessionId:
       typeof body.sessionId === "string" && body.sessionId.trim()
         ? body.sessionId.trim()
@@ -540,6 +544,7 @@ function failTask(task, reason, details = null) {
 function buildWorkViewAttachPayload(data, targetUrl) {
   const workView = data?.workView ?? {};
   return {
+    workViewId: workView.workViewId ?? null,
     sessionId: data?.session?.sessionId ?? null,
     status: workView.status ?? "ready",
     visibility: workView.visibility ?? "visible",

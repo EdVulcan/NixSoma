@@ -149,6 +149,7 @@ export function registerRoutes(deps) {
       executor,
       planBuilder,
       publishEvent,
+      sessionManagerUrl,
     })) {
       return;
     }

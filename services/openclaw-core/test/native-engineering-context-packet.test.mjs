@@ -59,3 +59,40 @@ test("engineering context packet filters one task and bounds output", () => {
   assert.equal(packet.messages[1].content[0].text.length <= 510, true);
   assert.equal(packet.provenance.taskId, "selected");
 });
+
+test("engineering context packet carries compact trusted work-view association without lease or URL data", () => {
+  const workViewAssociation = {
+    ok: true,
+    registry: "openclaw-native-engineering-work-view-association-v0",
+    summary: {
+      status: "bound",
+      taskId: "selected",
+      taskStatus: "running",
+      workViewId: "work-view-primary",
+      sessionStatus: "running",
+      sessionIdentityStatus: "authoritative",
+      helperStatus: "active",
+      actionAuthority: "active",
+      leaseMatched: true,
+      bindingStatus: "bound",
+      recoveryAction: "none",
+    },
+    governance: {
+      exposesLeaseId: false,
+      exposesActiveUrl: false,
+    },
+  };
+  const packet = buildNativeEngineeringContextPacket({
+    transcriptRecords: [],
+    taskId: "selected",
+    workViewAssociation,
+  });
+
+  assert.equal(packet.summary.workViewAssociationIncluded, true);
+  assert.equal(packet.summary.workViewAssociationStatus, "bound");
+  assert.equal(packet.provenance.workViewAssociationRegistry, "openclaw-native-engineering-work-view-association-v0");
+  assert.equal(packet.messages.at(-3).toolName, "trusted_work_view");
+  assert.equal(JSON.stringify(packet).includes("leaseId"), false);
+  assert.equal(JSON.stringify(packet).includes("activeUrl"), false);
+  assert.equal(packet.governance.readsTrustedWorkViewState, true);
+});

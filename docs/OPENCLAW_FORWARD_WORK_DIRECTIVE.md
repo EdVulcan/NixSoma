@@ -702,6 +702,24 @@ the current capture evidence. The next capability must be selected from a
 concrete user-visible gap and must preserve the existing local-first,
 non-persistent, policy-deferred boundary.
 
+The first demonstrated Level 2 work-view gap is now closed through the
+existing Engineering Context Packet action. An explicit `includeWorkView`
+request reads session-manager's authoritative `/work-view/state` and returns
+`openclaw-native-engineering-work-view-association-v0` with compact task
+binding, helper authority, and recovery status. It does not expose lease ids,
+active URLs, capture payloads, automatic binding, action dispatch, provider
+content, or external egress. Observer renders the association beside the
+packet, and unavailable session-manager state fails closed without inventing a
+binding.
+
+The next route should be selected from the resulting unbound-task workflow. If
+that workflow is real, add one explicit operator-reviewed bind action that
+re-reads authoritative session state before changing task metadata. Do not
+infer another browser action variant or create another Level 1
+readiness/evidence-only shell from historical plan text; preserve the existing
+provider, root, desktop-wide capture, and arbitrary endpoint execution
+boundaries.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

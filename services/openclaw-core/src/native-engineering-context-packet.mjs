@@ -115,6 +115,7 @@ export function buildNativeEngineeringContextPacket({
   maxOutputChars = DEFAULT_MAX_OUTPUT_CHARS,
   thresholdChars,
   protectRecentAssistantTurns,
+  workViewAssociation = null,
 } = {}) {
   const safeLimit = boundedPositiveInteger(limit, DEFAULT_LIMIT, MAX_LIMIT);
   const safeMaxOutputChars = boundedPositiveInteger(maxOutputChars, DEFAULT_MAX_OUTPUT_CHARS, MAX_OUTPUT_CHARS);
@@ -132,6 +133,9 @@ export function buildNativeEngineeringContextPacket({
     sourceMessages.push(transcript.message);
     redactions += transcript.redactions;
     if (transcript.outputTruncated) truncatedOutputs += 1;
+  }
+  if (workViewAssociation) {
+    sourceMessages.push(protectedSummaryMessage("trusted_work_view", workViewAssociation.summary));
   }
   sourceMessages.push(protectedSummaryMessage("verification", verificationEvidence?.summary));
   sourceMessages.push(protectedSummaryMessage("recovery", recoveryEvidence?.summary));
@@ -164,6 +168,8 @@ export function buildNativeEngineeringContextPacket({
       reclaimedChars: projection.summary.reclaimedChars,
       verificationEvidenceProtected: true,
       recoveryEvidenceProtected: true,
+      workViewAssociationIncluded: Boolean(workViewAssociation),
+      workViewAssociationStatus: workViewAssociation?.summary?.status ?? null,
     },
     bounds: {
       maxTranscriptRecords: MAX_LIMIT,
@@ -176,6 +182,7 @@ export function buildNativeEngineeringContextPacket({
       verificationRegistry: verificationEvidence?.registry ?? null,
       recoveryRegistry: recoveryEvidence?.registry ?? null,
       taskId,
+      workViewAssociationRegistry: workViewAssociation?.registry ?? null,
     },
     governance: {
       localAssemblyOnly: true,
@@ -187,6 +194,8 @@ export function buildNativeEngineeringContextPacket({
       readsCredentialStore: false,
       createsTask: false,
       createsApproval: false,
+      readsTrustedWorkViewState: Boolean(workViewAssociation),
+      localServiceReadOnly: Boolean(workViewAssociation),
     },
     auditEvidence: {
       operation: "engineering_context_packet_built",
@@ -199,7 +208,9 @@ export function buildNativeEngineeringContextPacket({
         redactions,
         compactedMessages: projection.summary.compactedMessages,
         reclaimedChars: projection.summary.reclaimedChars,
+        workViewAssociation: workViewAssociation?.summary ?? null,
       },
     },
+    workViewAssociation,
   };
 }

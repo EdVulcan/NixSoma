@@ -116,7 +116,7 @@ NODE
 )
 post_json "$CORE_URL/approvals/$second_approval_id/approve" '{"approvedBy":"dev-openclaw-native-engineering-context-packet-check","reason":"approve second bounded local context fixture command"}' > "$SECOND_APPROVED_FILE"
 post_json "$CORE_URL/operator/step" '{}' > "$SECOND_STEP_FILE"
-post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"limit\":8,\"maxOutputChars\":2000,\"thresholdChars\":256,\"protectRecentAssistantTurns\":0}" > "$PACKET_FILE"
+post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"limit\":8,\"maxOutputChars\":2000,\"thresholdChars\":256,\"protectRecentAssistantTurns\":0,\"includeWorkView\":true}" > "$PACKET_FILE"
 curl --silent --fail "$CORE_URL/plugins/openclaw-native-plugin-adapter" > "$ADAPTER_FILE"
 
 node - <<'NODE' "$TASK_FILE" "$STEP_FILE" "$SECOND_STEP_FILE" "$PACKET_FILE" "$ADAPTER_FILE" "$HTML_FILE" "$CLIENT_FILE" "$OUTPUT_SECRET" "$OBSERVER_CHECK"
@@ -149,12 +149,19 @@ if (
   || packet.summary?.compactedMessages < 1
   || packet.summary?.verificationEvidenceProtected !== true
   || packet.summary?.recoveryEvidenceProtected !== true
+  || packet.summary?.workViewAssociationIncluded !== true
+  || !packet.workViewAssociation?.registry
+  || packet.workViewAssociation?.source?.owner !== "openclaw-session-manager"
+  || packet.workViewAssociation?.governance?.exposesLeaseId !== false
+  || packet.workViewAssociation?.governance?.exposesActiveUrl !== false
   || packet.provenance?.taskId !== null
   || packet.governance?.localAssemblyOnly !== true
   || packet.governance?.readsCredentialStore !== false
   || packet.governance?.mutatesTaskState !== false
   || packet.governance?.callsProvider !== false
   || packet.governance?.networkEgress !== false
+  || packet.governance?.readsTrustedWorkViewState !== true
+  || packet.governance?.localServiceReadOnly !== true
   || packet.governance?.createsTask !== false
   || packet.governance?.createsApproval !== false
   || packet.auditEvidence?.operation !== "engineering_context_packet_built"
@@ -165,6 +172,9 @@ if (
 }
 if (packetRaw.includes(outputSecret)) {
   throw new Error("context packet leaked the fixture credential-like output");
+}
+if (packetRaw.includes("leaseId") || packetRaw.includes("activeUrl")) {
+  throw new Error("context packet leaked trusted work-view lease or URL fields");
 }
 if (
   !adapter.implementedCapabilities?.includes("sense.openclaw.engineering_context.packet")
@@ -185,6 +195,9 @@ if (observerCheck) {
     "engineering-context-packet-redactions",
     "engineering-context-packet-provider",
     "engineering-context-packet-audit",
+    "engineering-context-packet-work-view",
+    "engineering-context-packet-binding",
+    "engineering-context-packet-authority",
     "engineering-context-packet-build-button",
     "engineering-context-packet-json",
     "engineering-loop-state-recommendation",
@@ -202,6 +215,8 @@ if (observerCheck) {
     "Local governed engineering context packet",
     "sense.openclaw.engineering_context.packet",
     "engineeringContextPacketBuildButton",
+    "includeWorkView",
+    "trusted_work_view",
     "renderEngineeringRecommendationFromOperatorResult",
     "useEngineeringRecommendation",
     "ENGINEERING_RECOMMENDATION_CONTRACT",

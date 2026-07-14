@@ -25,7 +25,7 @@ function messageTextChars(message) {
 
 function isProtectedEvidence(message) {
   const evidenceKind = message?.evidenceKind ?? message?.metadata?.evidenceKind ?? null;
-  return ["verification", "recovery", "verification_evidence", "recovery_evidence"].includes(evidenceKind)
+  return ["verification", "recovery", "verification_evidence", "recovery_evidence", "trusted_work_view_evidence"].includes(evidenceKind)
     || ["cc_verify", "verification", "recovery"].includes(message?.toolName ?? message?.name ?? "");
 }
 

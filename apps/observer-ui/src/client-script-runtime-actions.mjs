@@ -499,6 +499,7 @@ async function attachTaskToWorkView(taskId, workViewResult) {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
+      workViewId: workViewResult.workView?.workViewId ?? null,
       sessionId: workViewResult.session?.sessionId ?? null,
       status: workViewResult.workView?.status ?? "ready",
       visibility: workViewResult.workView?.visibility ?? "visible",

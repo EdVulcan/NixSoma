@@ -4,6 +4,9 @@ const engineeringContextPacketMessages = document.querySelector("#engineering-co
 const engineeringContextPacketRedactions = document.querySelector("#engineering-context-packet-redactions");
 const engineeringContextPacketProvider = document.querySelector("#engineering-context-packet-provider");
 const engineeringContextPacketAudit = document.querySelector("#engineering-context-packet-audit");
+const engineeringContextPacketWorkView = document.querySelector("#engineering-context-packet-work-view");
+const engineeringContextPacketBinding = document.querySelector("#engineering-context-packet-binding");
+const engineeringContextPacketAuthority = document.querySelector("#engineering-context-packet-authority");
 const engineeringContextPacketBuildButton = document.querySelector("#engineering-context-packet-build-button");
 const engineeringContextPacketJson = document.querySelector("#engineering-context-packet-json");
 `;

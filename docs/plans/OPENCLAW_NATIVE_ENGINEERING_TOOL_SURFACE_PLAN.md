@@ -501,9 +501,19 @@ verifies the kernel socket peer before native D-Bus mutation. Body-config and
 real core/Observer checks pass for both boundaries; neither is a reason to
 reopen the engineering evidence chain.
 
-The next route remains the smallest concrete Level 2 trusted
-work-view/session-helper capability through an existing owner. Select it only
-from a demonstrated user-visible work-view gap. Do not infer another browser
-action variant or create another Level 1 readiness/evidence-only shell from
-historical plan text; preserve the existing provider, root, desktop-wide
-capture, and arbitrary endpoint execution boundaries until that gap is explicit.
+The first demonstrated Level 2 work-view gap is now closed through the
+existing Engineering Context Packet action. With explicit `includeWorkView`,
+core reads the session-manager owner and returns
+`openclaw-native-engineering-work-view-association-v0`, which classifies the
+selected engineering task as unbound, stale, authority-blocked, or bound. The
+association is compact and excludes lease ids, active URLs, capture payloads,
+automatic binding, and action dispatch; Observer renders the work-view id,
+binding status, and authority state beside the packet.
+
+The next route should be selected from the resulting unbound-task workflow. If
+that workflow is real, add one explicit operator-reviewed bind action that
+re-reads authoritative session state before changing task metadata. Do not
+infer another browser action variant or create another Level 1
+readiness/evidence-only shell from historical plan text; preserve the existing
+provider, root, desktop-wide capture, and arbitrary endpoint execution
+boundaries.

@@ -166,6 +166,21 @@ accept an endpoint, command, path, or provider payload from the model.
 Evidence is served through the existing `/operator/step` and `/operator/run`
 response serialization paths. No new provider route or task type was added.
 
+## Trusted Work-View Association Follow-Up Complete
+
+The existing explicit Observer packet action can now request a compact
+association with the session-manager-owned trusted AI work view. Core reads
+`/work-view/state` only when `includeWorkView=true` and derives task binding,
+session identity status, helper action authority, lease-match state, and
+recovery recommendation through
+`openclaw-native-engineering-work-view-association-v0`.
+
+The packet and Observer expose only bounded status metadata. Lease ids, active
+URLs, capture payloads, task mutation, action dispatch, automatic binding,
+provider calls, and external egress remain excluded. Session-manager failure
+returns an explicit unavailable association while preserving the local packet
+readback.
+
 ## Operator Route Fixture Follow-Up Complete
 
 The production-shaped route test now supplies a local valid recommendation to
@@ -185,7 +200,9 @@ egress.
 
 The Level 1 context-packet -> structured recommendation -> Observer review ->
 existing governed control loop is now closed with local route and UI evidence.
-The next autonomous product slice should advance the Level 2 trusted
-work-view/session-helper boundary through an existing work-view owner. Keep
-provider response content transient and do not resume the historical Phase
-59-136 wrapper chain.
+The first concrete Level 2 context bridge is also closed through the existing
+session-manager owner. The next slice, if a real unbound-task workflow is
+observed, is an explicit operator-reviewed task bind; it must revalidate the
+authoritative session before changing task metadata and must not dispatch an
+action or resume work automatically. Keep provider response content transient
+and do not resume the historical Phase 59-136 wrapper chain.

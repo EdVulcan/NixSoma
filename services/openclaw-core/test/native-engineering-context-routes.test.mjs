@@ -12,6 +12,8 @@ async function invoke({
   state = { tasks: new Map() },
   executor = { listCommandTranscriptRecords: () => [] },
   planBuilder = { listCapabilityInvocations: () => [] },
+  sessionManagerUrl = "http://127.0.0.1:4102",
+  readWorkViewState = async () => ({ ok: false, data: null }),
 } = {}) {
   const req = Readable.from([Buffer.from(JSON.stringify(body))]);
   req.method = method;
@@ -28,6 +30,8 @@ async function invoke({
     executor,
     planBuilder,
     publishEvent,
+    sessionManagerUrl,
+    readWorkViewState,
   });
   return { handled, ...response };
 }
@@ -117,4 +121,45 @@ test("engineering context packet route assembles existing task evidence without 
   assert.equal(response.body.governance.networkEgress, false);
   assert.equal(events[0].name, "native_engineering.context_packet_built");
   assert.equal(JSON.stringify(events).includes("do-not-include"), false);
+});
+
+test("engineering context packet route reads the existing session-manager owner when requested", async () => {
+  const task = {
+    id: "task-work-view-1",
+    type: "native_engineering_lsp_lifecycle",
+    status: "running",
+    goal: "Use the trusted work view for engineering context",
+    workViewStrategy: "openclaw-native-engineering-lsp-lifecycle",
+    workView: {
+      sessionId: "session-current",
+      workViewId: "work-view-primary",
+    },
+  };
+  const response = await invoke({
+    path: "/plugins/native-adapter/engineering-context/packet",
+    body: { taskId: task.id, includeWorkView: true },
+    state: { tasks: new Map([[task.id, task]]), runtimeState: {} },
+    readWorkViewState: async () => ({
+      ok: true,
+      data: {
+        session: { sessionId: "session-current", status: "running" },
+        workView: {
+          workViewId: "work-view-primary",
+          status: "ready",
+          helperStatus: "active",
+          trustedSession: {
+            sessionIdentity: { status: "authoritative" },
+            helperRuntime: { status: "active", actionAuthority: "active", leaseMatched: true },
+            recoveryRecommendation: { action: "none" },
+          },
+        },
+      },
+    }),
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.workViewAssociation.registry, "openclaw-native-engineering-work-view-association-v0");
+  assert.equal(response.body.workViewAssociation.summary.status, "bound");
+  assert.equal(response.body.governance.readsTrustedWorkViewState, true);
+  assert.equal(JSON.stringify(response.body).includes("leaseId"), false);
 });

@@ -3,9 +3,31 @@ import { buildNativeEngineeringMicrocompactProjection } from "./native-engineeri
 import { buildNativeEngineeringContextPacket } from "./native-engineering-context-packet.mjs";
 import { buildNativeEngineeringRecoveryEvidence } from "./native-engineering-recovery-evidence-builders.mjs";
 import { buildNativeEngineeringVerificationEvidence } from "./native-engineering-verification-evidence-builders.mjs";
+import { buildNativeEngineeringWorkViewAssociation } from "./native-engineering-work-view-association.mjs";
 
 const MICROCOMPACT_PROJECTION_PATH = "/plugins/native-adapter/engineering-microcompact/projection";
 const ENGINEERING_CONTEXT_PACKET_PATH = "/plugins/native-adapter/engineering-context/packet";
+
+async function readWorkViewStateFromSessionManager(sessionManagerUrl) {
+  if (typeof sessionManagerUrl !== "string" || !sessionManagerUrl.trim()) {
+    return { ok: false, data: null };
+  }
+  try {
+    const response = await fetch(`${sessionManagerUrl}/work-view/state`);
+    const data = await response.json().catch(() => null);
+    return response.ok && data?.ok === true
+      ? { ok: true, data }
+      : { ok: false, data: null };
+  } catch {
+    return { ok: false, data: null };
+  }
+}
+
+function taskForId(tasks, taskId) {
+  if (!taskId) return null;
+  if (tasks instanceof Map) return tasks.get(taskId) ?? null;
+  return Array.isArray(tasks) ? tasks.find((task) => task?.id === taskId) ?? null : null;
+}
 
 function positiveInteger(value, fallback, max) {
   const parsed = Number.parseInt(String(value ?? ""), 10);
@@ -29,6 +51,8 @@ export async function handleNativeEngineeringContextRoute({
   executor,
   planBuilder,
   publishEvent,
+  sessionManagerUrl,
+  readWorkViewState = readWorkViewStateFromSessionManager,
 }) {
   if (![MICROCOMPACT_PROJECTION_PATH, ENGINEERING_CONTEXT_PACKET_PATH].includes(requestUrl.pathname)) return false;
   if (req.method !== "POST") {
@@ -59,6 +83,17 @@ export async function handleNativeEngineeringContextRoute({
         taskId,
         limit,
       });
+      const selectedTaskId = taskId ?? state.runtimeState?.currentTaskId ?? null;
+      let workViewAssociation = null;
+      if (body.includeWorkView === true) {
+        const workViewRead = await readWorkViewState({ sessionManagerUrl });
+        workViewAssociation = buildNativeEngineeringWorkViewAssociation({
+          task: taskForId(state.tasks, selectedTaskId),
+          taskId: selectedTaskId,
+          workViewState: workViewRead.data,
+          readStatus: workViewRead.ok ? "available" : "unavailable",
+        });
+      }
       const packet = buildNativeEngineeringContextPacket({
         transcriptRecords,
         tasks: state.tasks,
@@ -69,6 +104,7 @@ export async function handleNativeEngineeringContextRoute({
         maxOutputChars: body.maxOutputChars,
         thresholdChars: body.thresholdChars,
         protectRecentAssistantTurns: body.protectRecentAssistantTurns,
+        workViewAssociation,
       });
       if (!await publishAuditOrFail({
         res,

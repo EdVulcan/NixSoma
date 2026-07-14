@@ -55,6 +55,27 @@ test("microcompact projection protects verification evidence outside recent wind
   assert.equal(result.messages[1].content[0].text.length, 2_000);
 });
 
+test("microcompact projection protects trusted work-view association outside recent window", () => {
+  const result = buildNativeEngineeringMicrocompactProjection({
+    thresholdChars: 10,
+    protectRecentAssistantTurns: 0,
+    messages: [
+      { role: "assistant", content: [{ type: "text", text: "old" }] },
+      {
+        role: "toolResult",
+        toolName: "trusted_work_view",
+        evidenceKind: "trusted_work_view_evidence",
+        content: [{ type: "text", text: "status=bound ".repeat(20) }],
+      },
+      { role: "assistant", content: [{ type: "text", text: "new" }] },
+    ],
+  });
+
+  assert.equal(result.summary.protectedEvidenceMessages, 1);
+  assert.equal(result.summary.compactedMessages, 0);
+  assert.match(result.messages[1].content[0].text, /status=bound/u);
+});
+
 test("microcompact projection rejects oversized message collections and text", () => {
   assert.throws(
     () => buildNativeEngineeringMicrocompactProjection({
