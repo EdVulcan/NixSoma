@@ -63,6 +63,7 @@ const resultEnvelopePhaseAliasPattern = /^dev-(?:observer-)?openclaw-live-provid
 const resultEnvelopeCommonEnvHelper = "dev-openclaw-live-provider-result-envelope-common-env.sh";
 const resultEnvelopePrereqHelper = "dev-openclaw-live-provider-result-envelope-prereq.sh";
 const resultEnvelopeAssertionsHelper = "dev-openclaw-live-provider-result-envelope-assertions.sh";
+const nativeEngineeringContextPacketPairBatchCheck = "openclaw-native-engineering-context-packet-pair-batch-reuse";
 
 function readCredentialValueLocalReadCommonScripts() {
   if (!fs.existsSync(credentialValueLocalReadManifestFile)) return new Set();
@@ -551,6 +552,20 @@ function selectSourceHeuristics(file) {
     ["services/openclaw-core/src/task-executor.mjs", ["task-executor"]],
     ["services/openclaw-core/src/route-handlers.mjs", ["task-workbench", "operator-loop", "observer-operator"]],
     ["services/openclaw-core/src/cloud-live-provider-result-envelope-routes.mjs", ["openclaw-live-provider-result-envelope-batch-reuse"]],
+    ["services/openclaw-core/src/native-engineering-context-packet.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
+    ["services/openclaw-core/src/native-engineering-context-routes.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
+    ["services/openclaw-core/src/native-engineering-work-view-association.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
+    ["services/openclaw-core/src/native-engineering-work-view-bind-routes.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
+    ["services/openclaw-core/src/native-engineering-work-view-binding.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
+    ["services/openclaw-core/test/native-engineering-context-packet.test.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
+    ["services/openclaw-core/test/native-engineering-context-routes.test.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
+    ["services/openclaw-core/test/native-engineering-work-view-association.test.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
+    ["services/openclaw-core/test/native-engineering-work-view-binding.test.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
+    ["apps/observer-ui/src/observer-panels-engineering-context.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
+    ["apps/observer-ui/src/client-script-config-dom-engineering-context.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
+    ["apps/observer-ui/src/client-script-refreshers-engineering-context.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
+    ["apps/observer-ui/src/client-script-renderers-engineering-context.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
+    ["apps/observer-ui/test/client-script-engineering-context.test.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
     ["services/openclaw-core/src/server.mjs", ["task-workbench", "operator-loop", "persistence"]],
     ["services/openclaw-core/src/runtime-state.mjs", ["persistence", "operator-loop"]],
     ["services/openclaw-browser-runtime/src/server.mjs", ["state-settling", "openclaw-ai-work-view-capture"]],
@@ -696,6 +711,14 @@ for (const file of changedFiles) {
       selectName("openclaw-service-lifecycle-scope");
       selectName(preCredentialPairBatchCheck);
       selectName("openclaw-live-provider-result-envelope-batch-reuse");
+      continue;
+    }
+    if (scriptBasename === "dev-openclaw-native-engineering-context-packet-common-check.sh") {
+      selectName(nativeEngineeringContextPacketPairBatchCheck);
+      continue;
+    }
+    if (scriptBasename === "dev-openclaw-native-engineering-context-packet-pair-batch-reuse-check.sh") {
+      selectName(nativeEngineeringContextPacketPairBatchCheck);
       continue;
     }
     if (preCredentialPairHelperScripts.has(scriptBasename)

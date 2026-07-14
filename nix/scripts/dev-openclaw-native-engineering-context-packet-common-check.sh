@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 CHECK_KIND="${OPENCLAW_CONTEXT_PACKET_CHECK_KIND:?OPENCLAW_CONTEXT_PACKET_CHECK_KIND is required}"
 OBSERVER_CHECK="${OPENCLAW_CONTEXT_PACKET_OBSERVER_CHECK:-false}"
+PAIR_RESET_SESSION="${OPENCLAW_CONTEXT_PACKET_PAIR_RESET_SESSION:-false}"
 FIXTURE_DIR="$REPO_ROOT/.artifacts/${CHECK_KIND}-fixture"
 WORKSPACE_DIR="$FIXTURE_DIR/openclaw"
 OUTPUT_SECRET="${CHECK_KIND}_OUTPUT_SECRET_DO_NOT_LEAK"
@@ -63,6 +64,10 @@ OPENCLAW_POST_JSON_DATA_FLAG="-d"
 source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
 
 "$SCRIPT_DIR/dev-up.sh"
+
+if [[ "$OBSERVER_CHECK" == "true" && "$PAIR_RESET_SESSION" == "true" ]]; then
+  post_json "$SESSION_MANAGER_URL/session/restart" '{"displayTarget":"workspace-2"}' >/dev/null
+fi
 
 TASK_FILE="$(mktemp)"
 BLOCKED_FILE="$(mktemp)"
@@ -142,6 +147,7 @@ const htmlPath = process.argv[10];
 const clientPath = process.argv[11];
 const outputSecret = process.argv[12];
 const observerCheck = process.argv[13] === "true";
+const pairResetSession = process.env.OPENCLAW_CONTEXT_PACKET_PAIR_RESET_SESSION === "true";
 const packetRaw = JSON.stringify({ packet, adapter });
 
 if (!step.ok || step.ran !== true || step.task?.status !== "completed" || !secondStep.ok || secondStep.ran !== true || secondStep.task?.status !== "completed") {
@@ -157,7 +163,11 @@ if (
   !preRecoveryPacket.ok
   || preRecoveryPacket.summary?.workViewAssociationIncluded !== true
   || preRecoveryPacket.workViewAssociation?.summary?.recoveryAction !== "prepare_work_view"
-  || preRecoveryPacket.workViewAssociation?.summary?.actionAuthority !== "inactive"
+  || (!pairResetSession && preRecoveryPacket.workViewAssociation?.summary?.actionAuthority !== "inactive")
+  || (pairResetSession && (
+    preRecoveryPacket.workViewAssociation?.summary?.helperStatus !== "divergent"
+    || preRecoveryPacket.workViewAssociation?.summary?.leaseMatched !== false
+  ))
 ) {
   throw new Error(`context packet should expose the existing work-view recovery recommendation before prepare: ${JSON.stringify(preRecoveryPacket.workViewAssociation?.summary)}`);
 }
@@ -180,7 +190,8 @@ if (
   || packet.registry !== "openclaw-native-engineering-context-packet-v0"
   || packet.mode !== "local_governed_engineering_context_assembly"
   || packet.capability?.id !== "sense.openclaw.engineering_context.packet"
-  || packet.summary?.sourceTranscriptRecords !== 2
+  || (!pairResetSession && packet.summary?.sourceTranscriptRecords !== 2)
+  || (pairResetSession && packet.summary?.sourceTranscriptRecords < 2)
   || packet.summary?.redactions < 1
   || packet.summary?.compactedMessages < 1
   || packet.summary?.verificationEvidenceProtected !== true
