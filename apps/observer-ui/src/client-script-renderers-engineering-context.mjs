@@ -21,6 +21,13 @@ export const observerClientEngineeringContextRenderersScript = `function renderE
     reveal_work_view: "Reveal Trusted Work View",
   };
   const recoveryButtonLabel = recoveryButtonLabels[recoveryAction] ?? null;
+  const rebindStatuses = new Set(["stale_session_binding", "stale_work_view_binding"]);
+  const canRebind = rebindStatuses.has(workViewSummary.bindingStatus);
+  if (engineeringContextPacketBindWorkViewButton) {
+    engineeringContextPacketBindWorkViewButton.textContent = canRebind
+      ? "Rebind Task to Work View"
+      : "Bind Task to Work View";
+  }
   engineeringContextPacketRecovery.textContent = recoveryAction;
   if (engineeringContextPacketRecoveryButton) {
     engineeringContextPacketRecoveryButton.textContent = recoveryButtonLabel ?? "Prepare Trusted Work View";

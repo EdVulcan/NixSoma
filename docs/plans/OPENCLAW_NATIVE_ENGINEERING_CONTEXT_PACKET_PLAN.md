@@ -214,6 +214,8 @@ revalidates authoritative state, preserves task status, rejects stale identity,
 and does not dispatch an action or resume work automatically. Its concrete
 `prepare_work_view` and post-prepare `reveal_work_view` recovery recommendations
 are now bridged through the existing Observer recovery control and refreshed
-packet readback. The dedicated work-view bind plan records the boundary and
-evidence. Keep provider response content transient and do not resume the
-historical Phase 59-136 wrapper chain.
+packet readback. After a session restart, the same selected task can be
+explicitly rebound through the existing bind route with `rebind: true` after
+authority recovery; automatic rebinding remains disabled. The dedicated
+work-view bind plan records the boundary and evidence. Keep provider response
+content transient and do not resume the historical Phase 59-136 wrapper chain.

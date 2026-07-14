@@ -40,6 +40,7 @@ function buildReadback({
   existingWorkViewIdPresent,
   sessionMatched,
   workViewMatched,
+  rebindRequested = false,
   operatorActionSource,
   now,
 } = {}) {
@@ -77,16 +78,20 @@ function buildReadback({
       taskWorkViewIdPresent: existingWorkViewIdPresent,
       sessionMatched,
       workViewMatched,
-      changed: status === "ready_to_bind",
+      operation: status === "ready_to_rebind" ? "rebind" : status === "already_bound" ? "noop" : "bind",
+      rebindRequested,
+      changed: status === "ready_to_bind" || status === "ready_to_rebind",
       operatorActionSource,
     },
     governance: {
       explicitOperatorConfirmation: true,
       revalidatedAuthoritativeState: stateAvailable,
       readSessionManagerOnly: true,
-      mutatesTaskState: status === "ready_to_bind",
+      mutatesTaskState: status === "ready_to_bind" || status === "ready_to_rebind",
       mutatesWorkViewState: false,
       changesTaskStatus: false,
+      explicitRebindRequested: rebindRequested,
+      replacesExistingBinding: status === "ready_to_rebind",
       dispatchesAction: false,
       createsTask: false,
       createsApproval: false,
@@ -112,6 +117,7 @@ export function buildNativeEngineeringWorkViewBindDecision({
   workViewState = null,
   readStatus = "available",
   confirm = false,
+  rebind = false,
   operatorActionSource = null,
   now = () => new Date().toISOString(),
 } = {}) {
@@ -143,6 +149,8 @@ export function buildNativeEngineeringWorkViewBindDecision({
     status = "work_view_state_unavailable";
   } else if (!authorityReady) {
     status = "authority_not_ready";
+  } else if (rebind === true && (existingSession && !sessionMatched || existingWorkViewId && !workViewMatched)) {
+    status = "ready_to_rebind";
   } else if (existingSession && !sessionMatched) {
     status = "stale_session_binding";
   } else if (existingWorkViewId && !workViewMatched) {
@@ -165,16 +173,17 @@ export function buildNativeEngineeringWorkViewBindDecision({
     existingWorkViewIdPresent: Boolean(existingWorkViewId),
     sessionMatched,
     workViewMatched,
+    rebindRequested: rebind === true,
     operatorActionSource: source,
     now,
   });
 
   return {
-    ok: status === "ready_to_bind" || status === "already_bound",
-    shouldMutate: status === "ready_to_bind",
+    ok: status === "ready_to_bind" || status === "ready_to_rebind" || status === "already_bound",
+    shouldMutate: status === "ready_to_bind" || status === "ready_to_rebind",
     status,
     readback,
-    internalBinding: status === "ready_to_bind"
+    internalBinding: status === "ready_to_bind" || status === "ready_to_rebind"
       ? {
           workViewId: parts.workView.workViewId.trim(),
           sessionId: parts.session.sessionId.trim(),

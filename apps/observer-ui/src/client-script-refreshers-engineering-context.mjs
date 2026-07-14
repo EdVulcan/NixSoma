@@ -41,14 +41,16 @@ async function bindEngineeringContextTaskToWorkView() {
   }
 
   engineeringContextPacketBindWorkViewButton.disabled = true;
+  const rebind = ["stale_session_binding", "stale_work_view_binding"]
+    .includes(engineeringContextPacketBinding?.textContent ?? "");
   try {
     const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-context/work-view/bind\`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ taskId, confirm: true }),
+      body: JSON.stringify({ taskId, confirm: true, rebind }),
     });
     await refreshEngineeringContextPacket();
-    setControlMessage(\`Bound task \${taskId} to the current trusted work view; task execution was not started.\`);
+    setControlMessage(\`\${rebind ? "Rebound" : "Bound"} task \${taskId} to the current trusted work view; task execution was not started.\`);
     return result;
   } catch (error) {
     engineeringContextPacketBinding.textContent = "blocked";

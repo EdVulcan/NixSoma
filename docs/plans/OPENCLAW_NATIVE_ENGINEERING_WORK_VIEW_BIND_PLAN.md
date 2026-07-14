@@ -36,7 +36,8 @@ session is running
 session identity is authoritative
 helper action authority is active
 helper lease match is true
-the task has no conflicting session or work-view binding
+the task has no conflicting session or work-view binding for an ordinary bind;
+an existing stale binding requires an explicit `rebind: true` request
 ```
 
 The task receives the authoritative session/work-view metadata and a compact
@@ -122,10 +123,31 @@ provider egress or ACPX/Codex live process execution
 The recovery bridge reuses the existing operator-reviewed prepare/reveal
 actions and does not change these deferred boundaries.
 
+## Explicit Stale-Binding Recovery Follow-Up
+
+After a session-manager restart, the existing association readback can classify
+the selected task as `stale_session_binding` or `stale_work_view_binding`. A
+normal bind request continues to reject that conflict. After the operator has
+explicitly restored current authority through the existing work-view recovery
+control, the same bind route accepts:
+
+```json
+{ "taskId": "...", "confirm": true, "rebind": true }
+```
+
+The route re-reads authoritative session-manager state immediately before
+replacing the task's compact binding, returns `operation: "rebind"`, preserves
+task status and execution phase, and emits the existing task binding event with
+explicit rebind provenance. It never dispatches browser work, replays a plan,
+or creates an automatic recovery task. Observer changes the existing Bind
+control to `Rebind Task to Work View` only for the two stale association
+statuses.
+
 ## Next Smallest Capability
 
 The bound-task context workflow now includes the concrete
-`prepare_work_view`/`reveal_work_view` recovery bridge. Select the next Level 2
-capability only from a new operator-visible gap in the refreshed readback. Do
-not add another bind variant or a readiness-only endpoint; authority loss must
-continue through the existing fail-closed recovery paths.
+`prepare_work_view`/`reveal_work_view` recovery bridge and explicit stale
+binding recovery. Select the next Level 2 capability only from a new
+operator-visible gap in the refreshed readback. Do not add another bind variant
+or a readiness-only endpoint; authority loss must continue through the existing
+fail-closed recovery paths.

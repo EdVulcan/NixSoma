@@ -733,7 +733,11 @@ can recommend `reveal_work_view` because the AI work view is prepared but
 hidden; the same panel now exposes a contextual Reveal Trusted Work View
 control through the existing action runner. Both controls revalidate current
 state, do not rebind tasks or replay actions, and do not create a new endpoint
-or automatic recovery path.
+or automatic recovery path. If a selected task retains an old session binding
+after that recovery, the same packet Bind control now becomes an explicit
+`Rebind Task to Work View` action; it requires `confirm:true` plus
+`rebind:true`, revalidates fresh authority, preserves task execution state, and
+does not replay the task.
 
 ## Identity-Upgrade Alignment
 

@@ -54,7 +54,10 @@ cleanup() {
     "${APPROVED_FILE:-}" "${STEP_FILE:-}" "${SECOND_TASK_FILE:-}" \
     "${SECOND_BLOCKED_FILE:-}" "${SECOND_APPROVED_FILE:-}" "${SECOND_STEP_FILE:-}" \
     "${PACKET_FILE:-}" "${ADAPTER_FILE:-}" "${PREPARE_FILE:-}" \
-    "${PRE_RECOVERY_PACKET_FILE:-}" "${BIND_FILE:-}"
+    "${PRE_RECOVERY_PACKET_FILE:-}" "${BIND_FILE:-}" \
+    "${SESSION_RESTART_FILE:-}" "${REBIND_PREPARE_FILE:-}" \
+    "${STALE_PACKET_FILE:-}" "${STALE_BIND_FILE:-}" \
+    "${REBOUND_FILE:-}" "${REBOUND_PACKET_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -82,6 +85,12 @@ ADAPTER_FILE="$(mktemp)"
 PREPARE_FILE="$(mktemp)"
 PRE_RECOVERY_PACKET_FILE="$(mktemp)"
 BIND_FILE="$(mktemp)"
+SESSION_RESTART_FILE="$(mktemp)"
+REBIND_PREPARE_FILE="$(mktemp)"
+STALE_PACKET_FILE="$(mktemp)"
+STALE_BIND_FILE="$(mktemp)"
+REBOUND_FILE="$(mktemp)"
+REBOUND_PACKET_FILE="$(mktemp)"
 HTML_FILE=""
 CLIENT_FILE=""
 
@@ -130,9 +139,15 @@ post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"task
 post_json "$SESSION_MANAGER_URL/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/engineering-context-bind"}' > "$PREPARE_FILE"
 post_json "$CORE_URL/plugins/native-adapter/engineering-context/work-view/bind" "{\"taskId\":\"$second_task_id\",\"confirm\":true}" > "$BIND_FILE"
 post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"limit\":8,\"maxOutputChars\":2000,\"thresholdChars\":256,\"protectRecentAssistantTurns\":0,\"includeWorkView\":true}" > "$PACKET_FILE"
+post_json "$SESSION_MANAGER_URL/session/restart" '{"displayTarget":"workspace-2"}' > "$SESSION_RESTART_FILE"
+post_json "$SESSION_MANAGER_URL/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/engineering-context-rebind"}' > "$REBIND_PREPARE_FILE"
+post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"taskId\":\"$second_task_id\",\"limit\":8,\"maxOutputChars\":2000,\"thresholdChars\":256,\"protectRecentAssistantTurns\":0,\"includeWorkView\":true}" > "$STALE_PACKET_FILE"
+OPENCLAW_POST_JSON_FAILURE=allow post_json "$CORE_URL/plugins/native-adapter/engineering-context/work-view/bind" "{\"taskId\":\"$second_task_id\",\"confirm\":true}" > "$STALE_BIND_FILE"
+post_json "$CORE_URL/plugins/native-adapter/engineering-context/work-view/bind" "{\"taskId\":\"$second_task_id\",\"confirm\":true,\"rebind\":true}" > "$REBOUND_FILE"
+post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"taskId\":\"$second_task_id\",\"limit\":8,\"maxOutputChars\":2000,\"thresholdChars\":256,\"protectRecentAssistantTurns\":0,\"includeWorkView\":true}" > "$REBOUND_PACKET_FILE"
 curl --silent --fail "$CORE_URL/plugins/openclaw-native-plugin-adapter" > "$ADAPTER_FILE"
 
-node - <<'NODE' "$TASK_FILE" "$STEP_FILE" "$SECOND_STEP_FILE" "$PRE_RECOVERY_PACKET_FILE" "$PREPARE_FILE" "$BIND_FILE" "$PACKET_FILE" "$ADAPTER_FILE" "$HTML_FILE" "$CLIENT_FILE" "$OUTPUT_SECRET" "$OBSERVER_CHECK"
+node - <<'NODE' "$TASK_FILE" "$STEP_FILE" "$SECOND_STEP_FILE" "$PRE_RECOVERY_PACKET_FILE" "$PREPARE_FILE" "$BIND_FILE" "$PACKET_FILE" "$SESSION_RESTART_FILE" "$REBIND_PREPARE_FILE" "$STALE_PACKET_FILE" "$STALE_BIND_FILE" "$REBOUND_FILE" "$REBOUND_PACKET_FILE" "$ADAPTER_FILE" "$HTML_FILE" "$CLIENT_FILE" "$OUTPUT_SECRET" "$OBSERVER_CHECK"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
 const taskResponse = readJson(2);
@@ -142,11 +157,17 @@ const preRecoveryPacket = readJson(5);
 const prepare = readJson(6);
 const bind = readJson(7);
 const packet = readJson(8);
-const adapter = readJson(9);
-const htmlPath = process.argv[10];
-const clientPath = process.argv[11];
-const outputSecret = process.argv[12];
-const observerCheck = process.argv[13] === "true";
+const sessionRestart = readJson(9);
+const rebindPrepare = readJson(10);
+const stalePacket = readJson(11);
+const staleBind = readJson(12);
+const rebound = readJson(13);
+const reboundPacket = readJson(14);
+const adapter = readJson(15);
+const htmlPath = process.argv[16];
+const clientPath = process.argv[17];
+const outputSecret = process.argv[18];
+const observerCheck = process.argv[19] === "true";
 const pairResetSession = process.env.OPENCLAW_CONTEXT_PACKET_PAIR_RESET_SESSION === "true";
 const packetRaw = JSON.stringify({ packet, adapter });
 
@@ -218,6 +239,29 @@ if (
 ) {
   throw new Error(`context packet evidence mismatch: ${JSON.stringify(packet)}`);
 }
+if (
+  !sessionRestart.ok
+  || sessionRestart.restarted !== true
+  || !rebindPrepare.ok
+  || rebindPrepare.workView?.helperRuntime?.status !== "active"
+  || !stalePacket.ok
+  || stalePacket.workViewAssociation?.summary?.status !== "stale_session_binding"
+  || stalePacket.workViewAssociation?.binding?.sessionMatched !== false
+  || staleBind.ok !== false
+  || staleBind.bind?.summary?.status !== "stale_session_binding"
+  || staleBind.bind?.summary?.operation !== "bind"
+  || rebound.ok !== true
+  || rebound.changed !== true
+  || rebound.bind?.summary?.status !== "bound"
+  || rebound.bind?.summary?.operation !== "rebind"
+  || rebound.bind?.governance?.replacesExistingBinding !== true
+  || rebound.association?.summary?.status !== "bound"
+  || !reboundPacket.ok
+  || reboundPacket.workViewAssociation?.summary?.status !== "bound"
+  || reboundPacket.provenance?.taskId !== secondStep.task?.id
+) {
+  throw new Error(`context packet stale binding recovery mismatch: ${JSON.stringify({ sessionRestart, rebindPrepare, stalePacket, staleBind, rebound, reboundPacket })}`);
+}
 if (packetRaw.includes(outputSecret)) {
   throw new Error("context packet leaked the fixture credential-like output");
 }
@@ -270,6 +314,7 @@ if (observerCheck) {
     "engineeringContextPacketRecovery",
     "engineeringContextPacketRecoveryButton",
     "Reveal Trusted Work View",
+    "Rebind Task to Work View",
     "/plugins/native-adapter/engineering-context/work-view/bind",
     "bindEngineeringContextTaskToWorkView",
     "prepareEngineeringContextWorkView",

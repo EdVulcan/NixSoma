@@ -80,6 +80,7 @@ export async function handleNativeEngineeringWorkViewBindRoute({
       const decision = buildNativeEngineeringWorkViewBindDecision({
         task,
         taskId,
+        rebind: body.rebind === true,
         confirm: false,
         operatorActionSource: "observer_engineering_context_packet",
       });
@@ -102,6 +103,7 @@ export async function handleNativeEngineeringWorkViewBindRoute({
     const decision = buildNativeEngineeringWorkViewBindDecision({
       task,
       taskId,
+      rebind: body.rebind === true,
       workViewState: workViewRead.data,
       readStatus: workViewRead.ok ? "available" : "unavailable",
       confirm: true,
@@ -147,7 +149,9 @@ export async function handleNativeEngineeringWorkViewBindRoute({
     });
     await publishEvent(createEventName("task.work_view_bound"), {
       task: serialiseTask(updatedTask),
-      reason: "operator_reviewed_trusted_work_view_bind",
+      reason: completedBind.summary.operation === "rebind"
+        ? "operator_reviewed_trusted_work_view_rebind"
+        : "operator_reviewed_trusted_work_view_bind",
       workViewBinding: completedBind.summary,
     });
     sendJson(res, 200, {

@@ -1700,3 +1700,68 @@ test("engineering work-view bind route fails closed when the current authority i
   assert.equal(response.body.bind.summary.status, "authority_not_ready");
   assert.equal(bindCalls, 0);
 });
+
+test("engineering work-view bind route requires explicit rebind for a stale task association", async () => {
+  const task = {
+    id: "task-bind-rebind",
+    status: "completed",
+    workView: { sessionId: "session-old", workViewId: "work-view-primary" },
+  };
+  const events = [];
+  let bindCalls = 0;
+  const deps = createBaseDeps({
+    state: { tasks: new Map([[task.id, task]]) },
+    taskManager: {
+      getTaskById: () => task,
+      bindTaskToTrustedWorkView: (candidate, binding) => {
+        bindCalls += 1;
+        candidate.workView = { ...binding };
+        return candidate;
+      },
+      serialiseTask: (candidate) => ({ id: candidate.id, status: candidate.status }),
+      buildTaskSummary: () => ({ total: 1 }),
+    },
+    readWorkViewState: async () => ({
+      ok: true,
+      data: {
+        session: { sessionId: "session-current", status: "running" },
+        workView: {
+          workViewId: "work-view-primary",
+          status: "ready",
+          visibility: "hidden",
+          mode: "background",
+          displayTarget: "workspace-2",
+          trustedSession: {
+            sessionIdentity: { status: "authoritative" },
+            helperRuntime: { status: "active", actionAuthority: "active", leaseMatched: true },
+            recoveryRecommendation: { action: "none" },
+          },
+        },
+      },
+    }),
+    publishEvent: async (name, payload) => events.push({ name, payload }),
+  });
+
+  const blocked = await invokeRoute(deps, "POST", "/plugins/native-adapter/engineering-context/work-view/bind", {
+    taskId: task.id,
+    confirm: true,
+  });
+  assert.equal(blocked.statusCode, 409);
+  assert.equal(blocked.body.bind.summary.status, "stale_session_binding");
+  assert.equal(bindCalls, 0);
+
+  const response = await invokeRoute(deps, "POST", "/plugins/native-adapter/engineering-context/work-view/bind", {
+    taskId: task.id,
+    confirm: true,
+    rebind: true,
+  });
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(response.body.changed, true);
+  assert.equal(response.body.bind.summary.status, "bound");
+  assert.equal(response.body.bind.summary.operation, "rebind");
+  assert.equal(response.body.bind.governance.replacesExistingBinding, true);
+  assert.equal(response.body.association.summary.status, "bound");
+  assert.equal(bindCalls, 1);
+  assert.equal(events[0].name, "task.work_view_bound");
+  assert.equal(events[0].payload.reason, "operator_reviewed_trusted_work_view_rebind");
+});

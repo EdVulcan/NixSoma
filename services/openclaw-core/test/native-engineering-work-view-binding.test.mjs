@@ -80,6 +80,23 @@ test("operator-reviewed bind remains explicit and rejects stale or unavailable a
   assert.equal(staleSession.status, "stale_session_binding");
   assert.equal(staleSession.ok, false);
 
+  const explicitRebind = buildNativeEngineeringWorkViewBindDecision({
+    task: {
+      id: "task-stale-session",
+      status: "completed",
+      workView: { sessionId: "session-old", workViewId: "work-view-primary" },
+    },
+    workViewState: workViewState(),
+    confirm: true,
+    rebind: true,
+  });
+  assert.equal(explicitRebind.status, "ready_to_rebind");
+  assert.equal(explicitRebind.ok, true);
+  assert.equal(explicitRebind.shouldMutate, true);
+  assert.equal(explicitRebind.readback.summary.operation, "rebind");
+  assert.equal(explicitRebind.readback.governance.mutatesTaskState, true);
+  assert.equal(explicitRebind.readback.governance.replacesExistingBinding, true);
+
   const staleWorkView = buildNativeEngineeringWorkViewBindDecision({
     task: {
       id: "task-stale-view",
