@@ -184,5 +184,33 @@ test("provider handoff capability rejects non-DeepSeek or malformed request bind
   }));
   assert.equal(invalidHash.statusCode, 400);
   assert.match(invalidHash.response.error, /SHA-256 hash/);
+
+  const invalidEnvelope = await runtime.invokeCapability(request({
+    params: {
+      confirm: true,
+      liveProviderExecution: {
+        credentialReference: CREDENTIAL_REFERENCE,
+        requestEnvelope: {
+          messages: [{ role: "tool", content: "unsupported role" }],
+        },
+      },
+    },
+  }));
+  assert.equal(invalidEnvelope.statusCode, 400);
+  assert.match(invalidEnvelope.response.error, /requestEnvelope is invalid/);
+
+  const oversizedEnvelope = await runtime.invokeCapability(request({
+    params: {
+      confirm: true,
+      liveProviderExecution: {
+        credentialReference: CREDENTIAL_REFERENCE,
+        requestEnvelope: {
+          messages: [{ role: "user", content: "x".repeat(8_001) }],
+        },
+      },
+    },
+  }));
+  assert.equal(oversizedEnvelope.statusCode, 400);
+  assert.match(oversizedEnvelope.response.error, /requestEnvelope is invalid/);
   assert.deepEqual(events, []);
 });

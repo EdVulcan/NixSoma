@@ -180,6 +180,20 @@ function buildOutboundBody(providerRequest, model) {
   return { ok: true, body, bodyText, requestContentHash: hashText(bodyText) };
 }
 
+export function validateLiveProviderRequestEnvelope({ requestEnvelope, model = DEEPSEEK_DEFAULT_MODEL } = {}) {
+  if (!requestEnvelope || typeof requestEnvelope !== "object" || Array.isArray(requestEnvelope)) {
+    return { ok: false, reason: "provider_request_envelope_required" };
+  }
+  const outbound = buildOutboundBody({ request: { body: requestEnvelope } }, model);
+  return outbound.ok
+    ? {
+        ok: true,
+        model: outbound.body.model,
+        requestContentHash: outbound.requestContentHash,
+      }
+    : { ok: false, reason: outbound.reason };
+}
+
 function isSha256(value) {
   return typeof value === "string" && /^[a-f0-9]{64}$/u.test(value);
 }

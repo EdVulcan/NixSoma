@@ -1,4 +1,7 @@
-import { DEEPSEEK_CREDENTIAL_REFERENCE } from "./cloud-live-provider-network-sender.mjs";
+import {
+  DEEPSEEK_CREDENTIAL_REFERENCE,
+  validateLiveProviderRequestEnvelope,
+} from "./cloud-live-provider-network-sender.mjs";
 import { CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT } from "./cloud-live-provider-runtime-response-contract.mjs";
 
 const CAPABILITY_ID = "act.openclaw.engineering_context.provider_handoff_task";
@@ -144,6 +147,12 @@ export function createEngineeringProviderHandoffCapabilityHandlers({
     }
     if (!input.requestEnvelope || typeof input.requestEnvelope !== "object" || Array.isArray(input.requestEnvelope)) {
       return "Provider handoff requestEnvelope is required.";
+    }
+    const requestEnvelopeValidation = validateLiveProviderRequestEnvelope({
+      requestEnvelope: input.requestEnvelope,
+    });
+    if (!requestEnvelopeValidation.ok) {
+      return `Provider handoff requestEnvelope is invalid: ${requestEnvelopeValidation.reason}.`;
     }
     const contextPacket = input.contextPacket;
     if (contextPacket !== undefined
