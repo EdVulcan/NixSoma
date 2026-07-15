@@ -283,6 +283,16 @@ keeps command execution, task creation, approvals, retries, mutation, and
 provider egress disabled. This bridge is documented in
 `docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_VERIFICATION_EVIDENCE_PLAN.md`.
 
+The first common capability-runtime entry point for the Level 2 trusted
+work-view is now available as
+`sense.openclaw.engineering_context.work_view_observation`. It reads the
+existing session-manager authority and sidecar observation contract, projects
+only compact binding/freshness/frame-provenance/semantic-count metadata, and
+records the normal policy, invocation, and capability-event evidence. It does
+not prepare or bind a task, dispatch an action, or transfer page payloads. The
+focused boundary is documented in
+`docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORK_VIEW_OBSERVATION_PLAN.md`.
+
 The selected Level 1 consistency closures are complete. Do not reopen the LSP
 symbol chain or add another evidence/readiness shell; choose the next concrete
 identity-upgrade capability only after its Level 2 authority boundary is

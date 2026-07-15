@@ -77,14 +77,14 @@ function createHarness(overrides = {}) {
       events.push({ name, body });
     },
     listCommandTranscriptRecords: overrides.listCommandTranscriptRecords ?? (() => []),
-    fetchImpl: async (url) => {
+    fetchImpl: overrides.fetchImpl ?? (async (url) => {
       calls.health.push(url);
       return {
         ok: true,
         statusText: "OK",
         json: async () => ({ ok: true, service: url.includes("4106") ? "openclaw-system-sense" : "test-service" }),
       };
-    },
+    }),
     createId: () => `id-${(calls.ids = (calls.ids ?? 0) + 1)}`,
     now: () => "2026-07-08T00:00:00.000Z",
   });
@@ -348,5 +348,91 @@ test("capability runtime exposes read-only verification evidence through the gov
   assert.equal(result.response.result.query.taskId, taskId);
   assert.equal(result.response.result.evidence[0].result.stdout, "verification-ok");
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("verification-ok"), false);
+  assert.deepEqual(events.map((event) => event.name), ["policy.evaluated", "capability.invoked"]);
+});
+
+test("capability runtime exposes compact trusted work-view observation through the governed invoke path", async () => {
+  const taskId = "work-view-task-1";
+  const task = {
+    id: taskId,
+    type: "native_engineering_lsp_lifecycle",
+    status: "running",
+    workViewStrategy: "openclaw-native-engineering-lsp-lifecycle",
+    workView: { sessionId: "session-current", workViewId: "work-view-primary" },
+  };
+  const workViewState = {
+    ok: true,
+    session: { sessionId: "session-current", status: "running", role: "ai-work-view" },
+    workView: {
+      workViewId: "work-view-primary",
+      status: "ready",
+      visibility: "hidden",
+      mode: "background",
+      trustedSession: {
+        sessionIdentity: { status: "authoritative", authority: "openclaw-session-manager" },
+        helperRuntime: {
+          status: "active",
+          actionAuthority: "active",
+          leaseMatched: true,
+          sidecar: {
+            captureSourceStatus: "ready",
+            captureFreshness: "fresh",
+            captureObservation: {
+              registry: "openclaw-trusted-work-view-sidecar-capture-observation-v0",
+              sequence: 4,
+              visualFrame: {
+                available: true,
+                fresh: true,
+                sequence: 4,
+                sha256: "a".repeat(64),
+                pageUrl: "https://private.example.invalid/not-returned",
+                width: 960,
+                height: 540,
+                byteLength: 12_000,
+              },
+              semanticTargets: {
+                available: true,
+                itemCount: 3,
+                inventorySha256: "b".repeat(64),
+                frameSequence: 4,
+                frameSha256: "a".repeat(64),
+                items: [{ name: "private target not returned" }],
+              },
+            },
+          },
+        },
+        recoveryRecommendation: { action: "none" },
+      },
+    },
+  };
+  const { runtime, state, events } = createHarness({
+    state: { tasks: new Map([[taskId, task]]) },
+    fetchImpl: async (url) => ({
+      ok: true,
+      json: async () => url.endsWith("/work-view/state") ? workViewState : { ok: true },
+    }),
+  });
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find((item) => item.id === "sense.openclaw.engineering_context.work_view_observation");
+  assert.equal(capability?.governance, "audit_only");
+  assert.equal(capability?.available, true);
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "sense.openclaw.engineering_context.work_view_observation",
+    taskId,
+  });
+
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.result.registry, "openclaw-native-engineering-work-view-association-v0");
+  assert.equal(result.response.result.identityLevel, "Level 2: trusted session/work-view component");
+  assert.equal(result.response.result.summary.status, "bound");
+  assert.equal(result.response.result.observation.freshness, "fresh");
+  assert.equal(result.response.result.observation.semanticTargets.itemCount, 3);
+  assert.equal(result.response.summary.kind, "engineering.work_view_observation");
+  assert.equal(result.response.summary.noPayloadExposure, true);
+  assert.equal(result.response.summary.readsTrustedWorkViewObservation, true);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("private.example"), false);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("private target"), false);
   assert.deepEqual(events.map((event) => event.name), ["policy.evaluated", "capability.invoked"]);
 });

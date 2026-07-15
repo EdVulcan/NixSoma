@@ -4,6 +4,7 @@ import { createEventName } from "../../../packages/shared-events/src/event-facto
 import { buildBaseCapabilities } from "./capability-descriptors.mjs";
 import { createEngineeringReadSearchCapabilityHandlers } from "./capability-runtime-engineering-read-search.mjs";
 import { createEngineeringVerificationCapabilityHandlers } from "./capability-runtime-engineering-verification.mjs";
+import { createEngineeringWorkViewCapabilityHandlers } from "./capability-runtime-work-view.mjs";
 
 export function createCapabilityRuntime(deps) {
   const {
@@ -61,6 +62,11 @@ export function createCapabilityRuntime(deps) {
     listCommandTranscriptRecords,
     listCapabilityInvocations: (options) => listCapabilityInvocations(options),
     tasks: state.tasks ?? new Map(),
+  });
+  const engineeringWorkViewHandlers = createEngineeringWorkViewCapabilityHandlers({
+    tasks: state.tasks ?? new Map(),
+    sessionManagerUrl,
+    fetchImpl,
   });
 
   function baseCapabilities() {
@@ -241,6 +247,10 @@ export function createCapabilityRuntime(deps) {
     const engineeringVerification = engineeringVerificationHandlers.callBackend(capability, request);
     if (engineeringVerification.handled) {
       return engineeringVerification.result;
+    }
+    const engineeringWorkView = await engineeringWorkViewHandlers.callBackend(capability, request);
+    if (engineeringWorkView.handled) {
+      return engineeringWorkView.result;
     }
 
     if (capability.id === "sense.system.vitals") {
@@ -424,6 +434,10 @@ export function createCapabilityRuntime(deps) {
     const engineeringVerificationSummary = engineeringVerificationHandlers.summariseResult(capability, result);
     if (engineeringVerificationSummary) {
       return engineeringVerificationSummary;
+    }
+    const engineeringWorkViewSummary = engineeringWorkViewHandlers.summariseResult(capability, result);
+    if (engineeringWorkViewSummary) {
+      return engineeringWorkViewSummary;
     }
 
     if (capability.id === "sense.system.vitals") {

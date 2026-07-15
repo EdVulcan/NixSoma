@@ -21,6 +21,7 @@ export OPENCLAW_WORKSPACE_ROOTS="$FIXTURE_DIR"
 
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 EVENT_HUB_URL="http://127.0.0.1:$OPENCLAW_EVENT_HUB_PORT"
+SESSION_MANAGER_URL="http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT"
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_EVENT_LOG_FILE"
@@ -39,6 +40,7 @@ cleanup() {
     "${ENGINEERING_GLOB_FILE:-}" \
     "${ENGINEERING_GREP_FILE:-}" \
     "${ENGINEERING_VERIFY_FILE:-}" \
+    "${WORK_VIEW_FILE:-}" \
     "${PROCESS_FILE:-}" \
     "${BLOCKED_COMMAND_FILE:-}" \
     "${APPROVED_COMMAND_FILE:-}" \
@@ -61,6 +63,7 @@ ENGINEERING_READ_FILE="$(mktemp)"
 ENGINEERING_GLOB_FILE="$(mktemp)"
 ENGINEERING_GREP_FILE="$(mktemp)"
 ENGINEERING_VERIFY_FILE="$(mktemp)"
+WORK_VIEW_FILE="$(mktemp)"
 PROCESS_FILE="$(mktemp)"
 BLOCKED_COMMAND_FILE="$(mktemp)"
 APPROVED_COMMAND_FILE="$(mktemp)"
@@ -73,6 +76,8 @@ post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.en
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool.glob\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"pattern\":\"src/**/*.ts\",\"limit\":4}}" > "$ENGINEERING_GLOB_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool.grep\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"query\":\"capabilityNeedle\",\"include\":\"src/**/*.ts\",\"literal\":true,\"limit\":4}}" > "$ENGINEERING_GREP_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_tool.verify_evidence","params":{"limit":4,"maxOutputChars":500}}' > "$ENGINEERING_VERIFY_FILE"
+post_json "$SESSION_MANAGER_URL/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/capability-work-view"}' > /dev/null
+post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.work_view_observation"}' > "$WORK_VIEW_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.process.list","intent":"process.list","params":{"limit":20}}' > "$PROCESS_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.command.dry_run","intent":"system.command","params":{"command":"rm","args":["-rf","/tmp/openclaw-danger"]}}' > "$BLOCKED_COMMAND_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.command.dry_run","intent":"system.command","approved":true,"params":{"command":"rm","args":["-rf","/tmp/openclaw-danger"]}}' > "$APPROVED_COMMAND_FILE"
@@ -90,6 +95,7 @@ node - <<'EOF' \
   "$APPROVED_COMMAND_FILE" \
   "$EVENTS_FILE" \
   "$ENGINEERING_VERIFY_FILE" \
+  "$WORK_VIEW_FILE" \
   "$FIXTURE_DIR"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
@@ -104,7 +110,8 @@ const blockedCommand = readJson(9);
 const approvedCommand = readJson(10);
 const events = readJson(11);
 const engineeringVerify = readJson(12);
-const fixtureDir = process.argv[13];
+const workView = readJson(13);
+const fixtureDir = process.argv[14];
 
 if (!vitals.ok || vitals.invoked !== true || vitals.capability?.id !== "sense.system.vitals" || vitals.policy?.decision !== "audit_only") {
   throw new Error("system vitals capability should be invoked with audit-only governance");
@@ -161,6 +168,20 @@ if (
 ) {
   throw new Error(`verification evidence capability should remain read-only through the governed builder: ${JSON.stringify(engineeringVerify)}`);
 }
+if (
+  !workView.ok
+  || workView.invoked !== true
+  || workView.capability?.id !== "sense.openclaw.engineering_context.work_view_observation"
+  || workView.result?.identityLevel !== "Level 2: trusted session/work-view component"
+  || workView.result?.summary?.status !== "work_view_observed"
+  || workView.result?.governance?.readsTrustedWorkViewObservation !== true
+  || workView.summary?.kind !== "engineering.work_view_observation"
+  || workView.summary?.noPayloadExposure !== true
+  || JSON.stringify(workView).includes("capability-work-view")
+  || JSON.stringify(workView).includes("leaseId")
+) {
+  throw new Error(`trusted work-view observation capability should remain compact and read-only: ${JSON.stringify(workView)}`);
+}
 if (!processes.ok || processes.invoked !== true || processes.result?.count < 1 || processes.summary?.kind !== "process.list") {
   throw new Error("process list capability should route through core");
 }
@@ -202,6 +223,11 @@ console.log(JSON.stringify({
       globMatches: engineeringGlob.result.summary.matchedResults,
       grepMatches: engineeringGrep.result.summary.matchedResults,
       verificationRecords: engineeringVerify.result.summary.total,
+      workViewObservation: {
+        status: workView.summary.status,
+        freshness: workView.summary.observationFreshness,
+        payloadExposed: !workView.summary.noPayloadExposure,
+      },
       policies: [engineeringRead.policy.decision, engineeringGlob.policy.decision, engineeringGrep.policy.decision],
     },
     process: {

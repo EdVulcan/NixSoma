@@ -223,6 +223,22 @@ export function buildBaseCapabilities({
       description: "Read bounded verification evidence from existing governed command transcripts without executing commands or creating tasks.",
     },
     {
+      id: "sense.openclaw.engineering_context.work_view_observation",
+      name: "Trusted Work-View Observation",
+      kind: "sensor",
+      service: "openclaw-session-manager",
+      endpoint: `${sessionManagerUrl}/work-view/state`,
+      intents: [
+        "openclaw.engineering_context.work_view_observation",
+        "engineering.context.work_view_observation",
+        "work_view.observe",
+      ],
+      domains: ["user_task", "body_internal"],
+      risk: "medium",
+      governance: "audit_only",
+      description: "Read compact authoritative trusted work-view authority and fresh observation metadata without exposing page payloads or dispatching actions.",
+    },
+    {
       id: "sense.openclaw.plugin_manifest_map",
       name: "Native OpenClaw Plugin Manifest Map",
       kind: "sensor",

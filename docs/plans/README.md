@@ -42,6 +42,7 @@ OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PROVIDER_SOURCE_TASK_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_READ_SEARCH_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_VERIFICATION_EVIDENCE_PLAN.md
+OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORK_VIEW_OBSERVATION_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PLAN_TODO_BRIDGE_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_ASSOCIATION_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_BIND_PLAN.md
@@ -112,22 +113,24 @@ OPENCLAW_NATIVE_ENGINEERING_PLAN_TODO_WORKBENCH_STORAGE_PLAN.md
 
 That lane now preserves compact persisted-workbench provenance through existing
 edit/write/verification task readback. The Level 1 operator execution
-consistency follow-up is complete, and the bounded native read/search bridge
-through the common capability runtime is documented in:
+consistency follow-up is complete, and the bounded native read/search,
+verification, and Level 2 work-view observation bridges through the common
+capability runtime are documented in:
 
 ```text
 OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_READ_SEARCH_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_VERIFICATION_EVIDENCE_PLAN.md
+OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORK_VIEW_OBSERVATION_PLAN.md
 ```
 
 The browser binding keeps the existing rule-v1 task target and action shape
 linked to operator execution, while the read/search bridge exposes
 `cc_read`/`cc_glob`/`cc_grep` through `/capabilities/invoke` with the existing
 policy, invocation ledger, and event evidence. Both are concrete Level 1
-closures, not new browser/provider lanes. The Level 1 engineering loop should
-not grow another evidence/readiness shell; continue with the smallest real Level 2
-trusted work-view/session-helper capability. The LSP selected-target chain,
+closures, not new browser/provider lanes. The work-view observation entry point
+is a sensor only and does not add a capture or action route. Do not grow
+another evidence/readiness shell. The LSP selected-target chain,
 plugin generation refresh with compact core-state persistence, ACPX
 compatibility/preflight, and local context packet are already completed
 evidence; do not reopen their historical next-step wording. ACPX live process

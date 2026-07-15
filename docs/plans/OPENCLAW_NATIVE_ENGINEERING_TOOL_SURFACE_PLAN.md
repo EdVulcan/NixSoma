@@ -8,9 +8,10 @@ The original read-only inventory and the subsequent Level 1 engineering loop
 are complete through LSP selected-target edit, verification, recovery/rerun,
 plugin refresh, ACPX/Codex boundary evidence, and local context-packet
 assembly. The Level 1 operator execution-consistency correction and the
-unified capability-runtime bridges for bounded read/search and verification
-evidence are now complete; the next identity-upgrade route remains the Level 2
-trusted work-view/session-helper boundary.
+unified capability-runtime bridges for bounded read/search, verification
+evidence, and trusted work-view observation are now complete; the next
+identity-upgrade route remains the Level 2 trusted work-view/session-helper
+action boundary.
 
 The latest completed slices are the compact work-view association, the explicit
 operator-reviewed task bind documented in
@@ -20,7 +21,9 @@ documented in
 `OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md`. The bounded
 read/search and verification capability-runtime bridges are documented in
 `OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_READ_SEARCH_PLAN.md` and
-`OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_VERIFICATION_EVIDENCE_PLAN.md`.
+`OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_VERIFICATION_EVIDENCE_PLAN.md`;
+the Level 2 observation bridge is documented in
+`OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORK_VIEW_OBSERVATION_PLAN.md`.
 
 Do not select historical inventory or LSP variant text below as a new slice.
 
@@ -98,6 +101,7 @@ services/openclaw-core/src/capability-descriptors.mjs
 services/openclaw-core/src/capability-runtime.mjs
 services/openclaw-core/src/capability-runtime-engineering-read-search.mjs
 services/openclaw-core/src/capability-runtime-engineering-verification.mjs
+services/openclaw-core/src/capability-runtime-work-view.mjs
 ```
 
 Core route:

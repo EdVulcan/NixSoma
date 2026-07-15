@@ -38,6 +38,7 @@ cleanup() {
     "${ENGINEERING_GLOB_FILE:-}" \
     "${ENGINEERING_GREP_FILE:-}" \
     "${ENGINEERING_VERIFY_FILE:-}" \
+    "${WORK_VIEW_FILE:-}" \
     "${BLOCKED_FILE:-}" \
     "${APPROVED_FILE:-}" \
     "${EVENTS_FILE:-}"
@@ -61,6 +62,7 @@ ENGINEERING_READ_FILE="$(mktemp)"
 ENGINEERING_GLOB_FILE="$(mktemp)"
 ENGINEERING_GREP_FILE="$(mktemp)"
 ENGINEERING_VERIFY_FILE="$(mktemp)"
+WORK_VIEW_FILE="$(mktemp)"
 BLOCKED_FILE="$(mktemp)"
 APPROVED_FILE="$(mktemp)"
 EVENTS_FILE="$(mktemp)"
@@ -73,6 +75,8 @@ post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.en
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool.glob\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"pattern\":\"src/**/*.ts\",\"limit\":4}}" > "$ENGINEERING_GLOB_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool.grep\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"query\":\"observerNeedle\",\"include\":\"src/**/*.ts\",\"literal\":true,\"limit\":4}}" > "$ENGINEERING_GREP_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_tool.verify_evidence","params":{"limit":4,"maxOutputChars":500}}' > "$ENGINEERING_VERIFY_FILE"
+post_json "http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/observer-capability-work-view"}' > /dev/null
+post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.work_view_observation"}' > "$WORK_VIEW_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.command.dry_run","intent":"system.command","params":{"command":"rm","args":["-rf","/tmp/openclaw-danger"]}}' > "$BLOCKED_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.command.dry_run","intent":"system.command","approved":true,"params":{"command":"rm","args":["-rf","/tmp/openclaw-danger"]}}' > "$APPROVED_FILE"
 curl --silent --fail "$EVENT_HUB_URL/events/audit?source=openclaw-core&limit=80" > "$EVENTS_FILE"
@@ -88,7 +92,8 @@ node - <<'EOF' \
   "$BLOCKED_FILE" \
   "$APPROVED_FILE" \
   "$EVENTS_FILE" \
-  "$ENGINEERING_VERIFY_FILE"
+  "$ENGINEERING_VERIFY_FILE" \
+  "$WORK_VIEW_FILE"
 const fs = require("node:fs");
 const html = fs.readFileSync(process.argv[2], "utf8");
 const client = fs.readFileSync(process.argv[3], "utf8");
@@ -101,6 +106,7 @@ const blocked = JSON.parse(fs.readFileSync(process.argv[9], "utf8"));
 const approved = JSON.parse(fs.readFileSync(process.argv[10], "utf8"));
 const events = JSON.parse(fs.readFileSync(process.argv[11], "utf8"));
 const engineeringVerify = JSON.parse(fs.readFileSync(process.argv[12], "utf8"));
+const workView = JSON.parse(fs.readFileSync(process.argv[13], "utf8"));
 
 for (const token of [
   "invoke-vitals-button",
@@ -155,6 +161,19 @@ if (
 ) {
   throw new Error("Observer verification evidence invoke path should remain read-only");
 }
+if (
+  !workView.ok
+  || workView.invoked !== true
+  || workView.capability?.id !== "sense.openclaw.engineering_context.work_view_observation"
+  || workView.result?.identityLevel !== "Level 2: trusted session/work-view component"
+  || workView.result?.summary?.status !== "work_view_observed"
+  || workView.summary?.kind !== "engineering.work_view_observation"
+  || workView.summary?.noPayloadExposure !== true
+  || JSON.stringify(workView).includes("observer-capability-work-view")
+  || JSON.stringify(workView).includes("leaseId")
+) {
+  throw new Error("Observer trusted work-view observation invoke path should remain compact and read-only");
+}
 if (!blocked.ok || blocked.invoked !== false || blocked.blocked !== true || blocked.reason !== "policy_requires_approval") {
   throw new Error("Observer blocked dry-run path should expose policy_requires_approval");
 }
@@ -186,6 +205,11 @@ console.log(JSON.stringify({
       globMatches: engineeringGlob.result.summary.matchedResults,
       grepMatches: engineeringGrep.result.summary.matchedResults,
       verificationRecords: engineeringVerify.result.summary.total,
+      workViewObservation: {
+        status: workView.summary.status,
+        freshness: workView.summary.observationFreshness,
+        payloadExposed: !workView.summary.noPayloadExposure,
+      },
     },
     vitalsPolicy: vitals.policy.decision,
     processCount: processes.result.count,
