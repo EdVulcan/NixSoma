@@ -1,6 +1,7 @@
 {
   imports = [
     ./dev-body.nix
+    ./clash-verge.nix
   ];
 
   nix.settings = {
