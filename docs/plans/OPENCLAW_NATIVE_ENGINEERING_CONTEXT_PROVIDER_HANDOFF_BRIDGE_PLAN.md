@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering Context Provider Handoff Bridge Plan
 
-Updated: 2026-07-14
+Updated: 2026-07-15
 
 ## Active Slice
 
@@ -91,6 +91,12 @@ request message, creates a second execution owner, reads credentials, or
 contacts the provider. The later `/operator/step` binding check remains the
 only path that can proceed toward execution.
 
+Observer now exposes the same capability in the Engineering Context panel as a
+one-shot pending-task control. The operator supplies a bounded transient
+request, while the panel returns only task, approval, binding, and governance
+readback. The control does not approve the task, run `/operator/step`, display
+the request text, or contact DeepSeek.
+
 ## Evidence
 
 Runtime:
@@ -102,6 +108,9 @@ services/openclaw-core/src/task-executor.mjs
 services/openclaw-core/src/capability-runtime-engineering-provider-handoff.mjs
 services/openclaw-core/src/capability-runtime.mjs
 services/openclaw-core/src/capability-descriptors.mjs
+apps/observer-ui/src/observer-panels-engineering-context.mjs
+apps/observer-ui/src/client-script-refreshers-engineering-provider-handoff.mjs
+apps/observer-ui/src/client-script-renderers-engineering-provider-handoff.mjs
 ```
 
 Tests:
@@ -111,11 +120,12 @@ services/openclaw-core/test/cloud-live-provider-runtime-context-packet.test.mjs
 services/openclaw-core/test/cloud-live-provider-runtime-live-execution.test.mjs
 services/openclaw-core/test/task-executor.test.mjs
 services/openclaw-core/test/capability-runtime-engineering-provider-handoff.test.mjs
+apps/observer-ui/test/client-script-engineering-provider-handoff.test.mjs
 ```
 
 The tests prove explicit flag handling, local work-view read assembly, plan/todo
-assembly, sensitive payload exclusion, compact durable evidence, and the
-existing hash-bound live execution path.
+assembly, sensitive payload exclusion, compact durable evidence, the Observer
+pending-task control, and the existing hash-bound live execution path.
 
 ## Deferred
 

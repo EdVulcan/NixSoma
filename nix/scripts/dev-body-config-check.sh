@@ -1361,7 +1361,7 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/packages/shared-client/src/service-descriptors.mjs"
     || -w "$observer_ui_server"
     || -e "$observer_ui_out/share/openclaw/apps/observer-ui/scripts"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 60 ]]; then
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 63 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi

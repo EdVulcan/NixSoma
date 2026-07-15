@@ -563,6 +563,8 @@ fixed DeepSeek request shape, delegates to the existing approval-bound egress
 owner, and retains only compact request/context binding metadata. This is a
 task-creation bridge, not a provider call: credential reads, endpoint contact,
 network egress, automatic approval, and operator execution remain deferred.
+Observer exposes the bounded request as a pending-task control and never
+echoes the request text in its readback.
 
 The ACPX/Codex bridge compatibility follow-up was completed as:
 

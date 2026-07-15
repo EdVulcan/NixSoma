@@ -333,7 +333,9 @@ bounded DeepSeek request shape, requires both capability approval and
 owner. The persisted task retains only the endpoint/model/credential-reference
 and request/context hash binding; it performs no credential read, endpoint
 contact, provider call, or network egress. The existing operator step remains
-the only execution owner.
+the only execution owner. Observer now exposes a one-shot pending-task control
+for this same capability: request text is transient, task approval remains
+pending, and the panel returns only compact task/approval/governance evidence.
 
 The first common capability-runtime entry point for the Level 2 trusted
 work-view is now available as

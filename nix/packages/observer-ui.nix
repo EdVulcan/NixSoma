@@ -12,6 +12,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-config-dom-cloud-provider.mjs
     ../../apps/observer-ui/src/client-script-config-dom-kernel-events.mjs
     ../../apps/observer-ui/src/client-script-config-dom-engineering-context.mjs
+    ../../apps/observer-ui/src/client-script-config-dom-engineering-provider-handoff.mjs
     ../../apps/observer-ui/src/client-script-config-dom-mvp-memory.mjs
     ../../apps/observer-ui/src/client-script-config-dom-native-runtime-refresh.mjs
     ../../apps/observer-ui/src/client-script-config-dom-system-body.mjs
@@ -26,6 +27,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-refreshers-cloud-live-runbook.mjs
     ../../apps/observer-ui/src/client-script-refreshers-cloud.mjs
     ../../apps/observer-ui/src/client-script-refreshers-engineering-context.mjs
+    ../../apps/observer-ui/src/client-script-refreshers-engineering-provider-handoff.mjs
     ../../apps/observer-ui/src/client-script-refreshers-kernel-events.mjs
     ../../apps/observer-ui/src/client-script-refreshers-memory-phases.mjs
     ../../apps/observer-ui/src/client-script-refreshers-mvp-phases.mjs
@@ -35,6 +37,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-renderers-acpx-codex-bridge.mjs
     ../../apps/observer-ui/src/client-script-renderers-engineering-edit.mjs
     ../../apps/observer-ui/src/client-script-renderers-engineering-context.mjs
+    ../../apps/observer-ui/src/client-script-renderers-engineering-provider-handoff.mjs
     ../../apps/observer-ui/src/client-script-renderers-engineering-lsp.mjs
     ../../apps/observer-ui/src/client-script-renderers-engineering-microcompact.mjs
     ../../apps/observer-ui/src/client-script-renderers-engineering-plan-todo.mjs

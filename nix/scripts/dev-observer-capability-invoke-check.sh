@@ -144,6 +144,10 @@ for (const token of [
   "invoke-command-dry-run-button",
   "invoke-approved-command-dry-run-button",
   "capability-invoke-json",
+  "engineering-provider-handoff-prompt-input",
+  "engineering-provider-handoff-create-button",
+  "Create Pending DeepSeek Handoff",
+  "engineering-provider-handoff-json",
 ]) {
   if (!html.includes(token)) {
     throw new Error(`Observer HTML missing ${token}`);
@@ -156,6 +160,10 @@ for (const token of [
   "renderCapabilityInvocation",
   "capability.invoked",
   "capability.blocked",
+  "act.openclaw.engineering_context.provider_handoff_task",
+  "createEngineeringProviderHandoffTask",
+  "renderEngineeringProviderHandoff",
+  "openclaw://credential/deepseek-api-key",
 ]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);

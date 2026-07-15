@@ -10,6 +10,7 @@ import { observerClientEngineeringVerificationRenderersScript } from "./client-s
 import { observerClientNativeRuntimeRefreshRenderersScript } from "./client-script-renderers-native-runtime-refresh.mjs";
 import { observerClientAcpxCodexBridgeRenderersScript } from "./client-script-renderers-acpx-codex-bridge.mjs";
 import { observerClientEngineeringContextRenderersScript } from "./client-script-renderers-engineering-context.mjs";
+import { observerClientEngineeringProviderHandoffRenderersScript } from "./client-script-renderers-engineering-provider-handoff.mjs";
 export const observerClientRenderersScript = `function setHealthPill(target, ok, text) {
   target.textContent = text;
   target.className = ok ? "status-pill" : "status-pill warn";
@@ -371,7 +372,7 @@ function renderFilesystemReadLedger(data) {
   ].join("\\n");
 }
 
-${observerClientWorkspaceSourceRenderersScript}${observerClientEngineeringEditRenderersScript}${observerClientEngineeringWriteRenderersScript}${observerClientEngineeringWriteExecutionRenderersScript}${observerClientEngineeringLspRenderersScript}${observerClientEngineeringVerificationRenderersScript}${observerClientEngineeringRecoveryRenderersScript}${observerClientEngineeringMicrocompactRenderersScript}${observerClientEngineeringPlanTodoRenderersScript}${observerClientEngineeringContextRenderersScript}${observerClientNativeRuntimeRefreshRenderersScript}${observerClientAcpxCodexBridgeRenderersScript}function renderNativePluginContract(data) {
+${observerClientWorkspaceSourceRenderersScript}${observerClientEngineeringEditRenderersScript}${observerClientEngineeringWriteRenderersScript}${observerClientEngineeringWriteExecutionRenderersScript}${observerClientEngineeringLspRenderersScript}${observerClientEngineeringVerificationRenderersScript}${observerClientEngineeringRecoveryRenderersScript}${observerClientEngineeringMicrocompactRenderersScript}${observerClientEngineeringPlanTodoRenderersScript}${observerClientEngineeringContextRenderersScript}${observerClientEngineeringProviderHandoffRenderersScript}${observerClientNativeRuntimeRefreshRenderersScript}${observerClientAcpxCodexBridgeRenderersScript}function renderNativePluginContract(data) {
   const summary = data?.summary ?? {};
   const contract = data?.contract ?? {};
   const governance = summary.governance ?? contract.governance ?? {};

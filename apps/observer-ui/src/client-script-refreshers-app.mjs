@@ -2,6 +2,7 @@ import { observerClientMvpPhaseRefreshersScript } from "./client-script-refreshe
 import { observerClientMemoryPhaseRefreshersScript } from "./client-script-refreshers-memory-phases.mjs";
 import { observerClientWorkspaceSourceRefreshersScript } from "./client-script-refreshers-workspace-source.mjs";
 import { observerClientEngineeringContextRefreshersScript } from "./client-script-refreshers-engineering-context.mjs";
+import { observerClientEngineeringProviderHandoffRefreshersScript } from "./client-script-refreshers-engineering-provider-handoff.mjs";
 export const observerClientAppRefreshersScript = `async function refreshOperatorState() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/operator/state\`);
@@ -431,4 +432,4 @@ async function refreshHealth() {
   }
 }
 
-${observerClientMvpPhaseRefreshersScript}${observerClientMemoryPhaseRefreshersScript}${observerClientEngineeringContextRefreshersScript}`;
+${observerClientMvpPhaseRefreshersScript}${observerClientMemoryPhaseRefreshersScript}${observerClientEngineeringContextRefreshersScript}${observerClientEngineeringProviderHandoffRefreshersScript}`;
