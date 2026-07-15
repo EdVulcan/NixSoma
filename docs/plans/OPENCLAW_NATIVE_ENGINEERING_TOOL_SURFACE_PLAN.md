@@ -597,9 +597,10 @@ recommendations, Observer recovery bridging, sidecar lifecycle task
 materialization, start-probe approval blocking, consolidated task/readback
 evidence, authoritative session identity matching across session-manager and
 browser-runtime, divergence recovery recommendations, and Observer session
-identity visibility. It still does not start a sidecar process, install a
-helper, capture the desktop, require root, copy credentials, call providers, or
-spawn ACP/Codex.
+identity visibility. Its approved lifecycle starts and stops one bounded
+user-session sidecar instance through the fixed `systemd --user` unit, while it
+still does not install a helper, capture the desktop, require root, copy
+credentials, call providers, or spawn ACP/Codex.
 
 The plan/todo suggested-action task/readback linkage is now complete through the
 existing edit/write/verification controls. The core recomputes the action from
@@ -615,9 +616,9 @@ browser navigation, semantic type, and real Firefox evidence are also complete.
 The bounded Level 2 browser eye-hand exit gate is closed. The kernel-whitepaper
 Phase A Nix store packaging and the fixed Phase B native D-Bus systemd inventory
 and restart slices are closed as well. The active route returns to a concrete
-Level 1 local capability; helper process execution, desktop-wide capture, hostd,
-unapproved provider egress, and ACPX/Codex live process execution remain
-deferred.
+Level 1 local capability; helper installation/login persistence, desktop-wide
+capture, hostd expansion, unapproved provider egress, and ACPX/Codex live
+process execution remain deferred.
 
 ## Current Route Correction
 
@@ -627,7 +628,9 @@ The historical LSP next-step text above is evidence history, not an instruction
 to reopen completed variants. The current native engineering frontier includes
 the complete LSP selected-target edit, verification, recovery, and rerun loop;
 the fixed native plugin registry generation lifecycle; ACPX/Codex compatibility
-and process-spawn preflight; and the local Engineering Context Packet.
+and process-spawn preflight, including the common capability-runtime read bridge
+documented in `OPENCLAW_NATIVE_ACPX_CODEX_CAPABILITY_RUNTIME_PLAN.md`; and the
+local Engineering Context Packet.
 
 The remaining ACPX live process/auth boundary and any provider/model boundary
 outside the explicit DeepSeek handoff require explicit operator authorization.
