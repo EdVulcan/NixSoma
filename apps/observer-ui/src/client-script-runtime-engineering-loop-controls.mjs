@@ -47,12 +47,12 @@ function engineeringLoopEvidenceRoute(kind, taskId) {
   return \`/plugins/native-adapter/engineering-verification/evidence?taskId=\${taskId ?? ""}\`;
 }
 
-function engineeringLspSelectedTargetReadBridgeRoute(taskId, language = "typescript") {
-  return \`/plugins/native-adapter/engineering-lsp/selected-target-read-bridge?taskId=\${encodeURIComponent(taskId ?? "")}&language=\${encodeURIComponent(language ?? "typescript")}&contextLines=2&includeRead=true\`;
+function engineeringLspSelectedTargetReadBridgeRoute(taskId, language = "typescript", targetIndex = engineeringLspSelectedTargetIndex()) {
+  return \`/plugins/native-adapter/engineering-lsp/selected-target-read-bridge?taskId=\${encodeURIComponent(taskId ?? "")}&language=\${encodeURIComponent(language ?? "typescript")}&targetIndex=\${encodeURIComponent(String(targetIndex ?? 0))}&contextLines=2&includeRead=true\`;
 }
 
-function engineeringLspSelectedTargetEditProposalSeedRoute(taskId, language = "typescript") {
-  return \`/plugins/native-adapter/engineering-lsp/selected-target-edit-proposal-seed?taskId=\${encodeURIComponent(taskId ?? "")}&language=\${encodeURIComponent(language ?? "typescript")}&contextLines=0\`;
+function engineeringLspSelectedTargetEditProposalSeedRoute(taskId, language = "typescript", targetIndex = engineeringLspSelectedTargetIndex()) {
+  return \`/plugins/native-adapter/engineering-lsp/selected-target-edit-proposal-seed?taskId=\${encodeURIComponent(taskId ?? "")}&language=\${encodeURIComponent(language ?? "typescript")}&targetIndex=\${encodeURIComponent(String(targetIndex ?? 0))}&contextLines=0\`;
 }
 
 function engineeringLoopWorkStandardsQuery(kind) {
@@ -256,8 +256,10 @@ async function refreshEngineeringLoopCompletionReadback() {
     const execution = task?.outcome?.details?.lspLifecycleExecution ?? lifecycle.execution ?? {};
     const lifecycleState = execution.lifecycleState ?? lifecycle.lifecycleState ?? {};
     const symbolResponse = lifecycle.symbolRequest?.responseSummary ?? execution.server?.symbolResponseSummary ?? {};
+    renderEngineeringLspTargetSelection(lifecycle.lifecycleAction === "symbol_request" ? symbolResponse : null);
+    const selectedTargetIndex = engineeringLspSelectedTargetIndex();
     const selectedTargetReadBridgeRoute = lifecycle.lifecycleAction === "symbol_request" && symbolResponse.selectedTarget
-      ? engineeringLspSelectedTargetReadBridgeRoute(latestEngineeringLoopControlState.taskId, lifecycle.language ?? execution.language ?? "typescript")
+      ? engineeringLspSelectedTargetReadBridgeRoute(latestEngineeringLoopControlState.taskId, lifecycle.language ?? execution.language ?? "typescript", selectedTargetIndex)
       : null;
     latestEngineeringLoopControlState.language = lifecycle.language ?? execution.language ?? "typescript";
     latestEngineeringLoopControlState.lifecycleAction = lifecycle.lifecycleAction ?? execution.lifecycleAction ?? "start";
@@ -275,6 +277,9 @@ async function refreshEngineeringLoopCompletionReadback() {
         : null,
       lifecycle.lifecycleAction === "symbol_request" && symbolResponse.selectedTarget
         ? \`Selected Target: uri=\${symbolResponse.selectedTarget.uri} start=\${symbolResponse.selectedTarget.range?.start?.line ?? "n/a"}:\${symbolResponse.selectedTarget.range?.start?.character ?? "n/a"} end=\${symbolResponse.selectedTarget.range?.end?.line ?? "n/a"}:\${symbolResponse.selectedTarget.range?.end?.character ?? "n/a"}\`
+        : null,
+      lifecycle.lifecycleAction === "symbol_request" && Array.isArray(symbolResponse.targets)
+        ? \`Target Selection: index=\${selectedTargetIndex} total=\${symbolResponse.targets.length} explicit=true\`
         : null,
       selectedTargetReadBridgeRoute ? \`Selected Target Read Bridge: \${selectedTargetReadBridgeRoute}\` : null,
       \`Lifecycle State: \${lifecycleState.status ?? "pending"} active=\${Boolean(lifecycleState.process?.longLivedProcessActive)} jsonRpc=\${Boolean(lifecycleState.boundaries?.jsonRpcEnabled)}\`,
@@ -313,9 +318,11 @@ async function readEngineeringLoopSelectedTarget() {
   if (!latestEngineeringLoopControlState?.taskId || latestEngineeringLoopControlState.kind !== "lsp-lifecycle") {
     throw new Error("Create or restore an LSP lifecycle task first.");
   }
+  const targetIndex = engineeringLspSelectedTargetIndex();
   const route = engineeringLspSelectedTargetReadBridgeRoute(
     latestEngineeringLoopControlState.taskId,
     latestEngineeringLoopControlState.language ?? "typescript",
+    targetIndex,
   );
   const bridge = await fetchJson(\`\${observerConfig.coreUrl}\${route}\`);
   if (!bridge.ok) {
@@ -337,6 +344,7 @@ async function readEngineeringLoopSelectedTarget() {
   engineeringLoopStateJson.textContent = [
     "Kind: lsp-selected-target-read",
     \`Task: \${latestEngineeringLoopControlState.taskId}\`,
+    \`Target Index: \${targetIndex}\`,
     \`Bridge: \${route}\`,
     \`Registry: \${bridge.registry ?? "unknown"}\`,
     \`Target: \${bridge.target?.relativePath ?? "unknown"} lines=\${bridge.target?.startLine ?? "n/a"}-\${bridge.target?.endLine ?? "n/a"}\`,
@@ -353,9 +361,11 @@ async function seedEngineeringLoopSelectedTargetEditProposal() {
   if (!latestEngineeringLoopControlState?.taskId || latestEngineeringLoopControlState.kind !== "lsp-lifecycle") {
     throw new Error("Create or restore an LSP lifecycle task first.");
   }
+  const targetIndex = engineeringLspSelectedTargetIndex();
   const route = engineeringLspSelectedTargetEditProposalSeedRoute(
     latestEngineeringLoopControlState.taskId,
     latestEngineeringLoopControlState.language ?? "typescript",
+    targetIndex,
   );
   const seed = await fetchJson(\`\${observerConfig.coreUrl}\${route}\`);
   if (!seed.ok) {
@@ -380,6 +390,7 @@ async function seedEngineeringLoopSelectedTargetEditProposal() {
   engineeringLoopStateJson.textContent = [
     "Kind: lsp-selected-target-edit-seed",
     \`Task: \${latestEngineeringLoopControlState.taskId}\`,
+    \`Target Index: \${targetIndex}\`,
     \`Seed: \${route}\`,
     \`Registry: \${seed.registry ?? "unknown"}\`,
     \`Target: \${seed.seed?.relativePath ?? "unknown"} oldBytes=\${seed.seed?.oldStringBytes ?? 0}\`,
@@ -403,6 +414,7 @@ function renderEngineeringLspLifecycleLoopTaskState(result) {
     language: result.engineeringLspLifecycle?.language ?? "typescript",
     lifecycleAction: result.engineeringLspLifecycle?.lifecycleAction ?? "start",
   };
+  renderEngineeringLspTargetSelection(null);
   engineeringLoopStateKind.textContent = "lsp-lifecycle";
   engineeringLoopStateTask.textContent = taskId ? taskId.slice(0, 8) : "none";
   engineeringLoopStateApproval.textContent = approvalId ? approvalId.slice(0, 8) : "none";
@@ -748,6 +760,17 @@ async function restoreEngineeringLoopStateFromHistory({ startup = false } = {}) 
   restored.suggestionLink = task.engineeringPlanTodoSuggestionLink ?? null;
   restored.workStandardsQuery = engineeringLoopWorkStandardsQuery(restored.kind);
   latestEngineeringLoopControlState = restored;
+  if (restored.kind === "lsp-lifecycle") {
+    const lifecycle = task.engineeringLspLifecycle ?? {};
+    const execution = task.outcome?.details?.lspLifecycleExecution ?? lifecycle.execution ?? {};
+    renderEngineeringLspTargetSelection(
+      lifecycle.symbolRequest?.responseSummary
+        ?? execution.server?.symbolResponseSummary
+        ?? null,
+    );
+  } else {
+    renderEngineeringLspTargetSelection(null);
+  }
   taskHistoryFocus = "selected-task";
   selectedHistoryTaskId = task.id;
   taskDetailIdInput.value = task.id;

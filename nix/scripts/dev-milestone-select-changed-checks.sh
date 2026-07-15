@@ -64,6 +64,7 @@ const resultEnvelopeCommonEnvHelper = "dev-openclaw-live-provider-result-envelop
 const resultEnvelopePrereqHelper = "dev-openclaw-live-provider-result-envelope-prereq.sh";
 const resultEnvelopeAssertionsHelper = "dev-openclaw-live-provider-result-envelope-assertions.sh";
 const nativeEngineeringContextPacketPairBatchCheck = "openclaw-native-engineering-context-packet-pair-batch-reuse";
+const nativeEngineeringLspObserverCheck = "observer-openclaw-native-engineering-lsp-evidence";
 
 function readCredentialValueLocalReadCommonScripts() {
   if (!fs.existsSync(credentialValueLocalReadManifestFile)) return new Set();
@@ -568,6 +569,12 @@ function selectSourceHeuristics(file) {
     ["apps/observer-ui/src/client-script-refreshers-engineering-context.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
     ["apps/observer-ui/src/client-script-renderers-engineering-context.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
     ["apps/observer-ui/test/client-script-engineering-context.test.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
+    ["apps/observer-ui/src/observer-panels-operations.mjs", [nativeEngineeringLspObserverCheck]],
+    ["apps/observer-ui/src/client-script-config-dom-workspace-source.mjs", [nativeEngineeringLspObserverCheck]],
+    ["apps/observer-ui/src/client-script-runtime-actions.mjs", [nativeEngineeringLspObserverCheck]],
+    ["apps/observer-ui/src/client-script-runtime-engineering-loop-controls.mjs", [nativeEngineeringLspObserverCheck]],
+    ["apps/observer-ui/src/client-script-runtime-engineering-lsp-target-selection.mjs", [nativeEngineeringLspObserverCheck]],
+    ["apps/observer-ui/test/client-script-engineering-lsp-target-selection.test.mjs", [nativeEngineeringLspObserverCheck]],
     ["services/openclaw-core/src/server.mjs", ["task-workbench", "operator-loop", "persistence"]],
     ["services/openclaw-core/src/runtime-state.mjs", ["persistence", "operator-loop"]],
     ["services/openclaw-browser-runtime/src/server.mjs", ["state-settling", "openclaw-ai-work-view-capture"]],

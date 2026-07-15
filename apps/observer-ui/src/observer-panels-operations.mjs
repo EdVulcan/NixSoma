@@ -149,6 +149,15 @@ export function observerOperationsPanels() {
             <button id="engineering-loop-restore-button" class="secondary" type="button">Restore Loop State</button>
             <button id="engineering-loop-recommendation-use-button" class="secondary" type="button" disabled>Use AI Recommendation</button>
           </div>
+          <div id="engineering-lsp-target-selection-panel" class="control-stack" hidden>
+            <div class="field">
+              <label for="engineering-lsp-target-select">LSP Response Target</label>
+              <select id="engineering-lsp-target-select" disabled>
+                <option value="0">Complete a symbol request to load targets</option>
+              </select>
+              <div class="hint" id="engineering-lsp-target-selection-status">No completed LSP symbol response target is available.</div>
+            </div>
+          </div>
           <pre id="engineering-loop-state-json">No engineering loop task created from Observer controls yet.</pre>
           <pre id="engineering-loop-recommendation-json">No transient AI engineering recommendation in the latest operator result.</pre>
         </section>

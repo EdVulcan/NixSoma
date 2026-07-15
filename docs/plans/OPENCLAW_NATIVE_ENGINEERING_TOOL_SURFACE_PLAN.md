@@ -341,6 +341,19 @@ That slice connects completed LSP selected target metadata to the native bounded
 read/search surface. It returns a follow-up read request by default and returns
 bounded read content only when `includeRead=true` is explicit.
 
+The explicit Observer target-selection follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_LSP_EXPLICIT_TARGET_SELECTION_PLAN.md
+```
+
+The existing response summary can expose up to eight bounded targets and the
+core bridges already accept `targetIndex`. Observer now lets the operator choose
+one of those targets before the existing read or edit-seed controls run, while
+keeping the selection page-local and read-only. Do not add automatic target
+follow-up, task creation, or selection persistence without a demonstrated
+operator gap.
+
 The Observer selected-target read control follow-up was completed as:
 
 ```text

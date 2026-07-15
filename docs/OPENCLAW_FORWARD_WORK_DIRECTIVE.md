@@ -762,6 +762,16 @@ The packet can likewise request the existing bounded plan/todo workbench
 summary and guidance-only next action; that context remains read-only and does
 not create or execute a task.
 
+The LSP selected-target route now also closes its concrete Observer ergonomics
+gap. Completed symbol responses can expose up to eight bounded URI/range target
+descriptors, while the existing core read bridge and edit-proposal seed already
+accept `targetIndex`. Observer now gives the operator an explicit option menu to
+choose one target before either existing control runs and passes that index
+through the existing workspace-constrained routes. Selection is page-local and
+read-only; it does not mutate task state, send another JSON-RPC request, create a
+task or approval, or execute a patch. Keep the LSP loop closed unless a new
+operator need demonstrates that this bounded selection is insufficient.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:
