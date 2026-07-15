@@ -113,6 +113,7 @@ export function createPlanBuilder(deps) {
     port,
     client,
     state,
+    taskManager,
     pluginReview,
     policyEvaluator,
     publishEvent,

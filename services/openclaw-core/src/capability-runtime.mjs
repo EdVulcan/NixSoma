@@ -16,11 +16,13 @@ export function createCapabilityRuntime(deps) {
     client,
     state,
     pluginReview = {},
+    taskManager = {},
     policyEvaluator,
     publishEvent = async () => {},
     fetchImpl = globalThis.fetch,
     createId = randomUUID,
     now = () => new Date().toISOString(),
+    readWorkViewState,
     listCommandTranscriptRecords = () => [],
     listFilesystemChangeRecords = () => [],
   } = deps;
@@ -89,9 +91,12 @@ export function createCapabilityRuntime(deps) {
   });
   const engineeringWorkViewHandlers = createEngineeringWorkViewCapabilityHandlers({
     tasks: state.tasks ?? new Map(),
+    taskManager,
     sessionManagerUrl,
     fetchImpl,
     postJson,
+    readWorkViewState,
+    publishEvent,
   });
 
   function baseCapabilities() {

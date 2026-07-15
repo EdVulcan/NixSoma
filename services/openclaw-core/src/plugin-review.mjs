@@ -361,6 +361,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "sense.openclaw.engineering_context.microcompact_evidence",
       "act.openclaw.engineering_context.microcompact_projection",
       "sense.openclaw.engineering_context.packet",
+      "act.openclaw.engineering_context.work_view_bind",
       "sense.openclaw.engineering_context.plan_todo_evidence",
       "act.openclaw.engineering_context.plan_todo_workbench_state",
       "sense.openclaw.plugin_runtime.refresh_evidence",

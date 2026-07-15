@@ -54,7 +54,7 @@ cleanup() {
     "${APPROVED_FILE:-}" "${STEP_FILE:-}" "${SECOND_TASK_FILE:-}" \
     "${SECOND_BLOCKED_FILE:-}" "${SECOND_APPROVED_FILE:-}" "${SECOND_STEP_FILE:-}" \
     "${PACKET_FILE:-}" "${ADAPTER_FILE:-}" "${PREPARE_FILE:-}" \
-    "${PRE_RECOVERY_PACKET_FILE:-}" "${BIND_FILE:-}" \
+    "${PRE_RECOVERY_PACKET_FILE:-}" "${CAPABILITY_BIND_FILE:-}" "${BIND_FILE:-}" \
     "${SESSION_RESTART_FILE:-}" "${REBIND_PREPARE_FILE:-}" \
     "${STALE_PACKET_FILE:-}" "${STALE_BIND_FILE:-}" \
     "${REBOUND_FILE:-}" "${REBOUND_PACKET_FILE:-}" \
@@ -85,6 +85,7 @@ PACKET_FILE="$(mktemp)"
 ADAPTER_FILE="$(mktemp)"
 PREPARE_FILE="$(mktemp)"
 PRE_RECOVERY_PACKET_FILE="$(mktemp)"
+CAPABILITY_BIND_FILE="$(mktemp)"
 BIND_FILE="$(mktemp)"
 SESSION_RESTART_FILE="$(mktemp)"
 REBIND_PREPARE_FILE="$(mktemp)"
@@ -140,6 +141,7 @@ post_json "$CORE_URL/approvals/$second_approval_id/approve" '{"approvedBy":"dev-
 post_json "$CORE_URL/operator/step" '{}' > "$SECOND_STEP_FILE"
 post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"taskId\":\"$second_task_id\",\"limit\":8,\"maxOutputChars\":2000,\"thresholdChars\":256,\"protectRecentAssistantTurns\":0,\"includeWorkView\":true,\"includeWorkViewObservation\":true,\"includePlanTodo\":true}" > "$PRE_RECOVERY_PACKET_FILE"
 post_json "$SESSION_MANAGER_URL/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/engineering-context-bind"}' > "$PREPARE_FILE"
+post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.engineering_context.work_view_bind\",\"taskId\":\"$task_id\",\"params\":{\"confirm\":true}}" > "$CAPABILITY_BIND_FILE"
 post_json "$CORE_URL/plugins/native-adapter/engineering-context/work-view/bind" "{\"taskId\":\"$second_task_id\",\"confirm\":true}" > "$BIND_FILE"
 post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"limit\":8,\"maxOutputChars\":2000,\"thresholdChars\":256,\"protectRecentAssistantTurns\":0,\"includeWorkView\":true,\"includeWorkViewObservation\":true,\"includePlanTodo\":true}" > "$PACKET_FILE"
 post_json "$SESSION_MANAGER_URL/session/restart" '{"displayTarget":"workspace-2"}' > "$SESSION_RESTART_FILE"
@@ -152,7 +154,7 @@ post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"task
 OPENCLAW_POST_JSON_FAILURE=allow post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"taskId\":\"$second_task_id\",\"sourceTaskId\":\"missing-context-source-task\"}" > "$UNKNOWN_SOURCE_PACKET_FILE"
 curl --silent --fail "$CORE_URL/plugins/openclaw-native-plugin-adapter" > "$ADAPTER_FILE"
 
-node - <<'NODE' "$TASK_FILE" "$STEP_FILE" "$SECOND_STEP_FILE" "$PRE_RECOVERY_PACKET_FILE" "$PREPARE_FILE" "$BIND_FILE" "$PACKET_FILE" "$SESSION_RESTART_FILE" "$REBIND_PREPARE_FILE" "$STALE_PACKET_FILE" "$STALE_BIND_FILE" "$REBOUND_FILE" "$REBOUND_PACKET_FILE" "$SOURCE_PACKET_FILE" "$UNKNOWN_SOURCE_PACKET_FILE" "$ADAPTER_FILE" "$HTML_FILE" "$CLIENT_FILE" "$OUTPUT_SECRET" "$OBSERVER_CHECK"
+node - <<'NODE' "$TASK_FILE" "$STEP_FILE" "$SECOND_STEP_FILE" "$PRE_RECOVERY_PACKET_FILE" "$PREPARE_FILE" "$CAPABILITY_BIND_FILE" "$BIND_FILE" "$PACKET_FILE" "$SESSION_RESTART_FILE" "$REBIND_PREPARE_FILE" "$STALE_PACKET_FILE" "$STALE_BIND_FILE" "$REBOUND_FILE" "$REBOUND_PACKET_FILE" "$SOURCE_PACKET_FILE" "$UNKNOWN_SOURCE_PACKET_FILE" "$ADAPTER_FILE" "$HTML_FILE" "$CLIENT_FILE" "$OUTPUT_SECRET" "$OBSERVER_CHECK"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
 const taskResponse = readJson(2);
@@ -160,23 +162,25 @@ const step = readJson(3);
 const secondStep = readJson(4);
 const preRecoveryPacket = readJson(5);
 const prepare = readJson(6);
-const bind = readJson(7);
-const packet = readJson(8);
-const sessionRestart = readJson(9);
-const rebindPrepare = readJson(10);
-const stalePacket = readJson(11);
-const staleBind = readJson(12);
-const rebound = readJson(13);
-const reboundPacket = readJson(14);
-const sourcePacket = readJson(15);
-const unknownSourcePacket = readJson(16);
-const adapter = readJson(17);
-const htmlPath = process.argv[18];
-const clientPath = process.argv[19];
-const outputSecret = process.argv[20];
-const observerCheck = process.argv[21] === "true";
+const capabilityBind = readJson(7);
+const bind = readJson(8);
+const packet = readJson(9);
+const sessionRestart = readJson(10);
+const rebindPrepare = readJson(11);
+const stalePacket = readJson(12);
+const staleBind = readJson(13);
+const rebound = readJson(14);
+const reboundPacket = readJson(15);
+const sourcePacket = readJson(16);
+const unknownSourcePacket = readJson(17);
+const adapter = readJson(18);
+const htmlPath = process.argv[19];
+const clientPath = process.argv[20];
+const outputSecret = process.argv[21];
+const observerCheck = process.argv[22] === "true";
 const pairResetSession = process.env.OPENCLAW_CONTEXT_PACKET_PAIR_RESET_SESSION === "true";
-const packetRaw = JSON.stringify({ packet, sourcePacket, unknownSourcePacket, adapter });
+const packetRaw = JSON.stringify({ capabilityBind, packet, sourcePacket, unknownSourcePacket, adapter });
+const capabilityBindReadbackRaw = JSON.stringify(capabilityBind.result?.bind ?? {});
 
 if (!step.ok || step.ran !== true || step.task?.status !== "completed" || !secondStep.ok || secondStep.ran !== true || secondStep.task?.status !== "completed") {
   throw new Error(`context packet fixture command should complete after approval: ${JSON.stringify(step)}`);
@@ -186,6 +190,25 @@ if (!String(step.execution?.commandTranscript?.[0]?.stdout ?? "").includes(`pass
 }
 if (!prepare.ok || prepare.workView?.helperRuntime?.status !== "active") {
   throw new Error(`context packet bind fixture should prepare the trusted work view: ${JSON.stringify(prepare)}`);
+}
+if (
+  !capabilityBind.ok
+  || capabilityBind.invoked !== true
+  || capabilityBind.capability?.id !== "act.openclaw.engineering_context.work_view_bind"
+  || capabilityBind.result?.ok !== true
+  || capabilityBind.result?.changed !== true
+  || capabilityBind.result?.bind?.summary?.status !== "bound"
+  || capabilityBind.result?.task?.status !== "completed"
+  || capabilityBind.result?.bind?.governance?.changesTaskStatus !== false
+  || capabilityBind.summary?.kind !== "engineering.work_view_bind"
+  || capabilityBind.summary?.taskStatusPreserved !== true
+  || capabilityBind.summary?.noProviderEgress !== true
+  || capabilityBind.summary?.noPayloadExposure !== true
+  || capabilityBindReadbackRaw.includes("sessionId")
+  || capabilityBindReadbackRaw.includes("leaseId")
+  || capabilityBindReadbackRaw.includes("activeUrl")
+) {
+  throw new Error(`common work-view bind capability mismatch: ${JSON.stringify(capabilityBind)}`);
 }
 if (
   !preRecoveryPacket.ok
@@ -308,6 +331,7 @@ if (packetRaw.includes("leaseId") || packetRaw.includes("activeUrl")) {
 }
 if (
   !adapter.implementedCapabilities?.includes("sense.openclaw.engineering_context.packet")
+  || !adapter.implementedCapabilities?.includes("act.openclaw.engineering_context.work_view_bind")
   || adapter.summary?.canExecutePluginCode !== false
   || adapter.summary?.canActivateRuntime !== false
 ) {

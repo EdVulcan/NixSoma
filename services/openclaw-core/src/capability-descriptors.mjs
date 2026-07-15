@@ -319,6 +319,22 @@ export function buildBaseCapabilities({
       description: "Read compact authoritative trusted work-view authority and fresh observation metadata without exposing page payloads or dispatching actions.",
     },
     {
+      id: "act.openclaw.engineering_context.work_view_bind",
+      name: "Native Engineering Work-View Bind",
+      kind: "actuator",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/plugins/native-adapter/engineering-context/work-view/bind`,
+      intents: [
+        "openclaw.engineering_context.work_view_bind",
+        "engineering.context.work_view_bind",
+        "work_view.bind",
+      ],
+      domains: ["user_task", "body_internal"],
+      risk: "medium",
+      governance: "allow",
+      description: "Bind one existing engineering task to the current authoritative trusted work view after explicit operator confirmation without starting task execution.",
+    },
+    {
       id: "sense.openclaw.plugin_manifest_map",
       name: "Native OpenClaw Plugin Manifest Map",
       kind: "sensor",

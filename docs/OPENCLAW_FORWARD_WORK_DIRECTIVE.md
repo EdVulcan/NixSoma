@@ -340,6 +340,19 @@ actions, or mutation. The real edit closed-loop and write execution milestones
 prove this common readback against completed tasks. It is documented in
 `docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_EXECUTION_EVIDENCE_PLAN.md`.
 
+The existing Level 2 engineering-task to trusted work-view bind is now also
+available through the common capability runtime as
+`act.openclaw.engineering_context.work_view_bind`. It reuses the dedicated
+bind operation and task-manager mutation owner, requires explicit confirmation,
+revalidates authoritative session/helper state immediately before mutation,
+preserves task status, and rejects stale identities unless an explicit rebind
+is requested. The common invocation keeps only compact bind status and
+governance evidence; no lease, URL, page payload, browser action, task/approval
+creation, provider call, or external egress is added. Core and Observer proof
+is included in the existing context-packet pair batch. The boundary is
+documented in
+`docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORK_VIEW_BIND_PLAN.md`.
+
 The selected Level 1 consistency closures are complete. Do not reopen the LSP
 symbol chain or add another evidence/readiness shell; choose the next concrete
 identity-upgrade capability only after its Level 2 authority boundary is

@@ -61,6 +61,7 @@ function createHarness(overrides = {}) {
     port: 4100,
     client,
     state,
+    taskManager: overrides.taskManager ?? {},
     pluginReview: {
       buildNativePluginManifestProfile: () => ({ ok: true, plugin: { id: "plugin-a" }, capabilities: [] }),
       buildNativeOpenClawToolCatalogProfile: () => ({ ok: true, summary: {} }),
@@ -76,6 +77,7 @@ function createHarness(overrides = {}) {
     publishEvent: async (name, body) => {
       events.push({ name, body });
     },
+    readWorkViewState: overrides.readWorkViewState,
     listCommandTranscriptRecords: overrides.listCommandTranscriptRecords ?? (() => []),
     listFilesystemChangeRecords: overrides.listFilesystemChangeRecords ?? (() => []),
     fetchImpl: overrides.fetchImpl ?? (async (url) => {
@@ -461,6 +463,140 @@ test("capability runtime rejects conflicting trusted work-view task ids before p
   assert.equal(calls.length, 0);
   assert.equal(state.capabilityInvocationLog.length, 0);
   assert.deepEqual(events, []);
+});
+
+test("capability runtime binds an engineering task only after explicit confirmation and preserves task status", async () => {
+  const taskId = "task-capability-bind";
+  const task = { id: taskId, status: "completed", workView: null };
+  let stateReads = 0;
+  let bindCalls = 0;
+  const workViewState = {
+    session: { sessionId: "session-current", status: "running" },
+    workView: {
+      workViewId: "work-view-primary",
+      status: "ready",
+      visibility: "hidden",
+      mode: "background",
+      displayTarget: "workspace-2",
+      trustedSession: {
+        sessionIdentity: { status: "authoritative" },
+        helperRuntime: { status: "active", actionAuthority: "active", leaseMatched: true },
+      },
+    },
+  };
+  const { runtime, state, events } = createHarness({
+    state: { tasks: new Map([[taskId, task]]) },
+    taskManager: {
+      getTaskById: (candidateId) => candidateId === taskId ? task : null,
+      bindTaskToTrustedWorkView: (candidate, binding) => {
+        bindCalls += 1;
+        candidate.workView = { ...binding };
+        return candidate;
+      },
+      serialiseTask: (candidate) => ({ id: candidate.id, status: candidate.status }),
+    },
+    readWorkViewState: async () => {
+      stateReads += 1;
+      return { ok: true, data: workViewState };
+    },
+  });
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find((item) => item.id === "act.openclaw.engineering_context.work_view_bind");
+  assert.equal(capability?.kind, "actuator");
+  assert.equal(capability?.governance, "allow");
+
+  const unconfirmed = await runtime.invokeCapability({
+    capabilityId: "act.openclaw.engineering_context.work_view_bind",
+    taskId,
+    params: {},
+  });
+  assert.equal(unconfirmed.response.invoked, true);
+  assert.equal(unconfirmed.response.result.ok, false);
+  assert.equal(unconfirmed.response.result.bind.summary.status, "operator_confirmation_required");
+  assert.equal(unconfirmed.response.summary.kind, "engineering.work_view_bind");
+  assert.equal(unconfirmed.response.summary.blocked, true);
+  assert.equal(unconfirmed.response.summary.noPayloadExposure, true);
+  assert.equal(stateReads, 0);
+  assert.equal(bindCalls, 0);
+
+  const bound = await runtime.invokeCapability({
+    capabilityId: "act.openclaw.engineering_context.work_view_bind",
+    taskId,
+    params: { confirm: true },
+  });
+  assert.equal(bound.response.invoked, true);
+  assert.equal(bound.response.result.ok, true);
+  assert.equal(bound.response.result.changed, true);
+  assert.equal(bound.response.result.bind.summary.status, "bound");
+  assert.equal(bound.response.result.bind.summary.operation, "bind");
+  assert.equal(bound.response.result.task.status, "completed");
+  assert.equal(bound.response.summary.taskStatusPreserved, true);
+  assert.equal(bound.response.summary.noWorkViewMutation, true);
+  assert.equal(bound.response.summary.noProviderEgress, true);
+  assert.equal(bound.response.summary.noPayloadExposure, true);
+  assert.equal(stateReads, 1);
+  assert.equal(bindCalls, 1);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("session-current"), false);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("leaseId"), false);
+  assert.deepEqual(events.map((event) => event.name), [
+    "policy.evaluated",
+    "capability.invoked",
+    "policy.evaluated",
+    "task.work_view_bound",
+    "capability.invoked",
+  ]);
+});
+
+test("capability runtime rejects stale engineering work-view binding without mutation", async () => {
+  const taskId = "task-capability-stale-bind";
+  const task = {
+    id: taskId,
+    status: "queued",
+    workView: { sessionId: "session-old", workViewId: "work-view-primary" },
+  };
+  let bindCalls = 0;
+  const { runtime, state } = createHarness({
+    state: { tasks: new Map([[taskId, task]]) },
+    taskManager: {
+      getTaskById: () => task,
+      bindTaskToTrustedWorkView: () => {
+        bindCalls += 1;
+        return task;
+      },
+    },
+    readWorkViewState: async () => ({
+      ok: true,
+      data: {
+        session: { sessionId: "session-current", status: "running" },
+        workView: {
+          workViewId: "work-view-primary",
+          status: "ready",
+          trustedSession: {
+            sessionIdentity: { status: "authoritative" },
+            helperRuntime: { status: "active", actionAuthority: "active", leaseMatched: true },
+          },
+        },
+      },
+    }),
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.openclaw.engineering_context.work_view_bind",
+    taskId,
+    params: { confirm: true },
+  });
+
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.result.ok, false);
+  assert.equal(result.response.result.bind.summary.status, "stale_session_binding");
+  assert.equal(result.response.summary.blocked, true);
+  assert.equal(result.response.summary.changed, false);
+  assert.equal(result.response.summary.taskStatusPreserved, true);
+  assert.equal(result.response.summary.noProviderEgress, true);
+  assert.equal(result.response.summary.noPayloadExposure, true);
+  assert.equal(bindCalls, 0);
+  assert.equal(state.capabilityInvocationLog.length, 1);
 });
 
 test("capability runtime exposes an allowlisted work-view control through the governed invoke path", async () => {

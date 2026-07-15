@@ -2,9 +2,11 @@ import {
   buildNativeEngineeringWorkViewAssociation,
   readNativeEngineeringWorkViewState,
 } from "./native-engineering-work-view-association.mjs";
+import { executeNativeEngineeringWorkViewBind } from "./native-engineering-work-view-bind-operation.mjs";
 
 const CAPABILITY_ID = "sense.openclaw.engineering_context.work_view_observation";
 const CONTROL_CAPABILITY_ID = "act.work_view.control";
+const BIND_CAPABILITY_ID = "act.openclaw.engineering_context.work_view_bind";
 const CONTROL_REGISTRY = "openclaw-native-work-view-control-v0";
 const MAX_TASK_ID_CHARS = 200;
 const MAX_CONTROL_OPERATION_CHARS = 80;
@@ -166,12 +168,14 @@ function resolveTaskId(params, request) {
 
 export function createEngineeringWorkViewCapabilityHandlers({
   tasks = new Map(),
+  taskManager = {},
   sessionManagerUrl,
   fetchImpl = globalThis.fetch,
   postJson = async () => {
     throw new Error("Trusted work-view control transport is not configured.");
   },
   readWorkViewState = readNativeEngineeringWorkViewState,
+  publishEvent = async () => {},
 } = {}) {
   async function callBackend(capability, request) {
     if (capability.id === CONTROL_CAPABILITY_ID) {
@@ -180,6 +184,25 @@ export function createEngineeringWorkViewCapabilityHandlers({
       return {
         handled: true,
         result: projectControlResult(control.action, response),
+      };
+    }
+    if (capability.id === BIND_CAPABILITY_ID) {
+      const bind = normaliseBindRequest(request);
+      const response = await executeNativeEngineeringWorkViewBind({
+        taskManager,
+        taskId: bind.taskId,
+        confirm: bind.confirm,
+        rebind: bind.rebind,
+        publishEvent,
+        sessionManagerUrl,
+        fetchImpl,
+        readWorkViewState,
+        serialiseTask: taskManager.serialiseTask,
+        operatorActionSource: "capability_runtime_engineering_context",
+      });
+      return {
+        handled: true,
+        result: response.body,
       };
     }
     if (capability.id !== CAPABILITY_ID) {
@@ -226,6 +249,28 @@ export function createEngineeringWorkViewCapabilityHandlers({
           && governance.exposesBrowserPayload === false,
       };
     }
+    if (capability.id === BIND_CAPABILITY_ID) {
+      const bind = result?.bind ?? {};
+      const summary = bind.summary ?? {};
+      const governance = bind.governance ?? {};
+      return {
+        kind: "engineering.work_view_bind",
+        ok: result?.ok === true,
+        blocked: result?.ok !== true,
+        taskId: result?.task?.id ?? summary.taskId ?? null,
+        taskStatus: result?.task?.status ?? null,
+        status: summary.status ?? null,
+        operation: summary.operation ?? null,
+        changed: result?.changed === true,
+        taskStatusPreserved: governance.changesTaskStatus === false,
+        noWorkViewMutation: governance.mutatesWorkViewState === false,
+        noProviderEgress: governance.callsProvider === false
+          && governance.networkEgress === false,
+        noPayloadExposure: governance.exposesSessionId === false
+          && governance.exposesLeaseId === false
+          && governance.exposesActiveUrl === false,
+      };
+    }
     if (capability.id !== CAPABILITY_ID) return null;
     const summary = result?.summary ?? {};
     const observation = result?.observation ?? {};
@@ -254,10 +299,12 @@ export function createEngineeringWorkViewCapabilityHandlers({
   }
 
   function validateRequest(capability, request) {
-    if (![CAPABILITY_ID, CONTROL_CAPABILITY_ID].includes(capability.id)) return null;
+    if (![CAPABILITY_ID, CONTROL_CAPABILITY_ID, BIND_CAPABILITY_ID].includes(capability.id)) return null;
     try {
       if (capability.id === CONTROL_CAPABILITY_ID) {
         normaliseControlRequest(request);
+      } else if (capability.id === BIND_CAPABILITY_ID) {
+        normaliseBindRequest(request);
       } else {
         resolveTaskId(request.params ?? {}, request);
       }
@@ -268,4 +315,23 @@ export function createEngineeringWorkViewCapabilityHandlers({
   }
 
   return { callBackend, summariseResult, validateRequest };
+}
+
+function normaliseBindRequest(request) {
+  const params = request.params ?? {};
+  const taskId = resolveTaskId(params, request);
+  if (!taskId) {
+    throw new Error("Trusted work-view bind taskId is required.");
+  }
+  if (params.confirm !== undefined && typeof params.confirm !== "boolean") {
+    throw new Error("Trusted work-view bind confirm must be a boolean.");
+  }
+  if (params.rebind !== undefined && typeof params.rebind !== "boolean") {
+    throw new Error("Trusted work-view bind rebind must be a boolean.");
+  }
+  return {
+    taskId,
+    confirm: params.confirm === true,
+    rebind: params.rebind === true,
+  };
 }

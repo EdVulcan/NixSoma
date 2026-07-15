@@ -143,11 +143,26 @@ or creates an automatic recovery task. Observer changes the existing Bind
 control to `Rebind Task to Work View` only for the two stale association
 statuses.
 
+## Common Capability Runtime Follow-Up Complete
+
+The same bind operation is now exposed through
+`act.openclaw.engineering_context.work_view_bind` in the common
+`POST /capabilities/invoke` runtime. The capability shares the route's
+session-manager revalidation, stale/rebind decision, task-manager mutation
+owner, completion event, and compact readback. Its invocation ledger records
+only task/status/operation and governance booleans; session ids, leases, URLs,
+and page payloads remain transient or internal.
+
+The context-packet core/Observer pair invokes a real capability bind on one
+completed fixture task and keeps the dedicated route for the subsequent
+idempotent/stale-rebind checks. Unit coverage proves missing confirmation,
+successful status-preserving mutation, and stale rejection without mutation.
+
 ## Next Smallest Capability
 
 The bound-task context workflow now includes the concrete
 `prepare_work_view`/`reveal_work_view` recovery bridge and explicit stale
 binding recovery. Select the next Level 2 capability only from a new
 operator-visible gap in the refreshed readback. Do not add another bind variant
-or a readiness-only endpoint; authority loss must continue through the existing
-fail-closed recovery paths.
+or a readiness-only endpoint; the common capability bridge is complete, and
+authority loss must continue through the existing fail-closed recovery paths.
