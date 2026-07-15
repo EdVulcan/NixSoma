@@ -320,6 +320,15 @@ continues through the existing approval-gated edit task path. The boundary is
 documented in
 `docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_EDIT_PROPOSAL_PLAN.md`.
 
+The corresponding native `cc_write` redacted proposal is also available as
+`act.openclaw.engineering_tool.write_proposal`. It preserves the existing
+workspace/content/overwrite bounds and returns only redacted diff metadata;
+content is absent from the response, capability history, and audit events.
+It does not write, create a task or approval, execute commands, or call a
+provider. Actual write approval and execution remain on the existing
+`workspace-text-write-tasks` path. The boundary is documented in
+`docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WRITE_PROPOSAL_PLAN.md`.
+
 The selected Level 1 consistency closures are complete. Do not reopen the LSP
 symbol chain or add another evidence/readiness shell; choose the next concrete
 identity-upgrade capability only after its Level 2 authority boundary is

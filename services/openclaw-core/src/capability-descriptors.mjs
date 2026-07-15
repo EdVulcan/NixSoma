@@ -239,6 +239,22 @@ export function buildBaseCapabilities({
       description: "Build a bounded exact-match edit diff proposal through the native workspace boundary; applying it still requires the existing approval-gated task path.",
     },
     {
+      id: "act.openclaw.engineering_tool.write_proposal",
+      name: "Native Engineering Write Proposal",
+      kind: "planner",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/plugins/native-adapter/engineering-write-proposal/draft`,
+      intents: [
+        "openclaw.engineering.write_proposal",
+        "engineering.write.proposal",
+        "engineering.write_proposal",
+      ],
+      domains: ["body_internal"],
+      risk: "high",
+      governance: "audit_only",
+      description: "Build a bounded redacted create/overwrite diff proposal through the native workspace boundary; applying it still requires the existing approval-gated write task path.",
+    },
+    {
       id: "sense.openclaw.engineering_context.packet",
       name: "Native Engineering Context Packet",
       kind: "sensor",

@@ -26,7 +26,7 @@ SESSION_MANAGER_URL="http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT"
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_EVENT_LOG_FILE"
 rm -rf "$FIXTURE_DIR"
-mkdir -p "$FIXTURE_DIR/nested" "$FIXTURE_DIR/src" "$FIXTURE_DIR/.openclaw"
+mkdir -p "$FIXTURE_DIR/nested" "$FIXTURE_DIR/src" "$FIXTURE_DIR/scratch" "$FIXTURE_DIR/.openclaw"
 printf 'OpenClaw capability invoke fixture\n' > "$FIXTURE_DIR/openclaw-capability-invoke.txt"
 printf 'Nested invoke search fixture\n' > "$FIXTURE_DIR/nested/search-note.md"
 printf 'export const capabilityNeedle = "OpenClaw capability invoke";\n' > "$FIXTURE_DIR/src/app.ts"
@@ -41,6 +41,7 @@ cleanup() {
     "${ENGINEERING_GREP_FILE:-}" \
     "${ENGINEERING_VERIFY_FILE:-}" \
     "${ENGINEERING_EDIT_PROPOSAL_FILE:-}" \
+    "${ENGINEERING_WRITE_PROPOSAL_FILE:-}" \
     "${WORK_VIEW_FILE:-}" \
     "${WORK_VIEW_CONTROL_FILE:-}" \
     "${CONTEXT_PACKET_FILE:-}" \
@@ -67,6 +68,7 @@ ENGINEERING_GLOB_FILE="$(mktemp)"
 ENGINEERING_GREP_FILE="$(mktemp)"
 ENGINEERING_VERIFY_FILE="$(mktemp)"
 ENGINEERING_EDIT_PROPOSAL_FILE="$(mktemp)"
+ENGINEERING_WRITE_PROPOSAL_FILE="$(mktemp)"
 WORK_VIEW_FILE="$(mktemp)"
 WORK_VIEW_CONTROL_FILE="$(mktemp)"
 CONTEXT_PACKET_FILE="$(mktemp)"
@@ -83,6 +85,7 @@ post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.en
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool.grep\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"query\":\"capabilityNeedle\",\"include\":\"src/**/*.ts\",\"literal\":true,\"limit\":4}}" > "$ENGINEERING_GREP_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_tool.verify_evidence","params":{"limit":4,"maxOutputChars":500}}' > "$ENGINEERING_VERIFY_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.engineering_tool.edit_proposal\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"src/app.ts\",\"oldString\":\"capabilityNeedle\",\"newString\":\"governedNeedle\",\"contextLines\":1}}" > "$ENGINEERING_EDIT_PROPOSAL_FILE"
+post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.engineering_tool.write_proposal\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"scratch/new-file.txt\",\"content\":\"transient write content\",\"overwrite\":false,\"contextLines\":1}}" > "$ENGINEERING_WRITE_PROPOSAL_FILE"
 post_json "$SESSION_MANAGER_URL/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/capability-work-view"}' > /dev/null
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.work_view.control","operation":"work_view.reveal","params":{"entryUrl":"https://example.com/capability-work-view"}}' > "$WORK_VIEW_CONTROL_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.packet","params":{"limit":4,"thresholdChars":256,"protectRecentAssistantTurns":0}}' > "$CONTEXT_PACKET_FILE"
@@ -105,6 +108,7 @@ node - <<'EOF' \
   "$EVENTS_FILE" \
   "$ENGINEERING_VERIFY_FILE" \
   "$ENGINEERING_EDIT_PROPOSAL_FILE" \
+  "$ENGINEERING_WRITE_PROPOSAL_FILE" \
   "$WORK_VIEW_FILE" \
   "$WORK_VIEW_CONTROL_FILE" \
   "$CONTEXT_PACKET_FILE" \
@@ -123,10 +127,11 @@ const approvedCommand = readJson(10);
 const events = readJson(11);
 const engineeringVerify = readJson(12);
 const engineeringEditProposal = readJson(13);
-const workView = readJson(14);
-const workViewControl = readJson(15);
-const contextPacket = readJson(16);
-const fixtureDir = process.argv[17];
+const engineeringWriteProposal = readJson(14);
+const workView = readJson(15);
+const workViewControl = readJson(16);
+const contextPacket = readJson(17);
+const fixtureDir = process.argv[18];
 
 if (!vitals.ok || vitals.invoked !== true || vitals.capability?.id !== "sense.system.vitals" || vitals.policy?.decision !== "audit_only") {
   throw new Error("system vitals capability should be invoked with audit-only governance");
@@ -201,6 +206,26 @@ if (
 }
 if (JSON.stringify(events).includes("governedNeedle")) {
   throw new Error("engineering edit proposal content must not enter the audit event payload");
+}
+if (
+  !engineeringWriteProposal.ok
+  || engineeringWriteProposal.invoked !== true
+  || engineeringWriteProposal.capability?.id !== "act.openclaw.engineering_tool.write_proposal"
+  || engineeringWriteProposal.result?.registry !== "openclaw-native-engineering-write-proposal-v0"
+  || engineeringWriteProposal.result?.summary?.proposalKind !== "create_file_proposal"
+  || engineeringWriteProposal.result?.target?.contentExposed !== false
+  || engineeringWriteProposal.result?.governance?.canMutate !== false
+  || engineeringWriteProposal.result?.governance?.createsTask !== false
+  || engineeringWriteProposal.summary?.kind !== "engineering.write_proposal"
+  || engineeringWriteProposal.summary?.noMutation !== true
+  || engineeringWriteProposal.summary?.noTaskCreation !== true
+  || engineeringWriteProposal.summary?.noProviderEgress !== true
+  || JSON.stringify(engineeringWriteProposal).includes("transient write content")
+) {
+  throw new Error(`engineering write proposal capability should retain redacted metadata only: ${JSON.stringify(engineeringWriteProposal)}`);
+}
+if (JSON.stringify(events).includes("transient write content")) {
+  throw new Error("engineering write proposal content must not enter the audit event payload");
 }
 if (
   !workView.ok
@@ -292,6 +317,11 @@ console.log(JSON.stringify({
         edits: engineeringEditProposal.summary.editCount,
         path: engineeringEditProposal.summary.relativePath,
         noMutation: engineeringEditProposal.summary.noMutation,
+      },
+      writeProposal: {
+        kind: engineeringWriteProposal.summary.proposalKind,
+        path: engineeringWriteProposal.summary.relativePath,
+        noMutation: engineeringWriteProposal.summary.noMutation,
       },
       workViewObservation: {
         status: workView.summary.status,

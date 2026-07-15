@@ -779,3 +779,84 @@ test("capability runtime exposes the existing bounded edit proposal without muta
     "capability.invoked",
   ]);
 });
+
+test("capability runtime exposes the existing redacted write proposal without mutation", async () => {
+  let receivedInput = null;
+  const { runtime, state, events } = createHarness({
+    pluginReview: {
+      buildNativeEngineeringWriteProposal: (input) => {
+        receivedInput = input;
+        return {
+          ok: true,
+          blocked: false,
+          registry: "openclaw-native-engineering-write-proposal-v0",
+          target: {
+            relativePath: "new-file.txt",
+            existingSha256: null,
+            proposedSha256: "c".repeat(64),
+            contentExposed: false,
+          },
+          summary: {
+            proposalKind: "create_file_proposal",
+            targetExists: false,
+            overwriteRequested: false,
+            proposedBytes: 21,
+            previewLineCount: 1,
+            previewTruncated: false,
+          },
+          governance: {
+            canMutate: false,
+            canWriteFile: false,
+            canOverwriteFile: false,
+            createsTask: false,
+            requiresApprovalBeforeWrite: true,
+          },
+          deferredExecutionBoundaries: ["no provider call"],
+        };
+      },
+    },
+  });
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find((item) => item.id === "act.openclaw.engineering_tool.write_proposal");
+  assert.equal(capability?.kind, "planner");
+  assert.equal(capability?.governance, "audit_only");
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.openclaw.engineering_tool.write_proposal",
+    params: {
+      workspacePath: "/workspace/fixture",
+      relativePath: "new-file.txt",
+      content: "transient write content",
+      overwrite: false,
+      contextLines: 2,
+      maxContentBytes: 500,
+      maxExistingFileBytes: 8_000,
+    },
+  });
+
+  assert.deepEqual(receivedInput, {
+    workspacePath: "/workspace/fixture",
+    relativePath: "new-file.txt",
+    content: "transient write content",
+    contentBase64: undefined,
+    overwrite: false,
+    contextLines: 2,
+    maxContentBytes: 500,
+    maxExistingFileBytes: 8_000,
+  });
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.result.registry, "openclaw-native-engineering-write-proposal-v0");
+  assert.equal(result.response.result.target.contentExposed, false);
+  assert.equal(result.response.summary.kind, "engineering.write_proposal");
+  assert.equal(result.response.summary.noMutation, true);
+  assert.equal(result.response.summary.noTaskCreation, true);
+  assert.equal(result.response.summary.noProviderEgress, true);
+  assert.equal(result.response.summary.requiresApprovalBeforeWrite, true);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("transient write content"), false);
+  assert.equal(JSON.stringify(events).includes("transient write content"), false);
+  assert.deepEqual(events.map((event) => event.name), [
+    "policy.evaluated",
+    "capability.invoked",
+  ]);
+});

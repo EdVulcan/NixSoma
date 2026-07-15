@@ -67,6 +67,7 @@ export function createCapabilityRuntime(deps) {
   });
   const engineeringProposalHandlers = createEngineeringProposalCapabilityHandlers({
     buildNativeEngineeringEditProposal: pluginReview.buildNativeEngineeringEditProposal,
+    buildNativeEngineeringWriteProposal: pluginReview.buildNativeEngineeringWriteProposal,
   });
   const engineeringContextHandlers = createEngineeringContextCapabilityHandlers({
     tasks: state.tasks ?? new Map(),

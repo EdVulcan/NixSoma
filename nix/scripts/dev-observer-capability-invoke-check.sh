@@ -25,7 +25,7 @@ OBSERVER_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_EVENT_LOG_FILE"
 rm -rf "$FIXTURE_DIR"
-mkdir -p "$FIXTURE_DIR/src" "$FIXTURE_DIR/.openclaw"
+mkdir -p "$FIXTURE_DIR/src" "$FIXTURE_DIR/scratch" "$FIXTURE_DIR/.openclaw"
 printf 'export const observerNeedle = "observer capability invoke";\n' > "$FIXTURE_DIR/src/app.ts"
 
 cleanup() {
@@ -39,6 +39,7 @@ cleanup() {
     "${ENGINEERING_GREP_FILE:-}" \
     "${ENGINEERING_VERIFY_FILE:-}" \
     "${ENGINEERING_EDIT_PROPOSAL_FILE:-}" \
+    "${ENGINEERING_WRITE_PROPOSAL_FILE:-}" \
     "${WORK_VIEW_FILE:-}" \
     "${WORK_VIEW_CONTROL_FILE:-}" \
     "${CONTEXT_PACKET_FILE:-}" \
@@ -66,6 +67,7 @@ ENGINEERING_GLOB_FILE="$(mktemp)"
 ENGINEERING_GREP_FILE="$(mktemp)"
 ENGINEERING_VERIFY_FILE="$(mktemp)"
 ENGINEERING_EDIT_PROPOSAL_FILE="$(mktemp)"
+ENGINEERING_WRITE_PROPOSAL_FILE="$(mktemp)"
 WORK_VIEW_FILE="$(mktemp)"
 WORK_VIEW_CONTROL_FILE="$(mktemp)"
 CONTEXT_PACKET_FILE="$(mktemp)"
@@ -82,6 +84,7 @@ post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.en
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool.grep\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"query\":\"observerNeedle\",\"include\":\"src/**/*.ts\",\"literal\":true,\"limit\":4}}" > "$ENGINEERING_GREP_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_tool.verify_evidence","params":{"limit":4,"maxOutputChars":500}}' > "$ENGINEERING_VERIFY_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.engineering_tool.edit_proposal\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"src/app.ts\",\"oldString\":\"observerNeedle\",\"newString\":\"governedObserverNeedle\",\"contextLines\":1}}" > "$ENGINEERING_EDIT_PROPOSAL_FILE"
+post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.engineering_tool.write_proposal\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"scratch/new-file.txt\",\"content\":\"transient observer write content\",\"overwrite\":false,\"contextLines\":1}}" > "$ENGINEERING_WRITE_PROPOSAL_FILE"
 post_json "http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/observer-capability-work-view"}' > /dev/null
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.work_view.control","operation":"work_view.reveal","params":{"entryUrl":"https://example.com/observer-capability-work-view"}}' > "$WORK_VIEW_CONTROL_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.packet","params":{"limit":4,"thresholdChars":256,"protectRecentAssistantTurns":0}}' > "$CONTEXT_PACKET_FILE"
@@ -103,6 +106,7 @@ node - <<'EOF' \
   "$EVENTS_FILE" \
   "$ENGINEERING_VERIFY_FILE" \
   "$ENGINEERING_EDIT_PROPOSAL_FILE" \
+  "$ENGINEERING_WRITE_PROPOSAL_FILE" \
   "$WORK_VIEW_FILE" \
   "$WORK_VIEW_CONTROL_FILE" \
   "$CONTEXT_PACKET_FILE"
@@ -119,9 +123,10 @@ const approved = JSON.parse(fs.readFileSync(process.argv[10], "utf8"));
 const events = JSON.parse(fs.readFileSync(process.argv[11], "utf8"));
 const engineeringVerify = JSON.parse(fs.readFileSync(process.argv[12], "utf8"));
 const engineeringEditProposal = JSON.parse(fs.readFileSync(process.argv[13], "utf8"));
-const workView = JSON.parse(fs.readFileSync(process.argv[14], "utf8"));
-const workViewControl = JSON.parse(fs.readFileSync(process.argv[15], "utf8"));
-const contextPacket = JSON.parse(fs.readFileSync(process.argv[16], "utf8"));
+const engineeringWriteProposal = JSON.parse(fs.readFileSync(process.argv[14], "utf8"));
+const workView = JSON.parse(fs.readFileSync(process.argv[15], "utf8"));
+const workViewControl = JSON.parse(fs.readFileSync(process.argv[16], "utf8"));
+const contextPacket = JSON.parse(fs.readFileSync(process.argv[17], "utf8"));
 
 for (const token of [
   "invoke-vitals-button",
@@ -193,6 +198,24 @@ if (
 }
 if (JSON.stringify(events).includes("governedObserverNeedle")) {
   throw new Error("Observer engineering edit proposal content must not enter the audit event payload");
+}
+if (
+  !engineeringWriteProposal.ok
+  || engineeringWriteProposal.invoked !== true
+  || engineeringWriteProposal.capability?.id !== "act.openclaw.engineering_tool.write_proposal"
+  || engineeringWriteProposal.result?.registry !== "openclaw-native-engineering-write-proposal-v0"
+  || engineeringWriteProposal.result?.summary?.proposalKind !== "create_file_proposal"
+  || engineeringWriteProposal.result?.target?.contentExposed !== false
+  || engineeringWriteProposal.summary?.kind !== "engineering.write_proposal"
+  || engineeringWriteProposal.summary?.noMutation !== true
+  || engineeringWriteProposal.summary?.noTaskCreation !== true
+  || engineeringWriteProposal.summary?.noProviderEgress !== true
+  || JSON.stringify(engineeringWriteProposal).includes("transient observer write content")
+) {
+  throw new Error("Observer engineering write proposal invoke path should remain redacted and proposal-only");
+}
+if (JSON.stringify(events).includes("transient observer write content")) {
+  throw new Error("Observer engineering write proposal content must not enter the audit event payload");
 }
 if (
   !workView.ok
@@ -273,6 +296,11 @@ console.log(JSON.stringify({
         edits: engineeringEditProposal.summary.editCount,
         path: engineeringEditProposal.summary.relativePath,
         noMutation: engineeringEditProposal.summary.noMutation,
+      },
+      writeProposal: {
+        kind: engineeringWriteProposal.summary.proposalKind,
+        path: engineeringWriteProposal.summary.relativePath,
+        noMutation: engineeringWriteProposal.summary.noMutation,
       },
       workViewObservation: {
         status: workView.summary.status,
