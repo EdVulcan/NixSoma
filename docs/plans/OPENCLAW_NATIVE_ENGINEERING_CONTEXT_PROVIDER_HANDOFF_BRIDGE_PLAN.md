@@ -121,11 +121,15 @@ services/openclaw-core/test/cloud-live-provider-runtime-live-execution.test.mjs
 services/openclaw-core/test/task-executor.test.mjs
 services/openclaw-core/test/capability-runtime-engineering-provider-handoff.test.mjs
 apps/observer-ui/test/client-script-engineering-provider-handoff.test.mjs
+nix/scripts/dev-openclaw-cloud-consciousness-live-provider-egress-execution-task-shell-common-check.sh
 ```
 
 The tests prove explicit flag handling, local work-view read assembly, plan/todo
 assembly, sensitive payload exclusion, compact durable evidence, the Observer
-pending-task control, and the existing hash-bound live execution path.
+pending-task control, and the existing hash-bound live execution path. The real
+Phase 63 Core check also proves the positive `approved:true` plus `confirm:true`
+common-capability path creates the same pending egress task without exposing the
+request text or contacting a provider.
 
 ## Deferred
 

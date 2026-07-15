@@ -336,6 +336,10 @@ contact, provider call, or network egress. The existing operator step remains
 the only execution owner. Observer now exposes a one-shot pending-task control
 for this same capability: request text is transient, task approval remains
 pending, and the panel returns only compact task/approval/governance evidence.
+The real Phase 63 Core check now enters this capability with both
+`approved:true` and `confirm:true`, then proves the existing approval and
+deferred operator path without exposing the request text or contacting a
+provider.
 
 The first common capability-runtime entry point for the Level 2 trusted
 work-view is now available as

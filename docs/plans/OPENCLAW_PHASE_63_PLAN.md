@@ -13,6 +13,9 @@ This advances the whitepaper line by moving from route evidence into an operator
 1. `openclaw-cloud-consciousness-live-provider-egress-execution-task-shell`
    - Requires Phase 62 egress execution route/task preflight evidence.
    - Exposes `/cloud-consciousness/live-provider-egress-execution-tasks`.
+   - The real Core check enters through the approved common capability
+     `act.openclaw.engineering_context.provider_handoff_task` and then reuses
+     the same egress task/approval owner.
    - Creates an approval-gated `cloud_consciousness_live_provider_egress_execution_task` shell.
    - The redacted request binding retains an explicit `contextPacket.sourceTaskId` when the HTTP fixture supplies one.
    - After approval and operator step, records `egressExecutionTaskApproved: true` and `egressExecutionDeferred: true`.

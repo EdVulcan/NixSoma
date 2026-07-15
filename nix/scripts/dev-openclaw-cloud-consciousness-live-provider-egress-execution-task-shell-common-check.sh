@@ -45,7 +45,7 @@ rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_SYS
 seed_live_provider_call_prerequisites "$CLOUD_DIR" "$PROVIDER_RESPONSE_FILE" "$RUNBOOK_FILE" "$EXECUTION_PLAN_FILE" "phase63-prereq"
 
 cleanup() {
-  rm -f "${HTML_FILE:-}" "${CLIENT_FILE:-}" "${TASK_FILE:-}" "${APPROVED_FILE:-}" "${STEP_FILE:-}" "${PREFLIGHT_FILE:-}" "${BEFORE_FILE:-}" "${CREDENTIAL_GATE_FILE:-}" "${ENDPOINT_GATE_FILE:-}" "${ROUTE_PREFLIGHT_FILE:-}" "${EGRESS_TASK_FILE:-}" "${EGRESS_APPROVED_FILE:-}" "${EGRESS_STEP_FILE:-}"
+  rm -f "${HTML_FILE:-}" "${CLIENT_FILE:-}" "${TASK_FILE:-}" "${APPROVED_FILE:-}" "${STEP_FILE:-}" "${PREFLIGHT_FILE:-}" "${BEFORE_FILE:-}" "${CREDENTIAL_GATE_FILE:-}" "${ENDPOINT_GATE_FILE:-}" "${ROUTE_PREFLIGHT_FILE:-}" "${CAPABILITY_FILE:-}" "${EGRESS_APPROVED_FILE:-}" "${EGRESS_STEP_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -100,7 +100,7 @@ PREFLIGHT_FILE="$(mktemp)"
 CREDENTIAL_GATE_FILE="$(mktemp)"
 ENDPOINT_GATE_FILE="$(mktemp)"
 ROUTE_PREFLIGHT_FILE="$(mktemp)"
-EGRESS_TASK_FILE="$(mktemp)"
+CAPABILITY_FILE="$(mktemp)"
 EGRESS_APPROVED_FILE="$(mktemp)"
 EGRESS_STEP_FILE="$(mktemp)"
 post_json "$CORE_URL/cloud-consciousness/live-provider-real-launch-tasks" '{"confirm":true}' > "$TASK_FILE"
@@ -113,12 +113,13 @@ post_json "$CORE_URL/cloud-consciousness/live-provider-endpoint-network-egress-g
 post_json "$CORE_URL/cloud-consciousness/live-provider-egress-execution-route-task-preflight" '{"confirm":true}' > "$ROUTE_PREFLIGHT_FILE"
 context_source_task_id="$(node -e 'const fs=require("node:fs"); const data=JSON.parse(fs.readFileSync(process.argv[1], "utf8")); if(!data.task?.id) throw new Error("missing context source task id"); console.log(data.task.id)' "$ROUTE_PREFLIGHT_FILE")"
 egress_task_request="$(node -e 'const sourceTaskId=process.argv[1]; console.log(JSON.stringify({confirm:true,liveProviderExecution:{requested:true,credentialReference:"openclaw://credential/deepseek-api-key",requestEnvelope:{model:"deepseek-chat",messages:[{role:"user",content:"Phase 63 bounded provider binding fixture."}]},contextPacket:{requested:true,sourceTaskId},responseContract:null}}))' "$context_source_task_id")"
-post_json "$CORE_URL/cloud-consciousness/live-provider-egress-execution-tasks" "$egress_task_request" > "$EGRESS_TASK_FILE"
-egress_approval_id="$(node -e 'const fs=require("node:fs"); const data=JSON.parse(fs.readFileSync(process.argv[1], "utf8")); if(!data.approval?.id) throw new Error("missing egress approval id"); console.log(data.approval.id)' "$EGRESS_TASK_FILE")"
+capability_request="$(node -e 'const params=JSON.parse(process.argv[1]); console.log(JSON.stringify({capabilityId:"act.openclaw.engineering_context.provider_handoff_task",approved:true,params}))' "$egress_task_request")"
+post_json "$CORE_URL/capabilities/invoke" "$capability_request" > "$CAPABILITY_FILE"
+egress_approval_id="$(node -e 'const fs=require("node:fs"); const data=JSON.parse(fs.readFileSync(process.argv[1], "utf8")); if(!data.result?.approval?.id) throw new Error("missing egress approval id"); console.log(data.result.approval.id)' "$CAPABILITY_FILE")"
 post_json "$CORE_URL/approvals/$egress_approval_id/approve" '{"approvedBy":"phase-63-check","reason":"Approve egress execution task shell while keeping endpoint contact and network egress deferred."}' > "$EGRESS_APPROVED_FILE"
 post_json "$CORE_URL/operator/step" '{}' > "$EGRESS_STEP_FILE"
 
-node - <<'EOF' "$TASK_REGISTRY" "$PREFLIGHT_REGISTRY" "$CREDENTIAL_GATE_REGISTRY" "$ENDPOINT_GATE_REGISTRY" "$ROUTE_PREFLIGHT_REGISTRY" "$EGRESS_TASK_REGISTRY" "$context_source_task_id" "$EGRESS_TASK_STATUS" "$PLAN_DOC" "$BEFORE_FILE" "$PREFLIGHT_FILE" "$CREDENTIAL_GATE_FILE" "$ENDPOINT_GATE_FILE" "$ROUTE_PREFLIGHT_FILE" "$EGRESS_TASK_FILE" "$EGRESS_STEP_FILE"
+node - <<'EOF' "$TASK_REGISTRY" "$PREFLIGHT_REGISTRY" "$CREDENTIAL_GATE_REGISTRY" "$ENDPOINT_GATE_REGISTRY" "$ROUTE_PREFLIGHT_REGISTRY" "$EGRESS_TASK_REGISTRY" "$context_source_task_id" "$EGRESS_TASK_STATUS" "$PLAN_DOC" "$BEFORE_FILE" "$PREFLIGHT_FILE" "$CREDENTIAL_GATE_FILE" "$ENDPOINT_GATE_FILE" "$ROUTE_PREFLIGHT_FILE" "$CAPABILITY_FILE" "$EGRESS_STEP_FILE"
 const fs = require("node:fs");
 const taskRegistry = process.argv[2];
 const preflightRegistry = process.argv[3];
@@ -134,7 +135,8 @@ const preflightRecord = JSON.parse(fs.readFileSync(process.argv[12], "utf8"));
 const credentialGateRecord = JSON.parse(fs.readFileSync(process.argv[13], "utf8"));
 const endpointGateRecord = JSON.parse(fs.readFileSync(process.argv[14], "utf8"));
 const routePreflightRecord = JSON.parse(fs.readFileSync(process.argv[15], "utf8"));
-const egressTaskRecord = JSON.parse(fs.readFileSync(process.argv[16], "utf8"));
+const egressCapabilityRecord = JSON.parse(fs.readFileSync(process.argv[16], "utf8"));
+const egressTaskRecord = egressCapabilityRecord.result;
 const egressStepRecord = JSON.parse(fs.readFileSync(process.argv[17], "utf8"));
 for (const token of [
   "openclaw-cloud-consciousness-live-provider-egress-execution-task-shell",
@@ -157,6 +159,18 @@ if (!endpointGateRecord.ok || endpointGateRecord.registry !== endpointGateRegist
 }
 if (!routePreflightRecord.ok || routePreflightRecord.registry !== routePreflightRegistry || routePreflightRecord.status !== "egress_execution_route_task_preflight_recorded_deferred") {
   throw new Error(`Phase 63 prerequisite should record Phase 62 egress route/task preflight: ${JSON.stringify(routePreflightRecord)}`);
+}
+if (
+  !egressCapabilityRecord.ok
+  || egressCapabilityRecord.invoked !== true
+  || egressCapabilityRecord.capability?.id !== "act.openclaw.engineering_context.provider_handoff_task"
+  || egressCapabilityRecord.policy?.decision !== "audit_only"
+  || egressCapabilityRecord.summary?.kind !== "engineering.provider_handoff_task"
+  || egressCapabilityRecord.summary?.requestBound !== true
+  || egressCapabilityRecord.summary?.noProviderCall !== true
+  || JSON.stringify(egressCapabilityRecord).includes("Phase 63 bounded provider binding fixture.")
+) {
+  throw new Error(`Phase 63 should create the egress shell through the approved common provider handoff capability without exposing prompt content: ${JSON.stringify(egressCapabilityRecord)}`);
 }
 const taskShell = egressTaskRecord.task?.cloudConsciousnessLiveProviderEgressExecution;
 const completedShell = egressStepRecord.task?.cloudConsciousnessLiveProviderEgressExecution;
