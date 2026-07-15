@@ -20,6 +20,7 @@ export OPENCLAW_SCREEN_ACT_PORT="${OPENCLAW_SCREEN_ACT_PORT:-$((PORT_BASE + 5))}
 export OPENCLAW_SYSTEM_SENSE_PORT="${OPENCLAW_SYSTEM_SENSE_PORT:-$((PORT_BASE + 6))}"
 export OPENCLAW_SYSTEM_HEAL_PORT="${OPENCLAW_SYSTEM_HEAL_PORT:-$((PORT_BASE + 7))}"
 export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-$((PORT_BASE + 8))}"
+export OPENCLAW_CLOUD_PROVIDER_ENDPOINT="${OPENCLAW_CLOUD_PROVIDER_ENDPOINT:-https://api.deepseek.com}"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-phase-64-egress-execution-approved-deferred-check.json}"
 export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-system-heal-phase-64-egress-execution-approved-deferred-check.json}"
 
@@ -113,13 +114,15 @@ post_json "$CORE_URL/cloud-consciousness/live-provider-real-launch-execution-pre
 post_json "$CORE_URL/cloud-consciousness/live-provider-credential-value-access-gate" '{"confirm":true}' > "$CREDENTIAL_GATE_FILE"
 post_json "$CORE_URL/cloud-consciousness/live-provider-endpoint-network-egress-gate" '{"confirm":true}' > "$ENDPOINT_GATE_FILE"
 post_json "$CORE_URL/cloud-consciousness/live-provider-egress-execution-route-task-preflight" '{"confirm":true}' > "$ROUTE_PREFLIGHT_FILE"
-post_json "$CORE_URL/cloud-consciousness/live-provider-egress-execution-tasks" '{"confirm":true}' > "$EGRESS_TASK_FILE"
+context_source_task_id="$(node -e 'const fs=require("node:fs"); const data=JSON.parse(fs.readFileSync(process.argv[1], "utf8")); if(!data.task?.id) throw new Error("missing context source task id"); console.log(data.task.id)' "$ROUTE_PREFLIGHT_FILE")"
+egress_task_request="$(node -e 'const sourceTaskId=process.argv[1]; console.log(JSON.stringify({confirm:true,liveProviderExecution:{requested:true,credentialReference:"openclaw://credential/deepseek-api-key",requestEnvelope:{model:"deepseek-chat",messages:[{role:"user",content:"Phase 64 bounded provider binding fixture."}]},contextPacket:{requested:true,sourceTaskId},responseContract:null}}))' "$context_source_task_id")"
+post_json "$CORE_URL/cloud-consciousness/live-provider-egress-execution-tasks" "$egress_task_request" > "$EGRESS_TASK_FILE"
 egress_approval_id="$(node -e 'const fs=require("node:fs"); const data=JSON.parse(fs.readFileSync(process.argv[1], "utf8")); if(!data.approval?.id) throw new Error("missing egress approval id"); console.log(data.approval.id)' "$EGRESS_TASK_FILE")"
 post_json "$CORE_URL/approvals/$egress_approval_id/approve" '{"approvedBy":"phase-64-check","reason":"Approve egress execution approved deferred while keeping endpoint contact and network egress deferred."}' > "$EGRESS_APPROVED_FILE"
 post_json "$CORE_URL/operator/step" '{}' > "$EGRESS_STEP_FILE"
 curl --silent --fail "$CORE_URL/cloud-consciousness/live-provider-egress-execution-approved-deferred" > "$APPROVED_DEFERRED_FILE"
 
-node - <<'EOF' "$TASK_REGISTRY" "$PREFLIGHT_REGISTRY" "$CREDENTIAL_GATE_REGISTRY" "$ENDPOINT_GATE_REGISTRY" "$ROUTE_PREFLIGHT_REGISTRY" "$EGRESS_TASK_REGISTRY" "$APPROVED_DEFERRED_REGISTRY" "$PLAN_DOC" "$BEFORE_FILE" "$PREFLIGHT_FILE" "$CREDENTIAL_GATE_FILE" "$ENDPOINT_GATE_FILE" "$ROUTE_PREFLIGHT_FILE" "$EGRESS_TASK_FILE" "$EGRESS_STEP_FILE" "$APPROVED_DEFERRED_FILE"
+node - <<'EOF' "$TASK_REGISTRY" "$PREFLIGHT_REGISTRY" "$CREDENTIAL_GATE_REGISTRY" "$ENDPOINT_GATE_REGISTRY" "$ROUTE_PREFLIGHT_REGISTRY" "$EGRESS_TASK_REGISTRY" "$context_source_task_id" "$APPROVED_DEFERRED_REGISTRY" "$PLAN_DOC" "$BEFORE_FILE" "$PREFLIGHT_FILE" "$CREDENTIAL_GATE_FILE" "$ENDPOINT_GATE_FILE" "$ROUTE_PREFLIGHT_FILE" "$EGRESS_TASK_FILE" "$EGRESS_STEP_FILE" "$APPROVED_DEFERRED_FILE"
 const fs = require("node:fs");
 const taskRegistry = process.argv[2];
 const preflightRegistry = process.argv[3];
@@ -127,16 +130,17 @@ const credentialGateRegistry = process.argv[4];
 const endpointGateRegistry = process.argv[5];
 const routePreflightRegistry = process.argv[6];
 const egressTaskRegistry = process.argv[7];
-const approvedDeferredRegistry = process.argv[8];
-const doc = fs.readFileSync(process.argv[9], "utf8");
-const before = JSON.parse(fs.readFileSync(process.argv[10], "utf8"));
-const preflightRecord = JSON.parse(fs.readFileSync(process.argv[11], "utf8"));
-const credentialGateRecord = JSON.parse(fs.readFileSync(process.argv[12], "utf8"));
-const endpointGateRecord = JSON.parse(fs.readFileSync(process.argv[13], "utf8"));
-const routePreflightRecord = JSON.parse(fs.readFileSync(process.argv[14], "utf8"));
-const egressTaskRecord = JSON.parse(fs.readFileSync(process.argv[15], "utf8"));
-const egressStepRecord = JSON.parse(fs.readFileSync(process.argv[16], "utf8"));
-const approvedDeferred = JSON.parse(fs.readFileSync(process.argv[17], "utf8"));
+const contextSourceTaskId = process.argv[8];
+const approvedDeferredRegistry = process.argv[9];
+const doc = fs.readFileSync(process.argv[10], "utf8");
+const before = JSON.parse(fs.readFileSync(process.argv[11], "utf8"));
+const preflightRecord = JSON.parse(fs.readFileSync(process.argv[12], "utf8"));
+const credentialGateRecord = JSON.parse(fs.readFileSync(process.argv[13], "utf8"));
+const endpointGateRecord = JSON.parse(fs.readFileSync(process.argv[14], "utf8"));
+const routePreflightRecord = JSON.parse(fs.readFileSync(process.argv[15], "utf8"));
+const egressTaskRecord = JSON.parse(fs.readFileSync(process.argv[16], "utf8"));
+const egressStepRecord = JSON.parse(fs.readFileSync(process.argv[17], "utf8"));
+const approvedDeferred = JSON.parse(fs.readFileSync(process.argv[18], "utf8"));
 for (const token of [
   "openclaw-cloud-consciousness-live-provider-egress-execution-approved-deferred",
   "Requires Phase 63 approved egress execution task shell evidence",
@@ -168,6 +172,7 @@ if (
   || taskShell?.registry !== egressTaskRegistry
   || taskShell?.sourceRegistry !== routePreflightRegistry
   || taskShell?.implementationStatus !== "task_shell_only"
+  || taskShell?.requestBinding?.sourceTaskId !== contextSourceTaskId
   || taskShell?.egressExecutionTaskCreated !== true
   || taskShell?.egressExecutionTaskApproved !== false
   || !egressStepRecord.ok

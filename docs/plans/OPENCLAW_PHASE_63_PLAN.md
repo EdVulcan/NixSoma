@@ -14,6 +14,7 @@ This advances the whitepaper line by moving from route evidence into an operator
    - Requires Phase 62 egress execution route/task preflight evidence.
    - Exposes `/cloud-consciousness/live-provider-egress-execution-tasks`.
    - Creates an approval-gated `cloud_consciousness_live_provider_egress_execution_task` shell.
+   - The redacted request binding retains an explicit `contextPacket.sourceTaskId` when the HTTP fixture supplies one.
    - After approval and operator step, records `egressExecutionTaskApproved: true` and `egressExecutionDeferred: true`.
    - Keeps credential value access, endpoint contact, network egress, provider response creation, rollback execution, host mutation, and live provider calls disabled.
 

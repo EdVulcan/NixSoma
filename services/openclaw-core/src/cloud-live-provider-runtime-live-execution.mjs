@@ -256,6 +256,11 @@ export async function executeCloudConsciousnessLiveProviderRequest({
   const contextPacketEvidence = compactContextPacketEvidence(
     options[CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE],
   );
+  const contextSourceTaskId = request.contextPacket?.requested === true
+    && typeof request.contextPacket.sourceTaskId === "string"
+    && request.contextPacket.sourceTaskId.trim().length > 0
+    ? request.contextPacket.sourceTaskId.trim()
+    : null;
   const requestedResponseContract = request.responseContract ?? request.contextPacket?.responseContract ?? null;
   const expectedBinding = task.cloudConsciousnessLiveProviderEgressExecution?.requestBinding ?? null;
   const expectedBindingResult = validateLiveProviderRequestBinding(expectedBinding);
@@ -271,6 +276,7 @@ export async function executeCloudConsciousnessLiveProviderRequest({
     providerRequest,
     responseContract: requestedResponseContract,
     contextContentHash: contextPacketEvidence?.contextContentHash ?? null,
+    sourceTaskId: contextSourceTaskId,
     env,
   });
   if (!actualBindingResult.ok

@@ -13,6 +13,7 @@ This advances the whitepaper line by making cloud-consciousness cooperation audi
 1. `openclaw-cloud-consciousness-live-provider-egress-execution-approved-deferred`
    - Requires Phase 63 approved egress execution task shell evidence.
    - Exposes `/cloud-consciousness/live-provider-egress-execution-approved-deferred`.
+   - The existing egress-task HTTP fixture preserves the explicit context source-task identity in the approval binding.
    - Reports `approvedDeferredEvidenceFound: true`, `egressExecutionTaskApproved: true`, and `egressExecutionDeferred: true`.
    - Keeps credential value access, endpoint contact, network egress, provider response creation, rollback execution, host mutation, and live provider calls disabled.
 

@@ -292,6 +292,10 @@ test("credential egress task binds the approved request without persisting its c
         model: "deepseek-chat",
         messages: [{ role: "user", content: prompt }],
       },
+      contextPacket: {
+        requested: true,
+        sourceTaskId: "task-context-source",
+      },
       responseContract: null,
     },
   });
@@ -301,6 +305,7 @@ test("credential egress task binds the approved request without persisting its c
   assert.equal(requestBinding.model, "deepseek-chat");
   assert.equal(requestBinding.requestContentIncluded, false);
   assert.equal(requestBinding.credentialValueIncluded, false);
+  assert.equal(requestBinding.sourceTaskId, "task-context-source");
   assert.match(requestBinding.requestContentHash, /^[a-f0-9]{64}$/u);
   assert.match(requestBinding.bindingHash, /^[a-f0-9]{64}$/u);
   assert.doesNotMatch(JSON.stringify(taskShell.task), /bounded prompt must remain/);

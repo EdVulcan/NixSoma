@@ -18,6 +18,7 @@ const MAX_RESPONSE_BYTES = 128 * 1024;
 const MAX_RESPONSE_CONTENT_CHARS = 16_000;
 const MAX_TIMEOUT_MS = 60_000;
 const DEFAULT_TIMEOUT_MS = 15_000;
+const MAX_SOURCE_TASK_ID_CHARS = 200;
 const ALLOWED_MESSAGE_ROLES = new Set(["system", "user", "assistant"]);
 
 function stableJson(value) {
@@ -39,6 +40,15 @@ function parseBoolean(value) {
 
 function boundedText(value, maxChars) {
   return typeof value === "string" ? value.slice(0, maxChars) : "";
+}
+
+function normaliseSourceTaskId(value) {
+  if (value === undefined || value === null) return { ok: true, value: null };
+  if (typeof value !== "string") return { ok: false, value: null };
+  const normalised = value.trim();
+  if (normalised.length === 0) return { ok: true, value: null };
+  if (normalised.length > MAX_SOURCE_TASK_ID_CHARS) return { ok: false, value: null };
+  return { ok: true, value: normalised };
 }
 
 function redactText(value, secret) {
@@ -176,6 +186,7 @@ function isSha256(value) {
 
 function bindingHash(binding) {
   const { bindingHash: _ignored, ...hashable } = binding;
+  if (hashable.sourceTaskId == null) delete hashable.sourceTaskId;
   return hashText(stableJson(hashable));
 }
 
@@ -183,6 +194,7 @@ export function validateLiveProviderRequestBinding(binding) {
   if (!binding || typeof binding !== "object" || Array.isArray(binding)) {
     return { ok: false, reason: "provider_request_binding_missing" };
   }
+  const sourceTaskId = normaliseSourceTaskId(binding.sourceTaskId);
   if (binding.registry !== "openclaw-cloud-consciousness-live-provider-request-binding-v0"
     || binding.provider !== "deepseek"
     || binding.credentialReference !== DEEPSEEK_CREDENTIAL_REFERENCE
@@ -197,6 +209,8 @@ export function validateLiveProviderRequestBinding(binding) {
     || binding.executionAuthorization?.credentialValueAccessAuthorized !== true
     || binding.executionAuthorization?.endpointNetworkEgressAuthorized !== true
     || binding.executionAuthorization?.liveProviderCallEnabled !== true
+    || !sourceTaskId.ok
+    || (binding.sourceTaskId != null && binding.sourceTaskId !== sourceTaskId.value)
     || !isSha256(binding.bindingHash)
     || binding.bindingHash !== bindingHash(binding)) {
     return { ok: false, reason: "provider_request_binding_invalid" };
@@ -210,9 +224,14 @@ export function buildLiveProviderRequestBinding({
   credentialReference = null,
   responseContract = null,
   contextContentHash = null,
+  sourceTaskId = null,
   env = process.env,
 } = {}) {
   const config = buildLiveProviderConfig({ env });
+  const normalisedSourceTaskId = normaliseSourceTaskId(sourceTaskId);
+  if (!normalisedSourceTaskId.ok) {
+    return { ok: false, reason: "provider_source_task_id_invalid" };
+  }
   const request = providerRequest ?? {
     request: {
       credentialReference,
@@ -247,6 +266,7 @@ export function buildLiveProviderRequestBinding({
       liveProviderCallEnabled: true,
     },
   };
+  if (normalisedSourceTaskId.value) binding.sourceTaskId = normalisedSourceTaskId.value;
   const result = validateLiveProviderRequestBinding({ ...binding, bindingHash: bindingHash(binding) });
   return result.ok ? result : { ok: false, reason: result.reason };
 }

@@ -229,11 +229,12 @@ The approved DeepSeek handoff and recommendation bridge are now bounded by the
 existing egress task. Task creation records only a redacted binding containing
 the allowlisted endpoint fingerprint, model, exact
 `openclaw://credential/deepseek-api-key` reference, request hash, optional
-context hash, response contract, and egress authorization flags. `/operator/step`
-rebuilds that binding and rejects any mismatch before the credential or network
-sender runs. The sender rejects non-DeepSeek credential references and HTTP
-redirects. Recommendations remain review-only and cannot create a task,
-approval, execution, or provider egress automatically.
+context hash, explicit context source-task id, response contract, and egress
+authorization flags. `/operator/step` rebuilds that binding and rejects any
+mismatch before the credential or network sender runs. The sender rejects
+non-DeepSeek credential references and HTTP redirects. Recommendations remain
+review-only and cannot create a task, approval, execution, or provider egress
+automatically.
 
 The same approved handoff now accepts explicit `includeWorkView`,
 `includeWorkViewObservation`, and `includePlanTodo` context selectors. It

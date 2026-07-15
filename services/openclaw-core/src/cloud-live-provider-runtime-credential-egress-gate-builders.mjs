@@ -888,6 +888,9 @@ export function createCloudLiveProviderRuntimeCredentialEgressGateBuilders(deps)
           credentialReference: liveProviderExecution.credentialReference,
           responseContract: liveProviderExecution.responseContract ?? null,
           contextContentHash: liveProviderExecution.contextContentHash ?? null,
+          sourceTaskId: liveProviderExecution.contextPacket?.requested === true
+            ? liveProviderExecution.contextPacket.sourceTaskId ?? null
+            : null,
           env: providerEnv,
         });
         if (!builtBinding.ok) {

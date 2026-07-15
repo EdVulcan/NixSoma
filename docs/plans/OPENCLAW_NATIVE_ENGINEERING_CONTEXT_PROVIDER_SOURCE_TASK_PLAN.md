@@ -58,7 +58,8 @@ network mutation.
 ```text
 explicit sourceTaskId required for cross-task context
 provider egress approval remains attached to the egress task
-source task identity and request content are covered by the binding
+explicit cross-task source identity and request content are covered by the
+approval binding
 context content remains transient
 no automatic task/approval/action creation
 no provider call during materialization
@@ -77,6 +78,8 @@ Runtime:
 ```text
 services/openclaw-core/src/cloud-live-provider-runtime-context-packet.mjs
 services/openclaw-core/src/cloud-live-provider-runtime-live-execution.mjs
+services/openclaw-core/src/cloud-live-provider-network-sender.mjs
+services/openclaw-core/src/cloud-live-provider-runtime-credential-egress-gate-builders.mjs
 ```
 
 Tests:
@@ -84,6 +87,8 @@ Tests:
 ```text
 services/openclaw-core/test/cloud-live-provider-runtime-context-packet.test.mjs
 services/openclaw-core/test/cloud-live-provider-runtime-live-execution.test.mjs
+services/openclaw-core/test/cloud-live-provider-network-sender.test.mjs
+services/openclaw-core/test/cloud-live-provider-runtime-credential-egress-gate-builders.test.mjs
 services/openclaw-core/test/task-executor.test.mjs
 ```
 
@@ -97,6 +102,14 @@ execution/source ids, source-only transcript selection, unknown-source
 fail-closed behavior, source readback, and the explicit shortcut. The existing
 packet core/Observer batch check exercises the same route against real local
 services.
+
+The approval-binding follow-up now retains an explicitly selected
+`contextPacket.sourceTaskId` in the redacted binding hash. A changed source is
+rejected before the sender runs, even when the replacement happens to produce
+the same bounded context hash. The existing Phase 63 and Phase 64 core HTTP
+fixtures submit that source selection through the egress task route and assert
+the serialized binding; they still prove no credential read, endpoint contact,
+network egress, or provider response.
 
 ## Deferred
 

@@ -105,6 +105,9 @@ function createBoundTask(options, env = LIVE_PROVIDER_TEST_ENV, contextContentHa
     providerRequest,
     responseContract: request.responseContract ?? request.contextPacket?.responseContract ?? null,
     contextContentHash,
+    sourceTaskId: request.contextPacket?.requested === true
+      ? request.contextPacket.sourceTaskId ?? null
+      : null,
     env,
   });
   assert.equal(binding.ok, true, binding.reason);
@@ -159,6 +162,55 @@ test("live execution rejects a request whose content changed after approval", as
         messages: [{ role: "user", content: "Changed after approval." }],
       },
     }),
+    env: LIVE_PROVIDER_TEST_ENV,
+    sendLiveProviderRequestImpl: async () => {
+      senderCalled = true;
+      return { ok: true };
+    },
+  });
+
+  assert.equal(result.blocked, true);
+  assert.equal(result.reason, "live_provider_request_binding_mismatch");
+  assert.equal(senderCalled, false);
+  assert.equal(task.status, "queued");
+});
+
+test("live execution rejects a different explicit context source after approval", async () => {
+  const harness = createHarness();
+  const contextContentHash = "c".repeat(64);
+  const approvedOptions = liveOptions({
+    contextPacket: {
+      requested: true,
+      taskId: "task-1",
+      sourceTaskId: "source-task-a",
+      responseContract: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
+    },
+    responseContract: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
+  });
+  const task = createBoundTask(approvedOptions, LIVE_PROVIDER_TEST_ENV, contextContentHash);
+  assert.equal(
+    task.cloudConsciousnessLiveProviderEgressExecution.requestBinding.sourceTaskId,
+    "source-task-a",
+  );
+  let senderCalled = false;
+  const changedSourceOptions = liveOptions({
+    contextPacket: {
+      requested: true,
+      taskId: "task-1",
+      sourceTaskId: "source-task-b",
+      responseContract: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
+    },
+    responseContract: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
+  });
+  changedSourceOptions[CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE] = {
+    registry: "openclaw-cloud-consciousness-live-provider-context-packet-v0",
+    contextContentHash,
+    sourceTaskId: "source-task-b",
+  };
+  const result = await executeCloudConsciousnessLiveProviderRequest({
+    ...harness.deps,
+    task,
+    options: changedSourceOptions,
     env: LIVE_PROVIDER_TEST_ENV,
     sendLiveProviderRequestImpl: async () => {
       senderCalled = true;
