@@ -436,3 +436,28 @@ test("capability runtime exposes compact trusted work-view observation through t
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("private target"), false);
   assert.deepEqual(events.map((event) => event.name), ["policy.evaluated", "capability.invoked"]);
 });
+
+test("capability runtime rejects conflicting trusted work-view task ids before policy or state read", async () => {
+  const calls = [];
+  const { runtime, state, events } = createHarness({
+    fetchImpl: async (url) => {
+      calls.push(url);
+      return { ok: true, json: async () => ({ ok: true }) };
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "sense.openclaw.engineering_context.work_view_observation",
+    taskId: "task-envelope",
+    params: { taskId: "task-params" },
+  });
+
+  assert.equal(result.statusCode, 400);
+  assert.deepEqual(result.response, {
+    ok: false,
+    error: "Trusted work-view observation taskId must match the request taskId.",
+  });
+  assert.equal(calls.length, 0);
+  assert.equal(state.capabilityInvocationLog.length, 0);
+  assert.deepEqual(events, []);
+});

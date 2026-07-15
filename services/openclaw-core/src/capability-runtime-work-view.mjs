@@ -26,6 +26,15 @@ function findTask(tasks, taskId) {
   return null;
 }
 
+function resolveTaskId(params, request) {
+  const requestTaskId = normaliseTaskId(request.taskId);
+  const parameterTaskId = normaliseTaskId(params.taskId);
+  if (requestTaskId && parameterTaskId && requestTaskId !== parameterTaskId) {
+    throw new Error("Trusted work-view observation taskId must match the request taskId.");
+  }
+  return parameterTaskId ?? requestTaskId;
+}
+
 export function createEngineeringWorkViewCapabilityHandlers({
   tasks = new Map(),
   sessionManagerUrl,
@@ -38,7 +47,7 @@ export function createEngineeringWorkViewCapabilityHandlers({
     }
 
     const params = request.params ?? {};
-    const taskId = normaliseTaskId(params.taskId ?? request.taskId);
+    const taskId = resolveTaskId(params, request);
     const task = findTask(tasks, taskId);
     if (taskId && !task) {
       throw new Error("Trusted work-view observation task does not exist.");
@@ -85,5 +94,15 @@ export function createEngineeringWorkViewCapabilityHandlers({
     };
   }
 
-  return { callBackend, summariseResult };
+  function validateRequest(capability, request) {
+    if (capability.id !== CAPABILITY_ID) return null;
+    try {
+      resolveTaskId(request.params ?? {}, request);
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : "Invalid trusted work-view observation request.";
+    }
+  }
+
+  return { callBackend, summariseResult, validateRequest };
 }

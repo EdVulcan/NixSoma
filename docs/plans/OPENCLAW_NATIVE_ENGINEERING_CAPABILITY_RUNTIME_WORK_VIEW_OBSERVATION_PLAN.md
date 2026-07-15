@@ -41,6 +41,7 @@ audit-only local capability
 existing policy decision is recorded before dispatch
 existing capability invocation ledger and events are used
 session-manager is the only state owner read
+conflicting envelope and parameter task ids are rejected before policy dispatch
 no task or work-view mutation
 no action dispatch, task creation, or approval creation
 no lease id, active URL, pixel/data URL, target item, selector, or input value

@@ -700,6 +700,14 @@ export function createCapabilityRuntime(deps) {
       };
     }
 
+    const engineeringWorkViewValidationError = engineeringWorkViewHandlers.validateRequest(capability, request);
+    if (engineeringWorkViewValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: engineeringWorkViewValidationError },
+      };
+    }
+
     const policy = recordPolicyDecision(evaluatePolicyIntent(
       buildCapabilityPolicyInput(capability, request),
       {
