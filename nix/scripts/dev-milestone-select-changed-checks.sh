@@ -550,7 +550,13 @@ function selectPhasePlanChecks(file) {
 function selectSourceHeuristics(file) {
   const direct = new Map([
     ["services/openclaw-core/src/policy-evaluator.mjs", ["openclaw-core-service-unit-tests", "policy"]],
-    ["services/openclaw-core/src/task-executor.mjs", ["task-executor"]],
+    ["services/openclaw-core/src/browser-task-action-contract.mjs", ["task-executor", "operator-loop"]],
+    ["services/openclaw-core/src/browser-task-execution-binding.mjs", ["task-executor", "operator-loop"]],
+    ["services/openclaw-core/src/task-executor.mjs", ["task-executor", "operator-loop"]],
+    ["services/openclaw-core/src/task-manager.mjs", ["task-executor", "operator-loop"]],
+    ["services/openclaw-core/test/browser-task-execution-binding.test.mjs", ["openclaw-core-service-unit-tests", "task-executor", "operator-loop"]],
+    ["services/openclaw-core/test/task-manager.test.mjs", ["openclaw-core-service-unit-tests", "task-executor", "operator-loop"]],
+    ["services/openclaw-core/test/task-executor.test.mjs", ["openclaw-core-service-unit-tests", "task-executor", "operator-loop"]],
     ["services/openclaw-core/src/route-handlers.mjs", ["task-workbench", "operator-loop", "observer-operator"]],
     ["services/openclaw-core/src/cloud-live-provider-result-envelope-routes.mjs", ["openclaw-live-provider-result-envelope-batch-reuse"]],
     ["services/openclaw-core/src/cloud-live-provider-runtime-context-packet.mjs", [nativeEngineeringContextPacketPairBatchCheck, "openclaw-core-service-unit-tests"]],

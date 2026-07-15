@@ -111,6 +111,18 @@ fixtures submit that source selection through the egress task route and assert
 the serialized binding; they still prove no credential read, endpoint contact,
 network egress, or provider response.
 
+The downstream operator consistency follow-up is documented in:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md
+```
+
+It is deliberately separate from provider context assembly. The existing
+browser task operator path now binds its reviewed rule-v1 target and action
+shape before execution, while keeping transient input values out of the
+persisted binding. It does not widen provider authority, create a new route, or
+change the source-task approval owner.
+
 ## Deferred
 
 ```text
@@ -125,6 +137,7 @@ ACPX/Codex live process execution and long-lived LSP pools
 ## Next Smallest Capability
 
 Keep source selection explicit and bounded. Do not add automatic source-task
-inference, source-task mutation, or provider-task creation. Continue on the
-selected Level 2 trusted work-view/session-helper route only after its runtime
-owner and authority boundary are explicit.
+inference, source-task mutation, or provider-task creation. Finish the existing
+operator execution-consistency binding before continuing on the selected Level 2
+trusted work-view/session-helper route; its runtime owner and authority
+boundary must remain explicit.

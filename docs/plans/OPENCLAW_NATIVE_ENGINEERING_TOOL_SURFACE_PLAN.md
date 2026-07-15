@@ -7,13 +7,16 @@ Updated: 2026-07-15
 The original read-only inventory and the subsequent Level 1 engineering loop
 are complete through LSP selected-target edit, verification, recovery/rerun,
 plugin refresh, ACPX/Codex boundary evidence, and local context-packet
-assembly. The current frontier is the Level 2 trusted work-view/session-helper
-boundary.
+assembly. The current frontier is a Level 1 operator execution-consistency
+correction for the existing browser task path; the next identity-upgrade route
+remains the Level 2 trusted work-view/session-helper boundary.
 
-The latest completed slices are the compact work-view association and the
-explicit operator-reviewed task bind documented in
+The latest completed slices are the compact work-view association, the explicit
+operator-reviewed task bind documented in
 `OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_ASSOCIATION_PLAN.md` and
-`OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_BIND_PLAN.md`.
+`OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_BIND_PLAN.md`, and the execution binding
+documented in
+`OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md`.
 
 Do not select historical inventory or LSP variant text below as a new slice.
 
@@ -140,9 +143,25 @@ automatic provider-request creation, automatic task/approval/execution from a
 recommendation, persisted transcript rewriting, and result-envelope creation
 remain deferred
 unapproved provider calls and network egress
+browser task execution without a persisted rule-v1 binding
 ```
 
 ## Next Slice
+
+The current operator execution-consistency follow-up is documented as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md
+```
+
+It keeps the existing `/operator/step` and `/operator/run` routes but binds
+each rule-v1 browser task to its target, action count/order/kind, and
+non-input parameters. `keyboard.type` and `browser.semantic_type` may receive
+only a bounded transient text value at execution; that value is excluded from
+the hash and persisted evidence. An absent or stale binding fails closed before
+work-view preparation or screen-act. This is the last Level 1 consistency gap
+selected from the current route; do not add another browser action variant or
+provider wrapper after it.
 
 The recovery action draft follow-up was completed as:
 

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createTaskRecovery } from "./task-recovery.mjs";
 import { redactWriteOnlyInputActionTree } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
+import { buildBrowserTaskExecutionBinding } from "./browser-task-execution-binding.mjs";
 
 const TASK_EXTENSION_FIELDS = [
   { name: "sourceCommand", copyFromCreateInput: true },
@@ -133,6 +134,7 @@ function serialiseTask(task) {
     policy: task.policy ?? null,
     approval: task.approval ?? null,
     workView: task.workView ?? null,
+    operatorExecutionBinding: task.operatorExecutionBinding ?? null,
     lastAction: task.lastAction ?? null,
     outcome: task.outcome ?? null,
     ...serialiseTaskExtensionFields(task),
@@ -314,6 +316,8 @@ function createTask(body, options = {}) {
     closedAt: null,
     updatedAt: now,
   };
+
+  task.operatorExecutionBinding = buildBrowserTaskExecutionBinding(task);
 
   // H-1 Fix: Evict oldest non-active tasks when the Map exceeds MAX_TASK_ENTRIES.
   if (tasks.size > MAX_TASK_ENTRIES) {

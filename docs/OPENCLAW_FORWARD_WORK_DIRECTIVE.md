@@ -252,6 +252,19 @@ the egress task remains the approval and execution owner. This continuity
 boundary is documented in
 `docs/plans/OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PROVIDER_SOURCE_TASK_PLAN.md`.
 
+The current Level 1 follow-up closes a separate operator execution-consistency
+gap in the existing browser task path. It is documented in
+`docs/plans/OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md`.
+Rule-v1 task creation stores a compact target/action-shape binding, and
+`/operator/step` plus `/operator/run` recompute and validate it before
+work-view preparation or screen-act. Target, action order/kind, and non-input
+parameters must match; only bounded transient text may vary for write-only
+input actions, and that text is excluded from the hash and persisted evidence.
+An absent or stale binding fails closed. This is a Level 1 correction to an
+existing execution path, not a new provider lane or another browser-action
+variant. After this proof, return to the smallest real Level 2
+work-view/session-helper capability.
+
 The next autonomous product route is the smallest real Level 2 trusted AI
 work-view/session-helper behavior. Keep helper installation, root/system daemon
 work, desktop-wide capture, unapproved provider egress, and arbitrary endpoint

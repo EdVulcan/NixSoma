@@ -1,6 +1,6 @@
 # OpenClaw Documentation Control Room
 
-Updated: 2026-07-14
+Updated: 2026-07-15
 
 This is the active documentation entry point for `OpenClawOnNixOS`.
 
@@ -26,6 +26,7 @@ phase ladder has become too fine-grained. The active route is now:
 preserve enhanced openclaw source on GitHub
 -> audit which enhanced capabilities are already absorbed
 -> migrate Claude Code-grade engineering capabilities as governed body tools
+-> close the current Level 1 operator execution-consistency boundary
 -> return to identity-upgrade work: work-view/session helper, then hostd
 ```
 
@@ -76,6 +77,7 @@ directive.
 | [OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PACKET_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PACKET_PLAN.md) | Active local engineering context assembly plus an explicitly approved transient DeepSeek handoff; no automatic provider calls or persisted assistant transcript. |
 | [OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PROVIDER_HANDOFF_BRIDGE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PROVIDER_HANDOFF_BRIDGE_PLAN.md) | Explicitly approved handoff of bounded work-view observation and plan/todo summaries through the existing provider binding; no raw page payloads or automatic execution. |
 | [OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PROVIDER_SOURCE_TASK_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PROVIDER_SOURCE_TASK_PLAN.md) | Explicit source-task selection for provider context so approved egress tasks can consume existing engineering evidence without mutating or resuming the source task. |
+| [OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md) | Binds existing rule-v1 browser task execution to its reviewed target/action shape before `/operator/step` or `/operator/run`. |
 | [OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PLAN_TODO_BRIDGE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PLAN_TODO_BRIDGE_PLAN.md) | Existing context-packet bridge for bounded visible plan/todo state and guidance-only next action. |
 | [OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_ASSOCIATION_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_ASSOCIATION_PLAN.md) | Completed Level 2 compact association between a native engineering task and the authoritative trusted work view. |
 | [OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_BIND_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_BIND_PLAN.md) | Completed Level 2 operator-reviewed task binding plus an explicit bridge to the existing trusted work-view recovery action, without automatic recovery. |

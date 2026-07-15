@@ -11,8 +11,8 @@ export const BROWSER_TASK_ACTION_DESCRIPTORS = Object.freeze([
 
 const descriptorByKind = new Map(BROWSER_TASK_ACTION_DESCRIPTORS.map((descriptor) => [descriptor.kind, descriptor]));
 
-function normaliseBrowserTaskActions(actions) {
-  return actions
+export function normaliseBrowserTaskActions(actions) {
+  return (Array.isArray(actions) ? actions : [])
     .filter((action) => action && typeof action === "object")
     .map((action) => ({
       kind: typeof action.kind === "string" && action.kind.trim() ? action.kind.trim() : "mouse.click",
@@ -20,15 +20,21 @@ function normaliseBrowserTaskActions(actions) {
     }));
 }
 
+export function browserTaskActionsFromPlan(task, { pendingOnly = true } = {}) {
+  if (task?.type !== "browser_task" || task?.plan?.strategy !== "rule-v1") return null;
+  const plannedActions = (task.plan.steps ?? [])
+    .filter((step) => step.phase === "acting_on_target" && (!pendingOnly || step.status !== "completed"));
+  return normaliseBrowserTaskActions(plannedActions);
+}
+
 export function browserTaskActionsForExecution(task, explicitActions) {
   if (Array.isArray(explicitActions) && explicitActions.length > 0) {
     return normaliseBrowserTaskActions(explicitActions);
   }
 
-  if (task?.type === "browser_task" && task?.plan?.strategy === "rule-v1") {
-    const plannedActions = (task.plan.steps ?? [])
-      .filter((step) => step.phase === "acting_on_target" && step.status !== "completed");
-    return normaliseBrowserTaskActions(plannedActions);
+  const plannedActions = browserTaskActionsFromPlan(task);
+  if (plannedActions) {
+    return plannedActions;
   }
 
   return [

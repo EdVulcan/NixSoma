@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { createTaskManager } from "../src/task-manager.mjs";
 
-function createHarness() {
+function createHarness({ buildRulePlan = () => null, shouldBuildPlan = () => false } = {}) {
   const tasks = new Map();
   const runtimeState = {
     status: "idle",
@@ -33,8 +33,8 @@ function createHarness() {
       },
       getCurrentTask: () => tasks.get(runtimeState.currentTaskId) ?? null,
     },
-    buildRulePlan: () => null,
-    shouldBuildPlan: () => false,
+    buildRulePlan,
+    shouldBuildPlan,
     serialisePlanForPublic: (plan) => plan,
     createApprovalRequestForTask: () => null,
     ensureTaskPolicy: () => {},
@@ -44,6 +44,35 @@ function createHarness() {
 
   return { manager, tasks };
 }
+
+test("task manager stores a compact browser execution binding on planned tasks", () => {
+  const { manager } = createHarness({
+    shouldBuildPlan: () => true,
+    buildRulePlan: ({ targetUrl, actions }) => ({
+      strategy: "rule-v1",
+      targetUrl,
+      steps: (actions ?? []).map((action) => ({
+        phase: "acting_on_target",
+        kind: action.kind,
+        status: "pending",
+        params: action.params,
+      })),
+    }),
+  });
+
+  const task = manager.createTask({
+    goal: "Bind planned browser execution inputs",
+    type: "browser_task",
+    targetUrl: "https://example.com/work",
+    includePlan: true,
+    actions: [{ kind: "keyboard.type", params: { text: "private transient value" } }],
+  });
+
+  assert.equal(task.operatorExecutionBinding?.registry, "openclaw-browser-task-execution-binding-v0");
+  assert.equal(task.operatorExecutionBinding?.inputTextBound, false);
+  assert.doesNotMatch(JSON.stringify(task.operatorExecutionBinding), /private transient value/u);
+  assert.equal(manager.serialiseTask(task).operatorExecutionBinding.actionCount, 1);
+});
 
 test("task manager centralizes extension field creation and serialization", () => {
   const { manager } = createHarness();

@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { createTaskExecutor } from "../src/task-executor.mjs";
+import { buildBrowserTaskExecutionBinding } from "../src/browser-task-execution-binding.mjs";
 import { DELEGATED_PLAN_TASK_HANDLER_DESCRIPTORS } from "../src/task-executor-delegated-plan-handlers.mjs";
 import { CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE } from "../src/cloud-live-provider-runtime-context-packet.mjs";
 
@@ -160,6 +161,7 @@ function createExecutorHarness(overrides = {}) {
     capabilityInvocationLog: [],
     nativeEngineeringLspLifecycleRecords: new Map(),
     runtimeState: {},
+    getCurrentTask: () => state.tasks.get(state.runtimeState.currentTaskId) ?? null,
     persistState: () => {
       persistCalls += 1;
     },
@@ -238,6 +240,7 @@ function createExecutorHarness(overrides = {}) {
       failTask,
       isActiveTask: (task) => ["queued", "running", "paused"].includes(task?.status),
       reconcileRuntimeState: () => {},
+      getNextQueuedTask: () => [...state.tasks.values()].find((task) => task.status === "queued") ?? null,
       ...overrides.taskManager,
     },
     planBuilder: {
@@ -1975,6 +1978,80 @@ test("browser task executor returns recoverable evidence when session authority 
   assert.equal(failed.authorityInterruption.stage, "prepare");
   assert.equal(failed.authorityInterruption.automaticRestart, false);
   assert.equal(failed.task.outcome.details.authorityInterruption.recoveryAction, "restore_trusted_work_view_then_recover_task");
+});
+
+test("operator step blocks a browser action or target that is outside the task binding", async () => {
+  const { executor, state, events } = createExecutorHarness();
+  const task = {
+    id: "operator-binding-task",
+    type: "browser_task",
+    goal: "Keep operator execution bound to the reviewed plan",
+    status: "queued",
+    targetUrl: "https://example.com/reviewed",
+    plan: {
+      strategy: "rule-v1",
+      steps: [{
+        phase: "acting_on_target",
+        kind: "mouse.click",
+        status: "pending",
+        params: { x: 10, y: 20, button: "left" },
+      }],
+    },
+  };
+  task.operatorExecutionBinding = buildBrowserTaskExecutionBinding(task);
+  state.tasks.set(task.id, task);
+
+  const result = await executor.runOperatorStep({
+    targetUrl: "https://example.com/unapproved",
+    actions: [{ kind: "browser.new_tab", params: { url: "https://example.com/unapproved" } }],
+  });
+
+  assert.equal(result.ran, false);
+  assert.equal(result.blocked, true);
+  assert.equal(result.reason, "operator_execution_target_mismatch");
+  assert.equal(task.status, "queued");
+  assert.equal(events.at(-1)?.name, "task.blocked");
+  assert.equal(events.at(-1)?.payload?.operatorExecutionBinding?.actionShapeValidated, undefined);
+});
+
+test("operator options retain only a transient write-only input override", async () => {
+  const { executor } = createExecutorHarness();
+  const task = {
+    id: "operator-input-binding-task",
+    type: "browser_task",
+    targetUrl: "https://example.com/reviewed",
+    plan: {
+      strategy: "rule-v1",
+      steps: [
+        {
+          phase: "acting_on_target",
+          kind: "keyboard.type",
+          status: "pending",
+          params: { text: "planned transient value" },
+        },
+        {
+          phase: "acting_on_target",
+          kind: "mouse.click",
+          status: "pending",
+          params: { x: 10, y: 20, button: "left" },
+        },
+      ],
+    },
+  };
+  task.operatorExecutionBinding = buildBrowserTaskExecutionBinding(task);
+
+  const options = await executor.buildOperatorOptions(task, {
+    actions: [
+      { kind: "keyboard.type", params: { text: "operator supplied transient value" } },
+      { kind: "mouse.click", params: { x: 10, y: 20, button: "left" } },
+    ],
+  });
+
+  assert.equal(options.operatorExecutionBindingError, undefined);
+  assert.equal(options.targetUrl, task.targetUrl);
+  assert.equal(options.operatorExecutionBinding.source, "task_plan_with_transient_input");
+  assert.equal(options.actions[0].params.text, "operator supplied transient value");
+  assert.doesNotMatch(JSON.stringify(options.operatorExecutionBinding), /operator supplied transient value/u);
 });
 
 test("operator options materialise the existing context packet for live provider execution", async () => {

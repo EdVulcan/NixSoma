@@ -51,14 +51,17 @@ assert_json() {
 "$SCRIPT_DIR/dev-up.sh"
 
 task_one="$(post_json "$CORE_URL/tasks/plan" "{\"goal\":\"Operator loop task one\",\"type\":\"browser_task\",\"targetUrl\":\"$TARGET_ONE\",\"actions\":[{\"kind\":\"keyboard.type\",\"params\":{\"text\":\"operator one\"}}]}")"
-assert_json "$task_one" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.task?.status!=="queued" || data.plan?.status!=="planned"){throw new Error("task one not queued/planned");}'
+assert_json "$task_one" 'const data=JSON.parse(process.argv[1]); const b=data.task?.operatorExecutionBinding; if(!data.ok || data.task?.status!=="queued" || data.plan?.status!=="planned" || b?.registry!=="openclaw-browser-task-execution-binding-v0" || b?.inputTextBound!==false || !/^[a-f0-9]{64}$/.test(b?.actionShapeHash??"") || JSON.stringify(b).includes("operator one")){throw new Error("task one binding missing or leaky");}'
 task_one_id="$(json_value "$task_one" 'const data=JSON.parse(process.argv[1]); process.stdout.write(data.task.id);')"
 
-step_result="$(post_json "$CORE_URL/operator/step" '{}')"
-assert_json "$step_result" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.ran!==true || data.task?.status!=="completed" || data.execution?.verification?.ok!==true){throw new Error("operator step did not complete one task");}'
+blocked_result="$(post_json "$CORE_URL/operator/step" "{\"targetUrl\":\"$TARGET_TWO\",\"actions\":[{\"kind\":\"browser.new_tab\",\"params\":{\"url\":\"$TARGET_TWO\"}}]}")"
+assert_json "$blocked_result" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.ran!==false || data.blocked!==true || data.reason!=="operator_execution_target_mismatch" || data.task?.status!=="queued"){throw new Error("operator mismatch was not blocked");}'
+
+step_result="$(post_json "$CORE_URL/operator/step" '{"actions":[{"kind":"keyboard.type","params":{"text":"operator one re-entry"}}]}')"
+assert_json "$step_result" 'const data=JSON.parse(process.argv[1]); const b=data.task?.outcome?.details?.operatorExecutionBinding; if(!data.ok || data.ran!==true || data.task?.status!=="completed" || data.execution?.verification?.ok!==true || b?.registry!=="openclaw-browser-task-execution-binding-v0" || b?.actionShapeValidated!==true || b?.inputTextBound!==false || JSON.stringify(b).includes("operator one")){throw new Error("operator step did not preserve binding evidence");}'
 
 task_two="$(post_json "$CORE_URL/tasks/plan" "{\"goal\":\"Operator loop task two\",\"type\":\"browser_task\",\"targetUrl\":\"$TARGET_TWO\",\"actions\":[{\"kind\":\"keyboard.type\",\"params\":{\"text\":\"operator two\"}},{\"kind\":\"mouse.click\",\"params\":{\"x\":520,\"y\":300,\"button\":\"left\"}}]}")"
-assert_json "$task_two" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.task?.status!=="queued" || data.plan?.status!=="planned"){throw new Error("task two not queued/planned");}'
+assert_json "$task_two" 'const data=JSON.parse(process.argv[1]); const b=data.task?.operatorExecutionBinding; if(!data.ok || data.task?.status!=="queued" || data.plan?.status!=="planned" || b?.registry!=="openclaw-browser-task-execution-binding-v0" || b?.actionCount!==2 || b?.inputTextBound!==false || !/^[a-f0-9]{64}$/.test(b?.actionShapeHash??"") || JSON.stringify(b).includes("operator two")){throw new Error("task two binding missing or leaky");}'
 task_two_id="$(json_value "$task_two" 'const data=JSON.parse(process.argv[1]); process.stdout.write(data.task.id);')"
 
 run_result="$(post_json "$CORE_URL/operator/run" '{"maxSteps":5}')"
@@ -96,6 +99,21 @@ const afterSummary = readJson(process.argv[5]);
 const restoredOne = readJson(process.argv[6]).task;
 const restoredTwo = readJson(process.argv[7]).task;
 const tasksList = readJson(process.argv[8]);
+
+function assertBinding(task, transientText) {
+  const binding = task?.operatorExecutionBinding;
+  if (
+    binding?.registry !== "openclaw-browser-task-execution-binding-v0"
+    || binding?.inputTextBound !== false
+    || !/^[a-f0-9]{64}$/.test(binding?.actionShapeHash ?? "")
+    || JSON.stringify(binding).includes(transientText)
+  ) {
+    throw new Error(`browser task binding readback mismatch for ${task?.id ?? "unknown"}`);
+  }
+}
+
+assertBinding(restoredOne, "operator one");
+assertBinding(restoredTwo, "operator two");
 
 const beforeCounts = beforeSummary.summary?.counts ?? {};
 const afterCounts = afterSummary.summary?.counts ?? {};

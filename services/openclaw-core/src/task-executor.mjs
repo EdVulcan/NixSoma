@@ -9,12 +9,14 @@ import { requestHostdSystemSenseRestart } from "./hostd-control-client.mjs";
 import { planCapabilityActionSteps } from "./task-recovery.mjs";
 import {
   browserTaskActionsForExecution,
+  browserTaskActionsFromPlan,
   compactBrowserTaskVisualGrounding,
   executeBrowserTaskActionWithCaptureRecovery,
   materialiseBrowserTaskAction,
   normaliseBrowserTaskVerificationUrl,
   observedBrowserTaskUrl,
 } from "./browser-task-action-contract.mjs";
+import { validateBrowserTaskOperatorInputs } from "./browser-task-execution-binding.mjs";
 import {
   invokeWorkViewAuthority,
   isWorkViewAuthorityInterruption,
@@ -677,7 +679,12 @@ async function executeTask(task, options = {}) {
   try {
     await setTaskPhase(task, "preparing_work_view", {
       status: "running",
-      details: { targetUrl, displayTarget, executor: "core-v1" },
+      details: {
+        targetUrl,
+        displayTarget,
+        executor: "core-v1",
+        operatorExecutionBinding: options.operatorExecutionBinding ?? null,
+      },
     });
     prepare = await invokeWorkViewAuthority("prepare", () => postJson(`${sessionManagerUrl}/work-view/prepare`, {
       displayTarget,
@@ -755,6 +762,7 @@ async function executeTask(task, options = {}) {
       const failedTask = failTask(task, "Executor verification failed.", {
         targetUrl,
         executor: "core-v2",
+        operatorExecutionBinding: options.operatorExecutionBinding ?? null,
         verification,
         workViewSummary: verification.workViewSummary ?? null,
         actionEvidence: verification.actionEvidence ?? null,
@@ -790,6 +798,7 @@ async function executeTask(task, options = {}) {
     const updatedTask = completeTask(task, {
       targetUrl,
       workViewUrl: targetUrl,
+      operatorExecutionBinding: options.operatorExecutionBinding ?? null,
       summary: `Executor completed task at ${targetUrl}`,
       executor: "core-v2",
       actionCount: actionResults.length,
@@ -847,6 +856,7 @@ async function executeTask(task, options = {}) {
     const failedTask = failTask(task, message, {
       targetUrl,
       executor: "core-v1",
+      operatorExecutionBinding: options.operatorExecutionBinding ?? null,
       actionCount: actionResults.length,
       authorityInterruption,
     });
@@ -1266,15 +1276,31 @@ async function executeTaskWithRecovery(task, options = {}) {
 }
 
 async function buildOperatorOptions(task, body = {}) {
-  const planActions = task.plan?.steps
-    ?.filter((step) => step.phase === "acting_on_target")
-    .map((step) => ({ kind: step.kind, params: step.params ?? {} }));
+  const isBrowserTask = task?.type === "browser_task";
+  const operatorInputBinding = isBrowserTask
+    ? validateBrowserTaskOperatorInputs({
+      task,
+      requestedTargetUrl: body.targetUrl,
+      requestedActions: body.actions,
+    })
+    : { ok: true, targetUrl: body.targetUrl ?? task.targetUrl, actions: null, binding: null };
+  const planActions = isBrowserTask
+    ? browserTaskActionsFromPlan(task)
+    : task.plan?.steps
+      ?.filter((step) => step.phase === "acting_on_target")
+      .map((step) => ({ kind: step.kind, params: step.params ?? {} }));
   const options = {
     ...body,
-    targetUrl: body.targetUrl ?? task.targetUrl,
-    actions: Array.isArray(body.actions) ? body.actions : planActions,
+    targetUrl: isBrowserTask ? operatorInputBinding.targetUrl : body.targetUrl ?? task.targetUrl,
+    actions: isBrowserTask
+      ? operatorInputBinding.actions ?? planActions
+      : Array.isArray(body.actions) ? body.actions : planActions,
+    operatorExecutionBinding: operatorInputBinding.binding,
     operator: "loop-v1",
   };
+  if (!operatorInputBinding.ok) {
+    options.operatorExecutionBindingError = operatorInputBinding.reason;
+  }
   if (body.liveProviderExecution?.contextPacket?.requested === true) {
     const materialised = await materialiseCloudLiveProviderContextPacketExecution({
       task,
@@ -1381,7 +1407,33 @@ async function runOperatorStep(body = {}) {
     };
   }
 
-  const executionResult = await executeTaskWithRecovery(task, await buildOperatorOptions(task, body));
+  const operatorOptions = await buildOperatorOptions(task, body);
+  if (operatorOptions.operatorExecutionBindingError) {
+    const reason = operatorOptions.operatorExecutionBindingError;
+    await publishEvent(createEventName("task.blocked"), {
+      task: serialiseTask(task),
+      reason,
+      executor: "operator-loop-v1",
+      operatorExecutionBinding: operatorOptions.operatorExecutionBinding ?? null,
+    });
+    return {
+      ran: false,
+      blocked: true,
+      reason,
+      dryRun: false,
+      task,
+      execution: null,
+      policy: task.policy?.decision ?? null,
+      approval: pendingApproval ? serialiseApproval(pendingApproval) : task.approval ?? null,
+      summary: {
+        ...buildTaskSummary(),
+        operatorExecutionBinding: operatorOptions.operatorExecutionBinding ?? null,
+      },
+      operator: buildOperatorState(),
+    };
+  }
+
+  const executionResult = await executeTaskWithRecovery(task, operatorOptions);
   const finalExecution = executionResult.finalExecution ?? executionResult;
   if (finalExecution.blocked === true) {
     return {
