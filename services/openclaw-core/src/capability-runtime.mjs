@@ -13,6 +13,7 @@ import { createEngineeringPlanTodoCapabilityHandlers } from "./capability-runtim
 import { createEngineeringWorkViewCapabilityHandlers } from "./capability-runtime-work-view.mjs";
 import { createPluginRuntimeRefreshCapabilityHandlers } from "./capability-runtime-plugin-refresh.mjs";
 import { createEngineeringProviderHandoffCapabilityHandlers } from "./capability-runtime-engineering-provider-handoff.mjs";
+import { createAcpxCodexCompatibilityCapabilityHandlers } from "./capability-runtime-acpx-codex.mjs";
 
 export function createCapabilityRuntime(deps) {
   const {
@@ -127,6 +128,9 @@ export function createCapabilityRuntime(deps) {
   });
   const pluginRuntimeRefreshHandlers = createPluginRuntimeRefreshCapabilityHandlers(pluginRuntime);
   const engineeringProviderHandoffHandlers = createEngineeringProviderHandoffCapabilityHandlers(providerRuntime);
+  const acpxCodexCompatibilityHandlers = createAcpxCodexCompatibilityCapabilityHandlers({
+    buildNativeAcpxCodexBridgeCompatibility: pluginReview.buildNativeAcpxCodexBridgeCompatibility,
+  });
 
   function baseCapabilities() {
     return buildBaseCapabilities({
@@ -355,6 +359,10 @@ export function createCapabilityRuntime(deps) {
     if (engineeringProviderHandoff.handled) {
       return engineeringProviderHandoff.result;
     }
+    const acpxCodexCompatibility = acpxCodexCompatibilityHandlers.callBackend(capability, request);
+    if (acpxCodexCompatibility.handled) {
+      return acpxCodexCompatibility.result;
+    }
 
     if (capability.id === "sense.system.vitals") {
       return fetchJson(`${systemSenseUrl}/system/health`);
@@ -573,6 +581,10 @@ export function createCapabilityRuntime(deps) {
     const engineeringProviderHandoffSummary = engineeringProviderHandoffHandlers.summariseResult(capability, result);
     if (engineeringProviderHandoffSummary) {
       return engineeringProviderHandoffSummary;
+    }
+    const acpxCodexCompatibilitySummary = acpxCodexCompatibilityHandlers.summariseResult(capability, result);
+    if (acpxCodexCompatibilitySummary) {
+      return acpxCodexCompatibilitySummary;
     }
 
     if (capability.id === "sense.system.vitals") {
@@ -882,6 +894,13 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: engineeringProviderHandoffValidationError },
+      };
+    }
+    const acpxCodexCompatibilityValidationError = acpxCodexCompatibilityHandlers.validateRequest(capability, request);
+    if (acpxCodexCompatibilityValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: acpxCodexCompatibilityValidationError },
       };
     }
 

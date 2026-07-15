@@ -319,6 +319,22 @@ export function buildBaseCapabilities({
       description: "Assemble bounded redacted local engineering context with protected verification/recovery evidence without provider use or persisted packet content.",
     },
     {
+      id: "sense.openclaw.acpx_codex_bridge.compatibility",
+      name: "Native ACPX/Codex Compatibility Evidence",
+      kind: "sensor",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/plugins/native-adapter/acpx-codex-bridge-compatibility`,
+      intents: [
+        "openclaw.acpx_codex_bridge.compatibility",
+        "acpx_codex_bridge.compatibility",
+        "acpx.codex.compatibility",
+      ],
+      domains: ["body_internal"],
+      risk: "low",
+      governance: "audit_only",
+      description: "Read bounded ACPX/Codex compatibility and session-metadata governance evidence without reading credentials, writing wrappers, spawning processes, or using network access.",
+    },
+    {
       id: "act.openclaw.engineering_context.provider_handoff_task",
       name: "Native Engineering Provider Handoff Task",
       kind: "actuator",

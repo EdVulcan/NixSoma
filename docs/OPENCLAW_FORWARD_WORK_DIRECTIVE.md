@@ -950,6 +950,15 @@ read-only; it does not mutate task state, send another JSON-RPC request, create 
 task or approval, or execute a patch. Keep the LSP loop closed unless a new
 operator need demonstrates that this bounded selection is insufficient.
 
+The existing ACPX/Codex compatibility and session-metadata read model is now
+also available through the common capability runtime as
+`sense.openclaw.acpx_codex_bridge.compatibility`. It reuses the native builder,
+records normal policy/invocation/event evidence, and keeps session metadata
+transient while summaries retain only counts and governance flags. It adds no
+credential access, wrapper mutation, process spawn, provider call, or network
+egress. Live ACPX/Codex execution remains an explicit operator-authorization
+boundary.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

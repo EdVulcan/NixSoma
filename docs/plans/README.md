@@ -56,6 +56,7 @@ OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_OBSERVATION_BRIDGE_PLAN.md
 OPENCLAW_NATIVE_PLUGIN_RUNTIME_REFRESH_EVIDENCE_PLAN.md
 OPENCLAW_NATIVE_PLUGIN_RUNTIME_REFRESH_TASK_PLAN.md
 OPENCLAW_NATIVE_ACPX_CODEX_BRIDGE_COMPATIBILITY_PLAN.md
+OPENCLAW_NATIVE_ACPX_CODEX_CAPABILITY_RUNTIME_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_PLAN_TODO_EVIDENCE_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_LSP_EVIDENCE_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_LSP_LIFECYCLE_READINESS_DRAFT_PLAN.md
@@ -154,9 +155,10 @@ is a sensor and the control entry point reuses only the existing session-manager
 owner routes; neither adds a capture implementation or browser action family.
 Do not grow another evidence/readiness shell. The LSP selected-target chain,
 plugin generation refresh with compact core-state persistence, ACPX
-compatibility/preflight, and local context packet are already completed
-evidence; do not reopen their historical next-step wording. ACPX live process
-execution and provider/model use remain explicit authorization boundaries.
+compatibility/preflight and its common capability-runtime bridge, and local
+context packet are already completed evidence; do not reopen their historical
+next-step wording. ACPX live process execution and provider/model use remain
+explicit authorization boundaries.
 
 The active Level 2 bridge is documented in:
 

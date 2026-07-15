@@ -46,6 +46,7 @@ cleanup() {
     "${WORK_VIEW_CONTROL_FILE:-}" \
     "${CONTEXT_PACKET_FILE:-}" \
     "${PROVIDER_HANDOFF_FILE:-}" \
+    "${ACPX_COMPATIBILITY_FILE:-}" \
     "${CAPABILITIES_FILE:-}" \
     "${PROCESS_FILE:-}" \
     "${BLOCKED_COMMAND_FILE:-}" \
@@ -75,6 +76,7 @@ WORK_VIEW_FILE="$(mktemp)"
 WORK_VIEW_CONTROL_FILE="$(mktemp)"
 CONTEXT_PACKET_FILE="$(mktemp)"
 PROVIDER_HANDOFF_FILE="$(mktemp)"
+ACPX_COMPATIBILITY_FILE="$(mktemp)"
 CAPABILITIES_FILE="$(mktemp)"
 PROCESS_FILE="$(mktemp)"
 BLOCKED_COMMAND_FILE="$(mktemp)"
@@ -96,6 +98,7 @@ post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engin
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.work_view_observation"}' > "$WORK_VIEW_FILE"
 curl --silent --fail "$CORE_URL/capabilities" > "$CAPABILITIES_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.openclaw.engineering_context.provider_handoff_task","approved":true,"params":{"confirm":false}}' > "$PROVIDER_HANDOFF_FILE"
+post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.acpx_codex_bridge.compatibility"}' > "$ACPX_COMPATIBILITY_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.process.list","intent":"process.list","params":{"limit":20}}' > "$PROCESS_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.command.dry_run","intent":"system.command","params":{"command":"rm","args":["-rf","/tmp/openclaw-danger"]}}' > "$BLOCKED_COMMAND_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.command.dry_run","intent":"system.command","approved":true,"params":{"command":"rm","args":["-rf","/tmp/openclaw-danger"]}}' > "$APPROVED_COMMAND_FILE"
@@ -119,6 +122,7 @@ node - <<'EOF' \
   "$WORK_VIEW_CONTROL_FILE" \
   "$CONTEXT_PACKET_FILE" \
   "$PROVIDER_HANDOFF_FILE" \
+  "$ACPX_COMPATIBILITY_FILE" \
   "$CAPABILITIES_FILE" \
   "$FIXTURE_DIR"
 const fs = require("node:fs");
@@ -140,8 +144,9 @@ const workView = readJson(15);
 const workViewControl = readJson(16);
 const contextPacket = readJson(17);
 const providerHandoff = readJson(18);
-const capabilities = readJson(19);
-const fixtureDir = process.argv[20];
+const acpxCompatibility = readJson(19);
+const capabilities = readJson(20);
+const fixtureDir = process.argv[21];
 
 if (!vitals.ok || vitals.invoked !== true || vitals.capability?.id !== "sense.system.vitals" || vitals.policy?.decision !== "audit_only") {
   throw new Error("system vitals capability should be invoked with audit-only governance");
@@ -302,6 +307,21 @@ if (
 ) {
   throw new Error(`provider handoff capability should stop at its explicit confirmation boundary: ${JSON.stringify(providerHandoff)}`);
 }
+if (
+  !acpxCompatibility.ok
+  || acpxCompatibility.invoked !== true
+  || acpxCompatibility.capability?.id !== "sense.openclaw.acpx_codex_bridge.compatibility"
+  || acpxCompatibility.result?.registry !== "openclaw-native-acpx-codex-bridge-compatibility-v0"
+  || acpxCompatibility.summary?.kind !== "acpx_codex_bridge.compatibility"
+  || acpxCompatibility.summary?.storeReady !== true
+  || acpxCompatibility.summary?.noCredentialAccess !== true
+  || acpxCompatibility.summary?.noWrapperMutation !== true
+  || acpxCompatibility.summary?.noProcessSpawn !== true
+  || acpxCompatibility.summary?.noProviderEgress !== true
+  || JSON.stringify(acpxCompatibility.invocation ?? {}).includes("sessionKey")
+) {
+  throw new Error(`ACPX/Codex compatibility capability should use the existing bounded read model without execution authority: ${JSON.stringify(acpxCompatibility)}`);
+}
 if (!processes.ok || processes.invoked !== true || processes.result?.count < 1 || processes.summary?.kind !== "process.list") {
   throw new Error("process list capability should route through core");
 }
@@ -372,6 +392,12 @@ console.log(JSON.stringify({
         blocked: providerHandoff.result.reason,
         createsTask: providerHandoff.summary.createsTask,
         noProviderCall: providerHandoff.summary.noProviderCall,
+      },
+      acpxCodexCompatibility: {
+        records: acpxCompatibility.summary.totalRecords,
+        storeReady: acpxCompatibility.summary.storeReady,
+        noProcessSpawn: acpxCompatibility.summary.noProcessSpawn,
+        noProviderEgress: acpxCompatibility.summary.noProviderEgress,
       },
       policies: [engineeringRead.policy.decision, engineeringGlob.policy.decision, engineeringGrep.policy.decision],
     },
