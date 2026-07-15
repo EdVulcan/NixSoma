@@ -39,6 +39,7 @@ cleanup() {
     "${ENGINEERING_GREP_FILE:-}" \
     "${ENGINEERING_VERIFY_FILE:-}" \
     "${WORK_VIEW_FILE:-}" \
+    "${WORK_VIEW_CONTROL_FILE:-}" \
     "${BLOCKED_FILE:-}" \
     "${APPROVED_FILE:-}" \
     "${EVENTS_FILE:-}"
@@ -63,6 +64,7 @@ ENGINEERING_GLOB_FILE="$(mktemp)"
 ENGINEERING_GREP_FILE="$(mktemp)"
 ENGINEERING_VERIFY_FILE="$(mktemp)"
 WORK_VIEW_FILE="$(mktemp)"
+WORK_VIEW_CONTROL_FILE="$(mktemp)"
 BLOCKED_FILE="$(mktemp)"
 APPROVED_FILE="$(mktemp)"
 EVENTS_FILE="$(mktemp)"
@@ -76,6 +78,7 @@ post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.en
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool.grep\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"query\":\"observerNeedle\",\"include\":\"src/**/*.ts\",\"literal\":true,\"limit\":4}}" > "$ENGINEERING_GREP_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_tool.verify_evidence","params":{"limit":4,"maxOutputChars":500}}' > "$ENGINEERING_VERIFY_FILE"
 post_json "http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/observer-capability-work-view"}' > /dev/null
+post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.work_view.control","operation":"work_view.reveal","params":{"entryUrl":"https://example.com/observer-capability-work-view"}}' > "$WORK_VIEW_CONTROL_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.work_view_observation"}' > "$WORK_VIEW_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.command.dry_run","intent":"system.command","params":{"command":"rm","args":["-rf","/tmp/openclaw-danger"]}}' > "$BLOCKED_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.command.dry_run","intent":"system.command","approved":true,"params":{"command":"rm","args":["-rf","/tmp/openclaw-danger"]}}' > "$APPROVED_FILE"
@@ -93,7 +96,8 @@ node - <<'EOF' \
   "$APPROVED_FILE" \
   "$EVENTS_FILE" \
   "$ENGINEERING_VERIFY_FILE" \
-  "$WORK_VIEW_FILE"
+  "$WORK_VIEW_FILE" \
+  "$WORK_VIEW_CONTROL_FILE"
 const fs = require("node:fs");
 const html = fs.readFileSync(process.argv[2], "utf8");
 const client = fs.readFileSync(process.argv[3], "utf8");
@@ -107,6 +111,7 @@ const approved = JSON.parse(fs.readFileSync(process.argv[10], "utf8"));
 const events = JSON.parse(fs.readFileSync(process.argv[11], "utf8"));
 const engineeringVerify = JSON.parse(fs.readFileSync(process.argv[12], "utf8"));
 const workView = JSON.parse(fs.readFileSync(process.argv[13], "utf8"));
+const workViewControl = JSON.parse(fs.readFileSync(process.argv[14], "utf8"));
 
 for (const token of [
   "invoke-vitals-button",
@@ -174,6 +179,26 @@ if (
 ) {
   throw new Error("Observer trusted work-view observation invoke path should remain compact and read-only");
 }
+if (
+  !workViewControl.ok
+  || workViewControl.invoked !== true
+  || workViewControl.capability?.id !== "act.work_view.control"
+  || workViewControl.result?.registry !== "openclaw-native-work-view-control-v0"
+  || workViewControl.result?.action !== "reveal_work_view"
+  || workViewControl.result?.workView?.visibility !== "visible"
+  || workViewControl.result?.governance?.browserNavigation !== true
+  || workViewControl.result?.governance?.providerEgress !== false
+  || workViewControl.policy?.subject?.intent !== "work_view.reveal"
+  || workViewControl.invocation?.request?.intent !== "work_view.reveal"
+  || workViewControl.summary?.kind !== "work_view.control"
+  || workViewControl.summary?.browserNavigation !== true
+  || workViewControl.summary?.noProviderEgress !== true
+  || workViewControl.summary?.noPayloadExposure !== true
+  || JSON.stringify(workViewControl).includes("observer-capability-work-view")
+  || JSON.stringify(workViewControl).includes("leaseId")
+) {
+  throw new Error("Observer trusted work-view control invoke path should remain allowlisted and compact");
+}
 if (!blocked.ok || blocked.invoked !== false || blocked.blocked !== true || blocked.reason !== "policy_requires_approval") {
   throw new Error("Observer blocked dry-run path should expose policy_requires_approval");
 }
@@ -209,6 +234,11 @@ console.log(JSON.stringify({
         status: workView.summary.status,
         freshness: workView.summary.observationFreshness,
         payloadExposed: !workView.summary.noPayloadExposure,
+      },
+      workViewControl: {
+        action: workViewControl.summary.action,
+        visibility: workViewControl.summary.visibility,
+        payloadExposed: !workViewControl.summary.noPayloadExposure,
       },
     },
     vitalsPolicy: vitals.policy.decision,

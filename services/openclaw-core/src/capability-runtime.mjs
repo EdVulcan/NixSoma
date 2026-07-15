@@ -67,6 +67,7 @@ export function createCapabilityRuntime(deps) {
     tasks: state.tasks ?? new Map(),
     sessionManagerUrl,
     fetchImpl,
+    postJson,
   });
 
   function baseCapabilities() {
@@ -90,6 +91,18 @@ export function createCapabilityRuntime(deps) {
 
   function capabilityByIntent(intent) {
     return baseCapabilities().find((capability) => capability.intents?.includes(intent)) ?? null;
+  }
+
+  function capabilityRequestIntent(capability, request) {
+    if (capability.id === "act.work_view.control") {
+      return request.operation
+        ?? request.intent
+        ?? request.params?.operation
+        ?? request.params?.action
+        ?? capability.intents?.[0]
+        ?? "capability.invoke";
+    }
+    return request.intent ?? capability.intents?.[0] ?? "capability.invoke";
   }
 
   function serviceHealthUrl(service) {
@@ -199,7 +212,7 @@ export function createCapabilityRuntime(deps) {
   }
 
   function buildCapabilityPolicyInput(capability, request) {
-    const intent = request.intent ?? capability.intents?.[0] ?? "capability.invoke";
+    const intent = capabilityRequestIntent(capability, request);
     const preferredDomain = capability.domains?.includes("cross_boundary")
       && !capability.domains?.includes("body_internal")
       ? "cross_boundary"
@@ -618,7 +631,7 @@ export function createCapabilityRuntime(deps) {
       request: {
         taskId: request.taskId ?? null,
         operation: request.operation ?? request.params?.operation ?? null,
-        intent: request.intent ?? capability.intents?.[0] ?? null,
+        intent: capabilityRequestIntent(capability, request),
         approved: request.approved === true,
         command: typeof request.params?.command === "string" ? request.params.command : null,
         cwd: typeof request.params?.cwd === "string" ? request.params.cwd : typeof request.params?.workingDirectory === "string" ? request.params.workingDirectory : null,

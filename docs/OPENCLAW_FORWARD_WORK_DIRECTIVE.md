@@ -293,6 +293,15 @@ not prepare or bind a task, dispatch an action, or transfer page payloads. The
 focused boundary is documented in
 `docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORK_VIEW_OBSERVATION_PLAN.md`.
 
+The existing `act.work_view.control` descriptor now has a matching common
+runtime handoff for explicit `work_view.prepare`, `work_view.reveal`, and
+`work_view.hide` decisions. It maps only to the existing session-manager owner
+routes and returns compact status/readback without session ids, leases, URLs,
+browser payloads, or page content. Prepare/reveal retain the existing browser
+navigation behavior; this is not provider egress and does not create tasks,
+approvals, or automatic recovery. The boundary is documented in
+`docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORK_VIEW_CONTROL_PLAN.md`.
+
 The selected Level 1 consistency closures are complete. Do not reopen the LSP
 symbol chain or add another evidence/readiness shell; choose the next concrete
 identity-upgrade capability only after its Level 2 authority boundary is

@@ -82,7 +82,8 @@ provider egress, credential access, root/system daemon work, and desktop capture
 
 ## Next Smallest Capability
 
-The Level 2 observation entry point is closed. Use its metadata only to improve
-an existing explicit operator decision or governed action handoff. Do not add a
-second capture route or another browser action variant without a demonstrated
-stale-observation operator gap.
+The observation-to-owner handoff is now documented in
+`OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORK_VIEW_CONTROL_PLAN.md`.
+Use that existing allowlisted control only for an explicit operator decision;
+do not add a second capture route, another browser action variant, or automatic
+recovery from observation metadata.

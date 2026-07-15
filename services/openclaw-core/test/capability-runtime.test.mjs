@@ -461,3 +461,152 @@ test("capability runtime rejects conflicting trusted work-view task ids before p
   assert.equal(state.capabilityInvocationLog.length, 0);
   assert.deepEqual(events, []);
 });
+
+test("capability runtime exposes an allowlisted work-view control through the governed invoke path", async () => {
+  const { runtime, state, events, calls } = createHarness({
+    client: {
+      postJson: async (url, body) => {
+        calls.postJson.push({ url, body });
+        return {
+          ok: true,
+          workView: {
+            status: "ready",
+            visibility: "visible",
+            mode: "foreground-observable",
+            helperStatus: "active",
+            browserStatus: "running",
+            activeUrl: "https://private.example.invalid/not-returned",
+            trustedSession: {
+              helperRuntime: { leaseId: "lease-not-returned" },
+              recoveryRecommendation: { action: "none" },
+            },
+          },
+          browser: { activeUrl: "https://private.example.invalid/browser-not-returned" },
+        };
+      },
+    },
+  });
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find((item) => item.id === "act.work_view.control");
+  assert.equal(capability?.governance, "allow");
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.work_view.control",
+    operation: "work_view.reveal",
+    params: { entryUrl: "https://private.example.invalid/request-url" },
+  });
+
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.result.registry, "openclaw-native-work-view-control-v0");
+  assert.equal(result.response.result.action, "reveal_work_view");
+  assert.equal(result.response.result.workView.visibility, "visible");
+  assert.equal(result.response.result.governance.browserNavigation, true);
+  assert.equal(result.response.result.governance.providerEgress, false);
+  assert.equal(result.response.result.governance.exposesActiveUrl, false);
+  assert.equal(result.response.policy.input.intent, "work_view.reveal");
+  assert.equal(result.response.invocation.request.intent, "work_view.reveal");
+  assert.equal(result.response.summary.kind, "work_view.control");
+  assert.equal(result.response.summary.browserNavigation, true);
+  assert.equal(result.response.summary.noProviderEgress, true);
+  assert.equal(result.response.summary.noPayloadExposure, true);
+  assert.deepEqual(calls.postJson, [{
+    url: "http://127.0.0.1:4102/work-view/reveal",
+    body: {
+      operatorActionSource: "capability_runtime_work_view_control",
+      recommendedAction: "reveal_work_view",
+      entryUrl: "https://private.example.invalid/request-url",
+    },
+  }]);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("private.example"), false);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("lease-not-returned"), false);
+  assert.deepEqual(events.map((event) => event.name), ["policy.evaluated", "capability.invoked"]);
+});
+
+test("capability runtime rejects an unallowlisted work-view control before policy or dispatch", async () => {
+  const { runtime, state, events, calls } = createHarness();
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.work_view.control",
+    operation: "browser.open",
+    params: { entryUrl: "https://private.example.invalid/not-used" },
+  });
+
+  assert.equal(result.statusCode, 400);
+  assert.deepEqual(result.response, {
+    ok: false,
+    error: "Trusted work-view control operation is not allowlisted.",
+  });
+  assert.deepEqual(calls.postJson, []);
+  assert.equal(state.capabilityInvocationLog.length, 0);
+  assert.deepEqual(events, []);
+});
+
+test("capability runtime maps each canonical work-view control to its fixed owner route", async () => {
+  const { runtime, calls } = createHarness();
+  const requests = [
+    {
+      operation: "work_view.prepare",
+      params: { displayTarget: "workspace-2", entryUrl: "https://example.com/prepare" },
+    },
+    {
+      operation: "work_view.reveal",
+      params: { entryUrl: "https://example.com/reveal" },
+    },
+    { operation: "work_view.hide", params: {} },
+  ];
+
+  for (const request of requests) {
+    const result = await runtime.invokeCapability({
+      capabilityId: "act.work_view.control",
+      ...request,
+    });
+    assert.equal(result.response.invoked, true);
+  }
+
+  assert.deepEqual(calls.postJson, [
+    {
+      url: "http://127.0.0.1:4102/work-view/prepare",
+      body: {
+        operatorActionSource: "capability_runtime_work_view_control",
+        recommendedAction: "prepare_work_view",
+        displayTarget: "workspace-2",
+        entryUrl: "https://example.com/prepare",
+      },
+    },
+    {
+      url: "http://127.0.0.1:4102/work-view/reveal",
+      body: {
+        operatorActionSource: "capability_runtime_work_view_control",
+        recommendedAction: "reveal_work_view",
+        entryUrl: "https://example.com/reveal",
+      },
+    },
+    {
+      url: "http://127.0.0.1:4102/work-view/hide",
+      body: {
+        operatorActionSource: "capability_runtime_work_view_control",
+        recommendedAction: "hide_work_view",
+      },
+    },
+  ]);
+});
+
+test("capability runtime rejects credential-bearing work-view URLs before dispatch", async () => {
+  const { runtime, state, events, calls } = createHarness();
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.work_view.control",
+    operation: "work_view.reveal",
+    params: { entryUrl: "https://user:password@example.com/private" },
+  });
+
+  assert.equal(result.statusCode, 400);
+  assert.deepEqual(result.response, {
+    ok: false,
+    error: "Trusted work-view control entryUrl must be an HTTP(S) URL without credentials.",
+  });
+  assert.deepEqual(calls.postJson, []);
+  assert.equal(state.capabilityInvocationLog.length, 0);
+  assert.deepEqual(events, []);
+});
