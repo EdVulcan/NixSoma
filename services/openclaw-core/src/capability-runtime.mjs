@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { buildBaseCapabilities } from "./capability-descriptors.mjs";
+import { createEngineeringReadSearchCapabilityHandlers } from "./capability-runtime-engineering-read-search.mjs";
 
 export function createCapabilityRuntime(deps) {
   const {
@@ -49,6 +50,11 @@ export function createCapabilityRuntime(deps) {
     buildOpenClawPluginManifestMap,
     buildOpenClawPluginCapabilityPlan,
   } = pluginReview;
+  const engineeringReadSearchHandlers = createEngineeringReadSearchCapabilityHandlers({
+    buildNativeEngineeringReadFile: pluginReview.buildNativeEngineeringReadFile,
+    buildNativeEngineeringGlob: pluginReview.buildNativeEngineeringGlob,
+    buildNativeEngineeringGrep: pluginReview.buildNativeEngineeringGrep,
+  });
 
   function baseCapabilities() {
     return buildBaseCapabilities({
@@ -221,6 +227,11 @@ export function createCapabilityRuntime(deps) {
   }
 
   async function callCapabilityBackend(capability, request) {
+    const engineeringReadSearch = engineeringReadSearchHandlers.callBackend(capability, request);
+    if (engineeringReadSearch.handled) {
+      return engineeringReadSearch.result;
+    }
+
     if (capability.id === "sense.system.vitals") {
       return fetchJson(`${systemSenseUrl}/system/health`);
     }
@@ -395,6 +406,11 @@ export function createCapabilityRuntime(deps) {
   }
 
   function summariseCapabilityInvocationResult(capability, result) {
+    const engineeringReadSearchSummary = engineeringReadSearchHandlers.summariseResult(capability, result);
+    if (engineeringReadSearchSummary) {
+      return engineeringReadSearchSummary;
+    }
+
     if (capability.id === "sense.system.vitals") {
       return {
         kind: "system.vitals",

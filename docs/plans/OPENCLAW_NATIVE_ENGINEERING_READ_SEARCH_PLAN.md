@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering Read/Search Plan
 
-Updated: 2026-07-09
+Updated: 2026-07-15
 
 ## Active Slice
 
@@ -103,14 +103,26 @@ openclaw-native-engineering-read-search
 observer-openclaw-native-engineering-read-search
 ```
 
-## Next Slice
+## Capability Runtime Follow-up
 
-After this slice, the recommended next real capability is:
+The bounded builders are now also exposed through the common capability
+runtime, documented in:
 
 ```text
-surgical edit proposal with diff preview
+OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_READ_SEARCH_PLAN.md
 ```
 
-That next slice should use read/search evidence to propose exact edits and diff
-previews, but still avoid raw write execution. Actual apply remains approval
-gated through OpenClaw's existing filesystem governance.
+The registry and `POST /capabilities/invoke` route apply the normal local
+policy decision and persist only compact invocation summaries. The dedicated
+native adapter routes and their Observer evidence remain unchanged.
+
+## Route Correction
+
+The historical surgical edit proposal follow-up is complete through the
+existing diff-preview, approval bridge, execution evidence, verification, and
+recovery loop. The capability-runtime follow-up above is also complete; do not
+open another read/search or edit evidence shell from this document.
+
+The next identity-upgrade route is the smallest real Level 2 trusted
+work-view/session-helper behavior, with local workspace scope and explicit
+authority boundaries preserved.

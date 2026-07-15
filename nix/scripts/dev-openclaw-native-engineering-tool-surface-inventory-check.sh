@@ -108,9 +108,9 @@ if (
   || !edit.intendedNativeCapabilityId.includes("edit_proposal")
   || verify.operationClass !== "verification_command_evidence"
   || !verify.deferredExecutionBoundary.includes("no shell or verification command is run")
-  || lsp.operationClass !== "language_intelligence_evidence_and_governed_lifecycle_state"
+  || lsp.operationClass !== "language_intelligence_evidence_governed_lifecycle_state_read_bridge_and_edit_seed"
   || !lsp.intendedNativeCapabilityId.includes("lsp_lifecycle_state")
-  || !lsp.deferredExecutionBoundary.includes("LSP JSON-RPC requests")
+  || !lsp.deferredExecutionBoundary.includes("long-lived process pools")
 ) {
   throw new Error(`tool-specific contract mismatch: ${JSON.stringify({ edit, verify, lsp })}`);
 }

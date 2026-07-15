@@ -7,16 +7,19 @@ Updated: 2026-07-15
 The original read-only inventory and the subsequent Level 1 engineering loop
 are complete through LSP selected-target edit, verification, recovery/rerun,
 plugin refresh, ACPX/Codex boundary evidence, and local context-packet
-assembly. The current frontier is a Level 1 operator execution-consistency
-correction for the existing browser task path; the next identity-upgrade route
-remains the Level 2 trusted work-view/session-helper boundary.
+assembly. The Level 1 operator execution-consistency correction and the
+unified capability-runtime bridge for bounded read/search are now complete; the
+next identity-upgrade route remains the Level 2 trusted work-view/session-helper
+boundary.
 
 The latest completed slices are the compact work-view association, the explicit
 operator-reviewed task bind documented in
 `OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_ASSOCIATION_PLAN.md` and
 `OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_BIND_PLAN.md`, and the execution binding
 documented in
-`OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md`.
+`OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md`. The bounded
+read/search capability-runtime bridge is documented in
+`OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_READ_SEARCH_PLAN.md`.
 
 Do not select historical inventory or LSP variant text below as a new slice.
 
@@ -37,11 +40,11 @@ contracts exist and how OpenClaw intends to govern them. It reports source index
 presence, expected source file presence, contract fields, governance flags, and
 deferred execution boundaries.
 
-It does not:
+The inventory endpoint itself does not:
 
 ```text
 import cc-tools modules
-execute cc_read / cc_glob / cc_grep
+execute the mapped tools
 create edits, patches, writes, tasks, or approvals
 start LSP servers
 run verification commands
@@ -50,15 +53,19 @@ expose source file bodies
 call providers or perform network egress
 ```
 
+The separate native read/search surface executes only bounded native
+`cc_read`/`cc_glob`/`cc_grep` behavior. Its capability-runtime entry point is
+governed by the existing local policy, invocation ledger, and audit event path.
+
 ## Contract Mapping
 
 | Source tool | Native capability id | Operation class | Risk | Approval expectation | Migration status |
 | --- | --- | --- | --- | --- | --- |
-| `cc_read` | `sense.openclaw.engineering_tool.read` | `read_only_file_read` | low | no approval for inventory; future content reads require workspace scope, budget, and audit | contract mapped, execution deferred |
+| `cc_read` | `sense.openclaw.engineering_tool.read` | `read_only_file_read` | low | no approval for bounded content reads; workspace scope, budget, and audit required | absorbed through bounded native route and capability-runtime invoke |
 | `cc_edit` | `act.openclaw.engineering_tool.edit_proposal` / `act.openclaw.engineering_tool.edit_proposal_task` / `sense.openclaw.engineering_tool.edit_execution_evidence` | `mutation_proposal_approval_execution_evidence` | high | approval required before apply | absorbed through governed proposal, approval bridge, thin execution evidence, and closed-loop proof |
 | `cc_write` | `act.openclaw.engineering_tool.write_proposal` / `sense.openclaw.engineering_tool.write_execution_evidence` | `mutation_proposal_and_execution_evidence` | high | approval required before create or overwrite | absorbed through governed proposal, approval bridge, and execution evidence |
-| `cc_glob` | `sense.openclaw.engineering_tool.glob` | `read_only_path_search` | low | no approval for bounded metadata search | contract mapped, execution deferred |
-| `cc_grep` | `sense.openclaw.engineering_tool.grep` | `read_only_content_search` | low | no approval for bounded search; snippets require budget and audit | contract mapped, execution deferred |
+| `cc_glob` | `sense.openclaw.engineering_tool.glob` | `read_only_path_search` | low | no approval for bounded metadata search | absorbed through bounded native route and capability-runtime invoke |
+| `cc_grep` | `sense.openclaw.engineering_tool.grep` | `read_only_content_search` | low | no approval for bounded search; snippets require budget and audit | absorbed through bounded native route and capability-runtime invoke |
 | `cc_lsp` | `sense.openclaw.engineering_tool.lsp_evidence` / `act.openclaw.engineering_tool.lsp_lifecycle_task` / `sense.openclaw.engineering_tool.lsp_lifecycle_state` / `plan.openclaw.engineering_tool.lsp_source_transfer` / `act.openclaw.engineering_tool.lsp_source_transfer_task` / `plan.openclaw.engineering_tool.lsp_symbol_request` / `act.openclaw.engineering_tool.lsp_symbol_request_task` / `sense.openclaw.engineering_tool.lsp_selected_target_read_bridge` / `plan.openclaw.engineering_tool.lsp_selected_target_edit_proposal_seed` | `language_intelligence_evidence_governed_lifecycle_source_transfer_symbol_boundary_read_bridge_edit_seed_approved_edit_verification_recovery_and_rerun_proof` | medium | no approval for evidence/state/proposal/read-bridge/edit-seed/recovery-evidence readback; approval required before lifecycle/source-transfer/symbol execution, edit mutation, verification command execution, or recovery rerun | partially absorbed as evidence, lifecycle draft, approval-gated binary gate, bounded process supervision probe, lifecycle state readback, initialize/shutdown handshake, didOpen source-transfer proposal, approval-gated didOpen task, symbol request proposal, approval-gated single symbol request task, bounded response target selection, selected-target native read bridge, selected-target edit proposal seed, selected-target approved edit closed-loop proof, selected-target verification handoff, selected-target recovery recommendation handoff, and selected-target recovered verification rerun proof |
 | `cc_verify` | `act.openclaw.engineering_tool.verify` | `verification_command_evidence` | medium | command execution requires policy or approval | partially absorbed, command execution deferred |
 | `cc_plan_enter` | `plan.openclaw.engineering_tool.plan_enter` / `act.openclaw.engineering_context.plan_todo_workbench_state` | `planning_state` | low | no hidden mode switch; explicit operator confirmation for core-state workbench storage | absorbed as evidence plus governed workbench storage |
@@ -86,6 +93,9 @@ Core builder:
 
 ```text
 services/openclaw-core/src/native-engineering-tool-surface-builders.mjs
+services/openclaw-core/src/capability-descriptors.mjs
+services/openclaw-core/src/capability-runtime.mjs
+services/openclaw-core/src/capability-runtime-engineering-read-search.mjs
 ```
 
 Core route:
@@ -108,8 +118,11 @@ Validation targets:
 
 ```text
 services/openclaw-core/test/native-engineering-tool-surface-builders.test.mjs
+services/openclaw-core/test/capability-runtime.test.mjs
 openclaw-native-engineering-tool-surface-inventory
 observer-openclaw-native-engineering-tool-surface-inventory
+capability-invoke
+observer-capability-invoke
 ```
 
 ## Deferred Execution
@@ -143,12 +156,22 @@ automatic provider-request creation, automatic task/approval/execution from a
 recommendation, persisted transcript rewriting, and result-envelope creation
 remain deferred
 unapproved provider calls and network egress
-browser task execution without a persisted rule-v1 binding
 ```
 
 ## Next Slice
 
-The current operator execution-consistency follow-up is documented as:
+The bounded read/search capability-runtime follow-up was completed as:
+
+```text
+OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_READ_SEARCH_PLAN.md
+```
+
+The existing native builders are now available through the common capability
+registry and `/capabilities/invoke` path, with the same bounded workspace,
+output, and binary policies plus compact invocation/event evidence. This does
+not add a task or approval path.
+
+The operator execution-consistency follow-up was completed as:
 
 ```text
 OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md
@@ -159,9 +182,10 @@ each rule-v1 browser task to its target, action count/order/kind, and
 non-input parameters. `keyboard.type` and `browser.semantic_type` may receive
 only a bounded transient text value at execution; that value is excluded from
 the hash and persisted evidence. An absent or stale binding fails closed before
-work-view preparation or screen-act. This is the last Level 1 consistency gap
-selected from the current route; do not add another browser action variant or
-provider wrapper after it.
+work-view preparation or screen-act. Together with the read/search bridge, this
+closes the selected Level 1 consistency gaps; do not add another browser action
+variant or provider wrapper. Continue with the smallest concrete capability at
+the next identity level when its authority boundary is explicit.
 
 The recovery action draft follow-up was completed as:
 

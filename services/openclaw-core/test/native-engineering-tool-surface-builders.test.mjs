@@ -104,8 +104,15 @@ test("native engineering tool surface maps cc-tools contracts without execution"
   assert.equal(readContract.intendedNativeCapabilityId, "sense.openclaw.engineering_tool.read");
   assert.equal(readContract.operationClass, "read_only_file_read");
   assert.equal(readContract.riskLevel, "low");
+  assert.equal(readContract.migrationStatus, "absorbed_bounded_route_and_capability_runtime");
+  assert.match(readContract.deferredExecutionBoundary, /bounded native read/u);
   assert.equal(readContract.sourceEvidence.indexMentioned, true);
   assert.equal(readContract.sourceEvidence.sourceFilesPresent, 1);
+
+  const globContract = inventory.tools.find((tool) => tool.sourceToolName === "cc_glob");
+  const grepContract = inventory.tools.find((tool) => tool.sourceToolName === "cc_grep");
+  assert.equal(globContract.migrationStatus, "absorbed_bounded_route_and_capability_runtime");
+  assert.equal(grepContract.migrationStatus, "absorbed_bounded_route_and_capability_runtime");
 
   const editContract = inventory.tools.find((tool) => tool.sourceToolName === "cc_edit");
   assert.equal(editContract.operationClass, "mutation_proposal");

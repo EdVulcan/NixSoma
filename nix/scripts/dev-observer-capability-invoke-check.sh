@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+FIXTURE_DIR="$REPO_ROOT/.artifacts/observer-capability-invoke-fixture"
 
 export OPENCLAW_CORE_PORT="${OPENCLAW_CORE_PORT:-7000}"
 export OPENCLAW_EVENT_HUB_PORT="${OPENCLAW_EVENT_HUB_PORT:-7001}"
@@ -15,6 +16,7 @@ export OPENCLAW_SYSTEM_HEAL_PORT="${OPENCLAW_SYSTEM_HEAL_PORT:-7007}"
 export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-7070}"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-observer-capability-invoke-check.json}"
 export OPENCLAW_EVENT_LOG_FILE="${OPENCLAW_EVENT_LOG_FILE:-$REPO_ROOT/.artifacts/openclaw-observer-capability-invoke-check-events.jsonl}"
+export OPENCLAW_WORKSPACE_ROOTS="$FIXTURE_DIR"
 
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 EVENT_HUB_URL="http://127.0.0.1:$OPENCLAW_EVENT_HUB_PORT"
@@ -22,6 +24,9 @@ OBSERVER_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_EVENT_LOG_FILE"
+rm -rf "$FIXTURE_DIR"
+mkdir -p "$FIXTURE_DIR/src" "$FIXTURE_DIR/.openclaw"
+printf 'export const observerNeedle = "observer capability invoke";\n' > "$FIXTURE_DIR/src/app.ts"
 
 cleanup() {
   rm -f \
@@ -29,10 +34,14 @@ cleanup() {
     "${CLIENT_FILE:-}" \
     "${VITALS_FILE:-}" \
     "${PROCESS_FILE:-}" \
+    "${ENGINEERING_READ_FILE:-}" \
+    "${ENGINEERING_GLOB_FILE:-}" \
+    "${ENGINEERING_GREP_FILE:-}" \
     "${BLOCKED_FILE:-}" \
     "${APPROVED_FILE:-}" \
     "${EVENTS_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
+  rm -rf "$FIXTURE_DIR"
 }
 trap cleanup EXIT
 
@@ -47,6 +56,9 @@ HTML_FILE="$(mktemp)"
 CLIENT_FILE="$(mktemp)"
 VITALS_FILE="$(mktemp)"
 PROCESS_FILE="$(mktemp)"
+ENGINEERING_READ_FILE="$(mktemp)"
+ENGINEERING_GLOB_FILE="$(mktemp)"
+ENGINEERING_GREP_FILE="$(mktemp)"
 BLOCKED_FILE="$(mktemp)"
 APPROVED_FILE="$(mktemp)"
 EVENTS_FILE="$(mktemp)"
@@ -55,6 +67,9 @@ curl --silent --fail "$OBSERVER_URL/" > "$HTML_FILE"
 curl --silent --fail "$OBSERVER_URL/client-v5.js" > "$CLIENT_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.system.vitals","intent":"system.observe"}' > "$VITALS_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.process.list","intent":"process.list","params":{"limit":10}}' > "$PROCESS_FILE"
+post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool.read\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"src/app.ts\",\"startLine\":1,\"endLine\":1}}" > "$ENGINEERING_READ_FILE"
+post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool.glob\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"pattern\":\"src/**/*.ts\",\"limit\":4}}" > "$ENGINEERING_GLOB_FILE"
+post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool.grep\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"query\":\"observerNeedle\",\"include\":\"src/**/*.ts\",\"literal\":true,\"limit\":4}}" > "$ENGINEERING_GREP_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.command.dry_run","intent":"system.command","params":{"command":"rm","args":["-rf","/tmp/openclaw-danger"]}}' > "$BLOCKED_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.command.dry_run","intent":"system.command","approved":true,"params":{"command":"rm","args":["-rf","/tmp/openclaw-danger"]}}' > "$APPROVED_FILE"
 curl --silent --fail "$EVENT_HUB_URL/events/audit?source=openclaw-core&limit=80" > "$EVENTS_FILE"
@@ -64,6 +79,9 @@ node - <<'EOF' \
   "$CLIENT_FILE" \
   "$VITALS_FILE" \
   "$PROCESS_FILE" \
+  "$ENGINEERING_READ_FILE" \
+  "$ENGINEERING_GLOB_FILE" \
+  "$ENGINEERING_GREP_FILE" \
   "$BLOCKED_FILE" \
   "$APPROVED_FILE" \
   "$EVENTS_FILE"
@@ -72,9 +90,12 @@ const html = fs.readFileSync(process.argv[2], "utf8");
 const client = fs.readFileSync(process.argv[3], "utf8");
 const vitals = JSON.parse(fs.readFileSync(process.argv[4], "utf8"));
 const processes = JSON.parse(fs.readFileSync(process.argv[5], "utf8"));
-const blocked = JSON.parse(fs.readFileSync(process.argv[6], "utf8"));
-const approved = JSON.parse(fs.readFileSync(process.argv[7], "utf8"));
-const events = JSON.parse(fs.readFileSync(process.argv[8], "utf8"));
+const engineeringRead = JSON.parse(fs.readFileSync(process.argv[6], "utf8"));
+const engineeringGlob = JSON.parse(fs.readFileSync(process.argv[7], "utf8"));
+const engineeringGrep = JSON.parse(fs.readFileSync(process.argv[8], "utf8"));
+const blocked = JSON.parse(fs.readFileSync(process.argv[9], "utf8"));
+const approved = JSON.parse(fs.readFileSync(process.argv[10], "utf8"));
+const events = JSON.parse(fs.readFileSync(process.argv[11], "utf8"));
 
 for (const token of [
   "invoke-vitals-button",
@@ -106,6 +127,18 @@ if (!vitals.ok || vitals.invoked !== true || vitals.policy?.decision !== "audit_
 if (!processes.ok || processes.invoked !== true || processes.result?.count < 1) {
   throw new Error("Observer process invoke path should return process summaries");
 }
+if (
+  !engineeringRead.ok
+  || engineeringRead.invoked !== true
+  || engineeringRead.summary?.kind !== "engineering.read"
+  || engineeringRead.result?.content?.includes("observerNeedle") !== true
+  || engineeringGlob.summary?.kind !== "engineering.glob"
+  || engineeringGlob.result?.summary?.matchedResults !== 1
+  || engineeringGrep.summary?.kind !== "engineering.grep"
+  || engineeringGrep.result?.summary?.matchedResults !== 1
+) {
+  throw new Error("Observer engineering read/search invoke path should return bounded results");
+}
 if (!blocked.ok || blocked.invoked !== false || blocked.blocked !== true || blocked.reason !== "policy_requires_approval") {
   throw new Error("Observer blocked dry-run path should expose policy_requires_approval");
 }
@@ -132,6 +165,11 @@ console.log(JSON.stringify({
       "/capabilities/invoke",
       "renderCapabilityInvocation",
     ],
+    engineeringReadSearch: {
+      read: engineeringRead.summary.kind,
+      globMatches: engineeringGlob.result.summary.matchedResults,
+      grepMatches: engineeringGrep.result.summary.matchedResults,
+    },
     vitalsPolicy: vitals.policy.decision,
     processCount: processes.result.count,
     blockedReason: blocked.reason,

@@ -265,6 +265,21 @@ existing execution path, not a new provider lane or another browser-action
 variant. After this proof, return to the smallest real Level 2
 work-view/session-helper capability.
 
+The bounded native engineering read/search surface is also available through
+the common `/capabilities/invoke` runtime. The capability registry now exposes
+`sense.openclaw.engineering_tool.read`, `.glob`, and `.grep`; each dispatches to
+the existing workspace-constrained native builder and records the normal policy,
+invocation, and audit events. File bodies and search snippets remain transient
+response data and are absent from persisted capability history. This bridge is
+documented in
+`docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_READ_SEARCH_PLAN.md`.
+It adds no task, approval, write, command, LSP, provider, or network authority.
+
+The selected Level 1 consistency closures are complete. Do not reopen the LSP
+symbol chain or add another evidence/readiness shell; choose the next concrete
+identity-upgrade capability only after its Level 2 authority boundary is
+explicit.
+
 The next autonomous product route is the smallest real Level 2 trusted AI
 work-view/session-helper behavior. Keep helper installation, root/system daemon
 work, desktop-wide capture, unapproved provider egress, and arbitrary endpoint

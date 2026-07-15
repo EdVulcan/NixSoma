@@ -40,6 +40,7 @@ OPENCLAW_NATIVE_ENGINEERING_MICROCOMPACT_PROJECTION_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PACKET_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PROVIDER_SOURCE_TASK_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md
+OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_READ_SEARCH_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PLAN_TODO_BRIDGE_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_ASSOCIATION_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_BIND_PLAN.md
@@ -97,7 +98,7 @@ phase." The corrected route is:
 preserve enhanced openclaw source on GitHub
 -> perform enhanced source gap audit
 -> migrate governed engineering tool capabilities into OpenClawOnNixOS
--> close the current Level 1 operator execution-consistency boundary
+-> close the Level 1 operator execution-consistency and capability-runtime boundaries
 -> return to identity-upgrade work-view/session-helper/hostd route
 ```
 
@@ -109,19 +110,21 @@ OPENCLAW_NATIVE_ENGINEERING_PLAN_TODO_WORKBENCH_STORAGE_PLAN.md
 ```
 
 That lane now preserves compact persisted-workbench provenance through existing
-edit/write/verification task readback. The current Level 1 operator execution
-consistency follow-up is documented in:
+edit/write/verification task readback. The Level 1 operator execution
+consistency follow-up is complete, and the bounded native read/search bridge
+through the common capability runtime is documented in:
 
 ```text
 OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md
+OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_READ_SEARCH_PLAN.md
 ```
 
-It binds the existing rule-v1 browser task target and action shape to the
-operator execution path, rejects a changed target or non-input action before
-screen-act, and keeps transient input text out of the binding. This is a
-correction to an existing execution path, not a new browser/provider lane. Once
-validated, the Level 1 engineering loop should not grow another
-evidence/readiness shell; continue with the smallest real Level 2
+The browser binding keeps the existing rule-v1 task target and action shape
+linked to operator execution, while the read/search bridge exposes
+`cc_read`/`cc_glob`/`cc_grep` through `/capabilities/invoke` with the existing
+policy, invocation ledger, and event evidence. Both are concrete Level 1
+closures, not new browser/provider lanes. The Level 1 engineering loop should
+not grow another evidence/readiness shell; continue with the smallest real Level 2
 trusted work-view/session-helper capability. The LSP selected-target chain,
 plugin generation refresh with compact core-state persistence, ACPX
 compatibility/preflight, and local context packet are already completed

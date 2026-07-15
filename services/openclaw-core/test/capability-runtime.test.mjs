@@ -181,3 +181,106 @@ test("capability runtime invokes filesystem reads and trims invocation history",
   assert.equal(calls.fetchJson[0], "http://127.0.0.1:4106/system/files/search?path=%2Ftmp&query=a&limit=5");
   assert.equal(events.filter((event) => event.name === "capability.invoked").length, 4);
 });
+
+test("capability runtime exposes bounded engineering read/search through the governed invoke path", async () => {
+  const builderInputs = {};
+  const { runtime, state, events } = createHarness({
+    pluginReview: {
+      buildNativeEngineeringReadFile: (input) => {
+        builderInputs.read = input;
+        return {
+          ok: true,
+          registry: "openclaw-native-engineering-read-search-v0",
+          operation: "read",
+          target: { relativePath: "src/app.ts", contentExposed: true },
+          summary: { lineCount: 2, charsReturned: 21, outputTruncated: false },
+          content: "source body must stay out of the ledger",
+        };
+      },
+      buildNativeEngineeringGlob: (input) => {
+        builderInputs.glob = input;
+        return {
+          ok: true,
+          registry: "openclaw-native-engineering-read-search-v0",
+          operation: "glob",
+          query: { pattern: "src/**/*.ts", limit: 4 },
+          summary: { pattern: "src/**/*.ts", matchedResults: 2, resultsTruncated: false, filesConsidered: 7, contentRead: false },
+        };
+      },
+      buildNativeEngineeringGrep: (input) => {
+        builderInputs.grep = input;
+        return {
+          ok: true,
+          registry: "openclaw-native-engineering-read-search-v0",
+          operation: "grep",
+          query: { text: "OpenClaw", include: "src/**/*.ts" },
+          summary: { query: "OpenClaw", include: "src/**/*.ts", matchedResults: 1, outputChars: 18, resultsTruncated: false, filesRead: 3 },
+        };
+      },
+    },
+  });
+
+  const registry = await runtime.buildCapabilityRegistry();
+  for (const capabilityId of [
+    "sense.openclaw.engineering_tool.read",
+    "sense.openclaw.engineering_tool.glob",
+    "sense.openclaw.engineering_tool.grep",
+  ]) {
+    const capability = registry.capabilities.find((item) => item.id === capabilityId);
+    assert.equal(capability?.governance, "audit_only");
+    assert.equal(capability?.requiresApproval, undefined);
+    assert.equal(capability?.available, true);
+  }
+
+  const read = await runtime.invokeCapability({
+    capabilityId: "sense.openclaw.engineering_tool.read",
+    params: {
+      workspacePath: "/tmp/workspace",
+      path: "src/app.ts",
+      start_line: 2,
+      endLine: 3,
+      maxOutputChars: 500,
+    },
+  });
+  const glob = await runtime.invokeCapability({
+    capabilityId: "sense.openclaw.engineering_tool.glob",
+    params: { workspacePath: "/tmp/workspace", pattern: "src/**/*.ts", limit: 4 },
+  });
+  const grep = await runtime.invokeCapability({
+    capabilityId: "sense.openclaw.engineering_tool.grep",
+    params: {
+      workspacePath: "/tmp/workspace",
+      q: "OpenClaw",
+      include: "src/**/*.ts",
+      case_sensitive: true,
+      limit: 2,
+    },
+  });
+
+  assert.equal(read.response.invoked, true);
+  assert.equal(read.response.summary.kind, "engineering.read");
+  assert.equal(read.response.summary.contentExposed, true);
+  assert.equal(glob.response.summary.matchedResults, 2);
+  assert.equal(grep.response.summary.filesRead, 3);
+  assert.deepEqual(builderInputs.read, {
+    workspacePath: "/tmp/workspace",
+    relativePath: "src/app.ts",
+    startLine: 2,
+    endLine: 3,
+    maxOutputChars: 500,
+    maxFileSizeBytes: undefined,
+  });
+  assert.deepEqual(builderInputs.grep, {
+    workspacePath: "/tmp/workspace",
+    query: "OpenClaw",
+    literal: undefined,
+    caseSensitive: true,
+    include: "src/**/*.ts",
+    limit: 2,
+    maxOutputChars: undefined,
+    maxFileSizeBytes: undefined,
+  });
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("source body"), false);
+  assert.equal(state.capabilityInvocationLog.length, 3);
+  assert.equal(events.filter((event) => event.name === "capability.invoked").length, 3);
+});
