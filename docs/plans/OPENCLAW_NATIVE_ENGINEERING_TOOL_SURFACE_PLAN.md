@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering Tool Surface Plan
 
-Updated: 2026-07-14
+Updated: 2026-07-15
 
 ## Current Frontier
 
@@ -491,7 +491,7 @@ deferred.
 
 ## Current Route Correction
 
-Updated: 2026-07-14
+Updated: 2026-07-15
 
 The historical LSP next-step text above is evidence history, not an instruction
 to reopen completed variants. The current native engineering frontier includes
@@ -562,6 +562,14 @@ The packet also explicitly reuses the existing plan/todo workbench evidence
 through `OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PLAN_TODO_BRIDGE_PLAN.md`. The
 protected context includes only bounded plan/workbench state and the existing
 guidance-only next action; it does not create or execute a plan transition.
+
+The explicit provider/source-task handoff now has a matching local operator
+surface. Observer can select a separate existing source task for the local
+Engineering Context Packet, show the effective source in readback, and send
+the execution and source ids independently. Core rejects an unknown explicit
+source before reading evidence and applies the source id consistently across
+transcript, verification, recovery, work-view, and plan/todo builders. This
+does not change the provider approval owner or add automatic source inference.
 
 The bound-task context workflow now also exposes the concrete trusted-session
 recovery recommendation in the existing Observer packet panel. When the

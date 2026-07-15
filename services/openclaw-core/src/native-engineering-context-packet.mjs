@@ -124,6 +124,7 @@ export function buildNativeEngineeringContextPacket({
   verificationEvidence = null,
   recoveryEvidence = null,
   taskId = null,
+  sourceTaskId = null,
   limit = DEFAULT_LIMIT,
   maxOutputChars = DEFAULT_MAX_OUTPUT_CHARS,
   thresholdChars,
@@ -133,8 +134,9 @@ export function buildNativeEngineeringContextPacket({
 } = {}) {
   const safeLimit = boundedPositiveInteger(limit, DEFAULT_LIMIT, MAX_LIMIT);
   const safeMaxOutputChars = boundedPositiveInteger(maxOutputChars, DEFAULT_MAX_OUTPUT_CHARS, MAX_OUTPUT_CHARS);
+  const selectedSourceTaskId = sourceTaskId ?? taskId;
   const selectedRecords = transcriptRecords
-    .filter((record) => !taskId || record.taskId === taskId)
+    .filter((record) => !selectedSourceTaskId || record.taskId === selectedSourceTaskId)
     .slice(0, safeLimit)
     .reverse();
   const sourceMessages = [];
@@ -178,6 +180,7 @@ export function buildNativeEngineeringContextPacket({
     messages: projection.messages,
     summary: {
       sourceTranscriptRecords: selectedRecords.length,
+      sourceTaskId: selectedSourceTaskId,
       messageCount: projection.messages.length,
       redactions,
       truncatedOutputs,
@@ -207,6 +210,7 @@ export function buildNativeEngineeringContextPacket({
       verificationRegistry: verificationEvidence?.registry ?? null,
       recoveryRegistry: recoveryEvidence?.registry ?? null,
       taskId,
+      sourceTaskId: selectedSourceTaskId,
       workViewAssociationRegistry: workViewAssociation?.registry ?? null,
     },
     governance: {
@@ -231,6 +235,7 @@ export function buildNativeEngineeringContextPacket({
       outputContentRecorded: false,
       summary: {
         sourceTranscriptRecords: selectedRecords.length,
+        sourceTaskId: selectedSourceTaskId,
         messageCount: projection.messages.length,
         redactions,
         compactedMessages: projection.summary.compactedMessages,

@@ -60,6 +60,26 @@ test("engineering context packet filters one task and bounds output", () => {
   assert.equal(packet.provenance.taskId, "selected");
 });
 
+test("engineering context packet keeps the execution task separate from an explicit source task", () => {
+  const packet = buildNativeEngineeringContextPacket({
+    transcriptRecords: [
+      { taskId: "source-task", stdout: "source-evidence", stderr: "", command: "npm" },
+      { taskId: "execution-task", stdout: "execution-evidence", stderr: "", command: "npm" },
+    ],
+    taskId: "execution-task",
+    sourceTaskId: "source-task",
+    thresholdChars: 10_000,
+    protectRecentAssistantTurns: 0,
+  });
+
+  assert.equal(packet.summary.sourceTranscriptRecords, 1);
+  assert.equal(packet.summary.sourceTaskId, "source-task");
+  assert.equal(packet.provenance.taskId, "execution-task");
+  assert.equal(packet.provenance.sourceTaskId, "source-task");
+  assert.equal(JSON.stringify(packet).includes("source-evidence"), true);
+  assert.equal(JSON.stringify(packet).includes("execution-evidence"), false);
+});
+
 test("engineering context packet carries compact trusted work-view association without lease or URL data", () => {
   const workViewAssociation = {
     ok: true,

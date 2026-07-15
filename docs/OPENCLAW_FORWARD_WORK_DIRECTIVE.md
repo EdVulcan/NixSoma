@@ -1,6 +1,6 @@
 # OpenClaw Forward Work Directive
 
-Updated: 2026-07-14
+Updated: 2026-07-15
 
 This is the active guidance document for continuing OpenClaw development after
 the Phase 136 checkpoint and the discovery that the locally optimized
@@ -761,6 +761,16 @@ a demonstrated operator decision before adding another Level 2 action.
 The packet can likewise request the existing bounded plan/todo workbench
 summary and guidance-only next action; that context remains read-only and does
 not create or execute a task.
+
+The concrete cross-task context gap is now closed locally as well. The
+Engineering Context Packet route accepts an optional `sourceTaskId` separate
+from the packet caller's `taskId`, requires that source task to exist, and
+uses it for transcript, verification, recovery, work-view, and plan/todo
+evidence. Observer exposes the source-task input, effective source readback,
+and an explicit Task Detail shortcut. The source remains read-only and packet
+assembly still performs no task mutation, approval, command execution,
+provider call, credential read, or network egress. Do not infer sources
+automatically or reopen the provider handoff lane for this UI improvement.
 
 The LSP selected-target route now also closes its concrete Observer ergonomics
 gap. Completed symbol responses can expose up to eight bounded URI/range target

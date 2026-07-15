@@ -11,8 +11,11 @@ const engineeringContextPacketCapture = document.querySelector("#engineering-con
 const engineeringContextPacketTargets = document.querySelector("#engineering-context-packet-targets");
 const engineeringContextPacketPlanTodo = document.querySelector("#engineering-context-packet-plan-todo");
 const engineeringContextPacketRecovery = document.querySelector("#engineering-context-packet-recovery");
+const engineeringContextPacketSourceTask = document.querySelector("#engineering-context-packet-source-task");
+const engineeringContextPacketSourceTaskIdInput = document.querySelector("#engineering-context-packet-source-task-id-input");
 const engineeringContextPacketBuildButton = document.querySelector("#engineering-context-packet-build-button");
 const engineeringContextPacketBindWorkViewButton = document.querySelector("#engineering-context-packet-bind-work-view-button");
 const engineeringContextPacketRecoveryButton = document.querySelector("#engineering-context-packet-recovery-button");
+const engineeringContextPacketUseTaskDetailButton = document.querySelector("#engineering-context-packet-use-task-detail-button");
 const engineeringContextPacketJson = document.querySelector("#engineering-context-packet-json");
 `;

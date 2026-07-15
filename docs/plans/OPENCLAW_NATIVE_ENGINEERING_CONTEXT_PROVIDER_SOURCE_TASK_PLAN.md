@@ -45,6 +45,14 @@ When `sourceTaskId` is absent, the existing same-task behavior remains the
 default. A missing source task fails closed. The source task is read-only in
 this path; it is not rebound, resumed, mutated, or automatically executed.
 
+The existing local Engineering Context Packet route now exposes the same
+selection boundary for operator use. Observer provides a separate source-task
+input, shows the effective source task in packet readback, and offers an
+explicit `Use Task Detail ID` shortcut. It sends `taskId` and `sourceTaskId`
+separately; work-view binding continues to use only the Task Detail ID, and
+building the packet still performs no task, approval, command, provider, or
+network mutation.
+
 ## Governance
 
 ```text
@@ -84,6 +92,12 @@ separate source task, preserves both ids, includes the source transcript, and
 rejects an unknown source. Existing live execution tests prove only compact
 source/egress provenance is retained.
 
+The local packet route and Observer tests additionally prove independent
+execution/source ids, source-only transcript selection, unknown-source
+fail-closed behavior, source readback, and the explicit shortcut. The existing
+packet core/Observer batch check exercises the same route against real local
+services.
+
 ## Deferred
 
 ```text
@@ -97,6 +111,7 @@ ACPX/Codex live process execution and long-lived LSP pools
 
 ## Next Smallest Capability
 
-Keep source selection explicit. Only add an Observer source-task picker if a
-concrete operator workflow demonstrates that manually supplying the existing
-task id is the remaining usability gap.
+Keep source selection explicit and bounded. Do not add automatic source-task
+inference, source-task mutation, or provider-task creation. Continue on the
+selected Level 2 trusted work-view/session-helper route only after its runtime
+owner and authority boundary are explicit.

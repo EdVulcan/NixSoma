@@ -8,11 +8,16 @@ export const observerClientEngineeringContextRefreshersScript = `async function 
     const taskId = typeof taskDetailIdInput?.value === "string" && taskDetailIdInput.value.trim()
       ? taskDetailIdInput.value.trim()
       : null;
+    const sourceTaskId = typeof engineeringContextPacketSourceTaskIdInput?.value === "string"
+      && engineeringContextPacketSourceTaskIdInput.value.trim()
+      ? engineeringContextPacketSourceTaskIdInput.value.trim()
+      : null;
     const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-context/packet\`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         taskId,
+        sourceTaskId,
         limit: 8,
         maxOutputChars: 2000,
         thresholdChars: 2000,
@@ -31,6 +36,19 @@ export const observerClientEngineeringContextRefreshersScript = `async function 
   } finally {
     engineeringContextPacketBuildButton.disabled = false;
   }
+}
+
+function useEngineeringContextTaskDetailAsSource() {
+  const taskId = typeof taskDetailIdInput?.value === "string" && taskDetailIdInput.value.trim()
+    ? taskDetailIdInput.value.trim()
+    : null;
+  if (!taskId) {
+    setControlMessage("Select a task detail before using it as the context packet source.");
+    return;
+  }
+
+  engineeringContextPacketSourceTaskIdInput.value = taskId;
+  setControlMessage(\`Using task detail \${taskId} as the read-only context packet source.\`);
 }
 
 async function bindEngineeringContextTaskToWorkView() {
@@ -83,6 +101,10 @@ async function prepareEngineeringContextWorkView() {
 
 engineeringContextPacketBuildButton?.addEventListener("click", () => {
   void refreshEngineeringContextPacket();
+});
+
+engineeringContextPacketUseTaskDetailButton?.addEventListener("click", () => {
+  useEngineeringContextTaskDetailAsSource();
 });
 
 engineeringContextPacketBindWorkViewButton?.addEventListener("click", () => {

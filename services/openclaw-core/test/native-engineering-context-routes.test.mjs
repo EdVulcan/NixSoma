@@ -191,3 +191,73 @@ test("engineering context packet route reads the existing session-manager owner 
   assert.equal(response.body.governance.readsTrustedWorkViewState, true);
   assert.equal(JSON.stringify(response.body).includes("leaseId"), false);
 });
+
+test("engineering context packet route uses an explicit source task without changing the execution task", async () => {
+  const sourceTask = {
+    id: "task-context-source",
+    type: "system_task",
+    status: "completed",
+    goal: "Source bounded engineering evidence",
+    plan: { steps: [{ id: "source-step", title: "Review source evidence", status: "done" }] },
+  };
+  const executionTask = {
+    id: "task-context-execution",
+    type: "cloud_provider_task",
+    status: "queued",
+    goal: "Own the later explicit provider handoff",
+    plan: { steps: [{ id: "execution-step", title: "Await operator review", status: "pending" }] },
+  };
+  const response = await invoke({
+    path: "/plugins/native-adapter/engineering-context/packet",
+    body: {
+      taskId: executionTask.id,
+      sourceTaskId: sourceTask.id,
+      includeWorkView: true,
+      includePlanTodo: true,
+      thresholdChars: 10_000,
+      protectRecentAssistantTurns: 0,
+    },
+    state: {
+      tasks: new Map([[sourceTask.id, sourceTask], [executionTask.id, executionTask]]),
+      runtimeState: { currentTaskId: executionTask.id },
+      nativeEngineeringPlanTodoWorkbenchRecords: new Map(),
+    },
+    executor: {
+      listCommandTranscriptRecords: () => [
+        { taskId: executionTask.id, command: "npm", stdout: "execution-output", stderr: "" },
+        { taskId: sourceTask.id, command: "npm", stdout: "source-output", stderr: "" },
+      ],
+    },
+    readWorkViewState: async () => ({ ok: false, data: null }),
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.provenance.taskId, executionTask.id);
+  assert.equal(response.body.provenance.sourceTaskId, sourceTask.id);
+  assert.equal(response.body.summary.sourceTaskId, sourceTask.id);
+  assert.equal(response.body.summary.sourceTranscriptRecords, 1);
+  assert.equal(response.body.workViewAssociation.summary.taskId, sourceTask.id);
+  assert.equal(response.body.messages.some((message) => JSON.stringify(message).includes(sourceTask.id)), true);
+  assert.equal(JSON.stringify(response.body).includes("execution-output"), false);
+  assert.equal(response.body.messages.some((message) => message.evidenceKind === "engineering_plan_todo_evidence"), true);
+  assert.equal(response.body.messages.some((message) => JSON.stringify(message).includes("execution-step")), false);
+});
+
+test("engineering context packet route rejects an unknown explicit source task before reading evidence", async () => {
+  let transcriptRead = false;
+  const response = await invoke({
+    path: "/plugins/native-adapter/engineering-context/packet",
+    body: { taskId: "task-context-execution", sourceTaskId: "task-context-missing" },
+    state: { tasks: new Map([["task-context-execution", { id: "task-context-execution" }]]) },
+    executor: {
+      listCommandTranscriptRecords: () => {
+        transcriptRead = true;
+        return [];
+      },
+    },
+  });
+
+  assert.equal(response.statusCode, 400);
+  assert.match(response.body.error, /source task does not exist/u);
+  assert.equal(transcriptRead, false);
+});

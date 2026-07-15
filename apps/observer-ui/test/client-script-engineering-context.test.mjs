@@ -26,6 +26,7 @@ function rendererContext() {
     engineeringContextPacketRecords: element(),
     engineeringContextPacketMessages: element(),
     engineeringContextPacketRedactions: element(),
+    engineeringContextPacketSourceTask: element(),
     engineeringContextPacketProvider: element(),
     engineeringContextPacketAudit: element(),
     engineeringContextPacketWorkView: element(),
@@ -49,6 +50,9 @@ test("Observer exposes only the allowlisted trusted work-view recovery actions",
     "engineering-context-packet-capture",
     "engineering-context-packet-targets",
     "engineering-context-packet-plan-todo",
+    "engineering-context-packet-source-task",
+    "engineering-context-packet-source-task-id-input",
+    "engineering-context-packet-use-task-detail-button",
   ]) {
     assert.equal(panel.includes(token), true, `panel is missing ${token}`);
   }
@@ -61,6 +65,7 @@ test("Observer exposes only the allowlisted trusted work-view recovery actions",
     summary: {
       workViewAssociationIncluded: true,
       messageCount: 1,
+      sourceTaskId: "task-source-1",
       planTodoEvidenceIncluded: true,
       planTodoTodoSource: "workbench_storage",
       planTodoCurrentAction: "create_verification_task",
@@ -80,6 +85,7 @@ test("Observer exposes only the allowlisted trusted work-view recovery actions",
   });
 
   assert.equal(context.engineeringContextPacketRecovery.textContent, "prepare_work_view");
+  assert.equal(context.engineeringContextPacketSourceTask.textContent, "task-source-1");
   assert.equal(context.engineeringContextPacketRecoveryButton.textContent, "Prepare Trusted Work View");
   assert.equal(context.engineeringContextPacketRecoveryButton.hidden, false);
   assert.equal(context.engineeringContextPacketRecoveryButton.disabled, false);
@@ -122,6 +128,8 @@ test("context packet recovery button reuses the existing reviewed action and ref
     engineeringContextPacketBuildButton: element(),
     engineeringContextPacketBindWorkViewButton: element(),
     engineeringContextPacketRecoveryButton: element(),
+    engineeringContextPacketUseTaskDetailButton: element(),
+    engineeringContextPacketSourceTaskIdInput: element(),
     engineeringContextPacketAudit: element(),
     engineeringContextPacketBinding: element(),
     engineeringContextPacketJson: element(),
@@ -143,6 +151,7 @@ test("context packet recovery button reuses the existing reviewed action and ref
   assert.deepEqual(calls.map(([kind]) => kind), ["recommended-action", "fetch", "render", "message", "message"]);
   assert.equal(calls[1][1], "http://core.invalid/plugins/native-adapter/engineering-context/packet");
   assert.equal(JSON.parse(calls[1][2].body).includeWorkView, true);
+  assert.equal(JSON.parse(calls[1][2].body).sourceTaskId, null);
   assert.match(calls.at(-1)[1], /Completed the trusted work-view recovery action/);
   assert.equal(context.engineeringContextPacketRecoveryButton.disabled, false);
 });
@@ -153,6 +162,8 @@ test("context packet bind control explicitly requests rebind for stale task asso
     engineeringContextPacketBuildButton: element(),
     engineeringContextPacketBindWorkViewButton: element(),
     engineeringContextPacketRecoveryButton: element(),
+    engineeringContextPacketUseTaskDetailButton: element(),
+    engineeringContextPacketSourceTaskIdInput: element(),
     engineeringContextPacketAudit: element(),
     engineeringContextPacketBinding: element(),
     engineeringContextPacketJson: element(),
@@ -173,4 +184,39 @@ test("context packet bind control explicitly requests rebind for stale task asso
 
   assert.equal(JSON.parse(calls[0][2].body).rebind, true);
   assert.match(calls.at(-1)[1], /Rebound task task-stale-context-1/);
+});
+
+test("context packet source picker sends an independent source task and supports explicit task-detail shortcut", async () => {
+  const calls = [];
+  const context = {
+    engineeringContextPacketBuildButton: element(),
+    engineeringContextPacketBindWorkViewButton: element(),
+    engineeringContextPacketRecoveryButton: element(),
+    engineeringContextPacketUseTaskDetailButton: element(),
+    engineeringContextPacketSourceTaskIdInput: element(),
+    engineeringContextPacketAudit: element(),
+    engineeringContextPacketBinding: element(),
+    engineeringContextPacketJson: element(),
+    taskDetailIdInput: { value: "task-execution-1" },
+    observerConfig: { coreUrl: "http://core.invalid" },
+    formatError: (error) => String(error?.message ?? error),
+    setControlMessage: (message) => calls.push(["message", message]),
+    renderEngineeringContextPacket: (data) => calls.push(["render", data]),
+    fetchJson: async (url, options) => {
+      calls.push(["fetch", url, options]);
+      return { summary: { messageCount: 1 } };
+    },
+  };
+  context.engineeringContextPacketSourceTaskIdInput.value = "task-source-1";
+
+  vm.runInNewContext(observerClientEngineeringContextRefreshersScript, context);
+  await context.refreshEngineeringContextPacket();
+
+  const request = JSON.parse(calls.find(([kind]) => kind === "fetch")[2].body);
+  assert.equal(request.taskId, "task-execution-1");
+  assert.equal(request.sourceTaskId, "task-source-1");
+
+  context.useEngineeringContextTaskDetailAsSource();
+  assert.equal(context.engineeringContextPacketSourceTaskIdInput.value, "task-execution-1");
+  assert.match(calls.at(-1)[1], /read-only context packet source/);
 });

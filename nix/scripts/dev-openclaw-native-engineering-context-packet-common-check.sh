@@ -57,7 +57,8 @@ cleanup() {
     "${PRE_RECOVERY_PACKET_FILE:-}" "${BIND_FILE:-}" \
     "${SESSION_RESTART_FILE:-}" "${REBIND_PREPARE_FILE:-}" \
     "${STALE_PACKET_FILE:-}" "${STALE_BIND_FILE:-}" \
-    "${REBOUND_FILE:-}" "${REBOUND_PACKET_FILE:-}"
+    "${REBOUND_FILE:-}" "${REBOUND_PACKET_FILE:-}" \
+    "${SOURCE_PACKET_FILE:-}" "${UNKNOWN_SOURCE_PACKET_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -91,6 +92,8 @@ STALE_PACKET_FILE="$(mktemp)"
 STALE_BIND_FILE="$(mktemp)"
 REBOUND_FILE="$(mktemp)"
 REBOUND_PACKET_FILE="$(mktemp)"
+SOURCE_PACKET_FILE="$(mktemp)"
+UNKNOWN_SOURCE_PACKET_FILE="$(mktemp)"
 HTML_FILE=""
 CLIENT_FILE=""
 
@@ -145,9 +148,11 @@ post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"task
 OPENCLAW_POST_JSON_FAILURE=allow post_json "$CORE_URL/plugins/native-adapter/engineering-context/work-view/bind" "{\"taskId\":\"$second_task_id\",\"confirm\":true}" > "$STALE_BIND_FILE"
 post_json "$CORE_URL/plugins/native-adapter/engineering-context/work-view/bind" "{\"taskId\":\"$second_task_id\",\"confirm\":true,\"rebind\":true}" > "$REBOUND_FILE"
 post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"taskId\":\"$second_task_id\",\"limit\":8,\"maxOutputChars\":2000,\"thresholdChars\":256,\"protectRecentAssistantTurns\":0,\"includeWorkView\":true,\"includeWorkViewObservation\":true,\"includePlanTodo\":true}" > "$REBOUND_PACKET_FILE"
+post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"taskId\":\"$second_task_id\",\"sourceTaskId\":\"$task_id\",\"limit\":8,\"maxOutputChars\":2000,\"thresholdChars\":256,\"protectRecentAssistantTurns\":0}" > "$SOURCE_PACKET_FILE"
+OPENCLAW_POST_JSON_FAILURE=allow post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"taskId\":\"$second_task_id\",\"sourceTaskId\":\"missing-context-source-task\"}" > "$UNKNOWN_SOURCE_PACKET_FILE"
 curl --silent --fail "$CORE_URL/plugins/openclaw-native-plugin-adapter" > "$ADAPTER_FILE"
 
-node - <<'NODE' "$TASK_FILE" "$STEP_FILE" "$SECOND_STEP_FILE" "$PRE_RECOVERY_PACKET_FILE" "$PREPARE_FILE" "$BIND_FILE" "$PACKET_FILE" "$SESSION_RESTART_FILE" "$REBIND_PREPARE_FILE" "$STALE_PACKET_FILE" "$STALE_BIND_FILE" "$REBOUND_FILE" "$REBOUND_PACKET_FILE" "$ADAPTER_FILE" "$HTML_FILE" "$CLIENT_FILE" "$OUTPUT_SECRET" "$OBSERVER_CHECK"
+node - <<'NODE' "$TASK_FILE" "$STEP_FILE" "$SECOND_STEP_FILE" "$PRE_RECOVERY_PACKET_FILE" "$PREPARE_FILE" "$BIND_FILE" "$PACKET_FILE" "$SESSION_RESTART_FILE" "$REBIND_PREPARE_FILE" "$STALE_PACKET_FILE" "$STALE_BIND_FILE" "$REBOUND_FILE" "$REBOUND_PACKET_FILE" "$SOURCE_PACKET_FILE" "$UNKNOWN_SOURCE_PACKET_FILE" "$ADAPTER_FILE" "$HTML_FILE" "$CLIENT_FILE" "$OUTPUT_SECRET" "$OBSERVER_CHECK"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
 const taskResponse = readJson(2);
@@ -163,13 +168,15 @@ const stalePacket = readJson(11);
 const staleBind = readJson(12);
 const rebound = readJson(13);
 const reboundPacket = readJson(14);
-const adapter = readJson(15);
-const htmlPath = process.argv[16];
-const clientPath = process.argv[17];
-const outputSecret = process.argv[18];
-const observerCheck = process.argv[19] === "true";
+const sourcePacket = readJson(15);
+const unknownSourcePacket = readJson(16);
+const adapter = readJson(17);
+const htmlPath = process.argv[18];
+const clientPath = process.argv[19];
+const outputSecret = process.argv[20];
+const observerCheck = process.argv[21] === "true";
 const pairResetSession = process.env.OPENCLAW_CONTEXT_PACKET_PAIR_RESET_SESSION === "true";
-const packetRaw = JSON.stringify({ packet, adapter });
+const packetRaw = JSON.stringify({ packet, sourcePacket, unknownSourcePacket, adapter });
 
 if (!step.ok || step.ran !== true || step.task?.status !== "completed" || !secondStep.ok || secondStep.ran !== true || secondStep.task?.status !== "completed") {
   throw new Error(`context packet fixture command should complete after approval: ${JSON.stringify(step)}`);
@@ -280,6 +287,19 @@ if (
 ) {
   throw new Error(`context packet stale binding recovery mismatch: ${JSON.stringify({ sessionRestart, rebindPrepare, stalePacket, staleBind, rebound, reboundPacket })}`);
 }
+if (
+  !sourcePacket.ok
+  || sourcePacket.provenance?.taskId !== secondStep.task?.id
+  || sourcePacket.provenance?.sourceTaskId !== taskResponse.task?.id
+  || sourcePacket.summary?.sourceTaskId !== taskResponse.task?.id
+  || sourcePacket.summary?.sourceTranscriptRecords !== 1
+  || !sourcePacket.messages?.some((message) => JSON.stringify(message).includes(taskResponse.task.id))
+  || JSON.stringify(sourcePacket.messages).includes(secondStep.task?.id)
+  || unknownSourcePacket.ok !== false
+  || !/source task does not exist/u.test(String(unknownSourcePacket.error ?? ""))
+) {
+  throw new Error(`context packet explicit source-task selection mismatch: ${JSON.stringify({ sourcePacket, unknownSourcePacket })}`);
+}
 if (packetRaw.includes(outputSecret)) {
   throw new Error("context packet leaked the fixture credential-like output");
 }
@@ -303,6 +323,9 @@ if (observerCheck) {
     "engineering-context-packet-records",
     "engineering-context-packet-messages",
     "engineering-context-packet-redactions",
+    "engineering-context-packet-source-task",
+    "engineering-context-packet-source-task-id-input",
+    "Use Task Detail ID",
     "engineering-context-packet-provider",
     "engineering-context-packet-audit",
     "engineering-context-packet-work-view",
@@ -333,6 +356,11 @@ if (observerCheck) {
     "engineeringContextPacketBuildButton",
     "engineeringContextPacketBindWorkViewButton",
     "engineeringContextPacketRecovery",
+    "engineeringContextPacketSourceTask",
+    "engineeringContextPacketSourceTaskIdInput",
+    "engineeringContextPacketUseTaskDetailButton",
+    "sourceTaskId",
+    "Task Selection:",
     "engineeringContextPacketRecoveryButton",
     "Reveal Trusted Work View",
     "Rebind Task to Work View",

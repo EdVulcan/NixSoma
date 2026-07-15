@@ -54,7 +54,14 @@ export async function handleNativeEngineeringContextRoute({
     if (requestUrl.pathname === ENGINEERING_CONTEXT_PACKET_PATH) {
       const limit = positiveInteger(body.limit, 12, 30);
       const taskId = typeof body.taskId === "string" && body.taskId.trim() ? body.taskId.trim() : null;
-      const transcriptRecords = executor.listCommandTranscriptRecords({ limit: taskId ? 100 : limit });
+      const sourceTaskId = typeof body.sourceTaskId === "string" && body.sourceTaskId.trim()
+        ? body.sourceTaskId.trim()
+        : null;
+      const selectedSourceTaskId = sourceTaskId ?? taskId;
+      if (sourceTaskId && !taskForId(state.tasks, sourceTaskId)) {
+        throw new Error("Engineering context source task does not exist.");
+      }
+      const transcriptRecords = executor.listCommandTranscriptRecords({ limit: selectedSourceTaskId ? 100 : limit });
       const verificationEvidence = buildNativeEngineeringVerificationEvidence({
         transcriptRecords,
         capabilityInvocations: planBuilder.listCapabilityInvocations({
@@ -62,17 +69,17 @@ export async function handleNativeEngineeringContextRoute({
           capabilityId: "act.system.command.execute",
         }),
         tasks: state.tasks,
-        taskId,
+        taskId: selectedSourceTaskId,
         limit,
         maxOutputChars: body.maxOutputChars,
       });
       const recoveryEvidence = buildNativeEngineeringRecoveryEvidence({
         verificationEvidence,
         tasks: state.tasks,
-        taskId,
+        taskId: selectedSourceTaskId,
         limit,
       });
-      const selectedTaskId = taskId ?? state.runtimeState?.currentTaskId ?? null;
+      const selectedTaskId = selectedSourceTaskId ?? state.runtimeState?.currentTaskId ?? null;
       let workViewAssociation = null;
       if (body.includeWorkView === true) {
         const workViewRead = await readWorkViewState({ sessionManagerUrl });
@@ -89,7 +96,7 @@ export async function handleNativeEngineeringContextRoute({
             tasks: state.tasks,
             runtimeState: state.runtimeState,
             workbenchRecords: state.nativeEngineeringPlanTodoWorkbenchRecords,
-            taskId,
+            taskId: selectedSourceTaskId,
             limit,
           })
         : null;
@@ -99,6 +106,7 @@ export async function handleNativeEngineeringContextRoute({
         verificationEvidence,
         recoveryEvidence,
         taskId,
+        sourceTaskId,
         limit,
         maxOutputChars: body.maxOutputChars,
         thresholdChars: body.thresholdChars,

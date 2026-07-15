@@ -5,6 +5,7 @@ export function observerEngineeringContextPanels() {
           <div class="metric"><span>Records</span><span id="engineering-context-packet-records">0</span></div>
           <div class="metric"><span>Messages</span><span id="engineering-context-packet-messages">0</span></div>
           <div class="metric"><span>Redactions</span><span id="engineering-context-packet-redactions">0</span></div>
+          <div class="metric"><span>Source Task</span><span id="engineering-context-packet-source-task">none</span></div>
           <div class="metric"><span>Provider</span><span id="engineering-context-packet-provider">blocked</span></div>
           <div class="metric"><span>Audit</span><span id="engineering-context-packet-audit">not built</span></div>
           <div class="metric"><span>Work View</span><span id="engineering-context-packet-work-view">none</span></div>
@@ -14,8 +15,15 @@ export function observerEngineeringContextPanels() {
           <div class="metric"><span>Targets</span><span id="engineering-context-packet-targets">none</span></div>
           <div class="metric"><span>Plan/Todo</span><span id="engineering-context-packet-plan-todo">none</span></div>
           <div class="metric"><span>Recovery</span><span id="engineering-context-packet-recovery">none</span></div>
+          <div class="control-stack">
+            <div class="field">
+              <label for="engineering-context-packet-source-task-id-input">Context Source Task ID</label>
+              <input id="engineering-context-packet-source-task-id-input" type="text" value="" spellcheck="false" placeholder="Optional existing task for read-only evidence" />
+            </div>
+          </div>
           <div class="actions tight">
             <button id="engineering-context-packet-build-button" class="secondary" type="button">Build Context Packet</button>
+            <button id="engineering-context-packet-use-task-detail-button" class="secondary" type="button">Use Task Detail ID</button>
             <button id="engineering-context-packet-bind-work-view-button" class="secondary" type="button">Bind Task to Work View</button>
             <button id="engineering-context-packet-recovery-button" class="secondary" type="button" hidden>Prepare Trusted Work View</button>
           </div>
