@@ -151,7 +151,12 @@ governed surfaces:
 - Native engineering microcompact evidence:
   `sense.openclaw.engineering_context.microcompact_evidence` estimates
   context-budget savings from historical command transcripts without returning
-  raw output or mutating runtime messages or persisted logs.
+  raw output or mutating runtime messages or persisted logs. The same readback is
+  now available through the common capability runtime.
+- Native engineering microcompact projection:
+  `act.openclaw.engineering_context.microcompact_projection` transforms only a
+  bounded caller-owned message copy and is now available through the common
+  capability runtime with summary-only audit evidence.
 - Native engineering plan/todo evidence:
   `sense.openclaw.engineering_context.plan_todo_evidence` maps
   `cc_plan_enter`, `cc_plan_exit`, and `cc_todo_write` into visible

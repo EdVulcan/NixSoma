@@ -64,6 +64,9 @@ Implementation:
 ```text
 services/openclaw-core/src/native-engineering-microcompact-projection.mjs
 services/openclaw-core/src/native-engineering-context-routes.mjs
+services/openclaw-core/src/capability-runtime-engineering-microcompact.mjs
+services/openclaw-core/src/capability-runtime.mjs
+services/openclaw-core/src/capability-descriptors.mjs
 ```
 
 Focused tests:
@@ -72,11 +75,14 @@ Focused tests:
 services/openclaw-core/test/native-engineering-microcompact-projection.test.mjs
 services/openclaw-core/test/native-engineering-context-routes.test.mjs
 services/openclaw-core/test/route-handlers.test.mjs
+services/openclaw-core/test/capability-runtime-engineering-microcompact.test.mjs
 ```
 
 The tests prove historical compaction, recent-turn protection, verification
 evidence protection, immutable input, input bounds, method rejection, and
-summary-only audit payloads.
+summary-only audit payloads. The common capability test additionally proves
+policy/invocation dispatch, projection audit ordering, and no content in
+invocation/event records.
 
 ## Deferred
 
@@ -87,6 +93,18 @@ persisted transcript rewriting
 silent removal of current verification or recovery evidence
 unbounded message/context inputs
 ```
+
+## Common Capability Runtime
+
+The projection is now also exposed through the common capability runtime as:
+
+```text
+act.openclaw.engineering_context.microcompact_projection
+```
+
+It keeps the existing caller-owned, no-approval boundary and does not create a
+second transformation implementation. The paired evidence readback is
+`sense.openclaw.engineering_context.microcompact_evidence`.
 
 ## Next Slice
 

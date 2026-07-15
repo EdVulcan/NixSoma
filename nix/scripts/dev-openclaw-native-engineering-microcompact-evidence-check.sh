@@ -7,6 +7,7 @@ FIXTURE_DIR="$REPO_ROOT/.artifacts/openclaw-native-engineering-microcompact-evid
 WORKSPACE_DIR="$FIXTURE_DIR/openclaw"
 PROMPT_SECRET="ENGINEERING_MICROCOMPACT_EVIDENCE_PROMPT_SECRET_DO_NOT_LEAK"
 TOOL_SECRET="ENGINEERING_MICROCOMPACT_EVIDENCE_TOOL_SECRET_DO_NOT_LEAK"
+PROJECTION_SECRET="ENGINEERING_MICROCOMPACT_PROJECTION_SECRET_DO_NOT_LEAK"
 
 source "$SCRIPT_DIR/openclaw-engineering-verification-evidence-fixture.sh"
 source "$SCRIPT_DIR/openclaw-engineering-microcompact-evidence-fixture.sh"
@@ -42,6 +43,8 @@ cleanup() {
     "${APPROVED_FILE:-}" \
     "${STEP_FILE:-}" \
     "${MICROCOMPACT_FILE:-}" \
+    "${CAPABILITY_EVIDENCE_FILE:-}" \
+    "${CAPABILITY_PROJECTION_FILE:-}" \
     "${ADAPTER_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
@@ -58,6 +61,8 @@ BLOCKED_FILE="$(mktemp)"
 APPROVED_FILE="$(mktemp)"
 STEP_FILE="$(mktemp)"
 MICROCOMPACT_FILE="$(mktemp)"
+CAPABILITY_EVIDENCE_FILE="$(mktemp)"
+CAPABILITY_PROJECTION_FILE="$(mktemp)"
 ADAPTER_FILE="$(mktemp)"
 
 post_json "$CORE_URL/plugins/native-adapter/source-command-proposals/tasks" '{"proposalId":"openclaw:typecheck","query":"verify","confirm":true}' > "$TASK_FILE"
@@ -81,9 +86,11 @@ EOF
 post_json "$CORE_URL/approvals/$approval_id/approve" '{"approvedBy":"dev-openclaw-native-engineering-microcompact-evidence-check","reason":"approve microcompact evidence large-output fixture command"}' > "$APPROVED_FILE"
 post_json "$CORE_URL/operator/step" '{}' > "$STEP_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-microcompact/evidence?limit=8&thresholdChars=256&protectRecentItems=0" > "$MICROCOMPACT_FILE"
+post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.microcompact_evidence","params":{"limit":8,"thresholdChars":256,"protectRecentItems":0}}' > "$CAPABILITY_EVIDENCE_FILE"
+post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.openclaw.engineering_context.microcompact_projection","params":{"thresholdChars":64,"protectRecentAssistantTurns":0,"messages":[{"role":"assistant","content":[{"type":"text","text":"old"}]},{"role":"toolResult","toolName":"cc_grep","content":[{"type":"text","text":"ENGINEERING_MICROCOMPACT_PROJECTION_SECRET_DO_NOT_LEAK_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}]},{"role":"assistant","content":[{"type":"text","text":"new"}]}]}}' > "$CAPABILITY_PROJECTION_FILE"
 curl --silent --fail "$CORE_URL/plugins/openclaw-native-plugin-adapter" > "$ADAPTER_FILE"
 
-node - <<'EOF' "$TASK_FILE" "$APPROVED_FILE" "$STEP_FILE" "$MICROCOMPACT_FILE" "$ADAPTER_FILE" "$PROMPT_SECRET" "$TOOL_SECRET"
+node - <<'EOF' "$TASK_FILE" "$APPROVED_FILE" "$STEP_FILE" "$MICROCOMPACT_FILE" "$CAPABILITY_EVIDENCE_FILE" "$CAPABILITY_PROJECTION_FILE" "$ADAPTER_FILE" "$PROMPT_SECRET" "$TOOL_SECRET" "$PROJECTION_SECRET"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
 
@@ -91,10 +98,13 @@ const taskResponse = readJson(2);
 const approved = readJson(3);
 const step = readJson(4);
 const microcompact = readJson(5);
-const adapter = readJson(6);
-const promptSecret = process.argv[7];
-const toolSecret = process.argv[8];
-const rawMicrocompact = JSON.stringify({ microcompact, adapter });
+const capabilityEvidence = readJson(6);
+const capabilityProjection = readJson(7);
+const adapter = readJson(8);
+const promptSecret = process.argv[9];
+const toolSecret = process.argv[10];
+const projectionSecret = process.argv[11];
+const rawMicrocompact = JSON.stringify({ microcompact, capabilityEvidence, capabilityProjection, adapter });
 
 if (approved.approval?.status !== "approved" || approved.task?.policy?.decision?.decision !== "audit_only") {
   throw new Error(`approval should enable audited command execution: ${JSON.stringify(approved)}`);
@@ -139,7 +149,35 @@ if (
 ) {
   throw new Error(`native adapter missing microcompact evidence capability: ${JSON.stringify(adapter)}`);
 }
-if (rawMicrocompact.includes("MMMMMMMMMMMMMMMMMMMM") || rawMicrocompact.includes(promptSecret) || rawMicrocompact.includes(toolSecret)) {
+if (
+  !capabilityEvidence.ok
+  || capabilityEvidence.invoked !== true
+  || capabilityEvidence.capability?.id !== "sense.openclaw.engineering_context.microcompact_evidence"
+  || capabilityEvidence.summary?.kind !== "engineering.microcompact_evidence"
+  || capabilityEvidence.summary?.compactableItems < 1
+  || capabilityEvidence.summary?.noRawOutputText !== true
+  || capabilityEvidence.summary?.noPersistedLogMutation !== true
+  || capabilityEvidence.summary?.noProviderEgress !== true
+  || capabilityEvidence.result?.registry !== "openclaw-native-engineering-microcompact-evidence-v0"
+  || capabilityEvidence.result?.governance?.canMutatePersistedLogs !== false
+) {
+  throw new Error(`common microcompact evidence capability mismatch: ${JSON.stringify(capabilityEvidence)}`);
+}
+if (
+  !capabilityProjection.ok
+  || capabilityProjection.invoked !== true
+  || capabilityProjection.capability?.id !== "act.openclaw.engineering_context.microcompact_projection"
+  || capabilityProjection.summary?.kind !== "engineering.microcompact_projection"
+  || capabilityProjection.summary?.compactedMessages !== 1
+  || capabilityProjection.summary?.noInputMutation !== true
+  || capabilityProjection.summary?.noPersistedMutation !== true
+  || capabilityProjection.summary?.noProviderEgress !== true
+  || capabilityProjection.result?.registry !== "openclaw-native-engineering-microcompact-projection-v0"
+  || capabilityProjection.result?.governance?.mutatesInputMessages !== false
+) {
+  throw new Error(`common microcompact projection capability mismatch: ${JSON.stringify(capabilityProjection)}`);
+}
+if (rawMicrocompact.includes("MMMMMMMMMMMMMMMMMMMM") || rawMicrocompact.includes(promptSecret) || rawMicrocompact.includes(toolSecret) || rawMicrocompact.includes(projectionSecret)) {
   throw new Error("microcompact evidence leaked raw output or fixture secrets");
 }
 

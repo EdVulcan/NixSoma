@@ -5,6 +5,7 @@ import { buildBaseCapabilities } from "./capability-descriptors.mjs";
 import { createEngineeringReadSearchCapabilityHandlers } from "./capability-runtime-engineering-read-search.mjs";
 import { createEngineeringVerificationCapabilityHandlers } from "./capability-runtime-engineering-verification.mjs";
 import { createEngineeringRecoveryCapabilityHandlers } from "./capability-runtime-engineering-recovery.mjs";
+import { createEngineeringMicrocompactCapabilityHandlers } from "./capability-runtime-engineering-microcompact.mjs";
 import { createEngineeringProposalCapabilityHandlers } from "./capability-runtime-engineering-proposals.mjs";
 import { createEngineeringExecutionEvidenceCapabilityHandlers } from "./capability-runtime-engineering-execution-evidence.mjs";
 import { createEngineeringContextCapabilityHandlers } from "./capability-runtime-engineering-context.mjs";
@@ -75,6 +76,12 @@ export function createCapabilityRuntime(deps) {
     listCommandTranscriptRecords,
     listCapabilityInvocations: (options) => listCapabilityInvocations(options),
     tasks: state.tasks ?? new Map(),
+  });
+  const engineeringMicrocompactHandlers = createEngineeringMicrocompactCapabilityHandlers({
+    listCommandTranscriptRecords,
+    listCapabilityInvocations: (options) => listCapabilityInvocations(options),
+    tasks: state.tasks ?? new Map(),
+    publishEvent,
   });
   const engineeringProposalHandlers = createEngineeringProposalCapabilityHandlers({
     buildNativeEngineeringEditProposal: pluginReview.buildNativeEngineeringEditProposal,
@@ -310,6 +317,10 @@ export function createCapabilityRuntime(deps) {
     if (engineeringRecovery.handled) {
       return engineeringRecovery.result;
     }
+    const engineeringMicrocompact = await engineeringMicrocompactHandlers.callBackend(capability, request);
+    if (engineeringMicrocompact.handled) {
+      return engineeringMicrocompact.result;
+    }
     const engineeringProposal = engineeringProposalHandlers.callBackend(capability, request);
     if (engineeringProposal.handled) {
       return engineeringProposal.result;
@@ -516,6 +527,10 @@ export function createCapabilityRuntime(deps) {
     const engineeringRecoverySummary = engineeringRecoveryHandlers.summariseResult(capability, result);
     if (engineeringRecoverySummary) {
       return engineeringRecoverySummary;
+    }
+    const engineeringMicrocompactSummary = engineeringMicrocompactHandlers.summariseResult(capability, result);
+    if (engineeringMicrocompactSummary) {
+      return engineeringMicrocompactSummary;
     }
     const engineeringProposalSummary = engineeringProposalHandlers.summariseResult(capability, result);
     if (engineeringProposalSummary) {
@@ -824,6 +839,13 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: engineeringRecoveryValidationError },
+      };
+    }
+    const engineeringMicrocompactValidationError = engineeringMicrocompactHandlers.validateRequest(capability, request);
+    if (engineeringMicrocompactValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: engineeringMicrocompactValidationError },
       };
     }
 

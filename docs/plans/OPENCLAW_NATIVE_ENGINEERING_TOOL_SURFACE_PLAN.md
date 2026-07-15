@@ -115,6 +115,7 @@ services/openclaw-core/src/capability-runtime.mjs
 services/openclaw-core/src/capability-runtime-engineering-read-search.mjs
 services/openclaw-core/src/capability-runtime-engineering-verification.mjs
 services/openclaw-core/src/capability-runtime-engineering-recovery.mjs
+services/openclaw-core/src/capability-runtime-engineering-microcompact.mjs
 services/openclaw-core/src/capability-runtime-engineering-execution-evidence.mjs
 services/openclaw-core/src/capability-runtime-work-view.mjs
 ```
@@ -231,6 +232,14 @@ runtime proof are documented in:
 ```text
 OPENCLAW_NATIVE_ENGINEERING_RECOVERY_EVIDENCE_PLAN.md
 ```
+
+The context-management builders are now also available through the common
+capability registry as `sense.openclaw.engineering_context.microcompact_evidence`
+and `act.openclaw.engineering_context.microcompact_projection`. The first reads
+bounded transcript savings; the second transforms only a caller-owned message
+copy. Both preserve protected evidence and summary-only invocation/audit
+metadata without task, approval, command, provider, or persisted-log mutation.
+The existing Core/Observer microcompact checks prove both dispatches.
 
 The operator execution-consistency follow-up was completed as:
 

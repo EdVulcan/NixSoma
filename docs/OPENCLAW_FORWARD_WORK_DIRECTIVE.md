@@ -303,6 +303,17 @@ retry commands, mutate workspaces, or call a provider. The direct Observer
 route and its real Core/Observer checks remain the read-model proof. Details are
 in `docs/plans/OPENCLAW_NATIVE_ENGINEERING_RECOVERY_EVIDENCE_PLAN.md`.
 
+The existing context-management lane is now also closed through the common
+capability runtime. `sense.openclaw.engineering_context.microcompact_evidence`
+reuses the bounded transcript/verification/recovery read models, while
+`act.openclaw.engineering_context.microcompact_projection` reuses the
+caller-owned in-memory projection and its summary-only audit event. Invocation
+and event records retain only compact counts and governance flags; neither
+capability mutates runtime messages, persisted logs, tasks, approvals, or
+provider state. The direct Core/Observer microcompact checks now invoke both
+common capabilities. Details are in
+`docs/plans/OPENCLAW_NATIVE_ENGINEERING_MICROCOMPACT_EVIDENCE_PLAN.md`.
+
 The first common capability-runtime entry point for the Level 2 trusted
 work-view is now available as
 `sense.openclaw.engineering_context.work_view_observation`. It reads the

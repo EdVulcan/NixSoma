@@ -1,10 +1,11 @@
 # OpenClaw Native Engineering Microcompact Evidence Plan
 
-Updated: 2026-07-09
+Updated: 2026-07-15
 
 ## Active Slice
 
-Microcompact context-management evidence.
+Microcompact context-management evidence through the direct and common
+capability-runtime paths.
 
 This slice migrates the useful enhanced-source `microcompact` idea into
 OpenClaw-native read-model evidence. It does not rewrite transcript state. It
@@ -56,7 +57,31 @@ task or approval creation
 ```
 
 Actual LLM-context transformation remains deferred until the read-model evidence
-is stable and governed.
+is consumed by an explicitly selected local context owner. The bounded
+caller-owned projection route is already implemented separately and remains
+transient.
+
+## Common Capability Runtime Bridge
+
+The existing evidence builder is available through the common
+`POST /capabilities/invoke` path as:
+
+```text
+sense.openclaw.engineering_context.microcompact_evidence
+```
+
+The bounded caller-owned projection is also available as:
+
+```text
+act.openclaw.engineering_context.microcompact_projection
+```
+
+Both bridges reuse the existing builders. Evidence reads the command,
+verification, and recovery read models; projection transforms only the supplied
+message copy and publishes the existing summary-only
+`native_engineering.microcompact_projection_built` audit event. Common
+invocation/event records retain counts and governance flags only; raw command
+output and message content remain transient.
 
 ## Evidence
 
@@ -64,6 +89,9 @@ Runtime builder:
 
 ```text
 services/openclaw-core/src/native-engineering-microcompact-evidence-builders.mjs
+services/openclaw-core/src/capability-runtime-engineering-microcompact.mjs
+services/openclaw-core/src/capability-runtime.mjs
+services/openclaw-core/src/capability-descriptors.mjs
 ```
 
 Route wiring:
@@ -83,11 +111,14 @@ Validation target:
 
 ```text
 services/openclaw-core/test/native-engineering-microcompact-evidence-builders.test.mjs
+services/openclaw-core/test/capability-runtime-engineering-microcompact.test.mjs
 openclaw-native-engineering-microcompact-evidence
 observer-openclaw-native-engineering-microcompact-evidence
+capability-invoke
+observer-capability-invoke
 ```
 
-Validated on 2026-07-09:
+Direct route validated on 2026-07-09:
 
 ```text
 node --test services/openclaw-core/test/native-engineering-microcompact-evidence-builders.test.mjs services/openclaw-core/test/route-handlers.test.mjs services/openclaw-core/test/native-adapter-plugin-routes.test.mjs
@@ -97,9 +128,20 @@ OPENCLAW_MILESTONE_CHECKS=openclaw-native-engineering-microcompact-evidence,obse
 OPENCLAW_MILESTONE_CHECKS=milestone-registry,milestone-script-audit bash nix/scripts/dev-milestone-check.sh
 ```
 
-## Follow-On Slice
+Common capability bridge validated on 2026-07-15:
 
-The bounded in-memory projection follow-up is complete:
+```text
+node --test services/openclaw-core/test/capability-runtime-engineering-microcompact.test.mjs services/openclaw-core/test/native-engineering-microcompact-evidence-builders.test.mjs services/openclaw-core/test/native-engineering-microcompact-projection.test.mjs services/openclaw-core/test/native-engineering-context-routes.test.mjs
+bash nix/scripts/dev-openclaw-native-engineering-microcompact-evidence-check.sh
+bash nix/scripts/dev-observer-openclaw-native-engineering-microcompact-evidence-check.sh
+```
+
+## Route Status
+
+The direct evidence route, bounded projection, Observer readback, and common
+capability-runtime entry points are closed for this Level 1 context-management
+slice. The bounded in-memory projection remains a caller-owned transformation;
+it does not authorize automatic provider/context rewriting.
 
 ```text
 OPENCLAW_NATIVE_ENGINEERING_MICROCOMPACT_PROJECTION_PLAN.md
