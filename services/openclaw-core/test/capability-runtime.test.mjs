@@ -610,3 +610,95 @@ test("capability runtime rejects credential-bearing work-view URLs before dispat
   assert.equal(state.capabilityInvocationLog.length, 0);
   assert.deepEqual(events, []);
 });
+
+test("capability runtime exposes the local engineering context packet through the governed invoke path", async () => {
+  const taskId = "context-capability-task";
+  const task = {
+    id: taskId,
+    type: "system_task",
+    status: "completed",
+    goal: "Assemble bounded context",
+    outcome: { kind: "completed" },
+  };
+  const transcriptRecord = {
+    taskId,
+    index: 0,
+    invocationId: "context-invocation-1",
+    command: "npm",
+    stdout: "password=private-context-value",
+    stderr: "",
+    exitCode: 0,
+    timedOut: false,
+  };
+  const { runtime, state, events } = createHarness({
+    state: {
+      tasks: new Map([[taskId, task]]),
+      runtimeState: { currentTaskId: taskId },
+    },
+    listCommandTranscriptRecords: ({ limit }) => {
+      assert.equal(limit, 100);
+      return [transcriptRecord];
+    },
+  });
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find((item) => item.id === "sense.openclaw.engineering_context.packet");
+  assert.equal(capability?.governance, "audit_only");
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "sense.openclaw.engineering_context.packet",
+    params: {
+      taskId,
+      limit: 4,
+      maxOutputChars: 200,
+      thresholdChars: 256,
+      protectRecentAssistantTurns: 0,
+    },
+  });
+
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.result.registry, "openclaw-native-engineering-context-packet-v0");
+  assert.equal(result.response.result.summary.sourceTranscriptRecords, 1);
+  assert.equal(result.response.result.summary.redactions, 1);
+  assert.equal(JSON.stringify(result.response.result).includes("private-context-value"), false);
+  assert.equal(result.response.summary.kind, "engineering.context_packet");
+  assert.equal(result.response.summary.noContentPersistence, true);
+  assert.equal(result.response.summary.noProviderEgress, true);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("private-context-value"), false);
+  assert.deepEqual(events.map((event) => event.name), [
+    "policy.evaluated",
+    "native_engineering.context_packet_built",
+    "capability.invoked",
+  ]);
+});
+
+test("capability runtime validates context packet source and observation selectors before policy", async () => {
+  const { runtime, state, events } = createHarness();
+
+  const invalidObservation = await runtime.invokeCapability({
+    capabilityId: "sense.openclaw.engineering_context.packet",
+    params: { includeWorkViewObservation: true },
+  });
+  assert.equal(invalidObservation.statusCode, 400);
+  assert.equal(invalidObservation.response.error, "includeWorkViewObservation requires includeWorkView.");
+
+  const missingSource = await runtime.invokeCapability({
+    capabilityId: "sense.openclaw.engineering_context.packet",
+    params: { sourceTaskId: "missing-context-source" },
+  });
+  assert.equal(missingSource.statusCode, 400);
+  assert.equal(missingSource.response.error, "Engineering context source task does not exist.");
+
+  const blankHarness = createHarness();
+  const blankSource = await blankHarness.runtime.invokeCapability({
+    capabilityId: "sense.openclaw.engineering_context.packet",
+    params: { sourceTaskId: "   " },
+  });
+  assert.equal(blankSource.statusCode, 200);
+  assert.equal(blankSource.response.invoked, true);
+  assert.equal(blankSource.response.result.summary.sourceTaskId, null);
+  assert.equal(blankHarness.state.capabilityInvocationLog.length, 1);
+
+  assert.equal(state.capabilityInvocationLog.length, 0);
+  assert.deepEqual(events, []);
+});

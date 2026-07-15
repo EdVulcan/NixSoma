@@ -302,6 +302,14 @@ navigation behavior; this is not provider egress and does not create tasks,
 approvals, or automatic recovery. The boundary is documented in
 `docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORK_VIEW_CONTROL_PLAN.md`.
 
+The local Engineering Context Packet now also has the common capability entry
+`sense.openclaw.engineering_context.packet`. Its dedicated route and capability
+share one bounded assembly owner for transcript redaction, verification/recovery
+protection, work-view and plan/todo selectors, and microcompact projection.
+Packet messages remain transient; invocation/event evidence stores summaries only,
+and no provider or credential path is added. The boundary is documented in
+`docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_CONTEXT_PACKET_PLAN.md`.
+
 The selected Level 1 consistency closures are complete. Do not reopen the LSP
 symbol chain or add another evidence/readiness shell; choose the next concrete
 identity-upgrade capability only after its Level 2 authority boundary is

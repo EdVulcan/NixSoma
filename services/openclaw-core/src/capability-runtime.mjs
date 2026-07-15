@@ -4,6 +4,7 @@ import { createEventName } from "../../../packages/shared-events/src/event-facto
 import { buildBaseCapabilities } from "./capability-descriptors.mjs";
 import { createEngineeringReadSearchCapabilityHandlers } from "./capability-runtime-engineering-read-search.mjs";
 import { createEngineeringVerificationCapabilityHandlers } from "./capability-runtime-engineering-verification.mjs";
+import { createEngineeringContextCapabilityHandlers } from "./capability-runtime-engineering-context.mjs";
 import { createEngineeringWorkViewCapabilityHandlers } from "./capability-runtime-work-view.mjs";
 
 export function createCapabilityRuntime(deps) {
@@ -62,6 +63,16 @@ export function createCapabilityRuntime(deps) {
     listCommandTranscriptRecords,
     listCapabilityInvocations: (options) => listCapabilityInvocations(options),
     tasks: state.tasks ?? new Map(),
+  });
+  const engineeringContextHandlers = createEngineeringContextCapabilityHandlers({
+    tasks: state.tasks ?? new Map(),
+    runtimeState: state.runtimeState ?? {},
+    workbenchRecords: state.nativeEngineeringPlanTodoWorkbenchRecords ?? [],
+    listCommandTranscriptRecords,
+    listCapabilityInvocations: (options) => listCapabilityInvocations(options),
+    sessionManagerUrl,
+    fetchImpl,
+    publishEvent,
   });
   const engineeringWorkViewHandlers = createEngineeringWorkViewCapabilityHandlers({
     tasks: state.tasks ?? new Map(),
@@ -261,6 +272,10 @@ export function createCapabilityRuntime(deps) {
     if (engineeringVerification.handled) {
       return engineeringVerification.result;
     }
+    const engineeringContext = await engineeringContextHandlers.callBackend(capability, request);
+    if (engineeringContext.handled) {
+      return engineeringContext.result;
+    }
     const engineeringWorkView = await engineeringWorkViewHandlers.callBackend(capability, request);
     if (engineeringWorkView.handled) {
       return engineeringWorkView.result;
@@ -447,6 +462,10 @@ export function createCapabilityRuntime(deps) {
     const engineeringVerificationSummary = engineeringVerificationHandlers.summariseResult(capability, result);
     if (engineeringVerificationSummary) {
       return engineeringVerificationSummary;
+    }
+    const engineeringContextSummary = engineeringContextHandlers.summariseResult(capability, result);
+    if (engineeringContextSummary) {
+      return engineeringContextSummary;
     }
     const engineeringWorkViewSummary = engineeringWorkViewHandlers.summariseResult(capability, result);
     if (engineeringWorkViewSummary) {
@@ -718,6 +737,13 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: engineeringWorkViewValidationError },
+      };
+    }
+    const engineeringContextValidationError = engineeringContextHandlers.validateRequest(capability, request);
+    if (engineeringContextValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: engineeringContextValidationError },
       };
     }
 

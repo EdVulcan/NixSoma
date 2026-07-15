@@ -42,6 +42,7 @@ cleanup() {
     "${ENGINEERING_VERIFY_FILE:-}" \
     "${WORK_VIEW_FILE:-}" \
     "${WORK_VIEW_CONTROL_FILE:-}" \
+    "${CONTEXT_PACKET_FILE:-}" \
     "${PROCESS_FILE:-}" \
     "${BLOCKED_COMMAND_FILE:-}" \
     "${APPROVED_COMMAND_FILE:-}" \
@@ -66,6 +67,7 @@ ENGINEERING_GREP_FILE="$(mktemp)"
 ENGINEERING_VERIFY_FILE="$(mktemp)"
 WORK_VIEW_FILE="$(mktemp)"
 WORK_VIEW_CONTROL_FILE="$(mktemp)"
+CONTEXT_PACKET_FILE="$(mktemp)"
 PROCESS_FILE="$(mktemp)"
 BLOCKED_COMMAND_FILE="$(mktemp)"
 APPROVED_COMMAND_FILE="$(mktemp)"
@@ -80,6 +82,7 @@ post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.en
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_tool.verify_evidence","params":{"limit":4,"maxOutputChars":500}}' > "$ENGINEERING_VERIFY_FILE"
 post_json "$SESSION_MANAGER_URL/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/capability-work-view"}' > /dev/null
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.work_view.control","operation":"work_view.reveal","params":{"entryUrl":"https://example.com/capability-work-view"}}' > "$WORK_VIEW_CONTROL_FILE"
+post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.packet","params":{"limit":4,"thresholdChars":256,"protectRecentAssistantTurns":0}}' > "$CONTEXT_PACKET_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.work_view_observation"}' > "$WORK_VIEW_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.process.list","intent":"process.list","params":{"limit":20}}' > "$PROCESS_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.command.dry_run","intent":"system.command","params":{"command":"rm","args":["-rf","/tmp/openclaw-danger"]}}' > "$BLOCKED_COMMAND_FILE"
@@ -100,6 +103,7 @@ node - <<'EOF' \
   "$ENGINEERING_VERIFY_FILE" \
   "$WORK_VIEW_FILE" \
   "$WORK_VIEW_CONTROL_FILE" \
+  "$CONTEXT_PACKET_FILE" \
   "$FIXTURE_DIR"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
@@ -116,7 +120,8 @@ const events = readJson(11);
 const engineeringVerify = readJson(12);
 const workView = readJson(13);
 const workViewControl = readJson(14);
-const fixtureDir = process.argv[15];
+const contextPacket = readJson(15);
+const fixtureDir = process.argv[16];
 
 if (!vitals.ok || vitals.invoked !== true || vitals.capability?.id !== "sense.system.vitals" || vitals.policy?.decision !== "audit_only") {
   throw new Error("system vitals capability should be invoked with audit-only governance");
@@ -207,6 +212,17 @@ if (
 ) {
   throw new Error(`trusted work-view control should use the fixed owner path and compact readback: ${JSON.stringify(workViewControl)}`);
 }
+if (
+  !contextPacket.ok
+  || contextPacket.invoked !== true
+  || contextPacket.capability?.id !== "sense.openclaw.engineering_context.packet"
+  || contextPacket.result?.registry !== "openclaw-native-engineering-context-packet-v0"
+  || contextPacket.summary?.kind !== "engineering.context_packet"
+  || contextPacket.summary?.noContentPersistence !== true
+  || contextPacket.summary?.noProviderEgress !== true
+) {
+  throw new Error(`engineering context packet capability should remain local and summary-only in the ledger: ${JSON.stringify(contextPacket)}`);
+}
 if (!processes.ok || processes.invoked !== true || processes.result?.count < 1 || processes.summary?.kind !== "process.list") {
   throw new Error("process list capability should route through core");
 }
@@ -257,6 +273,11 @@ console.log(JSON.stringify({
         action: workViewControl.summary.action,
         visibility: workViewControl.summary.visibility,
         payloadExposed: !workViewControl.summary.noPayloadExposure,
+      },
+      contextPacket: {
+        messages: contextPacket.summary.messageCount,
+        redactions: contextPacket.summary.redactions,
+        providerEgress: !contextPacket.summary.noProviderEgress,
       },
       policies: [engineeringRead.policy.decision, engineeringGlob.policy.decision, engineeringGrep.policy.decision],
     },

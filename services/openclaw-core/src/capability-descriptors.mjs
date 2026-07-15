@@ -223,6 +223,22 @@ export function buildBaseCapabilities({
       description: "Read bounded verification evidence from existing governed command transcripts without executing commands or creating tasks.",
     },
     {
+      id: "sense.openclaw.engineering_context.packet",
+      name: "Native Engineering Context Packet",
+      kind: "sensor",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/plugins/native-adapter/engineering-context/packet`,
+      intents: [
+        "openclaw.engineering_context.packet",
+        "engineering.context.packet",
+        "context.packet",
+      ],
+      domains: ["body_internal"],
+      risk: "medium",
+      governance: "audit_only",
+      description: "Assemble bounded redacted local engineering context with protected verification/recovery evidence without provider use or persisted packet content.",
+    },
+    {
       id: "sense.openclaw.engineering_context.work_view_observation",
       name: "Trusted Work-View Observation",
       kind: "sensor",

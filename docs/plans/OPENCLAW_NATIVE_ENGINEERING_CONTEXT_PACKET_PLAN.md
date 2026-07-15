@@ -260,6 +260,14 @@ and the existing guidance-only next action as protected context; it does not
 switch planning mode, write a todo file, create a task, or execute the
 suggestion.
 
+The same local packet owner is now available through the common capability
+runtime as `sense.openclaw.engineering_context.packet`. The dedicated route and
+capability share one assembly helper, so task/source selection, redaction,
+microcompact protection, work-view selectors, and plan/todo selectors cannot
+drift between callers. The capability records only compact invocation evidence;
+packet messages remain transient. See
+`OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_CONTEXT_PACKET_PLAN.md`.
+
 When this packet is used by the existing approved provider handoff, these
 selectors are still explicit request inputs and are covered by the same
 request-content hash. They do not enable provider calls or action execution by

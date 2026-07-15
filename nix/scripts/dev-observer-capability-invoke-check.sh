@@ -40,6 +40,7 @@ cleanup() {
     "${ENGINEERING_VERIFY_FILE:-}" \
     "${WORK_VIEW_FILE:-}" \
     "${WORK_VIEW_CONTROL_FILE:-}" \
+    "${CONTEXT_PACKET_FILE:-}" \
     "${BLOCKED_FILE:-}" \
     "${APPROVED_FILE:-}" \
     "${EVENTS_FILE:-}"
@@ -65,6 +66,7 @@ ENGINEERING_GREP_FILE="$(mktemp)"
 ENGINEERING_VERIFY_FILE="$(mktemp)"
 WORK_VIEW_FILE="$(mktemp)"
 WORK_VIEW_CONTROL_FILE="$(mktemp)"
+CONTEXT_PACKET_FILE="$(mktemp)"
 BLOCKED_FILE="$(mktemp)"
 APPROVED_FILE="$(mktemp)"
 EVENTS_FILE="$(mktemp)"
@@ -79,6 +81,7 @@ post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.en
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_tool.verify_evidence","params":{"limit":4,"maxOutputChars":500}}' > "$ENGINEERING_VERIFY_FILE"
 post_json "http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/observer-capability-work-view"}' > /dev/null
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.work_view.control","operation":"work_view.reveal","params":{"entryUrl":"https://example.com/observer-capability-work-view"}}' > "$WORK_VIEW_CONTROL_FILE"
+post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.packet","params":{"limit":4,"thresholdChars":256,"protectRecentAssistantTurns":0}}' > "$CONTEXT_PACKET_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.work_view_observation"}' > "$WORK_VIEW_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.command.dry_run","intent":"system.command","params":{"command":"rm","args":["-rf","/tmp/openclaw-danger"]}}' > "$BLOCKED_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.command.dry_run","intent":"system.command","approved":true,"params":{"command":"rm","args":["-rf","/tmp/openclaw-danger"]}}' > "$APPROVED_FILE"
@@ -97,7 +100,8 @@ node - <<'EOF' \
   "$EVENTS_FILE" \
   "$ENGINEERING_VERIFY_FILE" \
   "$WORK_VIEW_FILE" \
-  "$WORK_VIEW_CONTROL_FILE"
+  "$WORK_VIEW_CONTROL_FILE" \
+  "$CONTEXT_PACKET_FILE"
 const fs = require("node:fs");
 const html = fs.readFileSync(process.argv[2], "utf8");
 const client = fs.readFileSync(process.argv[3], "utf8");
@@ -112,6 +116,7 @@ const events = JSON.parse(fs.readFileSync(process.argv[11], "utf8"));
 const engineeringVerify = JSON.parse(fs.readFileSync(process.argv[12], "utf8"));
 const workView = JSON.parse(fs.readFileSync(process.argv[13], "utf8"));
 const workViewControl = JSON.parse(fs.readFileSync(process.argv[14], "utf8"));
+const contextPacket = JSON.parse(fs.readFileSync(process.argv[15], "utf8"));
 
 for (const token of [
   "invoke-vitals-button",
@@ -199,6 +204,17 @@ if (
 ) {
   throw new Error("Observer trusted work-view control invoke path should remain allowlisted and compact");
 }
+if (
+  !contextPacket.ok
+  || contextPacket.invoked !== true
+  || contextPacket.capability?.id !== "sense.openclaw.engineering_context.packet"
+  || contextPacket.result?.registry !== "openclaw-native-engineering-context-packet-v0"
+  || contextPacket.summary?.kind !== "engineering.context_packet"
+  || contextPacket.summary?.noContentPersistence !== true
+  || contextPacket.summary?.noProviderEgress !== true
+) {
+  throw new Error("Observer engineering context packet invoke path should remain local and summary-only");
+}
 if (!blocked.ok || blocked.invoked !== false || blocked.blocked !== true || blocked.reason !== "policy_requires_approval") {
   throw new Error("Observer blocked dry-run path should expose policy_requires_approval");
 }
@@ -239,6 +255,11 @@ console.log(JSON.stringify({
         action: workViewControl.summary.action,
         visibility: workViewControl.summary.visibility,
         payloadExposed: !workViewControl.summary.noPayloadExposure,
+      },
+      contextPacket: {
+        messages: contextPacket.summary.messageCount,
+        redactions: contextPacket.summary.redactions,
+        providerEgress: !contextPacket.summary.noProviderEgress,
       },
     },
     vitalsPolicy: vitals.policy.decision,
