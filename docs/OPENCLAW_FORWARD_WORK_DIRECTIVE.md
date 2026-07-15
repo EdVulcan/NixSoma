@@ -339,7 +339,9 @@ pending, and the panel returns only compact task/approval/governance evidence.
 The real Phase 63 Core check now enters this capability with both
 `approved:true` and `confirm:true`, then proves the existing approval and
 deferred operator path without exposing the request text or contacting a
-provider.
+provider. Observer's existing Context Source Task ID input is also forwarded
+into the same redacted source-task binding when supplied; it does not infer or
+mutate a source task.
 
 The first common capability-runtime entry point for the Level 2 trusted
 work-view is now available as

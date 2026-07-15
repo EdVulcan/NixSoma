@@ -4,6 +4,7 @@ export const observerClientEngineeringProviderHandoffRefreshersScript = `async f
   }
 
   const prompt = engineeringProviderHandoffPromptInput.value.trim();
+  const sourceTaskId = engineeringProviderHandoffSourceTaskIdInput?.value.trim() ?? "";
   if (!prompt) {
     setControlMessage("Enter a bounded provider request before creating the handoff task.");
     engineeringProviderHandoffPromptInput.focus();
@@ -27,6 +28,9 @@ export const observerClientEngineeringProviderHandoffRefreshersScript = `async f
               messages: [{ role: "user", content: prompt }],
             },
             responseContract: "engineering_recommendation_v0",
+            ...(sourceTaskId
+              ? { contextPacket: { requested: true, sourceTaskId } }
+              : {}),
           },
         },
       }),

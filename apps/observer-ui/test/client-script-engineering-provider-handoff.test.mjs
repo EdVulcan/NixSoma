@@ -32,12 +32,14 @@ test("Observer exposes the explicit pending provider handoff task control", asyn
     assert.equal(panel.includes(token), true, `panel is missing ${token}`);
   }
   assert.match(observerClientConfigDomEngineeringProviderHandoffScript, /engineeringProviderHandoffPromptInput/);
+  assert.match(observerClientConfigDomEngineeringProviderHandoffScript, /engineeringProviderHandoffSourceTaskIdInput/);
   assert.match(observerClientEngineeringProviderHandoffRefreshersScript, /confirm: true/);
   assert.match(observerClientEngineeringProviderHandoffRenderersScript, /renderEngineeringProviderHandoff/);
 
   const calls = [];
   const context = {
     engineeringProviderHandoffPromptInput: element({ value: "Review the bounded local engineering state." }),
+    engineeringProviderHandoffSourceTaskIdInput: element({ value: "source-task-1" }),
     engineeringProviderHandoffCreateButton: element(),
     engineeringProviderHandoffStatus: element(),
     engineeringProviderHandoffTask: element(),
@@ -97,6 +99,10 @@ test("Observer exposes the explicit pending provider handoff task control", asyn
   assert.equal(request.params.liveProviderExecution.credentialReference, "openclaw://credential/deepseek-api-key");
   assert.equal(request.params.liveProviderExecution.requestEnvelope.model, "deepseek-chat");
   assert.equal(request.params.liveProviderExecution.requestEnvelope.messages[0].content, "Review the bounded local engineering state.");
+  assert.deepEqual(request.params.liveProviderExecution.contextPacket, {
+    requested: true,
+    sourceTaskId: "source-task-1",
+  });
   assert.equal(context.engineeringProviderHandoffStatus.textContent, "pending");
   assert.equal(context.engineeringProviderHandoffTask.textContent, "provider-task-1");
   assert.equal(context.engineeringProviderHandoffApproval.textContent, "provider-approval-1");

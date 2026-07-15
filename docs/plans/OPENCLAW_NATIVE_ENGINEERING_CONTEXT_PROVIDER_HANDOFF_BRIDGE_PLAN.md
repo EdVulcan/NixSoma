@@ -93,9 +93,11 @@ only path that can proceed toward execution.
 
 Observer now exposes the same capability in the Engineering Context panel as a
 one-shot pending-task control. The operator supplies a bounded transient
-request, while the panel returns only task, approval, binding, and governance
-readback. The control does not approve the task, run `/operator/step`, display
-the request text, or contact DeepSeek.
+request and may explicitly select the existing Context Source Task ID, while
+the panel returns only task, approval, binding, and governance readback. The
+selected source id is forwarded into the same redacted request binding; the
+control does not infer or mutate a source task, approve the task, run
+`/operator/step`, display the request text, or contact DeepSeek.
 
 ## Evidence
 
@@ -129,7 +131,8 @@ assembly, sensitive payload exclusion, compact durable evidence, the Observer
 pending-task control, and the existing hash-bound live execution path. The real
 Phase 63 Core check also proves the positive `approved:true` plus `confirm:true`
 common-capability path creates the same pending egress task without exposing the
-request text or contacting a provider.
+request text or contacting a provider. The Observer test also proves the
+explicit source-task input reaches the capability request.
 
 ## Deferred
 
