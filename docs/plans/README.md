@@ -238,6 +238,9 @@ The existing dependency-map route now additionally reads bounded live
 `Unit.After` evidence for the fixed OpenClaw inventory, separates observed
 edges from declarative plan edges, and reports compact dependency drift through
 the native systemd and Observer milestones.
+The inventory also reconciles the Nix-declared user-owned unit list with the
+system-bus view, making stale system copies and expected user-manager absence
+explicit without introducing a user-bus proxy.
 
 It now closes browser action mediation through operator takeover suspension and
 explicit resume/rebind, then runs a bounded approval-gated user-space helper

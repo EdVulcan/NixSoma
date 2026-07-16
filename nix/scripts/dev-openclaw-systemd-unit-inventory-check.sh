@@ -15,6 +15,7 @@ export OPENCLAW_SYSTEM_HEAL_PORT="${OPENCLAW_SYSTEM_HEAL_PORT:-5837}"
 export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-5900}"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-systemd-unit-inventory-check.json}"
 export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-system-heal-systemd-unit-inventory-check.json}"
+export OPENCLAW_BODY_USER_OWNED_UNITS="${OPENCLAW_BODY_USER_OWNED_UNITS:-openclaw-session-manager,openclaw-browser-runtime}"
 
 SYSTEM_URL="http://127.0.0.1:$OPENCLAW_SYSTEM_SENSE_PORT"
 
@@ -81,6 +82,17 @@ if (dependencyMap.source?.dependencyEvidence !== "dbus_native_unit_after"
     governance: dependencyMap.governance,
   })}`);
 }
+if (inventory.source?.managerScopeTransport !== "system_bus_only"
+  || JSON.stringify(inventory.source?.expectedUserManagerUnits) !== JSON.stringify([
+    "openclaw-browser-runtime.service",
+    "openclaw-session-manager.service",
+  ])
+  || inventory.summary?.managerScopeConfigured !== expectedUnits.length) {
+  throw new Error(`systemd inventory should reconcile the desktop manager scope declaration: ${JSON.stringify({
+    source: inventory.source,
+    summary: inventory.summary,
+  })}`);
+}
 if (inventory.governance?.hostMutation !== false || inventory.governance?.autonomy !== "observe_only") {
   throw new Error(`systemd unit inventory governance should stay observe-only: ${JSON.stringify(inventory.governance)}`);
 }
@@ -111,6 +123,9 @@ if (coreUnit?.observation !== "dbus_properties_read_only"
   || coreUnit.systemdObserved !== true) {
   throw new Error(`native inventory should observe the running core unit: ${JSON.stringify(coreUnit)}`);
 }
+if (coreUnit.managerScopeStatus !== "matched" || coreUnit.observedManager !== "system") {
+  throw new Error(`core should be observed in its declared system manager: ${JSON.stringify(coreUnit)}`);
+}
 
 const coreDependency = dependencyMap.nodes?.find((node) => node.unit === "openclaw-core.service");
 if (!coreDependency?.observedUpstream?.includes("openclaw-event-hub.service")
@@ -135,6 +150,10 @@ console.log(JSON.stringify({
     dependencyEvidence: dependencyMap.source.dependencyEvidence,
     observedDependencyNodes: dependencyMap.summary.observedDependencyNodes,
     dependencyDriftNodes: dependencyMap.summary.dependencyDriftNodes,
+    managerScopeConfigured: inventory.summary.managerScopeConfigured,
+    managerScopeMatched: inventory.summary.managerScopeMatched,
+    managerScopeMismatches: inventory.summary.managerScopeMismatches,
+    managerScopeUnresolved: inventory.summary.managerScopeUnresolved,
     next: inventory.next.recommendedSlice,
   },
 }, null, 2));

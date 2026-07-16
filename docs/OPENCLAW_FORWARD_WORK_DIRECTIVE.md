@@ -862,6 +862,13 @@ operation, approval, task, mutation, arbitrary unit, or new route was added.
 The next Phase B capability still requires a separate operator justification
 behind the existing fixed hostd owner.
 
+The same inventory now also carries the Nix-declared manager scope for each
+unit. It distinguishes a system unit observed on the system bus, a user-owned
+unit intentionally not observed there, an unexpected system copy, and an
+actual system-bus observation failure. The existing Observer inventory renders
+compact matched/mismatch/unresolved scope counts. This remains read-only and
+does not add a user-bus proxy, hostd capability, approval, task, or mutation.
+
 The Level 1 live-plugin-refresh migration now owns a real fixed-registry
 generation lifecycle. An approved existing refresh task builds and validates a
 new built-in registry generation, atomically swaps the shared native plugin

@@ -363,6 +363,7 @@ if (ownership.eventHub.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   throw new Error(`event hub must execute from its read-only Nix closure: ${JSON.stringify(ownership.eventHub)}`);
 }
 if (ownership.core.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
+  || ownership.core.environment?.OPENCLAW_BODY_USER_OWNED_UNITS !== "openclaw-session-manager,openclaw-browser-runtime"
   || ownership.core.environment?.OPENCLAW_CORE_STATE_FILE !== "/var/lib/openclaw/openclaw-core-state.json"
   || ownership.core.environment?.OPENCLAW_BODY_EVIDENCE_LEDGER_DIR !== "/var/lib/openclaw/body-evidence-ledger"
   || ownership.core.environment?.OPENCLAW_SYSTEMD_REPAIR_AUTH_DELEGATION !== "polkit-dbus-fixed-unit"
@@ -445,6 +446,7 @@ console.log(JSON.stringify({
     coreRuntimeSource: ownership.core.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
     coreWorkingDirectory: ownership.core.serviceConfig.WorkingDirectory,
     coreStateFile: ownership.core.environment.OPENCLAW_CORE_STATE_FILE,
+    declaredUserOwnedUnits: ownership.core.environment.OPENCLAW_BODY_USER_OWNED_UNITS,
     screenSenseRuntimeSource: ownership.screenSense.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
     screenSenseWorkingDirectory: ownership.screenSense.serviceConfig.WorkingDirectory,
     screenActRuntimeSource: ownership.screenAct.environment.OPENCLAW_BODY_RUNTIME_SOURCE,

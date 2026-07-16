@@ -415,6 +415,10 @@ async function refreshSystemdUnitInventory() {
       \`Mode: \${data.mode ?? "unknown"} canMutate=\${Boolean(data.canMutate)} canRestart=\${Boolean(data.canRestart)}\`,
       \`Systemd: \${source.systemdAvailable ? source.systemdVersion ?? "available" : source.unavailableReason ?? "unavailable"}\`,
       \`Governance: \${governance.autonomy ?? "observe_only"} domain=\${governance.domain ?? "body_internal"} mutation=\${Boolean(governance.hostMutation)}\`,
+      "Manager scope: configured=" + String(summary.managerScopeConfigured ?? 0)
+        + " matched=" + String(summary.managerScopeMatched ?? 0)
+        + " mismatches=" + String(summary.managerScopeMismatches ?? 0)
+        + " unresolved=" + String(summary.managerScopeUnresolved ?? 0),
       \`Units: \${units.map((unit) => \`\${unit.unit}:\${unit.activeState ?? unit.status ?? "unknown"}\`).join(", ")}\`,
       \`Next: \${data.next?.recommendedSlice ?? "plan-only repair proposal"}\`,
     ].join("\\n");

@@ -194,6 +194,7 @@ let
     OPENCLAW_BROWSER_RUNTIME_STATE_FILE = "${stateDir}/openclaw-browser-runtime-state.json";
     OPENCLAW_EVENT_LOG_FILE = "${stateDir}/openclaw-events.jsonl";
     OPENCLAW_BODY_EVIDENCE_LEDGER_DIR = "${stateDir}/body-evidence-ledger";
+    OPENCLAW_BODY_USER_OWNED_UNITS = lib.concatStringsSep "," userOwnedServiceNames;
   } // optionalAttrs cfg.systemdRepairAuthDelegation.enable {
     OPENCLAW_HOSTD_SOCKET_PATH = hostdSocketPath;
     OPENCLAW_SYSTEMD_REPAIR_AUTH_DELEGATION = "polkit-dbus-fixed-unit";

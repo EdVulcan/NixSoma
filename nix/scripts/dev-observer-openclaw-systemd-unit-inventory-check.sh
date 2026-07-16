@@ -15,6 +15,7 @@ export OPENCLAW_SYSTEM_HEAL_PORT="${OPENCLAW_SYSTEM_HEAL_PORT:-5847}"
 export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-5910}"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-observer-systemd-unit-inventory-check.json}"
 export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-system-heal-observer-systemd-unit-inventory-check.json}"
+export OPENCLAW_BODY_USER_OWNED_UNITS="${OPENCLAW_BODY_USER_OWNED_UNITS:-openclaw-session-manager,openclaw-browser-runtime}"
 
 SYSTEM_URL="http://127.0.0.1:$OPENCLAW_SYSTEM_SENSE_PORT"
 OBSERVER_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
@@ -110,11 +111,21 @@ if (dependencyMap.source?.dependencyEvidence !== "dbus_native_unit_after"
     core: dependencyMap.nodes?.find((node) => node.unit === "openclaw-core.service"),
   })}`);
 }
+if (inventory.source?.managerScopeTransport !== "system_bus_only"
+  || inventory.summary?.managerScopeConfigured !== inventory.summary?.planned) {
+  throw new Error(`Observer-facing inventory should retain declared manager scope evidence: ${JSON.stringify({
+    source: inventory.source,
+    summary: inventory.summary,
+  })}`);
+}
 const coreUnit = inventory.units.find((unit) => unit.unit === "openclaw-core.service");
 if (coreUnit?.observation !== "dbus_properties_read_only"
   || coreUnit.loadState !== "loaded"
   || coreUnit.activeState !== "active") {
   throw new Error(`Observer-facing inventory should expose native core state: ${JSON.stringify(coreUnit)}`);
+}
+if (coreUnit.managerScopeStatus !== "matched" || coreUnit.observedManager !== "system") {
+  throw new Error(`Observer-facing inventory should show core in its declared system manager: ${JSON.stringify(coreUnit)}`);
 }
 
 console.log(JSON.stringify({
@@ -130,6 +141,10 @@ console.log(JSON.stringify({
     coreState: `${coreUnit.loadState}/${coreUnit.activeState}/${coreUnit.subState}`,
     dependencyEvidence: dependencyMap.source?.dependencyEvidence,
     observedDependencyNodes: dependencyMap.summary?.observedDependencyNodes,
+    managerScopeConfigured: inventory.summary?.managerScopeConfigured,
+    managerScopeMatched: inventory.summary?.managerScopeMatched,
+    managerScopeMismatches: inventory.summary?.managerScopeMismatches,
+    managerScopeUnresolved: inventory.summary?.managerScopeUnresolved,
   },
 }, null, 2));
 EOF

@@ -12,6 +12,7 @@ const specs = [
     component: "body",
     url: "http://127.0.0.1:4101",
     after: [],
+    expectedManager: "system",
   },
   {
     key: "core",
@@ -21,6 +22,7 @@ const specs = [
     component: "body",
     url: "http://127.0.0.1:4100",
     after: ["openclaw-event-hub"],
+    expectedManager: "system",
   },
   {
     key: "observerUi",
@@ -30,6 +32,7 @@ const specs = [
     component: "observer",
     url: "http://127.0.0.1:4170",
     after: ["openclaw-core", "openclaw-event-hub"],
+    expectedManager: "user",
   },
 ];
 
@@ -93,6 +96,11 @@ test("systemd inspection prefers native D-Bus without invoking commands", async 
 
   assert.equal(inventory.source.transport, "dbus_native");
   assert.equal(inventory.source.systemdVersion, "systemd 258.5");
+  assert.deepEqual(inventory.source.expectedUserManagerUnits, ["observer-ui.service"]);
+  assert.equal(inventory.summary.managerScopeConfigured, 3);
+  assert.equal(inventory.summary.managerScopeMatched, 2);
+  assert.equal(inventory.summary.managerScopeMismatches, 1);
+  assert.equal(inventory.units.find((unit) => unit.unit === "observer-ui.service").managerScopeStatus, "unexpected_system_unit");
   assert.equal(JSON.stringify(inventory).includes("nativeDependencies"), false);
   assert.equal(inventory.units[0].observation, "dbus_properties_read_only");
   assert.deepEqual(inventory.governance.readOnlyCommands, []);
@@ -146,4 +154,57 @@ test("systemd inspection fails closed without command fallback when native D-Bus
   assert.equal(dependencyMap.summary.observedEdges, 0);
   assert.deepEqual(dependencyMap.roots, ["openclaw-event-hub.service"]);
   assert.equal(dependencyMap.nodes.find((node) => node.unit === "openclaw-event-hub.service").impactClass, "foundational");
+});
+
+test("systemd inspection distinguishes expected user-manager absence from a scope mismatch", async () => {
+  const inspection = createSystemdInspection({
+    openClawSystemdUnitSpecs: specs,
+    platform: "linux",
+    systemdAdapter: {
+      async inspectUnits(unitNames) {
+        return {
+          available: true,
+          transport: "dbus_native",
+          version: "systemd 258.5",
+          readOnlyMethods: [
+            "org.freedesktop.systemd1.Manager.GetUnit",
+            "org.freedesktop.DBus.Properties.GetAll",
+          ],
+          units: new Map(unitNames.map((unitName) => [unitName,
+            unitName === "observer-ui.service"
+              ? {
+                found: false,
+                errorCode: "org.freedesktop.systemd1.NoSuchUnit",
+                error: "Unit observer-ui.service not found.",
+              }
+              : {
+                found: true,
+                properties: {
+                  Description: `${unitName} description`,
+                  LoadState: "loaded",
+                  ActiveState: "active",
+                  SubState: "running",
+                  UnitFileState: "enabled",
+                  MainPID: 123,
+                  ExecMainStatus: 0,
+                  FragmentPath: "/nix/store/openclaw.service",
+                },
+              },
+          ])),
+          nativeDependencies: new Map([
+            ["openclaw-event-hub.service", []],
+            ["openclaw-core.service", ["openclaw-event-hub.service"]],
+          ]),
+        };
+      },
+    },
+  });
+
+  const inventory = await inspection.buildSystemdUnitInventory();
+  const observer = inventory.units.find((unit) => unit.unit === "observer-ui.service");
+
+  assert.equal(observer.managerScopeStatus, "not_observed_on_system_bus");
+  assert.equal(inventory.summary.managerScopeMatched, 2);
+  assert.equal(inventory.summary.managerScopeMismatches, 0);
+  assert.equal(inventory.summary.managerScopeUnresolved, 1);
 });

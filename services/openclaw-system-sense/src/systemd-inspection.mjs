@@ -65,6 +65,9 @@ function buildBaseUnit(spec) {
     component: spec.component,
     bodyOwned: true,
     planned: true,
+    expectedManager: spec.expectedManager ?? "unknown",
+    observedManager: null,
+    managerScopeStatus: "not_checked",
     url: spec.url,
     after: spec.after,
     canMutate: false,
@@ -80,13 +83,25 @@ function buildBaseUnit(spec) {
   };
 }
 
+function isMissingSystemdUnit(observed) {
+  const detail = `${observed?.errorCode ?? ""} ${observed?.error ?? ""}`;
+  return detail.includes("NoSuchUnit") || detail.includes("NoSuchFile");
+}
+
 function inspectNativeSystemdUnit(spec, systemd) {
   const baseUnit = buildBaseUnit(spec);
   const observed = systemd.units.get(spec.unit);
   if (!observed?.found) {
+    const missing = isMissingSystemdUnit(observed);
     return {
       ...baseUnit,
       systemdObserved: true,
+      observedManager: "not_observed",
+      managerScopeStatus: missing
+        ? spec.expectedManager === "user"
+          ? "not_observed_on_system_bus"
+          : spec.expectedManager === "system" ? "missing_from_system_manager" : "not_observed"
+        : "system_bus_observation_failed",
       observation: "dbus_properties_read_failed",
       observationError: observed?.error ?? "Native systemd unit observation is missing.",
     };
@@ -104,6 +119,10 @@ function inspectNativeSystemdUnit(spec, systemd) {
     execMainStatus: Number(properties.ExecMainStatus) || 0,
     fragmentPath: properties.FragmentPath || null,
     systemdObserved: true,
+    observedManager: "system",
+    managerScopeStatus: spec.expectedManager === "system"
+      ? "matched"
+      : spec.expectedManager === "user" ? "unexpected_system_unit" : "observed_system_manager",
     observation: "dbus_properties_read_only",
   };
 }
@@ -114,6 +133,7 @@ function inspectSystemdUnit(spec, systemd) {
   if (!systemd.available) {
     return {
       ...baseUnit,
+      managerScopeStatus: "unavailable",
       observation: "planned_inventory_only",
     };
   }
@@ -129,6 +149,7 @@ async function buildSystemdUnitInventory() {
   const failed = units.filter((unit) => unit.activeState === "failed" || unit.subState === "failed").length;
   const inactive = units.filter((unit) => unit.activeState === "inactive").length;
   const observed = units.filter((unit) => unit.systemdObserved).length;
+  const managerScopeConfigured = units.filter((unit) => unit.expectedManager !== "unknown");
 
   return attachNativeDependencyEvidence({
     ok: true,
@@ -147,6 +168,11 @@ async function buildSystemdUnitInventory() {
       transport: systemd.transport,
       nativeUnavailableReason: systemd.nativeFailureReason ?? null,
       plannedFrom: "nix/modules/openclaw-body.nix serviceSpecs",
+      managerScopeTransport: systemd.available ? "system_bus_only" : "unavailable",
+      expectedUserManagerUnits: units
+        .filter((unit) => unit.expectedManager === "user")
+        .map((unit) => unit.unit)
+        .sort(),
     },
     governance: {
       domain: "body_internal",
@@ -167,6 +193,18 @@ async function buildSystemdUnitInventory() {
       failed,
       unknown: Math.max(0, units.length - active - inactive - failed),
       bodyOwned: units.filter((unit) => unit.bodyOwned).length,
+      managerScopeConfigured: managerScopeConfigured.length,
+      managerScopeMatched: units.filter((unit) => unit.managerScopeStatus === "matched").length,
+      managerScopeMismatches: units.filter((unit) => [
+        "unexpected_system_unit",
+        "missing_from_system_manager",
+      ].includes(unit.managerScopeStatus)).length,
+      managerScopeUnresolved: units.filter((unit) => [
+        "not_checked",
+        "unavailable",
+        "not_observed_on_system_bus",
+        "system_bus_observation_failed",
+      ].includes(unit.managerScopeStatus)).length,
       mutationEndpoints: 0,
       restartEndpoints: 0,
     },

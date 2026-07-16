@@ -96,6 +96,14 @@ const serviceTargets = {
   systemHeal: process.env.OPENCLAW_SYSTEM_HEAL_URL ?? "http://127.0.0.1:4107",
 };
 
+const configuredUserOwnedUnits = process.env.OPENCLAW_BODY_USER_OWNED_UNITS === undefined
+  ? null
+  : new Set(process.env.OPENCLAW_BODY_USER_OWNED_UNITS
+    .split(",")
+    .map((unit) => unit.trim())
+    .filter(Boolean)
+    .map((unit) => unit.endsWith(".service") ? unit : `${unit}.service`));
+
 const openClawSystemdUnitSpecs = [
   {
     key: "eventHub",
@@ -172,6 +180,9 @@ const openClawSystemdUnitSpecs = [
 ].map((spec) => ({
   ...spec,
   unit: `${spec.name}.service`,
+  expectedManager: configuredUserOwnedUnits === null
+    ? "unknown"
+    : configuredUserOwnedUnits.has(`${spec.name}.service`) ? "user" : "system",
 }));
 
 async function refreshServiceRegistry() {

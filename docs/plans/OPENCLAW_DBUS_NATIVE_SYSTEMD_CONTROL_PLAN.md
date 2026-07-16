@@ -180,6 +180,24 @@ The native systemd inventory and Observer milestones prove the live
 `openclaw-core.service` -> `openclaw-event-hub.service` edge and expose the
 number of observed nodes and declarative drift nodes from the switched VM.
 
+## Fourth Slice: Manager Scope Reconciliation
+
+The live dependency evidence exposed a second operator ambiguity: the system
+bus can observe a stale or duplicated unit name that is supposed to belong to
+the login user's manager, while a genuinely missing system unit must remain an
+error. The desktop Nix profile now injects the declared user-owned unit names
+into the body environment. System-sense reconciles that declaration with its
+system-bus observation and reports `expectedManager`, `observedManager`, and a
+bounded `managerScopeStatus` per unit, plus compact matched/mismatch/unresolved
+counts in the existing inventory response.
+
+This is still read-only and system-bus scoped. It does not claim that a user
+unit is healthy merely because it is absent from the system bus; it reports
+`not_observed_on_system_bus` and leaves user-manager observation to the existing
+login-session ownership path. Unexpected system copies are explicit
+`unexpected_system_unit` evidence. No user-bus proxy, hostd operation, new
+D-Bus method, task, approval, mutation, or route was added.
+
 ## Deferred
 
 - D-Bus start/stop/reload operations and any restart target other than the fixed
