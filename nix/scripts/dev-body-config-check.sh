@@ -596,6 +596,7 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-engineering-work-view-association.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-engineering-work-view-binding.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-engineering-work-view-bind-routes.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-engineering-recommendation-link.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-verification.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-recovery.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-microcompact.mjs"
@@ -608,7 +609,7 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/persist.mjs"
     || -w "$core_server"
     || -e "$core_out/share/openclaw/services/openclaw-core/test"
-    || "$(find "$core_out" -type f | wc -l)" -ne 183 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 189 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -1363,10 +1364,13 @@ EOF
     || ! -f "$observer_ui_server"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-html.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-engineering-plan.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-semantic-target-task.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-screen-observation.mjs"
     || ! -f "$observer_ui_out/share/openclaw/packages/shared-client/src/service-descriptors.mjs"
     || -w "$observer_ui_server"
     || -e "$observer_ui_out/share/openclaw/apps/observer-ui/scripts"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 63 ]]; then
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 68 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi

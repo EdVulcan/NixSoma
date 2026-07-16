@@ -93,6 +93,7 @@ OPENCLAW_NATIVE_ENGINEERING_PLANNING_WORKBENCH_STATE_BRIDGE_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_RESTORATION_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_AUTO_RESTORE_PLAN.md
 OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md
+OPENCLAW_NATIVE_ENGINEERING_PROVIDER_RECOMMENDATION_SEMANTIC_TASK_LINK_PLAN.md
 OPENCLAW_NIX_STORE_RUNTIME_PACKAGING_PLAN.md
 OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md
 ../architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md
@@ -205,6 +206,11 @@ first selected gap is now closed: Observer can select one current enabled named
 semantic target and create a queued `browser.semantic_click` task through the
 existing rule-v1 planner, while Operator Step/Run and the existing Core/sidecar
 handoff remain the only execution path.
+
+The provider recommendation continuity follow-up is now complete through the
+explicit Observer review and the existing semantic-click planner. Its compact
+provenance and deferred boundaries are recorded in
+`OPENCLAW_NATIVE_ENGINEERING_PROVIDER_RECOMMENDATION_SEMANTIC_TASK_LINK_PLAN.md`.
 
 The active Level 2 bridge is documented in:
 

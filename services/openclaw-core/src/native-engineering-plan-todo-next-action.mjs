@@ -44,6 +44,13 @@ const ACTIONS = {
     existingCapabilityId: "sense.screen.observe",
     requiresApproval: false,
   },
+  semanticClick: {
+    actionId: "create_semantic_click_task",
+    label: "Create a reviewed semantic click task for the current trusted work view target",
+    existingObserverControlId: "create-semantic-click-task-button",
+    existingCapabilityId: "plan.openclaw.browser.semantic_click_task",
+    requiresApproval: true,
+  },
 };
 
 export function getNativeEngineeringPlanTodoActionById(actionId) {
@@ -66,6 +73,9 @@ function classifyTodo(todo) {
   const text = `${todo?.id ?? ""} ${todo?.description ?? ""}`.toLowerCase();
   if (/(verify|test|check|validate|milestone|typecheck)/.test(text)) {
     return ACTIONS.verify;
+  }
+  if (/(semantic[ _-]*click|click[ _-]*target)/.test(text)) {
+    return ACTIONS.semanticClick;
   }
   if (/(observe|screen|capture|visual|work.?view)/.test(text)) {
     return ACTIONS.observe;

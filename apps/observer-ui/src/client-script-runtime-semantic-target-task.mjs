@@ -79,7 +79,7 @@ function renderSemanticTargetSelection(screen) {
   }
 }
 
-async function createOperatorReviewedSemanticClickTask() {
+async function createOperatorReviewedSemanticClickTask(engineeringRecommendationLink = null) {
   const selection = latestSemanticTargetSelection;
   const targetId = screenSemanticTargetSelect?.value ?? "";
   const target = selection?.targets?.find((candidate) => candidate.targetId === targetId) ?? null;
@@ -106,6 +106,7 @@ async function createOperatorReviewedSemanticClickTask() {
         planStrategy: "rule-v1",
         intent: "browser.semantic_click",
         actions: [{ kind: "browser.semantic_click", params: { target: targetIntent } }],
+        ...(engineeringRecommendationLink ? { engineeringRecommendationLink } : {}),
       }),
     });
     if (response.ok !== true || !response.task?.id) {
@@ -124,6 +125,8 @@ async function createOperatorReviewedSemanticClickTask() {
       executionStarted: false,
       operatorActionRequired: "operator_step_or_run",
       targetReferenceMaterialisedAtDispatch: true,
+      guidanceSourceTaskId: response.task?.engineeringRecommendationLink?.source?.taskId ?? null,
+      guidanceActionId: response.task?.engineeringRecommendationLink?.action?.actionId ?? null,
       selectorsExposed: false,
       arbitraryPageScript: false,
     }, null, 2);

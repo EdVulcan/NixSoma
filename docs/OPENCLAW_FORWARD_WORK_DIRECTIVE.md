@@ -733,6 +733,15 @@ the target reference, inventory digest, and visual-grounding frame to match.
 The real Firefox milestone proves autonomous selection, click, task evidence,
 post-frame advance, and expected navigation.
 
+The provider-to-action continuity bridge is documented in
+`docs/plans/OPENCLAW_NATIVE_ENGINEERING_PROVIDER_RECOMMENDATION_SEMANTIC_TASK_LINK_PLAN.md`.
+It carries only compact provenance from one completed approved provider
+recommendation through an explicit Observer review into the existing queued
+semantic-click planner. Core revalidates the completed provider source task and
+fixed control contract; provider response content, target coordinates,
+selectors, page scripts, credentials, and automatic execution remain outside
+the bridge.
+
 The trusted work-view readiness decision is now consumed by that same Core
 handoff. Before the existing `screen-act` route is called, Core re-reads the
 session-manager state and requires the task binding, active lease, fresh

@@ -40,12 +40,14 @@ function createContext() {
     taskDetailIdInput: { value: "" },
     fetchJson: async (url, options) => {
       calls.push({ url, options });
+      const request = JSON.parse(options.body);
       return {
         ok: true,
         task: {
           id: "task-semantic-click-1",
           status: "queued",
           plan: { strategy: "rule-v1" },
+          engineeringRecommendationLink: request.engineeringRecommendationLink ?? null,
         },
       };
     },
@@ -139,6 +141,23 @@ test("Observer creates a queued semantic click plan without dispatching it", asy
   assert.deepEqual(fixture.refreshes, ["runtime", "task-list", "task-history", "operator"]);
   assert.match(fixture.taskJson.textContent, /executionStarted": false/u);
   assert.match(fixture.messages.at(-1), /execution remains explicit/u);
+});
+
+test("Observer forwards compact AI recommendation provenance into the queued semantic click plan", async () => {
+  const fixture = createContext();
+  fixture.context.renderSemanticTargetSelection(screen());
+  const link = {
+    registry: "openclaw-native-engineering-recommendation-link-v0",
+    source: { taskId: "provider-task-42" },
+    action: { actionId: "create_semantic_click_task" },
+  };
+
+  await fixture.context.createOperatorReviewedSemanticClickTask(link);
+
+  const request = JSON.parse(fixture.calls[0].options.body);
+  assert.deepEqual(request.engineeringRecommendationLink, link);
+  assert.match(fixture.taskJson.textContent, /guidanceSourceTaskId": "provider-task-42"/u);
+  assert.match(fixture.taskJson.textContent, /guidanceActionId": "create_semantic_click_task"/u);
 });
 
 test("Observer disables reviewed semantic task planning without a safe current work view", () => {

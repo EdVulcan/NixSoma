@@ -75,6 +75,66 @@ test("task manager stores a compact browser execution binding on planned tasks",
   assert.equal(manager.serialiseTask(task).operatorExecutionBinding.actionCount, 1);
 });
 
+test("task manager recomputes provider recommendation provenance before serializing a semantic-click task", () => {
+  const { manager } = createHarness();
+  const providerTask = manager.createTask({
+    goal: "Completed provider recommendation source",
+    type: "cloud_consciousness_live_provider_egress_execution_task",
+  });
+  providerTask.cloudConsciousnessLiveProviderEgressExecution = {
+    registry: "openclaw-cloud-consciousness-live-provider-live-execution-v0",
+    responseContract: "engineering_recommendation_v0",
+    recommendation: {
+      registry: "openclaw-cloud-consciousness-live-provider-engineering-recommendation-v0",
+      contract: "engineering_recommendation_v0",
+      valid: true,
+      actionId: "create_semantic_click_task",
+    },
+  };
+  manager.completeTask(providerTask, { summary: "Provider recommendation completed." });
+
+  const task = manager.createTask({
+    goal: "Create the reviewed semantic click task",
+    type: "browser_task",
+    engineeringRecommendationLink: {
+      sourceTaskId: providerTask.id,
+      sourceRegistry: "openclaw-cloud-consciousness-live-provider-engineering-recommendation-v0",
+      contract: "engineering_recommendation_v0",
+      actionId: "create_semantic_click_task",
+      expectedObserverControlId: "create-semantic-click-task-button",
+      existingCapabilityId: "plan.openclaw.browser.semantic_click_task",
+      requiresApproval: true,
+      createsTaskAutomatically: false,
+      createsApprovalAutomatically: false,
+      executesAutomatically: false,
+    },
+  });
+
+  assert.equal(task.engineeringRecommendationLink.registry, "openclaw-native-engineering-recommendation-link-v0");
+  assert.equal(task.engineeringRecommendationLink.source.taskId, providerTask.id);
+  assert.equal(task.engineeringRecommendationLink.source.taskStatus, "completed");
+  assert.equal(task.engineeringRecommendationLink.action.actionId, "create_semantic_click_task");
+  assert.equal(task.engineeringRecommendationLink.governance.providerCallAllowed, false);
+  assert.equal(manager.serialiseTask(task).engineeringRecommendationLink.source.taskId, providerTask.id);
+
+  assert.throws(() => manager.createTask({
+    goal: "Reject a cross-task recommendation link",
+    type: "browser_task",
+    engineeringRecommendationLink: {
+      sourceTaskId: "missing-provider-task",
+      sourceRegistry: "openclaw-cloud-consciousness-live-provider-engineering-recommendation-v0",
+      contract: "engineering_recommendation_v0",
+      actionId: "create_semantic_click_task",
+      expectedObserverControlId: "create-semantic-click-task-button",
+      existingCapabilityId: "plan.openclaw.browser.semantic_click_task",
+      requiresApproval: true,
+      createsTaskAutomatically: false,
+      createsApprovalAutomatically: false,
+      executesAutomatically: false,
+    },
+  }), /source task does not exist/u);
+});
+
 test("task manager records experience at both terminal lifecycle boundaries", () => {
   const experiences = [];
   const { manager } = createHarness({

@@ -1385,6 +1385,18 @@ test("task plan route publishes created, approval, planned, and reclaimed task e
     plan: { steps: [{ phase: "acting_on_target", kind: "keyboard.type", params: { text: "hello" } }] },
   };
   const reclaimedTask = { id: "task-old", status: "superseded" };
+  const engineeringRecommendationLink = {
+    sourceTaskId: "provider-task-42",
+    sourceRegistry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_REGISTRY,
+    contract: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
+    actionId: "create_semantic_click_task",
+    expectedObserverControlId: "create-semantic-click-task-button",
+    existingCapabilityId: "plan.openclaw.browser.semantic_click_task",
+    requiresApproval: true,
+    createsTaskAutomatically: false,
+    createsApprovalAutomatically: false,
+    executesAutomatically: false,
+  };
   const deps = createBaseDeps({
     taskManager: {
       createTask: (input) => {
@@ -1413,6 +1425,7 @@ test("task plan route publishes created, approval, planned, and reclaimed task e
 
   const response = await invokeRoute(deps, "POST", "/tasks/plan", {
     targetUrl: "https://example.test/work",
+    engineeringRecommendationLink,
   });
 
   assert.equal(response.statusCode, 201, JSON.stringify(response.body));
@@ -1422,6 +1435,7 @@ test("task plan route publishes created, approval, planned, and reclaimed task e
     type: "browser_task",
     workViewStrategy: "ai-work-view",
     includePlan: true,
+    engineeringRecommendationLink,
   }]);
   assert.deepEqual(approvalCalls, ["task-plan"]);
   assert.deepEqual(events.map((event) => event.type), ["task.created", "task.planned", "task.phase_changed"]);

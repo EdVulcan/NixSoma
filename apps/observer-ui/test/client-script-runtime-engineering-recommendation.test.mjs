@@ -18,6 +18,7 @@ function createContext() {
   };
   const calls = [];
   const messages = [];
+  const recommendationLinks = [];
   const context = {
     GOVERNED_PLAN_TODO_SUGGESTION_CONTROLS: {
       create_verification_task: {
@@ -32,6 +33,12 @@ function createContext() {
         requiresApproval: false,
         run: async () => calls.push("screenObservation"),
       },
+      create_semantic_click_task: {
+        controlId: "create-semantic-click-task-button",
+        capabilityId: "plan.openclaw.browser.semantic_click_task",
+        requiresApproval: true,
+        run: async (link) => recommendationLinks.push(link),
+      },
     },
     engineeringLoopStateRecommendation: nodes.action,
     engineeringLoopStateRecommendationReview: nodes.review,
@@ -41,9 +48,10 @@ function createContext() {
     formatError: (error) => String(error?.message ?? error),
     setControlMessage: (message) => messages.push(message),
     invokeCapabilityFromUi: async (key) => calls.push(key),
+    createOperatorReviewedSemanticClickTask: async (link) => recommendationLinks.push(link),
   };
   vm.runInNewContext(observerClientRuntimeEngineeringRecommendationScript, context);
-  return { context, nodes, calls, messages };
+  return { context, nodes, calls, messages, recommendationLinks };
 }
 
 function validRecommendation(overrides = {}) {
@@ -135,4 +143,56 @@ test("Observer blocks a recommendation whose capability or approval contract div
     assert.equal(JSON.parse(fixture.nodes.json.textContent).status, "invalid_transient_recommendation");
     assert.deepEqual(fixture.calls, []);
   }
+});
+
+test("Observer carries the completed provider source task into the reviewed semantic-click control", async () => {
+  const fixture = createContext();
+  fixture.context.renderEngineeringRecommendationFromOperatorResult({
+    task: { id: "provider-task-42" },
+    execution: {
+      recommendation: validRecommendation({
+        actionId: "create_semantic_click_task",
+        label: "Create a reviewed semantic click task",
+        reason: "The current work-view target matches the bounded recommendation.",
+        existingObserverControlId: "create-semantic-click-task-button",
+        existingCapabilityId: "plan.openclaw.browser.semantic_click_task",
+      }),
+    },
+  });
+
+  const readback = JSON.parse(fixture.nodes.json.textContent);
+  assert.equal(readback.sourceTaskId, "provider-task-42");
+  await fixture.context.useEngineeringRecommendation();
+
+  assert.deepEqual(JSON.parse(JSON.stringify(fixture.recommendationLinks)), [{
+    sourceTaskId: "provider-task-42",
+    sourceRegistry: "openclaw-cloud-consciousness-live-provider-engineering-recommendation-v0",
+    contract: "engineering_recommendation_v0",
+    actionId: "create_semantic_click_task",
+    expectedObserverControlId: "create-semantic-click-task-button",
+    existingCapabilityId: "plan.openclaw.browser.semantic_click_task",
+    requiresApproval: true,
+    createsTaskAutomatically: false,
+    createsApprovalAutomatically: false,
+    executesAutomatically: false,
+  }]);
+});
+
+test("Observer blocks a semantic-click recommendation without a provider source task", async () => {
+  const fixture = createContext();
+  fixture.context.renderEngineeringRecommendationFromOperatorResult({
+    execution: {
+      recommendation: validRecommendation({
+        actionId: "create_semantic_click_task",
+        existingObserverControlId: "create-semantic-click-task-button",
+        existingCapabilityId: "plan.openclaw.browser.semantic_click_task",
+      }),
+    },
+  });
+
+  await assert.rejects(
+    () => fixture.context.useEngineeringRecommendation(),
+    /missing its completed provider source task/u,
+  );
+  assert.deepEqual(fixture.recommendationLinks, []);
 });

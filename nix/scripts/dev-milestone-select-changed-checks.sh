@@ -595,6 +595,8 @@ function selectSourceHeuristics(file) {
     ["services/openclaw-core/test/capability-runtime-browser-actions.test.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
     ["services/openclaw-core/test/capability-runtime-screen-actions.test.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
     ["services/openclaw-core/test/cloud-live-provider-runtime-response-contract.test.mjs", ["openclaw-core-service-unit-tests"]],
+    ["services/openclaw-core/src/native-engineering-recommendation-link.mjs", ["openclaw-core-service-unit-tests", "operator-loop"]],
+    ["services/openclaw-core/test/native-engineering-recommendation-link.test.mjs", ["openclaw-core-service-unit-tests", "operator-loop"]],
     ["services/openclaw-core/test/cloud-live-provider-runtime-engineering-plan-contract.test.mjs", ["openclaw-core-service-unit-tests", "openclaw-cloud-consciousness-live-provider-egress-execution-task-shell"]],
     ["services/openclaw-core/test/native-engineering-plan-todo-evidence-builders.test.mjs", ["openclaw-core-service-unit-tests", "openclaw-native-engineering-plan-todo-evidence", "observer-openclaw-native-engineering-plan-todo-evidence"]],
     ["services/openclaw-core/test/native-engineering-tool-surface-builders.test.mjs", ["openclaw-core-service-unit-tests", "openclaw-native-engineering-tool-surface-inventory", "observer-openclaw-native-engineering-tool-surface-inventory"]],

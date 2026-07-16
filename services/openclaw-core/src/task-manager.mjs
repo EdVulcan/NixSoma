@@ -2,10 +2,12 @@ import { randomUUID } from "node:crypto";
 import { createTaskRecovery } from "./task-recovery.mjs";
 import { redactWriteOnlyInputActionTree } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 import { buildBrowserTaskExecutionBinding } from "./browser-task-execution-binding.mjs";
+import { buildNativeEngineeringRecommendationLink } from "./native-engineering-recommendation-link.mjs";
 
 const TASK_EXTENSION_FIELDS = [
   { name: "sourceCommand", copyFromCreateInput: true },
   { name: "engineeringPlanTodoSuggestionLink", copyFromCreateInput: true },
+  { name: "engineeringRecommendationLink", copyFromCreateInput: true },
   { name: "engineeringEditProposal" },
   { name: "engineeringWriteProposal" },
   { name: "engineeringLspLifecycle" },
@@ -319,6 +321,12 @@ function createTask(body, options = {}) {
   };
 
   task.operatorExecutionBinding = buildBrowserTaskExecutionBinding(task);
+  if (task.engineeringRecommendationLink !== null) {
+    task.engineeringRecommendationLink = buildNativeEngineeringRecommendationLink({
+      input: task.engineeringRecommendationLink,
+      tasks,
+    });
+  }
 
   // H-1 Fix: Evict oldest non-active tasks when the Map exceeds MAX_TASK_ENTRIES.
   if (tasks.size > MAX_TASK_ENTRIES) {

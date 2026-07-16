@@ -85,6 +85,19 @@ test("native engineering plan/todo evidence can guide the existing screen observ
   assert.equal(response.nextGovernedActionSuggestion.governance.guidanceOnly, true);
 });
 
+test("native engineering plan/todo evidence prioritizes semantic click over generic work-view observation", () => {
+  const response = buildNativeEngineeringPlanTodoEvidence({
+    todos: [
+      { id: "click-current-target", description: "Create a semantic click task for the current trusted work-view target", status: "in_progress" },
+    ],
+  });
+
+  assert.equal(response.nextGovernedActionSuggestion.suggestion.actionId, "create_semantic_click_task");
+  assert.equal(response.nextGovernedActionSuggestion.suggestion.existingObserverControlId, "create-semantic-click-task-button");
+  assert.equal(response.nextGovernedActionSuggestion.suggestion.existingCapabilityId, "plan.openclaw.browser.semantic_click_task");
+  assert.equal(response.nextGovernedActionSuggestion.suggestion.requiresApproval, true);
+});
+
 test("native engineering plan/todo evidence reads governed workbench storage before task plan steps", () => {
   const response = buildNativeEngineeringPlanTodoEvidence({
     tasks: new Map([

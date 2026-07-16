@@ -1,18 +1,28 @@
 export const observerClientRuntimeEngineeringRecommendationScript = `const ENGINEERING_RECOMMENDATION_CONTRACT = "engineering_recommendation_v0";
 const ENGINEERING_RECOMMENDATION_REGISTRY = "openclaw-cloud-consciousness-live-provider-engineering-recommendation-v0";
 let latestEngineeringRecommendation = null;
+let latestEngineeringRecommendationSourceTaskId = null;
 
 function engineeringRecommendationFromResult(result) {
   const candidates = [];
+  const addCandidate = (recommendation, taskId) => {
+    if (!recommendation) {
+      return;
+    }
+    candidates.push({
+      recommendation,
+      sourceTaskId: typeof taskId === "string" && taskId.trim() ? taskId.trim() : null,
+    });
+  };
   if (result?.execution?.recommendation) {
-    candidates.push(result.execution.recommendation);
+    addCandidate(result.execution.recommendation, result.task?.id);
   }
   if (result?.recommendation) {
-    candidates.push(result.recommendation);
+    addCandidate(result.recommendation, result.task?.id);
   }
   for (const step of result?.steps ?? []) {
     if (step?.execution?.recommendation) {
-      candidates.push(step.execution.recommendation);
+      addCandidate(step.execution.recommendation, step.task?.id);
     }
   }
   return candidates.at(-1) ?? null;
@@ -61,6 +71,7 @@ function validateEngineeringRecommendation(recommendation) {
 
 function renderEngineeringRecommendationReadback(recommendation, { source = "operator" } = {}) {
   latestEngineeringRecommendation = null;
+  latestEngineeringRecommendationSourceTaskId = null;
   if (!recommendation) {
     engineeringLoopStateRecommendation.textContent = "none";
     engineeringLoopStateRecommendationReview.textContent = "not available";
@@ -71,25 +82,28 @@ function renderEngineeringRecommendationReadback(recommendation, { source = "ope
   }
 
   try {
-    const control = validateEngineeringRecommendation(recommendation);
-    latestEngineeringRecommendation = recommendation;
-    engineeringLoopStateRecommendation.textContent = recommendation.actionId;
+    const recommendationValue = recommendation.recommendation;
+    const control = validateEngineeringRecommendation(recommendationValue);
+    latestEngineeringRecommendation = recommendationValue;
+    latestEngineeringRecommendationSourceTaskId = recommendation.sourceTaskId;
+    engineeringLoopStateRecommendation.textContent = recommendationValue.actionId;
     engineeringLoopStateRecommendationReview.textContent = "required";
     engineeringLoopStateRecommendationControl.textContent = control.controlId;
     engineeringLoopRecommendationUseButton.disabled = false;
     engineeringLoopRecommendationJson.textContent = JSON.stringify({
-      registry: recommendation.registry,
-      contract: recommendation.contract,
+      registry: recommendationValue.registry,
+      contract: recommendationValue.contract,
       status: "valid_transient_recommendation",
       source,
-      actionId: recommendation.actionId,
-      label: recommendation.label ?? null,
-      confidence: recommendation.confidence,
-      reason: recommendation.reason,
-      existingObserverControlId: recommendation.existingObserverControlId,
-      existingCapabilityId: recommendation.existingCapabilityId ?? null,
+      actionId: recommendationValue.actionId,
+      label: recommendationValue.label ?? null,
+      confidence: recommendationValue.confidence,
+      reason: recommendationValue.reason,
+      sourceTaskId: recommendation.sourceTaskId,
+      existingObserverControlId: recommendationValue.existingObserverControlId,
+      existingCapabilityId: recommendationValue.existingCapabilityId ?? null,
       requiresOperatorReview: true,
-      requiresApproval: recommendation.requiresApproval === true,
+      requiresApproval: recommendationValue.requiresApproval === true,
       createsTaskAutomatically: false,
       createsApprovalAutomatically: false,
       executesAutomatically: false,
@@ -114,10 +128,31 @@ function renderEngineeringRecommendationFromOperatorResult(result) {
   });
 }
 
+function buildEngineeringRecommendationLinkInput(recommendation, control) {
+  if (recommendation.actionId !== "create_semantic_click_task") {
+    return null;
+  }
+  if (!latestEngineeringRecommendationSourceTaskId) {
+    throw new Error("The semantic-click recommendation is missing its completed provider source task.");
+  }
+  return {
+    sourceTaskId: latestEngineeringRecommendationSourceTaskId,
+    sourceRegistry: recommendation.registry,
+    contract: recommendation.contract,
+    actionId: recommendation.actionId,
+    expectedObserverControlId: control.controlId,
+    existingCapabilityId: recommendation.existingCapabilityId,
+    requiresApproval: recommendation.requiresApproval === true,
+    createsTaskAutomatically: recommendation.createsTaskAutomatically === true,
+    createsApprovalAutomatically: recommendation.createsApprovalAutomatically === true,
+    executesAutomatically: recommendation.executesAutomatically === true,
+  };
+}
+
 async function useEngineeringRecommendation() {
   const recommendation = latestEngineeringRecommendation;
   const control = validateEngineeringRecommendation(recommendation);
-  await control.run();
+  await control.run(buildEngineeringRecommendationLinkInput(recommendation, control));
   engineeringLoopStateRecommendationReview.textContent = "operator selected";
   setControlMessage(
     "Used the AI recommendation through the existing "
