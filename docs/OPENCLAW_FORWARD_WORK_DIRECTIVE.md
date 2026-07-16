@@ -1164,6 +1164,12 @@ the dedicated route remains the detailed read-model owner, while task creation,
 approval, operator execution, and filesystem mutation remain explicit and
 approval-gated.
 
+The existing Observer Edit Target Selection panel now also requests
+`sense.openclaw.workspace_edit_target_select` through the common capability
+runtime. It unwraps only bounded selected-target metadata; proposal creation,
+approval, patch execution, plugin execution, runtime activation, provider use,
+and mutation remain separate explicit paths.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

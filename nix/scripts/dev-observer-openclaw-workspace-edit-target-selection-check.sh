@@ -103,13 +103,17 @@ for (const token of [
   "OpenClaw Edit Target Selection",
   "edit-target-selection-registry",
   "openclaw-native-workspace-edit-target-selection-v0",
-  "/plugins/native-adapter/workspace-edit-target-selection",
+  "/capabilities/invoke",
+  "sense.openclaw.workspace_edit_target_select",
   "Target Selection: registry=",
   "selectTargetFromSource=true",
 ]) {
   if (!raw.includes(token)) {
     throw new Error(`Observer edit target selection missing ${token}`);
   }
+}
+if (client.includes("observerConfig.coreUrl}/plugins/native-adapter/workspace-edit-target-selection")) {
+  throw new Error("Observer edit target refresh must use the common capability runtime");
 }
 if (
   !selection.ok

@@ -633,7 +633,7 @@ function selectSourceHeuristics(file) {
     ["apps/observer-ui/src/client-script-refreshers-app.mjs", ["observer-capability-invoke"]],
     ["apps/observer-ui/src/client-script-runtime-bindings.mjs", ["observer-capability-invoke"]],
     ["apps/observer-ui/src/client-script-config-dom-workspace-source.mjs", [nativeEngineeringLspObserverCheck]],
-    ["apps/observer-ui/src/client-script-refreshers-workspace-source.mjs", ["observer-openclaw-native-engineering-tool-surface-inventory", "observer-openclaw-native-engineering-read-search", "observer-openclaw-native-engineering-edit-proposal", "observer-openclaw-native-engineering-write-proposal", "observer-openclaw-native-engineering-write-execution-evidence", nativeEngineeringLspObserverCheck, "observer-capability-invoke"]],
+    ["apps/observer-ui/src/client-script-refreshers-workspace-source.mjs", ["observer-openclaw-native-engineering-tool-surface-inventory", "observer-openclaw-native-engineering-read-search", "observer-openclaw-native-engineering-edit-proposal", "observer-openclaw-native-engineering-write-proposal", "observer-openclaw-native-engineering-write-execution-evidence", "observer-openclaw-workspace-edit-target-selection", nativeEngineeringLspObserverCheck, "observer-capability-invoke"]],
     ["apps/observer-ui/src/client-script-runtime-actions.mjs", [nativeEngineeringLspObserverCheck, "observer-capability-invoke"]],
     ["apps/observer-ui/src/client-script-runtime-screen-observation.mjs", ["observer-capability-invoke"]],
     ["apps/observer-ui/src/client-script-runtime-engineering-loop-controls.mjs", [nativeEngineeringLspObserverCheck, "observer-capability-invoke"]],

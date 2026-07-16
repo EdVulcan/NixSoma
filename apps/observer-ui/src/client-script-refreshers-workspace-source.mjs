@@ -513,8 +513,19 @@ async function refreshSymbolLookup() {
 
 async function refreshEditTargetSelection() {
   try {
-    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/workspace-edit-target-selection?scope=tools&query=edit&limit=8\`);
-    renderEditTargetSelection(data);
+    const response = await fetchJson(\`\${observerConfig.coreUrl}/capabilities/invoke\`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        capabilityId: "sense.openclaw.workspace_edit_target_select",
+        intent: "workspace.edit_target_select",
+        params: { scope: "tools", query: "edit", limit: 8 },
+      }),
+    });
+    if (response.invoked !== true) {
+      throw new Error("Workspace edit target selection capability was not invoked.");
+    }
+    renderEditTargetSelection(response.result ?? {});
   } catch {
     editTargetSelectionRegistry.textContent = "offline";
     editTargetSelectionCandidates.textContent = "0";

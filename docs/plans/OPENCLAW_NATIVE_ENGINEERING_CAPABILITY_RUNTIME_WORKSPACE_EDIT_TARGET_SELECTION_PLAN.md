@@ -75,6 +75,19 @@ Both checks invoke the common capability against the same local fixture and
 assert selected-target identity, proposal eligibility, source-content
 redaction, and every negative authority boundary.
 
+## Observer Common-Path Closure
+
+The existing Observer Edit Target Selection refresh now invokes
+`sense.openclaw.workspace_edit_target_select` through
+`POST /capabilities/invoke` and unwraps only the transient bounded builder
+result for the existing renderer. The dedicated selection route remains the
+detailed read-model owner; edit proposals, task creation, approval, patch
+execution, and mutation remain separate explicit paths.
+
+The real Observer check proves the served client no longer refreshes through
+the dedicated route while preserving selected-target identity and all negative
+authority flags.
+
 ## Deferred
 
 ```text

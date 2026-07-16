@@ -831,3 +831,11 @@ result transient for the existing renderer and leaves task creation, approval,
 operator execution, and mutation on their existing explicit owners. Its
 common-path closure is recorded in
 `OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_EXECUTION_EVIDENCE_PLAN.md`.
+
+The existing Observer Edit Target Selection refresh now uses
+`sense.openclaw.workspace_edit_target_select` through `/capabilities/invoke`.
+It preserves the existing selected-target renderer and keeps proposal creation,
+patch execution, plugin execution, runtime activation, provider use, and
+mutation outside the metadata-only capability. Its common-path closure is
+recorded in
+`OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_EDIT_TARGET_SELECTION_PLAN.md`.
