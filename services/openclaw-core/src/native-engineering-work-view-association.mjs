@@ -1,3 +1,5 @@
+import { buildNativeEngineeringWorkViewActionDecision } from "./native-engineering-work-view-action-decision.mjs";
+
 export const NATIVE_ENGINEERING_WORK_VIEW_ASSOCIATION_REGISTRY =
   "openclaw-native-engineering-work-view-association-v0";
 export const NATIVE_ENGINEERING_WORK_VIEW_OBSERVATION_REGISTRY =
@@ -205,6 +207,19 @@ export function buildNativeEngineeringWorkViewAssociation({
   const observation = stateAvailable && includeWorkViewObservation
     ? buildWorkViewObservation({ helperRuntime })
     : null;
+  const semanticActionDecision = buildNativeEngineeringWorkViewActionDecision({
+    task,
+    taskId: selectedTaskId,
+    binding,
+    authority: {
+      identityStatus: stateAvailable ? sessionIdentity.status ?? null : null,
+      actionAuthority: stateAvailable ? helperRuntime.actionAuthority ?? "inactive" : "inactive",
+      leaseMatched: stateAvailable ? helperRuntime.leaseMatched === true : false,
+    },
+    observation,
+    recoveryAction,
+    now,
+  });
   const summary = {
     status,
     taskId: selectedTaskId ?? null,
@@ -222,6 +237,10 @@ export function buildNativeEngineeringWorkViewAssociation({
     workViewObservationFreshness: observation?.freshness ?? null,
     workViewObservationSequence: observation?.sequence ?? null,
     semanticTargetCount: observation?.semanticTargets?.itemCount ?? null,
+    semanticActionDecisionStatus: semanticActionDecision.status,
+    semanticActionDecisionReason: semanticActionDecision.reason,
+    semanticActionReady: semanticActionDecision.readyForTargetSelection,
+    semanticActionOperatorControlId: semanticActionDecision.recommendation.existingObserverControlId,
   };
 
   return {
@@ -270,6 +289,7 @@ export function buildNativeEngineeringWorkViewAssociation({
     },
     binding,
     observation,
+    semanticActionDecision,
     summary,
     governance: {
       readOnly: true,
@@ -283,6 +303,7 @@ export function buildNativeEngineeringWorkViewAssociation({
       exposesVisualFrameBytes: false,
       exposesSemanticTargetItems: false,
       readsTrustedWorkViewObservation: Boolean(observation),
+      readsSemanticActionDecision: true,
       createsTask: false,
       createsApproval: false,
       executesAction: false,

@@ -592,6 +592,7 @@ function selectSourceHeuristics(file) {
     ["services/openclaw-core/test/browser-task-execution-binding.test.mjs", ["openclaw-core-service-unit-tests", "task-executor", "operator-loop"]],
     ["services/openclaw-core/test/task-manager.test.mjs", ["openclaw-core-service-unit-tests", "task-executor", "operator-loop"]],
     ["services/openclaw-core/test/native-engineering-experience-memory.test.mjs", ["openclaw-core-service-unit-tests", nativeEngineeringContextPacketPairBatchCheck]],
+    ["services/openclaw-core/test/native-engineering-work-view-action-decision.test.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
     ["services/openclaw-core/test/task-executor.test.mjs", ["openclaw-core-service-unit-tests", "task-executor", "operator-loop"]],
     ["services/openclaw-core/src/route-handlers.mjs", ["task-workbench", "operator-loop", "observer-operator", nativeEngineeringContextPacketPairBatchCheck]],
     ["services/openclaw-core/src/cloud-live-provider-result-envelope-routes.mjs", ["openclaw-live-provider-result-envelope-batch-reuse"]],

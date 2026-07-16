@@ -29,6 +29,11 @@ export const observerClientEngineeringContextRenderersScript = `function renderE
       ? String(workViewObservation.semanticTargets?.itemCount ?? 0)
       : "none";
   }
+  if (engineeringContextPacketSemanticAction) {
+    engineeringContextPacketSemanticAction.textContent = summary.semanticActionDecisionStatus
+      ? String(summary.semanticActionDecisionStatus) + "/" + String(summary.semanticActionDecisionReason ?? "none")
+      : "none";
+  }
   if (engineeringContextPacketPlanTodo) {
     engineeringContextPacketPlanTodo.textContent = summary.planTodoEvidenceIncluded
       ? \`\${summary.planTodoTodoSource ?? "unknown"}/\${summary.planTodoCurrentAction ?? "review_current_todo"}\`
@@ -72,6 +77,11 @@ export const observerClientEngineeringContextRenderersScript = `function renderE
     \`Governance: local=\${Boolean(governance.localAssemblyOnly)} credentialStore=\${Boolean(governance.readsCredentialStore)} taskMutation=\${Boolean(governance.mutatesTaskState)} provider=\${Boolean(governance.callsProvider)} network=\${Boolean(governance.networkEgress)}\`,
     \`Audit: operation=\${data?.auditEvidence?.operation ?? "missing"} inputContent=\${Boolean(data?.auditEvidence?.inputContentRecorded)} outputContent=\${Boolean(data?.auditEvidence?.outputContentRecorded)}\`,
     "",
+    "Semantic Action Decision Registry: openclaw-native-engineering-work-view-action-decision-v0",
+    "Semantic Action Decision: status=" + String(summary.semanticActionDecisionStatus ?? "none")
+      + " reason=" + String(summary.semanticActionDecisionReason ?? "none")
+      + " ready=" + String(summary.semanticActionReady === true)
+      + " control=" + String(summary.semanticActionOperatorControlId ?? "none"),
     "Packet messages:",
     JSON.stringify(messages, null, 2),
     "",

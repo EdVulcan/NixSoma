@@ -561,7 +561,12 @@ test("capability runtime exposes compact trusted work-view observation through t
   assert.equal(result.response.result.summary.status, "bound");
   assert.equal(result.response.result.observation.freshness, "fresh");
   assert.equal(result.response.result.observation.semanticTargets.itemCount, 3);
+  assert.equal(result.response.result.semanticActionDecision.status, "ready_for_target_selection");
+  assert.equal(result.response.result.summary.semanticActionReady, true);
   assert.equal(result.response.summary.kind, "engineering.work_view_observation");
+  assert.equal(result.response.summary.semanticActionDecisionStatus, "ready_for_target_selection");
+  assert.equal(result.response.summary.semanticActionReady, true);
+  assert.equal(result.response.summary.readsSemanticActionDecision, true);
   assert.equal(result.response.summary.noPayloadExposure, true);
   assert.equal(result.response.summary.readsTrustedWorkViewObservation, true);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("private.example"), false);

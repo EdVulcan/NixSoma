@@ -110,6 +110,10 @@ test("trusted work-view association reports a bound task with compact authority 
   assert.equal(association.observation.semanticTargets.itemCount, 2);
   assert.equal(association.observation.pageReferencePresent, true);
   assert.equal(association.summary.semanticTargetCount, 2);
+  assert.equal(association.semanticActionDecision.status, "ready_for_target_selection");
+  assert.equal(association.semanticActionDecision.reason, null);
+  assert.equal(association.summary.semanticActionReady, true);
+  assert.equal(association.governance.readsSemanticActionDecision, true);
   assert.equal(association.governance.exposesLeaseId, false);
   assert.equal(association.governance.exposesActiveUrl, false);
   assert.equal(association.governance.exposesVisualFrameBytes, false);
@@ -132,6 +136,7 @@ test("trusted work-view association distinguishes stale task binding and unavail
   });
   assert.equal(stale.summary.status, "stale_session_binding");
   assert.equal(stale.binding.sessionMatched, false);
+  assert.equal(stale.semanticActionDecision.reason, "work_view_binding_stale");
 
   const unavailable = buildNativeEngineeringWorkViewAssociation({
     taskId: "task-missing",
@@ -139,5 +144,6 @@ test("trusted work-view association distinguishes stale task binding and unavail
   });
   assert.equal(unavailable.ok, false);
   assert.equal(unavailable.summary.status, "work_view_state_unavailable");
+  assert.equal(unavailable.semanticActionDecision.reason, "task_selection_required");
   assert.equal(unavailable.governance.exposesLeaseId, false);
 });

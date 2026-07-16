@@ -289,7 +289,15 @@ export function createEngineeringWorkViewCapabilityHandlers({
       observationFreshness: summary.workViewObservationFreshness ?? observation.freshness ?? null,
       observationSequence: summary.workViewObservationSequence ?? observation.sequence ?? null,
       semanticTargetCount: summary.semanticTargetCount ?? observation.semanticTargets?.itemCount ?? null,
+      semanticActionDecisionStatus: summary.semanticActionDecisionStatus ?? result?.semanticActionDecision?.status ?? null,
+      semanticActionDecisionReason: summary.semanticActionDecisionReason ?? result?.semanticActionDecision?.reason ?? null,
+      semanticActionReady: summary.semanticActionReady === true
+        || result?.semanticActionDecision?.readyForTargetSelection === true,
+      semanticActionOperatorControlId: summary.semanticActionOperatorControlId
+        ?? result?.semanticActionDecision?.recommendation?.existingObserverControlId
+        ?? null,
       readsTrustedWorkViewObservation: governance.readsTrustedWorkViewObservation === true,
+      readsSemanticActionDecision: governance.readsSemanticActionDecision === true,
       noPayloadExposure: governance.exposesLeaseId === false
         && governance.exposesActiveUrl === false
         && governance.exposesCapturePayload === false

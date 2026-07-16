@@ -65,6 +65,7 @@ Runtime:
 
 ```text
 services/openclaw-core/src/native-engineering-work-view-association.mjs
+services/openclaw-core/src/native-engineering-work-view-action-decision.mjs
 services/openclaw-core/src/native-engineering-context-routes.mjs
 services/openclaw-core/src/native-engineering-context-packet.mjs
 ```
@@ -82,6 +83,7 @@ Validation:
 
 ```text
 services/openclaw-core/test/native-engineering-work-view-association.test.mjs
+services/openclaw-core/test/native-engineering-work-view-action-decision.test.mjs
 services/openclaw-core/test/native-engineering-context-packet.test.mjs
 services/openclaw-core/test/native-engineering-context-routes.test.mjs
 apps/observer-ui/test/client-script-engineering-context.test.mjs
@@ -99,8 +101,20 @@ long-lived LSP pools and ACPX/Codex live process execution
 provider egress, credentials, root/system daemon work, and desktop-wide capture
 ```
 
+## Readiness Decision Follow-Up Complete
+
+The existing work-view association now derives
+`openclaw-native-engineering-work-view-action-decision-v0`. It reports whether
+the operator may enter bounded semantic target selection using only task
+binding, authority, capture freshness, visual-frame provenance, and semantic
+inventory/frame consistency. The decision never selects a target or dispatches
+an action, and it exposes no target items, selectors, URLs, pixels, lease
+values, or input data.
+
 ## Next Smallest Capability
 
-Use this observation summary only to improve an existing operator decision or
-governed action handoff. Do not add a second capture route or another browser
-action variant until a concrete stale-observation decision is demonstrated.
+Use this decision at the existing browser semantic-action handoff for one
+operator-approved semantic click. The runtime owner must revalidate the
+frame-scoped target reference and visual grounding immediately before dispatch;
+do not add a second capture route or use the decision for automatic action
+dispatch.

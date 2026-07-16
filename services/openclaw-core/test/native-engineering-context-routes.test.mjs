@@ -189,7 +189,13 @@ test("engineering context packet route reads the existing session-manager owner 
                 captureObservation: {
                   registry: "openclaw-trusted-work-view-sidecar-capture-observation-v0",
                   sequence: 4,
-                  semanticTargets: { available: true, itemCount: 1 },
+                  semanticTargets: {
+                    available: true,
+                    itemCount: 1,
+                    inventorySha256: "d".repeat(64),
+                    frameSequence: 4,
+                    frameSha256: "c".repeat(64),
+                  },
                   visualFrame: { available: true, fresh: true, sequence: 4, sha256: "c".repeat(64) },
                 },
               },
@@ -206,6 +212,8 @@ test("engineering context packet route reads the existing session-manager owner 
   assert.equal(response.body.workViewAssociation.summary.status, "bound");
   assert.equal(response.body.workViewAssociation.observation.status, "ready");
   assert.equal(response.body.workViewAssociation.observation.semanticTargets.itemCount, 1);
+  assert.equal(response.body.workViewAssociation.semanticActionDecision.status, "ready_for_target_selection");
+  assert.equal(response.body.workViewAssociation.summary.semanticActionReady, true);
   assert.equal(response.body.summary.workViewObservationIncluded, true);
   assert.equal(response.body.summary.planTodoEvidenceIncluded, true);
   assert.equal(response.body.summary.planTodoCurrentAction, "create_verification_task");

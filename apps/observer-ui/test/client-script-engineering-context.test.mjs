@@ -34,6 +34,7 @@ function rendererContext() {
     engineeringContextPacketAuthority: element(),
     engineeringContextPacketCapture: element(),
     engineeringContextPacketTargets: element(),
+    engineeringContextPacketSemanticAction: element(),
     engineeringContextPacketPlanTodo: element(),
     engineeringContextPacketExperienceMemory: element(),
     engineeringContextPacketRecovery: element(),
@@ -50,6 +51,7 @@ test("Observer exposes only the allowlisted trusted work-view recovery actions",
     "engineering-context-packet-recovery-button",
     "engineering-context-packet-capture",
     "engineering-context-packet-targets",
+    "engineering-context-packet-semantic-action",
     "engineering-context-packet-plan-todo",
     "engineering-context-packet-experience-memory",
     "engineering-context-packet-source-task",
@@ -76,6 +78,10 @@ test("Observer exposes only the allowlisted trusted work-view recovery actions",
       experienceMemoryStored: 5,
       experienceMemoryStatus: "recalled",
       experienceMemoryAdvisoryOnly: true,
+      semanticActionDecisionStatus: "blocked",
+      semanticActionDecisionReason: "work_view_authority_not_ready",
+      semanticActionReady: false,
+      semanticActionOperatorControlId: "engineering-context-packet-recovery-button",
     },
     governance: { callsProvider: false },
     workViewAssociation: {
@@ -98,10 +104,12 @@ test("Observer exposes only the allowlisted trusted work-view recovery actions",
   assert.equal(context.engineeringContextPacketRecoveryButton.disabled, false);
   assert.equal(context.engineeringContextPacketCapture.textContent, "ready/fresh");
   assert.equal(context.engineeringContextPacketTargets.textContent, "3");
+  assert.equal(context.engineeringContextPacketSemanticAction.textContent, "blocked/work_view_authority_not_ready");
   assert.equal(context.engineeringContextPacketPlanTodo.textContent, "workbench_storage/create_verification_task");
   assert.equal(context.engineeringContextPacketExperienceMemory.textContent, "2/recalled");
   assert.match(context.engineeringContextPacketJson.textContent, /recovery=prepare_work_view/);
   assert.match(context.engineeringContextPacketJson.textContent, /Experience Memory: included=true recalled=2 stored=5 status=recalled advisoryOnly=true/);
+  assert.match(context.engineeringContextPacketJson.textContent, /Semantic Action Decision: status=blocked reason=work_view_authority_not_ready ready=false control=engineering-context-packet-recovery-button/);
 
   context.renderEngineeringContextPacket({
     summary: { workViewAssociationIncluded: true, messageCount: 1 },

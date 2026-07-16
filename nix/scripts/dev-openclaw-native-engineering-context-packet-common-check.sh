@@ -266,6 +266,11 @@ if (
   || packet.workViewAssociation?.observation?.semanticTargets?.inputValuesExposed !== false
   || packet.workViewAssociation?.observation?.semanticTargets?.selectorsExposed !== false
   || packet.workViewAssociation?.observation?.visualFrame?.pageUrl !== undefined
+  || packet.workViewAssociation?.semanticActionDecision?.registry !== "openclaw-native-engineering-work-view-action-decision-v0"
+  || packet.workViewAssociation?.semanticActionDecision?.governance?.selectsTarget !== false
+  || packet.workViewAssociation?.semanticActionDecision?.governance?.dispatchesAction !== false
+  || !["ready_for_target_selection", "blocked"].includes(packet.workViewAssociation?.semanticActionDecision?.status)
+  || !["ready_for_target_selection", "blocked"].includes(packet.summary?.semanticActionDecisionStatus)
   || packet.workViewAssociation?.summary?.recoveryAction !== "reveal_work_view"
   || packet.workViewAssociation?.source?.owner !== "openclaw-session-manager"
   || packet.workViewAssociation?.governance?.exposesLeaseId !== false
@@ -361,6 +366,7 @@ if (observerCheck) {
     "engineering-context-packet-authority",
     "engineering-context-packet-capture",
     "engineering-context-packet-targets",
+    "engineering-context-packet-semantic-action",
     "engineering-context-packet-plan-todo",
     "engineering-context-packet-experience-memory",
     "engineering-context-packet-recovery",
@@ -392,6 +398,7 @@ if (observerCheck) {
     "Task Selection:",
     "Experience Memory:",
     "engineeringContextPacketExperienceMemory",
+    "engineeringContextPacketSemanticAction",
     "engineeringContextPacketRecoveryButton",
     "Reveal Trusted Work View",
     "Rebind Task to Work View",
@@ -405,6 +412,8 @@ if (observerCheck) {
     "includePlanTodo",
     "engineering_plan_todo",
     "openclaw-native-engineering-work-view-observation-v0",
+    "openclaw-native-engineering-work-view-action-decision-v0",
+    "Semantic Action Decision:",
     "trusted_work_view",
     "renderEngineeringRecommendationFromOperatorResult",
     "useEngineeringRecommendation",

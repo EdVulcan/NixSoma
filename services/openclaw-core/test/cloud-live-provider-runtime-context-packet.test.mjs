@@ -255,6 +255,8 @@ test("context packet handoff can explicitly carry work-view observation and plan
   assert.equal(result.evidence.workViewObservationIncluded, true);
   assert.equal(result.evidence.workViewObservationStatus, "ready");
   assert.equal(result.evidence.semanticTargetCount, 2);
+  assert.equal(result.evidence.semanticActionDecisionStatus, "ready_for_target_selection");
+  assert.equal(result.evidence.semanticActionReady, true);
   assert.equal(result.evidence.planTodoEvidenceIncluded, true);
   assert.equal(result.evidence.planTodoTodoSource, "workbench_storage");
   assert.equal(result.liveProviderExecution.contextPacket.includeWorkViewObservation, true);
@@ -262,6 +264,7 @@ test("context packet handoff can explicitly carry work-view observation and plan
   const content = result.liveProviderExecution.requestEnvelope.messages[0].content;
   assert.match(content, /workViewObservationIncluded.*true/);
   assert.match(content, /workViewObservationStatus.*ready/);
+  assert.match(content, /semanticActionReady.*true/);
   assert.match(content, /openclaw-native-engineering-plan-todo-evidence-v0/);
   assert.doesNotMatch(content, /https:\/\/private\.example/);
   assert.doesNotMatch(content, /data:image/);

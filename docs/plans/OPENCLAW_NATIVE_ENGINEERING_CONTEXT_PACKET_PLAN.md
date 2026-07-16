@@ -70,6 +70,7 @@ Implementation:
 services/openclaw-core/src/native-engineering-context-packet.mjs
 services/openclaw-core/src/native-engineering-experience-memory.mjs
 services/openclaw-core/src/native-engineering-context-routes.mjs
+services/openclaw-core/src/native-engineering-work-view-action-decision.mjs
 ```
 
 Tests:
@@ -77,6 +78,7 @@ Tests:
 ```text
 services/openclaw-core/test/native-engineering-context-packet.test.mjs
 services/openclaw-core/test/native-engineering-experience-memory.test.mjs
+services/openclaw-core/test/native-engineering-work-view-action-decision.test.mjs
 services/openclaw-core/test/native-engineering-context-routes.test.mjs
 services/openclaw-core/test/route-handlers.test.mjs
 apps/observer-ui/src/observer-panels-engineering-context.mjs
@@ -273,6 +275,22 @@ assembly is reused by the capability route, direct route, Observer readback, and
 explicit provider handoff, so the provider path inherits no new authority. The
 memory recall stores only counts and a query hash in audit evidence.
 
+## Semantic Action Readiness Follow-Up Complete
+
+The existing trusted work-view observation now feeds a bounded semantic-action
+readiness decision through the same association owner. It allows only the
+operator-facing target-selection stage when the selected task is bound to the
+current work view, authority is authoritative with an active lease, the
+observation is ready and fresh, and the semantic inventory and visual frame
+share the same sequence and digests.
+
+The decision is read-only and reports bounded reasons for unbound, stale,
+unavailable, incomplete, or mismatched observations. Observer and Context
+Packet readback show the status and the existing recovery/bind/build control
+that can address it. Target ids, selectors, target items, action parameters,
+action dispatch, task/approval creation, provider calls, credentials, and
+network egress remain excluded.
+
 ## Next Slice
 
 The Level 1 context-packet -> structured recommendation -> Observer review ->
@@ -315,9 +333,9 @@ selectors are still explicit request inputs and are covered by the same
 request-content hash. They do not enable provider calls or action execution by
 themselves.
 
-The next Level 2 slice is to use this reviewed observation result in one
-existing operator decision, such as choosing whether the trusted work view is
-ready for a bounded semantic action. That decision must consume only the
-bounded observation summary and remain on the existing screen-action lane;
-arbitrary selectors, page scripts, automatic action dispatch, and desktop-wide
-capture remain deferred.
+The next Level 2 slice is to use this reviewed readiness decision at the
+existing browser semantic-action handoff for one bounded operator-approved
+click. The handoff must revalidate the current lease, target inventory digest,
+frame sequence, and visual grounding at the runtime owner before dispatch;
+arbitrary selectors, page scripts, automatic action dispatch, semantic type,
+and desktop-wide capture remain deferred.

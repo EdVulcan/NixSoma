@@ -9,6 +9,7 @@ const engineeringContextPacketBinding = document.querySelector("#engineering-con
 const engineeringContextPacketAuthority = document.querySelector("#engineering-context-packet-authority");
 const engineeringContextPacketCapture = document.querySelector("#engineering-context-packet-capture");
 const engineeringContextPacketTargets = document.querySelector("#engineering-context-packet-targets");
+const engineeringContextPacketSemanticAction = document.querySelector("#engineering-context-packet-semantic-action");
 const engineeringContextPacketPlanTodo = document.querySelector("#engineering-context-packet-plan-todo");
 const engineeringContextPacketExperienceMemory = document.querySelector("#engineering-context-packet-experience-memory");
 const engineeringContextPacketRecovery = document.querySelector("#engineering-context-packet-recovery");

@@ -233,6 +233,15 @@ Packet. The recalled evidence is visible in Observer and remains guidance only:
 it cannot create tasks, approvals, commands, actions, provider calls, or network
 egress. This is experience absorption, not automatic code self-modification.
 
+The first Level 2 observation-to-decision bridge is now also complete. The
+existing trusted work-view association derives a read-only semantic-action
+readiness decision only when task binding, active authority, fresh capture, and
+visual/inventory frame provenance agree. Observer and Context Packet show the
+bounded reason and existing recovery control; no target item, selector, action
+parameter, task, approval, dispatch, provider call, or network egress is added.
+The next slice is one explicitly approved semantic click through the existing
+browser action owner with a fresh frame-scoped revalidation.
+
 The planning workbench contract is now closed through the common capability
 runtime as well as its dedicated routes. `sense.openclaw.engineering_context.plan_todo_evidence`
 reads the existing bounded task/workbench builder, while

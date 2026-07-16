@@ -101,6 +101,10 @@ test("engineering context packet carries compact trusted work-view association w
       workViewObservationFreshness: "fresh",
       workViewObservationSequence: 7,
       semanticTargetCount: 2,
+      semanticActionDecisionStatus: "ready_for_target_selection",
+      semanticActionDecisionReason: null,
+      semanticActionReady: true,
+      semanticActionOperatorControlId: null,
     },
     observation: {
       registry: "openclaw-native-engineering-work-view-observation-v0",
@@ -130,6 +134,8 @@ test("engineering context packet carries compact trusted work-view association w
   assert.equal(packet.summary.workViewObservationIncluded, true);
   assert.equal(packet.summary.workViewObservationStatus, "ready");
   assert.equal(packet.summary.semanticTargetCount, 2);
+  assert.equal(packet.summary.semanticActionDecisionStatus, "ready_for_target_selection");
+  assert.equal(packet.summary.semanticActionReady, true);
   assert.equal(packet.provenance.workViewAssociationRegistry, "openclaw-native-engineering-work-view-association-v0");
   assert.equal(packet.governance.readsTrustedWorkViewObservation, true);
   assert.equal(packet.messages.at(-3).toolName, "trusted_work_view");
