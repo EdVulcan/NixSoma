@@ -980,6 +980,19 @@ closes a declared-versus-runtime contract gap; it is not a new edit or
 approval path. Details are in
 `docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_EDIT_TARGET_SELECTION_PLAN.md`.
 
+The adjacent declared/runtime gap for the existing mutation owners is now also
+closed. `act.openclaw.workspace_text_write` and
+`act.openclaw.workspace_patch_apply` are available through the common
+`/capabilities/invoke` path and delegate to the existing approval-gated
+`workspaceOps` task builders. Capability policy approval and `confirm:true` are
+both required; the common response may carry only transient task/approval and
+diff-preview data, while invocation history and audit events keep compact
+metadata without content, replacement text, or full diffs. Core and Observer
+capability-invoke checks prove the unconfirmed block and approved pending-task
+contracts. This is a Level 1 contract closure, not a new write executor or
+automatic approval path. Details are in
+`docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_MUTATIONS_PLAN.md`.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

@@ -16,6 +16,7 @@ import { createEngineeringProviderHandoffCapabilityHandlers } from "./capability
 import { createAcpxCodexCompatibilityCapabilityHandlers } from "./capability-runtime-acpx-codex.mjs";
 import { createPromptPackCapabilityHandlers } from "./capability-runtime-prompt-pack.mjs";
 import { createWorkspaceEditTargetCapabilityHandlers } from "./capability-runtime-workspace-edit-target.mjs";
+import { createWorkspaceMutationCapabilityHandlers } from "./capability-runtime-workspace-mutations.mjs";
 
 export function createCapabilityRuntime(deps) {
   const {
@@ -35,6 +36,9 @@ export function createCapabilityRuntime(deps) {
     listFilesystemChangeRecords = () => [],
     pluginRuntime = {},
     providerRuntime = {},
+    workspaceOps = {},
+    serialiseTask,
+    serialiseApproval,
   } = deps;
   const {
     fetchJson,
@@ -137,6 +141,11 @@ export function createCapabilityRuntime(deps) {
   });
   const workspaceEditTargetHandlers = createWorkspaceEditTargetCapabilityHandlers({
     buildNativeOpenClawWorkspaceEditTargetSelection: buildNativeOpenClawWorkspaceEditTargetSelection,
+  });
+  const workspaceMutationHandlers = createWorkspaceMutationCapabilityHandlers({
+    workspaceOps,
+    serialiseTask,
+    serialiseApproval,
   });
 
   function baseCapabilities() {
@@ -378,6 +387,10 @@ export function createCapabilityRuntime(deps) {
     if (workspaceEditTarget.handled) {
       return workspaceEditTarget.result;
     }
+    const workspaceMutation = await workspaceMutationHandlers.callBackend(capability, request);
+    if (workspaceMutation.handled) {
+      return workspaceMutation.result;
+    }
 
     if (capability.id === "sense.system.vitals") {
       return fetchJson(`${systemSenseUrl}/system/health`);
@@ -591,6 +604,10 @@ export function createCapabilityRuntime(deps) {
     const workspaceEditTargetSummary = workspaceEditTargetHandlers.summariseResult(capability, result);
     if (workspaceEditTargetSummary) {
       return workspaceEditTargetSummary;
+    }
+    const workspaceMutationSummary = workspaceMutationHandlers.summariseResult(capability, result);
+    if (workspaceMutationSummary) {
+      return workspaceMutationSummary;
     }
 
     if (capability.id === "sense.system.vitals") {
@@ -907,6 +924,13 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: acpxCodexCompatibilityValidationError },
+      };
+    }
+    const workspaceMutationValidationError = workspaceMutationHandlers.validateRequest(capability, request);
+    if (workspaceMutationValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: workspaceMutationValidationError },
       };
     }
 

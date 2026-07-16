@@ -103,6 +103,7 @@ const planBuilder = createPlanBuilder({
   client,
   state,
   taskManager,
+  workspaceOps,
   pluginReview,
   approvalEngine,
   policyEvaluator,

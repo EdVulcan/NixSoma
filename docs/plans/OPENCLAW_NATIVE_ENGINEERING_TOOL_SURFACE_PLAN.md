@@ -34,6 +34,17 @@ and Observer invoke the capability through the existing target-selection
 lifecycle; the detailed boundary is documented in
 `OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_EDIT_TARGET_SELECTION_PLAN.md`.
 
+The existing high-risk workspace mutation descriptors are now also aligned with
+the common capability runtime. `act.openclaw.workspace_text_write` and
+`act.openclaw.workspace_patch_apply` delegate to the existing `workspaceOps`
+task owners through `/capabilities/invoke`. They require both capability policy
+approval and `confirm:true`; common invocation/event summaries retain only
+compact task, approval, target, and governance metadata. Content, replacement
+strings, and full diff previews remain transient and are not persisted in the
+capability ledger or audit events. Core and Observer prove the same contract in
+the existing capability-invoke pair. Details are documented in
+`OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_MUTATIONS_PLAN.md`.
+
 The latest completed slices are the compact work-view association, the explicit
 operator-reviewed task bind documented in
 `OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_ASSOCIATION_PLAN.md` and

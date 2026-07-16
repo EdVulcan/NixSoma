@@ -379,8 +379,16 @@ Current OpenClaw:
   approved write task outcomes and filesystem ledger records, linking them back
   to engineering write proposal metadata.
 - `act.openclaw.workspace_text_write` exists as an approval-gated write path.
+- `act.openclaw.workspace_text_write` and `act.openclaw.workspace_patch_apply`
+  are now also exposed through the canonical `/capabilities/invoke` path. The
+  common bridge delegates to the existing `workspaceOps` task owners and
+  requires both capability approval and `confirm:true`; it does not duplicate
+  task creation or filesystem mutation.
 - Public task/approval/Observer surfaces expose hashes and byte counts instead
   of raw content.
+- Common invocation and audit summaries retain only compact task/approval,
+  target, and governance metadata. Write content, patch search/replacement
+  strings, and full diff previews remain transient response data.
 
 Classification: absorbed through governed proposal/approval/execution evidence.
 
@@ -388,6 +396,9 @@ Recommendation:
 
 - Keep full write as a high-risk action. Proposal evidence should remain
   separate from the approved, task-based, auditable, and recoverable write path.
+- Keep the common bridge paired with the existing task owner; do not create a
+  second mutation executor or treat capability approval as automatic task
+  execution.
 
 ### `cc_glob` and `cc_grep`
 

@@ -49,6 +49,9 @@ cleanup() {
     "${ENGINEERING_VERIFY_FILE:-}" \
     "${ENGINEERING_EDIT_PROPOSAL_FILE:-}" \
     "${ENGINEERING_WRITE_PROPOSAL_FILE:-}" \
+    "${WORKSPACE_TEXT_WRITE_UNCONFIRMED_FILE:-}" \
+    "${WORKSPACE_TEXT_WRITE_FILE:-}" \
+    "${WORKSPACE_PATCH_APPLY_FILE:-}" \
     "${WORK_VIEW_FILE:-}" \
     "${WORK_VIEW_CONTROL_FILE:-}" \
     "${CONTEXT_PACKET_FILE:-}" \
@@ -80,6 +83,9 @@ ENGINEERING_GREP_FILE="$(mktemp)"
 ENGINEERING_VERIFY_FILE="$(mktemp)"
 ENGINEERING_EDIT_PROPOSAL_FILE="$(mktemp)"
 ENGINEERING_WRITE_PROPOSAL_FILE="$(mktemp)"
+WORKSPACE_TEXT_WRITE_UNCONFIRMED_FILE="$(mktemp)"
+WORKSPACE_TEXT_WRITE_FILE="$(mktemp)"
+WORKSPACE_PATCH_APPLY_FILE="$(mktemp)"
 WORK_VIEW_FILE="$(mktemp)"
 WORK_VIEW_CONTROL_FILE="$(mktemp)"
 CONTEXT_PACKET_FILE="$(mktemp)"
@@ -101,6 +107,9 @@ post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.en
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_tool.verify_evidence","params":{"limit":4,"maxOutputChars":500}}' > "$ENGINEERING_VERIFY_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.engineering_tool.edit_proposal\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"src/app.ts\",\"oldString\":\"capabilityNeedle\",\"newString\":\"governedNeedle\",\"contextLines\":1}}" > "$ENGINEERING_EDIT_PROPOSAL_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.engineering_tool.write_proposal\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"scratch/new-file.txt\",\"content\":\"transient write content\",\"overwrite\":false,\"contextLines\":1}}" > "$ENGINEERING_WRITE_PROPOSAL_FILE"
+post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.workspace_text_write\",\"approved\":true,\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"scratch/common-write.txt\",\"content\":\"transient common write content\",\"overwrite\":false,\"confirm\":false}}" > "$WORKSPACE_TEXT_WRITE_UNCONFIRMED_FILE"
+post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.workspace_text_write\",\"approved\":true,\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"scratch/common-write.txt\",\"content\":\"transient common write content\",\"overwrite\":false,\"confirm\":true}}" > "$WORKSPACE_TEXT_WRITE_FILE"
+post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.workspace_patch_apply\",\"approved\":true,\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"src/app.ts\",\"search\":\"capabilityNeedle\",\"replacement\":\"transient common patch replacement\",\"occurrence\":1,\"contextLines\":1,\"confirm\":true}}" > "$WORKSPACE_PATCH_APPLY_FILE"
 post_json "$SESSION_MANAGER_URL/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/capability-work-view"}' > /dev/null
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.work_view.control","operation":"work_view.reveal","params":{"entryUrl":"https://example.com/capability-work-view"}}' > "$WORK_VIEW_CONTROL_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.packet","params":{"limit":4,"thresholdChars":256,"protectRecentAssistantTurns":0}}' > "$CONTEXT_PACKET_FILE"
@@ -128,6 +137,9 @@ node - <<'EOF' \
   "$ENGINEERING_VERIFY_FILE" \
   "$ENGINEERING_EDIT_PROPOSAL_FILE" \
   "$ENGINEERING_WRITE_PROPOSAL_FILE" \
+  "$WORKSPACE_TEXT_WRITE_UNCONFIRMED_FILE" \
+  "$WORKSPACE_TEXT_WRITE_FILE" \
+  "$WORKSPACE_PATCH_APPLY_FILE" \
   "$WORK_VIEW_FILE" \
   "$WORK_VIEW_CONTROL_FILE" \
   "$CONTEXT_PACKET_FILE" \
@@ -151,14 +163,17 @@ const events = readJson(11);
 const engineeringVerify = readJson(12);
 const engineeringEditProposal = readJson(13);
 const engineeringWriteProposal = readJson(14);
-const workView = readJson(15);
-const workViewControl = readJson(16);
-const contextPacket = readJson(17);
-const providerHandoff = readJson(18);
-const acpxCompatibility = readJson(19);
-const promptPack = readJson(20);
-const capabilities = readJson(21);
-const fixtureDir = process.argv[22];
+const workspaceTextWriteUnconfirmed = readJson(15);
+const workspaceTextWrite = readJson(16);
+const workspacePatchApply = readJson(17);
+const workView = readJson(18);
+const workViewControl = readJson(19);
+const contextPacket = readJson(20);
+const providerHandoff = readJson(21);
+const acpxCompatibility = readJson(22);
+const promptPack = readJson(23);
+const capabilities = readJson(24);
+const fixtureDir = process.argv[25];
 
 if (!vitals.ok || vitals.invoked !== true || vitals.capability?.id !== "sense.system.vitals" || vitals.policy?.decision !== "audit_only") {
   throw new Error("system vitals capability should be invoked with audit-only governance");
@@ -253,6 +268,69 @@ if (
 }
 if (JSON.stringify(events).includes("transient write content")) {
   throw new Error("engineering write proposal content must not enter the audit event payload");
+}
+if (!workspaceTextWriteUnconfirmed.ok
+  || workspaceTextWriteUnconfirmed.invoked !== true
+  || workspaceTextWriteUnconfirmed.result?.blocked !== true
+  || workspaceTextWriteUnconfirmed.result?.reason !== "operator_confirmation_required"
+  || workspaceTextWriteUnconfirmed.summary?.kind !== "workspace.text_write_task"
+  || workspaceTextWriteUnconfirmed.summary?.createsTask !== false
+  || workspaceTextWriteUnconfirmed.summary?.noContentInInvocation !== true
+) {
+  throw new Error(`workspace text write must keep its explicit confirmation gate after capability approval: ${JSON.stringify(workspaceTextWriteUnconfirmed)}`);
+}
+if (!workspaceTextWrite.ok
+  || workspaceTextWrite.invoked !== true
+  || workspaceTextWrite.capability?.id !== "act.openclaw.workspace_text_write"
+  || workspaceTextWrite.policy?.decision !== "audit_only"
+  || workspaceTextWrite.result?.registry !== "openclaw-native-workspace-text-write-task-v0"
+  || workspaceTextWrite.result?.task?.status !== "queued"
+  || workspaceTextWrite.result?.approval?.status !== "pending"
+  || workspaceTextWrite.result?.target?.contentExposed !== false
+  || workspaceTextWrite.summary?.kind !== "workspace.text_write_task"
+  || workspaceTextWrite.summary?.createsTask !== true
+  || workspaceTextWrite.summary?.createsApproval !== true
+  || workspaceTextWrite.summary?.noMutationBeforeApproval !== true
+  || workspaceTextWrite.summary?.noContentInInvocation !== true
+  || workspaceTextWrite.summary?.noReplacementInInvocation !== true
+  || workspaceTextWrite.summary?.noFullDiffInInvocation !== true
+  || workspaceTextWrite.summary?.noProviderEgress !== true
+  || JSON.stringify(workspaceTextWrite.invocation ?? {}).includes("transient common write content")
+) {
+  throw new Error(`workspace text write capability should delegate to the existing approval owner without persisting content: ${JSON.stringify(workspaceTextWrite)}`);
+}
+if (!workspacePatchApply.ok
+  || workspacePatchApply.invoked !== true
+  || workspacePatchApply.capability?.id !== "act.openclaw.workspace_patch_apply"
+  || workspacePatchApply.policy?.decision !== "audit_only"
+  || workspacePatchApply.result?.registry !== "openclaw-native-workspace-patch-apply-task-v0"
+  || workspacePatchApply.result?.task?.status !== "queued"
+  || workspacePatchApply.result?.approval?.status !== "pending"
+  || workspacePatchApply.result?.target?.contentExposed !== false
+  || workspacePatchApply.result?.target?.diffPreviewExposed !== true
+  || workspacePatchApply.summary?.kind !== "workspace.patch_apply_task"
+  || workspacePatchApply.summary?.createsTask !== true
+  || workspacePatchApply.summary?.createsApproval !== true
+  || workspacePatchApply.summary?.diffPreviewExposed !== true
+  || workspacePatchApply.summary?.noMutationBeforeApproval !== true
+  || workspacePatchApply.summary?.noReplacementInInvocation !== true
+  || workspacePatchApply.summary?.noFullDiffInInvocation !== true
+  || workspacePatchApply.summary?.noProviderEgress !== true
+  || JSON.stringify(workspacePatchApply.invocation ?? {}).includes("transient common patch replacement")
+) {
+  throw new Error(`workspace patch capability should delegate to the existing approval owner with a transient diff preview: ${JSON.stringify(workspacePatchApply)}`);
+}
+if (JSON.stringify(events).includes("transient common write content") || JSON.stringify(events).includes("transient common patch replacement")) {
+  throw new Error("workspace mutation content and replacements must not enter the audit event payload");
+}
+for (const capabilityId of ["act.openclaw.workspace_text_write", "act.openclaw.workspace_patch_apply"]) {
+  if (!capabilities.capabilities?.some((capability) =>
+    capability.id === capabilityId
+    && capability.governance === "require_approval"
+    && capability.requiresApproval === true
+  )) {
+    throw new Error(`capability registry should expose the approval-gated workspace mutation ${capabilityId}`);
+  }
 }
 if (
   !workView.ok
@@ -408,6 +486,13 @@ console.log(JSON.stringify({
         kind: engineeringWriteProposal.summary.proposalKind,
         path: engineeringWriteProposal.summary.relativePath,
         noMutation: engineeringWriteProposal.summary.noMutation,
+      },
+      workspaceMutations: {
+        unconfirmed: workspaceTextWriteUnconfirmed.result.reason,
+        textWriteTask: workspaceTextWrite.summary.taskId,
+        patchApplyTask: workspacePatchApply.summary.taskId,
+        contentInInvocation: workspaceTextWrite.summary.noContentInInvocation === false,
+        diffInInvocation: workspacePatchApply.summary.noFullDiffInInvocation === false,
       },
       workViewObservation: {
         status: workView.summary.status,
