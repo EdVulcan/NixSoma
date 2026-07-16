@@ -168,7 +168,7 @@ test("context packet recovery button reuses the existing reviewed action and ref
     renderEngineeringContextPacket: (data) => calls.push(["render", data]),
     fetchJson: async (url, options) => {
       calls.push(["fetch", url, options]);
-      return { summary: { messageCount: 2 } };
+      return { invoked: true, result: { summary: { messageCount: 2 } } };
     },
   };
 
@@ -176,9 +176,11 @@ test("context packet recovery button reuses the existing reviewed action and ref
   await context.prepareEngineeringContextWorkView();
 
   assert.deepEqual(calls.map(([kind]) => kind), ["recommended-action", "fetch", "render", "message", "message"]);
-  assert.equal(calls[1][1], "http://core.invalid/plugins/native-adapter/engineering-context/packet");
-  assert.equal(JSON.parse(calls[1][2].body).includeWorkView, true);
-  assert.equal(JSON.parse(calls[1][2].body).sourceTaskId, null);
+  assert.equal(calls[1][1], "http://core.invalid/capabilities/invoke");
+  const packetRequest = JSON.parse(calls[1][2].body);
+  assert.equal(packetRequest.capabilityId, "sense.openclaw.engineering_context.packet");
+  assert.equal(packetRequest.params.includeWorkView, true);
+  assert.equal(packetRequest.params.sourceTaskId, null);
   assert.match(calls.at(-1)[1], /Completed the trusted work-view recovery action/);
   assert.equal(context.engineeringContextPacketRecoveryButton.disabled, false);
 });
@@ -201,7 +203,7 @@ test("context packet bind control explicitly requests rebind for stale task asso
     renderEngineeringContextPacket: () => {},
     fetchJson: async (url, options) => {
       calls.push(["fetch", url, options]);
-      return { ok: true, changed: true };
+      return { invoked: true, result: { ok: true, changed: true } };
     },
   };
   context.engineeringContextPacketBinding.textContent = "stale_session_binding";
@@ -209,7 +211,12 @@ test("context packet bind control explicitly requests rebind for stale task asso
   vm.runInNewContext(observerClientEngineeringContextRefreshersScript, context);
   await context.bindEngineeringContextTaskToWorkView();
 
-  assert.equal(JSON.parse(calls[0][2].body).rebind, true);
+  assert.equal(calls[0][1], "http://core.invalid/capabilities/invoke");
+  const bindRequest = JSON.parse(calls[0][2].body);
+  assert.equal(bindRequest.capabilityId, "act.openclaw.engineering_context.work_view_bind");
+  assert.equal(bindRequest.taskId, "task-stale-context-1");
+  assert.equal(bindRequest.params.confirm, true);
+  assert.equal(bindRequest.params.rebind, true);
   assert.match(calls.at(-1)[1], /Rebound task task-stale-context-1/);
 });
 
@@ -231,7 +238,7 @@ test("context packet source picker sends an independent source task and supports
     renderEngineeringContextPacket: (data) => calls.push(["render", data]),
     fetchJson: async (url, options) => {
       calls.push(["fetch", url, options]);
-      return { summary: { messageCount: 1 } };
+      return { invoked: true, result: { summary: { messageCount: 1 } } };
     },
   };
   context.engineeringContextPacketSourceTaskIdInput.value = "task-source-1";
@@ -240,8 +247,9 @@ test("context packet source picker sends an independent source task and supports
   await context.refreshEngineeringContextPacket();
 
   const request = JSON.parse(calls.find(([kind]) => kind === "fetch")[2].body);
-  assert.equal(request.taskId, "task-execution-1");
-  assert.equal(request.sourceTaskId, "task-source-1");
+  assert.equal(request.capabilityId, "sense.openclaw.engineering_context.packet");
+  assert.equal(request.params.taskId, "task-execution-1");
+  assert.equal(request.params.sourceTaskId, "task-source-1");
 
   context.useEngineeringContextTaskDetailAsSource();
   assert.equal(context.engineeringContextPacketSourceTaskIdInput.value, "task-execution-1");

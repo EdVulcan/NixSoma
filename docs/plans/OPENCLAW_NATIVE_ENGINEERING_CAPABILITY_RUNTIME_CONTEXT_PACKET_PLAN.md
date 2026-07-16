@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering Capability Runtime Context Packet Plan
 
-Updated: 2026-07-15
+Updated: 2026-07-16
 
 ## Active Slice
 
@@ -29,7 +29,13 @@ The existing packet route and capability share one assembly helper. The common
 capability supports the existing bounded task/source selectors, work-view and
 plan/todo flags, output limits, and microcompact parameters. It publishes the
 same summary-only `native_engineering.context_packet_built` audit event before
-the standard `capability.invoked` event.
+the standard `capability.invoked` event. Observer's packet builder now uses
+this common path and unwraps only the transient result for local rendering.
+
+The existing work-view bind control also uses
+`act.openclaw.engineering_context.work_view_bind` through the common path,
+keeping `taskId`, `confirm:true`, and the explicit stale-binding `rebind` flag
+bound to the existing operator-reviewed owner.
 
 The response may contain the bounded transient packet messages required by the
 local context consumer. Invocation history and event evidence retain only
@@ -64,6 +70,7 @@ Tests and real checks:
 ```text
 services/openclaw-core/test/capability-runtime.test.mjs
 services/openclaw-core/test/native-engineering-context-routes.test.mjs
+apps/observer-ui/test/client-script-engineering-context.test.mjs
 nix/scripts/dev-capability-invoke-check.sh
 nix/scripts/dev-observer-capability-invoke-check.sh
 openclaw-native-engineering-context-packet-pair-batch-reuse

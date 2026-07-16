@@ -1106,6 +1106,13 @@ client no longer mutates session-manager directly, and observation still never
 triggers recovery automatically. The existing work-view control plan records
 this UI closure.
 
+The Observer Engineering Context Packet and Work-View Bind controls now also
+use their existing common capability owners. Packet assembly unwraps only the
+transient bounded result from `sense.openclaw.engineering_context.packet`, while
+bind sends `taskId`, `confirm:true`, and the explicit `rebind` decision through
+`act.openclaw.engineering_context.work_view_bind`; no packet content is persisted
+and no task execution or provider handoff is triggered automatically.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

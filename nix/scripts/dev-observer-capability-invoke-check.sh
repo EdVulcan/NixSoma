@@ -260,6 +260,8 @@ for (const token of [
   "work_view.prepare",
   "work_view.reveal",
   "work_view.hide",
+  "sense.openclaw.engineering_context.packet",
+  "act.openclaw.engineering_context.work_view_bind",
 ]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);
@@ -536,6 +538,10 @@ if (client.includes("observerConfig.sessionManagerUrl}/work-view/prepare")
   || client.includes("observerConfig.sessionManagerUrl}/work-view/reveal")
   || client.includes("observerConfig.sessionManagerUrl}/work-view/hide")) {
   throw new Error("Observer work-view controls must not mutate session-manager directly");
+}
+if (client.includes("observerConfig.coreUrl}/plugins/native-adapter/engineering-context/packet")
+  || client.includes("observerConfig.coreUrl}/plugins/native-adapter/engineering-context/work-view/bind")) {
+  throw new Error("Observer engineering context controls must use the common capability runtime");
 }
 if (!capabilities.capabilities?.some((capability) =>
   capability.id === "act.system.heal"

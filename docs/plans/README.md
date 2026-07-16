@@ -236,6 +236,12 @@ recommendation, and task-launch mutations use the three allowlisted operations;
 task launch performs only a separate read-only state read for owner binding
 metadata. No direct session-manager mutation route remains in the served client.
 
+The Observer Engineering Context Packet and Work-View Bind controls now use
+their existing common capabilities too: packet assembly is transient through
+`sense.openclaw.engineering_context.packet`, and bind remains explicit through
+`act.openclaw.engineering_context.work_view_bind` with confirmation and stale
+binding revalidation.
+
 The provider handoff's explicit source-task continuity is documented in:
 
 ```text
