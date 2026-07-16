@@ -271,6 +271,13 @@ Core check verified PID `191453 -> 196563`, and the Observer check verified
 `196563 -> 196638`; both completed through `hostd.restart_system_heal`, native
 D-Bus, explicit approval, Operator Step/Run, and restored-readiness evidence.
 
+The non-mutating `next-repair-task-shell` Core and Observer checks no longer
+bootstrap the historical body-evidence ledger or request `execute:true` as an
+unrelated prerequisite. They now prove the task route directly: a queued
+approval-gated task is created and Operator Step remains blocked before
+approval. The real-execution checks retain their explicit host-mutation guard
+and are the only checks that perform the fixed restart.
+
 ## Deferred
 
 - D-Bus start/stop/reload operations and restart targets outside the three fixed
