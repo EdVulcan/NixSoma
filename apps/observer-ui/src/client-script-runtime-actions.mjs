@@ -5,6 +5,7 @@ import { observerClientRuntimeEngineeringSuggestedActionScript } from "./client-
 import { observerClientRuntimeEngineeringRecommendationScript } from "./client-script-runtime-engineering-recommendation.mjs";
 import { observerClientRuntimeSystemBodyTasksScript } from "./client-script-runtime-system-body-tasks.mjs";
 import { observerClientRuntimeSystemHealScript } from "./client-script-runtime-system-heal.mjs";
+import { observerClientRuntimeWorkViewControlsScript } from "./client-script-runtime-work-view-controls.mjs";
 import { observerClientRuntimeBindingsScript } from "./client-script-runtime-bindings.mjs";
 import { observerClientNativeRuntimeRefreshTasksScript } from "./client-script-runtime-native-runtime-refresh.mjs";
 
@@ -72,7 +73,7 @@ async function createPlannedTask() {
   await refreshOperatorState();
 }
 
-${observerClientRuntimeApprovalTasksScript}${observerClientRuntimeEngineeringLoopControlsScript}${observerClientRuntimeEngineeringLspTargetSelectionScript}${observerClientRuntimeEngineeringSuggestedActionScript}${observerClientRuntimeEngineeringRecommendationScript}${observerClientNativeRuntimeRefreshTasksScript}${observerClientRuntimeSystemHealScript}async function runOperatorStepFromUi() {
+${observerClientRuntimeApprovalTasksScript}${observerClientRuntimeEngineeringLoopControlsScript}${observerClientRuntimeEngineeringLspTargetSelectionScript}${observerClientRuntimeEngineeringSuggestedActionScript}${observerClientRuntimeEngineeringRecommendationScript}${observerClientNativeRuntimeRefreshTasksScript}${observerClientRuntimeSystemHealScript}${observerClientRuntimeWorkViewControlsScript}async function runOperatorStepFromUi() {
   const result = await fetchJson(\`\${observerConfig.coreUrl}/operator/step\`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -277,95 +278,6 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-async function postWorkView(path, payload = {}) {
-  const result = await fetchJson(\`\${observerConfig.sessionManagerUrl}\${path}\`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (currentTaskState?.id) {
-    const phase =
-      path === "/work-view/prepare"
-        ? "preparing_work_view"
-        : path === "/work-view/reveal"
-          ? "visible"
-          : path === "/work-view/hide"
-            ? "backgrounded"
-            : null;
-    if (phase) {
-      await updateTaskPhase(currentTaskState.id, phase, {
-        visibility: result.workView?.visibility ?? null,
-        mode: result.workView?.mode ?? null,
-        workViewRecoveryAction: result.workView?.lastOperatorAction ?? null,
-        trustedSession: result.workView?.trustedSession
-          ? {
-              identityLevel: result.workView.trustedSession.identityLevel ?? null,
-              helperReadiness: result.workView.trustedSession.helperReadiness?.state ?? null,
-              recoveryRecommendation: result.workView.trustedSession.recoveryRecommendation?.action ?? null,
-              sidecarContract: result.workView.trustedSession.sidecarContract?.status ?? null,
-              lifecycleProposal: result.workView.trustedSession.sidecarContract?.lifecycleProposal?.status ?? null,
-              approvalTaskDraft: result.workView.trustedSession.sidecarContract?.approvalTaskDraft?.status ?? null,
-            }
-          : null,
-      });
-    }
-  }
-  setControlMessage(\`Work view \${result.workView?.status ?? "updated"} / \${result.workView?.visibility ?? "unknown"}\`);
-  await refreshRuntime();
-  await refreshTaskList();
-  await refreshTaskHistoryDetail();
-  await refreshWorkView();
-  await refreshScreen();
-}
-
-async function readLatestWorkViewStateForAction() {
-  const data = await fetchJson(\`\${observerConfig.sessionManagerUrl}/work-view/state\`);
-  latestWorkViewState = data.workView ?? null;
-  return latestWorkViewState;
-}
-
-async function runRecommendedWorkViewAction() {
-  const workView = await readLatestWorkViewStateForAction();
-  const recommendation = workView?.trustedSession?.recoveryRecommendation ?? {};
-  const action = recommendation.action ?? "none";
-
-  if (action === "none") {
-    setControlMessage("Work view helper is ready; no recovery action recommended.");
-    await refreshWorkView();
-    await refreshScreen();
-    return;
-  }
-
-  if (action === "prepare_work_view") {
-    await postWorkView("/work-view/prepare", {
-      displayTarget: workView?.displayTarget ?? "workspace-2",
-      entryUrl: getDesiredWorkViewUrl(),
-      operatorActionSource: "trusted_session_recovery_recommendation",
-      recommendedAction: action,
-    });
-    return;
-  }
-
-  if (action === "reveal_work_view") {
-    await postWorkView("/work-view/reveal", {
-      entryUrl: workView?.activeUrl ?? workView?.entryUrl ?? getDesiredWorkViewUrl(),
-      operatorActionSource: "trusted_session_recovery_recommendation",
-      recommendedAction: action,
-    });
-    return;
-  }
-
-  if (action === "hide_work_view") {
-    await postWorkView("/work-view/hide", {
-      operatorActionSource: "trusted_session_recovery_recommendation",
-      recommendedAction: action,
-    });
-    return;
-  }
-
-  setControlMessage(\`Unsupported work view recommendation: \${action}\`);
-}
-
 async function createTrustedSidecarLifecycleTask() {
   const result = await fetchJson(\`\${observerConfig.coreUrl}/work-view/trusted-sidecar/lifecycle-tasks\`, {
     method: "POST",
@@ -448,25 +360,18 @@ async function openWorkViewUrl(taskId = null) {
       targetUrl: entryUrl,
     });
   }
-  const prepareResult = await fetchJson(\`\${observerConfig.sessionManagerUrl}/work-view/prepare\`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      displayTarget: "workspace-2",
-      entryUrl,
-    }),
-  });
-
-  const revealResult = await fetchJson(\`\${observerConfig.sessionManagerUrl}/work-view/reveal\`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ entryUrl }),
-  });
-
-  setControlMessage(\`Opened work view URL: \${revealResult.workView?.activeUrl ?? prepareResult.workView?.activeUrl ?? entryUrl}\`);
+  await postWorkView("/work-view/prepare", {
+    displayTarget: "workspace-2",
+    entryUrl,
+  }, { refresh: false });
+  const revealResult = await postWorkView("/work-view/reveal", { entryUrl }, { refresh: false });
+  const stateResult = await fetchJson(\`\${observerConfig.sessionManagerUrl}/work-view/state\`);
+  const workView = stateResult.workView ?? null;
+  const enrichedRevealResult = { ...revealResult, workView };
+  setControlMessage(\`Opened work view URL: \${workView?.activeUrl ?? entryUrl}\`);
   await refreshWorkView();
   await refreshScreen();
-  return revealResult;
+  return enrichedRevealResult;
 }
 
 async function updateTaskPhase(taskId, phase, details = null) {
@@ -616,11 +521,7 @@ ${observerClientRuntimeSystemBodyTasksScript}async function completeCurrentTask(
   }
 
   const completedWorkViewUrl = currentTaskState.workView?.activeUrl ?? currentTaskState.targetUrl ?? null;
-  const hiddenResult = await fetchJson(\`\${observerConfig.sessionManagerUrl}/work-view/hide\`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({}),
-  });
+  const hiddenResult = await postWorkView("/work-view/hide", {}, { refresh: false });
   const hiddenState = await fetchJson(\`\${observerConfig.sessionManagerUrl}/work-view/state\`);
   const hiddenWorkView = hiddenState.workView ?? hiddenResult.workView ?? null;
 

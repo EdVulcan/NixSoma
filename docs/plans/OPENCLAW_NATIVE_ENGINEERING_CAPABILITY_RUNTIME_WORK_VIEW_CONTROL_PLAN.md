@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering Capability Runtime Work-View Control Plan
 
-Updated: 2026-07-15
+Updated: 2026-07-16
 
 ## Active Slice
 
@@ -97,6 +97,8 @@ provider egress, credential reads, root/system daemon work, and desktop capture
 ## Next Smallest Capability
 
 The observation-to-owner handoff is now available for an explicit caller. Use
-it only where an existing operator decision needs the work-view control; do not
-add another browser action variant or make observation trigger actions
-automatically.
+it for the existing Observer prepare/reveal/hide controls and recovery
+recommendation path. Observer task launch also uses the capability for prepare
+and reveal, then performs one separate read-only state read to attach the
+owner's current work-view identity to the task. Do not add another browser
+action variant or make observation trigger actions automatically.

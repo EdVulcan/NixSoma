@@ -1097,6 +1097,15 @@ outcomes only; real systemd restart/autofix remains on the separate approved
 hostd/D-Bus path. The boundary is documented in
 `docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_SYSTEM_HEAL_PLAN.md`.
 
+The existing Observer work-view controls now likewise use the governed
+`act.work_view.control` bridge. Prepare, reveal, hide, recovery recommendation,
+and task-launch mutations send only the three allowlisted operations through
+Core; task launch performs one separate read-only session-manager state read
+after reveal so the existing task binding can retain owner metadata. The served
+client no longer mutates session-manager directly, and observation still never
+triggers recovery automatically. The existing work-view control plan records
+this UI closure.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

@@ -255,6 +255,11 @@ for (const token of [
   "heal.restart-service",
   "heal.maintenance.tick",
   "mode: \"simulated\"",
+  "postWorkView",
+  "act.work_view.control",
+  "work_view.prepare",
+  "work_view.reveal",
+  "work_view.hide",
 ]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);
@@ -526,6 +531,11 @@ if (
 if (client.includes("observerConfig.systemHealUrl}/heal/restart-service")
   || client.includes("observerConfig.systemHealUrl}/maintenance/tick")) {
   throw new Error("Observer system-heal controls must not call the service directly");
+}
+if (client.includes("observerConfig.sessionManagerUrl}/work-view/prepare")
+  || client.includes("observerConfig.sessionManagerUrl}/work-view/reveal")
+  || client.includes("observerConfig.sessionManagerUrl}/work-view/hide")) {
+  throw new Error("Observer work-view controls must not mutate session-manager directly");
 }
 if (!capabilities.capabilities?.some((capability) =>
   capability.id === "act.system.heal"

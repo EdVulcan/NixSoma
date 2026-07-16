@@ -230,6 +230,12 @@ Only the explicit simulated `heal.restart-service` and
 Core policy, invocation history, and capability events cover the controls.
 Real systemd mutation remains on the separate approved hostd/D-Bus path.
 
+The existing Observer work-view controls now use the already-governed
+`act.work_view.control` bridge as well. Prepare, reveal, hide, recovery
+recommendation, and task-launch mutations use the three allowlisted operations;
+task launch performs only a separate read-only state read for owner binding
+metadata. No direct session-manager mutation route remains in the served client.
+
 The provider handoff's explicit source-task continuity is documented in:
 
 ```text
