@@ -178,6 +178,7 @@ const screen = JSON.parse(fs.readFileSync(process.argv[25], "utf8"));
 for (const token of [
   "invoke-vitals-button",
   "invoke-process-button",
+  "invoke-screen-observation-button",
   "invoke-command-dry-run-button",
   "invoke-approved-command-dry-run-button",
   "capability-invoke-json",
@@ -196,6 +197,9 @@ for (const token of [
 for (const token of [
   "/capabilities/invoke",
   "invokeCapabilityFromUi",
+  "invokeScreenObservationButton.addEventListener",
+  "screenObservation",
+  "sense.screen.observe",
   "renderCapabilityInvocation",
   "capability.invoked",
   "capability.blocked",
@@ -472,6 +476,7 @@ console.log(JSON.stringify({
     htmlControls: [
       "invoke-vitals-button",
       "invoke-process-button",
+      "invoke-screen-observation-button",
       "invoke-command-dry-run-button",
       "invoke-approved-command-dry-run-button",
     ],

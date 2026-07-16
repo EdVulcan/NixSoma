@@ -244,6 +244,12 @@ invokeProcessButton.addEventListener("click", () => {
   });
 });
 
+invokeScreenObservationButton.addEventListener("click", () => {
+  invokeCapabilityFromUi("screenObservation").catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
 invokeCommandDryRunButton.addEventListener("click", () => {
   invokeCapabilityFromUi("commandDryRun").catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

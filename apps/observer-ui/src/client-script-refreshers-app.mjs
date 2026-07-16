@@ -184,6 +184,10 @@ ${observerClientWorkspaceSourceRefreshersScript}async function invokeCapabilityF
       intent: "process.list",
       params: { limit: 10 },
     },
+    screenObservation: {
+      capabilityId: "sense.screen.observe",
+      intent: "screen.observe",
+    },
     commandDryRun: {
       capabilityId: "act.system.command.dry_run",
       intent: "system.command",

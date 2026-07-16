@@ -422,6 +422,10 @@ text, URLs, session/lease identifiers, visual bytes, semantic target items,
 mutation, action dispatch, provider calls, and network egress remain outside
 the capability response and invocation history. Details are in
 `docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_SCREEN_OBSERVATION_PLAN.md`.
+The existing Observer Body Capabilities panel now provides an explicit
+`Invoke Screen Observation` control for this same bounded request. It reuses
+the common invocation readback and does not add a second screen owner, expose
+raw screen payloads, or grant screen-action authority.
 
 The selected Level 1 consistency closures are complete. Do not reopen the LSP
 symbol chain or add another evidence/readiness shell; choose the next concrete

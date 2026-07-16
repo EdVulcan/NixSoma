@@ -120,6 +120,7 @@ const capabilityJson = document.querySelector("#capability-json");
 const capabilityInvokeJson = document.querySelector("#capability-invoke-json");
 const invokeVitalsButton = document.querySelector("#invoke-vitals-button");
 const invokeProcessButton = document.querySelector("#invoke-process-button");
+const invokeScreenObservationButton = document.querySelector("#invoke-screen-observation-button");
 const invokeCommandDryRunButton = document.querySelector("#invoke-command-dry-run-button");
 const invokeApprovedCommandDryRunButton = document.querySelector("#invoke-approved-command-dry-run-button");
 const capabilityHistoryTotal = document.querySelector("#capability-history-total");

@@ -72,6 +72,15 @@ nix/scripts/dev-capability-invoke-check.sh
 nix/scripts/dev-observer-capability-invoke-check.sh
 ```
 
+## Observer Operation
+
+The existing Observer Body Capabilities panel now exposes an explicit
+`Invoke Screen Observation` control. It reuses the common capability
+invocation readback and sends only the fixed `sense.screen.observe` request;
+the control does not add a second screen route or expose raw screen payloads.
+The real Observer check asserts the HTML control, client request mapping,
+event binding, and bounded service response together.
+
 ## Deferred
 
 ```text

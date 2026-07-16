@@ -105,6 +105,7 @@ export function observerOperationsPanels() {
           <div class="actions tight">
             <button id="invoke-vitals-button" class="secondary">Invoke Vitals</button>
             <button id="invoke-process-button" class="secondary">Invoke Processes</button>
+            <button id="invoke-screen-observation-button" class="secondary">Invoke Screen Observation</button>
             <button id="invoke-command-dry-run-button" class="secondary">Blocked Command Dry Run</button>
             <button id="invoke-approved-command-dry-run-button" class="secondary">Approved Dry Run</button>
           </div>
