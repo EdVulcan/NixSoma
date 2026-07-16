@@ -5,6 +5,22 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PLAN_FILE="$REPO_ROOT/docs/plans/OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md"
 CORE_URL="${OPENCLAW_INSTALLED_CORE_URL:-http://127.0.0.1:4100}"
+TARGET_UNIT="${OPENCLAW_SYSTEMD_NEXT_REPAIR_TARGET_UNIT:-openclaw-system-sense.service}"
+
+case "$TARGET_UNIT" in
+  openclaw-system-sense.service)
+    TARGET_OPERATION="restart_system_sense"
+    TARGET_CAPABILITY_ID="hostd.restart_system_sense"
+    ;;
+  openclaw-event-hub.service)
+    TARGET_OPERATION="restart_event_hub"
+    TARGET_CAPABILITY_ID="hostd.restart_event_hub"
+    ;;
+  *)
+    echo "Unsupported fixed next-repair target: $TARGET_UNIT" >&2
+    exit 64
+    ;;
+esac
 
 core_user="$(systemctl show openclaw-core.service --property=User --value)"
 hostd_user="$(systemctl show openclaw-hostd.service --property=User --value)"
@@ -27,20 +43,28 @@ curl --silent --fail "$CORE_URL/health" >/dev/null
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
 
-created="$(post_json "$CORE_URL/system/systemd/next-repair-tasks" '{"confirm":true,"execute":true}')"
+created_payload='{"confirm":true,"execute":true}'
+if [[ -n "${OPENCLAW_SYSTEMD_NEXT_REPAIR_TARGET_UNIT:-}" ]]; then
+  created_payload="$(node -e 'process.stdout.write(JSON.stringify({confirm:true,execute:true,targetUnit:process.argv[1]}))' "$TARGET_UNIT")"
+fi
+created="$(post_json "$CORE_URL/system/systemd/next-repair-tasks" "$created_payload")"
 approval_id="$(node -e 'const data = JSON.parse(process.argv[1]); process.stdout.write(data.approval.id)' "$created")"
-approved="$(post_json "$CORE_URL/approvals/$approval_id/approve" '{"approvedBy":"milestone-check","reason":"Approve one real OpenClaw system-sense repair execution attempt."}')"
+approval_payload="$(node -e 'process.stdout.write(JSON.stringify({approvedBy:"milestone-check",reason:`Approve one real OpenClaw ${process.argv[1]} repair execution attempt.`}))' "$TARGET_UNIT")"
+approved="$(post_json "$CORE_URL/approvals/$approval_id/approve" "$approval_payload")"
 step="$(post_json "$CORE_URL/operator/step" '{}')"
 task_id="$(node -e 'const data = JSON.parse(process.argv[1]); process.stdout.write(data.task.id)' "$created")"
 task_state="$(curl --silent --fail "$CORE_URL/tasks/$task_id")"
 
-node - <<'EOF' "$PLAN_FILE" "$created" "$approved" "$step" "$task_state"
+node - <<'EOF' "$PLAN_FILE" "$created" "$approved" "$step" "$task_state" "$TARGET_UNIT" "$TARGET_OPERATION" "$TARGET_CAPABILITY_ID"
 const fs = require("node:fs");
 const plan = fs.readFileSync(process.argv[2], "utf8");
 const created = JSON.parse(process.argv[3]);
 const approved = JSON.parse(process.argv[4]);
 const step = JSON.parse(process.argv[5]);
 const taskState = JSON.parse(process.argv[6]);
+const targetUnit = process.argv[7];
+const targetOperation = process.argv[8];
+const targetCapabilityId = process.argv[9];
 
 for (const token of [
   "Second Slice: Fixed Native Restart",
@@ -63,14 +87,18 @@ if (created.mode !== "operator-reviewed-next-systemd-repair-real-execution-task"
 }
 if (created.task?.status !== "queued"
   || created.task?.type !== "systemd_next_repair_task"
-  || created.task?.systemdNextRepair?.target?.unit !== "openclaw-system-sense.service"
+  || created.task?.systemdNextRepair?.target?.unit !== targetUnit
   || created.task?.systemdNextRepair?.execution?.realExecutionEnabled !== true) {
-  throw new Error(`next real execution task should target system-sense only: ${JSON.stringify(created.task)}`);
+  throw new Error(`next real execution task should target the selected fixed unit: ${JSON.stringify(created.task)}`);
 }
 if (created.task?.systemdNextRepair?.command?.command !== "systemctl"
-  || created.task?.systemdNextRepair?.command?.args?.join(" ") !== "restart openclaw-system-sense.service"
+  || created.task?.systemdNextRepair?.command?.args?.join(" ") !== `restart ${targetUnit}`
   || created.task?.systemdNextRepair?.command?.wouldExecute !== true) {
   throw new Error(`next real execution task should carry exact restart command: ${JSON.stringify(created.task?.systemdNextRepair?.command)}`);
+}
+if (created.task?.systemdNextRepair?.capability?.operation !== targetOperation
+  || created.task?.systemdNextRepair?.capability?.capabilityId !== targetCapabilityId) {
+  throw new Error(`next real execution task should carry the selected fixed capability: ${JSON.stringify(created.task?.systemdNextRepair?.capability)}`);
 }
 if (created.approval?.status !== "pending" || created.approval?.risk !== "high") {
   throw new Error(`next real execution task should require high-risk approval: ${JSON.stringify(created.approval)}`);
@@ -92,7 +120,7 @@ if (details.hostMutation !== true || details.hostMutationAttempted !== true || d
   throw new Error(`next real execution should mark explicit host mutation attempt: ${JSON.stringify(details)}`);
 }
 const transcript = details.commandTranscript?.[0];
-if (!transcript || transcript.command !== "systemctl restart openclaw-system-sense.service") {
+if (!transcript || transcript.command !== `systemctl restart ${targetUnit}`) {
   throw new Error(`next real execution should record command transcript: ${JSON.stringify(details.commandTranscript)}`);
 }
 if (transcript.exitCode !== 0
@@ -108,6 +136,8 @@ if (transcript.exitCode !== 0
   || transcript.peerIdentity?.boundary !== "kernel_so_peercred"
   || transcript.peerIdentity?.verified !== true
   || transcript.peerIdentity?.matched !== true
+  || transcript.nativeCapability?.operation !== targetOperation
+  || transcript.nativeCapability?.capabilityId !== targetCapabilityId
   || details.executionSucceeded !== true) {
   throw new Error(`next real execution transcript should prove native Polkit-authorized restart: ${JSON.stringify(transcript)}`);
 }
@@ -130,6 +160,8 @@ console.log(JSON.stringify({
     outcome: outcomeKind,
     command: transcript.command,
     actualCommand: transcript.actualCommand,
+    targetUnit,
+    capability: transcript.nativeCapability,
     transport: transcript.transport,
     method: transcript.method,
     jobPath: transcript.jobPath,

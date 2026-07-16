@@ -164,6 +164,7 @@ export function createSystemBodyTaskHandlers({
       authDelegation: result.authDelegation ?? null,
       transport: result.nativeMutation?.transport ?? result.authDelegation?.transport ?? null,
       method: result.nativeMutation?.method ?? result.authDelegation?.method ?? null,
+      nativeCapability: result.nativeMutation?.capability ?? null,
       jobPath: result.nativeMutation?.jobPath ?? null,
       beforeMainPid: result.nativeMutation?.before?.mainPid ?? null,
       afterMainPid: result.nativeMutation?.after?.mainPid ?? null,

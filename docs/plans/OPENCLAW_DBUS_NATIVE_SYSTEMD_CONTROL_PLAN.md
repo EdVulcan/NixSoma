@@ -235,6 +235,14 @@ the positive event-hub path and negative allowlist/peer boundaries. Real host
 mutation remains an explicit operator action and was not run during development
 validation.
 
+The existing core and Observer real-execution checks now accept the bounded
+`OPENCLAW_SYSTEMD_NEXT_REPAIR_TARGET_UNIT` selector for either descriptor entry,
+defaulting to `openclaw-system-sense.service`. Each check derives the expected
+operation and capability id from that same fixed mapping and verifies the task,
+native mutation, and command transcript agree. The shared host-mutation guard
+still refuses `execute:true` unless an intentional VM lane sets its explicit
+allow flag; no event-hub execution was started in this development slice.
+
 ## Deferred
 
 - D-Bus start/stop/reload operations and restart targets outside the two fixed

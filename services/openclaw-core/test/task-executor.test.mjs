@@ -1864,6 +1864,11 @@ test("approved next systemd repair executes only through the fixed hostd boundar
   assert.equal(transcript.actualCommand, "openclaw-hostd");
   assert.equal(transcript.transport, "dbus_native");
   assert.equal(transcript.method, "org.freedesktop.systemd1.Manager.RestartUnit");
+  assert.deepEqual(transcript.nativeCapability, {
+    registry: "openclaw-hostd-restart-capability-v1",
+    operation: "restart_system_sense",
+    capabilityId: "hostd.restart_system_sense",
+  });
   assert.equal(transcript.jobPath, "/org/freedesktop/systemd1/job/42");
   assert.equal(transcript.beforeMainPid, 100);
   assert.equal(transcript.afterMainPid, 200);
@@ -1979,6 +1984,11 @@ test("approved event-hub repair stays on the fixed hostd capability", async () =
   assert.deepEqual(hostdTarget, {
     targetUnit: "openclaw-event-hub.service",
     operation: "restart_event_hub",
+  });
+  assert.deepEqual(result.finalExecution.commandTranscript[0].nativeCapability, {
+    registry: "openclaw-hostd-restart-capability-v1",
+    operation: "restart_event_hub",
+    capabilityId: "hostd.restart_event_hub",
   });
   assert.equal(inventoryCalls, 2);
 });
