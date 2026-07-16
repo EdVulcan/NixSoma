@@ -1,6 +1,6 @@
 # OpenClaw Plans Directory
 
-Updated: 2026-07-16
+Updated: 2026-07-17
 
 This directory contains both active route documents and historical milestone
 evidence. Do not infer the next development task from the highest numbered phase
@@ -218,8 +218,9 @@ The existing approval-gated next-repair task can explicitly select the fixed
 `openclaw-system-sense.service` route remains compatible. Core and hostd share
 the descriptor-bound operation, Nix expands the same units into Polkit, and
 Observer exposes the selection without accepting arbitrary units or automatic
-restart. System-sense retains real switched-VM execution evidence; event-hub
-real mutation remains pending its explicit operator-approved check. The
+restart. System-sense retains real switched-VM execution evidence, and the
+2026-07-17 switched generation now proves event-hub real mutation through both
+Core and Observer checks with changed-PID and restored-readiness evidence. The
 detailed record is in `OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md`.
 
 The active Level 2 bridge is documented in:

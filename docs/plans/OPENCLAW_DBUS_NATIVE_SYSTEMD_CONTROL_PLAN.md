@@ -88,8 +88,8 @@ does not shell out to `systemctl`.
 The fixed native restart owner split and the original system-sense restart are
 proven in the switched VM generation. This slice extends the same contract to
 the fixed event-hub target; its protocol, task, hostd, Nix, and Polkit evidence
-is locally proven below, while the real event-hub mutation remains a separate
-operator-approved VM check.
+is locally proven below, with the real event-hub mutation validated by a
+separate explicit operator-approved VM check.
 
 1. Desktop system services run as the dedicated `openclaw-service` account
    instead of root; session-manager and browser-runtime remain user-manager
@@ -138,10 +138,12 @@ core and Observer milestones: both returned exit zero, an
 `org.freedesktop.systemd1` job path, changed positive main PIDs, restored
 readiness, `polkit-dbus-fixed-unit`, and the fixed hostd store closure with no
 sudo or direct systemctl execution. Core ran as `openclaw-service` while the
-Polkit subject and hostd process ran as `openclaw-hostd`. The event-hub
-extension has not been run against a real host during this development slice;
-its focused tests, closure builds, generated authorization, and operator
-boundary are the current evidence.
+Polkit subject and hostd process ran as `openclaw-hostd`. On 2026-07-17 the
+same generation also proved the event-hub extension through both real-execution
+milestones: Core changed the target PID from `191346` to `191587`, and the
+Observer check changed it from `191587` to `191671`. Both checks validated the
+descriptor capability `hostd.restart_event_hub`, native D-Bus transport,
+changed-PID evidence, and restored readiness.
 
 ## Completed Hostd Boundary
 
@@ -162,10 +164,8 @@ request it sent.
 
 Focused hostd tests, core executor tests, auth-delegation checks, Nix closure
 builds, body configuration, a real helper socket check, and the switched
-core/Observer milestones prove the owner/socket contract. The event-hub target
-has local protocol and generated-authorization proof but still needs the
-explicit real execution check. No new public route or arbitrary privileged API
-was added.
+core/Observer milestones prove the owner/socket contract for both fixed
+targets. No new public route or arbitrary privileged API was added.
 
 ## Third Slice: Live Dependency Evidence
 
@@ -231,9 +231,10 @@ The shared descriptor is
 system-sense route remains backward compatible. Unknown units, operation/target
 mismatches, direct systemctl fallback, automatic restart, arbitrary D-Bus
 arguments, and user-owned units remain rejected. Focused Core/hostd tests prove
-the positive event-hub path and negative allowlist/peer boundaries. Real host
-mutation remains an explicit operator action and was not run during development
-validation.
+the positive event-hub path and negative allowlist/peer boundaries. The
+2026-07-17 Core and Observer checks prove the explicit real host mutation and
+post-restart readiness through the existing approval and Operator Step/Run
+lifecycle.
 
 The existing core and Observer real-execution checks now accept the bounded
 `OPENCLAW_SYSTEMD_NEXT_REPAIR_TARGET_UNIT` selector for either descriptor entry,
@@ -241,7 +242,8 @@ defaulting to `openclaw-system-sense.service`. Each check derives the expected
 operation and capability id from that same fixed mapping and verifies the task,
 native mutation, and command transcript agree. The shared host-mutation guard
 still refuses `execute:true` unless an intentional VM lane sets its explicit
-allow flag; no event-hub execution was started in this development slice.
+allow flag; the intentional 2026-07-17 VM lane used that guard and completed
+both target checks.
 
 ## Deferred
 
@@ -254,10 +256,9 @@ allow flag; no event-hub execution was started in this development slice.
 
 ## Next Slice
 
-The fixed Level 3 hostd socket contract is complete for the two allowlisted
-restart capabilities; real VM evidence is complete for system-sense and
-deferred for event-hub until its explicit execution check. Future work must keep
-the native helper, exact user/group match, compact verified/matched readback,
-and descriptor-bound target. Continue with a separately justified capability
-behind the existing hostd owner; do not broaden this fixed restart into an
-arbitrary systemd control API.
+The fixed Level 3 hostd socket contract and real VM evidence are complete for
+both allowlisted restart capabilities. Future work must keep the native helper,
+exact user/group match, compact verified/matched readback, and
+descriptor-bound target. Continue with a separately justified capability behind
+the existing hostd owner; do not broaden this fixed restart into an arbitrary
+systemd control API.

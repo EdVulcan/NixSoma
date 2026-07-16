@@ -1,6 +1,6 @@
 # OpenClaw Documentation Control Room
 
-Updated: 2026-07-16
+Updated: 2026-07-17
 
 This is the active documentation entry point for `OpenClawOnNixOS`.
 
@@ -62,7 +62,9 @@ recovery capability: the existing approved next-repair lifecycle can target
 either `openclaw-system-sense.service` or its foundational upstream
 `openclaw-event-hub.service` through a descriptor-bound hostd operation. The
 Observer target selector remains explicit, unknown units remain rejected, and
-real host mutation still requires approval plus Operator Step/Run.
+real host mutation still requires approval plus Operator Step/Run. The switched
+VM now proves both fixed targets through the Core and Observer real-execution
+checks with native D-Bus, hostd, changed-PID, and restored-health evidence.
 
 ## Active Architecture
 
@@ -159,7 +161,7 @@ real host mutation still requires approval plus Operator Step/Run.
 | [OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_AUTO_RESTORE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_AUTO_RESTORE_PLAN.md) | Active startup auto-restore of Engineering Loop State when browser-local state is empty. |
 | [OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md](./plans/OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md) | Completed bounded Level 2 browser eye-hand bridge with real Firefox, semantic click/type, autonomous selection, write-only input, recovery, and Observer evidence. |
 | [OPENCLAW_NIX_STORE_RUNTIME_PACKAGING_PLAN.md](./plans/OPENCLAW_NIX_STORE_RUNTIME_PACKAGING_PLAN.md) | Completed kernel-whitepaper Phase A route; all nine services and the trusted sidecar template run from read-only Nix closures. |
-| [OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md](./plans/OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Completed Phase B fixed-unit slice plus live read-only `Unit.After` dependency, manager-scope evidence, and descriptor-bound system-sense/event-hub hostd restart contracts; system-sense has core/Observer VM proof and event-hub has local protocol/Nix proof pending real execution. |
+| [OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md](./plans/OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Completed Phase B fixed-unit slice plus live read-only `Unit.After` dependency, manager-scope evidence, and descriptor-bound system-sense/event-hub hostd restart contracts; both fixed targets have Core/Observer VM proof. |
 | [OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md](./plans/OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md) | Completed first Phase C slice: bounded read-only eBPF `sched_process_exec` capture and executable identity readback through system-sense, core proxy, and Observer. |
 | [OPENCLAW_MONOLITH_REDUCTION_PLAN.md](./plans/OPENCLAW_MONOLITH_REDUCTION_PLAN.md) | Tracks current coupling reduction and milestone-batch improvements. |
 | [OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md](./plans/OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md) | Tracks expert-review fixes around test lifecycle, shared packages, helpers, batching, and profiling. |

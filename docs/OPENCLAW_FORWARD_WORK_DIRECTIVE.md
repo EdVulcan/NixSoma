@@ -1,6 +1,6 @@
 # OpenClaw Forward Work Directive
 
-Updated: 2026-07-16
+Updated: 2026-07-17
 
 This is the active guidance document for continuing OpenClaw development after
 the Phase 136 checkpoint and the discovery that the locally optimized
@@ -948,9 +948,14 @@ socket as system-sense. Core re-reads native inventory before task creation,
 hostd accepts only the two fixed operation/unit pairs, and Nix expands the
 descriptor into exact Polkit rules. Focused tests and generated closure checks
 prove this contract; the switched VM has real system-sense execution evidence,
-but event-hub host mutation has not yet been run. Unknown units, automatic
-restart, arbitrary D-Bus arguments, and direct command fallback remain blocked;
-event-hub execution remains an explicit approval and Operator Step/Run boundary.
+and the 2026-07-17 switched generation now proves the event-hub mutation through
+both the Core and Observer real-execution checks. Core verified a changed PID
+from `191346` to `191587`; Observer verified a second changed PID from `191587`
+to `191671`. Both checks required explicit approval and Operator Step/Run,
+reported `openclaw-hostd` with `dbus_native` and
+`org.freedesktop.systemd1.Manager.RestartUnit`, and completed restored-health
+verification. Unknown units, automatic restart, arbitrary D-Bus arguments, and
+direct command fallback remain blocked.
 
 The Level 1 live-plugin-refresh migration now owns a real fixed-registry
 generation lifecycle. An approved existing refresh task builds and validates a
