@@ -114,7 +114,7 @@ for (const token of [
   }
 }
 for (const token of [
-  "/plugins/native-adapter/workspace-symbol-lookup",
+  "/capabilities/invoke",
   "refreshSymbolLookup",
   "renderSymbolLookup",
   "sense.openclaw.workspace_symbol_lookup",
@@ -122,6 +122,18 @@ for (const token of [
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);
   }
+}
+const symbolRefreshStart = client.indexOf("async function refreshSymbolLookup()");
+const symbolRefreshEnd = client.indexOf("async function refreshEditTargetSelection()", symbolRefreshStart);
+const symbolRefresh = client.slice(symbolRefreshStart, symbolRefreshEnd);
+if (
+  symbolRefreshStart < 0
+  || symbolRefreshEnd < 0
+  || !symbolRefresh.includes("/capabilities/invoke")
+  || !symbolRefresh.includes('capabilityId: "sense.openclaw.workspace_symbol_lookup"')
+  || symbolRefresh.includes("/plugins/native-adapter/workspace-symbol-lookup")
+) {
+  throw new Error("Observer symbol lookup refresh must use the common capability runtime.");
 }
 if (
   !lookup.ok

@@ -496,8 +496,19 @@ async function refreshEngineeringWriteExecutionEvidence() {
 
 async function refreshSemanticIndex() {
   try {
-    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/workspace-semantic-index?scope=tools&limit=24\`);
-    renderSemanticIndex(data);
+    const response = await fetchJson(\`\${observerConfig.coreUrl}/capabilities/invoke\`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        capabilityId: "sense.openclaw.workspace_semantic_index",
+        intent: "openclaw.workspace.semantic_index",
+        params: { scope: "tools", limit: 24 },
+      }),
+    });
+    if (response.invoked !== true) {
+      throw new Error("Workspace semantic index capability was not invoked.");
+    }
+    renderSemanticIndex(response.result ?? {});
   } catch {
     semanticIndexRegistry.textContent = "offline";
     semanticIndexFiles.textContent = "0";
@@ -510,8 +521,19 @@ async function refreshSemanticIndex() {
 
 async function refreshSymbolLookup() {
   try {
-    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/workspace-symbol-lookup?scope=tools&query=tool&limit=16\`);
-    renderSymbolLookup(data);
+    const response = await fetchJson(\`\${observerConfig.coreUrl}/capabilities/invoke\`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        capabilityId: "sense.openclaw.workspace_symbol_lookup",
+        intent: "openclaw.workspace.symbol_lookup",
+        params: { scope: "tools", query: "tool", limit: 16 },
+      }),
+    });
+    if (response.invoked !== true) {
+      throw new Error("Workspace symbol lookup capability was not invoked.");
+    }
+    renderSymbolLookup(response.result ?? {});
   } catch {
     symbolLookupRegistry.textContent = "offline";
     symbolLookupMatches.textContent = "0";

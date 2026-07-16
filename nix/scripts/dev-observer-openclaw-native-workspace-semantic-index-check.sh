@@ -159,7 +159,7 @@ for (const token of [
   }
 }
 for (const token of [
-  "/plugins/native-adapter/workspace-semantic-index",
+  "/capabilities/invoke",
   "refreshSemanticIndex",
   "renderSemanticIndex",
   "sense.openclaw.workspace_semantic_index",
@@ -167,6 +167,18 @@ for (const token of [
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);
   }
+}
+const semanticRefreshStart = client.indexOf("async function refreshSemanticIndex()");
+const semanticRefreshEnd = client.indexOf("async function refreshSymbolLookup()", semanticRefreshStart);
+const semanticRefresh = client.slice(semanticRefreshStart, semanticRefreshEnd);
+if (
+  semanticRefreshStart < 0
+  || semanticRefreshEnd < 0
+  || !semanticRefresh.includes("/capabilities/invoke")
+  || !semanticRefresh.includes('capabilityId: "sense.openclaw.workspace_semantic_index"')
+  || semanticRefresh.includes("/plugins/native-adapter/workspace-semantic-index")
+) {
+  throw new Error("Observer semantic index refresh must use the common capability runtime.");
 }
 if (
   !index.ok

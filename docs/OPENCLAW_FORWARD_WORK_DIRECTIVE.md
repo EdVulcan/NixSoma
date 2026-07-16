@@ -1258,6 +1258,15 @@ runtime. It unwraps only bounded selected-target metadata; proposal creation,
 approval, patch execution, plugin execution, runtime activation, provider use,
 and mutation remain separate explicit paths.
 
+The existing Observer workspace semantic-index and symbol-lookup panels now
+also refresh through their declared common capabilities:
+`sense.openclaw.workspace_semantic_index` and
+`sense.openclaw.workspace_symbol_lookup`. Their derived results remain
+transient; the common runtime records only bounded audit/invocation summaries.
+This closes the Level 1 navigation boundary and stops here; it does not add
+another LSP request, generic tool dispatcher, task, approval, mutation,
+provider call, or network path.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

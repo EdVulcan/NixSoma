@@ -26,6 +26,15 @@ bridge is documented in
 keeps prompt bodies, execution authority, task/approval creation, provider
 calls, and network use outside the capability summary and audit path.
 
+The existing workspace semantic-index and symbol-lookup navigation panels now
+use `sense.openclaw.workspace_semantic_index` and
+`sense.openclaw.workspace_symbol_lookup` through the common capability
+runtime. The detailed derived results remain transient for Observer rendering;
+invocation history and capability events retain only bounded navigation
+summaries. This closes the current Level 1 navigation boundary without adding
+another LSP request, dispatcher, task, approval, or execution path. See
+`OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_NAVIGATION_PLAN.md`.
+
 The existing read-only tool contract inventory is now also available through
 the common capability runtime as
 `sense.openclaw.engineering_tool_surface_inventory`. It reuses the dedicated
