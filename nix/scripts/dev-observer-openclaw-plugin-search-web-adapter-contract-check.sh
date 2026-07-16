@@ -124,7 +124,7 @@ cat > "$EXTENSIONS_DIR/memory/openclaw.plugin.json" <<'JSON'
 JSON
 
 cleanup() {
-  rm -f "${HTML_FILE:-}" "${CLIENT_FILE:-}" "${ADAPTER_FILE:-}" "${HISTORY_FILE:-}" "${APPROVALS_FILE:-}" "${TASKS_FILE:-}"
+  rm -f "${HTML_FILE:-}" "${CLIENT_FILE:-}" "${ADAPTER_FILE:-}" "${HISTORY_FILE:-}" "${APPROVALS_FILE:-}" "${TASKS_FILE:-}" "${INVOKE_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -137,15 +137,19 @@ ADAPTER_FILE="$(mktemp)"
 HISTORY_FILE="$(mktemp)"
 APPROVALS_FILE="$(mktemp)"
 TASKS_FILE="$(mktemp)"
+INVOKE_FILE="$(mktemp)"
 
 curl --silent --fail "$OBSERVER_URL/" > "$HTML_FILE"
 curl --silent --fail "$OBSERVER_URL/client-v5.js" > "$CLIENT_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/plugin-search-web-adapter-contract?limit=8" > "$ADAPTER_FILE"
+curl --silent --fail --request POST "$CORE_URL/capabilities/invoke" \
+  --header 'content-type: application/json' \
+  --data '{"capabilityId":"plan.openclaw.plugin_search_web_adapter_contract","intent":"plugin.search_web.contract","params":{"limit":8}}' > "$INVOKE_FILE"
 curl --silent --fail "$CORE_URL/capabilities/invocations?limit=10" > "$HISTORY_FILE"
 curl --silent --fail "$CORE_URL/approvals?status=pending&limit=10" > "$APPROVALS_FILE"
 curl --silent --fail "$CORE_URL/tasks?limit=10" > "$TASKS_FILE"
 
-node - <<'EOF' "$HTML_FILE" "$CLIENT_FILE" "$ADAPTER_FILE" "$HISTORY_FILE" "$APPROVALS_FILE" "$TASKS_FILE"
+node - <<'EOF' "$HTML_FILE" "$CLIENT_FILE" "$ADAPTER_FILE" "$HISTORY_FILE" "$APPROVALS_FILE" "$TASKS_FILE" "$INVOKE_FILE"
 const fs = require("node:fs");
 const readText = (index) => fs.readFileSync(process.argv[index], "utf8");
 const readJson = (index) => JSON.parse(readText(index));
@@ -156,7 +160,8 @@ const adapterContract = readJson(4);
 const history = readJson(5);
 const approvals = readJson(6);
 const tasks = readJson(7);
-const raw = JSON.stringify({ html, client, adapterContract, history, approvals, tasks });
+const invocation = readJson(8);
+const raw = JSON.stringify({ html, client, adapterContract, history, approvals, tasks, invocation });
 
 for (const token of [
   "OpenClaw Search/Web Adapter Contract",
@@ -171,7 +176,8 @@ for (const token of [
   }
 }
 for (const token of [
-  "/plugins/native-adapter/plugin-search-web-adapter-contract",
+  "/capabilities/invoke",
+  "plan.openclaw.plugin_search_web_adapter_contract",
   "refreshPluginSearchWebAdapterContract",
   "renderPluginSearchWebAdapterContract",
   "openclaw-plugin-search-web-adapter-contract-v0",
@@ -197,8 +203,27 @@ if (
 ) {
   throw new Error(`Observer search/web adapter contract response mismatch: ${JSON.stringify(adapterContract)}`);
 }
-if ((history.items ?? []).length !== 0) {
-  throw new Error(`Observer search/web adapter contract must not invoke capabilities: ${JSON.stringify(history.items)}`);
+if (
+  (history.items ?? []).length !== 1
+  || history.items[0]?.capability?.id !== "plan.openclaw.plugin_search_web_adapter_contract"
+  || history.items[0]?.summary?.kind !== "plugin.search_web_adapter_contract"
+  || history.items[0]?.summary?.noNetwork !== true
+  || history.items[0]?.summary?.noPluginExecution !== true
+  || history.items[0]?.summary?.noRuntimeActivation !== true
+) {
+  throw new Error(`Observer search/web adapter contract common capability evidence mismatch: ${JSON.stringify(history.items)}`);
+}
+if (
+  !invocation.ok
+  || invocation.invoked !== true
+  || invocation.capability?.id !== "plan.openclaw.plugin_search_web_adapter_contract"
+  || invocation.result?.registry !== "openclaw-plugin-search-web-adapter-contract-v0"
+  || invocation.summary?.kind !== "plugin.search_web_adapter_contract"
+  || invocation.summary?.noNetwork !== true
+  || invocation.summary?.noTaskCreation !== true
+  || invocation.summary?.noApprovalCreation !== true
+) {
+  throw new Error(`Observer search/web adapter contract capability response mismatch: ${JSON.stringify(invocation)}`);
 }
 if ((approvals.items ?? []).length !== 0) {
   throw new Error(`Observer search/web adapter contract must not create approvals: ${JSON.stringify(approvals.items)}`);

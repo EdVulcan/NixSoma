@@ -34,6 +34,14 @@ authority flags in the common invocation summary without exposing source
 content or enabling tool execution. The focused boundary is documented in
 `OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_TOOL_SURFACE_INVENTORY_PLAN.md`.
 
+The declared search/web adapter contract now also closes its common runtime
+boundary through `plan.openclaw.plugin_search_web_adapter_contract`. The
+Observer contract panel invokes the existing manifest-derived builder through
+`/capabilities/invoke`; its compact invocation summary keeps provider content
+transient and records only counts, check status, and negative governance flags.
+Network access, provider execution, plugin import, runtime activation, task
+creation, and approval creation remain disabled.
+
 The source-derived workspace edit target selection is now also declared in the
 common capability registry as `sense.openclaw.workspace_edit_target_select`.
 Its runtime bridge reuses the existing direct builder and emits only bounded

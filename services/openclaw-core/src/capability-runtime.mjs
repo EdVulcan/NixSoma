@@ -16,6 +16,7 @@ import { createEngineeringWorkViewCapabilityHandlers } from "./capability-runtim
 import { createPluginRuntimeRefreshCapabilityHandlers } from "./capability-runtime-plugin-refresh.mjs";
 import { createEngineeringProviderHandoffCapabilityHandlers } from "./capability-runtime-engineering-provider-handoff.mjs";
 import { createAcpxCodexCompatibilityCapabilityHandlers } from "./capability-runtime-acpx-codex.mjs";
+import { createPluginSearchWebContractCapabilityHandlers } from "./capability-runtime-plugin-search-web-contract.mjs";
 import { createPromptPackCapabilityHandlers } from "./capability-runtime-prompt-pack.mjs";
 import { createWorkspaceEditTargetCapabilityHandlers } from "./capability-runtime-workspace-edit-target.mjs";
 import { createWorkspaceMutationCapabilityHandlers } from "./capability-runtime-workspace-mutations.mjs";
@@ -78,6 +79,7 @@ export function createCapabilityRuntime(deps) {
     buildNativeEngineeringToolSurfaceInventory,
     buildOpenClawPluginManifestMap,
     buildOpenClawPluginCapabilityPlan,
+    buildOpenClawPluginSearchWebAdapterContract,
   } = pluginReview;
   const engineeringReadSearchHandlers = createEngineeringReadSearchCapabilityHandlers({
     buildNativeEngineeringReadFile: pluginReview.buildNativeEngineeringReadFile,
@@ -153,6 +155,9 @@ export function createCapabilityRuntime(deps) {
   const engineeringProviderHandoffHandlers = createEngineeringProviderHandoffCapabilityHandlers(providerRuntime);
   const acpxCodexCompatibilityHandlers = createAcpxCodexCompatibilityCapabilityHandlers({
     buildNativeAcpxCodexBridgeCompatibility: pluginReview.buildNativeAcpxCodexBridgeCompatibility,
+  });
+  const pluginSearchWebContractHandlers = createPluginSearchWebContractCapabilityHandlers({
+    buildOpenClawPluginSearchWebAdapterContract,
   });
   const promptPackHandlers = createPromptPackCapabilityHandlers({
     buildNativeOpenClawPromptSemanticsProfile: pluginReview.buildNativeOpenClawPromptSemanticsProfile,
@@ -438,6 +443,10 @@ export function createCapabilityRuntime(deps) {
     if (acpxCodexCompatibility.handled) {
       return acpxCodexCompatibility.result;
     }
+    const pluginSearchWebContract = pluginSearchWebContractHandlers.callBackend(capability, request);
+    if (pluginSearchWebContract.handled) {
+      return pluginSearchWebContract.result;
+    }
     const promptPack = promptPackHandlers.callBackend(capability, request);
     if (promptPack.handled) {
       return promptPack.result;
@@ -675,6 +684,10 @@ export function createCapabilityRuntime(deps) {
     const acpxCodexCompatibilitySummary = acpxCodexCompatibilityHandlers.summariseResult(capability, result);
     if (acpxCodexCompatibilitySummary) {
       return acpxCodexCompatibilitySummary;
+    }
+    const pluginSearchWebContractSummary = pluginSearchWebContractHandlers.summariseResult(capability, result);
+    if (pluginSearchWebContractSummary) {
+      return pluginSearchWebContractSummary;
     }
     const promptPackSummary = promptPackHandlers.summariseResult(capability, result);
     if (promptPackSummary) {

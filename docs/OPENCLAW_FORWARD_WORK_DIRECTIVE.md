@@ -1144,6 +1144,14 @@ credential access, wrapper mutation, process spawn, provider call, or network
 egress. Live ACPX/Codex execution remains an explicit operator-authorization
 boundary.
 
+The existing search/web adapter contract is now also available through the
+common capability runtime as
+`plan.openclaw.plugin_search_web_adapter_contract`. It reuses the existing
+manifest-derived builder and records only bounded provider/check counts and
+negative governance flags in invocation history. The Observer contract panel
+uses this path; network access, provider execution, plugin import, runtime
+activation, task creation, and approval creation remain disabled.
+
 The existing prompt-semantics work-standards profile is now also declared in the
 common capability runtime as `sense.openclaw.prompt_pack`. It reuses the bounded
 prompt builder, exposes only file/check counts and work-standards status in the

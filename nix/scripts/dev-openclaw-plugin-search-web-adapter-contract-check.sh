@@ -132,7 +132,7 @@ cat > "$EXTENSIONS_DIR/memory/openclaw.plugin.json" <<'JSON'
 JSON
 
 cleanup() {
-  rm -f "${ADAPTER_FILE:-}" "${STATUS_FILE:-}" "${HISTORY_FILE:-}" "${APPROVALS_FILE:-}" "${TASKS_FILE:-}"
+  rm -f "${ADAPTER_FILE:-}" "${STATUS_FILE:-}" "${HISTORY_FILE:-}" "${APPROVALS_FILE:-}" "${TASKS_FILE:-}" "${INVOKE_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -144,14 +144,18 @@ STATUS_FILE="$(mktemp)"
 HISTORY_FILE="$(mktemp)"
 APPROVALS_FILE="$(mktemp)"
 TASKS_FILE="$(mktemp)"
+INVOKE_FILE="$(mktemp)"
 
 curl --silent --fail "$CORE_URL/plugins/native-adapter/plugin-search-web-adapter-contract?limit=8" > "$ADAPTER_FILE"
 curl --silent --fail "$CORE_URL/plugins/openclaw-native-plugin-adapter" > "$STATUS_FILE"
+curl --silent --fail --request POST "$CORE_URL/capabilities/invoke" \
+  --header 'content-type: application/json' \
+  --data '{"capabilityId":"plan.openclaw.plugin_search_web_adapter_contract","intent":"plugin.search_web.contract","params":{"limit":8}}' > "$INVOKE_FILE"
 curl --silent --fail "$CORE_URL/capabilities/invocations?limit=10" > "$HISTORY_FILE"
 curl --silent --fail "$CORE_URL/approvals?status=pending&limit=10" > "$APPROVALS_FILE"
 curl --silent --fail "$CORE_URL/tasks?limit=10" > "$TASKS_FILE"
 
-node - <<'EOF' "$ADAPTER_FILE" "$STATUS_FILE" "$HISTORY_FILE" "$APPROVALS_FILE" "$TASKS_FILE"
+node - <<'EOF' "$ADAPTER_FILE" "$STATUS_FILE" "$HISTORY_FILE" "$APPROVALS_FILE" "$TASKS_FILE" "$INVOKE_FILE"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
 
@@ -160,7 +164,8 @@ const status = readJson(3);
 const history = readJson(4);
 const approvals = readJson(5);
 const tasks = readJson(6);
-const raw = JSON.stringify({ adapterContract, status, history, approvals, tasks });
+const invocation = readJson(7);
+const raw = JSON.stringify({ adapterContract, status, history, approvals, tasks, invocation });
 
 if (
   !adapterContract.ok
@@ -216,11 +221,31 @@ for (const check of adapterContract.contractChecks ?? []) {
 if (
   !status.implementedCapabilities?.includes("plan.openclaw.plugin_search_web_adapter_contract")
   || status.summary?.canPlanSearchWebAdapterContract !== true
+  || status.summary?.canInvokeSearchWebAdapterContract !== true
 ) {
   throw new Error(`native adapter status should expose search/web adapter contract shell: ${JSON.stringify(status)}`);
 }
-if ((history.items ?? []).length !== 0) {
-  throw new Error(`search/web adapter contract must not invoke capabilities: ${JSON.stringify(history.items)}`);
+if (
+  (history.items ?? []).length !== 1
+  || history.items[0]?.capability?.id !== "plan.openclaw.plugin_search_web_adapter_contract"
+  || history.items[0]?.summary?.kind !== "plugin.search_web_adapter_contract"
+  || history.items[0]?.summary?.noNetwork !== true
+  || history.items[0]?.summary?.noPluginExecution !== true
+  || history.items[0]?.summary?.noRuntimeActivation !== true
+) {
+  throw new Error(`search/web adapter contract common capability evidence mismatch: ${JSON.stringify(history.items)}`);
+}
+if (
+  !invocation.ok
+  || invocation.invoked !== true
+  || invocation.capability?.id !== "plan.openclaw.plugin_search_web_adapter_contract"
+  || invocation.result?.registry !== "openclaw-plugin-search-web-adapter-contract-v0"
+  || invocation.summary?.kind !== "plugin.search_web_adapter_contract"
+  || invocation.summary?.noNetwork !== true
+  || invocation.summary?.noTaskCreation !== true
+  || invocation.summary?.noApprovalCreation !== true
+) {
+  throw new Error(`search/web adapter contract capability response mismatch: ${JSON.stringify(invocation)}`);
 }
 if ((approvals.items ?? []).length !== 0) {
   throw new Error(`search/web adapter contract must not create approvals: ${JSON.stringify(approvals.items)}`);

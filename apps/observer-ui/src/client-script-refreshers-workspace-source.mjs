@@ -212,8 +212,19 @@ async function refreshPluginCandidateContractTests() {
 
 async function refreshPluginSearchWebAdapterContract() {
   try {
-    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/plugin-search-web-adapter-contract?limit=8\`);
-    renderPluginSearchWebAdapterContract(data);
+    const response = await fetchJson(\`\${observerConfig.coreUrl}/capabilities/invoke\`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        capabilityId: "plan.openclaw.plugin_search_web_adapter_contract",
+        intent: "plugin.search_web.contract",
+        params: { limit: 8 },
+      }),
+    });
+    if (response.invoked !== true) {
+      throw new Error("Search/web adapter contract capability was not invoked.");
+    }
+    renderPluginSearchWebAdapterContract(response.result ?? {});
   } catch {
     pluginSearchWebContractRegistry.textContent = "offline";
     pluginSearchWebContractProviders.textContent = "0";
