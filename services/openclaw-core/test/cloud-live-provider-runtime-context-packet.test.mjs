@@ -80,7 +80,19 @@ test("context packet handoff materialises one bounded provider message with comp
         source: { registry: "openclaw-task-lifecycle-terminal-v0", taskId: "task-context-1", outcomeHash: "a".repeat(64) },
         relevance: 101,
       }],
-      summary: { storedRecords: 1, recalledRecords: 1, status: "recalled", advisoryOnly: true },
+      summary: {
+        storedRecords: 1,
+        recalledRecords: 1,
+        matchedRecords: 1,
+        completedMatches: 1,
+        failedMatches: 0,
+        completionRate: 1,
+        latestOutcome: "completed",
+        pattern: "repeatable_success",
+        nextAction: "Reuse the bounded approval path and attach verification evidence before reporting completion.",
+        status: "recalled",
+        advisoryOnly: true,
+      },
       bounds: { maxRecallRecords: 8 },
       governance: { advisoryOnly: true },
       auditEvidence: { summary: { storedRecords: 1, recalledRecords: 1, queryTokenCount: 1, queryHash: "b".repeat(64), advisoryOnly: true } },
@@ -95,6 +107,12 @@ test("context packet handoff materialises one bounded provider message with comp
   assert.equal(result.evidence.requestEnvelopeMaterialized, true);
   assert.equal(result.evidence.experienceMemoryIncluded, true);
   assert.equal(result.evidence.experienceMemoryRecalled, 1);
+  assert.equal(result.evidence.experienceMemoryMatched, 1);
+  assert.equal(result.evidence.experienceMemoryCompletedMatches, 1);
+  assert.equal(result.evidence.experienceMemoryFailedMatches, 0);
+  assert.equal(result.evidence.experienceMemoryCompletionRate, 1);
+  assert.equal(result.evidence.experienceMemoryLatestOutcome, "completed");
+  assert.equal(result.evidence.experienceMemoryPattern, "repeatable_success");
   assert.equal(result.evidence.experienceMemoryAdvisoryOnly, true);
   assert.equal(result.liveProviderExecution.requestEnvelope.messages.length, 1);
   assert.match(result.liveProviderExecution.requestEnvelope.messages[0].content, /npm test/);

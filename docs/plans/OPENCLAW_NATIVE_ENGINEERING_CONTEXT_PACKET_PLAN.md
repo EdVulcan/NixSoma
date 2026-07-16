@@ -275,6 +275,25 @@ assembly is reused by the capability route, direct route, Observer readback, and
 explicit provider handoff, so the provider path inherits no new authority. The
 memory recall stores only counts and a query hash in audit evidence.
 
+## Adaptive Advisory Recall Follow-Up Complete
+
+Matching terminal experience now also produces a bounded pattern summary:
+
+```text
+matched/completed/failed counts
+completion rate and latest outcome
+repeatable_success, mixed_outcomes, recovery_needed, or no-match pattern
+advisory next-action guidance
+```
+
+The summary is derived from sanitized task type, phase, outcome, and
+applicability tokens. It is visible in the packet summary and Observer, and the
+approved provider handoff receives it only as part of the same transient local
+context packet. Compact evidence stores counts, rate, latest outcome, and
+pattern; it never stores task goals, command output, credentials, or raw model
+content. The guidance cannot create tasks, approvals, commands, actions, or
+network egress.
+
 ## Semantic Action Readiness Follow-Up Complete
 
 The existing trusted work-view observation now feeds a bounded semantic-action

@@ -11,6 +11,7 @@ const MAX_LESSON_CHARS = 320;
 const MAX_TOKEN_CHARS = 40;
 const MAX_APPLICABILITY_TOKENS = 16;
 const MAX_SOURCE_TASK_ID_CHARS = 120;
+const MAX_NEXT_ACTION_CHARS = 240;
 const STOP_WORDS = new Set([
   "the",
   "and",
@@ -119,6 +120,42 @@ function lessonFor({ taskType, outcome, executionPhase }) {
   );
 }
 
+function buildAdvisoryPattern(candidates) {
+  const completedMatches = candidates.filter(({ record }) => record.outcome === "completed").length;
+  const failedMatches = candidates.filter(({ record }) => record.outcome === "failed").length;
+  const terminalRecords = completedMatches + failedMatches;
+  const latest = [...candidates]
+    .sort((left, right) => String(right.record.recordedAt).localeCompare(String(left.record.recordedAt)))[0]?.record;
+  let pattern = "no_terminal_history";
+  let nextAction = "Follow the standard approval and verification boundaries for this task.";
+
+  if (terminalRecords === 0) {
+    pattern = candidates.length > 0 ? "non_terminal_history" : "no_match";
+  } else if (failedMatches > 0 && completedMatches === 0) {
+    pattern = "recovery_needed";
+    nextAction = "Inspect the latest recovery evidence before retrying; preserve the approval boundary.";
+  } else if (failedMatches > 0) {
+    pattern = "mixed_outcomes";
+    nextAction = "Compare prior completion and failure evidence before repeating; preserve approval and verification.";
+  } else {
+    pattern = "repeatable_success";
+    nextAction = "Reuse the bounded approval path and attach verification evidence before reporting completion.";
+  }
+
+  return {
+    matchedRecords: candidates.length,
+    terminalRecords,
+    completedMatches,
+    failedMatches,
+    completionRate: terminalRecords > 0
+      ? Number((completedMatches / terminalRecords).toFixed(2))
+      : null,
+    latestOutcome: latest?.outcome ?? null,
+    pattern,
+    nextAction: boundedText(nextAction, MAX_NEXT_ACTION_CHARS),
+  };
+}
+
 function normaliseLimit(value) {
   const parsed = Number.parseInt(String(value ?? ""), 10);
   return Number.isInteger(parsed) && parsed > 0
@@ -204,7 +241,7 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
   function buildExperienceMemoryReadModel({ taskType, goal, limit } = {}) {
     const selectedTaskType = normaliseTaskType(taskType);
     const queryTokens = new Set(applicabilityTokens(selectedTaskType, goal));
-    const candidates = [...records.values()]
+    const matchingCandidates = [...records.values()]
       .map((record) => {
         const matches = [...queryTokens].filter((token) => recordTokens(record).has(token)).length;
         const exactType = record.taskType === selectedTaskType;
@@ -214,8 +251,9 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
       .filter(({ relevance }) => relevance > 0)
       .sort((left, right) => right.relevance - left.relevance
         || String(right.record.recordedAt).localeCompare(String(left.record.recordedAt)))
-      .slice(0, normaliseLimit(limit));
+    const candidates = matchingCandidates.slice(0, normaliseLimit(limit));
     const recalledRecords = candidates.map(({ record, relevance }) => publicRecord(record, relevance));
+    const pattern = buildAdvisoryPattern(matchingCandidates);
     const generatedAt = now();
     const queryHash = sha256(JSON.stringify({ taskType: selectedTaskType, tokens: [...queryTokens] }));
 
@@ -228,6 +266,14 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
       summary: {
         storedRecords: records.size,
         recalledRecords: recalledRecords.length,
+        matchedRecords: pattern.matchedRecords,
+        terminalRecords: pattern.terminalRecords,
+        completedMatches: pattern.completedMatches,
+        failedMatches: pattern.failedMatches,
+        completionRate: pattern.completionRate,
+        latestOutcome: pattern.latestOutcome,
+        pattern: pattern.pattern,
+        nextAction: pattern.nextAction,
         matchedTaskType: recalledRecords.some((record) => record.taskType === selectedTaskType),
         queryTokenCount: queryTokens.size,
         status: recalledRecords.length > 0 ? "recalled" : records.size > 0 ? "no_match" : "empty",
@@ -256,6 +302,11 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
         summary: {
           storedRecords: records.size,
           recalledRecords: recalledRecords.length,
+          matchedRecords: pattern.matchedRecords,
+          completedMatches: pattern.completedMatches,
+          failedMatches: pattern.failedMatches,
+          completionRate: pattern.completionRate,
+          pattern: pattern.pattern,
           queryTokenCount: queryTokens.size,
           queryHash,
           advisoryOnly: true,

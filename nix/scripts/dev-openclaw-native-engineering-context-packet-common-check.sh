@@ -255,6 +255,10 @@ if (
   || packet.summary?.planTodoCurrentAction === null
   || packet.summary?.experienceMemoryIncluded !== true
   || packet.summary?.experienceMemoryRecalled < 1
+  || packet.summary?.experienceMemoryMatched < 1
+  || !["repeatable_success", "mixed_outcomes", "recovery_needed", "non_terminal_history"].includes(packet.summary?.experienceMemoryPattern)
+  || typeof packet.summary?.experienceMemoryNextAction !== "string"
+  || packet.summary?.experienceMemoryNextAction.length === 0
   || packet.summary?.experienceMemoryAdvisoryOnly !== true
   || !packet.messages?.some((message) => message.evidenceKind === "experience_memory_evidence")
   || !packet.messages?.some((message) => message.evidenceKind === "engineering_plan_todo_evidence")
@@ -369,6 +373,7 @@ if (observerCheck) {
     "engineering-context-packet-semantic-action",
     "engineering-context-packet-plan-todo",
     "engineering-context-packet-experience-memory",
+    "engineering-context-packet-experience-memory-pattern",
     "engineering-context-packet-recovery",
     "engineering-context-packet-build-button",
     "engineering-context-packet-bind-work-view-button",
@@ -397,7 +402,9 @@ if (observerCheck) {
     "sourceTaskId",
     "Task Selection:",
     "Experience Memory:",
+    "Experience Memory Next Action:",
     "engineeringContextPacketExperienceMemory",
+    "engineeringContextPacketExperienceMemoryPattern",
     "engineeringContextPacketSemanticAction",
     "engineeringContextPacketRecoveryButton",
     "Reveal Trusted Work View",
@@ -432,6 +439,8 @@ console.log(JSON.stringify({
     records: packet.summary.sourceTranscriptRecords,
     redactions: packet.summary.redactions,
     compactedMessages: packet.summary.compactedMessages,
+    experienceMemoryPattern: packet.summary.experienceMemoryPattern,
+    experienceMemoryCompletionRate: packet.summary.experienceMemoryCompletionRate,
     provider: packet.governance.callsProvider,
   },
 }, null, 2));

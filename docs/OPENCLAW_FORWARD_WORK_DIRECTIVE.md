@@ -231,7 +231,10 @@ persists only sanitized task type/phase/tokens/confidence/hash metadata, and
 recalls at most four matching lessons into the existing Engineering Context
 Packet. The recalled evidence is visible in Observer and remains guidance only:
 it cannot create tasks, approvals, commands, actions, provider calls, or network
-egress. This is experience absorption, not automatic code self-modification.
+egress. The same recall now derives bounded completed/failed counts, completion
+rate, latest outcome, and a safe next-action suggestion from matching terminal
+history. This is experience absorption, not automatic code self-modification;
+the pattern and suggestion remain advisory and cannot execute anything.
 
 The first Level 2 observation-to-decision bridge is now also complete. The
 existing trusted work-view association derives a read-only semantic-action

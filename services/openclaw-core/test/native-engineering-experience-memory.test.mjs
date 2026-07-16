@@ -68,6 +68,13 @@ test("experience memory recalls the most applicable bounded lessons", () => {
   assert.equal(recalled.registry, NATIVE_ENGINEERING_EXPERIENCE_MEMORY_REGISTRY);
   assert.equal(recalled.summary.storedRecords, 2);
   assert.equal(recalled.summary.recalledRecords, 1);
+  assert.equal(recalled.summary.matchedRecords, 1);
+  assert.equal(recalled.summary.completedMatches, 1);
+  assert.equal(recalled.summary.failedMatches, 0);
+  assert.equal(recalled.summary.completionRate, 1);
+  assert.equal(recalled.summary.latestOutcome, "completed");
+  assert.equal(recalled.summary.pattern, "repeatable_success");
+  assert.match(recalled.summary.nextAction, /verification evidence/);
   assert.equal(recalled.summary.status, "recalled");
   assert.equal(recalled.summary.advisoryOnly, true);
   assert.equal(recalled.records[0].taskType, "system_task");
@@ -81,7 +88,52 @@ test("experience memory recalls the most applicable bounded lessons", () => {
     goal: "refresh plugin runtime",
   });
   assert.equal(unrelated.summary.recalledRecords, 0);
+  assert.equal(unrelated.summary.matchedRecords, 0);
+  assert.equal(unrelated.summary.pattern, "no_match");
   assert.equal(unrelated.summary.status, "no_match");
+});
+
+test("experience memory derives a bounded recovery pattern from mixed terminal outcomes", () => {
+  const records = new Map();
+  const memory = createNativeEngineeringExperienceMemory({
+    records,
+    now: (() => {
+      let index = 0;
+      return () => `2026-07-16T00:00:0${index++}.000Z`;
+    })(),
+  });
+  memory.recordTaskExperience({
+    id: "experience-mixed-completed",
+    type: "system_task",
+    goal: "verify bounded context",
+    status: "completed",
+    executionPhase: "completed",
+  });
+  memory.recordTaskExperience({
+    id: "experience-mixed-failed",
+    type: "system_task",
+    goal: "verify bounded context",
+    status: "failed",
+    executionPhase: "verifying_result",
+  });
+
+  const recalled = memory.buildExperienceMemoryReadModel({
+    taskType: "system_task",
+    goal: "verify bounded context",
+    limit: 1,
+  });
+
+  assert.equal(recalled.summary.recalledRecords, 1);
+  assert.equal(recalled.summary.matchedRecords, 2);
+  assert.equal(recalled.summary.terminalRecords, 2);
+  assert.equal(recalled.summary.completedMatches, 1);
+  assert.equal(recalled.summary.failedMatches, 1);
+  assert.equal(recalled.summary.completionRate, 0.5);
+  assert.equal(recalled.summary.latestOutcome, "failed");
+  assert.equal(recalled.summary.pattern, "mixed_outcomes");
+  assert.match(recalled.summary.nextAction, /Compare prior/);
+  assert.equal(recalled.auditEvidence.summary.pattern, "mixed_outcomes");
+  assert.equal(recalled.auditEvidence.summary.completionRate, 0.5);
 });
 
 test("experience memory keeps a bounded record window", () => {

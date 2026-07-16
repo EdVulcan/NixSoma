@@ -1034,7 +1034,20 @@ test("capability runtime exposes the local engineering context packet through th
         source: { registry: "openclaw-task-lifecycle-terminal-v0", taskId, outcomeHash: "a".repeat(64) },
         relevance: 101,
       }],
-      summary: { storedRecords: 1, recalledRecords: 1, status: "recalled", advisoryOnly: true, queryTokenCount: 1 },
+      summary: {
+        storedRecords: 1,
+        recalledRecords: 1,
+        matchedRecords: 1,
+        completedMatches: 1,
+        failedMatches: 0,
+        completionRate: 1,
+        latestOutcome: "completed",
+        pattern: "repeatable_success",
+        nextAction: "Reuse the bounded approval path and attach verification evidence before reporting completion.",
+        status: "recalled",
+        advisoryOnly: true,
+        queryTokenCount: 1,
+      },
       bounds: { maxRecallRecords: 8 },
       governance: { advisoryOnly: true },
       auditEvidence: { summary: { storedRecords: 1, recalledRecords: 1, queryTokenCount: 1, queryHash: "b".repeat(64), advisoryOnly: true } },
@@ -1067,6 +1080,8 @@ test("capability runtime exposes the local engineering context packet through th
   assert.equal(result.response.summary.noProviderEgress, true);
   assert.equal(result.response.summary.experienceMemoryIncluded, true);
   assert.equal(result.response.summary.experienceMemoryRecalled, 1);
+  assert.equal(result.response.summary.experienceMemoryPattern, "repeatable_success");
+  assert.equal(result.response.summary.experienceMemoryCompletionRate, 1);
   assert.equal(result.response.summary.experienceMemoryAdvisoryOnly, true);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("private-context-value"), false);
   assert.deepEqual(events.map((event) => event.name), [

@@ -127,7 +127,19 @@ test("engineering context packet route assembles existing task evidence without 
         source: { registry: "openclaw-task-lifecycle-terminal-v0", taskId: task.id, outcomeHash: "a".repeat(64) },
         relevance: 101,
       }],
-      summary: { storedRecords: 1, recalledRecords: 1, status: "recalled", advisoryOnly: true },
+      summary: {
+        storedRecords: 1,
+        recalledRecords: 1,
+        matchedRecords: 1,
+        completedMatches: 1,
+        failedMatches: 0,
+        completionRate: 1,
+        latestOutcome: "completed",
+        pattern: "repeatable_success",
+        nextAction: "Reuse the bounded approval path and attach verification evidence before reporting completion.",
+        status: "recalled",
+        advisoryOnly: true,
+      },
       bounds: { maxRecallRecords: 8 },
       governance: { advisoryOnly: true },
       auditEvidence: { summary: { storedRecords: 1, recalledRecords: 1, queryTokenCount: 1, queryHash: "b".repeat(64), advisoryOnly: true } },
@@ -142,6 +154,8 @@ test("engineering context packet route assembles existing task evidence without 
   assert.equal(response.body.governance.callsProvider, false);
   assert.equal(response.body.governance.networkEgress, false);
   assert.equal(response.body.summary.experienceMemoryRecalled, 1);
+  assert.equal(response.body.summary.experienceMemoryPattern, "repeatable_success");
+  assert.equal(response.body.summary.experienceMemoryCompletionRate, 1);
   assert.equal(response.body.messages.some((message) => message.evidenceKind === "experience_memory_evidence"), true);
   assert.equal(events[0].name, "native_engineering.context_packet_built");
   assert.equal(JSON.stringify(events).includes("do-not-include"), false);

@@ -207,6 +207,13 @@ test("engineering context packet carries bounded advisory experience memory as p
       summary: {
         storedRecords: 1,
         recalledRecords: 1,
+        matchedRecords: 1,
+        completedMatches: 0,
+        failedMatches: 1,
+        completionRate: 0,
+        latestOutcome: "failed",
+        pattern: "recovery_needed",
+        nextAction: "Inspect the latest recovery evidence before retrying; preserve the approval boundary.",
         status: "recalled",
         advisoryOnly: true,
       },
@@ -230,6 +237,13 @@ test("engineering context packet carries bounded advisory experience memory as p
   assert.equal(experienceMessage?.toolName, "experience_memory");
   assert.equal(packet.summary.experienceMemoryIncluded, true);
   assert.equal(packet.summary.experienceMemoryRecalled, 1);
+  assert.equal(packet.summary.experienceMemoryMatched, 1);
+  assert.equal(packet.summary.experienceMemoryCompletedMatches, 0);
+  assert.equal(packet.summary.experienceMemoryFailedMatches, 1);
+  assert.equal(packet.summary.experienceMemoryCompletionRate, 0);
+  assert.equal(packet.summary.experienceMemoryLatestOutcome, "failed");
+  assert.equal(packet.summary.experienceMemoryPattern, "recovery_needed");
+  assert.match(packet.summary.experienceMemoryNextAction, /recovery evidence/);
   assert.equal(packet.summary.experienceMemoryStatus, "recalled");
   assert.equal(packet.summary.experienceMemoryAdvisoryOnly, true);
   assert.equal(packet.governance.readsExperienceMemory, true);

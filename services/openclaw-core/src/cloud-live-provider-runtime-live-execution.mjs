@@ -71,6 +71,25 @@ function compactContextPacketEvidence(evidence) {
     planTodoEvidenceIncluded: evidence.planTodoEvidenceIncluded === true,
     planTodoTodoSource: evidence.planTodoTodoSource ?? null,
     planTodoCurrentAction: evidence.planTodoCurrentAction ?? null,
+    experienceMemoryIncluded: evidence.experienceMemoryIncluded === true,
+    experienceMemoryRecalled: Number.isInteger(evidence.experienceMemoryRecalled)
+      ? evidence.experienceMemoryRecalled
+      : 0,
+    experienceMemoryMatched: Number.isInteger(evidence.experienceMemoryMatched)
+      ? evidence.experienceMemoryMatched
+      : 0,
+    experienceMemoryCompletedMatches: Number.isInteger(evidence.experienceMemoryCompletedMatches)
+      ? evidence.experienceMemoryCompletedMatches
+      : 0,
+    experienceMemoryFailedMatches: Number.isInteger(evidence.experienceMemoryFailedMatches)
+      ? evidence.experienceMemoryFailedMatches
+      : 0,
+    experienceMemoryCompletionRate: typeof evidence.experienceMemoryCompletionRate === "number"
+      ? evidence.experienceMemoryCompletionRate
+      : null,
+    experienceMemoryLatestOutcome: evidence.experienceMemoryLatestOutcome ?? null,
+    experienceMemoryPattern: evidence.experienceMemoryPattern ?? null,
+    experienceMemoryStatus: evidence.experienceMemoryStatus ?? null,
     contextContentHash: typeof evidence.contextContentHash === "string"
       ? evidence.contextContentHash
       : null,

@@ -37,6 +37,7 @@ function rendererContext() {
     engineeringContextPacketSemanticAction: element(),
     engineeringContextPacketPlanTodo: element(),
     engineeringContextPacketExperienceMemory: element(),
+    engineeringContextPacketExperienceMemoryPattern: element(),
     engineeringContextPacketRecovery: element(),
     engineeringContextPacketBindWorkViewButton: element(),
     engineeringContextPacketRecoveryButton: element({ hidden: true }),
@@ -76,6 +77,13 @@ test("Observer exposes only the allowlisted trusted work-view recovery actions",
       experienceMemoryIncluded: true,
       experienceMemoryRecalled: 2,
       experienceMemoryStored: 5,
+      experienceMemoryMatched: 3,
+      experienceMemoryCompletedMatches: 2,
+      experienceMemoryFailedMatches: 1,
+      experienceMemoryCompletionRate: 0.67,
+      experienceMemoryLatestOutcome: "completed",
+      experienceMemoryPattern: "mixed_outcomes",
+      experienceMemoryNextAction: "Compare prior completion and failure evidence before repeating; preserve approval and verification.",
       experienceMemoryStatus: "recalled",
       experienceMemoryAdvisoryOnly: true,
       semanticActionDecisionStatus: "blocked",
@@ -107,8 +115,10 @@ test("Observer exposes only the allowlisted trusted work-view recovery actions",
   assert.equal(context.engineeringContextPacketSemanticAction.textContent, "blocked/work_view_authority_not_ready");
   assert.equal(context.engineeringContextPacketPlanTodo.textContent, "workbench_storage/create_verification_task");
   assert.equal(context.engineeringContextPacketExperienceMemory.textContent, "2/recalled");
+  assert.equal(context.engineeringContextPacketExperienceMemoryPattern.textContent, "mixed_outcomes/0.67");
   assert.match(context.engineeringContextPacketJson.textContent, /recovery=prepare_work_view/);
-  assert.match(context.engineeringContextPacketJson.textContent, /Experience Memory: included=true recalled=2 stored=5 status=recalled advisoryOnly=true/);
+  assert.match(context.engineeringContextPacketJson.textContent, /Experience Memory: included=true recalled=2 stored=5 matched=3 completed=2 failed=1 rate=0.67 latest=completed pattern=mixed_outcomes status=recalled advisoryOnly=true/);
+  assert.match(context.engineeringContextPacketJson.textContent, /Experience Memory Next Action: Compare prior completion/);
   assert.match(context.engineeringContextPacketJson.textContent, /Semantic Action Decision: status=blocked reason=work_view_authority_not_ready ready=false control=engineering-context-packet-recovery-button/);
 
   context.renderEngineeringContextPacket({

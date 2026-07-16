@@ -58,6 +58,13 @@ export function createEngineeringContextCapabilityHandlers({
       experienceMemoryIncluded: summary.experienceMemoryIncluded === true,
       experienceMemoryRecalled: summary.experienceMemoryRecalled ?? 0,
       experienceMemoryStatus: summary.experienceMemoryStatus ?? null,
+      experienceMemoryMatched: summary.experienceMemoryMatched ?? 0,
+      experienceMemoryCompletedMatches: summary.experienceMemoryCompletedMatches ?? 0,
+      experienceMemoryFailedMatches: summary.experienceMemoryFailedMatches ?? 0,
+      experienceMemoryCompletionRate: summary.experienceMemoryCompletionRate ?? null,
+      experienceMemoryLatestOutcome: summary.experienceMemoryLatestOutcome ?? null,
+      experienceMemoryPattern: summary.experienceMemoryPattern ?? null,
+      experienceMemoryNextAction: summary.experienceMemoryNextAction ?? null,
       experienceMemoryAdvisoryOnly: summary.experienceMemoryAdvisoryOnly === true,
       noContentPersistence: governance.mutatesPersistedLogs === false
         && governance.mutatesTaskState === false,

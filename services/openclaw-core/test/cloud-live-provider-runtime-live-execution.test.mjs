@@ -433,6 +433,15 @@ test("live execution retains only compact work-view and plan/todo context eviden
     planTodoEvidenceIncluded: true,
     planTodoTodoSource: "workbench_storage",
     planTodoCurrentAction: "review_current_todo",
+    experienceMemoryIncluded: true,
+    experienceMemoryRecalled: 2,
+    experienceMemoryMatched: 3,
+    experienceMemoryCompletedMatches: 2,
+    experienceMemoryFailedMatches: 1,
+    experienceMemoryCompletionRate: 0.67,
+    experienceMemoryLatestOutcome: "completed",
+    experienceMemoryPattern: "mixed_outcomes",
+    experienceMemoryStatus: "recalled",
     contextContentHash,
     providerMessageChars: 1200,
     contextTruncated: false,
@@ -494,6 +503,12 @@ test("live execution retains only compact work-view and plan/todo context eviden
   assert.equal(result.summary.contextPacket.workViewObservationIncluded, true);
   assert.equal(result.summary.contextPacket.semanticTargetCount, 2);
   assert.equal(result.summary.contextPacket.planTodoEvidenceIncluded, true);
+  assert.equal(result.summary.contextPacket.experienceMemoryIncluded, true);
+  assert.equal(result.summary.contextPacket.experienceMemoryMatched, 3);
+  assert.equal(result.summary.contextPacket.experienceMemoryCompletedMatches, 2);
+  assert.equal(result.summary.contextPacket.experienceMemoryFailedMatches, 1);
+  assert.equal(result.summary.contextPacket.experienceMemoryCompletionRate, 0.67);
+  assert.equal(result.summary.contextPacket.experienceMemoryPattern, "mixed_outcomes");
   assert.equal(result.task.outcome.details.contextPacket.contextContentIncluded, false);
   assert.doesNotMatch(JSON.stringify(result.task), /Review the bounded context/);
 });
