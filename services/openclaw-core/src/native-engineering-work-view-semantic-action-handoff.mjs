@@ -72,6 +72,7 @@ function buildRevalidation({ association, reference, screen }) {
     screenInventoryReady,
     screenVisualFrameReady: screenVisualReady,
     targetPresentInScreenInventory: targetPresent,
+    screenInventoryMatchesReference: semanticTargets.inventorySha256 === reference?.inventorySha256,
     stateInventoryMatchesScreen: stateSemanticTargets.inventorySha256 === semanticTargets.inventorySha256,
     stateSemanticFrameMatchesReference: stateSemanticTargets.frameSequence === reference?.frame?.sequence
       && stateSemanticTargets.frameSha256 === reference?.frame?.sha256,
@@ -130,9 +131,7 @@ export function buildNativeEngineeringWorkViewSemanticActionHandoff({
     reason = "semantic_target_capture_not_ready";
   } else if (!revalidation.targetPresentInScreenInventory) {
     reason = "semantic_target_not_in_current_inventory";
-  } else if (!revalidation.stateInventoryMatchesScreen
-    || !revalidation.stateSemanticFrameMatchesReference
-    || !revalidation.stateVisualFrameMatchesReference
+  } else if (!revalidation.screenInventoryMatchesReference
     || !revalidation.screenSemanticFrameMatchesReference
     || !revalidation.screenVisualFrameMatchesReference) {
     reason = "semantic_target_capture_mismatch";

@@ -675,9 +675,13 @@ post-frame advance, and expected navigation.
 The trusted work-view readiness decision is now consumed by that same Core
 handoff. Before the existing `screen-act` route is called, Core re-reads the
 session-manager state and requires the task binding, active lease, fresh
-observation, screen inventory, and visual frame to agree with the materialized
-reference. Stale or cross-source-mismatched evidence fails the task and
-suppresses automatic recovery; no second route or action family was added.
+readiness snapshot, screen inventory, and visual frame to be self-consistent
+with the materialized reference. A newer screen frame is not rejected merely
+because the session-manager cache has not advanced to the same sequence; the
+existing sidecar is the dispatch-time owner and revalidates the current
+reference, lease, capture, and grounding. Stale or cross-source-mismatched
+evidence fails the task and suppresses automatic recovery; no second route or
+action family was added.
 
 The next smallest Level 2 capability is write-only semantic text input. Remove
 legacy plaintext input echoes from browser state, summaries, action/task

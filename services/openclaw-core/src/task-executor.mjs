@@ -744,6 +744,22 @@ async function executeTask(task, options = {}) {
           : null,
       });
       actionResults.push(actionData.action);
+      if (action.kind === "browser.semantic_click"
+        && actionData.action?.mediation?.accepted !== true) {
+        throw new NativeEngineeringSemanticActionHandoffBlockedError({
+          ...(semanticActionHandoff ?? {}),
+          ok: false,
+          status: "blocked",
+          reason: actionData.action?.mediation?.reason ?? "semantic_action_dispatch_rejected",
+          runtimeOwnerRevalidation: {
+            attempted: true,
+            accepted: false,
+            visualGrounding: actionData.action?.mediation?.visualGrounding
+              ? compactBrowserTaskVisualGrounding(actionData.action.mediation.visualGrounding)
+              : null,
+          },
+        });
+      }
       await setTaskPhase(task, "acting_on_target", {
         status: "running",
         details: {

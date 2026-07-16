@@ -285,6 +285,7 @@ function createExecutorHarness(overrides = {}) {
 function buildSemanticClickExecutionFixture({
   captureFreshness = "fresh",
   stateInventorySha256 = "b".repeat(64),
+  runtimeActionReason = null,
 } = {}) {
   const targetUrl = "https://example.com/semantic-click";
   const frameSha256 = "a".repeat(64);
@@ -382,6 +383,22 @@ function buildSemanticClickExecutionFixture({
       postCalls.push({ url, body });
       if (url === "http://screen-act/act/mouse/click") {
         screenActCalls += 1;
+        if (runtimeActionReason) {
+          return {
+            ok: true,
+            action: {
+              id: "semantic-click-rejected-action",
+              kind: "mouse.click",
+              params: body,
+              degraded: true,
+              result: "blocked-or-degraded",
+              mediation: {
+                accepted: false,
+                reason: runtimeActionReason,
+              },
+            },
+          };
+        }
         return {
           ok: true,
           action: {
@@ -2178,7 +2195,7 @@ test("browser task executor blocks stale semantic click handoff without automati
 });
 
 test("browser task executor blocks semantic click when current inventory digest mismatches", async () => {
-  const fixture = buildSemanticClickExecutionFixture({ stateInventorySha256: "c".repeat(64) });
+  const fixture = buildSemanticClickExecutionFixture({ runtimeActionReason: "semantic_target_capture_mismatch" });
   const { executor } = createExecutorHarness({
     taskManager: fixture.taskManager,
     deps: {
@@ -2202,8 +2219,9 @@ test("browser task executor blocks semantic click when current inventory digest 
 
   assert.equal(result.finalExecution.task.status, "failed");
   assert.equal(result.finalExecution.semanticActionHandoff.reason, "semantic_target_capture_mismatch");
-  assert.equal(result.finalExecution.task.outcome.details.semanticActionHandoff.revalidation.stateInventoryMatchesScreen, false);
-  assert.equal(fixture.screenActCalls, 0);
+  assert.equal(result.finalExecution.task.outcome.details.semanticActionHandoff.runtimeOwnerRevalidation.accepted, false);
+  assert.equal(result.recovery.suppressed, true);
+  assert.equal(fixture.screenActCalls, 1);
 });
 
 test("browser task executor returns recoverable evidence when session authority is unavailable", async () => {

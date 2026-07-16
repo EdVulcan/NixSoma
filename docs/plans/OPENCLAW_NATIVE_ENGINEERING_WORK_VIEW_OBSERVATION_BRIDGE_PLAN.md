@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering Work-View Observation Bridge Plan
 
-Updated: 2026-07-14
+Updated: 2026-07-16
 
 ## Active Slice
 
@@ -66,6 +66,8 @@ Runtime:
 ```text
 services/openclaw-core/src/native-engineering-work-view-association.mjs
 services/openclaw-core/src/native-engineering-work-view-action-decision.mjs
+services/openclaw-core/src/native-engineering-work-view-semantic-action-handoff.mjs
+services/openclaw-core/src/task-executor.mjs
 services/openclaw-core/src/native-engineering-context-routes.mjs
 services/openclaw-core/src/native-engineering-context-packet.mjs
 ```
@@ -84,6 +86,8 @@ Validation:
 ```text
 services/openclaw-core/test/native-engineering-work-view-association.test.mjs
 services/openclaw-core/test/native-engineering-work-view-action-decision.test.mjs
+services/openclaw-core/test/native-engineering-work-view-semantic-action-handoff.test.mjs
+services/openclaw-core/test/task-executor.test.mjs
 services/openclaw-core/test/native-engineering-context-packet.test.mjs
 services/openclaw-core/test/native-engineering-context-routes.test.mjs
 apps/observer-ui/test/client-script-engineering-context.test.mjs
@@ -116,11 +120,13 @@ values, or input data.
 The existing browser semantic-action handoff now consumes this decision for one
 operator-reviewed `browser.semantic_click`. Core materialises the target from
 the existing screen observation, re-reads the existing session-manager state,
-and requires the task binding, active lease, fresh capture, inventory digest,
-frame sequence/digest, current target presence, and visual frame to agree
-before calling the existing `screen-act` route. The sidecar remains the final
-runtime owner and performs its own immediate capture and post-action visual
-grounding checks.
+and requires the task binding, active lease, fresh readiness capture, current
+inventory digest/frame, current target presence, and visual frame to be
+self-consistent before calling the existing `screen-act` route. The
+session-manager observation is a bounded readiness snapshot; Core does not
+require that cached snapshot to equal a newer `screen/current` frame. The
+sidecar remains the final runtime owner and performs its own immediate capture,
+reference/lease revalidation, and post-action visual grounding checks.
 
 Stale or cross-source-mismatched evidence returns a failed task with compact
 `semanticActionHandoff` evidence and suppresses automatic task recovery, so no
@@ -130,6 +136,8 @@ semantic typing path was added.
 
 ## Next Smallest Capability
 
-Carry this proof through the existing real task/Firefox validation lane, then
-select the next identity-level capability. Do not add another readiness-only
-chain.
+The existing real task/Firefox validation lane now proves this handoff: current
+semantic click, stale reference rejection, Core task evidence, post-frame
+grounding, and Observer/capture contracts all pass. The bounded Level 2 browser
+eye-hand route is closed for this slice. Select the next identity-level
+capability from the forward directive, not another readiness-only chain.

@@ -146,11 +146,12 @@ test("semantic click handoff blocks a screen inventory digest mismatch", () => {
     task: task(),
     action: action(),
     workViewStateResult: workViewState({ stateInventorySha256: "c".repeat(64) }),
-    screenResponse: screenResponse(),
+    screenResponse: screenResponse({ screenInventorySha256: "c".repeat(64) }),
   });
 
   assert.equal(handoff.ok, false);
   assert.equal(handoff.reason, "semantic_target_capture_mismatch");
-  assert.equal(handoff.revalidation.stateInventoryMatchesScreen, false);
+  assert.equal(handoff.revalidation.stateInventoryMatchesScreen, true);
+  assert.equal(handoff.revalidation.screenInventoryMatchesReference, false);
   assert.equal(handoff.governance.pagePayloadExposed, false);
 });
