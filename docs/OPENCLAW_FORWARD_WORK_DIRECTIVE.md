@@ -1,6 +1,6 @@
 # OpenClaw Forward Work Directive
 
-Updated: 2026-07-15
+Updated: 2026-07-16
 
 This is the active guidance document for continuing OpenClaw development after
 the Phase 136 checkpoint and the discovery that the locally optimized
@@ -958,6 +958,15 @@ transient while summaries retain only counts and governance flags. It adds no
 credential access, wrapper mutation, process spawn, provider call, or network
 egress. Live ACPX/Codex execution remains an explicit operator-authorization
 boundary.
+
+The existing prompt-semantics work-standards profile is now also declared in the
+common capability runtime as `sense.openclaw.prompt_pack`. It reuses the bounded
+prompt builder, exposes only file/check counts and work-standards status in the
+invocation summary, and explicitly records no prompt-content exposure, prompt or
+tool execution, mutation, task/approval creation, provider call, or network use.
+Core and Observer capability-invoke checks exercise this path against a local
+fixture. The detailed boundary is documented in
+`docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_PROMPT_STANDARDS_PLAN.md`.
 
 ## Identity-Upgrade Alignment
 

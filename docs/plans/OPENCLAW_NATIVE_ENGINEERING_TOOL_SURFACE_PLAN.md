@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering Tool Surface Plan
 
-Updated: 2026-07-15
+Updated: 2026-07-16
 
 ## Current Frontier
 
@@ -18,6 +18,13 @@ The previously route-only plan/todo workbench lane is also closed at the common
 runtime boundary. Its evidence and confirmed core-state storage descriptors now
 dispatch through `/capabilities/invoke`, reuse the existing builders, and keep
 plan text and todo descriptions out of persisted invocation summaries.
+
+The existing prompt-semantics work-standards profile is now also declared in
+the common capability registry as `sense.openclaw.prompt_pack`. Its runtime
+bridge is documented in
+`OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_PROMPT_STANDARDS_PLAN.md` and
+keeps prompt bodies, execution authority, task/approval creation, provider
+calls, and network use outside the capability summary and audit path.
 
 The latest completed slices are the compact work-view association, the explicit
 operator-reviewed task bind documented in
@@ -118,6 +125,7 @@ services/openclaw-core/src/capability-runtime-engineering-recovery.mjs
 services/openclaw-core/src/capability-runtime-engineering-microcompact.mjs
 services/openclaw-core/src/capability-runtime-engineering-execution-evidence.mjs
 services/openclaw-core/src/capability-runtime-work-view.mjs
+services/openclaw-core/src/capability-runtime-prompt-pack.mjs
 ```
 
 Core route:
@@ -141,6 +149,7 @@ Validation targets:
 ```text
 services/openclaw-core/test/native-engineering-tool-surface-builders.test.mjs
 services/openclaw-core/test/capability-runtime.test.mjs
+services/openclaw-core/test/capability-runtime-prompt-pack.test.mjs
 openclaw-native-engineering-tool-surface-inventory
 observer-openclaw-native-engineering-tool-surface-inventory
 capability-invoke
@@ -151,6 +160,10 @@ openclaw-native-engineering-edit-closed-loop
 openclaw-native-engineering-write-execution-evidence
 observer-openclaw-native-engineering-write-execution-evidence
 ```
+
+The Core and Observer `capability-invoke` checks also invoke
+`sense.openclaw.prompt_pack` against a local prompt fixture and verify its
+bounded work-standards summary and negative authority boundary.
 
 ## Deferred Execution
 

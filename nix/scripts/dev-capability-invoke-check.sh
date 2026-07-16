@@ -30,6 +30,13 @@ mkdir -p "$FIXTURE_DIR/nested" "$FIXTURE_DIR/src" "$FIXTURE_DIR/scratch" "$FIXTU
 printf 'OpenClaw capability invoke fixture\n' > "$FIXTURE_DIR/openclaw-capability-invoke.txt"
 printf 'Nested invoke search fixture\n' > "$FIXTURE_DIR/nested/search-note.md"
 printf 'export const capabilityNeedle = "OpenClaw capability invoke";\n' > "$FIXTURE_DIR/src/app.ts"
+printf '%s\n' \
+  '# Prompt semantics fixture' \
+  'Plan each edit with a diff and patch preview.' \
+  'Require approval and safety before command execution.' \
+  'Run typecheck, test, lint, and verify after changes.' \
+  'The prompt is guidance only and is not product authority.' \
+  > "$FIXTURE_DIR/AGENTS.md"
 
 cleanup() {
   rm -f \
@@ -47,6 +54,7 @@ cleanup() {
     "${CONTEXT_PACKET_FILE:-}" \
     "${PROVIDER_HANDOFF_FILE:-}" \
     "${ACPX_COMPATIBILITY_FILE:-}" \
+    "${PROMPT_PACK_FILE:-}" \
     "${CAPABILITIES_FILE:-}" \
     "${PROCESS_FILE:-}" \
     "${BLOCKED_COMMAND_FILE:-}" \
@@ -77,6 +85,7 @@ WORK_VIEW_CONTROL_FILE="$(mktemp)"
 CONTEXT_PACKET_FILE="$(mktemp)"
 PROVIDER_HANDOFF_FILE="$(mktemp)"
 ACPX_COMPATIBILITY_FILE="$(mktemp)"
+PROMPT_PACK_FILE="$(mktemp)"
 CAPABILITIES_FILE="$(mktemp)"
 PROCESS_FILE="$(mktemp)"
 BLOCKED_COMMAND_FILE="$(mktemp)"
@@ -99,6 +108,7 @@ post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engin
 curl --silent --fail "$CORE_URL/capabilities" > "$CAPABILITIES_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.openclaw.engineering_context.provider_handoff_task","approved":true,"params":{"confirm":false}}' > "$PROVIDER_HANDOFF_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.acpx_codex_bridge.compatibility"}' > "$ACPX_COMPATIBILITY_FILE"
+post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.prompt_pack\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"query\":\"edit\",\"limit\":8}}" > "$PROMPT_PACK_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.process.list","intent":"process.list","params":{"limit":20}}' > "$PROCESS_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.command.dry_run","intent":"system.command","params":{"command":"rm","args":["-rf","/tmp/openclaw-danger"]}}' > "$BLOCKED_COMMAND_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.command.dry_run","intent":"system.command","approved":true,"params":{"command":"rm","args":["-rf","/tmp/openclaw-danger"]}}' > "$APPROVED_COMMAND_FILE"
@@ -123,6 +133,7 @@ node - <<'EOF' \
   "$CONTEXT_PACKET_FILE" \
   "$PROVIDER_HANDOFF_FILE" \
   "$ACPX_COMPATIBILITY_FILE" \
+  "$PROMPT_PACK_FILE" \
   "$CAPABILITIES_FILE" \
   "$FIXTURE_DIR"
 const fs = require("node:fs");
@@ -145,8 +156,9 @@ const workViewControl = readJson(16);
 const contextPacket = readJson(17);
 const providerHandoff = readJson(18);
 const acpxCompatibility = readJson(19);
-const capabilities = readJson(20);
-const fixtureDir = process.argv[21];
+const promptPack = readJson(20);
+const capabilities = readJson(21);
+const fixtureDir = process.argv[22];
 
 if (!vitals.ok || vitals.invoked !== true || vitals.capability?.id !== "sense.system.vitals" || vitals.policy?.decision !== "audit_only") {
   throw new Error("system vitals capability should be invoked with audit-only governance");
@@ -322,6 +334,30 @@ if (
 ) {
   throw new Error(`ACPX/Codex compatibility capability should use the existing bounded read model without execution authority: ${JSON.stringify(acpxCompatibility)}`);
 }
+if (
+  !promptPack.ok
+  || promptPack.invoked !== true
+  || promptPack.capability?.id !== "sense.openclaw.prompt_pack"
+  || promptPack.result?.registry !== "openclaw-native-prompt-semantics-v0"
+  || promptPack.result?.summary?.totalFiles !== 1
+  || promptPack.result?.summary?.exposesPromptContent !== false
+  || promptPack.result?.workStandards?.registry !== "openclaw-engineering-work-standards-v0"
+  || promptPack.result?.workStandards?.status !== "ready_for_engineering_loop_guidance"
+  || promptPack.summary?.kind !== "openclaw.prompt_pack"
+  || promptPack.summary?.workStandardsStatus !== "ready_for_engineering_loop_guidance"
+  || promptPack.summary?.noPromptContentExposure !== true
+  || promptPack.summary?.noPromptExecution !== true
+  || promptPack.summary?.noMutation !== true
+  || promptPack.summary?.noTaskCreation !== true
+  || promptPack.summary?.noApprovalCreation !== true
+  || promptPack.summary?.noProviderEgress !== true
+  || JSON.stringify(promptPack.invocation ?? {}).includes("Plan each edit")
+) {
+  throw new Error(`prompt pack capability should expose bounded standards metadata without prompt authority: ${JSON.stringify(promptPack)}`);
+}
+if (JSON.stringify(events).includes("Plan each edit")) {
+  throw new Error("prompt pack content must not enter the audit event payload");
+}
 if (!processes.ok || processes.invoked !== true || processes.result?.count < 1 || processes.summary?.kind !== "process.list") {
   throw new Error("process list capability should route through core");
 }
@@ -398,6 +434,13 @@ console.log(JSON.stringify({
         storeReady: acpxCompatibility.summary.storeReady,
         noProcessSpawn: acpxCompatibility.summary.noProcessSpawn,
         noProviderEgress: acpxCompatibility.summary.noProviderEgress,
+      },
+      promptPack: {
+        files: promptPack.summary.totalFiles,
+        expectedChecks: promptPack.summary.expectedChecks,
+        workStandards: promptPack.summary.workStandardsStatus,
+        noPromptContentExposure: promptPack.summary.noPromptContentExposure,
+        noProviderEgress: promptPack.summary.noProviderEgress,
       },
       policies: [engineeringRead.policy.decision, engineeringGlob.policy.decision, engineeringGrep.policy.decision],
     },

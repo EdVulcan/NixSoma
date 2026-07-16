@@ -159,6 +159,23 @@ export function buildBaseCapabilities({
       description: "Execute a bounded read-only symbol lookup over enhanced OpenClaw workspace files without exposing function bodies or executing legacy code.",
     },
     {
+      id: "sense.openclaw.prompt_pack",
+      name: "Native OpenClaw Prompt Semantics Pack",
+      kind: "sensor",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/plugins/native-adapter/prompt-semantics`,
+      intents: [
+        "openclaw.prompt.pack",
+        "openclaw.prompt_pack",
+        "prompt.semantics",
+        "prompt_semantics",
+      ],
+      domains: ["body_internal"],
+      risk: "low",
+      governance: "audit_only",
+      description: "Derive bounded engineering work standards from reviewed OpenClaw prompt/tool semantics without exposing prompt content, executing prompt or tool code, or creating tasks and approvals.",
+    },
+    {
       id: "sense.openclaw.engineering_tool.read",
       name: "Native Engineering Bounded File Read",
       kind: "sensor",

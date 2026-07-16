@@ -787,6 +787,8 @@ export function createPluginReviewWorkspaceIntelligence({
         canImportModule: false,
         canExecutePromptCode: false,
         canExecuteToolCode: false,
+        canCallProvider: false,
+        canUseNetwork: false,
         canActivateRuntime: false,
         createsTask: false,
         createsApproval: false,

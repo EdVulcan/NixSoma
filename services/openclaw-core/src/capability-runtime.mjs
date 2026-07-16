@@ -14,6 +14,7 @@ import { createEngineeringWorkViewCapabilityHandlers } from "./capability-runtim
 import { createPluginRuntimeRefreshCapabilityHandlers } from "./capability-runtime-plugin-refresh.mjs";
 import { createEngineeringProviderHandoffCapabilityHandlers } from "./capability-runtime-engineering-provider-handoff.mjs";
 import { createAcpxCodexCompatibilityCapabilityHandlers } from "./capability-runtime-acpx-codex.mjs";
+import { createPromptPackCapabilityHandlers } from "./capability-runtime-prompt-pack.mjs";
 
 export function createCapabilityRuntime(deps) {
   const {
@@ -63,7 +64,6 @@ export function createCapabilityRuntime(deps) {
     buildNativeOpenClawWorkspaceSemanticIndex,
     buildNativeOpenClawWorkspaceSymbolLookup,
     buildNativeOpenClawWorkspaceEditTargetSelection,
-    buildNativeOpenClawPromptSemanticsProfile,
     buildOpenClawPluginManifestMap,
     buildOpenClawPluginCapabilityPlan,
   } = pluginReview;
@@ -130,6 +130,9 @@ export function createCapabilityRuntime(deps) {
   const engineeringProviderHandoffHandlers = createEngineeringProviderHandoffCapabilityHandlers(providerRuntime);
   const acpxCodexCompatibilityHandlers = createAcpxCodexCompatibilityCapabilityHandlers({
     buildNativeAcpxCodexBridgeCompatibility: pluginReview.buildNativeAcpxCodexBridgeCompatibility,
+  });
+  const promptPackHandlers = createPromptPackCapabilityHandlers({
+    buildNativeOpenClawPromptSemanticsProfile: pluginReview.buildNativeOpenClawPromptSemanticsProfile,
   });
 
   function baseCapabilities() {
@@ -363,6 +366,10 @@ export function createCapabilityRuntime(deps) {
     if (acpxCodexCompatibility.handled) {
       return acpxCodexCompatibility.result;
     }
+    const promptPack = promptPackHandlers.callBackend(capability, request);
+    if (promptPack.handled) {
+      return promptPack.result;
+    }
 
     if (capability.id === "sense.system.vitals") {
       return fetchJson(`${systemSenseUrl}/system/health`);
@@ -458,14 +465,6 @@ export function createCapabilityRuntime(deps) {
       return buildNativeOpenClawWorkspaceEditTargetSelection({
         workspacePath: request.params.workspacePath,
         scope: request.params.scope,
-        query: request.params.query ?? request.params.q,
-        limit: request.params.limit,
-      });
-    }
-
-    if (capability.id === "sense.openclaw.prompt_pack") {
-      return buildNativeOpenClawPromptSemanticsProfile({
-        workspacePath: request.params.workspacePath,
         query: request.params.query ?? request.params.q,
         limit: request.params.limit,
       });
@@ -585,6 +584,10 @@ export function createCapabilityRuntime(deps) {
     const acpxCodexCompatibilitySummary = acpxCodexCompatibilityHandlers.summariseResult(capability, result);
     if (acpxCodexCompatibilitySummary) {
       return acpxCodexCompatibilitySummary;
+    }
+    const promptPackSummary = promptPackHandlers.summariseResult(capability, result);
+    if (promptPackSummary) {
+      return promptPackSummary;
     }
 
     if (capability.id === "sense.system.vitals") {

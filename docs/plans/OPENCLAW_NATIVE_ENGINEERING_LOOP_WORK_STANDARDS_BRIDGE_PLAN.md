@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering Loop Work Standards Bridge Plan
 
-Updated: 2026-07-10
+Updated: 2026-07-16
 
 ## Active Slice
 
@@ -69,6 +69,11 @@ openclaw-native-engineering-loop-operator-controls
 The existing operator-controls milestone checks that the served client contains
 the standards bridge functions, route, registry token, and no-mutation boundary.
 
+The profile is also available through the common `sense.openclaw.prompt_pack`
+capability. That bridge keeps the backend invocation summary bounded and does
+not turn Observer guidance into policy, task, approval, execution, provider, or
+network authority.
+
 ## Deferred
 
 The following remain deferred:
@@ -84,7 +89,6 @@ root/system daemon work
 
 ## Next Slice
 
-The next useful safe slice should turn standards visibility into a small
-server-side read-only task coverage assessment only if it can reuse existing
-task, verification, ledger, and recovery evidence without opening another
-readiness chain.
+The standards visibility and common capability bridge are complete. The next
+route is the Level 2 trusted work-view/session-helper capability; do not add
+another standards-only coverage or readiness chain.

@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering Prompt Work Standards Plan
 
-Updated: 2026-07-12
+Updated: 2026-07-16
 
 ## Active Slice
 
@@ -70,6 +70,13 @@ verification, or recovery task.
 This remains read-only guidance: it does not create tasks, approvals, operator
 steps, mutations, command executions, provider requests, or recovery actions.
 
+The same profile is now declared in the common capability registry as
+`sense.openclaw.prompt_pack`. Its `/capabilities/invoke` bridge is documented
+in `OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_PROMPT_STANDARDS_PLAN.md`.
+The bridge records only bounded counts, work-standards status, and explicit
+negative authority flags; prompt bodies remain transient and are absent from
+invocation history and audit events.
+
 ## Governance
 
 The surface remains read-only:
@@ -132,8 +139,8 @@ root/system daemon work
 
 ## Next Slice
 
-Task-aware standards readback is complete. The next provider-related step may
-consume the existing context packet only after an explicitly authorized local
-model/provider boundary is selected. Until then, keep provider egress,
-credential access, ACP/Codex live process execution, and root/system daemon work
-deferred; do not reopen this lane with another evidence-only shell.
+Task-aware standards readback and the common capability-runtime bridge are
+complete. Continue with the Level 2 trusted work-view/session-helper route. Keep
+provider egress, credential access, ACP/Codex live process execution, and
+root/system daemon work deferred; do not reopen this lane with another
+evidence-only shell.
