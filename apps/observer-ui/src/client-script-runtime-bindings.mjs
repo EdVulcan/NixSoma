@@ -316,11 +316,7 @@ refreshScreenButton.addEventListener("click", () => {
 });
 
 clickActionButton.addEventListener("click", () => {
-  runAction("/act/mouse/click", {
-    x: 640,
-    y: 360,
-    button: "left",
-  }).catch((error) => {
+  runMouseClickCapability(640, 360).catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);
   });
 });

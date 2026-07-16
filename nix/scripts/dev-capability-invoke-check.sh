@@ -57,6 +57,7 @@ cleanup() {
     "${WORK_VIEW_CONTROL_FILE:-}" \
     "${BROWSER_OPEN_FILE:-}" \
     "${SCREEN_KEYBOARD_FILE:-}" \
+    "${SCREEN_POINTER_FILE:-}" \
     "${CONTEXT_PACKET_FILE:-}" \
     "${PROVIDER_HANDOFF_FILE:-}" \
     "${ACPX_COMPATIBILITY_FILE:-}" \
@@ -94,6 +95,7 @@ WORK_VIEW_FILE="$(mktemp)"
 WORK_VIEW_CONTROL_FILE="$(mktemp)"
 BROWSER_OPEN_FILE="$(mktemp)"
 SCREEN_KEYBOARD_FILE="$(mktemp)"
+SCREEN_POINTER_FILE="$(mktemp)"
 CONTEXT_PACKET_FILE="$(mktemp)"
 PROVIDER_HANDOFF_FILE="$(mktemp)"
 ACPX_COMPATIBILITY_FILE="$(mktemp)"
@@ -121,6 +123,7 @@ post_json "$SESSION_MANAGER_URL/work-view/prepare" '{"displayTarget":"workspace-
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.work_view.control","operation":"work_view.reveal","params":{"entryUrl":"https://example.com/capability-work-view"}}' > "$WORK_VIEW_CONTROL_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.browser.open","operation":"browser.new_tab","params":{"url":"https://example.com/capability-browser-action"}}' > "$BROWSER_OPEN_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.screen.pointer_keyboard","operation":"keyboard.type","params":{"text":"transient capability input"}}' > "$SCREEN_KEYBOARD_FILE"
+post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.screen.pointer_keyboard","operation":"mouse.click","params":{"x":640,"y":360,"button":"left"}}' > "$SCREEN_POINTER_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.packet","params":{"limit":4,"thresholdChars":256,"protectRecentAssistantTurns":0}}' > "$CONTEXT_PACKET_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.work_view_observation"}' > "$WORK_VIEW_FILE"
 curl --silent --fail "$CORE_URL/capabilities" > "$CAPABILITIES_FILE"
@@ -159,7 +162,8 @@ node - <<'EOF' \
   "$FIXTURE_DIR" \
   "$SCREEN_FILE" \
   "$BROWSER_OPEN_FILE" \
-  "$SCREEN_KEYBOARD_FILE"
+  "$SCREEN_KEYBOARD_FILE" \
+  "$SCREEN_POINTER_FILE"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
 const vitals = readJson(2);
@@ -189,6 +193,7 @@ const fixtureDir = process.argv[25];
 const screen = readJson(26);
 const browserOpen = readJson(27);
 const screenKeyboard = readJson(28);
+const screenPointer = readJson(29);
 
 if (!vitals.ok || vitals.invoked !== true || vitals.capability?.id !== "sense.system.vitals" || vitals.policy?.decision !== "audit_only") {
   throw new Error("system vitals capability should be invoked with audit-only governance");
@@ -432,6 +437,27 @@ if (
   || JSON.stringify(screenKeyboard).includes("transient capability input")
 ) {
   throw new Error(`keyboard type capability should use the existing screen-act owner without input exposure: ${JSON.stringify(screenKeyboard)}`);
+}
+if (
+  !screenPointer.ok
+  || screenPointer.invoked !== true
+  || screenPointer.capability?.id !== "act.screen.pointer_keyboard"
+  || screenPointer.policy?.subject?.intent !== "mouse.click"
+  || screenPointer.invocation?.request?.intent !== "mouse.click"
+  || screenPointer.result?.registry !== "openclaw-screen-pointer-capability-v0"
+  || screenPointer.result?.operation !== "mouse.click"
+  || screenPointer.result?.action?.mediation?.accepted !== true
+  || screenPointer.result?.governance?.dispatchesExistingScreenActOwner !== true
+  || screenPointer.result?.governance?.pointerAction !== true
+  || screenPointer.result?.governance?.writesBrowserInput !== false
+  || screenPointer.summary?.kind !== "mouse.click"
+  || screenPointer.summary?.accepted !== true
+  || screenPointer.summary?.pointerAction !== true
+  || screenPointer.summary?.noPayloadExposure !== true
+  || screenPointer.summary?.noProviderEgress !== true
+  || JSON.stringify(screenPointer).includes("640")
+) {
+  throw new Error(`mouse click capability should use a bounded left-click owner path without coordinate evidence: ${JSON.stringify(screenPointer)}`);
 }
 if (
   !contextPacket.ok

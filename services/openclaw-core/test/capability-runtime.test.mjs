@@ -277,6 +277,62 @@ test("capability runtime dispatches bounded keyboard type through screen-act wit
   assert.equal(events.at(-1)?.name, "capability.invoked");
 });
 
+test("capability runtime dispatches bounded left click through screen-act", async () => {
+  const { runtime, state, events, calls } = createHarness({
+    postJsonResult: {
+      ok: true,
+      action: {
+        kind: "mouse.click",
+        result: "executed-browser-runtime",
+        degraded: false,
+        params: { x: 640, y: 360, button: "left" },
+        mediation: {
+          attempted: true,
+          accepted: true,
+          status: "accepted",
+          reason: null,
+          leaseMatched: true,
+          transport: "trusted-sidecar-ipc",
+          visualGrounding: {
+            required: true,
+            status: "advanced",
+            sequenceAdvanced: true,
+            pageUrl: "https://example.com/private",
+            dataUrl: "data:image/jpeg;base64,secret",
+          },
+        },
+      },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.screen.pointer_keyboard",
+    operation: "mouse.click",
+    params: { x: 640, y: 360, button: "left" },
+  });
+
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.policy.input.intent, "mouse.click");
+  assert.equal(result.response.invocation.request.intent, "mouse.click");
+  assert.equal(result.response.summary.kind, "mouse.click");
+  assert.equal(result.response.summary.accepted, true);
+  assert.equal(result.response.summary.pointerAction, true);
+  assert.equal(result.response.summary.writesBrowserInput, false);
+  assert.equal(result.response.summary.noPayloadExposure, true);
+  assert.equal(result.response.summary.noProviderEgress, true);
+  assert.equal(result.response.result.registry, "openclaw-screen-pointer-capability-v0");
+  assert.equal(result.response.result.governance.pointerAction, true);
+  assert.deepEqual(calls.postJson, [{
+    url: "http://127.0.0.1:4105/act/mouse/click",
+    body: { x: 640, y: 360, button: "left" },
+  }]);
+  assert.equal(JSON.stringify(result.response.invocation).includes("640"), false);
+  assert.equal(JSON.stringify(result.response.result).includes("data:image/jpeg"), false);
+  assert.equal(state.capabilityInvocationLog.at(-1)?.request.intent, "mouse.click");
+  assert.equal(events.at(-1)?.name, "capability.invoked");
+});
+
 test("capability runtime exposes workspace edit target selection through the governed invoke path", async () => {
   const builderInputs = [];
   const { runtime, state, events } = createHarness({

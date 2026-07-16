@@ -19,7 +19,7 @@ import { createWorkspaceEditTargetCapabilityHandlers } from "./capability-runtim
 import { createWorkspaceMutationCapabilityHandlers } from "./capability-runtime-workspace-mutations.mjs";
 import { createScreenObservationCapabilityHandlers } from "./capability-runtime-screen.mjs";
 import { createBrowserActionCapabilityHandlers } from "./capability-runtime-browser-actions.mjs";
-import { createScreenKeyboardCapabilityHandlers } from "./capability-runtime-screen-actions.mjs";
+import { createScreenActionCapabilityHandlers } from "./capability-runtime-screen-actions.mjs";
 
 export function createCapabilityRuntime(deps) {
   const {
@@ -160,7 +160,7 @@ export function createCapabilityRuntime(deps) {
     screenActUrl,
     postJson,
   });
-  const screenKeyboardHandlers = createScreenKeyboardCapabilityHandlers({
+  const screenActionHandlers = createScreenActionCapabilityHandlers({
     screenActUrl,
     postJson,
   });
@@ -430,9 +430,9 @@ export function createCapabilityRuntime(deps) {
     if (browserAction.handled) {
       return browserAction.result;
     }
-    const screenKeyboard = await screenKeyboardHandlers.callBackend(capability, request);
-    if (screenKeyboard.handled) {
-      return screenKeyboard.result;
+    const screenAction = await screenActionHandlers.callBackend(capability, request);
+    if (screenAction.handled) {
+      return screenAction.result;
     }
 
     if (capability.id === "sense.system.vitals") {
@@ -660,9 +660,9 @@ export function createCapabilityRuntime(deps) {
     if (browserActionSummary) {
       return browserActionSummary;
     }
-    const screenKeyboardSummary = screenKeyboardHandlers.summariseResult(capability, result);
-    if (screenKeyboardSummary) {
-      return screenKeyboardSummary;
+    const screenActionSummary = screenActionHandlers.summariseResult(capability, result);
+    if (screenActionSummary) {
+      return screenActionSummary;
     }
 
     if (capability.id === "sense.system.vitals") {
@@ -1002,11 +1002,11 @@ export function createCapabilityRuntime(deps) {
         response: { ok: false, error: browserActionValidationError },
       };
     }
-    const screenKeyboardValidationError = screenKeyboardHandlers.validateRequest(capability, request);
-    if (screenKeyboardValidationError) {
+    const screenActionValidationError = screenActionHandlers.validateRequest(capability, request);
+    if (screenActionValidationError) {
       return {
         statusCode: 400,
-        response: { ok: false, error: screenKeyboardValidationError },
+        response: { ok: false, error: screenActionValidationError },
       };
     }
 

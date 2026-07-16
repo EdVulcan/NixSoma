@@ -578,6 +578,32 @@ async function runBrowserOpenCapability(url) {
   await refreshWorkView();
 }
 
+async function runMouseClickCapability(x, y) {
+  const result = await fetchJson(observerConfig.coreUrl + "/capabilities/invoke", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      capabilityId: "act.screen.pointer_keyboard",
+      operation: "mouse.click",
+      params: { x, y, button: "left" },
+    }),
+  });
+  const action = result.result?.action ?? {};
+  if (currentTaskState?.id) {
+    await updateTaskPhase(currentTaskState.id, "acting_on_target", {
+      actionKind: action.kind ?? "mouse.click",
+      degraded: action.degraded === true,
+    });
+  }
+  setControlMessage("Capability mouse.click completed (" + (action.result ?? "unknown") + ")");
+  await refreshRuntime();
+  await refreshTaskList();
+  await refreshTaskHistoryDetail();
+  await refreshActionState();
+  await refreshScreen();
+  await refreshWorkView();
+}
+
 async function runKeyboardTypeCapability(text) {
   const result = await fetchJson(observerConfig.coreUrl + "/capabilities/invoke", {
     method: "POST",

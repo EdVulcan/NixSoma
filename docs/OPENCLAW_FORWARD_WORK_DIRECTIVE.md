@@ -1077,14 +1077,15 @@ dispatch, selector surface, page-script authority, or generic action proxy.
 The boundary is documented in
 `docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_BROWSER_ACTION_PLAN.md`.
 
-The adjacent declared/runtime gap for the existing screen-act keyboard owner is
-also closed for one explicit Level 2 action. `act.screen.pointer_keyboard`
-accepts only `keyboard.type` through the common capability runtime and delegates
-to `/act/keyboard/type`; Observer's existing Simulate Type control uses the same
-path. Input remains write-only and transient, so invocation evidence retains no
-input value, selector, page payload, or visual bytes. Pointer coordinates,
-hotkeys, semantic targets, page scripts, automatic dispatch, and generic
-keyboard proxies remain deferred. The boundary is documented in
+The adjacent declared/runtime gap for the existing screen-act pointer/keyboard
+owner is also closed for two explicit Level 2 actions. `act.screen.pointer_keyboard`
+accepts only bounded `keyboard.type` and left-button `mouse.click` operations
+through the common capability runtime; Observer's existing Simulate Type and
+Simulate Click controls use the same path. Input remains write-only and
+transient, click coordinates are bounded, and invocation evidence retains no
+input value, coordinates, selector, page payload, or visual bytes. Hotkeys,
+semantic targets, page scripts, automatic dispatch, and generic keyboard/mouse
+proxies remain deferred. The boundary is documented in
 `docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_SCREEN_ACTION_PLAN.md`.
 
 ## Identity-Upgrade Alignment

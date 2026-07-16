@@ -1,14 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { createScreenKeyboardCapabilityHandlers } from "../src/capability-runtime-screen-actions.mjs";
+import { createScreenActionCapabilityHandlers } from "../src/capability-runtime-screen-actions.mjs";
 
 const capability = { id: "act.screen.pointer_keyboard" };
 
-test("screen keyboard capability delegates only keyboard.type and keeps input write-only", async () => {
+test("screen keyboard capability delegates keyboard.type and keeps input write-only", async () => {
   const calls = [];
   const input = "transient-input-secret";
-  const handlers = createScreenKeyboardCapabilityHandlers({
+  const handlers = createScreenActionCapabilityHandlers({
     screenActUrl: "http://screen-act",
     postJson: async (url, body) => {
       calls.push({ url, body });
@@ -63,13 +63,67 @@ test("screen keyboard capability delegates only keyboard.type and keeps input wr
   assert.equal(JSON.stringify(backend.result).includes("data:image/jpeg"), false);
 });
 
-test("screen keyboard capability validates the fixed operation and write-only input contract", async () => {
-  const handlers = createScreenKeyboardCapabilityHandlers({ screenActUrl: "http://screen-act" });
+test("screen pointer capability delegates only a bounded left click", async () => {
+  const calls = [];
+  const handlers = createScreenActionCapabilityHandlers({
+    screenActUrl: "http://screen-act",
+    postJson: async (url, body) => {
+      calls.push({ url, body });
+      return {
+        ok: true,
+        action: {
+          kind: "mouse.click",
+          result: "executed-browser-runtime",
+          degraded: false,
+          params: { x: 640, y: 360, button: "left" },
+          mediation: {
+            attempted: true,
+            accepted: true,
+            status: "accepted",
+            reason: null,
+            leaseMatched: true,
+            transport: "trusted-sidecar-ipc",
+            visualGrounding: {
+              required: true,
+              status: "advanced",
+              sequenceAdvanced: true,
+              pageUrl: "https://example.com/private",
+              dataUrl: "data:image/jpeg;base64,secret",
+            },
+          },
+        },
+      };
+    },
+  });
+
+  const backend = await handlers.callBackend(capability, {
+    operation: "mouse.click",
+    params: { x: 640, y: 360, button: "left" },
+  });
+
+  assert.deepEqual(calls, [{
+    url: "http://screen-act/act/mouse/click",
+    body: { x: 640, y: 360, button: "left" },
+  }]);
+  assert.equal(backend.result.ok, true);
+  assert.equal(backend.result.registry, "openclaw-screen-pointer-capability-v0");
+  assert.equal(backend.result.governance.pointerAction, true);
+  assert.equal(backend.result.governance.writesBrowserInput, false);
+  assert.equal(backend.result.governance.exposesSelectors, false);
+  const summary = handlers.summariseResult(capability, backend.result);
+  assert.equal(summary.kind, "mouse.click");
+  assert.equal(summary.pointerAction, true);
+  assert.equal(summary.noPayloadExposure, true);
+  assert.equal(JSON.stringify(backend.result).includes("data:image/jpeg"), false);
+});
+
+test("screen action capability validates the fixed keyboard and pointer contracts", async () => {
+  const handlers = createScreenActionCapabilityHandlers({ screenActUrl: "http://screen-act" });
 
   assert.equal(handlers.validateRequest(capability, {
-    operation: "mouse.click",
+    operation: "browser.new_tab",
     params: { text: "hello" },
-  }), "Screen keyboard capability only allows keyboard.type.");
+  }), "Screen action capability only allows keyboard.type or mouse.click.");
   assert.equal(handlers.validateRequest(capability, {
     operation: "keyboard.type",
     params: { text: "hello", semanticTarget: { targetId: "target-1" } },
@@ -82,8 +136,24 @@ test("screen keyboard capability validates the fixed operation and write-only in
     operation: "keyboard.type",
     params: { text: "hello" },
   }), null);
+  assert.equal(handlers.validateRequest(capability, {
+    operation: "mouse.click",
+    params: { x: 640, y: 360, button: "right" },
+  }), "Screen pointer capability only allows the left button.");
+  assert.equal(handlers.validateRequest(capability, {
+    operation: "mouse.click",
+    params: { x: 960, y: 360, button: "left" },
+  }), "Screen pointer capability x must be an integer between 0 and 959.");
+  assert.equal(handlers.validateRequest(capability, {
+    operation: "mouse.click",
+    params: { x: 640, y: 360, semanticTarget: { targetId: "target-1" } },
+  }), "Screen pointer capability only accepts params.x, params.y, and left button.");
+  assert.equal(handlers.validateRequest(capability, {
+    operation: "mouse.click",
+    params: { x: 640, y: 360, button: "left" },
+  }), null);
 
-  const mismatchedOwner = createScreenKeyboardCapabilityHandlers({
+  const mismatchedOwner = createScreenActionCapabilityHandlers({
     screenActUrl: "http://screen-act",
     postJson: async () => ({
       ok: true,
@@ -101,16 +171,16 @@ test("screen keyboard capability validates the fixed operation and write-only in
   assert.equal(ownerResult.result.ok, false);
   assert.equal(ownerResult.result.governance.ownerContractMatched, false);
 
-  const unavailable = createScreenKeyboardCapabilityHandlers({ screenActUrl: "http://screen-act" });
+  const unavailable = createScreenActionCapabilityHandlers({ screenActUrl: "http://screen-act" });
   const unavailableResult = await unavailable.callBackend(capability, {
     operation: "keyboard.type",
     params: { text: "hello" },
   });
-  assert.equal(unavailableResult.result.action.mediation.reason, "screen_keyboard_owner_unavailable");
+  assert.equal(unavailableResult.result.action.mediation.reason, "screen_action_owner_unavailable");
 });
 
-test("screen keyboard capability leaves unrelated capabilities untouched", async () => {
-  const handlers = createScreenKeyboardCapabilityHandlers({
+test("screen action capability leaves unrelated capabilities untouched", async () => {
+  const handlers = createScreenActionCapabilityHandlers({
     screenActUrl: "http://screen-act",
     postJson: async () => ({ ok: true }),
   });

@@ -1,7 +1,14 @@
 const CAPABILITY_ID = "act.screen.pointer_keyboard";
-const OPERATION = "keyboard.type";
-const REGISTRY = "openclaw-screen-keyboard-capability-v0";
+const KEYBOARD_OPERATION = "keyboard.type";
+const POINTER_OPERATION = "mouse.click";
+const OPERATIONS = new Set([KEYBOARD_OPERATION, POINTER_OPERATION]);
+const REGISTRIES = Object.freeze({
+  [KEYBOARD_OPERATION]: "openclaw-screen-keyboard-capability-v0",
+  [POINTER_OPERATION]: "openclaw-screen-pointer-capability-v0",
+});
 const MAX_INPUT_CHARS = 2_000;
+const MAX_X = 959;
+const MAX_Y = 539;
 const SAFE_MEDIATION_REASONS = new Set([
   "operator_takeover_active",
   "trusted_sidecar_capture_source_unavailable",
@@ -13,8 +20,12 @@ const SAFE_MEDIATION_REASONS = new Set([
   "unsupported_action",
   "authority_already_connected",
   "browser_action_owner_unavailable",
-  "screen_keyboard_owner_unavailable",
+  "screen_action_owner_unavailable",
 ]);
+
+function registryForOperation(operation) {
+  return REGISTRIES[operation] ?? "openclaw-screen-action-capability-v0";
+}
 
 function boundedReason(value) {
   if (typeof value !== "string" || !value.trim()) return null;
@@ -27,6 +38,10 @@ function normaliseOperation(request) {
   return request?.operation ?? params.operation ?? request?.intent ?? null;
 }
 
+function operationError() {
+  return new Error("Screen action capability only allows keyboard.type or mouse.click.");
+}
+
 function normaliseInput(value) {
   if (typeof value !== "string") {
     throw new Error("Screen keyboard capability requires params.text.");
@@ -35,6 +50,29 @@ function normaliseInput(value) {
     throw new Error("Screen keyboard capability input must be within 2000 characters.");
   }
   return value;
+}
+
+function normaliseCoordinate(value, label, maximum) {
+  if (!Number.isInteger(value) || value < 0 || value > maximum) {
+    throw new Error(`Screen pointer capability ${label} must be an integer between 0 and ${maximum}.`);
+  }
+  return value;
+}
+
+function normaliseClickParams(params) {
+  const unsupportedParams = Object.keys(params)
+    .filter((key) => !["operation", "x", "y", "button"].includes(key));
+  if (unsupportedParams.length > 0) {
+    throw new Error("Screen pointer capability only accepts params.x, params.y, and left button.");
+  }
+  if (params.button !== undefined && params.button !== "left") {
+    throw new Error("Screen pointer capability only allows the left button.");
+  }
+  return {
+    x: normaliseCoordinate(params.x, "x", MAX_X),
+    y: normaliseCoordinate(params.y, "y", MAX_Y),
+    button: "left",
+  };
 }
 
 function compactMediation(mediation) {
@@ -62,14 +100,16 @@ function compactMediation(mediation) {
 function projectOwnerResponse(response, operation) {
   const action = response?.action ?? {};
   const mediation = compactMediation(action.mediation);
-  const ownerContractMatched = action.kind === OPERATION;
-  const browserRuntimeExecuted = action.result === "executed-browser-runtime";
+  const ownerContractMatched = action.kind === operation;
+  const browserRuntimeExecuted = ownerContractMatched && action.result === "executed-browser-runtime";
+  const writesBrowserInput = operation === KEYBOARD_OPERATION;
+  const pointerAction = operation === POINTER_OPERATION;
   return {
     ok: response?.ok === true && ownerContractMatched && mediation.accepted === true,
-    registry: REGISTRY,
+    registry: registryForOperation(operation),
     operation,
     action: {
-      kind: OPERATION,
+      kind: operation,
       result: typeof action.result === "string" ? action.result.slice(0, 80) : null,
       degraded: action.degraded === true,
       mediation,
@@ -79,7 +119,8 @@ function projectOwnerResponse(response, operation) {
       ownerContractMatched,
       requiresFreshScreenContext: true,
       requiresTrustedLease: true,
-      writesBrowserInput: true,
+      writesBrowserInput,
+      pointerAction,
       browserNetworkNavigation: false,
       automaticDispatch: false,
       createsTask: false,
@@ -103,7 +144,8 @@ function projectOwnerResponse(response, operation) {
       mediationStatus: mediation.status,
       mediationReason: mediation.reason,
       leaseMatched: mediation.leaseMatched,
-      writesBrowserInput: true,
+      writesBrowserInput,
+      pointerAction,
       inputValueExposed: false,
       browserNetworkNavigation: false,
       noAutomaticDispatch: true,
@@ -114,19 +156,21 @@ function projectOwnerResponse(response, operation) {
 }
 
 function unavailableOwnerResponse(operation) {
+  const writesBrowserInput = operation === KEYBOARD_OPERATION;
+  const pointerAction = operation === POINTER_OPERATION;
   return {
     ok: false,
-    registry: REGISTRY,
+    registry: registryForOperation(operation),
     operation,
     action: {
-      kind: OPERATION,
+      kind: operation,
       result: null,
       degraded: true,
       mediation: {
         attempted: true,
         accepted: false,
         status: "unavailable",
-        reason: "screen_keyboard_owner_unavailable",
+        reason: "screen_action_owner_unavailable",
         leaseMatched: false,
         transport: null,
         visualGrounding: null,
@@ -137,7 +181,8 @@ function unavailableOwnerResponse(operation) {
       ownerContractMatched: false,
       requiresFreshScreenContext: true,
       requiresTrustedLease: true,
-      writesBrowserInput: true,
+      writesBrowserInput,
+      pointerAction,
       browserNetworkNavigation: false,
       automaticDispatch: false,
       createsTask: false,
@@ -159,9 +204,10 @@ function unavailableOwnerResponse(operation) {
       browserRuntimeExecuted: false,
       degraded: true,
       mediationStatus: "unavailable",
-      mediationReason: "screen_keyboard_owner_unavailable",
+      mediationReason: "screen_action_owner_unavailable",
       leaseMatched: false,
-      writesBrowserInput: true,
+      writesBrowserInput,
+      pointerAction,
       inputValueExposed: false,
       browserNetworkNavigation: false,
       noAutomaticDispatch: true,
@@ -171,26 +217,34 @@ function unavailableOwnerResponse(operation) {
   };
 }
 
-export function createScreenKeyboardCapabilityHandlers({
+export function createScreenActionCapabilityHandlers({
   screenActUrl,
   postJson = async () => {
-    throw new Error("Screen keyboard capability transport is not configured.");
+    throw new Error("Screen action capability transport is not configured.");
   },
 } = {}) {
   function normaliseRequest(request) {
     const operation = normaliseOperation(request);
-    if (operation !== OPERATION) {
-      throw new Error("Screen keyboard capability only allows keyboard.type.");
+    const candidates = [request?.operation, request?.params?.operation, request?.intent]
+      .filter((value) => value !== undefined && value !== null && value !== "");
+    if (!OPERATIONS.has(operation) || candidates.length === 0 || candidates.some((value) => value !== operation)) {
+      throw operationError();
     }
     const params = request?.params ?? {};
-    const unsupportedParams = Object.keys(params)
-      .filter((key) => !["operation", "text"].includes(key));
-    if (unsupportedParams.length > 0) {
-      throw new Error("Screen keyboard capability only accepts params.text.");
+    if (operation === KEYBOARD_OPERATION) {
+      const unsupportedParams = Object.keys(params)
+        .filter((key) => !["operation", "text"].includes(key));
+      if (unsupportedParams.length > 0) {
+        throw new Error("Screen keyboard capability only accepts params.text.");
+      }
+      return {
+        operation,
+        payload: { text: normaliseInput(params.text) },
+      };
     }
     return {
       operation,
-      text: normaliseInput(params.text),
+      payload: normaliseClickParams(params),
     };
   }
 
@@ -200,7 +254,10 @@ export function createScreenKeyboardCapabilityHandlers({
     }
     const action = normaliseRequest(request);
     try {
-      const response = await postJson(`${screenActUrl}/act/keyboard/type`, { text: action.text });
+      const endpoint = action.operation === KEYBOARD_OPERATION
+        ? "/act/keyboard/type"
+        : "/act/mouse/click";
+      const response = await postJson(`${screenActUrl}${endpoint}`, action.payload);
       return {
         handled: true,
         result: projectOwnerResponse(response, action.operation),
@@ -217,10 +274,11 @@ export function createScreenKeyboardCapabilityHandlers({
     if (capability.id !== CAPABILITY_ID) return null;
     const summary = result?.summary ?? {};
     const governance = result?.governance ?? {};
+    const operation = result?.operation ?? null;
     return {
-      kind: "keyboard.type",
+      kind: operation,
       ok: result?.ok === true,
-      operation: result?.operation ?? OPERATION,
+      operation,
       actionAttempted: summary.actionAttempted === true,
       accepted: summary.accepted === true,
       browserRuntimeExecuted: summary.browserRuntimeExecuted === true,
@@ -229,6 +287,7 @@ export function createScreenKeyboardCapabilityHandlers({
       mediationReason: summary.mediationReason ?? null,
       leaseMatched: summary.leaseMatched === true,
       writesBrowserInput: governance.writesBrowserInput === true,
+      pointerAction: governance.pointerAction === true,
       inputValueExposed: governance.exposesInputValue === true,
       browserNetworkNavigation: governance.browserNetworkNavigation === true,
       noAutomaticDispatch: governance.automaticDispatch === false,
@@ -244,21 +303,10 @@ export function createScreenKeyboardCapabilityHandlers({
 
   function validateRequest(capability, request) {
     if (capability.id !== CAPABILITY_ID) return null;
-    const params = request?.params ?? {};
-    const candidates = [request?.operation, params.operation, request?.intent]
-      .filter((value) => value !== undefined && value !== null && value !== "");
-    if (candidates.length === 0 || candidates.some((value) => value !== OPERATION)) {
-      return "Screen keyboard capability only allows keyboard.type.";
-    }
-    const unsupportedParams = Object.keys(params)
-      .filter((key) => !["operation", "text"].includes(key));
-    if (unsupportedParams.length > 0) {
-      return "Screen keyboard capability only accepts params.text.";
-    }
     try {
-      normaliseInput(params.text);
+      normaliseRequest(request);
     } catch (error) {
-      return error instanceof Error ? error.message : "Invalid screen keyboard input.";
+      return error instanceof Error ? error.message : "Invalid screen action request.";
     }
     return null;
   }
