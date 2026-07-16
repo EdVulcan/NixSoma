@@ -242,6 +242,22 @@ export function buildBaseCapabilities({
       description: "Search bounded workspace text with result, file-size, output, binary, and skipped-directory limits.",
     },
     {
+      id: "sense.openclaw.engineering_tool.lsp_selected_target_read_bridge",
+      name: "Native Engineering LSP Selected-Target Read",
+      kind: "sensor",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/plugins/native-adapter/engineering-lsp/selected-target-read-bridge`,
+      intents: [
+        "openclaw.engineering_tool.lsp_selected_target_read_bridge",
+        "engineering.lsp.selected_target_read_bridge",
+        "engineering.lsp.selected-target-read-bridge",
+      ],
+      domains: ["body_internal"],
+      risk: "low",
+      governance: "audit_only",
+      description: "Read a bounded selected LSP response target through the existing workspace-constrained native read bridge without sending another LSP request or mutating the workspace.",
+    },
+    {
       id: "sense.openclaw.engineering_tool.verify_evidence",
       name: "Native Engineering Verification Evidence",
       kind: "sensor",

@@ -380,6 +380,7 @@ export function createNativeEngineeringLspSelectedTargetReadBridgeBuilders({
     const generatedAt = new Date().toISOString();
     const summary = {
       sourceTaskId: record.sourceTaskId ?? null,
+      targetIndex: safeTargetIndex,
       selectedTargetFound: true,
       targetUri: selectedTarget.uri,
       relativePath: uriResolution.relativePath,

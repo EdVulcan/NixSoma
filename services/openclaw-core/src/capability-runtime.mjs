@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { buildBaseCapabilities } from "./capability-descriptors.mjs";
 import { createEngineeringReadSearchCapabilityHandlers } from "./capability-runtime-engineering-read-search.mjs";
+import { createEngineeringLspCapabilityHandlers } from "./capability-runtime-engineering-lsp.mjs";
 import { createEngineeringVerificationCapabilityHandlers } from "./capability-runtime-engineering-verification.mjs";
 import { createEngineeringRecoveryCapabilityHandlers } from "./capability-runtime-engineering-recovery.mjs";
 import { createEngineeringMicrocompactCapabilityHandlers } from "./capability-runtime-engineering-microcompact.mjs";
@@ -80,6 +81,9 @@ export function createCapabilityRuntime(deps) {
     buildNativeEngineeringReadFile: pluginReview.buildNativeEngineeringReadFile,
     buildNativeEngineeringGlob: pluginReview.buildNativeEngineeringGlob,
     buildNativeEngineeringGrep: pluginReview.buildNativeEngineeringGrep,
+  });
+  const engineeringLspHandlers = createEngineeringLspCapabilityHandlers({
+    buildNativeEngineeringLspSelectedTargetReadBridge: pluginReview.buildNativeEngineeringLspSelectedTargetReadBridge,
   });
   const engineeringVerificationHandlers = createEngineeringVerificationCapabilityHandlers({
     listCommandTranscriptRecords,
@@ -373,6 +377,10 @@ export function createCapabilityRuntime(deps) {
     if (engineeringReadSearch.handled) {
       return engineeringReadSearch.result;
     }
+    const engineeringLsp = engineeringLspHandlers.callBackend(capability, request);
+    if (engineeringLsp.handled) {
+      return engineeringLsp.result;
+    }
     const engineeringVerification = engineeringVerificationHandlers.callBackend(capability, request);
     if (engineeringVerification.handled) {
       return engineeringVerification.result;
@@ -602,6 +610,10 @@ export function createCapabilityRuntime(deps) {
     const engineeringReadSearchSummary = engineeringReadSearchHandlers.summariseResult(capability, result);
     if (engineeringReadSearchSummary) {
       return engineeringReadSearchSummary;
+    }
+    const engineeringLspSummary = engineeringLspHandlers.summariseResult(capability, result);
+    if (engineeringLspSummary) {
+      return engineeringLspSummary;
     }
     const engineeringVerificationSummary = engineeringVerificationHandlers.summariseResult(capability, result);
     if (engineeringVerificationSummary) {
@@ -972,6 +984,13 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: engineeringMicrocompactValidationError },
+      };
+    }
+    const engineeringLspValidationError = engineeringLspHandlers.validateRequest(capability, request);
+    if (engineeringLspValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: engineeringLspValidationError },
       };
     }
     const pluginRuntimeRefreshValidationError = pluginRuntimeRefreshHandlers.validateRequest(capability, request);

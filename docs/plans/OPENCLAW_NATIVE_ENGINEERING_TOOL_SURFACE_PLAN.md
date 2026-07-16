@@ -532,6 +532,13 @@ That slice lets the operator call the selected-target read bridge from
 Engineering Loop State and inspect the bounded read preview without automatic
 task creation or mutation.
 
+The selected-target read bridge is now also aligned with the common capability
+runtime. Observer sends the explicit task id, target index, and bounded read
+parameters through `sense.openclaw.engineering_tool.lsp_selected_target_read_bridge`;
+Core reuses the existing builder and records only compact policy/invocation
+metadata. The transient read preview remains response-only. This is a runtime
+boundary closure, not a new LSP request variant or readiness shell.
+
 The selected-target edit proposal seed follow-up was completed as:
 
 ```text

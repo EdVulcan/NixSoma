@@ -58,6 +58,7 @@ cleanup() {
     "${SCREEN_POINTER_FILE:-}" \
     "${SYSTEM_HEAL_FILE:-}" \
     "${MAINTENANCE_FILE:-}" \
+    "${LSP_SELECTED_TARGET_READ_FILE:-}" \
     "${CONTEXT_PACKET_FILE:-}" \
     "${PROVIDER_HANDOFF_FILE:-}" \
     "${ACPX_COMPATIBILITY_FILE:-}" \
@@ -99,6 +100,7 @@ SCREEN_KEYBOARD_FILE="$(mktemp)"
 SCREEN_POINTER_FILE="$(mktemp)"
 SYSTEM_HEAL_FILE="$(mktemp)"
 MAINTENANCE_FILE="$(mktemp)"
+LSP_SELECTED_TARGET_READ_FILE="$(mktemp)"
 CONTEXT_PACKET_FILE="$(mktemp)"
 PROVIDER_HANDOFF_FILE="$(mktemp)"
 ACPX_COMPATIBILITY_FILE="$(mktemp)"
@@ -116,6 +118,7 @@ post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.process.list",
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool.read\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"src/app.ts\",\"startLine\":1,\"endLine\":1}}" > "$ENGINEERING_READ_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool.glob\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"pattern\":\"src/**/*.ts\",\"limit\":4}}" > "$ENGINEERING_GLOB_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool.grep\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"query\":\"observerNeedle\",\"include\":\"src/**/*.ts\",\"literal\":true,\"limit\":4}}" > "$ENGINEERING_GREP_FILE"
+post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_tool.lsp_selected_target_read_bridge","intent":"engineering.lsp.selected_target_read_bridge","taskId":"observer-missing-lsp-target-task","params":{"taskId":"observer-missing-lsp-target-task","language":"typescript","targetIndex":0,"contextLines":2,"includeRead":true}}' > "$LSP_SELECTED_TARGET_READ_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_tool.verify_evidence","params":{"limit":4,"maxOutputChars":500}}' > "$ENGINEERING_VERIFY_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.engineering_tool.edit_proposal\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"src/app.ts\",\"oldString\":\"observerNeedle\",\"newString\":\"governedObserverNeedle\",\"contextLines\":1}}" > "$ENGINEERING_EDIT_PROPOSAL_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.engineering_tool.write_proposal\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"scratch/new-file.txt\",\"content\":\"transient observer write content\",\"overwrite\":false,\"contextLines\":1}}" > "$ENGINEERING_WRITE_PROPOSAL_FILE"
@@ -168,7 +171,8 @@ node - <<'EOF' \
   "$SCREEN_KEYBOARD_FILE" \
   "$SCREEN_POINTER_FILE" \
   "$SYSTEM_HEAL_FILE" \
-  "$MAINTENANCE_FILE"
+  "$MAINTENANCE_FILE" \
+  "$LSP_SELECTED_TARGET_READ_FILE"
 const fs = require("node:fs");
 const html = fs.readFileSync(process.argv[2], "utf8");
 const client = fs.readFileSync(process.argv[3], "utf8");
@@ -199,6 +203,7 @@ const screenKeyboard = JSON.parse(fs.readFileSync(process.argv[27], "utf8"));
 const screenPointer = JSON.parse(fs.readFileSync(process.argv[28], "utf8"));
 const systemHeal = JSON.parse(fs.readFileSync(process.argv[29], "utf8"));
 const maintenance = JSON.parse(fs.readFileSync(process.argv[30], "utf8"));
+const lspSelectedTargetRead = JSON.parse(fs.readFileSync(process.argv[31], "utf8"));
 
 for (const token of [
   "invoke-vitals-button",
@@ -228,6 +233,7 @@ for (const token of [
   "invokeScreenObservationButton.addEventListener",
   "screenObservation",
   "sense.screen.observe",
+  "sense.openclaw.engineering_tool.lsp_selected_target_read_bridge",
   "GOVERNED_PLAN_TODO_SUGGESTION_CONTROLS",
   "observe_current_screen",
   "invoke-screen-observation-button",
@@ -299,6 +305,18 @@ if (
   || engineeringGrep.result?.summary?.matchedResults !== 1
 ) {
   throw new Error("Observer engineering read/search invoke path should return bounded results");
+}
+if (
+  !lspSelectedTargetRead.ok
+  || lspSelectedTargetRead.invoked !== true
+  || lspSelectedTargetRead.capability?.id !== "sense.openclaw.engineering_tool.lsp_selected_target_read_bridge"
+  || lspSelectedTargetRead.summary?.kind !== "engineering.lsp_selected_target_read"
+  || lspSelectedTargetRead.summary?.blocked !== true
+  || lspSelectedTargetRead.summary?.noMutation !== true
+  || lspSelectedTargetRead.summary?.noProviderEgress !== true
+  || lspSelectedTargetRead.result?.reason !== "no_completed_symbol_request_target_state"
+) {
+  throw new Error("Observer LSP selected-target read capability should fail closed without completed symbol state");
 }
 if (
   !engineeringVerify.ok
@@ -544,6 +562,9 @@ if (client.includes("observerConfig.coreUrl}/plugins/native-adapter/engineering-
   || client.includes("observerConfig.coreUrl}/plugins/native-adapter/engineering-context/work-view/bind")) {
   throw new Error("Observer engineering context controls must use the common capability runtime");
 }
+if (client.includes("observerConfig.coreUrl}/plugins/native-adapter/engineering-lsp/selected-target-read-bridge")) {
+  throw new Error("Observer LSP selected-target reads must use the common capability runtime");
+}
 if (client.includes("observerConfig.screenSenseUrl}/screen/refresh")) {
   throw new Error("Observer screen refresh control must use the common capability runtime");
 }
@@ -554,6 +575,13 @@ if (!capabilities.capabilities?.some((capability) =>
   && capability.intents?.includes("heal.maintenance.tick")
 )) {
   throw new Error("Observer capability registry should expose the audited simulated system-heal contract");
+}
+if (!capabilities.capabilities?.some((capability) =>
+  capability.id === "sense.openclaw.engineering_tool.lsp_selected_target_read_bridge"
+  && capability.governance === "audit_only"
+  && capability.intents?.includes("engineering.lsp.selected_target_read_bridge")
+)) {
+  throw new Error("Observer capability registry should expose the bounded LSP selected-target read contract");
 }
 if (
   !contextPacket.ok
@@ -688,6 +716,10 @@ console.log(JSON.stringify({
         messages: contextPacket.summary.messageCount,
         redactions: contextPacket.summary.redactions,
         providerEgress: !contextPacket.summary.noProviderEgress,
+      },
+      lspSelectedTargetRead: {
+        blocked: lspSelectedTargetRead.result?.reason,
+        noMutation: lspSelectedTargetRead.summary?.noMutation,
       },
       providerHandoff: {
         blocked: providerHandoff.result.reason,

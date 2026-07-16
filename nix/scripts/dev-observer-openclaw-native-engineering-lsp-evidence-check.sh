@@ -125,7 +125,7 @@ for (const token of [
   "/plugins/native-adapter/engineering-lsp/lifecycle-draft",
   "/plugins/native-adapter/engineering-lsp/source-transfer-proposal",
   "/plugins/native-adapter/engineering-lsp/symbol-request-proposal",
-  "/plugins/native-adapter/engineering-lsp/selected-target-read-bridge",
+  "/capabilities/invoke",
   "/plugins/native-adapter/engineering-lsp/selected-target-edit-proposal-seed",
   "/plugins/native-adapter/engineering-lsp/lifecycle-tasks",
   "/tasks/",
@@ -137,7 +137,7 @@ for (const token of [
   "readEngineeringLoopSelectedTarget",
   "renderEngineeringLspTargetSelection",
   "engineeringLspSelectedTargetIndex",
-  "engineeringLspSelectedTargetReadBridgeRoute",
+  "engineeringLspSelectedTargetReadCapabilityRequest",
   "seedEngineeringLoopSelectedTargetEditProposal",
   "engineeringLspSelectedTargetEditProposalSeedRoute",
   "renderEngineeringLspLifecycleLoopTaskState",
@@ -176,10 +176,14 @@ for (const token of [
   "lsp-symbol-request-proposal-only",
   "definition/references/hover request through a short-lived LSP process",
   "send didOpen",
+  "sense.openclaw.engineering_tool.lsp_selected_target_read_bridge",
 ]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing engineering LSP token: ${token}`);
   }
+}
+if (client.includes("observerConfig.coreUrl}/plugins/native-adapter/engineering-lsp/selected-target-read-bridge")) {
+  throw new Error("Observer LSP selected-target reads must use the common capability runtime");
 }
 if (
   !evidence.ok

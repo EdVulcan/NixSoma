@@ -1028,6 +1028,15 @@ read-only; it does not mutate task state, send another JSON-RPC request, create 
 task or approval, or execute a patch. Keep the LSP loop closed unless a new
 operator need demonstrates that this bounded selection is insufficient.
 
+The existing selected-target read control is now also routed through the common
+capability runtime as
+`sense.openclaw.engineering_tool.lsp_selected_target_read_bridge`. It reuses
+the same completed-target builder and keeps the read preview transient while
+policy, invocation, and audit evidence retain only bounded target/read metadata
+and negative authority flags. This closes a declared/runtime boundary without
+reopening symbol requests, starting another LSP process, creating tasks or
+approvals, mutating the workspace, or enabling provider/network egress.
+
 The existing ACPX/Codex compatibility and session-metadata read model is now
 also available through the common capability runtime as
 `sense.openclaw.acpx_codex_bridge.compatibility`. It reuses the native builder,

@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering LSP Selected-Target Read Bridge Plan
 
-Updated: 2026-07-10
+Updated: 2026-07-16
 
 ## Active Slice
 
@@ -92,3 +92,27 @@ That slice adds a `Read Selected Target` Observer control that calls the bridge
 only after an explicit operator click and renders bounded read preview evidence
 without automatic task creation, approval creation, JSON-RPC, LSP process start,
 provider egress, or mutation.
+
+## Common Capability Runtime Follow-up
+
+The existing read control now invokes
+`sense.openclaw.engineering_tool.lsp_selected_target_read_bridge` through the
+common `POST /capabilities/invoke` path. The handler reuses the same selected
+target builder and requires an explicit task id, target index bounds, and
+bounded read parameters. Capability policy, invocation, and event evidence
+retain only target metadata, read counts, and negative authority flags; the
+transient bounded preview remains in the response only.
+
+This closes a declared/runtime boundary without reopening symbol execution. It
+does not send another JSON-RPC request, start an LSP process, create a task or
+approval, mutate the workspace, call a provider, or use external network
+egress.
+
+Additional evidence:
+
+```text
+services/openclaw-core/src/capability-runtime-engineering-lsp.mjs
+services/openclaw-core/test/capability-runtime.test.mjs
+apps/observer-ui/test/client-script-engineering-lsp-target-selection.test.mjs
+observer-capability-invoke
+```

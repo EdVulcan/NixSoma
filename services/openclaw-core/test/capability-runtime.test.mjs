@@ -160,6 +160,81 @@ test("capability runtime invokes bounded screen observation through the screen-s
   assert.deepEqual(calls.fetchJson, ["http://127.0.0.1:4104/screen/current"]);
 });
 
+test("capability runtime exposes the existing LSP selected-target read bridge without persisting content", async () => {
+  const privateContent = "const privateSymbol = true;";
+  const { runtime, state, events } = createHarness({
+    pluginReview: {
+      buildNativeEngineeringLspSelectedTargetReadBridge: (params) => {
+        assert.equal(params.taskId, "task-lsp-selected-read");
+        assert.equal(params.targetIndex, 1);
+        return {
+          ok: true,
+          blocked: false,
+          summary: {
+            sourceTaskId: params.taskId,
+            targetIndex: params.targetIndex,
+            relativePath: "src/app.ts",
+            startLine: 2,
+            endLine: 3,
+            includeRead: true,
+            readOk: true,
+            contentExposed: true,
+          },
+          target: { relativePath: "src/app.ts", startLine: 2, endLine: 3 },
+          readResult: {
+            ok: true,
+            summary: { charsReturned: privateContent.length, outputTruncated: false },
+            content: privateContent,
+          },
+          bounds: { noRawLspPayload: true },
+          governance: { canMutateWorkspace: false, canCallProvider: false },
+        };
+      },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "sense.openclaw.engineering_tool.lsp_selected_target_read_bridge",
+    intent: "engineering.lsp.selected_target_read_bridge",
+    taskId: "task-lsp-selected-read",
+    params: {
+      taskId: "task-lsp-selected-read",
+      language: "typescript",
+      targetIndex: 1,
+      contextLines: 2,
+      includeRead: true,
+    },
+  });
+
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.capability.id, "sense.openclaw.engineering_tool.lsp_selected_target_read_bridge");
+  assert.equal(result.response.summary.kind, "engineering.lsp_selected_target_read");
+  assert.equal(result.response.summary.targetIndex, 1);
+  assert.equal(result.response.summary.noRawLspPayload, true);
+  assert.equal(result.response.summary.noMutation, true);
+  assert.equal(result.response.summary.noProviderEgress, true);
+  assert.equal(result.response.summary.charsReturned, privateContent.length);
+  assert.equal(result.response.result.readResult.content, privateContent);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes(privateContent), false);
+  assert.equal(JSON.stringify(events).includes(privateContent), false);
+  assert.deepEqual(events.map((event) => event.name), ["policy.evaluated", "capability.invoked"]);
+
+  const rejected = await runtime.invokeCapability({
+    capabilityId: "sense.openclaw.engineering_tool.lsp_selected_target_read_bridge",
+    params: { includeRead: true },
+  });
+  assert.equal(rejected.statusCode, 400);
+  assert.match(rejected.response.error, /explicit taskId/u);
+
+  const invalidTarget = await runtime.invokeCapability({
+    capabilityId: "sense.openclaw.engineering_tool.lsp_selected_target_read_bridge",
+    params: { taskId: "task-lsp-selected-read", targetIndex: 8 },
+  });
+  assert.equal(invalidTarget.statusCode, 400);
+  assert.match(invalidTarget.response.error, /targetIndex/u);
+});
+
 test("capability runtime dispatches browser new-tab through screen-act with a bound intent", async () => {
   const targetUrl = "https://example.com/capability-browser-action";
   const { runtime, state, events, calls } = createHarness({

@@ -47,8 +47,19 @@ function engineeringLoopEvidenceRoute(kind, taskId) {
   return \`/plugins/native-adapter/engineering-verification/evidence?taskId=\${taskId ?? ""}\`;
 }
 
-function engineeringLspSelectedTargetReadBridgeRoute(taskId, language = "typescript", targetIndex = engineeringLspSelectedTargetIndex()) {
-  return \`/plugins/native-adapter/engineering-lsp/selected-target-read-bridge?taskId=\${encodeURIComponent(taskId ?? "")}&language=\${encodeURIComponent(language ?? "typescript")}&targetIndex=\${encodeURIComponent(String(targetIndex ?? 0))}&contextLines=2&includeRead=true\`;
+function engineeringLspSelectedTargetReadCapabilityRequest(taskId, language = "typescript", targetIndex = engineeringLspSelectedTargetIndex()) {
+  return {
+    capabilityId: "sense.openclaw.engineering_tool.lsp_selected_target_read_bridge",
+    intent: "engineering.lsp.selected_target_read_bridge",
+    taskId,
+    params: {
+      taskId,
+      language,
+      targetIndex,
+      contextLines: 2,
+      includeRead: true,
+    },
+  };
 }
 
 function engineeringLspSelectedTargetEditProposalSeedRoute(taskId, language = "typescript", targetIndex = engineeringLspSelectedTargetIndex()) {
@@ -259,7 +270,7 @@ async function refreshEngineeringLoopCompletionReadback() {
     renderEngineeringLspTargetSelection(lifecycle.lifecycleAction === "symbol_request" ? symbolResponse : null);
     const selectedTargetIndex = engineeringLspSelectedTargetIndex();
     const selectedTargetReadBridgeRoute = lifecycle.lifecycleAction === "symbol_request" && symbolResponse.selectedTarget
-      ? engineeringLspSelectedTargetReadBridgeRoute(latestEngineeringLoopControlState.taskId, lifecycle.language ?? execution.language ?? "typescript", selectedTargetIndex)
+      ? "/capabilities/invoke"
       : null;
     latestEngineeringLoopControlState.language = lifecycle.language ?? execution.language ?? "typescript";
     latestEngineeringLoopControlState.lifecycleAction = lifecycle.lifecycleAction ?? execution.lifecycleAction ?? "start";
@@ -319,12 +330,31 @@ async function readEngineeringLoopSelectedTarget() {
     throw new Error("Create or restore an LSP lifecycle task first.");
   }
   const targetIndex = engineeringLspSelectedTargetIndex();
-  const route = engineeringLspSelectedTargetReadBridgeRoute(
+  const request = engineeringLspSelectedTargetReadCapabilityRequest(
     latestEngineeringLoopControlState.taskId,
     latestEngineeringLoopControlState.language ?? "typescript",
     targetIndex,
   );
-  const bridge = await fetchJson(\`\${observerConfig.coreUrl}\${route}\`);
+  const route = "/capabilities/invoke";
+  const response = await fetchJson(\`\${observerConfig.coreUrl}\${route}\`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (response.invoked !== true) {
+    const reason = response.reason ?? "LSP selected-target read capability was not invoked.";
+    engineeringLoopStateCompletion.textContent = \`blocked=\${reason}\`;
+    engineeringLoopStateEvidence.textContent = route;
+    engineeringLoopStateJson.textContent = [
+      "Kind: lsp-selected-target-read",
+      \`Task: \${latestEngineeringLoopControlState.taskId}\`,
+      \`Capability: \${request.capabilityId}\`,
+      \`Blocked: \${reason}\`,
+      "Boundary: explicit read-only bridge; no task, approval, JSON-RPC, LSP process, mutation, provider call, or result envelope.",
+    ].join("\\n");
+    throw new Error(reason);
+  }
+  const bridge = response.result ?? {};
   if (!bridge.ok) {
     engineeringLoopStateCompletion.textContent = \`blocked=\${bridge.reason ?? "unknown"}\`;
     engineeringLoopStateEvidence.textContent = route;
