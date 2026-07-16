@@ -29,6 +29,8 @@ OPENCLAW_NATIVE_ENGINEERING_PROMPT_WORK_STANDARDS_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_PROMPT_STANDARDS_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_EDIT_TARGET_SELECTION_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_MUTATIONS_PLAN.md
+OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_BROWSER_ACTION_PLAN.md
+OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_SCREEN_ACTION_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_LOOP_WORK_STANDARDS_BRIDGE_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_WRITE_PROPOSAL_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_WRITE_APPROVAL_BRIDGE_PLAN.md
@@ -212,6 +214,12 @@ runtime bridge documented in
 Only explicit `browser.new_tab` requests reach the existing screen-act owner;
 fresh capture, trusted lease mediation, and browser network navigation remain
 on that owner, while invocation evidence excludes the URL and browser payload.
+
+The existing screen-act keyboard descriptor now has a similarly bounded common
+runtime bridge documented in
+`OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_SCREEN_ACTION_PLAN.md`.
+Only explicit `keyboard.type` requests reach the existing screen-act owner;
+write-only input remains transient and is excluded from invocation evidence.
 
 The provider handoff's explicit source-task continuity is documented in:
 

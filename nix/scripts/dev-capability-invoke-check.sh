@@ -56,6 +56,7 @@ cleanup() {
     "${WORK_VIEW_FILE:-}" \
     "${WORK_VIEW_CONTROL_FILE:-}" \
     "${BROWSER_OPEN_FILE:-}" \
+    "${SCREEN_KEYBOARD_FILE:-}" \
     "${CONTEXT_PACKET_FILE:-}" \
     "${PROVIDER_HANDOFF_FILE:-}" \
     "${ACPX_COMPATIBILITY_FILE:-}" \
@@ -92,6 +93,7 @@ WORKSPACE_PATCH_APPLY_FILE="$(mktemp)"
 WORK_VIEW_FILE="$(mktemp)"
 WORK_VIEW_CONTROL_FILE="$(mktemp)"
 BROWSER_OPEN_FILE="$(mktemp)"
+SCREEN_KEYBOARD_FILE="$(mktemp)"
 CONTEXT_PACKET_FILE="$(mktemp)"
 PROVIDER_HANDOFF_FILE="$(mktemp)"
 ACPX_COMPATIBILITY_FILE="$(mktemp)"
@@ -118,6 +120,7 @@ post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.work
 post_json "$SESSION_MANAGER_URL/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/capability-work-view"}' > /dev/null
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.work_view.control","operation":"work_view.reveal","params":{"entryUrl":"https://example.com/capability-work-view"}}' > "$WORK_VIEW_CONTROL_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.browser.open","operation":"browser.new_tab","params":{"url":"https://example.com/capability-browser-action"}}' > "$BROWSER_OPEN_FILE"
+post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.screen.pointer_keyboard","operation":"keyboard.type","params":{"text":"transient capability input"}}' > "$SCREEN_KEYBOARD_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.packet","params":{"limit":4,"thresholdChars":256,"protectRecentAssistantTurns":0}}' > "$CONTEXT_PACKET_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.work_view_observation"}' > "$WORK_VIEW_FILE"
 curl --silent --fail "$CORE_URL/capabilities" > "$CAPABILITIES_FILE"
@@ -155,7 +158,8 @@ node - <<'EOF' \
   "$CAPABILITIES_FILE" \
   "$FIXTURE_DIR" \
   "$SCREEN_FILE" \
-  "$BROWSER_OPEN_FILE"
+  "$BROWSER_OPEN_FILE" \
+  "$SCREEN_KEYBOARD_FILE"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
 const vitals = readJson(2);
@@ -184,6 +188,7 @@ const capabilities = readJson(24);
 const fixtureDir = process.argv[25];
 const screen = readJson(26);
 const browserOpen = readJson(27);
+const screenKeyboard = readJson(28);
 
 if (!vitals.ok || vitals.invoked !== true || vitals.capability?.id !== "sense.system.vitals" || vitals.policy?.decision !== "audit_only") {
   throw new Error("system vitals capability should be invoked with audit-only governance");
@@ -406,6 +411,27 @@ if (
   || JSON.stringify(browserOpen).includes("capability-browser-action")
 ) {
   throw new Error(`browser new-tab capability should use the existing screen-act owner with compact evidence: ${JSON.stringify(browserOpen)}`);
+}
+if (
+  !screenKeyboard.ok
+  || screenKeyboard.invoked !== true
+  || screenKeyboard.capability?.id !== "act.screen.pointer_keyboard"
+  || screenKeyboard.policy?.subject?.intent !== "keyboard.type"
+  || screenKeyboard.invocation?.request?.intent !== "keyboard.type"
+  || screenKeyboard.result?.registry !== "openclaw-screen-keyboard-capability-v0"
+  || screenKeyboard.result?.operation !== "keyboard.type"
+  || screenKeyboard.result?.action?.mediation?.accepted !== true
+  || screenKeyboard.result?.governance?.dispatchesExistingScreenActOwner !== true
+  || screenKeyboard.result?.governance?.writesBrowserInput !== true
+  || screenKeyboard.result?.governance?.exposesInputValue !== false
+  || screenKeyboard.summary?.kind !== "keyboard.type"
+  || screenKeyboard.summary?.accepted !== true
+  || screenKeyboard.summary?.inputValueExposed !== false
+  || screenKeyboard.summary?.noPayloadExposure !== true
+  || screenKeyboard.summary?.noProviderEgress !== true
+  || JSON.stringify(screenKeyboard).includes("transient capability input")
+) {
+  throw new Error(`keyboard type capability should use the existing screen-act owner without input exposure: ${JSON.stringify(screenKeyboard)}`);
 }
 if (
   !contextPacket.ok

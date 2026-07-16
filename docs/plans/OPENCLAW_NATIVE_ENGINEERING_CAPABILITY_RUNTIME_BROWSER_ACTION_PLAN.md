@@ -62,11 +62,12 @@ trusted owner result, and absence of navigation URL from invocation evidence.
 
 ## Deferred
 
-Generic pointer/keyboard capability invocation remains on the existing
-task/screen-act paths until a separate operator workflow justifies a common
-runtime bridge. Semantic target selection, arbitrary selectors, page scripts,
-automatic actions, provider egress, root/system daemon work, and desktop-wide
-capture remain unchanged and deferred.
+Pointer/keyboard capability invocation beyond the explicit `keyboard.type`
+bridge remains on the existing task/screen-act paths until a separate operator
+workflow justifies another common runtime bridge. Semantic target selection,
+arbitrary selectors, page scripts, automatic actions, provider egress,
+root/system daemon work, and desktop-wide capture remain unchanged and
+deferred.
 
 ## Next Smallest Capability
 

@@ -217,6 +217,66 @@ test("capability runtime dispatches browser new-tab through screen-act with a bo
   assert.equal(events.at(-1)?.name, "capability.invoked");
 });
 
+test("capability runtime dispatches bounded keyboard type through screen-act without persisting input", async () => {
+  const input = "transient-capability-input";
+  const { runtime, state, events, calls } = createHarness({
+    postJsonResult: {
+      ok: true,
+      action: {
+        kind: "keyboard.type",
+        result: "executed-browser-runtime",
+        degraded: false,
+        params: { text: input },
+        mediation: {
+          attempted: true,
+          accepted: true,
+          status: "accepted",
+          reason: null,
+          leaseMatched: true,
+          transport: "trusted-sidecar-ipc",
+          visualGrounding: {
+            required: true,
+            status: "advanced",
+            sequenceAdvanced: true,
+            pageUrl: "https://example.com/private",
+            dataUrl: "data:image/jpeg;base64,secret",
+          },
+        },
+      },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.screen.pointer_keyboard",
+    operation: "keyboard.type",
+    params: { text: input },
+  });
+
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.capability.id, "act.screen.pointer_keyboard");
+  assert.equal(result.response.policy.input.intent, "keyboard.type");
+  assert.equal(result.response.invocation.request.intent, "keyboard.type");
+  assert.equal(result.response.summary.kind, "keyboard.type");
+  assert.equal(result.response.summary.accepted, true);
+  assert.equal(result.response.summary.writesBrowserInput, true);
+  assert.equal(result.response.summary.inputValueExposed, false);
+  assert.equal(result.response.summary.noPayloadExposure, true);
+  assert.equal(result.response.summary.noProviderEgress, true);
+  assert.equal(result.response.result.governance.dispatchesExistingScreenActOwner, true);
+  assert.equal(result.response.result.governance.exposesInputValue, false);
+  assert.deepEqual(calls.postJson, [{
+    url: "http://127.0.0.1:4105/act/keyboard/type",
+    body: { text: input },
+  }]);
+  assert.equal(JSON.stringify(result.response.invocation).includes(input), false);
+  assert.equal(JSON.stringify(result.response.summary).includes(input), false);
+  assert.equal(JSON.stringify(result.response.result).includes(input), false);
+  assert.equal(JSON.stringify(result.response.result).includes("data:image/jpeg"), false);
+  assert.equal(state.capabilityInvocationLog.at(-1)?.request.intent, "keyboard.type");
+  assert.equal(events.at(-1)?.name, "capability.invoked");
+});
+
 test("capability runtime exposes workspace edit target selection through the governed invoke path", async () => {
   const builderInputs = [];
   const { runtime, state, events } = createHarness({

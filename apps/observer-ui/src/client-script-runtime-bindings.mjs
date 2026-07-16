@@ -326,9 +326,7 @@ clickActionButton.addEventListener("click", () => {
 });
 
 typeActionButton.addEventListener("click", () => {
-  runAction("/act/keyboard/type", {
-    text: "hello from openclaw-screen-act",
-  }).catch((error) => {
+  runKeyboardTypeCapability("hello from openclaw-screen-act").catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);
   });
 });

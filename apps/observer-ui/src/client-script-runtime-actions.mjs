@@ -578,6 +578,32 @@ async function runBrowserOpenCapability(url) {
   await refreshWorkView();
 }
 
+async function runKeyboardTypeCapability(text) {
+  const result = await fetchJson(observerConfig.coreUrl + "/capabilities/invoke", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      capabilityId: "act.screen.pointer_keyboard",
+      operation: "keyboard.type",
+      params: { text },
+    }),
+  });
+  const action = result.result?.action ?? {};
+  if (currentTaskState?.id) {
+    await updateTaskPhase(currentTaskState.id, "acting_on_target", {
+      actionKind: action.kind ?? "keyboard.type",
+      degraded: action.degraded === true,
+    });
+  }
+  setControlMessage("Capability keyboard.type completed (" + (action.result ?? "unknown") + ")");
+  await refreshRuntime();
+  await refreshTaskList();
+  await refreshTaskHistoryDetail();
+  await refreshActionState();
+  await refreshScreen();
+  await refreshWorkView();
+}
+
 async function runHeal(service) {
   const result = await fetchJson(\`\${observerConfig.systemHealUrl}/heal/restart-service\`, {
     method: "POST",

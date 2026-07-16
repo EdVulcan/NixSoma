@@ -54,6 +54,7 @@ cleanup() {
     "${WORK_VIEW_FILE:-}" \
     "${WORK_VIEW_CONTROL_FILE:-}" \
     "${BROWSER_OPEN_FILE:-}" \
+    "${SCREEN_KEYBOARD_FILE:-}" \
     "${CONTEXT_PACKET_FILE:-}" \
     "${PROVIDER_HANDOFF_FILE:-}" \
     "${ACPX_COMPATIBILITY_FILE:-}" \
@@ -91,6 +92,7 @@ WORKSPACE_PATCH_APPLY_FILE="$(mktemp)"
 WORK_VIEW_FILE="$(mktemp)"
 WORK_VIEW_CONTROL_FILE="$(mktemp)"
 BROWSER_OPEN_FILE="$(mktemp)"
+SCREEN_KEYBOARD_FILE="$(mktemp)"
 CONTEXT_PACKET_FILE="$(mktemp)"
 PROVIDER_HANDOFF_FILE="$(mktemp)"
 ACPX_COMPATIBILITY_FILE="$(mktemp)"
@@ -117,6 +119,7 @@ post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.work
 post_json "http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/observer-capability-work-view"}' > /dev/null
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.work_view.control","operation":"work_view.reveal","params":{"entryUrl":"https://example.com/observer-capability-work-view"}}' > "$WORK_VIEW_CONTROL_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.browser.open","operation":"browser.new_tab","params":{"url":"https://example.com/observer-capability-browser-action"}}' > "$BROWSER_OPEN_FILE"
+post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.screen.pointer_keyboard","operation":"keyboard.type","params":{"text":"transient observer capability input"}}' > "$SCREEN_KEYBOARD_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.packet","params":{"limit":4,"thresholdChars":256,"protectRecentAssistantTurns":0}}' > "$CONTEXT_PACKET_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_context.work_view_observation"}' > "$WORK_VIEW_FILE"
 curl --silent --fail "$CORE_URL/capabilities" > "$CAPABILITIES_FILE"
@@ -152,7 +155,8 @@ node - <<'EOF' \
   "$PROMPT_PACK_FILE" \
   "$CAPABILITIES_FILE" \
   "$SCREEN_FILE" \
-  "$BROWSER_OPEN_FILE"
+  "$BROWSER_OPEN_FILE" \
+  "$SCREEN_KEYBOARD_FILE"
 const fs = require("node:fs");
 const html = fs.readFileSync(process.argv[2], "utf8");
 const client = fs.readFileSync(process.argv[3], "utf8");
@@ -179,6 +183,7 @@ const promptPack = JSON.parse(fs.readFileSync(process.argv[23], "utf8"));
 const capabilities = JSON.parse(fs.readFileSync(process.argv[24], "utf8"));
 const screen = JSON.parse(fs.readFileSync(process.argv[25], "utf8"));
 const browserOpen = JSON.parse(fs.readFileSync(process.argv[26], "utf8"));
+const screenKeyboard = JSON.parse(fs.readFileSync(process.argv[27], "utf8"));
 
 for (const token of [
   "invoke-vitals-button",
@@ -194,6 +199,7 @@ for (const token of [
   "workspace-text-write-task-button",
   "workspace-patch-apply-task-button",
   "new-tab-action-button",
+  "type-action-button",
 ]) {
   if (!html.includes(token)) {
     throw new Error(`Observer HTML missing ${token}`);
@@ -222,6 +228,9 @@ for (const token of [
   "runBrowserOpenCapability",
   "act.browser.open",
   "browser.new_tab",
+  "runKeyboardTypeCapability",
+  "act.screen.pointer_keyboard",
+  "keyboard.type",
 ]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);
@@ -417,6 +426,27 @@ if (
   || JSON.stringify(browserOpen).includes("observer-capability-browser-action")
 ) {
   throw new Error("Observer browser new-tab capability should use the existing screen-act owner with compact evidence");
+}
+if (
+  !screenKeyboard.ok
+  || screenKeyboard.invoked !== true
+  || screenKeyboard.capability?.id !== "act.screen.pointer_keyboard"
+  || screenKeyboard.policy?.subject?.intent !== "keyboard.type"
+  || screenKeyboard.invocation?.request?.intent !== "keyboard.type"
+  || screenKeyboard.result?.registry !== "openclaw-screen-keyboard-capability-v0"
+  || screenKeyboard.result?.operation !== "keyboard.type"
+  || screenKeyboard.result?.action?.mediation?.accepted !== true
+  || screenKeyboard.result?.governance?.dispatchesExistingScreenActOwner !== true
+  || screenKeyboard.result?.governance?.writesBrowserInput !== true
+  || screenKeyboard.result?.governance?.exposesInputValue !== false
+  || screenKeyboard.summary?.kind !== "keyboard.type"
+  || screenKeyboard.summary?.accepted !== true
+  || screenKeyboard.summary?.inputValueExposed !== false
+  || screenKeyboard.summary?.noPayloadExposure !== true
+  || screenKeyboard.summary?.noProviderEgress !== true
+  || JSON.stringify(screenKeyboard).includes("transient observer capability input")
+) {
+  throw new Error("Observer keyboard type capability should use the existing screen-act owner without input exposure");
 }
 if (
   !contextPacket.ok

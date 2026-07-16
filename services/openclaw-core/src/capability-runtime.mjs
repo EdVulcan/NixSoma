@@ -19,6 +19,7 @@ import { createWorkspaceEditTargetCapabilityHandlers } from "./capability-runtim
 import { createWorkspaceMutationCapabilityHandlers } from "./capability-runtime-workspace-mutations.mjs";
 import { createScreenObservationCapabilityHandlers } from "./capability-runtime-screen.mjs";
 import { createBrowserActionCapabilityHandlers } from "./capability-runtime-browser-actions.mjs";
+import { createScreenKeyboardCapabilityHandlers } from "./capability-runtime-screen-actions.mjs";
 
 export function createCapabilityRuntime(deps) {
   const {
@@ -159,6 +160,10 @@ export function createCapabilityRuntime(deps) {
     screenActUrl,
     postJson,
   });
+  const screenKeyboardHandlers = createScreenKeyboardCapabilityHandlers({
+    screenActUrl,
+    postJson,
+  });
 
   function baseCapabilities() {
     return buildBaseCapabilities({
@@ -193,6 +198,13 @@ export function createCapabilityRuntime(deps) {
         ?? "capability.invoke";
     }
     if (capability.id === "act.browser.open") {
+      return request.operation
+        ?? request.params?.operation
+        ?? request.intent
+        ?? capability.intents?.[0]
+        ?? "capability.invoke";
+    }
+    if (capability.id === "act.screen.pointer_keyboard") {
       return request.operation
         ?? request.params?.operation
         ?? request.intent
@@ -417,6 +429,10 @@ export function createCapabilityRuntime(deps) {
     const browserAction = await browserActionHandlers.callBackend(capability, request);
     if (browserAction.handled) {
       return browserAction.result;
+    }
+    const screenKeyboard = await screenKeyboardHandlers.callBackend(capability, request);
+    if (screenKeyboard.handled) {
+      return screenKeyboard.result;
     }
 
     if (capability.id === "sense.system.vitals") {
@@ -643,6 +659,10 @@ export function createCapabilityRuntime(deps) {
     const browserActionSummary = browserActionHandlers.summariseResult(capability, result);
     if (browserActionSummary) {
       return browserActionSummary;
+    }
+    const screenKeyboardSummary = screenKeyboardHandlers.summariseResult(capability, result);
+    if (screenKeyboardSummary) {
+      return screenKeyboardSummary;
     }
 
     if (capability.id === "sense.system.vitals") {
@@ -980,6 +1000,13 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: browserActionValidationError },
+      };
+    }
+    const screenKeyboardValidationError = screenKeyboardHandlers.validateRequest(capability, request);
+    if (screenKeyboardValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: screenKeyboardValidationError },
       };
     }
 
