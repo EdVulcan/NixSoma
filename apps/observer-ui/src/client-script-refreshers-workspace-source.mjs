@@ -368,8 +368,25 @@ async function refreshEngineeringLspEvidence() {
 
 async function refreshEngineeringEditProposal() {
   try {
-    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-edit-proposal/draft?relativePath=package.json&oldString=OpenClaw%20on%20NixOS%20monorepo%20skeleton&newString=OpenClaw%20on%20NixOS%20native%20agent%20body%20skeleton&contextLines=1&maxOutputChars=8000\`);
-    renderEngineeringEditProposal(data);
+    const response = await fetchJson(\`\${observerConfig.coreUrl}/capabilities/invoke\`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        capabilityId: "act.openclaw.engineering_tool.edit_proposal",
+        intent: "engineering.edit_proposal",
+        params: {
+          relativePath: "package.json",
+          oldString: "OpenClaw on NixOS monorepo skeleton",
+          newString: "OpenClaw on NixOS native agent body skeleton",
+          contextLines: 1,
+          maxOutputChars: 8000,
+        },
+      }),
+    });
+    if (response.invoked !== true) {
+      throw new Error("Engineering edit proposal capability was not invoked.");
+    }
+    renderEngineeringEditProposal(response.result ?? {});
   } catch {
     engineeringEditProposalRegistry.textContent = "offline";
     engineeringEditProposalTarget.textContent = "none";

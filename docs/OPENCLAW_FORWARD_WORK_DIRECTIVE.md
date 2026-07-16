@@ -402,6 +402,9 @@ apply, create a task or approval, execute commands, or call a provider. Apply
 continues through the existing approval-gated edit task path. The boundary is
 documented in
 `docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_EDIT_PROPOSAL_PLAN.md`.
+The existing Observer Edit Proposal panel now also requests that proposal
+through the common capability runtime and keeps the diff transient; its
+approval-gated apply task remains a separate explicit operator action.
 
 The corresponding native `cc_write` redacted proposal is also available as
 `act.openclaw.engineering_tool.write_proposal`. It preserves the existing

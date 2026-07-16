@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering Capability Runtime Edit Proposal Plan
 
-Updated: 2026-07-15
+Updated: 2026-07-16
 
 ## Active Slice
 
@@ -59,6 +59,16 @@ The real core and Observer capability checks invoke the proposal against a
 fixture, verify the bounded transient diff, and prove the raw proposal text is
 absent from the event ledger.
 
+## Observer Common-Path Closure
+
+The existing Observer edit-proposal panel now requests its bounded proposal
+through `POST /capabilities/invoke` using
+`act.openclaw.engineering_tool.edit_proposal`. It unwraps only the transient
+proposal result for the existing diff renderer; the dedicated draft route
+remains the detailed read-model owner and duplicate-match evidence path.
+Capability summary and event evidence remain compact and do not contain the
+search/replacement text or diff lines.
+
 ## Deferred
 
 ```text
@@ -72,7 +82,8 @@ approval bridge and is unchanged by this common entry point.
 
 ## Next Smallest Capability
 
-The common runtime execution-evidence follow-up is now complete in
+The common runtime execution-evidence follow-up and Observer proposal
+common-path closure are now complete in
 `OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_EXECUTION_EVIDENCE_PLAN.md`.
 It reads only the existing completed edit task and filesystem-ledger evidence;
 proposal content remains outside durable capability evidence. Keep proposal

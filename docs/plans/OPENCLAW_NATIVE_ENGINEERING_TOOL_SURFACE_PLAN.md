@@ -799,3 +799,9 @@ unwraps only the transient bounded builder results for the existing renderer;
 workspace limits, invocation/audit evidence, file-content non-persistence, and
 all negative execution boundaries remain owned by the existing native builders
 and common runtime.
+
+The existing Observer Edit Proposal panel now also uses
+`act.openclaw.engineering_tool.edit_proposal` through `/capabilities/invoke`.
+It reuses the existing transient diff renderer and leaves proposal application
+on the explicit approval-gated task path; no write, task, approval, command,
+provider, or network authority is added by the panel refresh.

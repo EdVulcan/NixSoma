@@ -34,7 +34,7 @@ prepare_engineering_edit_proposal_fixture "$WORKSPACE_DIR" "OBSERVER_ENGINEERING
 rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_EVENT_LOG_FILE"
 
 cleanup() {
-  rm -f "${HTML_FILE:-}" "${CLIENT_FILE:-}" "${PROPOSAL_FILE:-}" "${DUPLICATE_FILE:-}"
+  rm -f "${HTML_FILE:-}" "${CLIENT_FILE:-}" "${PROPOSAL_FILE:-}" "${DUPLICATE_FILE:-}" "${CAPABILITY_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -45,13 +45,18 @@ HTML_FILE="$(mktemp)"
 CLIENT_FILE="$(mktemp)"
 PROPOSAL_FILE="$(mktemp)"
 DUPLICATE_FILE="$(mktemp)"
+CAPABILITY_FILE="$(mktemp)"
 
 curl --silent --fail "$OBSERVER_URL/" > "$HTML_FILE"
 curl --silent --fail "$OBSERVER_URL/client-v5.js" > "$CLIENT_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-edit-proposal/draft?relativePath=package.json&oldString=$OLD_TEXT&newString=$NEW_TEXT&contextLines=1&maxOutputChars=8000" > "$PROPOSAL_FILE"
 DUPLICATE_STATUS="$(curl --silent --output "$DUPLICATE_FILE" --write-out "%{http_code}" "$CORE_URL/plugins/native-adapter/engineering-edit-proposal/draft?relativePath=src/duplicate.ts&oldString=repeat&newString=once&contextLines=1")"
+curl --silent --fail -X POST "$CORE_URL/capabilities/invoke" \
+  -H 'content-type: application/json' \
+  --data '{"capabilityId":"act.openclaw.engineering_tool.edit_proposal","intent":"engineering.edit_proposal","params":{"relativePath":"package.json","oldString":"OpenClaw on NixOS monorepo skeleton","newString":"OpenClaw on NixOS native agent body skeleton","contextLines":1,"maxOutputChars":8000}}' \
+  > "$CAPABILITY_FILE"
 
-node - <<'EOF' "$HTML_FILE" "$CLIENT_FILE" "$PROPOSAL_FILE" "$DUPLICATE_FILE" "$DUPLICATE_STATUS" "$TARGET_FILE"
+node - <<'EOF' "$HTML_FILE" "$CLIENT_FILE" "$PROPOSAL_FILE" "$DUPLICATE_FILE" "$DUPLICATE_STATUS" "$TARGET_FILE" "$CAPABILITY_FILE"
 const fs = require("node:fs");
 const readText = (index) => fs.readFileSync(process.argv[index], "utf8");
 const readJson = (index) => JSON.parse(readText(index));
@@ -62,8 +67,9 @@ const proposal = readJson(4);
 const duplicate = readJson(5);
 const duplicateStatus = process.argv[6];
 const targetFile = process.argv[7];
+const capability = readJson(8);
 const targetText = fs.readFileSync(targetFile, "utf8");
-const raw = JSON.stringify({ html, client, proposal, duplicate });
+const raw = JSON.stringify({ html, client, proposal, duplicate, capability });
 
 for (const token of [
   "OpenClaw Engineering Edit Proposal",
@@ -79,19 +85,40 @@ for (const token of [
   }
 }
 for (const token of [
-  "/plugins/native-adapter/engineering-edit-proposal/draft",
+  "/capabilities/invoke",
+  "engineering.edit_proposal",
   "refreshEngineeringEditProposal",
   "renderEngineeringEditProposal",
   "Native governed edit proposal",
   "act.openclaw.engineering_tool.edit_proposal",
   "surgical-edit-proposal-diff-preview-only",
+  "engineering-edit-proposal-task-button",
+  "engineering-edit-proposal-tasks",
 ]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing engineering edit proposal token: ${token}`);
   }
 }
-if (html.includes("engineering-edit-proposal-task-button") || client.includes("engineering-edit-proposal-task-button")) {
-  throw new Error("Observer edit proposal should not expose a task/apply button");
+if (
+  !capability.ok
+  || capability.invoked !== true
+  || capability.capability?.id !== "act.openclaw.engineering_tool.edit_proposal"
+  || capability.result?.registry !== "openclaw-native-engineering-edit-proposal-v0"
+  || capability.result?.summary?.editCount !== 1
+  || capability.summary?.kind !== "engineering.edit_proposal"
+  || capability.summary?.noMutation !== true
+  || capability.summary?.noTaskCreation !== true
+  || capability.summary?.noProviderEgress !== true
+) {
+  throw new Error(`Observer common edit proposal capability mismatch: ${JSON.stringify(capability)}`);
+}
+const refreshStart = client.indexOf("async function refreshEngineeringEditProposal");
+const refreshEnd = client.indexOf("\nasync function ", refreshStart + 1);
+const refreshBody = refreshStart >= 0
+  ? client.slice(refreshStart, refreshEnd >= 0 ? refreshEnd : undefined)
+  : "";
+if (refreshBody.includes("engineering-edit-proposal-tasks") || refreshBody.includes("engineering-edit-proposal-task-button")) {
+  throw new Error("Observer edit proposal refresh must not create or trigger an edit task");
 }
 if (
   !proposal.ok
