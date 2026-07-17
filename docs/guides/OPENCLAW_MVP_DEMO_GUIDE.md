@@ -1,4 +1,4 @@
-# OpenClaw on NixOS MVP Demo Guide
+# NixSoma MVP Demo Guide
 
 Updated: 2026-05-19
 

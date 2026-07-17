@@ -1,4 +1,4 @@
-# OpenClaw Plans Directory
+# NixSoma Plans Directory
 
 Updated: 2026-07-17
 
@@ -118,7 +118,7 @@ phase." The corrected route is:
 ```text
 preserve enhanced openclaw source on GitHub
 -> perform enhanced source gap audit
--> migrate governed engineering tool capabilities into OpenClawOnNixOS
+-> migrate governed engineering tool capabilities into NixSoma
 -> close the Level 1 operator execution-consistency and declared/runtime capability boundaries
 -> return to identity-upgrade work-view/session-helper/hostd route
 ```

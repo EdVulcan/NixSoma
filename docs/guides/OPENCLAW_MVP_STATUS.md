@@ -1,4 +1,4 @@
-# OpenClaw on NixOS MVP Status
+# NixSoma MVP Status
 
 Updated: 2026-05-19
 

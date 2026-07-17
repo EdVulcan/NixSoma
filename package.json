@@ -1,8 +1,8 @@
 {
-  "name": "openclaw-on-nixos",
+  "name": "nixsoma",
   "private": true,
   "version": "0.1.0",
-  "description": "OpenClaw on NixOS monorepo skeleton",
+  "description": "NixSoma monorepo for an OpenClaw AI-native control plane on NixOS",
   "workspaces": [
     "apps/*",
     "services/*",

@@ -1,11 +1,16 @@
-# OpenClaw Forward Work Directive
+# NixSoma Forward Work Directive
 
 Updated: 2026-07-17
 
-This is the active guidance document for continuing OpenClaw development after
+This is the active guidance document for continuing NixSoma development after
 the Phase 136 checkpoint and the discovery that the locally optimized
 `openclaw` source has not yet been preserved on GitHub or migrated into
-`OpenClawOnNixOS`.
+NixSoma.
+
+NixSoma is the public project and repository name. Existing `openclaw-*`
+service names, `OPENCLAW_*` environment variables, protocol registries, and
+systemd unit names remain compatibility contracts and are intentionally not
+renamed in this branding change.
 
 Use this document as the first stop for new agents. Historical phase plans and
 milestone checks remain valuable evidence, but they must not be treated as an

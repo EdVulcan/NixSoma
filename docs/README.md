@@ -1,8 +1,11 @@
-# OpenClaw Documentation Control Room
+# NixSoma Documentation Control Room
 
 Updated: 2026-07-17
 
-This is the active documentation entry point for `OpenClawOnNixOS`.
+This is the active documentation entry point for `NixSoma`, the public project
+name for the OpenClaw-on-NixOS control plane. Historical phase documents retain
+their original OpenClaw names because milestone identifiers and evidence links
+depend on them.
 
 The project has many historical phase plans. Do not use the largest phase number
 as the next task. Start from the active route below.

@@ -1,6 +1,6 @@
-# OpenClawOnNixOS
+# NixSoma
 
-OpenClawOnNixOS is the next-generation workspace for building OpenClaw as an AI-native control plane on top of NixOS.
+NixSoma is the next-generation workspace for building OpenClaw as an AI-native control plane on top of NixOS.
 
 The first milestone focuses on a minimal "body loop":
 

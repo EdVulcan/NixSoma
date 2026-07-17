@@ -1,5 +1,5 @@
 {
-  description = "OpenClaw on NixOS";
+  description = "NixSoma - an OpenClaw AI-native control plane on NixOS";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";

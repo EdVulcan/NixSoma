@@ -1,4 +1,4 @@
-# OpenClaw on NixOS MVP Final Readiness
+# NixSoma MVP Final Readiness
 
 Updated: 2026-05-22
 

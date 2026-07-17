@@ -1,7 +1,7 @@
 # AI Work View Capture Strategy
 
 This document defines the current Linux/NixOS capture direction for
-OpenClawOnNixOS.
+NixSoma.
 
 ## Decision
 

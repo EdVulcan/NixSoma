@@ -1,4 +1,4 @@
-# OpenClaw_On_NixOS — 代码审查修复日志
+# NixSoma - 代码审查修复日志
 
 > **审查日期**：2026-05-24  
 > **项目环境**：NixOS（Linux）  
