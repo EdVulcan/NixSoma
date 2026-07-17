@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 import { createOperatorAuthenticator } from "../src/operator-auth.mjs";
 
@@ -44,6 +47,32 @@ test("operator authentication accepts bearer credentials and derives the actor",
   assert.equal(missing.headers["www-authenticate"], "Bearer");
 });
 
+test("operator credential files take precedence over legacy token values", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "nixsoma-operator-auth-"));
+  const tokenFilePath = path.join(directory, "operator-token");
+  fs.writeFileSync(tokenFilePath, "file-secret\n", "utf8");
+
+  try {
+    const auth = createOperatorAuthenticator({
+      token: "legacy-secret",
+      tokenFilePath,
+    });
+    const fileCredential = auth.authorizeRequest(
+      request("POST", { authorization: "Bearer file-secret" }),
+      new URL("/operator/step", "http://127.0.0.1:4100"),
+    );
+    const legacyCredential = auth.authorizeRequest(
+      request("POST", { authorization: "Bearer legacy-secret" }),
+      new URL("/operator/step", "http://127.0.0.1:4100"),
+    );
+
+    assert.equal(fileCredential.ok, true);
+    assert.equal(legacyCredential.statusCode, 401);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test("operator origin policy rejects untrusted browser origins and keeps health public", () => {
   const auth = createOperatorAuthenticator({
     token: "operator-secret",
@@ -62,7 +91,10 @@ test("operator origin policy rejects untrusted browser origins and keeps health 
   );
   assert.equal(health.ok, true);
   assert.equal(health.identity, null);
-  assert.equal(auth.requestRequiresAuth(request("GET"), new URL("/tasks", "http://127.0.0.1:4100")), false);
+  assert.equal(auth.requestRequiresAuth(request("GET"), new URL("/tasks", "http://127.0.0.1:4100")), true);
+  assert.equal(auth.requestRequiresAuth(request("GET"), new URL("/approvals/summary", "http://127.0.0.1:4100")), true);
+  assert.equal(auth.requestRequiresAuth(request("GET"), new URL("/capabilities/invocations", "http://127.0.0.1:4100")), true);
+  assert.equal(auth.requestRequiresAuth(request("GET"), new URL("/capabilities", "http://127.0.0.1:4100")), false);
   assert.equal(auth.requestRequiresAuth(request("POST"), new URL("/tasks", "http://127.0.0.1:4100")), true);
 });
 

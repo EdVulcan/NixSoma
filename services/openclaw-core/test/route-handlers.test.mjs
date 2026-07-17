@@ -870,6 +870,36 @@ test("registered mutation routes require operator authentication before capabili
   assert.equal(invoked, true);
 });
 
+test("sensitive read routes require operator authentication before exposing state", async () => {
+  let listApprovalsCalled = false;
+  const operatorAuth = createOperatorAuthenticator({ token: "operator-secret" });
+  const deps = createBaseDeps({
+    deps: { operatorAuth },
+    approvalEngine: {
+      listApprovals: () => {
+        listApprovalsCalled = true;
+        return [{ id: "approval-1", status: "pending" }];
+      },
+      buildApprovalSummary: () => ({ counts: { pending: 1 } }),
+    },
+  });
+
+  const rejected = await invokeRoute(deps, "GET", "/approvals?limit=10");
+  assert.equal(rejected.statusCode, 401);
+  assert.equal(listApprovalsCalled, false);
+
+  const accepted = await invokeRoute(
+    deps,
+    "GET",
+    "/approvals?limit=10",
+    null,
+    { authorization: "Bearer operator-secret" },
+  );
+  assert.equal(accepted.statusCode, 200, JSON.stringify(accepted.body));
+  assert.deepEqual(accepted.body.items, [{ id: "approval-1", status: "pending" }]);
+  assert.equal(listApprovalsCalled, true);
+});
+
 test("approval mutation derives approvedBy from authenticated operator instead of request body", async () => {
   const approval = { id: "approval-authenticated", status: "pending" };
   let observedInput = null;

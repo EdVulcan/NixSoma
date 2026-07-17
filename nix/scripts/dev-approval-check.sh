@@ -29,6 +29,7 @@ cleanup() {
   rm -f \
     "${HTML_FILE:-}" \
     "${CLIENT_FILE:-}" \
+    "${ANONYMOUS_APPROVAL_READ_FILE:-}" \
     "${BLOCKED_TASK_FILE:-}" \
     "${PENDING_APPROVALS_FILE:-}" \
     "${BLOCKED_STEP_FILE:-}" \
@@ -72,6 +73,14 @@ for (const token of ["/approvals?limit=10", "approval.created", "approval.approv
   }
 }
 EOF
+
+ANONYMOUS_APPROVAL_READ_FILE="$(mktemp)"
+anonymous_approval_read_status="$(command curl --silent --output "$ANONYMOUS_APPROVAL_READ_FILE" --write-out "%{http_code}" "$CORE_URL/approvals?limit=10")"
+if [[ "$anonymous_approval_read_status" != "401" ]]; then
+  echo "anonymous approval read should be rejected with HTTP 401, got $anonymous_approval_read_status" >&2
+  cat "$ANONYMOUS_APPROVAL_READ_FILE" >&2
+  exit 1
+fi
 
 BLOCKED_TASK_FILE="$(mktemp)"
 PENDING_APPROVALS_FILE="$(mktemp)"

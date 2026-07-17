@@ -1359,14 +1359,17 @@ The token is supplied directly by the Unix dev launcher or through a
 systemd `LoadCredential` file for NixOS services. Core can exchange the token
 for a short-lived `HttpOnly; SameSite=Strict` operator session; Observer has an
 explicit sign-in/sign-out panel and sends credentialed requests only after the
-session is established. `/health` remains public for liveness, while the
-read-only GET surface remains a separate read-authorization follow-up.
+session is established. `/health` and non-state capability descriptions remain
+public for liveness and discovery, while task, approval, runtime, policy, and
+execution-ledger read models require the same authenticated operator boundary.
+The Unix helper injects the file-backed credential into direct Core readback
+calls used by milestone scripts.
 
 Focused auth/route tests, Observer tests, generated-client syntax, body-config
-evaluation, store-native Core/Observer builds, and a live Core probe prove the
-boundary. The live probe covers unauthenticated mutation rejection, untrusted
-Origin rejection, server-derived actor identity, cookie flags, session use,
-and post-logout rejection.
+evaluation, store-native Core/Observer builds, and live Core probes prove the
+boundary. The probes cover unauthenticated mutation and sensitive-read
+rejection, untrusted Origin rejection, server-derived actor identity, cookie
+flags, session use, and post-logout rejection.
 
 The common system-sense and screen-act mutation paths now reject unsigned direct
 calls and accept only Core-issued, short-lived grants bound to the exact method,
@@ -1395,10 +1398,10 @@ bounded credential map, while NixOS delivers the map and caller files with
 `LoadCredential`. Shared-token and loopback compatibility remains only when a
 per-caller map is not configured.
 
-The next security slice is Core operator identity and authenticated approval
-sessions, followed by Core-issued per-service execution grants for direct
-actuator routes. Only after those boundaries and the existing hostd health proof
-should the fixed hostd/systemd Level 3 activation bridge resume.
+The next security slice is Core-issued per-service execution grants for direct
+actuator routes, followed by reservation commit/abort/recovery closure. Only
+after those boundaries and the existing hostd health proof should the fixed
+hostd/systemd Level 3 activation bridge resume.
 
 ## Identity-Upgrade Alignment
 

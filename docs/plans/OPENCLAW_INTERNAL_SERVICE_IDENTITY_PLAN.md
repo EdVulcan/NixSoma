@@ -65,19 +65,45 @@ inspection identity. NixOS exposes `browserRuntimeCredentialMapFile`,
 `browserRuntimeCredentialFiles`, and legacy `browserRuntimeAuthTokenFile`
 through `LoadCredential`; token values remain outside Nix expressions.
 
+## Delivered Slice: Authenticated Core Readback
+
+Core now applies the operator identity boundary to sensitive state read models,
+not only mutation routes. Approval inboxes and summaries, task history and
+focus routes, runtime and policy state, capability invocation history, command
+transcripts, and filesystem ledgers require either the bearer credential or an
+active operator session. `/health` and the non-state capability registry remain
+available for liveness and discovery; this is an explicit bounded read policy,
+not a claim that every Core GET is public or that every internal service route
+is operator-authenticated.
+
+Operator credentials are resolved file-first, so a `LoadCredential` or launcher
+file cannot be silently shadowed by a legacy environment value. The shared Unix
+HTTP helper adds the same file-backed credential to direct Core readback calls;
+POST requests continue through its existing authenticated `post_json` path.
+
+## Evidence
+
+- Operator auth tests prove file-first credential precedence and the sensitive
+  read allowlist.
+- Core route tests prove an anonymous approval read is rejected before the route
+  reads state, while an authenticated operator receives the bounded inbox.
+- The real approval milestone proves the authenticated task/approval lifecycle
+  and separately probes that an unauthenticated approval read returns `401`.
+- The HTTP helper check proves direct Core GET calls receive the bearer header
+  without adding it to unrelated service requests.
+
 ## Deliberately Deferred
 
 - Removal of shared Event Hub and Browser Runtime compatibility modes.
 - Authorization of Browser Runtime read routes through a separate operator
   session; the per-caller map authenticates internal service callers.
-- Core operator identity, direct actuator grants, and reservation
-  commit/abort/recovery state machine closure.
+- Core-issued direct actuator grants and reservation commit/abort/recovery state
+  machine closure.
 - Real NixOS VM activation, host-health oracle, generation receipt, and rollback.
 
 ## Next Slice
 
-Close the Core operator identity boundary and bind approvals to an authenticated
-operator session. Then make the existing direct actuator routes accept only
-Core-issued per-service execution grants; keep the current task/approval and
-trusted work-view contracts intact while removing unauthenticated internal HTTP
-mutation paths.
+Make the existing direct actuator routes accept only Core-issued per-service
+execution grants. Keep the current task/approval and trusted work-view
+contracts intact, and prove that unsigned direct command/file/browser actuator
+requests fail before mutation while a correctly bound single-use grant succeeds.

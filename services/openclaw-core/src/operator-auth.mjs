@@ -4,6 +4,16 @@ import { randomBytes, timingSafeEqual } from "node:crypto";
 const SESSION_COOKIE_NAME = "nixsoma_operator_session";
 const DEFAULT_SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const MUTATION_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+const OPERATOR_READ_PATH_PATTERNS = [
+  /^\/approvals(?:\/|$)/u,
+  /^\/tasks(?:\/|$)/u,
+  /^\/capabilities\/invocations(?:\/|$)/u,
+  /^\/commands\/transcripts(?:\/|$)/u,
+  /^\/filesystem\/(?:changes|reads)(?:\/|$)/u,
+  /^\/operator\/state$/u,
+  /^\/policy\/state$/u,
+  /^\/state\/runtime$/u,
+];
 
 function normaliseSecret(value) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
@@ -74,18 +84,23 @@ function configuredOrigins(input) {
   return new Set(values.map(normaliseOrigin).filter(Boolean));
 }
 
-export function createOperatorAuthenticator({
-  token = process.env.OPENCLAW_OPERATOR_TOKEN,
-  tokenFilePath = process.env.OPENCLAW_OPERATOR_TOKEN_FILE,
-  actor = process.env.OPENCLAW_OPERATOR_ACTOR ?? "operator",
-  allowedOrigins = process.env.OPENCLAW_OPERATOR_ALLOWED_ORIGINS ?? [],
-  sessionTtlMs = DEFAULT_SESSION_TTL_MS,
-  secureCookies = process.env.OPENCLAW_OPERATOR_COOKIE_SECURE === "1",
-  required = true,
-  now = () => Date.now(),
-  createSessionToken = () => randomBytes(32).toString("hex"),
-} = {}) {
-  const expectedToken = normaliseSecret(token) ?? readTokenFile(tokenFilePath);
+export function createOperatorAuthenticator(options = {}) {
+  const token = Object.prototype.hasOwnProperty.call(options, "token")
+    ? options.token
+    : process.env.OPENCLAW_OPERATOR_TOKEN;
+  const tokenFilePath = Object.prototype.hasOwnProperty.call(options, "tokenFilePath")
+    ? options.tokenFilePath
+    : process.env.OPENCLAW_OPERATOR_TOKEN_FILE;
+  const actor = options.actor ?? process.env.OPENCLAW_OPERATOR_ACTOR ?? "operator";
+  const allowedOrigins = options.allowedOrigins
+    ?? process.env.OPENCLAW_OPERATOR_ALLOWED_ORIGINS
+    ?? [];
+  const sessionTtlMs = options.sessionTtlMs ?? DEFAULT_SESSION_TTL_MS;
+  const secureCookies = options.secureCookies ?? process.env.OPENCLAW_OPERATOR_COOKIE_SECURE === "1";
+  const required = options.required ?? true;
+  const now = options.now ?? (() => Date.now());
+  const createSessionToken = options.createSessionToken ?? (() => randomBytes(32).toString("hex"));
+  const expectedToken = readTokenFile(tokenFilePath) ?? normaliseSecret(token);
   if (required && !expectedToken) {
     throw new Error("OpenClaw Core requires OPENCLAW_OPERATOR_TOKEN or OPENCLAW_OPERATOR_TOKEN_FILE.");
   }
@@ -205,7 +220,8 @@ export function createOperatorAuthenticator({
     if (method === "OPTIONS" || (method === "GET" && pathname === "/health")) return false;
     if (method === "POST" && pathname === "/auth/login") return false;
     if (pathname === "/auth/session" || pathname === "/auth/logout") return true;
-    return MUTATION_METHODS.has(method);
+    if (MUTATION_METHODS.has(method)) return true;
+    return method === "GET" && OPERATOR_READ_PATH_PATTERNS.some((pattern) => pattern.test(pathname));
   }
 
   function authorizeRequest(req, requestUrl) {

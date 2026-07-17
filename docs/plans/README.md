@@ -121,6 +121,7 @@ preserve enhanced openclaw source on GitHub
 -> perform enhanced source gap audit
 -> migrate governed engineering tool capabilities into NixSoma
 -> close the Level 1 operator execution-consistency and declared/runtime capability boundaries
+-> require operator identity for sensitive Core state readback as well as mutations
 -> return to identity-upgrade work-view/session-helper/hostd route
 ```
 

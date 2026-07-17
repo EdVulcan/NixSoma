@@ -71,6 +71,11 @@ real host mutation still requires approval plus Operator Step/Run. The switched
 VM now proves all three fixed targets through Core and Observer real-execution
 checks with native D-Bus, changed-PID, and restored-health evidence.
 
+The Core operator identity boundary now covers both mutation routes and the
+sensitive task, approval, runtime/policy, and execution-ledger read models.
+`/health` and non-state capability discovery remain public; the next security
+slice is Core-issued per-service grants for direct actuator routes.
+
 The first Phase D declarative-evolution capability and its approval-bound
 staging/build loop are now complete. Core can generate an allowlisted
 `openclaw-managed.nix` candidate, bind its hash to an approval, stage the exact
