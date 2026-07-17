@@ -120,6 +120,7 @@ export function createPluginReview(deps) {
     buildNativeDeclarativeEvolutionHealthGate,
   } = createNativeDeclarativeEvolutionHealthGateBuilders({
     tasks,
+    approvals: state.approvals,
     stagingDirectory: process.env.OPENCLAW_MANAGED_CONFIG_STAGING_DIR,
   });
   const {

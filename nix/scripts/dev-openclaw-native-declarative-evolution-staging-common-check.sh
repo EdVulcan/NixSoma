@@ -27,7 +27,7 @@ export OPENCLAW_NIX_SYSTEM="${OPENCLAW_NIX_SYSTEM:-x86_64-linux}"
 export OPENCLAW_NIX_COMMAND="${OPENCLAW_NIX_COMMAND:-nix}"
 export OPENCLAW_NIX_INSTANTIATE="${OPENCLAW_NIX_INSTANTIATE:-nix-instantiate}"
 export OPENCLAW_NIXOS_BUILD_MODE="${OPENCLAW_NIXOS_BUILD_MODE:-dry-run}"
-export OPENCLAW_NIXOS_BUILD_TIMEOUT_MS="${OPENCLAW_NIXOS_BUILD_TIMEOUT_MS:-120000}"
+export OPENCLAW_NIXOS_BUILD_TIMEOUT_MS="${OPENCLAW_NIXOS_BUILD_TIMEOUT_MS:-600000}"
 
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 OBSERVER_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
@@ -358,6 +358,55 @@ post_json "$CORE_URL/approvals/$APPROVAL_ID/approve" \
   '{"approvedBy":"dev-openclaw-native-declarative-evolution-staging-check","reason":"Approve one hash-bound managed Nix staging and read-only evaluation/build check."}' > "$APPROVED_FILE"
 post_json "$CORE_URL/operator/step" '{}' > "$STEP_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.declarative_evolution.health_gate\",\"params\":{\"taskId\":\"$TASK_ID\"}}" > "$HEALTH_GATE_FILE"
+
+if [[ "$OPENCLAW_NIXOS_BUILD_MODE" != "build" ]]; then
+  node - <<'NODE' "$HEALTH_GATE_FILE" "$OPENCLAW_CORE_STATE_FILE" "$TASK_ID" "$CANDIDATE_HASH"
+const fs = require("node:fs");
+const healthGate = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const state = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+const taskId = process.argv[4];
+const candidateHash = process.argv[5];
+const taskTypes = (state.tasks ?? []).map((task) => task.type);
+const result = healthGate.result ?? {};
+if (
+  healthGate.ok !== true
+  || healthGate.invoked !== true
+  || result.ok !== true
+  || result.blocked !== false
+  || result.taskId !== taskId
+  || result.candidate?.candidateHash !== candidateHash
+  || result.assessment?.status !== "blocked"
+  || result.assessment?.eligibleForActivationReview !== false
+  || result.closureIntegrity?.status !== "blocked"
+  || !result.failedChecks?.includes("nixBuildOutputBound")
+  || !result.failedChecks?.includes("closureQueryPassed")
+  || result.governance?.writesManagedConfig !== false
+  || result.governance?.switchesGeneration !== false
+  || result.governance?.executesRollback !== false
+  || result.governance?.automaticActivation !== false
+  || result.governance?.automaticRollback !== false
+  || taskTypes.some((type) => type === "native_declarative_evolution_activation_decision" || type === "native_declarative_evolution_activation")
+  || JSON.stringify(healthGate).includes("services.openclaw.components")
+) {
+  throw new Error(`Dry-run closure-integrity gate did not fail closed: ${JSON.stringify({ healthGate, taskTypes })}`);
+}
+console.log(JSON.stringify({
+  nativeDeclarativeEvolutionStaging: {
+    status: "passed",
+    proofMode: "dry-run-closure-integrity-blocked",
+    taskId,
+    candidateHash,
+    closureIntegrity: result.closureIntegrity?.status,
+    failedChecks: result.failedChecks,
+    activationTaskCreated: false,
+    generationSwitch: false,
+    rollback: false,
+  },
+}, null, 2));
+NODE
+  exit 0
+fi
+
 curl --silent --fail "$CORE_URL/plugins/native-adapter/declarative-evolution/activation-decision?taskId=$TASK_ID" > "$ACTIVATION_REVIEW_FILE"
 post_json "$CORE_URL/plugins/native-adapter/declarative-evolution/activation-decisions" \
   "{\"taskId\":\"$TASK_ID\",\"decision\":\"approve_activation_review\",\"confirm\":true}" > "$ACTIVATION_TASK_FILE"
@@ -454,7 +503,8 @@ if (
   || execution?.evaluation?.candidateType !== "lambda"
   || execution?.evaluation?.toplevelEvaluated !== true
   || execution?.build?.status !== "passed"
-  || execution?.build?.mode !== "nix-build-dry-run"
+  || execution?.build?.mode !== "nix-build-no-link"
+  || execution?.build?.outputPath !== execution?.evaluation?.toplevelPath
   || execution?.governance?.writesManagedConfig !== false
   || execution?.governance?.writesOpenClawStaging !== true
   || execution?.governance?.switchesGeneration !== false
@@ -478,7 +528,16 @@ if (
   || healthGate.result?.assessment?.eligibleForActivationReview !== true
   || healthGate.result?.assessment?.hostHealth !== "not_assessed"
   || healthGate.result?.evaluatedClosure?.path !== execution.evaluation.toplevelPath
+  || !/^\/nix\/store\/.+\.drv$/.test(healthGate.result?.evaluatedClosure?.derivationPath ?? "")
+  || !/^sha256-[A-Za-z0-9+/=]+$/.test(healthGate.result?.evaluatedClosure?.narHash ?? "")
+  || healthGate.result?.closureIntegrity?.status !== "verified"
+  || healthGate.result?.closureIntegrity?.receipt?.sourceStagingTaskId !== taskId
+  || healthGate.result?.closureIntegrity?.receipt?.approvalId !== approved.approval?.id
+  || !/^[a-f0-9]{64}$/.test(healthGate.result?.closureIntegrity?.receipt?.receiptHash ?? "")
   || healthGate.result?.governance?.readsStagingFile !== true
+  || healthGate.result?.governance?.readsCurrentApprovalRecord !== true
+  || healthGate.result?.governance?.requeriesStoreOutput !== true
+  || healthGate.result?.governance?.emitsImmutableClosureReceipt !== true
   || healthGate.result?.governance?.writesManagedConfig !== false
   || healthGate.result?.governance?.switchesGeneration !== false
   || healthGate.result?.governance?.executesRollback !== false
@@ -505,12 +564,19 @@ const activationChecks = {
     && activationReview.hostHealth?.status === "healthy"
     && activationReview.binding?.candidateHash === candidateHash
     && activationReview.binding?.sourceStagingTaskId === taskId
+    && activationReview.binding?.derivationPath === healthGate.result.evaluatedClosure.derivationPath
+    && activationReview.binding?.narHash === healthGate.result.evaluatedClosure.narHash
+    && activationReview.binding?.closureIntegrityReceiptHash === healthGate.result.closureIntegrity.receipt.receiptHash
+    && activationReview.binding?.approvalRecordHash === healthGate.result.closureIntegrity.receipt.approvalRecordHash
     && /^[a-f0-9]{64}$/.test(activationReview.binding?.hostHealthHash ?? ""),
   taskDraft: activationTaskResponse.ok
     && activationTaskResponse.task?.id === activationTaskId
     && activationTaskResponse.approval?.id === activationApprovalId
     && activationBinding?.candidateHash === candidateHash
     && activationBinding?.sourceStagingTaskId === taskId
+    && activationBinding?.closureIntegrityReceiptHash === activationReview.binding?.closureIntegrityReceiptHash
+    && activationBinding?.derivationPath === activationReview.binding?.derivationPath
+    && activationBinding?.narHash === activationReview.binding?.narHash
     && activationBinding?.hostHealthHash === activationReview.binding?.hostHealthHash,
   approval: activationApproved.ok
     && activationApproved.approval?.id === activationApprovalId
@@ -527,6 +593,9 @@ const activationChecks = {
     && activationExecution?.status === "passed"
     && activationExecution?.activation === "approved_for_future_activation"
     && activationExecution?.candidateHash === candidateHash
+    && activationExecution?.closureIntegrityReceiptHash === activationReview.binding?.closureIntegrityReceiptHash
+    && activationExecution?.derivationPath === activationReview.binding?.derivationPath
+    && activationExecution?.narHash === activationReview.binding?.narHash
     && activationExecution?.hostHealthHash === activationReview.binding?.hostHealthHash
     && activationExecution?.hostHealthStatus === "healthy"
     && activationTask?.nativeDeclarativeEvolution?.governance?.hostHealthRevalidated === true,
@@ -536,6 +605,7 @@ const activationChecks = {
     && activationExecution?.governance?.executesRollback === false
     && activationExecution?.governance?.automaticActivation === false
     && activationStep.execution?.verification?.checks?.includes("host_health_hash_bound")
+    && activationStep.execution?.verification?.checks?.includes("closure_integrity_receipt_bound")
     && activationStep.execution?.verification?.checks?.includes("activation_not_executed"),
   confirmationGate: activationTaskBlocked.ok
     && activationTaskBlocked.invoked === true

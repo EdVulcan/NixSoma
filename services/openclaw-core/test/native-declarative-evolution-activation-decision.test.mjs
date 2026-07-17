@@ -35,6 +35,15 @@ function createHarness({ health = null } = {}) {
     },
     evaluatedClosure: {
       path: "/nix/store/abc123-openclaw-system",
+      derivationPath: "/nix/store/def456-openclaw-system.drv",
+      narHash: "sha256-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa=",
+    },
+    closureIntegrity: {
+      status: "verified",
+      receipt: {
+        receiptHash: "d".repeat(64),
+        approvalRecordHash: "e".repeat(64),
+      },
     },
     failedChecks: [],
     assessment: {
@@ -107,6 +116,9 @@ test("activation decision review binds candidate, closure, and healthy host fing
   assert.equal(review.healthGate.candidateHash, "a".repeat(64));
   assert.equal(review.binding.stagedFileHash, "b".repeat(64));
   assert.equal(review.binding.evaluatedClosurePath, "/nix/store/abc123-openclaw-system");
+  assert.equal(review.binding.derivationPath, "/nix/store/def456-openclaw-system.drv");
+  assert.equal(review.binding.narHash, "sha256-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa=");
+  assert.equal(review.binding.closureIntegrityReceiptHash, "d".repeat(64));
   assert.match(review.binding.hostHealthHash, /^[a-f0-9]{64}$/);
   assert.deepEqual(calls.map((call) => call.name), ["healthGate", "health"]);
 });

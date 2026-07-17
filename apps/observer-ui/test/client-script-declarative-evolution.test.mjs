@@ -94,6 +94,7 @@ test("Observer renders a compact host-health-bound activation review", () => {
   assert.equal(context.declarativeEvolutionActivationReady.textContent, "true");
   assert.match(context.declarativeEvolutionReviewJson.textContent, /staging-task-1/u);
   assert.match(context.declarativeEvolutionReviewJson.textContent, /hostHealthHash/u);
+  assert.match(context.declarativeEvolutionReviewJson.textContent, /closureIntegrityReceiptHash/u);
   assert.doesNotMatch(context.declarativeEvolutionReviewJson.textContent, /services\.openclaw\.components/u);
 });
 

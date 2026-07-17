@@ -7,6 +7,8 @@ FIXTURE_DIR="$REPO_ROOT/.artifacts/observer-openclaw-native-engineering-lsp-evid
 WORKSPACE_DIR="$FIXTURE_DIR/openclaw"
 
 source "$SCRIPT_DIR/openclaw-engineering-read-search-fixture.sh"
+# Protected Core mutations/read models require the same operator identity as Observer.
+source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
 
 export OPENCLAW_CORE_PORT="${OPENCLAW_CORE_PORT:-10260}"
 export OPENCLAW_EVENT_HUB_PORT="${OPENCLAW_EVENT_HUB_PORT:-10261}"
@@ -85,21 +87,17 @@ curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/evidence?
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/lifecycle-draft?language=typescript&lifecycleAction=start&limit=200" > "$DRAFT_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/source-transfer-proposal?language=typescript&relativePath=src/app.ts&maxPreviewChars=1200" > "$SOURCE_TRANSFER_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-lsp/symbol-request-proposal?language=typescript&action=definition&relativePath=src/app.ts&line=2&character=14" > "$SYMBOL_REQUEST_FILE"
-curl --silent --fail -X POST "$CORE_URL/capabilities/invoke" \
-  -H 'content-type: application/json' \
-  --data '{"capabilityId":"sense.openclaw.engineering_tool.lsp_evidence","intent":"engineering.lsp.evidence","params":{"action":"check","language":"typescript","limit":200}}' \
+post_json "$CORE_URL/capabilities/invoke" \
+  '{"capabilityId":"sense.openclaw.engineering_tool.lsp_evidence","intent":"engineering.lsp.evidence","params":{"action":"check","language":"typescript","limit":200}}' \
   > "$CAPABILITY_EVIDENCE_FILE"
-curl --silent --fail -X POST "$CORE_URL/capabilities/invoke" \
-  -H 'content-type: application/json' \
-  --data '{"capabilityId":"plan.openclaw.engineering_tool.lsp_lifecycle","intent":"engineering.lsp.lifecycle","params":{"language":"typescript","lifecycleAction":"start","limit":200}}' \
+post_json "$CORE_URL/capabilities/invoke" \
+  '{"capabilityId":"plan.openclaw.engineering_tool.lsp_lifecycle","intent":"engineering.lsp.lifecycle","params":{"language":"typescript","lifecycleAction":"start","limit":200}}' \
   > "$CAPABILITY_LIFECYCLE_FILE"
-curl --silent --fail -X POST "$CORE_URL/capabilities/invoke" \
-  -H 'content-type: application/json' \
-  --data '{"capabilityId":"plan.openclaw.engineering_tool.lsp_source_transfer","intent":"engineering.lsp.source_transfer","params":{"language":"typescript","relativePath":"src/app.ts","maxPreviewChars":1200}}' \
+post_json "$CORE_URL/capabilities/invoke" \
+  '{"capabilityId":"plan.openclaw.engineering_tool.lsp_source_transfer","intent":"engineering.lsp.source_transfer","params":{"language":"typescript","relativePath":"src/app.ts","maxPreviewChars":1200}}' \
   > "$CAPABILITY_SOURCE_TRANSFER_FILE"
-curl --silent --fail -X POST "$CORE_URL/capabilities/invoke" \
-  -H 'content-type: application/json' \
-  --data '{"capabilityId":"plan.openclaw.engineering_tool.lsp_symbol_request","intent":"engineering.lsp.symbol_request","params":{"language":"typescript","action":"definition","relativePath":"src/app.ts","line":2,"character":14}}' \
+post_json "$CORE_URL/capabilities/invoke" \
+  '{"capabilityId":"plan.openclaw.engineering_tool.lsp_symbol_request","intent":"engineering.lsp.symbol_request","params":{"language":"typescript","action":"definition","relativePath":"src/app.ts","line":2,"character":14}}' \
   > "$CAPABILITY_SYMBOL_REQUEST_FILE"
 
 node - <<'EOF' "$HTML_FILE" "$CLIENT_FILE" "$EVIDENCE_FILE" "$DRAFT_FILE" "$SOURCE_TRANSFER_FILE" "$SYMBOL_REQUEST_FILE" "$CAPABILITY_EVIDENCE_FILE" "$CAPABILITY_LIFECYCLE_FILE" "$CAPABILITY_SOURCE_TRANSFER_FILE" "$CAPABILITY_SYMBOL_REQUEST_FILE"

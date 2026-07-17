@@ -232,6 +232,10 @@ test("capability runtime exposes the read-only declarative evolution health gate
           candidate: { candidateHash },
           staging: { fileHash: candidateHash, fileBytes: 64 },
           evaluatedClosure: { path: "/nix/store/abc123-openclaw-system", status: "bound" },
+          closureIntegrity: {
+            status: "verified",
+            receipt: { receiptHash: "d".repeat(64) },
+          },
           failedChecks: [],
           assessment: {
             status: "eligible_for_activation_review",
@@ -240,6 +244,9 @@ test("capability runtime exposes the read-only declarative evolution health gate
           },
           governance: {
             readsStagingFile: true,
+            readsCurrentApprovalRecord: true,
+            requeriesStoreOutput: true,
+            emitsImmutableClosureReceipt: true,
             writesManagedConfig: false,
             switchesGeneration: false,
             executesRollback: false,
@@ -280,6 +287,8 @@ test("capability runtime exposes the read-only declarative evolution health gate
   assert.equal(result.response.summary.assessment, "eligible_for_activation_review");
   assert.equal(result.response.summary.eligibleForActivationReview, true);
   assert.equal(result.response.summary.evaluatedToplevelPath, "/nix/store/abc123-openclaw-system");
+  assert.equal(result.response.summary.closureIntegrityVerified, true);
+  assert.equal(result.response.summary.closureIntegrityReceiptHash, "d".repeat(64));
   assert.equal(result.response.summary.hostHealth, "not_assessed");
   assert.equal(result.response.summary.noManagedConfigWrite, true);
   assert.equal(result.response.summary.noGenerationSwitch, true);

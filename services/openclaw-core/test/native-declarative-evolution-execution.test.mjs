@@ -39,7 +39,7 @@ test("declarative evolution execution stages only the approved candidate hash an
             }),
           };
         }
-        return { status: "passed", stdout: "" };
+        return { status: "passed", stdout: "/nix/store/abc123-openclaw-system\n" };
       },
     });
 
@@ -51,6 +51,7 @@ test("declarative evolution execution stages only the approved candidate hash an
     assert.equal(result.evaluation.status, "passed");
     assert.equal(result.evaluation.toplevelPath, "/nix/store/abc123-openclaw-system");
     assert.equal(result.build.mode, "nix-build-dry-run");
+    assert.equal(result.build.outputPath, "/nix/store/abc123-openclaw-system");
     assert.equal(result.governance.writesManagedConfig, false);
     assert.equal(result.governance.switchesGeneration, false);
     assert.equal(result.governance.executesRollback, false);

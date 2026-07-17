@@ -13,6 +13,10 @@ import {
 const candidateHash = "a".repeat(64);
 const stagedFileHash = "b".repeat(64);
 const closurePath = "/nix/store/abc123-openclaw-system";
+const derivationPath = "/nix/store/def456-openclaw-system.drv";
+const narHash = "sha256-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa=";
+const closureIntegrityReceiptHash = "d".repeat(64);
+const approvalRecordHash = "e".repeat(64);
 const hostHealthHash = "c".repeat(64);
 
 function createHarness() {
@@ -35,6 +39,10 @@ function createHarness() {
         candidateHash,
         stagedFileHash,
         evaluatedClosurePath: closurePath,
+        derivationPath,
+        narHash,
+        closureIntegrityReceiptHash,
+        approvalRecordHash,
         hostHealthHash,
       },
     },
@@ -52,6 +60,10 @@ function createHarness() {
       candidateHash,
       stagedFileHash,
       evaluatedClosurePath: closurePath,
+      derivationPath,
+      narHash,
+      closureIntegrityReceiptHash,
+      approvalRecordHash,
       hostHealthHash,
     },
   };

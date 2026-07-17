@@ -120,6 +120,11 @@ function compactHealthGate(gate) {
     stagedFileHash: gate?.staging?.fileHash ?? null,
     stagedFileBytes: gate?.staging?.fileBytes ?? null,
     evaluatedClosurePath: gate?.evaluatedClosure?.path ?? null,
+    derivationPath: gate?.evaluatedClosure?.derivationPath ?? null,
+    narHash: gate?.evaluatedClosure?.narHash ?? null,
+    closureIntegrityReceiptHash: gate?.closureIntegrity?.receipt?.receiptHash ?? null,
+    approvalRecordHash: gate?.closureIntegrity?.receipt?.approvalRecordHash ?? null,
+    closureIntegrityStatus: gate?.closureIntegrity?.status ?? null,
     failedCheckCount: Array.isArray(gate?.failedChecks) ? gate.failedChecks.length : null,
   };
 }
@@ -201,6 +206,10 @@ export function createNativeDeclarativeEvolutionActivationDecisionBuilders({
       candidateHash: healthGate.candidate?.candidateHash ?? null,
       stagedFileHash: healthGate.staging?.fileHash ?? null,
       evaluatedClosurePath: healthGate.evaluatedClosure?.path ?? null,
+      derivationPath: healthGate.evaluatedClosure?.derivationPath ?? null,
+      narHash: healthGate.evaluatedClosure?.narHash ?? null,
+      closureIntegrityReceiptHash: healthGate.closureIntegrity?.receipt?.receiptHash ?? null,
+      approvalRecordHash: healthGate.closureIntegrity?.receipt?.approvalRecordHash ?? null,
       hostHealthHash: hostHealth.hostHealthHash,
     };
     const activationReady = hostHealth.status === "healthy";

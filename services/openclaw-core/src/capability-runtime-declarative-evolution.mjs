@@ -175,6 +175,12 @@ export function createDeclarativeEvolutionCapabilityHandlers({
         candidateHash: result?.candidate?.candidateHash ?? null,
         stagedFileHash: result?.staging?.fileHash ?? null,
         evaluatedToplevelPath: result?.evaluatedClosure?.path ?? null,
+        derivationPath: result?.evaluatedClosure?.derivationPath ?? null,
+        narHash: result?.evaluatedClosure?.narHash ?? null,
+        closureIntegrityReceiptHash: result?.closureIntegrity?.receipt?.receiptHash ?? null,
+        currentApprovalRecordBound: result?.checks?.currentApprovalTaskBound === true
+          && result?.checks?.currentApprovalApproved === true,
+        closureIntegrityVerified: result?.closureIntegrity?.status === "verified",
         assessment: result?.assessment?.status ?? null,
         eligibleForActivationReview: result?.assessment?.eligibleForActivationReview === true,
         failedCheckCount: Array.isArray(result?.failedChecks) ? result.failedChecks.length : null,

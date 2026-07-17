@@ -9,7 +9,7 @@ import { resolveNativeDeclarativeEvolutionStagingDirectory } from "./native-decl
 
 const execFileAsync = promisify(execFile);
 const MAX_COMMAND_OUTPUT = 512;
-const DEFAULT_TIMEOUT_MS = 120000;
+const DEFAULT_TIMEOUT_MS = 600000;
 
 function assertCandidateHash(candidateHash) {
   if (!/^[a-f0-9]{64}$/.test(candidateHash)) {
@@ -72,7 +72,9 @@ function buildNixCommandArgs(command, expression, { buildMode }) {
     "--impure",
   ];
   if (command === "build") {
+    args.push("--option", "max-jobs", "1", "--option", "cores", "1");
     args.push("--no-link");
+    args.push("--print-out-paths");
     if (buildMode === "dry-run") {
       args.push("--dry-run");
     }
@@ -256,6 +258,10 @@ export function createNativeDeclarativeEvolutionExecution({
     const build = {
       status: buildResult?.status ?? "failed",
       mode: safeBuildMode === "dry-run" ? "nix-build-dry-run" : "nix-build-no-link",
+      outputPath: String(buildResult?.stdout ?? "")
+        .split(/\r?\n/u)
+        .map((line) => line.trim())
+        .find((line) => /^\/nix\/store\/[a-z0-9][a-z0-9+._?=-]*$/u.test(line)) ?? null,
       reason: buildResult?.reason ?? null,
       exitCode: buildResult?.exitCode ?? null,
     };

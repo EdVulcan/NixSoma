@@ -37,6 +37,10 @@ function compactDecisionTask(task) {
     candidateHash: execution.candidateHash ?? null,
     stagedFileHash: execution.stagedFileHash ?? null,
     evaluatedClosurePath: execution.evaluatedClosurePath ?? null,
+    derivationPath: execution.derivationPath ?? null,
+    narHash: execution.narHash ?? null,
+    closureIntegrityReceiptHash: execution.closureIntegrityReceiptHash ?? null,
+    approvalRecordHash: execution.approvalRecordHash ?? null,
     hostHealthHash: execution.hostHealthHash ?? null,
   };
 }
@@ -51,6 +55,10 @@ function activationBinding({ decisionTask, stagingTask, review, activationDecisi
     stagedFileHash: execution.stagedFileHash,
     stagingPath: stagingTask.nativeDeclarativeEvolution?.execution?.staging?.path ?? null,
     evaluatedClosurePath: execution.evaluatedClosurePath,
+    derivationPath: execution.derivationPath ?? null,
+    narHash: execution.narHash ?? null,
+    closureIntegrityReceiptHash: execution.closureIntegrityReceiptHash ?? null,
+    approvalRecordHash: execution.approvalRecordHash ?? null,
     hostHealthHash: execution.hostHealthHash,
     targetPath: review.candidate?.targetPath ?? HOSTD_ACTIVATION_TARGET_PATH,
     expiresAt,
@@ -66,6 +74,10 @@ function bindingMatchesDecision({ decisionTask, stagingTask, review, activationD
     && binding.candidateHash === observed.candidateHash
     && binding.stagedFileHash === observed.stagedFileHash
     && binding.evaluatedClosurePath === observed.evaluatedClosurePath
+    && binding.derivationPath === observed.derivationPath
+    && binding.narHash === observed.narHash
+    && binding.closureIntegrityReceiptHash === observed.closureIntegrityReceiptHash
+    && binding.approvalRecordHash === observed.approvalRecordHash
     && binding.hostHealthHash === observed.hostHealthHash
     && execution.activation === "approved_for_future_activation"
     && binding.targetPath === HOSTD_ACTIVATION_TARGET_PATH
@@ -79,6 +91,8 @@ function governance() {
     candidateHashBound: true,
     stagedFileHashBound: true,
     evaluatedClosureBound: true,
+    closureIntegrityReceiptBound: true,
+    currentApprovalRecordBound: true,
     preActivationHostHealthBound: true,
     activationOwner: "openclaw-hostd",
     healthOwner: "openclaw-system-sense",

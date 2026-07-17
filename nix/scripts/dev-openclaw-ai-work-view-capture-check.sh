@@ -28,6 +28,7 @@ export OPENCLAW_BROWSER_ENGINE_MODE="firefox"
 export OPENCLAW_BROWSER_ALLOW_LOCAL_FIXTURES="1"
 export OPENCLAW_BROWSER_PROFILE_DIR="${OPENCLAW_BROWSER_PROFILE_DIR:-$REPO_ROOT/.artifacts/openclaw-browser-profile-ai-work-view-capture-check}"
 OPENCLAW_DEV_RUN_ID="${OPENCLAW_DEV_RUN_ID:-ports-$OPENCLAW_CORE_PORT}"
+export OPENCLAW_SESSION_MANAGER_STATE_FILE="${OPENCLAW_SESSION_MANAGER_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-session-manager-ai-work-view-capture-$OPENCLAW_CORE_PORT.json}"
 OPENCLAW_BROWSER_RUNTIME_OPERATOR_TOKEN_FILE="${OPENCLAW_BROWSER_RUNTIME_OPERATOR_TOKEN_FILE:-$REPO_ROOT/.artifacts/openclaw-browser-runtime-credentials-$OPENCLAW_DEV_RUN_ID/openclaw-operator}"
 
 BROWSER_URL="http://127.0.0.1:$OPENCLAW_BROWSER_RUNTIME_PORT"
@@ -59,7 +60,9 @@ browser_post_json() {
 }
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
-rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_BROWSER_RUNTIME_STATE_FILE" "$OPENCLAW_BROWSER_RUNTIME_STATE_FILE.tmp-"* "$OPENCLAW_EVENT_LOG_FILE"
+rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" \
+  "$OPENCLAW_SESSION_MANAGER_STATE_FILE" "$OPENCLAW_SESSION_MANAGER_STATE_FILE.tmp" \
+  "$OPENCLAW_BROWSER_RUNTIME_STATE_FILE" "$OPENCLAW_BROWSER_RUNTIME_STATE_FILE.tmp-"* "$OPENCLAW_EVENT_LOG_FILE"
 rm -rf "$OPENCLAW_BROWSER_PROFILE_DIR"
 
 cleanup() {
@@ -76,6 +79,7 @@ cleanup() {
     return 1
   fi
   rm -f "$OPENCLAW_BROWSER_RUNTIME_STATE_FILE" "$OPENCLAW_BROWSER_RUNTIME_STATE_FILE.tmp-"*
+  rm -f "$OPENCLAW_SESSION_MANAGER_STATE_FILE" "$OPENCLAW_SESSION_MANAGER_STATE_FILE.tmp"
   rm -f "$OPENCLAW_EVENT_LOG_FILE"
   rm -f "${SCREEN_EVENTS_FILE:-}"
   rm -f "${AUTONOMOUS_SEMANTIC_FILE:-}"
@@ -136,87 +140,35 @@ node -e 'const data=JSON.parse(process.argv[1]); const targets=data.readback?.ex
 
 semantic_capture="$(browser_curl --silent --fail "$BROWSER_URL/browser/capture")"
 semantic_click_body="$(node -e 'const data=JSON.parse(process.argv[1]); const inventory=data.capture?.semanticTargets??{}; const target=inventory.items?.find((item)=>item.name==="Inspect target"); if(!target){throw new Error(`semantic click target missing: ${JSON.stringify(inventory)}`);} process.stdout.write(JSON.stringify({semanticTarget:{registry:"openclaw-browser-semantic-target-reference-v0",operation:"click",targetId:target.targetId,inventorySha256:inventory.inventorySha256,frame:{sha256:inventory.frame.sha256,sequence:inventory.frame.sequence}}}));' "$semantic_capture")"
-semantic_click="$(post_json "$SCREEN_ACT_URL/act/mouse/click" "$semantic_click_body")"
-node - <<'EOF' "$semantic_click" "$SEMANTIC_CLICK_URL"
-const data = JSON.parse(process.argv[2]);
-const expectedUrl = process.argv[3];
-const mediation = data.action?.mediation ?? {};
-const effect = mediation.effect ?? {};
-const grounding = mediation.visualGrounding ?? {};
-if (data.action?.result !== "executed-browser-runtime"
-  || mediation.accepted !== true
-  || mediation.transport !== "trusted-sidecar-ipc"
-  || effect.registry !== "openclaw-browser-semantic-target-action-v0"
-  || effect.operation !== "click"
-  || effect.status !== "executed"
-  || !effect.targetId
-  || !effect.inventorySha256
-  || effect.frame?.sequence !== grounding.before?.sequence
-  || effect.inputValuesExposed !== false
-  || effect.selectorsExposed !== false
-  || effect.arbitraryPageScript !== false
-  || effect.persisted !== false
-  || grounding.status !== "grounded"
-  || grounding.after?.pageUrl !== expectedUrl
-  || grounding.after?.sequence <= grounding.before?.sequence
-  || grounding.after?.sha256 === grounding.before?.sha256
-  || JSON.stringify(data).includes("fixture-private-value")
-  || JSON.stringify(data).includes("fixture-password-secret")
-  || JSON.stringify(data).includes('"selector":')) {
-  throw new Error(`semantic target click was not governed and frame-grounded: ${JSON.stringify(data)}`);
-}
-console.log(JSON.stringify({
-  semanticTargetAction: {
-    targetId: effect.targetId,
-    inventorySha256: effect.inventorySha256,
-    beforeSequence: grounding.before.sequence,
-    afterSequence: grounding.after.sequence,
-    observedUrl: grounding.after.pageUrl,
-    selectorsExposed: effect.selectorsExposed,
-  },
-}, null, 2));
-EOF
+direct_semantic_click="$(post_json "$SCREEN_ACT_URL/act/mouse/click" "$semantic_click_body")"
+node -e 'const data=JSON.parse(process.argv[1]); if(data.code!=="EXECUTION_GRANT_REQUIRED"){throw new Error(`direct screen-act semantic request was not denied without a Core grant: ${JSON.stringify(data)}`);}' "$direct_semantic_click"
 
-stale_semantic_click="$(post_json "$SCREEN_ACT_URL/act/mouse/click" "$semantic_click_body")"
-node -e 'const data=JSON.parse(process.argv[1]); const mediation=data.action?.mediation??{}; if(data.action?.result!=="blocked-or-degraded" || mediation.accepted!==false || mediation.reason!=="semantic_target_capture_mismatch" || mediation.visualGrounding!=null){throw new Error(`stale semantic target reference was not rejected before dispatch: ${JSON.stringify(data)}`);}' "$stale_semantic_click"
-
-grounded_action="$(post_json "$SCREEN_ACT_URL/act/browser/new-tab" "{\"url\":\"$GROUNDING_URL\"}")"
-node - <<'EOF' "$grounded_action" "$GROUNDING_URL"
-const data = JSON.parse(process.argv[2]);
-const expectedUrl = process.argv[3];
+grounded_action_body="$(node -e 'process.stdout.write(JSON.stringify({capabilityId:"act.browser.open",operation:"browser.new_tab",intent:"browser.new_tab",params:{url:process.argv[1]}}));' "$GROUNDING_URL")"
+grounded_action_envelope="$(post_json "$CORE_URL/capabilities/invoke" "$grounded_action_body")"
+node - <<'EOF' "$grounded_action_envelope" "$GROUNDING_URL"
+const envelope = JSON.parse(process.argv[2]);
+const data = envelope.result ?? {};
 const mediation = data.action?.mediation ?? {};
 const grounding = mediation.visualGrounding ?? {};
-if (data.action?.result !== "executed-browser-runtime"
+if (envelope.invoked !== true
+  || data.action?.result !== "executed-browser-runtime"
   || mediation.accepted !== true
   || mediation.transport !== "trusted-sidecar-ipc"
-  || grounding.registry !== "openclaw-trusted-work-view-visual-action-grounding-v0"
   || grounding.required !== true
   || grounding.status !== "grounded"
-  || mediation.effect?.url !== expectedUrl
   || grounding.sequenceAdvanced !== true
-  || grounding.before?.fresh !== true
-  || grounding.after?.fresh !== true
-  || grounding.after?.sequence <= grounding.before?.sequence
-  || grounding.after?.sha256 === grounding.before?.sha256
-  || grounding.after?.pageUrl !== expectedUrl
-  || grounding.before?.sourceScope !== "ai_owned_active_page_only"
-  || grounding.after?.sourceScope !== "ai_owned_active_page_only"
-  || grounding.before?.dataExposed !== false
-  || grounding.after?.dataExposed !== false
   || grounding.imageDataRetained !== false
-  || grounding.desktopWideCapture !== false
   || grounding.persisted !== false
+  || "before" in grounding
+  || "after" in grounding
   || JSON.stringify(grounding).includes("data:image/")) {
-  throw new Error(`real browser action was not grounded in compact pre/post frame evidence: ${JSON.stringify(data)}`);
+  throw new Error(`Core-issued browser action was not grounded in compact pre/post frame evidence: ${JSON.stringify(envelope)}`);
 }
 console.log(JSON.stringify({
   visualActionGrounding: {
     status: grounding.status,
     transport: mediation.transport,
-    beforeSequence: grounding.before.sequence,
-    afterSequence: grounding.after.sequence,
-    beforeSha256: grounding.before.sha256,
-    afterSha256: grounding.after.sha256,
+    sequenceAdvanced: grounding.sequenceAdvanced,
     imageDataRetained: grounding.imageDataRetained,
   },
 }, null, 2));

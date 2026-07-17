@@ -1311,12 +1311,14 @@ The approval-bound staging loop is now also complete through
 `act.openclaw.declarative_evolution.staging_task`. After explicit confirmation
 and approval, Core rebuilds the candidate from structured changes, requires the
 same SHA-256 hash, writes the exact body to an OpenClaw-owned staging directory,
-and runs read-only `nix-instantiate`, `nix eval`, and no-link `nix build` checks.
-Task, approval, state, and event evidence retain only compact hash/path,
-validation, evaluation, build, and governance metadata; the candidate body is
-not persisted in the public evidence surfaces. The Core and Observer milestone
-pair proves the full path with `nix build --dry-run` to keep daily validation
-bounded.
+and runs read-only `nix-instantiate`, `nix eval`, and no-link `nix build` checks
+when the explicit materialization lane is selected. Task, approval, state, and
+event evidence retain only compact hash/path, validation, evaluation, build,
+and governance metadata; the candidate body is not persisted in the public
+evidence surfaces. The Core and Observer milestone pair proves the default
+dry-run path with no materialization to keep daily validation bounded; the
+explicit no-link lane is reserved for a resource-bounded positive closure
+receipt proof.
 
 This slice still does not write `/etc/nixos`, run `nixos-rebuild`, switch a
 generation, execute rollback, read credentials, call a provider, or use network
@@ -1340,7 +1342,8 @@ through `act.openclaw.declarative_evolution.activation_decision`,
 and `POST /plugins/native-adapter/declarative-evolution/activation-decisions`.
 Core reads `openclaw-system-sense:/system/health`, requires a healthy host for
 an approval of future activation, and binds the staging task, candidate hash,
-staged-file hash, evaluated closure, and host-health hash. The approved task
+staged-file hash, closure-integrity receipt, evaluated output/deriver/NAR
+metadata, and host-health hash. The approved task
 revalidates every binding before recording `approved_for_future_activation` or
 `rejected`; a changed health fingerprint fails closed. The Core and Observer
 staging milestone pair proves the served panel, confirmation gate, real
@@ -1370,10 +1373,19 @@ task or approval and performs no hostd call, managed-config write, generation
 switch, or rollback. This is a controlled activation contract, not evidence
 that a host generation has already been switched.
 
-The next real slice is closure-integrity receipt verification: re-query the real
-store output, bind derivation/output or NAR hash to the current approval and
-execution task, and prove an independent health oracle before any isolated
-physical activation check. Do not add another generic readiness wrapper.
+The closure-integrity receipt contract and fail-closed daily lane are now
+implemented: when a real output exists, every health-gate review re-queries it
+through `nix path-info`, reads the current staging approval record, and emits a
+tamper-evident receipt binding candidate and staged-file hashes to the output
+path, deriver, NAR hash, and approval fingerprint. Decision and controlled
+activation bindings carry and revalidate the receipt hash. The current host's
+explicit no-link materialization attempt timed out after 600 seconds while
+building 37 derivations, so the positive receipt remains an open proof gate;
+the daily lane reports that state as blocked and performs no activation. The
+next real slice is one cached/resource-bounded materialization proof, followed
+by an independent health oracle and separate activation/health/rollback
+authorities. Physical activation remains disabled by default; do not add
+another generic readiness wrapper.
 
 ## Operator Identity And Mutation Boundary Checkpoint
 

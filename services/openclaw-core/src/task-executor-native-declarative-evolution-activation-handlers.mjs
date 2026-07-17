@@ -15,6 +15,10 @@ function expectedBinding(task) {
     candidateHash: decision.candidateHash ?? null,
     stagedFileHash: decision.stagedFileHash ?? null,
     evaluatedClosurePath: decision.evaluatedClosurePath ?? null,
+    derivationPath: decision.derivationPath ?? null,
+    narHash: decision.narHash ?? null,
+    closureIntegrityReceiptHash: decision.closureIntegrityReceiptHash ?? null,
+    approvalRecordHash: decision.approvalRecordHash ?? null,
     hostHealthHash: decision.hostHealthHash ?? null,
     decision: decision.decision ?? null,
   };
@@ -201,6 +205,10 @@ export function createNativeDeclarativeEvolutionActivationDecisionTaskHandlers({
           candidateHash: expected.candidateHash,
           stagedFileHash: expected.stagedFileHash,
           evaluatedClosurePath: expected.evaluatedClosurePath,
+          derivationPath: expected.derivationPath,
+          narHash: expected.narHash,
+          closureIntegrityReceiptHash: expected.closureIntegrityReceiptHash,
+          approvalRecordHash: expected.approvalRecordHash,
           hostHealthHash: expected.hostHealthHash,
         },
         observedBinding: {
@@ -244,6 +252,10 @@ export function createNativeDeclarativeEvolutionActivationDecisionTaskHandlers({
       candidateHash: expected.candidateHash,
       stagedFileHash: expected.stagedFileHash,
       evaluatedClosurePath: expected.evaluatedClosurePath,
+      derivationPath: expected.derivationPath,
+      narHash: expected.narHash,
+      closureIntegrityReceiptHash: expected.closureIntegrityReceiptHash,
+      approvalRecordHash: expected.approvalRecordHash,
       hostHealthHash: expected.hostHealthHash,
       hostHealthStatus: review.hostHealth?.status ?? null,
       governance: {
@@ -289,7 +301,7 @@ export function createNativeDeclarativeEvolutionActivationDecisionTaskHandlers({
       capabilityInvocations: [],
       verification: {
         ok: true,
-        checks: ["health_gate_bound", "candidate_hash_bound", "staged_file_hash_bound", "host_health_hash_bound", "activation_not_executed"],
+        checks: ["health_gate_bound", "candidate_hash_bound", "staged_file_hash_bound", "closure_integrity_receipt_bound", "host_health_hash_bound", "activation_not_executed"],
         failedChecks: [],
       },
       policy: policy.decision,

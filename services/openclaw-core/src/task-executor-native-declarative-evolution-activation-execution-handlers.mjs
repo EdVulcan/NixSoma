@@ -23,6 +23,10 @@ function expectedBinding(task) {
     stagedFileHash: binding.stagedFileHash ?? null,
     stagingPath: binding.stagingPath ?? null,
     evaluatedClosurePath: binding.evaluatedClosurePath ?? null,
+    derivationPath: binding.derivationPath ?? null,
+    narHash: binding.narHash ?? null,
+    closureIntegrityReceiptHash: binding.closureIntegrityReceiptHash ?? null,
+    approvalRecordHash: binding.approvalRecordHash ?? null,
     hostHealthHash: binding.hostHealthHash ?? null,
     targetPath: binding.targetPath ?? null,
     expiresAt: binding.expiresAt ?? null,
@@ -58,6 +62,10 @@ function reviewMatchesBinding(review, expected) {
     && review?.binding?.candidateHash === expected.candidateHash
     && review?.binding?.stagedFileHash === expected.stagedFileHash
     && review?.binding?.evaluatedClosurePath === expected.evaluatedClosurePath
+    && review?.binding?.derivationPath === expected.derivationPath
+    && review?.binding?.narHash === expected.narHash
+    && review?.binding?.closureIntegrityReceiptHash === expected.closureIntegrityReceiptHash
+    && review?.binding?.approvalRecordHash === expected.approvalRecordHash
     && review?.binding?.hostHealthHash === expected.hostHealthHash
     && review?.activationReady === true;
 }
@@ -361,7 +369,7 @@ export function createNativeDeclarativeEvolutionActivationTaskHandlers({
       capabilityInvocations: [],
       verification: {
         ok: true,
-        checks: ["decision_approved", "candidate_binding", "hostd_receipt", "generation_switched", "post_activation_health"],
+        checks: ["decision_approved", "candidate_binding", "closure_integrity_receipt_bound", "hostd_receipt", "generation_switched", "post_activation_health"],
         failedChecks: [],
       },
       policy: policy.decision,

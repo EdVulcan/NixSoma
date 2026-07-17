@@ -77,9 +77,11 @@ sense.openclaw.declarative_evolution.health_gate
 
 For a completed staging task, Core re-reads the exact OpenClaw-owned staging
 file, recomputes its hash and byte count, verifies the candidate/approval/
-execution bindings, and requires the evaluated `/nix/store/...` to remain
-bound to the staging execution record. A passing assessment is
-`eligible_for_activation_review`; host health remains `not_assessed`.
+execution bindings, reads the current approval record, and re-queries the
+evaluated `/nix/store/...` output through `nix path-info`. The gate requires the
+observed output path, deriver, NAR hash, staging bytes, and approval record to
+remain bound to a tamper-evident closure-integrity receipt. A passing assessment
+is `eligible_for_activation_review`; host health remains `not_assessed`.
 
 The explicit activation-decision boundary is complete through:
 
@@ -90,8 +92,8 @@ act.openclaw.declarative_evolution.activation_decision
 ```
 
 Core now reads the host health endpoint from `openclaw-system-sense`, binds the
-candidate hash, staged-file hash, evaluated closure, and host-health hash into
-one decision, and rejects approval creation when the host is not healthy. The
+candidate hash, staged-file hash, closure-integrity receipt, and host-health
+hash into one decision, and rejects approval creation when the host is not healthy. The
 approved task revalidates that binding before recording either
 `approved_for_future_activation` or `rejected`. It never writes managed
 configuration, switches a generation, runs `nixos-rebuild`, activates a
@@ -130,6 +132,7 @@ the historical binding shape remains readable for compatibility.
 services/openclaw-core/src/native-declarative-evolution-builders.mjs
 services/openclaw-core/src/capability-runtime-declarative-evolution.mjs
 services/openclaw-core/src/native-declarative-evolution-execution.mjs
+services/openclaw-core/src/native-declarative-evolution-closure-integrity.mjs
 services/openclaw-core/src/native-declarative-evolution-health-gate.mjs
 services/openclaw-core/src/native-declarative-evolution-paths.mjs
 services/openclaw-core/src/native-declarative-evolution-task-builders.mjs
@@ -140,6 +143,7 @@ services/openclaw-core/src/task-executor-native-declarative-evolution-activation
 services/openclaw-core/src/task-executor-native-declarative-evolution-activation-execution-handlers.mjs
 services/openclaw-core/test/native-declarative-evolution-builders.test.mjs
 services/openclaw-core/test/native-declarative-evolution-execution.test.mjs
+services/openclaw-core/test/native-declarative-evolution-closure-integrity.test.mjs
 services/openclaw-core/test/native-declarative-evolution-health-gate.test.mjs
 services/openclaw-core/test/native-declarative-evolution-task-builders.test.mjs
 services/openclaw-core/test/native-declarative-evolution-task-routes.test.mjs
@@ -165,23 +169,28 @@ services/openclaw-hostd/test/hostd-activation.test.mjs
 packages/shared-systemd/src/openclaw-hostd-activation.mjs
 ```
 
-The focused builder, execution, task-builder, route, capability-runtime, hostd,
-and executor tests pass. The Core and Observer staging checks pass with real
-services. Core proves generic approval binding, staging-file hash equality, real
-`nix-instantiate`, `nix eval`, read-only `nix build --dry-run`, health-gate
-closure binding, host-health binding, approval revalidation, and zero
-activation. Observer proves the served activation panel, capability registry,
-blocked confirmation and missing-task fail-closed paths, invocation history,
-and no candidate-text exposure. No managed config write, generation switch,
-activation, or rollback is performed.
+The focused builder, closure-query/receipt, execution, task-builder, route,
+capability-runtime, hostd, and executor tests pass. The default Core and
+Observer staging checks pass with real services. Core proves generic approval
+binding, staging-file hash equality, current approval-record lookup, real
+`nix-instantiate`, `nix eval`, and the fail-closed dry-run closure gate;
+`nix path-info` deriver/NAR binding and positive closure-integrity receipt
+validation are unit-covered and run only when a real no-link build output
+exists. On the current host, the explicit build lane attempted 37 derivations
+and about 956 MiB of closure materialization but timed out after 600 seconds
+before producing an output path. Observer proves the served activation panel,
+bounded closure status readback, capability registry, blocked confirmation and
+missing-task fail-closed paths, invocation history, and no candidate-text
+exposure. No managed config write, generation switch, activation, or rollback is
+performed.
 
 ## Next Real Slice
 
-The next mainline slice is closure-integrity receipt verification for the
-controlled Level 3 bridge, not another activation wrapper. Before enabling a
-physical mutation, Core must re-query the real `/nix/store` output, bind the
-derivation/output or NAR hash to the current candidate and approval, and retain
-an immutable execution receipt. An independent host-health oracle and separate
-activation/health/rollback authorities must then be proven in an isolated NixOS
-check. Until those proofs exist, managed-config installation, `nixos-rebuild`,
+The closure-integrity receipt contract and fail-closed daily lane are complete,
+but the positive real-output materialization gate remains open. The next
+mainline slice is to complete one cached or otherwise resource-bounded
+`nix build --no-link --print-out-paths` proof and record the resulting
+deriver/NAR receipt on NixOS. Only after that evidence exists should the project
+move to an independent host-health oracle and separate activation/health/rollback
+authorities. Until then, managed-config installation, `nixos-rebuild`,
 generation switching, and physical rollback remain deferred.

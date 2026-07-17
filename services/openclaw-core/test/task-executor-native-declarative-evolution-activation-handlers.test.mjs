@@ -16,6 +16,10 @@ function createTask(overrides = {}) {
     candidateHash: "a".repeat(64),
     stagedFileHash: "b".repeat(64),
     evaluatedClosurePath: "/nix/store/abc123-openclaw-system",
+    derivationPath: "/nix/store/def456-openclaw-system.drv",
+    narHash: "sha256-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa=",
+    closureIntegrityReceiptHash: "d".repeat(64),
+    approvalRecordHash: "e".repeat(64),
     hostHealthHash: "c".repeat(64),
     decision: "approve_activation_review",
   };
@@ -95,6 +99,10 @@ function healthyReview(task = "task-staging") {
       candidateHash: "a".repeat(64),
       stagedFileHash: "b".repeat(64),
       evaluatedClosurePath: "/nix/store/abc123-openclaw-system",
+      derivationPath: "/nix/store/def456-openclaw-system.drv",
+      narHash: "sha256-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa=",
+      closureIntegrityReceiptHash: "d".repeat(64),
+      approvalRecordHash: "e".repeat(64),
       hostHealthHash: "c".repeat(64),
     },
   };

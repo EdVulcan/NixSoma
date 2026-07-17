@@ -19,6 +19,10 @@ const candidateText = "{ services.openclaw.enable = true; }\n";
 const candidateHash = createHash("sha256").update(candidateText).digest("hex");
 const stagedFileHash = "b".repeat(64);
 const closurePath = "/nix/store/abc123-openclaw-system";
+const derivationPath = "/nix/store/def456-openclaw-system.drv";
+const narHash = "sha256-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa=";
+const closureIntegrityReceiptHash = "d".repeat(64);
+const approvalRecordHash = "e".repeat(64);
 const hostHealthHash = "c".repeat(64);
 
 function createReceipt(taskId) {
@@ -67,6 +71,10 @@ function createTask(overrides = {}) {
         stagedFileHash,
         stagingPath: `/var/lib/openclaw/managed-config-staging/openclaw-managed-${candidateHash}.nix`,
         evaluatedClosurePath: closurePath,
+        derivationPath,
+        narHash,
+        closureIntegrityReceiptHash,
+        approvalRecordHash,
         hostHealthHash,
         targetPath: HOSTD_ACTIVATION_TARGET_PATH,
         expiresAt: new Date(Date.now() + 60_000).toISOString(),
@@ -123,6 +131,10 @@ function createHarness({ task = createTask(), approved = true, changedHealth = f
       candidateHash,
       stagedFileHash,
       evaluatedClosurePath: closurePath,
+      derivationPath,
+      narHash,
+      closureIntegrityReceiptHash,
+      approvalRecordHash,
       hostHealthHash: changedHealth ? "d".repeat(64) : hostHealthHash,
     },
   };
