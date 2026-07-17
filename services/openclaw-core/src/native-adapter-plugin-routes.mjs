@@ -212,6 +212,12 @@ function acpxCodexBridgeWrapperTaskInput(body) {
   };
 }
 
+function declarativeEvolutionCandidateInput(body) {
+  return {
+    changes: body.changes,
+  };
+}
+
 const GET_ROUTES = new Map([
   [
     "/plugins/native-adapter/manifest-profile",
@@ -498,6 +504,13 @@ const POST_RECORD_ROUTES = new Map([
     {
       builder: "recordNativeAcpxCodexSession",
       input: acpxCodexSessionInput,
+    },
+  ],
+  [
+    "/plugins/native-adapter/declarative-evolution/candidate",
+    {
+      builder: "buildNativeDeclarativeEvolutionCandidate",
+      input: declarativeEvolutionCandidateInput,
     },
   ],
 ]);

@@ -23,6 +23,7 @@ import { createWorkspaceMutationCapabilityHandlers } from "./capability-runtime-
 import { createScreenObservationCapabilityHandlers } from "./capability-runtime-screen.mjs";
 import { createBrowserActionCapabilityHandlers } from "./capability-runtime-browser-actions.mjs";
 import { createScreenActionCapabilityHandlers } from "./capability-runtime-screen-actions.mjs";
+import { createDeclarativeEvolutionCapabilityHandlers } from "./capability-runtime-declarative-evolution.mjs";
 
 export function createCapabilityRuntime(deps) {
   const {
@@ -80,6 +81,7 @@ export function createCapabilityRuntime(deps) {
     buildOpenClawPluginManifestMap,
     buildOpenClawPluginCapabilityPlan,
     buildOpenClawPluginSearchWebAdapterContract,
+    buildNativeDeclarativeEvolutionCandidate,
   } = pluginReview;
   const engineeringReadSearchHandlers = createEngineeringReadSearchCapabilityHandlers({
     buildNativeEngineeringReadFile: pluginReview.buildNativeEngineeringReadFile,
@@ -181,6 +183,9 @@ export function createCapabilityRuntime(deps) {
   const screenActionHandlers = createScreenActionCapabilityHandlers({
     screenActUrl,
     postJson,
+  });
+  const declarativeEvolutionHandlers = createDeclarativeEvolutionCapabilityHandlers({
+    buildNativeDeclarativeEvolutionCandidate,
   });
 
   function baseCapabilities() {
@@ -471,6 +476,10 @@ export function createCapabilityRuntime(deps) {
     if (screenAction.handled) {
       return screenAction.result;
     }
+    const declarativeEvolution = await declarativeEvolutionHandlers.callBackend(capability, request);
+    if (declarativeEvolution.handled) {
+      return declarativeEvolution.result;
+    }
 
     if (capability.id === "sense.system.vitals") {
       return fetchJson(`${systemSenseUrl}/system/health`);
@@ -712,6 +721,10 @@ export function createCapabilityRuntime(deps) {
     const screenActionSummary = screenActionHandlers.summariseResult(capability, result);
     if (screenActionSummary) {
       return screenActionSummary;
+    }
+    const declarativeEvolutionSummary = declarativeEvolutionHandlers.summariseResult(capability, result);
+    if (declarativeEvolutionSummary) {
+      return declarativeEvolutionSummary;
     }
 
     if (capability.id === "sense.system.vitals") {
@@ -1070,6 +1083,13 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: screenActionValidationError },
+      };
+    }
+    const declarativeEvolutionValidationError = declarativeEvolutionHandlers.validateRequest(capability, request);
+    if (declarativeEvolutionValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: declarativeEvolutionValidationError },
       };
     }
 

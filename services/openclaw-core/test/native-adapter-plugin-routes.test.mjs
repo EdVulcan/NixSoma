@@ -580,6 +580,30 @@ test("native adapter ACPX/Codex bridge routes preserve query and persistence bod
   assert.deepEqual(taskResponse.body.approval, { id: "approval-acpx", status: "pending" });
 });
 
+test("native adapter declarative evolution route accepts only structured changes", async () => {
+  let observedInput = null;
+  const response = await invokeNativeAdapterPluginRoute({
+    buildNativeDeclarativeEvolutionCandidate: async (input) => {
+      observedInput = input;
+      return {
+        ok: true,
+        registry: "openclaw-native-declarative-evolution-candidate-v0",
+        candidateStatus: "validated",
+      };
+    },
+  }, "POST", "/plugins/native-adapter/declarative-evolution/candidate", {
+    changes: [{ operation: "enable_component", component: "systemSense" }],
+    candidateText: "must-not-be-forwarded",
+  });
+
+  assert.equal(response.handled, true);
+  assert.equal(response.statusCode, 201);
+  assert.deepEqual(observedInput, {
+    changes: [{ operation: "enable_component", component: "systemSense" }],
+  });
+  assert.equal(response.body.registry, "openclaw-native-declarative-evolution-candidate-v0");
+});
+
 test("native adapter plugin route reports misses without writing a response", async () => {
   const missed = await invokeNativeAdapterPluginRoute({}, "GET", "/workspaces");
 

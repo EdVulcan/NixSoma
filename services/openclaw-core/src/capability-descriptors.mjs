@@ -701,6 +701,22 @@ export function buildBaseCapabilities({
       description: "Create approval-gated native tasks for bounded OpenClaw workspace patch application with diff preview, using the existing filesystem write capability and ledger.",
     },
     {
+      id: "plan.openclaw.declarative_evolution.managed_config_candidate",
+      name: "Declarative Managed Nix Candidate",
+      kind: "planner",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/plugins/native-adapter/declarative-evolution/candidate`,
+      intents: [
+        "openclaw.declarative_evolution.managed_config_candidate",
+        "declarative.evolution.managed_config_candidate",
+        "nix.managed_config_candidate",
+      ],
+      domains: ["body_internal"],
+      risk: "medium",
+      governance: "audit_only",
+      description: "Generate and validate a bounded /etc/nixos/openclaw-managed.nix candidate without writing, switching generations, or rolling back the host.",
+    },
+    {
       id: "act.system.command.dry_run",
       name: "System Command Dry Run",
       kind: "actuator",

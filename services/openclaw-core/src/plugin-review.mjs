@@ -16,6 +16,7 @@ import { createNativeEngineeringLspSymbolRequestProposalBuilders } from "./nativ
 import { createNativeEngineeringLspSelectedTargetReadBridgeBuilders } from "./native-engineering-lsp-selected-target-read-bridge-builders.mjs";
 import { buildNativeEngineeringEditExecutionEvidence } from "./native-engineering-edit-execution-evidence-builders.mjs";
 import { buildNativeEngineeringWriteExecutionEvidence } from "./native-engineering-write-execution-evidence-builders.mjs";
+import { createNativeDeclarativeEvolutionBuilders } from "./native-declarative-evolution-builders.mjs";
 import { createNativeAcpxCodexBridgeBuilders } from "./native-acpx-codex-bridge-builders.mjs";
 import { createNativeAcpxCodexBridgeTaskBuilders } from "./native-acpx-codex-bridge-task-builders.mjs";
 import {
@@ -111,6 +112,9 @@ export function createPluginReview(deps) {
     safeStat,
     selectOpenClawToolCatalogWorkspace,
   });
+  const {
+    buildNativeDeclarativeEvolutionCandidate,
+  } = createNativeDeclarativeEvolutionBuilders();
   const {
     buildNativeEngineeringReadFile,
     buildNativeEngineeringGlob,
@@ -386,10 +390,11 @@ function buildOpenClawNativePluginAdapterStatus() {
       "act.openclaw.workspace_patch_apply",
       "plan.plugin.runtime_preflight",
       "plan.plugin.runtime_adapter_contract",
+      "plan.openclaw.declarative_evolution.managed_config_candidate",
     ],
     pendingCapabilities: ["act.plugin.capability.invoke"],
     summary: {
-      implemented: 51,
+      implemented: 52,
       pending: 1,
       canReadManifestMetadata: true,
       canReadToolCatalogMetadata: true,
@@ -436,6 +441,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       canPlanSearchWebRuntimePreflight: true,
       canPlanSearchWebRuntimeActivation: true,
       canPlanNativeRuntimeAdapterContract: true,
+      canPlanDeclarativeEvolutionCandidate: true,
       canReadWorkspaceSemanticMetadata: true,
       canExecuteWorkspaceSymbolLookup: true,
       canSelectWorkspaceEditTargets: true,
@@ -495,6 +501,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "runtime preflight builds a governed execution envelope without loading plugin modules",
       "source contents, README text, script bodies, dependency versions, plugin code execution, and runtime activation remain blocked",
       "mutating plugin invocation remains pending explicit adapter design and approval gates",
+      "declarative evolution candidates generate only allowlisted managed Nix fragments and never write, switch generations, or roll back automatically",
     ],
   };
 }
@@ -542,6 +549,7 @@ function buildOpenClawNativePluginAdapterStatus() {
     buildNativeOpenClawWorkspaceSymbolLookup,
     buildNativeOpenClawWorkspaceEditTargetSelection,
     buildNativeEngineeringToolSurfaceInventory,
+    buildNativeDeclarativeEvolutionCandidate,
     buildNativeEngineeringReadFile,
     buildNativeEngineeringGlob,
     buildNativeEngineeringGrep,

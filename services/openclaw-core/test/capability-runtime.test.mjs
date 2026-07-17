@@ -71,6 +71,26 @@ function createHarness(overrides = {}) {
       buildNativeOpenClawPromptSemanticsProfile: () => ({ ok: true }),
       buildOpenClawPluginManifestMap: () => ({ ok: true }),
       buildOpenClawPluginCapabilityPlan: () => ({ ok: true }),
+      buildNativeDeclarativeEvolutionCandidate: async ({ changes }) => ({
+        ok: true,
+        registry: "openclaw-native-declarative-evolution-candidate-v0",
+        candidateStatus: "validated",
+        target: { path: "/etc/nixos/openclaw-managed.nix" },
+        changes,
+        candidateText: "secret candidate body must remain transient",
+        candidateHash: "candidate-hash",
+        candidateBytes: 64,
+        validation: { status: "passed", mode: "test-validator" },
+        governance: {
+          writesManagedConfig: false,
+          switchesGeneration: false,
+          executesRollback: false,
+          createsTask: false,
+          createsApproval: false,
+          callsProvider: false,
+          networkEgress: false,
+        },
+      }),
       ...overrides.pluginReview,
     },
     policyEvaluator,
@@ -113,6 +133,30 @@ test("capability runtime builds the local body registry with service health", as
   );
   assert.equal(runtime.capabilityByIntent("cloud.provider.send")?.id, "boundary.cross_domain.approval");
   assert.ok(calls.health.some((url) => url === "http://127.0.0.1:4106/health"));
+});
+
+test("capability runtime generates a validated managed Nix candidate without host mutation", async () => {
+  const { runtime, state, events } = createHarness();
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "plan.openclaw.declarative_evolution.managed_config_candidate",
+    intent: "declarative.evolution.managed_config_candidate",
+    params: {
+      changes: [{ operation: "enable_component", component: "systemSense" }],
+    },
+  });
+
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.capability.id, "plan.openclaw.declarative_evolution.managed_config_candidate");
+  assert.equal(result.response.summary.kind, "declarative_evolution.managed_config_candidate");
+  assert.equal(result.response.summary.validationStatus, "passed");
+  assert.equal(result.response.summary.noManagedConfigWrite, true);
+  assert.equal(result.response.summary.noGenerationSwitch, true);
+  assert.equal(result.response.summary.noRollback, true);
+  assert.equal(result.response.summary.candidateTextInSummary, false);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("secret candidate body"), false);
+  assert.deepEqual(events.slice(-2).map((event) => event.name), ["policy.evaluated", "capability.invoked"]);
 });
 
 test("capability runtime exposes the native engineering tool surface inventory without execution authority", async () => {

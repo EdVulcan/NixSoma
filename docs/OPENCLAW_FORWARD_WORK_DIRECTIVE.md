@@ -1267,6 +1267,23 @@ This closes the Level 1 navigation boundary and stops here; it does not add
 another LSP request, generic tool dispatcher, task, approval, mutation,
 provider call, or network path.
 
+## Completed Phase D Candidate Slice
+
+The first real Phase D declarative-evolution capability is now complete. Core
+accepts only structured allowlisted changes, generates a transient
+`/etc/nixos/openclaw-managed.nix` candidate, and validates the generated module
+with `nix-instantiate`. The common capability is
+`plan.openclaw.declarative_evolution.managed_config_candidate`; its invocation
+ledger retains only the candidate hash, byte count, validation result, target,
+and negative authority flags.
+
+This slice does not write the managed file, create a task or approval, run
+`nixos-rebuild`, switch a generation, execute rollback, read credentials, call
+a provider, or use the network. The next mainline slice is an explicitly
+approved candidate-staging and read-only NixOS build/evaluation path bound to
+the exact candidate hash. Health-gated activation and physical rollback remain
+separate capabilities.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

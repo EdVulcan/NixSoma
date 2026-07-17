@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering Tool Surface Plan
 
-Updated: 2026-07-16
+Updated: 2026-07-17
 
 ## Current Frontier
 
@@ -34,6 +34,13 @@ invocation history and capability events retain only bounded navigation
 summaries. This closes the current Level 1 navigation boundary without adding
 another LSP request, dispatcher, task, approval, or execution path. See
 `OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_NAVIGATION_PLAN.md`.
+
+The next identity-upgrade slice has now moved to the kernel whitepaper's Phase
+D boundary. Core can generate and validate a bounded managed-Nix candidate as
+`plan.openclaw.declarative_evolution.managed_config_candidate`; the candidate
+is transient and hash-bound in invocation evidence. Host writes, approvals,
+`nixos-rebuild`, generation switching, and rollback are the next separate
+vertical capabilities, not part of this engineering-tool route.
 
 The existing read-only tool contract inventory is now also available through
 the common capability runtime as

@@ -28,7 +28,8 @@ preserve enhanced openclaw source on GitHub
 -> migrate Claude Code-grade engineering capabilities as governed body tools
 -> close Level 1 operator execution-consistency and declared/runtime capability boundaries
 -> complete the bounded AI plan review/save bridge on the approved provider handoff
--> select the next concrete Level 2 work-view/session-helper operator gap, then hostd
+-> close the first Phase D managed-Nix candidate and validation loop
+-> bind approved staging/build/health/rollback steps one at a time
 ```
 
 Do not continue with Phase 137-style provider wrappers unless the next slice
@@ -67,6 +68,12 @@ real host mutation still requires approval plus Operator Step/Run. The switched
 VM now proves all three fixed targets through Core and Observer real-execution
 checks with native D-Bus, changed-PID, and restored-health evidence.
 
+The first Phase D declarative-evolution capability is now complete. The common
+capability runtime can generate an allowlisted `openclaw-managed.nix` candidate
+and validate its module shape with `nix-instantiate`; it does not write the
+managed file, run `nixos-rebuild`, switch generations, or roll back. The active
+plan is [OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md](./plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md).
+
 ## Active Architecture
 
 | Document | Role |
@@ -85,6 +92,7 @@ checks with native D-Bus, changed-PID, and restored-health evidence.
 | [OPENCLAW_ENHANCED_SOURCE_MIGRATION_BRIEF.md](./plans/OPENCLAW_ENHANCED_SOURCE_MIGRATION_BRIEF.md) | Records the optimized Windows-host `openclaw` source inventory, preservation strategy, and integration rules. |
 | [OPENCLAW_ENHANCED_SOURCE_GAP_AUDIT.md](./plans/OPENCLAW_ENHANCED_SOURCE_GAP_AUDIT.md) | Audits which preserved enhanced-source capabilities are absorbed, partially absorbed, not absorbed, should not migrate, or require source transfer. |
 | [OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md) | Active native engineering tool contract inventory and common capability-runtime route. |
+| [OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md](./plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | First real Phase D candidate-generation and `nix-instantiate` validation loop; no host write or generation switch. |
 | [OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_TOOL_SURFACE_INVENTORY_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_TOOL_SURFACE_INVENTORY_PLAN.md) | Common capability-runtime entry point and Observer common-path bridge for the existing read-only engineering tool surface inventory. |
 | [OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_NAVIGATION_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_NAVIGATION_PLAN.md) | Common capability-runtime and Observer bridge for bounded workspace semantic-index and symbol-lookup navigation; no source or execution authority. |
 | [OPENCLAW_NATIVE_ENGINEERING_READ_SEARCH_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_READ_SEARCH_PLAN.md) | Active bounded workspace read/search route and Observer common-path bridge for `cc_read`, `cc_glob`, and `cc_grep`. |

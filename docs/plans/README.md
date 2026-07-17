@@ -15,6 +15,7 @@ Read these first:
 OPENCLAW_ENHANCED_SOURCE_MIGRATION_BRIEF.md
 OPENCLAW_ENHANCED_SOURCE_GAP_AUDIT.md
 OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md
+OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_TOOL_SURFACE_INVENTORY_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_NAVIGATION_PLAN.md
 OPENCLAW_NATIVE_ENGINEERING_READ_SEARCH_PLAN.md
@@ -464,6 +465,12 @@ through the existing core proxy and Observer. The completed plan is
 interception, persistence, policy execution, and Nix self-evolution remain
 deferred. Do not add another event kind until a new concrete operator need is
 demonstrated by this readback.
+
+The first bounded Phase D declarative-evolution slice is also complete through
+`OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md`. Core accepts only
+structured allowlisted changes, renders the managed Nix module, and validates
+the generated module with `nix-instantiate`. It does not write the managed
+file, create an approval, run `nixos-rebuild`, switch generations, or roll back.
 
 ## Historical Phase Plans
 
