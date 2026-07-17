@@ -466,11 +466,14 @@ interception, persistence, policy execution, and Nix self-evolution remain
 deferred. Do not add another event kind until a new concrete operator need is
 demonstrated by this readback.
 
-The first bounded Phase D declarative-evolution slice is also complete through
+The first bounded Phase D declarative-evolution slice and approval-bound
+staging/build loop are complete through
 `OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md`. Core accepts only
-structured allowlisted changes, renders the managed Nix module, and validates
-the generated module with `nix-instantiate`. It does not write the managed
-file, create an approval, run `nixos-rebuild`, switch generations, or roll back.
+structured allowlisted changes, binds the generated candidate hash to an
+approval, stages the exact candidate under OpenClaw ownership, and runs
+read-only `nix-instantiate`, `nix eval`, and no-link `nix build --dry-run`
+checks. It does not write `/etc/nixos`, run `nixos-rebuild`, switch generations,
+or roll back.
 
 ## Historical Phase Plans
 

@@ -93,6 +93,9 @@ function createHarness(overrides = {}) {
       }),
       ...overrides.pluginReview,
     },
+    declarativeEvolution: overrides.declarativeEvolution ?? {
+      createNativeDeclarativeEvolutionStagingTask: overrides.pluginReview?.createNativeDeclarativeEvolutionStagingTask,
+    },
     policyEvaluator,
     publishEvent: async (name, body) => {
       events.push({ name, body });
@@ -157,6 +160,60 @@ test("capability runtime generates a validated managed Nix candidate without hos
   assert.equal(result.response.summary.candidateTextInSummary, false);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("secret candidate body"), false);
   assert.deepEqual(events.slice(-2).map((event) => event.name), ["policy.evaluated", "capability.invoked"]);
+});
+
+test("capability runtime creates a hash-bound declarative evolution staging task only after confirmation", async () => {
+  const candidateHash = "a".repeat(64);
+  const calls = [];
+  const { runtime, events } = createHarness({
+    pluginReview: {
+      createNativeDeclarativeEvolutionStagingTask: async (input) => {
+        calls.push(input);
+        return {
+          ok: true,
+          registry: "openclaw-native-declarative-evolution-staging-task-v0",
+          candidate: { candidateHash },
+          approvalBinding: { candidateHash },
+          task: { id: "task-staging", status: "queued" },
+          approval: { id: "approval-staging", status: "pending" },
+          governance: {
+            createsTask: true,
+            createsApproval: true,
+            canExecuteWithoutApproval: false,
+            writesManagedConfig: false,
+            switchesGeneration: false,
+            executesRollback: false,
+            networkEgress: false,
+          },
+        };
+      },
+    },
+  });
+  const changes = [{ operation: "enable_component", component: "systemSense" }];
+
+  const unconfirmed = await runtime.invokeCapability({
+    capabilityId: "act.openclaw.declarative_evolution.staging_task",
+    params: { changes, confirm: false },
+  });
+  assert.equal(unconfirmed.response.invoked, true);
+  assert.equal(unconfirmed.response.result.reason, "operator_confirmation_required");
+  assert.equal(calls.length, 0);
+
+  const confirmed = await runtime.invokeCapability({
+    capabilityId: "act.openclaw.declarative_evolution.staging_task",
+    params: { changes, confirm: true },
+  });
+  assert.equal(confirmed.response.invoked, true);
+  assert.equal(confirmed.response.result.approvalBinding.candidateHash, candidateHash);
+  assert.equal(confirmed.response.summary.kind, "declarative_evolution.staging_task");
+  assert.equal(confirmed.response.summary.createsTask, true);
+  assert.equal(confirmed.response.summary.createsApproval, true);
+  assert.equal(confirmed.response.summary.noManagedConfigWrite, true);
+  assert.equal(confirmed.response.summary.noGenerationSwitch, true);
+  assert.equal(confirmed.response.summary.noRollback, true);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0], { changes, confirm: true });
+  assert.equal(JSON.stringify(events).includes(candidateHash), true);
 });
 
 test("capability runtime exposes the native engineering tool surface inventory without execution authority", async () => {

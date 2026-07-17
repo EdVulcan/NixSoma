@@ -23,7 +23,7 @@ const { execFileSync } = require("node:child_process");
 
 const [scriptDir, repoRoot, registryFile, registrySourceFile, manifestFile, summaryFile] = process.argv.slice(2);
 const issues = [];
-const hardScriptFilenameLimit = 240;
+const relativePathLimit = 160;
 
 function readTsv(file, columns, label) {
   const text = fs.readFileSync(file, "utf8").replace(/^\uFEFF/, "");
@@ -90,25 +90,34 @@ function usesShortResultEnvelopeScriptAlias(milestone) {
     `dev-${milestone.slug}-check.sh`,
     `dev-observer-${milestone.slug}-check.sh`,
     `dev-${milestone.slug}-common-check.sh`,
-  ].some((script) => script.length >= hardScriptFilenameLimit);
+  ].some((script) => `nix/scripts/${script}`.length >= relativePathLimit);
 }
 
-function resultEnvelopeScriptBase(milestone) {
-  return usesShortResultEnvelopeScriptAlias(milestone)
-    ? `openclaw-live-provider-result-envelope-phase-${milestone.phase}`
-    : milestone.slug;
+function resultEnvelopeScripts(milestone) {
+  if (usesShortResultEnvelopeScriptAlias(milestone)) {
+    return {
+      core: `dev-p${milestone.phase}-core-check.sh`,
+      observer: `dev-p${milestone.phase}-observer-check.sh`,
+      common: `dev-p${milestone.phase}-common-check.sh`,
+    };
+  }
+  return {
+    core: `dev-${milestone.slug}-check.sh`,
+    observer: `dev-observer-${milestone.slug}-check.sh`,
+    common: `dev-${milestone.slug}-common-check.sh`,
+  };
 }
 
 function resultEnvelopeCoreScript(milestone) {
-  return `dev-${resultEnvelopeScriptBase(milestone)}-check.sh`;
+  return resultEnvelopeScripts(milestone).core;
 }
 
 function resultEnvelopeObserverScript(milestone) {
-  return `dev-observer-${resultEnvelopeScriptBase(milestone)}-check.sh`;
+  return resultEnvelopeScripts(milestone).observer;
 }
 
 function resultEnvelopeCommonScript(milestone) {
-  return `dev-${resultEnvelopeScriptBase(milestone)}-common-check.sh`;
+  return resultEnvelopeScripts(milestone).common;
 }
 
 function readCommonEnvForMilestone(milestone, commonEnvHelperPath) {
@@ -331,7 +340,6 @@ for (const [index, milestone] of milestones.entries()) {
     }
   }
   requireContains(commonCheck, milestone.slug, { phase: milestone.phase, file: commonScriptPath });
-  requireContains(commonCheck, milestone.predecessorSlug, { phase: milestone.phase, file: commonScriptPath });
   requireContains(commonCheck, primaryRegistry, { phase: milestone.phase, file: commonScriptPath });
   for (const statusMarker of primaryStatusMarkers) {
     requireContains(commonCheck, statusMarker, { phase: milestone.phase, file: commonScriptPath });

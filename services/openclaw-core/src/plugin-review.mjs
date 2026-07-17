@@ -391,10 +391,11 @@ function buildOpenClawNativePluginAdapterStatus() {
       "plan.plugin.runtime_preflight",
       "plan.plugin.runtime_adapter_contract",
       "plan.openclaw.declarative_evolution.managed_config_candidate",
+      "act.openclaw.declarative_evolution.staging_task",
     ],
     pendingCapabilities: ["act.plugin.capability.invoke"],
     summary: {
-      implemented: 52,
+      implemented: 53,
       pending: 1,
       canReadManifestMetadata: true,
       canReadToolCatalogMetadata: true,
@@ -442,6 +443,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       canPlanSearchWebRuntimeActivation: true,
       canPlanNativeRuntimeAdapterContract: true,
       canPlanDeclarativeEvolutionCandidate: true,
+      canCreateDeclarativeEvolutionStagingTask: true,
       canReadWorkspaceSemanticMetadata: true,
       canExecuteWorkspaceSymbolLookup: true,
       canSelectWorkspaceEditTargets: true,
@@ -502,6 +504,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "source contents, README text, script bodies, dependency versions, plugin code execution, and runtime activation remain blocked",
       "mutating plugin invocation remains pending explicit adapter design and approval gates",
       "declarative evolution candidates generate only allowlisted managed Nix fragments and never write, switch generations, or roll back automatically",
+      "declarative evolution staging tasks bind approval and execution to one candidate hash, write only OpenClaw-owned staging, and run read-only NixOS evaluation/build without activation or rollback",
     ],
   };
 }

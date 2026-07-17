@@ -717,6 +717,22 @@ export function buildBaseCapabilities({
       description: "Generate and validate a bounded /etc/nixos/openclaw-managed.nix candidate without writing, switching generations, or rolling back the host.",
     },
     {
+      id: "act.openclaw.declarative_evolution.staging_task",
+      name: "Approved Declarative Evolution Staging Task",
+      kind: "actuator",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/plugins/native-adapter/declarative-evolution/staging-tasks`,
+      intents: [
+        "openclaw.declarative_evolution.stage_candidate",
+        "declarative.evolution.stage_candidate",
+        "nix.managed_config_staging_task",
+      ],
+      domains: ["body_internal"],
+      risk: "high",
+      governance: "allow",
+      description: "Create an explicitly confirmed task that binds one validated candidate hash to an OpenClaw-owned staging file and runs read-only NixOS evaluation/build; activation and rollback remain disabled.",
+    },
+    {
       id: "act.system.command.dry_run",
       name: "System Command Dry Run",
       kind: "actuator",

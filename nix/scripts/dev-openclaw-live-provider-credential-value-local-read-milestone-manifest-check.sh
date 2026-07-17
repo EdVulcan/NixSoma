@@ -63,6 +63,24 @@ function artifactSuffixForSlug(slug) {
   return slug.replace(/^openclaw-cloud-consciousness-live-provider-/, "");
 }
 
+const relativePathLimit = 160;
+
+function physicalScriptsForMilestone(milestone) {
+  const legacy = {
+    core: `dev-${milestone.slug}-check.sh`,
+    observer: `dev-observer-${milestone.slug}-check.sh`,
+    common: `dev-${milestone.slug}-common-check.sh`,
+  };
+  if (Object.values(legacy).some((script) => `nix/scripts/${script}`.length >= relativePathLimit)) {
+    return {
+      core: `dev-p${milestone.phase}-core-check.sh`,
+      observer: `dev-p${milestone.phase}-observer-check.sh`,
+      common: `dev-p${milestone.phase}-common-check.sh`,
+    };
+  }
+  return legacy;
+}
+
 function readCommonEnvForMilestone(milestone, commonEnvHelperPath) {
   try {
     const command = [
@@ -176,10 +194,11 @@ for (const [index, milestone] of milestones.entries()) {
       actualNextSlug: milestone.nextSlug,
     });
   }
-  const coreScript = `dev-${milestone.slug}-check.sh`;
-  const commonScript = `dev-${milestone.slug}-common-check.sh`;
+  const physicalScripts = physicalScriptsForMilestone(milestone);
+  const coreScript = physicalScripts.core;
+  const commonScript = physicalScripts.common;
   const observerName = `observer-${milestone.slug}`;
-  const observerScript = `dev-observer-${milestone.slug}-check.sh`;
+  const observerScript = physicalScripts.observer;
   const coreRegistry = registryByName.get(milestone.slug);
   const observerRegistry = registryByName.get(observerName);
   const expectedCoreDescription = `Phase ${milestone.phase} ${milestone.coreDescription}`;

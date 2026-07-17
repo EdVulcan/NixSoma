@@ -45,6 +45,31 @@ const entries = registryText.split(/\n/)
 const byScript = new Map(entries.map((entry) => [entry.script, entry]));
 const byName = new Map(entries.map((entry) => [entry.name, entry]));
 const selected = new Set();
+
+function collectRenamedFiles() {
+  const renamed = new Set();
+  const commands = [
+    ["diff", "--name-status", "-M"],
+    ["diff", "--cached", "--name-status", "-M"],
+  ];
+  for (const args of commands) {
+    try {
+      const output = execFileSync("git", args, { encoding: "utf8" });
+      for (const line of output.split(/\n/)) {
+        const [status, from, to] = line.split("\t");
+        if (status?.startsWith("R") && from && to) {
+          renamed.add(from);
+          renamed.add(to);
+        }
+      }
+    } catch {
+      // Keep changed-check selection conservative when rename metadata is unavailable.
+    }
+  }
+  return renamed;
+}
+
+const renamedFiles = collectRenamedFiles();
 const sharedPackageContractsCheck = "openclaw-shared-package-contracts";
 const structurallyCoveredCommonChecks = [];
 const httpJsonHelperCheck = "openclaw-http-json-helper";
@@ -59,23 +84,63 @@ const credentialValueLocalReadAttemptManifestCheck = "openclaw-live-provider-cre
 const credentialValueLocalReadAttemptManifestFile = path.join(scriptDir, "openclaw-live-provider-credential-value-local-read-attempt-milestones.tsv");
 const resultEnvelopeManifestCheck = "openclaw-live-provider-result-envelope-milestone-manifest";
 const resultEnvelopeScriptNeedle = "credential-value-local-read-execution-local-read-attempt-local-read-result-envelope";
-const resultEnvelopePhaseAliasPattern = /^dev-(?:observer-)?openclaw-live-provider-result-envelope-phase-\d+(?:-common)?-check\.sh$/;
+const resultEnvelopePhaseAliasPattern = /^dev-p\d+-(?:core|observer|common)-check\.sh$/;
+const resultEnvelopeLegacyPhaseAliasPattern = /^dev-(?:observer-)?openclaw-live-provider-result-envelope-phase-\d+(?:-common)?-check\.sh$/;
+const resultEnvelopeBatchScript = "dev-p115-136-batch-check.sh";
 const resultEnvelopeCommonEnvHelper = "dev-openclaw-live-provider-result-envelope-common-env.sh";
 const resultEnvelopePrereqHelper = "dev-openclaw-live-provider-result-envelope-prereq.sh";
 const resultEnvelopeAssertionsHelper = "dev-openclaw-live-provider-result-envelope-assertions.sh";
 const nativeEngineeringContextPacketPairBatchCheck = "openclaw-native-engineering-context-packet-pair-batch-reuse";
 const nativeEngineeringLspCoreCheck = "openclaw-native-engineering-lsp-evidence";
 const nativeEngineeringLspObserverCheck = "observer-openclaw-native-engineering-lsp-evidence";
+const nativeDeclarativeEvolutionCoreCheck = "openclaw-native-declarative-evolution-staging";
+const nativeDeclarativeEvolutionObserverCheck = "observer-openclaw-native-declarative-evolution-staging";
+const windowsPathBudgetCheck = "windows-path-budget";
 
-function readCredentialValueLocalReadCommonScripts() {
-  if (!fs.existsSync(credentialValueLocalReadManifestFile)) return new Set();
-  return new Set(fs.readFileSync(credentialValueLocalReadManifestFile, "utf8")
+function physicalScriptsForManifestRow(phase, slug, forceShort = false) {
+  const legacy = {
+    core: `dev-${slug}-check.sh`,
+    observer: `dev-observer-${slug}-check.sh`,
+    common: `dev-${slug}-common-check.sh`,
+  };
+  const short = {
+    core: `dev-p${phase}-core-check.sh`,
+    observer: `dev-p${phase}-observer-check.sh`,
+    common: `dev-p${phase}-common-check.sh`,
+  };
+  const needsShort = forceShort || Object.values(legacy)
+    .some((script) => `nix/scripts/${script}`.length >= 160);
+  return { physical: needsShort ? short : legacy, all: [...new Set([...Object.values(legacy), ...Object.values(short)])] };
+}
+
+function manifestRows(file) {
+  if (!fs.existsSync(file)) return [];
+  return fs.readFileSync(file, "utf8")
     .split(/\n/)
     .map((line) => line.replace(/\r$/, ""))
     .filter((line) => line.trim() && !line.startsWith("#"))
-    .map((line) => line.split("\t")[1])
-    .filter(Boolean)
-    .map((slug) => `dev-${slug}-common-check.sh`));
+    .map((line) => {
+      const [phase, slug] = line.split("\t");
+      return { phase: Number.parseInt(phase, 10), slug };
+    });
+}
+
+function findCredentialManifestRow(file, scriptBasename) {
+  return manifestRows(file).find((row) => physicalScriptsForManifestRow(row.phase, row.slug).all.includes(scriptBasename)) ?? null;
+}
+
+function findResultEnvelopeManifestRow(scriptBasename) {
+  return manifestRows(path.join(scriptDir, "openclaw-live-provider-result-envelope-milestones.tsv"))
+    .find((row) => physicalScriptsForManifestRow(row.phase, row.slug, row.phase >= 130).all.includes(scriptBasename)) ?? null;
+}
+
+function readCredentialValueLocalReadCommonScripts() {
+  if (!fs.existsSync(credentialValueLocalReadManifestFile)) return new Set();
+  return new Set(manifestRows(credentialValueLocalReadManifestFile)
+    .flatMap((row) => {
+      const scripts = physicalScriptsForManifestRow(row.phase, row.slug);
+      return [scripts.physical.common, ...scripts.all.filter((script) => script.endsWith("-common-check.sh"))];
+    }));
 }
 
 function readPreCredentialPairRows() {
@@ -122,13 +187,11 @@ const credentialValueLocalReadHelperScripts = new Set([
 
 function readCredentialValueLocalReadAttemptCommonScripts() {
   if (!fs.existsSync(credentialValueLocalReadAttemptManifestFile)) return new Set();
-  return new Set(fs.readFileSync(credentialValueLocalReadAttemptManifestFile, "utf8")
-    .split(/\n/)
-    .map((line) => line.replace(/\r$/, ""))
-    .filter((line) => line.trim() && !line.startsWith("#"))
-    .map((line) => line.split("\t")[1])
-    .filter(Boolean)
-    .map((slug) => `dev-${slug}-common-check.sh`));
+  return new Set(manifestRows(credentialValueLocalReadAttemptManifestFile)
+    .flatMap((row) => {
+      const scripts = physicalScriptsForManifestRow(row.phase, row.slug);
+      return [scripts.physical.common, ...scripts.all.filter((script) => script.endsWith("-common-check.sh"))];
+    }));
 }
 
 const credentialValueLocalReadAttemptCommonScripts = readCredentialValueLocalReadAttemptCommonScripts();
@@ -391,7 +454,9 @@ function isAllowedResultEnvelopeRouteExtractionRemoval(text) {
 
 function isResultEnvelopeMilestoneScript(scriptBasename) {
   return scriptBasename.includes(resultEnvelopeScriptNeedle)
-    || resultEnvelopePhaseAliasPattern.test(scriptBasename);
+    || resultEnvelopePhaseAliasPattern.test(scriptBasename)
+    || resultEnvelopeLegacyPhaseAliasPattern.test(scriptBasename)
+    || scriptBasename === resultEnvelopeBatchScript;
 }
 
 function isResultEnvelopeRouteExtractionOnly(file) {
@@ -553,7 +618,7 @@ function selectSourceHeuristics(file) {
     ["services/openclaw-core/src/policy-evaluator.mjs", ["openclaw-core-service-unit-tests", "policy"]],
     ["services/openclaw-core/src/browser-task-action-contract.mjs", ["task-executor", "operator-loop"]],
     ["services/openclaw-core/src/browser-task-execution-binding.mjs", ["task-executor", "operator-loop"]],
-    ["services/openclaw-core/src/task-executor.mjs", ["task-executor", "operator-loop", nativeEngineeringContextPacketPairBatchCheck]],
+    ["services/openclaw-core/src/task-executor.mjs", ["task-executor", "operator-loop", nativeEngineeringContextPacketPairBatchCheck, nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
     ["services/openclaw-core/src/hostd-control-client.mjs", ["openclaw-systemd-next-repair-task-shell", "observer-openclaw-systemd-next-repair-task-shell", "body-config"]],
     ["services/openclaw-core/src/systemd-task-builders.mjs", ["openclaw-systemd-next-repair-task-shell", "observer-openclaw-systemd-next-repair-task-shell"]],
     ["services/openclaw-core/src/task-executor-system-body-handlers.mjs", ["openclaw-systemd-next-repair-real-execution", "observer-openclaw-systemd-next-repair-real-execution"]],
@@ -561,10 +626,10 @@ function selectSourceHeuristics(file) {
     ["services/openclaw-hostd/src/hostd-protocol.mjs", ["openclaw-systemd-next-repair-real-execution", "observer-openclaw-systemd-next-repair-real-execution", "body-config"]],
     ["services/openclaw-hostd/src/systemd-hostd-control.mjs", ["openclaw-systemd-next-repair-real-execution", "observer-openclaw-systemd-next-repair-real-execution", "body-config"]],
     ["services/openclaw-hostd/test/hostd.test.mjs", ["openclaw-systemd-next-repair-real-execution", "observer-openclaw-systemd-next-repair-real-execution"]],
-    ["services/openclaw-core/src/task-manager.mjs", ["task-executor", "operator-loop", nativeEngineeringContextPacketPairBatchCheck]],
+    ["services/openclaw-core/src/task-manager.mjs", ["task-executor", "operator-loop", nativeEngineeringContextPacketPairBatchCheck, nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
     ["services/openclaw-core/src/native-engineering-experience-memory.mjs", ["openclaw-core-service-unit-tests", nativeEngineeringContextPacketPairBatchCheck, "capability-invoke", "observer-capability-invoke"]],
-    ["services/openclaw-core/src/capability-descriptors.mjs", ["capability-invoke", "observer-capability-invoke", nativeEngineeringLspCoreCheck, nativeEngineeringLspObserverCheck]],
-    ["services/openclaw-core/src/capability-runtime.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke", nativeEngineeringLspCoreCheck, nativeEngineeringLspObserverCheck]],
+    ["services/openclaw-core/src/capability-descriptors.mjs", ["capability-invoke", "observer-capability-invoke", nativeEngineeringLspCoreCheck, nativeEngineeringLspObserverCheck, nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
+    ["services/openclaw-core/src/capability-runtime.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke", nativeEngineeringLspCoreCheck, nativeEngineeringLspObserverCheck, nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
     ["services/openclaw-core/src/capability-runtime-engineering-lsp.mjs", ["openclaw-core-service-unit-tests", nativeEngineeringLspCoreCheck, nativeEngineeringLspObserverCheck]],
     ["services/openclaw-core/src/capability-runtime-engineering-read-search.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
     ["services/openclaw-core/src/capability-runtime-engineering-tool-surface.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke", "openclaw-native-engineering-tool-surface-inventory", "observer-openclaw-native-engineering-tool-surface-inventory"]],
@@ -582,18 +647,25 @@ function selectSourceHeuristics(file) {
     ["services/openclaw-core/src/capability-runtime-screen.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
     ["services/openclaw-core/src/capability-runtime-browser-actions.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
     ["services/openclaw-core/src/capability-runtime-screen-actions.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
-    ["services/openclaw-core/src/capability-runtime-declarative-evolution.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
-    ["services/openclaw-core/src/native-declarative-evolution-builders.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
-    ["services/openclaw-core/src/native-adapter-plugin-routes.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
-    ["services/openclaw-core/src/plugin-review.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
+    ["services/openclaw-core/src/capability-runtime-declarative-evolution.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
+    ["services/openclaw-core/src/native-declarative-evolution-builders.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
+    ["services/openclaw-core/src/native-declarative-evolution-execution.mjs", ["openclaw-core-service-unit-tests", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
+    ["services/openclaw-core/src/native-declarative-evolution-task-builders.mjs", ["openclaw-core-service-unit-tests", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
+    ["services/openclaw-core/src/native-declarative-evolution-task-routes.mjs", ["openclaw-core-service-unit-tests", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
+    ["services/openclaw-core/src/task-executor-native-declarative-evolution-handlers.mjs", ["openclaw-core-service-unit-tests", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
+    ["services/openclaw-core/src/native-adapter-plugin-routes.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
+    ["services/openclaw-core/src/plugin-review.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
     ["services/openclaw-core/src/plugin-review-workspace-intelligence.mjs", ["openclaw-core-service-unit-tests", "openclaw-workspace-edit-target-selection", "observer-openclaw-workspace-edit-target-selection"]],
     ["services/openclaw-core/src/capability-runtime-engineering-plan-todo.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke", "openclaw-native-engineering-plan-todo-evidence", "observer-openclaw-native-engineering-plan-todo-evidence"]],
     ["services/openclaw-core/src/native-engineering-plan-todo-next-action.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke", "openclaw-native-engineering-plan-todo-evidence", "observer-openclaw-native-engineering-plan-todo-evidence"]],
     ["services/openclaw-core/src/capability-runtime-work-view.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
-    ["services/openclaw-core/src/plan-builder.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke", nativeEngineeringContextPacketPairBatchCheck, "openclaw-native-plugin-runtime-refresh-evidence", "observer-openclaw-native-plugin-runtime-refresh-evidence"]],
+    ["services/openclaw-core/src/plan-builder.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke", nativeEngineeringContextPacketPairBatchCheck, "openclaw-native-plugin-runtime-refresh-evidence", "observer-openclaw-native-plugin-runtime-refresh-evidence", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
     ["services/openclaw-core/src/native-engineering-tool-surface-builders.mjs", ["openclaw-native-engineering-tool-surface-inventory", "observer-openclaw-native-engineering-tool-surface-inventory", "capability-invoke", "observer-capability-invoke"]],
     ["services/openclaw-core/test/capability-runtime.test.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
-    ["services/openclaw-core/test/native-declarative-evolution-builders.test.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
+    ["services/openclaw-core/test/native-declarative-evolution-builders.test.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
+    ["services/openclaw-core/test/native-declarative-evolution-execution.test.mjs", ["openclaw-core-service-unit-tests", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
+    ["services/openclaw-core/test/native-declarative-evolution-task-builders.test.mjs", ["openclaw-core-service-unit-tests", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
+    ["services/openclaw-core/test/native-declarative-evolution-task-routes.test.mjs", ["openclaw-core-service-unit-tests", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
     ["services/openclaw-core/test/native-adapter-plugin-routes.test.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
     ["services/openclaw-core/test/capability-runtime-engineering-lsp.test.mjs", ["openclaw-core-service-unit-tests", nativeEngineeringLspCoreCheck, nativeEngineeringLspObserverCheck]],
     ["services/openclaw-core/test/capability-runtime-engineering-microcompact.test.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke", "openclaw-native-engineering-microcompact-evidence", "observer-openclaw-native-engineering-microcompact-evidence"]],
@@ -617,8 +689,10 @@ function selectSourceHeuristics(file) {
     ["services/openclaw-core/test/task-manager.test.mjs", ["openclaw-core-service-unit-tests", "task-executor", "operator-loop"]],
     ["services/openclaw-core/test/native-engineering-experience-memory.test.mjs", ["openclaw-core-service-unit-tests", nativeEngineeringContextPacketPairBatchCheck]],
     ["services/openclaw-core/test/native-engineering-work-view-action-decision.test.mjs", [nativeEngineeringContextPacketPairBatchCheck]],
-    ["services/openclaw-core/test/task-executor.test.mjs", ["openclaw-core-service-unit-tests", "task-executor", "operator-loop"]],
-    ["services/openclaw-core/src/route-handlers.mjs", ["task-workbench", "operator-loop", "observer-operator", nativeEngineeringContextPacketPairBatchCheck]],
+    ["services/openclaw-core/test/task-executor.test.mjs", ["openclaw-core-service-unit-tests", "task-executor", "operator-loop", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
+    ["services/openclaw-core/src/route-handlers.mjs", ["task-workbench", "operator-loop", "observer-operator", nativeEngineeringContextPacketPairBatchCheck, nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
+    ["services/openclaw-core/src/task-recovery.mjs", ["task-executor", "operator-loop", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
+    ["services/openclaw-core/src/approval-engine.mjs", ["task-executor", "operator-loop", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
     ["services/openclaw-core/src/cloud-live-provider-result-envelope-routes.mjs", ["openclaw-live-provider-result-envelope-batch-reuse"]],
     ["services/openclaw-core/src/cloud-live-provider-runtime-context-packet.mjs", [nativeEngineeringContextPacketPairBatchCheck, "openclaw-core-service-unit-tests"]],
     ["services/openclaw-core/src/cloud-live-provider-runtime-engineering-plan-contract.mjs", ["openclaw-core-service-unit-tests", "openclaw-cloud-consciousness-live-provider-egress-execution-task-shell"]],
@@ -802,7 +876,17 @@ for (const file of changedFiles) {
 
   if (file.startsWith("nix/scripts/")) {
     const scriptBasename = path.basename(file);
+    if (renamedFiles.has(file)) {
+      selectName("milestone-registry");
+      selectName("milestone-script-audit");
+      selectName(windowsPathBudgetCheck);
+      selectName(credentialValueLocalReadManifestCheck);
+      selectName(credentialValueLocalReadAttemptManifestCheck);
+      selectName(resultEnvelopeManifestCheck);
+      continue;
+    }
     selectName("milestone-script-audit");
+      selectName(windowsPathBudgetCheck);
     if (scriptBasename === "dev-openclaw-http-json-helper.sh"
       || scriptBasename === "dev-openclaw-http-json-helper-check.sh") {
       selectName(httpJsonHelperCheck);
@@ -864,8 +948,10 @@ for (const file of changedFiles) {
       selectPreCredentialPairRowsForCommon(scriptBasename);
       continue;
     }
+    const credentialValueLocalReadRow = findCredentialManifestRow(credentialValueLocalReadManifestFile, scriptBasename);
     if (credentialValueLocalReadHelperScripts.has(scriptBasename)
-      || credentialValueLocalReadCommonScripts.has(scriptBasename)) {
+      || credentialValueLocalReadCommonScripts.has(scriptBasename)
+      || credentialValueLocalReadRow) {
       selectName(credentialValueLocalReadManifestCheck);
       if (scriptBasename === "dev-openclaw-live-provider-credential-value-local-read-batch-reuse-check.sh"
         || scriptBasename === "dev-openclaw-live-provider-credential-value-local-read-prereq.sh") {
@@ -880,13 +966,21 @@ for (const file of changedFiles) {
         structurallyCoveredCommonChecks.push(file);
         continue;
       }
-      const coreName = scriptBasename.replace(/^dev-/, "").replace(/-common-check\.sh$/, "");
-      selectName(coreName);
-      selectName(`observer-${coreName}`);
+      if (credentialValueLocalReadRow) {
+        selectName(credentialValueLocalReadRow.slug);
+        selectName(`observer-${credentialValueLocalReadRow.slug}`);
+      }
       continue;
     }
+    if (credentialValueLocalReadRow) {
+      selectName(credentialValueLocalReadRow.slug);
+      selectName(`observer-${credentialValueLocalReadRow.slug}`);
+      continue;
+    }
+    const credentialValueLocalReadAttemptRow = findCredentialManifestRow(credentialValueLocalReadAttemptManifestFile, scriptBasename);
     if (credentialValueLocalReadAttemptHelperScripts.has(scriptBasename)
-      || credentialValueLocalReadAttemptCommonScripts.has(scriptBasename)) {
+      || credentialValueLocalReadAttemptCommonScripts.has(scriptBasename)
+      || credentialValueLocalReadAttemptRow) {
       selectName(credentialValueLocalReadAttemptManifestCheck);
       if (scriptBasename === "dev-openclaw-live-provider-credential-value-local-read-attempt-batch-reuse-check.sh"
         || scriptBasename === "dev-openclaw-live-provider-credential-value-local-read-attempt-prereq.sh") {
@@ -901,9 +995,15 @@ for (const file of changedFiles) {
         structurallyCoveredCommonChecks.push(file);
         continue;
       }
-      const coreName = scriptBasename.replace(/^dev-/, "").replace(/-common-check\.sh$/, "");
-      selectName(coreName);
-      selectName(`observer-${coreName}`);
+      if (credentialValueLocalReadAttemptRow) {
+        selectName(credentialValueLocalReadAttemptRow.slug);
+        selectName(`observer-${credentialValueLocalReadAttemptRow.slug}`);
+      }
+      continue;
+    }
+    if (credentialValueLocalReadAttemptRow) {
+      selectName(credentialValueLocalReadAttemptRow.slug);
+      selectName(`observer-${credentialValueLocalReadAttemptRow.slug}`);
       continue;
     }
     if (scriptBasename === "openclaw-live-provider-result-envelope-milestones.tsv"
@@ -941,12 +1041,22 @@ for (const file of changedFiles) {
         }
         selectName("openclaw-live-provider-result-envelope-batch-reuse");
       }
+      const resultEnvelopeRow = findResultEnvelopeManifestRow(scriptBasename);
+      if (resultEnvelopeRow) {
+        selectName(resultEnvelopeRow.slug);
+        selectName(`observer-${resultEnvelopeRow.slug}`);
+      }
       continue;
     }
     if (byScript.has(scriptBasename)) {
       selected.add(byScript.get(scriptBasename).name);
     }
     selectScriptsReferencing(scriptBasename);
+    continue;
+  }
+
+  if (renamedFiles.has(file) && file.startsWith("services/openclaw-core/")) {
+    selectName("openclaw-core-service-unit-tests");
     continue;
   }
 

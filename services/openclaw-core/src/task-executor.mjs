@@ -2,6 +2,7 @@ import { createEventName } from "../../../packages/shared-events/src/event-facto
 import { createDelegatedPlanTaskHandlers } from "./task-executor-delegated-plan-handlers.mjs";
 import { createNativeDeferredTaskHandlers } from "./task-executor-native-deferred-handlers.mjs";
 import { createNativePluginRuntimeRefreshTaskHandlers } from "./task-executor-native-plugin-runtime-refresh-handlers.mjs";
+import { createNativeDeclarativeEvolutionTaskHandlers } from "./task-executor-native-declarative-evolution-handlers.mjs";
 import { createNativeAcpxCodexBridgeTaskHandlers } from "./task-executor-native-acpx-codex-bridge-handlers.mjs";
 import { createNativeEngineeringLspLifecycleTaskHandlers } from "./native-engineering-lsp-lifecycle-tasks.mjs";
 import { createSystemBodyTaskHandlers } from "./task-executor-system-body-handlers.mjs";
@@ -1236,6 +1237,7 @@ function buildNonRecoverableExecutionResult(finalExecution) {
 const NON_RECOVERABLE_TASK_HANDLERS = [
   ...createNativeEngineeringLspLifecycleTaskHandlers({ state, taskManager, approvalEngine, policyEvaluator, publishEvent }),
   ...createNativePluginRuntimeRefreshTaskHandlers({ state, taskManager, approvalEngine, policyEvaluator, planBuilder, publishEvent }),
+  ...createNativeDeclarativeEvolutionTaskHandlers({ state, taskManager, approvalEngine, policyEvaluator, planBuilder, publishEvent }),
   ...createNativeAcpxCodexBridgeTaskHandlers({ state, taskManager, approvalEngine, policyEvaluator, planBuilder, publishEvent }),
   ...createNativeDeferredTaskHandlers({ state, taskManager, approvalEngine, policyEvaluator, publishEvent }),
   ...createSystemBodyTaskHandlers({ client, state, taskManager, publishEvent, hostdControlClient }),

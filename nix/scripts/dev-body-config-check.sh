@@ -605,6 +605,10 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-provider-handoff.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-plugin-refresh.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-plan-todo.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-execution.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-task-builders.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-task-routes.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/task-executor-native-declarative-evolution-handlers.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/hostd-control-client.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-capabilities.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-capabilities.json"
@@ -613,7 +617,7 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/persist.mjs"
     || -w "$core_server"
     || -e "$core_out/share/openclaw/services/openclaw-core/test"
-    || "$(find "$core_out" -type f | wc -l)" -ne 191 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 198 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi

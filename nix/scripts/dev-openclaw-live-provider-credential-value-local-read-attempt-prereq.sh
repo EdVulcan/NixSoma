@@ -70,6 +70,9 @@ openclaw_credential_value_local_read_attempt_prepare_prereq_state() {
   local source_core_state="$REPO_ROOT/.artifacts/openclaw-core-phase-${fast_source_phase}-${fast_source_suffix}-check.json"
   local source_system_heal_state="$REPO_ROOT/.artifacts/openclaw-system-heal-phase-${fast_source_phase}-${fast_source_suffix}-check.json"
   local fallback_common_check="dev-${predecessor_slug}-common-check.sh"
+  if [[ ! -f "$SCRIPT_DIR/$fallback_common_check" && -f "$SCRIPT_DIR/dev-p${predecessor_phase}-common-check.sh" ]]; then
+    fallback_common_check="dev-p${predecessor_phase}-common-check.sh"
+  fi
   local fallback_port_base_env="PHASE${predecessor_phase}_PORT_BASE"
   local prereq_name="phase-${fast_source_phase}-${fast_source_suffix}-state"
 

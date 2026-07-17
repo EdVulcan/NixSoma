@@ -58,6 +58,9 @@ run_phase_common_check() {
 
   slug="$(phase_slug "$phase")"
   common_script="$SCRIPT_DIR/dev-$slug-common-check.sh"
+  if [[ ! -f "$common_script" && -f "$SCRIPT_DIR/dev-p${phase}-common-check.sh" ]]; then
+    common_script="$SCRIPT_DIR/dev-p${phase}-common-check.sh"
+  fi
   phase_env="PHASE$phase"
 
   if [[ ! -f "$common_script" ]]; then

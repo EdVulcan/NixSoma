@@ -10,7 +10,7 @@ const fs = require("node:fs");
 
 const [registryFile, manifestFile] = process.argv.slice(2);
 const registryText = fs.readFileSync(registryFile, "utf8").replace(/^\uFEFF/, "");
-const hardScriptFilenameLimit = 240;
+const relativePathLimit = 160;
 
 function readManifest(file) {
   const text = fs.readFileSync(file, "utf8").replace(/^\uFEFF/, "");
@@ -26,25 +26,33 @@ function readManifest(file) {
 const milestones = readManifest(manifestFile);
 
 function usesShortResultEnvelopeScriptAlias(milestone) {
-  return Number.parseInt(milestone.phase, 10) >= 130 || [
+  const phase = Number.parseInt(milestone.phase, 10);
+  return phase >= 130 || [
     `dev-${milestone.slug}-check.sh`,
     `dev-observer-${milestone.slug}-check.sh`,
     `dev-${milestone.slug}-common-check.sh`,
-  ].some((script) => script.length >= hardScriptFilenameLimit);
+  ].some((script) => `nix/scripts/${script}`.length >= relativePathLimit);
 }
 
-function resultEnvelopeScriptBase(milestone) {
-  return usesShortResultEnvelopeScriptAlias(milestone)
-    ? `openclaw-live-provider-result-envelope-phase-${milestone.phase}`
-    : milestone.slug;
+function resultEnvelopeScripts(milestone) {
+  if (usesShortResultEnvelopeScriptAlias(milestone)) {
+    return {
+      core: `dev-p${milestone.phase}-core-check.sh`,
+      observer: `dev-p${milestone.phase}-observer-check.sh`,
+    };
+  }
+  return {
+    core: `dev-${milestone.slug}-check.sh`,
+    observer: `dev-observer-${milestone.slug}-check.sh`,
+  };
 }
 
 function resultEnvelopeCoreScript(milestone) {
-  return `dev-${resultEnvelopeScriptBase(milestone)}-check.sh`;
+  return resultEnvelopeScripts(milestone).core;
 }
 
 function resultEnvelopeObserverScript(milestone) {
-  return `dev-observer-${resultEnvelopeScriptBase(milestone)}-check.sh`;
+  return resultEnvelopeScripts(milestone).observer;
 }
 
 const coreRows = milestones.map((milestone) => [

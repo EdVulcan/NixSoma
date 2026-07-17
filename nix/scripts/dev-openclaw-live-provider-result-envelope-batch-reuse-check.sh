@@ -63,8 +63,10 @@ run_phase_common_check() {
   core_script="dev-$slug-check.sh"
   observer_script="dev-observer-$slug-check.sh"
   common_script_name="dev-$slug-common-check.sh"
-  if (( phase >= 130 || ${#core_script} >= 240 || ${#observer_script} >= 240 || ${#common_script_name} >= 240 )); then
-    common_script_name="dev-openclaw-live-provider-result-envelope-phase-$phase-common-check.sh"
+  if (( phase >= 130 || ${#core_script} + 12 >= 160 || ${#observer_script} + 12 >= 160 || ${#common_script_name} + 12 >= 160 )); then
+    core_script="dev-p${phase}-core-check.sh"
+    observer_script="dev-p${phase}-observer-check.sh"
+    common_script_name="dev-p${phase}-common-check.sh"
   fi
   common_script="$SCRIPT_DIR/$common_script_name"
   phase_env="PHASE$phase"

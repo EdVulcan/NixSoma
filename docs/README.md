@@ -68,11 +68,29 @@ real host mutation still requires approval plus Operator Step/Run. The switched
 VM now proves all three fixed targets through Core and Observer real-execution
 checks with native D-Bus, changed-PID, and restored-health evidence.
 
-The first Phase D declarative-evolution capability is now complete. The common
-capability runtime can generate an allowlisted `openclaw-managed.nix` candidate
-and validate its module shape with `nix-instantiate`; it does not write the
-managed file, run `nixos-rebuild`, switch generations, or roll back. The active
-plan is [OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md](./plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md).
+The first Phase D declarative-evolution capability and its approval-bound
+staging/build loop are now complete. Core can generate an allowlisted
+`openclaw-managed.nix` candidate, bind its hash to an approval, stage the exact
+candidate under OpenClaw ownership, and run read-only Nix evaluation/build
+checks. It still does not write `/etc/nixos`, run `nixos-rebuild`, switch
+generations, or roll back. The active plan is
+[OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md](./plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md).
+
+## Windows Checkout Path Policy
+
+The repository keeps public milestone names, capability IDs, endpoint paths,
+and audit tokens unchanged. Only physical filenames may use short aliases such
+as `dev-p100-core-check.sh`; the manifest, expanded registry, wrappers, batch
+checks, and changed-check selector derive and validate the same alias.
+
+Run `bash nix/scripts/dev-windows-path-budget-check.sh` before committing. It
+scans tracked and untracked files and enforces a 160-character repository
+relative-path budget by default. Set
+`OPENCLAW_WINDOWS_RELATIVE_PATH_LIMIT` only for an explicit validation
+experiment; do not use a larger value as a permanent workaround. A short
+checkout directory is still recommended. On Windows Git installations that
+support it, `git -c core.longpaths=true clone ...` can provide extra headroom,
+but it is not the repository's primary fix.
 
 ## Active Architecture
 

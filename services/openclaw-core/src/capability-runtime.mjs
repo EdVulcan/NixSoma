@@ -44,6 +44,7 @@ export function createCapabilityRuntime(deps) {
     buildExperienceMemoryReadModel = () => null,
     pluginRuntime = {},
     providerRuntime = {},
+    declarativeEvolution = {},
     workspaceOps = {},
     serialiseTask,
     serialiseApproval,
@@ -186,6 +187,7 @@ export function createCapabilityRuntime(deps) {
   });
   const declarativeEvolutionHandlers = createDeclarativeEvolutionCapabilityHandlers({
     buildNativeDeclarativeEvolutionCandidate,
+    createNativeDeclarativeEvolutionStagingTask: declarativeEvolution.createNativeDeclarativeEvolutionStagingTask,
   });
 
   function baseCapabilities() {

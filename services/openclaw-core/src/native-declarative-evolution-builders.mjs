@@ -151,18 +151,19 @@ function hashCandidate(candidateText) {
   return createHash("sha256").update(candidateText, "utf8").digest("hex");
 }
 
+export function hashNativeDeclarativeEvolutionCandidate(candidateText) {
+  return hashCandidate(candidateText);
+}
+
 function boundedOutput(value) {
   return typeof value === "string" ? value.trim().slice(0, MAX_VALIDATION_OUTPUT) : "";
 }
 
-export async function validateNativeDeclarativeEvolutionNix(candidateText, {
+export async function validateNativeDeclarativeEvolutionNixFile(candidatePath, {
   nixInstantiate = process.env.OPENCLAW_NIX_INSTANTIATE ?? "nix-instantiate",
   timeoutMs = 5000,
 } = {}) {
-  const tempDir = await mkdtemp(path.join(os.tmpdir(), "openclaw-managed-nix-"));
-  const candidatePath = path.join(tempDir, "openclaw-managed.nix");
   try {
-    await writeFile(candidatePath, candidateText, { encoding: "utf8", mode: 0o600 });
     const expression = [
       `let module = import ${renderNixString(candidatePath)};`,
       "value = module { lib = { mkAfter = value: value; }; };",
@@ -197,6 +198,15 @@ export async function validateNativeDeclarativeEvolutionNix(candidateText, {
       stderr: boundedOutput(error?.stderr),
       message: boundedOutput(error?.message),
     };
+  }
+}
+
+export async function validateNativeDeclarativeEvolutionNix(candidateText, options = {}) {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "openclaw-managed-nix-"));
+  const candidatePath = path.join(tempDir, "openclaw-managed.nix");
+  try {
+    await writeFile(candidatePath, candidateText, { encoding: "utf8", mode: 0o600 });
+    return await validateNativeDeclarativeEvolutionNixFile(candidatePath, options);
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }

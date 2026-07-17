@@ -2654,3 +2654,114 @@ test("execution serializer exposes transient recommendation separately from comp
   assert.deepEqual(serialized.recommendation, recommendation);
   assert.deepEqual(serialized.recommendationEvidence, evidence);
 });
+
+test("approved declarative evolution staging executes only the hash-bound candidate", async () => {
+  const candidateHash = "b".repeat(64);
+  const candidateText = "validated candidate body";
+  let executionCalls = 0;
+  const approval = {
+    id: "approval-declarative",
+    status: "approved",
+    binding: {
+      kind: "native_declarative_evolution_candidate",
+      candidateHash,
+    },
+  };
+  const task = {
+    id: "task-declarative",
+    type: "native_declarative_evolution_staging",
+    goal: "Stage a managed Nix candidate",
+    status: "queued",
+    policy: { request: { requiresApproval: true }, decision: { decision: "audit_only", reason: "approved_and_audited" } },
+    approval: { requestId: approval.id, status: "approved" },
+    plan: { strategy: "native-declarative-evolution-staging-v0" },
+    nativeDeclarativeEvolution: {
+      candidate: {
+        candidateHash,
+        changes: [{ operation: "enable_component", component: "core" }],
+      },
+      approvalBinding: approval.binding,
+      governance: { writesManagedConfig: false, switchesGeneration: false, executesRollback: false },
+      execution: null,
+    },
+  };
+  const { executor, state, events } = createExecutorHarness({
+    state: { approvals: new Map([[approval.id, approval]]) },
+    planBuilder: {
+      buildNativeDeclarativeEvolutionCandidate: async ({ changes }) => ({
+        candidateStatus: "validated",
+        candidateHash,
+        candidateText,
+        changes,
+        validation: { status: "passed" },
+      }),
+      executeNativeDeclarativeEvolutionCandidate: async ({ candidateText: text, candidateHash: hash }) => {
+        executionCalls += 1;
+        assert.equal(text, candidateText);
+        assert.equal(hash, candidateHash);
+        return {
+          status: "passed",
+          candidateHash,
+          staging: { status: "staged", path: `/var/lib/openclaw/managed-config-staging/${candidateHash}.nix` },
+          evaluation: { status: "passed", mode: "nix-eval" },
+          build: { status: "passed", mode: "nix-build-dry-run" },
+          governance: { writesManagedConfig: false, switchesGeneration: false, executesRollback: false },
+        };
+      },
+    },
+  });
+
+  const result = await executor.executeTaskWithRecovery(task);
+  assert.equal(result.finalExecution.task.status, "completed");
+  assert.equal(executionCalls, 1);
+  assert.equal(result.finalExecution.task.nativeDeclarativeEvolution.execution.candidateHash, candidateHash);
+  assert.equal(result.finalExecution.task.nativeDeclarativeEvolution.governance.approvalBoundToCandidateHash, true);
+  assert.equal(JSON.stringify(events).includes(candidateText), false);
+  assert.equal(events.some((event) => event.name === "task.completed"), true);
+  assert.equal(state.approvals.get(approval.id).binding.candidateHash, candidateHash);
+});
+
+test("approved declarative evolution staging refuses a changed candidate before staging", async () => {
+  const expectedHash = "c".repeat(64);
+  const observedHash = "d".repeat(64);
+  let executionCalls = 0;
+  const approval = {
+    id: "approval-declarative-mismatch",
+    status: "approved",
+    binding: { kind: "native_declarative_evolution_candidate", candidateHash: expectedHash },
+  };
+  const task = {
+    id: "task-declarative-mismatch",
+    type: "native_declarative_evolution_staging",
+    goal: "Stage a managed Nix candidate",
+    status: "queued",
+    policy: { request: { requiresApproval: true }, decision: { decision: "audit_only" } },
+    approval: { requestId: approval.id, status: "approved" },
+    plan: { strategy: "native-declarative-evolution-staging-v0" },
+    nativeDeclarativeEvolution: {
+      candidate: { candidateHash: expectedHash, changes: [{ operation: "enable_component", component: "core" }] },
+      approvalBinding: approval.binding,
+      governance: {},
+    },
+  };
+  const { executor } = createExecutorHarness({
+    state: { approvals: new Map([[approval.id, approval]]) },
+    planBuilder: {
+      buildNativeDeclarativeEvolutionCandidate: async () => ({
+        candidateStatus: "validated",
+        candidateHash: observedHash,
+        candidateText: "changed candidate",
+        validation: { status: "passed" },
+      }),
+      executeNativeDeclarativeEvolutionCandidate: async () => {
+        executionCalls += 1;
+        return { status: "passed" };
+      },
+    },
+  });
+
+  const result = await executor.executeTaskWithRecovery(task);
+  assert.equal(result.finalExecution.task.status, "failed");
+  assert.match(result.finalExecution.task.outcome.summary, /candidate changed after approval/);
+  assert.equal(executionCalls, 0);
+});

@@ -12,6 +12,8 @@ import { createCloudConsciousnessProviderCallRehearsalBuilders } from "./cloud-c
 import { createCloudConsciousnessProviderDryRunBuilders } from "./cloud-consciousness-provider-dry-run-builders.mjs";
 import { createLongTermMemoryBuilders } from "./long-term-memory-builders.mjs";
 import { createNativePluginPlanBuilders } from "./native-plugin-plan-builders.mjs";
+import { createNativeDeclarativeEvolutionTaskBuilders } from "./native-declarative-evolution-task-builders.mjs";
+import { createNativeDeclarativeEvolutionExecution } from "./native-declarative-evolution-execution.mjs";
 import { createPhase2MvpReadinessBuilders } from "./phase2-mvp-readiness-builders.mjs";
 import { createPhase3WorkViewBuilders } from "./phase3-work-view-builders.mjs";
 import { createPhase4SelfHealBuilders } from "./phase4-self-heal-builders.mjs";
@@ -108,12 +110,14 @@ export function createPlanBuilder(deps) {
     buildOpenClawPluginManifestMap,
     buildOpenClawPluginCapabilityPlan,
     buildNativeAcpxCodexBridgeWrapperDraft,
+    buildNativeDeclarativeEvolutionCandidate,
   } = pluginReview;
 
   // Native plugin refresh builders depend on the rule-plan serializer below;
   // expose them lazily so the common capability runtime can share the same owner.
   let nativePluginPlanBuilders = null;
   let cloudLiveProviderRuntimeImplementation = null;
+  let nativeDeclarativeEvolutionTaskBuilders = null;
   const capabilityRuntime = createCapabilityRuntime({
     host,
     port,
@@ -149,6 +153,14 @@ export function createPlanBuilder(deps) {
           throw new Error("Cloud live provider runtime builders are not initialized.");
         }
         return cloudLiveProviderRuntimeImplementation.createCloudConsciousnessLiveProviderEgressExecutionTask(...args);
+      },
+    },
+    declarativeEvolution: {
+      createNativeDeclarativeEvolutionStagingTask: (...args) => {
+        if (!nativeDeclarativeEvolutionTaskBuilders) {
+          throw new Error("Native declarative evolution task builders are not initialized.");
+        }
+        return nativeDeclarativeEvolutionTaskBuilders.createNativeDeclarativeEvolutionStagingTask(...args);
       },
     },
   });
@@ -215,6 +227,27 @@ export function createPlanBuilder(deps) {
     createNativePluginRuntimeRefreshTask,
     createNativePluginInvokeTask,
   } = nativePluginPlanBuilders;
+
+  const nativeDeclarativeEvolutionExecution = createNativeDeclarativeEvolutionExecution();
+  nativeDeclarativeEvolutionTaskBuilders = createNativeDeclarativeEvolutionTaskBuilders({
+    buildNativeDeclarativeEvolutionCandidate,
+    stagingDirectory: nativeDeclarativeEvolutionExecution.stagingDirectory,
+    autonomyMode,
+    evaluatePolicyIntent,
+    createTask,
+    createApprovalRequestForTask,
+    supersedeOtherActiveTasks,
+    reconcileRuntimeState,
+    persistState,
+    publishEvent,
+    publishTaskApprovalIfPending,
+    serialiseTask,
+    serialisePlanForPublic,
+  });
+  const {
+    buildNativeDeclarativeEvolutionStagingTaskDraft,
+    createNativeDeclarativeEvolutionStagingTask,
+  } = nativeDeclarativeEvolutionTaskBuilders;
 
   const systemdTaskBuilders = createSystemdTaskBuilders({
     fetchJson,
@@ -701,6 +734,12 @@ function compactCloudConsciousnessEvidenceRef(evidence) {
     createNativePluginRuntimeAdapterTask,
     createNativePluginRuntimeRefreshTask,
     createNativePluginInvokeTask,
+    buildNativeDeclarativeEvolutionCandidate,
+    buildNativeDeclarativeEvolutionStagingTaskDraft,
+    createNativeDeclarativeEvolutionStagingTask,
+    executeNativeDeclarativeEvolutionCandidate: nativeDeclarativeEvolutionExecution.executeNativeDeclarativeEvolutionCandidate,
+    stageNativeDeclarativeEvolutionCandidate: nativeDeclarativeEvolutionExecution.stageCandidate,
+    runNativeDeclarativeEvolutionReadOnlyNixOsCheck: nativeDeclarativeEvolutionExecution.runReadOnlyNixOsCheck,
     buildSystemdRepairExecutionTaskDraft,
     createSystemdRepairExecutionTask,
     createSystemdRepairCandidateTaskShell,

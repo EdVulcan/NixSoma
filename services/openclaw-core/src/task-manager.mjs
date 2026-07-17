@@ -12,6 +12,7 @@ const TASK_EXTENSION_FIELDS = [
   { name: "engineeringWriteProposal" },
   { name: "engineeringLspLifecycle" },
   { name: "nativePluginRuntimeRefresh" },
+  { name: "nativeDeclarativeEvolution" },
   { name: "nativeAcpxCodexBridgeWrapper" },
   { name: "nativeAcpxCodexBridgeProcessSpawn" },
   { name: "workViewTrustedSidecarLifecycle" },

@@ -1267,22 +1267,31 @@ This closes the Level 1 navigation boundary and stops here; it does not add
 another LSP request, generic tool dispatcher, task, approval, mutation,
 provider call, or network path.
 
-## Completed Phase D Candidate Slice
+## Completed Phase D Candidate And Staging Slice
 
-The first real Phase D declarative-evolution capability is now complete. Core
+The first real Phase D declarative-evolution capability is complete. Core
 accepts only structured allowlisted changes, generates a transient
 `/etc/nixos/openclaw-managed.nix` candidate, and validates the generated module
 with `nix-instantiate`. The common capability is
-`plan.openclaw.declarative_evolution.managed_config_candidate`; its invocation
-ledger retains only the candidate hash, byte count, validation result, target,
-and negative authority flags.
+`plan.openclaw.declarative_evolution.managed_config_candidate`.
 
-This slice does not write the managed file, create a task or approval, run
-`nixos-rebuild`, switch a generation, execute rollback, read credentials, call
-a provider, or use the network. The next mainline slice is an explicitly
-approved candidate-staging and read-only NixOS build/evaluation path bound to
-the exact candidate hash. Health-gated activation and physical rollback remain
-separate capabilities.
+The approval-bound staging loop is now also complete through
+`act.openclaw.declarative_evolution.staging_task`. After explicit confirmation
+and approval, Core rebuilds the candidate from structured changes, requires the
+same SHA-256 hash, writes the exact body to an OpenClaw-owned staging directory,
+and runs read-only `nix-instantiate`, `nix eval`, and no-link `nix build` checks.
+Task, approval, state, and event evidence retain only compact hash/path,
+validation, evaluation, build, and governance metadata; the candidate body is
+not persisted in the public evidence surfaces. The Core and Observer milestone
+pair proves the full path with `nix build --dry-run` to keep daily validation
+bounded.
+
+This slice still does not write `/etc/nixos`, run `nixos-rebuild`, switch a
+generation, execute rollback, read credentials, call a provider, or use network
+egress. The next mainline slice is a read-only health-gate assessment bound to
+the exact staged candidate and evaluated system closure. Activation and
+physical rollback remain separate capabilities and cannot be inferred from a
+successful build.
 
 ## Identity-Upgrade Alignment
 

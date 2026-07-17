@@ -32,6 +32,11 @@ export function isNativePluginRuntimeRefreshTask(task) {
     && task?.plan?.strategy === "native-plugin-runtime-refresh-v0";
 }
 
+export function isNativeDeclarativeEvolutionStagingTask(task) {
+  return task?.type === "native_declarative_evolution_staging"
+    && task?.plan?.strategy === "native-declarative-evolution-staging-v0";
+}
+
 export function isNativeAcpxCodexBridgeWrapperTask(task) {
   return task?.type === "native_acpx_codex_bridge_wrapper_action"
     && task?.plan?.strategy === "acpx-codex-bridge-wrapper-action-v0";

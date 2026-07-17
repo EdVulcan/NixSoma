@@ -198,6 +198,10 @@ let
     OPENCLAW_BROWSER_RUNTIME_STATE_FILE = "${stateDir}/openclaw-browser-runtime-state.json";
     OPENCLAW_EVENT_LOG_FILE = "${stateDir}/openclaw-events.jsonl";
     OPENCLAW_BODY_EVIDENCE_LEDGER_DIR = "${stateDir}/body-evidence-ledger";
+    OPENCLAW_MANAGED_CONFIG_STAGING_DIR = "${stateDir}/managed-config-staging";
+    OPENCLAW_NIXOS_FLAKE = cfg.repoRoot;
+    OPENCLAW_NIXOS_BASE_MODULE = "${cfg.repoRoot}/nix/hosts/local-dev.nix";
+    OPENCLAW_NIX_SYSTEM = pkgs.stdenv.hostPlatform.system;
     OPENCLAW_BODY_USER_OWNED_UNITS = lib.concatStringsSep "," userOwnedServiceNames;
   } // optionalAttrs cfg.systemdRepairAuthDelegation.enable {
     OPENCLAW_HOSTD_SOCKET_PATH = hostdSocketPath;

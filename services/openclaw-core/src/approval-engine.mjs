@@ -27,6 +27,7 @@ function serialiseApproval(approval) {
     updatedAt: approval.updatedAt,
     resolvedAt: approval.resolvedAt ?? null,
     expiredAt: approval.expiredAt ?? null,
+    ...(approval.binding ? { binding: approval.binding } : {}),
     task: approval.taskId && tasks.has(approval.taskId) ? serialiseTask(tasks.get(approval.taskId)) : null,
   };
 }
@@ -172,6 +173,9 @@ function createApprovalRequestForTask(task, decision) {
     updatedAt: now,
     resolvedAt: null,
     expiredAt: null,
+    ...(task.nativeDeclarativeEvolution?.approvalBinding
+      ? { binding: task.nativeDeclarativeEvolution.approvalBinding }
+      : {}),
   };
   approvals.set(approval.id, approval);
   task.approval = {
