@@ -73,8 +73,15 @@ checks with native D-Bus, changed-PID, and restored-health evidence.
 
 The Core operator identity boundary now covers both mutation routes and the
 sensitive task, approval, runtime/policy, and execution-ledger read models.
-`/health` and non-state capability discovery remain public; the next security
-slice is Core-issued per-service grants for direct actuator routes.
+`/health` and non-state capability discovery remain public. Core-issued
+per-service grants now protect direct command, file, and screen actuator routes;
+the real regression proves unsigned, cross-audience, replayed, and target-
+tampered grants fail before mutation while an approved Core path succeeds. The
+reservation recovery regression now proves an interrupted running step becomes
+`recovered_aborted` after Core restart without automatic replay. Pre-start
+expiry remains unit-covered because the production executor has no externally
+pausable reserve/start boundary; the next mainline is the fixed hostd/systemd
+Level 3 activation bridge.
 
 The first Phase D declarative-evolution capability and its approval-bound
 staging/build loop are now complete. Core can generate an allowlisted

@@ -732,3 +732,5 @@ observer-workspace-command-denial-recovery-persistence	dev-observer-workspace-co
 observer-workspace-command-recovery	dev-observer-workspace-command-recovery-check.sh	Observer controls and visibility for recovered OpenClaw workspace commands
 observer-workspace-command-recovery-persistence	dev-observer-workspace-command-recovery-persistence-check.sh	Observer visibility for recovered OpenClaw workspace command chains across restarts
 observer-operator	dev-observer-operator-check.sh	Observer UI planner/operator controls and API wiring
+direct-actuator-grant	dev-direct-actuator-grant-check.sh	Real service regression for unsigned, cross-audience, replayed, and Core-issued actuator grants
+reservation-recovery	dev-reservation-recovery-check.sh	Real Core restart regression for failed-closed capability reservation recovery without replay

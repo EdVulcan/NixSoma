@@ -292,6 +292,10 @@ is failed closed and requires a new approved task after Core restart. The
 approval binding is derived from capability metadata rather than a fixed list of
 capability ids. Capabilities that only create a pending, approval-gated task are
 kept as task-shell entry points; they do not claim direct mutation authority.
+The real-service regression in `nix/scripts/dev-direct-actuator-grant-check.sh`
+proves that unsigned system-sense and screen-act requests fail before mutation,
+audience-swapped grants fail, single-use replay fails, target tampering fails,
+and the approved Core path still writes through its signed grant.
 
 The same approved handoff now accepts explicit `includeWorkView`,
 `includeWorkViewObservation`, and `includePlanTodo` context selectors. It
@@ -1398,10 +1402,15 @@ bounded credential map, while NixOS delivers the map and caller files with
 `LoadCredential`. Shared-token and loopback compatibility remains only when a
 per-caller map is not configured.
 
-The next security slice is Core-issued per-service execution grants for direct
-actuator routes, followed by reservation commit/abort/recovery closure. Only
-after those boundaries and the existing hostd health proof should the fixed
-hostd/systemd Level 3 activation bridge resume.
+The direct-actuator grant slice is now closed by both unit coverage and the real
+service attack regression above. The reservation implementation already covers
+commit, abort, expiry, and restart recovery in the Core runtime. The real
+service check in `nix/scripts/dev-reservation-recovery-check.sh` proves an
+interrupted running reservation is failed closed as `recovered_aborted` without
+automatic replay. Pre-start expiry remains unit-covered because the production
+executor has no externally pausable reserve/start boundary. These security
+boundaries are now sufficient to resume the fixed hostd/systemd Level 3
+activation bridge, subject to its existing health proof.
 
 ## Identity-Upgrade Alignment
 

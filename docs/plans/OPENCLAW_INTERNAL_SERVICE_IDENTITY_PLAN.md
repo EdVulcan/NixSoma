@@ -92,18 +92,47 @@ POST requests continue through its existing authenticated `post_json` path.
 - The HTTP helper check proves direct Core GET calls receive the bearer header
   without adding it to unrelated service requests.
 
+## Delivered Slice: Core-Issued Actuator Grants
+
+Direct mutation routes now require a short-lived, single-use Ed25519 grant
+issued by Core and addressed to the exact downstream service. The grant binds
+the HTTP method, path, body, task/step context, capability, and intent. Missing
+verification configuration fails closed; audience swaps, request mismatches,
+expired grants, and replayed grants are rejected before the actuator runs.
+
+## Evidence
+
+- `packages/shared-utils/test/execution-grants.test.mjs` covers signature,
+  audience, request binding, context binding, expiry, and replay semantics.
+- `services/openclaw-core/test/service-client.test.mjs` proves Core's service
+  client signs the configured actuator target and carries task context.
+- `nix/scripts/dev-direct-actuator-grant-check.sh` starts isolated real services
+  and proves unsigned system-sense/screen-act requests, cross-audience grants,
+  replay, and target tampering fail before mutation; the approved Core operator
+  path completes a real filesystem write through its issued grant.
+
+## Delivered Slice: Reservation Recovery Evidence
+
+The Core reservation state machine now has real service evidence for an
+interrupted running step. A bounded approved command is allowed to persist its
+`running` reservation, Core is interrupted, and the same persisted state is
+reloaded. Startup reconciliation marks the step and task failed, clears the
+active reservation, records a `recovered_aborted` receipt, and does not replay
+the command.
+
+Evidence: `nix/scripts/dev-reservation-recovery-check.sh`. Focused unit tests
+also cover commit, abort, pre-start expiry release, and restart recovery.
+
 ## Deliberately Deferred
 
 - Removal of shared Event Hub and Browser Runtime compatibility modes.
 - Authorization of Browser Runtime read routes through a separate operator
   session; the per-caller map authenticates internal service callers.
-- Core-issued direct actuator grants and reservation commit/abort/recovery state
-  machine closure.
+- A production pause boundary for pre-start reservation expiry. The branch is
+  unit-covered and remains intentionally unexposed as a standalone API.
 - Real NixOS VM activation, host-health oracle, generation receipt, and rollback.
 
 ## Next Slice
 
-Make the existing direct actuator routes accept only Core-issued per-service
-execution grants. Keep the current task/approval and trusted work-view
-contracts intact, and prove that unsigned direct command/file/browser actuator
-requests fail before mutation while a correctly bound single-use grant succeeds.
+Resume the fixed hostd/systemd Level 3 activation bridge using the existing
+approval, health, changed-PID, and recovery contracts.
