@@ -4,6 +4,7 @@ import { Readable } from "node:stream";
 
 import { registerRoutes } from "../src/route-handlers.mjs";
 import { buildEyeHandRecoveryEvidence } from "../src/task-recovery.mjs";
+import { createOperatorAuthenticator } from "../src/operator-auth.mjs";
 import {
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_REGISTRY,
@@ -98,12 +99,15 @@ function createBaseDeps(overrides = {}) {
   };
 }
 
-async function invokeRoute(deps, method, path, body = null) {
+async function invokeRoute(deps, method, path, body = null, requestHeaders = {}) {
   const handler = registerRoutes(deps);
   const chunks = body === null ? [] : [Buffer.from(JSON.stringify(body))];
   const req = Readable.from(chunks);
   req.method = method;
-  req.headers = {};
+  req.headers = requestHeaders;
+  if (!deps.operatorAuth) {
+    req.openclawOperator = { actor: "operator", role: "operator", authMethod: "test" };
+  }
 
   let statusCode = null;
   let headers = null;
@@ -835,6 +839,71 @@ test("capability invoke POST remains on the mutable route path", async () => {
   });
 });
 
+test("registered mutation routes require operator authentication before capability invocation", async () => {
+  let invoked = false;
+  const operatorAuth = createOperatorAuthenticator({
+    token: "operator-secret",
+    allowedOrigins: ["http://127.0.0.1:4170"],
+  });
+  const deps = createBaseDeps({
+    deps: { operatorAuth },
+    planBuilder: {
+      invokeCapability: async () => {
+        invoked = true;
+        return { statusCode: 202, response: { ok: true } };
+      },
+    },
+  });
+
+  const rejected = await invokeRoute(deps, "POST", "/capabilities/invoke", { capabilityId: "act.system.command.execute" });
+  assert.equal(rejected.statusCode, 401);
+  assert.equal(invoked, false);
+
+  const accepted = await invokeRoute(
+    deps,
+    "POST",
+    "/capabilities/invoke",
+    { capabilityId: "sense.system.vitals" },
+    { authorization: "Bearer operator-secret" },
+  );
+  assert.equal(accepted.statusCode, 202);
+  assert.equal(invoked, true);
+});
+
+test("approval mutation derives approvedBy from authenticated operator instead of request body", async () => {
+  const approval = { id: "approval-authenticated", status: "pending" };
+  let observedInput = null;
+  const operatorAuth = createOperatorAuthenticator({ token: "operator-secret", actor: "real-operator" });
+  const deps = createBaseDeps({
+    deps: { operatorAuth },
+    state: { approvals: new Map([[approval.id, approval]]) },
+    approvalEngine: {
+      serialiseApproval: (item) => item,
+      listApprovals: () => [],
+      buildApprovalSummary: () => ({}),
+      markApprovalApproved: (item, input) => {
+        observedInput = input;
+        item.status = "approved";
+        return { approval: item, task: null };
+      },
+    },
+  });
+
+  const response = await invokeRoute(
+    deps,
+    "POST",
+    `/approvals/${approval.id}/approve`,
+    { approvedBy: "forged-actor", reason: "explicit approval" },
+    { authorization: "Bearer operator-secret" },
+  );
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(observedInput, {
+    approvedBy: "real-operator",
+    reason: "explicit approval",
+  });
+});
+
 test("approval route group filters inbox items and clamps limits", async () => {
   const deps = createBaseDeps({
     approvalEngine: {
@@ -927,7 +996,7 @@ test("approval deny route publishes task failure when denial fails a task", asyn
       buildApprovalSummary: () => ({ counts: { denied: 1, pending: 0 } }),
       markApprovalDenied: (item, input) => {
         assert.deepEqual(input, {
-          deniedBy: "user",
+          deniedBy: "operator",
           reason: "Denied by user.",
         });
         item.status = "denied";

@@ -20,7 +20,7 @@ openclaw-live-provider-credential-value-local-read-attempt-batch-reuse	dev-openc
 openclaw-live-provider-result-envelope-milestone-manifest	dev-openclaw-live-provider-result-envelope-milestone-manifest-check.sh	Phase 99-136 live-provider result-envelope milestone metadata alignment
 openclaw-live-provider-result-envelope-batch-reuse	dev-openclaw-live-provider-result-envelope-batch-reuse-check.sh	Phase 99-136 result-envelope batch validation with one reusable service lifecycle
 openclaw-live-provider-result-envelope-phase-115-116-batch-reuse	dev-p115-136-batch-check.sh	Phase 115-136 manifest-backed result-envelope batch validation
-openclaw-native-declarative-evolution-staging	dev-openclaw-native-declarative-evolution-staging-check.sh	Real Core approval, hash binding, OpenClaw-owned staging, and read-only Nix evaluation/build validation
+openclaw-native-declarative-evolution-staging	dev-openclaw-native-declarative-evolution-staging-check.sh	Real Core approval, hash binding, read-only Nix evaluation/build, host-health-bound activation decision, and zero-activation execution validation
 body-config	dev-body-config-check.sh	NixOS body module, profiles, and systemd service skeleton
 state-settling	dev-state-settling-check.sh	Session/browser/screen first-frame settling
 openclaw-ai-work-view-capture	dev-openclaw-ai-work-view-capture-check.sh	Browser-runtime-backed AI work view capture metadata through screen-sense
@@ -647,7 +647,7 @@ observer-openclaw-cloud-consciousness-live-provider-credential-value-local-read-
 observer-openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-approved-deferred	dev-p97-observer-check.sh	Observer visibility for Phase 97 credential value local read execution local read attempt local read approved deferred evidence
 observer-openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution-local-read-attempt-local-read-final-readiness-preflight	dev-p98-observer-check.sh	Observer visibility for Phase 98 credential value local read execution local read attempt local read final readiness preflight
 # @openclaw-generate-live-provider-result-envelope observer
-observer-openclaw-native-declarative-evolution-staging	dev-observer-openclaw-native-declarative-evolution-staging-check.sh	Observer capability-registry and blocked-invocation visibility for declarative evolution staging
+observer-openclaw-native-declarative-evolution-staging	dev-observer-openclaw-native-declarative-evolution-staging-check.sh	Observer served activation-decision panel, capability registry, health review, and fail-closed confirmation visibility for declarative evolution
 observer-openclaw-systemd-unit-inventory	dev-observer-openclaw-systemd-unit-inventory-check.sh	Observer visibility for read-only OpenClaw systemd unit inventory
 observer-openclaw-kernel-process-exec-capture	dev-observer-openclaw-kernel-process-exec-capture-check.sh	Observer visibility for real read-only eBPF process-exec events
 observer-openclaw-systemd-repair-plan	dev-observer-openclaw-systemd-repair-plan-check.sh	Observer visibility for plan-only OpenClaw systemd repair proposals

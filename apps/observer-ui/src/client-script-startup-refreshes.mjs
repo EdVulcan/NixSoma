@@ -2,6 +2,12 @@ export const OBSERVER_STARTUP_REFRESH_INTERVAL_MS = 5000;
 
 export const OBSERVER_STARTUP_REFRESH_GROUPS = [
   {
+    group: "operatorAuth",
+    refreshNames: [
+      "refreshOperatorSession",
+    ],
+  },
+  {
     group: "phaseMemory",
     refreshNames: [
       "refreshHealth",
@@ -254,6 +260,12 @@ export const OBSERVER_STARTUP_REFRESH_GROUPS = [
       "refreshSourceCommandProposals",
       "refreshSourceCommandPlanDraft",
       "refreshWorkspaceCommandPlanDraft",
+    ],
+  },
+  {
+    group: "declarativeEvolution",
+    refreshNames: [
+      "refreshDeclarativeEvolutionActivationDecision",
     ],
   },
   {

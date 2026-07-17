@@ -9,12 +9,15 @@ mkOpenClawSourceClosure {
   pname = "openclaw-observer-ui";
   files = [
     ../../apps/observer-ui/package.json
+    ../../apps/observer-ui/src/client-script-auth.mjs
     ../../apps/observer-ui/src/client-script-config-dom-cloud-provider.mjs
+    ../../apps/observer-ui/src/client-script-config-dom-declarative-evolution.mjs
     ../../apps/observer-ui/src/client-script-config-dom-kernel-events.mjs
     ../../apps/observer-ui/src/client-script-config-dom-engineering-context.mjs
     ../../apps/observer-ui/src/client-script-config-dom-engineering-provider-handoff.mjs
     ../../apps/observer-ui/src/client-script-config-dom-mvp-memory.mjs
     ../../apps/observer-ui/src/client-script-config-dom-native-runtime-refresh.mjs
+    ../../apps/observer-ui/src/client-script-config-dom-operator-auth.mjs
     ../../apps/observer-ui/src/client-script-config-dom-system-body.mjs
     ../../apps/observer-ui/src/client-script-config-dom-workspace-source.mjs
     ../../apps/observer-ui/src/client-script-config-dom.mjs
@@ -26,6 +29,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-refreshers-cloud-live-result-envelope.mjs
     ../../apps/observer-ui/src/client-script-refreshers-cloud-live-runbook.mjs
     ../../apps/observer-ui/src/client-script-refreshers-cloud.mjs
+    ../../apps/observer-ui/src/client-script-refreshers-declarative-evolution.mjs
     ../../apps/observer-ui/src/client-script-refreshers-engineering-context.mjs
     ../../apps/observer-ui/src/client-script-refreshers-engineering-provider-handoff.mjs
     ../../apps/observer-ui/src/client-script-refreshers-kernel-events.mjs
@@ -35,6 +39,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-refreshers-systemd.mjs
     ../../apps/observer-ui/src/client-script-refreshers-workspace-source.mjs
     ../../apps/observer-ui/src/client-script-renderers-acpx-codex-bridge.mjs
+    ../../apps/observer-ui/src/client-script-renderers-declarative-evolution.mjs
     ../../apps/observer-ui/src/client-script-renderers-engineering-edit.mjs
     ../../apps/observer-ui/src/client-script-renderers-engineering-context.mjs
     ../../apps/observer-ui/src/client-script-renderers-engineering-provider-handoff.mjs
@@ -67,8 +72,10 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script.mjs
     ../../apps/observer-ui/src/observer-html.mjs
     ../../apps/observer-ui/src/observer-panels-cloud.mjs
+    ../../apps/observer-ui/src/observer-panels-declarative-evolution.mjs
     ../../apps/observer-ui/src/observer-panels-engineering-context.mjs
     ../../apps/observer-ui/src/observer-panels-foundation.mjs
+    ../../apps/observer-ui/src/observer-panels-operator-auth.mjs
     ../../apps/observer-ui/src/observer-panels-kernel-events.mjs
     ../../apps/observer-ui/src/observer-panels-operations.mjs
     ../../apps/observer-ui/src/observer-panels-system.mjs

@@ -123,8 +123,8 @@ test("provider handoff capability remains explicitly approval-gated and request-
   const registry = await runtime.buildCapabilityRegistry();
   const capability = registry.capabilities.find((item) => item.id === CAPABILITY_ID);
 
-  assert.equal(capability?.governance, "require_approval");
-  assert.equal(capability?.requiresApproval, true);
+  assert.equal(capability?.governance, "allow");
+  assert.equal(capability?.requiresApproval, undefined);
   assert.equal(capability?.available, true);
 
   const blocked = await runtime.invokeCapability({

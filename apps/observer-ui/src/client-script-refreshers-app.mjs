@@ -3,6 +3,7 @@ import { observerClientMemoryPhaseRefreshersScript } from "./client-script-refre
 import { observerClientWorkspaceSourceRefreshersScript } from "./client-script-refreshers-workspace-source.mjs";
 import { observerClientEngineeringContextRefreshersScript } from "./client-script-refreshers-engineering-context.mjs";
 import { observerClientEngineeringProviderHandoffRefreshersScript } from "./client-script-refreshers-engineering-provider-handoff.mjs";
+import { observerClientDeclarativeEvolutionRefreshersScript } from "./client-script-refreshers-declarative-evolution.mjs";
 export const observerClientAppRefreshersScript = `async function refreshOperatorState() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/operator/state\`);
@@ -384,7 +385,7 @@ function getSelectedHistoryTaskId() {
 }
 
 async function fetchJson(url, options) {
-  const response = await fetch(url, options);
+  const response = await fetch(url, operatorRequestOptions(options));
   const contentType = response.headers.get("content-type") ?? "";
   const payload = contentType.includes("application/json")
     ? await response.json()
@@ -436,4 +437,4 @@ async function refreshHealth() {
   }
 }
 
-${observerClientMvpPhaseRefreshersScript}${observerClientMemoryPhaseRefreshersScript}${observerClientEngineeringContextRefreshersScript}${observerClientEngineeringProviderHandoffRefreshersScript}`;
+${observerClientMvpPhaseRefreshersScript}${observerClientMemoryPhaseRefreshersScript}${observerClientEngineeringContextRefreshersScript}${observerClientEngineeringProviderHandoffRefreshersScript}${observerClientDeclarativeEvolutionRefreshersScript}`;

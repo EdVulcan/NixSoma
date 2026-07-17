@@ -10,10 +10,6 @@ function approvalIdFromPath(pathname, suffix) {
   return pathname.slice("/approvals/".length, -suffix.length);
 }
 
-function normaliseActor(value) {
-  return typeof value === "string" && value.trim() ? value.trim() : "user";
-}
-
 export async function handleApprovalRoute({ req, res, requestUrl, state, approvalEngine, taskManager, publishEvent }) {
   const {
     serialiseApproval,
@@ -61,8 +57,13 @@ export async function handleApprovalRoute({ req, res, requestUrl, state, approva
 
     try {
       const body = await readJsonBody(req);
+      const operatorActor = req.openclawOperator?.actor;
+      if (!operatorActor) {
+        sendJson(res, 401, { ok: false, error: "Authenticated operator identity is required." });
+        return true;
+      }
       const result = markApprovalApproved(approval, {
-        approvedBy: normaliseActor(body.approvedBy),
+        approvedBy: operatorActor,
         reason: typeof body.reason === "string" && body.reason.trim() ? body.reason.trim() : "Approved by user.",
       });
       await publishEvent(createEventName("approval.approved"), {
@@ -96,8 +97,13 @@ export async function handleApprovalRoute({ req, res, requestUrl, state, approva
 
     try {
       const body = await readJsonBody(req);
+      const operatorActor = req.openclawOperator?.actor;
+      if (!operatorActor) {
+        sendJson(res, 401, { ok: false, error: "Authenticated operator identity is required." });
+        return true;
+      }
       const result = markApprovalDenied(approval, {
-        deniedBy: normaliseActor(body.deniedBy),
+        deniedBy: operatorActor,
         reason: typeof body.reason === "string" && body.reason.trim() ? body.reason.trim() : "Denied by user.",
       });
       await publishEvent(createEventName("approval.denied"), {

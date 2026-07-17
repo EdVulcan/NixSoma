@@ -401,10 +401,10 @@ if (JSON.stringify(events).includes("transient common write content") || JSON.st
 for (const capabilityId of ["act.openclaw.workspace_text_write", "act.openclaw.workspace_patch_apply"]) {
   if (!capabilities.capabilities?.some((capability) =>
     capability.id === capabilityId
-    && capability.governance === "require_approval"
-    && capability.requiresApproval === true
+    && capability.governance === "allow"
+    && capability.requiresApproval !== true
   )) {
-    throw new Error(`capability registry should expose the approval-gated workspace mutation ${capabilityId}`);
+    throw new Error(`capability registry should expose the non-mutating workspace task shell ${capabilityId}`);
   }
 }
 if (!capabilities.capabilities?.some((capability) =>
@@ -521,11 +521,11 @@ if (
 }
 if (!capabilities.ok || !capabilities.capabilities?.some((capability) =>
   capability.id === "act.openclaw.engineering_context.provider_handoff_task"
-  && capability.governance === "require_approval"
-  && capability.requiresApproval === true
+  && capability.governance === "allow"
+  && capability.requiresApproval !== true
   && capability.domains?.includes("cross_boundary")
 )) {
-  throw new Error("capability registry should expose the governed provider handoff task boundary");
+  throw new Error("capability registry should expose the non-egress provider handoff task shell");
 }
 if (
   !providerHandoff.ok
@@ -599,17 +599,17 @@ if (
 if (!processes.ok || processes.invoked !== true || processes.result?.count < 1 || processes.summary?.kind !== "process.list") {
   throw new Error("process list capability should route through core");
 }
-if (!blockedCommand.ok || blockedCommand.invoked !== false || blockedCommand.blocked !== true || blockedCommand.reason !== "policy_requires_approval") {
-  throw new Error("unapproved command dry-run capability should be blocked by policy");
+if (!blockedCommand.ok || blockedCommand.invoked !== false || blockedCommand.blocked !== true || blockedCommand.reason !== "approval_task_required") {
+  throw new Error("unbound command dry-run capability should be blocked by the server approval boundary");
 }
 if (blockedCommand.policy?.decision !== "require_approval") {
   throw new Error("blocked command dry-run should expose require_approval decision");
 }
-if (!approvedCommand.ok || approvedCommand.invoked !== true || approvedCommand.policy?.decision !== "audit_only") {
-  throw new Error("approved command dry-run should invoke under audit-only governance");
+if (!approvedCommand.ok || approvedCommand.invoked !== false || approvedCommand.blocked !== true || approvedCommand.reason !== "approval_task_required") {
+  throw new Error("client approved command dry-run must remain blocked without a bound server approval task");
 }
-if (approvedCommand.result?.plan?.wouldExecute !== false || approvedCommand.summary?.wouldExecute !== false) {
-  throw new Error("approved command capability must still be dry-run only");
+if (approvedCommand.policy?.decision !== "require_approval") {
+  throw new Error("client approved command dry-run should expose the server-side approval requirement");
 }
 
 const eventTypes = new Set((events.items ?? []).map((event) => event.type));
@@ -716,7 +716,7 @@ console.log(JSON.stringify({
     commandDryRun: {
       blockedReason: blockedCommand.reason,
       approvedPolicy: approvedCommand.policy.decision,
-      wouldExecute: approvedCommand.summary.wouldExecute,
+      approvedWithoutBinding: approvedCommand.reason === "approval_task_required",
     },
   },
   auditEvents: [...eventTypes].filter((type) => type.startsWith("capability.") || type === "policy.evaluated"),

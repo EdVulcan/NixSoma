@@ -11,6 +11,12 @@ openclaw_post_json() {
   local payload_mode="${OPENCLAW_POST_JSON_PAYLOAD_MODE:-data}"
   local data_flag="${OPENCLAW_POST_JSON_DATA_FLAG:---data}"
   local curl_args=(--silent)
+  local operator_token="${OPENCLAW_OPERATOR_TOKEN:-}"
+  local operator_token_file="${OPENCLAW_OPERATOR_TOKEN_FILE:-$OPENCLAW_HTTP_JSON_HELPER_DIR/../../.artifacts/openclaw-operator-token}"
+
+  if [[ -z "$operator_token" && -s "$operator_token_file" ]]; then
+    operator_token="$(tr -d '\r\n' <"$operator_token_file")"
+  fi
 
   case "$failure_mode" in
     fail)
@@ -28,6 +34,9 @@ openclaw_post_json() {
   esac
 
   curl_args+=(-X POST "$url" -H 'content-type: application/json')
+  if [[ -n "$operator_token" ]]; then
+    curl_args+=(-H "authorization: Bearer $operator_token")
+  fi
 
   case "$payload_mode" in
     data)

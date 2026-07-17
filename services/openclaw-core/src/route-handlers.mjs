@@ -25,7 +25,7 @@ import { handleWorkspaceNativeOpsRoute } from "./workspace-native-ops-routes.mjs
 import { handleWorkspacePluginReadRoute } from "./workspace-plugin-read-routes.mjs";
 
 export function registerRoutes(deps) {
-  const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl, readWorkViewState, buildExperienceMemoryReadModel } = deps;
+  const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl, readWorkViewState, buildExperienceMemoryReadModel, operatorAuth } = deps;
 
   const { reconcileApprovalExpirations, serialiseApproval } = approvalEngine;
   const { buildTaskSummary, serialiseTask } = taskManager;
@@ -42,6 +42,19 @@ export function registerRoutes(deps) {
   };
 
   return async function handleRequest(req, res, requestUrl) {
+    if (operatorAuth) {
+      res.openclawCorsHeaders = operatorAuth.buildCorsHeaders(req);
+      const authorization = operatorAuth.authorizeRequest(req, requestUrl);
+      if (!authorization.ok) {
+        res.openclawResponseHeaders = authorization.headers;
+        sendJson(res, authorization.statusCode, { ok: false, error: authorization.error });
+        return;
+      }
+      if (authorization.identity) {
+        req.openclawOperator = authorization.identity;
+      }
+    }
+
     if (await handleCoreInfrastructureRoute({ req, res, requestUrl, client, state, config, serviceUrls })) {
       return;
     }

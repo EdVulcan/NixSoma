@@ -24,6 +24,7 @@ mkOpenClawSourceClosure {
     ../../packages/shared-events/src/event-names.mjs
     ../../packages/shared-utils/package.json
     ../../packages/shared-utils/src/http.mjs
+    ../../packages/shared-utils/src/execution-grants.mjs
     ../../packages/shared-utils/src/persist.mjs
     ../../packages/shared-utils/src/work-view-input-evidence.mjs
     ../../packages/shared-utils/src/work-view-semantic-targets.mjs

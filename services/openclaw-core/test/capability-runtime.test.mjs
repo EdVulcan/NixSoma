@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { createCapabilityRuntime } from "../src/capability-runtime.mjs";
+import { buildCapabilityApprovalBinding } from "../src/capability-runtime-approval-binding.mjs";
 
 function createHarness(overrides = {}) {
   const events = [];
@@ -290,6 +291,73 @@ test("capability runtime exposes the read-only declarative evolution health gate
   assert.deepEqual(calls, [{ taskId: "task-staging" }]);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("must-not-leave-the-builder"), false);
   assert.deepEqual(events.slice(-2).map((event) => event.name), ["policy.evaluated", "capability.invoked"]);
+});
+
+test("capability runtime creates a host-health-bound activation decision only after confirmation", async () => {
+  const calls = [];
+  const { runtime } = createHarness({
+    declarativeEvolution: {
+      createNativeDeclarativeEvolutionActivationDecisionTask: async (input) => {
+        calls.push(input);
+        return {
+          ok: true,
+          registry: "openclaw-native-declarative-evolution-activation-decision-v0",
+          review: {
+            sourceTaskId: input.taskId,
+            activationReady: true,
+            hostHealth: { status: "healthy" },
+          },
+          approvalBinding: {
+            sourceStagingTaskId: input.taskId,
+            decision: input.decision,
+            candidateHash: "a".repeat(64),
+            hostHealthHash: "b".repeat(64),
+          },
+          task: { id: "task-activation", status: "queued" },
+          approval: { id: "approval-activation", status: "pending" },
+          governance: {
+            createsTask: true,
+            createsApproval: true,
+            writesManagedConfig: false,
+            switchesGeneration: false,
+            executesActivation: false,
+            executesRollback: false,
+            automaticActivation: false,
+            automaticRollback: false,
+          },
+        };
+      },
+    },
+  });
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const descriptor = registry.capabilities.find((item) => item.id === "act.openclaw.declarative_evolution.activation_decision");
+  assert.equal(descriptor?.kind, "actuator");
+  assert.equal(descriptor?.risk, "high");
+  assert.equal(descriptor?.governance, "allow");
+
+  const blocked = await runtime.invokeCapability({
+    capabilityId: "act.openclaw.declarative_evolution.activation_decision",
+    params: { taskId: "task-staging", decision: "approve_activation_review", confirm: false },
+  });
+  assert.equal(blocked.response.result.reason, "operator_confirmation_required");
+  assert.equal(blocked.response.result.governance.executesActivation, false);
+  assert.equal(blocked.response.result.governance.automaticActivation, false);
+  assert.equal(blocked.response.result.governance.automaticRollback, false);
+  assert.equal(calls.length, 0);
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.openclaw.declarative_evolution.activation_decision",
+    params: { taskId: "task-staging", decision: "approve_activation_review", confirm: true },
+  });
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.summary.kind, "declarative_evolution.activation_decision");
+  assert.equal(result.response.summary.activationReady, true);
+  assert.equal(result.response.summary.activationExecuted, false);
+  assert.equal(result.response.summary.noGenerationSwitch, true);
+  assert.equal(result.response.summary.noAutomaticActivation, true);
+  assert.equal(result.response.summary.noAutomaticRollback, true);
+  assert.deepEqual(calls, [{ taskId: "task-staging", decision: "approve_activation_review", confirm: true }]);
 });
 
 test("capability runtime exposes the native engineering tool surface inventory without execution authority", async () => {
@@ -824,11 +892,121 @@ test("capability runtime records and publishes blocked invocations", async () =>
   assert.equal(result.statusCode, 200);
   assert.equal(result.response.invoked, false);
   assert.equal(result.response.blocked, true);
-  assert.equal(result.response.reason, "policy_requires_approval");
+  assert.equal(result.response.reason, "approval_task_required");
   assert.equal(state.capabilityInvocationLog.length, 1);
   assert.equal(state.capabilityInvocationLog[0].blocked, true);
   assert.deepEqual(events.map((event) => event.name), ["policy.evaluated", "capability.blocked"]);
   assert.equal(calls.persisted, 1);
+});
+
+test("capability runtime commits an approved command reservation and rejects replay", async () => {
+  const task = {
+    id: "task-command-runtime",
+    status: "queued",
+    plan: {
+      planId: "plan-command-runtime",
+      steps: [{
+        id: "step-command-runtime",
+        phase: "acting_on_target",
+        status: "pending",
+        capabilityId: "act.system.command.execute",
+        intent: "system.command.execute",
+        governance: "require_approval",
+        requiresApproval: true,
+        params: { command: "echo", args: ["approved"], cwd: "/tmp" },
+      }],
+    },
+  };
+  const approval = {
+    id: "approval-command-runtime",
+    taskId: task.id,
+    status: "approved",
+  };
+  approval.binding = buildCapabilityApprovalBinding({ task });
+  task.approval = { requestId: approval.id, status: approval.status };
+  const { runtime, calls } = createHarness({
+    state: {
+      tasks: new Map([[task.id, task]]),
+      approvals: new Map([[approval.id, approval]]),
+    },
+    client: {
+      postJson: async (url, body) => {
+        calls.postJson.push({ url, body });
+        return { ok: true, execution: { result: { exitCode: 0 } } };
+      },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.system.command.execute",
+    taskId: task.id,
+    stepId: "step-command-runtime",
+    intent: "system.command.execute",
+    params: { command: "echo", args: ["approved"], cwd: "/tmp" },
+  });
+
+  assert.equal(result.response.invoked, true);
+  assert.equal(task.plan.steps[0].status, "completed");
+  assert.equal(task.plan.steps[0].executionReceipt.status, "committed");
+  assert.equal(calls.postJson.length, 1);
+
+  const replay = await runtime.invokeCapability({
+    capabilityId: "act.system.command.execute",
+    taskId: task.id,
+    stepId: "step-command-runtime",
+    intent: "system.command.execute",
+    params: { command: "echo", args: ["approved"], cwd: "/tmp" },
+  });
+  assert.equal(replay.response.invoked, false);
+  assert.equal(replay.response.reason, "approval_step_completed");
+  assert.equal(calls.postJson.length, 1);
+});
+
+test("capability runtime aborts an approved reservation when the actuator fails", async () => {
+  const task = {
+    id: "task-command-failure",
+    status: "queued",
+    plan: {
+      planId: "plan-command-failure",
+      steps: [{
+        id: "step-command-failure",
+        phase: "acting_on_target",
+        status: "pending",
+        capabilityId: "act.system.command.execute",
+        intent: "system.command.execute",
+        governance: "require_approval",
+        requiresApproval: true,
+        params: { command: "echo", args: ["failure"] },
+      }],
+    },
+  };
+  const approval = { id: "approval-command-failure", taskId: task.id, status: "approved" };
+  approval.binding = buildCapabilityApprovalBinding({ task });
+  task.approval = { requestId: approval.id, status: approval.status };
+  const { runtime } = createHarness({
+    state: {
+      tasks: new Map([[task.id, task]]),
+      approvals: new Map([[approval.id, approval]]),
+    },
+    client: {
+      postJson: async () => {
+        throw new Error("actuator unavailable");
+      },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.system.command.execute",
+    taskId: task.id,
+    stepId: "step-command-failure",
+    intent: "system.command.execute",
+    params: { command: "echo", args: ["failure"] },
+  });
+
+  assert.equal(result.statusCode, 502);
+  assert.equal(result.response.reason, "capability_backend_failed");
+  assert.equal(task.plan.steps[0].status, "pending");
+  assert.equal(task.plan.steps[0].executionReceipt.status, "aborted");
 });
 
 test("capability runtime invokes filesystem reads and trims invocation history", async () => {

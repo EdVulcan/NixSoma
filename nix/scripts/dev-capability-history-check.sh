@@ -88,22 +88,22 @@ for (const response of [vitals, blocked, approved]) {
 if (vitals.invocation.capability?.id !== "sense.system.vitals" || vitals.invocation.invoked !== true) {
   throw new Error("vitals invocation should be recorded as invoked");
 }
-if (blocked.invocation.capability?.id !== "act.system.command.dry_run" || blocked.invocation.blocked !== true || blocked.invocation.reason !== "policy_requires_approval") {
-  throw new Error("blocked command dry-run should be recorded with policy_requires_approval");
+if (blocked.invocation.capability?.id !== "act.system.command.dry_run" || blocked.invocation.blocked !== true || blocked.invocation.reason !== "approval_task_required") {
+  throw new Error("unbound command dry-run should be recorded with the server approval requirement");
 }
-if (approved.invocation.summary?.wouldExecute !== false || approved.invocation.policy?.decision !== "audit_only") {
-  throw new Error("approved command dry-run history should remain dry-run and audited");
+if (approved.invocation.blocked !== true || approved.invocation.reason !== "approval_task_required" || approved.invocation.policy?.decision !== "require_approval") {
+  throw new Error("client approved command dry-run history should remain blocked without a bound task");
 }
 
 const beforeItems = beforeHistory.items ?? [];
 const afterItems = afterHistory.items ?? [];
-if (beforeHistory.summary?.total !== 3 || beforeHistory.summary?.invoked !== 2 || beforeHistory.summary?.blocked !== 1) {
+if (beforeHistory.summary?.total !== 3 || beforeHistory.summary?.invoked !== 1 || beforeHistory.summary?.blocked !== 2) {
   throw new Error(`unexpected capability history summary before restart: ${JSON.stringify(beforeHistory.summary)}`);
 }
 if (beforeSummary.summary?.total !== beforeHistory.summary?.total) {
   throw new Error("summary endpoint should match history endpoint summary");
 }
-if (afterHistory.summary?.total !== 3 || afterHistory.summary?.invoked !== 2 || afterHistory.summary?.blocked !== 1) {
+if (afterHistory.summary?.total !== 3 || afterHistory.summary?.invoked !== 1 || afterHistory.summary?.blocked !== 2) {
   throw new Error(`capability invocation history did not survive restart: ${JSON.stringify(afterHistory.summary)}`);
 }
 
@@ -131,7 +131,7 @@ console.log(JSON.stringify({
   examples: {
     vitalsInvocation: vitals.invocation.id,
     blockedReason: blocked.invocation.reason,
-    approvedWouldExecute: approved.invocation.summary.wouldExecute,
+    approvedWithoutBinding: approved.invocation.reason === "approval_task_required",
   },
   auditEvents: [...eventTypes].filter((type) => type.startsWith("capability.")),
 }, null, 2));

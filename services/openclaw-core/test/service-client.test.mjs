@@ -5,8 +5,14 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { createServiceClient } from "../src/service-client.mjs";
+import { generateKeyPairSync } from "node:crypto";
+import {
+  createExecutionGrantSigner,
+  createExecutionGrantVerifier,
+  executionGrantContextFromHeaders,
+} from "../../../packages/shared-utils/src/execution-grants.mjs";
 
-function createClient(overrides = {}) {
+function createClient(overrides = {}, options = {}) {
   return createServiceClient({
     eventHubUrl: "http://127.0.0.1:4101",
     sessionManagerUrl: "http://127.0.0.1:4102",
@@ -16,7 +22,7 @@ function createClient(overrides = {}) {
     systemSenseUrl: "http://127.0.0.1:4106",
     systemHealUrl: "http://127.0.0.1:4107",
     ...overrides,
-  });
+  }, options);
 }
 
 test("fetchJson returns parsed successful responses", async () => {
@@ -65,6 +71,57 @@ test("postJson sends JSON request bodies", async () => {
   assert.equal(calls[0].options.method, "POST");
   assert.equal(calls[0].options.headers["content-type"], "application/json");
   assert.equal(calls[0].options.body, '{"confirm":true}');
+});
+
+test("postJson signs configured actuator requests and binds async task context", async () => {
+  const { privateKey, publicKey } = generateKeyPairSync("ed25519");
+  const signer = createExecutionGrantSigner({
+    privateKey: privateKey.export({ type: "pkcs8", format: "pem" }),
+    createId: () => "service-client-grant",
+    now: () => 1_000,
+  });
+  const verifier = createExecutionGrantVerifier({
+    publicKey: publicKey.export({ type: "spki", format: "pem" }),
+    audience: "openclaw-system-sense",
+    now: () => 1_000,
+  });
+  const originalFetch = globalThis.fetch;
+  let captured;
+  globalThis.fetch = async (url, options) => {
+    captured = { url, options };
+    return new Response(JSON.stringify({ ok: true }), { status: 200 });
+  };
+
+  try {
+    const client = createClient({}, { executionGrantSigner: signer });
+    await client.postJsonWithExecutionGrantContext(
+      {
+        taskId: "task-client",
+        stepId: "step-client",
+        capabilityId: "act.filesystem.write_text",
+        intent: "filesystem.write",
+      },
+      () => client.postJson("http://127.0.0.1:4106/system/files/write-text", {
+        path: "/workspace/note.txt",
+        content: "bound",
+      }),
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  const context = executionGrantContextFromHeaders(captured.options.headers);
+  const verified = verifier.verifyRequest({
+    token: captured.options.headers["x-openclaw-execution-grant"],
+    method: captured.options.method,
+    path: new URL(captured.url).pathname,
+    body: JSON.parse(captured.options.body),
+    context,
+  });
+  assert.equal(verified.ok, true);
+  assert.equal(verified.grant.taskId, "task-client");
+  assert.equal(verified.grant.stepId, "step-client");
+  assert.equal(verified.grant.capabilityId, "act.filesystem.write_text");
 });
 
 test("readJsonFileIfPresent tolerates missing and malformed files", () => {

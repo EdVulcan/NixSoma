@@ -475,6 +475,17 @@ read-only `nix-instantiate`, `nix eval`, and no-link `nix build --dry-run`
 checks. It does not write `/etc/nixos`, run `nixos-rebuild`, switch generations,
 or roll back.
 
+The same Phase D route now also has an explicit activation-decision and
+host-health boundary. Core exposes a read-only review and an approval-gated
+decision task bound to the staging task, candidate/file hashes, evaluated
+closure, and current `openclaw-system-sense` health fingerprint. Approval and
+execution revalidate the binding and record only a future activation decision;
+they do not install config, switch generations, activate, or roll back. The
+next route first closes independent service identity and credential delivery;
+the fixed hostd/systemd Level 3 activation bridge comes after that prerequisite
+and its concrete post-action health proof. The common actuator path already has
+Core-issued grants plus reservation commit/abort/recovery.
+
 ## Historical Phase Plans
 
 `OPENCLAW_PHASE_2_PLAN.md` through `OPENCLAW_PHASE_136_PLAN.md` are retained

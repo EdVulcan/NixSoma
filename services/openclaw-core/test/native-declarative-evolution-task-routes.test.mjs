@@ -76,3 +76,51 @@ test("declarative evolution staging task route reports builder errors as bad req
   assert.equal(response.statusCode, 400);
   assert.deepEqual(response.body, { ok: false, error: "candidate invalid" });
 });
+
+test("declarative evolution activation decision routes preserve source task and decision", async () => {
+  let observed = null;
+  const review = await invoke(
+    "GET",
+    "/plugins/native-adapter/declarative-evolution/activation-decision?taskId=task-staging",
+    {},
+    {
+      buildNativeDeclarativeEvolutionActivationDecisionReview: async (input) => {
+        observed = { kind: "review", input };
+        return { ok: true, blocked: false, sourceTaskId: input.taskId, activationReady: true };
+      },
+    },
+  );
+  assert.equal(review.handled, true);
+  assert.equal(review.statusCode, 200);
+  assert.deepEqual(observed, { kind: "review", input: { taskId: "task-staging" } });
+  assert.equal(review.body.activationReady, true);
+
+  const decision = await invoke(
+    "POST",
+    "/plugins/native-adapter/declarative-evolution/activation-decisions",
+    { taskId: "task-staging", decision: "approve_activation_review", confirm: true },
+    {
+      createNativeDeclarativeEvolutionActivationDecisionTask: async (input) => {
+        observed = { kind: "decision", input };
+        return {
+          registry: "openclaw-native-declarative-evolution-activation-decision-v0",
+          mode: "approval-gated",
+          generatedAt: "2026-07-17T00:00:00.000Z",
+          review: { sourceTaskId: input.taskId, activationReady: true },
+          approvalBinding: { decision: input.decision, candidateHash: "a".repeat(64) },
+          task: { id: "task-activation", status: "queued" },
+          approval: { id: "approval-activation", status: "pending" },
+          governance: { createsTask: true, createsApproval: true, executesActivation: false },
+        };
+      },
+    },
+  );
+  assert.equal(decision.handled, true);
+  assert.equal(decision.statusCode, 201);
+  assert.deepEqual(observed, {
+    kind: "decision",
+    input: { taskId: "task-staging", decision: "approve_activation_review", confirm: true },
+  });
+  assert.equal(decision.body.approvalBinding.decision, "approve_activation_review");
+  assert.equal(decision.body.governance.executesActivation, false);
+});

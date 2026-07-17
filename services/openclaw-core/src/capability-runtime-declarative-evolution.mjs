@@ -1,17 +1,22 @@
 import {
   NATIVE_DECLARATIVE_EVOLUTION_HEALTH_GATE_CAPABILITY_ID,
 } from "./native-declarative-evolution-health-gate.mjs";
+import {
+  NATIVE_DECLARATIVE_EVOLUTION_ACTIVATION_DECISION_CAPABILITY_ID,
+  NATIVE_DECLARATIVE_EVOLUTION_ACTIVATION_DECISION_REGISTRY,
+} from "./native-declarative-evolution-activation-decision.mjs";
 
 const CAPABILITY_ID = "plan.openclaw.declarative_evolution.managed_config_candidate";
 const STAGING_TASK_CAPABILITY_ID = "act.openclaw.declarative_evolution.staging_task";
 const HEALTH_GATE_CAPABILITY_ID = NATIVE_DECLARATIVE_EVOLUTION_HEALTH_GATE_CAPABILITY_ID;
+const ACTIVATION_DECISION_CAPABILITY_ID = NATIVE_DECLARATIVE_EVOLUTION_ACTIVATION_DECISION_CAPABILITY_ID;
 
-function blockedTaskResult(reason) {
+function blockedTaskResult(reason, registry = "openclaw-native-declarative-evolution-staging-task-v0") {
   return {
     ok: false,
     blocked: true,
     reason,
-    registry: "openclaw-native-declarative-evolution-staging-task-v0",
+    registry,
     mode: "capability-runtime-declarative-evolution-task",
     governance: {
       createsTask: false,
@@ -19,7 +24,10 @@ function blockedTaskResult(reason) {
       canExecuteWithoutApproval: false,
       writesManagedConfig: false,
       switchesGeneration: false,
+      executesActivation: false,
       executesRollback: false,
+      automaticActivation: false,
+      automaticRollback: false,
       networkEgress: false,
     },
   };
@@ -29,14 +37,27 @@ export function createDeclarativeEvolutionCapabilityHandlers({
   buildNativeDeclarativeEvolutionCandidate,
   buildNativeDeclarativeEvolutionHealthGate,
   createNativeDeclarativeEvolutionStagingTask,
+  createNativeDeclarativeEvolutionActivationDecisionTask,
 } = {}) {
   function validateRequest(capability, request) {
-    if (![CAPABILITY_ID, STAGING_TASK_CAPABILITY_ID, HEALTH_GATE_CAPABILITY_ID].includes(capability.id)) {
+    if (![CAPABILITY_ID, STAGING_TASK_CAPABILITY_ID, HEALTH_GATE_CAPABILITY_ID, ACTIVATION_DECISION_CAPABILITY_ID].includes(capability.id)) {
       return null;
     }
     if (capability.id === HEALTH_GATE_CAPABILITY_ID) {
       if (typeof request.params?.taskId !== "string" || !request.params.taskId.trim()) {
         return "Declarative evolution health gate requires taskId.";
+      }
+      return null;
+    }
+    if (capability.id === ACTIVATION_DECISION_CAPABILITY_ID) {
+      if (typeof request.params?.taskId !== "string" || !request.params.taskId.trim()) {
+        return "Declarative evolution activation decision requires taskId.";
+      }
+      if (!["approve_activation_review", "reject_activation"].includes(request.params?.decision)) {
+        return "Declarative evolution activation decision requires a supported decision.";
+      }
+      if (request.params?.confirm !== undefined && typeof request.params.confirm !== "boolean") {
+        return "Declarative evolution activation decision confirm must be a boolean.";
       }
       return null;
     }
@@ -76,6 +97,25 @@ export function createDeclarativeEvolutionCapabilityHandlers({
         handled: true,
         result: await createNativeDeclarativeEvolutionStagingTask({
           changes: request.params.changes,
+          confirm: true,
+        }),
+      };
+    }
+    if (capability.id === ACTIVATION_DECISION_CAPABILITY_ID) {
+      if (request.params?.confirm !== true) {
+        return {
+          handled: true,
+          result: blockedTaskResult("operator_confirmation_required", NATIVE_DECLARATIVE_EVOLUTION_ACTIVATION_DECISION_REGISTRY),
+        };
+      }
+      if (typeof createNativeDeclarativeEvolutionActivationDecisionTask !== "function") {
+        throw new Error("Native declarative evolution activation decision builder is unavailable.");
+      }
+      return {
+        handled: true,
+        result: await createNativeDeclarativeEvolutionActivationDecisionTask({
+          taskId: request.params.taskId,
+          decision: request.params.decision,
           confirm: true,
         }),
       };
@@ -131,6 +171,31 @@ export function createDeclarativeEvolutionCapabilityHandlers({
         noGenerationSwitch: result?.governance?.switchesGeneration === false,
         noRollback: result?.governance?.executesRollback === false,
         noProviderEgress: result?.governance?.networkEgress === false,
+      };
+    }
+    if (capability.id === ACTIVATION_DECISION_CAPABILITY_ID) {
+      return {
+        kind: "declarative_evolution.activation_decision",
+        ok: result?.ok === true,
+        blocked: result?.blocked === true,
+        reason: result?.reason ?? null,
+        taskId: result?.task?.id ?? null,
+        approvalId: result?.approval?.id ?? null,
+        sourceStagingTaskId: result?.approvalBinding?.sourceStagingTaskId ?? result?.review?.sourceTaskId ?? null,
+        decision: result?.approvalBinding?.decision ?? null,
+        candidateHash: result?.approvalBinding?.candidateHash ?? null,
+        hostHealthHash: result?.approvalBinding?.hostHealthHash ?? null,
+        hostHealthStatus: result?.review?.hostHealth?.status ?? null,
+        activationReady: result?.review?.activationReady === true,
+        createsTask: result?.governance?.createsTask === true,
+        createsApproval: result?.governance?.createsApproval === true,
+        activationExecuted: result?.governance?.executesActivation === true,
+        noManagedConfigWrite: result?.governance?.writesManagedConfig === false,
+        noGenerationSwitch: result?.governance?.switchesGeneration === false,
+        noRollback: result?.governance?.executesRollback === false,
+        noAutomaticActivation: result?.governance?.automaticActivation === false,
+        noAutomaticRollback: result?.governance?.automaticRollback === false,
+        candidateTextInSummary: false,
       };
     }
     if (capability.id !== CAPABILITY_ID) {

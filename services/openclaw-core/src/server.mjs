@@ -1,6 +1,5 @@
 // services/openclaw-core/src/server.mjs
 import http from "node:http";
-import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { corsHeaders, sendJson, readJsonBody, createEventPublisher, registerService } from "../../../packages/shared-utils/src/http.mjs";
 import { getOpenClawServicePort, getOpenClawServiceUrl } from "../../../packages/shared-client/src/service-descriptors.mjs";
@@ -17,10 +16,13 @@ import { createPlanBuilder } from "./plan-builder.mjs";
 import { createTaskExecutor } from "./task-executor.mjs";
 import { registerRoutes } from "./route-handlers.mjs";
 import { createNativeEngineeringExperienceMemory } from "./native-engineering-experience-memory.mjs";
+import { createOperatorAuthenticator } from "./operator-auth.mjs";
+import { createExecutionGrantSigner } from "../../../packages/shared-utils/src/execution-grants.mjs";
 
 // configure state & client
 const host = process.env.OPENCLAW_CORE_HOST ?? "127.0.0.1";
 const port = getOpenClawServicePort("core");
+const observerUiPort = getOpenClawServicePort("observerUi");
 const eventHubUrl = getOpenClawServiceUrl("eventHub");
 const sessionManagerUrl = getOpenClawServiceUrl("sessionManager");
 const browserRuntimeUrl = getOpenClawServiceUrl("browserRuntime");
@@ -30,12 +32,20 @@ const systemSenseUrl = getOpenClawServiceUrl("systemSense");
 const systemHealUrl = getOpenClawServiceUrl("systemHeal");
 const stateFilePath = process.env.OPENCLAW_CORE_STATE_FILE
   ?? path.resolve(process.cwd(), "../../.artifacts/openclaw-core-state.json");
+const operatorAuth = createOperatorAuthenticator({
+  allowedOrigins: process.env.OPENCLAW_OPERATOR_ALLOWED_ORIGINS
+    ?? [`http://127.0.0.1:${observerUiPort}`, `http://localhost:${observerUiPort}`],
+});
 
 const publishEvent = createEventPublisher(eventHubUrl, "openclaw-core");
 
 const urls = { eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl };
 
-const client = createServiceClient(urls);
+const executionGrantSigner = createExecutionGrantSigner({
+  privateKeyFilePath: process.env.OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE,
+  required: false,
+});
+const client = createServiceClient(urls, { executionGrantSigner });
 
 // We need getTaskById for runtime-state, but getTaskById is in task-manager which depends on runtimeState.
 // To solve this, we can initialize state first, and then inject taskManager!
@@ -154,6 +164,7 @@ const handleRequest = registerRoutes({
   screenActUrl,
   systemSenseUrl,
   systemHealUrl,
+  operatorAuth,
   buildExperienceMemoryReadModel: (...args) => experienceMemory.buildExperienceMemoryReadModel(...args),
 });
 
@@ -161,10 +172,65 @@ const handleRequest = registerRoutes({
 const server = http.createServer(async (req, res) => {
   try {
     const requestUrl = new URL(req.url ?? "/", `http://${req.headers.host ?? `${host}:${port}`}`);
+    res.openclawCorsHeaders = operatorAuth.buildCorsHeaders(req);
+
+    const origin = operatorAuth.authorizeOrigin(req);
+    if (!origin.ok) {
+      res.openclawResponseHeaders = origin.headers;
+      sendJson(res, origin.statusCode, { ok: false, error: origin.error });
+      return;
+    }
 
     if (req.method === "OPTIONS") {
-      res.writeHead(204, corsHeaders());
+      res.writeHead(204, corsHeaders(res.openclawCorsHeaders));
       res.end();
+      return;
+    }
+
+    if (req.method === "POST" && requestUrl.pathname === "/auth/login") {
+      try {
+        const body = await readJsonBody(req);
+        const session = operatorAuth.createSession(body.token);
+        if (!session.ok) {
+          res.openclawResponseHeaders = session.headers;
+          sendJson(res, session.statusCode, { ok: false, error: session.error });
+          return;
+        }
+        res.openclawResponseHeaders = { "set-cookie": session.setCookie };
+        sendJson(res, 200, {
+          ok: true,
+          operator: session.identity,
+          expiresAt: session.identity.sessionExpiresAt,
+        });
+      } catch (error) {
+        sendJson(res, 400, {
+          ok: false,
+          error: error instanceof Error ? error.message : "Invalid operator login request.",
+        });
+      }
+      return;
+    }
+
+    if (req.method === "GET" && requestUrl.pathname === "/auth/session") {
+      const session = operatorAuth.authenticateRequest(req, { requireAuth: true });
+      if (!session.ok) {
+        res.openclawResponseHeaders = session.headers;
+        sendJson(res, session.statusCode, { ok: false, error: session.error });
+        return;
+      }
+      sendJson(res, 200, { ok: true, operator: session.identity });
+      return;
+    }
+
+    if (req.method === "POST" && requestUrl.pathname === "/auth/logout") {
+      const session = operatorAuth.authenticateRequest(req, { requireAuth: true });
+      if (!session.ok) {
+        res.openclawResponseHeaders = session.headers;
+        sendJson(res, session.statusCode, { ok: false, error: session.error });
+        return;
+      }
+      res.openclawResponseHeaders = { "set-cookie": operatorAuth.clearSession(req) };
+      sendJson(res, 200, { ok: true, loggedOut: true });
       return;
     }
 
@@ -198,6 +264,7 @@ if (!nativePluginRuntimeRestore.ok && nativePluginRuntimeRestore.restored === fa
   console.warn(`Native plugin runtime generation state was reset: ${nativePluginRuntimeRestore.reason}`);
 }
 taskManager.reconcileInterruptedTasksAtStartup();
+taskManager.reconcileInterruptedCapabilityReservationsAtStartup();
 taskManager.reconcileRuntimeState();
 
 server.listen(port, host, async () => {

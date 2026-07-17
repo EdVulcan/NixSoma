@@ -4,6 +4,7 @@ import { createEventName } from "../../../packages/shared-events/src/event-facto
 import { buildTrustedWorkViewActionLease } from "./trusted-work-view-action-mediation.mjs";
 import { normaliseWorkViewSemanticTargetReference } from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
 import { redactWriteOnlyInputParams } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
+import { assertExecutionGrant, createExecutionGrantVerifier } from "../../../packages/shared-utils/src/execution-grants.mjs";
 
 const host = process.env.OPENCLAW_SCREEN_ACT_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_PORT ?? "4105", 10);
@@ -14,6 +15,11 @@ const browserRuntimeUrl = process.env.OPENCLAW_BROWSER_RUNTIME_URL ?? "http://12
 const browserRuntimeAuthToken = typeof process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN === "string"
   ? process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN.trim()
   : "";
+const executionGrantVerifier = createExecutionGrantVerifier({
+  audience: "openclaw-screen-act",
+  publicKeyFilePath: process.env.OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE,
+  required: false,
+});
 const screenWaitMs = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_WAIT_MS ?? "1500", 10);
 const screenPollMs = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_POLL_MS ?? "100", 10);
 
@@ -281,6 +287,7 @@ const server = http.createServer(async (req, res) => {
     // the HTTP connection hanging with no response.
     try {
       const body = await readJsonBody(req);
+      assertExecutionGrant({ verifier: executionGrantVerifier, req, requestUrl, body });
       const semanticTarget = body.semanticTarget
         ? normaliseWorkViewSemanticTargetReference(body.semanticTarget)
         : null;
@@ -296,7 +303,7 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 200, { ok: true, action });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
+      sendJson(res, error.statusCode ?? 400, { ok: false, error: message, code: error.code ?? null });
     }
     return;
   }
@@ -305,6 +312,7 @@ const server = http.createServer(async (req, res) => {
     // M-4 Fix: Added try/catch consistent with all other routes in this service.
     try {
       const body = await readJsonBody(req);
+      assertExecutionGrant({ verifier: executionGrantVerifier, req, requestUrl, body });
       const semanticTarget = body.semanticTarget
         ? normaliseWorkViewSemanticTargetReference(body.semanticTarget)
         : null;
@@ -318,7 +326,7 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 200, { ok: true, action });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
+      sendJson(res, error.statusCode ?? 400, { ok: false, error: message, code: error.code ?? null });
     }
     return;
   }
@@ -326,13 +334,14 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "POST" && requestUrl.pathname === "/act/browser/new-tab") {
     try {
       const body = await readJsonBody(req);
+      assertExecutionGrant({ verifier: executionGrantVerifier, req, requestUrl, body });
       const action = await executeAction("browser.new_tab", {
         url: typeof body.url === "string" ? body.url : "",
       });
       sendJson(res, 200, { ok: true, action });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
+      sendJson(res, error.statusCode ?? 400, { ok: false, error: message, code: error.code ?? null });
     }
     return;
   }
@@ -341,13 +350,14 @@ const server = http.createServer(async (req, res) => {
     // M-1 Fix: Added try/catch consistent with all other POST routes.
     try {
       const body = await readJsonBody(req);
+      assertExecutionGrant({ verifier: executionGrantVerifier, req, requestUrl, body });
       const action = await executeAction("keyboard.hotkey", {
         keys: Array.isArray(body.keys) ? body.keys : [],
       });
       sendJson(res, 200, { ok: true, action });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
+      sendJson(res, error.statusCode ?? 400, { ok: false, error: message, code: error.code ?? null });
     }
     return;
   }
@@ -356,6 +366,7 @@ const server = http.createServer(async (req, res) => {
     // M-1 Fix: Added try/catch consistent with all other POST routes.
     try {
       const body = await readJsonBody(req);
+      assertExecutionGrant({ verifier: executionGrantVerifier, req, requestUrl, body });
       const action = await executeAction("window.focus", {
         windowId: typeof body.windowId === "string" ? body.windowId : null,
         title: typeof body.title === "string" ? body.title : null,
@@ -363,7 +374,7 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 200, { ok: true, action });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
+      sendJson(res, error.statusCode ?? 400, { ok: false, error: message, code: error.code ?? null });
     }
     return;
   }

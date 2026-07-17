@@ -3,7 +3,8 @@
 ## Status
 
 Complete on 2026-07-17 as the first bounded Phase D capability, its
-approval-bound staging/build loop, and its read-only health-gate assessment.
+approval-bound staging/build loop, read-only health-gate assessment, and
+explicit host-health-bound activation decision boundary.
 
 ## Delivered Capability
 
@@ -79,6 +80,22 @@ execution bindings, and requires the evaluated `/nix/store/...` to remain
 bound to the staging execution record. A passing assessment is
 `eligible_for_activation_review`; host health remains `not_assessed`.
 
+The explicit activation-decision boundary is complete through:
+
+```text
+GET /plugins/native-adapter/declarative-evolution/activation-decision?taskId=...
+POST /plugins/native-adapter/declarative-evolution/activation-decisions
+act.openclaw.declarative_evolution.activation_decision
+```
+
+Core now reads the host health endpoint from `openclaw-system-sense`, binds the
+candidate hash, staged-file hash, evaluated closure, and host-health hash into
+one decision, and rejects approval creation when the host is not healthy. The
+approved task revalidates that binding before recording either
+`approved_for_future_activation` or `rejected`. It never writes managed
+configuration, switches a generation, runs `nixos-rebuild`, activates a
+generation, or rolls back.
+
 ## Evidence
 
 ```text
@@ -89,32 +106,47 @@ services/openclaw-core/src/native-declarative-evolution-health-gate.mjs
 services/openclaw-core/src/native-declarative-evolution-paths.mjs
 services/openclaw-core/src/native-declarative-evolution-task-builders.mjs
 services/openclaw-core/src/native-declarative-evolution-task-routes.mjs
+services/openclaw-core/src/native-declarative-evolution-activation-decision.mjs
 services/openclaw-core/src/task-executor-native-declarative-evolution-handlers.mjs
+services/openclaw-core/src/task-executor-native-declarative-evolution-activation-handlers.mjs
 services/openclaw-core/test/native-declarative-evolution-builders.test.mjs
 services/openclaw-core/test/native-declarative-evolution-execution.test.mjs
 services/openclaw-core/test/native-declarative-evolution-health-gate.test.mjs
 services/openclaw-core/test/native-declarative-evolution-task-builders.test.mjs
 services/openclaw-core/test/native-declarative-evolution-task-routes.test.mjs
+services/openclaw-core/test/native-declarative-evolution-activation-decision.test.mjs
+services/openclaw-core/test/task-executor-native-declarative-evolution-activation-handlers.test.mjs
 services/openclaw-core/test/capability-runtime.test.mjs
 services/openclaw-core/test/native-adapter-plugin-routes.test.mjs
 nix/scripts/dev-openclaw-native-declarative-evolution-staging-common-check.sh
 nix/scripts/dev-openclaw-native-declarative-evolution-staging-check.sh
 nix/scripts/dev-observer-openclaw-native-declarative-evolution-staging-check.sh
 nix/scripts/dev-capability-invoke-check.sh
+apps/observer-ui/src/observer-panels-declarative-evolution.mjs
+apps/observer-ui/src/client-script-config-dom-declarative-evolution.mjs
+apps/observer-ui/src/client-script-refreshers-declarative-evolution.mjs
+apps/observer-ui/src/client-script-renderers-declarative-evolution.mjs
+apps/observer-ui/test/client-script-declarative-evolution.test.mjs
 ```
 
 The focused builder, execution, task-builder, route, capability-runtime, and
 executor tests pass. The Core and Observer staging checks pass with real
 services. Core proves approval binding, staging-file hash equality, real
-`nix-instantiate`, `nix eval`, read-only `nix build --dry-run`, and health-gate
-closure binding; Observer proves the generic capability registry, blocked
-confirmation and missing-task fail-closed paths, invocation history, and no
-candidate-text exposure. No managed config write, generation switch, host
-health inference, activation, or rollback is performed.
+`nix-instantiate`, `nix eval`, read-only `nix build --dry-run`, health-gate
+closure binding, host-health binding, approval revalidation, and zero
+activation. Observer proves the served activation panel, capability registry,
+blocked confirmation and missing-task fail-closed paths, invocation history,
+and no candidate-text exposure. No managed config write, generation switch,
+activation, or rollback is performed.
 
 ## Next Real Slice
 
-The next mainline slice is an explicit activation decision and host-health
-boundary. It must remain separate from this read-only assessment: activation,
-`nixos-rebuild`, generation switching, host-health assessment, and physical
-rollback are deferred follow-up capabilities.
+The next mainline slice remains a controlled Level 3 activation bridge owned by
+the fixed hostd/systemd boundary, but it is gated by the Level 1 operator
+identity and mutation-boundary work recorded in
+`docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md`. It must remain separate from this
+decision task: managed-config installation, `nixos-rebuild`, generation
+switching, and physical rollback are deferred until direct actuators have
+independent service identity and credential delivery, and the hostd boundary has
+a concrete fixed target with real post-action health proof. The common actuator
+path already has Core-issued grants plus reservation commit/abort/recovery.

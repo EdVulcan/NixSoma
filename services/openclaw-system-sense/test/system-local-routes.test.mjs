@@ -30,6 +30,12 @@ function parseResponse(res) {
   return JSON.parse(res.body);
 }
 
+const acceptedExecutionGrant = {
+  verifyRequest() {
+    return { ok: true, grant: { grantId: "test-grant" } };
+  },
+};
+
 test("system file routes preserve listed event and response envelope", async () => {
   const events = [];
   const res = createResponseCapture();
@@ -72,6 +78,7 @@ test("system file routes preserve write-text body parsing and event payload", as
     requestUrl: new URL("http://127.0.0.1/system/files/write-text"),
     allowedRoots: ["/workspace"],
     publishEvent: async (type, payload) => events.push({ type, payload }),
+    executionGrantVerifier: acceptedExecutionGrant,
     operations: {
       writeTextFile(body) {
         assert.deepEqual(body, { path: "/workspace/note.txt", content: "openclaw", overwrite: true });
@@ -109,6 +116,7 @@ test("system file routes fail closed before mutation when the required audit pub
     publishAuditEvent: async () => {
       throw new Error("audit unavailable");
     },
+    executionGrantVerifier: acceptedExecutionGrant,
     operations: {
       writeTextFile() {
         writeCalled = true;
@@ -120,6 +128,28 @@ test("system file routes fail closed before mutation when the required audit pub
   assert.equal(res.statusCode, 400);
   assert.equal(writeCalled, false);
   assert.match(parseResponse(res).error, /audit unavailable/u);
+});
+
+test("system file mutation routes reject requests without a Core execution grant", async () => {
+  let writeCalled = false;
+  const res = createResponseCapture();
+  await handleSystemFileRoutes({
+    req: createJsonRequest("POST", { path: "/workspace/note.txt", content: "must not write" }),
+    res,
+    requestUrl: new URL("http://127.0.0.1/system/files/write-text"),
+    allowedRoots: ["/workspace"],
+    publishEvent: async () => {},
+    operations: {
+      writeTextFile() {
+        writeCalled = true;
+        return {};
+      },
+    },
+  });
+
+  assert.equal(res.statusCode, 503);
+  assert.equal(parseResponse(res).code, "EXECUTION_GRANT_VERIFIER_UNAVAILABLE");
+  assert.equal(writeCalled, false);
 });
 
 test("system command routes preserve dry-run envelope and event", async () => {

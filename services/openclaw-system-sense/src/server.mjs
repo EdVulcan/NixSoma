@@ -19,6 +19,7 @@ import { createSystemdNextRepairPlanning } from "./systemd-next-repair-planning.
 import { createSystemdRepairCandidatePlanning } from "./systemd-repair-candidate-planning.mjs";
 import { createSystemdRepairProposals } from "./systemd-repair-proposals.mjs";
 import { handleSystemdRoutes } from "./systemd-routes.mjs";
+import { createExecutionGrantVerifier } from "../../../packages/shared-utils/src/execution-grants.mjs";
 
 const host = process.env.OPENCLAW_SYSTEM_SENSE_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SYSTEM_SENSE_PORT ?? "4106", 10);
@@ -44,6 +45,11 @@ const commandAllowlist = (process.env.OPENCLAW_SYSTEM_COMMAND_ALLOWLIST ?? "echo
   .filter(Boolean);
 const commandTimeoutMs = Number.parseInt(process.env.OPENCLAW_SYSTEM_COMMAND_TIMEOUT_MS ?? "3000", 10);
 const commandOutputLimit = Number.parseInt(process.env.OPENCLAW_SYSTEM_COMMAND_OUTPUT_LIMIT ?? "8192", 10);
+const executionGrantVerifier = createExecutionGrantVerifier({
+  audience: "openclaw-system-sense",
+  publicKeyFilePath: process.env.OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE,
+  required: false,
+});
 const execFileAsync = promisify(execFile);
 const kernelProcessExecCapture = createKernelProcessExecCapture({
   enabled: process.env.OPENCLAW_KERNEL_EVENT_CAPTURE_ENABLED === "1",
@@ -628,6 +634,7 @@ const server = http.createServer(async (req, res) => {
     publishAuditEvent,
     allowedRoots,
     operations: systemFileOperations,
+    executionGrantVerifier,
   })) {
     return;
   }
@@ -639,6 +646,7 @@ const server = http.createServer(async (req, res) => {
     publishEvent,
     publishAuditEvent,
     operations: systemCommandOperations,
+    executionGrantVerifier,
   })) {
     return;
   }

@@ -14,6 +14,7 @@ import { createLongTermMemoryBuilders } from "./long-term-memory-builders.mjs";
 import { createNativePluginPlanBuilders } from "./native-plugin-plan-builders.mjs";
 import { createNativeDeclarativeEvolutionTaskBuilders } from "./native-declarative-evolution-task-builders.mjs";
 import { createNativeDeclarativeEvolutionExecution } from "./native-declarative-evolution-execution.mjs";
+import { createNativeDeclarativeEvolutionActivationDecisionBuilders } from "./native-declarative-evolution-activation-decision.mjs";
 import { createPhase2MvpReadinessBuilders } from "./phase2-mvp-readiness-builders.mjs";
 import { createPhase3WorkViewBuilders } from "./phase3-work-view-builders.mjs";
 import { createPhase4SelfHealBuilders } from "./phase4-self-heal-builders.mjs";
@@ -111,6 +112,7 @@ export function createPlanBuilder(deps) {
     buildOpenClawPluginCapabilityPlan,
     buildNativeAcpxCodexBridgeWrapperDraft,
     buildNativeDeclarativeEvolutionCandidate,
+    buildNativeDeclarativeEvolutionHealthGate,
   } = pluginReview;
 
   // Native plugin refresh builders depend on the rule-plan serializer below;
@@ -118,6 +120,7 @@ export function createPlanBuilder(deps) {
   let nativePluginPlanBuilders = null;
   let cloudLiveProviderRuntimeImplementation = null;
   let nativeDeclarativeEvolutionTaskBuilders = null;
+  let nativeDeclarativeEvolutionActivationDecisionBuilders = null;
   const capabilityRuntime = createCapabilityRuntime({
     host,
     port,
@@ -161,6 +164,12 @@ export function createPlanBuilder(deps) {
           throw new Error("Native declarative evolution task builders are not initialized.");
         }
         return nativeDeclarativeEvolutionTaskBuilders.createNativeDeclarativeEvolutionStagingTask(...args);
+      },
+      createNativeDeclarativeEvolutionActivationDecisionTask: (...args) => {
+        if (!nativeDeclarativeEvolutionActivationDecisionBuilders) {
+          throw new Error("Native declarative evolution activation decision builders are not initialized.");
+        }
+        return nativeDeclarativeEvolutionActivationDecisionBuilders.createNativeDeclarativeEvolutionActivationDecisionTask(...args);
       },
     },
   });
@@ -248,6 +257,28 @@ export function createPlanBuilder(deps) {
     buildNativeDeclarativeEvolutionStagingTaskDraft,
     createNativeDeclarativeEvolutionStagingTask,
   } = nativeDeclarativeEvolutionTaskBuilders;
+  nativeDeclarativeEvolutionActivationDecisionBuilders = createNativeDeclarativeEvolutionActivationDecisionBuilders({
+    tasks,
+    buildNativeDeclarativeEvolutionHealthGate,
+    fetchJson,
+    systemSenseUrl,
+    autonomyMode,
+    evaluatePolicyIntent,
+    createTask,
+    createApprovalRequestForTask,
+    supersedeOtherActiveTasks,
+    reconcileRuntimeState,
+    persistState,
+    publishEvent,
+    publishTaskApprovalIfPending,
+    serialiseTask,
+    serialisePlanForPublic,
+  });
+  const {
+    buildNativeDeclarativeEvolutionActivationDecisionReview,
+    buildNativeDeclarativeEvolutionActivationDecisionTaskDraft,
+    createNativeDeclarativeEvolutionActivationDecisionTask,
+  } = nativeDeclarativeEvolutionActivationDecisionBuilders;
 
   const systemdTaskBuilders = createSystemdTaskBuilders({
     fetchJson,
@@ -737,6 +768,9 @@ function compactCloudConsciousnessEvidenceRef(evidence) {
     buildNativeDeclarativeEvolutionCandidate,
     buildNativeDeclarativeEvolutionStagingTaskDraft,
     createNativeDeclarativeEvolutionStagingTask,
+    buildNativeDeclarativeEvolutionActivationDecisionReview,
+    buildNativeDeclarativeEvolutionActivationDecisionTaskDraft,
+    createNativeDeclarativeEvolutionActivationDecisionTask,
     executeNativeDeclarativeEvolutionCandidate: nativeDeclarativeEvolutionExecution.executeNativeDeclarativeEvolutionCandidate,
     stageNativeDeclarativeEvolutionCandidate: nativeDeclarativeEvolutionExecution.stageCandidate,
     runNativeDeclarativeEvolutionReadOnlyNixOsCheck: nativeDeclarativeEvolutionExecution.runReadOnlyNixOsCheck,

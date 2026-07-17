@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createTaskManager } from "../src/task-manager.mjs";
+import { EXECUTION_RESERVATION_REGISTRY } from "../src/capability-runtime-approval-binding.mjs";
 
 function createHarness({ buildRulePlan = () => null, shouldBuildPlan = () => false, recordTaskExperience = () => null } = {}) {
   const tasks = new Map();
@@ -287,6 +288,57 @@ test("task manager reconciles only running browser rule plans after core restart
   assert.equal(manager.isRecoverableTask(runningTask), true);
   assert.equal(queuedTask.status, "queued");
   assert.equal(pausedTask.status, "paused");
+});
+
+test("task manager fails active capability reservations closed after core restart", () => {
+  const { manager, tasks } = createHarness();
+  const task = {
+    id: "running-command-task",
+    type: "system_task",
+    goal: "Execute one approved command",
+    status: "running",
+    executionPhase: "acting_on_target",
+    plan: {
+      strategy: "rule-v1",
+      status: "running",
+      steps: [{
+        id: "command-step",
+        phase: "acting_on_target",
+        status: "running",
+        capabilityId: "act.system.command.execute",
+        executionReservation: {
+          registry: EXECUTION_RESERVATION_REGISTRY,
+          reservationId: "reservation-restart",
+          taskId: "running-command-task",
+          stepId: "command-step",
+          capabilityId: "act.system.command.execute",
+          requestHash: "a".repeat(64),
+          status: "running",
+          reservedAt: "2026-07-10T00:00:00.000Z",
+          startedAt: "2026-07-10T00:00:00.001Z",
+          expiresAt: "2026-07-10T00:05:00.000Z",
+        },
+      }],
+    },
+    phaseHistory: [],
+    createdAt: "2026-07-10T00:00:00.000Z",
+    updatedAt: "2026-07-10T00:00:00.000Z",
+  };
+  tasks.set(task.id, task);
+
+  const recovered = manager.reconcileInterruptedCapabilityReservationsAtStartup();
+
+  assert.deepEqual(recovered, [{
+    taskId: task.id,
+    stepId: "command-step",
+    reservationId: "reservation-restart",
+    capabilityId: "act.system.command.execute",
+    requestHash: "a".repeat(64),
+  }]);
+  assert.equal(task.status, "failed");
+  assert.equal(task.plan.steps[0].status, "failed");
+  assert.equal(task.plan.steps[0].executionReceipt.status, "recovered_aborted");
+  assert.equal(task.outcome.details.automaticReplay, false);
 });
 
 test("task manager binds trusted work-view metadata without changing task execution state", () => {

@@ -1,9 +1,10 @@
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { readJsonBody, sendJson } from "../../../packages/shared-utils/src/http.mjs";
+import { assertExecutionGrant } from "../../../packages/shared-utils/src/execution-grants.mjs";
 
 function sendRouteError(res, error) {
   const message = error instanceof Error ? error.message : "Unknown error";
-  sendJson(res, 400, {
+  sendJson(res, error.statusCode ?? 400, {
     ok: false,
     error: message,
     code: error.code ?? null,
@@ -19,6 +20,7 @@ export async function handleSystemFileRoutes({
   publishAuditEvent = publishEvent,
   allowedRoots,
   operations,
+  executionGrantVerifier = null,
 }) {
   if (req.method === "GET" && requestUrl.pathname === "/system/files/metadata") {
     try {
@@ -104,6 +106,7 @@ export async function handleSystemFileRoutes({
   if (req.method === "POST" && requestUrl.pathname === "/system/files/write-text") {
     try {
       const body = await readJsonBody(req);
+      assertExecutionGrant({ verifier: executionGrantVerifier, req, requestUrl, body });
       await publishAuditEvent(createEventName("system.files.write_requested"), {
         path: body.path ?? null,
         contentBytes: typeof body.content === "string" ? Buffer.byteLength(body.content, "utf8") : 0,
@@ -129,6 +132,7 @@ export async function handleSystemFileRoutes({
   if (req.method === "POST" && requestUrl.pathname === "/system/files/append-text") {
     try {
       const body = await readJsonBody(req);
+      assertExecutionGrant({ verifier: executionGrantVerifier, req, requestUrl, body });
       await publishAuditEvent(createEventName("system.files.append_requested"), {
         path: body.path ?? null,
         contentBytes: typeof body.content === "string" ? Buffer.byteLength(body.content, "utf8") : 0,
@@ -155,6 +159,7 @@ export async function handleSystemFileRoutes({
   if (req.method === "POST" && requestUrl.pathname === "/system/files/mkdir") {
     try {
       const body = await readJsonBody(req);
+      assertExecutionGrant({ verifier: executionGrantVerifier, req, requestUrl, body });
       await publishAuditEvent(createEventName("system.files.directory_requested"), {
         path: body.path ?? null,
         recursive: body.recursive === true,

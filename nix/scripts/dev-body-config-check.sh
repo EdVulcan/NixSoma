@@ -114,6 +114,8 @@ const envNames = [
   "OPENCLAW_KERNEL_EVENT_PROBE",
   "OPENCLAW_KERNEL_EVENT_CAPTURE_DURATION_MS",
   "OPENCLAW_KERNEL_EVENT_CAPTURE_MAX_EVENTS",
+  "OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE",
+  "OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE",
 ];
 
 function requireIncludes(label, content, tokens) {
@@ -139,6 +141,7 @@ requireIncludes("openclaw-body module", bodyModule, [
   "ReadWritePaths = [ \"%t/openclaw-sidecars\" ]",
   "systemd.tmpfiles.rules",
   "openclaw-event-log-ownership-migration",
+  "openclaw-execution-grant-key-init",
   "ExecStartPre = [ \"+${eventLogOwnershipMigration}\" ]",
   "chown ${lib.escapeShellArg \"${owner}:${group}\"} \"$event_log\"",
   "StateDirectory = \"openclaw\"",
@@ -259,8 +262,11 @@ if command -v nix >/dev/null 2>&1; then
         serviceConfig = {
           User = unit.serviceConfig.User or null;
           Group = unit.serviceConfig.Group or null;
-          WorkingDirectory = unit.serviceConfig.WorkingDirectory;
-          ExecStart = unit.serviceConfig.ExecStart;
+          WorkingDirectory = unit.serviceConfig.WorkingDirectory or null;
+          ExecStart = unit.serviceConfig.ExecStart or null;
+          Type = unit.serviceConfig.Type or null;
+          RemainAfterExit = unit.serviceConfig.RemainAfterExit or null;
+          LoadCredential = unit.serviceConfig.LoadCredential or [ ];
           RuntimeDirectory = unit.serviceConfig.RuntimeDirectory or null;
           RuntimeDirectoryMode = unit.serviceConfig.RuntimeDirectoryMode or null;
           AmbientCapabilities = unit.serviceConfig.AmbientCapabilities or [ ];
@@ -280,6 +286,8 @@ if command -v nix >/dev/null 2>&1; then
       session = project config.systemd.user.services.openclaw-session-manager;
       browser = project config.systemd.user.services.openclaw-browser-runtime;
       core = project config.systemd.services.openclaw-core;
+      operatorTokenInit = project config.systemd.services.openclaw-operator-token-init;
+      executionGrantInit = project config.systemd.services.openclaw-execution-grant-key-init;
       eventHub = project config.systemd.services.openclaw-event-hub;
       screenSense = project config.systemd.services.openclaw-screen-sense;
       screenAct = project config.systemd.services.openclaw-screen-act;
@@ -370,10 +378,25 @@ if (ownership.core.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || ownership.core.environment?.OPENCLAW_BODY_EVIDENCE_LEDGER_DIR !== "/var/lib/openclaw/body-evidence-ledger"
   || ownership.core.environment?.OPENCLAW_SYSTEMD_REPAIR_AUTH_DELEGATION !== "polkit-dbus-fixed-unit"
   || ownership.core.environment?.OPENCLAW_HOSTD_SOCKET_PATH !== "/run/openclaw/hostd.sock"
+  || ownership.core.environment?.OPENCLAW_OPERATOR_TOKEN_FILE !== "%d/operator-token"
+  || ownership.core.environment?.OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE !== "%d/execution-grant-private"
+  || JSON.stringify(ownership.core.serviceConfig?.LoadCredential ?? []) !== JSON.stringify(["operator-token:/var/lib/openclaw/operator-token", "execution-grant-private:/var/lib/openclaw/execution-grant-private.pem"])
   || !String(ownership.core.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
   || !String(ownership.core.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-core")
   || ownership.core.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
   throw new Error(`core must execute from its read-only Nix closure with writable state: ${JSON.stringify(ownership.core)}`);
+}
+if (!ownership.operatorTokenInit.wantedBy?.includes("multi-user.target")
+  || ownership.operatorTokenInit.serviceConfig?.Type !== "oneshot"
+  || ownership.operatorTokenInit.serviceConfig?.RemainAfterExit !== true
+  || !String(ownership.operatorTokenInit.serviceConfig?.ExecStart ?? "").includes("openclaw-operator-token-init")) {
+  throw new Error(`core operator credential initializer is not durable and pre-started: ${JSON.stringify(ownership.operatorTokenInit)}`);
+}
+if (!ownership.executionGrantInit.wantedBy?.includes("multi-user.target")
+  || ownership.executionGrantInit.serviceConfig?.Type !== "oneshot"
+  || ownership.executionGrantInit.serviceConfig?.RemainAfterExit !== true
+  || !String(ownership.executionGrantInit.serviceConfig?.ExecStart ?? "").includes("openclaw-execution-grant-key-init")) {
+  throw new Error(`execution grant key initializer is not durable and pre-started: ${JSON.stringify(ownership.executionGrantInit)}`);
 }
 if (ownership.hostd == null
   || ownership.hostd.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
@@ -610,16 +633,20 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-paths.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-task-builders.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-task-routes.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-activation-decision.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/task-executor-native-declarative-evolution-handlers.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/task-executor-native-declarative-evolution-activation-handlers.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/operator-auth.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/hostd-control-client.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-capabilities.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-capabilities.json"
     || ! -f "$core_out/share/openclaw/packages/plugin-runtime/src/plugin-registry.mjs"
     || ! -f "$core_out/share/openclaw/packages/plugin-runtime/src/plugin-registry-generation-store.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/persist.mjs"
+    || ! -f "$core_out/share/openclaw/packages/shared-utils/src/execution-grants.mjs"
     || -w "$core_server"
     || -e "$core_out/share/openclaw/services/openclaw-core/test"
-    || "$(find "$core_out" -type f | wc -l)" -ne 201 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 205 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -631,6 +658,7 @@ EOF
     runtime_url="http://127.0.0.1:$runtime_port"
     upstream_url="http://127.0.0.1:$upstream_port"
     state_file="$runtime_dir/core-state.json"
+    operator_token="body-config-operator-token"
     cleanup_runtime() {
       for pid in "${core_pid:-}" "${upstream_pid:-}"; do
         if [[ -n "$pid" ]]; then
@@ -664,6 +692,7 @@ EOF
       OPENCLAW_SYSTEM_SENSE_URL="$upstream_url" \
       OPENCLAW_SYSTEM_HEAL_URL="$upstream_url" \
       OPENCLAW_CORE_STATE_FILE="$state_file" \
+      OPENCLAW_OPERATOR_TOKEN="$operator_token" \
       OPENCLAW_WORKSPACE_ROOTS="$runtime_dir" \
       OPENCLAW_BODY_RUNTIME_SOURCE=nix-store \
         node src/server.mjs >"$runtime_dir/core.log" 2>&1 &
@@ -680,6 +709,7 @@ EOF
     start_core
     curl --silent --fail -X POST "$runtime_url/tasks" \
       -H 'content-type: application/json' \
+      -H "authorization: Bearer $operator_token" \
       --data '{"type":"phase_a_nix_store_probe","goal":"Persist a queued control-plane task without execution","intent":"task.observe"}' \
       >"$runtime_dir/created.json"
     task_id="$(node -e 'const fs = require("node:fs"); const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); process.stdout.write(data.task.id)' "$runtime_dir/created.json")"
@@ -1036,9 +1066,10 @@ EOF
     || ! -f "$screen_act_server"
     || ! -f "$screen_act_out/share/openclaw/services/openclaw-screen-act/src/trusted-work-view-action-mediation.mjs"
     || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/work-view-input-evidence.mjs"
+    || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/execution-grants.mjs"
     || -w "$screen_act_server"
     || -e "$screen_act_out/share/openclaw/packages/shared-utils/test/http.test.mjs"
-    || "$(find "$screen_act_out" -type f | wc -l)" -ne 11 ]]; then
+    || "$(find "$screen_act_out" -type f | wc -l)" -ne 12 ]]; then
     echo "screen-act Nix closure is not exact and read-only: $screen_act_out" >&2
     exit 1
   fi
@@ -1050,6 +1081,8 @@ EOF
     runtime_url="http://127.0.0.1:$runtime_port"
     upstream_url="http://127.0.0.1:$upstream_port"
     input_text="nix store action remains write only"
+    grant_private_key="$runtime_dir/execution-grant-private.pem"
+    grant_public_key="$runtime_dir/execution-grant-public.pem"
     cleanup_runtime() {
       for pid in "${screen_act_pid:-}" "${upstream_pid:-}"; do
         if [[ -n "$pid" ]]; then
@@ -1070,6 +1103,19 @@ EOF
       fi
       sleep 0.1
     done
+    node --input-type=module -e '
+      import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+      import { createPrivateKey, createPublicKey, generateKeyPairSync } from "node:crypto";
+      const [privatePath, publicPath] = process.argv.slice(1);
+      if (!existsSync(privatePath)) {
+        const { privateKey } = generateKeyPairSync("ed25519");
+        writeFileSync(privatePath, privateKey.export({ type: "pkcs8", format: "pem" }), { mode: 0o600 });
+      }
+      const privateKey = createPrivateKey(readFileSync(privatePath, "utf8"));
+      writeFileSync(publicPath, createPublicKey(privateKey).export({ type: "spki", format: "pem" }), { mode: 0o644 });
+      chmodSync(privatePath, 0o600);
+      chmodSync(publicPath, 0o644);
+    ' "$grant_private_key" "$grant_public_key"
     cd "$screen_act_working_dir"
     OPENCLAW_SCREEN_ACT_HOST=127.0.0.1 \
     OPENCLAW_SCREEN_ACT_PORT="$runtime_port" \
@@ -1077,6 +1123,7 @@ EOF
     OPENCLAW_SCREEN_SENSE_URL="$upstream_url" \
     OPENCLAW_SESSION_MANAGER_URL="$upstream_url" \
     OPENCLAW_BROWSER_RUNTIME_URL="$upstream_url" \
+    OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE="$grant_public_key" \
     OPENCLAW_BODY_RUNTIME_SOURCE=nix-store \
       node src/server.mjs >"$runtime_dir/screen-act.log" 2>&1 &
     screen_act_pid=$!
@@ -1087,8 +1134,21 @@ EOF
       fi
       sleep 0.1
     done
+    grant_token="$(OPENCLAW_GRANT_INPUT="$input_text" node --input-type=module -e '
+      const modulePath = process.argv[1];
+      const privatePath = process.argv[2];
+      const { createExecutionGrantSigner } = await import(modulePath);
+      const signer = createExecutionGrantSigner({ privateKeyFilePath: privatePath });
+      process.stdout.write(signer.issue({
+        audience: "openclaw-screen-act",
+        method: "POST",
+        path: "/act/keyboard/type",
+        body: { text: process.env.OPENCLAW_GRANT_INPUT },
+      }));
+    ' "$screen_act_out/share/openclaw/packages/shared-utils/src/execution-grants.mjs" "$grant_private_key")"
     curl --silent --fail -X POST "$runtime_url/act/keyboard/type" \
       -H 'content-type: application/json' \
+      -H "x-openclaw-execution-grant: $grant_token" \
       --data "{\"text\":\"$input_text\"}" >"$runtime_dir/action.json"
     curl --silent --fail "$runtime_url/act/state" >"$runtime_dir/action-state.json"
 
@@ -1141,6 +1201,7 @@ EOF
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-dbus-adapter.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-routes.mjs"
     || ! -f "$system_sense_out/share/openclaw/packages/shared-events/src/event-names.mjs"
+    || ! -f "$system_sense_out/share/openclaw/packages/shared-utils/src/execution-grants.mjs"
     || -w "$system_sense_server"
     || -e "$system_sense_out/share/openclaw/services/openclaw-system-sense/test"
     || -e "$system_sense_working_dir/node_modules/@openclaw"
@@ -1148,7 +1209,7 @@ EOF
     || -e "$system_sense_working_dir/node_modules/typescript"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-dbus-transport.mjs"
     || ! -f "$system_sense_out/share/openclaw/packages/shared-systemd/src/systemd-dbus-transport.mjs"
-    || "$system_sense_source_count" -ne 25 ]]; then
+    || "$system_sense_source_count" -ne 26 ]]; then
     echo "system-sense Nix closure is not exact, production-only, and read-only: $system_sense_out" >&2
     exit 1
   fi
@@ -1380,10 +1441,17 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-engineering-plan.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-semantic-target-task.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-screen-observation.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-declarative-evolution.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-auth.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-operator-auth.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-refreshers-declarative-evolution.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-renderers-declarative-evolution.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panels-declarative-evolution.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panels-operator-auth.mjs"
     || ! -f "$observer_ui_out/share/openclaw/packages/shared-client/src/service-descriptors.mjs"
     || -w "$observer_ui_server"
     || -e "$observer_ui_out/share/openclaw/apps/observer-ui/scripts"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 68 ]]; then
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 75 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi

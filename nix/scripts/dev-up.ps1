@@ -4,10 +4,21 @@ $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $artifactDir = Join-Path $repoRoot ".artifacts"
 $stateFile = Join-Path $artifactDir "dev-services.json"
 $eventLogFile = if ($env:OPENCLAW_EVENT_LOG_FILE) { $env:OPENCLAW_EVENT_LOG_FILE } else { Join-Path $artifactDir "openclaw-events.jsonl" }
+$operatorTokenFile = if ($env:OPENCLAW_OPERATOR_TOKEN_FILE) { $env:OPENCLAW_OPERATOR_TOKEN_FILE } else { Join-Path $artifactDir "openclaw-operator-token" }
 
 if (-not (Test-Path $artifactDir)) {
   New-Item -ItemType Directory -Path $artifactDir | Out-Null
 }
+
+if (-not $env:OPENCLAW_OPERATOR_TOKEN -and (Test-Path $operatorTokenFile)) {
+  $env:OPENCLAW_OPERATOR_TOKEN = (Get-Content -Raw -Path $operatorTokenFile).Trim()
+}
+if (-not $env:OPENCLAW_OPERATOR_TOKEN) {
+  $bytes = New-Object byte[] 32
+  [Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+  $env:OPENCLAW_OPERATOR_TOKEN = ([Convert]::ToHexString($bytes)).ToLowerInvariant()
+}
+Set-Content -Path $operatorTokenFile -Value $env:OPENCLAW_OPERATOR_TOKEN -Encoding ascii
 
 function Resolve-NodeExe {
   $candidates = @(
@@ -47,6 +58,11 @@ function Wait-Health {
 
 $nodeExe = Resolve-NodeExe
 $env:OPENCLAW_EVENT_LOG_FILE = $eventLogFile
+$env:OPENCLAW_OPERATOR_ALLOWED_ORIGINS = if ($env:OPENCLAW_OPERATOR_ALLOWED_ORIGINS) {
+  $env:OPENCLAW_OPERATOR_ALLOWED_ORIGINS
+} else {
+  "http://127.0.0.1:4170,http://localhost:4170"
+}
 
 $services = @(
   @{
@@ -102,8 +118,8 @@ foreach ($service in $services) {
   Write-Host "Starting $($service.name) ..."
   $process = Start-Process -FilePath $nodeExe -ArgumentList "src/server.mjs" -WorkingDirectory $service.workingDir -PassThru
 
-  if (-not (Wait-Health -Url $service.healthUrl)) {
-    Write-Error "Health check failed for $($service.name) at $($service.healthUrl)"
+  if ($process.HasExited -or -not (Wait-Health -Url $service.healthUrl) -or $process.HasExited) {
+    throw "Health check failed for $($service.name) at $($service.healthUrl); the replacement process did not remain alive."
   }
 
   $started += [pscustomobject]@{

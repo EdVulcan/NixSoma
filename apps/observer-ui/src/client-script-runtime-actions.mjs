@@ -309,11 +309,11 @@ async function startTrustedSidecarLifecycleProbe() {
     throw new Error("Create or load a trusted sidecar lifecycle task first.");
   }
 
-  const response = await fetch(\`\${observerConfig.coreUrl}/work-view/trusted-sidecar/lifecycle-tasks/\${encodeURIComponent(taskId)}/start-probe\`, {
+  const response = await fetch(\`\${observerConfig.coreUrl}/work-view/trusted-sidecar/lifecycle-tasks/\${encodeURIComponent(taskId)}/start-probe\`, operatorRequestOptions({
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({}),
-  });
+  }));
   const contentType = response.headers.get("content-type") ?? "";
   const result = contentType.includes("application/json")
     ? await response.json()

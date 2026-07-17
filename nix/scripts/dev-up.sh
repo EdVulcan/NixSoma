@@ -6,8 +6,21 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 ARTIFACT_DIR="$REPO_ROOT/.artifacts"
 OPENCLAW_EVENT_LOG_FILE="${OPENCLAW_EVENT_LOG_FILE:-$ARTIFACT_DIR/openclaw-events.jsonl}"
 OPENCLAW_EVENT_HUB_TOKEN="${OPENCLAW_EVENT_HUB_TOKEN:-$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')}"
+OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_OPERATOR_TOKEN_FILE:-$ARTIFACT_DIR/openclaw-operator-token}"
 
 mkdir -p "$ARTIFACT_DIR"
+
+if [[ -z "${OPENCLAW_OPERATOR_TOKEN:-}" && -s "$OPENCLAW_OPERATOR_TOKEN_FILE" ]]; then
+  OPENCLAW_OPERATOR_TOKEN="$(tr -d '\r\n' <"$OPENCLAW_OPERATOR_TOKEN_FILE")"
+fi
+if [[ -z "${OPENCLAW_OPERATOR_TOKEN:-}" ]]; then
+  OPENCLAW_OPERATOR_TOKEN="$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
+fi
+(
+  umask 077
+  printf '%s\n' "$OPENCLAW_OPERATOR_TOKEN" >"$OPENCLAW_OPERATOR_TOKEN_FILE"
+)
+chmod 600 "$OPENCLAW_OPERATOR_TOKEN_FILE"
 
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-openclaw-wait-helper.sh"
@@ -40,6 +53,8 @@ sanitize_run_id() {
 OPENCLAW_DEV_RUN_ID_EXPLICIT="${OPENCLAW_DEV_RUN_ID+x}"
 OPENCLAW_DEV_STATE_FILE_EXPLICIT="${OPENCLAW_DEV_STATE_FILE+x}"
 OPENCLAW_DEV_RUN_ID="$(sanitize_run_id "${OPENCLAW_DEV_RUN_ID:-ports-$CORE_PORT}")"
+OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE="${OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE:-$ARTIFACT_DIR/openclaw-execution-grant-$OPENCLAW_DEV_RUN_ID-private.pem}"
+OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE="${OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE:-$ARTIFACT_DIR/openclaw-execution-grant-$OPENCLAW_DEV_RUN_ID-public.pem}"
 OPENCLAW_BROWSER_RUNTIME_STATE_FILE="${OPENCLAW_BROWSER_RUNTIME_STATE_FILE:-$ARTIFACT_DIR/openclaw-browser-runtime-$OPENCLAW_DEV_RUN_ID.json}"
 OPENCLAW_BROWSER_ENGINE_MODE="${OPENCLAW_BROWSER_ENGINE_MODE:-simulated}"
 OPENCLAW_BROWSER_PROFILE_DIR="${OPENCLAW_BROWSER_PROFILE_DIR:-$ARTIFACT_DIR/openclaw-browser-profile-$OPENCLAW_DEV_RUN_ID}"
@@ -50,6 +65,27 @@ elif [[ -n "$OPENCLAW_DEV_RUN_ID_EXPLICIT" ]]; then
 else
   STATE_FILE="$ARTIFACT_DIR/dev-services-unix.tsv"
 fi
+
+ensure_execution_grant_keypair() {
+  mkdir -p "$(dirname "$OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE")" "$(dirname "$OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE")"
+  "$NODE_EXE" --input-type=module -e '
+    import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+    import { createPrivateKey, createPublicKey, generateKeyPairSync } from "node:crypto";
+
+    const [privatePath, publicPath] = process.argv.slice(1);
+    if (!existsSync(privatePath)) {
+      const { privateKey } = generateKeyPairSync("ed25519");
+      writeFileSync(privatePath, privateKey.export({ type: "pkcs8", format: "pem" }), { mode: 0o600 });
+    }
+    const privateKey = createPrivateKey(readFileSync(privatePath, "utf8"));
+    const publicKey = createPublicKey(privateKey).export({ type: "spki", format: "pem" });
+    writeFileSync(publicPath, publicKey, { mode: 0o644 });
+    chmodSync(privatePath, 0o600);
+    chmodSync(publicPath, 0o644);
+  ' "$OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE" "$OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE"
+}
+
+ensure_execution_grant_keypair
 
 use_scoped_service_artifacts() {
   [[ -n "$OPENCLAW_DEV_RUN_ID_EXPLICIT" || -n "$OPENCLAW_DEV_STATE_FILE_EXPLICIT" ]]
@@ -264,6 +300,12 @@ start_service_process() {
     export OPENCLAW_TRUSTED_SIDECAR_UNIT_INSTANCE="${OPENCLAW_TRUSTED_SIDECAR_UNIT_INSTANCE:-primary}"
     export OPENCLAW_EVENT_LOG_FILE="$OPENCLAW_EVENT_LOG_FILE"
     export OPENCLAW_EVENT_HUB_TOKEN="$OPENCLAW_EVENT_HUB_TOKEN"
+    export OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE="$OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE"
+    if [[ "$name" == "openclaw-core" ]]; then
+      export OPENCLAW_OPERATOR_TOKEN="$OPENCLAW_OPERATOR_TOKEN"
+      export OPENCLAW_OPERATOR_ALLOWED_ORIGINS="${OPENCLAW_OPERATOR_ALLOWED_ORIGINS:-http://127.0.0.1:$OBSERVER_UI_PORT,http://localhost:$OBSERVER_UI_PORT}"
+      export OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE="$OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE"
+    fi
     export OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN="${OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN:-}"
     export OPENCLAW_SYSTEM_ALLOWED_ROOTS="${OPENCLAW_SYSTEM_ALLOWED_ROOTS:-$REPO_ROOT:$ARTIFACT_DIR:$working_dir}"
     nohup "$NODE_EXE" src/server.mjs >"$log_file" 2>&1 &
@@ -312,7 +354,10 @@ for entry in "${services[@]}"; do
     start_service_process "$name" "$working_dir"
     pid="$(cat "$(service_pid_file "$name")" 2>/dev/null || true)"
 
-    if wait_health "$health_url"; then
+    # A stale listener can make the health probe pass while the replacement
+    # process exits with EADDRINUSE. Confirm the recorded process survives the
+    # probe before accepting the service.
+    if wait_health "$health_url" && openclaw_wait_until 2 0.1 is_managed_service_pid "$pid"; then
       success=1
       break
     fi

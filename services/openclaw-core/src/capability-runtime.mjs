@@ -24,7 +24,12 @@ import { createScreenObservationCapabilityHandlers } from "./capability-runtime-
 import { createBrowserActionCapabilityHandlers } from "./capability-runtime-browser-actions.mjs";
 import { createScreenActionCapabilityHandlers } from "./capability-runtime-screen-actions.mjs";
 import { createDeclarativeEvolutionCapabilityHandlers } from "./capability-runtime-declarative-evolution.mjs";
-import { validateCapabilityExecutionApproval } from "./capability-runtime-approval-binding.mjs";
+import {
+  abortCapabilityExecutionReservation,
+  commitCapabilityExecutionReservation,
+  startCapabilityExecutionReservation,
+  validateCapabilityExecutionApproval,
+} from "./capability-runtime-approval-binding.mjs";
 
 export function createCapabilityRuntime(deps) {
   const {
@@ -66,8 +71,10 @@ export function createCapabilityRuntime(deps) {
     MAX_CAPABILITY_INVOCATION_ENTRIES = 100,
     CAPABILITY_HEALTH_TIMEOUT_MS = 1000,
     CROSS_BOUNDARY_INTENTS = [],
+    CAPABILITY_EXECUTION_RESERVATION_TTL_MS,
     persistState = () => {},
   } = state;
+  const reservationTtlMs = CAPABILITY_EXECUTION_RESERVATION_TTL_MS;
   const tasks = state.tasks ?? new Map();
   const approvals = state.approvals ?? new Map();
   const {
@@ -193,6 +200,7 @@ export function createCapabilityRuntime(deps) {
     buildNativeDeclarativeEvolutionCandidate,
     buildNativeDeclarativeEvolutionHealthGate,
     createNativeDeclarativeEvolutionStagingTask: declarativeEvolution.createNativeDeclarativeEvolutionStagingTask,
+    createNativeDeclarativeEvolutionActivationDecisionTask: declarativeEvolution.createNativeDeclarativeEvolutionActivationDecisionTask,
   });
 
   function baseCapabilities() {
@@ -400,7 +408,7 @@ export function createCapabilityRuntime(deps) {
     return url.toString();
   }
 
-  async function callCapabilityBackend(capability, request) {
+  async function dispatchCapabilityBackend(capability, request) {
     const engineeringToolSurface = engineeringToolSurfaceHandlers.callBackend(capability, request);
     if (engineeringToolSurface.handled) {
       return engineeringToolSurface.result;
@@ -628,6 +636,22 @@ export function createCapabilityRuntime(deps) {
     }
 
     throw new Error(`Capability ${capability.id} is not invokable through core-v0.`);
+  }
+
+  async function callCapabilityBackend(capability, request) {
+    const context = {
+      taskId: request.taskId,
+      stepId: request.stepId,
+      capabilityId: capability.id,
+      intent: capabilityRequestIntent(capability, request),
+    };
+    if (typeof client.postJsonWithExecutionGrantContext === "function") {
+      return client.postJsonWithExecutionGrantContext(
+        context,
+        () => dispatchCapabilityBackend(capability, request),
+      );
+    }
+    return dispatchCapabilityBackend(capability, request);
   }
 
   function requestOperationFromResult(result) {
@@ -953,6 +977,39 @@ export function createCapabilityRuntime(deps) {
     return entry;
   }
 
+  async function buildBlockedCapabilityResponse({ capability, request, policy, reason }) {
+    const invocation = recordCapabilityInvocation({
+      capability,
+      request,
+      policy,
+      invoked: false,
+      blocked: true,
+      reason,
+      summary: {
+        kind: capability.id,
+        ok: false,
+      },
+    });
+    await publishEvent(createEventName("capability.blocked"), {
+      invocation,
+      capability,
+      policy,
+      reason: policy.reason,
+    });
+    return {
+      statusCode: 200,
+      response: {
+        ok: true,
+        invoked: false,
+        blocked: true,
+        reason,
+        capability,
+        policy,
+        invocation,
+      },
+    };
+  }
+
   function listCapabilityInvocations({ limit = 20, capabilityId = null } = {}) {
     const safeLimit = Math.max(1, Math.min(Number.isInteger(limit) ? limit : 20, 100));
     return capabilityInvocationLog
@@ -1012,7 +1069,9 @@ export function createCapabilityRuntime(deps) {
       tasks,
       approvals,
       persistState,
-      reserve: true,
+      now,
+      createId,
+      reservationTtlMs,
     });
     request.approved = serverApproval.approved;
     request.serverApproval = serverApproval;
@@ -1130,39 +1189,118 @@ export function createCapabilityRuntime(deps) {
       const reason = !serverApproval.ok
         ? serverApproval.reason
         : policy.decision === "deny" ? "policy_denied" : "policy_requires_approval";
+      return buildBlockedCapabilityResponse({ capability, request, policy, reason });
+    }
+
+    if (serverApproval.required) {
+      const reservedApproval = validateCapabilityExecutionApproval({
+        capability,
+        request,
+        tasks,
+        approvals,
+        persistState,
+        reserve: true,
+        now,
+        createId,
+        reservationTtlMs,
+      });
+      request.serverApproval = reservedApproval;
+      if (!reservedApproval.ok) {
+        return buildBlockedCapabilityResponse({
+          capability,
+          request,
+          policy,
+          reason: reservedApproval.reason,
+        });
+      }
+
+      const startedApproval = startCapabilityExecutionReservation({
+        request,
+        tasks,
+        persistState,
+        now,
+      });
+      request.serverApproval = startedApproval;
+      if (!startedApproval.ok) {
+        return buildBlockedCapabilityResponse({
+          capability,
+          request,
+          policy,
+          reason: startedApproval.reason,
+        });
+      }
+    }
+
+    let result;
+    try {
+      result = await callCapabilityBackend(capability, request);
+    } catch (error) {
+      if (serverApproval.required) {
+        const abortedApproval = abortCapabilityExecutionReservation({
+          request,
+          tasks,
+          persistState,
+          now,
+          reason: "capability_backend_failed",
+        });
+        request.serverApproval = abortedApproval;
+      }
       const invocation = recordCapabilityInvocation({
         capability,
         request,
         policy,
         invoked: false,
         blocked: true,
-        reason,
-        summary: {
-          kind: capability.id,
-          ok: false,
-        },
+        reason: "capability_backend_failed",
+        summary: { kind: capability.id, ok: false },
       });
       await publishEvent(createEventName("capability.blocked"), {
         invocation,
         capability,
         policy,
-        reason: policy.reason,
+        reason: "capability_backend_failed",
       });
       return {
-        statusCode: 200,
+        statusCode: 502,
         response: {
-          ok: true,
+          ok: false,
           invoked: false,
           blocked: true,
-          reason,
+          reason: "capability_backend_failed",
           capability,
           policy,
           invocation,
+          error: error instanceof Error ? error.message : "Capability backend failed.",
         },
       };
     }
 
-    const result = await callCapabilityBackend(capability, request);
+    if (serverApproval.required && result?.ok === false) {
+      const abortedApproval = abortCapabilityExecutionReservation({
+        request,
+        tasks,
+        persistState,
+        now,
+        reason: result.reason ?? "capability_backend_rejected",
+      });
+      request.serverApproval = abortedApproval;
+    } else if (serverApproval.required) {
+      const committedApproval = commitCapabilityExecutionReservation({
+        request,
+        tasks,
+        persistState,
+        now,
+      });
+      request.serverApproval = committedApproval;
+      if (!committedApproval.ok) {
+        return buildBlockedCapabilityResponse({
+          capability,
+          request,
+          policy,
+          reason: committedApproval.reason,
+        });
+      }
+    }
     const summary = summariseCapabilityInvocationResult(capability, result);
     const invocation = recordCapabilityInvocation({
       capability,

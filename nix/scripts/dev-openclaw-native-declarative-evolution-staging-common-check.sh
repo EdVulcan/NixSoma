@@ -59,10 +59,16 @@ cleanup() {
     "${BLOCKED_FILE:-}" \
     "${HEALTH_GATE_ROUTE_FILE:-}" \
     "${HEALTH_GATE_CAPABILITY_FILE:-}" \
+    "${ACTIVATION_REVIEW_ROUTE_FILE:-}" \
+    "${ACTIVATION_BLOCKED_FILE:-}" \
     "${HEALTH_GATE_FILE:-}" \
     "${TASK_FILE:-}" \
     "${APPROVED_FILE:-}" \
-    "${STEP_FILE:-}"
+    "${STEP_FILE:-}" \
+    "${ACTIVATION_REVIEW_FILE:-}" \
+    "${ACTIVATION_TASK_FILE:-}" \
+    "${ACTIVATION_APPROVED_FILE:-}" \
+    "${ACTIVATION_STEP_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
   rm -rf "$STAGING_DIR"
 }
@@ -79,6 +85,8 @@ if [[ "$OBSERVER_CHECK" == "true" ]]; then
   BLOCKED_FILE="$(mktemp)"
   HEALTH_GATE_ROUTE_FILE="$(mktemp)"
   HEALTH_GATE_CAPABILITY_FILE="$(mktemp)"
+  ACTIVATION_REVIEW_ROUTE_FILE="$(mktemp)"
+  ACTIVATION_BLOCKED_FILE="$(mktemp)"
 
   curl --silent --fail "$OBSERVER_URL/" > "$HTML_FILE"
   curl --silent --fail "$OBSERVER_URL/client-v5.js" > "$CLIENT_FILE"
@@ -87,8 +95,10 @@ if [[ "$OBSERVER_CHECK" == "true" ]]; then
   curl --silent --fail "$CORE_URL/plugins/native-adapter/declarative-evolution/health-gate" > "$HEALTH_GATE_ROUTE_FILE"
   OPENCLAW_POST_JSON_FAILURE=allow post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.declarative_evolution.health_gate","params":{}}' > "$HEALTH_GATE_CAPABILITY_FILE"
   curl --silent --fail "$CORE_URL/capabilities/invocations?limit=10" > "$INVOCATION_FILE"
+  curl --silent --fail "$CORE_URL/plugins/native-adapter/declarative-evolution/activation-decision" > "$ACTIVATION_REVIEW_ROUTE_FILE"
+  OPENCLAW_POST_JSON_FAILURE=allow post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.openclaw.declarative_evolution.activation_decision","params":{"taskId":"missing-staging-task","decision":"approve_activation_review","confirm":false}}' > "$ACTIVATION_BLOCKED_FILE"
 
-  node - <<'NODE' "$HTML_FILE" "$CLIENT_FILE" "$CAPABILITIES_FILE" "$BLOCKED_FILE" "$HEALTH_GATE_ROUTE_FILE" "$HEALTH_GATE_CAPABILITY_FILE" "$INVOCATION_FILE"
+  node - <<'NODE' "$HTML_FILE" "$CLIENT_FILE" "$CAPABILITIES_FILE" "$BLOCKED_FILE" "$HEALTH_GATE_ROUTE_FILE" "$HEALTH_GATE_CAPABILITY_FILE" "$INVOCATION_FILE" "$ACTIVATION_REVIEW_ROUTE_FILE" "$ACTIVATION_BLOCKED_FILE"
 const fs = require("node:fs");
 const readText = (index) => fs.readFileSync(process.argv[index], "utf8");
 const readJson = (index) => JSON.parse(readText(index));
@@ -99,11 +109,15 @@ const blocked = readJson(5);
 const healthGateRoute = readJson(6);
 const healthGateCapability = readJson(7);
 const invocations = readJson(8);
+const activationReviewRoute = readJson(9);
+const activationBlocked = readJson(10);
 const capabilityId = "act.openclaw.declarative_evolution.staging_task";
 const healthGateCapabilityId = "sense.openclaw.declarative_evolution.health_gate";
+const activationCapabilityId = "act.openclaw.declarative_evolution.activation_decision";
 const descriptor = capabilities.capabilities?.find((item) => item.id === capabilityId);
 const healthGateDescriptor = capabilities.capabilities?.find((item) => item.id === healthGateCapabilityId);
-const raw = JSON.stringify({ html, client, capabilities, blocked, healthGateRoute, healthGateCapability, invocations });
+const activationDescriptor = capabilities.capabilities?.find((item) => item.id === activationCapabilityId);
+const raw = JSON.stringify({ html, client, capabilities, blocked, healthGateRoute, healthGateCapability, invocations, activationReviewRoute, activationBlocked });
 
 for (const token of [
   "Body Capabilities",
@@ -111,6 +125,9 @@ for (const token of [
   "capability-online",
   "capability-approval",
   "capability-history-json",
+  "declarative-evolution-source-task-id",
+  "declarative-evolution-refresh-button",
+  "declarative-evolution-decision-button",
 ]) {
   if (!html.includes(token)) throw new Error(`Observer HTML missing generic capability token: ${token}`);
 }
@@ -120,6 +137,9 @@ for (const token of [
   "refreshCapabilityState",
   "renderCapabilityState",
   "refreshCapabilityHistory",
+  "refreshDeclarativeEvolutionActivationDecision",
+  "renderDeclarativeEvolutionActivationReview",
+  "/plugins/native-adapter/declarative-evolution/activation-decisions",
 ]) {
   if (!client.includes(token)) throw new Error(`Observer client missing generic capability token: ${token}`);
 }
@@ -191,6 +211,47 @@ if (
 ) {
   throw new Error(`Observer common declarative health-gate invocation did not fail closed: ${JSON.stringify(healthGateCapability)}`);
 }
+if (
+  !activationDescriptor
+  || activationDescriptor.kind !== "actuator"
+  || activationDescriptor.risk !== "high"
+  || activationDescriptor.governance !== "allow"
+  || (() => {
+    try {
+      return new URL(activationDescriptor.endpoint).pathname !== "/plugins/native-adapter/declarative-evolution/activation-decisions";
+    } catch {
+      return true;
+    }
+  })()
+) {
+  throw new Error(`Observer capability registry missing activation decision descriptor: ${JSON.stringify(activationDescriptor)}`);
+}
+if (
+  activationReviewRoute.ok !== false
+  || activationReviewRoute.blocked !== true
+  || activationReviewRoute.reason !== "staging_task_id_required"
+  || activationReviewRoute.governance?.readsHostHealth !== false
+  || activationReviewRoute.governance?.automaticActivation !== false
+) {
+  throw new Error(`Observer activation decision review did not fail closed: ${JSON.stringify(activationReviewRoute)}`);
+}
+if (
+  !activationBlocked.ok
+  || activationBlocked.invoked !== true
+  || activationBlocked.result?.blocked !== true
+  || activationBlocked.result?.reason !== "operator_confirmation_required"
+  || activationBlocked.summary?.kind !== "declarative_evolution.activation_decision"
+  || activationBlocked.summary?.createsTask !== false
+  || activationBlocked.summary?.createsApproval !== false
+  || activationBlocked.summary?.noManagedConfigWrite !== true
+  || activationBlocked.summary?.noGenerationSwitch !== true
+  || activationBlocked.summary?.noRollback !== true
+  || activationBlocked.summary?.activationExecuted !== false
+  || activationBlocked.summary?.noAutomaticActivation !== true
+  || activationBlocked.summary?.noAutomaticRollback !== true
+) {
+  throw new Error(`Observer activation decision confirmation gate mismatch: ${JSON.stringify(activationBlocked)}`);
+}
 if (raw.includes("services.openclaw.components") || raw.includes("Generated by OpenClaw declarative evolution")) {
   throw new Error("Observer staging review must not expose generated candidate text.");
 }
@@ -202,6 +263,8 @@ console.log(JSON.stringify({
     confirmationGate: blocked.result.reason,
     healthGateRoute: healthGateRoute.reason,
     healthGateCapability: healthGateCapability.error,
+    activationReviewRoute: activationReviewRoute.reason,
+    activationConfirmationGate: activationBlocked.result.reason,
     candidateTextExposed: false,
   },
 }, null, 2));
@@ -213,6 +276,10 @@ TASK_FILE="$(mktemp)"
 APPROVED_FILE="$(mktemp)"
 STEP_FILE="$(mktemp)"
 HEALTH_GATE_FILE="$(mktemp)"
+ACTIVATION_REVIEW_FILE="$(mktemp)"
+ACTIVATION_TASK_FILE="$(mktemp)"
+ACTIVATION_APPROVED_FILE="$(mktemp)"
+ACTIVATION_STEP_FILE="$(mktemp)"
 
 post_json "$CORE_URL/plugins/native-adapter/declarative-evolution/staging-tasks" \
   '{"changes":[{"operation":"enable_component","component":"systemSense"}],"confirm":true}' > "$TASK_FILE"
@@ -254,8 +321,44 @@ post_json "$CORE_URL/approvals/$APPROVAL_ID/approve" \
   '{"approvedBy":"dev-openclaw-native-declarative-evolution-staging-check","reason":"Approve one hash-bound managed Nix staging and read-only evaluation/build check."}' > "$APPROVED_FILE"
 post_json "$CORE_URL/operator/step" '{}' > "$STEP_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.declarative_evolution.health_gate\",\"params\":{\"taskId\":\"$TASK_ID\"}}" > "$HEALTH_GATE_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/declarative-evolution/activation-decision?taskId=$TASK_ID" > "$ACTIVATION_REVIEW_FILE"
+post_json "$CORE_URL/plugins/native-adapter/declarative-evolution/activation-decisions" \
+  "{\"taskId\":\"$TASK_ID\",\"decision\":\"approve_activation_review\",\"confirm\":true}" > "$ACTIVATION_TASK_FILE"
 
-node - <<'NODE' "$TASK_FILE" "$APPROVED_FILE" "$STEP_FILE" "$HEALTH_GATE_FILE" "$STAGING_DIR" "$OPENCLAW_EVENT_LOG_FILE" "$CANDIDATE_HASH" "$TASK_ID"
+read -r ACTIVATION_TASK_ID ACTIVATION_APPROVAL_ID < <(node - <<'NODE' "$ACTIVATION_TASK_FILE" "$CANDIDATE_HASH"
+const fs = require("node:fs");
+const response = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const candidateHash = process.argv[3];
+if (
+  !response.ok
+  || response.registry !== "openclaw-native-declarative-evolution-activation-decision-v0"
+  || response.task?.type !== "native_declarative_evolution_activation_decision"
+  || response.task?.status !== "queued"
+  || response.approval?.status !== "pending"
+  || response.approvalBinding?.decision !== "approve_activation_review"
+  || response.approvalBinding?.candidateHash !== candidateHash
+  || response.approvalBinding?.sourceStagingTaskId !== response.review?.sourceTaskId
+  || typeof response.approvalBinding?.hostHealthHash !== "string"
+  || !/^[a-f0-9]{64}$/.test(response.approvalBinding.hostHealthHash)
+  || response.governance?.createsTask !== true
+  || response.governance?.createsApproval !== true
+  || response.governance?.writesManagedConfig !== false
+  || response.governance?.switchesGeneration !== false
+  || response.governance?.executesActivation !== false
+  || response.governance?.executesRollback !== false
+  || response.governance?.automaticActivation !== false
+) {
+  throw new Error(`Declarative activation decision task draft mismatch: ${JSON.stringify(response)}`);
+}
+process.stdout.write(`${response.task.id} ${response.approval.id}\n`);
+NODE
+)
+
+post_json "$CORE_URL/approvals/$ACTIVATION_APPROVAL_ID/approve" \
+  '{"approvedBy":"dev-openclaw-native-declarative-evolution-staging-check","reason":"Approve one host-health-bound future activation decision without activating a generation."}' > "$ACTIVATION_APPROVED_FILE"
+post_json "$CORE_URL/operator/step" '{}' > "$ACTIVATION_STEP_FILE"
+
+node - <<'NODE' "$TASK_FILE" "$APPROVED_FILE" "$STEP_FILE" "$HEALTH_GATE_FILE" "$STAGING_DIR" "$OPENCLAW_EVENT_LOG_FILE" "$CANDIDATE_HASH" "$TASK_ID" "$ACTIVATION_REVIEW_FILE" "$ACTIVATION_TASK_FILE" "$ACTIVATION_APPROVED_FILE" "$ACTIVATION_STEP_FILE" "$ACTIVATION_TASK_ID" "$ACTIVATION_APPROVAL_ID"
 const fs = require("node:fs");
 const crypto = require("node:crypto");
 const path = require("node:path");
@@ -269,6 +372,12 @@ const stagingDir = path.resolve(process.argv[6]);
 const eventLogFile = process.argv[7];
 const candidateHash = process.argv[8];
 const taskId = process.argv[9];
+const activationReview = readJson(10);
+const activationTaskResponse = readJson(11);
+const activationApproved = readJson(12);
+const activationStep = readJson(13);
+const activationTaskId = process.argv[14];
+const activationApprovalId = process.argv[15];
 const task = step.task;
 const execution = task?.nativeDeclarativeEvolution?.execution;
 const stagingPath = execution?.staging?.path;
@@ -333,6 +442,51 @@ if (
 ) {
   throw new Error(`Declarative health-gate assessment mismatch: ${JSON.stringify({ healthGate, execution })}`);
 }
+const activationTask = activationStep.task;
+const activationExecution = activationTask?.nativeDeclarativeEvolution?.execution;
+const activationBinding = activationTaskResponse.approvalBinding;
+const activationChecks = {
+  review: activationReview.ok
+    && activationReview.blocked === false
+    && activationReview.sourceTaskId === taskId
+    && activationReview.activationReady === true
+    && activationReview.healthGate?.assessment === "eligible_for_activation_review"
+    && activationReview.hostHealth?.status === "healthy"
+    && activationReview.binding?.candidateHash === candidateHash
+    && activationReview.binding?.sourceStagingTaskId === taskId
+    && /^[a-f0-9]{64}$/.test(activationReview.binding?.hostHealthHash ?? ""),
+  taskDraft: activationTaskResponse.ok
+    && activationTaskResponse.task?.id === activationTaskId
+    && activationTaskResponse.approval?.id === activationApprovalId
+    && activationBinding?.candidateHash === candidateHash
+    && activationBinding?.sourceStagingTaskId === taskId
+    && activationBinding?.hostHealthHash === activationReview.binding?.hostHealthHash,
+  approval: activationApproved.ok
+    && activationApproved.approval?.id === activationApprovalId
+    && activationApproved.approval?.status === "approved"
+    && activationApproved.approval?.binding?.candidateHash === candidateHash,
+  execution: activationStep.ok
+    && activationStep.ran === true
+    && activationStep.blocked === false
+    && activationTask?.id === activationTaskId
+    && activationTask?.status === "completed"
+    && activationExecution?.status === "passed"
+    && activationExecution?.activation === "approved_for_future_activation"
+    && activationExecution?.candidateHash === candidateHash
+    && activationExecution?.hostHealthHash === activationReview.binding?.hostHealthHash
+    && activationExecution?.hostHealthStatus === "healthy"
+    && activationTask?.nativeDeclarativeEvolution?.governance?.hostHealthRevalidated === true,
+  zeroActivation: activationExecution?.governance?.writesManagedConfig === false
+    && activationExecution?.governance?.switchesGeneration === false
+    && activationExecution?.governance?.executesActivation === false
+    && activationExecution?.governance?.executesRollback === false
+    && activationExecution?.governance?.automaticActivation === false
+    && activationStep.execution?.verification?.checks?.includes("host_health_hash_bound")
+    && activationStep.execution?.verification?.checks?.includes("activation_not_executed"),
+};
+if (Object.values(activationChecks).some((passed) => !passed)) {
+  throw new Error(`Declarative activation decision execution mismatch: ${JSON.stringify(Object.fromEntries(Object.entries(activationChecks).filter(([, passed]) => !passed)))}`);
+}
 if (
   !stagedText
   || crypto.createHash("sha256").update(stagedText, "utf8").digest("hex") !== candidateHash
@@ -365,6 +519,10 @@ console.log(JSON.stringify({
     build: execution.build.mode,
     healthGate: healthGate.result.assessment.status,
     evaluatedClosure: healthGate.result.evaluatedClosure.path,
+    activationDecision: activationExecution.activation,
+    activationTaskId,
+    activationApprovalId,
+    hostHealth: activationExecution.hostHealthStatus,
     hostMutation: execution.governance.writesManagedConfig,
     generationSwitch: execution.governance.switchesGeneration,
     rollback: execution.governance.executesRollback,

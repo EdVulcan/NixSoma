@@ -1,5 +1,6 @@
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { readJsonBody, sendJson } from "../../../packages/shared-utils/src/http.mjs";
+import { assertExecutionGrant } from "../../../packages/shared-utils/src/execution-grants.mjs";
 
 export async function handleSystemCommandRoutes({
   req,
@@ -8,6 +9,7 @@ export async function handleSystemCommandRoutes({
   publishEvent,
   publishAuditEvent = publishEvent,
   operations,
+  executionGrantVerifier = null,
 }) {
   if (req.method === "GET" && requestUrl.pathname === "/system/processes") {
     try {
@@ -50,6 +52,7 @@ export async function handleSystemCommandRoutes({
   if (req.method === "POST" && requestUrl.pathname === "/system/command/execute") {
     try {
       const body = await readJsonBody(req);
+      assertExecutionGrant({ verifier: executionGrantVerifier, req, requestUrl, body });
       await publishAuditEvent(createEventName("system.command.execute_requested"), {
         command: body.command ?? null,
         argsCount: Array.isArray(body.args) ? body.args.length : 0,
@@ -69,7 +72,7 @@ export async function handleSystemCommandRoutes({
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message, code: error.code ?? null, details: error.details ?? null });
+      sendJson(res, error.statusCode ?? 400, { ok: false, error: message, code: error.code ?? null, details: error.details ?? null });
     }
     return true;
   }

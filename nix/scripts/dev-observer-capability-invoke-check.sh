@@ -461,10 +461,10 @@ if (JSON.stringify(events).includes("transient observer common write content") |
 for (const capabilityId of ["act.openclaw.workspace_text_write", "act.openclaw.workspace_patch_apply"]) {
   if (!capabilities.capabilities?.some((capability) =>
     capability.id === capabilityId
-    && capability.governance === "require_approval"
-    && capability.requiresApproval === true
+    && capability.governance === "allow"
+    && capability.requiresApproval !== true
   )) {
-    throw new Error(`Observer capability registry missing ${capabilityId}`);
+    throw new Error(`Observer capability registry missing non-mutating task shell ${capabilityId}`);
   }
 }
 if (
@@ -644,11 +644,11 @@ if (
 }
 if (!capabilities.ok || !capabilities.capabilities?.some((capability) =>
   capability.id === "act.openclaw.engineering_context.provider_handoff_task"
-  && capability.governance === "require_approval"
-  && capability.requiresApproval === true
+  && capability.governance === "allow"
+  && capability.requiresApproval !== true
   && capability.domains?.includes("cross_boundary")
 )) {
-  throw new Error("Observer capability registry should expose the governed provider handoff task boundary");
+  throw new Error("Observer capability registry should expose the non-egress provider handoff task shell");
 }
 if (
   !providerHandoff.ok
@@ -701,11 +701,11 @@ if (
 if (JSON.stringify(events).includes("Plan each edit")) {
   throw new Error("Observer prompt pack content must not enter the audit event payload");
 }
-if (!blocked.ok || blocked.invoked !== false || blocked.blocked !== true || blocked.reason !== "policy_requires_approval") {
-  throw new Error("Observer blocked dry-run path should expose policy_requires_approval");
+if (!blocked.ok || blocked.invoked !== false || blocked.blocked !== true || blocked.reason !== "approval_task_required") {
+  throw new Error("Observer unbound dry-run path should expose the server approval requirement");
 }
-if (!approved.ok || approved.invoked !== true || approved.summary?.wouldExecute !== false) {
-  throw new Error("Observer approved dry-run path should remain dry-run only");
+if (!approved.ok || approved.invoked !== false || approved.blocked !== true || approved.reason !== "approval_task_required") {
+  throw new Error("Observer client approved dry-run must remain blocked without a bound server task");
 }
 
 const eventTypes = new Set((events.items ?? []).map((event) => event.type));
@@ -791,7 +791,7 @@ console.log(JSON.stringify({
     vitalsPolicy: vitals.policy.decision,
     processCount: processes.result.count,
     blockedReason: blocked.reason,
-    approvedWouldExecute: approved.summary.wouldExecute,
+    approvedWithoutBinding: approved.reason === "approval_task_required",
   },
   auditEvents: [...eventTypes].filter((type) => type.startsWith("capability.") || type === "policy.evaluated"),
 }, null, 2));

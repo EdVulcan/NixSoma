@@ -272,7 +272,7 @@ automatically.
 
 The 2026-07-17 security review also closed the main control-plane bypasses that
 must remain part of the active contract: capability execution now requires a
-server-side task/step/intent/params approval binding with one-time consumption;
+server-side task/step/intent/params approval binding with one-time reservation;
 Core infrastructure forwarding is limited to explicit read-only routes with
 query preservation; file operations use realpath and no-follow descriptors;
 browser navigation rejects private destinations and the browser runtime uses an
@@ -282,6 +282,16 @@ browser token must be passed to session-manager, screen-act, and the trusted
 sidecar, while public browser state must never expose the helper lease. These
 are boundary corrections for the existing Level 2 route, not a new provider
 phase.
+
+The actuator execution slice is now closed for the common capability path. Core
+issues a short-lived, single-use execution grant to system-sense and screen-act,
+and each approved capability step follows `reserve -> start -> commit` or
+`abort`. Failed or rejected backend calls release the reservation; expired
+pre-start reservations are released, while an interrupted running reservation
+is failed closed and requires a new approved task after Core restart. The
+approval binding is derived from capability metadata rather than a fixed list of
+capability ids. Capabilities that only create a pending, approval-gated task are
+kept as task-shell entry points; they do not claim direct mutation authority.
 
 The same approved handoff now accepts explicit `includeWorkView`,
 `includeWorkViewObservation`, and `includePlanTodo` context selectors. It
@@ -1285,7 +1295,7 @@ This closes the Level 1 navigation boundary and stops here; it does not add
 another LSP request, generic tool dispatcher, task, approval, mutation,
 provider call, or network path.
 
-## Completed Phase D Candidate, Staging, And Health-Gate Slice
+## Completed Phase D Candidate, Staging, Health-Gate, And Activation-Decision Slice
 
 The first real Phase D declarative-evolution capability is complete. Core
 accepts only structured allowlisted changes, generates a transient
@@ -1320,10 +1330,53 @@ does not write managed configuration, switch generations, activate a system,
 or execute rollback. The Core and Observer staging checks prove this path with
 real services and no candidate-text exposure.
 
-The next mainline slice is an explicit activation decision and host-health
-boundary. `nixos-rebuild`, generation switching, host-health assessment, and
-physical rollback remain deferred capabilities; none can be inferred from a
-successful health-gate assessment.
+The explicit activation-decision and host-health boundary is now complete
+through `act.openclaw.declarative_evolution.activation_decision`,
+`GET /plugins/native-adapter/declarative-evolution/activation-decision?taskId=...`,
+and `POST /plugins/native-adapter/declarative-evolution/activation-decisions`.
+Core reads `openclaw-system-sense:/system/health`, requires a healthy host for
+an approval of future activation, and binds the staging task, candidate hash,
+staged-file hash, evaluated closure, and host-health hash. The approved task
+revalidates every binding before recording `approved_for_future_activation` or
+`rejected`; a changed health fingerprint fails closed. The Core and Observer
+staging milestone pair proves the served panel, confirmation gate, real
+approval, revalidation, and zero activation.
+
+This remains a decision boundary, not physical activation. It does not write
+`/etc/nixos`, run `nixos-rebuild`, switch a generation, activate a system, or
+roll back. Before that Level 3 bridge, the control plane must pass the
+operator-identity boundary below.
+
+## Operator Identity And Mutation Boundary Checkpoint
+
+The first operator-identity slice is now implemented as a Level 1 control-plane
+boundary. Core requires an operator token for every mutation route, validates a
+configured browser `Origin`, and derives the approval actor from the
+authenticated server-side identity. The request body can still carry an
+approval reason, but `approvedBy` and `deniedBy` are no longer trusted input.
+
+The token is supplied directly by the Unix dev launcher or through a
+systemd `LoadCredential` file for NixOS services. Core can exchange the token
+for a short-lived `HttpOnly; SameSite=Strict` operator session; Observer has an
+explicit sign-in/sign-out panel and sends credentialed requests only after the
+session is established. `/health` remains public for liveness, while the
+read-only GET surface remains a separate read-authorization follow-up.
+
+Focused auth/route tests, Observer tests, generated-client syntax, body-config
+evaluation, store-native Core/Observer builds, and a live Core probe prove the
+boundary. The live probe covers unauthenticated mutation rejection, untrusted
+Origin rejection, server-derived actor identity, cookie flags, session use,
+and post-logout rejection.
+
+The common system-sense and screen-act mutation paths now reject unsigned direct
+calls and accept only Core-issued, short-lived grants bound to the exact method,
+route, body hash, audience, task, step, capability, and intent. This still does
+not establish independent service identity for every internal service, replace
+shared browser/event credentials with per-service credentials, or prove a real
+Nix closure receipt and host-health oracle for activation. The next security
+slice is independent service identity and credential delivery; only after that
+and the existing hostd health proof should the fixed hostd/systemd Level 3
+activation bridge resume.
 
 ## Identity-Upgrade Alignment
 

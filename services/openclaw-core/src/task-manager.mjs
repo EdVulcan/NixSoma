@@ -3,6 +3,7 @@ import { createTaskRecovery } from "./task-recovery.mjs";
 import { redactWriteOnlyInputActionTree } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 import { buildBrowserTaskExecutionBinding } from "./browser-task-execution-binding.mjs";
 import { buildNativeEngineeringRecommendationLink } from "./native-engineering-recommendation-link.mjs";
+import { recoverCapabilityExecutionReservations } from "./capability-runtime-approval-binding.mjs";
 
 const TASK_EXTENSION_FIELDS = [
   { name: "sourceCommand", copyFromCreateInput: true },
@@ -434,6 +435,36 @@ function reconcileInterruptedTasksAtStartup() {
   return interruptedTasks;
 }
 
+function reconcileInterruptedCapabilityReservationsAtStartup() {
+  const recovered = recoverCapabilityExecutionReservations({
+    tasks,
+    persistState,
+    reason: "core_runtime_restart",
+  });
+  const recoveredByTask = new Map();
+  for (const reservation of recovered) {
+    const entries = recoveredByTask.get(reservation.taskId) ?? [];
+    entries.push(reservation);
+    recoveredByTask.set(reservation.taskId, entries);
+  }
+
+  for (const [taskId, reservations] of recoveredByTask) {
+    const task = getTaskById(taskId);
+    if (!task || !isActiveTask(task)) {
+      continue;
+    }
+    failTask(task, "Core runtime restarted during a governed capability execution.", {
+      executor: "core-startup-capability-reservation-recovery-v1",
+      reason: "core_runtime_restart",
+      reservations,
+      automaticReplay: false,
+      recoveryAction: "create_new_approved_execution_task",
+    });
+  }
+
+  return recovered;
+}
+
 function supersedeOtherActiveTasks(exceptTaskId) {
   const reclaimed = [];
 
@@ -641,5 +672,6 @@ function buildWorkViewAttachPayload(data, targetUrl) {
     supersedeOtherActiveTasks,
     reconcileRuntimeState,
     reconcileInterruptedTasksAtStartup,
+    reconcileInterruptedCapabilityReservationsAtStartup,
   };
 }

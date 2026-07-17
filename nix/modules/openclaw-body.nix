@@ -10,6 +10,70 @@ let
   browserRuntimeAuthEnvironment = optionalAttrs (cfg.browserRuntimeAuthToken != null && cfg.browserRuntimeAuthToken != "") {
     OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN = cfg.browserRuntimeAuthToken;
   };
+  operatorAuthAllowedOrigins =
+    if cfg.operatorAuthAllowedOrigins != [ ]
+    then cfg.operatorAuthAllowedOrigins
+    else [
+      "http://127.0.0.1:${toString cfg.ports.observerUi}"
+      "http://localhost:${toString cfg.ports.observerUi}"
+    ];
+  operatorTokenInitScript = pkgs.writeShellScript "openclaw-operator-token-init" ''
+    set -euo pipefail
+    token_file=${lib.escapeShellArg cfg.operatorAuthTokenFile}
+    token_dir=$(${pkgs.coreutils}/bin/dirname "$token_file")
+    ${pkgs.coreutils}/bin/install -d -m 0750 -o ${lib.escapeShellArg owner} -g ${lib.escapeShellArg group} "$token_dir"
+    if [ ! -s "$token_file" ]; then
+      token_tmp="$token_file.tmp.$$"
+      umask 0077
+      ${pkgs.coreutils}/bin/od -An -N32 -tx1 /dev/urandom | ${pkgs.coreutils}/bin/tr -d ' \n' > "$token_tmp"
+      ${pkgs.coreutils}/bin/chown ${lib.escapeShellArg "${owner}:${group}"} "$token_tmp"
+      ${pkgs.coreutils}/bin/chmod 0640 "$token_tmp"
+      ${pkgs.coreutils}/bin/mv "$token_tmp" "$token_file"
+    else
+      ${pkgs.coreutils}/bin/chown ${lib.escapeShellArg "${owner}:${group}"} "$token_file"
+      ${pkgs.coreutils}/bin/chmod 0640 "$token_file"
+    fi
+  '';
+  operatorTokenInitService = {
+    description = "OpenClaw operator credential initialization";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "openclaw-core.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = operatorTokenInitScript;
+      RemainAfterExit = true;
+    };
+  };
+  executionGrantKeyInitScript = pkgs.writeShellScript "openclaw-execution-grant-key-init" ''
+    set -euo pipefail
+    private_file=${lib.escapeShellArg cfg.executionGrantPrivateKeyFile}
+    public_file=${lib.escapeShellArg cfg.executionGrantPublicKeyFile}
+    key_dir=$(${pkgs.coreutils}/bin/dirname "$private_file")
+    ${pkgs.coreutils}/bin/install -d -m 0750 -o ${lib.escapeShellArg owner} -g ${lib.escapeShellArg group} "$key_dir"
+    if [ ! -s "$private_file" ]; then
+      private_tmp="$private_file.tmp.$$"
+      umask 0077
+      ${pkgs.openssl}/bin/openssl genpkey -algorithm ED25519 -out "$private_tmp" >/dev/null 2>&1
+      ${pkgs.coreutils}/bin/chown ${lib.escapeShellArg "${owner}:${group}"} "$private_tmp"
+      ${pkgs.coreutils}/bin/chmod 0640 "$private_tmp"
+      ${pkgs.coreutils}/bin/mv "$private_tmp" "$private_file"
+    fi
+    public_tmp="$public_file.tmp.$$"
+    ${pkgs.openssl}/bin/openssl pkey -in "$private_file" -pubout -out "$public_tmp" >/dev/null 2>&1
+    ${pkgs.coreutils}/bin/chown ${lib.escapeShellArg "${owner}:${group}"} "$public_tmp"
+    ${pkgs.coreutils}/bin/chmod 0640 "$public_tmp"
+    ${pkgs.coreutils}/bin/mv "$public_tmp" "$public_file"
+  '';
+  executionGrantKeyInitService = {
+    description = "OpenClaw execution grant key initialization";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "openclaw-core.service" "openclaw-screen-act.service" "openclaw-system-sense.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = executionGrantKeyInitScript;
+      RemainAfterExit = true;
+    };
+  };
 
   serviceSpecs = [
     {
@@ -233,13 +297,22 @@ let
         )
         spec.after;
       dependencyUnits = map (name: "${name}.service") sameScopeAfter;
+      operatorAuthDependencyUnits = if
+        (spec.key == "core" && cfg.operatorAuthTokenFile != null)
+        then [ "openclaw-operator-token-init.service" ]
+        else [ ];
+      executionGrantDependencyUnits = if
+        builtins.elem spec.key [ "core" "screenAct" "systemSense" ]
+        && builtins.elem spec.key cfg.components
+        then [ "openclaw-execution-grant-key-init.service" ]
+        else [ ];
     in
     {
       inherit (spec) description;
       wantedBy = [ (if userScope then "graphical-session.target" else "multi-user.target") ];
       partOf = if userScope then [ "graphical-session.target" ] else [ ];
-      wants = (if userScope then [ ] else [ "network-online.target" ]) ++ dependencyUnits;
-      after = (if userScope then [ "graphical-session.target" ] else [ "network-online.target" ]) ++ dependencyUnits;
+      wants = (if userScope then [ ] else [ "network-online.target" ]) ++ dependencyUnits ++ operatorAuthDependencyUnits ++ executionGrantDependencyUnits;
+      after = (if userScope then [ "graphical-session.target" ] else [ "network-online.target" ]) ++ dependencyUnits ++ operatorAuthDependencyUnits ++ executionGrantDependencyUnits;
       environment = commonEnvironment stateDir // {
         ${spec.hostEnv} = cfg.host;
         ${spec.portEnv} = toString spec.port;
@@ -251,7 +324,15 @@ let
           if spec ? runtimePackage && spec.runtimePackage != null
           then "nix-store"
           else "mutable-repo";
-      } // (if spec ? extraEnvironment then spec.extraEnvironment browserProfileDir else { });
+      } // (if spec ? extraEnvironment then spec.extraEnvironment browserProfileDir else { })
+      // optionalAttrs (spec.key == "core" && cfg.operatorAuthTokenFile != null) {
+        OPENCLAW_OPERATOR_TOKEN_FILE = "%d/operator-token";
+        OPENCLAW_OPERATOR_ALLOWED_ORIGINS = lib.concatStringsSep "," operatorAuthAllowedOrigins;
+      } // optionalAttrs (spec.key == "core") {
+        OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE = "%d/execution-grant-private";
+      } // optionalAttrs (builtins.elem spec.key [ "screenAct" "systemSense" ]) {
+        OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE = cfg.executionGrantPublicKeyFile;
+      };
       serviceConfig = {
         Type = "simple";
         WorkingDirectory = "${runtimeRoot}/${spec.path}";
@@ -263,6 +344,9 @@ let
       } // optionalAttrs (!userScope && cfg.user != null) {
         User = cfg.user;
         Group = cfg.group;
+      } // optionalAttrs (spec.key == "core") {
+        LoadCredential = (if cfg.operatorAuthTokenFile != null then [ "operator-token:${cfg.operatorAuthTokenFile}" ] else [ ])
+          ++ [ "execution-grant-private:${cfg.executionGrantPrivateKeyFile}" ];
       } // optionalAttrs (!userScope && cfg.user != null && spec.key == "eventHub") {
         ExecStartPre = [ "+${eventLogOwnershipMigration}" ];
       } // optionalAttrs (!userScope && spec.key == "systemSense" && cfg.kernelEventCapture.enable) {
@@ -490,6 +574,30 @@ in
       description = "Optional shared internal token for authenticated event-hub ingress; keep it out of public configuration when possible.";
     };
 
+    operatorAuthTokenFile = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "File containing the Core operator token; the value is loaded with systemd LoadCredential and never placed in the Nix store environment.";
+    };
+
+    executionGrantPrivateKeyFile = mkOption {
+      type = types.str;
+      default = "${cfg.stateDir}/execution-grant-private.pem";
+      description = "Ed25519 private key file used only by Core to sign short-lived actuator execution grants.";
+    };
+
+    executionGrantPublicKeyFile = mkOption {
+      type = types.str;
+      default = "${cfg.stateDir}/execution-grant-public.pem";
+      description = "Ed25519 public key file used by actuator services to verify Core execution grants.";
+    };
+
+    operatorAuthAllowedOrigins = mkOption {
+      type = types.listOf types.str;
+      default = [ ];
+      description = "Explicit browser origins allowed to call the Core operator control plane.";
+    };
+
     browserRuntimeAuthToken = mkOption {
       type = types.nullOr types.str;
       default = null;
@@ -570,6 +678,18 @@ in
         message = "A non-loopback browser runtime requires services.openclaw.browserRuntimeAuthToken.";
       }
       {
+        assertion = !builtins.elem "core" cfg.components || cfg.operatorAuthTokenFile != null;
+        message = "The OpenClaw Core control plane requires services.openclaw.operatorAuthTokenFile.";
+      }
+      {
+        assertion = cfg.operatorAuthTokenFile == null || !builtins.elem "core" cfg.componentOwnership.user;
+        message = "The Core operator credential initializer currently requires a system-owned openclaw-core service.";
+      }
+      {
+        assertion = !builtins.elem "core" cfg.componentOwnership.user;
+        message = "The Core execution grant signer currently requires a system-owned openclaw-core service.";
+      }
+      {
         assertion = !cfg.systemdRepairAuthDelegation.enable || cfg.user != null;
         message = "services.openclaw.systemdRepairAuthDelegation.enable requires services.openclaw.user so delegation is scoped to one OpenClaw service account.";
       }
@@ -629,7 +749,12 @@ in
         name = spec.name;
         value = mkService "system" spec;
       })
-      systemOwnedSpecs) // optionalAttrs cfg.systemdRepairAuthDelegation.enable {
+      systemOwnedSpecs)
+      // optionalAttrs (cfg.operatorAuthTokenFile != null && builtins.elem "core" cfg.components) {
+      openclaw-operator-token-init = operatorTokenInitService;
+    } // optionalAttrs (builtins.any (component: builtins.elem component cfg.components) [ "core" "screenAct" "systemSense" ]) {
+      openclaw-execution-grant-key-init = executionGrantKeyInitService;
+    } // optionalAttrs cfg.systemdRepairAuthDelegation.enable {
       openclaw-hostd = hostdService;
     };
 

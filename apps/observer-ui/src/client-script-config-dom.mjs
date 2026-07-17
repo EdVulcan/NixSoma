@@ -6,6 +6,8 @@ import { observerClientConfigDomWorkspaceSourceScript } from "./client-script-co
 import { observerClientConfigDomEngineeringContextScript } from "./client-script-config-dom-engineering-context.mjs";
 import { observerClientConfigDomEngineeringProviderHandoffScript } from "./client-script-config-dom-engineering-provider-handoff.mjs";
 import { observerClientConfigDomNativeRuntimeRefreshScript } from "./client-script-config-dom-native-runtime-refresh.mjs";
+import { observerClientConfigDomDeclarativeEvolutionScript } from "./client-script-config-dom-declarative-evolution.mjs";
+import { observerClientConfigDomOperatorAuthScript } from "./client-script-config-dom-operator-auth.mjs";
 
 export const observerClientConfigDomScript = `const observerBase = \`\${window.location.protocol}//\${window.location.hostname}\`;
 const observerConfig = {
@@ -17,6 +19,7 @@ const observerConfig = {
   systemSenseUrl: \`\${observerBase}:4100/proxy/system-sense\`,
   systemHealUrl: \`\${observerBase}:4100/proxy/system-heal\`,
 };
+${observerClientConfigDomOperatorAuthScript}
 
 const SOURCE_DERIVED_EDIT_PROPOSAL_REGISTRY = "openclaw-source-derived-edit-proposal-v0";
 
@@ -164,7 +167,7 @@ const filesystemReadLedgerQuery = document.querySelector("#filesystem-read-ledge
 const filesystemReadLedgerReadText = document.querySelector("#filesystem-read-ledger-read-text");
 const filesystemReadLedgerTasks = document.querySelector("#filesystem-read-ledger-tasks");
 const filesystemReadLedgerJson = document.querySelector("#filesystem-read-ledger-json");
-${observerClientConfigDomWorkspaceSourceScript}${observerClientConfigDomEngineeringContextScript}${observerClientConfigDomEngineeringProviderHandoffScript}${observerClientConfigDomNativeRuntimeRefreshScript}let currentTaskState = null;
+${observerClientConfigDomWorkspaceSourceScript}${observerClientConfigDomEngineeringContextScript}${observerClientConfigDomEngineeringProviderHandoffScript}${observerClientConfigDomNativeRuntimeRefreshScript}${observerClientConfigDomDeclarativeEvolutionScript}let currentTaskState = null;
 let latestActionState = null;
 let latestHistoryTask = null;
 let selectedHistoryTaskId = null;

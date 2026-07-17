@@ -8,13 +8,17 @@ export function corsHeaders(extraHeaders = {}) {
   return {
     "access-control-allow-origin": "*",
     "access-control-allow-methods": "GET, POST, OPTIONS",
-    "access-control-allow-headers": "content-type",
+    "access-control-allow-headers": "content-type, authorization, x-request-id",
     ...extraHeaders,
   };
 }
 
 export function sendJson(res, statusCode, payload) {
-  res.writeHead(statusCode, corsHeaders({ "content-type": "application/json; charset=utf-8" }));
+  res.writeHead(statusCode, corsHeaders({
+    ...(res?.openclawCorsHeaders ?? {}),
+    ...(res?.openclawResponseHeaders ?? {}),
+    "content-type": "application/json; charset=utf-8",
+  }));
   res.end(JSON.stringify(payload, null, 2));
 }
 

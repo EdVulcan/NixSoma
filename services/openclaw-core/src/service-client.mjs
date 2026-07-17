@@ -1,8 +1,39 @@
 import { existsSync, readFileSync } from "node:fs";
+import { AsyncLocalStorage } from "node:async_hooks";
+import {
+  EXECUTION_GRANT_HEADER,
+  executionGrantContextHeaders,
+  normaliseExecutionGrantContext,
+} from "../../../packages/shared-utils/src/execution-grants.mjs";
 
-export function createServiceClient(urls) {
+export function createServiceClient(urls, {
+  executionGrantSigner = null,
+  executionGrantTargets = null,
+} = {}) {
   const { eventHubUrl, sessionManagerUrl, browserRuntimeUrl,
           screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl } = urls;
+  const grantContextStorage = new AsyncLocalStorage();
+  const grantTargets = executionGrantTargets ?? [
+    { audience: "openclaw-screen-act", url: screenActUrl },
+    { audience: "openclaw-system-sense", url: systemSenseUrl },
+  ];
+
+  function resolveExecutionGrantTarget(url) {
+    if (!executionGrantSigner || typeof url !== "string") return null;
+    let requestOrigin;
+    try {
+      requestOrigin = new URL(url).origin;
+    } catch {
+      return null;
+    }
+    return grantTargets.find((target) => {
+      try {
+        return target?.audience && new URL(target.url).origin === requestOrigin;
+      } catch {
+        return false;
+      }
+    }) ?? null;
+  }
 
   // L302-330
 async function fetchJson(url, options = {}) {
@@ -14,10 +45,33 @@ async function fetchJson(url, options = {}) {
   return data;
 }
 
-async function postJson(url, body = {}) {
+async function postJson(url, body = {}, options = {}) {
+  const {
+    grantContext = grantContextStorage.getStore() ?? {},
+    executionGrant = true,
+    ...fetchOptions
+  } = options;
+  const target = executionGrant ? resolveExecutionGrantTarget(url) : null;
+  const headers = {
+    "content-type": "application/json",
+    ...(fetchOptions.headers ?? {}),
+  };
+  if (target) {
+    const context = normaliseExecutionGrantContext(grantContext);
+    const parsedUrl = new URL(url);
+    headers[EXECUTION_GRANT_HEADER] = executionGrantSigner.issue({
+      audience: target.audience,
+      method: "POST",
+      path: `${parsedUrl.pathname}${parsedUrl.search}`,
+      body,
+      context,
+    });
+    Object.assign(headers, executionGrantContextHeaders(context));
+  }
   return fetchJson(url, {
+    ...fetchOptions,
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   });
 }
@@ -58,5 +112,8 @@ function buildSystemSenseUrl(pathname, params = {}) {
     postJson,
     readJsonFileIfPresent,
     buildSystemSenseUrl,
+    postJsonWithExecutionGrantContext(context, operation) {
+      return grantContextStorage.run(normaliseExecutionGrantContext(context), operation);
+    },
   };
 }
