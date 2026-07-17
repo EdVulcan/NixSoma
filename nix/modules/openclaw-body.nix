@@ -7,7 +7,12 @@ let
   hostdRestartUnitPolicy = lib.concatStringsSep " || " (map
     (capability: "action.lookup(\"unit\") == \"${capability.targetUnit}\"")
     hostdRestartCapabilities);
-  browserRuntimeAuthEnvironment = optionalAttrs (cfg.browserRuntimeAuthToken != null && cfg.browserRuntimeAuthToken != "") {
+  browserRuntimeAuthEnvironment = optionalAttrs (
+    cfg.browserRuntimeAuthToken != null
+    && cfg.browserRuntimeAuthToken != ""
+    && cfg.browserRuntimeAuthTokenFile == null
+    && cfg.browserRuntimeCredentialMapFile == null
+  ) {
     OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN = cfg.browserRuntimeAuthToken;
   };
   operatorAuthAllowedOrigins =
@@ -195,6 +200,12 @@ let
   userOwnedSpecs = builtins.filter (spec: builtins.elem spec.key cfg.componentOwnership.user) enabledSpecs;
   systemOwnedSpecs = builtins.filter (spec: !builtins.elem spec.key cfg.componentOwnership.user) enabledSpecs;
   userOwnedServiceNames = map (spec: spec.name) userOwnedSpecs;
+  eventHubCredentialSources = map (spec: spec.name) (builtins.filter
+    (spec: spec.key != "eventHub" && spec.key != "observerUi")
+    enabledSpecs);
+  browserRuntimeCredentialSources = map (spec: spec.name) (builtins.filter
+    (spec: builtins.elem spec.key [ "sessionManager" "screenSense" "screenAct" ])
+    enabledSpecs);
 
   trustedSidecarRuntimeRoot =
     if cfg.runtimePackages.sessionManager != null
@@ -272,7 +283,7 @@ let
     OPENCLAW_NIXOS_BASE_MODULE = "${cfg.repoRoot}/nix/hosts/local-dev.nix";
     OPENCLAW_NIX_SYSTEM = pkgs.stdenv.hostPlatform.system;
     OPENCLAW_BODY_USER_OWNED_UNITS = lib.concatStringsSep "," userOwnedServiceNames;
-  } // optionalAttrs (cfg.eventHubToken != null) {
+  } // optionalAttrs (cfg.eventHubToken != null && cfg.eventHubCredentialMapFile == null) {
     OPENCLAW_EVENT_HUB_TOKEN = cfg.eventHubToken;
   } // optionalAttrs cfg.systemdRepairAuthDelegation.enable {
     OPENCLAW_HOSTD_SOCKET_PATH = hostdSocketPath;
@@ -301,6 +312,32 @@ let
         (spec.key == "core" && cfg.operatorAuthTokenFile != null)
         then [ "openclaw-operator-token-init.service" ]
         else [ ];
+      eventHubCredentialFile = if builtins.hasAttr spec.name cfg.eventHubCredentialFiles
+        then builtins.getAttr spec.name cfg.eventHubCredentialFiles
+        else null;
+      eventHubCredentialLoads =
+        (if eventHubCredentialFile != null then [ "event-hub-token:${eventHubCredentialFile}" ] else [ ])
+        ++ (if spec.key == "eventHub" && cfg.eventHubCredentialMapFile != null
+          then [ "event-hub-token-map:${cfg.eventHubCredentialMapFile}" ]
+          else [ ]);
+      browserRuntimeCredentialFile = if spec.key != "browserRuntime" && builtins.hasAttr spec.name cfg.browserRuntimeCredentialFiles
+        then builtins.getAttr spec.name cfg.browserRuntimeCredentialFiles
+        else null;
+      browserRuntimeCredentialLoads =
+        (if browserRuntimeCredentialFile != null then [ "browser-runtime-token:${browserRuntimeCredentialFile}" ] else [ ])
+        ++ (if spec.key == "browserRuntime" && cfg.browserRuntimeCredentialMapFile != null
+          then [ "browser-runtime-token-map:${cfg.browserRuntimeCredentialMapFile}" ]
+          else [ ])
+        ++ (if spec.key == "browserRuntime" && cfg.browserRuntimeAuthTokenFile != null
+          then [ "browser-runtime-auth-token:${cfg.browserRuntimeAuthTokenFile}" ]
+          else [ ]);
+      credentialLoads =
+        (if spec.key == "core"
+          then (if cfg.operatorAuthTokenFile != null then [ "operator-token:${cfg.operatorAuthTokenFile}" ] else [ ])
+            ++ [ "execution-grant-private:${cfg.executionGrantPrivateKeyFile}" ]
+          else [ ])
+        ++ eventHubCredentialLoads
+        ++ browserRuntimeCredentialLoads;
       executionGrantDependencyUnits = if
         builtins.elem spec.key [ "core" "screenAct" "systemSense" ]
         && builtins.elem spec.key cfg.components
@@ -325,6 +362,21 @@ let
           then "nix-store"
           else "mutable-repo";
       } // (if spec ? extraEnvironment then spec.extraEnvironment browserProfileDir else { })
+      // optionalAttrs (eventHubCredentialFile != null) {
+        OPENCLAW_EVENT_HUB_TOKEN_FILE = "%d/event-hub-token";
+      } // optionalAttrs (spec.key == "eventHub" && cfg.eventHubCredentialMapFile != null) {
+        OPENCLAW_EVENT_HUB_TOKEN_MAP_FILE = "%d/event-hub-token-map";
+        OPENCLAW_EVENT_HUB_AUTH_REQUIRED = "1";
+      }
+      // optionalAttrs (browserRuntimeCredentialFile != null) {
+        OPENCLAW_BROWSER_RUNTIME_TOKEN_FILE = "%d/browser-runtime-token";
+        OPENCLAW_BROWSER_RUNTIME_CALLER = spec.name;
+      } // optionalAttrs (spec.key == "browserRuntime" && cfg.browserRuntimeCredentialMapFile != null) {
+        OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_MAP_FILE = "%d/browser-runtime-token-map";
+        OPENCLAW_BROWSER_RUNTIME_AUTH_REQUIRED = "1";
+      } // optionalAttrs (spec.key == "browserRuntime" && cfg.browserRuntimeAuthTokenFile != null) {
+        OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN_FILE = "%d/browser-runtime-auth-token";
+      }
       // optionalAttrs (spec.key == "core" && cfg.operatorAuthTokenFile != null) {
         OPENCLAW_OPERATOR_TOKEN_FILE = "%d/operator-token";
         OPENCLAW_OPERATOR_ALLOWED_ORIGINS = lib.concatStringsSep "," operatorAuthAllowedOrigins;
@@ -344,9 +396,8 @@ let
       } // optionalAttrs (!userScope && cfg.user != null) {
         User = cfg.user;
         Group = cfg.group;
-      } // optionalAttrs (spec.key == "core") {
-        LoadCredential = (if cfg.operatorAuthTokenFile != null then [ "operator-token:${cfg.operatorAuthTokenFile}" ] else [ ])
-          ++ [ "execution-grant-private:${cfg.executionGrantPrivateKeyFile}" ];
+      } // optionalAttrs (credentialLoads != [ ]) {
+        LoadCredential = credentialLoads;
       } // optionalAttrs (!userScope && cfg.user != null && spec.key == "eventHub") {
         ExecStartPre = [ "+${eventLogOwnershipMigration}" ];
       } // optionalAttrs (!userScope && spec.key == "systemSense" && cfg.kernelEventCapture.enable) {
@@ -574,6 +625,18 @@ in
       description = "Optional shared internal token for authenticated event-hub ingress; keep it out of public configuration when possible.";
     };
 
+    eventHubCredentialMapFile = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "JSON map of event source names to credential files; systemd loads it as an Event Hub-only credential and never places its contents in the Nix store.";
+    };
+
+    eventHubCredentialFiles = mkOption {
+      type = types.attrsOf types.str;
+      default = { };
+      description = "Per-service Event Hub credential files keyed by openclaw service name; used with eventHubCredentialMapFile and systemd LoadCredential.";
+    };
+
     operatorAuthTokenFile = mkOption {
       type = types.nullOr types.str;
       default = null;
@@ -601,7 +664,25 @@ in
     browserRuntimeAuthToken = mkOption {
       type = types.nullOr types.str;
       default = null;
-      description = "Optional shared internal bearer token for browser-runtime callers; required when the browser runtime binds beyond loopback.";
+      description = "Legacy shared internal bearer token for browser-runtime compatibility; prefer browserRuntimeCredentialMapFile and per-caller files.";
+    };
+
+    browserRuntimeAuthTokenFile = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "File containing the legacy shared browser-runtime token; loaded with systemd LoadCredential instead of placing the value in the Nix expression.";
+    };
+
+    browserRuntimeCredentialMapFile = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "JSON map of browser-runtime caller names to credentials; loaded only by Browser Runtime through systemd LoadCredential.";
+    };
+
+    browserRuntimeCredentialFiles = mkOption {
+      type = types.attrsOf types.str;
+      default = { };
+      description = "Per-caller Browser Runtime credential files keyed by openclaw service name; delivered to session-manager, screen-sense, and screen-act with systemd LoadCredential.";
     };
 
     logDir = mkOption {
@@ -674,12 +755,26 @@ in
       {
         assertion = !builtins.elem "browserRuntime" cfg.components
           || builtins.elem cfg.host [ "127.0.0.1" "::1" "localhost" ]
-          || (cfg.browserRuntimeAuthToken != null && cfg.browserRuntimeAuthToken != "");
-        message = "A non-loopback browser runtime requires services.openclaw.browserRuntimeAuthToken.";
+          || (cfg.browserRuntimeAuthToken != null && cfg.browserRuntimeAuthToken != "")
+          || cfg.browserRuntimeAuthTokenFile != null
+          || cfg.browserRuntimeCredentialMapFile != null;
+        message = "A non-loopback browser runtime requires a legacy token, token file, or per-caller credential map.";
       }
       {
         assertion = !builtins.elem "core" cfg.components || cfg.operatorAuthTokenFile != null;
         message = "The OpenClaw Core control plane requires services.openclaw.operatorAuthTokenFile.";
+      }
+      {
+        assertion = cfg.eventHubCredentialMapFile == null
+          || (builtins.elem "eventHub" cfg.components
+            && builtins.all (source: builtins.hasAttr source cfg.eventHubCredentialFiles) eventHubCredentialSources);
+        message = "Event Hub per-source authentication requires a credential file for every enabled publishing service.";
+      }
+      {
+        assertion = cfg.browserRuntimeCredentialMapFile == null
+          || (builtins.elem "browserRuntime" cfg.components
+            && builtins.all (source: builtins.hasAttr source cfg.browserRuntimeCredentialFiles) browserRuntimeCredentialSources);
+        message = "Browser Runtime per-caller authentication requires a credential file for every enabled Browser Runtime caller.";
       }
       {
         assertion = cfg.operatorAuthTokenFile == null || !builtins.elem "core" cfg.componentOwnership.user;

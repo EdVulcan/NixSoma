@@ -19,6 +19,61 @@ if (-not $env:OPENCLAW_OPERATOR_TOKEN) {
   $env:OPENCLAW_OPERATOR_TOKEN = ([Convert]::ToHexString($bytes)).ToLowerInvariant()
 }
 Set-Content -Path $operatorTokenFile -Value $env:OPENCLAW_OPERATOR_TOKEN -Encoding ascii
+$eventCredentialDir = if ($env:OPENCLAW_EVENT_HUB_CREDENTIAL_DIR) { $env:OPENCLAW_EVENT_HUB_CREDENTIAL_DIR } else { Join-Path $artifactDir "openclaw-event-hub-credentials" }
+$eventTokenMapFile = if ($env:OPENCLAW_EVENT_HUB_TOKEN_MAP_FILE) { $env:OPENCLAW_EVENT_HUB_TOKEN_MAP_FILE } else { Join-Path $artifactDir "openclaw-event-hub-credential-map.json" }
+$browserCredentialDir = if ($env:OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_DIR) { $env:OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_DIR } else { Join-Path $artifactDir "openclaw-browser-runtime-credentials" }
+$browserTokenMapFile = if ($env:OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_MAP_FILE) { $env:OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_MAP_FILE } else { Join-Path $artifactDir "openclaw-browser-runtime-credential-map.json" }
+$browserOperatorTokenFile = if ($env:OPENCLAW_BROWSER_RUNTIME_OPERATOR_TOKEN_FILE) { $env:OPENCLAW_BROWSER_RUNTIME_OPERATOR_TOKEN_FILE } else { Join-Path $browserCredentialDir "openclaw-operator" }
+$eventServiceNames = @(
+  "openclaw-event-hub",
+  "openclaw-core",
+  "openclaw-session-manager",
+  "openclaw-browser-runtime",
+  "openclaw-screen-sense",
+  "openclaw-screen-act",
+  "openclaw-system-sense",
+  "openclaw-system-heal"
+)
+if (-not (Test-Path $eventCredentialDir)) {
+  New-Item -ItemType Directory -Path $eventCredentialDir | Out-Null
+}
+$eventTokenMap = @{}
+foreach ($name in $eventServiceNames) {
+  $tokenPath = Join-Path $eventCredentialDir $name
+  if (-not (Test-Path $tokenPath)) {
+    $bytes = New-Object byte[] 32
+    [Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+    [Convert]::ToHexString($bytes).ToLowerInvariant() | Set-Content -Path $tokenPath -Encoding ascii
+  }
+  $eventTokenMap[$name] = (Get-Content -Raw -Path $tokenPath).Trim()
+}
+$eventTokenMap | ConvertTo-Json -Compress | Set-Content -Path $eventTokenMapFile -Encoding ascii
+Remove-Item Env:OPENCLAW_EVENT_HUB_TOKEN -ErrorAction SilentlyContinue
+$env:OPENCLAW_EVENT_HUB_AUTH_REQUIRED = "1"
+$env:OPENCLAW_EVENT_HUB_TOKEN_MAP_FILE = $eventTokenMapFile
+$browserServiceNames = @(
+  "openclaw-session-manager",
+  "openclaw-screen-sense",
+  "openclaw-screen-act",
+  "openclaw-operator"
+)
+if (-not (Test-Path $browserCredentialDir)) {
+  New-Item -ItemType Directory -Path $browserCredentialDir | Out-Null
+}
+$browserTokenMap = @{}
+foreach ($name in $browserServiceNames) {
+  $tokenPath = Join-Path $browserCredentialDir $name
+  if (-not (Test-Path $tokenPath)) {
+    $bytes = New-Object byte[] 32
+    [Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+    [Convert]::ToHexString($bytes).ToLowerInvariant() | Set-Content -Path $tokenPath -Encoding ascii
+  }
+  $browserTokenMap[$name] = (Get-Content -Raw -Path $tokenPath).Trim()
+}
+$browserTokenMap | ConvertTo-Json -Compress | Set-Content -Path $browserTokenMapFile -Encoding ascii
+Remove-Item Env:OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN -ErrorAction SilentlyContinue
+$env:OPENCLAW_BROWSER_RUNTIME_AUTH_REQUIRED = "1"
+$env:OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_MAP_FILE = $browserTokenMapFile
 
 function Resolve-NodeExe {
   $candidates = @(
@@ -116,6 +171,14 @@ $started = @()
 
 foreach ($service in $services) {
   Write-Host "Starting $($service.name) ..."
+  $env:OPENCLAW_EVENT_HUB_TOKEN_FILE = Join-Path $eventCredentialDir $service.name
+  Remove-Item Env:OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN_FILE -ErrorAction SilentlyContinue
+  Remove-Item Env:OPENCLAW_BROWSER_RUNTIME_TOKEN_FILE -ErrorAction SilentlyContinue
+  Remove-Item Env:OPENCLAW_BROWSER_RUNTIME_CALLER -ErrorAction SilentlyContinue
+  if ($service.name -in @("openclaw-session-manager", "openclaw-screen-sense", "openclaw-screen-act")) {
+    $env:OPENCLAW_BROWSER_RUNTIME_TOKEN_FILE = Join-Path $browserCredentialDir $service.name
+    $env:OPENCLAW_BROWSER_RUNTIME_CALLER = $service.name
+  }
   $process = Start-Process -FilePath $nodeExe -ArgumentList "src/server.mjs" -WorkingDirectory $service.workingDir -PassThru
 
   if ($process.HasExited -or -not (Wait-Health -Url $service.healthUrl) -or $process.HasExited) {

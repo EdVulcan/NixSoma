@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { readCaptureAdapter } from "./capture-adapter.mjs";
 import { buildTrustedWorkViewContract } from "../../../packages/shared-utils/src/work-view-trust.mjs";
+import { createServiceCredentialHeaders, readServiceCredential } from "../../../packages/shared-utils/src/service-credentials.mjs";
 import { projectWorkViewVisualFrame } from "../../../packages/shared-utils/src/work-view-visual-frame.mjs";
 import {
   projectWorkViewSemanticTargets,
@@ -22,6 +23,12 @@ const sessionManagerUrl = process.env.OPENCLAW_SESSION_MANAGER_URL ?? "http://12
 const browserRuntimeUrl = process.env.OPENCLAW_BROWSER_RUNTIME_URL ?? "http://127.0.0.1:4103";
 const stateWaitMs = Number.parseInt(process.env.OPENCLAW_SCREEN_STATE_WAIT_MS ?? "1500", 10);
 const statePollMs = Number.parseInt(process.env.OPENCLAW_SCREEN_STATE_POLL_MS ?? "100", 10);
+const browserRuntimeCaller = process.env.OPENCLAW_BROWSER_RUNTIME_CALLER?.trim() || "openclaw-screen-sense";
+const browserRuntimeAuthToken = readServiceCredential({
+  filePath: process.env.OPENCLAW_BROWSER_RUNTIME_TOKEN_FILE,
+  value: process.env.OPENCLAW_BROWSER_RUNTIME_TOKEN_FILE ? null : process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN,
+  label: `${browserRuntimeCaller} browser-runtime credential`,
+}) ?? "";
 
 const screenState = {
   captureId: `capture-${randomUUID()}`,
@@ -53,10 +60,23 @@ const screenState = {
   workViewSummary: null,
 };
 
-import { corsHeaders, sendJson, createEventPublisher, registerService } from "../../../packages/shared-utils/src/http.mjs";
+import {
+  corsHeaders,
+  sendJson,
+  createEventPublisher,
+  registerService,
+} from "../../../packages/shared-utils/src/http.mjs";
 
 
 const publishEvent = createEventPublisher(eventHubUrl, "openclaw-screen-sense");
+
+function browserRuntimeHeaders(extraHeaders = {}) {
+  return createServiceCredentialHeaders({
+    token: browserRuntimeAuthToken,
+    caller: browserRuntimeCaller,
+    extraHeaders,
+  });
+}
 
 
 function updateScreenState(patch) {
@@ -281,7 +301,7 @@ async function readUpstreamState() {
   // caused an unhandled exception instead of a graceful degradation.
   const [sessionResponse, browserResponse] = await Promise.all([
     fetch(`${sessionManagerUrl}/session/state`).catch(() => null),
-    fetch(`${browserRuntimeUrl}/browser/state`).catch(() => null),
+    fetch(`${browserRuntimeUrl}/browser/state`, { headers: browserRuntimeHeaders() }).catch(() => null),
   ]);
 
   const sessionData = sessionResponse ? await sessionResponse.json().catch(() => null) : null;
@@ -289,7 +309,9 @@ async function readUpstreamState() {
   const browserData = browserResponse ? await browserResponse.json().catch(() => null) : null;
   const browser = browserData?.browser ?? null;
   const adapter = await readCaptureAdapter(async () => {
-    const browserCaptureResponse = await fetch(`${browserRuntimeUrl}/browser/capture`).catch(() => null);
+    const browserCaptureResponse = await fetch(`${browserRuntimeUrl}/browser/capture`, {
+      headers: browserRuntimeHeaders(),
+    }).catch(() => null);
     const browserCaptureData = browserCaptureResponse ? await browserCaptureResponse.json() : null;
     return browserCaptureData?.capture ?? null;
   });

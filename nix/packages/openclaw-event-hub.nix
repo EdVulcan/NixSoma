@@ -13,5 +13,6 @@ mkOpenClawSourceClosure {
     ../../services/openclaw-event-hub/src/event-ingress.mjs
     ../../packages/shared-utils/package.json
     ../../packages/shared-utils/src/http.mjs
+    ../../packages/shared-utils/src/service-credentials.mjs
   ];
 }

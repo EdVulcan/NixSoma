@@ -1371,12 +1371,34 @@ and post-logout rejection.
 The common system-sense and screen-act mutation paths now reject unsigned direct
 calls and accept only Core-issued, short-lived grants bound to the exact method,
 route, body hash, audience, task, step, capability, and intent. This still does
-not establish independent service identity for every internal service, replace
-shared browser/event credentials with per-service credentials, or prove a real
-Nix closure receipt and host-health oracle for activation. The next security
-slice is independent service identity and credential delivery; only after that
-and the existing hostd health proof should the fixed hostd/systemd Level 3
-activation bridge resume.
+not replace shared Browser Runtime credentials with per-caller credentials or
+prove a real Nix closure receipt and host-health oracle for activation.
+
+The first independent service-identity slice is now complete for Event Hub.
+Each publishing service reads its own credential from a file, sends a bounded
+caller/source identity, and Event Hub verifies the exact source-to-token
+assignment in a credential map with constant-time comparison. Required map mode
+fails closed at startup and rejects both token/source swaps and missing caller
+identity. The Unix and PowerShell dev launchers generate separate local
+credentials; NixOS exposes the same map and per-service files through
+`LoadCredential` without writing token values into the Nix expression. This
+slice is documented in
+`docs/plans/OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md`.
+
+The Browser Runtime per-caller identity slice is now complete. A configured
+caller map binds separate credentials to session-manager, screen-sense, and
+screen-act; each service reads its own file and sends its caller identity.
+Trusted sidecar capture and action receive the session-manager credential only
+through the connected Unix IPC bind message, never through the transient
+EnvironmentFile. Unix and PowerShell development launchers generate the same
+bounded credential map, while NixOS delivers the map and caller files with
+`LoadCredential`. Shared-token and loopback compatibility remains only when a
+per-caller map is not configured.
+
+The next security slice is Core operator identity and authenticated approval
+sessions, followed by Core-issued per-service execution grants for direct
+actuator routes. Only after those boundaries and the existing hostd health proof
+should the fixed hostd/systemd Level 3 activation bridge resume.
 
 ## Identity-Upgrade Alignment
 

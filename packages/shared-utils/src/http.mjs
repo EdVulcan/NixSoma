@@ -1,5 +1,6 @@
 // 所有服务共享的 HTTP 工具函数
 import { randomUUID } from "node:crypto";
+import { createServiceCredentialHeaders, readServiceCredential } from "./service-credentials.mjs";
 
 
 const MAX_REQUEST_BODY_BYTES = 1_048_576;
@@ -53,16 +54,26 @@ export function readJsonBody(req, maxBytes = MAX_REQUEST_BODY_BYTES) {
   });
 }
 
-export function createEventPublisher(eventHubUrl, serviceName, fetchFn = fetch, { required = false, token = process.env.OPENCLAW_EVENT_HUB_TOKEN } = {}) {
+export function createEventPublisher(eventHubUrl, serviceName, fetchFn = fetch, {
+  required = false,
+  token = process.env.OPENCLAW_EVENT_HUB_TOKEN,
+  tokenFilePath = process.env.OPENCLAW_EVENT_HUB_TOKEN_FILE,
+} = {}) {
+  const eventToken = readServiceCredential({
+    filePath: tokenFilePath,
+    value: tokenFilePath ? null : token,
+    label: `${serviceName} event-hub credential`,
+  });
   return async function publishEvent(type, payload = {}) {
     try {
-      const headers = {
-        "content-type": "application/json",
-        "x-openclaw-event-source": serviceName,
-      };
-      if (typeof token === "string" && token.trim()) {
-        headers.authorization = `Bearer ${token.trim()}`;
-      }
+      const headers = createServiceCredentialHeaders({
+        token: eventToken,
+        caller: serviceName,
+        extraHeaders: {
+          "content-type": "application/json",
+          "x-openclaw-event-source": serviceName,
+        },
+      });
       const response = await fetchFn(`${eventHubUrl}/events`, {
         method: "POST",
         headers,
@@ -85,16 +96,26 @@ export function createEventPublisher(eventHubUrl, serviceName, fetchFn = fetch, 
   };
 }
 
-export async function registerService(eventHubUrl, name, url) {
+export async function registerService(eventHubUrl, name, url, {
+  token = process.env.OPENCLAW_EVENT_HUB_TOKEN,
+  tokenFilePath = process.env.OPENCLAW_EVENT_HUB_TOKEN_FILE,
+  fetchFn = fetch,
+} = {}) {
   try {
-    const headers = {
-      "content-type": "application/json",
-      "x-openclaw-event-source": name,
-    };
-    if (typeof process.env.OPENCLAW_EVENT_HUB_TOKEN === "string" && process.env.OPENCLAW_EVENT_HUB_TOKEN.trim()) {
-      headers.authorization = `Bearer ${process.env.OPENCLAW_EVENT_HUB_TOKEN.trim()}`;
-    }
-    await fetch(`${eventHubUrl}/services/register`, {
+    const eventToken = readServiceCredential({
+      filePath: tokenFilePath,
+      value: tokenFilePath ? null : token,
+      label: `${name} event-hub credential`,
+    });
+    const headers = createServiceCredentialHeaders({
+      token: eventToken,
+      caller: name,
+      extraHeaders: {
+        "content-type": "application/json",
+        "x-openclaw-event-source": name,
+      },
+    });
+    await fetchFn(`${eventHubUrl}/services/register`, {
       method: "POST",
       headers,
       body: JSON.stringify({ name, url }),

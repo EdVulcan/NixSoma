@@ -24,7 +24,6 @@ function boundedEnvironment() {
     OPENCLAW_SIDECAR_HEARTBEAT_INTERVAL_MS: "250",
     OPENCLAW_SIDECAR_CAPTURE_INTERVAL_MS: "1000",
     OPENCLAW_SIDECAR_RECONNECT_TIMEOUT_MS: "30000",
-    OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN: "browser-runtime-secret",
   };
 }
 
@@ -51,8 +50,7 @@ test("systemd user launcher writes one bounded environment and stops the same un
   assert.equal(statSync(launched.environmentFilePath).mode & 0o777, 0o600);
   assert.match(contents, /OPENCLAW_SIDECAR_TASK_ID="task-sidecar"/u);
   assert.match(contents, /OPENCLAW_SIDECAR_APPROVAL_ID="approval-sidecar"/u);
-  assert.match(contents, /OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN="browser-runtime-secret"/u);
-  for (const forbidden of ["SESSION", "LEASE", "CREDENTIAL", "PROVIDER", "BROWSER_RUNTIME_URL"]) {
+  for (const forbidden of ["SESSION", "LEASE", "CREDENTIAL", "PROVIDER", "BROWSER_RUNTIME_URL", "BROWSER_RUNTIME_AUTH_TOKEN"]) {
     assert.equal(contents.includes(forbidden), false);
   }
   assert.deepEqual(calls, [{
@@ -71,6 +69,13 @@ test("trusted sidecar launcher rejects authority values outside its environment 
     () => serializeTrustedSidecarEnvironment({
       ...boundedEnvironment(),
       OPENCLAW_SIDECAR_LEASE_ID: "lease-must-not-persist",
+    }),
+    /environment key is not allowed/u,
+  );
+  assert.throws(
+    () => serializeTrustedSidecarEnvironment({
+      ...boundedEnvironment(),
+      OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN: "credential-must-not-persist",
     }),
     /environment key is not allowed/u,
   );

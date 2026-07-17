@@ -5,7 +5,7 @@ import {
   createSidecarMessageDecoder,
   encodeSidecarMessage,
 } from "./trusted-work-view-sidecar-channel.mjs";
-import { createBearerAuthHeaders } from "../../../packages/shared-utils/src/http.mjs";
+import { createServiceCredentialHeaders } from "../../../packages/shared-utils/src/service-credentials.mjs";
 import { projectWorkViewVisualFrame } from "../../../packages/shared-utils/src/work-view-visual-frame.mjs";
 
 const HEARTBEAT_REGISTRY = "openclaw-trusted-work-view-sidecar-heartbeat-v0";
@@ -15,9 +15,6 @@ const captureIntervalMs = Math.max(500, Number.parseInt(process.env.OPENCLAW_SID
 const reconnectTimeoutMs = Math.max(5_000, Number.parseInt(process.env.OPENCLAW_SIDECAR_RECONNECT_TIMEOUT_MS ?? "30000", 10));
 const lifecycleTaskId = process.env.OPENCLAW_SIDECAR_TASK_ID ?? null;
 const lifecycleApprovalId = process.env.OPENCLAW_SIDECAR_APPROVAL_ID ?? null;
-const browserRuntimeAuthToken = typeof process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN === "string"
-  ? process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN.trim()
-  : "";
 
 if (!socketPath || !lifecycleTaskId || !lifecycleApprovalId) {
   throw new Error("Trusted work-view sidecar requires socket and lifecycle identity.");
@@ -93,6 +90,14 @@ function bindAuthority(message) {
     sessionId: message.sessionId,
     workViewId: message.workViewId,
     browserRuntimeUrl: message.browserRuntimeUrl ? validateLoopbackOrigin(message.browserRuntimeUrl) : null,
+    browserRuntimeCaller: typeof message.browserRuntimeCaller === "string"
+      && /^[A-Za-z0-9._-]{1,120}$/u.test(message.browserRuntimeCaller.trim())
+      ? message.browserRuntimeCaller.trim()
+      : null,
+    browserRuntimeCredential: typeof message.browserRuntimeCredential === "string"
+      && message.browserRuntimeCredential.trim()
+      ? message.browserRuntimeCredential.trim()
+      : null,
   };
   heartbeatCount += 1;
   latestCaptureObservation = null;
@@ -117,7 +122,10 @@ async function observeBrowserCapture({ afterMutation = false } = {}) {
   capturePromise = (async () => {
     try {
       const response = await fetch(`${browserRuntimeUrl}/browser/capture?visual=metadata`, {
-        headers: createBearerAuthHeaders(browserRuntimeAuthToken),
+        headers: createServiceCredentialHeaders({
+          token: binding.browserRuntimeCredential,
+          caller: binding.browserRuntimeCaller,
+        }),
       });
       const data = await response.json();
       if (!response.ok || data?.ok !== true) {
@@ -257,7 +265,11 @@ async function executeBrowserAction(message) {
   try {
     const response = await fetch(`${binding.browserRuntimeUrl}${endpoint}`, {
       method: "POST",
-      headers: createBearerAuthHeaders(browserRuntimeAuthToken, { "content-type": "application/json" }),
+      headers: createServiceCredentialHeaders({
+        token: binding.browserRuntimeCredential,
+        caller: binding.browserRuntimeCaller,
+        extraHeaders: { "content-type": "application/json" },
+      }),
       body: JSON.stringify({ ...message.payload, trustedHelperLease: message.trustedHelperLease }),
     });
     const data = await response.json();

@@ -116,6 +116,14 @@ const envNames = [
   "OPENCLAW_KERNEL_EVENT_CAPTURE_MAX_EVENTS",
   "OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE",
   "OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE",
+  "OPENCLAW_EVENT_HUB_TOKEN_FILE",
+  "OPENCLAW_EVENT_HUB_TOKEN_MAP_FILE",
+  "OPENCLAW_EVENT_HUB_AUTH_REQUIRED",
+  "OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN_FILE",
+  "OPENCLAW_BROWSER_RUNTIME_TOKEN_FILE",
+  "OPENCLAW_BROWSER_RUNTIME_CALLER",
+  "OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_MAP_FILE",
+  "OPENCLAW_BROWSER_RUNTIME_AUTH_REQUIRED",
 ];
 
 function requireIncludes(label, content, tokens) {
@@ -142,6 +150,17 @@ requireIncludes("openclaw-body module", bodyModule, [
   "systemd.tmpfiles.rules",
   "openclaw-event-log-ownership-migration",
   "openclaw-execution-grant-key-init",
+  "eventHubCredentialMapFile",
+  "eventHubCredentialFiles",
+  "event-hub-token-map",
+  "event-hub-token",
+  "browserRuntimeAuthTokenFile",
+  "browserRuntimeCredentialMapFile",
+  "browserRuntimeCredentialFiles",
+  "browser-runtime-token-map",
+  "browser-runtime-token",
+  "browser-runtime-auth-token",
+  "LoadCredential",
   "ExecStartPre = [ \"+${eventLogOwnershipMigration}\" ]",
   "chown ${lib.escapeShellArg \"${owner}:${group}\"} \"$event_log\"",
   "StateDirectory = \"openclaw\"",
@@ -541,6 +560,7 @@ EOF
   if [[ "$event_hub_out" != /nix/store/*
     || ! -f "$event_hub_server"
     || ! -f "$event_hub_out/share/openclaw/packages/shared-utils/src/http.mjs"
+    || ! -f "$event_hub_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
     || -w "$event_hub_server"
     || -e "$event_hub_out/share/openclaw/packages/shared-utils/src/work-view-trust.mjs" ]]; then
     echo "event-hub Nix closure is not minimal and read-only: $event_hub_out" >&2
@@ -646,7 +666,8 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/execution-grants.mjs"
     || -w "$core_server"
     || -e "$core_out/share/openclaw/services/openclaw-core/test"
-    || "$(find "$core_out" -type f | wc -l)" -ne 205 ]]; then
+    || ! -f "$core_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
+    || "$(find "$core_out" -type f | wc -l)" -ne 206 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -769,7 +790,8 @@ EOF
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/work-view-trust.mjs"
     || -w "$session_manager_server"
     || -e "$session_manager_out/share/openclaw/services/openclaw-session-manager/test"
-    || "$(find "$session_manager_out" -type f | wc -l)" -ne 14 ]]; then
+    || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
+    || "$(find "$session_manager_out" -type f | wc -l)" -ne 15 ]]; then
     echo "session-manager Nix closure is not exact and read-only: $session_manager_out" >&2
     exit 1
   fi
@@ -872,10 +894,11 @@ EOF
     || ! -f "$browser_runtime_server"
     || ! -f "$browser_runtime_working_dir/node_modules/puppeteer-core/package.json"
     || ! -f "$browser_runtime_out/share/openclaw/packages/shared-utils/src/work-view-input-evidence.mjs"
+    || ! -f "$browser_runtime_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
     || -w "$browser_runtime_server"
     || -e "$browser_runtime_working_dir/node_modules/@openclaw"
     || -e "$browser_runtime_working_dir/node_modules/typescript"
-    || "$browser_runtime_source_count" -ne 13 ]]; then
+    || "$browser_runtime_source_count" -ne 15 ]]; then
     echo "browser-runtime Nix closure is not exact, production-only, and read-only: $browser_runtime_out" >&2
     exit 1
   fi
@@ -985,9 +1008,10 @@ EOF
     || ! -f "$screen_sense_server"
     || ! -f "$screen_sense_out/share/openclaw/packages/shared-events/src/event-factory.mjs"
     || ! -f "$screen_sense_out/share/openclaw/packages/shared-utils/src/work-view-semantic-targets.mjs"
+    || ! -f "$screen_sense_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
     || -w "$screen_sense_server"
     || -e "$screen_sense_out/share/openclaw/packages/shared-utils/test/work-view-trust.test.mjs"
-    || "$(find "$screen_sense_out" -type f | wc -l)" -ne 10 ]]; then
+    || "$(find "$screen_sense_out" -type f | wc -l)" -ne 11 ]]; then
     echo "screen-sense Nix closure is not exact and read-only: $screen_sense_out" >&2
     exit 1
   fi
@@ -1067,9 +1091,10 @@ EOF
     || ! -f "$screen_act_out/share/openclaw/services/openclaw-screen-act/src/trusted-work-view-action-mediation.mjs"
     || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/work-view-input-evidence.mjs"
     || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/execution-grants.mjs"
+    || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
     || -w "$screen_act_server"
     || -e "$screen_act_out/share/openclaw/packages/shared-utils/test/http.test.mjs"
-    || "$(find "$screen_act_out" -type f | wc -l)" -ne 12 ]]; then
+    || "$(find "$screen_act_out" -type f | wc -l)" -ne 13 ]]; then
     echo "screen-act Nix closure is not exact and read-only: $screen_act_out" >&2
     exit 1
   fi
@@ -1202,6 +1227,7 @@ EOF
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-routes.mjs"
     || ! -f "$system_sense_out/share/openclaw/packages/shared-events/src/event-names.mjs"
     || ! -f "$system_sense_out/share/openclaw/packages/shared-utils/src/execution-grants.mjs"
+    || ! -f "$system_sense_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
     || -w "$system_sense_server"
     || -e "$system_sense_out/share/openclaw/services/openclaw-system-sense/test"
     || -e "$system_sense_working_dir/node_modules/@openclaw"
@@ -1209,7 +1235,7 @@ EOF
     || -e "$system_sense_working_dir/node_modules/typescript"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-dbus-transport.mjs"
     || ! -f "$system_sense_out/share/openclaw/packages/shared-systemd/src/systemd-dbus-transport.mjs"
-    || "$system_sense_source_count" -ne 26 ]]; then
+    || "$system_sense_source_count" -ne 27 ]]; then
     echo "system-sense Nix closure is not exact, production-only, and read-only: $system_sense_out" >&2
     exit 1
   fi
@@ -1329,10 +1355,11 @@ EOF
   if [[ "$system_heal_out" != /nix/store/*
     || ! -f "$system_heal_server"
     || ! -f "$system_heal_out/share/openclaw/packages/shared-utils/src/persist.mjs"
+    || ! -f "$system_heal_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
     || ! -f "$system_heal_out/share/openclaw/packages/shared-events/src/event-names.mjs"
     || -w "$system_heal_server"
     || -e "$system_heal_out/share/openclaw/services/openclaw-system-heal/test"
-    || "$(find "$system_heal_out" -type f | wc -l)" -ne 7 ]]; then
+    || "$(find "$system_heal_out" -type f | wc -l)" -ne 8 ]]; then
     echo "system-heal Nix closure is not exact and read-only: $system_heal_out" >&2
     exit 1
   fi

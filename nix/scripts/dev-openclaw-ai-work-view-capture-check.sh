@@ -27,6 +27,8 @@ export OPENCLAW_EVENT_LOG_FILE="${OPENCLAW_EVENT_LOG_FILE:-$REPO_ROOT/.artifacts
 export OPENCLAW_BROWSER_ENGINE_MODE="firefox"
 export OPENCLAW_BROWSER_ALLOW_LOCAL_FIXTURES="1"
 export OPENCLAW_BROWSER_PROFILE_DIR="${OPENCLAW_BROWSER_PROFILE_DIR:-$REPO_ROOT/.artifacts/openclaw-browser-profile-ai-work-view-capture-check}"
+OPENCLAW_DEV_RUN_ID="${OPENCLAW_DEV_RUN_ID:-ports-$OPENCLAW_CORE_PORT}"
+OPENCLAW_BROWSER_RUNTIME_OPERATOR_TOKEN_FILE="${OPENCLAW_BROWSER_RUNTIME_OPERATOR_TOKEN_FILE:-$REPO_ROOT/.artifacts/openclaw-browser-runtime-credentials-$OPENCLAW_DEV_RUN_ID/openclaw-operator}"
 
 BROWSER_URL="http://127.0.0.1:$OPENCLAW_BROWSER_RUNTIME_PORT"
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
@@ -37,8 +39,15 @@ EVENT_HUB_URL="http://127.0.0.1:$OPENCLAW_EVENT_HUB_PORT"
 
 browser_curl() {
   local auth_args=()
-  if [[ -n "${OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN:-}" ]]; then
-    auth_args=(-H "authorization: Bearer $OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN")
+  local browser_token="${OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN:-}"
+  if [[ -z "$browser_token" && -s "$OPENCLAW_BROWSER_RUNTIME_OPERATOR_TOKEN_FILE" ]]; then
+    browser_token="$(tr -d '\r\n' <"$OPENCLAW_BROWSER_RUNTIME_OPERATOR_TOKEN_FILE")"
+  fi
+  if [[ -n "$browser_token" ]]; then
+    auth_args=(
+      -H "authorization: Bearer $browser_token"
+      -H "x-openclaw-service-caller: openclaw-operator"
+    )
   fi
   curl "${auth_args[@]}" "$@"
 }

@@ -19,6 +19,7 @@ import { buildWriteOnlyInputEvidence } from "../../../packages/shared-utils/src/
 import { normaliseBoundedBrowserUrl, validateBoundedBrowserUrl } from "./browser-navigation.mjs";
 import { createBrowserWorkspaceStore } from "./browser-workspace-store.mjs";
 import { createBrowserEngineAdapter } from "./browser-engine-adapter.mjs";
+import { createBrowserRuntimeAuthenticator } from "./browser-runtime-auth.mjs";
 
 
 const host = process.env.OPENCLAW_BROWSER_RUNTIME_HOST ?? "127.0.0.1";
@@ -29,13 +30,19 @@ const stateFilePath = process.env.OPENCLAW_BROWSER_RUNTIME_STATE_FILE ?? `/tmp/o
 const engineMode = process.env.OPENCLAW_BROWSER_ENGINE_MODE ?? "simulated";
 const engineProfileDirectory = process.env.OPENCLAW_BROWSER_PROFILE_DIR ?? `/tmp/openclaw-browser-profile-${port}`;
 const allowLocalFixtureUrls = process.env.OPENCLAW_BROWSER_ALLOW_LOCAL_FIXTURES === "1";
-const browserRuntimeAuthToken = typeof process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN === "string"
-  && process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN.trim()
-  ? process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN.trim()
-  : null;
 const isLoopbackHost = ["127.0.0.1", "::1", "localhost"].includes(host);
-if (!isLoopbackHost && !browserRuntimeAuthToken) {
-  throw new Error("Browser runtime refuses non-loopback binding without OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN.");
+const browserRuntimeAuth = createBrowserRuntimeAuthenticator({
+  token: process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN,
+  tokenFilePath: process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN_FILE,
+  credentialMapFilePath: process.env.OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_MAP_FILE,
+  required: process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_REQUIRED === "1"
+    || Boolean(process.env.OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_MAP_FILE),
+});
+if (!isLoopbackHost
+  && !process.env.OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_MAP_FILE
+  && !process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN
+  && !process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN_FILE) {
+  throw new Error("Browser runtime refuses non-loopback binding without an internal credential.");
 }
 if (!["firefox", "simulated"].includes(engineMode)) {
   throw new Error(`Unsupported browser engine mode: ${engineMode}.`);
@@ -110,17 +117,6 @@ function serialiseBrowserState({ includeAuthority = false } = {}) {
     trustedHelperLease: includeAuthority && trustedHelperLease ? { ...trustedHelperLease } : null,
     tabs: browserState.tabs.map((tab) => ({ ...tab })),
   };
-}
-
-function assertBrowserRuntimeRequestAuth(req) {
-  if (!browserRuntimeAuthToken) {
-    return;
-  }
-  if (req.headers.authorization !== `Bearer ${browserRuntimeAuthToken}`) {
-    const error = new Error("Browser runtime requires authenticated internal service access.");
-    error.code = "BROWSER_RUNTIME_AUTH_REQUIRED";
-    throw error;
-  }
 }
 
 function applyEngineSnapshot(snapshot) {
@@ -348,7 +344,7 @@ const server = http.createServer(async (req, res) => {
 
   if (requestUrl.pathname !== "/health") {
     try {
-      assertBrowserRuntimeRequestAuth(req);
+      browserRuntimeAuth.authenticateRequest(req);
     } catch (error) {
       sendJson(res, 401, { ok: false, error: error.message });
       return;

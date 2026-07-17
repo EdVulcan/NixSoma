@@ -61,6 +61,7 @@ export function createTrustedWorkViewSidecarSupervisor({
   stopTimeoutMs = 1_000,
   reconnectTimeoutMs = 30_000,
   browserRuntimeAuthToken = process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN ?? "",
+  browserRuntimeCaller = process.env.OPENCLAW_BROWSER_RUNTIME_CALLER ?? "openclaw-session-manager",
   socketDirectory = path.join(process.env.XDG_RUNTIME_DIR ?? tmpdir(), "openclaw-sidecars"),
   launcherMode = process.env.OPENCLAW_TRUSTED_SIDECAR_LAUNCHER_MODE ?? "systemd-user",
   unitInstance = process.env.OPENCLAW_TRUSTED_SIDECAR_UNIT_INSTANCE ?? "primary",
@@ -94,6 +95,10 @@ export function createTrustedWorkViewSidecarSupervisor({
   const normalizedBrowserRuntimeAuthToken = typeof browserRuntimeAuthToken === "string"
     ? browserRuntimeAuthToken.trim()
     : "";
+  const normalizedBrowserRuntimeCaller = typeof browserRuntimeCaller === "string"
+    && /^[A-Za-z0-9._-]{1,120}$/u.test(browserRuntimeCaller.trim())
+    ? browserRuntimeCaller.trim()
+    : "openclaw-session-manager";
   const processLauncher = launcher ?? createTrustedWorkViewSidecarLauncher({
     mode: launcherMode,
     unitInstance,
@@ -299,9 +304,6 @@ export function createTrustedWorkViewSidecarSupervisor({
         OPENCLAW_SIDECAR_HEARTBEAT_INTERVAL_MS: String(heartbeatIntervalMs),
         OPENCLAW_SIDECAR_CAPTURE_INTERVAL_MS: String(captureIntervalMs),
         OPENCLAW_SIDECAR_RECONNECT_TIMEOUT_MS: String(reconnectTimeoutMs),
-        ...(normalizedBrowserRuntimeAuthToken
-          ? { OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN: normalizedBrowserRuntimeAuthToken }
-          : {}),
       },
     });
     const processHandle = launched.processHandle;
@@ -398,6 +400,8 @@ export function createTrustedWorkViewSidecarSupervisor({
         sessionId: nextOwner.sessionId,
         workViewId: nextOwner.workViewId,
         browserRuntimeUrl: nextOwner.browserRuntimeUrl,
+        browserRuntimeCaller: normalizedBrowserRuntimeCaller,
+        browserRuntimeCredential: normalizedBrowserRuntimeAuthToken || null,
       }));
       await ready;
     } catch (error) {

@@ -5,14 +5,18 @@ import { buildTrustedWorkViewContract } from "../../../packages/shared-utils/src
 import { createTrustedWorkViewHelperRuntime } from "./trusted-work-view-helper-runtime.mjs";
 import { createTrustedWorkViewSidecarSupervisor } from "./trusted-work-view-sidecar-supervisor.mjs";
 import { createTrustedWorkViewSidecarRecoveryStore } from "./trusted-work-view-sidecar-recovery-store.mjs";
+import { createServiceCredentialHeaders, readServiceCredential } from "../../../packages/shared-utils/src/service-credentials.mjs";
 
 const host = process.env.OPENCLAW_SESSION_MANAGER_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SESSION_MANAGER_PORT ?? "4102", 10);
 const eventHubUrl = process.env.OPENCLAW_EVENT_HUB_URL ?? "http://127.0.0.1:4101";
 const browserRuntimeUrl = process.env.OPENCLAW_BROWSER_RUNTIME_URL ?? "http://127.0.0.1:4103";
-const browserRuntimeAuthToken = typeof process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN === "string"
-  ? process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN.trim()
-  : "";
+const browserRuntimeCaller = process.env.OPENCLAW_BROWSER_RUNTIME_CALLER?.trim() || "openclaw-session-manager";
+const browserRuntimeAuthToken = readServiceCredential({
+  filePath: process.env.OPENCLAW_BROWSER_RUNTIME_TOKEN_FILE,
+  value: process.env.OPENCLAW_BROWSER_RUNTIME_TOKEN_FILE ? null : process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN,
+  label: `${browserRuntimeCaller} browser-runtime credential`,
+}) ?? "";
 const startDelayMs = Number.parseInt(process.env.OPENCLAW_SESSION_START_DELAY_MS ?? "0", 10);
 const defaultWorkViewUrl = process.env.OPENCLAW_WORK_VIEW_URL ?? "https://example.com/work-view";
 const stateFilePath = process.env.OPENCLAW_SESSION_MANAGER_STATE_FILE ?? `/tmp/openclaw-session-manager-${port}.json`;
@@ -50,6 +54,7 @@ const sidecarRecoveryStore = createTrustedWorkViewSidecarRecoveryStore({ stateFi
 let sidecarLifecycleIntent = sidecarRecoveryStore.snapshot();
 const trustedWorkViewSidecarSupervisor = createTrustedWorkViewSidecarSupervisor({
   browserRuntimeAuthToken,
+  browserRuntimeCaller,
   launcherMode: process.env.OPENCLAW_TRUSTED_SIDECAR_LAUNCHER_MODE ?? "systemd-user",
   unitInstance: process.env.OPENCLAW_TRUSTED_SIDECAR_UNIT_INSTANCE ?? "primary",
   onHeartbeat(message) {
@@ -72,7 +77,6 @@ const trustedWorkViewSidecarSupervisor = createTrustedWorkViewSidecarSupervisor(
 
 import {
   corsHeaders,
-  createBearerAuthHeaders,
   sendJson,
   readJsonBody,
   createEventPublisher,
@@ -187,7 +191,11 @@ function sleep(ms) {
 }
 
 function browserRuntimeHeaders(extraHeaders = {}) {
-  return createBearerAuthHeaders(browserRuntimeAuthToken, extraHeaders);
+  return createServiceCredentialHeaders({
+    token: browserRuntimeAuthToken,
+    caller: browserRuntimeCaller,
+    extraHeaders,
+  });
 }
 
 const publishEvent = createEventPublisher(eventHubUrl, "openclaw-session-manager");

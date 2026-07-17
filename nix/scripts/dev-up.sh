@@ -5,7 +5,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 ARTIFACT_DIR="$REPO_ROOT/.artifacts"
 OPENCLAW_EVENT_LOG_FILE="${OPENCLAW_EVENT_LOG_FILE:-$ARTIFACT_DIR/openclaw-events.jsonl}"
-OPENCLAW_EVENT_HUB_TOKEN="${OPENCLAW_EVENT_HUB_TOKEN:-$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')}"
 OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_OPERATOR_TOKEN_FILE:-$ARTIFACT_DIR/openclaw-operator-token}"
 
 mkdir -p "$ARTIFACT_DIR"
@@ -55,6 +54,11 @@ OPENCLAW_DEV_STATE_FILE_EXPLICIT="${OPENCLAW_DEV_STATE_FILE+x}"
 OPENCLAW_DEV_RUN_ID="$(sanitize_run_id "${OPENCLAW_DEV_RUN_ID:-ports-$CORE_PORT}")"
 OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE="${OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE:-$ARTIFACT_DIR/openclaw-execution-grant-$OPENCLAW_DEV_RUN_ID-private.pem}"
 OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE="${OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE:-$ARTIFACT_DIR/openclaw-execution-grant-$OPENCLAW_DEV_RUN_ID-public.pem}"
+OPENCLAW_EVENT_HUB_CREDENTIAL_DIR="${OPENCLAW_EVENT_HUB_CREDENTIAL_DIR:-$ARTIFACT_DIR/openclaw-event-hub-credentials-$OPENCLAW_DEV_RUN_ID}"
+OPENCLAW_EVENT_HUB_TOKEN_MAP_FILE="${OPENCLAW_EVENT_HUB_TOKEN_MAP_FILE:-$ARTIFACT_DIR/openclaw-event-hub-credential-map-$OPENCLAW_DEV_RUN_ID.json}"
+OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_DIR="${OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_DIR:-$ARTIFACT_DIR/openclaw-browser-runtime-credentials-$OPENCLAW_DEV_RUN_ID}"
+OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_MAP_FILE="${OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_MAP_FILE:-$ARTIFACT_DIR/openclaw-browser-runtime-credential-map-$OPENCLAW_DEV_RUN_ID.json}"
+OPENCLAW_BROWSER_RUNTIME_OPERATOR_TOKEN_FILE="${OPENCLAW_BROWSER_RUNTIME_OPERATOR_TOKEN_FILE:-$OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_DIR/openclaw-operator}"
 OPENCLAW_BROWSER_RUNTIME_STATE_FILE="${OPENCLAW_BROWSER_RUNTIME_STATE_FILE:-$ARTIFACT_DIR/openclaw-browser-runtime-$OPENCLAW_DEV_RUN_ID.json}"
 OPENCLAW_BROWSER_ENGINE_MODE="${OPENCLAW_BROWSER_ENGINE_MODE:-simulated}"
 OPENCLAW_BROWSER_PROFILE_DIR="${OPENCLAW_BROWSER_PROFILE_DIR:-$ARTIFACT_DIR/openclaw-browser-profile-$OPENCLAW_DEV_RUN_ID}"
@@ -86,6 +90,64 @@ ensure_execution_grant_keypair() {
 }
 
 ensure_execution_grant_keypair
+
+ensure_event_hub_credentials() {
+  local names=(
+    openclaw-event-hub
+    openclaw-core
+    openclaw-session-manager
+    openclaw-browser-runtime
+    openclaw-screen-sense
+    openclaw-screen-act
+    openclaw-system-sense
+    openclaw-system-heal
+  )
+  mkdir -p "$OPENCLAW_EVENT_HUB_CREDENTIAL_DIR"
+  "$NODE_EXE" --input-type=module -e '
+    import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+    import { randomUUID } from "node:crypto";
+    const [directory, mapPath, ...names] = process.argv.slice(1);
+    for (const name of names) {
+      const tokenPath = `${directory}/${name}`;
+      if (!existsSync(tokenPath)) {
+        writeFileSync(tokenPath, `${randomUUID()}${randomUUID()}\n`, { mode: 0o600 });
+      }
+      chmodSync(tokenPath, 0o600);
+    }
+    const map = Object.fromEntries(names.map((name) => [name, readFileSync(`${directory}/${name}`, "utf8").trim()]));
+    writeFileSync(mapPath, `${JSON.stringify(map)}\n`, { mode: 0o600 });
+    chmodSync(mapPath, 0o600);
+  ' "$OPENCLAW_EVENT_HUB_CREDENTIAL_DIR" "$OPENCLAW_EVENT_HUB_TOKEN_MAP_FILE" "${names[@]}"
+}
+
+ensure_event_hub_credentials
+
+ensure_browser_runtime_credentials() {
+  local names=(
+    openclaw-session-manager
+    openclaw-screen-sense
+    openclaw-screen-act
+    openclaw-operator
+  )
+  mkdir -p "$OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_DIR"
+  "$NODE_EXE" --input-type=module -e '
+    import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+    import { randomUUID } from "node:crypto";
+    const [directory, mapPath, ...names] = process.argv.slice(1);
+    for (const name of names) {
+      const tokenPath = `${directory}/${name}`;
+      if (!existsSync(tokenPath)) {
+        writeFileSync(tokenPath, `${randomUUID()}${randomUUID()}\n`, { mode: 0o600 });
+      }
+      chmodSync(tokenPath, 0o600);
+    }
+    const map = Object.fromEntries(names.map((name) => [name, readFileSync(`${directory}/${name}`, "utf8").trim()]));
+    writeFileSync(mapPath, `${JSON.stringify(map)}\n`, { mode: 0o600 });
+    chmodSync(mapPath, 0o600);
+  ' "$OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_DIR" "$OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_MAP_FILE" "${names[@]}"
+}
+
+ensure_browser_runtime_credentials
 
 use_scoped_service_artifacts() {
   [[ -n "$OPENCLAW_DEV_RUN_ID_EXPLICIT" || -n "$OPENCLAW_DEV_STATE_FILE_EXPLICIT" ]]
@@ -299,7 +361,21 @@ start_service_process() {
     export OPENCLAW_TRUSTED_SIDECAR_LAUNCHER_MODE="${OPENCLAW_TRUSTED_SIDECAR_LAUNCHER_MODE:-direct-spawn}"
     export OPENCLAW_TRUSTED_SIDECAR_UNIT_INSTANCE="${OPENCLAW_TRUSTED_SIDECAR_UNIT_INSTANCE:-primary}"
     export OPENCLAW_EVENT_LOG_FILE="$OPENCLAW_EVENT_LOG_FILE"
-    export OPENCLAW_EVENT_HUB_TOKEN="$OPENCLAW_EVENT_HUB_TOKEN"
+    unset OPENCLAW_EVENT_HUB_TOKEN
+    export OPENCLAW_EVENT_HUB_AUTH_REQUIRED=1
+    export OPENCLAW_EVENT_HUB_TOKEN_FILE="$OPENCLAW_EVENT_HUB_CREDENTIAL_DIR/$name"
+    export OPENCLAW_EVENT_HUB_TOKEN_MAP_FILE="$OPENCLAW_EVENT_HUB_TOKEN_MAP_FILE"
+    unset OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN_FILE OPENCLAW_BROWSER_RUNTIME_TOKEN_FILE OPENCLAW_BROWSER_RUNTIME_CALLER
+    export OPENCLAW_BROWSER_RUNTIME_AUTH_REQUIRED=1
+    case "$name" in
+      openclaw-browser-runtime)
+        export OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_MAP_FILE="$OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_MAP_FILE"
+        ;;
+      openclaw-session-manager|openclaw-screen-sense|openclaw-screen-act)
+        export OPENCLAW_BROWSER_RUNTIME_TOKEN_FILE="$OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_DIR/$name"
+        export OPENCLAW_BROWSER_RUNTIME_CALLER="$name"
+        ;;
+    esac
     export OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE="$OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE"
     if [[ "$name" == "openclaw-core" ]]; then
       export OPENCLAW_OPERATOR_TOKEN="$OPENCLAW_OPERATOR_TOKEN"

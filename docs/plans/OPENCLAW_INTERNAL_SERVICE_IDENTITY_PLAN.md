@@ -1,0 +1,83 @@
+# NixSoma Internal Service Identity Plan
+
+Updated: 2026-07-17
+
+## Purpose
+
+Close the internal-service identity gap before the fixed Level 3 hostd and
+systemd activation bridge. A service must not be able to claim another service's
+audit identity merely because it can reach a loopback HTTP port.
+
+Identity alignment: Level 1 control-plane boundary, supporting the Level 3
+controlled system daemon boundary.
+
+## Delivered Slice: Event Hub
+
+The Event Hub now supports a required per-source credential map:
+
+```text
+service credential file
+-> createEventPublisher/registerService
+-> x-openclaw-event-source + x-openclaw-service-caller
+-> Event Hub source-to-token verification
+-> server-generated audit source
+```
+
+`packages/shared-utils/src/service-credentials.mjs` reads direct or
+`LoadCredential`-backed files, parses bounded maps, creates caller headers, and
+uses constant-time token comparison. `createEventIngress` retains the old
+single-token compatibility mode, but required map mode fails closed when the
+map is missing and rejects token/source swaps or missing caller identity.
+
+The Unix and PowerShell development launchers generate one credential per
+publishing service in ignored artifact files. NixOS exposes
+`eventHubCredentialMapFile` and `eventHubCredentialFiles`; when configured,
+service units receive only `%d` credential paths through `LoadCredential` and
+Event Hub requires the map.
+
+## Evidence
+
+- Event ingress and credential helper tests cover file reads, map parsing,
+  constant-time comparison, source binding, and required-mode failure.
+- An isolated real-service run proved wrong-token and missing-caller requests
+  return `401`, while the correct source token returns `201`; service registry
+  registration succeeded for all publishing services.
+- `dev-body-config-check.sh` passed, including Nix store closures with the new
+  shared credential module and read-only runtime checks.
+
+## Delivered Slice: Browser Runtime
+
+Browser Runtime now supports a strict per-caller credential map. The
+session-manager, screen-sense, and screen-act services read only their own
+credential file and send their bounded caller identity. Browser Runtime rejects
+caller/token swaps, while retaining the old shared-token and loopback behavior
+only when no map is configured.
+
+The trusted sidecar uses the session-manager caller identity. Its launch
+environment contains no Browser Runtime credential; the supervisor delivers the
+credential in the already-connected Unix IPC bind message, and the sidecar
+keeps it only in memory for loopback capture/action requests. The launcher
+regression proves that the credential cannot enter the transient EnvironmentFile.
+
+The Unix and PowerShell development launchers generate independent Browser
+Runtime credentials for the three internal callers plus a bounded operator
+inspection identity. NixOS exposes `browserRuntimeCredentialMapFile`,
+`browserRuntimeCredentialFiles`, and legacy `browserRuntimeAuthTokenFile`
+through `LoadCredential`; token values remain outside Nix expressions.
+
+## Deliberately Deferred
+
+- Removal of shared Event Hub and Browser Runtime compatibility modes.
+- Authorization of Browser Runtime read routes through a separate operator
+  session; the per-caller map authenticates internal service callers.
+- Core operator identity, direct actuator grants, and reservation
+  commit/abort/recovery state machine closure.
+- Real NixOS VM activation, host-health oracle, generation receipt, and rollback.
+
+## Next Slice
+
+Close the Core operator identity boundary and bind approvals to an authenticated
+operator session. Then make the existing direct actuator routes accept only
+Core-issued per-service execution grants; keep the current task/approval and
+trusted work-view contracts intact while removing unauthenticated internal HTTP
+mutation paths.

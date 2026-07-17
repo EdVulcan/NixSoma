@@ -21,10 +21,24 @@ export function readJsonBody<T = Record<string, unknown>>(
 export function createEventPublisher(
   eventHubUrl: string,
   serviceName: string,
-  fetchFn?: typeof fetch
+  fetchFn?: typeof fetch,
+  options?: {
+    required?: boolean;
+    token?: string | null;
+    tokenFilePath?: string | null;
+  }
 ): (type: string, payload?: Record<string, unknown>) => Promise<{ ok: boolean; error?: string }>;
 
-export function registerService(eventHubUrl: string, name: string, url: string): Promise<void>;
+export function registerService(
+  eventHubUrl: string,
+  name: string,
+  url: string,
+  options?: {
+    token?: string | null;
+    tokenFilePath?: string | null;
+    fetchFn?: typeof fetch;
+  }
+): Promise<void>;
 
 export function getRequestId(req: OpenClawIncomingMessage): string;
 

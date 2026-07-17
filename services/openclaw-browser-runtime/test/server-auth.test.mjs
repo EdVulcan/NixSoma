@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { once } from "node:events";
 import http from "node:http";
 import { tmpdir } from "node:os";
@@ -48,13 +48,21 @@ test("browser runtime protects state and returns the helper lease only to authen
   const stateDirectory = mkdtempSync(path.join(tmpdir(), "openclaw-browser-auth-test-"));
   const baseUrl = `http://127.0.0.1:${port}`;
   const token = "browser-runtime-test-token";
+  const otherToken = "browser-runtime-other-token";
+  const credentialMapPath = path.join(stateDirectory, "browser-runtime-credentials.json");
+  writeFileSync(credentialMapPath, JSON.stringify({
+    "openclaw-session-manager": token,
+    "openclaw-screen-act": otherToken,
+  }), "utf8");
   const child = spawn(process.execPath, ["src/server.mjs"], {
     cwd: serviceDirectory,
     env: {
       ...process.env,
       OPENCLAW_BROWSER_RUNTIME_HOST: "127.0.0.1",
       OPENCLAW_BROWSER_RUNTIME_PORT: String(port),
-      OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN: token,
+      OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN: "",
+      OPENCLAW_BROWSER_RUNTIME_CREDENTIAL_MAP_FILE: credentialMapPath,
+      OPENCLAW_BROWSER_RUNTIME_AUTH_REQUIRED: "1",
       OPENCLAW_BROWSER_ENGINE_MODE: "simulated",
       OPENCLAW_BROWSER_RUNTIME_STATE_FILE: path.join(stateDirectory, "state.json"),
       OPENCLAW_BROWSER_PROFILE_DIR: path.join(stateDirectory, "profile"),
@@ -75,8 +83,17 @@ test("browser runtime protects state and returns the helper lease only to authen
 
   const headers = {
     authorization: `Bearer ${token}`,
+    "x-openclaw-service-caller": "openclaw-session-manager",
     "content-type": "application/json",
   };
+  const swappedCaller = await fetch(`${baseUrl}/browser/state`, {
+    headers: { ...headers, "x-openclaw-service-caller": "openclaw-screen-act" },
+  });
+  assert.equal(swappedCaller.status, 401);
+  const swappedToken = await fetch(`${baseUrl}/browser/state`, {
+    headers: { ...headers, authorization: `Bearer ${otherToken}` },
+  });
+  assert.equal(swappedToken.status, 401);
   const publicState = await fetch(`${baseUrl}/browser/state`, { headers });
   assert.equal(publicState.status, 200);
   assert.equal((await publicState.json()).browser.trustedHelperLease, null);

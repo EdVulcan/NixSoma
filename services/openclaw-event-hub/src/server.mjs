@@ -13,7 +13,11 @@ const auditLogFile =
   process.env.OPENCLAW_EVENT_LOG_FILE
   ?? (bodyStateDir ? path.join(bodyStateDir, "openclaw-events.jsonl") : path.resolve(".artifacts", "openclaw-events.jsonl"));
 const maxAuditQueryLimit = Number.parseInt(process.env.OPENCLAW_EVENT_AUDIT_MAX_LIMIT ?? "1000", 10);
-const eventIngress = createEventIngress({ token: process.env.OPENCLAW_EVENT_HUB_TOKEN });
+const eventIngress = createEventIngress({
+  token: process.env.OPENCLAW_EVENT_HUB_TOKEN,
+  tokenMapFilePath: process.env.OPENCLAW_EVENT_HUB_TOKEN_MAP_FILE,
+  required: process.env.OPENCLAW_EVENT_HUB_AUTH_REQUIRED === "1",
+});
 
 const recentEvents = [];
 const streamClients = new Map();

@@ -5,6 +5,7 @@ import { buildTrustedWorkViewActionLease } from "./trusted-work-view-action-medi
 import { normaliseWorkViewSemanticTargetReference } from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
 import { redactWriteOnlyInputParams } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 import { assertExecutionGrant, createExecutionGrantVerifier } from "../../../packages/shared-utils/src/execution-grants.mjs";
+import { createServiceCredentialHeaders, readServiceCredential } from "../../../packages/shared-utils/src/service-credentials.mjs";
 
 const host = process.env.OPENCLAW_SCREEN_ACT_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_PORT ?? "4105", 10);
@@ -12,9 +13,12 @@ const eventHubUrl = process.env.OPENCLAW_EVENT_HUB_URL ?? "http://127.0.0.1:4101
 const screenSenseUrl = process.env.OPENCLAW_SCREEN_SENSE_URL ?? "http://127.0.0.1:4104";
 const sessionManagerUrl = process.env.OPENCLAW_SESSION_MANAGER_URL ?? "http://127.0.0.1:4102";
 const browserRuntimeUrl = process.env.OPENCLAW_BROWSER_RUNTIME_URL ?? "http://127.0.0.1:4103";
-const browserRuntimeAuthToken = typeof process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN === "string"
-  ? process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN.trim()
-  : "";
+const browserRuntimeCaller = process.env.OPENCLAW_BROWSER_RUNTIME_CALLER?.trim() || "openclaw-screen-act";
+const browserRuntimeAuthToken = readServiceCredential({
+  filePath: process.env.OPENCLAW_BROWSER_RUNTIME_TOKEN_FILE,
+  value: process.env.OPENCLAW_BROWSER_RUNTIME_TOKEN_FILE ? null : process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN,
+  label: `${browserRuntimeCaller} browser-runtime credential`,
+}) ?? "";
 const executionGrantVerifier = createExecutionGrantVerifier({
   audience: "openclaw-screen-act",
   publicKeyFilePath: process.env.OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE,
@@ -31,7 +35,6 @@ const actionState = {
 
 import {
   corsHeaders,
-  createBearerAuthHeaders,
   sendJson,
   readJsonBody,
   createEventPublisher,
@@ -144,7 +147,10 @@ async function executeBrowserAction(kind, params, screen) {
       : `${browserRuntimeUrl}${endpoint}`;
     const headers = { "content-type": "application/json" };
     if (!sidecarActive) {
-      Object.assign(headers, createBearerAuthHeaders(browserRuntimeAuthToken));
+      Object.assign(headers, createServiceCredentialHeaders({
+        token: browserRuntimeAuthToken,
+        caller: browserRuntimeCaller,
+      }));
     }
     const response = await fetch(targetUrl, {
       method: "POST",
