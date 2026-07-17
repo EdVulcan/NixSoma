@@ -31,7 +31,12 @@ function createRendererContext() {
     declarativeEvolutionReviewJson: element(),
     declarativeEvolutionActivationTaskId: element(),
     declarativeEvolutionActivationApprovalId: element(),
+    declarativeEvolutionDecisionTaskIdInput: element(),
+    declarativeEvolutionExecutionTaskId: element(),
+    declarativeEvolutionExecutionStatus: element(),
+    declarativeEvolutionActivationButton: element(),
     declarativeEvolutionDecisionJson: element(),
+    declarativeEvolutionExecutionJson: element(),
   };
 }
 
@@ -39,11 +44,14 @@ test("Observer exposes the declarative-evolution activation decision panel", () 
   const panel = observerDeclarativeEvolutionPanels();
   for (const token of [
     "declarative-evolution-source-task-id",
+    "declarative-evolution-decision-task-id",
     "declarative-evolution-decision",
     "declarative-evolution-refresh-button",
     "declarative-evolution-decision-button",
+    "declarative-evolution-activation-button",
     "declarative-evolution-review-json",
     "declarative-evolution-decision-json",
+    "declarative-evolution-execution-json",
   ]) {
     assert.equal(panel.includes(token), true, `panel is missing ${token}`);
   }
@@ -91,23 +99,31 @@ test("Observer renders a compact host-health-bound activation review", () => {
 
 test("Observer queues an explicit activation decision and refreshes existing read models", async () => {
   const sourceTaskIdInput = element({ value: "staging-task-1" });
+  const decisionTaskIdInput = element({ value: "decision-task-1" });
   const decision = element({ value: "approve_activation_review" });
   const refreshButton = element();
   const decisionButton = element();
+  const activationButton = element();
   const calls = [];
   const refreshes = [];
   const rendered = [];
   const context = {
     declarativeEvolutionSourceTaskIdInput: sourceTaskIdInput,
+    declarativeEvolutionDecisionTaskIdInput: decisionTaskIdInput,
     declarativeEvolutionDecision: decision,
     declarativeEvolutionRefreshButton: refreshButton,
     declarativeEvolutionDecisionButton: decisionButton,
+    declarativeEvolutionActivationButton: activationButton,
+    declarativeEvolutionExecutionTaskId: element(),
+    declarativeEvolutionExecutionStatus: element(),
     declarativeEvolutionDecisionJson: element(),
+    declarativeEvolutionExecutionJson: element(),
     observerConfig: { coreUrl: "http://core.invalid" },
     formatError: (error) => String(error?.message ?? error),
     setControlMessage: (message) => calls.push(["message", message]),
     renderDeclarativeEvolutionActivationReview: (data) => rendered.push(["review", data]),
     renderDeclarativeEvolutionActivationDecision: (data) => rendered.push(["decision", data]),
+    renderDeclarativeEvolutionActivationExecution: (data) => rendered.push(["execution", data]),
     fetchJson: async (url, options) => {
       calls.push(["fetch", url, options]);
       if (!options) {
@@ -130,16 +146,24 @@ test("Observer queues an explicit activation decision and refreshes existing rea
   vm.runInNewContext(observerClientDeclarativeEvolutionRefreshersScript, context);
   await context.refreshDeclarativeEvolutionActivationDecision();
   await context.createDeclarativeEvolutionActivationDecision();
+  await context.createDeclarativeEvolutionActivation();
 
-  assert.equal(calls[0][1], "http://core.invalid/plugins/native-adapter/declarative-evolution/activation-decision?taskId=staging-task-1");
-  assert.equal(calls[1][1], "http://core.invalid/plugins/native-adapter/declarative-evolution/activation-decisions");
-  assert.deepEqual(JSON.parse(calls[1][2].body), {
+  const fetchCalls = calls.filter(([kind]) => kind === "fetch");
+  assert.equal(fetchCalls[0][1], "http://core.invalid/plugins/native-adapter/declarative-evolution/activation-decision?taskId=staging-task-1");
+  assert.equal(fetchCalls[1][1], "http://core.invalid/plugins/native-adapter/declarative-evolution/activation-decisions");
+  assert.deepEqual(JSON.parse(fetchCalls[1][2].body), {
     taskId: "staging-task-1",
     decision: "approve_activation_review",
     confirm: true,
   });
-  assert.deepEqual(rendered.map(([kind]) => kind), ["review", "review", "decision"]);
-  assert.deepEqual(refreshes, ["runtime", "tasks", "history", "approvals"]);
-  assert.match(calls.at(-1)[1], /Queued declarative-evolution decision task activation-task-1/u);
+  assert.equal(fetchCalls[2][1], "http://core.invalid/plugins/native-adapter/declarative-evolution/activation-tasks");
+  assert.deepEqual(JSON.parse(fetchCalls[2][2].body), {
+    activationDecisionTaskId: "decision-task-1",
+    confirm: true,
+  });
+  assert.deepEqual(rendered.map(([kind]) => kind), ["review", "review", "decision", "execution"]);
+  assert.deepEqual(refreshes, ["runtime", "tasks", "history", "approvals", "runtime", "tasks", "history", "approvals"]);
+  assert.match(calls.at(-1)[1], /Queued activation task activation-task-1/u);
   assert.equal(decisionButton.disabled, false);
+  assert.equal(activationButton.disabled, false);
 });

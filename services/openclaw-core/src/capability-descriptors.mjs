@@ -762,6 +762,22 @@ export function buildBaseCapabilities({
       description: "Create an explicitly confirmed, approval-gated decision bound to one healthy staged candidate; recording the decision never writes managed config, switches generations, activates a system, or rolls back.",
     },
     {
+      id: "act.openclaw.declarative_evolution.activation",
+      name: "Controlled Declarative Evolution Activation",
+      kind: "actuator",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/plugins/native-adapter/declarative-evolution/activation-tasks`,
+      intents: [
+        "openclaw.declarative_evolution.activate",
+        "declarative.evolution.activate",
+        "nix.managed_config_activation",
+      ],
+      domains: ["body_internal"],
+      risk: "high",
+      governance: "allow",
+      description: "Create an explicitly confirmed activation task that binds an approved decision to the fixed hostd owner and independent post-activation health oracle; rollback remains manual-only.",
+    },
+    {
       id: "act.system.command.dry_run",
       name: "System Command Dry Run",
       kind: "actuator",

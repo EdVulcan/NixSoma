@@ -4,10 +4,11 @@ import { createNativeDeferredTaskHandlers } from "./task-executor-native-deferre
 import { createNativePluginRuntimeRefreshTaskHandlers } from "./task-executor-native-plugin-runtime-refresh-handlers.mjs";
 import { createNativeDeclarativeEvolutionTaskHandlers } from "./task-executor-native-declarative-evolution-handlers.mjs";
 import { createNativeDeclarativeEvolutionActivationDecisionTaskHandlers } from "./task-executor-native-declarative-evolution-activation-handlers.mjs";
+import { createNativeDeclarativeEvolutionActivationTaskHandlers } from "./task-executor-native-declarative-evolution-activation-execution-handlers.mjs";
 import { createNativeAcpxCodexBridgeTaskHandlers } from "./task-executor-native-acpx-codex-bridge-handlers.mjs";
 import { createNativeEngineeringLspLifecycleTaskHandlers } from "./native-engineering-lsp-lifecycle-tasks.mjs";
 import { createSystemBodyTaskHandlers } from "./task-executor-system-body-handlers.mjs";
-import { requestHostdRestart } from "./hostd-control-client.mjs";
+import { requestHostdManagedConfigActivation, requestHostdRestart } from "./hostd-control-client.mjs";
 import { planCapabilityActionSteps } from "./task-recovery.mjs";
 import {
   browserTaskActionsForExecution,
@@ -44,6 +45,7 @@ export function createTaskExecutor(deps) {
     policyEvaluator,
     publishEvent,
     hostdControlClient = requestHostdRestart,
+    hostdActivationClient = requestHostdManagedConfigActivation,
     buildExperienceMemoryReadModel = () => null,
     readWorkViewState = readNativeEngineeringWorkViewState,
   } = deps;
@@ -1239,6 +1241,7 @@ const NON_RECOVERABLE_TASK_HANDLERS = [
   ...createNativePluginRuntimeRefreshTaskHandlers({ state, taskManager, approvalEngine, policyEvaluator, planBuilder, publishEvent }),
   ...createNativeDeclarativeEvolutionTaskHandlers({ state, taskManager, approvalEngine, policyEvaluator, planBuilder, publishEvent }),
   ...createNativeDeclarativeEvolutionActivationDecisionTaskHandlers({ state, taskManager, approvalEngine, policyEvaluator, planBuilder, publishEvent }),
+  ...createNativeDeclarativeEvolutionActivationTaskHandlers({ state, taskManager, approvalEngine, policyEvaluator, planBuilder, hostdActivationClient, publishEvent }),
   ...createNativeAcpxCodexBridgeTaskHandlers({ state, taskManager, approvalEngine, policyEvaluator, planBuilder, publishEvent }),
   ...createNativeDeferredTaskHandlers({ state, taskManager, approvalEngine, policyEvaluator, publishEvent }),
   ...createSystemBodyTaskHandlers({ client, state, taskManager, publishEvent, hostdControlClient }),

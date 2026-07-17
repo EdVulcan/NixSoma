@@ -2,6 +2,7 @@ import { sendJson, readJsonBody } from "../../../packages/shared-utils/src/http.
 
 const ROUTE = "/plugins/native-adapter/declarative-evolution/staging-tasks";
 const ACTIVATION_DECISION_ROUTE = "/plugins/native-adapter/declarative-evolution/activation-decisions";
+const ACTIVATION_ROUTE = "/plugins/native-adapter/declarative-evolution/activation-tasks";
 const ACTIVATION_REVIEW_ROUTE = "/plugins/native-adapter/declarative-evolution/activation-decision";
 
 function errorMessage(error) {
@@ -29,7 +30,7 @@ export async function handleNativeDeclarativeEvolutionTaskRoute({
     return true;
   }
 
-  if (req.method !== "POST" || ![ROUTE, ACTIVATION_DECISION_ROUTE].includes(requestUrl.pathname)) {
+  if (req.method !== "POST" || ![ROUTE, ACTIVATION_DECISION_ROUTE, ACTIVATION_ROUTE].includes(requestUrl.pathname)) {
     return false;
   }
 
@@ -41,10 +42,15 @@ export async function handleNativeDeclarativeEvolutionTaskRoute({
         decision: body.decision,
         confirm: body.confirm === true,
       })
-      : await planBuilder.createNativeDeclarativeEvolutionStagingTask({
-        changes: body.changes,
-        confirm: body.confirm === true,
-      });
+      : requestUrl.pathname === ACTIVATION_ROUTE
+        ? await planBuilder.createNativeDeclarativeEvolutionActivationTask({
+          activationDecisionTaskId: body.activationDecisionTaskId,
+          confirm: body.confirm === true,
+        })
+        : await planBuilder.createNativeDeclarativeEvolutionStagingTask({
+          changes: body.changes,
+          confirm: body.confirm === true,
+        });
     sendJson(res, 201, {
       ok: true,
       registry: result.registry,

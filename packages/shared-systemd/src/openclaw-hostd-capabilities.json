@@ -16,5 +16,11 @@
       "targetUnit": "openclaw-system-heal.service",
       "capabilityId": "hostd.restart_system_heal"
     }
-  ]
+  ],
+  "activation": {
+    "registry": "openclaw-hostd-managed-config-activation-v1",
+    "operation": "activate_managed_config",
+    "targetPath": "/etc/nixos/openclaw-managed.nix",
+    "capabilityId": "hostd.activate_managed_config"
+  }
 }

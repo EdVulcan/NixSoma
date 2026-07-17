@@ -1299,7 +1299,7 @@ This closes the Level 1 navigation boundary and stops here; it does not add
 another LSP request, generic tool dispatcher, task, approval, mutation,
 provider call, or network path.
 
-## Completed Phase D Candidate, Staging, Health-Gate, And Activation-Decision Slice
+## Completed Phase D Candidate, Staging, Health-Gate, Activation-Decision, And Controlled Activation Contract
 
 The first real Phase D declarative-evolution capability is complete. Core
 accepts only structured allowlisted changes, generates a transient
@@ -1350,6 +1350,30 @@ This remains a decision boundary, not physical activation. It does not write
 `/etc/nixos`, run `nixos-rebuild`, switch a generation, activate a system, or
 roll back. Before that Level 3 bridge, the control plane must pass the
 operator-identity boundary below.
+
+The Level 3 controlled activation contract is now implemented behind the fixed
+hostd boundary. `POST
+/plugins/native-adapter/declarative-evolution/activation-tasks` and
+`act.openclaw.declarative_evolution.activation` accept only a completed approved
+activation decision and bind the candidate hash, staged-file hash, fixed
+staging path, evaluated closure, pre-activation health hash, task lineage, and
+bounded expiry. The activation executor revalidates the binding, requires the
+generic `planId + stepId + requestHash` approval contract, calls hostd through
+the peer-verified Unix socket, validates the immutable receipt, and reads
+post-action health from `openclaw-system-sense`; rollback remains manual-only.
+
+Hostd exposes only `hostd.activate_managed_config`, fixed to
+`/etc/nixos/openclaw-managed.nix` and a configured flake rebuild command.
+`OPENCLAW_HOSTD_ACTIVATION_ENABLED=false` remains the default. The Core and
+Observer Phase D pair proves the zero-confirmation path creates no activation
+task or approval and performs no hostd call, managed-config write, generation
+switch, or rollback. This is a controlled activation contract, not evidence
+that a host generation has already been switched.
+
+The next real slice is closure-integrity receipt verification: re-query the real
+store output, bind derivation/output or NAR hash to the current approval and
+execution task, and prove an independent health oracle before any isolated
+physical activation check. Do not add another generic readiness wrapper.
 
 ## Operator Identity And Mutation Boundary Checkpoint
 
@@ -1409,8 +1433,9 @@ service check in `nix/scripts/dev-reservation-recovery-check.sh` proves an
 interrupted running reservation is failed closed as `recovered_aborted` without
 automatic replay. Pre-start expiry remains unit-covered because the production
 executor has no externally pausable reserve/start boundary. These security
-boundaries are now sufficient to resume the fixed hostd/systemd Level 3
-activation bridge, subject to its existing health proof.
+boundaries are now sufficient to keep the fixed hostd/systemd Level 3
+activation contract under test. Physical activation remains deferred until the
+closure receipt and independent post-action health oracle are proven.
 
 ## Identity-Upgrade Alignment
 

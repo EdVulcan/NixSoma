@@ -360,6 +360,60 @@ test("capability runtime creates a host-health-bound activation decision only af
   assert.deepEqual(calls, [{ taskId: "task-staging", decision: "approve_activation_review", confirm: true }]);
 });
 
+test("capability runtime keeps managed-config activation confirmation and execution separate", async () => {
+  const calls = [];
+  const { runtime } = createHarness({
+    declarativeEvolution: {
+      createNativeDeclarativeEvolutionActivationTask: async (input) => {
+        calls.push(input);
+        return {
+          ok: true,
+          registry: "openclaw-native-declarative-evolution-activation-v0",
+          approvalBinding: {
+            activationDecisionTaskId: input.activationDecisionTaskId,
+            candidateHash: "a".repeat(64),
+            evaluatedClosurePath: "/nix/store/abc123-openclaw-system",
+          },
+          task: { id: "task-managed-activation", status: "queued" },
+          approval: { id: "approval-managed-activation", status: "pending" },
+          governance: {
+            createsTask: true,
+            createsApproval: true,
+            executesActivation: true,
+            automaticActivation: false,
+            automaticRollback: false,
+            executesRollback: false,
+          },
+        };
+      },
+    },
+  });
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const descriptor = registry.capabilities.find((item) => item.id === "act.openclaw.declarative_evolution.activation");
+  assert.equal(descriptor?.kind, "actuator");
+  assert.equal(descriptor?.risk, "high");
+
+  const blocked = await runtime.invokeCapability({
+    capabilityId: "act.openclaw.declarative_evolution.activation",
+    params: { activationDecisionTaskId: "task-decision", confirm: false },
+  });
+  assert.equal(blocked.response.result.reason, "operator_confirmation_required");
+  assert.equal(blocked.response.result.governance.executesActivation, false);
+  assert.equal(calls.length, 0);
+
+  const created = await runtime.invokeCapability({
+    capabilityId: "act.openclaw.declarative_evolution.activation",
+    params: { activationDecisionTaskId: "task-decision", confirm: true },
+  });
+  assert.equal(created.statusCode, 200);
+  assert.equal(created.response.summary.kind, "declarative_evolution.activation");
+  assert.equal(created.response.summary.activationExecuted, false);
+  assert.equal(created.response.summary.noAutomaticActivation, true);
+  assert.equal(created.response.summary.noAutomaticRollback, true);
+  assert.deepEqual(calls, [{ activationDecisionTaskId: "task-decision", confirm: true }]);
+});
+
 test("capability runtime exposes the native engineering tool surface inventory without execution authority", async () => {
   const { runtime, state, events } = createHarness({
     pluginReview: {

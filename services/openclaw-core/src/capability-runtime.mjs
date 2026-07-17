@@ -201,6 +201,7 @@ export function createCapabilityRuntime(deps) {
     buildNativeDeclarativeEvolutionHealthGate,
     createNativeDeclarativeEvolutionStagingTask: declarativeEvolution.createNativeDeclarativeEvolutionStagingTask,
     createNativeDeclarativeEvolutionActivationDecisionTask: declarativeEvolution.createNativeDeclarativeEvolutionActivationDecisionTask,
+    createNativeDeclarativeEvolutionActivationTask: declarativeEvolution.createNativeDeclarativeEvolutionActivationTask,
   });
 
   function baseCapabilities() {

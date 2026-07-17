@@ -1,4 +1,5 @@
 export const observerClientConfigDomDeclarativeEvolutionScript = `const declarativeEvolutionSourceTaskIdInput = document.querySelector("#declarative-evolution-source-task-id");
+const declarativeEvolutionDecisionTaskIdInput = document.querySelector("#declarative-evolution-decision-task-id");
 const declarativeEvolutionDecision = document.querySelector("#declarative-evolution-decision");
 const declarativeEvolutionActivationRegistry = document.querySelector("#declarative-evolution-activation-registry");
 const declarativeEvolutionHealthGateStatus = document.querySelector("#declarative-evolution-health-gate-status");
@@ -6,8 +7,12 @@ const declarativeEvolutionHostHealthStatus = document.querySelector("#declarativ
 const declarativeEvolutionActivationReady = document.querySelector("#declarative-evolution-activation-ready");
 const declarativeEvolutionActivationTaskId = document.querySelector("#declarative-evolution-activation-task-id");
 const declarativeEvolutionActivationApprovalId = document.querySelector("#declarative-evolution-activation-approval-id");
+const declarativeEvolutionExecutionTaskId = document.querySelector("#declarative-evolution-execution-task-id");
+const declarativeEvolutionExecutionStatus = document.querySelector("#declarative-evolution-execution-status");
 const declarativeEvolutionRefreshButton = document.querySelector("#declarative-evolution-refresh-button");
 const declarativeEvolutionDecisionButton = document.querySelector("#declarative-evolution-decision-button");
+const declarativeEvolutionActivationButton = document.querySelector("#declarative-evolution-activation-button");
 const declarativeEvolutionReviewJson = document.querySelector("#declarative-evolution-review-json");
 const declarativeEvolutionDecisionJson = document.querySelector("#declarative-evolution-decision-json");
+const declarativeEvolutionExecutionJson = document.querySelector("#declarative-evolution-execution-json");
 `;

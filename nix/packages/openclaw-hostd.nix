@@ -28,5 +28,6 @@ mkOpenClawNpmRuntimeClosure {
     ../../packages/shared-systemd/src/systemd-dbus-transport.mjs
     ../../packages/shared-systemd/src/openclaw-hostd-capabilities.json
     ../../packages/shared-systemd/src/openclaw-hostd-capabilities.mjs
+    ../../packages/shared-systemd/src/openclaw-hostd-activation.mjs
   ];
 }

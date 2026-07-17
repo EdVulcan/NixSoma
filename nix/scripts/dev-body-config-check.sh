@@ -654,12 +654,15 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-task-builders.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-task-routes.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-activation-decision.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-activation.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/task-executor-native-declarative-evolution-handlers.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/task-executor-native-declarative-evolution-activation-handlers.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/task-executor-native-declarative-evolution-activation-execution-handlers.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/operator-auth.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/hostd-control-client.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-capabilities.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-capabilities.json"
+    || ! -f "$core_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-activation.mjs"
     || ! -f "$core_out/share/openclaw/packages/plugin-runtime/src/plugin-registry.mjs"
     || ! -f "$core_out/share/openclaw/packages/plugin-runtime/src/plugin-registry-generation-store.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/persist.mjs"
@@ -667,7 +670,7 @@ EOF
     || -w "$core_server"
     || -e "$core_out/share/openclaw/services/openclaw-core/test"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 206 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 209 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -744,7 +747,8 @@ EOF
     wait "$core_pid" >/dev/null 2>&1 || true
     core_pid=""
     start_core
-    curl --silent --fail "$runtime_url/tasks?limit=5" >"$runtime_dir/restored.json"
+    curl --silent --fail "$runtime_url/tasks?limit=5" \
+      -H "authorization: Bearer $operator_token" >"$runtime_dir/restored.json"
 
     node - <<'EOF' "$runtime_dir/health.json" "$runtime_dir/created.json" "$runtime_dir/restored.json" "$state_file" "$core_out"
 const fs = require("node:fs");
@@ -1256,11 +1260,14 @@ EOF
   if [[ "$hostd_out" != /nix/store/*
     || ! -f "$hostd_working_dir/src/server.mjs"
     || ! -f "$hostd_working_dir/src/hostd-protocol.mjs"
+    || ! -f "$hostd_working_dir/src/hostd-activation-protocol.mjs"
+    || ! -f "$hostd_working_dir/src/managed-config-activation.mjs"
     || ! -f "$hostd_working_dir/src/openclaw-hostd-peer-credentials.c"
     || ! -x "$hostd_out/bin/openclaw-hostd-peer-credentials"
     || ! -f "$hostd_out/share/openclaw/packages/shared-systemd/src/systemd-dbus-transport.mjs"
     || ! -f "$hostd_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-capabilities.mjs"
     || ! -f "$hostd_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-capabilities.json"
+    || ! -f "$hostd_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-activation.mjs"
     || ! -f "$hostd_working_dir/node_modules/@homebridge/dbus-native/package.json"
     || -w "$hostd_working_dir/src/server.mjs"
     || -e "$hostd_working_dir/test" ]]; then

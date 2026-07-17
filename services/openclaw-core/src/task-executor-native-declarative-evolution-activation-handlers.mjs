@@ -1,9 +1,11 @@
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
+import { buildCapabilityRequestBindingHash } from "./capability-runtime-approval-binding.mjs";
 import {
   isNativeDeclarativeEvolutionActivationDecisionTask,
 } from "./native-declarative-evolution-activation-decision.mjs";
 
 const EXECUTION_REGISTRY = "openclaw-native-declarative-evolution-activation-decision-execution-v0";
+const DECISION_CAPABILITY_ID = "act.openclaw.declarative_evolution.activation_decision";
 
 function expectedBinding(task) {
   const decision = task?.nativeDeclarativeEvolution?.activationDecision ?? {};
@@ -21,7 +23,25 @@ function expectedBinding(task) {
 function approvalMatchesDecision(task, approval) {
   const expected = expectedBinding(task);
   const actual = approval?.binding ?? null;
-  return Object.entries(expected).every(([key, value]) => actual?.[key] === value);
+  if (Object.entries(expected).every(([key, value]) => actual?.[key] === value)) return true;
+
+  const binding = approval?.binding;
+  const step = (Array.isArray(task?.plan?.steps) ? task.plan.steps : [])
+    .find((candidate) => candidate?.capabilityId === DECISION_CAPABILITY_ID
+      && (candidate.requiresApproval === true || candidate.governance === "require_approval"));
+  if (binding?.registry !== "openclaw-capability-execution-approval-binding-v1"
+    || binding.planId !== task?.plan?.planId
+    || !step) {
+    return false;
+  }
+  const requestHash = buildCapabilityRequestBindingHash({
+    capabilityId: step.capabilityId,
+    intent: step.intent ?? step.kind ?? null,
+    params: step.params ?? {},
+  });
+  return binding.steps?.some((boundStep) => boundStep.stepId === step.id
+    && boundStep.capabilityId === DECISION_CAPABILITY_ID
+    && boundStep.requestHash === requestHash) === true;
 }
 
 function compactExecution(execution) {

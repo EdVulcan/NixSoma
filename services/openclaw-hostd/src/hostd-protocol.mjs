@@ -4,6 +4,7 @@ import {
   HOSTD_RESTART_CAPABILITY_REGISTRY,
   findHostdRestartCapability,
 } from "../../../packages/shared-systemd/src/openclaw-hostd-capabilities.mjs";
+import { createHostdActivationRequestHandler } from "./hostd-activation-protocol.mjs";
 
 export const HOSTD_PROTOCOL_VERSION = 1;
 export const HOSTD_REQUEST_MAX_BYTES = 8192;
@@ -83,9 +84,16 @@ export function parseHostdRequest(line) {
 
 export function createHostdRequestHandler({
   runRestart = runFixedSystemdRestart,
+  runActivation,
   requirePeerIdentity = true,
 } = {}) {
+  const handleActivation = createHostdActivationRequestHandler({
+    runActivation,
+    requirePeerIdentity,
+  });
   return async function handleHostdRequest(line, { peerIdentity = null } = {}) {
+    const activationResponse = await handleActivation(line, { peerIdentity });
+    if (activationResponse !== null) return activationResponse;
     const parsed = parseHostdRequest(line);
     if (!parsed.ok) return parsed.response;
 

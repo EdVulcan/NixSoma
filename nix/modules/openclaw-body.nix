@@ -232,6 +232,10 @@ let
         else "";
       OPENCLAW_HOSTD_PEER_EXPECTED_USER = if cfg.user != null then cfg.user else "openclaw-service";
       OPENCLAW_HOSTD_PEER_EXPECTED_GROUP = cfg.group;
+      OPENCLAW_MANAGED_CONFIG_STAGING_DIR = "${cfg.stateDir}/managed-config-staging";
+      OPENCLAW_NIXOS_FLAKE = cfg.repoRoot;
+      OPENCLAW_NIXOS_FLAKE_ATTRIBUTE = "openclaw-local-dev";
+      OPENCLAW_HOSTD_ACTIVATION_ENABLED = "false";
       OPENCLAW_BODY_RUNTIME_SOURCE = if cfg.runtimePackages.hostd != null then "nix-store" else "mutable-repo";
     };
     serviceConfig = {

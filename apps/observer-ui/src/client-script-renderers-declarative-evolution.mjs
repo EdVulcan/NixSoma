@@ -34,6 +34,9 @@ function renderDeclarativeEvolutionActivationDecision(data) {
   const execution = task?.nativeDeclarativeEvolution?.execution ?? null;
   declarativeEvolutionActivationTaskId.textContent = task?.id ?? "none";
   declarativeEvolutionActivationApprovalId.textContent = approval?.id ?? "none";
+  if (task?.id && declarativeEvolutionDecisionTaskIdInput) {
+    declarativeEvolutionDecisionTaskIdInput.value = task.id;
+  }
   declarativeEvolutionDecisionJson.textContent = JSON.stringify({
     ok: data?.ok === true || data?.result?.ok === true,
     taskId: task?.id ?? null,
@@ -57,6 +60,31 @@ function renderDeclarativeEvolutionActivationDecision(data) {
       executesRollback: governance.executesRollback === true,
       automaticActivation: governance.automaticActivation === true,
     },
+  }, null, 2);
+}
+
+function renderDeclarativeEvolutionActivationExecution(data) {
+  const task = data?.task ?? data?.result?.task ?? null;
+  const approval = data?.approval ?? data?.result?.approval ?? null;
+  const binding = data?.approvalBinding ?? data?.result?.approvalBinding ?? task?.nativeDeclarativeEvolution?.activation ?? {};
+  const execution = task?.nativeDeclarativeEvolution?.execution ?? data?.result?.activation ?? null;
+  declarativeEvolutionExecutionTaskId.textContent = task?.id ?? "none";
+  declarativeEvolutionExecutionStatus.textContent = execution?.status ?? task?.status ?? "queued";
+  declarativeEvolutionExecutionJson.textContent = JSON.stringify({
+    ok: data?.ok === true || data?.result?.ok === true,
+    taskId: task?.id ?? null,
+    taskStatus: task?.status ?? null,
+    approvalId: approval?.id ?? null,
+    activationDecisionTaskId: binding.activationDecisionTaskId ?? null,
+    sourceStagingTaskId: binding.sourceStagingTaskId ?? null,
+    candidateHash: binding.candidateHash ?? null,
+    evaluatedClosurePath: binding.evaluatedClosurePath ?? null,
+    executionStatus: execution?.status ?? null,
+    activationExecuted: execution?.activationExecuted === true,
+    generationSwitched: execution?.generationSwitched === true,
+    postActivationHealth: execution?.postActivationHealth ?? null,
+    receiptHash: execution?.executionReceipt?.receiptHash ?? null,
+    automaticRollback: false,
   }, null, 2);
 }
 

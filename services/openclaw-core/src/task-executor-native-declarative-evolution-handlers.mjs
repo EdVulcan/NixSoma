@@ -1,7 +1,9 @@
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
+import { buildCapabilityRequestBindingHash } from "./capability-runtime-approval-binding.mjs";
 import { isNativeDeclarativeEvolutionStagingTask } from "./task-recovery.mjs";
 
 const EXECUTION_REGISTRY = "openclaw-native-declarative-evolution-staging-execution-v0";
+const STAGING_CAPABILITY_ID = "act.openclaw.declarative_evolution.staging_task";
 
 function compactExecution(execution) {
   return {
@@ -26,9 +28,28 @@ function compactExecution(execution) {
 
 function approvalMatchesCandidate(task, approval) {
   const expectedHash = task?.nativeDeclarativeEvolution?.approvalBinding?.candidateHash;
-  return typeof expectedHash === "string"
+  const legacyMatch = typeof expectedHash === "string"
     && approval?.binding?.kind === "native_declarative_evolution_candidate"
     && approval.binding.candidateHash === expectedHash;
+  if (legacyMatch) return true;
+
+  const binding = approval?.binding;
+  const step = (Array.isArray(task?.plan?.steps) ? task.plan.steps : [])
+    .find((candidate) => candidate?.capabilityId === STAGING_CAPABILITY_ID
+      && (candidate.requiresApproval === true || candidate.governance === "require_approval"));
+  if (binding?.registry !== "openclaw-capability-execution-approval-binding-v1"
+    || binding.planId !== task?.plan?.planId
+    || !step) {
+    return false;
+  }
+  const requestHash = buildCapabilityRequestBindingHash({
+    capabilityId: step.capabilityId,
+    intent: step.intent ?? step.kind ?? null,
+    params: step.params ?? {},
+  });
+  return binding.steps?.some((boundStep) => boundStep.stepId === step.id
+    && boundStep.capabilityId === STAGING_CAPABILITY_ID
+    && boundStep.requestHash === requestHash) === true;
 }
 
 export function createNativeDeclarativeEvolutionTaskHandlers({

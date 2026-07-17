@@ -400,10 +400,11 @@ function buildOpenClawNativePluginAdapterStatus() {
       "plan.openclaw.declarative_evolution.managed_config_candidate",
       "act.openclaw.declarative_evolution.staging_task",
       "sense.openclaw.declarative_evolution.health_gate",
+      "act.openclaw.declarative_evolution.activation",
     ],
     pendingCapabilities: ["act.plugin.capability.invoke"],
     summary: {
-      implemented: 54,
+      implemented: 55,
       pending: 1,
       canReadManifestMetadata: true,
       canReadToolCatalogMetadata: true,
@@ -515,6 +516,7 @@ function buildOpenClawNativePluginAdapterStatus() {
       "declarative evolution candidates generate only allowlisted managed Nix fragments and never write, switch generations, or roll back automatically",
       "declarative evolution staging tasks bind approval and execution to one candidate hash, write only OpenClaw-owned staging, and run read-only NixOS evaluation/build without activation or rollback",
       "declarative evolution health-gate reads the completed staging task and restages no content, verifies candidate/file/approval hashes plus evaluated closure binding, and never infers host health or activates a generation",
+      "declarative evolution activation tasks require an approved activation decision, fixed hostd ownership, a bounded receipt, and independent post-activation health; rollback remains manual-only",
     ],
   };
 }

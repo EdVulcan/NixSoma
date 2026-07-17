@@ -1,6 +1,6 @@
 # NixSoma Documentation Control Room
 
-Updated: 2026-07-17
+Updated: 2026-07-18
 
 This is the active documentation entry point for `NixSoma`, the public project
 name for the OpenClaw-on-NixOS control plane. Historical phase documents retain
@@ -32,7 +32,7 @@ preserve enhanced openclaw source on GitHub
 -> close Level 1 operator execution-consistency and declared/runtime capability boundaries
 -> complete the bounded AI plan review/save bridge on the approved provider handoff
 -> close the first Phase D managed-Nix candidate and validation loop
--> bind approved staging/build/health/rollback steps one at a time
+-> bind approved staging/build/health/activation steps one at a time
 ```
 
 Do not continue with Phase 137-style provider wrappers unless the next slice

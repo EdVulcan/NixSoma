@@ -4,6 +4,17 @@ import {
   HOSTD_RESTART_CAPABILITY_REGISTRY,
   hostdRestartCapabilityForTarget,
 } from "../../../packages/shared-systemd/src/openclaw-hostd-capabilities.mjs";
+import {
+  HOSTD_ACTIVATION_CAPABILITY_REGISTRY,
+  HOSTD_ACTIVATION_MAX_AGE_MS,
+  HOSTD_ACTIVATION_OPERATION,
+  HOSTD_ACTIVATION_PROTOCOL_VERSION,
+  HOSTD_ACTIVATION_RESPONSE_REGISTRY,
+  HOSTD_ACTIVATION_TARGET_PATH,
+  isBoundedActivationExpiry,
+  isNixStorePath,
+  isSha256,
+} from "../../../packages/shared-systemd/src/openclaw-hostd-activation.mjs";
 
 export const OPENCLAW_HOSTD_SOCKET_PATH_ENV = "OPENCLAW_HOSTD_SOCKET_PATH";
 export const DEFAULT_OPENCLAW_HOSTD_SOCKET_PATH = "/run/openclaw/hostd.sock";
@@ -21,7 +32,11 @@ function boundedSocketPath(socketPath) {
   return socketPath;
 }
 
-function parseResponse(line, expectedRequestId) {
+function parseResponse(line, expectedRequestId, {
+  registry = HOSTD_RESPONSE_REGISTRY,
+  protocolVersion = HOSTD_PROTOCOL_VERSION,
+  capabilityRegistry = HOSTD_RESTART_CAPABILITY_REGISTRY,
+} = {}) {
   let response;
   try {
     response = JSON.parse(line);
@@ -29,9 +44,9 @@ function parseResponse(line, expectedRequestId) {
     throw new Error("OpenClaw hostd returned invalid JSON.");
   }
   if (!response || typeof response !== "object" || Array.isArray(response)
-    || response.registry !== HOSTD_RESPONSE_REGISTRY
-    || response.protocolVersion !== HOSTD_PROTOCOL_VERSION
-    || (response.ok === true && response.capability?.registry !== HOSTD_RESTART_CAPABILITY_REGISTRY)) {
+    || response.registry !== registry
+    || response.protocolVersion !== protocolVersion
+    || (response.ok === true && response.capability?.registry !== capabilityRegistry)) {
     throw new Error("OpenClaw hostd returned an invalid protocol response.");
   }
   if (response.requestId !== expectedRequestId) {
@@ -40,26 +55,17 @@ function parseResponse(line, expectedRequestId) {
   return response;
 }
 
-export async function requestHostdRestart({
-  socketPath = process.env[OPENCLAW_HOSTD_SOCKET_PATH_ENV] ?? DEFAULT_OPENCLAW_HOSTD_SOCKET_PATH,
-  targetUnit = HOSTD_TARGET_UNIT,
-  operation = null,
-  requestId = randomUUID(),
+function requestHostdMessage({
+  socketPath,
+  request,
+  requestId,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   createConnection = net.createConnection,
+  response = {},
 } = {}) {
   const targetSocketPath = boundedSocketPath(socketPath);
-  const capability = hostdRestartCapabilityForTarget(targetUnit);
-  if (!capability || (operation !== null && operation !== capability.operation)) {
-    throw new Error(`OpenClaw hostd client rejects restart target ${targetUnit}.`);
-  }
-  const request = JSON.stringify({
-    version: HOSTD_PROTOCOL_VERSION,
-    operation: capability.operation,
-    target: capability.targetUnit,
-    requestId,
-  });
-  if (Buffer.byteLength(request, "utf8") > HOSTD_REQUEST_MAX_BYTES) {
+  const requestText = JSON.stringify(request);
+  if (Buffer.byteLength(requestText, "utf8") > HOSTD_REQUEST_MAX_BYTES) {
     throw new Error("OpenClaw hostd request exceeds the bounded protocol size.");
   }
 
@@ -68,13 +74,13 @@ export async function requestHostdRestart({
     let buffer = "";
     let settled = false;
     let socket;
-    const finish = (error, response) => {
+    const finish = (error, value) => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
       socket?.destroy();
       if (error) reject(error);
-      else resolve(response);
+      else resolve(value);
     };
     const timer = setTimeout(() => finish(new Error("OpenClaw hostd request timed out.")), boundedTimeoutMs);
 
@@ -95,7 +101,7 @@ export async function requestHostdRestart({
       const newlineIndex = buffer.indexOf("\n");
       if (newlineIndex < 0) return;
       try {
-        finish(null, parseResponse(buffer.slice(0, newlineIndex), requestId));
+        finish(null, parseResponse(buffer.slice(0, newlineIndex), requestId, response));
       } catch (error) {
         finish(error instanceof Error ? error : new Error("OpenClaw hostd returned an invalid response."));
       }
@@ -104,7 +110,81 @@ export async function requestHostdRestart({
     socket.on("end", () => {
       if (!settled) finish(new Error("OpenClaw hostd closed the connection without a response."));
     });
-    socket.on("connect", () => socket.end(`${request}\n`));
+    socket.on("connect", () => socket.end(`${requestText}\n`));
+  });
+}
+
+export async function requestHostdRestart({
+  socketPath = process.env[OPENCLAW_HOSTD_SOCKET_PATH_ENV] ?? DEFAULT_OPENCLAW_HOSTD_SOCKET_PATH,
+  targetUnit = HOSTD_TARGET_UNIT,
+  operation = null,
+  requestId = randomUUID(),
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  createConnection = net.createConnection,
+} = {}) {
+  const capability = hostdRestartCapabilityForTarget(targetUnit);
+  if (!capability || (operation !== null && operation !== capability.operation)) {
+    throw new Error(`OpenClaw hostd client rejects restart target ${targetUnit}.`);
+  }
+  return requestHostdMessage({
+    socketPath,
+    request: {
+      version: HOSTD_PROTOCOL_VERSION,
+      operation: capability.operation,
+      target: capability.targetUnit,
+      requestId,
+    },
+    requestId,
+    timeoutMs,
+    createConnection,
+  });
+}
+
+export async function requestHostdManagedConfigActivation({
+  socketPath = process.env[OPENCLAW_HOSTD_SOCKET_PATH_ENV] ?? DEFAULT_OPENCLAW_HOSTD_SOCKET_PATH,
+  targetPath = HOSTD_ACTIVATION_TARGET_PATH,
+  stagingPath,
+  candidateHash,
+  evaluatedClosurePath,
+  sourceStagingTaskId = null,
+  activationDecisionTaskId = null,
+  activationTaskId = null,
+  expiresAt = new Date(Date.now() + HOSTD_ACTIVATION_MAX_AGE_MS).toISOString(),
+  requestId = randomUUID(),
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  createConnection = net.createConnection,
+} = {}) {
+  if (targetPath !== HOSTD_ACTIVATION_TARGET_PATH
+    || typeof stagingPath !== "string"
+    || !isSha256(candidateHash)
+    || !isNixStorePath(evaluatedClosurePath)
+    || !isBoundedActivationExpiry(expiresAt)) {
+    throw new Error("OpenClaw hostd client rejects an unbound managed-config activation request.");
+  }
+  const request = {
+    version: HOSTD_ACTIVATION_PROTOCOL_VERSION,
+    operation: HOSTD_ACTIVATION_OPERATION,
+    target: HOSTD_ACTIVATION_TARGET_PATH,
+    stagingPath,
+    candidateHash,
+    evaluatedClosurePath,
+    expiresAt,
+    requestId,
+    ...(sourceStagingTaskId ? { sourceStagingTaskId } : {}),
+    ...(activationDecisionTaskId ? { activationDecisionTaskId } : {}),
+    ...(activationTaskId ? { activationTaskId } : {}),
+  };
+  return requestHostdMessage({
+    socketPath,
+    request,
+    requestId,
+    timeoutMs,
+    createConnection,
+    response: {
+      registry: HOSTD_ACTIVATION_RESPONSE_REGISTRY,
+      protocolVersion: HOSTD_ACTIVATION_PROTOCOL_VERSION,
+      capabilityRegistry: HOSTD_ACTIVATION_CAPABILITY_REGISTRY,
+    },
   });
 }
 

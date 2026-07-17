@@ -124,3 +124,30 @@ test("declarative evolution activation decision routes preserve source task and 
   assert.equal(decision.body.approvalBinding.decision, "approve_activation_review");
   assert.equal(decision.body.governance.executesActivation, false);
 });
+
+test("declarative evolution activation task route forwards only the decision task and confirmation", async () => {
+  let observed = null;
+  const response = await invoke(
+    "POST",
+    "/plugins/native-adapter/declarative-evolution/activation-tasks",
+    { activationDecisionTaskId: "task-decision", confirm: "yes", stagingPath: "/tmp/must-not-forward" },
+    {
+      createNativeDeclarativeEvolutionActivationTask: async (input) => {
+        observed = input;
+        return {
+          registry: "openclaw-native-declarative-evolution-activation-v0",
+          mode: "approval-gated",
+          generatedAt: "2026-07-17T00:00:00.000Z",
+          approvalBinding: { activationDecisionTaskId: input.activationDecisionTaskId },
+          task: { id: "task-activation", status: "queued" },
+          approval: { id: "approval-activation", status: "pending" },
+          governance: { createsTask: true, createsApproval: true, executesActivation: true },
+        };
+      },
+    },
+  );
+  assert.equal(response.handled, true);
+  assert.equal(response.statusCode, 201);
+  assert.deepEqual(observed, { activationDecisionTaskId: "task-decision", confirm: false });
+  assert.equal(response.body.approvalBinding.activationDecisionTaskId, "task-decision");
+});

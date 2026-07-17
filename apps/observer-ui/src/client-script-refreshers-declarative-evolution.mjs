@@ -66,12 +66,49 @@ async function createDeclarativeEvolutionActivationDecision() {
   }
 }
 
+async function createDeclarativeEvolutionActivation() {
+  if (!declarativeEvolutionDecisionTaskIdInput || !declarativeEvolutionActivationButton) {
+    return;
+  }
+  const activationDecisionTaskId = declarativeEvolutionDecisionTaskIdInput.value.trim();
+  if (!activationDecisionTaskId) {
+    setControlMessage("Enter a completed approved decision task ID before queueing activation.");
+    declarativeEvolutionDecisionTaskIdInput.focus();
+    return;
+  }
+  declarativeEvolutionActivationButton.disabled = true;
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/declarative-evolution/activation-tasks\`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ activationDecisionTaskId, confirm: true }),
+    });
+    renderDeclarativeEvolutionActivationExecution(data);
+    setControlMessage(\`Queued activation task \${data.task?.id ?? "unknown"}; host mutation still requires approval and fixed hostd.\`);
+    await Promise.all([
+      refreshRuntime(),
+      refreshTaskList(),
+      refreshTaskHistoryDetail(),
+      refreshApprovalState(),
+    ]);
+  } catch (error) {
+    declarativeEvolutionExecutionJson.textContent = \`Unable to queue managed-config activation: \${formatError(error)}\`;
+    setControlMessage("Managed-config activation was not queued.");
+  } finally {
+    declarativeEvolutionActivationButton.disabled = false;
+  }
+}
+
 declarativeEvolutionRefreshButton?.addEventListener("click", () => {
   void refreshDeclarativeEvolutionActivationDecision();
 });
 
 declarativeEvolutionDecisionButton?.addEventListener("click", () => {
   void createDeclarativeEvolutionActivationDecision();
+});
+
+declarativeEvolutionActivationButton?.addEventListener("click", () => {
+  void createDeclarativeEvolutionActivation();
 });
 
 `;

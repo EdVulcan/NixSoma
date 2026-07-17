@@ -7,6 +7,7 @@ import {
 import {
   NATIVE_DECLARATIVE_EVOLUTION_ACTIVATION_DECISION_TASK_TYPE,
 } from "../src/native-declarative-evolution-activation-decision.mjs";
+import { buildCapabilityApprovalBinding } from "../src/capability-runtime-approval-binding.mjs";
 
 function createTask(overrides = {}) {
   const binding = {
@@ -138,4 +139,39 @@ test("activation decision remains blocked until approval is present", async () =
   assert.equal(result.blocked, true);
   assert.equal(result.reason, "policy_requires_approval");
   assert.equal(task.status, "queued");
+});
+
+test("activation decision executor accepts the current generic step-bound approval contract", async () => {
+  const task = createTask({
+    plan: {
+      planId: "plan-generic-activation-decision",
+      strategy: "native-declarative-evolution-activation-decision-v0",
+      steps: [{
+        id: "step-record-activation-decision",
+        kind: "openclaw.declarative.evolution.activation_decision",
+        capabilityId: "act.openclaw.declarative_evolution.activation_decision",
+        governance: "require_approval",
+        requiresApproval: true,
+        params: {
+          ...createTask().nativeDeclarativeEvolution.activationDecision,
+          writesManagedConfig: false,
+          switchesGeneration: false,
+          executesActivation: false,
+          executesRollback: false,
+        },
+      }],
+    },
+  });
+  const binding = buildCapabilityApprovalBinding({ task });
+  task.approval.binding = binding;
+  const { handlers, events } = createHarness({
+    task,
+    review: healthyReview(),
+    approval: { id: "approval-activation", status: "approved", binding },
+  });
+  const result = await handlers[0].execute(task);
+
+  assert.equal(result.task.status, "completed");
+  assert.equal(result.activationDecision.activation, "approved_for_future_activation");
+  assert.equal(events.filter((event) => event.name === "task.completed").length, 1);
 });
