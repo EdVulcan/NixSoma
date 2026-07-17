@@ -11,6 +11,9 @@ const eventHubUrl = process.env.OPENCLAW_EVENT_HUB_URL ?? "http://127.0.0.1:4101
 const screenSenseUrl = process.env.OPENCLAW_SCREEN_SENSE_URL ?? "http://127.0.0.1:4104";
 const sessionManagerUrl = process.env.OPENCLAW_SESSION_MANAGER_URL ?? "http://127.0.0.1:4102";
 const browserRuntimeUrl = process.env.OPENCLAW_BROWSER_RUNTIME_URL ?? "http://127.0.0.1:4103";
+const browserRuntimeAuthToken = typeof process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN === "string"
+  ? process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN.trim()
+  : "";
 const screenWaitMs = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_WAIT_MS ?? "1500", 10);
 const screenPollMs = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_POLL_MS ?? "100", 10);
 
@@ -20,7 +23,14 @@ const actionState = {
   updatedAt: new Date().toISOString(),
 };
 
-import { corsHeaders, sendJson, readJsonBody, createEventPublisher, registerService } from "../../../packages/shared-utils/src/http.mjs";
+import {
+  corsHeaders,
+  createBearerAuthHeaders,
+  sendJson,
+  readJsonBody,
+  createEventPublisher,
+  registerService,
+} from "../../../packages/shared-utils/src/http.mjs";
 
 
 const publishEvent = createEventPublisher(eventHubUrl, "openclaw-screen-act");
@@ -126,9 +136,13 @@ async function executeBrowserAction(kind, params, screen) {
     const targetUrl = sidecarActive
       ? `${sessionManagerUrl}/work-view/trusted-sidecar/action`
       : `${browserRuntimeUrl}${endpoint}`;
+    const headers = { "content-type": "application/json" };
+    if (!sidecarActive) {
+      Object.assign(headers, createBearerAuthHeaders(browserRuntimeAuthToken));
+    }
     const response = await fetch(targetUrl, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers,
       body: JSON.stringify(sidecarActive
         ? { kind, payload, trustedHelperLease: leaseContext.trustedHelperLease }
         : { ...payload, trustedHelperLease: leaseContext.trustedHelperLease }),

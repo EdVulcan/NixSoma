@@ -20,18 +20,18 @@ function boundedString(value, maxLength) {
   return text ? text.slice(0, maxLength) : null;
 }
 
-function boundedUrl(value) {
+function boundedUrl(value, { allowLocalFixtureUrls = false } = {}) {
   if (!value) return null;
   try {
-    return normaliseBoundedBrowserUrl(value);
+    return normaliseBoundedBrowserUrl(value, { allowLocalFixtureUrls });
   } catch {
     return null;
   }
 }
 
-function normalizeTab(value) {
+function normalizeTab(value, options = {}) {
   const id = boundedString(value?.id, 160);
-  const url = boundedUrl(value?.url);
+  const url = boundedUrl(value?.url, options);
   if (!id || !url) return null;
   return {
     id,
@@ -41,12 +41,12 @@ function normalizeTab(value) {
   };
 }
 
-function buildWorkspaceIntent(browserState, now) {
+function buildWorkspaceIntent(browserState, now, options = {}) {
   const tabs = (Array.isArray(browserState?.tabs) ? browserState.tabs : [])
     .slice(-MAX_TABS)
-    .map(normalizeTab)
+    .map((tab) => normalizeTab(tab, options))
     .filter(Boolean);
-  const activeUrl = boundedUrl(browserState?.activeUrl);
+  const activeUrl = boundedUrl(browserState?.activeUrl, options);
   return {
     registry: WORKSPACE_REGISTRY,
     persistedAt: now(),
@@ -70,16 +70,17 @@ function buildWorkspaceIntent(browserState, now) {
   };
 }
 
-function normalizePersistedIntent(value) {
+function normalizePersistedIntent(value, options = {}) {
   if (value?.registry !== WORKSPACE_REGISTRY || !value.workspace) {
     throw new Error("Browser workspace intent registry is invalid.");
   }
-  return buildWorkspaceIntent(value.workspace, () => boundedString(value.persistedAt, 64));
+  return buildWorkspaceIntent(value.workspace, () => boundedString(value.persistedAt, 64), options);
 }
 
 export function createBrowserWorkspaceStore({
   stateFilePath,
   now = () => new Date().toISOString(),
+  allowLocalFixtureUrls = false,
 } = {}) {
   if (typeof stateFilePath !== "string" || !stateFilePath.trim()) {
     throw new Error("Browser workspace store requires a state file path.");
@@ -92,7 +93,7 @@ export function createBrowserWorkspaceStore({
         throw new Error("Browser workspace intent exceeds the bounded state size.");
       }
       const parsed = JSON.parse(readFileSync(targetPath, "utf8"));
-      const intent = normalizePersistedIntent(parsed);
+      const intent = normalizePersistedIntent(parsed, { allowLocalFixtureUrls });
       return {
         restored: true,
         status: "restored_requires_explicit_prepare",
@@ -112,7 +113,7 @@ export function createBrowserWorkspaceStore({
   }
 
   function persist(browserState) {
-    const intent = buildWorkspaceIntent(browserState, now);
+    const intent = buildWorkspaceIntent(browserState, now, { allowLocalFixtureUrls });
     const serialized = `${JSON.stringify(intent, null, 2)}\n`;
     if (Buffer.byteLength(serialized, "utf8") > MAX_STATE_BYTES) {
       throw new Error("Browser workspace intent exceeds the bounded state size.");

@@ -10,6 +10,9 @@ const host = process.env.OPENCLAW_SESSION_MANAGER_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SESSION_MANAGER_PORT ?? "4102", 10);
 const eventHubUrl = process.env.OPENCLAW_EVENT_HUB_URL ?? "http://127.0.0.1:4101";
 const browserRuntimeUrl = process.env.OPENCLAW_BROWSER_RUNTIME_URL ?? "http://127.0.0.1:4103";
+const browserRuntimeAuthToken = typeof process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN === "string"
+  ? process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN.trim()
+  : "";
 const startDelayMs = Number.parseInt(process.env.OPENCLAW_SESSION_START_DELAY_MS ?? "0", 10);
 const defaultWorkViewUrl = process.env.OPENCLAW_WORK_VIEW_URL ?? "https://example.com/work-view";
 const stateFilePath = process.env.OPENCLAW_SESSION_MANAGER_STATE_FILE ?? `/tmp/openclaw-session-manager-${port}.json`;
@@ -46,6 +49,7 @@ const workViewState = {
 const sidecarRecoveryStore = createTrustedWorkViewSidecarRecoveryStore({ stateFilePath });
 let sidecarLifecycleIntent = sidecarRecoveryStore.snapshot();
 const trustedWorkViewSidecarSupervisor = createTrustedWorkViewSidecarSupervisor({
+  browserRuntimeAuthToken,
   launcherMode: process.env.OPENCLAW_TRUSTED_SIDECAR_LAUNCHER_MODE ?? "systemd-user",
   unitInstance: process.env.OPENCLAW_TRUSTED_SIDECAR_UNIT_INSTANCE ?? "primary",
   onHeartbeat(message) {
@@ -66,7 +70,14 @@ const trustedWorkViewSidecarSupervisor = createTrustedWorkViewSidecarSupervisor(
   },
 });
 
-import { corsHeaders, sendJson, readJsonBody, createEventPublisher, registerService } from "../../../packages/shared-utils/src/http.mjs";
+import {
+  corsHeaders,
+  createBearerAuthHeaders,
+  sendJson,
+  readJsonBody,
+  createEventPublisher,
+  registerService,
+} from "../../../packages/shared-utils/src/http.mjs";
 
 
 
@@ -175,6 +186,10 @@ function sleep(ms) {
   });
 }
 
+function browserRuntimeHeaders(extraHeaders = {}) {
+  return createBearerAuthHeaders(browserRuntimeAuthToken, extraHeaders);
+}
+
 const publishEvent = createEventPublisher(eventHubUrl, "openclaw-session-manager");
 
 
@@ -187,7 +202,7 @@ async function ensureBrowserWorkView(url = workViewState.entryUrl || defaultWork
     });
     const response = await fetch(`${browserRuntimeUrl}/browser/open`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: browserRuntimeHeaders({ "content-type": "application/json" }),
       body: JSON.stringify({
         url,
         sessionId: sessionState.sessionId,
@@ -241,7 +256,7 @@ async function syncBrowserHelperLease() {
   }
   const response = await fetch(`${browserRuntimeUrl}/browser/trusted-helper-lease`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: browserRuntimeHeaders({ "content-type": "application/json" }),
     body: JSON.stringify({
       sessionId: sessionState.sessionId,
       trustedHelperLease,
@@ -780,7 +795,7 @@ async function revokeStaleBrowserLeaseBeforeRecovery() {
     try {
       const response = await fetch(`${browserRuntimeUrl}/browser/trusted-helper-lease/revoke`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: browserRuntimeHeaders({ "content-type": "application/json" }),
         body: "{}",
       });
       const result = await response.json().catch(() => null);

@@ -619,7 +619,7 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/persist.mjs"
     || -w "$core_server"
     || -e "$core_out/share/openclaw/services/openclaw-core/test"
-    || "$(find "$core_out" -type f | wc -l)" -ne 200 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 201 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -886,6 +886,7 @@ EOF
       OPENCLAW_SESSION_MANAGER_URL="$upstream_url" \
       OPENCLAW_BROWSER_RUNTIME_STATE_FILE="$state_file" \
       OPENCLAW_BROWSER_ENGINE_MODE=simulated \
+      OPENCLAW_BROWSER_ALLOW_LOCAL_FIXTURES=1 \
       OPENCLAW_BROWSER_PROFILE_DIR="$runtime_dir/profile" \
       OPENCLAW_BODY_RUNTIME_SOURCE=nix-store \
         node src/server.mjs >"$runtime_dir/browser-runtime.log" 2>&1 &

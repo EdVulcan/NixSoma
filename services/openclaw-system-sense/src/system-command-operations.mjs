@@ -1,8 +1,17 @@
 import { execFile } from "node:child_process";
+import { lstatSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 
 const defaultExecFileAsync = promisify(execFile);
+const NEVER_ALLOW_COMMANDS = new Set(["find", "grep", "rg"]);
+const PATH_ARGUMENT_COMMANDS = new Set(["cat", "head", "tail", "wc", "ls"]);
+const SAFE_COMMAND_FLAGS = new Map([
+  ["head", new Set(["-n"])],
+  ["tail", new Set(["-n"])],
+  ["wc", new Set(["-c", "-l", "-w"])],
+  ["ls", new Set(["-a", "-A", "-l", "-la", "-al"])],
+]);
 
 export function createSystemCommandOperations({
   commandAllowlist = [],
@@ -120,6 +129,11 @@ function assertCommandAllowed(command) {
     throw new Error("Command is required for execution.");
   }
   const trimmed = command.trim();
+  if (NEVER_ALLOW_COMMANDS.has(trimmed)) {
+    const error = new Error("This command has been removed from the OpenClaw executor; use a bounded native sense capability.");
+    error.code = "COMMAND_REMOVED_FOR_SAFETY";
+    throw error;
+  }
   if (trimmed.includes("/") || trimmed.includes("\\") || path.basename(trimmed) !== trimmed) {
     const error = new Error("Command must be an allowlisted executable name, not a path.");
     error.code = "COMMAND_PATH_NOT_ALLOWED";
@@ -132,6 +146,43 @@ function assertCommandAllowed(command) {
     throw error;
   }
   return trimmed;
+}
+
+function assertCommandArgumentsSafe(command, args, cwd) {
+  if (!PATH_ARGUMENT_COMMANDS.has(command)) {
+    return;
+  }
+
+  const allowedFlags = SAFE_COMMAND_FLAGS.get(command) ?? new Set();
+  for (const arg of args) {
+    if (arg.startsWith("-") && !allowedFlags.has(arg)) {
+      const error = new Error(`Unsupported ${command} argument.`);
+      error.code = "COMMAND_ARGUMENT_NOT_ALLOWED";
+      error.details = { command, argument: arg };
+      throw error;
+    }
+    if (arg.startsWith("-")) {
+      continue;
+    }
+    const candidate = path.resolve(cwd, arg);
+    const normalisedCwd = process.platform === "win32" ? cwd.toLowerCase() : cwd;
+    const normalisedCandidate = process.platform === "win32" ? candidate.toLowerCase() : candidate;
+    if (normalisedCandidate !== normalisedCwd && !normalisedCandidate.startsWith(`${normalisedCwd}${path.sep}`)) {
+      const error = new Error("Command path arguments must remain inside the approved working directory.");
+      error.code = "COMMAND_ARGUMENT_PATH_OUTSIDE_CWD";
+      throw error;
+    }
+    try {
+      if (lstatSync(candidate).isSymbolicLink()) {
+        const error = new Error("Command path arguments must not be symbolic links.");
+        error.code = "COMMAND_ARGUMENT_SYMLINK_NOT_ALLOWED";
+        throw error;
+      }
+    } catch (error) {
+      if (error?.code === "ENOENT") continue;
+      throw error;
+    }
+  }
 }
 
 function truncateOutput(value) {
@@ -188,6 +239,7 @@ async function executeCommand(body) {
   const command = assertCommandAllowed(body.command);
   const args = normaliseCommandArgs(body.args);
   const cwdResult = resolveAllowedPath(body.cwd ?? body.workingDirectory ?? defaultCwd);
+  assertCommandArgumentsSafe(command, args, cwdResult.path);
   const dryRun = buildCommandDryRun({
     command,
     args,

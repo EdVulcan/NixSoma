@@ -6,6 +6,7 @@ export async function handleSystemCommandRoutes({
   res,
   requestUrl,
   publishEvent,
+  publishAuditEvent = publishEvent,
   operations,
 }) {
   if (req.method === "GET" && requestUrl.pathname === "/system/processes") {
@@ -49,6 +50,11 @@ export async function handleSystemCommandRoutes({
   if (req.method === "POST" && requestUrl.pathname === "/system/command/execute") {
     try {
       const body = await readJsonBody(req);
+      await publishAuditEvent(createEventName("system.command.execute_requested"), {
+        command: body.command ?? null,
+        argsCount: Array.isArray(body.args) ? body.args.length : 0,
+        cwd: body.cwd ?? body.workingDirectory ?? null,
+      });
       const execution = await operations.executeCommand(body);
       await publishEvent(createEventName("system.command.executed"), {
         command: execution.command,

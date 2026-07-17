@@ -144,6 +144,7 @@ function buildCapabilityInvokeBodyFromPlanStep(step, task) {
   return {
     capabilityId: step.capabilityId,
     taskId: task.id,
+    stepId: step.id ?? null,
     intent: step.intent ?? step.kind,
     operation: inferCapabilityOperation(step),
     approved,
@@ -480,9 +481,7 @@ function serialiseFilesystemReadSummary(summary) {
 
 function isTaskPolicyApproved(task) {
   const approval = task?.approval?.requestId ? approvals.get(task.approval.requestId) : null;
-  return task?.policy?.decision?.approved === true
-    || task?.policy?.request?.approved === true
-    || approval?.status === "approved";
+  return approval?.taskId === task?.id && approval?.status === "approved";
 }
 
 function buildCapabilityApprovalGate(task, actionSteps) {

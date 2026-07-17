@@ -24,6 +24,7 @@ import { createScreenObservationCapabilityHandlers } from "./capability-runtime-
 import { createBrowserActionCapabilityHandlers } from "./capability-runtime-browser-actions.mjs";
 import { createScreenActionCapabilityHandlers } from "./capability-runtime-screen-actions.mjs";
 import { createDeclarativeEvolutionCapabilityHandlers } from "./capability-runtime-declarative-evolution.mjs";
+import { validateCapabilityExecutionApproval } from "./capability-runtime-approval-binding.mjs";
 
 export function createCapabilityRuntime(deps) {
   const {
@@ -67,6 +68,8 @@ export function createCapabilityRuntime(deps) {
     CROSS_BOUNDARY_INTENTS = [],
     persistState = () => {},
   } = state;
+  const tasks = state.tasks ?? new Map();
+  const approvals = state.approvals ?? new Map();
   const {
     evaluatePolicyIntent,
     recordPolicyDecision,
@@ -346,10 +349,12 @@ export function createCapabilityRuntime(deps) {
     return {
       capabilityId,
       taskId: typeof body.taskId === "string" && body.taskId.trim() ? body.taskId.trim() : null,
+      stepId: typeof body.stepId === "string" && body.stepId.trim() ? body.stepId.trim() : null,
       params,
       operation: typeof body.operation === "string" && body.operation.trim() ? body.operation.trim() : null,
       intent: typeof body.intent === "string" && body.intent.trim() ? body.intent.trim() : null,
       approved: body.approved === true || body.policy?.approved === true,
+      claimedApproved: body.approved === true || body.policy?.approved === true,
       policy: body.policy && typeof body.policy === "object" ? body.policy : {},
     };
   }
@@ -915,9 +920,11 @@ export function createCapabilityRuntime(deps) {
       },
       request: {
         taskId: request.taskId ?? null,
+        stepId: request.stepId ?? null,
         operation: request.operation ?? request.params?.operation ?? null,
         intent: capabilityRequestIntent(capability, request),
         approved: request.approved === true,
+        claimedApproved: request.claimedApproved === true,
         command: typeof request.params?.command === "string" ? request.params.command : null,
         cwd: typeof request.params?.cwd === "string" ? request.params.cwd : typeof request.params?.workingDirectory === "string" ? request.params.workingDirectory : null,
         path: typeof request.params?.path === "string" ? request.params.path : null,
@@ -932,6 +939,7 @@ export function createCapabilityRuntime(deps) {
         autonomyMode: policy.autonomyMode,
         autonomous: policy.autonomous === true,
       },
+      authorization: request.serverApproval ?? null,
       invoked: invoked === true,
       blocked: blocked === true,
       reason,
@@ -997,6 +1005,17 @@ export function createCapabilityRuntime(deps) {
         response: { ok: false, error: "Capability not found." },
       };
     }
+
+    const serverApproval = validateCapabilityExecutionApproval({
+      capability,
+      request,
+      tasks,
+      approvals,
+      persistState,
+      reserve: true,
+    });
+    request.approved = serverApproval.approved;
+    request.serverApproval = serverApproval;
 
     const engineeringWorkViewValidationError = engineeringWorkViewHandlers.validateRequest(capability, request);
     if (engineeringWorkViewValidationError) {
@@ -1107,8 +1126,10 @@ export function createCapabilityRuntime(deps) {
     ));
     await publishEvent(createEventName("policy.evaluated"), { capability, policy });
 
-    if (!isPolicyExecutionAllowed(policy)) {
-      const reason = policy.decision === "deny" ? "policy_denied" : "policy_requires_approval";
+    if (!serverApproval.ok || !isPolicyExecutionAllowed(policy)) {
+      const reason = !serverApproval.ok
+        ? serverApproval.reason
+        : policy.decision === "deny" ? "policy_denied" : "policy_requires_approval";
       const invocation = recordCapabilityInvocation({
         capability,
         request,

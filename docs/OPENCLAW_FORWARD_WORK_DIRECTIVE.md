@@ -265,6 +265,19 @@ non-DeepSeek credential references and HTTP redirects. Recommendations remain
 review-only and cannot create a task, approval, execution, or provider egress
 automatically.
 
+The 2026-07-17 security review also closed the main control-plane bypasses that
+must remain part of the active contract: capability execution now requires a
+server-side task/step/intent/params approval binding with one-time consumption;
+Core infrastructure forwarding is limited to explicit read-only routes with
+query preservation; file operations use realpath and no-follow descriptors;
+browser navigation rejects private destinations and the browser runtime uses an
+internal bearer token whenever it is configured or binds beyond loopback; and
+Event Hub ingress plus required system-sense audit writes fail closed. The
+browser token must be passed to session-manager, screen-act, and the trusted
+sidecar, while public browser state must never expose the helper lease. These
+are boundary corrections for the existing Level 2 route, not a new provider
+phase.
+
 The same approved handoff now accepts explicit `includeWorkView`,
 `includeWorkViewObservation`, and `includePlanTodo` context selectors. It
 reuses the existing local association and plan/todo builders, includes only

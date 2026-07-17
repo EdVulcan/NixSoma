@@ -38,7 +38,7 @@ const maxSearchLimit = Number.parseInt(process.env.OPENCLAW_SYSTEM_FILE_SEARCH_L
 const maxSearchDepth = Number.parseInt(process.env.OPENCLAW_SYSTEM_FILE_SEARCH_DEPTH ?? "4", 10);
 const maxFileReadBytes = Number.parseInt(process.env.OPENCLAW_SYSTEM_FILE_READ_LIMIT ?? "65536", 10);
 const maxFileWriteBytes = Number.parseInt(process.env.OPENCLAW_SYSTEM_FILE_WRITE_LIMIT ?? "65536", 10);
-const commandAllowlist = (process.env.OPENCLAW_SYSTEM_COMMAND_ALLOWLIST ?? "echo,printf,pwd,whoami,ls,cat,head,tail,wc,find,grep,rg")
+const commandAllowlist = (process.env.OPENCLAW_SYSTEM_COMMAND_ALLOWLIST ?? "echo,printf,pwd,whoami,ls,cat,head,tail,wc")
   .split(",")
   .map((command) => command.trim())
   .filter(Boolean);
@@ -243,6 +243,7 @@ import { createEventName } from "../../../packages/shared-events/src/event-facto
 
 
 const publishEvent = createEventPublisher(eventHubUrl, "openclaw-system-sense");
+const publishAuditEvent = createEventPublisher(eventHubUrl, "openclaw-system-sense", fetch, { required: true });
 
 
 const systemFileOperations = createSystemFileOperations({
@@ -624,6 +625,7 @@ const server = http.createServer(async (req, res) => {
     res,
     requestUrl,
     publishEvent,
+    publishAuditEvent,
     allowedRoots,
     operations: systemFileOperations,
   })) {
@@ -635,6 +637,7 @@ const server = http.createServer(async (req, res) => {
     res,
     requestUrl,
     publishEvent,
+    publishAuditEvent,
     operations: systemCommandOperations,
   })) {
     return;

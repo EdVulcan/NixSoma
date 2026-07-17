@@ -20,6 +20,7 @@ import {
   unavailableWorkViewSemanticTargets,
 } from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
 import { buildWriteOnlyInputEvidence } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
+import { isHttpUrl, validateBoundedBrowserUrl } from "./browser-navigation.mjs";
 
 const ENGINE_REGISTRY = "openclaw-browser-engine-adapter-v0";
 const MAX_RESTORED_TABS = 32;
@@ -44,6 +45,8 @@ export function createBrowserEngineAdapter({
   browserFamily = "firefox",
   puppeteerApi = puppeteer,
   navigationTimeoutMs = 10_000,
+  allowLocalFixtureUrls = false,
+  urlLookup,
   onDisconnected = () => {},
 } = {}) {
   if (!["chrome", "firefox"].includes(browserFamily)) {
@@ -147,6 +150,24 @@ export function createBrowserEngineAdapter({
       height: WORK_VIEW_VISUAL_FRAME_HEIGHT,
       deviceScaleFactor: 1,
     });
+    if (typeof page.setRequestInterception === "function" && typeof page.on === "function") {
+      await page.setRequestInterception(true);
+      page.on("request", async (request) => {
+        try {
+          if (!isHttpUrl(request.url())) {
+            request.continue();
+            return;
+          }
+          await validateBoundedBrowserUrl(request.url(), {
+            allowLocalFixtureUrls,
+            ...(urlLookup ? { lookup: urlLookup } : {}),
+          });
+          request.continue();
+        } catch {
+          request.abort("blockedbyclient");
+        }
+      });
+    }
     return page;
   }
 
@@ -218,7 +239,11 @@ export function createBrowserEngineAdapter({
   }
 
   async function navigatePage(page, url) {
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: navigationTimeoutMs });
+    const safeUrl = await validateBoundedBrowserUrl(url, {
+      allowLocalFixtureUrls,
+      ...(urlLookup ? { lookup: urlLookup } : {}),
+    });
+    await page.goto(safeUrl, { waitUntil: "domcontentloaded", timeout: navigationTimeoutMs });
     return page;
   }
 

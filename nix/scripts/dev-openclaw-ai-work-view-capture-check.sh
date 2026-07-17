@@ -25,6 +25,7 @@ export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifac
 export OPENCLAW_BROWSER_RUNTIME_STATE_FILE="${OPENCLAW_BROWSER_RUNTIME_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-browser-runtime-ai-work-view-capture-check.json}"
 export OPENCLAW_EVENT_LOG_FILE="${OPENCLAW_EVENT_LOG_FILE:-$REPO_ROOT/.artifacts/openclaw-events-ai-work-view-capture-check.jsonl}"
 export OPENCLAW_BROWSER_ENGINE_MODE="firefox"
+export OPENCLAW_BROWSER_ALLOW_LOCAL_FIXTURES="1"
 export OPENCLAW_BROWSER_PROFILE_DIR="${OPENCLAW_BROWSER_PROFILE_DIR:-$REPO_ROOT/.artifacts/openclaw-browser-profile-ai-work-view-capture-check}"
 
 BROWSER_URL="http://127.0.0.1:$OPENCLAW_BROWSER_RUNTIME_PORT"
@@ -33,6 +34,20 @@ SESSION_MANAGER_URL="http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT"
 SCREEN_URL="http://127.0.0.1:$OPENCLAW_SCREEN_SENSE_PORT"
 SCREEN_ACT_URL="http://127.0.0.1:$OPENCLAW_SCREEN_ACT_PORT"
 EVENT_HUB_URL="http://127.0.0.1:$OPENCLAW_EVENT_HUB_PORT"
+
+browser_curl() {
+  local auth_args=()
+  if [[ -n "${OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN:-}" ]]; then
+    auth_args=(-H "authorization: Bearer $OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN")
+  fi
+  curl "${auth_args[@]}" "$@"
+}
+
+browser_post_json() {
+  local url="$1"
+  local payload="$2"
+  browser_curl --silent --fail -X POST "$url" -H 'content-type: application/json' --data "$payload"
+}
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_BROWSER_RUNTIME_STATE_FILE" "$OPENCLAW_BROWSER_RUNTIME_STATE_FILE.tmp-"* "$OPENCLAW_EVENT_LOG_FILE"
@@ -91,7 +106,7 @@ assert_json() {
 
 prepare_result="$(post_json "$SESSION_MANAGER_URL/work-view/prepare" "{\"displayTarget\":\"workspace-2\",\"entryUrl\":\"$TARGET_URL\"}")"
 node -e 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.workView?.helperRuntime?.status!=="active"){throw new Error(`real browser work view prepare failed: ${JSON.stringify(data)}`);}' "$prepare_result"
-open_result="$(curl --silent --fail "$BROWSER_URL/browser/state")"
+open_result="$(browser_curl --silent --fail "$BROWSER_URL/browser/state")"
 assert_json "$open_result" 'const data=JSON.parse(process.argv[1]); if(!data.ok || !data.browser?.sessionId || data.browser?.engine?.mode!=="firefox" || data.browser?.engine?.realEngine!==true || !Number.isInteger(data.browser?.browserPid)){throw new Error(`real browser work view did not open with session: ${JSON.stringify(data)}`);}'
 engine_pid="$(node -e 'const data=JSON.parse(process.argv[1]); process.stdout.write(String(data.browser.browserPid));' "$open_result")"
 kill -0 "$engine_pid"
@@ -99,8 +114,8 @@ kill -0 "$engine_pid"
 session_state="$(curl --silent --fail "$SESSION_MANAGER_URL/work-view/state")"
 input_body="$(node -e 'const data=JSON.parse(process.argv[1]); const r=data.workView?.helperRuntime??{}; const trustedHelperLease={registry:"openclaw-trusted-work-view-helper-lease-v0",owner:r.owner,mode:r.mode,scope:r.scope,leaseId:r.leaseId,sessionId:r.sessionId,workViewId:r.workViewId,heartbeatAt:r.heartbeatAt,actionAuthority:r.actionAuthority}; process.stdout.write(JSON.stringify({text:process.argv[2],trustedHelperLease}));' "$session_state" "$INPUT_TEXT")"
 click_body="$(node -e 'const body=JSON.parse(process.argv[1]); process.stdout.write(JSON.stringify({x:512,y:256,trustedHelperLease:body.trustedHelperLease}));' "$input_body")"
-post_json "$BROWSER_URL/browser/input" "$input_body" >/dev/null
-post_json "$BROWSER_URL/browser/click" "$click_body" >/dev/null
+browser_post_json "$BROWSER_URL/browser/input" "$input_body" >/dev/null
+browser_post_json "$BROWSER_URL/browser/click" "$click_body" >/dev/null
 
 sidecar_task="$(post_json "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks" '{"confirm":true}')"
 SIDECAR_TASK_ID="$(node -e 'const data=JSON.parse(process.argv[1]); process.stdout.write(data.task.id);' "$sidecar_task")"
@@ -110,7 +125,7 @@ sidecar_start="$(post_json "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks/
 node -e 'const data=JSON.parse(process.argv[1]); const frame=data.readback?.execution?.captureObservation?.visualFrame??{}; if(!data.ok || data.readback?.status!=="running_after_approval" || frame.available!==true || frame.fresh!==true || frame.dataExposed!==false || frame.sourceScope!=="ai_owned_active_page_only" || JSON.stringify(frame).includes("data:image/")){throw new Error(`real sidecar did not receive bounded frame metadata: ${JSON.stringify(data)}`);}' "$sidecar_start"
 node -e 'const data=JSON.parse(process.argv[1]); const targets=data.readback?.execution?.captureObservation?.semanticTargets??{}; if(targets.available!==true || targets.itemCount<4 || targets.itemsRetained!==false || targets.inputValuesExposed!==false || targets.selectorsExposed!==false || targets.mutation!==false || !targets.inventorySha256 || !targets.frameSha256 || JSON.stringify(targets).includes("fixture-password-secret")){throw new Error(`real sidecar did not retain semantic target summary safely: ${JSON.stringify(targets)}`);}' "$sidecar_start"
 
-semantic_capture="$(curl --silent --fail "$BROWSER_URL/browser/capture")"
+semantic_capture="$(browser_curl --silent --fail "$BROWSER_URL/browser/capture")"
 semantic_click_body="$(node -e 'const data=JSON.parse(process.argv[1]); const inventory=data.capture?.semanticTargets??{}; const target=inventory.items?.find((item)=>item.name==="Inspect target"); if(!target){throw new Error(`semantic click target missing: ${JSON.stringify(inventory)}`);} process.stdout.write(JSON.stringify({semanticTarget:{registry:"openclaw-browser-semantic-target-reference-v0",operation:"click",targetId:target.targetId,inventorySha256:inventory.inventorySha256,frame:{sha256:inventory.frame.sha256,sequence:inventory.frame.sequence}}}));' "$semantic_capture")"
 semantic_click="$(post_json "$SCREEN_ACT_URL/act/mouse/click" "$semantic_click_body")"
 node - <<'EOF' "$semantic_click" "$SEMANTIC_CLICK_URL"
@@ -243,9 +258,9 @@ console.log(JSON.stringify({
 ' "$AUTONOMOUS_GROUNDING_URL" <<<"$grounded_execution"
 
 provider="$(curl --silent "$SCREEN_URL/screen/provider")"
-capture="$(curl --silent "$BROWSER_URL/browser/capture")"
+capture="$(browser_curl --silent "$BROWSER_URL/browser/capture")"
 screen="$(curl --silent "$SCREEN_URL/screen/current")"
-metadata_capture="$(curl --silent "$BROWSER_URL/browser/capture?visual=metadata")"
+metadata_capture="$(browser_curl --silent "$BROWSER_URL/browser/capture?visual=metadata")"
 for readback in "$capture" "$screen" "$metadata_capture"; do
   if [[ "$readback" == *"$INPUT_TEXT"* ]]; then
     echo "write-only browser input leaked into capture readback" >&2

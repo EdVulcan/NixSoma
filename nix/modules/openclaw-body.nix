@@ -7,6 +7,9 @@ let
   hostdRestartUnitPolicy = lib.concatStringsSep " || " (map
     (capability: "action.lookup(\"unit\") == \"${capability.targetUnit}\"")
     hostdRestartCapabilities);
+  browserRuntimeAuthEnvironment = optionalAttrs (cfg.browserRuntimeAuthToken != null && cfg.browserRuntimeAuthToken != "") {
+    OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN = cfg.browserRuntimeAuthToken;
+  };
 
   serviceSpecs = [
     {
@@ -41,6 +44,7 @@ let
       port = cfg.ports.sessionManager;
       after = [ "openclaw-event-hub" ];
       runtimePackage = cfg.runtimePackages.sessionManager;
+      extraEnvironment = _: browserRuntimeAuthEnvironment;
     }
     {
       key = "browserRuntime";
@@ -57,7 +61,7 @@ let
         OPENCLAW_BROWSER_PROFILE_DIR = profileDir;
       } // optionalAttrs (cfg.browserEngine.mode == "firefox") {
         OPENCLAW_BROWSER_EXECUTABLE = "${cfg.browserEngine.package}/bin/firefox";
-      };
+      } // browserRuntimeAuthEnvironment;
     }
     {
       key = "screenSense";
@@ -80,6 +84,7 @@ let
       port = cfg.ports.screenAct;
       after = [ "openclaw-event-hub" "openclaw-screen-sense" "openclaw-browser-runtime" ];
       runtimePackage = cfg.runtimePackages.screenAct;
+      extraEnvironment = _: browserRuntimeAuthEnvironment;
     }
     {
       key = "systemSense";
@@ -203,6 +208,8 @@ let
     OPENCLAW_NIXOS_BASE_MODULE = "${cfg.repoRoot}/nix/hosts/local-dev.nix";
     OPENCLAW_NIX_SYSTEM = pkgs.stdenv.hostPlatform.system;
     OPENCLAW_BODY_USER_OWNED_UNITS = lib.concatStringsSep "," userOwnedServiceNames;
+  } // optionalAttrs (cfg.eventHubToken != null) {
+    OPENCLAW_EVENT_HUB_TOKEN = cfg.eventHubToken;
   } // optionalAttrs cfg.systemdRepairAuthDelegation.enable {
     OPENCLAW_HOSTD_SOCKET_PATH = hostdSocketPath;
     OPENCLAW_SYSTEMD_REPAIR_AUTH_DELEGATION = "polkit-dbus-fixed-unit";
@@ -477,6 +484,18 @@ in
       description = "OpenClaw body state directory.";
     };
 
+    eventHubToken = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "Optional shared internal token for authenticated event-hub ingress; keep it out of public configuration when possible.";
+    };
+
+    browserRuntimeAuthToken = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "Optional shared internal bearer token for browser-runtime callers; required when the browser runtime binds beyond loopback.";
+    };
+
     logDir = mkOption {
       type = types.str;
       default = "/var/log/openclaw";
@@ -543,6 +562,12 @@ in
           || builtins.elem "browserRuntime" cfg.componentOwnership.user
           || cfg.user != null;
         message = "Firefox browser runtime requires login-user ownership or a non-root system service user; root browser launch is not supported.";
+      }
+      {
+        assertion = !builtins.elem "browserRuntime" cfg.components
+          || builtins.elem cfg.host [ "127.0.0.1" "::1" "localhost" ]
+          || (cfg.browserRuntimeAuthToken != null && cfg.browserRuntimeAuthToken != "");
+        message = "A non-loopback browser runtime requires services.openclaw.browserRuntimeAuthToken.";
       }
       {
         assertion = !cfg.systemdRepairAuthDelegation.enable || cfg.user != null;

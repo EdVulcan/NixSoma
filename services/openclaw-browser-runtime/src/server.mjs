@@ -16,7 +16,7 @@ import {
   unavailableWorkViewSemanticTargets,
 } from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
 import { buildWriteOnlyInputEvidence } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
-import { normaliseBoundedBrowserUrl } from "./browser-navigation.mjs";
+import { normaliseBoundedBrowserUrl, validateBoundedBrowserUrl } from "./browser-navigation.mjs";
 import { createBrowserWorkspaceStore } from "./browser-workspace-store.mjs";
 import { createBrowserEngineAdapter } from "./browser-engine-adapter.mjs";
 
@@ -28,13 +28,22 @@ const sessionManagerUrl = process.env.OPENCLAW_SESSION_MANAGER_URL ?? "http://12
 const stateFilePath = process.env.OPENCLAW_BROWSER_RUNTIME_STATE_FILE ?? `/tmp/openclaw-browser-runtime-${port}.json`;
 const engineMode = process.env.OPENCLAW_BROWSER_ENGINE_MODE ?? "simulated";
 const engineProfileDirectory = process.env.OPENCLAW_BROWSER_PROFILE_DIR ?? `/tmp/openclaw-browser-profile-${port}`;
+const allowLocalFixtureUrls = process.env.OPENCLAW_BROWSER_ALLOW_LOCAL_FIXTURES === "1";
+const browserRuntimeAuthToken = typeof process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN === "string"
+  && process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN.trim()
+  ? process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN.trim()
+  : null;
+const isLoopbackHost = ["127.0.0.1", "::1", "localhost"].includes(host);
+if (!isLoopbackHost && !browserRuntimeAuthToken) {
+  throw new Error("Browser runtime refuses non-loopback binding without OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN.");
+}
 if (!["firefox", "simulated"].includes(engineMode)) {
   throw new Error(`Unsupported browser engine mode: ${engineMode}.`);
 }
 
 const publishEvent = createEventPublisher(eventHubUrl, "openclaw-browser-runtime");
 
-const workspaceStore = createBrowserWorkspaceStore({ stateFilePath });
+const workspaceStore = createBrowserWorkspaceStore({ stateFilePath, allowLocalFixtureUrls });
 const restoredWorkspace = workspaceStore.restore();
 const restoredIntent = restoredWorkspace.intent?.workspace ?? null;
 let browserEngine = null;
@@ -76,6 +85,7 @@ if (engineMode === "firefox") {
     executablePath: process.env.OPENCLAW_BROWSER_EXECUTABLE,
     profileDirectory: engineProfileDirectory,
     browserFamily: "firefox",
+    allowLocalFixtureUrls,
     onDisconnected() {
       updateBrowserState({
         running: false,
@@ -93,14 +103,24 @@ function updateBrowserState(patch) {
   });
 }
 
-function serialiseBrowserState() {
+function serialiseBrowserState({ includeAuthority = false } = {}) {
+  const { trustedHelperLease, ...publicBrowserState } = browserState;
   return {
-    ...browserState,
-    trustedHelperLease: browserState.trustedHelperLease
-      ? { ...browserState.trustedHelperLease }
-      : null,
+    ...publicBrowserState,
+    trustedHelperLease: includeAuthority && trustedHelperLease ? { ...trustedHelperLease } : null,
     tabs: browserState.tabs.map((tab) => ({ ...tab })),
   };
+}
+
+function assertBrowserRuntimeRequestAuth(req) {
+  if (!browserRuntimeAuthToken) {
+    return;
+  }
+  if (req.headers.authorization !== `Bearer ${browserRuntimeAuthToken}`) {
+    const error = new Error("Browser runtime requires authenticated internal service access.");
+    error.code = "BROWSER_RUNTIME_AUTH_REQUIRED";
+    throw error;
+  }
 }
 
 function applyEngineSnapshot(snapshot) {
@@ -240,7 +260,7 @@ function buildBrowserCapture(
       activeUrl,
       displayTarget: "browser-runtime",
     },
-    browser: browserState,
+    browser: serialiseBrowserState(),
     captureStrategy: "browser-runtime-backed",
     activeUrl,
     capturedAt,
@@ -326,6 +346,15 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (requestUrl.pathname !== "/health") {
+    try {
+      assertBrowserRuntimeRequestAuth(req);
+    } catch (error) {
+      sendJson(res, 401, { ok: false, error: error.message });
+      return;
+    }
+  }
+
   if (req.method === "GET" && requestUrl.pathname === "/health") {
     sendJson(res, 200, {
       ok: true,
@@ -353,7 +382,11 @@ const server = http.createServer(async (req, res) => {
       const body = await readJsonBody(req);
       const url = normaliseBoundedBrowserUrl(
         typeof body.url === "string" && body.url.trim() ? body.url.trim() : "https://example.com",
+        { allowLocalFixtureUrls },
       );
+      const safeUrl = browserEngine
+        ? await validateBoundedBrowserUrl(url, { allowLocalFixtureUrls })
+        : url;
       const requestedSessionId = typeof body.sessionId === "string" && body.sessionId.trim()
         ? body.sessionId.trim()
         : browserState.sessionId ?? `session-${randomUUID()}`;
@@ -364,6 +397,9 @@ const server = http.createServer(async (req, res) => {
       const restoreUrls = browserState.workspaceRecovery.restored
         ? browserState.tabs.map((tab) => tab.url)
         : [];
+      const safeRestoreUrls = browserEngine
+        ? await Promise.all(restoreUrls.map((restoreUrl) => validateBoundedBrowserUrl(restoreUrl, { allowLocalFixtureUrls })))
+        : restoreUrls;
 
       if (!browserState.running) {
         updateBrowserState({
@@ -389,10 +425,10 @@ const server = http.createServer(async (req, res) => {
 
       let tab;
       if (browserEngine) {
-        applyEngineSnapshot(await browserEngine.open({ url, restoreUrls }));
+        applyEngineSnapshot(await browserEngine.open({ url: safeUrl, restoreUrls: safeRestoreUrls }));
         tab = browserState.tabs.find((candidate) => candidate.url === browserState.activeUrl) ?? browserState.tabs.at(-1);
       } else {
-        tab = addTab(url);
+        tab = addTab(safeUrl);
       }
       if (browserState.workspaceRecovery.restored) {
         updateBrowserState({
@@ -408,7 +444,7 @@ const server = http.createServer(async (req, res) => {
         });
       }
       workspaceStore.persist(browserState);
-      const browser = serialiseBrowserState();
+      const browser = serialiseBrowserState({ includeAuthority: true });
       await publishEvent(createEventName("browser.started"), { browser, tab });
       sendJson(res, 201, { ok: true, browser, tab });
     } catch (error) {
@@ -426,7 +462,10 @@ const server = http.createServer(async (req, res) => {
       }
 
       const body = await readJsonBody(req);
-      const url = normaliseBoundedBrowserUrl(body.url ?? "https://example.com/docs");
+      const url = normaliseBoundedBrowserUrl(body.url ?? "https://example.com/docs", { allowLocalFixtureUrls });
+      const safeUrl = browserEngine
+        ? await validateBoundedBrowserUrl(url, { allowLocalFixtureUrls })
+        : url;
       const mediation = validateBrowserActionMediation(body);
       if (!mediation.accepted) {
         sendJson(res, 409, { ok: false, error: mediation.reason, mediation });
@@ -434,13 +473,13 @@ const server = http.createServer(async (req, res) => {
       }
       let tab;
       if (browserEngine) {
-        applyEngineSnapshot(await browserEngine.newTab(url));
+        applyEngineSnapshot(await browserEngine.newTab(safeUrl));
         workspaceStore.persist(browserState);
         tab = browserState.tabs.find((candidate) => candidate.url === browserState.activeUrl) ?? browserState.tabs.at(-1);
       } else {
-        tab = addTab(url);
+        tab = addTab(safeUrl);
       }
-      const browser = serialiseBrowserState();
+      const browser = serialiseBrowserState({ includeAuthority: true });
       await publishEvent(createEventName("browser.updated"), { browser, tab, action: "new-tab" });
       sendJson(res, 201, { ok: true, browser, tab, mediation });
     } catch (error) {
@@ -480,7 +519,7 @@ const server = http.createServer(async (req, res) => {
         } : browserState.workspaceRecovery,
       });
       workspaceStore.persist(browserState);
-      const browser = serialiseBrowserState();
+      const browser = serialiseBrowserState({ includeAuthority: true });
       await publishEvent(createEventName("browser.updated"), {
         browser,
         action: "trusted-helper-lease-rebound",

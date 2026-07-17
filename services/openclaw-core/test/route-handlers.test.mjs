@@ -160,12 +160,12 @@ test("core infrastructure health route preserves service configuration readback"
   assert.equal(response.body.systemHealUrl, "http://127.0.0.1:4107");
 });
 
-test("core infrastructure proxy route forwards JSON bodies to configured services", async () => {
-  let observed = null;
+test("core infrastructure proxy rejects mutation and unknown routes", async () => {
+  let postCalled = false;
   const deps = createBaseDeps({
     client: {
-      postJson: async (url, body) => {
-        observed = { url, body };
+      postJson: async () => {
+        postCalled = true;
         return { ok: true, proxied: true };
       },
     },
@@ -173,12 +173,12 @@ test("core infrastructure proxy route forwards JSON bodies to configured service
 
   const response = await invokeRoute(deps, "POST", "/proxy/session-manager/work-view/prepare", { url: "https://example.test" });
 
-  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
-  assert.deepEqual(observed, {
-    url: "http://127.0.0.1:4102/work-view/prepare",
-    body: { url: "https://example.test" },
-  });
-  assert.deepEqual(response.body, { ok: true, proxied: true });
+  assert.equal(response.statusCode, 405, JSON.stringify(response.body));
+  assert.equal(response.body.ok, false);
+  assert.equal(postCalled, false);
+
+  const unknown = await invokeRoute(deps, "GET", "/proxy/session-manager/work-view/unknown");
+  assert.equal(unknown.statusCode, 404, JSON.stringify(unknown.body));
 });
 
 test("core infrastructure proxy route forwards read-only system kernel event routes", async () => {
@@ -208,10 +208,10 @@ test("core infrastructure proxy route forwards read-only system kernel event rou
     },
   });
 
-  const response = await invokeRoute(deps, "GET", "/proxy/system-sense/system/kernel/process-exec-events");
+  const response = await invokeRoute(deps, "GET", "/proxy/system-sense/system/kernel/process-exec-events?limit=5");
 
   assert.equal(response.statusCode, 200, JSON.stringify(response.body));
-  assert.equal(observedUrl, "http://127.0.0.1:4106/system/kernel/process-exec-events");
+  assert.equal(observedUrl, "http://127.0.0.1:4106/system/kernel/process-exec-events?limit=5");
   assert.equal(response.body.registry, "openclaw-kernel-process-exec-v0");
   assert.equal(response.body.mode, "read_only");
   assert.equal(response.body.readback.registry, "openclaw-kernel-process-exec-readback-v0");

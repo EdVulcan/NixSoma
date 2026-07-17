@@ -1,4 +1,4 @@
-import { sendJson, readJsonBody } from "../../../packages/shared-utils/src/http.mjs";
+import { sendJson } from "../../../packages/shared-utils/src/http.mjs";
 
 const PROXY_TARGET_URL_KEYS = {
   "session-manager": "sessionManagerUrl",
@@ -7,6 +7,61 @@ const PROXY_TARGET_URL_KEYS = {
   "screen-sense": "screenSenseUrl",
   "screen-act": "screenActUrl",
   "system-sense": "systemSenseUrl",
+};
+
+const READ_ONLY_PROXY_PATHS = {
+  "session-manager": new Set(["/health", "/session/state", "/work-view/state"]),
+  "screen-sense": new Set(["/health", "/screen/current", "/screen/provider", "/screen/windows", "/screen/ocr"]),
+  "screen-act": new Set(["/health", "/act/state"]),
+  "system-heal": new Set([
+    "/health",
+    "/heal/state",
+    "/heal/history",
+    "/maintenance/state",
+    "/maintenance/policy",
+    "/maintenance/history",
+  ]),
+  "system-sense": new Set([
+    "/health",
+    "/system/health",
+    "/system/health/trends",
+    "/system/route/next-action",
+    "/system/route/recovery-policy",
+    "/system/route/body-governance-readiness",
+    "/system/route/phase-2-review",
+    "/system/route/body-evidence-timeline",
+    "/system/route/body-evidence-timeline-readiness",
+    "/system/route/body-evidence-ledger-plan",
+    "/system/route/body-evidence-ledger-route-review",
+    "/system/route/body-evidence-ledger-storage-root-plan",
+    "/system/route/body-evidence-ledger-storage-root-route-review",
+    "/system/route/body-evidence-ledger-first-record-plan",
+    "/system/route/body-evidence-ledger-first-record-route-review",
+    "/system/route/body-evidence-ledger-readiness",
+    "/system/route/body-evidence-ledger-demo-status",
+    "/system/route/body-evidence-ledger-followup-record-plan",
+    "/system/route/body-evidence-ledger-followup-record-route-review",
+    "/system/body",
+    "/system/services",
+    "/system/alerts",
+    "/system/processes",
+    "/system/systemd/units",
+    "/system/systemd/dependency-map",
+    "/system/systemd/repair-candidates",
+    "/system/systemd/repair-candidate-plan",
+    "/system/systemd/repair-candidate-task-route",
+    "/system/systemd/repair-candidate-readiness",
+    "/system/systemd/repair-candidate-route-review",
+    "/system/systemd/repair-candidate-demo-status",
+    "/system/systemd/next-repair-scope-review",
+    "/system/systemd/next-repair-plan",
+    "/system/systemd/next-repair-route-review",
+    "/system/systemd/next-repair-dry-run",
+    "/system/systemd/next-repair-task-route",
+    "/system/systemd/repair-plan",
+    "/system/systemd/repair-dry-run",
+    "/system/kernel/process-exec-events",
+  ]),
 };
 
 function proxySubpath(pathname) {
@@ -32,15 +87,18 @@ async function handleProxyRoute({
     return false;
   }
 
-  try {
-    if (req.method === "POST" || req.method === "PUT") {
-      const body = await readJsonBody(req);
-      const result = await client.postJson(`${targetUrlBase}${proxySubpath(requestUrl.pathname)}`, body);
-      sendJson(res, 200, result);
-      return true;
-    }
+  if (req.method !== "GET" || !READ_ONLY_PROXY_PATHS[targetService]?.has(proxySubpath(requestUrl.pathname))) {
+    sendJson(res, req.method === "GET" ? 404 : 405, {
+      ok: false,
+      error: "Core proxy exposes only allowlisted read-only GET routes.",
+    });
+    return true;
+  }
 
-    const result = await client.fetchJson(`${targetUrlBase}${proxySubpath(requestUrl.pathname)}`);
+  try {
+    const targetUrl = new URL(proxySubpath(requestUrl.pathname), targetUrlBase);
+    targetUrl.search = requestUrl.search;
+    const result = await client.fetchJson(targetUrl.toString());
     sendJson(res, 200, result);
     return true;
   } catch (error) {

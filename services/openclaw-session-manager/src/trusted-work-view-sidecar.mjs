@@ -5,6 +5,7 @@ import {
   createSidecarMessageDecoder,
   encodeSidecarMessage,
 } from "./trusted-work-view-sidecar-channel.mjs";
+import { createBearerAuthHeaders } from "../../../packages/shared-utils/src/http.mjs";
 import { projectWorkViewVisualFrame } from "../../../packages/shared-utils/src/work-view-visual-frame.mjs";
 
 const HEARTBEAT_REGISTRY = "openclaw-trusted-work-view-sidecar-heartbeat-v0";
@@ -14,6 +15,9 @@ const captureIntervalMs = Math.max(500, Number.parseInt(process.env.OPENCLAW_SID
 const reconnectTimeoutMs = Math.max(5_000, Number.parseInt(process.env.OPENCLAW_SIDECAR_RECONNECT_TIMEOUT_MS ?? "30000", 10));
 const lifecycleTaskId = process.env.OPENCLAW_SIDECAR_TASK_ID ?? null;
 const lifecycleApprovalId = process.env.OPENCLAW_SIDECAR_APPROVAL_ID ?? null;
+const browserRuntimeAuthToken = typeof process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN === "string"
+  ? process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN.trim()
+  : "";
 
 if (!socketPath || !lifecycleTaskId || !lifecycleApprovalId) {
   throw new Error("Trusted work-view sidecar requires socket and lifecycle identity.");
@@ -112,7 +116,9 @@ async function observeBrowserCapture({ afterMutation = false } = {}) {
   const browserRuntimeUrl = binding.browserRuntimeUrl;
   capturePromise = (async () => {
     try {
-      const response = await fetch(`${browserRuntimeUrl}/browser/capture?visual=metadata`);
+      const response = await fetch(`${browserRuntimeUrl}/browser/capture?visual=metadata`, {
+        headers: createBearerAuthHeaders(browserRuntimeAuthToken),
+      });
       const data = await response.json();
       if (!response.ok || data?.ok !== true) {
         throw new Error(data?.error ?? "browser_capture_request_failed");
@@ -251,7 +257,7 @@ async function executeBrowserAction(message) {
   try {
     const response = await fetch(`${binding.browserRuntimeUrl}${endpoint}`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: createBearerAuthHeaders(browserRuntimeAuthToken, { "content-type": "application/json" }),
       body: JSON.stringify({ ...message.payload, trustedHelperLease: message.trustedHelperLease }),
     });
     const data = await response.json();
@@ -331,7 +337,13 @@ function handleAuthorityConnection(socket) {
 const server = net.createServer(handleAuthorityConnection);
 
 function removeSocketFile() {
-  rmSync(socketPath, { force: true });
+  try {
+    rmSync(socketPath, { force: true });
+  } catch (error) {
+    if (!(["EACCES", "EPERM"].includes(error?.code))) {
+      throw error;
+    }
+  }
 }
 
 function stop(reason) {

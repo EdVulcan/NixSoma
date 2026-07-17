@@ -16,6 +16,7 @@ export async function handleSystemFileRoutes({
   res,
   requestUrl,
   publishEvent,
+  publishAuditEvent = publishEvent,
   allowedRoots,
   operations,
 }) {
@@ -103,6 +104,11 @@ export async function handleSystemFileRoutes({
   if (req.method === "POST" && requestUrl.pathname === "/system/files/write-text") {
     try {
       const body = await readJsonBody(req);
+      await publishAuditEvent(createEventName("system.files.write_requested"), {
+        path: body.path ?? null,
+        contentBytes: typeof body.content === "string" ? Buffer.byteLength(body.content, "utf8") : 0,
+        overwrite: body.overwrite !== false,
+      });
       const result = operations.writeTextFile(body);
       await publishEvent(createEventName("system.files.written"), {
         path: result.path,
@@ -123,6 +129,11 @@ export async function handleSystemFileRoutes({
   if (req.method === "POST" && requestUrl.pathname === "/system/files/append-text") {
     try {
       const body = await readJsonBody(req);
+      await publishAuditEvent(createEventName("system.files.append_requested"), {
+        path: body.path ?? null,
+        contentBytes: typeof body.content === "string" ? Buffer.byteLength(body.content, "utf8") : 0,
+        createIfMissing: body.createIfMissing === true,
+      });
       const result = operations.appendTextFile(body);
       await publishEvent(createEventName("system.files.appended"), {
         path: result.path,
@@ -144,6 +155,10 @@ export async function handleSystemFileRoutes({
   if (req.method === "POST" && requestUrl.pathname === "/system/files/mkdir") {
     try {
       const body = await readJsonBody(req);
+      await publishAuditEvent(createEventName("system.files.directory_requested"), {
+        path: body.path ?? null,
+        recursive: body.recursive === true,
+      });
       const result = operations.createDirectory(body);
       await publishEvent(createEventName("system.files.directory_created"), {
         path: result.path,

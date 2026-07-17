@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { buildCapabilityApprovalBinding } from "./capability-runtime-approval-binding.mjs";
 
 export function createApprovalEngine(deps) {
   const { state, taskManager, policyEvaluator, publishEvent } = deps;
@@ -152,11 +153,13 @@ function createApprovalRequestForTask(task, decision) {
       status: existing.status,
       required: existing.status === "pending",
       updatedAt: existing.updatedAt,
+      ...(existing.binding ? { binding: existing.binding } : {}),
     };
     return existing;
   }
 
   const now = new Date().toISOString();
+  const binding = buildCapabilityApprovalBinding({ task }) ?? task.nativeDeclarativeEvolution?.approvalBinding ?? null;
   const approval = {
     id: randomUUID(),
     status: "pending",
@@ -173,9 +176,7 @@ function createApprovalRequestForTask(task, decision) {
     updatedAt: now,
     resolvedAt: null,
     expiredAt: null,
-    ...(task.nativeDeclarativeEvolution?.approvalBinding
-      ? { binding: task.nativeDeclarativeEvolution.approvalBinding }
-      : {}),
+    ...(binding ? { binding } : {}),
   };
   approvals.set(approval.id, approval);
   task.approval = {
@@ -183,6 +184,7 @@ function createApprovalRequestForTask(task, decision) {
     status: approval.status,
     required: true,
     updatedAt: approval.updatedAt,
+    ...(binding ? { binding } : {}),
   };
 
   if (approvals.size > MAX_APPROVAL_ITEMS) {
@@ -220,6 +222,7 @@ function markApprovalApproved(approval, { approvedBy = "user", reason = "Approve
       status: approval.status,
       required: false,
       updatedAt: now,
+      ...(approval.binding ? { binding: approval.binding } : {}),
     };
     ensureTaskPolicy(task, { stage: "approval.approved", force: true });
   }

@@ -24,6 +24,7 @@ function boundedEnvironment() {
     OPENCLAW_SIDECAR_HEARTBEAT_INTERVAL_MS: "250",
     OPENCLAW_SIDECAR_CAPTURE_INTERVAL_MS: "1000",
     OPENCLAW_SIDECAR_RECONNECT_TIMEOUT_MS: "30000",
+    OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN: "browser-runtime-secret",
   };
 }
 
@@ -50,6 +51,7 @@ test("systemd user launcher writes one bounded environment and stops the same un
   assert.equal(statSync(launched.environmentFilePath).mode & 0o777, 0o600);
   assert.match(contents, /OPENCLAW_SIDECAR_TASK_ID="task-sidecar"/u);
   assert.match(contents, /OPENCLAW_SIDECAR_APPROVAL_ID="approval-sidecar"/u);
+  assert.match(contents, /OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN="browser-runtime-secret"/u);
   for (const forbidden of ["SESSION", "LEASE", "CREDENTIAL", "PROVIDER", "BROWSER_RUNTIME_URL"]) {
     assert.equal(contents.includes(forbidden), false);
   }

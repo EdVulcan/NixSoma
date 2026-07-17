@@ -1,5 +1,18 @@
-import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import {
+  closeSync,
+  constants,
+  fstatSync,
+  lstatSync,
+  mkdirSync,
+  openSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
+
+const NO_FOLLOW = constants.O_NOFOLLOW ?? 0;
 
 export function createSystemFileOperations({
   allowedRoots = [],
@@ -12,6 +25,76 @@ export function createSystemFileOperations({
 function normaliseForBoundary(value) {
   const resolved = path.resolve(value);
   return process.platform === "win32" ? resolved.toLowerCase() : resolved;
+}
+
+function lstatOrNull(filePath) {
+  try {
+    return lstatSync(filePath);
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      return null;
+    }
+    throw error;
+  }
+}
+
+function nearestExistingPath(filePath) {
+  let current = filePath;
+  while (true) {
+    if (lstatOrNull(current)) {
+      return current;
+    }
+    const parent = path.dirname(current);
+    if (parent === current) {
+      return null;
+    }
+    current = parent;
+  }
+}
+
+function assertNoSymlinkComponents(candidate, root) {
+  let current = candidate;
+  const normalisedRoot = normaliseForBoundary(root);
+  while (true) {
+    const stats = lstatOrNull(current);
+    if (stats?.isSymbolicLink()) {
+      const error = new Error("OpenClaw file paths must not contain symbolic links.");
+      error.code = "PATH_SYMLINK_NOT_ALLOWED";
+      error.details = { path: candidate, symlinkPath: current };
+      throw error;
+    }
+    if (normaliseForBoundary(current) === normalisedRoot) {
+      return;
+    }
+    const parent = path.dirname(current);
+    if (parent === current) {
+      break;
+    }
+    current = parent;
+  }
+
+  const error = new Error("OpenClaw file path could not be anchored to an allowed root.");
+  error.code = "PATH_ROOT_ANCHOR_FAILED";
+  throw error;
+}
+
+function assertRealPathWithinRoot(candidate, root) {
+  const existingPath = nearestExistingPath(candidate);
+  if (!existingPath) {
+    const error = new Error("OpenClaw file path has no existing parent.");
+    error.code = "PATH_PARENT_NOT_FOUND";
+    throw error;
+  }
+  const realRoot = realpathSync(root);
+  const realExisting = realpathSync(existingPath);
+  const normalisedRoot = normaliseForBoundary(realRoot);
+  const normalisedExisting = normaliseForBoundary(realExisting);
+  if (normalisedExisting !== normalisedRoot && !normalisedExisting.startsWith(`${normalisedRoot}${path.sep}`)) {
+    const error = new Error("Resolved OpenClaw file path is outside the allowed root.");
+    error.code = "PATH_REALPATH_OUTSIDE_ALLOWED_ROOTS";
+    error.details = { path: candidate, root };
+    throw error;
+  }
 }
 
 function resolveAllowedPath(inputPath = null) {
@@ -33,6 +116,9 @@ function resolveAllowedPath(inputPath = null) {
     throw error;
   }
 
+  assertNoSymlinkComponents(candidate, root);
+  assertRealPathWithinRoot(candidate, root);
+
   return {
     requestedPath: rawPath,
     path: candidate,
@@ -53,8 +139,7 @@ function classifyFile(stats) {
   return "other";
 }
 
-function buildFileMetadata(filePath) {
-  const stats = statSync(filePath);
+function buildFileMetadataFromStats(filePath, stats) {
   return {
     path: filePath,
     name: path.basename(filePath),
@@ -67,9 +152,13 @@ function buildFileMetadata(filePath) {
   };
 }
 
+function buildFileMetadata(filePath) {
+  return buildFileMetadataFromStats(filePath, lstatSync(filePath));
+}
+
 function listFiles(inputPath, limit) {
   const resolved = resolveAllowedPath(inputPath);
-  if (!existsSync(resolved.path)) {
+  if (!lstatOrNull(resolved.path)) {
     const error = new Error("Path does not exist.");
     error.code = "PATH_NOT_FOUND";
     throw error;
@@ -129,7 +218,7 @@ function searchFiles(inputPath, query, limit) {
 
     let stats;
     try {
-      stats = statSync(currentPath);
+      stats = lstatSync(currentPath);
     } catch {
       return;
     }
@@ -142,7 +231,7 @@ function searchFiles(inputPath, query, limit) {
       }
     }
 
-    if (!stats.isDirectory()) {
+    if (stats.isSymbolicLink() || !stats.isDirectory()) {
       return;
     }
 
@@ -167,35 +256,48 @@ function searchFiles(inputPath, query, limit) {
 
 function readTextFile(inputPath) {
   const resolved = resolveAllowedPath(inputPath);
-  if (!existsSync(resolved.path)) {
+  if (!lstatOrNull(resolved.path)) {
     const error = new Error("Path does not exist.");
     error.code = "PATH_NOT_FOUND";
     throw error;
   }
 
-  const metadata = buildFileMetadata(resolved.path);
-  if (metadata.type !== "file") {
-    const error = new Error("Text reads require a regular file.");
-    error.code = "TARGET_NOT_FILE";
-    error.details = { path: resolved.path, type: metadata.type };
-    throw error;
-  }
-  if (metadata.sizeBytes > maxFileReadBytes) {
-    const error = new Error("Text read exceeds OpenClaw file read limit.");
-    error.code = "FILE_READ_LIMIT_EXCEEDED";
-    error.details = { sizeBytes: metadata.sizeBytes, maxFileReadBytes };
-    throw error;
-  }
+  let fd;
+  try {
+    fd = openSync(resolved.path, constants.O_RDONLY | NO_FOLLOW);
+    const metadata = buildFileMetadataFromStats(resolved.path, fstatSync(fd));
+    if (metadata.type !== "file") {
+      const error = new Error("Text reads require a regular file.");
+      error.code = "TARGET_NOT_FILE";
+      error.details = { path: resolved.path, type: metadata.type };
+      throw error;
+    }
+    if (metadata.sizeBytes > maxFileReadBytes) {
+      const error = new Error("Text read exceeds OpenClaw file read limit.");
+      error.code = "FILE_READ_LIMIT_EXCEEDED";
+      error.details = { sizeBytes: metadata.sizeBytes, maxFileReadBytes };
+      throw error;
+    }
 
-  const content = readFileSync(resolved.path, "utf8");
-  return {
-    ...resolved,
-    mode: "read_text",
-    encoding: "utf8",
-    content,
-    contentBytes: Buffer.byteLength(content, "utf8"),
-    metadata,
-  };
+    const content = readFileSync(fd, "utf8");
+    return {
+      ...resolved,
+      mode: "read_text",
+      encoding: "utf8",
+      content,
+      contentBytes: Buffer.byteLength(content, "utf8"),
+      metadata,
+    };
+  } catch (error) {
+    if (error?.code === "ELOOP") {
+      error.code = "PATH_SYMLINK_NOT_ALLOWED";
+    }
+    throw error;
+  } finally {
+    if (fd !== undefined) {
+      closeSync(fd);
+    }
+  }
 }
 
 function writeTextFile(body = {}) {
@@ -230,15 +332,16 @@ function writeTextFile(body = {}) {
   // is boundary validation only; it throws if parentPath falls outside the
   // allowed roots. On NixOS the path check is correct and complete.
   resolveAllowedPath(parentPath);
-  if (!existsSync(parentPath) || !statSync(parentPath).isDirectory()) {
+  if (!lstatOrNull(parentPath)?.isDirectory()) {
     const error = new Error("Parent directory must exist inside allowed roots.");
     error.code = "PARENT_DIRECTORY_NOT_FOUND";
     error.details = { parentPath };
     throw error;
   }
 
-  const existedBefore = existsSync(resolved.path);
-  if (existedBefore && statSync(resolved.path).isDirectory()) {
+  const existingStats = lstatOrNull(resolved.path);
+  const existedBefore = Boolean(existingStats);
+  if (existingStats?.isDirectory()) {
     const error = new Error("Cannot write text over a directory.");
     error.code = "TARGET_IS_DIRECTORY";
     throw error;
@@ -249,16 +352,38 @@ function writeTextFile(body = {}) {
     throw error;
   }
 
-  writeFileSync(resolved.path, content, { encoding });
-  const metadata = buildFileMetadata(resolved.path);
-  return {
-    ...resolved,
-    mode: "write_text",
-    contentBytes,
-    encoding,
-    overwrite: existedBefore,
-    metadata,
-  };
+  let fd;
+  try {
+    const flags = constants.O_WRONLY
+      | constants.O_CREAT
+      | (existedBefore ? constants.O_TRUNC : constants.O_EXCL)
+      | NO_FOLLOW;
+    fd = openSync(resolved.path, flags, 0o600);
+    writeFileSync(fd, content, { encoding });
+    const metadata = buildFileMetadataFromStats(resolved.path, fstatSync(fd));
+    if (metadata.type !== "file") {
+      const error = new Error("Text writes require a regular file target.");
+      error.code = "TARGET_NOT_FILE";
+      throw error;
+    }
+    return {
+      ...resolved,
+      mode: "write_text",
+      contentBytes,
+      encoding,
+      overwrite: existedBefore,
+      metadata,
+    };
+  } catch (error) {
+    if (error?.code === "ELOOP") {
+      error.code = "PATH_SYMLINK_NOT_ALLOWED";
+    }
+    throw error;
+  } finally {
+    if (fd !== undefined) {
+      closeSync(fd);
+    }
+  }
 }
 
 function appendTextFile(body = {}) {
@@ -282,7 +407,7 @@ function appendTextFile(body = {}) {
   const contentBytes = Buffer.byteLength(content, "utf8");
   const resolved = resolveAllowedPath(targetPath);
   const createIfMissing = body.createIfMissing === true;
-  if (!existsSync(resolved.path)) {
+  if (!lstatOrNull(resolved.path)) {
     if (!createIfMissing) {
       const error = new Error("Target file must exist for append-text.");
       error.code = "TARGET_NOT_FOUND";
@@ -290,7 +415,7 @@ function appendTextFile(body = {}) {
     }
     const parentPath = path.dirname(resolved.path);
     resolveAllowedPath(parentPath);
-    if (!existsSync(parentPath) || !statSync(parentPath).isDirectory()) {
+    if (!lstatOrNull(parentPath)?.isDirectory()) {
       const error = new Error("Parent directory must exist inside allowed roots.");
       error.code = "PARENT_DIRECTORY_NOT_FOUND";
       error.details = { parentPath };
@@ -298,8 +423,8 @@ function appendTextFile(body = {}) {
     }
   }
 
-  const existedBefore = existsSync(resolved.path);
-  const existingStats = existedBefore ? statSync(resolved.path) : null;
+  const existingStats = lstatOrNull(resolved.path);
+  const existedBefore = Boolean(existingStats);
   if (existingStats && !existingStats.isFile()) {
     const error = new Error("Cannot append text to a non-file target.");
     error.code = "TARGET_NOT_FILE";
@@ -315,19 +440,39 @@ function appendTextFile(body = {}) {
     throw error;
   }
 
-  appendFileSync(resolved.path, content, { encoding });
-  const metadata = buildFileMetadata(resolved.path);
-  return {
-    ...resolved,
-    mode: "append_text",
-    contentBytes,
-    previousBytes,
-    totalBytes,
-    encoding,
-    created: !existedBefore,
-    createIfMissing,
-    metadata,
-  };
+  let fd;
+  try {
+    const flags = constants.O_WRONLY | constants.O_APPEND | NO_FOLLOW
+      | (existedBefore ? 0 : constants.O_CREAT | constants.O_EXCL);
+    fd = openSync(resolved.path, flags, 0o600);
+    writeFileSync(fd, content, { encoding });
+    const metadata = buildFileMetadataFromStats(resolved.path, fstatSync(fd));
+    if (metadata.type !== "file") {
+      const error = new Error("Text appends require a regular file target.");
+      error.code = "TARGET_NOT_FILE";
+      throw error;
+    }
+    return {
+      ...resolved,
+      mode: "append_text",
+      contentBytes,
+      previousBytes,
+      totalBytes,
+      encoding,
+      created: !existedBefore,
+      createIfMissing,
+      metadata,
+    };
+  } catch (error) {
+    if (error?.code === "ELOOP") {
+      error.code = "PATH_SYMLINK_NOT_ALLOWED";
+    }
+    throw error;
+  } finally {
+    if (fd !== undefined) {
+      closeSync(fd);
+    }
+  }
 }
 
 function createDirectory(body = {}) {
@@ -344,21 +489,23 @@ function createDirectory(body = {}) {
   const recursive = body.recursive === true;
   const parentPath = path.dirname(resolved.path);
   resolveAllowedPath(parentPath);
-  if (!recursive && (!existsSync(parentPath) || !statSync(parentPath).isDirectory())) {
+  if (!recursive && (!lstatOrNull(parentPath) || !lstatOrNull(parentPath).isDirectory())) {
     const error = new Error("Parent directory must exist inside allowed roots.");
     error.code = "PARENT_DIRECTORY_NOT_FOUND";
     error.details = { parentPath };
     throw error;
   }
 
-  const existedBefore = existsSync(resolved.path);
-  if (existedBefore && !statSync(resolved.path).isDirectory()) {
+  const existingStats = lstatOrNull(resolved.path);
+  const existedBefore = Boolean(existingStats);
+  if (existedBefore && !existingStats.isDirectory()) {
     const error = new Error("Target path exists and is not a directory.");
     error.code = "TARGET_NOT_DIRECTORY";
     throw error;
   }
 
   mkdirSync(resolved.path, { recursive });
+  resolveAllowedPath(resolved.path);
   const metadata = buildFileMetadata(resolved.path);
   return {
     ...resolved,

@@ -60,6 +60,7 @@ export function createTrustedWorkViewSidecarSupervisor({
   startTimeoutMs = 2_000,
   stopTimeoutMs = 1_000,
   reconnectTimeoutMs = 30_000,
+  browserRuntimeAuthToken = process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN ?? "",
   socketDirectory = path.join(process.env.XDG_RUNTIME_DIR ?? tmpdir(), "openclaw-sidecars"),
   launcherMode = process.env.OPENCLAW_TRUSTED_SIDECAR_LAUNCHER_MODE ?? "systemd-user",
   unitInstance = process.env.OPENCLAW_TRUSTED_SIDECAR_UNIT_INSTANCE ?? "primary",
@@ -90,6 +91,9 @@ export function createTrustedWorkViewSidecarSupervisor({
   let startRejecter = null;
   let stopResolver = null;
   const pendingActions = new Map();
+  const normalizedBrowserRuntimeAuthToken = typeof browserRuntimeAuthToken === "string"
+    ? browserRuntimeAuthToken.trim()
+    : "";
   const processLauncher = launcher ?? createTrustedWorkViewSidecarLauncher({
     mode: launcherMode,
     unitInstance,
@@ -295,6 +299,9 @@ export function createTrustedWorkViewSidecarSupervisor({
         OPENCLAW_SIDECAR_HEARTBEAT_INTERVAL_MS: String(heartbeatIntervalMs),
         OPENCLAW_SIDECAR_CAPTURE_INTERVAL_MS: String(captureIntervalMs),
         OPENCLAW_SIDECAR_RECONNECT_TIMEOUT_MS: String(reconnectTimeoutMs),
+        ...(normalizedBrowserRuntimeAuthToken
+          ? { OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN: normalizedBrowserRuntimeAuthToken }
+          : {}),
       },
     });
     const processHandle = launched.processHandle;

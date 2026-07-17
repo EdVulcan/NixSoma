@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import { promises as fsPromises } from "node:fs";
 import path from "node:path";
+import { createEventIngress } from "./event-ingress.mjs";
 
 const host = process.env.OPENCLAW_EVENT_HUB_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_EVENT_HUB_PORT ?? "4101", 10);
@@ -12,6 +13,7 @@ const auditLogFile =
   process.env.OPENCLAW_EVENT_LOG_FILE
   ?? (bodyStateDir ? path.join(bodyStateDir, "openclaw-events.jsonl") : path.resolve(".artifacts", "openclaw-events.jsonl"));
 const maxAuditQueryLimit = Number.parseInt(process.env.OPENCLAW_EVENT_AUDIT_MAX_LIMIT ?? "1000", 10);
+const eventIngress = createEventIngress({ token: process.env.OPENCLAW_EVENT_HUB_TOKEN });
 
 const recentEvents = [];
 const streamClients = new Map();
@@ -21,50 +23,29 @@ const serviceRegistry = new Map();
 import { corsHeaders, sendJson, readJsonBody } from "../../../packages/shared-utils/src/http.mjs";
 
 
-function normaliseEvent(input) {
-  if (!input || typeof input !== "object") {
-    throw new Error("Event payload must be an object.");
-  }
-
-  const type = typeof input.type === "string" && input.type.trim() ? input.type.trim() : null;
-  if (!type) {
-    throw new Error("Event type is required.");
-  }
-
-  const source =
-    typeof input.source === "string" && input.source.trim()
-      ? input.source.trim()
-      : "unknown-source";
-
-  const payload =
-    input.payload && typeof input.payload === "object" && !Array.isArray(input.payload)
-      ? input.payload
-      : {};
-
-  return {
-    id: typeof input.id === "string" && input.id.trim() ? input.id.trim() : randomUUID(),
-    type,
-    source,
-    timestamp:
-      typeof input.timestamp === "string" && input.timestamp.trim()
-        ? input.timestamp.trim()
-        : new Date().toISOString(),
-    payload,
-  };
-}
-
 // M-6 Fix: Converted from sync I/O (mkdirSync, existsSync, writeFileSync) to
 // async fs.promises API to avoid blocking the event loop during audit setup.
 let auditLogReady = false;
+let auditLogReadyPromise = null;
 async function ensureAuditLogReady() {
   if (auditLogReady) return;
-  await fs.promises.mkdir(path.dirname(auditLogFile), { recursive: true });
-  try {
-    await fs.promises.access(auditLogFile);
-  } catch {
-    await fs.promises.writeFile(auditLogFile, "", "utf8");
+  if (!auditLogReadyPromise) {
+    auditLogReadyPromise = (async () => {
+      await fs.promises.mkdir(path.dirname(auditLogFile), { recursive: true });
+      try {
+        await fs.promises.access(auditLogFile);
+      } catch {
+        await fs.promises.writeFile(auditLogFile, "", "utf8");
+      }
+      auditLogReady = true;
+    })();
   }
-  auditLogReady = true;
+  try {
+    await auditLogReadyPromise;
+  } catch (error) {
+    auditLogReadyPromise = null;
+    throw error;
+  }
 }
 
 function safeParseAuditLine(line) {
@@ -85,7 +66,7 @@ function safeParseAuditLine(line) {
 
 // H-3 Fix: Async file read to avoid blocking the event loop on large log files.
 async function readAuditEvents({ type = null, source = null, limit = 100 } = {}) {
-  ensureAuditLogReady();
+  await ensureAuditLogReady();
   const safeLimit = Math.max(1, Math.min(limit, maxAuditQueryLimit));
   const text = await fsPromises.readFile(auditLogFile, "utf8");
   const items = [];
@@ -109,7 +90,7 @@ async function readAuditEvents({ type = null, source = null, limit = 100 } = {})
 
 // H-3 Fix: Async file read to avoid blocking the event loop on large log files.
 async function buildAuditSummary() {
-  ensureAuditLogReady();
+  await ensureAuditLogReady();
   const text = await fsPromises.readFile(auditLogFile, "utf8");
   const byType = {};
   const bySource = {};
@@ -158,7 +139,7 @@ async function buildAuditSummary() {
 
 // H-3 Fix: Async append to avoid blocking the event loop during log writes.
 async function appendAuditEvent(event) {
-  ensureAuditLogReady();
+  await ensureAuditLogReady();
   await fsPromises.appendFile(auditLogFile, `${JSON.stringify(event)}\n`, "utf8");
 }
 
@@ -220,6 +201,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && requestUrl.pathname === "/services/register") {
     try {
+      eventIngress.authenticateRequest(req);
       const body = await readJsonBody(req);
       if (body.name && body.url) {
         serviceRegistry.set(body.name, {
@@ -304,14 +286,15 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && requestUrl.pathname === "/events") {
     try {
+      const ingress = eventIngress.authenticateRequest(req);
       const body = await readJsonBody(req);
-      const event = normaliseEvent(body);
+      const event = eventIngress.normaliseEvent(body, ingress);
       // H-3 Fix: await publishEvent since it is now async (async audit log append).
       await publishEvent(event);
       sendJson(res, 201, { ok: true, event });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      sendJson(res, 400, { ok: false, error: message });
+      sendJson(res, error?.code === "EVENT_INGRESS_AUTH_REQUIRED" ? 401 : 400, { ok: false, error: message });
     }
     return;
   }
@@ -319,10 +302,16 @@ const server = http.createServer(async (req, res) => {
   sendJson(res, 404, { ok: false, error: "Route not found." });
 });
 
-ensureAuditLogReady();
-hydrateRecentEventsFromAuditLog();
+async function startEventHub() {
+  await ensureAuditLogReady();
+  await hydrateRecentEventsFromAuditLog();
+  server.listen(port, host, () => {
+    console.log(`openclaw-event-hub listening on http://${host}:${port}`);
+    console.log(`openclaw-event-hub audit log: ${auditLogFile}`);
+  });
+}
 
-server.listen(port, host, () => {
-  console.log(`openclaw-event-hub listening on http://${host}:${port}`);
-  console.log(`openclaw-event-hub audit log: ${auditLogFile}`);
+startEventHub().catch((error) => {
+  console.error(`Unable to start openclaw-event-hub: ${error instanceof Error ? error.message : error}`);
+  process.exitCode = 1;
 });

@@ -17,6 +17,7 @@ export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifac
 export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-system-heal-phase-3-operator-interrupt-controls-check.json}"
 export OPENCLAW_SESSION_MANAGER_STATE_FILE="${OPENCLAW_SESSION_MANAGER_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-session-manager-phase-3-operator-interrupt-controls-check.json}"
 export OPENCLAW_BROWSER_RUNTIME_STATE_FILE="${OPENCLAW_BROWSER_RUNTIME_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-browser-runtime-phase-3-operator-interrupt-controls-check.json}"
+export OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN="${OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN:-$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')}"
 export OPENCLAW_TRUSTED_SIDECAR_LAUNCHER_MODE="systemd-user"
 export OPENCLAW_TRUSTED_SIDECAR_UNIT_INSTANCE="primary"
 
@@ -127,6 +128,7 @@ old_browser_action_body="$(node -e 'const data=JSON.parse(process.argv[1]); cons
 old_browser_action_status="$(curl --silent --output "$OLD_BROWSER_ACTION_FILE" --write-out "%{http_code}" \
   -X POST "$BROWSER_RUNTIME_URL/browser/input" \
   -H 'content-type: application/json' \
+  -H "authorization: Bearer $OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN" \
   --data "$old_browser_action_body")"
 CONTROLS_FILE="$(mktemp)"
 curl --silent --fail "$CORE_URL/phase-3/operator-interrupt-controls" > "$CONTROLS_FILE"
@@ -138,6 +140,7 @@ resumed_browser_action_body="$(node -e 'const data=JSON.parse(process.argv[1]); 
 curl --silent --fail \
   -X POST "$BROWSER_RUNTIME_URL/browser/input" \
   -H 'content-type: application/json' \
+  -H "authorization: Bearer $OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN" \
   --data "$resumed_browser_action_body" > "$RESUMED_BROWSER_ACTION_FILE"
 sidecar_task="$(post_json "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks" '{"confirm":true}')"
 sidecar_task_id="$(node -e 'const data = JSON.parse(process.argv[1]); process.stdout.write(data.task.id)' "$sidecar_task")"
@@ -155,9 +158,13 @@ approved_start_probe_status="$(curl --silent --output "$APPROVED_START_PROBE_FIL
   -X POST "$CORE_URL/work-view/trusted-sidecar/lifecycle-tasks/$sidecar_task_id/start-probe" \
   -H 'content-type: application/json' \
   --data '{}')"
+if [[ "$approved_start_probe_status" != "200" ]]; then
+  cat "$APPROVED_START_PROBE_FILE" >&2
+  exit 1
+fi
 systemctl --user is-active --quiet "$SIDECAR_UNIT_NAME"
 test -f "$SIDECAR_ENV_FILE"
-if grep -Eq '^OPENCLAW_.*(SESSION|LEASE|CREDENTIAL|PROVIDER|BROWSER_RUNTIME)' "$SIDECAR_ENV_FILE"; then
+if grep -Eq '^OPENCLAW_.*(SESSION|LEASE|CREDENTIAL|PROVIDER|BROWSER_RUNTIME_URL)' "$SIDECAR_ENV_FILE"; then
   echo "trusted sidecar environment file persisted forbidden authority or provider fields" >&2
   exit 1
 fi
@@ -287,6 +294,7 @@ authority_interrupted_task_id="$(node -e 'const data=JSON.parse(require("node:fs
     OPENCLAW_SESSION_MANAGER_PORT="$OPENCLAW_SESSION_MANAGER_PORT" \
     OPENCLAW_EVENT_HUB_URL="http://127.0.0.1:$OPENCLAW_EVENT_HUB_PORT" \
     OPENCLAW_BROWSER_RUNTIME_URL="$BROWSER_RUNTIME_URL" \
+    OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN="$OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN" \
     OPENCLAW_SESSION_MANAGER_STATE_FILE="$OPENCLAW_SESSION_MANAGER_STATE_FILE" \
     node src/server.mjs >> "$SESSION_MANAGER_LOG_FILE" 2>&1 &
   echo $! > "$SESSION_MANAGER_PID_FILE"
@@ -304,7 +312,8 @@ curl --silent --fail "$SESSION_MANAGER_URL/work-view/state" > "$RECOVERY_REQUIRE
 recovery_action_body="$(node -e 'const data=JSON.parse(process.argv[1]); const r=data.workView?.helperRuntime??{}; const trustedHelperLease={registry:"openclaw-trusted-work-view-helper-lease-v0",owner:r.owner,mode:r.mode,scope:r.scope,leaseId:r.leaseId,sessionId:r.sessionId,workViewId:r.workViewId,heartbeatAt:r.heartbeatAt,actionAuthority:"active"}; process.stdout.write(JSON.stringify({text:"blocked-after-session-manager-restart",trustedHelperLease}));' "$(cat "$RESUMED_STATE_FILE")")"
 RECOVERY_BROWSER_ACTION_FILE="$(mktemp)"
 recovery_action_status="$(curl --silent --output "$RECOVERY_BROWSER_ACTION_FILE" --write-out "%{http_code}" \
-  -X POST "$BROWSER_RUNTIME_URL/browser/input" -H 'content-type: application/json' --data "$recovery_action_body")"
+  -X POST "$BROWSER_RUNTIME_URL/browser/input" -H 'content-type: application/json' \
+  -H "authorization: Bearer $OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN" --data "$recovery_action_body")"
 post_json "$SESSION_MANAGER_URL/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/phase-3-controls-recovered"}' >/dev/null
 RESTART_SIDECAR_FILE="$(mktemp)"
 RESTARTED_STATE_FILE="$(mktemp)"
@@ -389,7 +398,8 @@ console.log(JSON.stringify({
 EOF
 restarted_capture_sequence="$(node -e 'const data=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(String(data.workView.helperRuntime.sidecar.captureObservation.sequence));' "$REPLACED_STATE_FILE")"
 BROWSER_BEFORE_RESTART_STATE_FILE="$(mktemp)"
-curl --silent --fail "$BROWSER_RUNTIME_URL/browser/state" > "$BROWSER_BEFORE_RESTART_STATE_FILE"
+curl --silent --fail "$BROWSER_RUNTIME_URL/browser/state" \
+  -H "authorization: Bearer $OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN" > "$BROWSER_BEFORE_RESTART_STATE_FILE"
 old_browser_runtime_pid="$(cat "$BROWSER_RUNTIME_PID_FILE")"
 kill -TERM "$old_browser_runtime_pid"
 for _ in $(seq 1 50); do
@@ -409,6 +419,7 @@ fi
     OPENCLAW_BROWSER_RUNTIME_PORT="$OPENCLAW_BROWSER_RUNTIME_PORT" \
     OPENCLAW_EVENT_HUB_URL="http://127.0.0.1:$OPENCLAW_EVENT_HUB_PORT" \
     OPENCLAW_SESSION_MANAGER_URL="$SESSION_MANAGER_URL" \
+    OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN="$OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN" \
     OPENCLAW_BROWSER_RUNTIME_STATE_FILE="$OPENCLAW_BROWSER_RUNTIME_STATE_FILE" \
     node src/server.mjs >> "$BROWSER_RUNTIME_LOG_FILE" 2>&1 &
   echo $! > "$BROWSER_RUNTIME_PID_FILE"
@@ -422,7 +433,8 @@ for _ in $(seq 1 50); do
 done
 curl --silent --fail "$BROWSER_RUNTIME_URL/health" >/dev/null
 BROWSER_RESTORED_STATE_FILE="$(mktemp)"
-curl --silent --fail "$BROWSER_RUNTIME_URL/browser/state" > "$BROWSER_RESTORED_STATE_FILE"
+curl --silent --fail "$BROWSER_RUNTIME_URL/browser/state" \
+  -H "authorization: Bearer $OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN" > "$BROWSER_RESTORED_STATE_FILE"
 node - <<'EOF' "$BROWSER_BEFORE_RESTART_STATE_FILE" "$BROWSER_RESTORED_STATE_FILE" "$OPENCLAW_BROWSER_RUNTIME_STATE_FILE"
 const fs = require("node:fs");
 const before = JSON.parse(fs.readFileSync(process.argv[2], "utf8")).browser ?? {};
@@ -482,7 +494,8 @@ for _ in $(seq 1 50); do
   sleep 0.1
 done
 BROWSER_REBOUND_STATE_FILE="$(mktemp)"
-curl --silent --fail "$BROWSER_RUNTIME_URL/browser/state" > "$BROWSER_REBOUND_STATE_FILE"
+curl --silent --fail "$BROWSER_RUNTIME_URL/browser/state" \
+  -H "authorization: Bearer $OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN" > "$BROWSER_REBOUND_STATE_FILE"
 node - <<'EOF' "$BROWSER_BEFORE_RESTART_STATE_FILE" "$BROWSER_REBOUND_STATE_FILE" "$BROWSER_RECOVERED_STATE_FILE"
 const fs = require("node:fs");
 const before = JSON.parse(fs.readFileSync(process.argv[2], "utf8")).browser ?? {};
@@ -519,7 +532,8 @@ NEW_TAB_ACTION_FILE="$(mktemp)"
 curl --silent --fail -X POST "$SCREEN_ACT_URL/act/browser/new-tab" \
   -H 'content-type: application/json' --data "{\"url\":\"$NEW_TAB_URL\"}" > "$NEW_TAB_ACTION_FILE"
 NEW_TAB_BROWSER_STATE_FILE="$(mktemp)"
-curl --silent --fail "$BROWSER_RUNTIME_URL/browser/state" > "$NEW_TAB_BROWSER_STATE_FILE"
+curl --silent --fail "$BROWSER_RUNTIME_URL/browser/state" \
+  -H "authorization: Bearer $OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN" > "$NEW_TAB_BROWSER_STATE_FILE"
 NEW_TAB_CAPTURE_STATE_FILE="$(mktemp)"
 for _ in $(seq 1 50); do
   curl --silent --fail "$SESSION_MANAGER_URL/work-view/state" > "$NEW_TAB_CAPTURE_STATE_FILE"

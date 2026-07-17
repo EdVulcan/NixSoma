@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { createTaskExecutor } from "../src/task-executor.mjs";
+import { buildCapabilityApprovalBinding } from "../src/capability-runtime-approval-binding.mjs";
 import { buildBrowserTaskExecutionBinding } from "../src/browser-task-execution-binding.mjs";
 import { DELEGATED_PLAN_TASK_HANDLER_DESCRIPTORS } from "../src/task-executor-delegated-plan-handlers.mjs";
 import { CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE } from "../src/cloud-live-provider-runtime-context-packet.mjs";
@@ -1074,7 +1075,42 @@ test("approved ACPX/Codex process-spawn task records preflight without spawning"
 
 test("capability plan task dispatches to capability invocation handler", async () => {
   const invocationBodies = [];
+  const task = {
+    id: "capability-plan-dispatch-1",
+    type: "system_task",
+    goal: "Run one safe capability plan step",
+    status: "queued",
+    policy: {
+      decision: { decision: "allow", reason: "unit_test", approved: true },
+    },
+    approval: {
+      requestId: "approval-capability-plan-1",
+      status: "approved",
+    },
+    plan: {
+      planId: "plan-capability-dispatch-1",
+      steps: [
+        {
+          id: "capability-step-1",
+          phase: "acting_on_target",
+          kind: "system.command.execute",
+          capabilityId: "act.system.command.execute",
+          intent: "system.command.execute",
+          params: { command: "echo ok" },
+        },
+      ],
+    },
+  };
+  const approval = {
+    id: "approval-capability-plan-1",
+    taskId: task.id,
+    status: "approved",
+    binding: buildCapabilityApprovalBinding({ task }),
+  };
   const { executor, events } = createExecutorHarness({
+    state: {
+      approvals: new Map([[approval.id, approval]]),
+    },
     planBuilder: {
       capabilityById: (id) => ({ id, requiresApproval: false }),
       invokeCapability: async (body) => {
@@ -1100,27 +1136,6 @@ test("capability plan task dispatches to capability invocation handler", async (
       },
     },
   });
-  const task = {
-    id: "capability-plan-dispatch-1",
-    type: "system_task",
-    goal: "Run one safe capability plan step",
-    status: "queued",
-    policy: {
-      decision: { decision: "allow", reason: "unit_test", approved: true },
-    },
-    plan: {
-      steps: [
-        {
-          id: "capability-step-1",
-          phase: "acting_on_target",
-          kind: "system.command.execute",
-          capabilityId: "act.system.command.execute",
-          intent: "system.command.execute",
-          params: { command: "echo ok" },
-        },
-      ],
-    },
-  };
 
   const result = await executor.executeTaskWithRecovery(task, {
     autoRecover: true,

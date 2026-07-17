@@ -88,10 +88,38 @@ test("system file routes preserve write-text body parsing and event payload", as
   assert.equal(handled, true);
   assert.equal(res.statusCode, 200);
   assert.deepEqual(events, [{
+    type: "system.files.write_requested",
+    payload: { path: "/workspace/note.txt", contentBytes: 8, overwrite: true },
+  }, {
     type: "system.files.written",
     payload: { path: "/workspace/note.txt", contentBytes: 8, overwrite: true },
   }]);
   assert.equal(parseResponse(res).mode, "write_text");
+});
+
+test("system file routes fail closed before mutation when the required audit publish fails", async () => {
+  let writeCalled = false;
+  const res = createResponseCapture();
+  await handleSystemFileRoutes({
+    req: createJsonRequest("POST", { path: "/workspace/note.txt", content: "must not write" }),
+    res,
+    requestUrl: new URL("http://127.0.0.1/system/files/write-text"),
+    allowedRoots: ["/workspace"],
+    publishEvent: async () => {},
+    publishAuditEvent: async () => {
+      throw new Error("audit unavailable");
+    },
+    operations: {
+      writeTextFile() {
+        writeCalled = true;
+        return { path: "/workspace/note.txt", contentBytes: 14, overwrite: false };
+      },
+    },
+  });
+
+  assert.equal(res.statusCode, 400);
+  assert.equal(writeCalled, false);
+  assert.match(parseResponse(res).error, /audit unavailable/u);
 });
 
 test("system command routes preserve dry-run envelope and event", async () => {

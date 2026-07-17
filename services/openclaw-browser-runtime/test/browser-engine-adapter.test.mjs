@@ -124,6 +124,7 @@ test("browser engine adapter launches a bounded profile and delegates real page 
     executablePath: fake.executablePath,
     profileDirectory: fake.profileDirectory,
     puppeteerApi: fake.puppeteerApi,
+    allowLocalFixtureUrls: true,
     onDisconnected: () => { disconnected += 1; },
   });
 
@@ -198,6 +199,7 @@ test("browser engine adapter fails closed when an AI-owned frame exceeds the byt
     executablePath: fake.executablePath,
     profileDirectory: fake.profileDirectory,
     puppeteerApi: fake.puppeteerApi,
+    allowLocalFixtureUrls: true,
   });
 
   await adapter.open({ url: "http://127.0.0.1/oversized" });
@@ -224,6 +226,7 @@ test("browser engine adapter clicks only a current frame-bound semantic target",
     executablePath: fake.executablePath,
     profileDirectory: fake.profileDirectory,
     puppeteerApi: fake.puppeteerApi,
+    allowLocalFixtureUrls: true,
   });
 
   await adapter.open({ url: "http://127.0.0.1/semantic-click" });
@@ -259,6 +262,7 @@ test("browser engine adapter types write-only input into one current textbox tar
     executablePath: fake.executablePath,
     profileDirectory: fake.profileDirectory,
     puppeteerApi: fake.puppeteerApi,
+    allowLocalFixtureUrls: true,
   });
   await adapter.open({ url: "http://127.0.0.1/semantic-type" });
   const frame = await adapter.captureVisualFrame({ includeData: false });
@@ -296,6 +300,7 @@ test("browser engine adapter does not publish a frame captured across a page mut
     executablePath: fake.executablePath,
     profileDirectory: fake.profileDirectory,
     puppeteerApi: fake.puppeteerApi,
+    allowLocalFixtureUrls: true,
   });
 
   await adapter.open({ url: "http://127.0.0.1/mutable" });

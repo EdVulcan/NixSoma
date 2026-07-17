@@ -10,6 +10,7 @@ mkOpenClawSourceClosure {
   files = [
     ../../services/openclaw-event-hub/package.json
     ../../services/openclaw-event-hub/src/server.mjs
+    ../../services/openclaw-event-hub/src/event-ingress.mjs
     ../../packages/shared-utils/package.json
     ../../packages/shared-utils/src/http.mjs
   ];

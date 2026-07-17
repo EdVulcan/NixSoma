@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -68,4 +68,37 @@ test("system file operations reject boundary escapes and oversized writes", () =
       (error) => error?.code === "FILE_WRITE_LIMIT_EXCEEDED",
     );
   });
+});
+
+test("system file operations reject symlink escapes for reads, writes, and search traversal", () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "openclaw-system-file-root-"));
+  const outside = mkdtempSync(path.join(os.tmpdir(), "openclaw-system-file-outside-"));
+  try {
+    const outsideFile = path.join(outside, "secret.txt");
+    const link = path.join(root, "secret.txt");
+    writeFileSync(outsideFile, "outside-root", "utf8");
+    symlinkSync(outsideFile, link);
+    const operations = createSystemFileOperations({ allowedRoots: [root] });
+
+    assert.throws(
+      () => operations.resolveAllowedPath(link),
+      (error) => error?.code === "PATH_SYMLINK_NOT_ALLOWED",
+    );
+    assert.throws(
+      () => operations.readTextFile(link),
+      (error) => error?.code === "PATH_SYMLINK_NOT_ALLOWED",
+    );
+    assert.throws(
+      () => operations.writeTextFile({ path: link, content: "must-not-follow" }),
+      (error) => error?.code === "PATH_SYMLINK_NOT_ALLOWED",
+    );
+    const search = operations.searchFiles(root, "secret", 10);
+    assert.equal(search.results.length, 1);
+    assert.equal(search.results[0].type, "symlink");
+    assert.equal(search.results[0].path, link);
+    assert.equal(search.results.some((result) => result.path === outsideFile), false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+    rmSync(outside, { recursive: true, force: true });
+  }
 });
