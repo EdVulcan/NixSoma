@@ -114,6 +114,12 @@ bounded journal evidence, Observer controls, and one healthy scheduler tick.
 No provider request, repair execution, hostd mutation, rollback, or reboot was
 used.
 
+The completed automatic triage, promotion, approved one-shot dispatch, and
+startup fail-closed source is prebuilt as
+`/nix/store/yzjwwp67apgv4rrzpm3g2gz12bqkq7vj-nixos-system-nixos-26.05.4808.569d57850992`.
+The closure diff from the installed generation is only `openclaw-core`. This
+candidate has not been switched or live-probed.
+
 ## Deferred
 
 - automatic provider diagnosis;

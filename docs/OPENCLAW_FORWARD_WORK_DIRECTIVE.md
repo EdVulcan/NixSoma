@@ -61,6 +61,12 @@ five-minute scheduler tick recorded all three fixed targets healthy without an
 incident. This proves deployment and observation, not real repair, hostd
 activation, or rollback.
 
+The automatic triage/promotion/approved-dispatch source through `1d00eea9` is
+prebuilt as
+`/nix/store/yzjwwp67apgv4rrzpm3g2gz12bqkq7vj-nixos-system-nixos-26.05.4808.569d57850992`
+but is not switched. Its closure diff against `/run/current-system` contains
+only `openclaw-core`; activation remains an explicit physical-host decision.
+
 The Event Hub audit-log blocker is closed in source through reverse bounded tail
 reads, streaming cached summaries, serialized rotation, and a fixed retained
 segment policy. The post-repair diagnosis loop and its exact request-bound AI

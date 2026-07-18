@@ -16,6 +16,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Capability source | Current `main` through the Level 3 fixed-unit incident scheduler, automatic local triage/promotion, and approval-triggered one-shot repair dispatch | Implemented; commit history is authoritative |
 | Local validation | 884 workspace tests and typecheck pass; body-config and event-audit integration pass; 811 registry entries pass | Validated |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/gb72w3qavm6b0vv114ml723g7y8jv5qh-nixos-system-nixos-26.05.4808.569d57850992` | Current source baseline deployed 2026-07-18 |
+| Prebuilt candidate | `/nix/store/yzjwwp67apgv4rrzpm3g2gz12bqkq7vj-nixos-system-nixos-26.05.4808.569d57850992`; closure diff is only `openclaw-core` | Built from `1d00eea9`; not switched |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -137,10 +138,11 @@ the journal endpoint is live, Observer contains both incident controls, and the
 first scheduler tick observed all fixed targets healthy. Automatic low-risk
 local triage, pending repair promotion, one-shot dispatch after explicit
 approval, and fail-closed restart reconciliation are complete in source. This
-source baseline is not deployed. The next gate is an explicitly authorized
-physical-host switch followed only by non-mutating health, auth, scheduler, and
-Observer probes; real repair and generation rollback remain deferred to an
-explicit/disposable mutation check.
+source baseline is prebuilt but not deployed at
+`/nix/store/yzjwwp67apgv4rrzpm3g2gz12bqkq7vj-nixos-system-nixos-26.05.4808.569d57850992`.
+The next gate is an explicitly authorized physical-host switch followed only by
+non-mutating health, auth, scheduler, and Observer probes; real repair and
+generation rollback remain deferred to an explicit/disposable mutation check.
 
 ## Progress Estimate
 
