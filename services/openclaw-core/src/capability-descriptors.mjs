@@ -370,6 +370,22 @@ export function buildBaseCapabilities({
       description: "Read bounded failed verification evidence and operator recovery recommendations without creating recovery tasks or executing commands.",
     },
     {
+      id: "act.openclaw.engineering_tool.verify",
+      name: "Native Engineering Verification Task",
+      kind: "actuator",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/plugins/native-adapter/source-command-proposals/tasks`,
+      intents: [
+        "openclaw.engineering_tool.verify",
+        "engineering.tool.verify",
+        "engineering.verify",
+      ],
+      domains: ["body_internal"],
+      risk: "high",
+      governance: "allow",
+      description: "Create a bounded source-command verification task and its approval through the existing workspace command owner; command execution remains separately approval-gated.",
+    },
+    {
       id: "act.openclaw.engineering_tool.edit_proposal",
       name: "Native Engineering Edit Proposal",
       kind: "planner",

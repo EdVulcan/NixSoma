@@ -905,16 +905,23 @@ async function createEngineeringWriteLoopApprovalTask(engineeringPlanTodoSuggest
 
 async function createEngineeringVerificationLoopApprovalTask(engineeringPlanTodoSuggestionLink = null) {
   const input = readEngineeringVerificationLoopInput();
-  const result = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/source-command-proposals/tasks\`, {
+  const response = await fetchJson(\`\${observerConfig.coreUrl}/capabilities/invoke\`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
-      proposalId: input.proposalId,
-      query: input.query,
-      engineeringPlanTodoSuggestionLink,
-      confirm: true,
+      capabilityId: "act.openclaw.engineering_tool.verify",
+      params: {
+        proposalId: input.proposalId,
+        query: input.query,
+        engineeringPlanTodoSuggestionLink,
+        confirm: true,
+      },
     }),
   });
+  if (response.invoked !== true) {
+    throw new Error(response.reason ?? "Engineering verification task capability was not invoked.");
+  }
+  const result = response.result ?? {};
 
   focusEngineeringLoopTask(result);
   renderEngineeringLoopControlState("verification", result);

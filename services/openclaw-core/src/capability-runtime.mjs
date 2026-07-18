@@ -6,6 +6,7 @@ import { createEngineeringToolSurfaceCapabilityHandlers } from "./capability-run
 import { createEngineeringReadSearchCapabilityHandlers } from "./capability-runtime-engineering-read-search.mjs";
 import { createEngineeringLspCapabilityHandlers } from "./capability-runtime-engineering-lsp.mjs";
 import { createEngineeringVerificationCapabilityHandlers } from "./capability-runtime-engineering-verification.mjs";
+import { createEngineeringVerificationTaskCapabilityHandlers } from "./capability-runtime-engineering-verification-task.mjs";
 import { createEngineeringRecoveryCapabilityHandlers } from "./capability-runtime-engineering-recovery.mjs";
 import { createEngineeringMicrocompactCapabilityHandlers } from "./capability-runtime-engineering-microcompact.mjs";
 import { createEngineeringProposalCapabilityHandlers } from "./capability-runtime-engineering-proposals.mjs";
@@ -114,6 +115,11 @@ export function createCapabilityRuntime(deps) {
     listCommandTranscriptRecords,
     listCapabilityInvocations: (options) => listCapabilityInvocations(options),
     tasks: state.tasks ?? new Map(),
+  });
+  const engineeringVerificationTaskHandlers = createEngineeringVerificationTaskCapabilityHandlers({
+    workspaceOps,
+    serialiseTask,
+    serialiseApproval,
   });
   const engineeringRecoveryHandlers = createEngineeringRecoveryCapabilityHandlers({
     listCommandTranscriptRecords,
@@ -426,6 +432,10 @@ export function createCapabilityRuntime(deps) {
     if (engineeringVerification.handled) {
       return engineeringVerification.result;
     }
+    const engineeringVerificationTask = await engineeringVerificationTaskHandlers.callBackend(capability, request);
+    if (engineeringVerificationTask.handled) {
+      return engineeringVerificationTask.result;
+    }
     const engineeringRecovery = engineeringRecoveryHandlers.callBackend(capability, request);
     if (engineeringRecovery.handled) {
       return engineeringRecovery.result;
@@ -687,6 +697,10 @@ export function createCapabilityRuntime(deps) {
     const engineeringVerificationSummary = engineeringVerificationHandlers.summariseResult(capability, result);
     if (engineeringVerificationSummary) {
       return engineeringVerificationSummary;
+    }
+    const engineeringVerificationTaskSummary = engineeringVerificationTaskHandlers.summariseResult(capability, result);
+    if (engineeringVerificationTaskSummary) {
+      return engineeringVerificationTaskSummary;
     }
     const engineeringRecoverySummary = engineeringRecoveryHandlers.summariseResult(capability, result);
     if (engineeringRecoverySummary) {
@@ -1103,6 +1117,13 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: engineeringRecoveryValidationError },
+      };
+    }
+    const engineeringVerificationTaskValidationError = engineeringVerificationTaskHandlers.validateRequest(capability, request);
+    if (engineeringVerificationTaskValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: engineeringVerificationTaskValidationError },
       };
     }
     const engineeringMicrocompactValidationError = engineeringMicrocompactHandlers.validateRequest(capability, request);

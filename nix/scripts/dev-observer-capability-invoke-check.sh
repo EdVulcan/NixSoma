@@ -54,6 +54,7 @@ cleanup() {
     "${ENGINEERING_GREP_FILE:-}" \
     "${ENGINEERING_TOOL_SURFACE_FILE:-}" \
     "${ENGINEERING_VERIFY_FILE:-}" \
+    "${ENGINEERING_VERIFY_TASK_FILE:-}" \
     "${ENGINEERING_EDIT_PROPOSAL_FILE:-}" \
     "${ENGINEERING_WRITE_PROPOSAL_FILE:-}" \
     "${WORKSPACE_TEXT_WRITE_UNCONFIRMED_FILE:-}" \
@@ -98,6 +99,7 @@ ENGINEERING_GLOB_FILE="$(mktemp)"
 ENGINEERING_GREP_FILE="$(mktemp)"
 ENGINEERING_TOOL_SURFACE_FILE="$(mktemp)"
 ENGINEERING_VERIFY_FILE="$(mktemp)"
+ENGINEERING_VERIFY_TASK_FILE="$(mktemp)"
 ENGINEERING_EDIT_PROPOSAL_FILE="$(mktemp)"
 ENGINEERING_WRITE_PROPOSAL_FILE="$(mktemp)"
 WORKSPACE_TEXT_WRITE_UNCONFIRMED_FILE="$(mktemp)"
@@ -131,6 +133,7 @@ post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.en
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool_surface_inventory\",\"intent\":\"engineering.tool_surface_inventory\",\"params\":{\"workspacePath\":\"$TOOL_SURFACE_WORKSPACE_DIR\"}}" > "$ENGINEERING_TOOL_SURFACE_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_tool.lsp_selected_target_read_bridge","intent":"engineering.lsp.selected_target_read_bridge","taskId":"observer-missing-lsp-target-task","params":{"taskId":"observer-missing-lsp-target-task","language":"typescript","targetIndex":0,"contextLines":2,"includeRead":true}}' > "$LSP_SELECTED_TARGET_READ_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_tool.verify_evidence","params":{"limit":4,"maxOutputChars":500}}' > "$ENGINEERING_VERIFY_FILE"
+post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.engineering_tool.verify\",\"params\":{\"proposalId\":\"openclaw:build\",\"workspacePath\":\"$TOOL_SURFACE_WORKSPACE_DIR\",\"query\":\"command\",\"confirm\":true}}" > "$ENGINEERING_VERIFY_TASK_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.engineering_tool.edit_proposal\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"src/app.ts\",\"oldString\":\"observerNeedle\",\"newString\":\"governedObserverNeedle\",\"contextLines\":1}}" > "$ENGINEERING_EDIT_PROPOSAL_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.engineering_tool.write_proposal\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"scratch/new-file.txt\",\"content\":\"transient observer write content\",\"overwrite\":false,\"contextLines\":1}}" > "$ENGINEERING_WRITE_PROPOSAL_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.workspace_text_write\",\"approved\":true,\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"scratch/common-write.txt\",\"content\":\"transient observer common write content\",\"overwrite\":false,\"confirm\":false}}" > "$WORKSPACE_TEXT_WRITE_UNCONFIRMED_FILE"
@@ -184,7 +187,8 @@ node - <<'EOF' \
   "$SYSTEM_HEAL_FILE" \
   "$MAINTENANCE_FILE" \
   "$LSP_SELECTED_TARGET_READ_FILE" \
-  "$ENGINEERING_TOOL_SURFACE_FILE"
+  "$ENGINEERING_TOOL_SURFACE_FILE" \
+  "$ENGINEERING_VERIFY_TASK_FILE"
 const fs = require("node:fs");
 const html = fs.readFileSync(process.argv[2], "utf8");
 const client = fs.readFileSync(process.argv[3], "utf8");
@@ -217,6 +221,7 @@ const systemHeal = JSON.parse(fs.readFileSync(process.argv[29], "utf8"));
 const maintenance = JSON.parse(fs.readFileSync(process.argv[30], "utf8"));
 const lspSelectedTargetRead = JSON.parse(fs.readFileSync(process.argv[31], "utf8"));
 const engineeringToolSurface = JSON.parse(fs.readFileSync(process.argv[32], "utf8"));
+const engineeringVerifyTask = JSON.parse(fs.readFileSync(process.argv[33], "utf8"));
 
 for (const token of [
   "invoke-vitals-button",
@@ -267,6 +272,7 @@ for (const token of [
   "openclaw://credential/deepseek-api-key",
   "act.openclaw.workspace_text_write",
   "act.openclaw.workspace_patch_apply",
+  "act.openclaw.engineering_tool.verify",
   "runBrowserOpenCapability",
   "act.browser.open",
   "browser.new_tab",
@@ -359,6 +365,13 @@ if (
 ) {
   throw new Error("Observer engineering tool surface inventory capability should remain metadata-only");
 }
+if (!capabilities.capabilities?.some((capability) =>
+  capability.id === "act.openclaw.engineering_tool.verify"
+  && capability.governance === "allow"
+  && capability.kind === "actuator"
+)) {
+  throw new Error("Observer capability registry should expose the engineering verification task bridge");
+}
 if (
   !engineeringVerify.ok
   || engineeringVerify.invoked !== true
@@ -369,6 +382,21 @@ if (
   || engineeringVerify.result?.governance?.canExecuteCommand !== false
 ) {
   throw new Error("Observer verification evidence invoke path should remain read-only");
+}
+if (
+  !engineeringVerifyTask.ok
+  || engineeringVerifyTask.invoked !== true
+  || engineeringVerifyTask.capability?.id !== "act.openclaw.engineering_tool.verify"
+  || engineeringVerifyTask.result?.task?.status !== "queued"
+  || engineeringVerifyTask.result?.approval?.status !== "pending"
+  || engineeringVerifyTask.result?.sourceCommandTask?.executed !== false
+  || engineeringVerifyTask.summary?.kind !== "engineering.verification_task"
+  || engineeringVerifyTask.summary?.createsTask !== true
+  || engineeringVerifyTask.summary?.createsApproval !== true
+  || engineeringVerifyTask.summary?.noCommandExecution !== true
+  || engineeringVerifyTask.summary?.noProviderEgress !== true
+) {
+  throw new Error("Observer verification task capability should create only an approval-gated source command task");
 }
 if (
   !engineeringEditProposal.ok

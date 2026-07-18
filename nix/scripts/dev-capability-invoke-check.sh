@@ -56,6 +56,7 @@ cleanup() {
     "${ENGINEERING_GREP_FILE:-}" \
     "${ENGINEERING_TOOL_SURFACE_FILE:-}" \
     "${ENGINEERING_VERIFY_FILE:-}" \
+    "${ENGINEERING_VERIFY_TASK_FILE:-}" \
     "${ENGINEERING_EDIT_PROPOSAL_FILE:-}" \
     "${ENGINEERING_WRITE_PROPOSAL_FILE:-}" \
     "${WORKSPACE_TEXT_WRITE_UNCONFIRMED_FILE:-}" \
@@ -97,6 +98,7 @@ ENGINEERING_GLOB_FILE="$(mktemp)"
 ENGINEERING_GREP_FILE="$(mktemp)"
 ENGINEERING_TOOL_SURFACE_FILE="$(mktemp)"
 ENGINEERING_VERIFY_FILE="$(mktemp)"
+ENGINEERING_VERIFY_TASK_FILE="$(mktemp)"
 ENGINEERING_EDIT_PROPOSAL_FILE="$(mktemp)"
 ENGINEERING_WRITE_PROPOSAL_FILE="$(mktemp)"
 WORKSPACE_TEXT_WRITE_UNCONFIRMED_FILE="$(mktemp)"
@@ -127,6 +129,7 @@ post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.en
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool.grep\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"query\":\"capabilityNeedle\",\"include\":\"src/**/*.ts\",\"literal\":true,\"limit\":4}}" > "$ENGINEERING_GREP_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"sense.openclaw.engineering_tool_surface_inventory\",\"intent\":\"engineering.tool_surface_inventory\",\"params\":{\"workspacePath\":\"$TOOL_SURFACE_WORKSPACE_DIR\"}}" > "$ENGINEERING_TOOL_SURFACE_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"sense.openclaw.engineering_tool.verify_evidence","params":{"limit":4,"maxOutputChars":500}}' > "$ENGINEERING_VERIFY_FILE"
+post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.engineering_tool.verify\",\"params\":{\"proposalId\":\"openclaw:build\",\"workspacePath\":\"$TOOL_SURFACE_WORKSPACE_DIR\",\"query\":\"command\",\"confirm\":true}}" > "$ENGINEERING_VERIFY_TASK_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.engineering_tool.edit_proposal\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"src/app.ts\",\"oldString\":\"capabilityNeedle\",\"newString\":\"governedNeedle\",\"contextLines\":1}}" > "$ENGINEERING_EDIT_PROPOSAL_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.engineering_tool.write_proposal\",\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"scratch/new-file.txt\",\"content\":\"transient write content\",\"overwrite\":false,\"contextLines\":1}}" > "$ENGINEERING_WRITE_PROPOSAL_FILE"
 post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.workspace_text_write\",\"approved\":true,\"params\":{\"workspacePath\":\"$FIXTURE_DIR\",\"relativePath\":\"scratch/common-write.txt\",\"content\":\"transient common write content\",\"overwrite\":false,\"confirm\":false}}" > "$WORKSPACE_TEXT_WRITE_UNCONFIRMED_FILE"
@@ -179,7 +182,8 @@ node - <<'EOF' \
   "$SCREEN_KEYBOARD_FILE" \
   "$SCREEN_POINTER_FILE" \
   "$ENGINEERING_TOOL_SURFACE_FILE" \
-  "$DECLARATIVE_EVOLUTION_FILE"
+  "$DECLARATIVE_EVOLUTION_FILE" \
+  "$ENGINEERING_VERIFY_TASK_FILE"
 const fs = require("node:fs");
 const readJson = (index) => JSON.parse(fs.readFileSync(process.argv[index], "utf8"));
 const vitals = readJson(2);
@@ -212,6 +216,7 @@ const screenKeyboard = readJson(28);
 const screenPointer = readJson(29);
 const engineeringToolSurface = readJson(30);
 const declarativeEvolution = readJson(31);
+const engineeringVerifyTask = readJson(32);
 
 if (!vitals.ok || vitals.invoked !== true || vitals.capability?.id !== "sense.system.vitals" || vitals.policy?.decision !== "audit_only") {
   throw new Error("system vitals capability should be invoked with audit-only governance");
@@ -304,6 +309,21 @@ if (
   || engineeringVerify.result?.governance?.canExecuteCommand !== false
 ) {
   throw new Error(`verification evidence capability should remain read-only through the governed builder: ${JSON.stringify(engineeringVerify)}`);
+}
+if (
+  !engineeringVerifyTask.ok
+  || engineeringVerifyTask.invoked !== true
+  || engineeringVerifyTask.capability?.id !== "act.openclaw.engineering_tool.verify"
+  || engineeringVerifyTask.result?.task?.status !== "queued"
+  || engineeringVerifyTask.result?.approval?.status !== "pending"
+  || engineeringVerifyTask.result?.sourceCommandTask?.executed !== false
+  || engineeringVerifyTask.summary?.kind !== "engineering.verification_task"
+  || engineeringVerifyTask.summary?.createsTask !== true
+  || engineeringVerifyTask.summary?.createsApproval !== true
+  || engineeringVerifyTask.summary?.noCommandExecution !== true
+  || engineeringVerifyTask.summary?.noProviderEgress !== true
+) {
+  throw new Error(`verification task capability should create only an approval-gated source command task: ${JSON.stringify(engineeringVerifyTask)}`);
 }
 if (
   !engineeringEditProposal.ok
@@ -406,6 +426,13 @@ for (const capabilityId of ["act.openclaw.workspace_text_write", "act.openclaw.w
   )) {
     throw new Error(`capability registry should expose the non-mutating workspace task shell ${capabilityId}`);
   }
+}
+if (!capabilities.capabilities?.some((capability) =>
+  capability.id === "act.openclaw.engineering_tool.verify"
+  && capability.governance === "allow"
+  && capability.kind === "actuator"
+)) {
+  throw new Error("capability registry should expose the approval-gated engineering verification task bridge");
 }
 if (!capabilities.capabilities?.some((capability) =>
   capability.id === "sense.openclaw.engineering_tool_surface_inventory"

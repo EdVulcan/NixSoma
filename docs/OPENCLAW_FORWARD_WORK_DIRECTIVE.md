@@ -392,6 +392,12 @@ keeps command execution, task creation, approvals, retries, mutation, and
 provider egress disabled. This bridge is documented in
 `docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_VERIFICATION_EVIDENCE_PLAN.md`.
 
+The matching `act.openclaw.engineering_tool.verify` capability is also wired
+through the common `/capabilities/invoke` runtime. With explicit confirmation
+it materializes the existing source-command verification task and pending
+approval; it does not execute commands or approve them. Actual execution
+remains on the existing approval-gated owner and its operator step.
+
 The matching failed-verification recovery readback is now also available as
 `sense.openclaw.engineering_tool.recovery_evidence`. It reuses the existing
 verification and recovery builders through one bounded handler, keeps failure
