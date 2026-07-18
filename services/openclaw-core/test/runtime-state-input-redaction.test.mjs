@@ -80,3 +80,35 @@ test("core state persists and restores bounded experience memory records", async
   assert.equal(restored.experienceMemoryRecords.size, 1);
   assert.equal(restored.experienceMemoryRecords.get("experience-task-1").taskType, "system_task");
 });
+
+test("core state persists and restores fixed-unit incident scheduler dedupe state", (t) => {
+  const root = mkdtempSync(path.join(tmpdir(), "openclaw-core-incident-scheduler-state-"));
+  const stateFilePath = path.join(root, "state.json");
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+
+  const runtime = createRuntimeState({ stateFilePath, getTaskById: () => null });
+  Object.assign(runtime.fixedUnitIncidentSchedulerState, {
+    registry: "openclaw-fixed-unit-incident-scheduler-v0",
+    enabled: true,
+    intervalMs: 300_000,
+    lastTickAt: "2026-07-18T14:30:00.000Z",
+    units: {
+      "openclaw-system-heal.service": {
+        status: "unhealthy",
+        fingerprint: `sha256:${"a".repeat(64)}`,
+        lastObservedAt: "2026-07-18T14:30:00.000Z",
+        latestTaskId: "scheduled-task-1",
+      },
+    },
+  });
+  runtime.persistState.flush();
+
+  const restored = createRuntimeState({ stateFilePath, getTaskById: () => null });
+  restored.loadPersistentState();
+
+  assert.equal(restored.fixedUnitIncidentSchedulerState.registry, "openclaw-fixed-unit-incident-scheduler-v0");
+  assert.equal(
+    restored.fixedUnitIncidentSchedulerState.units["openclaw-system-heal.service"].latestTaskId,
+    "scheduled-task-1",
+  );
+});

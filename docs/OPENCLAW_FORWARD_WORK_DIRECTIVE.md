@@ -45,10 +45,10 @@ The risk is local drift:
 ## Current Validated Frontier
 
 The current capability baseline includes bounded journal evidence, the bounded
-Event Hub audit store, the fixed Level 3 incident repair loop, and its governed
-DeepSeek diagnosis handoff. All workspace
-tests and typecheck pass, the
-body-config and event-audit integration checks pass, the 811-entry milestone
+Event Hub audit store, the fixed Level 3 incident repair loop, its governed
+DeepSeek diagnosis handoff, and the local fixed-unit incident scheduler. All
+workspace tests and typecheck pass, the body-config and event-audit integration
+checks pass, the 811-entry milestone
 registry audit passes, and the Windows path budget has no file over 160
 repository-relative characters.
 
@@ -1611,11 +1611,18 @@ same projection and rejects drift. Its structured result accepts only
 `review_systemd_incident_observation`, which opens the exact provider task
 containing the receipt and cannot recursively refresh or record another receipt.
 
-Freeze this provider/systemd diagnosis lane. The next real capability is a
-bounded automatic incident scheduler for fixed OpenClaw units: periodic local
-observation plus deduplicated incident creation, with no provider egress,
-repair, hostd, activation, or rollback authority. Keep human approval at those
-high-risk boundaries rather than every read-only observation.
+The bounded automatic incident scheduler is complete through
+`docs/plans/OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md`. Core periodically
+reads local health and fixed-unit inventory, derives targets from the shared
+hostd capability registry, audits and creates one completed compact task for a
+new unhealthy fingerprint, persists dedupe state across restart, and re-arms
+after recovery. Existing Observer history renders the incident without a new
+panel. It has no provider, repair, hostd, activation, or rollback authority.
+
+Freeze both this scheduler slice and the provider/systemd diagnosis lane. The
+next real capability is one operator-reviewed local triage bridge from a
+scheduler incident into the existing fixed-unit repair planning boundary. Bind
+the source task, fingerprint, and unit, and stop before approval or execution.
 
 ## Operator Identity And Mutation Boundary Checkpoint
 

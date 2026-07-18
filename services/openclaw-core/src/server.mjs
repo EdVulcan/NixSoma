@@ -18,6 +18,7 @@ import { registerRoutes } from "./route-handlers.mjs";
 import { createNativeEngineeringExperienceMemory } from "./native-engineering-experience-memory.mjs";
 import { createOperatorAuthenticator } from "./operator-auth.mjs";
 import { createExecutionGrantSigner } from "../../../packages/shared-utils/src/execution-grants.mjs";
+import { createFixedUnitIncidentScheduler } from "./fixed-unit-incident-scheduler.mjs";
 
 // configure state & client
 const host = process.env.OPENCLAW_CORE_HOST ?? "127.0.0.1";
@@ -38,6 +39,7 @@ const operatorAuth = createOperatorAuthenticator({
 });
 
 const publishEvent = createEventPublisher(eventHubUrl, "openclaw-core");
+const publishAuditEvent = createEventPublisher(eventHubUrl, "openclaw-core", fetch, { required: true });
 
 const urls = { eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl };
 
@@ -75,6 +77,7 @@ const taskManager = createTaskManager({
 });
 
 const approvalEngine = createApprovalEngine({ state, taskManager, policyEvaluator, publishEvent });
+let fixedUnitIncidentScheduler = null;
 
 const pluginReview = createPluginReview({
   client,
@@ -247,6 +250,7 @@ let shuttingDown = false;
 function shutdown() {
   if (shuttingDown) return;
   shuttingDown = true;
+  fixedUnitIncidentScheduler?.stop();
   state.persistState.flush?.();
   if (!server.listening) {
     process.exit(0);
@@ -266,6 +270,16 @@ if (!nativePluginRuntimeRestore.ok && nativePluginRuntimeRestore.restored === fa
 taskManager.reconcileInterruptedTasksAtStartup();
 taskManager.reconcileInterruptedCapabilityReservationsAtStartup();
 taskManager.reconcileRuntimeState();
+fixedUnitIncidentScheduler = createFixedUnitIncidentScheduler({
+  enabled: process.env.OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_ENABLED === "1",
+  intervalMs: process.env.OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_INTERVAL_MS,
+  fetchJson: (url) => client.fetchJson(url),
+  systemSenseUrl,
+  taskManager,
+  schedulerState: state.fixedUnitIncidentSchedulerState,
+  persistState: state.persistState,
+  publishAuditEvent,
+});
 
 server.listen(port, host, async () => {
   console.log(`openclaw-core listening on http://${host}:${port}`);
@@ -274,4 +288,5 @@ server.listen(port, host, async () => {
     service: "openclaw-core",
     url: `http://${host}:${port}`,
   });
+  fixedUnitIncidentScheduler?.start();
 });

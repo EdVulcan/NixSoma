@@ -195,6 +195,10 @@ test("task manager centralizes extension field creation and serialization", () =
     },
     systemdRepair: { registry: "openclaw-systemd-repair-v0" },
     systemdNextRepair: { registry: "openclaw-systemd-next-repair-v0" },
+    systemdIncidentObservation: {
+      registry: "openclaw-fixed-unit-incident-observation-v0",
+      target: { unit: "openclaw-system-heal.service" },
+    },
     cloudConsciousnessLiveProviderExecutionPlan: {
       registry: "openclaw-cloud-live-provider-execution-plan-v0",
     },
@@ -211,6 +215,7 @@ test("task manager centralizes extension field creation and serialization", () =
   assert.equal(task.engineeringPlanTodoSuggestionLink.source.taskId, "source-plan-task");
   assert.deepEqual(task.systemdRepair, { registry: "openclaw-systemd-repair-v0" });
   assert.deepEqual(task.systemdNextRepair, { registry: "openclaw-systemd-next-repair-v0" });
+  assert.equal(task.systemdIncidentObservation.target.unit, "openclaw-system-heal.service");
   assert.deepEqual(task.cloudConsciousnessLiveProviderExecutionPlan, {
     registry: "openclaw-cloud-live-provider-execution-plan-v0",
   });
@@ -218,6 +223,7 @@ test("task manager centralizes extension field creation and serialization", () =
 
   let serialized = manager.serialiseTask(task);
   assert.equal(serialized.engineeringPlanTodoSuggestionLink.source.taskId, "source-plan-task");
+  assert.equal(serialized.systemdIncidentObservation.registry, "openclaw-fixed-unit-incident-observation-v0");
   assert.equal(serialized.bodyEvidenceLedgerDirectory, null);
   assert.equal(serialized.cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalRead, null);
   assert.equal(serialized.cloudConsciousnessLiveProviderCredentialValueLocalReadExecutionLocalReadAttemptLocalReadResultEnvelopeCreationExecutionAttemptLocalReadResultEnvelope, null);

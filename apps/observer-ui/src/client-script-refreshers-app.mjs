@@ -280,6 +280,9 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
     const taskRecoveryEvidence = task.outcome?.details?.recoveryEvidence ?? task.recovery?.recoveryEvidence ?? null;
     const taskPostExecutionVerification = task.outcome?.details?.postExecutionVerification ?? null;
     const systemdIncidentReceipt = task.outcome?.details?.incidentReceipt ?? null;
+    const scheduledSystemdIncident = task.systemdIncidentObservation
+      ?? task.outcome?.details?.systemdIncidentObservation
+      ?? null;
     const providerContextPacket = task.outcome?.details?.contextPacket ?? null;
     const systemdIncidentObservationReceipt = task.cloudConsciousnessLiveProviderEgressExecution
       ?.systemdIncidentObservationReceipt ?? null;
@@ -314,6 +317,12 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
       lines.push(\`Systemd Repair Target: \${systemdIncidentReceipt.target?.unit ?? "unknown"} healthKey=\${systemdIncidentReceipt.target?.healthServiceKey ?? "unknown"}\`);
       lines.push(\`Systemd Repair Journal: \${journal.registry ?? "unknown"} available=\${Boolean(journal.available)} entries=\${journal.returned ?? 0} messagesPersisted=\${Boolean(journal.messagesPersisted)}\`);
       lines.push(\`Systemd Repair Hostd: \${systemdIncidentReceipt.hostdReceipt?.transport ?? "unknown"} job=\${systemdIncidentReceipt.hostdReceipt?.jobPath ?? "none"} receipt=\${systemdIncidentReceipt.receiptHash ?? "none"}\`);
+    }
+    if (scheduledSystemdIncident) {
+      lines.push(\`Scheduled Systemd Incident: \${scheduledSystemdIncident.registry ?? "unknown"} fingerprint=\${scheduledSystemdIncident.fingerprint ?? "none"}\`);
+      lines.push(\`Scheduled Systemd Target: \${scheduledSystemdIncident.target?.unit ?? "unknown"} healthKey=\${scheduledSystemdIncident.target?.healthServiceKey ?? "unknown"}\`);
+      lines.push(\`Scheduled Systemd Health: service=\${scheduledSystemdIncident.health?.service?.status ?? "unknown"} unit=\${scheduledSystemdIncident.health?.unit?.activeState ?? "unknown"}/\${scheduledSystemdIncident.health?.unit?.subState ?? "unknown"}\`);
+      lines.push(\`Scheduled Systemd Boundary: provider=\${Boolean(scheduledSystemdIncident.governance?.callsProvider)} repair=\${Boolean(scheduledSystemdIncident.governance?.authorizesRepair)} hostd=\${Boolean(scheduledSystemdIncident.governance?.invokesHostd)} approval=\${Boolean(scheduledSystemdIncident.governance?.approvalRequired)}\`);
     }
     if (providerContextPacket?.systemdIncidentContextIncluded === true) {
       lines.push(\`Provider Incident Context: \${providerContextPacket.registry ?? "unknown"} source=\${providerContextPacket.sourceTaskId ?? "none"}\`);

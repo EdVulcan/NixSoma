@@ -26,6 +26,7 @@ Only these documents should guide current route selection:
 | [`OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md) | Reviewed same-unit refresh of existing health, fixed-unit inventory, and bounded journal evidence. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_OBSERVATION_RECEIPT_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_OBSERVATION_RECEIPT_PLAN.md) | Compact hash-bound evidence from the reviewed same-unit observation refresh. |
 | [`OPENCLAW_SYSTEMD_OBSERVATION_AI_HANDOFF_PLAN.md`](./OPENCLAW_SYSTEMD_OBSERVATION_AI_HANDOFF_PLAN.md) | Exact approval-bound AI diagnosis and reviewed readback from the compact observation receipt. |
+| [`OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md`](./OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md) | Periodic local observation and restart-safe deduplicated incident tasks for fixed units. |
 | [`OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md`](./OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Declarative-evolution evidence and deferred activation boundary. |
 | [`OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md`](./OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md) | Measured validation, runtime, and review debt that blocks the mainline. |
 
@@ -53,15 +54,17 @@ bound Event Hub audit-log memory and retention
 -> persist one compact hash-bound local observation receipt
 -> create one exact approval-bound diagnosis from that receipt
 -> review the exact observation task without recursive refresh
+-> periodically observe the three fixed hostd targets locally
+-> create one compact completed task per new failure fingerprint
 ```
 
 This route advances the Level 3 body loop without widening hostd authority and
 without introducing a new provider response schema. This provider/systemd lane
-is now frozen. The immediate next real capability is a bounded automatic
-incident scheduler for fixed OpenClaw units, limited to local observation and
-deduplicated incident creation. Real generation activation, rollback, arbitrary
-systemd control, desktop-wide capture, and automatic provider egress remain
-deferred.
+and the incident scheduler are now frozen. The immediate next real capability
+is one operator-reviewed local triage bridge from a scheduled incident into the
+existing fixed-unit repair planning boundary, stopping before approval or
+execution. Real generation activation, rollback, arbitrary systemd control,
+desktop-wide capture, and automatic provider egress remain deferred.
 
 ## Completed Capability Evidence
 

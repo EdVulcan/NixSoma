@@ -388,6 +388,8 @@ let
         OPENCLAW_OPERATOR_ALLOWED_ORIGINS = lib.concatStringsSep "," operatorAuthAllowedOrigins;
       } // optionalAttrs (spec.key == "core") {
         OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE = "%d/execution-grant-private";
+        OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_ENABLED = if cfg.fixedUnitIncidentScheduler.enable then "1" else "0";
+        OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_INTERVAL_MS = toString (cfg.fixedUnitIncidentScheduler.intervalSeconds * 1000);
       } // optionalAttrs (builtins.elem spec.key [ "screenAct" "systemSense" ]) {
         OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE = cfg.executionGrantPublicKeyFile;
       };
@@ -701,6 +703,19 @@ in
 
     systemdRepairAuthDelegation = {
       enable = mkEnableOption "Polkit-authorized native D-Bus repair of fixed OpenClaw-owned systemd units";
+    };
+
+    fixedUnitIncidentScheduler = {
+      enable = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Enable Core's local read-only scheduler for deduplicated incidents on fixed OpenClaw units.";
+      };
+      intervalSeconds = mkOption {
+        type = types.ints.between 30 86400;
+        default = 300;
+        description = "Interval between local fixed-unit health observations.";
+      };
     };
 
     kernelEventCapture = {

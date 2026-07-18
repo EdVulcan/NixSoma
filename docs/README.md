@@ -13,8 +13,8 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current `main` through the Level 3 incident repair loop and bounded Event Hub audit storage | Implemented; commit history is authoritative |
-| Local validation | 845 workspace tests and typecheck pass; body-config and event-audit integration pass; 811 registry entries pass | Validated |
+| Capability source | Current `main` through the Level 3 fixed-unit incident scheduler and governed repair/diagnosis loop | Implemented; commit history is authoritative |
+| Local validation | 855 workspace tests and typecheck pass; body-config and event-audit integration pass; 811 registry entries pass | Validated |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/735kfj8knq1nn092hq4z57sjlc9di3q5-nixos-system-nixos-26.05.4808.569d57850992` | Running but behind the capability source |
 | Deployed journal probe | `/system/systemd/journal-evidence` returns `404`; `openclaw-system-sense` has no `systemd-journal` supplementary group | Not deployed |
 | Deployed audit store | Installed Event Hub predates streaming tail reads, cached summaries, and rotation | Not deployed |
@@ -73,6 +73,9 @@ The completed bounded frontier is:
   journal messages and provider output and carrying no repair authority.
 - One operator-created, approval-bound fresh diagnosis from that observation
   receipt, with execution-time drift rejection and exact observation readback.
+- One five-minute local scheduler for the three fixed hostd targets, with
+  compact audited incident tasks, restart-safe dedupe, recovery re-arming, and
+  existing Observer task-detail visibility.
 
 Real generation activation and rollback remain unproven on a disposable
 mutation environment. Level 4 graphics-stack ownership remains future work.
@@ -104,13 +107,15 @@ body health + bounded journal evidence
 -> compact hash-bound local observation receipt
 -> exact approval-bound observation diagnosis
 -> reviewed opening of the exact observation task
+-> periodic local fixed-unit observation
+-> deduplicated completed incident task in Observer
 ```
 
 Do not broaden hostd into arbitrary systemd control or add another provider
-readiness wrapper. Freeze this completed provider/systemd lane. The next real
-capability is a bounded automatic incident scheduler for fixed OpenClaw units,
-limited to local observation and deduplicated incident creation. It must not
-add hostd mutation, automatic provider calls, or implicit repair.
+readiness wrapper. Freeze the completed provider/systemd and scheduler lanes.
+The next real capability is one operator-reviewed local triage bridge from a
+scheduler incident into the existing fixed-unit repair planning boundary. It
+must bind the source fingerprint and unit and stop before approval or execution.
 
 ## Progress Estimate
 
@@ -140,6 +145,7 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md) | Completed reviewed same-unit health, inventory, and bounded journal refresh. |
 | [OPENCLAW_SYSTEMD_INCIDENT_OBSERVATION_RECEIPT_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_OBSERVATION_RECEIPT_PLAN.md) | Completed compact hash-bound local evidence for the reviewed observation. |
 | [OPENCLAW_SYSTEMD_OBSERVATION_AI_HANDOFF_PLAN.md](./plans/OPENCLAW_SYSTEMD_OBSERVATION_AI_HANDOFF_PLAN.md) | Completed approval-bound diagnosis and reviewed readback for the observation receipt. |
+| [OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md](./plans/OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md) | Completed periodic local observation and deduplicated incident task creation for fixed units. |
 | [OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md](./plans/OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md) | Completed first bounded read-only kernel event slice. |
 | [OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md](./plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Current declarative-evolution evidence and explicitly deferred activation boundary. |
 | [OPENCLAW_MONOLITH_REDUCTION_PLAN.md](./plans/OPENCLAW_MONOLITH_REDUCTION_PLAN.md) | Active coupling and maintainability debt record. |

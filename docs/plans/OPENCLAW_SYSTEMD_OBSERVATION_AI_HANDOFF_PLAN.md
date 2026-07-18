@@ -59,8 +59,7 @@ a response-contract failure, preventing recursive refresh/receipt chains.
 
 ## Next Real Capability
 
-Freeze this completed provider/systemd diagnosis lane. The next Level 3 slice is
-a bounded automatic incident scheduler for fixed OpenClaw units: periodic local
-observation and deduplicated incident creation without provider egress or repair
-authority. Human approval should remain at provider, repair, activation, and
-rollback boundaries rather than every read-only observation.
+The bounded automatic incident scheduler selected here is complete in
+`OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md`. Freeze both lanes. Continue
+with one operator-reviewed local triage bridge from a scheduled incident into
+the existing fixed repair planning owner, stopping before approval or execution.

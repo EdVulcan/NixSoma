@@ -21,6 +21,7 @@ const TASK_EXTENSION_FIELDS = [
   { name: "workViewTrustedSidecarLifecycle" },
   { name: "systemdRepair", copyFromCreateInput: true },
   { name: "systemdNextRepair", copyFromCreateInput: true },
+  { name: "systemdIncidentObservation", copyFromCreateInput: true },
   { name: "systemdRepairCandidate" },
   { name: "operatorTakeover" },
   { name: "bodyEvidenceLedgerDirectory" },
