@@ -13,6 +13,11 @@ import {
 } from "../src/cloud-live-provider-network-sender.mjs";
 import { CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT } from "../src/cloud-live-provider-runtime-response-contract.mjs";
 import { CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_PLAN_CONTRACT } from "../src/cloud-live-provider-runtime-engineering-plan-contract.mjs";
+import {
+  buildSystemdIncidentProviderContext,
+  materialiseStoredSystemdIncidentProviderExecution,
+} from "../src/systemd-incident-provider-context.mjs";
+import { createSystemdIncidentRepairTask } from "./systemd-incident-fixture.mjs";
 
 const LIVE_PROVIDER_TEST_ENV = {
   OPENCLAW_CLOUD_PROVIDER_ENDPOINT: "https://api.deepseek.com",
@@ -406,6 +411,92 @@ test("valid structured recommendation is transient while task state keeps compac
   assert.equal(result.task.cloudConsciousnessLiveProviderEgressExecution.recommendation.reasonIncluded, false);
   assert.doesNotMatch(JSON.stringify(result.task), /bounded todo evidence supports/);
   assert.equal(result.summary.recommendation.actionId, "create_verification_task");
+});
+
+test("approved incident context returns a guidance-only recommendation and persists compact provenance", async () => {
+  const harness = createHarness();
+  const sourceTask = createSystemdIncidentRepairTask();
+  const incident = buildSystemdIncidentProviderContext({ sourceTask });
+  assert.equal(incident.ok, true, incident.reason);
+  const task = createTask();
+  task.cloudConsciousnessLiveProviderEgressExecution.systemdIncidentContext = incident.projection;
+  task.cloudConsciousnessLiveProviderEgressExecution.incidentContextContentHash = incident.contextContentHash;
+  const tasks = new Map([[sourceTask.id, sourceTask], [task.id, task]]);
+  const materialised = materialiseStoredSystemdIncidentProviderExecution({
+    handoffTask: task,
+    tasks,
+  });
+  assert.equal(materialised.ok, true, materialised.reason);
+  const request = materialised.liveProviderExecution;
+  const binding = buildLiveProviderRequestBinding({
+    requestEnvelope: request.requestEnvelope,
+    credentialReference: request.credentialReference,
+    responseContract: request.responseContract,
+    contextContentHash: materialised.evidence.contextContentHash,
+    sourceTaskId: request.contextPacket.sourceTaskId,
+    env: LIVE_PROVIDER_TEST_ENV,
+  });
+  assert.equal(binding.ok, true, binding.reason);
+  task.cloudConsciousnessLiveProviderEgressExecution.requestBinding = binding.binding;
+  const options = { liveProviderExecution: request };
+  options[CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE] = materialised.evidence;
+  const reason = "The restart changed the process but event-hub application health remained offline; review the failed receipt before any further governed action.";
+
+  const result = await executeCloudConsciousnessLiveProviderRequest({
+    ...harness.deps,
+    task,
+    options,
+    env: LIVE_PROVIDER_TEST_ENV,
+    sendLiveProviderRequestImpl: async ({ providerRequest }) => {
+      assert.match(providerRequest.request.body.messages[0].content, /openclaw-event-hub\.service/u);
+      assert.doesNotMatch(providerRequest.request.body.messages[0].content, /private-health|private diagnostic/u);
+      return {
+        ok: true,
+        audit: {
+          responseContentHash: "incident-recommendation-response-hash",
+          providerResponseCreated: true,
+          endpointContacted: true,
+          networkEgress: true,
+          transmitsExternally: true,
+        },
+        governance: {
+          providerCredentialRead: true,
+          credentialValueRead: true,
+          providerResponseCreated: true,
+          endpointContacted: true,
+          networkEgress: true,
+          transmitsExternally: true,
+          liveProviderCallEnabled: true,
+        },
+        response: {
+          id: "incident-recommendation-response-1",
+          model: "deepseek-chat",
+          assistantContent: JSON.stringify({
+            actionId: "review_current_todo",
+            reason,
+            confidence: 0.91,
+            requiresOperatorReview: true,
+          }),
+          responseContentHash: "incident-recommendation-response-hash",
+          usage: { total_tokens: 40 },
+        },
+      };
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.recommendation.reason, reason);
+  assert.equal(result.recommendation.createsTaskAutomatically, false);
+  assert.equal(result.recommendation.executesAutomatically, false);
+  assert.equal(result.contextPacket.systemdIncidentContextIncluded, true);
+  assert.equal(result.contextPacket.systemdIncidentTargetUnit, "openclaw-event-hub.service");
+  assert.equal(result.contextPacket.systemdIncidentRestoredHealthy, false);
+  assert.equal(result.contextPacket.systemdIncidentJournalEntries, 3);
+  assert.equal(result.contextPacket.journalMessagesIncluded, false);
+  assert.equal(result.task.cloudConsciousnessLiveProviderEgressExecution.recommendation.reasonIncluded, false);
+  const persisted = JSON.stringify(result.task);
+  assert.doesNotMatch(persisted, /event-hub application health remained offline/u);
+  assert.doesNotMatch(persisted, /private-health|private diagnostic/u);
 });
 
 test("valid engineering plan is transient while task state keeps compact plan evidence", async () => {

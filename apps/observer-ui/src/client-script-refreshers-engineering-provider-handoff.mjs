@@ -1,16 +1,36 @@
-export const observerClientEngineeringProviderHandoffRefreshersScript = `async function createEngineeringProviderHandoffTask() {
+export const observerClientEngineeringProviderHandoffRefreshersScript = `function syncEngineeringProviderIncidentMode() {
+  const incidentMode = engineeringProviderHandoffIncludeSystemdIncident?.checked === true;
+  if (engineeringProviderHandoffPromptInput) {
+    engineeringProviderHandoffPromptInput.disabled = incidentMode;
+  }
+  if (engineeringProviderHandoffResponseContract) {
+    engineeringProviderHandoffResponseContract.disabled = incidentMode;
+    if (incidentMode) {
+      engineeringProviderHandoffResponseContract.value = "engineering_recommendation_v0";
+    }
+  }
+}
+
+async function createEngineeringProviderHandoffTask() {
   if (!engineeringProviderHandoffCreateButton || !engineeringProviderHandoffPromptInput) {
     return;
   }
 
   const prompt = engineeringProviderHandoffPromptInput.value.trim();
   const sourceTaskId = engineeringProviderHandoffSourceTaskIdInput?.value.trim() ?? "";
-  const responseContract = engineeringProviderHandoffResponseContract?.value === "engineering_plan_v0"
+  const includeSystemdIncidentReceipt = engineeringProviderHandoffIncludeSystemdIncident?.checked === true;
+  const responseContract = !includeSystemdIncidentReceipt
+    && engineeringProviderHandoffResponseContract?.value === "engineering_plan_v0"
     ? "engineering_plan_v0"
     : "engineering_recommendation_v0";
-  if (!prompt) {
+  if (!includeSystemdIncidentReceipt && !prompt) {
     setControlMessage("Enter a bounded provider request before creating the handoff task.");
     engineeringProviderHandoffPromptInput.focus();
+    return;
+  }
+  if (includeSystemdIncidentReceipt && !sourceTaskId) {
+    setControlMessage("Select a completed systemd repair task before creating the incident handoff.");
+    engineeringProviderHandoffSourceTaskIdInput?.focus();
     return;
   }
 
@@ -26,17 +46,22 @@ export const observerClientEngineeringProviderHandoffRefreshersScript = `async f
           confirm: true,
           liveProviderExecution: {
             credentialReference: "openclaw://credential/deepseek-api-key",
-            requestEnvelope: {
-              model: "deepseek-chat",
-              messages: [{ role: "user", content: prompt }],
-            },
+            ...(!includeSystemdIncidentReceipt
+              ? {
+                  requestEnvelope: {
+                    model: "deepseek-chat",
+                    messages: [{ role: "user", content: prompt }],
+                  },
+                }
+              : {}),
             responseContract,
-            ...((sourceTaskId || responseContract === "engineering_plan_v0")
+            ...((sourceTaskId || responseContract === "engineering_plan_v0" || includeSystemdIncidentReceipt)
               ? {
                   contextPacket: {
                     requested: true,
                     ...(sourceTaskId ? { sourceTaskId } : {}),
                     ...(responseContract === "engineering_plan_v0" ? { includePlanTodo: true } : {}),
+                    ...(includeSystemdIncidentReceipt ? { includeSystemdIncidentReceipt: true } : {}),
                   },
                 }
               : {}),
@@ -46,7 +71,9 @@ export const observerClientEngineeringProviderHandoffRefreshersScript = `async f
     });
     renderEngineeringProviderHandoff(data);
     const taskId = data?.result?.task?.id ?? "unknown";
-    setControlMessage(\`Created pending DeepSeek handoff task \${taskId}; approval and operator execution remain separate.\`);
+    setControlMessage(includeSystemdIncidentReceipt
+      ? \`Created pending systemd incident diagnosis task \${taskId}; approval remains required before provider contact.\`
+      : \`Created pending DeepSeek handoff task \${taskId}; approval and operator execution remain separate.\`);
   } catch (error) {
     engineeringProviderHandoffStatus.textContent = "blocked";
     engineeringProviderHandoffJson.textContent = \`Unable to create the provider handoff task: \${formatError(error)}\`;
@@ -59,5 +86,7 @@ export const observerClientEngineeringProviderHandoffRefreshersScript = `async f
 engineeringProviderHandoffCreateButton?.addEventListener("click", () => {
   void createEngineeringProviderHandoffTask();
 });
+engineeringProviderHandoffIncludeSystemdIncident?.addEventListener("change", syncEngineeringProviderIncidentMode);
+syncEngineeringProviderIncidentMode();
 
 `;

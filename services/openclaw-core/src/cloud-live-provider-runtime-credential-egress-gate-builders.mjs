@@ -6,6 +6,7 @@ import {
   validateLiveProviderRequestBinding,
 } from "./cloud-live-provider-network-sender.mjs";
 import * as liveProviderPhaseGovernance from "./cloud-live-provider-runtime-governance.mjs";
+import { materialiseSystemdIncidentProviderHandoff } from "./systemd-incident-provider-context.mjs";
 
 const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CREDENTIAL_VALUE_ACCESS_GATE_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-credential-value-access-gate-v0";
@@ -879,17 +880,26 @@ export function createCloudLiveProviderRuntimeCredentialEgressGateBuilders(deps)
     if (!sourceTask) {
       throw new Error("Unable to locate Phase 62 egress execution route/task preflight evidence.");
     }
+    const incidentMaterialisation = materialiseSystemdIncidentProviderHandoff({
+      liveProviderExecution,
+      tasks: typeof listTasks === "function" ? listTasks() : [],
+    });
+    if (!incidentMaterialisation.ok) {
+      throw new Error(`Systemd incident provider context rejected: ${incidentMaterialisation.reason}.`);
+    }
+    const effectiveLiveProviderExecution = incidentMaterialisation.liveProviderExecution;
 
     let requestBinding = null;
-    if (liveProviderExecution?.requested === true) {
-      if (liveProviderExecution.requestEnvelope && typeof liveProviderExecution.requestEnvelope === "object") {
+    if (effectiveLiveProviderExecution?.requested === true) {
+      if (effectiveLiveProviderExecution.requestEnvelope
+        && typeof effectiveLiveProviderExecution.requestEnvelope === "object") {
         const builtBinding = buildLiveProviderRequestBinding({
-          requestEnvelope: liveProviderExecution.requestEnvelope,
-          credentialReference: liveProviderExecution.credentialReference,
-          responseContract: liveProviderExecution.responseContract ?? null,
-          contextContentHash: liveProviderExecution.contextContentHash ?? null,
-          sourceTaskId: liveProviderExecution.contextPacket?.requested === true
-            ? liveProviderExecution.contextPacket.sourceTaskId ?? null
+          requestEnvelope: effectiveLiveProviderExecution.requestEnvelope,
+          credentialReference: effectiveLiveProviderExecution.credentialReference,
+          responseContract: effectiveLiveProviderExecution.responseContract ?? null,
+          contextContentHash: effectiveLiveProviderExecution.contextContentHash ?? null,
+          sourceTaskId: effectiveLiveProviderExecution.contextPacket?.requested === true
+            ? effectiveLiveProviderExecution.contextPacket.sourceTaskId ?? null
             : null,
           env: providerEnv,
         });
@@ -897,8 +907,8 @@ export function createCloudLiveProviderRuntimeCredentialEgressGateBuilders(deps)
           throw new Error(`Live provider egress task request binding rejected: ${builtBinding.reason}.`);
         }
         requestBinding = builtBinding.binding;
-      } else if (liveProviderExecution.requestBinding) {
-        const validatedBinding = validateLiveProviderRequestBinding(liveProviderExecution.requestBinding);
+      } else if (effectiveLiveProviderExecution.requestBinding) {
+        const validatedBinding = validateLiveProviderRequestBinding(effectiveLiveProviderExecution.requestBinding);
         if (!validatedBinding.ok) {
           throw new Error(`Live provider egress task request binding rejected: ${validatedBinding.reason}.`);
         }
@@ -977,7 +987,9 @@ export function createCloudLiveProviderRuntimeCredentialEgressGateBuilders(deps)
       sourceRegistry: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_EGRESS_EXECUTION_ROUTE_TASK_PREFLIGHT_REGISTRY,
       implementationStatus: "task_shell_only",
       requestBinding,
-      requestBindingRequired: liveProviderExecution?.requested === true,
+      requestBindingRequired: effectiveLiveProviderExecution?.requested === true,
+      systemdIncidentContext: incidentMaterialisation.incidentContext,
+      incidentContextContentHash: incidentMaterialisation.evidence?.contextContentHash ?? null,
       egressExecutionTaskCreated: true,
       egressExecutionTaskApproved: false,
       egressExecutionDeferred: true,

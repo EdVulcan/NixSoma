@@ -7,6 +7,7 @@ import {
   DEEPSEEK_CREDENTIAL_REFERENCE,
 } from "../src/cloud-live-provider-network-sender.mjs";
 import { createTaskLifecycleHarness } from "./task-builder-harness.mjs";
+import { createSystemdIncidentRepairTask } from "./systemd-incident-fixture.mjs";
 
 const REAL_LAUNCH_TASK_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-real-launch-task-v0";
@@ -310,6 +311,43 @@ test("credential egress task binds the approved request without persisting its c
   assert.match(requestBinding.bindingHash, /^[a-f0-9]{64}$/u);
   assert.doesNotMatch(JSON.stringify(taskShell.task), /bounded prompt must remain/);
   assert.deepEqual(taskShell.task.plan.approvalBinding, requestBinding);
+});
+
+test("credential egress task binds and persists only the safe systemd incident projection", async () => {
+  const preflightTask = createEgressRouteTaskPreflightTask();
+  const incidentTask = createSystemdIncidentRepairTask();
+  const { deps } = createCredentialEgressHarness({ tasks: [preflightTask, incidentTask] });
+  const builders = createCloudLiveProviderRuntimeCredentialEgressGateBuilders(deps);
+
+  const taskShell = await builders.createCloudConsciousnessLiveProviderEgressExecutionTask({
+    confirm: true,
+    liveProviderExecution: {
+      requested: true,
+      credentialReference: DEEPSEEK_CREDENTIAL_REFERENCE,
+      responseContract: "engineering_recommendation_v0",
+      contextPacket: {
+        requested: true,
+        sourceTaskId: incidentTask.id,
+        includeSystemdIncidentReceipt: true,
+      },
+    },
+  });
+
+  const shell = taskShell.task.cloudConsciousnessLiveProviderEgressExecution;
+  assert.equal(shell.requestBinding.sourceTaskId, incidentTask.id);
+  assert.equal(shell.requestBinding.responseContract, "engineering_recommendation_v0");
+  assert.match(shell.requestBinding.contextContentHash, /^[a-f0-9]{64}$/u);
+  assert.deepEqual(shell.systemdIncidentContext.target, {
+    unit: "openclaw-event-hub.service",
+    healthServiceKey: "eventHub",
+  });
+  assert.equal(shell.systemdIncidentContext.journalEvidence.messagesIncluded, false);
+  assert.equal(shell.incidentContextContentHash, shell.requestBinding.contextContentHash);
+  const persisted = JSON.stringify(taskShell.task);
+  assert.doesNotMatch(persisted, /private-health|private diagnostic|hostd-private-invocation/u);
+  assert.doesNotMatch(persisted, /Operator request: Diagnose/u);
+  assert.equal(shell.endpointContacted, false);
+  assert.equal(shell.networkEgress, false);
 });
 
 test("credential egress execution dispatches an explicitly bound live request", async () => {

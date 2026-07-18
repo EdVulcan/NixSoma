@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering Tool Surface Plan
 
-Updated: 2026-07-17
+Updated: 2026-07-18
 
 ## Current Frontier
 
@@ -18,6 +18,14 @@ The previously route-only plan/todo workbench lane is also closed at the common
 runtime boundary. Its evidence and confirmed core-state storage descriptors now
 dispatch through `/capabilities/invoke`, reuse the existing builders, and keep
 plan text and todo descriptions out of persisted invocation summaries.
+
+The provider handoff now also accepts a verified terminal fixed-systemd repair
+receipt through the bounded mode documented in
+`OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md`. Incident mode builds its own
+deterministic request, reuses `engineering_recommendation_v0`, and excludes
+journal messages, URLs, error text, credentials, and raw hostd identity. The
+existing high-risk provider approval and Operator execution remain the only
+egress owner; no systemd action is inferred from the provider response.
 
 The existing prompt-semantics work-standards profile is now also declared in
 the common capability registry as `sense.openclaw.prompt_pack`. Its runtime
@@ -260,7 +268,9 @@ verification command execution and task-completion attachment
 planning/todo evidence and governed core-state workbench storage are absorbed; hidden planning mode, `.openclaw/cc-todo.md` persistence, task mutation, and plan_exit execution transition remain deferred
 microcompact evidence, bounded in-memory projection, local governed engineering
 context packets, the explicitly approved DeepSeek context-packet handoff, and
-the bounded `engineering_recommendation_v0` response contract are absorbed;
+the bounded `engineering_recommendation_v0` response contract are absorbed; the
+terminal systemd incident receipt may now use that same exact request-bound
+handoff without journal-message egress or a new provider schema;
 automatic provider-request creation, automatic task/approval/execution from a
 recommendation, persisted transcript rewriting, and result-envelope creation
 remain deferred

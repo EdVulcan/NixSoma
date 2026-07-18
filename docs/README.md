@@ -14,7 +14,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
 | Capability source | Current `main` through the Level 3 incident repair loop and bounded Event Hub audit storage | Implemented; commit history is authoritative |
-| Local validation | 812 workspace tests and typecheck pass; body-config and event-audit integration pass; 811 registry entries pass | Validated |
+| Local validation | 821 workspace tests and typecheck pass; body-config and event-audit integration pass; 811 registry entries pass | Validated |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/735kfj8knq1nn092hq4z57sjlc9di3q5-nixos-system-nixos-26.05.4808.569d57850992` | Running but behind the capability source |
 | Deployed journal probe | `/system/systemd/journal-evidence` returns `404`; `openclaw-system-sense` has no `systemd-journal` supplementary group | Not deployed |
 | Deployed audit store | Installed Event Hub predates streaming tail reads, cached summaries, and rotation | Not deployed |
@@ -58,6 +58,9 @@ The completed bounded frontier is:
   manual rollback evidence, and a physical-host-safe failure rehearsal.
 - Explicitly approved DeepSeek context handoff and structured engineering-plan
   recommendation without automatic task creation, execution, or provider use.
+- Exact request-bound DeepSeek diagnosis handoff for a verified terminal
+  systemd incident receipt, with journal messages and private runtime details
+  excluded and no recommendation-driven repair authority.
 
 Real generation activation and rollback remain unproven on a disposable
 mutation environment. Level 4 graphics-stack ownership remains future work.
@@ -72,7 +75,7 @@ instead of being silently truncated. Against the current 438 MiB development
 log, a 200-event tail query took about 41 ms and the first full summary about
 1.9 s with roughly 20 MiB heap; a cached repeat took 0 ms.
 
-The Level 3 incident loop is complete in source:
+The Level 3 incident and guidance loop is complete in source:
 
 ```text
 body health + bounded journal evidence
@@ -80,14 +83,15 @@ body health + bounded journal evidence
 -> existing fixed restart owner
 -> post-repair health verification
 -> task and Observer evidence
+-> approved compact incident handoff
+-> transient engineering_recommendation_v0 guidance
 ```
 
-Do not broaden hostd into arbitrary systemd control or add another journal
-readiness wrapper. The next real capability returns to AI governance: project
-only the compact incident receipt into the existing explicitly approved
-DeepSeek handoff and obtain a structured, guidance-only recommendation. Reuse
-the existing provider and Observer owners; do not send journal messages,
-auto-create repair tasks, or create a new provider schema chain.
+Do not broaden hostd into arbitrary systemd control or add another journal or
+provider readiness wrapper. The next real capability is bounded local incident
+experience recall through the existing advisory memory owner. It may retain
+target, restored-state, and compact outcome-pattern evidence, but not journal
+text, provider output, automatic provider calls, or repair authority.
 
 ## Progress Estimate
 
@@ -110,6 +114,7 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md](./plans/OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md) | Completed bounded Level 2 browser/work-view contract. |
 | [OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md](./plans/OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md) | Current operator, service identity, and execution-grant boundary. |
 | [OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md](./plans/OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Current fixed Level 3 restart and journal-diagnosis boundary. |
+| [OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md) | Completed exact request-bound incident diagnosis handoff and provider boundary. |
 | [OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md](./plans/OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md) | Completed first bounded read-only kernel event slice. |
 | [OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md](./plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Current declarative-evolution evidence and explicitly deferred activation boundary. |
 | [OPENCLAW_MONOLITH_REDUCTION_PLAN.md](./plans/OPENCLAW_MONOLITH_REDUCTION_PLAN.md) | Active coupling and maintainability debt record. |

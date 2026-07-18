@@ -45,7 +45,8 @@ The risk is local drift:
 ## Current Validated Frontier
 
 The current capability baseline includes bounded journal evidence, the bounded
-Event Hub audit store, and the fixed Level 3 incident repair loop. All workspace
+Event Hub audit store, the fixed Level 3 incident repair loop, and its governed
+DeepSeek diagnosis handoff. All workspace
 tests and typecheck pass, the
 body-config and event-audit integration checks pass, the 811-entry milestone
 registry audit passes, and the Windows path budget has no file over 160
@@ -61,9 +62,9 @@ separately authorized mutation environment.
 
 The Event Hub audit-log blocker is closed in source through reverse bounded tail
 reads, streaming cached summaries, serialized rotation, and a fixed retained
-segment policy. The post-repair diagnosis loop defined below is also complete in
-source; do not select work from an older phase number or historical `Next Slice`
-paragraph.
+segment policy. The post-repair diagnosis loop and its exact request-bound AI
+guidance handoff defined below are also complete in source; do not select work
+from an older phase number or historical `Next Slice` paragraph.
 
 ## Governing Vision
 
@@ -1536,14 +1537,29 @@ streamed summary for Observer refreshes. The incident loop must not add
 arbitrary journal queries, arbitrary systemd units, automatic restart, or a new
 provider contract.
 
+### Completed Governed Incident AI Handoff
+
+The compact terminal incident receipt now enters the existing explicitly
+approved DeepSeek handoff through
+`docs/plans/OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md`. Core recomputes the
+receipt hash, verifies task/step/target/health binding, removes journal messages
+and private runtime details, and creates one exact request-bound provider task.
+Operator execution reconstructs the request from the authoritative source task
+and rejects source or stored-projection drift.
+
+This path reuses `engineering_recommendation_v0`; it does not add a provider
+schema family. Provider guidance remains transient and cannot create a task or
+approval, invoke hostd, retry a restart, activate a generation, or roll back the
+host. Injected sender tests prove the request/response contract; no real
+provider contact was executed on the sole physical host.
+
 ### Next Real Capability
 
-Project the compact incident receipt, without journal messages, into the
-existing explicitly approved DeepSeek context handoff and return one structured
-guidance-only diagnosis recommendation. Reuse the current provider approval,
-request binding, recommendation bridge, and Observer owner. Do not create a new
-provider schema chain, auto-create or approve repair tasks, invoke hostd from the
-recommendation, or widen the fixed system authority.
+Use the existing advisory experience-memory owner to retain one bounded,
+target-specific pattern from terminal systemd incident receipts and recall it
+for a later matching incident. Keep this local and guidance-only: do not retain
+journal text or provider output, automatically create a provider request, or
+authorize another repair.
 
 ## Operator Identity And Mutation Boundary Checkpoint
 

@@ -1,6 +1,7 @@
 export const observerClientConfigDomEngineeringProviderHandoffScript = `const engineeringProviderHandoffPromptInput = document.querySelector("#engineering-provider-handoff-prompt-input");
 const engineeringProviderHandoffSourceTaskIdInput = document.querySelector("#engineering-context-packet-source-task-id-input");
 const engineeringProviderHandoffResponseContract = document.querySelector("#engineering-provider-handoff-response-contract");
+const engineeringProviderHandoffIncludeSystemdIncident = document.querySelector("#engineering-provider-handoff-include-systemd-incident");
 const engineeringProviderHandoffCreateButton = document.querySelector("#engineering-provider-handoff-create-button");
 const engineeringProviderHandoffStatus = document.querySelector("#engineering-provider-handoff-status");
 const engineeringProviderHandoffTask = document.querySelector("#engineering-provider-handoff-task");

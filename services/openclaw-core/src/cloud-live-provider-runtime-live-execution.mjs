@@ -105,6 +105,16 @@ function compactContextPacketEvidence(evidence) {
     contextTruncated: evidence.contextTruncated === true,
     contextContentIncluded: false,
     requestEnvelopeMaterialized: evidence.requestEnvelopeMaterialized === true,
+    systemdIncidentContextIncluded: evidence.systemdIncidentContextIncluded === true,
+    systemdIncidentTargetUnit: evidence.systemdIncidentTargetUnit ?? null,
+    systemdIncidentHealthServiceKey: evidence.systemdIncidentHealthServiceKey ?? null,
+    systemdIncidentRestoredHealthy: evidence.systemdIncidentRestoredHealthy ?? null,
+    systemdIncidentJournalAvailable: evidence.systemdIncidentJournalAvailable ?? null,
+    systemdIncidentJournalEntries: Number.isInteger(evidence.systemdIncidentJournalEntries)
+      ? evidence.systemdIncidentJournalEntries
+      : 0,
+    systemdIncidentReceiptHash: evidence.systemdIncidentReceiptHash ?? null,
+    journalMessagesIncluded: false,
   };
 }
 

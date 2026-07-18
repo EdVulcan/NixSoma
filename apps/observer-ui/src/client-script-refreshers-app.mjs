@@ -280,6 +280,7 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
     const taskRecoveryEvidence = task.outcome?.details?.recoveryEvidence ?? task.recovery?.recoveryEvidence ?? null;
     const taskPostExecutionVerification = task.outcome?.details?.postExecutionVerification ?? null;
     const systemdIncidentReceipt = task.outcome?.details?.incidentReceipt ?? null;
+    const providerContextPacket = task.outcome?.details?.contextPacket ?? null;
     lines.push(...formatEngineeringVerificationFollowupLines(task));
     if (taskVerification) {
       lines.push(\`Verification: \${taskVerification.ok === true ? "passed" : taskVerification.ok === false ? "failed" : "unknown"}\`);
@@ -311,6 +312,11 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
       lines.push(\`Systemd Repair Target: \${systemdIncidentReceipt.target?.unit ?? "unknown"} healthKey=\${systemdIncidentReceipt.target?.healthServiceKey ?? "unknown"}\`);
       lines.push(\`Systemd Repair Journal: \${journal.registry ?? "unknown"} available=\${Boolean(journal.available)} entries=\${journal.returned ?? 0} messagesPersisted=\${Boolean(journal.messagesPersisted)}\`);
       lines.push(\`Systemd Repair Hostd: \${systemdIncidentReceipt.hostdReceipt?.transport ?? "unknown"} job=\${systemdIncidentReceipt.hostdReceipt?.jobPath ?? "none"} receipt=\${systemdIncidentReceipt.receiptHash ?? "none"}\`);
+    }
+    if (providerContextPacket?.systemdIncidentContextIncluded === true) {
+      lines.push(\`Provider Incident Context: \${providerContextPacket.registry ?? "unknown"} source=\${providerContextPacket.sourceTaskId ?? "none"}\`);
+      lines.push(\`Provider Incident Target: \${providerContextPacket.systemdIncidentTargetUnit ?? "unknown"} restored=\${providerContextPacket.systemdIncidentRestoredHealthy ?? "unknown"}\`);
+      lines.push(\`Provider Incident Journal: available=\${providerContextPacket.systemdIncidentJournalAvailable ?? "unknown"} entries=\${providerContextPacket.systemdIncidentJournalEntries ?? 0} messagesIncluded=\${Boolean(providerContextPacket.journalMessagesIncluded)}\`);
     }
     if (task.bodyEvidenceLedgerFirstRecord) {
       const firstRecord = task.bodyEvidenceLedgerFirstRecord;

@@ -53,6 +53,7 @@ function createHarness({ policyDecision = {} } = {}) {
     providerRuntime: {
       createCloudConsciousnessLiveProviderEgressExecutionTask: async (input) => {
         calls.push(input);
+        const incidentRequested = input.liveProviderExecution.contextPacket?.includeSystemdIncidentReceipt === true;
         return {
           ok: true,
           registry: "openclaw-cloud-consciousness-live-provider-egress-execution-task-v0",
@@ -60,6 +61,17 @@ function createHarness({ policyDecision = {} } = {}) {
             id: "provider-handoff-task-1",
             status: "queued",
             cloudConsciousnessLiveProviderEgressExecution: {
+              ...(incidentRequested
+                ? {
+                    systemdIncidentContext: {
+                      registry: "openclaw-systemd-incident-provider-context-v0",
+                      sourceTaskId: "source-task-1",
+                      sourceReceiptHash: `sha256:${"a".repeat(64)}`,
+                      target: { unit: "openclaw-event-hub.service", healthServiceKey: "eventHub" },
+                      restoredHealthy: false,
+                    },
+                  }
+                : {}),
               requestBinding: {
                 provider: "deepseek",
                 model: "deepseek-chat",
@@ -185,6 +197,55 @@ test("provider handoff capability accepts the bounded engineering plan response 
   assert.equal(calls[0].liveProviderExecution.responseContract, CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_PLAN_CONTRACT);
   assert.equal(calls[0].liveProviderExecution.contextPacket.includePlanTodo, true);
   assert.equal(JSON.stringify(created.response).includes("transient plan request"), false);
+});
+
+test("provider handoff capability delegates systemd incident projection to the authoritative task builder", async () => {
+  const { runtime, calls } = createHarness();
+  const created = await runtime.invokeCapability({
+    capabilityId: CAPABILITY_ID,
+    approved: true,
+    params: {
+      confirm: true,
+      liveProviderExecution: {
+        credentialReference: CREDENTIAL_REFERENCE,
+        responseContract: "engineering_recommendation_v0",
+        contextPacket: {
+          requested: true,
+          sourceTaskId: "source-task-1",
+          includeSystemdIncidentReceipt: true,
+        },
+      },
+    },
+  });
+
+  assert.equal(created.response.invoked, true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].liveProviderExecution.requestEnvelope, undefined);
+  assert.equal(calls[0].liveProviderExecution.contextPacket.includeSystemdIncidentReceipt, true);
+  assert.equal(created.response.summary.systemdIncidentContextIncluded, true);
+  assert.equal(created.response.summary.systemdIncidentTargetUnit, "openclaw-event-hub.service");
+  assert.equal(created.response.summary.systemdIncidentRestoredHealthy, false);
+  assert.match(created.response.summary.systemdIncidentReceiptHash, /^sha256:[a-f0-9]{64}$/u);
+
+  const invalid = await runtime.invokeCapability({
+    capabilityId: CAPABILITY_ID,
+    approved: true,
+    params: {
+      confirm: true,
+      liveProviderExecution: {
+        credentialReference: CREDENTIAL_REFERENCE,
+        requestEnvelope: { messages: [{ role: "user", content: "caller override" }] },
+        contextPacket: {
+          requested: true,
+          sourceTaskId: "source-task-1",
+          includeSystemdIncidentReceipt: true,
+        },
+      },
+    },
+  });
+  assert.equal(invalid.statusCode, 400);
+  assert.match(invalid.response.error, /builds its fixed request envelope internally/u);
+  assert.equal(calls.length, 1);
 });
 
 test("provider handoff capability rejects non-DeepSeek or malformed request bindings", async () => {

@@ -47,10 +47,11 @@ function buildLiveProviderExecution(params) {
   const includeWorkView = contextPacket?.includeWorkView === true;
   const includeWorkViewObservation = contextPacket?.includeWorkViewObservation === true;
   const includePlanTodo = contextPacket?.includePlanTodo === true;
+  const includeSystemdIncidentReceipt = contextPacket?.includeSystemdIncidentReceipt === true;
   return {
     requested: true,
     credentialReference: input.credentialReference,
-    requestEnvelope: input.requestEnvelope,
+    ...(input.requestEnvelope ? { requestEnvelope: input.requestEnvelope } : {}),
     responseContract: input.responseContract ?? CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
     contextContentHash: input.contextContentHash ?? null,
     ...(contextPacket
@@ -61,6 +62,7 @@ function buildLiveProviderExecution(params) {
             ...(includeWorkView ? { includeWorkView: true } : {}),
             ...(includeWorkViewObservation ? { includeWorkViewObservation: true } : {}),
             ...(includePlanTodo ? { includePlanTodo: true } : {}),
+            ...(includeSystemdIncidentReceipt ? { includeSystemdIncidentReceipt: true } : {}),
           },
         }
       : {}),
@@ -110,6 +112,7 @@ export function createEngineeringProviderHandoffCapabilityHandlers({
     const task = result?.task;
     const binding = bindingSummary(task);
     const governance = result?.governance ?? {};
+    const incidentContext = task?.cloudConsciousnessLiveProviderEgressExecution?.systemdIncidentContext ?? null;
     return {
       kind: "engineering.provider_handoff_task",
       ok: result?.ok === true,
@@ -126,6 +129,10 @@ export function createEngineeringProviderHandoffCapabilityHandlers({
       credentialReference: binding.credentialReference,
       requestContentIncluded: binding.requestContentIncluded,
       credentialValueIncluded: binding.credentialValueIncluded,
+      systemdIncidentContextIncluded: incidentContext?.registry === "openclaw-systemd-incident-provider-context-v0",
+      systemdIncidentTargetUnit: incidentContext?.target?.unit ?? null,
+      systemdIncidentRestoredHealthy: incidentContext?.restoredHealthy ?? null,
+      systemdIncidentReceiptHash: incidentContext?.sourceReceiptHash ?? null,
       createsTask: governance.createsTask === true,
       createsApproval: governance.createsApproval === true,
       endpointContacted: governance.endpointContacted === true,
@@ -152,15 +159,6 @@ export function createEngineeringProviderHandoffCapabilityHandlers({
     if (input.credentialReference !== DEEPSEEK_CREDENTIAL_REFERENCE) {
       return "Provider handoff credentialReference must use the fixed DeepSeek reference.";
     }
-    if (!input.requestEnvelope || typeof input.requestEnvelope !== "object" || Array.isArray(input.requestEnvelope)) {
-      return "Provider handoff requestEnvelope is required.";
-    }
-    const requestEnvelopeValidation = validateLiveProviderRequestEnvelope({
-      requestEnvelope: input.requestEnvelope,
-    });
-    if (!requestEnvelopeValidation.ok) {
-      return `Provider handoff requestEnvelope is invalid: ${requestEnvelopeValidation.reason}.`;
-    }
     const contextPacket = input.contextPacket;
     if (contextPacket !== undefined
       && (!contextPacket || typeof contextPacket !== "object" || Array.isArray(contextPacket))) {
@@ -169,15 +167,53 @@ export function createEngineeringProviderHandoffCapabilityHandlers({
     if (contextPacket !== undefined && contextPacket.requested !== true) {
       return "Provider handoff contextPacket.requested must be true when provided.";
     }
-    for (const key of ["includeWorkView", "includeWorkViewObservation", "includePlanTodo"]) {
+    for (const key of [
+      "includeWorkView",
+      "includeWorkViewObservation",
+      "includePlanTodo",
+      "includeSystemdIncidentReceipt",
+    ]) {
       if (contextPacket?.[key] !== undefined && typeof contextPacket[key] !== "boolean") {
         return `Provider handoff contextPacket.${key} must be a boolean.`;
       }
     }
+    let sourceTaskId;
     try {
-      normaliseSourceTaskId(contextPacket?.sourceTaskId);
+      sourceTaskId = normaliseSourceTaskId(contextPacket?.sourceTaskId);
     } catch (error) {
       return error instanceof Error ? error.message : "Invalid provider handoff sourceTaskId.";
+    }
+    const includeSystemdIncidentReceipt = contextPacket?.includeSystemdIncidentReceipt === true;
+    if (includeSystemdIncidentReceipt) {
+      if (!sourceTaskId) {
+        return "Provider handoff systemd incident context requires sourceTaskId.";
+      }
+      if (input.requestEnvelope !== undefined) {
+        return "Provider handoff systemd incident context builds its fixed request envelope internally.";
+      }
+      if (input.contextContentHash !== undefined && input.contextContentHash !== null) {
+        return "Provider handoff systemd incident context computes its contextContentHash internally.";
+      }
+      if (contextPacket.includeWorkView === true
+        || contextPacket.includeWorkViewObservation === true
+        || contextPacket.includePlanTodo === true) {
+        return "Provider handoff systemd incident context cannot combine unrelated context selectors.";
+      }
+      if (input.responseContract !== undefined
+        && input.responseContract !== null
+        && input.responseContract !== CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT) {
+        return "Provider handoff systemd incident context requires engineering_recommendation_v0.";
+      }
+    } else {
+      if (!input.requestEnvelope || typeof input.requestEnvelope !== "object" || Array.isArray(input.requestEnvelope)) {
+        return "Provider handoff requestEnvelope is required.";
+      }
+      const requestEnvelopeValidation = validateLiveProviderRequestEnvelope({
+        requestEnvelope: input.requestEnvelope,
+      });
+      if (!requestEnvelopeValidation.ok) {
+        return `Provider handoff requestEnvelope is invalid: ${requestEnvelopeValidation.reason}.`;
+      }
     }
     if (input.contextContentHash !== undefined
       && input.contextContentHash !== null

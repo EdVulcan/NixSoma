@@ -32,6 +32,7 @@ import {
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE,
   materialiseCloudLiveProviderContextPacketExecution,
 } from "./cloud-live-provider-runtime-context-packet.mjs";
+import { materialiseStoredSystemdIncidentProviderExecution } from "./systemd-incident-provider-context.mjs";
 import { readNativeEngineeringWorkViewState } from "./native-engineering-work-view-association.mjs";
 import { buildCapabilityRequestBindingHash } from "./capability-runtime-approval-binding.mjs";
 import { validateWorkspaceCommandAutonomousGrant } from "./workspace-command-autonomy.mjs";
@@ -1430,6 +1431,19 @@ async function buildOperatorOptions(task, body = {}) {
       options[CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE] = materialised.evidence;
     } else {
       options.liveProviderContextPacketError = materialised.reason;
+    }
+  } else if (body.liveProviderExecution === undefined) {
+    const incidentExecution = materialiseStoredSystemdIncidentProviderExecution({
+      handoffTask: task,
+      tasks,
+    });
+    if (incidentExecution.handled) {
+      if (incidentExecution.ok) {
+        options.liveProviderExecution = incidentExecution.liveProviderExecution;
+        options[CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE] = incidentExecution.evidence;
+      } else {
+        options.liveProviderContextPacketError = incidentExecution.reason;
+      }
     }
   }
   return options;

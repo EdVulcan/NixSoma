@@ -19,6 +19,7 @@ Only these documents should guide current route selection:
 | [`OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md`](./OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md) | Bounded Level 2 browser/work-view contract. |
 | [`OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md`](./OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md) | Operator identity, per-service credentials, and execution grants. |
 | [`OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md`](./OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Fixed Level 3 restart owners and bounded journal diagnosis. |
+| [`OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md) | Exact request-bound, guidance-only AI diagnosis from a compact terminal repair receipt. |
 | [`OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md`](./OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Declarative-evolution evidence and deferred activation boundary. |
 | [`OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md`](./OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md) | Measured validation, runtime, and review debt that blocks the mainline. |
 
@@ -28,8 +29,8 @@ The kernel whitepaper remains the long-horizon authority:
 ## Current Route
 
 Completed capability families must not be reopened for another wrapper,
-readiness marker, readback mirror, or horizontal variant. The immediate route
-is:
+readiness marker, readback mirror, or horizontal variant. The completed Level 3
+diagnosis route is:
 
 ```text
 bound Event Hub audit-log memory and retention
@@ -37,11 +38,15 @@ bound Event Hub audit-log memory and retention
 -> reuse the existing fixed restart owner
 -> verify post-repair health
 -> expose task and Observer evidence
+-> project the compact terminal receipt through the approved DeepSeek handoff
+-> return one transient structured recommendation
 ```
 
-This route advances the Level 3 body loop without widening hostd authority.
-Real generation activation, rollback, arbitrary systemd control, desktop-wide
-capture, and automatic provider egress remain deferred.
+This route advances the Level 3 body loop without widening hostd authority and
+without introducing a new provider response schema. The immediate next real
+capability is local, bounded incident experience recall through the existing
+advisory memory owner. Real generation activation, rollback, arbitrary systemd
+control, desktop-wide capture, and automatic provider egress remain deferred.
 
 ## Completed Capability Evidence
 

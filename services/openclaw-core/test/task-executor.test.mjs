@@ -14,6 +14,8 @@ import { buildWorkspaceCommandAutonomousGrant } from "../src/workspace-command-a
 import { buildBrowserTaskExecutionBinding } from "../src/browser-task-execution-binding.mjs";
 import { DELEGATED_PLAN_TASK_HANDLER_DESCRIPTORS } from "../src/task-executor-delegated-plan-handlers.mjs";
 import { CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE } from "../src/cloud-live-provider-runtime-context-packet.mjs";
+import { buildSystemdIncidentProviderContext } from "../src/systemd-incident-provider-context.mjs";
+import { createSystemdIncidentRepairTask } from "./systemd-incident-fixture.mjs";
 
 const DELEGATED_NON_RECOVERABLE_TASK_HANDLERS = DELEGATED_PLAN_TASK_HANDLER_DESCRIPTORS.map(
   ({ name, predicate, execute }) => [name, predicate, execute],
@@ -2826,6 +2828,64 @@ test("operator options materialise the existing context packet for live provider
   assert.equal(options.liveProviderExecution.requestEnvelope.messages.length, 1);
   assert.match(options.liveProviderExecution.requestEnvelope.messages[0].content, /npm test/);
   assert.match(options.liveProviderExecution.requestEnvelope.messages[0].content, /provider context evidence/);
+});
+
+test("approved systemd incident handoff reconstructs its exact provider request for Operator Step", async () => {
+  const sourceTask = createSystemdIncidentRepairTask();
+  const incident = buildSystemdIncidentProviderContext({ sourceTask });
+  assert.equal(incident.ok, true, incident.reason);
+  let capturedOptions = null;
+  const { executor, state } = createExecutorHarness({
+    planBuilder: {
+      isCloudConsciousnessLiveProviderEgressExecutionTask: (task) => (
+        task?.type === "cloud_consciousness_live_provider_egress_execution_task"
+      ),
+      executeCloudConsciousnessLiveProviderEgressExecutionTask: async (task, options) => {
+        capturedOptions = options;
+        task.status = "completed";
+        task.outcome = {
+          kind: "completed",
+          details: { contextPacket: options[CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE] },
+        };
+        return { task, contextPacket: task.outcome.details.contextPacket };
+      },
+    },
+  });
+  const handoffTask = {
+    id: "systemd-incident-provider-task-1",
+    type: "cloud_consciousness_live_provider_egress_execution_task",
+    status: "queued",
+    approval: { requestId: "systemd-incident-provider-approval-1" },
+    policy: { decision: { decision: "allow", reason: "approved_test_task" } },
+    cloudConsciousnessLiveProviderEgressExecution: {
+      registry: "openclaw-cloud-consciousness-live-provider-egress-execution-task-v0",
+      systemdIncidentContext: incident.projection,
+      incidentContextContentHash: incident.contextContentHash,
+    },
+  };
+  state.tasks.set(sourceTask.id, sourceTask);
+  state.tasks.set(handoffTask.id, handoffTask);
+  state.approvals.set("systemd-incident-provider-approval-1", {
+    id: "systemd-incident-provider-approval-1",
+    status: "approved",
+  });
+
+  const result = await executor.runOperatorStep({});
+
+  assert.equal(result.ran, true);
+  assert.equal(result.task.status, "completed");
+  assert.equal(capturedOptions.liveProviderExecution.requested, true);
+  assert.equal(capturedOptions.liveProviderExecution.taskId, handoffTask.id);
+  assert.equal(capturedOptions.liveProviderExecution.contextPacket.sourceTaskId, sourceTask.id);
+  assert.equal(capturedOptions.liveProviderExecution.authorization.liveProviderCallEnabled, true);
+  assert.equal(
+    capturedOptions[CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE].systemdIncidentContextIncluded,
+    true,
+  );
+  assert.doesNotMatch(
+    capturedOptions.liveProviderExecution.requestEnvelope.messages[0].content,
+    /private-health|private diagnostic|hostd-private-invocation/u,
+  );
 });
 
 test("operator options carry explicitly requested work-view observation and plan/todo context", async () => {

@@ -338,12 +338,26 @@ binding, and fail-closed handling when systemd is running but the application
 remains unhealthy. Installed real-mutation checks are updated as future release
 gates but are not executed on the sole physical host.
 
+## Ninth Slice: Governed Incident AI Handoff
+
+The compact incident receipt now enters the existing explicitly approved
+DeepSeek handoff through
+`OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md`. Core verifies the terminal
+repair task and receipt hash, projects only bounded health, journal counts,
+native mutation summary, and restored state, and binds the exact generated
+request before approval. Operator execution reconstructs the same request from
+the authoritative source task and fails closed on source or projection drift.
+
+This slice reuses `engineering_recommendation_v0`; it does not create a
+systemd-specific provider schema. Journal messages, service URLs, errors,
+credentials, hostd invocation identity, and raw job paths do not leave the
+host. The recommendation remains transient and cannot create or approve a
+repair task, invoke hostd, retry a restart, activate a generation, or roll back
+the host. No real provider contact was executed on the sole physical host.
+
 ## Next Slice
 
-Return to the AI-governance mainline instead of adding another Level 3 repair
-wrapper. The smallest next real capability is to project this compact incident
-receipt into the existing explicitly approved DeepSeek context handoff and
-receive a structured, guidance-only diagnosis recommendation. Reuse the current
-provider approval, request binding, recommendation bridge, and Observer surface;
-do not send journal messages, create a provider schema family, automatically
-create or approve a repair task, invoke hostd, or expand system authority.
+Advance experience-based diagnosis through one bounded local incident-memory
+record derived from terminal receipts and recalled for a later matching target.
+Reuse the existing advisory experience-memory owner; do not retain journal text
+or provider output, automatically contact a provider, or authorize repair.
