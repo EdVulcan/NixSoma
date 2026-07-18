@@ -19,6 +19,7 @@ import { createNativeEngineeringExperienceMemory } from "./native-engineering-ex
 import { createOperatorAuthenticator } from "./operator-auth.mjs";
 import { createExecutionGrantSigner } from "../../../packages/shared-utils/src/execution-grants.mjs";
 import { createFixedUnitIncidentScheduler } from "./fixed-unit-incident-scheduler.mjs";
+import { createFixedUnitIncidentApprovedDispatcher } from "./fixed-unit-incident-approved-dispatch.mjs";
 
 // configure state & client
 const host = process.env.OPENCLAW_CORE_HOST ?? "127.0.0.1";
@@ -144,6 +145,16 @@ executor = createTaskExecutor({
   policyEvaluator,
   publishEvent,
 });
+const dispatchApprovedFixedUnitRepair = createFixedUnitIncidentApprovedDispatcher({
+  tasks: state.tasks,
+  approvals: state.approvals,
+  schedulerState: state.fixedUnitIncidentSchedulerState,
+  realExecutionRegistry: state.SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_REGISTRY,
+  executeTaskWithRecovery: (task, options) => executor.executeTaskWithRecovery(task, options),
+  failTask: (task, reason, details) => taskManager.failTask(task, reason, details),
+  persistState: state.persistState,
+  publishAuditEvent,
+});
 
 // register routes
 const handleRequest = registerRoutes({
@@ -168,6 +179,7 @@ const handleRequest = registerRoutes({
   systemSenseUrl,
   systemHealUrl,
   operatorAuth,
+  dispatchApprovedFixedUnitRepair,
   buildExperienceMemoryReadModel: (...args) => experienceMemory.buildExperienceMemoryReadModel(...args),
 });
 

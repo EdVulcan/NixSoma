@@ -26,7 +26,10 @@ Core starts with an explicitly configured interval
 -> revalidate the entire source chain against current scheduler state
 -> create one existing fixed-target real repair task and pending approval
 -> let the operator explicitly approve or deny that exact task
--> stop before Operator execution or hostd invocation
+-> after approval, revalidate source, promotion, task, target, and approval
+-> audit and reserve one automatic dispatch without recovery/retry
+-> execute once through the existing fixed-target Executor and hostd boundary
+-> retain the existing incident receipt and post-repair health evidence
 ```
 
 The NixOS module enables the scheduler by default at a five-minute interval.
@@ -43,7 +46,8 @@ fixed unit. Unknown persisted units are discarded. Recovery clears the active
 fingerprint and derived workflow state, so a later regression creates a new
 incident; a Core restart does not duplicate an unchanged incident. Transient
 triage or promotion failure retains only a fixed error code and is retried on
-the next unchanged unhealthy tick.
+the next unchanged unhealthy tick. Approved dispatch persists a compact
+reservation and terminal outcome; it never retains Executor error text.
 
 ## Authority Boundary
 
@@ -71,6 +75,15 @@ the next unchanged unhealthy tick.
   real-execution shape, but returns while its approval is still pending. It
   neither approves the task nor invokes Operator, hostd, activation, rollback,
   or a provider.
+- Approval resolution invokes the dispatch coordinator only for a
+  scheduler-triggered automatic promotion. Generic and manually promoted tasks
+  are ignored.
+- The coordinator revalidates the current incident, triage and promotion hashes,
+  exact approval/task binding, fixed hostd capability, and real-execution shape,
+  then requires a successful audit before persisting one dispatch reservation.
+- The systemd Executor requires that reservation for automatic promotions, so
+  a stale, audit-blocked, failed, or directly invoked task cannot bypass the
+  coordinator. Execution uses no automatic recovery or retry.
 
 ## Evidence
 
@@ -80,10 +93,10 @@ the next unchanged unhealthy tick.
 - real task-manager extension serialization and Core-state restoration tests;
 - generated Observer client syntax, compact task-detail assertions, and the
   explicit Triage action;
-- `876/876` workspace tests and full typecheck;
+- `882/882` workspace tests and full typecheck;
 - 811-entry milestone registry, script audit, and 160-character Windows path
   budget;
-- full `dev-body-config-check.sh`, including exact 221-file Core and 77-file
+- full `dev-body-config-check.sh`, including exact 222-file Core and 77-file
   Observer Nix closures.
 
 The validated source baseline was switched onto the physical host as generation
@@ -96,15 +109,14 @@ used.
 ## Deferred
 
 - automatic provider diagnosis;
-- automatic approval resolution or repair execution;
+- automatic approval resolution;
 - arbitrary systemd targets;
 - real activation and rollback validation in a disposable mutation environment.
 
 ## Next Real Capability
 
-After explicit approval of the automatically promoted fixed-target repair task,
-dispatch that exact task through the existing Executor once without requiring a
-second operator command. Revalidate approval, task, source fingerprint, target,
-and execution binding immediately before dispatch. Never dispatch a pending,
-denied, expired, changed, or already-consumed task, and keep provider,
-activation, and rollback disabled.
+Reconcile an approved dispatch across Core restart without replaying a possible
+host mutation. A persisted queued `reserved` task may resume only when evidence
+proves Executor execution never started; a persisted `running` task must fail
+closed with explicit operator recovery. Keep automatic retry, second restart,
+provider, activation, and rollback disabled.

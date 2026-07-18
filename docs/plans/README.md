@@ -60,17 +60,20 @@ bound Event Hub audit-log memory and retention
 -> create one completed triage evidence task without approval or execution
 -> automatically promote that triage into one pending fixed-target repair approval
 -> require explicit operator approval or denial
+-> after approval, reserve and dispatch that exact task once through Executor
+-> preserve the existing post-repair health and incident receipt
 ```
 
 This route advances the Level 3 body loop without widening hostd authority and
 without introducing a new provider response schema. The deployed baseline is
 proven through non-mutating health, auth, scheduler, and Observer probes, and
-automatic local triage and pending repair promotion are complete in source. The
-immediate next real capability is one-shot Executor dispatch after explicit
-approval of that exact task; pending, denied, expired, changed, or consumed
-tasks remain inert. Real hostd mutation, generation activation/rollback,
-arbitrary systemd control, desktop-wide capture, and automatic provider egress
-remain deferred.
+automatic local triage, pending repair promotion, and approval-triggered
+one-shot dispatch are complete in source. The immediate next real capability is
+restart reconciliation for a persisted approved dispatch: resume only a queued
+reservation proven not to have entered Executor, and fail interrupted running
+work closed. Real hostd mutation, generation activation/rollback, arbitrary
+systemd control, desktop-wide capture, and automatic provider egress remain
+deferred.
 
 ## Completed Capability Evidence
 

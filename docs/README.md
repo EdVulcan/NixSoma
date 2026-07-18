@@ -13,8 +13,8 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current `main` through the Level 3 fixed-unit incident scheduler, automatic local triage/promotion, and governed repair/diagnosis loop | Implemented; commit history is authoritative |
-| Local validation | 876 workspace tests and typecheck pass; body-config and event-audit integration pass; 811 registry entries pass | Validated |
+| Capability source | Current `main` through the Level 3 fixed-unit incident scheduler, automatic local triage/promotion, and approval-triggered one-shot repair dispatch | Implemented; commit history is authoritative |
+| Local validation | 882 workspace tests and typecheck pass; body-config and event-audit integration pass; 811 registry entries pass | Validated |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/gb72w3qavm6b0vv114ml723g7y8jv5qh-nixos-system-nixos-26.05.4808.569d57850992` | Current source baseline deployed 2026-07-18 |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
@@ -84,6 +84,10 @@ The completed bounded frontier is:
   scheduler chain and creates or reuses the existing fixed-target real repair
   task with one pending approval, without approval resolution or hostd
   invocation.
+- One approval-triggered dispatch coordinator that revalidates and reserves the
+  exact automatic repair task, then enters the existing Executor once with
+  automatic recovery disabled. The systemd handler rejects automatic tasks
+  without that reservation.
 
 Real repair execution and rollback remain unproven on a disposable mutation
 environment. Level 4 graphics-stack ownership remains future work.
@@ -120,6 +124,8 @@ body health + bounded journal evidence
 -> automatic local triage bound to the current repair draft
 -> automatic promotion into one pending fixed-target repair approval
 -> explicit operator approval or denial
+-> one-shot approved dispatch through the existing fixed hostd executor
+-> post-repair health and incident receipt
 ```
 
 Do not broaden hostd into arbitrary systemd control or add another provider
@@ -127,11 +133,12 @@ readiness wrapper. The validated source baseline is now deployed: all service
 health probes returned 200, anonymous protected reads/mutations returned 401,
 the journal endpoint is live, Observer contains both incident controls, and the
 first scheduler tick observed all fixed targets healthy. Automatic low-risk
-local triage and pending repair promotion are complete in source. The next real
-capability is one-shot Executor dispatch after explicit approval, removing the
-second operator command while preserving the approval boundary. Real hostd
-mutation, generation rollback, and a promoted repair receipt remain deferred
-to a disposable mutation environment.
+local triage, pending repair promotion, and one-shot dispatch after explicit
+approval are complete in source. The next real capability is restart-safe
+reconciliation of a reserved approved dispatch, distinguishing a safe queued
+resume from a fail-closed interrupted execution. This source baseline is not
+deployed; real hostd mutation and generation rollback remain deferred to an
+explicit/disposable mutation check.
 
 ## Progress Estimate
 

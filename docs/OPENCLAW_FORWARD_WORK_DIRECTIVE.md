@@ -47,7 +47,7 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, and the local fixed-unit incident scheduler and
-triage/repair-promotion bridge. All 876 workspace tests and typecheck pass, the
+triage/repair-promotion bridge. All 882 workspace tests and typecheck pass, the
 body-config and event-audit integration checks pass, the 811-entry milestone
 registry audit passes, and the Windows path budget has no file over 160
 repository-relative characters.
@@ -1628,16 +1628,22 @@ triage state. The scheduler then automatically calls the existing promotion
 owner, which revalidates the triage, incident, fingerprint, current scheduler
 state, fixed unit, and hostd capability before creating or reusing one real
 repair task and pending approval. Promotion failure is compact and retryable.
-It does not approve, execute, invoke hostd, call a provider, activate a
-generation, or roll one back.
+It does not approve or execute. After explicit approval, the fixed-unit dispatch
+coordinator revalidates the current source, triage/promotion hashes, exact
+approval/task binding, fixed target, and real-execution shape. A required audit
+precedes one persisted reservation and a single existing Executor call with
+automatic recovery disabled. The systemd handler rejects automatic promotions
+without that reservation, closing direct Operator-step bypass after stale or
+audit-blocked dispatch.
 
 Freeze the provider/systemd diagnosis lane and do not add another evidence
-wrapper. Automatic low-risk local triage and pending repair promotion are
-complete. The next real capability is one-shot dispatch of that exact repair
-task through the existing Executor after explicit approval, without a second
-operator command. Revalidate the current source and exact approval/execution
-binding, and keep pending, denied, expired, changed, or consumed tasks inert.
-Real promoted repair execution requires a disposable mutation environment.
+wrapper. Automatic low-risk local triage, pending repair promotion, and
+approval-triggered one-shot dispatch are complete in source. The next real
+capability is restart reconciliation for the persisted dispatch reservation:
+resume a queued task only when execution provably never started, and fail a
+persisted running task closed with explicit recovery. Do not add automatic
+retry or a second restart attempt. Real promoted repair execution requires an
+explicit/disposable mutation environment.
 
 ## Operator Identity And Mutation Boundary Checkpoint
 

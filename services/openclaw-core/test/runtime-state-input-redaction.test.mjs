@@ -112,6 +112,15 @@ test("core state persists and restores fixed-unit incident scheduler dedupe stat
           code: "automatic_repair_promotion_failed",
           at: "2026-07-18T14:32:00.000Z",
         },
+        repairDispatchTaskId: "repair-task-1",
+        repairDispatchStatus: "failed",
+        repairDispatchAt: "2026-07-18T14:33:00.000Z",
+        repairDispatchCompletedAt: "2026-07-18T14:34:00.000Z",
+        repairDispatchOutcomeStatus: null,
+        repairDispatchFailure: {
+          code: "automatic_repair_dispatch_failed",
+          at: "2026-07-18T14:34:00.000Z",
+        },
       },
     },
   });
@@ -148,5 +157,13 @@ test("core state persists and restores fixed-unit incident scheduler dedupe stat
   assert.equal(
     restored.fixedUnitIncidentSchedulerState.units["openclaw-system-heal.service"].repairPromotionFailure.code,
     "automatic_repair_promotion_failed",
+  );
+  assert.equal(
+    restored.fixedUnitIncidentSchedulerState.units["openclaw-system-heal.service"].repairDispatchStatus,
+    "failed",
+  );
+  assert.equal(
+    restored.fixedUnitIncidentSchedulerState.units["openclaw-system-heal.service"].repairDispatchFailure.code,
+    "automatic_repair_dispatch_failed",
   );
 });

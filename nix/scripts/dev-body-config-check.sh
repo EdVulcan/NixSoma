@@ -652,6 +652,7 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-closure-integrity.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/fixed-unit-incident-scheduler.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/fixed-unit-incident-triage.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/fixed-unit-incident-approved-dispatch.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-health-gate.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-host-health-oracle.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-rollback-evidence.mjs"
@@ -679,7 +680,7 @@ EOF
     || -w "$core_server"
     || -e "$core_out/share/openclaw/services/openclaw-core/test"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 221 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 222 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi

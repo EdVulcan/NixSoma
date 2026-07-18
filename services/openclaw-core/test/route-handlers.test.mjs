@@ -1013,6 +1013,49 @@ test("approval approve route publishes approval event and serialises contracts",
   });
 });
 
+test("approval route dispatches only the approved task through the injected fixed-unit coordinator", async () => {
+  const approval = { id: "approval-auto-repair", status: "pending" };
+  const task = { id: "task-auto-repair", status: "queued" };
+  const order = [];
+  const deps = createBaseDeps({
+    state: { approvals: new Map([[approval.id, approval]]) },
+    approvalEngine: {
+      serialiseApproval: (item) => ({ id: item.id, status: item.status }),
+      buildApprovalSummary: () => ({ counts: { approved: 1 } }),
+      markApprovalApproved: (item) => {
+        item.status = "approved";
+        return { approval: item, task };
+      },
+    },
+    taskManager: {
+      serialiseTask: (item) => ({ id: item.id, status: item.status }),
+    },
+    deps: {
+      publishEvent: async () => { order.push("approval-event"); },
+      dispatchApprovedFixedUnitRepair: async (input) => {
+        order.push("automatic-dispatch");
+        assert.equal(input.task, task);
+        assert.equal(input.approval, approval);
+        return {
+          registry: "openclaw-fixed-unit-incident-approved-dispatch-v0",
+          eligible: true,
+          dispatched: true,
+          status: "completed",
+          code: null,
+          taskId: task.id,
+        };
+      },
+    },
+  });
+
+  const response = await invokeRoute(deps, "POST", `/approvals/${approval.id}/approve`, {});
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(order, ["approval-event", "automatic-dispatch"]);
+  assert.equal(response.body.automaticDispatch.dispatched, true);
+  assert.equal(response.body.automaticDispatch.taskId, task.id);
+});
+
 test("approval deny route publishes task failure when denial fails a task", async () => {
   const approval = { id: "approval-deny", status: "pending" };
   const task = { id: "task-deny", status: "queued" };

@@ -441,6 +441,11 @@ test("fixed-unit scheduler creates a new task after recovery and regression", as
   const unit = responses.inventory.units.find((candidate) => candidate.unit === "openclaw-system-sense.service");
   assert.equal(harness.scheduler.readState().units[unit.unit].triageStatus, "completed");
   assert.equal(harness.scheduler.readState().units[unit.unit].repairPromotionStatus, "completed");
+  Object.assign(harness.schedulerState.units[unit.unit], {
+    repairDispatchTaskId: harness.schedulerState.units[unit.unit].latestRepairTaskId,
+    repairDispatchStatus: "reserved",
+    repairDispatchAt: "2026-07-18T14:30:00.000Z",
+  });
   unit.activeState = "active";
   unit.subState = "running";
   await harness.scheduler.tick();
@@ -452,6 +457,9 @@ test("fixed-unit scheduler creates a new task after recovery and regression", as
   assert.equal(harness.scheduler.readState().units[unit.unit].repairApprovalStatus, null);
   assert.equal(harness.scheduler.readState().units[unit.unit].repairPromotionStatus, null);
   assert.equal(harness.scheduler.readState().units[unit.unit].repairPromotionFailure, null);
+  assert.equal(harness.scheduler.readState().units[unit.unit].repairDispatchTaskId, null);
+  assert.equal(harness.scheduler.readState().units[unit.unit].repairDispatchStatus, null);
+  assert.equal(harness.scheduler.readState().units[unit.unit].repairDispatchAt, null);
   markUnhealthy(responses, "openclaw-system-sense.service");
   await harness.scheduler.tick();
 

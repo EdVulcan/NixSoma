@@ -154,6 +154,23 @@ function normaliseUnitSchedulerState(value) {
           at: compactTimestamp(value.repairPromotionFailure.at),
         }
       : null,
+    repairDispatchTaskId: typeof value.repairDispatchTaskId === "string" && value.repairDispatchTaskId.trim()
+      ? value.repairDispatchTaskId.trim()
+      : null,
+    repairDispatchStatus: ["reserved", "completed", "failed"].includes(value.repairDispatchStatus)
+      ? value.repairDispatchStatus
+      : null,
+    repairDispatchAt: compactTimestamp(value.repairDispatchAt),
+    repairDispatchCompletedAt: compactTimestamp(value.repairDispatchCompletedAt),
+    repairDispatchOutcomeStatus: ["completed", "failed"].includes(value.repairDispatchOutcomeStatus)
+      ? value.repairDispatchOutcomeStatus
+      : null,
+    repairDispatchFailure: value.repairDispatchFailure?.code === "automatic_repair_dispatch_failed"
+      ? {
+          code: "automatic_repair_dispatch_failed",
+          at: compactTimestamp(value.repairDispatchFailure.at),
+        }
+      : null,
   };
 }
 
@@ -275,6 +292,12 @@ export function createFixedUnitIncidentScheduler({
         repairApprovalStatus: unhealthy && !newIncident ? prior.repairApprovalStatus ?? null : null,
         repairPromotionStatus: unhealthy && !newIncident ? prior.repairPromotionStatus ?? null : null,
         repairPromotionFailure: unhealthy && !newIncident ? prior.repairPromotionFailure ?? null : null,
+        repairDispatchTaskId: unhealthy && !newIncident ? prior.repairDispatchTaskId ?? null : null,
+        repairDispatchStatus: unhealthy && !newIncident ? prior.repairDispatchStatus ?? null : null,
+        repairDispatchAt: unhealthy && !newIncident ? prior.repairDispatchAt ?? null : null,
+        repairDispatchCompletedAt: unhealthy && !newIncident ? prior.repairDispatchCompletedAt ?? null : null,
+        repairDispatchOutcomeStatus: unhealthy && !newIncident ? prior.repairDispatchOutcomeStatus ?? null : null,
+        repairDispatchFailure: unhealthy && !newIncident ? prior.repairDispatchFailure ?? null : null,
       };
     }
     Object.assign(state, {

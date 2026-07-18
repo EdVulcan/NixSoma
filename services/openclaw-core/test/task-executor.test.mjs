@@ -2029,6 +2029,49 @@ test("systemd next repair task dispatches to deferred non-recoverable handler", 
   assert(events.some((event) => event.name === "systemd.next_repair.execution_deferred"));
 });
 
+test("automatic fixed-unit repair cannot bypass its approved dispatch reservation", async () => {
+  let hostdCalls = 0;
+  const { executor } = createExecutorHarness({
+    state: {
+      HOSTD_SOCKET_PATH: "/run/openclaw/hostd.sock",
+      SYSTEMD_REPAIR_AUTH_DELEGATION: "polkit-dbus-fixed-unit",
+      fixedUnitIncidentSchedulerState: { units: {} },
+    },
+    deps: {
+      hostdControlClient: async () => {
+        hostdCalls += 1;
+        return { ok: true };
+      },
+    },
+  });
+  const task = {
+    id: "automatic-repair-without-reservation",
+    type: "systemd_next_repair_task",
+    status: "queued",
+    approval: { requestId: "approval-auto", status: "approved" },
+    systemdIncidentRepairPromotion: {
+      registry: "openclaw-fixed-unit-incident-repair-promotion-v0",
+      mode: "automatic_approval_gated_repair_task_creation",
+      trigger: "scheduler",
+      triageTaskId: "triage-auto",
+      targetUnit: "openclaw-system-heal.service",
+    },
+    systemdNextRepair: {
+      registry: "openclaw-systemd-next-repair-real-execution-v0",
+      target: { unit: "openclaw-system-heal.service" },
+      command: { command: "systemctl", args: ["restart", "openclaw-system-heal.service"] },
+      execution: { realExecutionEnabled: true },
+    },
+  };
+
+  await assert.rejects(
+    () => executor.executeTaskWithRecovery(task, { autoRecover: false }),
+    /requires its current approved dispatch reservation/u,
+  );
+  assert.equal(hostdCalls, 0);
+  assert.equal(task.status, "queued");
+});
+
 test("approved next systemd repair executes only through the fixed hostd boundary", async () => {
   let inventoryCalls = 0;
   let journalCalls = 0;

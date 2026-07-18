@@ -10,7 +10,16 @@ function approvalIdFromPath(pathname, suffix) {
   return pathname.slice("/approvals/".length, -suffix.length);
 }
 
-export async function handleApprovalRoute({ req, res, requestUrl, state, approvalEngine, taskManager, publishEvent }) {
+export async function handleApprovalRoute({
+  req,
+  res,
+  requestUrl,
+  state,
+  approvalEngine,
+  taskManager,
+  publishEvent,
+  dispatchApprovedFixedUnitRepair = null,
+}) {
   const {
     serialiseApproval,
     listApprovals,
@@ -70,11 +79,25 @@ export async function handleApprovalRoute({ req, res, requestUrl, state, approva
         approval: serialiseApproval(result.approval),
         task: result.task ? serialiseTask(result.task) : null,
       });
+      const automaticDispatch = result.task && typeof dispatchApprovedFixedUnitRepair === "function"
+        ? await dispatchApprovedFixedUnitRepair({
+            task: result.task,
+            approval: result.approval,
+          }).catch(() => ({
+            registry: "openclaw-fixed-unit-incident-approved-dispatch-v0",
+            eligible: true,
+            dispatched: false,
+            status: "blocked",
+            code: "automatic_repair_dispatch_failed",
+            taskId: result.task.id,
+          }))
+        : null;
       sendJson(res, 200, {
         ok: true,
         approval: serialiseApproval(result.approval),
         task: result.task ? serialiseTask(result.task) : null,
         summary: buildApprovalSummary(),
+        ...(automaticDispatch ? { automaticDispatch } : {}),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

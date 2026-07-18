@@ -15,6 +15,10 @@ function bindingHash(binding) {
   return `sha256:${createHash("sha256").update(JSON.stringify(binding)).digest("hex")}`;
 }
 
+export function hashFixedUnitIncidentRepairPromotionBinding(binding) {
+  return bindingHash(binding);
+}
+
 function sourceTaskId(value) {
   if (typeof value !== "string" || !value.trim() || value.length > 128) {
     throw new Error("Fixed-unit incident triage requires a bounded sourceTaskId.");
@@ -384,7 +388,7 @@ export function createFixedUnitIncidentTriageBuilders({
       trigger: automatic ? "scheduler" : "operator",
       createdAt,
       ...promotionBinding,
-      bindingHash: bindingHash(promotionBinding),
+      bindingHash: hashFixedUnitIncidentRepairPromotionBinding(promotionBinding),
       governance: {
         risk: "high",
         requiresApproval: true,

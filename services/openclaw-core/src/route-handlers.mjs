@@ -25,7 +25,7 @@ import { handleWorkspaceNativeOpsRoute } from "./workspace-native-ops-routes.mjs
 import { handleWorkspacePluginReadRoute } from "./workspace-plugin-read-routes.mjs";
 
 export function registerRoutes(deps) {
-  const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl, readWorkViewState, buildExperienceMemoryReadModel, operatorAuth } = deps;
+  const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl, readWorkViewState, buildExperienceMemoryReadModel, operatorAuth, dispatchApprovedFixedUnitRepair } = deps;
 
   const { reconcileApprovalExpirations, serialiseApproval } = approvalEngine;
   const { buildTaskSummary, serialiseTask } = taskManager;
@@ -272,7 +272,16 @@ export function registerRoutes(deps) {
       return;
     }
 
-    if (await handleApprovalRoute({ req, res, requestUrl, state, approvalEngine, taskManager, publishEvent })) {
+    if (await handleApprovalRoute({
+      req,
+      res,
+      requestUrl,
+      state,
+      approvalEngine,
+      taskManager,
+      publishEvent,
+      dispatchApprovedFixedUnitRepair,
+    })) {
       return;
     }
 

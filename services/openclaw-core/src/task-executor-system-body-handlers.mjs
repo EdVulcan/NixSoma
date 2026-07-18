@@ -5,6 +5,7 @@ import { createEventName } from "../../../packages/shared-events/src/event-facto
 import { hostdRestartCapabilityForTarget } from "../../../packages/shared-systemd/src/openclaw-hostd-capabilities.mjs";
 import { requestHostdRestart } from "./hostd-control-client.mjs";
 import { createSystemdRepairVerification } from "./systemd-repair-verification.mjs";
+import { validateAutomaticFixedUnitRepairDispatchReservation } from "./fixed-unit-incident-approved-dispatch.mjs";
 
 export function createSystemBodyTaskHandlers({
   client,
@@ -26,6 +27,7 @@ export function createSystemBodyTaskHandlers({
     SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_REGISTRY,
     SYSTEMD_REPAIR_REAL_EXECUTION_UNIT,
     SYSTEMD_NEXT_REPAIR_REAL_EXECUTION_UNIT,
+    fixedUnitIncidentSchedulerState = {},
     BODY_EVIDENCE_LEDGER_DIR,
     BODY_EVIDENCE_LEDGER_FILE_PATH,
   } = state;
@@ -921,6 +923,13 @@ export function createSystemBodyTaskHandlers({
     const targetCapability = hostdRestartCapabilityForTarget(targetUnit);
     if (!targetCapability) {
       throw new Error(`Next real systemd repair execution is not supported by hostd for ${targetUnit}.`);
+    }
+    const automaticReservation = validateAutomaticFixedUnitRepairDispatchReservation(
+      task,
+      fixedUnitIncidentSchedulerState,
+    );
+    if (!automaticReservation.ok) {
+      throw new Error("Automatic fixed-unit repair execution requires its current approved dispatch reservation.");
     }
 
     const command = task.systemdNextRepair?.command ?? {};
