@@ -19,6 +19,7 @@ The expert review items are considered complete only when each item has code-lev
 | Event schema duplication C2 | `OpenClawEvent<T>` and `EventSchema` described the same event payload contract independently. | Complete | `EventSchema<T>` reuses `OpenClawEvent<T>` payload typing from shared-types. |
 | Shared package engineering E3 | Shared packages lacked independent tsconfig/barrel/type declarations. | Complete | Shared package `tsconfig.json` files, barrel entries, and `shared-utils` declarations added. |
 | Unit tests E2 | No focused unit tests existed for shared packages or services. | Complete, focused service-layer and dispatch coverage established | Node built-in tests added for plugin runtime, shared-events, shared-utils, and `openclaw-core` policy evaluation, service-client behavior, route handler contract helpers, task-executor read models, delegated non-recoverable dispatch, internal deferred dispatch, capability-plan dispatch, and representative systemd/body-evidence deferred dispatch. |
+| Event Hub audit-log memory | Development audit queries and summaries read and split the entire JSONL file; the default `.artifacts` log has reached hundreds of MiB and can create a large transient heap spike. | Open, mainline blocker | `services/openclaw-event-hub/src/server.mjs` `readAuditEvents()` and `buildAuditSummary()` use whole-file `readFile`; replace this with bounded streaming/index/retention behavior and focused large-log tests before the next Level 3 feature slice. |
 | Shared-client empty shell C5 | `shared-client` only exported tiny service constants. | Complete | `service-descriptors` now provides typed and runtime service ids, default ports, URL env vars, and resolver helpers; core and Observer consume the shared runtime descriptors for defaults. |
 | Shared-events identity helper C5 | `createEventName` was a no-op identity function. | Complete | Runtime and typed event factory validate names against `eventNames`; shared registry now covers existing maintenance, screen-act, command, body evidence, long-term memory, cloud-consciousness, and systemd repair publish events; core route/task/plan publish call sites and non-core service publish call sites now use registry-backed event names. |
 | Root package script redundancy E1/P2 | `package.json` had many hard-coded `dev:*check:unix` milestone scripts. | Complete | Root scripts reduced to one milestone runner plus stable lifecycle/smoke aliases; `dev-milestone-check.sh` accepts milestone names as npm args. |
@@ -170,6 +171,7 @@ The expert review items are considered complete only when each item has code-lev
 
 ## Next Expert Items After This Slice
 
-1. Continue state-reuse and batch-reuse inventory for remaining long-running milestone lanes without weakening real service assertions.
-2. Keep adding focused service-layer unit tests for real-execution branches only when those branches are touched or can be safely isolated without host mutation.
-3. Keep moving remaining core helper-module event names behind the shared registry as those modules are touched.
+1. Remove the Event Hub whole-file audit read/split path and establish bounded retention or indexing with large-log regression coverage.
+2. Continue state-reuse and batch-reuse inventory for remaining long-running milestone lanes without weakening real service assertions.
+3. Keep adding focused service-layer unit tests for real-execution branches only when those branches are touched or can be safely isolated without host mutation.
+4. Keep moving remaining core helper-module event names behind the shared registry as those modules are touched.

@@ -35,10 +35,17 @@ docs/       Local design notes and implementation references
 
 ## Status
 
-The repository now includes the first runnable service pair:
+The repository now contains the full bounded local control plane listed above,
+plus the system-owned `openclaw-hostd` boundary. The current capability
+baseline includes governed engineering tools, the trusted browser/work-view
+loop, per-service identity and execution grants, three fixed systemd repair
+targets, Phase D declarative-evolution evidence, and bounded read-only journal
+diagnosis.
 
-1. `openclaw-event-hub`
-2. `openclaw-core`
+Source completion, validation, and deployment are tracked separately in the
+[documentation control room](./docs/README.md). A capability implemented at the
+repository HEAD is not considered deployed until the installed NixOS generation
+and a live capability probe confirm it.
 
 ## Quick Start
 
@@ -54,10 +61,10 @@ On Linux / NixOS:
 npm run dev:up:unix
 ```
 
-The Unix launcher keeps health checks on `127.0.0.1`, but it now binds the services to `0.0.0.0` so the observer UI and backend ports can be reached from the host machine through the VM IP as well.
-
-- Inside the VM, use `http://127.0.0.1:<port>`
-- From the host machine, use `http://<vm-ip>:<port>`
+The Unix launcher binds services to `127.0.0.1` by default. On the current
+physical-host development route, use `http://127.0.0.1:<port>`. Set
+`OPENCLAW_DEV_BIND_HOST` only for an explicitly reviewed network-exposure test;
+the normal development and NixOS service boundary remains loopback-only.
 
 Verify the current health matrix:
 

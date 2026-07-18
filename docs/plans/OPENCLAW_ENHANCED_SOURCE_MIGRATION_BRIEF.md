@@ -1,12 +1,14 @@
 # OpenClaw Enhanced Source Migration Brief
 
-Updated: 2026-07-09
+Updated: 2026-07-18
 
-This brief exists so a VM-side agent can understand an important project truth:
-the main `OpenClawOnNixOS` repository has absorbed many enhanced `openclaw`
-ideas through governed source-integration milestones, but the concrete locally
-optimized `openclaw` source changes from the Windows host have not been fully
-merged into this repository yet.
+Status: historical migration source and constraint record. Source preservation,
+the gap audit, and the selected governed engineering capability migration are
+complete. Do not use this document as the current next-work queue.
+
+This brief records how NixSoma absorbed selected enhanced `openclaw` ideas
+through governed source-integration milestones without making the external
+source a runtime dependency.
 
 Read this file before continuing new phases that claim to improve coding
 capability, Claude Code parity, source integration, plugin runtime ergonomics, or
@@ -33,15 +35,17 @@ Primary project repository:
 /home/edvulcan/OpenClaw_On_NixOS
 ```
 
-Windows host source repository containing the local enhanced implementation:
+Preserved enhanced source reference:
 
 ```text
-D:\OpenclawAndClaudecode\openclaw
+repository: https://github.com/EdVulcan/openclaw-enhanced-source
+branch: main
+commit: d90b253b0c03191613e45c36b1434078b8788bed
 ```
 
-The VM cannot assume those local Windows-only changes are present after a normal
-`git pull` of `EdVulcan/OpenClaw_On_NixOS`. They are source material for the
-next integration pass, not already-integrated code.
+The current workspace is the physical NixOS host. The preserved repository is
+read-only source material for historical comparison, not already-integrated
+code and not an instruction to recover the former Windows or VM workspace.
 
 ## Why This Matters
 
@@ -207,7 +211,7 @@ OpenClawOnNixOS target: classify these separately. Some may become operator UX,
 project identity, or agent conduct docs. They are not equal priority with the
 engineering capability layer.
 
-## Required VM Agent Reading Order
+## Historical VM Agent Reading Order
 
 Before continuing a new source-integration or coding-capability phase, read:
 
@@ -230,7 +234,7 @@ Then answer with evidence:
    readiness wrapper?
 ```
 
-## Transfer Options If The VM Needs Source
+## Historical Source Transfer Options
 
 The VM agent should not fabricate source details if the Windows enhanced source
 is unavailable. Use one of these transfer paths:
@@ -319,9 +323,9 @@ help.txt
 temp_test.txt
 ```
 
-After the enhanced source is pushed, record its GitHub URL and commit hash in
-this brief. The VM agent should then clone or fetch that reference for source
-inspection instead of guessing from summaries.
+The source URL and commit are recorded above and in the preservation decision.
+Future inspection must use that pinned reference instead of guessing from
+summaries.
 
 ## Integration Rules
 
@@ -339,12 +343,20 @@ inspection instead of guessing from summaries.
   sidecars or privileged daemons only when the capability requires that identity
   level.
 
-## Recommended Next Slice
+## Migration Completion
 
-Create an "enhanced source migration gap audit" that compares the existing
-`OpenClawOnNixOS` source-integration milestones against the inventory above.
+The enhanced source migration gap audit is complete:
 
-The audit should classify each capability as:
+```text
+docs/plans/OPENCLAW_ENHANCED_SOURCE_GAP_AUDIT.md
+```
+
+The resulting native governed engineering route delivered bounded read/search,
+edit/write proposal and approval execution, verification and recovery evidence,
+planning/workbench state, microcompact context handling, plugin refresh, LSP
+workflows, and the existing explicitly approved provider context handoff.
+
+The historical audit classification remains:
 
 ```text
 absorbed
@@ -354,7 +366,7 @@ should not migrate
 requires source transfer
 ```
 
-After the audit, prioritize the highest-value real capability:
+The selected capability trunk was:
 
 ```text
 Native governed engineering tool surface:
@@ -362,6 +374,6 @@ read -> grep/glob -> surgical edit proposal -> verification command ->
 observer evidence -> recovery/audit.
 ```
 
-This directly advances the whitepaper direction because it makes the local body
-better at controlled self-development, not merely better at passing milestone
-checks.
+That trunk is now implemented. Follow `docs/README.md` and
+`docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md` for the current route; do not repeat
+the gap audit or open another migration phase solely from this historical text.

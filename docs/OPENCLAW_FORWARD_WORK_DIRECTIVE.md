@@ -2,10 +2,10 @@
 
 Updated: 2026-07-18
 
-This is the active guidance document for continuing NixSoma development after
-the Phase 136 checkpoint and the discovery that the locally optimized
-`openclaw` source has not yet been preserved on GitHub or migrated into
-NixSoma.
+This is the active guidance document for continuing NixSoma development. The
+enhanced source preservation and governed capability migration that originally
+created this directive are complete; their sections below are retained as
+historical constraints, not current prerequisites.
 
 NixSoma is the public project and repository name. Existing `openclaw-*`
 service names, `OPENCLAW_*` environment variables, protocol registries, and
@@ -38,9 +38,29 @@ The risk is local drift:
 - Some of those gates are valid sovereignty boundaries, but continuing that
   pattern mechanically would create more shell/checklist work than product
   capability.
-- The locally enhanced `openclaw` source contains real Claude Code-grade
-  engineering improvements that are not yet stored in GitHub and not yet
-  integrated as native OpenClaw body capabilities.
+- The preserved enhanced-source migration produced real governed engineering
+  capabilities, but its old `Required Work` and `Next Slice` wording can now
+  cause completed capability families to be reopened.
+
+## Current Validated Frontier
+
+The capability baseline through `1be83c4d` is pushed and locally validated.
+Workspace tests and typecheck pass, the 811-entry milestone registry audit
+passes, and the Windows path budget has no file over 160 repository-relative
+characters.
+
+The running physical-host generation is older than that capability baseline.
+Its services are healthy, but the new systemd journal-evidence endpoint returns
+`404` and `openclaw-system-sense` does not yet have the `systemd-journal`
+supplementary group. Treat bounded journal evidence as source-complete and
+validated, not deployed. Do not run `nixos-rebuild switch`, real hostd
+activation, generation rollback, or other privileged mutation without a
+separately authorized mutation environment.
+
+The immediate maintenance blocker is bounded Event Hub audit-log memory use.
+The next real Level 3 capability is the post-repair diagnosis loop defined under
+`Completed Level 3 Bounded Journal Evidence`; do not select work from an older
+phase number or historical `Next Slice` paragraph.
 
 ## Governing Vision
 
@@ -86,7 +106,7 @@ observer mirror
 Those patterns are allowed only when they are the smallest necessary slice for a
 new product capability.
 
-## First Required Work: Use Preserved Enhanced Source
+## Completed Migration Prerequisite: Preserved Enhanced Source
 
 The optimized Windows-host `openclaw` source is now preserved on GitHub as a
 source reference for migration.
@@ -136,7 +156,7 @@ help.txt
 temp_test.txt
 ```
 
-Preferred VM inspection command:
+Historical pinned-source inspection command:
 
 ```bash
 rm -rf /tmp/openclaw-enhanced-source
@@ -154,12 +174,13 @@ openclaw checkout. GitHub reported one large historical cache file warning:
 cache file as migration material.
 ```
 
-The next step is not more preservation. The next step is the gap audit.
+Preservation is complete. Keep this source pinned for historical inspection;
+do not repeat preservation or import it as a runtime dependency.
 
-## Second Required Work: Enhanced Source Gap Audit
+## Completed Migration Prerequisite: Enhanced Source Gap Audit
 
-After the enhanced source is preserved, perform a source-integration gap audit.
-The audit must classify every enhanced capability as one of:
+The completed source-integration gap audit classifies every enhanced capability
+as one of:
 
 ```text
 absorbed
@@ -187,21 +208,21 @@ operator-facing UI refinements
 identity notes: HEARTBEAT, SOUL, TOOLS
 ```
 
-The audit output should become a new document:
+The audit output is retained in:
 
 ```text
 docs/plans/OPENCLAW_ENHANCED_SOURCE_GAP_AUDIT.md
 ```
 
-## Third Required Work: Select Real Capability Slices
+## Completed Migration Route: Real Capability Slices
 
-After the audit, the recommended trunk is:
+The audit selected this trunk:
 
 ```text
 Native governed engineering tool surface
 ```
 
-The first slices should move in this order:
+The migration slices were implemented in this order:
 
 1. Read-only tool inventory and contract mapping.
 2. Native governed read/search surface.
@@ -215,8 +236,8 @@ The first slices should move in this order:
    state, and initialize/shutdown handshake before any source-content transfer
    or symbol request.
 
-Only after these are proven should the project continue deeper cloud-provider
-execution work.
+These migration slices are now implemented. Do not replay this sequence; use
+the current evidence-based frontier and identity-level route below.
 
 ## Current Evidence-Based Frontier
 
@@ -1484,6 +1505,24 @@ syntax, and no task, approval, restart, activation, or rollback. The next
 Level 3 capability must again be selected from a concrete operator gap; do not
 turn this read model into arbitrary journal queries or a new readiness chain.
 
+### Next Real Level 3 Capability
+
+Close one operator-visible incident loop by combining existing owners:
+
+```text
+body health + bounded journal evidence
+-> bounded diagnosis
+-> existing fixed restart owner
+-> post-repair health verification
+-> task and Observer evidence
+```
+
+Before that feature slice, remove the measured Event Hub development-log memory
+hazard: audit query and summary must not read and split a hundreds-of-MiB log as
+one string. This is a blocking correction, not a new capability phase. The
+incident loop must not add arbitrary journal queries, arbitrary systemd units,
+automatic restart, or a new provider contract.
+
 ## Operator Identity And Mutation Boundary Checkpoint
 
 The first operator-identity slice is now implemented as a Level 1 control-plane
@@ -1510,9 +1549,9 @@ flags, session use, and post-logout rejection.
 
 The common system-sense and screen-act mutation paths now reject unsigned direct
 calls and accept only Core-issued, short-lived grants bound to the exact method,
-route, body hash, audience, task, step, capability, and intent. This still does
-not replace shared Browser Runtime credentials with per-caller credentials or
-prove a real Nix closure receipt and host-health oracle for activation.
+route, body hash, audience, task, step, capability, and intent. Browser Runtime
+per-caller identity and the Phase D closure receipt/health oracle are owned by
+the completed contracts below; this grant boundary does not widen either one.
 
 The first independent service-identity slice is now complete for Event Hub.
 Each publishing service reads its own credential from a file, sends a bounded
@@ -1543,8 +1582,10 @@ interrupted running reservation is failed closed as `recovered_aborted` without
 automatic replay. Pre-start expiry remains unit-covered because the production
 executor has no externally pausable reserve/start boundary. These security
 boundaries are now sufficient to keep the fixed hostd/systemd Level 3
-activation contract under test. Physical activation remains deferred until the
-closure receipt and independent post-action health oracle are proven.
+activation contract under test. The closure receipt and independent post-action
+health oracle are proven locally; physical activation remains deferred until a
+separate disposable mutation environment is provisioned and explicitly
+authorized.
 
 ## Identity-Upgrade Alignment
 

@@ -1,517 +1,92 @@
 # NixSoma Plans Directory
 
-Updated: 2026-07-17
+Updated: 2026-07-18
 
-This directory contains both active route documents and historical milestone
-evidence. Do not infer the next development task from the highest numbered phase
-file.
+This directory contains current decision records and historical milestone
+evidence. It is not a queue ordered by phase number. Use
+[`docs/README.md`](../README.md) for the current source, validation, deployment,
+and route baseline.
 
-## Active Route Documents
+## Active Decision Records
 
-Read these first:
+Only these documents should guide current route selection:
 
-```text
-../OPENCLAW_FORWARD_WORK_DIRECTIVE.md
-OPENCLAW_ENHANCED_SOURCE_MIGRATION_BRIEF.md
-OPENCLAW_ENHANCED_SOURCE_GAP_AUDIT.md
-OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md
-OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_TOOL_SURFACE_INVENTORY_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_NAVIGATION_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_READ_SEARCH_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_EDIT_PROPOSAL_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_EDIT_APPROVAL_BRIDGE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_EDIT_CLOSED_LOOP_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LOOP_OPERATOR_CONTROLS_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LOOP_PARAMETERIZED_INPUTS_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LOOP_STATE_GUIDANCE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LOOP_COMPLETION_READBACK_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LOOP_RECOVERY_ACTION_DRAFT_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LOOP_RECOVERY_RERUN_READBACK_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_PROMPT_WORK_STANDARDS_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_PROMPT_STANDARDS_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_EDIT_TARGET_SELECTION_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_MUTATIONS_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_BROWSER_ACTION_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_SCREEN_ACTION_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LOOP_WORK_STANDARDS_BRIDGE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_WRITE_PROPOSAL_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_WRITE_APPROVAL_BRIDGE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_WRITE_EXECUTION_EVIDENCE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_WRITE_CLOSED_LOOP_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_VERIFICATION_EVIDENCE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_VERIFICATION_WORK_STANDARDS_COVERAGE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_RECOVERY_EVIDENCE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_RECOVERY_WORK_STANDARDS_COVERAGE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_MICROCOMPACT_EVIDENCE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_MICROCOMPACT_PROJECTION_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PACKET_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PROVIDER_HANDOFF_BRIDGE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PROVIDER_SOURCE_TASK_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_READ_SEARCH_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_VERIFICATION_EVIDENCE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORK_VIEW_OBSERVATION_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORK_VIEW_CONTROL_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORK_VIEW_BIND_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_SCREEN_OBSERVATION_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_CONTEXT_PACKET_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_EDIT_PROPOSAL_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WRITE_PROPOSAL_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_EXECUTION_EVIDENCE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_LSP_READ_PROPOSALS_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PLAN_TODO_BRIDGE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_ASSOCIATION_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_BIND_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_OBSERVATION_BRIDGE_PLAN.md
-OPENCLAW_NATIVE_PLUGIN_RUNTIME_REFRESH_EVIDENCE_PLAN.md
-OPENCLAW_NATIVE_PLUGIN_RUNTIME_REFRESH_TASK_PLAN.md
-OPENCLAW_NATIVE_ACPX_CODEX_BRIDGE_COMPATIBILITY_PLAN.md
-OPENCLAW_NATIVE_ACPX_CODEX_CAPABILITY_RUNTIME_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_PLAN_TODO_EVIDENCE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_EVIDENCE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_LIFECYCLE_READINESS_DRAFT_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_SUPERVISED_LIFECYCLE_PILOT_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_LIFECYCLE_STATE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_HANDSHAKE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_SOURCE_TRANSFER_PROPOSAL_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_SOURCE_TRANSFER_TASK_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_SYMBOL_REQUEST_PROPOSAL_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_SYMBOL_REQUEST_TASK_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_OBSERVER_SYMBOL_REQUEST_CONTROL_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_SYMBOL_RESPONSE_SUMMARY_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_VARIANT_REQUESTS_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_RESPONSE_TARGET_SELECTION_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_EXPLICIT_TARGET_SELECTION_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_SELECTED_TARGET_READ_BRIDGE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_OBSERVER_SELECTED_TARGET_READ_CONTROL_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_SELECTED_TARGET_EDIT_PROPOSAL_SEED_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_OBSERVER_SELECTED_TARGET_EDIT_SEED_CONTROL_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_SELECTED_TARGET_EDIT_CLOSED_LOOP_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_SELECTED_TARGET_VERIFICATION_HANDOFF_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_SELECTED_TARGET_RECOVERY_RECOMMENDATION_HANDOFF_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_LSP_SELECTED_TARGET_RECOVERED_VERIFICATION_RERUN_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_PLANNING_WORKBENCH_STATE_BRIDGE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_RESTORATION_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_WORKBENCH_STATE_AUTO_RESTORE_PLAN.md
-OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_PROVIDER_RECOMMENDATION_SEMANTIC_TASK_LINK_PLAN.md
-OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md
-OPENCLAW_NIX_STORE_RUNTIME_PACKAGING_PLAN.md
-OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md
-../architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md
-../architecture/KERNEL_LEVEL_EVOLUTION_WHITEPAPER.md
-```
+| Document | Decision owned |
+| --- | --- |
+| [`../OPENCLAW_FORWARD_WORK_DIRECTIVE.md`](../OPENCLAW_FORWARD_WORK_DIRECTIVE.md) | Mainline selection, anti-nesting rules, current physical-host boundary, and next real capability. |
+| [`../architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md`](../architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md) | Level 1-4 identity progression and maturity baseline. |
+| [`OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md`](./OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md) | Governed Level 1 engineering capability frontier. |
+| [`OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md`](./OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md) | Bounded Level 2 browser/work-view contract. |
+| [`OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md`](./OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md) | Operator identity, per-service credentials, and execution grants. |
+| [`OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md`](./OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Fixed Level 3 restart owners and bounded journal diagnosis. |
+| [`OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md`](./OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Declarative-evolution evidence and deferred activation boundary. |
+| [`OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md`](./OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md) | Measured validation, runtime, and review debt that blocks the mainline. |
 
-Use these as supporting documents:
+The kernel whitepaper remains the long-horizon authority:
+[`KERNEL_LEVEL_EVOLUTION_WHITEPAPER.md`](../architecture/KERNEL_LEVEL_EVOLUTION_WHITEPAPER.md).
+
+## Current Route
+
+Completed capability families must not be reopened for another wrapper,
+readiness marker, readback mirror, or horizontal variant. The immediate route
+is:
 
 ```text
-OPENCLAW_MONOLITH_REDUCTION_PLAN.md
-OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md
-OPENCLAW_SOURCE_INTEGRATION_STAGE_PLAN.md
+bound Event Hub audit-log memory and retention
+-> combine body health with bounded journal diagnosis
+-> reuse the existing fixed restart owner
+-> verify post-repair health
+-> expose task and Observer evidence
 ```
 
-## Current Route Correction
+This route advances the Level 3 body loop without widening hostd authority.
+Real generation activation, rollback, arbitrary systemd control, desktop-wide
+capture, and automatic provider egress remain deferred.
 
-The current route is no longer "continue to the next numbered cloud-provider
-phase." The corrected route is:
+## Completed Capability Evidence
 
-```text
-preserve enhanced openclaw source on GitHub
--> perform enhanced source gap audit
--> migrate governed engineering tool capabilities into NixSoma
--> close the Level 1 operator execution-consistency and declared/runtime capability boundaries
--> require operator identity for sensitive Core state readback as well as mutations
--> return to identity-upgrade work-view/session-helper/hostd route
-```
+The following plan families are retained because they describe implemented
+contracts or are referenced by milestone scripts:
 
-Current native engineering plan/todo storage and suggested-action Observer
-bridge evidence is documented in:
+- Enhanced-source gap audit and native read/search/edit/write/verify/recovery.
+- Engineering planning, todo, workbench restoration, and microcompact context.
+- LSP lifecycle, bounded symbol requests, target selection, and verification
+  recovery.
+- Trusted work-view association, control, semantic action, and recovery.
+- Provider context packets, explicit DeepSeek handoff, and structured plan
+  recommendation.
+- Plugin runtime refresh and ACPX/Codex compatibility contracts.
+- Phase A Nix-store packaging, Phase B fixed systemd control, Phase C eBPF
+  observation, and Phase D declarative-evolution evidence.
 
-```text
-OPENCLAW_NATIVE_ENGINEERING_PLAN_TODO_WORKBENCH_STORAGE_PLAN.md
-```
+Their `Next Slice` sections record historical decisions. They do not override
+the current route above.
 
-That lane now preserves compact persisted-workbench provenance through existing
-edit/write/verification task readback. The Level 1 operator execution
-consistency follow-up is complete, and the bounded native read/search,
-verification, local context packet, Level 2 work-view observation, explicit
-work-view control, and operator-reviewed work-view bind bridges through the
-common capability runtime are
-documented in:
+## Historical Migration Records
 
-```text
-OPENCLAW_NATIVE_ENGINEERING_OPERATOR_EXECUTION_BINDING_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_READ_SEARCH_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_VERIFICATION_EVIDENCE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORK_VIEW_OBSERVATION_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORK_VIEW_CONTROL_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORK_VIEW_BIND_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_SCREEN_OBSERVATION_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_CONTEXT_PACKET_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_EDIT_PROPOSAL_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WRITE_PROPOSAL_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_EXECUTION_EVIDENCE_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_MUTATIONS_PLAN.md
-OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_LSP_READ_PROPOSALS_PLAN.md
-```
+These remain useful source evidence but are not active next-work instructions:
 
-The plan/todo workbench direct routes are now aligned with the common capability
-registry and invoke path: bounded evidence is read through
-`sense.openclaw.engineering_context.plan_todo_evidence`, and confirmed storage
-is performed through `act.openclaw.engineering_context.plan_todo_workbench_state`.
-The existing core check proves the two dispatches, explicit confirmation gate,
-revision increment, task-status preservation, and compact invocation metadata.
+| Document | Historical role |
+| --- | --- |
+| [`OPENCLAW_ENHANCED_SOURCE_MIGRATION_BRIEF.md`](./OPENCLAW_ENHANCED_SOURCE_MIGRATION_BRIEF.md) | Preserved enhanced-source inventory and migration constraints. |
+| [`OPENCLAW_ENHANCED_SOURCE_GAP_AUDIT.md`](./OPENCLAW_ENHANCED_SOURCE_GAP_AUDIT.md) | Completed capability classification and migration evidence. |
+| [`OPENCLAW_SOURCE_INTEGRATION_STAGE_PLAN.md`](./OPENCLAW_SOURCE_INTEGRATION_STAGE_PLAN.md) | Earlier source-integration stage log. |
+| [`OPENCLAW_POST_MVP_PLAN.md`](./OPENCLAW_POST_MVP_PLAN.md) | Earlier post-MVP route selection. |
 
-The existing source-derived workspace edit target selection is also aligned with
-the common capability registry and invoke path through
-`sense.openclaw.workspace_edit_target_select`. It reuses the direct bounded
-builder, records only target metadata and governance flags in the invocation
-summary, and keeps file mutation, task/approval creation, plugin execution,
-runtime activation, provider calls, and network egress disabled. The existing
-Core/Observer target-selection pair proves both the direct route and the common
-invoke path. Its boundary is documented in
-`OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_EDIT_TARGET_SELECTION_PLAN.md`.
+## Numbered Phase Plans
 
-The browser binding keeps the existing rule-v1 task target and action shape
-linked to operator execution, while the read/search bridge exposes
-`cc_read`/`cc_glob`/`cc_grep` through `/capabilities/invoke` with the existing
-policy, invocation ledger, and event evidence. Both are concrete Level 1
-closures, not new browser/provider lanes. The work-view observation entry point
-is a sensor and the control entry point reuses only the existing session-manager
-owner routes; neither adds a capture implementation or browser action family.
-Do not grow another evidence/readiness shell. The LSP selected-target chain,
-plugin generation refresh with compact core-state persistence, ACPX
-compatibility/preflight and its common capability-runtime bridge, and local
-context packet are already completed evidence; do not reopen their historical
-next-step wording. ACPX live process execution and provider/model use remain
-explicit authorization boundaries.
+`OPENCLAW_PHASE_*_PLAN.md` files are retained because milestone scripts and
+runtime evidence still reference them. They are historical check fixtures, not
+the live roadmap. Do not delete, rename, or move them until every dependent
+registry and script has migrated.
 
-The latest provider follow-up is complete. The bounded
-`engineering_plan_v0` response contract in
-`OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PROVIDER_HANDOFF_BRIDGE_PLAN.md` turns one
-already-approved DeepSeek response into a transient plan draft; Observer can
-save it only after operator review through the existing
-`act.openclaw.engineering_context.plan_todo_workbench_state` capability. Durable
-provider evidence is compact and request-bound, and no automatic task,
-approval, execution, or mutation is added.
+## Plan Creation Rule
 
-The subsequent Level 2 recovery-decision closure is recorded in
-`OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md`: Observer now maps the
-public `prepare`, `reveal`, `hide`, `resume_ai_action_authority`, and
-`restart_approved_trusted_sidecar` recommendations to existing explicit owners.
-It does not add an endpoint, automatic recovery, task replay, or a new
-capability-runtime family.
-
-The next route is not another provider response schema or capability-runtime
-mirror. Select a concrete Level 2 trusted work-view/session-helper operator gap
-from current evidence, then reuse the existing owner and recovery contracts. The
-first selected gap is now closed: Observer can select one current enabled named
-semantic target and create a queued `browser.semantic_click` task through the
-existing rule-v1 planner, while Operator Step/Run and the existing Core/sidecar
-handoff remain the only execution path.
-
-The provider recommendation continuity follow-up is now complete through the
-explicit Observer review and the existing semantic-click planner. Its compact
-provenance and deferred boundaries are recorded in
-`OPENCLAW_NATIVE_ENGINEERING_PROVIDER_RECOMMENDATION_SEMANTIC_TASK_LINK_PLAN.md`.
-
-The first post-Level-2 hostd capability is now implemented and locally proven.
-The existing approval-gated next-repair task can explicitly select the fixed
-`openclaw-event-hub.service` recovery target, while the default
-`openclaw-system-sense.service` route remains compatible. Core and hostd share
-the descriptor-bound operation, Nix expands the same units into Polkit, and
-Observer exposes the selection without accepting arbitrary units or automatic
-restart. System-sense retains real switched-VM execution evidence, and the
-2026-07-17 switched generation now proves event-hub real mutation through both
-Core and Observer checks with changed-PID and restored-readiness evidence. The
-same descriptor-bound route now includes system-heal, and the switched
-generation proves its real mutation through both Core and Observer checks. The
-detailed record is in `OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md`.
-
-The active Level 2 bridge is documented in:
-
-```text
-OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md
-```
-
-The current native engineering extension of that bridge is documented in:
-
-```text
-OPENCLAW_NATIVE_ENGINEERING_WORK_VIEW_OBSERVATION_BRIDGE_PLAN.md
-```
-
-It reuses the existing context packet and reports only bounded capture
-freshness, frame provenance, and semantic-target counts; it does not create a
-new endpoint or action path.
-
-The explicit provider handoff of those bounded summaries, together with the
-existing plan/todo evidence, is documented in:
-
-```text
-OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PROVIDER_HANDOFF_BRIDGE_PLAN.md
-```
-
-It reuses the existing approval-bound DeepSeek task and keeps the context
-transient; it does not transfer raw page payloads or create automatic actions.
-The same explicit task creation is available through
-`act.openclaw.engineering_context.provider_handoff_task`, which delegates to
-the existing egress owner and still leaves operator execution and provider
-egress separately gated.
-
-The existing browser navigation descriptor now also has a bounded common
-runtime bridge documented in
-`OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_BROWSER_ACTION_PLAN.md`.
-Only explicit `browser.new_tab` requests reach the existing screen-act owner;
-fresh capture, trusted lease mediation, and browser network navigation remain
-on that owner, while invocation evidence excludes the URL and browser payload.
-
-The existing screen-act pointer/keyboard descriptor now has a similarly bounded
-common runtime bridge documented in
-`OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_SCREEN_ACTION_PLAN.md`.
-Only explicit `keyboard.type` and bounded left-button `mouse.click` requests
-reach the existing screen-act owner; write-only input and click coordinates
-remain transient and are excluded from invocation evidence.
-
-The existing system-heal Observer controls now also use the common capability
-runtime, documented in
-`OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_SYSTEM_HEAL_PLAN.md`.
-Only the explicit simulated `heal.restart-service` and
-`heal.maintenance.tick` operations reach the existing system-heal owner;
-Core policy, invocation history, and capability events cover the controls.
-Real systemd mutation remains on the separate approved hostd/D-Bus path.
-
-The existing Observer work-view controls now use the already-governed
-`act.work_view.control` bridge as well. Prepare, reveal, hide, recovery
-recommendation, and task-launch mutations use the three allowlisted operations;
-task launch performs only a separate read-only state read for owner binding
-metadata. No direct session-manager mutation route remains in the served client.
-
-The Observer Engineering Context Packet and Work-View Bind controls now use
-their existing common capabilities too: packet assembly is transient through
-`sense.openclaw.engineering_context.packet`, and bind remains explicit through
-`act.openclaw.engineering_context.work_view_bind` with confirmation and stale
-binding revalidation.
-
-The provider handoff's explicit source-task continuity is documented in:
-
-```text
-OPENCLAW_NATIVE_ENGINEERING_CONTEXT_PROVIDER_SOURCE_TASK_PLAN.md
-```
-
-It keeps the provider egress task as the approval owner while reading bounded
-evidence from a separately selected existing engineering task.
-
-The bounded Level 2 browser eye-hand exit gate and kernel-whitepaper Phase A are
-complete. The active Phase B route is documented alongside the Phase A record:
-
-```text
-OPENCLAW_NIX_STORE_RUNTIME_PACKAGING_PLAN.md
-OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md
-```
-
-Kernel-whitepaper Phase A is complete: all nine services and the trusted
-sidecar template run from reviewed read-only Nix closures with real targeted
-behavior evidence. Phase B's first slice is also complete: system-sense now
-reads all fixed OpenClaw unit inventory through native systemd D-Bus, fails
-closed without a `systemctl` fallback, and preserves the existing Observer
-contract. The fixed system-sense restart and exact Polkit rule were proven in a
-switched VM behind the existing approved next-repair lifecycle. The current
-follow-up now also has core and Observer real-execution proof: hostd runs as
-`openclaw-hostd`, core runs as `openclaw-service`, the socket remains group-bound,
-and both milestones record exit zero, native D-Bus job paths, changed PIDs,
-restored readiness, and removal of the host's historical sudo helper.
-The existing dependency-map route now additionally reads bounded live
-`Unit.After` evidence for the fixed OpenClaw inventory, separates observed
-edges from declarative plan edges, and reports compact dependency drift through
-the native systemd and Observer milestones.
-The inventory also reconciles the Nix-declared user-owned unit list with the
-system-bus view, making stale system copies and expected user-manager absence
-explicit without introducing a user-bus proxy.
-
-It now closes browser action mediation through operator takeover suspension and
-explicit resume/rebind, then runs a bounded approval-gated user-space helper
-heartbeat process under the existing sidecar lifecycle. Fail-closed recovery
-across session-manager restart now persists compact intent, revokes the old
-browser lease, avoids automatic child resurrection, and reuses the approved
-task for explicit restart. Browser-runtime restart continuity now blocks actions
-on capture-source loss, recommends prepare through the existing Observer path,
-and recovers capture plus sidecar IPC without restarting the helper. The next
-real slice is bounded browser navigation/new-tab through the same trusted
-transport. That operator-facing action is now complete with bounded URL
-validation, lease/capture gates, real tab mutation, refreshed capture, and an
-Observer control. Its core planner/task-executor bridge is complete with shared
-production descriptors, compact sidecar
-effect evidence, and post-action capture verification. The next real slice is
-in-flight browser task recovery across capture-source interruption. That
-bounded recovery now performs one prepare and one retry only for sidecar capture
-reasons and records compact action evidence. Active-task continuity across
-session-manager restart now persists recoverable authority-interruption
-evidence, explicitly restores the session and approved sidecar, and executes
-only unfinished steps from the preserved browser plan. Active-task startup
-reconciliation across core process restart is also complete: persisted running
-browser plans become recoverable evidence while queued/paused tasks are
-preserved, and recovery executes pending work through the still-running sidecar.
-The next real Level 2 slice is independently supervised user-session sidecar
-ownership with fail-closed disconnect and explicit fresh-lease reconnect. Do
-not add a readiness milestone, automatic action restart, root/system daemon,
-fault-injection endpoint, or desktop-wide capture.
-
-That slice is complete: the bounded current-user socket sidecar survives
-session-manager restart without retaining action authority, and the existing
-approved lifecycle action reconnects the same PID only after a fresh work-view
-session exists. The next real reliability slice is explicit approved
-replacement after the sidecar process itself exits; no automatic replacement,
-new panel, or readiness chain is needed.
-
-That replacement slice is complete: unexpected PID exit suspends action
-authority and the existing approved lifecycle starts a different PID before
-capture/actions resume. The remaining Level 2 ownership slice is a declarative,
-non-auto-started `systemd --user` unit path for the same sidecar process. It must
-reuse the current approval/socket/recovery contracts and must not create a root
-service or parallel lifecycle API.
-
-The non-auto-started user-unit contract is now present in the desktop-body Nix
-profile and proven through the existing `body-config` milestone. Runtime still
-uses direct spawn. The next slice is the approval-preserving launcher bridge to
-that fixed template instance, including explicit stop and existing Observer
-readback; it is not another unit/readiness document.
-
-That launcher bridge is complete: approved lifecycle start/stop now controls
-the fixed `systemd --user` instance, binds authority over the existing socket,
-keeps lease/session/provider values out of its bounded environment file, and
-projects launcher ownership through the existing Observer panel. Direct spawn
-is an explicit development fallback. The next slice is bounded AI-owned browser
-workspace continuity across browser-runtime restart, not a Level 2 readiness
-wrapper.
-
-Bounded browser workspace continuity is now complete through the same Phase 3
-lane: compact tabs/session intent survives browser-runtime restart without
-restoring lease or actions, and explicit prepare rebinds fresh authority. The
-next real slice is a local real-browser-engine adapter behind the existing
-browser API and sidecar, replacing the synthetic PID/in-memory capture model.
-
-The real browser-engine adapter and declarative login-user ownership are now
-complete. The desktop profile emits session-manager and browser-runtime only as
-graphical-session user units, uses per-user state/profile paths, and defaults to
-the fixed NixOS Firefox without a root browser, hardcoded UID, or duplicate
-system units. The next Level 2 slice is bounded pixel capture of the AI-owned
-browser page through the existing capture/trust/Observer lane; current capture
-metadata is real, but its readable blocks are not yet derived from an acquired
-browser frame.
-
-Bounded visual capture is now complete through the same browser/screen/Observer
-lane: the active AI-owned Firefox page produces a validated `960x540` JPEG with
-a 256 KiB ceiling, digest, freshness, no filesystem write, and metadata-only
-audit/sidecar projections. The next Level 2 slice is to link fresh frame
-digest/sequence evidence to trusted action dispatch and post-action refresh,
-without moving image bytes into task or sidecar state.
-
-Visual-frame-grounded actions are now complete for the real Firefox path:
-sidecar metadata observations provide fresh digest/sequence references,
-operator and autonomous navigation retain compact pre/post evidence, and
-simulated fallback stays explicit. The next Level 2 slice is bounded read-only
-semantic target inventory for visible interactive elements in the AI-owned
-page, tied to the current frame and exposed through the existing lane.
-
-The bounded semantic inventory is now complete through that same lane. Current
-browser/screen/Observer readback carries frame-scoped visible target metadata;
-sidecar, task, summary, metadata, and audit paths retain only count/digest/frame
-evidence, with no values or selectors. The next Level 2 slice is a governed
-semantic target action selected by `targetId` plus matching frame/inventory
-digest, reusing the current lease, grounding, autonomous task, and Observer
-contracts rather than adding a route or readiness family.
-
-The first governed semantic click is now complete through the existing
-mouse-click route and trusted sidecar. Browser-runtime resolves only a current
-frame-bound target, derives its coordinate internally, emits compact semantic
-effect plus visual grounding, and rejects stale reference reuse. Observer shows
-the effect and the real Firefox milestone proves navigation and no replay. The
-next Level 2 slice is core-side target selection after initial observation so
-an autonomous browser task can construct a current reference at dispatch time.
-Semantic typing remains deferred pending removal of input-text echoes from
-public state and audit paths.
-
-Autonomous target selection is now complete. Core stores exact-name/optional
-role intent, observes after prepare, requires one unique current match, and
-materializes the frame reference only at dispatch. Recovery rematerializes
-after prepare, while sidecar refreshes capture and requires target inventory and
-grounding-frame equality before forwarding. The existing Firefox milestone now
-proves the autonomous task. The next Level 2 slice is write-only semantic text
-input after replacing all legacy plaintext input echoes with bounded redaction
-metadata.
-
-That redaction prerequisite is now complete. Browser, screen, Observer,
-screen-act, task/verification/recovery evidence, events, and core persistence
-retain bounded input evidence rather than text. Core restart fails active
-redacted-input tasks as `input_reentry_required` with no replay. The next Level
-2 slice is one semantic type operation selected from the current inventory and
-executed through the existing keyboard/sidecar/grounding path with a transient
-execution-only value.
-
-Semantic type is now complete through that path. The plan stores target intent
-only, execution supplies transient text, the runtime accepts only a current
-enabled textbox, and Firefox evidence proves frame change with no value in
-response, state, or events. The current bounded Level 2 browser eye-hand exit
-gate and kernel-whitepaper Phase A are closed. Phase B now has a proven native
-read-only D-Bus inventory and a VM-proven fixed-unit mutation bridge. Work now
-returns to the Level 1 native governed engineering route; broader systemd APIs
-remain deferred until a cohesive hostd boundary is justified.
-
-The kernel-whitepaper Phase C first slice is complete. Store-native
-system-sense owns a raw `sched_process_exec` tracepoint and libbpf ring buffer,
-returns four raw identity fields plus a separate bounded CO-RE exec-filename
-readback, and projects explicit disabled/captured/permission failure state
-through the existing core proxy and Observer. The completed plan is
-`OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md`; network/VFS capture,
-interception, persistence, policy execution, and Nix self-evolution remain
-deferred. Do not add another event kind until a new concrete operator need is
-demonstrated by this readback.
-
-The first bounded Phase D declarative-evolution slice and approval-bound
-staging/build loop are complete through
-`OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md`. Core accepts only
-structured allowlisted changes, binds the generated candidate hash to an
-approval, stages the exact candidate under OpenClaw ownership, and runs
-read-only `nix-instantiate`, `nix eval`, and default `nix build --dry-run`
-checks; the explicit no-link build lane is separate and materializes an output
-only for the positive closure proof. It does not write `/etc/nixos`, run
-`nixos-rebuild`, switch generations, or roll back.
-
-The same Phase D route now also has an explicit activation-decision and
-host-health boundary. Core exposes a read-only review and an approval-gated
-decision task bound to the staging task, candidate/file hashes, current
-approval record, real evaluated output/deriver/NAR metadata, a stable
-task-bound closure-integrity receipt, and an independent Core-owned
-`openclaw-native-declarative-evolution-host-health-oracle-v0` assessment of
-raw `openclaw-system-sense` facts. Approval and execution revalidate the
-binding and record only a future activation decision; they do not install
-config, switch generations, activate, or roll back. The fixed hostd/systemd
-Level 3 contract is present but physical activation remains disabled by
-default. Health, activation, and rollback owners are explicit in readback; the
-physical-host-safe injected activation/health-failure rehearsal now dispatches
-through the user-space executor and Observer readback. Real hostd, `/etc/nixos`,
-generation switching, and rollback remain disabled. Phase D local evidence is
-complete; do not add another activation wrapper. The common actuator path
-already has Core-issued grants plus reservation commit/abort/recovery.
-
-## Historical Phase Plans
-
-`OPENCLAW_PHASE_2_PLAN.md` through `OPENCLAW_PHASE_136_PLAN.md` are retained
-because milestone scripts and runtime evidence still reference them.
-
-They are historical records and check fixtures. They are not the live roadmap.
-
-Do not delete, rename, or move them until the milestone scripts that read them
-are updated.
-
-## Cleanup Rule
-
-When adding a new plan:
-
-- Prefer updating an active route document over creating another numbered phase.
-- Create a new numbered phase only when a real capability slice needs an
-  executable milestone check.
-- If the document is historical evidence, say so at the top.
-- If the document is active guidance, link it from this README and from
-  `docs/README.md`.
+- Prefer updating an active decision record.
+- Create a plan only for a real capability with a distinct owner and proof.
+- Do not create a numbered plan for documentation cleanup, readiness wording,
+  or another mirror of existing evidence.
+- State `delivered`, `evidence`, `deferred`, and `next real capability` at
+  closure.
+- Move completed guidance into historical evidence by changing the index, not
+  by deleting referenced files.

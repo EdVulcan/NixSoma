@@ -54,7 +54,7 @@
 
 ## 第 1 级：用户态控制平面
 
-这是 OpenClaw 当前所处的阶段。
+这是 OpenClaw 的基础层，当前已经接近收口。
 
 ### 形态
 
@@ -96,7 +96,7 @@
 
 ## 第 2 级：受信会话组件
 
-这是下一步最重要的升级点。
+这是当前 bounded browser/work-view 范围内已经闭环的身份层。
 
 ### 形态
 
@@ -282,17 +282,16 @@
 
 当前主线应该是：
 
-- 稳定用户态控制平面
-- 稳定 AI 工作视图 capture
-- 稳定 browser/runtime capture
-- 稳定 command/file capture contract
-- 为未来的 trusted session helper 预留接口
+- 保持已完成的用户态控制面和 bounded AI 工作视图稳定
+- 通过既有 hostd owner 建立 diagnosis、fixed repair、post-repair verification 闭环
+- 分开记录源码完成、验证通过、system generation 部署和真实特权动作
+- 在独立 mutation 环境出现前保持 generation activation/rollback 禁用
 
 而这些能力，已经比“强行抓整个用户桌面”更接近 OpenClaw 的长期产品形态。
 
 ---
 
-## 六、当前证据化进度基线（2026-07-11）
+## 六、当前证据化进度基线（2026-07-18）
 
 进度不能再按历史 Phase 数量计算。以下比例是根据当前运行时代码、NixOS
 模块、任务闭环、Observer、测试证据和仍缺失的架构组件估算的能力成熟度，
@@ -301,26 +300,29 @@
 | 身份层级 | 当前成熟度 | 证据与主要缺口 |
 | --- | --- | --- |
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
-| Level 2 受信会话组件 | 约 100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
-| Level 3 系统级特权组件 | 约 30% | 固定 OpenClaw unit inventory 已通过原生只读 systemd D-Bus 建立；固定 system-sense restart 的独立 `openclaw-hostd` 服务账户、精确 Polkit 规则、`SO_PEERCRED` user/group 校验和 core 可访问的组控 Unix socket 已通过 Nix closure、focused tests 与真实 VM mutation 建立。广义 D-Bus mutation 和更多受控特权能力仍未建立。 |
+| Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
+| Level 3 系统级特权组件 | 约 45% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis 和只读 eBPF process evidence 已形成。真实 generation activation/rollback、自动 incident scheduler、资源/cgroup 治理和更广系统能力仍未建立。 |
 | Level 4 图形栈内生组件 | 约 0-5% | 只有 AI-owned work-view 方向与接口预留；专属 session、nested compositor、原生图形输入输出尚未实现。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
-**约 43%**。内核白皮书中的 Phase A Nix 纯净化已完成全部 9 个服务
-closure 与 trusted sidecar store 运行路径；
-Phase B 已完成原生只读 D-Bus inventory、一个由精确 Polkit 管理且由独立
-hostd 所有的固定 native restart；Phase C 已完成首个只读 `sched_process_exec`
-eBPF 探针切片，真实 VM 事件采集、bounded readback、continuity 和 executable
-identity 均已验证；Phase D 声明式 Nix 自进化与自动
-回滚仍主要是设计和边界证据。因此旧阶段路线的“接近 90%”只能描述早期
-里程碑清单，不能代表最终白皮书完成度。
+**45-55%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted
+sidecar store 运行路径；Phase B 已完成原生只读 D-Bus inventory、三个由精确
+Polkit 和独立 hostd 所有的固定 native restart，以及 bounded journal
+diagnosis；Phase C 已完成首个只读 `sched_process_exec` eBPF 探针切片；Phase D
+已完成候选生成、审批绑定、staging/build、真实 closure receipt、独立
+host-health oracle、受控 activation contract、人工 rollback evidence 和物理机
+安全失败演练。真实 generation activation 与 rollback 仍未在可抛弃 mutation
+环境中证明。因此旧阶段路线的“接近 90%”只能描述早期里程碑清单，不能代表
+最终白皮书完成度。
 
 当前 bounded Level 2 browser 眼手闭环与内核白皮书 Phase A 已收口。
 Phase B 的固定 D-Bus 控制切片已经完成：systemd unit inventory 已替换
-`systemctl` 读取包装，system-sense restart 也已通过独立 hostd、policy、
-approval、精确 Polkit、audit、恢复检查和真实 VM/Observer 证明。不要把该
-固定授权扩展成任意 systemd API；后续 Level 3 工作必须继续沿用 hostd
-所有权边界并为每个新能力单独建立授权和恢复证据。
+`systemctl` 读取包装，system-sense、event-hub 和 system-heal restart 已通过
+独立 hostd、policy、approval、精确 Polkit、audit、恢复检查和历史真实
+VM/Observer 证明；bounded journal diagnosis 已在当前源码和物理机隔离检查中
+证明，但尚未部署到当前 system generation。不要把该固定授权扩展成任意
+systemd API；下一步应组合现有 health、journal、fixed restart 和 post-repair
+verification owner，形成一个完整 incident loop。
 
 ---
 

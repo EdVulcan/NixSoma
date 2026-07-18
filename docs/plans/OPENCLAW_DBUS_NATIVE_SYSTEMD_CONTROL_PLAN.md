@@ -309,13 +309,16 @@ when manager ownership is unknown.
 - Any hostd capability beyond the fixed system-sense, event-hub, and system-heal restarts,
   including arbitrary unit names, methods, arguments, or caller-supplied D-Bus
   paths.
-- eBPF kernel event transport and declarative Nix self-evolution.
+- Additional eBPF event kinds beyond the existing bounded process-exec slice,
+  and real Phase D generation activation or rollback.
 
 ## Next Slice
 
 The fixed Level 3 hostd socket contract, all three allowlisted restart
-capabilities, and bounded journal diagnosis are complete. Future work must
-keep the native helper, exact user/group match, compact verified/matched
-readback, and descriptor-bound mutation targets. Select another capability only
-with a separate operator gap; do not broaden this fixed restart contract into
-an arbitrary systemd control API.
+capabilities, and bounded journal diagnosis are complete. The next operator gap
+is post-repair verification: combine existing body health and journal evidence,
+dispatch only through the existing fixed restart owner, then record fresh
+post-action health and Observer evidence. Keep the native helper, exact
+user/group match, compact verified/matched readback, and descriptor-bound
+mutation targets. Do not broaden this contract into an arbitrary systemd API or
+automatic restart scheduler.
