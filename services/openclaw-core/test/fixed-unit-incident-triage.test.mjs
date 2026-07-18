@@ -256,6 +256,27 @@ test("fixed-unit incident triage requires explicit confirmation and a current so
   );
 });
 
+test("automatic fixed-unit incident triage reuses the same no-authority owner without confirmation", async () => {
+  const harness = createHarness();
+
+  const result = await harness.builders.createAutomaticFixedUnitIncidentTriageTask({
+    sourceTaskId: SOURCE_TASK_ID,
+  });
+
+  assert.equal(result.mode, "automatic_local_triage");
+  assert.equal(result.triage.mode, "automatic_local_plan");
+  assert.equal(result.triage.trigger, "scheduler");
+  assert.equal(result.task.status, "completed");
+  assert.equal(result.task.approval, undefined);
+  assert.equal(result.task.plan.steps.some((step) => step.capabilityId || step.command), false);
+  assert.equal(result.governance.createsApproval, false);
+  assert.equal(result.governance.executesRepair, false);
+  assert.equal(result.governance.invokesHostd, false);
+  assert.equal(result.governance.callsProvider, false);
+  const audit = harness.events.find((event) => event.name === "systemd.fixed_unit_incident_triage_recorded");
+  assert.equal(audit.payload.trigger, "scheduler");
+});
+
 test("fixed-unit incident repair promotion creates one pending fixed-target approval without execution", async () => {
   const harness = createHarness();
   const triage = await harness.builders.createFixedUnitIncidentTriageTask({

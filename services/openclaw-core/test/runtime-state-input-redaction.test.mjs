@@ -98,6 +98,12 @@ test("core state persists and restores fixed-unit incident scheduler dedupe stat
         fingerprint: `sha256:${"a".repeat(64)}`,
         lastObservedAt: "2026-07-18T14:30:00.000Z",
         latestTaskId: "scheduled-task-1",
+        latestTriageTaskId: "triage-task-1",
+        triageStatus: "failed",
+        triageFailure: {
+          code: "automatic_triage_failed",
+          at: "2026-07-18T14:31:00.000Z",
+        },
       },
     },
   });
@@ -110,5 +116,13 @@ test("core state persists and restores fixed-unit incident scheduler dedupe stat
   assert.equal(
     restored.fixedUnitIncidentSchedulerState.units["openclaw-system-heal.service"].latestTaskId,
     "scheduled-task-1",
+  );
+  assert.equal(
+    restored.fixedUnitIncidentSchedulerState.units["openclaw-system-heal.service"].latestTriageTaskId,
+    "triage-task-1",
+  );
+  assert.equal(
+    restored.fixedUnitIncidentSchedulerState.units["openclaw-system-heal.service"].triageFailure.code,
+    "automatic_triage_failed",
   );
 });

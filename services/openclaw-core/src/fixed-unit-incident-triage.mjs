@@ -114,7 +114,7 @@ export function createFixedUnitIncidentTriageBuilders({
   const inFlightBySourceTask = new Map();
   const inFlightRepairPromotionByTriageTask = new Map();
 
-  async function performFixedUnitIncidentTriage(sourceId) {
+  async function performFixedUnitIncidentTriage(sourceId, trigger) {
     const sourceTask = tasks.get(sourceId);
     const validation = validateFixedUnitIncidentTask(sourceTask);
     if (!validation.ok) {
@@ -127,7 +127,7 @@ export function createFixedUnitIncidentTriageBuilders({
     if (existing) {
       return {
         registry: FIXED_UNIT_INCIDENT_TRIAGE_REGISTRY,
-        mode: "operator_reviewed_local_triage",
+        mode: existing.systemdIncidentTriage?.mode ?? "local_triage",
         generatedAt: existing.systemdIncidentTriage?.createdAt ?? existing.createdAt ?? null,
         task: existing,
         triage: existing.systemdIncidentTriage,
@@ -155,6 +155,7 @@ export function createFixedUnitIncidentTriageBuilders({
     assertCurrentSchedulerSource(schedulerState, sourceTask, observation, validation.target);
 
     const createdAt = now();
+    const automatic = trigger === "scheduler";
     const binding = {
       sourceTaskId: sourceTask.id,
       sourceFingerprint: observation.fingerprint,
@@ -166,7 +167,8 @@ export function createFixedUnitIncidentTriageBuilders({
     };
     const triage = {
       registry: FIXED_UNIT_INCIDENT_TRIAGE_REGISTRY,
-      mode: "operator_reviewed_local_plan",
+      mode: automatic ? "automatic_local_plan" : "operator_reviewed_local_plan",
+      trigger: automatic ? "scheduler" : "operator",
       createdAt,
       binding: {
         ...binding,
@@ -204,6 +206,7 @@ export function createFixedUnitIncidentTriageBuilders({
 
     const audit = await publishEvent("systemd.fixed_unit_incident_triage_recorded", {
       registry: triage.registry,
+      trigger: triage.trigger,
       source: triage.source,
       target: triage.target,
       binding: triage.binding,
@@ -222,20 +225,22 @@ export function createFixedUnitIncidentTriageBuilders({
     };
     const policyDecision = evaluatePolicyIntent({
       type: FIXED_UNIT_INCIDENT_TRIAGE_TASK_TYPE,
-      goal: `Review local repair planning for scheduled incident on ${validation.target.unit}`,
+      goal: `${automatic ? "Prepare" : "Review"} local repair planning for scheduled incident on ${validation.target.unit}`,
       policy: policyRequest,
     }, {
       stage: "fixed_unit_incident_triage.task",
       type: FIXED_UNIT_INCIDENT_TRIAGE_TASK_TYPE,
     });
     const task = createTask({
-      goal: `Review local repair planning for scheduled incident on ${validation.target.unit}`,
+      goal: `${automatic ? "Prepare" : "Review"} local repair planning for scheduled incident on ${validation.target.unit}`,
       type: FIXED_UNIT_INCIDENT_TRIAGE_TASK_TYPE,
       workViewStrategy: "local-systemd-incident-triage",
       plan: {
         planner: "fixed-unit-incident-triage-v0",
-        strategy: "operator-reviewed-local-systemd-triage",
-        summary: `Bind scheduled incident evidence to the existing repair draft for ${validation.target.unit}; stop before approval or execution.`,
+        strategy: automatic
+          ? "automatic-local-systemd-triage"
+          : "operator-reviewed-local-systemd-triage",
+        summary: `Bind scheduled incident evidence to the existing repair draft for ${validation.target.unit}; stop before repair promotion, approval, or execution.`,
         steps: [
           {
             id: "review-scheduled-incident",
@@ -261,7 +266,7 @@ export function createFixedUnitIncidentTriageBuilders({
       decision: policyDecision,
     };
     const completedTask = completeTask(task, {
-      summary: `Reviewed local repair planning boundary for ${validation.target.unit}.`,
+      summary: `${automatic ? "Prepared" : "Reviewed"} local repair planning boundary for ${validation.target.unit}.`,
       systemdIncidentTriage: triage,
       createsApproval: false,
       executesRepair: false,
@@ -277,7 +282,7 @@ export function createFixedUnitIncidentTriageBuilders({
 
     return {
       registry: FIXED_UNIT_INCIDENT_TRIAGE_REGISTRY,
-      mode: "operator_reviewed_local_triage",
+      mode: automatic ? "automatic_local_triage" : "operator_reviewed_local_triage",
       generatedAt: createdAt,
       task: completedTask,
       triage,
@@ -300,7 +305,23 @@ export function createFixedUnitIncidentTriageBuilders({
     const existingOperation = inFlightBySourceTask.get(sourceId);
     if (existingOperation) return existingOperation;
 
-    const operation = performFixedUnitIncidentTriage(sourceId);
+    const operation = performFixedUnitIncidentTriage(sourceId, "operator");
+    inFlightBySourceTask.set(sourceId, operation);
+    try {
+      return await operation;
+    } finally {
+      if (inFlightBySourceTask.get(sourceId) === operation) {
+        inFlightBySourceTask.delete(sourceId);
+      }
+    }
+  }
+
+  async function createAutomaticFixedUnitIncidentTriageTask({ sourceTaskId: inputTaskId = null } = {}) {
+    const sourceId = sourceTaskId(inputTaskId);
+    const existingOperation = inFlightBySourceTask.get(sourceId);
+    if (existingOperation) return existingOperation;
+
+    const operation = performFixedUnitIncidentTriage(sourceId, "scheduler");
     inFlightBySourceTask.set(sourceId, operation);
     try {
       return await operation;
@@ -438,5 +459,9 @@ export function createFixedUnitIncidentTriageBuilders({
     }
   }
 
-  return { createFixedUnitIncidentTriageTask, createFixedUnitIncidentRepairTask };
+  return {
+    createFixedUnitIncidentTriageTask,
+    createAutomaticFixedUnitIncidentTriageTask,
+    createFixedUnitIncidentRepairTask,
+  };
 }

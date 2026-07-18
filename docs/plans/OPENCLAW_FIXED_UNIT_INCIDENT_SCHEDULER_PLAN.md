@@ -19,7 +19,7 @@ Core starts with an explicitly configured interval
 -> create one completed local incident task
 -> show the compact task through existing Observer history/detail
 -> suppress the same fingerprint until recovery or a changed failure
--> let the operator explicitly select Triage on the current incident
+-> automatically create or reuse local triage for every current incident
 -> bind source task, fingerprint, fixed unit, and existing repair draft owner
 -> create one completed local plan/evidence task without approval or execution
 -> let the operator explicitly select Prepare repair on that triage
@@ -36,10 +36,12 @@ clears its timer during Core shutdown.
 ## Persistence And Dedupe
 
 Core persists the last tick, next due time, compact read-failure code, and the
-current status, fingerprint, latest observation time, and latest task ID for
-each fixed unit. Unknown persisted units are discarded. Recovery clears the
-active fingerprint, so a later regression creates a new incident; a Core
-restart does not duplicate an unchanged incident.
+current status, fingerprint, latest observation time, latest incident/triage
+task IDs, and compact triage outcome for each fixed unit. Unknown persisted
+units are discarded. Recovery clears the active fingerprint and triage state,
+so a later regression creates a new incident; a Core restart does not
+duplicate an unchanged incident. A transient triage failure retains only a
+fixed error code and is retried on the next unchanged unhealthy tick.
 
 ## Authority Boundary
 
@@ -54,9 +56,9 @@ restart does not duplicate an unchanged incident.
   commands, hostd receipts, and private paths.
 - The scheduler cannot call a provider, create provider approval, invoke hostd,
   execute repair, activate a generation, or roll one back.
-- Triage revalidates the source fingerprint against current scheduler state,
-  coalesces concurrent requests, and reuses a completed triage for the same
-  source evidence.
+- Automatic and operator-requested triage share one owner. It revalidates the
+  source fingerprint against current scheduler state, coalesces concurrent
+  requests, and reuses a completed triage for the same source evidence.
 - Triage calls only the existing read-only repair draft owner. It does not add
   capability or command steps, supersede active tasks, create approval, or
   enter the execution queue.
@@ -76,7 +78,7 @@ restart does not duplicate an unchanged incident.
 - real task-manager extension serialization and Core-state restoration tests;
 - generated Observer client syntax, compact task-detail assertions, and the
   explicit Triage action;
-- `870/870` workspace tests and full typecheck;
+- `873/873` workspace tests and full typecheck;
 - 811-entry milestone registry, script audit, and 160-character Windows path
   budget;
 - full `dev-body-config-check.sh`, including exact 221-file Core and 77-file
@@ -94,12 +96,12 @@ used.
 - automatic provider diagnosis;
 - automatic repair or approval creation;
 - arbitrary systemd targets;
-- automatic local triage after scheduler observation;
 - real activation and rollback validation in a disposable mutation environment.
 
 ## Next Real Capability
 
-Automatically create or reuse the low-risk local triage task after each current
-unhealthy scheduler observation. Retry transient triage failures without
-duplicating the incident, and stop before repair promotion or approval. Keep
-provider, hostd, activation, rollback, and repair execution disabled.
+Automatically promote each successfully bound triage into one existing
+fixed-target repair task and pending approval, with idempotent retry and current
+source revalidation. Stop before approval resolution, Operator execution, or
+hostd invocation. Keep provider, activation, rollback, and repair execution
+disabled.

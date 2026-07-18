@@ -62,6 +62,7 @@ function createHarness({
   responses = healthyResponses(),
   schedulerState = {},
   publishAuditEvent = async () => ({ ok: true }),
+  createIncidentTriageTask = null,
   fetchJson,
   setTimer,
   clearTimer,
@@ -90,6 +91,7 @@ function createHarness({
       : responses.inventory),
     systemSenseUrl: "http://127.0.0.1:4106",
     taskManager,
+    createIncidentTriageTask,
     schedulerState,
     persistState: () => { persistenceCount += 1; },
     publishAuditEvent,
@@ -151,6 +153,99 @@ test("fixed-unit scheduler creates one compact completed incident task", async (
   assert.equal(task.systemdIncidentObservation.governance.journalMessagesIncluded, false);
 });
 
+test("fixed-unit scheduler automatically creates bounded triage after current incident state is persisted", async () => {
+  const responses = healthyResponses();
+  const unit = "openclaw-system-heal.service";
+  markUnhealthy(responses, unit);
+  const schedulerState = {};
+  const calls = [];
+  const harness = createHarness({
+    responses,
+    schedulerState,
+    createIncidentTriageTask: async ({ sourceTaskId }) => {
+      calls.push({
+        sourceTaskId,
+        state: JSON.parse(JSON.stringify(schedulerState.units[unit])),
+      });
+      return {
+        task: { id: "triage-task-1", status: "completed" },
+        triage: {
+          source: {
+            taskId: sourceTaskId,
+            fingerprint: schedulerState.units[unit].fingerprint,
+          },
+        },
+        governance: {
+          createsApproval: false,
+          executesRepair: false,
+          invokesHostd: false,
+          callsProvider: false,
+        },
+      };
+    },
+  });
+
+  const result = await harness.scheduler.tick();
+
+  assert.deepEqual(result.triageTaskIds, ["triage-task-1"]);
+  assert.equal(result.triageFailureCount, 0);
+  assert.equal(result.automaticTriageEnabled, true);
+  assert.equal(calls[0].sourceTaskId, "scheduled-task-1");
+  assert.equal(calls[0].state.status, "unhealthy");
+  assert.equal(calls[0].state.latestTaskId, "scheduled-task-1");
+  assert.equal(harness.scheduler.readState().units[unit].latestTriageTaskId, "triage-task-1");
+  assert.equal(harness.scheduler.readState().units[unit].triageStatus, "completed");
+  assert.equal(harness.scheduler.readState().units[unit].triageFailure, null);
+});
+
+test("fixed-unit scheduler retries transient automatic triage failure without duplicating incident", async () => {
+  const responses = healthyResponses();
+  const unit = "openclaw-event-hub.service";
+  markUnhealthy(responses, unit);
+  let attempts = 0;
+  const harness = createHarness({
+    responses,
+    createIncidentTriageTask: async ({ sourceTaskId }) => {
+      attempts += 1;
+      if (attempts === 1) throw new Error("private triage failure");
+      return {
+        task: { id: "triage-task-retry", status: "completed" },
+        triage: {
+          source: {
+            taskId: sourceTaskId,
+            fingerprint: harness.scheduler.readState().units[unit].fingerprint,
+          },
+        },
+        governance: {
+          createsApproval: false,
+          executesRepair: false,
+          invokesHostd: false,
+          callsProvider: false,
+        },
+      };
+    },
+  });
+
+  const first = await harness.scheduler.tick();
+  assert.equal(first.createdTaskIds.length, 1);
+  assert.equal(first.triageFailureCount, 1);
+  assert.equal(harness.scheduler.readState().units[unit].triageStatus, "failed");
+  assert.deepEqual(harness.scheduler.readState().units[unit].triageFailure, {
+    code: "automatic_triage_failed",
+    at: "2026-07-18T14:30:00.000Z",
+  });
+  assert.doesNotMatch(JSON.stringify(harness.scheduler.readState()), /private triage failure/u);
+
+  const second = await harness.scheduler.tick();
+  assert.deepEqual(second.createdTaskIds, []);
+  assert.deepEqual(second.triageTaskIds, ["triage-task-retry"]);
+  assert.equal(second.triageFailureCount, 0);
+  assert.equal(harness.tasks.length, 1);
+  assert.equal(attempts, 2);
+  assert.equal(harness.scheduler.readState().units[unit].triageStatus, "completed");
+  assert.equal(harness.scheduler.readState().units[unit].triageFailure, null);
+});
+
 test("fixed-unit scheduler deduplicates one unchanged unhealthy fingerprint", async () => {
   const responses = healthyResponses();
   markUnhealthy(responses, "openclaw-event-hub.service");
@@ -168,14 +263,35 @@ test("fixed-unit scheduler deduplicates one unchanged unhealthy fingerprint", as
 
 test("fixed-unit scheduler creates a new task after recovery and regression", async () => {
   const responses = healthyResponses();
-  const harness = createHarness({ responses });
+  const harness = createHarness({
+    responses,
+    createIncidentTriageTask: async ({ sourceTaskId }) => ({
+      task: { id: `triage-${sourceTaskId}`, status: "completed" },
+      triage: {
+        source: {
+          taskId: sourceTaskId,
+          fingerprint: harness.scheduler.readState().units["openclaw-system-sense.service"].fingerprint,
+        },
+      },
+      governance: {
+        createsApproval: false,
+        executesRepair: false,
+        invokesHostd: false,
+        callsProvider: false,
+      },
+    }),
+  });
 
   markUnhealthy(responses, "openclaw-system-sense.service");
   await harness.scheduler.tick();
   const unit = responses.inventory.units.find((candidate) => candidate.unit === "openclaw-system-sense.service");
+  assert.equal(harness.scheduler.readState().units[unit.unit].triageStatus, "completed");
   unit.activeState = "active";
   unit.subState = "running";
   await harness.scheduler.tick();
+  assert.equal(harness.scheduler.readState().units[unit.unit].latestTriageTaskId, null);
+  assert.equal(harness.scheduler.readState().units[unit.unit].triageStatus, null);
+  assert.equal(harness.scheduler.readState().units[unit.unit].triageFailure, null);
   markUnhealthy(responses, "openclaw-system-sense.service");
   await harness.scheduler.tick();
 

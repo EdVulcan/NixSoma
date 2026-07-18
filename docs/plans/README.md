@@ -56,17 +56,18 @@ bound Event Hub audit-log memory and retention
 -> review the exact observation task without recursive refresh
 -> periodically observe the three fixed hostd targets locally
 -> create one compact completed task per new failure fingerprint
--> explicitly bind the current incident to the existing local repair draft
+-> automatically bind the current incident to the existing local repair draft
 -> create one completed triage evidence task without approval or execution
 -> explicitly promote that triage into one pending fixed-target repair approval
 ```
 
 This route advances the Level 3 body loop without widening hostd authority and
-without introducing a new provider response schema. This provider/systemd lane
-and the scheduled incident-to-repair-task lane is now frozen. The immediate next
-real capability is explicitly authorized deployment of the validated source
-baseline plus non-mutating health, auth, scheduler, and Observer probes. Real
-hostd mutation, generation activation/rollback, arbitrary systemd control,
+without introducing a new provider response schema. The deployed baseline is
+proven through non-mutating health, auth, scheduler, and Observer probes, and
+automatic local triage is complete in source. The immediate next real
+capability is automatic promotion of a current triage into one pending
+fixed-target repair approval; approval resolution and execution stay explicit.
+Real hostd mutation, generation activation/rollback, arbitrary systemd control,
 desktop-wide capture, and automatic provider egress remain deferred.
 
 ## Completed Capability Evidence

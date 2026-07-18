@@ -47,7 +47,7 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, and the local fixed-unit incident scheduler and
-triage/repair-promotion bridge. All 870 workspace tests and typecheck pass, the
+triage/repair-promotion bridge. All 873 workspace tests and typecheck pass, the
 body-config and event-audit integration checks pass, the 811-entry milestone
 registry audit passes, and the Windows path budget has no file over 160
 repository-relative characters.
@@ -1618,22 +1618,25 @@ complete through
 reads local health and fixed-unit inventory, derives targets from the shared
 hostd capability registry, audits and creates one completed compact task for a
 new unhealthy fingerprint, persists dedupe state across restart, and re-arms
-after recovery. Existing Observer history renders the incident and exposes an
-explicit Triage action. Triage revalidates the current source task, fingerprint,
-and fixed unit, reuses the existing read-only repair draft owner, and creates
-one completed local evidence task. An explicit Prepare repair action then
+after recovery. Existing Observer history renders the incident. The scheduler
+automatically creates or reuses triage through the same local owner after
+persisting each current unhealthy observation. Triage revalidates the current
+source task, fingerprint, and fixed unit, reuses the existing read-only repair
+draft owner, and creates one completed local evidence task. Transient failure
+retains only a fixed error code and retries on the next tick; recovery clears
+triage state. An explicit Prepare repair action then
 revalidates the triage, incident, fingerprint, current scheduler state, fixed
 unit, and hostd capability before creating one existing real repair task and
 pending approval. It does not approve, execute, invoke hostd, call a provider,
 activate a generation, or roll one back.
 
 Freeze the provider/systemd diagnosis lane and do not add another evidence
-wrapper. The next real capability is automatic low-risk local triage after a
-scheduled incident so the operator only enters at repair promotion. The
-automatic path must reuse the same source/fingerprint/unit validation, audit
-before task mutation, retry after transient triage failure without duplicating
-the incident, and retain no approval, provider, hostd, activation, or rollback
-authority. Real promoted repair execution requires a disposable mutation
+wrapper. Automatic low-risk local triage is complete. The next real capability
+is automatic promotion of each current completed triage into one existing
+fixed-target repair task and pending approval. Reuse the existing promotion
+owner and idempotency, retry without duplicating the incident or repair task,
+and stop before approval resolution, Operator execution, hostd, activation, or
+rollback. Real promoted repair execution requires a disposable mutation
 environment.
 
 ## Operator Identity And Mutation Boundary Checkpoint

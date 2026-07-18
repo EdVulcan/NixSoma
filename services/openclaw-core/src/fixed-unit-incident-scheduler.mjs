@@ -124,6 +124,18 @@ function normaliseUnitSchedulerState(value) {
     latestTaskId: typeof value.latestTaskId === "string" && value.latestTaskId.trim()
       ? value.latestTaskId.trim()
       : null,
+    latestTriageTaskId: typeof value.latestTriageTaskId === "string" && value.latestTriageTaskId.trim()
+      ? value.latestTriageTaskId.trim()
+      : null,
+    triageStatus: ["completed", "failed"].includes(value.triageStatus)
+      ? value.triageStatus
+      : null,
+    triageFailure: value.triageFailure?.code === "automatic_triage_failed"
+      ? {
+          code: "automatic_triage_failed",
+          at: compactTimestamp(value.triageFailure.at),
+        }
+      : null,
   };
 }
 
@@ -199,6 +211,7 @@ export function createFixedUnitIncidentScheduler({
   fetchJson,
   systemSenseUrl,
   taskManager,
+  createIncidentTriageTask = null,
   schedulerState = {},
   persistState = () => {},
   publishAuditEvent = async () => ({ ok: true }),
@@ -234,6 +247,9 @@ export function createFixedUnitIncidentScheduler({
         fingerprint: unhealthy ? observation.fingerprint : null,
         lastObservedAt: at,
         latestTaskId: createdTaskByUnit.get(observation.target.unit)?.id ?? prior.latestTaskId ?? null,
+        latestTriageTaskId: unhealthy ? prior.latestTriageTaskId ?? null : null,
+        triageStatus: unhealthy ? prior.triageStatus ?? null : null,
+        triageFailure: unhealthy ? prior.triageFailure ?? null : null,
       };
     }
     Object.assign(state, {
@@ -243,6 +259,48 @@ export function createFixedUnitIncidentScheduler({
       lastFailure: null,
     });
     persistState();
+  }
+
+  async function triageCurrentIncidents(observations, observedAt) {
+    if (typeof createIncidentTriageTask !== "function") {
+      return { taskIds: [], failures: [] };
+    }
+    const taskIds = [];
+    const failures = [];
+    for (const observation of observations) {
+      if (observation.health.healthy) continue;
+      const unitState = state.units[observation.target.unit];
+      if (!unitState?.latestTaskId) continue;
+      try {
+        const result = await createIncidentTriageTask({ sourceTaskId: unitState.latestTaskId });
+        if (result?.task?.status !== "completed"
+          || result?.triage?.source?.taskId !== unitState.latestTaskId
+          || result?.triage?.source?.fingerprint !== observation.fingerprint
+          || result?.governance?.createsApproval !== false
+          || result?.governance?.executesRepair !== false
+          || result?.governance?.invokesHostd !== false
+          || result?.governance?.callsProvider !== false) {
+          throw new Error("automatic_triage_contract_invalid");
+        }
+        unitState.latestTriageTaskId = result.task.id;
+        unitState.triageStatus = "completed";
+        unitState.triageFailure = null;
+        taskIds.push(result.task.id);
+      } catch {
+        unitState.triageStatus = "failed";
+        unitState.triageFailure = {
+          code: "automatic_triage_failed",
+          at: observedAt,
+        };
+        failures.push({
+          unit: observation.target.unit,
+          sourceTaskId: unitState.latestTaskId,
+          ...unitState.triageFailure,
+        });
+      }
+    }
+    persistState();
+    return { taskIds, failures };
   }
 
   async function runTick() {
@@ -321,11 +379,15 @@ export function createFixedUnitIncidentScheduler({
       createdTaskByUnit.set(observation.target.unit, task);
     }
     applySuccessfulObservation(observations, observedAt, currentMs, createdTaskByUnit);
+    const triage = await triageCurrentIncidents(observations, observedAt);
     return {
       ok: true,
       skipped: false,
       observedUnits: observations.length,
       createdTaskIds: [...createdTaskByUnit.values()].map((task) => task.id),
+      triageTaskIds: triage.taskIds,
+      triageFailureCount: triage.failures.length,
+      automaticTriageEnabled: typeof createIncidentTriageTask === "function",
     };
   }
 

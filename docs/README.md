@@ -13,8 +13,8 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current `main` through the Level 3 fixed-unit incident scheduler, local triage bridge, and governed repair/diagnosis loop | Implemented; commit history is authoritative |
-| Local validation | 870 workspace tests and typecheck pass; body-config and event-audit integration pass; 811 registry entries pass | Validated |
+| Capability source | Current `main` through the Level 3 fixed-unit incident scheduler, automatic local triage, and governed repair/diagnosis loop | Implemented; commit history is authoritative |
+| Local validation | 873 workspace tests and typecheck pass; body-config and event-audit integration pass; 811 registry entries pass | Validated |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/gb72w3qavm6b0vv114ml723g7y8jv5qh-nixos-system-nixos-26.05.4808.569d57850992` | Current source baseline deployed 2026-07-18 |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
@@ -77,9 +77,9 @@ The completed bounded frontier is:
 - One five-minute local scheduler for the three fixed hostd targets, with
   compact audited incident tasks, restart-safe dedupe, recovery re-arming, and
   existing Observer task-detail visibility.
-- One explicit local Triage action that binds the scheduler's current source
+- Automatic local triage that binds each current scheduler incident's source
   task, fingerprint, and fixed unit to the existing read-only repair draft and
-  creates a completed evidence task without approval or execution.
+  creates or reuses a completed evidence task without approval or execution.
 - One explicit Prepare repair action that revalidates the triage/source/current
   scheduler chain and creates the existing fixed-target real repair task with a
   pending approval, without approval resolution or hostd invocation.
@@ -116,7 +116,7 @@ body health + bounded journal evidence
 -> reviewed opening of the exact observation task
 -> periodic local fixed-unit observation
 -> deduplicated completed incident task in Observer
--> explicit local triage bound to the current repair draft
+-> automatic local triage bound to the current repair draft
 -> explicit approval-gated promotion into the existing fixed repair executor
 ```
 
@@ -124,11 +124,12 @@ Do not broaden hostd into arbitrary systemd control or add another provider
 readiness wrapper. The validated source baseline is now deployed: all service
 health probes returned 200, anonymous protected reads/mutations returned 401,
 the journal endpoint is live, Observer contains both incident controls, and the
-first scheduler tick observed all fixed targets healthy. The next real
-capability is automatic low-risk local triage after a scheduled incident, while
-repair promotion remains explicit and high-risk execution remains approval
-gated. Real hostd mutation, generation rollback, and a promoted repair receipt
-remain deferred to a disposable mutation environment.
+first scheduler tick observed all fixed targets healthy. Automatic low-risk
+local triage is complete in source. The next real capability is automatic
+promotion into one pending fixed-target repair approval, while approval
+resolution and high-risk execution remain explicit. Real hostd mutation,
+generation rollback, and a promoted repair receipt remain deferred to a
+disposable mutation environment.
 
 ## Progress Estimate
 

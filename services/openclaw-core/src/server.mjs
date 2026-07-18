@@ -276,6 +276,7 @@ fixedUnitIncidentScheduler = createFixedUnitIncidentScheduler({
   fetchJson: (url) => client.fetchJson(url),
   systemSenseUrl,
   taskManager,
+  createIncidentTriageTask: ({ sourceTaskId }) => planBuilder.createAutomaticFixedUnitIncidentTriageTask({ sourceTaskId }),
   schedulerState: state.fixedUnitIncidentSchedulerState,
   persistState: state.persistState,
   publishAuditEvent,

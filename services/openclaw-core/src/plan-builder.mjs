@@ -336,7 +336,11 @@ export function createPlanBuilder(deps) {
     createSystemdRepairCandidateTaskShell,
     createSystemdNextRepairTaskShell,
   } = systemdTaskBuilders;
-  const { createFixedUnitIncidentTriageTask, createFixedUnitIncidentRepairTask } = createFixedUnitIncidentTriageBuilders({
+  const {
+    createFixedUnitIncidentTriageTask,
+    createAutomaticFixedUnitIncidentTriageTask,
+    createFixedUnitIncidentRepairTask,
+  } = createFixedUnitIncidentTriageBuilders({
     tasks,
     schedulerState: state.fixedUnitIncidentSchedulerState,
     buildSystemdRepairExecutionTaskDraft,
@@ -825,6 +829,7 @@ function compactCloudConsciousnessEvidenceRef(evidence) {
     createSystemdRepairCandidateTaskShell,
     createSystemdNextRepairTaskShell,
     createFixedUnitIncidentTriageTask,
+    createAutomaticFixedUnitIncidentTriageTask,
     createFixedUnitIncidentRepairTask,
     createBodyEvidenceLedgerDirectoryTaskShell,
     createBodyEvidenceLedgerFirstRecordTaskShell,
