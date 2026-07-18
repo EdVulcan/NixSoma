@@ -1357,7 +1357,8 @@ Core host-health oracle owns health assessment, fixed `openclaw-hostd` owns
 activation, and `deferred_manual_operator` owns rollback. The oracle is an
 independent decision module inside the Core control plane, not a separate
 privileged daemon; process isolation and physical generation rehearsal remain
-deferred to the NixOS VM activation slice.
+deferred. The current workspace is a physical host, not a VM; no VM-only
+acceptance step may be treated as an available prerequisite.
 
 The activation executor now records bounded manual rollback evidence when a
 validated hostd receipt shows a generation switch but the independent
@@ -1409,9 +1410,12 @@ and Core/Observer checks now pass. The pinned flake remains the default outside
 that host optimization and its cold materialization remains a long-running
 resource check. No lane writes `/etc/nixos`, switches a generation, activates a
 system, or rolls back. The local manual rollback evidence contract is complete;
-the next real slice is a NixOS-VM-only activation/health-failure rehearsal.
-Do not enable physical activation on the development host or add another
-generic readiness wrapper.
+the next real slice is a physical-host-safe activation/health-failure rehearsal
+using injected receipt/oracle inputs through the existing user-space boundary.
+It must not connect to real hostd, write `/etc/nixos`, run `nixos-rebuild`,
+switch a generation, or execute rollback. Do not turn a future disposable-VM
+release gate into a current workspace assumption or add another generic
+readiness wrapper.
 
 ## Operator Identity And Mutation Boundary Checkpoint
 
@@ -1533,9 +1537,24 @@ What is the next smallest real capability step?
 If a slice cannot answer those questions, it is likely a checklist shell and
 should be stopped or merged into a more meaningful slice.
 
-## VM Agent Startup Checklist
+## Current Execution Environment
 
-Use this exact startup order on the VM:
+As of 2026-07-18, `/home/edvulcan/OpenClaw_On_NixOS` is running on the only
+available physical host (`systemd-detect-virt=none`). There is no VM workspace,
+VM IP, or SSH handoff available for current development. Historical VM claims
+below remain evidence of earlier acceptance only; they are not executable
+instructions for the current agent.
+
+On this physical host, normal development is user-space and read-only with
+respect to the host: do not run `sudo`, `nixos-rebuild switch`, generation
+activation, real hostd activation, or rollback. Use injected clients, dry-run
+builders, local service lanes, and unit/Observer evidence for unsafe host
+boundaries until a separate mutation environment is explicitly provisioned.
+
+## Historical VM Agent Startup Checklist (Archived)
+
+The following checklist is retained for historical VM recovery only. Do not use
+it as the current startup order:
 
 ```bash
 cd /home/edvulcan/OpenClaw_On_NixOS

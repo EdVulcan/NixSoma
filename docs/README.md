@@ -69,7 +69,9 @@ the fixed `openclaw-system-sense.service`, its foundational upstream
 Observer target selector remains explicit, unknown units remain rejected, and
 real host mutation still requires approval plus Operator Step/Run. The switched
 VM now proves all three fixed targets through Core and Observer real-execution
-checks with native D-Bus, changed-PID, and restored-health evidence.
+checks with native D-Bus, changed-PID, and restored-health evidence. Those VM
+results are historical evidence; the current checkout runs on the only
+available physical host and has no VM workspace available.
 
 The Core operator identity boundary now covers both mutation routes and the
 sensitive task, approval, runtime/policy, and execution-ledger read models.
@@ -92,8 +94,10 @@ current approval record, re-queries a real evaluated `/nix/store` output and
 deriver/NAR metadata, and emits a stable task-bound closure-integrity receipt.
 The explicit NixOS host lane now proves the receipt, healthy-host review, and
 future activation decision; the normal dry-run lane still fails closed without
-materialization. It does not write `/etc/nixos`, run `nixos-rebuild`, switch
-generations, or roll back. The active plan is
+materialization. The manual rollback evidence path binds receipt and health
+hashes without executing rollback. The next proof is a physical-host-safe
+injected health-failure rehearsal; it does not write `/etc/nixos`, run
+`nixos-rebuild`, switch generations, or roll back. The active plan is
 [OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md](./plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md).
 
 ## Windows Checkout Path Policy

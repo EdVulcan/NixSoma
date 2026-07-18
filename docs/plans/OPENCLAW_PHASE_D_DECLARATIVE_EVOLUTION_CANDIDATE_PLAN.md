@@ -203,8 +203,11 @@ by the activation decision and post-action readback: health is owned by the
 oracle, activation by fixed `openclaw-hostd`, and rollback by a manual operator.
 This is an independent decision module, not a separate privileged daemon. The
 Core manual rollback evidence contract is now also complete for the
-post-activation health-failure path. The next mainline slice is a NixOS-VM-only
-activation/health-failure rehearsal that exercises this evidence against a
-real hostd receipt. Until that rehearsal is complete, managed-config
-installation, `nixos-rebuild`, generation switching, and physical rollback
-remain deferred on the physical development host.
+post-activation health-failure path. The next mainline slice is a
+physical-host-safe activation/health-failure rehearsal: inject a validated
+hostd receipt and degraded/unavailable oracle result through the existing
+user-space executor/test boundary, then prove the task and Observer readback.
+It must not connect to the real hostd socket, write `/etc/nixos`, run
+`nixos-rebuild`, switch a generation, or execute rollback. A disposable VM may
+be a later release gate if one is provisioned; it is not a current workspace
+precondition.
