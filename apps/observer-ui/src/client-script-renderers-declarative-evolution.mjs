@@ -100,6 +100,7 @@ function renderDeclarativeEvolutionActivationExecution(data) {
     activationExecuted: execution?.activationExecuted === true,
     generationSwitched: execution?.generationSwitched === true,
     postActivationHealth: execution?.postActivationHealth ?? null,
+    rollbackEvidence: execution?.rollbackEvidence ?? null,
     receiptHash: execution?.executionReceipt?.receiptHash ?? null,
     automaticRollback: false,
   }, null, 2);

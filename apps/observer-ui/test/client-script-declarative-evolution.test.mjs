@@ -60,6 +60,7 @@ test("Observer exposes the declarative-evolution activation decision panel", () 
   assert.match(observerClientConfigDomDeclarativeEvolutionScript, /declarativeEvolutionSourceTaskIdInput/u);
   assert.match(observerClientDeclarativeEvolutionRefreshersScript, /confirm: true/u);
   assert.match(observerClientDeclarativeEvolutionRenderersScript, /candidateHash/u);
+  assert.match(observerClientDeclarativeEvolutionRenderersScript, /rollbackEvidence/u);
 });
 
 test("Observer renders a compact host-health-bound activation review", () => {
@@ -105,6 +106,45 @@ test("Observer renders a compact host-health-bound activation review", () => {
   assert.match(context.declarativeEvolutionReviewJson.textContent, /hostHealthOracle/u);
   assert.match(context.declarativeEvolutionReviewJson.textContent, /closureIntegrityReceiptHash/u);
   assert.doesNotMatch(context.declarativeEvolutionReviewJson.textContent, /services\.openclaw\.components/u);
+});
+
+test("Observer renders manual rollback evidence in activation execution readback", () => {
+  const context = createRendererContext();
+  vm.runInNewContext(observerClientDeclarativeEvolutionRenderersScript, context);
+
+  context.renderDeclarativeEvolutionActivationExecution({
+    ok: false,
+    task: {
+      id: "activation-task-1",
+      status: "failed",
+      nativeDeclarativeEvolution: {
+        activation: {
+          candidateHash: "a".repeat(64),
+        },
+        execution: {
+          status: "failed",
+          activationExecuted: true,
+          generationSwitched: true,
+          postActivationHealth: { status: "degraded" },
+          rollbackEvidence: {
+            status: "manual_operator_required",
+            owner: "deferred_manual_operator",
+            governance: {
+              automaticRollback: false,
+              executesRollback: false,
+            },
+          },
+          executionReceipt: { receiptHash: "b".repeat(64) },
+        },
+      },
+    },
+  });
+
+  assert.equal(context.declarativeEvolutionExecutionStatus.textContent, "failed");
+  assert.match(context.declarativeEvolutionExecutionJson.textContent, /manual_operator_required/u);
+  assert.match(context.declarativeEvolutionExecutionJson.textContent, /deferred_manual_operator/u);
+  assert.match(context.declarativeEvolutionExecutionJson.textContent, /automaticRollback/u);
+  assert.match(context.declarativeEvolutionExecutionJson.textContent, /false/u);
 });
 
 test("Observer queues an explicit activation decision and refreshes existing read models", async () => {

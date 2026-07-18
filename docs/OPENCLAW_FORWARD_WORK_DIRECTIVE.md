@@ -1359,6 +1359,13 @@ independent decision module inside the Core control plane, not a separate
 privileged daemon; process isolation and physical generation rehearsal remain
 deferred to the NixOS VM activation slice.
 
+The activation executor now records bounded manual rollback evidence when a
+validated hostd receipt shows a generation switch but the independent
+post-activation health result is degraded or unavailable. That evidence binds
+the activation receipt and pre/post health hashes and recommends operator
+review; it never creates a task or approval, calls hostd again, executes
+rollback, or enables automatic recovery.
+
 This remains a decision boundary, not physical activation. It does not write
 `/etc/nixos`, run `nixos-rebuild`, switch a generation, activate a system, or
 roll back. Before that Level 3 bridge, the control plane must pass the
@@ -1401,10 +1408,10 @@ real closure receipt, healthy-host review, approved future activation decision,
 and Core/Observer checks now pass. The pinned flake remains the default outside
 that host optimization and its cold materialization remains a long-running
 resource check. No lane writes `/etc/nixos`, switches a generation, activates a
-system, or rolls back. The next real slice is a NixOS-VM-only
-activation/health-failure rehearsal with manual rollback evidence; do not
-enable physical activation on the development host or add another generic
-readiness wrapper.
+system, or rolls back. The local manual rollback evidence contract is complete;
+the next real slice is a NixOS-VM-only activation/health-failure rehearsal.
+Do not enable physical activation on the development host or add another
+generic readiness wrapper.
 
 ## Operator Identity And Mutation Boundary Checkpoint
 

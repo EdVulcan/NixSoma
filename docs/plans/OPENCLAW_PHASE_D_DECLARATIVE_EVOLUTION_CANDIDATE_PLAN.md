@@ -118,6 +118,13 @@ to the configured flake rebuild; `OPENCLAW_HOSTD_ACTIVATION_ENABLED=false` is
 the default, so the real NixOS mutation remains opt-in and is not exercised by
 the daily milestone.
 
+When a validated hostd receipt reports a successful generation switch but the
+independent post-activation health oracle reports a non-healthy result, Core
+now records a bounded manual rollback evidence object. It binds the activation
+receipt hash and pre/post health hashes, names `deferred_manual_operator` as the
+rollback owner, and recommends operator review. It does not create a task or
+approval, call hostd again, execute rollback, or enable automatic recovery.
+
 The Core/Observer staging pair additionally proves that `confirm=false` creates
 no activation task or approval and performs no hostd call, managed-config write,
 generation switch, or rollback. The hostd protocol rejects oversized input,
@@ -135,6 +142,7 @@ services/openclaw-core/src/native-declarative-evolution-execution.mjs
 services/openclaw-core/src/native-declarative-evolution-closure-integrity.mjs
 services/openclaw-core/src/native-declarative-evolution-health-gate.mjs
 services/openclaw-core/src/native-declarative-evolution-host-health-oracle.mjs
+services/openclaw-core/src/native-declarative-evolution-rollback-evidence.mjs
 services/openclaw-core/src/native-declarative-evolution-paths.mjs
 services/openclaw-core/src/native-declarative-evolution-task-builders.mjs
 services/openclaw-core/src/native-declarative-evolution-task-routes.mjs
@@ -146,6 +154,7 @@ services/openclaw-core/test/native-declarative-evolution-builders.test.mjs
 services/openclaw-core/test/native-declarative-evolution-execution.test.mjs
 services/openclaw-core/test/native-declarative-evolution-closure-integrity.test.mjs
 services/openclaw-core/test/native-declarative-evolution-health-gate.test.mjs
+services/openclaw-core/test/native-declarative-evolution-rollback-evidence.test.mjs
 services/openclaw-core/test/native-declarative-evolution-task-builders.test.mjs
 services/openclaw-core/test/native-declarative-evolution-task-routes.test.mjs
 services/openclaw-core/test/native-declarative-evolution-activation-decision.test.mjs
@@ -192,8 +201,10 @@ proof, and fail-closed daily lane are complete. The Core-owned
 evaluates fresh bounded system-sense facts and emits the authority split used
 by the activation decision and post-action readback: health is owned by the
 oracle, activation by fixed `openclaw-hostd`, and rollback by a manual operator.
-This is an independent decision module, not a separate privileged daemon.
-The next mainline slice is a NixOS-VM-only activation/health-failure rehearsal
-with manual rollback evidence. Until that rehearsal is complete, managed-config
+This is an independent decision module, not a separate privileged daemon. The
+Core manual rollback evidence contract is now also complete for the
+post-activation health-failure path. The next mainline slice is a NixOS-VM-only
+activation/health-failure rehearsal that exercises this evidence against a
+real hostd receipt. Until that rehearsal is complete, managed-config
 installation, `nixos-rebuild`, generation switching, and physical rollback
-remain deferred on the development host.
+remain deferred on the physical development host.

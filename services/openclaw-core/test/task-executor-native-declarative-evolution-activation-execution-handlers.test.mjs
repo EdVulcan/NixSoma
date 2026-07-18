@@ -87,7 +87,12 @@ function createTask(overrides = {}) {
   return task;
 }
 
-function createHarness({ task = createTask(), approved = true, changedHealth = false } = {}) {
+function createHarness({
+  task = createTask(),
+  approved = true,
+  changedHealth = false,
+  postActivationHealth = { status: "healthy", hostHealthHash: "e".repeat(64) },
+} = {}) {
   const events = [];
   const decisionTask = {
     id: "task-decision",
@@ -148,7 +153,7 @@ function createHarness({ task = createTask(), approved = true, changedHealth = f
     },
     planBuilder: {
       buildNativeDeclarativeEvolutionActivationDecisionReview: async () => review,
-      readNativeDeclarativeEvolutionHostHealth: async () => ({ status: "healthy", hostHealthHash: "e".repeat(64) }),
+      readNativeDeclarativeEvolutionHostHealth: async () => postActivationHealth,
     },
     hostdActivationClient: async (input) => {
       hostdCalls += 1;
@@ -167,9 +172,38 @@ test("approved activation executes through hostd and binds post-activation healt
   assert.equal(result.activation.activationExecuted, true);
   assert.equal(result.activation.generationSwitched, true);
   assert.equal(result.postActivationHealth.status, "healthy");
+  assert.equal(result.rollbackEvidence, null);
   assert.equal(result.executionReceipt.activationTaskId, task.id);
   assert.equal(getHostdCalls(), 1);
   assert.equal(events.filter((event) => event.name === "task.completed").length, 1);
+});
+
+test("successful activation with degraded post-health produces manual rollback evidence without rollback", async () => {
+  const degraded = createHarness({
+    postActivationHealth: {
+      registry: "openclaw-core-host-health-oracle-v0",
+      owner: "openclaw-core-host-health-oracle",
+      status: "degraded",
+      hostHealthHash: "f".repeat(64),
+      failedChecks: ["servicesHealthy"],
+    },
+  });
+  const result = await degraded.handlers[0].execute(degraded.task);
+  const execution = result.task.nativeDeclarativeEvolution.execution;
+
+  assert.equal(result.task.status, "failed");
+  assert.equal(result.reason, "post_activation_health_degraded");
+  assert.equal(degraded.getHostdCalls(), 1);
+  assert.equal(result.rollbackEvidence.ok, true);
+  assert.equal(result.rollbackEvidence.status, "manual_operator_required");
+  assert.equal(result.rollbackEvidence.healthTransition.preActivationHealthHash, hostHealthHash);
+  assert.equal(result.rollbackEvidence.healthTransition.postActivationHealthHash, "f".repeat(64));
+  assert.equal(result.rollbackEvidence.governance.automaticRollback, false);
+  assert.equal(result.rollbackEvidence.governance.executesRollback, false);
+  assert.equal(result.rollbackEvidence.governance.callsHostd, false);
+  assert.equal(execution.governance.rollbackEvidenceBound, true);
+  assert.equal(execution.governance.rollbackAuthority, "deferred_manual_operator");
+  assert.equal(degraded.events.filter((event) => event.name === "task.failed").length, 1);
 });
 
 test("activation does not call hostd without approval or after binding changes", async () => {

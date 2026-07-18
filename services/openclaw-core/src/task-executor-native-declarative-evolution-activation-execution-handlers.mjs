@@ -9,6 +9,9 @@ import {
 import {
   NATIVE_DECLARATIVE_EVOLUTION_ACTIVATION_DECISION_TASK_TYPE,
 } from "./native-declarative-evolution-activation-decision.mjs";
+import {
+  buildNativeDeclarativeEvolutionManualRollbackEvidence,
+} from "./native-declarative-evolution-rollback-evidence.mjs";
 
 const EXECUTION_REGISTRY = "openclaw-native-declarative-evolution-activation-execution-v0";
 const ACTIVATION_CAPABILITY_ID = "act.openclaw.declarative_evolution.activation";
@@ -162,6 +165,7 @@ export function createNativeDeclarativeEvolutionActivationTaskHandlers({
       approval: details.approval ?? null,
       executionReceipt: details.executionReceipt ?? null,
       postActivationHealth: details.postActivationHealth ?? null,
+      rollbackEvidence: details.rollbackEvidence ?? null,
     };
   }
 
@@ -300,6 +304,13 @@ export function createNativeDeclarativeEvolutionActivationTaskHandlers({
       && receipt.activationExecuted === true
       && receipt.generationSwitched === true;
     const healthPassed = postActivationHealth?.status === "healthy";
+    const rollbackEvidence = !activationPassed || healthPassed
+      ? null
+      : buildNativeDeclarativeEvolutionManualRollbackEvidence({
+          receipt,
+          preActivationHealthHash: expected.hostHealthHash,
+          postActivationHealth,
+        });
     const execution = {
       registry: EXECUTION_REGISTRY,
       status: activationPassed && healthPassed ? "passed" : "failed",
@@ -314,6 +325,7 @@ export function createNativeDeclarativeEvolutionActivationTaskHandlers({
       postActivationHostHealthHash: postActivationHealth?.hostHealthHash ?? null,
       executionReceipt: compactReceipt(receipt),
       postActivationHealth: compactHealth(postActivationHealth),
+      rollbackEvidence,
       governance: {
         writesManagedConfig: true,
         switchesGeneration: receipt.generationSwitched === true,
@@ -325,6 +337,7 @@ export function createNativeDeclarativeEvolutionActivationTaskHandlers({
         healthOracleOwner: postActivationHealth?.owner ?? null,
         activationAuthority: "openclaw-hostd",
         rollbackAuthority: "deferred_manual_operator",
+        rollbackEvidenceBound: rollbackEvidence?.ok === true,
       },
     };
     task.nativeDeclarativeEvolution.execution = execution;
@@ -334,6 +347,7 @@ export function createNativeDeclarativeEvolutionActivationTaskHandlers({
       activationExecuted: execution.activationExecuted,
       generationSwitched: execution.generationSwitched,
       postActivationHealthBound: postActivationHealth !== null,
+      rollbackEvidenceBound: rollbackEvidence?.ok === true,
     };
 
     if (!activationPassed) {
@@ -350,7 +364,8 @@ export function createNativeDeclarativeEvolutionActivationTaskHandlers({
         approval: approvalEvidence,
         executionReceipt: execution.executionReceipt,
         postActivationHealth: execution.postActivationHealth,
-        recovery: "manual_operator_health_review_required_no_automatic_rollback",
+        rollbackEvidence,
+        recovery: rollbackEvidence?.recommendation ?? "manual_operator_health_review_required_no_automatic_rollback",
       });
     }
 
@@ -383,6 +398,7 @@ export function createNativeDeclarativeEvolutionActivationTaskHandlers({
       approval: approvalEvidence,
       executionReceipt: execution.executionReceipt,
       postActivationHealth: execution.postActivationHealth,
+      rollbackEvidence: execution.rollbackEvidence,
       activation: execution,
     };
   }
