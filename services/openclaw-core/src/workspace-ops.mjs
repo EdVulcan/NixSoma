@@ -16,6 +16,7 @@ import {
   truncatePatchMetadata,
 } from "./workspace-proposal-utils.mjs";
 import { createWorkspaceCommandPlanBuilders } from "./workspace-command-plan-builders.mjs";
+import { normaliseWorkspaceMutationVerificationTrigger } from "./workspace-command-autonomy.mjs";
 import { createNativeEngineeringLspLifecycleTaskBuilders } from "./native-engineering-lsp-lifecycle-tasks.mjs";
 import { buildNativeEngineeringPlanTodoSuggestionLink } from "./native-engineering-plan-todo-suggestion-link.mjs";
 
@@ -77,6 +78,33 @@ function redactPublicParams(params) {
     }
   }
   return redacted;
+}
+
+function buildWorkspaceMutationTaskMetadata(draftEnvelope) {
+  const target = draftEnvelope?.target ?? {};
+  const allowedTargetKeys = [
+    "relativePath",
+    "contentBytes",
+    "contentSha256",
+    "originalBytes",
+    "nextBytes",
+    "replacementBytes",
+    "originalSha256",
+    "nextSha256",
+    "editCount",
+    "overwrite",
+  ];
+  return {
+    registry: "openclaw-native-workspace-mutation-v0",
+    capabilityId: draftEnvelope?.capability?.id ?? null,
+    workspace: draftEnvelope?.workspace ?? null,
+    target: Object.fromEntries(
+      allowedTargetKeys
+        .filter((key) => Object.prototype.hasOwnProperty.call(target, key))
+        .map((key) => [key, target[key]]),
+    ),
+    contentExposed: false,
+  };
 }
 
 function normaliseWorkspaceOpsContent({ content = "", contentBase64 = null } = {}) {
@@ -251,6 +279,7 @@ async function createNativeOpenClawWorkspaceTextWriteTask({
     engineeringPlanTodoSuggestionLink,
   }, { skipInitialPolicy: true });
   task.policy = draft.policy;
+  task.workspaceMutation = buildWorkspaceMutationTaskMetadata(draftEnvelope);
   const approval = createApprovalRequestForTask(task, draft.policy.decision);
   const reclaimedTasks = supersedeOtherActiveTasks(task.id);
   reconcileRuntimeState();
@@ -1028,6 +1057,7 @@ async function createNativeOpenClawWorkspacePatchApplyTask({
     engineeringPlanTodoSuggestionLink,
   }, { skipInitialPolicy: true });
   task.policy = draft.policy;
+  task.workspaceMutation = buildWorkspaceMutationTaskMetadata(draftEnvelope);
   const approval = createApprovalRequestForTask(task, draft.policy.decision);
   const reclaimedTasks = supersedeOtherActiveTasks(task.id);
   reconcileRuntimeState();
@@ -1229,6 +1259,8 @@ async function createWorkspaceCommandTask({
   proposalId = null,
   workspaceId = null,
   scriptName = null,
+  workspacePath = null,
+  verificationTrigger = null,
   engineeringPlanTodoSuggestionLink = null,
   confirm = false,
 } = {}) {
@@ -1236,7 +1268,13 @@ async function createWorkspaceCommandTask({
     throw new Error("Workspace command task creation requires confirm=true.");
   }
 
-  const draftEnvelope = buildWorkspaceCommandPlanDraft({ proposalId, workspaceId, scriptName });
+  const draftEnvelope = buildWorkspaceCommandPlanDraft({
+    proposalId,
+    workspaceId,
+    workspacePath,
+    scriptName,
+    verificationTrigger: normaliseWorkspaceMutationVerificationTrigger(verificationTrigger),
+  });
   const draft = draftEnvelope.draft;
   const task = createTask({
     goal: draft.goal,
@@ -1244,6 +1282,7 @@ async function createWorkspaceCommandTask({
     workViewStrategy: "workspace-command",
     plan: draft.plan,
     policy: draft.policy.request,
+    verificationTrigger: normaliseWorkspaceMutationVerificationTrigger(verificationTrigger),
     engineeringPlanTodoSuggestionLink,
   }, { skipInitialPolicy: true });
   task.policy = draft.policy;
@@ -1276,6 +1315,7 @@ async function createWorkspaceCommandTask({
       canExecuteWithoutApproval: draft.governance?.canExecuteWithoutApproval === true,
       autoAuthorized: draft.governance?.autoAuthorized === true,
       autonomous: draft.governance?.autonomous === true,
+      verificationTrigger: normaliseWorkspaceMutationVerificationTrigger(verificationTrigger),
       executed: false,
       requiresExplicitApproval: requiresApproval,
       exposesScriptBody: false,
@@ -1289,6 +1329,7 @@ async function createOpenClawSourceCommandTask({
   scriptName = null,
   workspacePath = null,
   query = "command",
+  verificationTrigger = null,
   engineeringPlanTodoSuggestionLink = null,
   confirm = false,
 } = {}) {
@@ -1308,10 +1349,13 @@ async function createOpenClawSourceCommandTask({
     scriptName,
     workspacePath,
     query,
+    verificationTrigger: normaliseWorkspaceMutationVerificationTrigger(verificationTrigger),
   });
   const sourceProposal = sourceDraft.sourceCommandProposal;
   const workspaceTask = await createWorkspaceCommandTask({
     proposalId: sourceProposal.id,
+    workspacePath: sourceProposal.workspacePath,
+    verificationTrigger: normaliseWorkspaceMutationVerificationTrigger(verificationTrigger),
     engineeringPlanTodoSuggestionLink: suggestionLink,
     confirm: true,
   });
@@ -1346,6 +1390,7 @@ async function createOpenClawSourceCommandTask({
       approvalId: workspaceTask.approval?.id ?? null,
       taskId: workspaceTask.task?.id ?? null,
       autoAuthorized: workspaceTask.governance?.autoAuthorized === true,
+      verificationTrigger: normaliseWorkspaceMutationVerificationTrigger(verificationTrigger),
       executed: false,
       contentExposed: false,
     },

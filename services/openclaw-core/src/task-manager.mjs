@@ -11,6 +11,8 @@ const TASK_EXTENSION_FIELDS = [
   { name: "engineeringRecommendationLink", copyFromCreateInput: true },
   { name: "engineeringEditProposal" },
   { name: "engineeringWriteProposal" },
+  { name: "workspaceMutation" },
+  { name: "verificationTrigger", copyFromCreateInput: true },
   { name: "engineeringLspLifecycle" },
   { name: "nativePluginRuntimeRefresh" },
   { name: "nativeDeclarativeEvolution" },

@@ -1245,6 +1245,173 @@ test("sovereign validation task executes through the existing capability plan wi
   assert.equal(events.some((event) => event.name === "task.completed"), true);
 });
 
+test("sovereign workspace mutation automatically runs one bound validation followup", async () => {
+  const mutationTask = {
+    id: "workspace-mutation-task-1",
+    type: "system_task",
+    goal: "Apply an approved workspace patch",
+    status: "queued",
+    workViewStrategy: "openclaw-native-workspace-patch-apply",
+    policy: {
+      request: { intent: "filesystem.write_text", domain: "body_internal", risk: "high", requiresApproval: false },
+      decision: { decision: "audit_only", reason: "approved_mutation_fixture", autonomyMode: "sovereign_body" },
+    },
+    workspaceMutation: {
+      registry: "openclaw-native-workspace-mutation-v0",
+      capabilityId: "act.openclaw.workspace_patch_apply",
+      workspace: { id: "openclaw", name: "OpenClaw", path: "/repo" },
+      target: {
+        relativePath: "src/example.mjs",
+        originalSha256: "a".repeat(64),
+        nextSha256: "b".repeat(64),
+        editCount: 1,
+      },
+      contentExposed: false,
+    },
+    plan: {
+      strategy: "rule-v1",
+      steps: [{
+        id: "mutation-step-1",
+        phase: "acting_on_target",
+        kind: "filesystem.write_text",
+        capabilityId: "act.filesystem.write_text",
+        intent: "filesystem.write_text",
+        params: { path: "/repo/src/example.mjs", content: "[redacted]", overwrite: true },
+        requiresApproval: false,
+      }],
+    },
+  };
+  const invocationBodies = [];
+  const followupCalls = [];
+  const { executor, events } = createExecutorHarness({
+    state: { autonomyMode: "sovereign_body" },
+    deps: {
+      workspaceOps: {
+        findWorkspaceCommandProposal: ({ workspacePath, scriptName }) => ({
+          proposal: workspacePath === "/repo" && scriptName === "typecheck"
+            ? {
+                id: "openclaw:typecheck",
+                workspaceId: "openclaw",
+                workspacePath: "/repo",
+                workspaceName: "OpenClaw",
+                scriptName: "typecheck",
+                category: "validation",
+                packageManager: "npm",
+                command: "npm",
+                args: ["run", "typecheck"],
+                cwd: "/repo",
+                risk: "low",
+                usesShell: false,
+              }
+            : null,
+        }),
+        createOpenClawSourceCommandTask: async (input) => {
+          followupCalls.push(input);
+          const params = {
+            command: "npm",
+            args: ["run", "typecheck"],
+            cwd: "/repo",
+            timeoutMs: 120000,
+          };
+          const step = {
+            id: "verification-step-1",
+            phase: "acting_on_target",
+            kind: "system.command.execute",
+            capabilityId: "act.system.command.execute",
+            intent: "system.command.execute",
+            params,
+            requiresApproval: false,
+            governance: "audit_only",
+            autonomousExecution: buildWorkspaceCommandAutonomousGrant({
+              proposal: {
+                workspaceId: "openclaw",
+                workspacePath: "/repo",
+                scriptName: "typecheck",
+                category: "validation",
+                packageManager: "npm",
+                command: "npm",
+                args: ["run", "typecheck"],
+                cwd: "/repo",
+                risk: "low",
+                usesShell: false,
+              },
+              requestHash: buildCapabilityRequestBindingHash({
+                capabilityId: "act.system.command.execute",
+                intent: "system.command.execute",
+                params,
+              }),
+              verificationTrigger: input.verificationTrigger,
+            }),
+          };
+          return {
+            task: {
+              id: "workspace-verification-task-1",
+              type: "system_task",
+              status: "queued",
+              workViewStrategy: "workspace-command",
+              verificationTrigger: input.verificationTrigger,
+              policy: {
+                request: { requiresApproval: false },
+                decision: {
+                  decision: "audit_only",
+                  domain: "body_internal",
+                  risk: "low",
+                  autonomyMode: "sovereign_body",
+                  autonomous: true,
+                },
+              },
+              plan: { strategy: "rule-v1", steps: [step] },
+            },
+            approval: null,
+            governance: { autoAuthorized: true },
+          };
+        },
+      },
+    },
+    planBuilder: {
+        capabilityById: (id) => ({
+          id,
+          requiresApproval: id === "act.system.command.execute",
+          governance: id === "act.system.command.execute" ? "require_approval" : "allow",
+        }),
+        invokeCapability: async (body) => {
+          invocationBodies.push(body);
+          return {
+            response: {
+              capability: { id: body.capabilityId },
+              invoked: true,
+              blocked: false,
+              invocation: { id: `invocation-${invocationBodies.length}`, request: body.params },
+              summary: body.capabilityId === "act.system.command.execute"
+                ? { exitCode: 0, timedOut: false, stdout: "typecheck-ok\n", stderr: "" }
+                : { kind: "filesystem.write_text", ok: true },
+              policy: { decision: body.capabilityId === "act.system.command.execute" ? "audit_only" : "allow" },
+            },
+          };
+        },
+      },
+  });
+
+  const result = await executor.executeTaskWithRecovery(mutationTask, { autoRecover: false });
+  const followup = result.finalExecution.task.outcome.details.verificationFollowup;
+
+  assert.equal(result.finalExecution.task.status, "completed");
+  assert.equal(followup.triggered, true);
+  assert.equal(followup.executed, true);
+  assert.equal(followup.ok, true);
+  assert.equal(followup.sourceTaskId, mutationTask.id);
+  assert.equal(followup.scriptName, "typecheck");
+  assert.equal(followupCalls.length, 1);
+  assert.equal(followupCalls[0].verificationTrigger.sourceTaskId, mutationTask.id);
+  assert.equal(invocationBodies.length, 2);
+  assert.deepEqual(invocationBodies.map((body) => body.capabilityId), [
+    "act.filesystem.write_text",
+    "act.system.command.execute",
+  ]);
+  assert.equal(invocationBodies[1].approved, false);
+  assert.equal(events.filter((event) => event.name === "task.completed").length, 2);
+});
+
 test("approved native engineering LSP lifecycle task records missing binary recovery evidence", async () => {
   const { executor, state, events } = createExecutorHarness();
   state.approvals.set("approval-lsp", {

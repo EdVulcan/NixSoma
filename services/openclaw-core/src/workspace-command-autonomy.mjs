@@ -1,8 +1,27 @@
 const AUTONOMOUS_VALIDATION_SCRIPTS = new Set(["typecheck", "test", "lint"]);
 const PACKAGE_MANAGERS = new Set(["npm", "pnpm", "yarn", "bun"]);
+const VERIFICATION_TRIGGER_REGISTRY = "openclaw-workspace-mutation-verification-trigger-v0";
 
 export const WORKSPACE_COMMAND_AUTONOMY_REGISTRY = "openclaw-workspace-command-autonomy-v0";
 export const WORKSPACE_COMMAND_AUTONOMOUS_GRANT_REGISTRY = "openclaw-workspace-command-autonomous-execution-v0";
+
+function isBoundedIdentifier(value) {
+  return typeof value === "string" && value.trim().length > 0 && value.length <= 160;
+}
+
+export function normaliseWorkspaceMutationVerificationTrigger(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  if (!isBoundedIdentifier(value.sourceTaskId) || !/^[a-f0-9]{64}$/.test(value.mutationHash ?? "")) {
+    return null;
+  }
+  return {
+    registry: VERIFICATION_TRIGGER_REGISTRY,
+    sourceTaskId: value.sourceTaskId,
+    mutationHash: value.mutationHash,
+  };
+}
 
 function exactValidationScript(proposal) {
   return typeof proposal?.scriptName === "string"
@@ -66,17 +85,19 @@ export function assessWorkspaceCommandAutonomy({ proposal, autonomyMode } = {}) 
   };
 }
 
-export function buildWorkspaceCommandAutonomousGrant({ proposal, requestHash } = {}) {
+export function buildWorkspaceCommandAutonomousGrant({ proposal, requestHash, verificationTrigger = null } = {}) {
   const assessment = assessWorkspaceCommandAutonomy({ proposal, autonomyMode: "sovereign_body" });
   if (!assessment.authorized || typeof requestHash !== "string" || !requestHash) {
     return null;
   }
+  const trigger = normaliseWorkspaceMutationVerificationTrigger(verificationTrigger);
   return {
     registry: WORKSPACE_COMMAND_AUTONOMOUS_GRANT_REGISTRY,
     mode: "sovereign_body_audit_only",
     owner: "workspace-command-task-v0",
     capabilityId: "act.system.command.execute",
     requestHash,
+    verificationTrigger: trigger,
     ...assessment.scope,
   };
 }
@@ -127,6 +148,12 @@ export function validateWorkspaceCommandAutonomousGrant({ task, step, capability
   }
   if (typeof grant.requestHash !== "string" || !grant.requestHash || grant.requestHash !== requestHash) {
     return { ok: false, reason: "autonomous_execution_request_mismatch" };
+  }
+  const taskTrigger = normaliseWorkspaceMutationVerificationTrigger(task.verificationTrigger);
+  const grantTrigger = normaliseWorkspaceMutationVerificationTrigger(grant.verificationTrigger);
+  if (Boolean(taskTrigger) !== Boolean(grantTrigger)
+    || (taskTrigger && JSON.stringify(taskTrigger) !== JSON.stringify(grantTrigger))) {
+    return { ok: false, reason: "autonomous_execution_verification_trigger_mismatch" };
   }
   return {
     ok: true,

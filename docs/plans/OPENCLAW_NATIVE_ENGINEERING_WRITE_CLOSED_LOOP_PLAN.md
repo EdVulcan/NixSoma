@@ -1,6 +1,6 @@
 # OpenClaw Native Engineering Write Closed Loop Plan
 
-Updated: 2026-07-09
+Updated: 2026-07-18
 
 ## Active Slice
 
@@ -12,7 +12,8 @@ This slice does not add another read-only endpoint. It proves that the existing
 ```text
 bounded read/search -> write proposal -> approval task ->
 operator-approved workspace_text_write -> filesystem ledger ->
-Observer visibility -> approved verification command -> recovery readback
+Observer visibility -> approved or bounded sovereign verification command ->
+recovery readback
 ```
 
 Identity alignment: Level 1, stable user-space control plane.
@@ -35,10 +36,18 @@ creates an approval-gated verification command task
 approves and executes verification through the existing command path
 checks verification evidence is attached to task completion
 checks recovery readback reports no failures for the successful verification
+in `guardian`, keeps verification approval-gated
+in `sovereign_body`, creates and executes at most one bound low-risk validation
+  follow-up after the completed mutation
 ```
 
 No new endpoint, provider egress, credential read, root daemon, or hidden
 enhanced-source import is introduced.
+
+The sovereign follow-up is not write autonomy. The write still requires its
+existing explicit approval and operator execution path. Only the validation
+task can use the standing authorization, and only when its command shape,
+task/step binding, and source mutation hash all match.
 
 ## Evidence
 
@@ -78,8 +87,10 @@ The following remain deferred:
 
 ```text
 automatic approval
-automatic command execution without approval
+automatic command execution outside the fixed `sovereign_body` validation
+  follow-up
 automatic recovery task creation
+automatic verification retry or recovery rerun
 provider calls, network egress, result envelopes
 raw credential reads
 ```
@@ -95,6 +106,16 @@ OPENCLAW_NATIVE_ENGINEERING_EDIT_CLOSED_LOOP_PLAN.md
 That slice proves edit proposal -> approval-gated workspace_patch_apply ->
 ledger -> Observer -> verification/recovery, with only a thin execution
 readback and no readiness chain.
+
+The bounded write-validation autonomy follow-up is covered in this same lane:
+
+```text
+services/openclaw-core/src/task-executor-verification-followup.mjs
+services/openclaw-core/test/task-executor-verification-followup.test.mjs
+```
+
+The real check runs both `guardian` and `sovereign_body` branches through the
+same user-space service lifecycle.
 
 ## Next Slice
 

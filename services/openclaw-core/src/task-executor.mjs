@@ -35,6 +35,7 @@ import {
 import { readNativeEngineeringWorkViewState } from "./native-engineering-work-view-association.mjs";
 import { buildCapabilityRequestBindingHash } from "./capability-runtime-approval-binding.mjs";
 import { validateWorkspaceCommandAutonomousGrant } from "./workspace-command-autonomy.mjs";
+import { createWorkspaceMutationVerificationFollowupCoordinator } from "./task-executor-verification-followup.mjs";
 
 export function createTaskExecutor(deps) {
   const {
@@ -65,6 +66,7 @@ export function createTaskExecutor(deps) {
     policyAuditLog,
     capabilityInvocationLog,
     runtimeState,
+    autonomyMode,
     updateRuntimeState,
     getCurrentTask,
   } = state;
@@ -93,6 +95,11 @@ export function createTaskExecutor(deps) {
   const { serialiseApproval, buildApprovalSummary, createApprovalRequestForTask, publishTaskApprovalIfPending } = approvalEngine;
   const { applyWorkspacePatchEdits, readBoundedWorkspaceTextFile } = workspaceOps;
   const { ensureTaskPolicy, recordPolicyDecision, evaluatePolicyIntent, isPolicyExecutionAllowed } = policyEvaluator;
+  const verificationFollowupCoordinator = createWorkspaceMutationVerificationFollowupCoordinator({
+    autonomyMode,
+    workspaceOps,
+    executeCapabilityPlanTask,
+  });
 
   // L10299-10323
 function buildOperatorState() {
@@ -1133,6 +1140,11 @@ async function executeCapabilityPlanTask(task, options = {}) {
       })),
       commandTranscript,
     });
+    const verificationFollowup = await verificationFollowupCoordinator.createAndRun(completedTask);
+    if (verificationFollowup) {
+      completedTask.outcome.details.verificationFollowup = verificationFollowup;
+      persistState();
+    }
     await publishEvent(createEventName("task.completed"), {
       task: serialiseTask(completedTask),
       executor: "capability-invoke-v1",
@@ -1229,6 +1241,7 @@ function serialiseExecutionResult(executionResult) {
       summary: response.summary ?? null,
     })),
     commandTranscript: finalExecution.task?.outcome?.details?.commandTranscript ?? [],
+    verificationFollowup: finalExecution.task?.outcome?.details?.verificationFollowup ?? null,
     finalReadiness: finalExecution.verifiedScreen?.screen?.readiness ?? null,
     finalWorkView: finalExecution.finalWorkViewState?.workView ?? null,
     recovery: executionResult.recovery ?? null,

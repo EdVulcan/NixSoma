@@ -1,8 +1,10 @@
 import { randomUUID } from "node:crypto";
+import path from "node:path";
 import { buildCapabilityRequestBindingHash } from "./capability-runtime-approval-binding.mjs";
 import {
   assessWorkspaceCommandAutonomy,
   buildWorkspaceCommandAutonomousGrant,
+  normaliseWorkspaceMutationVerificationTrigger,
 } from "./workspace-command-autonomy.mjs";
 
 export function createWorkspaceCommandPlanBuilders({
@@ -11,13 +13,26 @@ export function createWorkspaceCommandPlanBuilders({
   buildRulePlan,
   autonomyMode,
 }) {
-  function findWorkspaceCommandProposal({ proposalId = null, workspaceId = null, scriptName = null } = {}) {
+  function findWorkspaceCommandProposal({ proposalId = null, workspaceId = null, workspacePath = null, targetPath = null, scriptName = null } = {}) {
     const proposals = buildWorkspaceCommandProposals();
+    const resolvedWorkspacePath = workspacePath ? path.resolve(workspacePath) : null;
+    const resolvedTargetPath = targetPath ? path.resolve(targetPath) : null;
     const match = proposals.items.find((item) => {
       if (proposalId && item.id === proposalId) {
         return true;
       }
-      return workspaceId && scriptName && item.workspaceId === workspaceId && item.scriptName === scriptName;
+      if (workspaceId && scriptName && item.workspaceId === workspaceId && item.scriptName === scriptName) {
+        return true;
+      }
+      if (resolvedWorkspacePath && scriptName && path.resolve(item.workspacePath) === resolvedWorkspacePath && item.scriptName === scriptName) {
+        return true;
+      }
+      if (resolvedTargetPath && scriptName && item.scriptName === scriptName) {
+        const candidateWorkspacePath = path.resolve(item.workspacePath);
+        return resolvedTargetPath === candidateWorkspacePath
+          || resolvedTargetPath.startsWith(`${candidateWorkspacePath}${path.sep}`);
+      }
+      return false;
     }) ?? null;
 
     return {
@@ -26,8 +41,8 @@ export function createWorkspaceCommandPlanBuilders({
     };
   }
 
-  function buildWorkspaceCommandPlanDraft({ proposalId = null, workspaceId = null, scriptName = null } = {}) {
-    const { proposals, proposal } = findWorkspaceCommandProposal({ proposalId, workspaceId, scriptName });
+  function buildWorkspaceCommandPlanDraft({ proposalId = null, workspaceId = null, workspacePath = null, scriptName = null, verificationTrigger = null } = {}) {
+    const { proposals, proposal } = findWorkspaceCommandProposal({ proposalId, workspaceId, workspacePath, scriptName });
     if (!proposal) {
       throw new Error("Workspace command proposal was not found.");
     }
@@ -51,7 +66,11 @@ export function createWorkspaceCommandPlanBuilders({
     });
     const autonomyAuthorization = assessWorkspaceCommandAutonomy({ proposal, autonomyMode });
     const autonomousGrant = autonomyAuthorization.authorized
-      ? buildWorkspaceCommandAutonomousGrant({ proposal, requestHash })
+      ? buildWorkspaceCommandAutonomousGrant({
+          proposal,
+          requestHash,
+          verificationTrigger: normaliseWorkspaceMutationVerificationTrigger(verificationTrigger),
+        })
       : null;
     const autonomous = autonomousGrant !== null;
     const policyRequest = {
@@ -128,6 +147,7 @@ export function createWorkspaceCommandPlanBuilders({
           canExecuteWithoutApproval: autonomous,
           autoAuthorized: autonomous,
           autonomous,
+          verificationTrigger: normaliseWorkspaceMutationVerificationTrigger(verificationTrigger),
           autonomyAuthorization,
           requiresExplicitApproval: !autonomous,
           exposesScriptBody: false,
@@ -163,6 +183,7 @@ export function createWorkspaceCommandPlanBuilders({
     scriptName = null,
     workspacePath = null,
     query = "command",
+    verificationTrigger = null,
   } = {}) {
     const { proposals, proposal } = findSourceCommandProposal({
       proposalId,
@@ -174,7 +195,10 @@ export function createWorkspaceCommandPlanBuilders({
     if (!proposal) {
       throw new Error("OpenClaw source command proposal was not found.");
     }
-    const draft = buildWorkspaceCommandPlanDraft({ proposalId: proposal.id });
+    const draft = buildWorkspaceCommandPlanDraft({
+      proposalId: proposal.id,
+      verificationTrigger,
+    });
     const sourceCommandPlan = {
       registry: "openclaw-source-command-plan-draft-v0",
       mode: "plan-only-source-command",

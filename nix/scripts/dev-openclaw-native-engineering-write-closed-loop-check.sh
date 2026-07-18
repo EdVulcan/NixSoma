@@ -22,6 +22,7 @@ export OPENCLAW_SYSTEM_HEAL_PORT="${OPENCLAW_SYSTEM_HEAL_PORT:-10407}"
 export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-10408}"
 export OPENCLAW_WORKSPACE_ROOTS="$WORKSPACE_DIR"
 export OPENCLAW_SYSTEM_ALLOWED_ROOTS="$WORKSPACE_DIR"
+export OPENCLAW_AUTONOMY_MODE="${OPENCLAW_AUTONOMY_MODE:-guardian}"
 export OPENCLAW_SYSTEM_COMMAND_ALLOWLIST="npm"
 export OPENCLAW_SYSTEM_COMMAND_TIMEOUT_MS="15000"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-engineering-write-closed-loop-check.json}"
@@ -179,6 +180,16 @@ curl --silent --fail "$CORE_URL/capabilities/invocations?capabilityId=act.filesy
 curl --silent --fail "$CORE_URL/filesystem/changes?limit=20" > "$WRITE_LEDGER_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-write-execution/evidence?taskId=$write_task_id&limit=10" > "$WRITE_EVIDENCE_FILE"
 
+verify_approval_id=""
+verify_task_id=""
+if [[ "$OPENCLAW_AUTONOMY_MODE" == "sovereign_body" ]]; then
+  printf '%s\n' '{"skipped":true}' > "$VERIFY_TASK_FILE"
+  printf '%s\n' '{"skipped":true}' > "$VERIFY_BLOCKED_FILE"
+  printf '%s\n' '{"skipped":true}' > "$VERIFY_APPROVE_FILE"
+  printf '%s\n' '{"skipped":true}' > "$VERIFY_STEP_FILE"
+  printf '%s\n' '{"skipped":true}' > "$VERIFY_EVIDENCE_FILE"
+  printf '%s\n' '{"skipped":true}' > "$RECOVERY_FILE"
+else
 post_json "$CORE_URL/plugins/native-adapter/source-command-proposals/tasks" '{"proposalId":"openclaw:typecheck","query":"verify","confirm":true}' > "$VERIFY_TASK_FILE"
 post_json "$CORE_URL/operator/step" '{}' > "$VERIFY_BLOCKED_FILE"
 
@@ -201,6 +212,7 @@ post_json "$CORE_URL/approvals/$verify_approval_id/approve" '{"approvedBy":"dev-
 post_json "$CORE_URL/operator/step" '{}' > "$VERIFY_STEP_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-verification/evidence?taskId=$verify_task_id&maxOutputChars=1000" > "$VERIFY_EVIDENCE_FILE"
 curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-recovery/evidence?taskId=$verify_task_id&limit=10" > "$RECOVERY_FILE"
+fi
 
 node - <<'EOF' \
   "$HTML_FILE" \
@@ -217,7 +229,8 @@ node - <<'EOF' \
   "$TARGET_FILE" \
   "$WRITE_SECRET" \
   "$write_task_id" \
-  "$verify_task_id"
+  "$verify_task_id" \
+  "$OPENCLAW_AUTONOMY_MODE"
 const fs = require("node:fs");
 const readText = (index) => fs.readFileSync(process.argv[index], "utf8");
 const readJson = (index) => JSON.parse(readText(index));
@@ -237,6 +250,8 @@ const targetFile = process.argv[13];
 const secret = process.argv[14];
 const writeTaskId = process.argv[15];
 const verifyTaskId = process.argv[16];
+const autonomyMode = process.argv[17];
+const autonomous = autonomyMode === "sovereign_body";
 const raw = JSON.stringify({
   writeApprove,
   writeStep,
@@ -299,34 +314,46 @@ if (
 ) {
   throw new Error(`write execution readback mismatch: ${JSON.stringify(writeEvidence)}`);
 }
-if (verifyApprove.approval?.status !== "approved" || verifyApprove.task?.policy?.decision?.decision !== "audit_only") {
+if (!autonomous && (verifyApprove.approval?.status !== "approved" || verifyApprove.task?.policy?.decision?.decision !== "audit_only")) {
   throw new Error(`verification approval mismatch: ${JSON.stringify(verifyApprove)}`);
 }
-if (
+if (!autonomous && (
   !verifyStep.ok
   || verifyStep.ran !== true
   || verifyStep.task?.id !== verifyTaskId
   || verifyStep.task?.status !== "completed"
   || !String(verifyStep.execution?.commandTranscript?.[0]?.stdout ?? "").includes("engineering-write-closed-loop-ok")
-) {
+)) {
   throw new Error(`approved verification step mismatch: ${JSON.stringify(verifyStep)}`);
 }
-if (
+if (autonomous) {
+  const followup = writeStep.task?.outcome?.details?.verificationFollowup;
+  if (
+    followup?.triggered !== true
+    || followup?.executed !== true
+    || followup?.ok !== true
+    || followup?.sourceTaskId !== writeTaskId
+    || followup?.scriptName !== "typecheck"
+  ) {
+    throw new Error(`sovereign automatic verification followup mismatch: ${JSON.stringify(followup)}`);
+  }
+}
+if (!autonomous && (
   !verifyEvidence.ok
   || verifyEvidence.summary?.passed !== 1
   || verifyEvidence.summary?.attachedToCompletedTasks !== 1
   || verifyEvidence.evidence?.[0]?.taskId !== verifyTaskId
   || verifyEvidence.evidence?.[0]?.result?.exitCode !== 0
   || !String(verifyEvidence.evidence?.[0]?.result?.stdout ?? "").includes("engineering-write-closed-loop-ok")
-) {
+)) {
   throw new Error(`verification evidence mismatch: ${JSON.stringify(verifyEvidence)}`);
 }
-if (
+if (!autonomous && (
   !recovery.ok
   || recovery.registry !== "openclaw-native-engineering-recovery-evidence-v0"
   || recovery.summary?.totalFailures !== 0
   || recovery.governance?.canCreateRecoveryTask !== false
-) {
+)) {
   throw new Error(`recovery readback mismatch: ${JSON.stringify(recovery)}`);
 }
 if (raw.includes(secret)) {
@@ -337,9 +364,10 @@ console.log(JSON.stringify({
   openclawNativeEngineeringWriteClosedLoop: {
     writeTaskId,
     verifyTaskId,
+    autonomyMode,
     writeLedgerRecords: ledger.summary.write_text,
-    verificationPassed: verifyEvidence.summary.passed,
-    recoveryFailures: recovery.summary.totalFailures,
+    verificationPassed: autonomous ? 1 : verifyEvidence.summary.passed,
+    recoveryFailures: autonomous ? 0 : recovery.summary.totalFailures,
   },
 }, null, 2));
 EOF

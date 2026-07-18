@@ -131,6 +131,28 @@ test("a bounded sovereign validation grant authorizes the exact command without 
     tasks: new Map([[task.id, task]]),
     approvals: new Map(),
   };
+  const verificationTrigger = {
+    registry: "openclaw-workspace-mutation-verification-trigger-v0",
+    sourceTaskId: "source-mutation-task-1",
+    mutationHash: "a".repeat(64),
+  };
+  task.verificationTrigger = verificationTrigger;
+  task.plan.steps[0].autonomousExecution = buildWorkspaceCommandAutonomousGrant({
+    proposal: {
+      workspaceId: "openclaw",
+      workspacePath: "/repo",
+      scriptName: "typecheck",
+      category: "validation",
+      packageManager: "npm",
+      command: "npm",
+      args: ["run", "typecheck"],
+      cwd: "/repo",
+      risk: "low",
+      usesShell: false,
+    },
+    requestHash,
+    verificationTrigger,
+  });
 
   const result = validateCapabilityExecutionApproval({
     capability,
@@ -148,6 +170,24 @@ test("a bounded sovereign validation grant authorizes the exact command without 
   assert.equal(result.required, false);
   assert.equal(result.approved, true);
   assert.equal(result.bindingHash, requestHash);
+
+  task.verificationTrigger = {
+    ...verificationTrigger,
+    mutationHash: "b".repeat(64),
+  };
+  const mismatch = validateCapabilityExecutionApproval({
+    capability,
+    request: {
+      taskId: task.id,
+      stepId: task.plan.steps[0].id,
+      intent: "system.command.execute",
+      params,
+      approved: false,
+    },
+    ...state,
+  });
+  assert.equal(mismatch.ok, false);
+  assert.equal(mismatch.reason, "autonomous_execution_verification_trigger_mismatch");
 });
 
 test("a sovereign validation grant fails closed when command parameters change", () => {

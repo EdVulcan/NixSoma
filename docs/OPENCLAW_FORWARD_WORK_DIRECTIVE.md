@@ -221,7 +221,8 @@ execution work.
 ## Current Evidence-Based Frontier
 
 The Level 1 native engineering route now has bounded read/search, proposal,
-approval-gated edit/write, ledger, verification, recovery, LSP selected-target,
+approval-gated edit/write, ledger, one bounded sovereign post-write validation
+follow-up, verification, recovery, LSP selected-target,
 planning workbench, governed suggested-action creation, and compact linked task
 readback. It also has a bounded microcompact transformation for caller-owned
 in-memory message copies, with recent verification/recovery context protected
@@ -229,6 +230,18 @@ and no persisted transcript mutation. A local Engineering Context Packet now
 assembles bounded task/transcript context with credential-like redaction and
 protected verification/recovery summaries without provider use. Do not reopen completed LSP symbol-request slices or add another
 standalone engineering evidence/readiness shell without a concrete operator gap.
+
+The second-stage write closed-loop autonomy is deliberately narrow. After an
+approved workspace mutation completes, `sovereign_body` may create and execute
+at most one validation follow-up through the existing source-command owner. The
+follow-up is bound to the source task id and mutation hash, and can use only a
+registered shell-free `typecheck`, `test`, or `lint` proposal with the existing
+task/step/request binding. `guardian` keeps the same follow-up behind explicit
+approval. Write approval, arbitrary commands, build/runtime scripts, recovery
+reruns, provider calls, network egress, and host/system mutation remain outside
+this standing authorization. A lookup, creation, or execution failure is
+recorded as compact follow-up evidence and does not rewrite the completed
+mutation result.
 
 The first Hermes-inspired experience-memory slice is now also implemented. Core
 records a bounded advisory lesson automatically at task completion or failure,
@@ -518,6 +531,15 @@ without file content, diff lines, replacement text, task creation, approval
 actions, or mutation. The real edit closed-loop and write execution milestones
 prove this common readback against completed tasks. It is documented in
 `docs/plans/OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_EXECUTION_EVIDENCE_PLAN.md`.
+
+The write closed-loop now also records a bounded post-write validation follow-up
+when the runtime autonomy mode is `sovereign_body`. It reuses the existing
+workspace command, capability grant, and task executor owners rather than adding
+a second command path. The `guardian` and `sovereign_body` branches are both
+covered by `nix/scripts/dev-openclaw-native-engineering-write-closed-loop-check.sh`;
+the former proves pending approval and the latter proves one successful bound
+validation with no verification approval. Details remain in the write closed
+loop and verification evidence plans.
 
 The existing Level 2 engineering-task to trusted work-view bind is now also
 available through the common capability runtime as

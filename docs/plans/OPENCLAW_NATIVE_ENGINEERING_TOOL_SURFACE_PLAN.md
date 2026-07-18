@@ -241,7 +241,8 @@ unbounded/raw file reads outside the native read/search surface
 raw enhanced glob/grep execution outside native bounds
 automatic edit approval, automatic recovery task creation, and verification command execution outside the task-bound `sovereign_body` allowlist
 automatic write approval, automatic recovery task creation, and post-write
-verification command execution
+verification command execution outside the single bound `sovereign_body`
+validation follow-up
 long-lived LSP process pool and multi-request symbol navigation sessions;
 `lsp_evidence` contract, availability evidence, lifecycle readiness draft,
 approval-gated binary gate, bounded process supervision probe, lifecycle state
@@ -310,9 +311,15 @@ proposal with a fixed shell-free command shape receives a task/step/parameter
 bound `audit_only` grant and no approval record. The grant is checked again by
 the existing capability execution binding before `system-sense` is called and
 cannot authorize `build`, `dev`, `start`, mutation, provider, or network work.
-Actual execution still stays on the existing Operator Step path, and every
-automatic execution records policy, invocation, audit, and command-transcript
-evidence.
+Guardian execution still stays on the existing Operator Step path. A completed
+approved workspace mutation may additionally trigger at most one
+`sovereign_body` validation task through the existing task executor. That task
+is limited to a registered shell-free `typecheck`, `test`, or `lint` proposal,
+and its source task id, mutation hash, step, and request binding are rechecked
+before system-sense execution. Every automatic execution records policy,
+invocation, audit, and command-transcript evidence; no write approval,
+arbitrary command, retry, recovery task, provider call, or network authority is
+added.
 
 The corresponding failed-verification recovery readback is now available as
 `sense.openclaw.engineering_tool.recovery_evidence`. It reuses the existing
