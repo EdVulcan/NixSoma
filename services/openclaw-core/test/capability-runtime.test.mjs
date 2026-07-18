@@ -1781,9 +1781,12 @@ test("capability runtime exposes the local engineering context packet through th
   const taskId = "context-capability-task";
   const task = {
     id: taskId,
-    type: "system_task",
+    type: "systemd_next_repair_task",
     status: "completed",
     goal: "Assemble bounded context",
+    systemdNextRepair: {
+      target: { unit: "openclaw-event-hub.service", healthServiceKey: "eventHub" },
+    },
     outcome: { kind: "completed" },
   };
   const transcriptRecord = {
@@ -1805,7 +1808,9 @@ test("capability runtime exposes the local engineering context packet through th
       assert.equal(limit, 100);
       return [transcriptRecord];
     },
-    buildExperienceMemoryReadModel: ({ taskType, goal }) => ({
+    buildExperienceMemoryReadModel: ({ taskType, goal, incidentTargetUnit }) => {
+      assert.equal(incidentTargetUnit, "openclaw-event-hub.service");
+      return {
       ok: true,
       registry: "openclaw-native-engineering-experience-memory-v0",
       records: [{
@@ -1814,7 +1819,7 @@ test("capability runtime exposes the local engineering context packet through th
         lesson: "Reuse bounded verification evidence.",
         outcome: "completed",
         executionPhase: "completed",
-        applicabilityTokens: ["type:system_task"],
+        applicabilityTokens: ["type:systemd_next_repair_task", "unit:openclaw-event-hub.service"],
         confidence: 0.72,
         recordedAt: "2026-07-08T00:00:00.000Z",
         source: { registry: "openclaw-task-lifecycle-terminal-v0", taskId, outcomeHash: "a".repeat(64) },
@@ -1830,6 +1835,13 @@ test("capability runtime exposes the local engineering context packet through th
         latestOutcome: "completed",
         pattern: "repeatable_success",
         nextAction: "Reuse the bounded approval path and attach verification evidence before reporting completion.",
+        incidentTargetUnit,
+        incidentMatchedRecords: 1,
+        incidentRestoredMatches: 1,
+        incidentRecoveryRequiredMatches: 0,
+        incidentLatestRestoredHealthy: true,
+        incidentPattern: "repeatable_restoration",
+        incidentNextAction: "Reuse the fixed approval path and verify both native and application health.",
         status: "recalled",
         advisoryOnly: true,
         queryTokenCount: 1,
@@ -1838,7 +1850,8 @@ test("capability runtime exposes the local engineering context packet through th
       governance: { advisoryOnly: true },
       auditEvidence: { summary: { storedRecords: 1, recalledRecords: 1, queryTokenCount: 1, queryHash: "b".repeat(64), advisoryOnly: true } },
       goal,
-    }),
+      };
+    },
   });
 
   const registry = await runtime.buildCapabilityRegistry();
@@ -1868,6 +1881,12 @@ test("capability runtime exposes the local engineering context packet through th
   assert.equal(result.response.summary.experienceMemoryRecalled, 1);
   assert.equal(result.response.summary.experienceMemoryPattern, "repeatable_success");
   assert.equal(result.response.summary.experienceMemoryCompletionRate, 1);
+  assert.equal(result.response.summary.experienceMemoryIncidentTargetUnit, "openclaw-event-hub.service");
+  assert.equal(result.response.summary.experienceMemoryIncidentMatched, 1);
+  assert.equal(result.response.summary.experienceMemoryIncidentRestored, 1);
+  assert.equal(result.response.summary.experienceMemoryIncidentRecoveryRequired, 0);
+  assert.equal(result.response.summary.experienceMemoryIncidentLatestRestoredHealthy, true);
+  assert.equal(result.response.summary.experienceMemoryIncidentPattern, "repeatable_restoration");
   assert.equal(result.response.summary.experienceMemoryAdvisoryOnly, true);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("private-context-value"), false);
   assert.deepEqual(events.map((event) => event.name), [

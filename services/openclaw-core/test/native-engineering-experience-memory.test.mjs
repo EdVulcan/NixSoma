@@ -5,6 +5,7 @@ import {
   createNativeEngineeringExperienceMemory,
   NATIVE_ENGINEERING_EXPERIENCE_MEMORY_REGISTRY,
 } from "../src/native-engineering-experience-memory.mjs";
+import { createSystemdIncidentRepairTask } from "./systemd-incident-fixture.mjs";
 
 test("experience memory records bounded terminal lessons without task details or sensitive goal values", () => {
   const records = new Map();
@@ -91,6 +92,61 @@ test("experience memory recalls the most applicable bounded lessons", () => {
   assert.equal(unrelated.summary.matchedRecords, 0);
   assert.equal(unrelated.summary.pattern, "no_match");
   assert.equal(unrelated.summary.status, "no_match");
+});
+
+test("experience memory records and recalls a bounded fixed-target incident pattern", () => {
+  const records = new Map();
+  const memory = createNativeEngineeringExperienceMemory({
+    records,
+    now: () => "2026-07-18T11:00:00.000Z",
+  });
+  const task = createSystemdIncidentRepairTask();
+
+  const record = memory.recordTaskExperience(task);
+  const recalled = memory.buildExperienceMemoryReadModel({
+    taskType: "systemd_next_repair_task",
+    goal: "Restore the fixed event-hub service and verify application health.",
+    incidentTargetUnit: "openclaw-event-hub.service",
+  });
+
+  assert.equal(record.incidentPattern.registry, "openclaw-systemd-incident-experience-v0");
+  assert.equal(record.incidentPattern.targetUnit, "openclaw-event-hub.service");
+  assert.equal(record.incidentPattern.restoredHealthy, false);
+  assert.equal(record.incidentPattern.journalEntries, 3);
+  assert.equal(record.incidentPattern.journalMessagesIncluded, false);
+  assert.equal(record.incidentPattern.providerOutputIncluded, false);
+  assert.equal(recalled.summary.incidentMatchedRecords, 1);
+  assert.equal(recalled.summary.incidentRestoredMatches, 0);
+  assert.equal(recalled.summary.incidentRecoveryRequiredMatches, 1);
+  assert.equal(recalled.summary.incidentLatestRestoredHealthy, false);
+  assert.equal(recalled.summary.incidentPattern, "repeated_recovery_required");
+  assert.match(recalled.summary.incidentNextAction, /recovery evidence/u);
+  assert.equal(recalled.records[0].relevance > 1_000, true);
+  const serialized = JSON.stringify(record);
+  assert.doesNotMatch(serialized, /private-health|private diagnostic|hostd-private-invocation/u);
+  assert.doesNotMatch(serialized, /journal message|job\/72|kernel_so_peercred/u);
+
+  const otherTarget = memory.buildExperienceMemoryReadModel({
+    taskType: "systemd_next_repair_task",
+    goal: "Restore a fixed service.",
+    incidentTargetUnit: "openclaw-system-sense.service",
+  });
+  assert.equal(otherTarget.summary.incidentMatchedRecords, 0);
+  assert.equal(otherTarget.summary.incidentPattern, "none");
+  assert.equal(otherTarget.records.length, 0);
+
+  const phaseOnlyRecords = new Map();
+  const phaseOnlyMemory = createNativeEngineeringExperienceMemory({ records: phaseOnlyRecords });
+  const phaseOnlyTask = createSystemdIncidentRepairTask({ id: "phase-only-systemd-incident" });
+  const incidentReceipt = phaseOnlyTask.outcome.details.incidentReceipt;
+  delete phaseOnlyTask.outcome;
+  phaseOnlyTask.phaseHistory = [{
+    phase: "systemd_next_repair_execution_failed",
+    details: { incidentReceipt },
+  }];
+  const phaseOnlyRecord = phaseOnlyMemory.recordTaskExperience(phaseOnlyTask);
+  assert.equal(phaseOnlyRecord.incidentPattern.targetUnit, "openclaw-event-hub.service");
+  assert.equal(phaseOnlyRecord.incidentPattern.restoredHealthy, false);
 });
 
 test("experience memory derives a bounded recovery pattern from mixed terminal outcomes", () => {

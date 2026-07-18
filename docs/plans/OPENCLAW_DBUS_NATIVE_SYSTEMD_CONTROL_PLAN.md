@@ -357,7 +357,8 @@ the host. No real provider contact was executed on the sole physical host.
 
 ## Next Slice
 
-Advance experience-based diagnosis through one bounded local incident-memory
-record derived from terminal receipts and recalled for a later matching target.
-Reuse the existing advisory experience-memory owner; do not retain journal text
-or provider output, automatically contact a provider, or authorize repair.
+The bounded local incident-memory slice is complete through
+`OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md`. Next, include only a
+small bounded matching-target pattern summary in the existing approved incident
+AI handoff. Do not retain or send journal text/provider output, add a provider
+schema, automatically contact a provider, or authorize repair.

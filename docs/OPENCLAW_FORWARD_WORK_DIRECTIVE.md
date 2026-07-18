@@ -1553,13 +1553,28 @@ approval, invoke hostd, retry a restart, activate a generation, or roll back the
 host. Injected sender tests prove the request/response contract; no real
 provider contact was executed on the sole physical host.
 
+### Completed Systemd Incident Experience Recall
+
+The existing advisory experience-memory owner now records a compact pattern
+from a verified terminal systemd incident receipt and recalls only matching-unit
+incident records for a later selected repair task. The shared receipt owner
+verifies hash, task, fixed-unit, health, journal, and hostd binding before any
+pattern is stored. Context Packet and Observer show restored/recovery-required
+counts, latest state, pattern, and a bounded local next action.
+
+Delegated executors now enter the same experience lifecycle on their first
+terminal `setTaskPhase` transition; repeated terminal updates do not duplicate
+the record. Journal text, service URLs, errors, provider output, invocation ids,
+peer identity, and raw job paths remain absent. Recall creates no task, approval,
+provider request, command, or repair authority. The contract is documented in
+`docs/plans/OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md`.
+
 ### Next Real Capability
 
-Use the existing advisory experience-memory owner to retain one bounded,
-target-specific pattern from terminal systemd incident receipts and recall it
-for a later matching incident. Keep this local and guidance-only: do not retain
-journal text or provider output, automatically create a provider request, or
-authorize another repair.
+Include at most a small bounded set of matching-target incident patterns in the
+existing exact request-bound systemd incident AI handoff. Preserve the existing
+explicit provider approval and `engineering_recommendation_v0`; do not send
+journal/provider text, create automatic egress, or authorize another repair.
 
 ## Operator Identity And Mutation Boundary Checkpoint
 

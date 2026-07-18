@@ -380,8 +380,12 @@ function appendTaskPhase(task, phase, details = null) {
 }
 
 async function setTaskPhase(task, phase, { status = task.status, details = null } = {}) {
+  const wasTerminal = task.status === "completed" || task.status === "failed";
   task.status = status;
   const updatedTask = appendTaskPhase(task, phase, details);
+  if (!wasTerminal && (status === "completed" || status === "failed")) {
+    recordTerminalTaskExperience(updatedTask);
+  }
   reconcileRuntimeState();
   await publishEvent("task.phase_changed", { task: serialiseTask(updatedTask) });
   return updatedTask;

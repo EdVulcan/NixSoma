@@ -82,9 +82,8 @@ recommendation metadata and compact incident provenance.
 
 ## Next Real Capability
 
-Use the existing advisory experience-memory owner to retain a bounded,
-target-specific pattern from terminal incident receipts and recall it for a
-later matching incident. Keep the learned evidence local and advisory: it must
-not retain journal text or provider output, create a provider request, or
-authorize another repair. This advances experience-based diagnosis without
-reopening the completed provider handoff.
+The local target-specific experience record and recall are now complete through
+`OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md`. The next capability may
+include at most a small bounded set of matching patterns in this same exact
+request-bound handoff. It must retain the existing explicit approval and exclude
+journal text, provider output, automatic egress, and repair authority.

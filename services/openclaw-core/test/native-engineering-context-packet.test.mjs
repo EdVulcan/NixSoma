@@ -214,6 +214,13 @@ test("engineering context packet carries bounded advisory experience memory as p
         latestOutcome: "failed",
         pattern: "recovery_needed",
         nextAction: "Inspect the latest recovery evidence before retrying; preserve the approval boundary.",
+        incidentTargetUnit: "openclaw-event-hub.service",
+        incidentMatchedRecords: 1,
+        incidentRestoredMatches: 0,
+        incidentRecoveryRequiredMatches: 1,
+        incidentLatestRestoredHealthy: false,
+        incidentPattern: "repeated_recovery_required",
+        incidentNextAction: "Compare the latest bounded recovery evidence before another approved repair.",
         status: "recalled",
         advisoryOnly: true,
       },
@@ -244,6 +251,13 @@ test("engineering context packet carries bounded advisory experience memory as p
   assert.equal(packet.summary.experienceMemoryLatestOutcome, "failed");
   assert.equal(packet.summary.experienceMemoryPattern, "recovery_needed");
   assert.match(packet.summary.experienceMemoryNextAction, /recovery evidence/);
+  assert.equal(packet.summary.experienceMemoryIncidentTargetUnit, "openclaw-event-hub.service");
+  assert.equal(packet.summary.experienceMemoryIncidentMatched, 1);
+  assert.equal(packet.summary.experienceMemoryIncidentRestored, 0);
+  assert.equal(packet.summary.experienceMemoryIncidentRecoveryRequired, 1);
+  assert.equal(packet.summary.experienceMemoryIncidentLatestRestoredHealthy, false);
+  assert.equal(packet.summary.experienceMemoryIncidentPattern, "repeated_recovery_required");
+  assert.match(packet.summary.experienceMemoryIncidentNextAction, /bounded recovery evidence/u);
   assert.equal(packet.summary.experienceMemoryStatus, "recalled");
   assert.equal(packet.summary.experienceMemoryAdvisoryOnly, true);
   assert.equal(packet.governance.readsExperienceMemory, true);

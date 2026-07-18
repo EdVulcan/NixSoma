@@ -81,6 +81,7 @@ export async function buildNativeEngineeringContextPacketReadModel({
   const experienceMemory = buildExperienceMemoryReadModel({
     taskType: recallTask?.type ?? taskTypeFromTranscript(transcriptRecords, selectedTaskId),
     goal: recallTask?.goal ?? null,
+    incidentTargetUnit: incidentTargetUnitForTask(recallTask),
     limit: 4,
   });
 
@@ -121,6 +122,14 @@ export async function buildNativeEngineeringContextPacketReadModel({
     planTodoEvidence,
     experienceMemory,
   });
+}
+
+function incidentTargetUnitForTask(task) {
+  const latestPhase = Array.isArray(task?.phaseHistory) ? task.phaseHistory.at(-1) : null;
+  return task?.systemdNextRepair?.target?.unit
+    ?? task?.outcome?.details?.incidentReceipt?.target?.unit
+    ?? latestPhase?.details?.incidentReceipt?.target?.unit
+    ?? null;
 }
 
 function taskTypeFromTranscript(transcriptRecords, taskId) {

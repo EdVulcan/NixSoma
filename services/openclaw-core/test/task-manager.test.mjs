@@ -155,6 +155,31 @@ test("task manager records experience at both terminal lifecycle boundaries", ()
   ]);
 });
 
+test("task manager records delegated terminal phases exactly once", async () => {
+  const experiences = [];
+  const { manager } = createHarness({
+    recordTaskExperience: (task) => {
+      experiences.push({ id: task.id, status: task.status, phase: task.executionPhase });
+    },
+  });
+  const task = manager.createTask({
+    goal: "Complete through a delegated executor phase",
+    type: "systemd_next_repair_task",
+  });
+
+  await manager.setTaskPhase(task, "systemd_next_repair_execution_failed", {
+    status: "failed",
+    details: { incidentReceipt: { registry: "test-receipt" } },
+  });
+  await manager.setTaskPhase(task, "systemd_next_repair_execution_failed", { status: "failed" });
+
+  assert.deepEqual(experiences, [{
+    id: task.id,
+    status: "failed",
+    phase: "systemd_next_repair_execution_failed",
+  }]);
+});
+
 test("task manager centralizes extension field creation and serialization", () => {
   const { manager } = createHarness();
   const body = {

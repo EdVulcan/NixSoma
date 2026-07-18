@@ -645,6 +645,7 @@ function selectSourceHeuristics(file) {
     ["services/openclaw-core/src/capability-runtime-engineering-proposals.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
     ["services/openclaw-core/src/capability-runtime-engineering-context.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
     ["services/openclaw-core/src/capability-runtime-engineering-provider-handoff.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
+    ["services/openclaw-core/src/systemd-incident-receipt.mjs", ["openclaw-core-service-unit-tests", nativeEngineeringContextPacketPairBatchCheck, "capability-invoke", "observer-capability-invoke", "openclaw-cloud-consciousness-live-provider-egress-execution-task-shell"]],
     ["services/openclaw-core/src/systemd-incident-provider-context.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke", "openclaw-cloud-consciousness-live-provider-egress-execution-task-shell"]],
     ["services/openclaw-core/src/capability-runtime-acpx-codex.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],
     ["services/openclaw-core/src/capability-runtime-prompt-pack.mjs", ["openclaw-core-service-unit-tests", "capability-invoke", "observer-capability-invoke"]],

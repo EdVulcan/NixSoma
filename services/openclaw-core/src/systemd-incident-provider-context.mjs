@@ -5,17 +5,15 @@ import {
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
   buildCloudLiveProviderEngineeringRecommendationInstruction,
 } from "./cloud-live-provider-runtime-response-contract.mjs";
-import { systemdHealthServiceKeyForUnit } from "./systemd-repair-verification.mjs";
-import { hostdRestartCapabilityForTarget } from "../../../packages/shared-systemd/src/openclaw-hostd-capabilities.mjs";
+import {
+  SYSTEMD_INCIDENT_RECEIPT_REGISTRY,
+  validateSystemdIncidentReceiptTask,
+} from "./systemd-incident-receipt.mjs";
 
 export const SYSTEMD_INCIDENT_PROVIDER_CONTEXT_REGISTRY =
   "openclaw-systemd-incident-provider-context-v0";
 
-const INCIDENT_RECEIPT_REGISTRY = "openclaw-systemd-repair-incident-receipt-v0";
-const JOURNAL_EVIDENCE_REGISTRY = "openclaw-systemd-journal-evidence-v0";
-const INCIDENT_STEP_ID = "execute-next-systemd-restart";
 const DEEPSEEK_MODEL = "deepseek-chat";
-const SHA256_PATTERN = /^[a-f0-9]{64}$/u;
 
 function hashText(value) {
   return createHash("sha256").update(value).digest("hex");
@@ -28,11 +26,6 @@ function taskList(tasks) {
 
 function taskForId(tasks, taskId) {
   return taskList(tasks).find((task) => task?.id === taskId) ?? null;
-}
-
-function receiptContentHash(receipt) {
-  const { receiptHash: _receiptHash, ...content } = receipt;
-  return hashText(JSON.stringify(content));
 }
 
 function compactUnitState(state) {
@@ -122,60 +115,10 @@ function invalid(reason) {
 }
 
 export function buildSystemdIncidentProviderContext({ sourceTask } = {}) {
-  if (!sourceTask?.id
-    || sourceTask.type !== "systemd_next_repair_task"
-    || !["completed", "failed"].includes(sourceTask.status)) {
-    return invalid("systemd_incident_source_task_not_terminal_repair");
-  }
-  const receipt = sourceTask.outcome?.details?.incidentReceipt;
-  if (!receipt || receipt.registry !== INCIDENT_RECEIPT_REGISTRY) {
-    return invalid("systemd_incident_receipt_missing");
-  }
-  if (receipt.task?.id !== sourceTask.id || receipt.task?.stepId !== INCIDENT_STEP_ID) {
-    return invalid("systemd_incident_receipt_task_binding_mismatch");
-  }
-  const receiptHash = typeof receipt.receiptHash === "string"
-    ? receipt.receiptHash.replace(/^sha256:/u, "")
-    : "";
-  if (!SHA256_PATTERN.test(receiptHash) || receiptHash !== receiptContentHash(receipt)) {
-    return invalid("systemd_incident_receipt_hash_mismatch");
-  }
-  const expectedHealthServiceKey = systemdHealthServiceKeyForUnit(receipt.target?.unit);
-  if (!expectedHealthServiceKey
-    || receipt.target?.healthServiceKey !== expectedHealthServiceKey
-    || receipt.preHealth?.healthServiceKey !== expectedHealthServiceKey
-    || receipt.preHealth?.service?.key !== expectedHealthServiceKey
-    || receipt.postHealth?.healthServiceKey !== expectedHealthServiceKey
-    || receipt.postHealth?.service?.key !== expectedHealthServiceKey) {
-    return invalid("systemd_incident_target_health_binding_mismatch");
-  }
-  const targetUnit = receipt.target.unit;
-  if (receipt.preHealth?.unit?.unit !== targetUnit
-    || receipt.postHealth?.unit?.unit !== targetUnit
-    || receipt.journalEvidence?.unit !== targetUnit
-    || receipt.hostdReceipt?.unit !== targetUnit) {
-    return invalid("systemd_incident_unit_binding_mismatch");
-  }
-  const expectedHostdCapability = hostdRestartCapabilityForTarget(targetUnit);
-  const hostd = receipt.hostdReceipt;
-  if (!expectedHostdCapability
-    || (hostd.owner !== null && hostd.owner !== "openclaw-hostd")
-    || (hostd.transport !== null && hostd.transport !== "dbus_native")
-    || (hostd.method !== null && hostd.method !== "org.freedesktop.systemd1.Manager.RestartUnit")
-    || (hostd.capability !== null
-      && (hostd.capability?.operation !== expectedHostdCapability.operation
-        || hostd.capability?.capabilityId !== expectedHostdCapability.capabilityId))) {
-    return invalid("systemd_incident_hostd_binding_mismatch");
-  }
+  const validation = validateSystemdIncidentReceiptTask({ sourceTask });
+  if (!validation.ok) return invalid(validation.reason);
+  const { receipt, targetUnit, healthServiceKey: expectedHealthServiceKey } = validation;
   const journal = receipt.journalEvidence;
-  if (!journal
-    || journal.registry !== JOURNAL_EVIDENCE_REGISTRY
-    || journal.messagesPersisted !== false
-    || Object.hasOwn(journal, "entries")
-    || Object.hasOwn(journal, "message")
-    || Object.hasOwn(journal, "messages")) {
-    return invalid("systemd_incident_journal_projection_not_safe");
-  }
 
   const projection = {
     registry: SYSTEMD_INCIDENT_PROVIDER_CONTEXT_REGISTRY,
@@ -217,7 +160,7 @@ export function buildSystemdIncidentProviderContext({ sourceTask } = {}) {
     requestEnvelope,
     evidence: {
       registry: SYSTEMD_INCIDENT_PROVIDER_CONTEXT_REGISTRY,
-      sourceRegistry: INCIDENT_RECEIPT_REGISTRY,
+      sourceRegistry: SYSTEMD_INCIDENT_RECEIPT_REGISTRY,
       taskId: sourceTask.id,
       executionTaskId: null,
       sourceTaskId: sourceTask.id,
