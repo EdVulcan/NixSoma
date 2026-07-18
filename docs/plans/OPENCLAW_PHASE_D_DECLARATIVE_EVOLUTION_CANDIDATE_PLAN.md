@@ -170,27 +170,24 @@ packages/shared-systemd/src/openclaw-hostd-activation.mjs
 ```
 
 The focused builder, closure-query/receipt, execution, task-builder, route,
-capability-runtime, hostd, and executor tests pass. The default Core and
-Observer staging checks pass with real services. Core proves generic approval
-binding, staging-file hash equality, current approval-record lookup, real
-`nix-instantiate`, `nix eval`, and the fail-closed dry-run closure gate;
-`nix path-info` deriver/NAR binding and positive closure-integrity receipt
-validation are unit-covered and run only when a real no-link build output
-exists. On the current host, the explicit build lane attempted 37 derivations
-and about 956 MiB of closure materialization but timed out after 600 seconds
-before producing an output path. Observer proves the served activation panel,
-bounded closure status readback, capability registry, blocked confirmation and
-missing-task fail-closed paths, invocation history, and no candidate-text
-exposure. No managed config write, generation switch, activation, or rollback is
-performed.
+capability-runtime, hostd, and executor tests pass. The Core positive lane now
+uses the installed read-only NixOS `nixos` channel on this host when available,
+records that `nixpkgsSource`, and proves real `nix-instantiate`, `nix eval`,
+`nix build --no-link --print-out-paths`, `nix path-info` deriver/NAR binding,
+task-bound receipt stability, current approval-record lookup, healthy-host
+revalidation, and approved future activation without mutation. The Observer
+pair proves the served activation panel, bounded closure status readback,
+capability registry, blocked confirmation and missing-task fail-closed paths,
+invocation history, and no candidate-text exposure. The pinned `26.11` flake
+remains the default outside this host optimization; its cold materialization
+can exceed the bounded check timeout. No managed config write, generation
+switch, activation, or rollback is performed.
 
 ## Next Real Slice
 
-The closure-integrity receipt contract and fail-closed daily lane are complete,
-but the positive real-output materialization gate remains open. The next
-mainline slice is to complete one cached or otherwise resource-bounded
-`nix build --no-link --print-out-paths` proof and record the resulting
-deriver/NAR receipt on NixOS. Only after that evidence exists should the project
-move to an independent host-health oracle and separate activation/health/rollback
-authorities. Until then, managed-config installation, `nixos-rebuild`,
-generation switching, and physical rollback remain deferred.
+The closure-integrity receipt contract, positive real-output materialization
+proof, and fail-closed daily lane are complete. The next mainline slice is an
+independent host-health oracle followed by separate activation, health, and
+rollback authorities. Until those owners are isolated, managed-config
+installation, `nixos-rebuild`, generation switching, and physical rollback
+remain deferred.

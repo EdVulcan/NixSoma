@@ -115,6 +115,10 @@ test("approved activation decision records future approval without activation", 
 
   assert.equal(result.task.status, "completed");
   assert.equal(result.activationDecision.activation, "approved_for_future_activation");
+  assert.equal(result.activationDecision.derivationPath, task.nativeDeclarativeEvolution.activationDecision.derivationPath);
+  assert.equal(result.activationDecision.narHash, task.nativeDeclarativeEvolution.activationDecision.narHash);
+  assert.equal(result.activationDecision.closureIntegrityReceiptHash, task.nativeDeclarativeEvolution.activationDecision.closureIntegrityReceiptHash);
+  assert.equal(result.activationDecision.approvalRecordHash, task.nativeDeclarativeEvolution.activationDecision.approvalRecordHash);
   assert.equal(result.activationDecision.governance.executesActivation, false);
   assert.equal(result.activationDecision.governance.switchesGeneration, false);
   assert.equal(result.activationDecision.governance.executesRollback, false);

@@ -481,17 +481,16 @@ only for the positive closure proof. It does not write `/etc/nixos`, run
 The same Phase D route now also has an explicit activation-decision and
 host-health boundary. Core exposes a read-only review and an approval-gated
 decision task bound to the staging task, candidate/file hashes, current
-approval record, real evaluated output/deriver/NAR metadata when materialized, a
-tamper-evident closure-integrity receipt, and the current
-`openclaw-system-sense` health fingerprint. Approval and execution revalidate
-the binding and record only a future activation decision; they do not install
-config, switch generations, activate, or roll back. The fixed hostd/systemd
-Level 3 contract is present but physical activation remains disabled by
-default. The daily dry-run lane correctly blocks without a real output; the
-next route is one resource-bounded materialization proof, then an independent
-health oracle and separate activation/health/rollback authorities in an
-isolated NixOS check. The common actuator path already has Core-issued grants
-plus reservation commit/abort/recovery.
+approval record, real evaluated output/deriver/NAR metadata, a stable
+task-bound closure-integrity receipt, and the current `openclaw-system-sense`
+health fingerprint. Approval and execution revalidate the binding and record
+only a future activation decision; they do not install config, switch
+generations, activate, or roll back. The fixed hostd/systemd Level 3 contract
+is present but physical activation remains disabled by default. The explicit
+NixOS host lane now proves the real no-link materialization and Core/Observer
+visibility; the next route is an independent health oracle and separate
+activation/health/rollback authorities in an isolated NixOS check. The common
+actuator path already has Core-issued grants plus reservation commit/abort/recovery.
 
 ## Historical Phase Plans
 

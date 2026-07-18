@@ -1,13 +1,11 @@
 import { createHash } from "node:crypto";
-import { execFile } from "node:child_process";
+import { spawn } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { promisify } from "node:util";
 
 import { validateNativeDeclarativeEvolutionNixFile } from "./native-declarative-evolution-builders.mjs";
 import { resolveNativeDeclarativeEvolutionStagingDirectory } from "./native-declarative-evolution-paths.mjs";
 
-const execFileAsync = promisify(execFile);
 const MAX_COMMAND_OUTPUT = 512;
 const DEFAULT_TIMEOUT_MS = 600000;
 
@@ -26,42 +24,107 @@ function boundedOutputBytes(value) {
   return typeof value === "string" ? Math.min(Buffer.byteLength(value, "utf8"), MAX_COMMAND_OUTPUT) : 0;
 }
 
+function appendBoundedOutput(current, chunk) {
+  const next = `${current}${String(chunk ?? "")}`;
+  if (next.length <= MAX_COMMAND_OUTPUT) return next;
+  const half = Math.floor((MAX_COMMAND_OUTPUT - 32) / 2);
+  return `${next.slice(0, half)}\n...[output truncated]...\n${next.slice(-half)}`;
+}
+
 function nixPathLiteral(value) {
   return `(builtins.toPath ${JSON.stringify(path.resolve(value))})`;
 }
 
-function buildNixOsExpression({ flakePath, baseModulePath, stagedPath, system, body }) {
+function buildNixOsExpression({
+  flakePath,
+  nixpkgsPath,
+  baseModulePath,
+  stagedPath,
+  system,
+  body,
+}) {
+  const nixpkgsExpression = nixpkgsPath
+    ? `builtins.getFlake ${JSON.stringify(path.resolve(nixpkgsPath))}`
+    : "flake.inputs.nixpkgs";
   return [
     `let flake = builtins.getFlake ${JSON.stringify(flakePath)};`,
+    `nixpkgs = ${nixpkgsExpression};`,
     `candidate = ${nixPathLiteral(stagedPath)};`,
     `base = ${nixPathLiteral(baseModulePath)};`,
-    `system = flake.inputs.nixpkgs.lib.nixosSystem { system = ${JSON.stringify(system)}; modules = [ base candidate { fileSystems."/" = { device = "none"; fsType = "tmpfs"; }; boot.loader.grub.devices = [ "nodev" ]; } ]; };`,
+    `system = nixpkgs.lib.nixosSystem { system = ${JSON.stringify(system)}; modules = [ base candidate { fileSystems."/" = { device = "none"; fsType = "tmpfs"; }; boot.loader.grub.devices = [ "nodev" ]; } ]; };`,
     `in ${body}`,
   ].join(" ");
 }
 
-async function defaultRunNixCommand(nixCommand, args, { timeoutMs }) {
-  try {
-    const { stdout, stderr } = await execFileAsync(nixCommand, args, {
-      timeout: timeoutMs,
-      maxBuffer: 32 * 1024,
+function defaultRunNixCommand(nixCommand, args, { timeoutMs }) {
+  return new Promise((resolve) => {
+    const child = spawn(nixCommand, args, { windowsHide: true });
+    let stdout = "";
+    let stderr = "";
+    let timedOut = false;
+    let settled = false;
+    let timeoutHandle;
+    let forceKillHandle;
+
+    const finish = (result) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutHandle);
+      clearTimeout(forceKillHandle);
+      resolve(result);
+    };
+
+    child.stdout?.on("data", (chunk) => {
+      stdout = appendBoundedOutput(stdout, chunk);
     });
-    return {
-      status: "passed",
-      stdout,
-      stderrBytes: boundedOutputBytes(stderr),
-    };
-  } catch (error) {
-    if (error?.code === "ENOENT") {
-      return { status: "unavailable", reason: "nix_command_unavailable" };
-    }
-    return {
-      status: "failed",
-      reason: error?.killed ? "nix_command_timeout" : "nix_command_failed",
-      exitCode: Number.isInteger(error?.status) ? error.status : null,
-      stderrBytes: boundedOutputBytes(error?.stderr),
-    };
-  }
+    child.stderr?.on("data", (chunk) => {
+      stderr = appendBoundedOutput(stderr, chunk);
+    });
+    child.once("error", (error) => {
+      if (error?.code === "ENOENT") {
+        finish({ status: "unavailable", reason: "nix_command_unavailable" });
+        return;
+      }
+      finish({
+        status: "failed",
+        reason: "nix_command_failed",
+        exitCode: Number.isInteger(error?.status) ? error.status : null,
+        stderrBytes: boundedOutputBytes(stderr),
+      });
+    });
+    child.once("close", (code) => {
+      if (timedOut) {
+        finish({
+          status: "failed",
+          reason: "nix_command_timeout",
+          exitCode: Number.isInteger(code) ? code : null,
+          stderrBytes: boundedOutputBytes(stderr),
+        });
+        return;
+      }
+      finish({
+        status: code === 0 ? "passed" : "failed",
+        ...(code === 0 ? {} : { reason: "nix_command_failed" }),
+        stdout,
+        exitCode: Number.isInteger(code) ? code : null,
+        stderrBytes: boundedOutputBytes(stderr),
+      });
+    });
+
+    timeoutHandle = setTimeout(() => {
+      timedOut = true;
+      child.kill("SIGTERM");
+      forceKillHandle = setTimeout(() => child.kill("SIGKILL"), 1000);
+    }, timeoutMs);
+  });
+}
+
+export function runNativeDeclarativeEvolutionNixCommand({
+  nixCommand = process.env.OPENCLAW_NIX_COMMAND ?? "nix",
+  args = [],
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+} = {}) {
+  return defaultRunNixCommand(nixCommand, args, { timeoutMs });
 }
 
 function buildNixCommandArgs(command, expression, { buildMode }) {
@@ -89,6 +152,7 @@ export function createNativeDeclarativeEvolutionExecution({
   stagingDir = process.env.OPENCLAW_MANAGED_CONFIG_STAGING_DIR
     ?? path.join(process.env.OPENCLAW_BODY_STATE_DIR ?? path.resolve(process.cwd(), "../../.artifacts"), "managed-config-staging"),
   flakePath = process.env.OPENCLAW_NIXOS_FLAKE ?? null,
+  nixpkgsPath = process.env.OPENCLAW_NIXOS_NIXPKGS_OVERRIDE ?? null,
   baseModulePath = process.env.OPENCLAW_NIXOS_BASE_MODULE ?? null,
   system = process.env.OPENCLAW_NIX_SYSTEM ?? "x86_64-linux",
   nixCommand = process.env.OPENCLAW_NIX_COMMAND ?? "nix",
@@ -103,6 +167,7 @@ export function createNativeDeclarativeEvolutionExecution({
 } = {}) {
   const resolvedStagingDir = resolveNativeDeclarativeEvolutionStagingDirectory({ stagingDir });
   const resolvedFlakePath = flakePath ? path.resolve(flakePath) : null;
+  const resolvedNixpkgsPath = nixpkgsPath ? path.resolve(nixpkgsPath) : null;
   const resolvedBaseModulePath = baseModulePath
     ? path.resolve(baseModulePath)
     : resolvedFlakePath
@@ -186,6 +251,7 @@ export function createNativeDeclarativeEvolutionExecution({
 
     const evaluationExpression = buildNixOsExpression({
       flakePath: resolvedFlakePath,
+      nixpkgsPath: resolvedNixpkgsPath,
       baseModulePath: resolvedBaseModulePath,
       stagedPath: candidatePath,
       system,
@@ -223,6 +289,7 @@ export function createNativeDeclarativeEvolutionExecution({
         mode: "nix-eval",
         candidateType: parsed?.candidateType ?? null,
         componentCount: Array.isArray(parsed?.components) ? parsed.components.length : 0,
+        nixpkgsSource: resolvedNixpkgsPath ?? "flake.lock",
         toplevelPath: parsed?.toplevelPath ?? null,
         toplevelEvaluated: parsed?.toplevelEvaluated === true,
       };
@@ -246,6 +313,7 @@ export function createNativeDeclarativeEvolutionExecution({
 
     const buildExpression = buildNixOsExpression({
       flakePath: resolvedFlakePath,
+      nixpkgsPath: resolvedNixpkgsPath,
       baseModulePath: resolvedBaseModulePath,
       stagedPath: candidatePath,
       system,

@@ -87,13 +87,13 @@ The first Phase D declarative-evolution capability and its approval-bound
 staging/build loop are now complete. Core can generate an allowlisted
 `openclaw-managed.nix` candidate, bind its hash to an approval, stage the exact
 candidate under OpenClaw ownership, and run read-only Nix evaluation/build
-checks. The read-only health-gate now re-reads that exact staging file, reads
-the current approval record, and, when a real output exists, re-queries the
-evaluated `/nix/store` output and deriver/NAR metadata before emitting a
-tamper-evident closure-integrity receipt. The daily dry-run lane fails closed
-until that output is materialized; host health remains `not_assessed`. It still
-does not write `/etc/nixos`, run `nixos-rebuild`, switch generations, or roll
-back. The active plan is
+checks. The read-only health-gate re-reads that exact staging file, reads the
+current approval record, re-queries a real evaluated `/nix/store` output and
+deriver/NAR metadata, and emits a stable task-bound closure-integrity receipt.
+The explicit NixOS host lane now proves the receipt, healthy-host review, and
+future activation decision; the normal dry-run lane still fails closed without
+materialization. It does not write `/etc/nixos`, run `nixos-rebuild`, switch
+generations, or roll back. The active plan is
 [OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md](./plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md).
 
 ## Windows Checkout Path Policy

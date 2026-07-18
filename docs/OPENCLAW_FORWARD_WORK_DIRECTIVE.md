@@ -1374,18 +1374,25 @@ switch, or rollback. This is a controlled activation contract, not evidence
 that a host generation has already been switched.
 
 The closure-integrity receipt contract and fail-closed daily lane are now
-implemented: when a real output exists, every health-gate review re-queries it
-through `nix path-info`, reads the current staging approval record, and emits a
-tamper-evident receipt binding candidate and staged-file hashes to the output
-path, deriver, NAR hash, and approval fingerprint. Decision and controlled
-activation bindings carry and revalidate the receipt hash. The current host's
-explicit no-link materialization attempt timed out after 600 seconds while
-building 37 derivations, so the positive receipt remains an open proof gate;
-the daily lane reports that state as blocked and performs no activation. The
-next real slice is one cached/resource-bounded materialization proof, followed
-by an independent health oracle and separate activation/health/rollback
-authorities. Physical activation remains disabled by default; do not add
-another generic readiness wrapper.
+implemented and positively proven: when a real output exists, every health-gate
+review re-queries it through `nix path-info`, reads the current staging approval
+record, and emits a task-bound receipt binding candidate and staged-file hashes
+to the output path, deriver, NAR hash, and approval fingerprint. The receipt
+identity and issue time are stable for that completed staging task, so approval
+and execution revalidation compare the same receipt binding. Decision and
+controlled activation bindings carry and revalidate the receipt hash.
+
+On NixOS, the explicit positive lane uses the installed read-only `nixos`
+channel when available and records that source in evaluation evidence; this
+avoids rebuilding the pinned `26.11` flake closure when the deployed host is
+`26.05`. The local-channel `nix build --no-link --print-out-paths` proof,
+real closure receipt, healthy-host review, approved future activation decision,
+and Core/Observer checks now pass. The pinned flake remains the default outside
+that host optimization and its cold materialization remains a long-running
+resource check. No lane writes `/etc/nixos`, switches a generation, activates a
+system, or rolls back. The next real slice is an independent health oracle and
+separate activation/health/rollback authorities; do not add another generic
+readiness wrapper.
 
 ## Operator Identity And Mutation Boundary Checkpoint
 

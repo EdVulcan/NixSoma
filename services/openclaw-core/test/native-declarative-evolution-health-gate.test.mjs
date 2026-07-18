@@ -21,6 +21,8 @@ function completedTask({ candidateHash, candidateBytes, stagingPath }) {
     id: "task-staging",
     type: NATIVE_DECLARATIVE_EVOLUTION_STAGING_TASK_TYPE,
     status: "completed",
+    createdAt: "2026-07-17T00:00:00.000Z",
+    closedAt: "2026-07-17T00:00:03.000Z",
     approval: { requestId: "approval-staging" },
     nativeDeclarativeEvolution: {
       candidate: {
@@ -75,6 +77,7 @@ test("declarative evolution health gate verifies the staged file and evaluated c
 
   try {
     await writeFile(stagingPath, candidateText, "utf8");
+    let currentNow = "2026-07-17T00:00:10.000Z";
     const { buildNativeDeclarativeEvolutionHealthGate } = createNativeDeclarativeEvolutionHealthGateBuilders({
       tasks,
       approvals,
@@ -87,10 +90,12 @@ test("declarative evolution health gate verifies the staged file and evaluated c
         narHash: "sha256-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa=",
         narSize: 123,
       }),
-      now: () => "2026-07-17T00:00:00.000Z",
+      now: () => currentNow,
     });
 
     const result = await buildNativeDeclarativeEvolutionHealthGate({ taskId: "task-staging" });
+    currentNow = "2026-07-17T00:05:00.000Z";
+    const revalidated = await buildNativeDeclarativeEvolutionHealthGate({ taskId: "task-staging" });
 
     assert.equal(result.ok, true);
     assert.equal(result.blocked, false);
@@ -103,6 +108,9 @@ test("declarative evolution health gate verifies the staged file and evaluated c
     assert.equal(result.closureIntegrity.status, "verified");
     assert.match(result.closureIntegrity.receipt.receiptHash, /^[a-f0-9]{64}$/);
     assert.equal(result.closureIntegrity.receipt.approvalId, "approval-staging");
+    assert.equal(revalidated.closureIntegrity.receipt.receiptId, result.closureIntegrity.receipt.receiptId);
+    assert.equal(revalidated.closureIntegrity.receipt.issuedAt, result.closureIntegrity.receipt.issuedAt);
+    assert.equal(revalidated.closureIntegrity.receipt.receiptHash, result.closureIntegrity.receipt.receiptHash);
     assert.equal(result.governance.readsCurrentApprovalRecord, true);
     assert.equal(result.governance.requeriesStoreOutput, true);
     assert.equal(result.governance.emitsImmutableClosureReceipt, true);

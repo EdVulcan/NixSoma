@@ -176,7 +176,8 @@ export function createNativeDeclarativeEvolutionHealthGateBuilders({
     };
     const closureReceipt = Object.values(checks).every((passed) => passed === true)
       ? createNativeDeclarativeEvolutionClosureIntegrityReceipt({
-          issuedAt: now(),
+          receiptId: `closure-${sha256(task.id).slice(0, 32)}`,
+          issuedAt: task.closedAt ?? task.updatedAt ?? task.createdAt ?? now(),
           sourceStagingTaskId: task.id,
           approval,
           candidateHash,
