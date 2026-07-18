@@ -663,6 +663,7 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/task-executor-native-declarative-evolution-activation-execution-handlers.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/operator-auth.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/hostd-control-client.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/systemd-repair-verification.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-capabilities.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-capabilities.json"
     || ! -f "$core_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-activation.mjs"
@@ -673,7 +674,7 @@ EOF
     || -w "$core_server"
     || -e "$core_out/share/openclaw/services/openclaw-core/test"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 215 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 216 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi

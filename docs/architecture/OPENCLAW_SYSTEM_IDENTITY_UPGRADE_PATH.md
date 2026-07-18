@@ -301,7 +301,7 @@
 | --- | --- | --- |
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
-| Level 3 系统级特权组件 | 约 45% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis 和只读 eBPF process evidence 已形成。真实 generation activation/rollback、自动 incident scheduler、资源/cgroup 治理和更广系统能力仍未建立。 |
+| Level 3 系统级特权组件 | 约 50% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt 和只读 eBPF process evidence 已形成。真实 generation activation/rollback、自动 incident scheduler、资源/cgroup 治理和更广系统能力仍未建立。 |
 | Level 4 图形栈内生组件 | 约 0-5% | 只有 AI-owned work-view 方向与接口预留；专属 session、nested compositor、原生图形输入输出尚未实现。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
@@ -320,9 +320,11 @@ Phase B 的固定 D-Bus 控制切片已经完成：systemd unit inventory 已替
 `systemctl` 读取包装，system-sense、event-hub 和 system-heal restart 已通过
 独立 hostd、policy、approval、精确 Polkit、audit、恢复检查和历史真实
 VM/Observer 证明；bounded journal diagnosis 已在当前源码和物理机隔离检查中
-证明，但尚未部署到当前 system generation。不要把该固定授权扩展成任意
-systemd API；下一步应组合现有 health、journal、fixed restart 和 post-repair
-verification owner，形成一个完整 incident loop。
+证明，但尚未部署到当前 system generation。源码中的 incident loop 已组合
+现有 health、journal、fixed restart 和 post-repair verification owner，并且只在
+目标应用健康恢复后完成任务。不要把该固定授权扩展成任意 systemd API；下一步
+应把压缩且不含 journal message 的 incident receipt 接入现有显式批准的 AI
+handoff，生成只提供建议、不自动执行修复的结构化诊断。
 
 ---
 

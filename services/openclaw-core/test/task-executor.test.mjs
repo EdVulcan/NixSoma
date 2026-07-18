@@ -2029,6 +2029,7 @@ test("systemd next repair task dispatches to deferred non-recoverable handler", 
 
 test("approved next systemd repair executes only through the fixed hostd boundary", async () => {
   let inventoryCalls = 0;
+  let journalCalls = 0;
   const { executor, events } = createExecutorHarness({
     state: {
       SYSTEMD_REPAIR_EXECUTION_TIMEOUT_MS: 3000,
@@ -2063,12 +2064,23 @@ test("approved next systemd repair executes only through the fixed hostd boundar
               }],
             };
           }
+          if (url.includes("/system/systemd/journal-evidence?")) {
+            journalCalls += 1;
+            return {
+              registry: "openclaw-systemd-journal-evidence-v0",
+              available: true,
+              unit: "openclaw-system-sense.service",
+              requestedLines: 25,
+              summary: { returned: 2, parseErrors: 0, filteredEntries: 0 },
+              entries: [{ at: new Date().toISOString(), message: "token=do-not-retain" }],
+            };
+          }
           return {
             system: {
               timestamp: new Date().toISOString(),
               alerts: [],
               network: { online: true, checkedTargets: 7 },
-              services: { browserRuntime: { name: "browserRuntime", ok: true } },
+              services: { systemSense: { name: "systemSense", ok: true, status: "healthy" } },
             },
           };
         },
@@ -2157,13 +2169,20 @@ test("approved next systemd repair executes only through the fixed hostd boundar
   assert.equal(finalTask.outcome.details.postExecutionVerification.summary.targetHealthy, true);
   assert.equal(finalTask.outcome.details.postExecutionVerification.summary.nativeMutationVerified, true);
   assert.equal(finalTask.outcome.details.postExecutionVerification.summary.restoredHealthy, true);
+  assert.equal(finalTask.outcome.details.postExecutionVerification.targetHealthServiceKey, "systemSense");
   assert.equal(finalTask.outcome.details.postExecutionVerification.recoveryRecommendation, null);
   assert.equal(finalTask.outcome.details.postExecutionVerification.after.readinessAttempts, 2);
+  assert.equal(finalTask.outcome.details.incidentDiagnosis.journalEvidence.returned, 2);
+  assert.equal(finalTask.outcome.details.incidentReceipt.target.healthServiceKey, "systemSense");
+  assert.equal(finalTask.outcome.details.incidentReceipt.restoredHealthy, true);
+  assert.equal(finalTask.outcome.details.incidentReceipt.journalEvidence.messagesPersisted, false);
+  assert.equal(JSON.stringify(finalTask).includes("do-not-retain"), false);
   assert.equal(inventoryCalls, 3);
+  assert.equal(journalCalls, 1);
   assert(events.some((event) => event.name === "systemd.next_repair.execution_completed"));
 });
 
-test("approved event-hub repair stays on the fixed hostd capability", async () => {
+test("event-hub repair stays on the fixed hostd capability and fails closed on unhealthy service", async () => {
   let inventoryCalls = 0;
   let hostdTarget = null;
   const { executor } = createExecutorHarness({
@@ -2196,7 +2215,24 @@ test("approved event-hub repair stays on the fixed hostd capability", async () =
               }],
             };
           }
-          return { system: { timestamp: new Date().toISOString(), alerts: [], network: {} } };
+          if (url.includes("/system/systemd/journal-evidence?")) {
+            return {
+              registry: "openclaw-systemd-journal-evidence-v0",
+              available: true,
+              unit: "openclaw-event-hub.service",
+              requestedLines: 25,
+              summary: { returned: 1, parseErrors: 0, filteredEntries: 0 },
+              entries: [],
+            };
+          }
+          return {
+            system: {
+              timestamp: new Date().toISOString(),
+              alerts: [],
+              network: {},
+              services: { eventHub: { name: "eventHub", ok: false, status: "offline" } },
+            },
+          };
         },
         postJson: async () => ({ ok: true }),
       },
@@ -2254,7 +2290,10 @@ test("approved event-hub repair stays on the fixed hostd capability", async () =
   };
 
   const result = await executor.executeTaskWithRecovery(task, { autoRecover: false });
-  assert.equal(result.finalExecution.task.outcome.kind, "systemd_next_repair_execution_completed");
+  assert.equal(result.finalExecution.task.outcome.kind, "systemd_next_repair_execution_failed");
+  assert.equal(result.finalExecution.task.outcome.reason, "systemd_next_repair_health_not_restored");
+  assert.equal(result.finalExecution.task.outcome.details.executionSucceeded, true);
+  assert.equal(result.finalExecution.task.outcome.details.repairSucceeded, false);
   assert.deepEqual(hostdTarget, {
     targetUnit: "openclaw-event-hub.service",
     operation: "restart_event_hub",
@@ -2264,7 +2303,10 @@ test("approved event-hub repair stays on the fixed hostd capability", async () =
     operation: "restart_event_hub",
     capabilityId: "hostd.restart_event_hub",
   });
-  assert.equal(inventoryCalls, 2);
+  assert.equal(result.finalExecution.task.outcome.details.postExecutionVerification.targetHealthServiceKey, "eventHub");
+  assert.equal(result.finalExecution.task.outcome.details.incidentReceipt.target.healthServiceKey, "eventHub");
+  assert.equal(result.finalExecution.task.outcome.details.incidentReceipt.restoredHealthy, false);
+  assert.equal(inventoryCalls, 3);
 });
 
 test("failed native systemd repair recommends operator recovery without fallback or retry", async () => {
@@ -2290,7 +2332,23 @@ test("failed native systemd repair recommends operator recovery without fallback
                 systemdObserved: true,
               }],
             }
-          : { system: { timestamp: new Date().toISOString(), alerts: [], network: {} } },
+          : url.includes("/system/systemd/journal-evidence?")
+            ? {
+                registry: "openclaw-systemd-journal-evidence-v0",
+                available: false,
+                unit: "openclaw-system-sense.service",
+                requestedLines: 25,
+                summary: { returned: 0, parseErrors: 0, filteredEntries: 0 },
+                entries: [],
+              }
+            : {
+                system: {
+                  timestamp: new Date().toISOString(),
+                  alerts: [],
+                  network: {},
+                  services: { systemSense: { name: "systemSense", ok: true, status: "healthy" } },
+                },
+              },
         postJson: async () => ({ ok: true }),
       },
     },

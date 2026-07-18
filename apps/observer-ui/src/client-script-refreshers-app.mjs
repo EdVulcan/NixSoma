@@ -279,6 +279,7 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
     const taskActionEvidence = task.outcome?.details?.actionEvidence ?? taskVerification?.actionEvidence ?? null;
     const taskRecoveryEvidence = task.outcome?.details?.recoveryEvidence ?? task.recovery?.recoveryEvidence ?? null;
     const taskPostExecutionVerification = task.outcome?.details?.postExecutionVerification ?? null;
+    const systemdIncidentReceipt = task.outcome?.details?.incidentReceipt ?? null;
     lines.push(...formatEngineeringVerificationFollowupLines(task));
     if (taskVerification) {
       lines.push(\`Verification: \${taskVerification.ok === true ? "passed" : taskVerification.ok === false ? "failed" : "unknown"}\`);
@@ -303,6 +304,13 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
       lines.push(\`Post Execution Verification: \${taskPostExecutionVerification.registry ?? "unknown"} / \${taskPostExecutionVerification.mode ?? "unknown"}\`);
       lines.push(\`Post Verification Unit: \${taskPostExecutionVerification.targetUnit ?? "unknown"} before=\${summary.beforeActiveState ?? "unknown"} after=\${summary.afterActiveState ?? "unknown"}\`);
       lines.push(\`Post Verification Health: beforeServiceOk=\${summary.beforeServiceOk ?? "unknown"} afterServiceOk=\${summary.afterServiceOk ?? "unknown"} noAutomaticRecovery=\${Boolean(summary.noAutomaticRecovery)}\`);
+    }
+    if (systemdIncidentReceipt) {
+      const journal = systemdIncidentReceipt.journalEvidence ?? {};
+      lines.push(\`Systemd Repair Receipt: \${systemdIncidentReceipt.registry ?? "unknown"} restoredHealthy=\${Boolean(systemdIncidentReceipt.restoredHealthy)}\`);
+      lines.push(\`Systemd Repair Target: \${systemdIncidentReceipt.target?.unit ?? "unknown"} healthKey=\${systemdIncidentReceipt.target?.healthServiceKey ?? "unknown"}\`);
+      lines.push(\`Systemd Repair Journal: \${journal.registry ?? "unknown"} available=\${Boolean(journal.available)} entries=\${journal.returned ?? 0} messagesPersisted=\${Boolean(journal.messagesPersisted)}\`);
+      lines.push(\`Systemd Repair Hostd: \${systemdIncidentReceipt.hostdReceipt?.transport ?? "unknown"} job=\${systemdIncidentReceipt.hostdReceipt?.jobPath ?? "none"} receipt=\${systemdIncidentReceipt.receiptHash ?? "none"}\`);
     }
     if (task.bodyEvidenceLedgerFirstRecord) {
       const firstRecord = task.bodyEvidenceLedgerFirstRecord;

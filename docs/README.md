@@ -13,8 +13,8 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current `main` through bounded systemd journal evidence and bounded Event Hub audit storage | Implemented; commit history is authoritative |
-| Local validation | 807 workspace tests and typecheck pass; body-config and event-audit integration pass; 811 registry entries pass | Validated |
+| Capability source | Current `main` through the Level 3 incident repair loop and bounded Event Hub audit storage | Implemented; commit history is authoritative |
+| Local validation | 812 workspace tests and typecheck pass; body-config and event-audit integration pass; 811 registry entries pass | Validated |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/735kfj8knq1nn092hq4z57sjlc9di3q5-nixos-system-nixos-26.05.4808.569d57850992` | Running but behind the capability source |
 | Deployed journal probe | `/system/systemd/journal-evidence` returns `404`; `openclaw-system-sense` has no `systemd-journal` supplementary group | Not deployed |
 | Deployed audit store | Installed Event Hub predates streaming tail reads, cached summaries, and rotation | Not deployed |
@@ -50,8 +50,9 @@ The completed bounded frontier is:
 - Level 2 trusted browser/work-view observation, semantic action, takeover,
   recovery, and Observer control within the bounded AI-owned workspace.
 - Level 3 independent hostd ownership, exact Polkit and peer boundaries, three
-  fixed systemd repair targets, read-only eBPF process evidence, and bounded
-  journal diagnosis in source.
+  fixed systemd repair targets, read-only eBPF process evidence, bounded journal
+  diagnosis, and target-specific post-repair application health receipts in
+  source.
 - Phase D candidate generation, approval-bound staging/build, real closure
   receipt, independent host-health oracle, controlled activation contract,
   manual rollback evidence, and a physical-host-safe failure rehearsal.
@@ -71,7 +72,7 @@ instead of being silently truncated. Against the current 438 MiB development
 log, a 200-event tail query took about 41 ms and the first full summary about
 1.9 s with roughly 20 MiB heap; a cached repeat took 0 ms.
 
-The next real Level 3 capability is one cohesive incident loop:
+The Level 3 incident loop is complete in source:
 
 ```text
 body health + bounded journal evidence
@@ -81,10 +82,12 @@ body health + bounded journal evidence
 -> task and Observer evidence
 ```
 
-Do not broaden hostd into arbitrary systemd control, add another journal
-readiness wrapper, or create a new provider schema chain. Only after the local
-incident loop is useful should its redacted context be considered for the
-existing explicitly approved DeepSeek handoff.
+Do not broaden hostd into arbitrary systemd control or add another journal
+readiness wrapper. The next real capability returns to AI governance: project
+only the compact incident receipt into the existing explicitly approved
+DeepSeek handoff and obtain a structured, guidance-only recommendation. Reuse
+the existing provider and Observer owners; do not send journal messages,
+auto-create repair tasks, or create a new provider schema chain.
 
 ## Progress Estimate
 

@@ -44,8 +44,9 @@ The risk is local drift:
 
 ## Current Validated Frontier
 
-The current capability baseline includes bounded journal evidence and the
-bounded Event Hub audit store. All 807 workspace tests and typecheck pass, the
+The current capability baseline includes bounded journal evidence, the bounded
+Event Hub audit store, and the fixed Level 3 incident repair loop. All workspace
+tests and typecheck pass, the
 body-config and event-audit integration checks pass, the 811-entry milestone
 registry audit passes, and the Windows path budget has no file over 160
 repository-relative characters.
@@ -60,9 +61,9 @@ separately authorized mutation environment.
 
 The Event Hub audit-log blocker is closed in source through reverse bounded tail
 reads, streaming cached summaries, serialized rotation, and a fixed retained
-segment policy. The next real Level 3 capability is the post-repair diagnosis
-loop defined under `Completed Level 3 Bounded Journal Evidence`; do not select
-work from an older phase number or historical `Next Slice` paragraph.
+segment policy. The post-repair diagnosis loop defined below is also complete in
+source; do not select work from an older phase number or historical `Next Slice`
+paragraph.
 
 ## Governing Vision
 
@@ -1507,9 +1508,9 @@ syntax, and no task, approval, restart, activation, or rollback. The next
 Level 3 capability must again be selected from a concrete operator gap; do not
 turn this read model into arbitrary journal queries or a new readiness chain.
 
-### Next Real Level 3 Capability
+### Completed Level 3 Incident Repair Loop
 
-Close one operator-visible incident loop by combining existing owners:
+One operator-visible incident loop now combines the existing owners:
 
 ```text
 body health + bounded journal evidence
@@ -1519,12 +1520,30 @@ body health + bounded journal evidence
 -> task and Observer evidence
 ```
 
+Core selects the real health key for each fixed target, captures only a compact
+journal summary before mutation, dispatches one existing hostd restart, and
+requires both native unit state and application health before marking the repair
+successful. A content-hashed incident receipt binds task/step identity,
+pre-health, journal counts, native job/PID evidence, post-health, and the final
+restored state. Observer reads the same task evidence. Journal messages are not
+persisted, and an active/running unit with unhealthy application state fails
+closed to the existing operator recovery recommendation.
+
 The measured Event Hub development-log memory hazard is now closed. The
 production store has no whole-file `readFile` path, retains fixed 64 MiB
 segments, preserves an oversized legacy segment on first rotation, and caches a
 streamed summary for Observer refreshes. The incident loop must not add
 arbitrary journal queries, arbitrary systemd units, automatic restart, or a new
 provider contract.
+
+### Next Real Capability
+
+Project the compact incident receipt, without journal messages, into the
+existing explicitly approved DeepSeek context handoff and return one structured
+guidance-only diagnosis recommendation. Reuse the current provider approval,
+request binding, recommendation bridge, and Observer owner. Do not create a new
+provider schema chain, auto-create or approve repair tasks, invoke hostd from the
+recommendation, or widen the fixed system authority.
 
 ## Operator Identity And Mutation Boundary Checkpoint
 

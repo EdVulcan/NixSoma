@@ -78,6 +78,11 @@ const step = JSON.parse(process.argv[6]);
 const targetUnit = process.argv[7];
 const targetOperation = process.argv[8];
 const targetCapabilityId = process.argv[9];
+const targetHealthServiceKey = {
+  "openclaw-system-sense.service": "systemSense",
+  "openclaw-event-hub.service": "eventHub",
+  "openclaw-system-heal.service": "systemHeal",
+}[targetUnit];
 
 for (const token of [
   "Create Next Repair Real Execution Task",
@@ -95,6 +100,9 @@ for (const token of [
   "systemd.next_repair.execution_completed",
   "systemd.next_repair.execution_failed",
   "openclaw-systemd-next-repair-real-execution-v0",
+  "Systemd Repair Receipt:",
+  "Systemd Repair Journal:",
+  "incidentReceipt",
 ]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);
@@ -124,6 +132,7 @@ const transcript = details.commandTranscript?.[0];
 if (details.hostMutationAttempted !== true
   || details.executed !== true
   || details.executionSucceeded !== true
+  || details.repairSucceeded !== true
   || transcript?.command !== `systemctl restart ${targetUnit}`
   || transcript?.exitCode !== 0
   || transcript?.transport !== "dbus_native"
@@ -139,9 +148,26 @@ if (details.hostMutationAttempted !== true
   || transcript?.peerIdentity?.matched !== true
   || transcript?.nativeCapability?.operation !== targetOperation
   || transcript?.nativeCapability?.capabilityId !== targetCapabilityId
+  || details.postExecutionVerification?.targetHealthServiceKey !== targetHealthServiceKey
+  || details.postExecutionVerification?.summary?.targetServiceHealthy !== true
   || details.postExecutionVerification?.summary?.restoredHealthy !== true
   || details.postExecutionVerification?.recoveryRecommendation !== null) {
   throw new Error(`Observer source should expose next real execution evidence: ${JSON.stringify(details)}`);
+}
+const diagnosis = details.incidentDiagnosis;
+const receipt = details.incidentReceipt;
+if (diagnosis?.registry !== "openclaw-systemd-repair-incident-diagnosis-v0"
+  || diagnosis?.target?.healthServiceKey !== targetHealthServiceKey
+  || diagnosis?.journalEvidence?.registry !== "openclaw-systemd-journal-evidence-v0"
+  || diagnosis?.journalEvidence?.available !== true
+  || diagnosis?.journalEvidence?.messagesPersisted !== false
+  || receipt?.registry !== "openclaw-systemd-repair-incident-receipt-v0"
+  || receipt?.target?.unit !== targetUnit
+  || receipt?.hostdReceipt?.jobPath !== transcript.jobPath
+  || receipt?.postHealth?.service?.ok !== true
+  || receipt?.restoredHealthy !== true
+  || !/^sha256:[a-f0-9]{64}$/u.test(receipt?.receiptHash ?? "")) {
+  throw new Error(`Observer source should expose compact diagnosis and repair receipt: ${JSON.stringify({ diagnosis, receipt })}`);
 }
 
 console.log(JSON.stringify({
@@ -161,6 +187,10 @@ console.log(JSON.stringify({
     beforeMainPid: transcript.beforeMainPid,
     afterMainPid: transcript.afterMainPid,
     hostMutationAttempted: details.hostMutationAttempted,
+    repairSucceeded: details.repairSucceeded,
+    targetHealthServiceKey,
+    journalEntries: diagnosis.journalEvidence.returned,
+    incidentReceiptHash: receipt.receiptHash,
   },
 }, null, 2));
 EOF

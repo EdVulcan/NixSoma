@@ -69,6 +69,11 @@ const taskState = JSON.parse(process.argv[6]);
 const targetUnit = process.argv[7];
 const targetOperation = process.argv[8];
 const targetCapabilityId = process.argv[9];
+const targetHealthServiceKey = {
+  "openclaw-system-sense.service": "systemSense",
+  "openclaw-event-hub.service": "eventHub",
+  "openclaw-system-heal.service": "systemHeal",
+}[targetUnit];
 
 for (const token of [
   "Second Slice: Fixed Native Restart",
@@ -142,18 +147,49 @@ if (transcript.exitCode !== 0
   || transcript.peerIdentity?.matched !== true
   || transcript.nativeCapability?.operation !== targetOperation
   || transcript.nativeCapability?.capabilityId !== targetCapabilityId
-  || details.executionSucceeded !== true) {
+  || details.executionSucceeded !== true
+  || details.repairSucceeded !== true) {
   throw new Error(`next real execution transcript should prove native Polkit-authorized restart: ${JSON.stringify(transcript)}`);
 }
 if (typeof details.rollbackNote !== "string" || !details.rollbackNote.includes("verify health")) {
   throw new Error(`next real execution should carry rollback note: ${JSON.stringify(details.rollbackNote)}`);
 }
-if (details.postExecutionVerification?.summary?.targetHealthy !== true
+if (details.postExecutionVerification?.targetHealthServiceKey !== targetHealthServiceKey
+  || details.postExecutionVerification?.summary?.targetUnitHealthy !== true
+  || details.postExecutionVerification?.summary?.targetServiceHealthy !== true
+  || details.postExecutionVerification?.summary?.targetHealthy !== true
   || details.postExecutionVerification?.summary?.nativeMutationVerified !== true
   || details.postExecutionVerification?.summary?.restoredHealthy !== true
   || details.postExecutionVerification?.recoveryRecommendation !== null
   || details.postExecutionVerification?.governance?.triggersRecovery !== false) {
   throw new Error(`next real execution should carry verification evidence without recovery: ${JSON.stringify(details.postExecutionVerification)}`);
+}
+const diagnosis = details.incidentDiagnosis;
+const receipt = details.incidentReceipt;
+if (diagnosis?.registry !== "openclaw-systemd-repair-incident-diagnosis-v0"
+  || diagnosis?.task?.id !== finalTask.id
+  || diagnosis?.task?.stepId !== "execute-next-systemd-restart"
+  || diagnosis?.target?.unit !== targetUnit
+  || diagnosis?.target?.healthServiceKey !== targetHealthServiceKey
+  || diagnosis?.journalEvidence?.registry !== "openclaw-systemd-journal-evidence-v0"
+  || diagnosis?.journalEvidence?.available !== true
+  || !Number.isInteger(diagnosis?.journalEvidence?.returned)
+  || diagnosis?.journalEvidence?.messagesPersisted !== false) {
+  throw new Error(`next real execution should bind bounded pre-repair diagnosis: ${JSON.stringify(diagnosis)}`);
+}
+if (receipt?.registry !== "openclaw-systemd-repair-incident-receipt-v0"
+  || receipt?.task?.id !== finalTask.id
+  || receipt?.task?.stepId !== "execute-next-systemd-restart"
+  || receipt?.target?.unit !== targetUnit
+  || receipt?.target?.healthServiceKey !== targetHealthServiceKey
+  || receipt?.hostdReceipt?.transport !== "dbus_native"
+  || receipt?.hostdReceipt?.jobPath !== transcript.jobPath
+  || receipt?.postHealth?.service?.ok !== true
+  || receipt?.restoredHealthy !== true
+  || receipt?.governance?.singleRestartAttempt !== true
+  || receipt?.governance?.automaticRecovery !== false
+  || !/^sha256:[a-f0-9]{64}$/u.test(receipt?.receiptHash ?? "")) {
+  throw new Error(`next real execution should persist a compact incident receipt: ${JSON.stringify(receipt)}`);
 }
 
 console.log(JSON.stringify({
@@ -174,6 +210,10 @@ console.log(JSON.stringify({
     exitCode: transcript.exitCode,
     hostMutationAttempted: details.hostMutationAttempted,
     executionSucceeded: details.executionSucceeded,
+    repairSucceeded: details.repairSucceeded,
+    targetHealthServiceKey,
+    journalEntries: diagnosis.journalEvidence.returned,
+    incidentReceiptHash: receipt.receiptHash,
   },
 }, null, 2));
 EOF

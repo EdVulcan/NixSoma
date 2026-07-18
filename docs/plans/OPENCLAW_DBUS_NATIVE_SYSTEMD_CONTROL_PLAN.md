@@ -312,13 +312,38 @@ when manager ownership is unknown.
 - Additional eBPF event kinds beyond the existing bounded process-exec slice,
   and real Phase D generation activation or rollback.
 
+## Eighth Slice: Incident Repair Loop
+
+The fixed Level 3 repair path now binds diagnosis, mutation, and application
+health in one existing task lifecycle. Before hostd is contacted, Core captures
+the selected target's native unit state, its actual `/system/health` service
+entry, and a compact summary of the bounded journal response. Journal messages
+remain transient: the task stores only registry, availability, counts, latest
+timestamp, and error code.
+
+Core then dispatches exactly once through the existing descriptor-backed hostd
+owner. Post-verification polls both native `loaded/active/running` state and the
+selected service health key (`systemSense`, `eventHub`, or `systemHeal`). A
+successful D-Bus job no longer completes the repair when application health is
+still false. The final incident receipt binds task and execution step, fixed
+target, pre-health, compact journal evidence, native hostd job/PID evidence,
+post-health, and `restoredHealthy` under a content hash. Observer renders that
+same receipt through the existing task detail surface.
+
+This slice adds no hostd operation, systemd target, journal query shape,
+automatic restart, retry, scheduler, activation, or rollback authority. Focused
+tests use an injected hostd client and prove target-specific health mapping,
+bounded readiness polling, journal-message non-persistence, successful receipt
+binding, and fail-closed handling when systemd is running but the application
+remains unhealthy. Installed real-mutation checks are updated as future release
+gates but are not executed on the sole physical host.
+
 ## Next Slice
 
-The fixed Level 3 hostd socket contract, all three allowlisted restart
-capabilities, and bounded journal diagnosis are complete. The next operator gap
-is post-repair verification: combine existing body health and journal evidence,
-dispatch only through the existing fixed restart owner, then record fresh
-post-action health and Observer evidence. Keep the native helper, exact
-user/group match, compact verified/matched readback, and descriptor-bound
-mutation targets. Do not broaden this contract into an arbitrary systemd API or
-automatic restart scheduler.
+Return to the AI-governance mainline instead of adding another Level 3 repair
+wrapper. The smallest next real capability is to project this compact incident
+receipt into the existing explicitly approved DeepSeek context handoff and
+receive a structured, guidance-only diagnosis recommendation. Reuse the current
+provider approval, request binding, recommendation bridge, and Observer surface;
+do not send journal messages, create a provider schema family, automatically
+create or approve a repair task, invoke hostd, or expand system authority.

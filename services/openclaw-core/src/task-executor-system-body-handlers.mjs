@@ -4,6 +4,7 @@ import path from "node:path";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { hostdRestartCapabilityForTarget } from "../../../packages/shared-systemd/src/openclaw-hostd-capabilities.mjs";
 import { requestHostdRestart } from "./hostd-control-client.mjs";
+import { createSystemdRepairVerification } from "./systemd-repair-verification.mjs";
 
 export function createSystemBodyTaskHandlers({
   client,
@@ -38,6 +39,12 @@ export function createSystemBodyTaskHandlers({
     completeTask,
     reconcileRuntimeState,
   } = taskManager;
+  const systemdRepairVerification = createSystemdRepairVerification({
+    fetchJson,
+    systemSenseUrl,
+    postVerificationAttempts: SYSTEMD_REPAIR_POST_VERIFICATION_ATTEMPTS,
+    postVerificationPollMs: SYSTEMD_REPAIR_POST_VERIFICATION_POLL_MS,
+  });
 
   function isSystemdRepairExecutionTask(task) {
     return task?.type === "systemd_repair_execution_task"
@@ -744,154 +751,6 @@ export function createSystemBodyTaskHandlers({
     };
   }
 
-  function findSystemdVerificationUnit(inventory, targetUnit) {
-    return (inventory?.units ?? []).find((unit) => unit.unit === targetUnit) ?? null;
-  }
-
-  async function captureSystemdRepairVerificationSnapshot(targetUnit, stage) {
-    const checkedAt = new Date().toISOString();
-    const snapshot = {
-      stage,
-      checkedAt,
-      targetUnit,
-      unitInventory: null,
-      targetUnitState: null,
-      systemHealth: null,
-      targetServiceHealth: null,
-      errors: [],
-    };
-
-    try {
-      const inventory = await fetchJson(`${systemSenseUrl}/system/systemd/units`);
-      const unit = findSystemdVerificationUnit(inventory, targetUnit);
-      snapshot.unitInventory = {
-        registry: inventory.registry ?? null,
-        observedAt: inventory.observedAt ?? null,
-        systemdAvailable: inventory.source?.systemdAvailable ?? null,
-        summary: inventory.summary ?? null,
-      };
-      snapshot.targetUnitState = unit
-        ? {
-            unit: unit.unit,
-            activeState: unit.activeState ?? null,
-            subState: unit.subState ?? null,
-            loadState: unit.loadState ?? null,
-            unitFileState: unit.unitFileState ?? null,
-            mainPid: Number.isInteger(unit.mainPid) ? unit.mainPid : null,
-            systemdObserved: unit.systemdObserved === true,
-            observation: unit.observation ?? null,
-          }
-        : null;
-      if (!unit) {
-        snapshot.errors.push("target_unit_not_found_in_inventory");
-      }
-    } catch (error) {
-      snapshot.errors.push(`unit_inventory_unavailable:${error instanceof Error ? error.message : "unknown"}`);
-    }
-
-    try {
-      const health = await fetchJson(`${systemSenseUrl}/system/health`);
-      const browserRuntime = health.system?.services?.browserRuntime ?? null;
-      snapshot.systemHealth = {
-        timestamp: health.system?.timestamp ?? null,
-        alertCount: Array.isArray(health.system?.alerts) ? health.system.alerts.length : 0,
-        online: health.system?.network?.online ?? null,
-        checkedTargets: health.system?.network?.checkedTargets ?? null,
-      };
-      snapshot.targetServiceHealth = browserRuntime
-        ? {
-            name: browserRuntime.name ?? "browserRuntime",
-            ok: browserRuntime.ok === true,
-            status: browserRuntime.status ?? null,
-            url: browserRuntime.url ?? null,
-            latencyMs: browserRuntime.latencyMs ?? null,
-            checkedAt: browserRuntime.checkedAt ?? null,
-          }
-        : null;
-      if (!browserRuntime) {
-        snapshot.errors.push("browser_runtime_health_not_found");
-      }
-    } catch (error) {
-      snapshot.errors.push(`system_health_unavailable:${error instanceof Error ? error.message : "unknown"}`);
-    }
-
-    return snapshot;
-  }
-
-  async function captureSystemdRepairPostRestartSnapshot(targetUnit, stage) {
-    let snapshot;
-    for (let attempt = 1; attempt <= SYSTEMD_REPAIR_POST_VERIFICATION_ATTEMPTS; attempt += 1) {
-      snapshot = await captureSystemdRepairVerificationSnapshot(targetUnit, stage);
-      if (snapshot.targetUnitState?.systemdObserved === true) {
-        return {
-          ...snapshot,
-          readinessAttempts: attempt,
-        };
-      }
-      if (attempt < SYSTEMD_REPAIR_POST_VERIFICATION_ATTEMPTS) {
-        await new Promise((resolve) => setTimeout(resolve, SYSTEMD_REPAIR_POST_VERIFICATION_POLL_MS));
-      }
-    }
-    return {
-      ...snapshot,
-      readinessAttempts: SYSTEMD_REPAIR_POST_VERIFICATION_ATTEMPTS,
-    };
-  }
-
-  function buildSystemdRepairPostExecutionVerification(targetUnit, before, after, result) {
-    const afterTarget = after.targetUnitState;
-    const targetHealthy = afterTarget?.systemdObserved === true
-      && afterTarget.loadState === "loaded"
-      && afterTarget.activeState === "active"
-      && afterTarget.subState === "running";
-    const nativeMutationVerified = result.ok === true
-      && result.nativeMutation?.transport === "dbus_native"
-      && result.nativeMutation?.method === "org.freedesktop.systemd1.Manager.RestartUnit"
-      && Number.isInteger(result.nativeMutation?.before?.mainPid)
-      && Number.isInteger(result.nativeMutation?.after?.mainPid)
-      && result.nativeMutation.before.mainPid !== result.nativeMutation.after.mainPid;
-    const restoredHealthy = targetHealthy && nativeMutationVerified;
-    return {
-      registry: "openclaw-systemd-repair-post-verification-v0",
-      mode: restoredHealthy ? "native_restart_restored_health" : "recovery_recommendation_required",
-      targetUnit,
-      checkedAt: new Date().toISOString(),
-      commandExitCode: result.exitCode,
-      commandSucceeded: result.ok === true,
-      before,
-      after,
-      summary: {
-        unitObservedBefore: before.targetUnitState?.systemdObserved === true,
-        unitObservedAfter: after.targetUnitState?.systemdObserved === true,
-        beforeActiveState: before.targetUnitState?.activeState ?? null,
-        afterActiveState: after.targetUnitState?.activeState ?? null,
-        afterSubState: afterTarget?.subState ?? null,
-        afterMainPid: afterTarget?.mainPid ?? null,
-        beforeServiceOk: before.targetServiceHealth?.ok ?? null,
-        afterServiceOk: after.targetServiceHealth?.ok ?? null,
-        errorCount: before.errors.length + after.errors.length,
-        targetHealthy,
-        nativeMutationVerified,
-        restoredHealthy,
-        noAutomaticRecovery: true,
-      },
-      recoveryRecommendation: restoredHealthy
-        ? null
-        : {
-            strategy: "inspect_unit_and_restore_declarative_generation",
-            targetUnit,
-            automaticRestart: false,
-            requiresOperatorReview: true,
-          },
-      governance: {
-        recordsEvidenceOnly: true,
-        triggersRecovery: false,
-        retriesExecution: false,
-        schedulesFollowUp: false,
-      },
-    };
-  }
-
   async function executeSystemdRepairExecutionTask(task) {
     const targetUnit = task.systemdRepair?.target?.unit ?? null;
     if (targetUnit !== SYSTEMD_REPAIR_REAL_EXECUTION_UNIT) {
@@ -904,7 +763,7 @@ export function createSystemBodyTaskHandlers({
       throw new Error(`Unexpected systemd repair command: ${JSON.stringify(command)}`);
     }
 
-    const beforeVerification = await captureSystemdRepairVerificationSnapshot(targetUnit, "before_real_execution");
+    const beforeVerification = await systemdRepairVerification.captureSnapshot(targetUnit, "before_real_execution");
     const runningTask = await setTaskPhase(task, "systemd_repair_execution_running", {
       status: "running",
       details: {
@@ -917,8 +776,8 @@ export function createSystemBodyTaskHandlers({
     });
     const result = await runSystemdRepairCommand(runningTask);
     const commandTranscript = [buildSystemdRepairCommandTranscript(runningTask, result)];
-    const afterVerification = await captureSystemdRepairPostRestartSnapshot(targetUnit, "after_real_execution");
-    const postExecutionVerification = buildSystemdRepairPostExecutionVerification(
+    const afterVerification = await systemdRepairVerification.capturePostRestartSnapshot(targetUnit, "after_real_execution");
+    const postExecutionVerification = systemdRepairVerification.buildPostExecutionVerification(
       targetUnit,
       beforeVerification,
       afterVerification,
@@ -1070,29 +929,44 @@ export function createSystemBodyTaskHandlers({
       throw new Error(`Unexpected next systemd repair command: ${JSON.stringify(command)}`);
     }
 
-    const beforeVerification = await captureSystemdRepairVerificationSnapshot(targetUnit, "before_next_real_execution");
+    const beforeVerification = await systemdRepairVerification.captureSnapshot(targetUnit, "before_next_real_execution");
+    const incidentDiagnosis = await systemdRepairVerification.captureIncidentDiagnosis({
+      taskId: task.id,
+      stepId: "execute-next-systemd-restart",
+      targetUnit,
+      before: beforeVerification,
+    });
     const runningTask = await setTaskPhase(task, "systemd_next_repair_execution_running", {
       status: "running",
       details: {
         executor: "systemd-next-repair-real-execution-v0",
         target: task.systemdNextRepair?.target ?? null,
         command,
+        incidentDiagnosis,
         hostMutationAttempted: true,
         executed: true,
       },
     });
     const result = await runSystemdRepairCommand(runningTask);
     const commandTranscript = [buildSystemdRepairCommandTranscript(runningTask, result)];
-    const afterVerification = await captureSystemdRepairPostRestartSnapshot(targetUnit, "after_next_real_execution");
-    const postExecutionVerification = buildSystemdRepairPostExecutionVerification(
+    const afterVerification = await systemdRepairVerification.capturePostRestartSnapshot(targetUnit, "after_next_real_execution");
+    const postExecutionVerification = systemdRepairVerification.buildPostExecutionVerification(
       targetUnit,
       beforeVerification,
       afterVerification,
       result,
     );
+    const incidentReceipt = systemdRepairVerification.buildIncidentReceipt({
+      task: runningTask,
+      stepId: "execute-next-systemd-restart",
+      diagnosis: incidentDiagnosis,
+      verification: postExecutionVerification,
+      result,
+    });
     const rollbackNote = "If this restart degrades body health, inspect systemd status and verify health before attempting any further repair.";
-    const status = result.ok ? "completed" : "failed";
-    const phase = result.ok ? "systemd_next_repair_execution_completed" : "systemd_next_repair_execution_failed";
+    const repairSucceeded = postExecutionVerification.summary.restoredHealthy === true;
+    const status = repairSucceeded ? "completed" : "failed";
+    const phase = repairSucceeded ? "systemd_next_repair_execution_completed" : "systemd_next_repair_execution_failed";
     const updatedTask = await setTaskPhase(runningTask, phase, {
       status,
       details: {
@@ -1104,6 +978,8 @@ export function createSystemBodyTaskHandlers({
         executed: true,
         commandTranscript,
         result,
+        incidentDiagnosis,
+        incidentReceipt,
         postExecutionVerification,
       },
     });
@@ -1117,17 +993,20 @@ export function createSystemBodyTaskHandlers({
         hostMutationAttempted: true,
         executed: true,
         executionSucceeded: result.ok,
+        repairSucceeded,
         exitCode: result.exitCode,
         completedAt: result.completedAt,
         authDelegation: result.authDelegation ?? null,
       },
     };
     updatedTask.outcome = {
-      kind: result.ok ? "systemd_next_repair_execution_completed" : "systemd_next_repair_execution_failed",
-      summary: result.ok
+      kind: repairSucceeded ? "systemd_next_repair_execution_completed" : "systemd_next_repair_execution_failed",
+      summary: repairSucceeded
         ? `Operator-approved next systemd restart completed for ${targetUnit}.`
-        : `Operator-approved next systemd restart attempted for ${targetUnit} and exited with code ${result.exitCode}.`,
-      reason: result.ok ? null : "systemd_next_restart_nonzero_exit",
+        : result.ok
+          ? `Operator-approved next systemd restart completed for ${targetUnit}, but target health was not restored.`
+          : `Operator-approved next systemd restart attempted for ${targetUnit} and exited with code ${result.exitCode}.`,
+      reason: repairSucceeded ? null : result.ok ? "systemd_next_repair_health_not_restored" : "systemd_next_restart_nonzero_exit",
       details: {
         systemdNextRepair: updatedTask.systemdNextRepair,
         target: updatedTask.systemdNextRepair?.target ?? null,
@@ -1136,9 +1015,12 @@ export function createSystemBodyTaskHandlers({
         hostMutationAttempted: true,
         executed: true,
         executionSucceeded: result.ok,
+        repairSucceeded,
         authDelegation: result.authDelegation ?? null,
         commandTranscript,
         result,
+        incidentDiagnosis,
+        incidentReceipt,
         postExecutionVerification,
         rollbackNote,
       },
@@ -1147,7 +1029,7 @@ export function createSystemBodyTaskHandlers({
     updatedTask.closedAt = updatedTask.updatedAt;
     reconcileRuntimeState();
     persistState();
-    await publishEvent(result.ok ? "systemd.next_repair.execution_completed" : "systemd.next_repair.execution_failed", {
+    await publishEvent(repairSucceeded ? "systemd.next_repair.execution_completed" : "systemd.next_repair.execution_failed", {
       task: serialiseTask(updatedTask),
       result,
     });
@@ -1159,7 +1041,17 @@ export function createSystemBodyTaskHandlers({
       blocked: false,
       reason: null,
       commandTranscript,
-      verification: { ok: result.ok, checks: [], failedChecks: result.ok ? [] : [{ name: "systemctl_next_restart_exit_code", expected: 0, actual: result.exitCode }] },
+      verification: {
+        ok: repairSucceeded,
+        checks: [],
+        failedChecks: repairSucceeded
+          ? []
+          : [{
+              name: result.ok ? "systemd_next_repair_restored_health" : "systemctl_next_restart_exit_code",
+              expected: result.ok ? true : 0,
+              actual: result.ok ? false : result.exitCode,
+            }],
+      },
       execution: {
         mode: "operator_reviewed_next_real_systemd_restart",
         target: updatedTask.systemdNextRepair?.target ?? null,
@@ -1168,8 +1060,11 @@ export function createSystemBodyTaskHandlers({
         hostMutationAttempted: true,
         executed: true,
         executionSucceeded: result.ok,
+        repairSucceeded,
         exitCode: result.exitCode,
         authDelegation: result.authDelegation ?? null,
+        incidentDiagnosis,
+        incidentReceipt,
         postExecutionVerification,
         rollbackNote: updatedTask.outcome.details.rollbackNote,
       },
