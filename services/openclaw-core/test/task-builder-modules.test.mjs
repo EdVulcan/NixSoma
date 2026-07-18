@@ -177,6 +177,34 @@ test("native hostd task builder accepts the fixed system-heal recovery target", 
   assert.equal(result.approval.status, "pending");
 });
 
+test("native hostd task builder can queue an automatic approval without superseding active work", async () => {
+  const { deps, calls, events } = createTaskLifecycleHarness({
+    fetchJson: () => ({
+      registry: "openclaw-systemd-unit-inventory-v0",
+      observedAt: "2026-07-19T00:30:00.000Z",
+      source: { transport: "dbus_native" },
+      units: [{
+        unit: "openclaw-system-heal.service",
+        loadState: "loaded",
+        activeState: "failed",
+        systemdObserved: true,
+      }],
+    }),
+  });
+  const builders = createSystemdTaskBuilders(deps);
+
+  const result = await builders.createSystemdNextRepairTaskShell({
+    confirm: true,
+    execute: true,
+    targetUnit: "openclaw-system-heal.service",
+    supersedeExistingTasks: false,
+  });
+
+  assert.equal(result.approval.status, "pending");
+  assert.equal(calls.some((call) => call.name === "supersedeOtherActiveTasks"), false);
+  assert.equal(events.some((event) => event.name === "task.phase_changed"), false);
+});
+
 test("native systemd execution task fails closed without the fixed helper authorization", async () => {
   const { deps, fetchUrls } = createTaskLifecycleHarness();
   const buildersWithoutHostd = createSystemdTaskBuilders({

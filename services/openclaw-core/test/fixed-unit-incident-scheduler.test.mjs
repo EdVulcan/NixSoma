@@ -9,6 +9,8 @@ import {
   listFixedUnitIncidentTargets,
 } from "../src/fixed-unit-incident-scheduler.mjs";
 
+const TEST_PROMOTION_BINDING_HASH = `sha256:${"a".repeat(64)}`;
+
 const NOW_MS = Date.parse("2026-07-18T14:30:00.000Z");
 
 function healthyResponses() {
@@ -63,6 +65,7 @@ function createHarness({
   schedulerState = {},
   publishAuditEvent = async () => ({ ok: true }),
   createIncidentTriageTask = null,
+  createIncidentRepairTask = null,
   fetchJson,
   setTimer,
   clearTimer,
@@ -92,6 +95,7 @@ function createHarness({
     systemSenseUrl: "http://127.0.0.1:4106",
     taskManager,
     createIncidentTriageTask,
+    createIncidentRepairTask,
     schedulerState,
     persistState: () => { persistenceCount += 1; },
     publishAuditEvent,
@@ -164,6 +168,7 @@ test("fixed-unit scheduler automatically creates bounded triage after current in
     schedulerState,
     createIncidentTriageTask: async ({ sourceTaskId }) => {
       calls.push({
+        kind: "triage",
         sourceTaskId,
         state: JSON.parse(JSON.stringify(schedulerState.units[unit])),
       });
@@ -183,6 +188,37 @@ test("fixed-unit scheduler automatically creates bounded triage after current in
         },
       };
     },
+    createIncidentRepairTask: async ({ triageTaskId }) => {
+      calls.push({
+        kind: "repair",
+        triageTaskId,
+        state: JSON.parse(JSON.stringify(schedulerState.units[unit])),
+      });
+      return {
+        task: {
+          id: "repair-task-1",
+          type: "systemd_next_repair_task",
+          status: "queued",
+          systemdNextRepair: { target: { unit } },
+          systemdIncidentRepairPromotion: { bindingHash: TEST_PROMOTION_BINDING_HASH },
+          approval: { requestId: "approval-1", status: "pending" },
+        },
+        approval: { id: "approval-1", taskId: "repair-task-1", status: "pending" },
+        promotion: {
+          bindingHash: TEST_PROMOTION_BINDING_HASH,
+          triageTaskId,
+          sourceTaskId: schedulerState.units[unit].latestTaskId,
+          sourceFingerprint: schedulerState.units[unit].fingerprint,
+          targetUnit: unit,
+        },
+        governance: {
+          createsApproval: true,
+          executesRepair: false,
+          invokesHostd: false,
+          callsProvider: false,
+        },
+      };
+    },
   });
 
   const result = await harness.scheduler.tick();
@@ -190,12 +226,24 @@ test("fixed-unit scheduler automatically creates bounded triage after current in
   assert.deepEqual(result.triageTaskIds, ["triage-task-1"]);
   assert.equal(result.triageFailureCount, 0);
   assert.equal(result.automaticTriageEnabled, true);
+  assert.deepEqual(result.repairTaskIds, ["repair-task-1"]);
+  assert.deepEqual(result.repairApprovalIds, ["approval-1"]);
+  assert.equal(result.repairPromotionFailureCount, 0);
+  assert.equal(result.automaticRepairPromotionEnabled, true);
   assert.equal(calls[0].sourceTaskId, "scheduled-task-1");
   assert.equal(calls[0].state.status, "unhealthy");
   assert.equal(calls[0].state.latestTaskId, "scheduled-task-1");
+  assert.equal(calls[1].triageTaskId, "triage-task-1");
+  assert.equal(calls[1].state.latestTriageTaskId, "triage-task-1");
+  assert.equal(calls[1].state.triageStatus, "completed");
   assert.equal(harness.scheduler.readState().units[unit].latestTriageTaskId, "triage-task-1");
   assert.equal(harness.scheduler.readState().units[unit].triageStatus, "completed");
   assert.equal(harness.scheduler.readState().units[unit].triageFailure, null);
+  assert.equal(harness.scheduler.readState().units[unit].latestRepairTaskId, "repair-task-1");
+  assert.equal(harness.scheduler.readState().units[unit].latestRepairApprovalId, "approval-1");
+  assert.equal(harness.scheduler.readState().units[unit].repairApprovalStatus, "pending");
+  assert.equal(harness.scheduler.readState().units[unit].repairPromotionStatus, "completed");
+  assert.equal(harness.scheduler.readState().units[unit].repairPromotionFailure, null);
 });
 
 test("fixed-unit scheduler retries transient automatic triage failure without duplicating incident", async () => {
@@ -246,6 +294,84 @@ test("fixed-unit scheduler retries transient automatic triage failure without du
   assert.equal(harness.scheduler.readState().units[unit].triageFailure, null);
 });
 
+test("fixed-unit scheduler retries transient automatic repair promotion without duplicating incident", async () => {
+  const responses = healthyResponses();
+  const unit = "openclaw-system-heal.service";
+  markUnhealthy(responses, unit);
+  let promotionAttempts = 0;
+  const harness = createHarness({
+    responses,
+    createIncidentTriageTask: async ({ sourceTaskId }) => ({
+      task: { id: "triage-task-promotion-retry", status: "completed" },
+      triage: {
+        source: {
+          taskId: sourceTaskId,
+          fingerprint: harness.scheduler.readState().units[unit].fingerprint,
+        },
+      },
+      governance: {
+        createsApproval: false,
+        executesRepair: false,
+        invokesHostd: false,
+        callsProvider: false,
+      },
+    }),
+    createIncidentRepairTask: async ({ triageTaskId }) => {
+      promotionAttempts += 1;
+      if (promotionAttempts === 1) throw new Error("private promotion failure");
+      const unitState = harness.scheduler.readState().units[unit];
+      return {
+        task: {
+          id: "repair-task-promotion-retry",
+          type: "systemd_next_repair_task",
+          status: "queued",
+          systemdNextRepair: { target: { unit } },
+          systemdIncidentRepairPromotion: { bindingHash: TEST_PROMOTION_BINDING_HASH },
+          approval: { requestId: "approval-promotion-retry", status: "pending" },
+        },
+        approval: {
+          id: "approval-promotion-retry",
+          taskId: "repair-task-promotion-retry",
+          status: "pending",
+        },
+        promotion: {
+          bindingHash: TEST_PROMOTION_BINDING_HASH,
+          triageTaskId,
+          sourceTaskId: unitState.latestTaskId,
+          sourceFingerprint: unitState.fingerprint,
+          targetUnit: unit,
+        },
+        governance: {
+          createsApproval: true,
+          executesRepair: false,
+          invokesHostd: false,
+          callsProvider: false,
+        },
+      };
+    },
+  });
+
+  const first = await harness.scheduler.tick();
+  assert.equal(first.createdTaskIds.length, 1);
+  assert.equal(first.repairPromotionFailureCount, 1);
+  assert.equal(harness.scheduler.readState().units[unit].repairPromotionStatus, "failed");
+  assert.deepEqual(harness.scheduler.readState().units[unit].repairPromotionFailure, {
+    code: "automatic_repair_promotion_failed",
+    at: "2026-07-18T14:30:00.000Z",
+  });
+  assert.doesNotMatch(JSON.stringify(harness.scheduler.readState()), /private promotion failure/u);
+
+  const second = await harness.scheduler.tick();
+  assert.deepEqual(second.createdTaskIds, []);
+  assert.deepEqual(second.repairTaskIds, ["repair-task-promotion-retry"]);
+  assert.deepEqual(second.repairApprovalIds, ["approval-promotion-retry"]);
+  assert.equal(second.repairPromotionFailureCount, 0);
+  assert.equal(harness.tasks.length, 1);
+  assert.equal(promotionAttempts, 2);
+  assert.equal(harness.scheduler.readState().units[unit].repairPromotionStatus, "completed");
+  assert.equal(harness.scheduler.readState().units[unit].repairPromotionFailure, null);
+});
+
 test("fixed-unit scheduler deduplicates one unchanged unhealthy fingerprint", async () => {
   const responses = healthyResponses();
   markUnhealthy(responses, "openclaw-event-hub.service");
@@ -280,18 +406,52 @@ test("fixed-unit scheduler creates a new task after recovery and regression", as
         callsProvider: false,
       },
     }),
+    createIncidentRepairTask: async ({ triageTaskId }) => {
+      const unitState = harness.scheduler.readState().units["openclaw-system-sense.service"];
+      const suffix = unitState.latestTaskId;
+      return {
+        task: {
+          id: `repair-${suffix}`,
+          type: "systemd_next_repair_task",
+          status: "queued",
+          systemdNextRepair: { target: { unit: "openclaw-system-sense.service" } },
+          systemdIncidentRepairPromotion: { bindingHash: TEST_PROMOTION_BINDING_HASH },
+          approval: { requestId: `approval-${suffix}`, status: "pending" },
+        },
+        approval: { id: `approval-${suffix}`, taskId: `repair-${suffix}`, status: "pending" },
+        promotion: {
+          bindingHash: TEST_PROMOTION_BINDING_HASH,
+          triageTaskId,
+          sourceTaskId: unitState.latestTaskId,
+          sourceFingerprint: unitState.fingerprint,
+          targetUnit: "openclaw-system-sense.service",
+        },
+        governance: {
+          createsApproval: true,
+          executesRepair: false,
+          invokesHostd: false,
+          callsProvider: false,
+        },
+      };
+    },
   });
 
   markUnhealthy(responses, "openclaw-system-sense.service");
   await harness.scheduler.tick();
   const unit = responses.inventory.units.find((candidate) => candidate.unit === "openclaw-system-sense.service");
   assert.equal(harness.scheduler.readState().units[unit.unit].triageStatus, "completed");
+  assert.equal(harness.scheduler.readState().units[unit.unit].repairPromotionStatus, "completed");
   unit.activeState = "active";
   unit.subState = "running";
   await harness.scheduler.tick();
   assert.equal(harness.scheduler.readState().units[unit.unit].latestTriageTaskId, null);
   assert.equal(harness.scheduler.readState().units[unit.unit].triageStatus, null);
   assert.equal(harness.scheduler.readState().units[unit.unit].triageFailure, null);
+  assert.equal(harness.scheduler.readState().units[unit.unit].latestRepairTaskId, null);
+  assert.equal(harness.scheduler.readState().units[unit.unit].latestRepairApprovalId, null);
+  assert.equal(harness.scheduler.readState().units[unit.unit].repairApprovalStatus, null);
+  assert.equal(harness.scheduler.readState().units[unit.unit].repairPromotionStatus, null);
+  assert.equal(harness.scheduler.readState().units[unit.unit].repairPromotionFailure, null);
   markUnhealthy(responses, "openclaw-system-sense.service");
   await harness.scheduler.tick();
 

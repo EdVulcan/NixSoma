@@ -332,7 +332,7 @@ export function createFixedUnitIncidentTriageBuilders({
     }
   }
 
-  async function performFixedUnitIncidentRepairPromotion(triageTaskId) {
+  async function performFixedUnitIncidentRepairPromotion(triageTaskId, trigger) {
     const triageTask = tasks.get(triageTaskId);
     const validation = validateFixedUnitIncidentTriageTask(triageTask, { tasks, schedulerState });
     if (!validation.ok) {
@@ -346,7 +346,7 @@ export function createFixedUnitIncidentTriageBuilders({
     if (existing) {
       return {
         registry: FIXED_UNIT_INCIDENT_REPAIR_PROMOTION_REGISTRY,
-        mode: "operator_reviewed_approval_gated_repair_promotion",
+        mode: existing.systemdIncidentRepairPromotion?.mode ?? "approval_gated_repair_promotion",
         generatedAt: existing.systemdIncidentRepairPromotion?.createdAt ?? existing.createdAt ?? null,
         task: existing,
         approval: approvals.get(existing.approval?.requestId) ?? null,
@@ -367,6 +367,7 @@ export function createFixedUnitIncidentTriageBuilders({
       throw new Error("Fixed-unit incident repair promotion requires a hostd fixed target.");
     }
     const createdAt = now();
+    const automatic = trigger === "scheduler";
     const promotionBinding = {
       triageTaskId: triageTask.id,
       triageBindingHash: validation.triage.binding.bindingHash,
@@ -377,7 +378,10 @@ export function createFixedUnitIncidentTriageBuilders({
     };
     const promotion = {
       registry: FIXED_UNIT_INCIDENT_REPAIR_PROMOTION_REGISTRY,
-      mode: "operator_reviewed_approval_gated_repair_task_creation",
+      mode: automatic
+        ? "automatic_approval_gated_repair_task_creation"
+        : "operator_reviewed_approval_gated_repair_task_creation",
+      trigger: automatic ? "scheduler" : "operator",
       createdAt,
       ...promotionBinding,
       bindingHash: bindingHash(promotionBinding),
@@ -395,6 +399,7 @@ export function createFixedUnitIncidentTriageBuilders({
       confirm: true,
       execute: true,
       targetUnit: validation.target.unit,
+      supersedeExistingTasks: !automatic,
       sourceIncidentRepairPromotion: promotion,
       validateBeforeCreate: async () => {
         const current = validateFixedUnitIncidentTriageTask(triageTask, { tasks, schedulerState });
@@ -403,6 +408,7 @@ export function createFixedUnitIncidentTriageBuilders({
         }
         const audit = await publishEvent("systemd.fixed_unit_incident_repair_promoted", {
           registry: promotion.registry,
+          trigger: promotion.trigger,
           triageTaskId: promotion.triageTaskId,
           sourceTaskId: promotion.sourceTaskId,
           sourceFingerprint: promotion.sourceFingerprint,
@@ -425,7 +431,9 @@ export function createFixedUnitIncidentTriageBuilders({
     }
     return {
       registry: FIXED_UNIT_INCIDENT_REPAIR_PROMOTION_REGISTRY,
-      mode: "operator_reviewed_approval_gated_repair_promotion",
+      mode: automatic
+        ? "automatic_approval_gated_repair_promotion"
+        : "operator_reviewed_approval_gated_repair_promotion",
       generatedAt: createdAt,
       task: result.task,
       approval: result.approval,
@@ -448,7 +456,22 @@ export function createFixedUnitIncidentTriageBuilders({
     const taskId = sourceTaskId(inputTaskId);
     const existingOperation = inFlightRepairPromotionByTriageTask.get(taskId);
     if (existingOperation) return existingOperation;
-    const operation = performFixedUnitIncidentRepairPromotion(taskId);
+    const operation = performFixedUnitIncidentRepairPromotion(taskId, "operator");
+    inFlightRepairPromotionByTriageTask.set(taskId, operation);
+    try {
+      return await operation;
+    } finally {
+      if (inFlightRepairPromotionByTriageTask.get(taskId) === operation) {
+        inFlightRepairPromotionByTriageTask.delete(taskId);
+      }
+    }
+  }
+
+  async function createAutomaticFixedUnitIncidentRepairTask({ triageTaskId: inputTaskId = null } = {}) {
+    const taskId = sourceTaskId(inputTaskId);
+    const existingOperation = inFlightRepairPromotionByTriageTask.get(taskId);
+    if (existingOperation) return existingOperation;
+    const operation = performFixedUnitIncidentRepairPromotion(taskId, "scheduler");
     inFlightRepairPromotionByTriageTask.set(taskId, operation);
     try {
       return await operation;
@@ -463,5 +486,6 @@ export function createFixedUnitIncidentTriageBuilders({
     createFixedUnitIncidentTriageTask,
     createAutomaticFixedUnitIncidentTriageTask,
     createFixedUnitIncidentRepairTask,
+    createAutomaticFixedUnitIncidentRepairTask,
   };
 }

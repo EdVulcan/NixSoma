@@ -22,9 +22,10 @@ Core starts with an explicitly configured interval
 -> automatically create or reuse local triage for every current incident
 -> bind source task, fingerprint, fixed unit, and existing repair draft owner
 -> create one completed local plan/evidence task without approval or execution
--> let the operator explicitly select Prepare repair on that triage
+-> automatically promote current triage through the existing repair owner
 -> revalidate the entire source chain against current scheduler state
 -> create one existing fixed-target real repair task and pending approval
+-> let the operator explicitly approve or deny that exact task
 -> stop before Operator execution or hostd invocation
 ```
 
@@ -36,12 +37,13 @@ clears its timer during Core shutdown.
 ## Persistence And Dedupe
 
 Core persists the last tick, next due time, compact read-failure code, and the
-current status, fingerprint, latest observation time, latest incident/triage
-task IDs, and compact triage outcome for each fixed unit. Unknown persisted
-units are discarded. Recovery clears the active fingerprint and triage state,
-so a later regression creates a new incident; a Core restart does not
-duplicate an unchanged incident. A transient triage failure retains only a
-fixed error code and is retried on the next unchanged unhealthy tick.
+current status, fingerprint, latest observation time, latest incident, triage,
+repair task and approval IDs, and compact triage/promotion outcomes for each
+fixed unit. Unknown persisted units are discarded. Recovery clears the active
+fingerprint and derived workflow state, so a later regression creates a new
+incident; a Core restart does not duplicate an unchanged incident. Transient
+triage or promotion failure retains only a fixed error code and is retried on
+the next unchanged unhealthy tick.
 
 ## Authority Boundary
 
@@ -62,9 +64,9 @@ fixed error code and is retried on the next unchanged unhealthy tick.
 - Triage calls only the existing read-only repair draft owner. It does not add
   capability or command steps, supersede active tasks, create approval, or
   enter the execution queue.
-- Repair promotion is explicit, audit-first, restart-safe through persisted
-  task metadata, and idempotent for one triage binding. It ignores caller
-  target, execution, and approval fields.
+- Automatic and operator-requested repair promotion share one audit-first,
+  restart-safe owner and remain idempotent for one triage binding. They ignore
+  caller target, execution, and approval fields.
 - Promotion reuses the existing hostd fixed-target repair task owner with its
   real-execution shape, but returns while its approval is still pending. It
   neither approves the task nor invokes Operator, hostd, activation, rollback,
@@ -78,7 +80,7 @@ fixed error code and is retried on the next unchanged unhealthy tick.
 - real task-manager extension serialization and Core-state restoration tests;
 - generated Observer client syntax, compact task-detail assertions, and the
   explicit Triage action;
-- `873/873` workspace tests and full typecheck;
+- `876/876` workspace tests and full typecheck;
 - 811-entry milestone registry, script audit, and 160-character Windows path
   budget;
 - full `dev-body-config-check.sh`, including exact 221-file Core and 77-file
@@ -94,14 +96,15 @@ used.
 ## Deferred
 
 - automatic provider diagnosis;
-- automatic repair or approval creation;
+- automatic approval resolution or repair execution;
 - arbitrary systemd targets;
 - real activation and rollback validation in a disposable mutation environment.
 
 ## Next Real Capability
 
-Automatically promote each successfully bound triage into one existing
-fixed-target repair task and pending approval, with idempotent retry and current
-source revalidation. Stop before approval resolution, Operator execution, or
-hostd invocation. Keep provider, activation, rollback, and repair execution
-disabled.
+After explicit approval of the automatically promoted fixed-target repair task,
+dispatch that exact task through the existing Executor once without requiring a
+second operator command. Revalidate approval, task, source fingerprint, target,
+and execution binding immediately before dispatch. Never dispatch a pending,
+denied, expired, changed, or already-consumed task, and keep provider,
+activation, and rollback disabled.

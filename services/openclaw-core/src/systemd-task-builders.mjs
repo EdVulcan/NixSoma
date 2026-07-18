@@ -309,6 +309,7 @@ export function createSystemdTaskBuilders(deps) {
     confirm = false,
     execute = false,
     targetUnit: requestedTargetUnit = null,
+    supersedeExistingTasks = true,
     sourceIncidentRepairPromotion = null,
     validateBeforeCreate = null,
   } = {}) {
@@ -464,7 +465,9 @@ export function createSystemdTaskBuilders(deps) {
       decision: policyDecision,
     };
     const approval = createApprovalRequestForTask(task, policyDecision);
-    const reclaimedTasks = supersedeOtherActiveTasks(task.id);
+    const reclaimedTasks = supersedeExistingTasks === false
+      ? []
+      : supersedeOtherActiveTasks(task.id);
     reconcileRuntimeState();
     persistState();
 

@@ -104,6 +104,14 @@ test("core state persists and restores fixed-unit incident scheduler dedupe stat
           code: "automatic_triage_failed",
           at: "2026-07-18T14:31:00.000Z",
         },
+        latestRepairTaskId: "repair-task-1",
+        latestRepairApprovalId: "approval-1",
+        repairApprovalStatus: "pending",
+        repairPromotionStatus: "failed",
+        repairPromotionFailure: {
+          code: "automatic_repair_promotion_failed",
+          at: "2026-07-18T14:32:00.000Z",
+        },
       },
     },
   });
@@ -124,5 +132,21 @@ test("core state persists and restores fixed-unit incident scheduler dedupe stat
   assert.equal(
     restored.fixedUnitIncidentSchedulerState.units["openclaw-system-heal.service"].triageFailure.code,
     "automatic_triage_failed",
+  );
+  assert.equal(
+    restored.fixedUnitIncidentSchedulerState.units["openclaw-system-heal.service"].latestRepairTaskId,
+    "repair-task-1",
+  );
+  assert.equal(
+    restored.fixedUnitIncidentSchedulerState.units["openclaw-system-heal.service"].latestRepairApprovalId,
+    "approval-1",
+  );
+  assert.equal(
+    restored.fixedUnitIncidentSchedulerState.units["openclaw-system-heal.service"].repairApprovalStatus,
+    "pending",
+  );
+  assert.equal(
+    restored.fixedUnitIncidentSchedulerState.units["openclaw-system-heal.service"].repairPromotionFailure.code,
+    "automatic_repair_promotion_failed",
   );
 });

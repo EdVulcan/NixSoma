@@ -340,6 +340,7 @@ export function createPlanBuilder(deps) {
     createFixedUnitIncidentTriageTask,
     createAutomaticFixedUnitIncidentTriageTask,
     createFixedUnitIncidentRepairTask,
+    createAutomaticFixedUnitIncidentRepairTask,
   } = createFixedUnitIncidentTriageBuilders({
     tasks,
     schedulerState: state.fixedUnitIncidentSchedulerState,
@@ -831,6 +832,7 @@ function compactCloudConsciousnessEvidenceRef(evidence) {
     createFixedUnitIncidentTriageTask,
     createAutomaticFixedUnitIncidentTriageTask,
     createFixedUnitIncidentRepairTask,
+    createAutomaticFixedUnitIncidentRepairTask,
     createBodyEvidenceLedgerDirectoryTaskShell,
     createBodyEvidenceLedgerFirstRecordTaskShell,
     createBodyEvidenceLedgerFollowupRecordTaskShell,

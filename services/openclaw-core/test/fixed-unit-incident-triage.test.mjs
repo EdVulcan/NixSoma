@@ -301,8 +301,34 @@ test("fixed-unit incident repair promotion creates one pending fixed-target appr
   const createCall = harness.calls.find((call) => call.name === "createRepairTask");
   assert.equal(createCall.input.execute, true);
   assert.equal(createCall.input.targetUnit, TARGET.unit);
+  assert.equal(createCall.input.supersedeExistingTasks, true);
   assert.equal(typeof createCall.input.validateBeforeCreate, "function");
   assert.equal(harness.events.some((event) => event.name === "systemd.fixed_unit_incident_repair_promoted"), true);
+});
+
+test("automatic fixed-unit repair promotion creates only one pending approval without confirmation", async () => {
+  const harness = createHarness();
+  const triage = await harness.builders.createAutomaticFixedUnitIncidentTriageTask({
+    sourceTaskId: SOURCE_TASK_ID,
+  });
+
+  const result = await harness.builders.createAutomaticFixedUnitIncidentRepairTask({
+    triageTaskId: triage.task.id,
+  });
+
+  assert.equal(result.mode, "automatic_approval_gated_repair_promotion");
+  assert.equal(result.promotion.mode, "automatic_approval_gated_repair_task_creation");
+  assert.equal(result.promotion.trigger, "scheduler");
+  assert.equal(result.task.status, "queued");
+  assert.equal(result.approval.status, "pending");
+  assert.equal(result.governance.createsApproval, true);
+  assert.equal(result.governance.executesRepair, false);
+  assert.equal(result.governance.invokesHostd, false);
+  assert.equal(result.governance.callsProvider, false);
+  const createCall = harness.calls.find((call) => call.name === "createRepairTask");
+  assert.equal(createCall.input.supersedeExistingTasks, false);
+  const audit = harness.events.find((event) => event.name === "systemd.fixed_unit_incident_repair_promoted");
+  assert.equal(audit.payload.trigger, "scheduler");
 });
 
 test("fixed-unit incident repair promotion reuses the same task across repeated requests", async () => {

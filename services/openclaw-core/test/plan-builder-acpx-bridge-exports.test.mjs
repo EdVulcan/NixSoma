@@ -110,6 +110,7 @@ test("plan builder exposes ACPX/Codex wrapper draft builder for executor handler
 
   assert.equal(typeof planBuilder.buildNativeAcpxCodexBridgeWrapperDraft, "function");
   assert.equal(typeof planBuilder.createAutomaticFixedUnitIncidentTriageTask, "function");
+  assert.equal(typeof planBuilder.createAutomaticFixedUnitIncidentRepairTask, "function");
   assert.deepEqual(
     planBuilder.buildNativeAcpxCodexBridgeWrapperDraft({
       sessionKey: "agent:codex:one",
