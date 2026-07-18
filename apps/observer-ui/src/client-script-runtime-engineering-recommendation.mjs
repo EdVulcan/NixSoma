@@ -156,18 +156,24 @@ function buildEngineeringRecommendationLinkInput(recommendation, control) {
 }
 
 const REVIEWED_SYSTEMD_RECOMMENDATION_CONTROLS = Object.freeze({
-  review_systemd_incident_evidence: "load-selected-task-button",
-  refresh_systemd_incident_observation: "refresh-systemd-journal-evidence-button",
+  review_systemd_incident_evidence: {
+    controlId: "load-selected-task-button",
+    capabilityId: null,
+  },
+  refresh_systemd_incident_observation: {
+    controlId: "refresh-systemd-journal-evidence-button",
+    capabilityId: "act.openclaw.systemd_incident.observation_receipt",
+  },
 });
 
 async function resolveBoundSystemdIncidentEvidence(recommendationLink) {
-  const expectedControlId = REVIEWED_SYSTEMD_RECOMMENDATION_CONTROLS[recommendationLink?.actionId];
-  if (!expectedControlId
+  const expected = REVIEWED_SYSTEMD_RECOMMENDATION_CONTROLS[recommendationLink?.actionId];
+  if (!expected
     || !recommendationLink.sourceTaskId
     || recommendationLink.sourceRegistry !== ENGINEERING_RECOMMENDATION_REGISTRY
     || recommendationLink.contract !== ENGINEERING_RECOMMENDATION_CONTRACT
-    || recommendationLink.expectedObserverControlId !== expectedControlId
-    || recommendationLink.existingCapabilityId !== null
+    || recommendationLink.expectedObserverControlId !== expected.controlId
+    || recommendationLink.existingCapabilityId !== expected.capabilityId
     || recommendationLink.requiresApproval !== false
     || recommendationLink.createsTaskAutomatically !== false
     || recommendationLink.createsApprovalAutomatically !== false
@@ -190,7 +196,7 @@ async function resolveBoundSystemdIncidentEvidence(recommendationLink) {
     || persistedRecommendation.contract !== ENGINEERING_RECOMMENDATION_CONTRACT
     || persistedRecommendation.actionId !== recommendationLink.actionId
     || persistedRecommendation.existingObserverControlId !== recommendationLink.expectedObserverControlId
-    || persistedRecommendation.existingCapabilityId !== null
+    || persistedRecommendation.existingCapabilityId !== expected.capabilityId
     || persistedRecommendation.requiresOperatorReview !== true
     || persistedRecommendation.requiresApproval !== false
     || execution?.responseContract !== ENGINEERING_RECOMMENDATION_CONTRACT
@@ -234,6 +240,22 @@ async function reviewBoundSystemdIncidentEvidence(recommendationLink) {
 
 async function refreshBoundSystemdIncidentObservation(recommendationLink) {
   const { receipt } = await resolveBoundSystemdIncidentEvidence(recommendationLink);
+  const capabilityResult = await fetchJson(\`\${observerConfig.coreUrl}/capabilities/invoke\`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      capabilityId: "act.openclaw.systemd_incident.observation_receipt",
+      intent: "systemd_incident.observation_receipt",
+      params: {
+        providerTaskId: recommendationLink.sourceTaskId,
+        confirm: true,
+      },
+    }),
+  });
+  if (capabilityResult?.invoked !== true || capabilityResult?.result?.ok !== true) {
+    throw new Error("The reviewed systemd incident observation receipt was not recorded.");
+  }
+  renderCapabilityInvocation(capabilityResult);
   systemdJournalEvidenceUnit.value = receipt.target.unit;
   await Promise.all([
     refreshSystemState(),

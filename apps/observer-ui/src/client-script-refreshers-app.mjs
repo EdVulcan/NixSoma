@@ -281,6 +281,8 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
     const taskPostExecutionVerification = task.outcome?.details?.postExecutionVerification ?? null;
     const systemdIncidentReceipt = task.outcome?.details?.incidentReceipt ?? null;
     const providerContextPacket = task.outcome?.details?.contextPacket ?? null;
+    const systemdIncidentObservationReceipt = task.cloudConsciousnessLiveProviderEgressExecution
+      ?.systemdIncidentObservationReceipt ?? null;
     lines.push(...formatEngineeringVerificationFollowupLines(task));
     if (taskVerification) {
       lines.push(\`Verification: \${taskVerification.ok === true ? "passed" : taskVerification.ok === false ? "failed" : "unknown"}\`);
@@ -318,6 +320,16 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
       lines.push(\`Provider Incident Target: \${providerContextPacket.systemdIncidentTargetUnit ?? "unknown"} restored=\${providerContextPacket.systemdIncidentRestoredHealthy ?? "unknown"}\`);
       lines.push(\`Provider Incident Journal: available=\${providerContextPacket.systemdIncidentJournalAvailable ?? "unknown"} entries=\${providerContextPacket.systemdIncidentJournalEntries ?? 0} messagesIncluded=\${Boolean(providerContextPacket.journalMessagesIncluded)}\`);
       lines.push(\`Provider Incident Experience: matched=\${providerContextPacket.systemdIncidentExperiencePatterns ?? 0} restored=\${providerContextPacket.systemdIncidentExperienceRestoredPatterns ?? 0} recoveryRequired=\${providerContextPacket.systemdIncidentExperienceRecoveryRequiredPatterns ?? 0} providerOutputIncluded=\${Boolean(providerContextPacket.providerOutputIncluded)}\`);
+    }
+    if (systemdIncidentObservationReceipt) {
+      const observationHealth = systemdIncidentObservationReceipt.health ?? {};
+      const observationJournal = systemdIncidentObservationReceipt.journal ?? {};
+      const observationGovernance = systemdIncidentObservationReceipt.governance ?? {};
+      lines.push(\`Systemd Observation Receipt: \${systemdIncidentObservationReceipt.registry ?? "unknown"} receipt=\${systemdIncidentObservationReceipt.receiptHash ?? "none"}\`);
+      lines.push(\`Systemd Observation Target: \${systemdIncidentObservationReceipt.target?.unit ?? "unknown"} source=\${systemdIncidentObservationReceipt.sourceTaskId ?? "none"}\`);
+      lines.push(\`Systemd Observation Health: serviceHealthy=\${Boolean(observationHealth.serviceHealthy)} unitObserved=\${Boolean(observationHealth.unitObserved)} unitRunning=\${Boolean(observationHealth.unitRunning)}\`);
+      lines.push(\`Systemd Observation Journal: available=\${Boolean(observationJournal.available)} requested=\${observationJournal.requestedLines ?? 0} returned=\${observationJournal.returned ?? 0} parseErrors=\${observationJournal.parseErrors ?? 0}\`);
+      lines.push(\`Systemd Observation Boundary: journalMessagesIncluded=\${Boolean(observationGovernance.journalMessagesIncluded)} providerOutputIncluded=\${Boolean(observationGovernance.providerOutputIncluded)} callsProvider=\${Boolean(observationGovernance.callsProvider)} authorizesRepair=\${Boolean(observationGovernance.authorizesRepair)}\`);
     }
     if (task.bodyEvidenceLedgerFirstRecord) {
       const firstRecord = task.bodyEvidenceLedgerFirstRecord;

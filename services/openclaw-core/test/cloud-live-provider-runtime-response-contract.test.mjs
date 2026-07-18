@@ -107,7 +107,10 @@ test("systemd incident refresh resolves to the existing bounded journal control"
     result.recommendation.existingObserverControlId,
     "refresh-systemd-journal-evidence-button",
   );
-  assert.equal(result.recommendation.existingCapabilityId, null);
+  assert.equal(
+    result.recommendation.existingCapabilityId,
+    "act.openclaw.systemd_incident.observation_receipt",
+  );
   assert.equal(result.recommendation.requiresApproval, false);
   assert.equal(result.recommendation.requiresOperatorReview, true);
   assert.equal(result.recommendation.createsTaskAutomatically, false);

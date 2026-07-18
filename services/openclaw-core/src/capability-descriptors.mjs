@@ -546,6 +546,21 @@ export function buildBaseCapabilities({
       description: "Read bounded context-budget evidence from existing command transcripts without returning raw output or mutating runtime messages or persisted logs.",
     },
     {
+      id: "act.openclaw.systemd_incident.observation_receipt",
+      name: "Systemd Incident Observation Receipt",
+      kind: "actuator",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/capabilities/invoke`,
+      intents: [
+        "openclaw.systemd_incident.observation_receipt",
+        "systemd_incident.observation_receipt",
+      ],
+      domains: ["body_internal"],
+      risk: "low",
+      governance: "allow",
+      description: "Persist one compact reviewed same-unit health and journal observation receipt without journal messages, provider egress, hostd, or repair authority.",
+    },
+    {
       id: "act.openclaw.engineering_context.microcompact_projection",
       name: "Native Engineering Microcompact Projection",
       kind: "actuator",

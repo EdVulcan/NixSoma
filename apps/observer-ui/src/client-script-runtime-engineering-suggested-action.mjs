@@ -43,7 +43,7 @@ export const observerClientRuntimeEngineeringSuggestedActionScript = `const GOVE
   },
   refresh_systemd_incident_observation: {
     controlId: "refresh-systemd-journal-evidence-button",
-    capabilityId: null,
+    capabilityId: "act.openclaw.systemd_incident.observation_receipt",
     requiresApproval: false,
     run: (recommendationLink) => refreshBoundSystemdIncidentObservation(recommendationLink),
   },

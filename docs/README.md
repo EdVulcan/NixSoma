@@ -69,6 +69,8 @@ The completed bounded frontier is:
   incident receipt and recovery evidence in existing Observer task detail.
 - One operator-reviewed provider action that refreshes body health, fixed-unit
   inventory, and bounded journal evidence for that exact incident unit.
+- One compact hash-bound local receipt for that reviewed observation, excluding
+  journal messages and provider output and carrying no repair authority.
 
 Real generation activation and rollback remain unproven on a disposable
 mutation environment. Level 4 graphics-stack ownership remains future work.
@@ -97,13 +99,14 @@ body health + bounded journal evidence
 -> approved diagnosis informed by bounded prior outcomes
 -> reviewed opening of the exact bound incident evidence
 -> reviewed same-unit read-only observation refresh
+-> compact hash-bound local observation receipt
 ```
 
 Do not broaden hostd into arbitrary systemd control or add another provider
-readiness wrapper. The next real capability is one compact hash-bound local
-receipt for the reviewed refreshed observation. It must not retain journal
-messages, add hostd mutation, automatic provider calls, or a new response
-schema.
+readiness wrapper. The next real capability is an operator-created fresh
+diagnosis task bound to the observation receipt and the existing incident
+evidence. It must retain explicit approval before provider egress and must not
+add hostd mutation, automatic provider calls, or a new response schema.
 
 ## Progress Estimate
 
@@ -131,6 +134,7 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Completed learned-pattern inclusion in the exact approved incident diagnosis request. |
 | [OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_ACTION_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_ACTION_PLAN.md) | Completed reviewed read-only opening of provider-bound incident evidence. |
 | [OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md) | Completed reviewed same-unit health, inventory, and bounded journal refresh. |
+| [OPENCLAW_SYSTEMD_INCIDENT_OBSERVATION_RECEIPT_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_OBSERVATION_RECEIPT_PLAN.md) | Completed compact hash-bound local evidence for the reviewed observation. |
 | [OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md](./plans/OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md) | Completed first bounded read-only kernel event slice. |
 | [OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md](./plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Current declarative-evolution evidence and explicitly deferred activation boundary. |
 | [OPENCLAW_MONOLITH_REDUCTION_PLAN.md](./plans/OPENCLAW_MONOLITH_REDUCTION_PLAN.md) | Active coupling and maintainability debt record. |

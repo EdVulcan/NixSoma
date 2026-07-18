@@ -25,6 +25,7 @@ import { createScreenObservationCapabilityHandlers } from "./capability-runtime-
 import { createBrowserActionCapabilityHandlers } from "./capability-runtime-browser-actions.mjs";
 import { createScreenActionCapabilityHandlers } from "./capability-runtime-screen-actions.mjs";
 import { createDeclarativeEvolutionCapabilityHandlers } from "./capability-runtime-declarative-evolution.mjs";
+import { createSystemdIncidentObservationCapabilityHandlers } from "./capability-runtime-systemd-incident-observation.mjs";
 import {
   abortCapabilityExecutionReservation,
   commitCapabilityExecutionReservation,
@@ -208,6 +209,14 @@ export function createCapabilityRuntime(deps) {
     createNativeDeclarativeEvolutionStagingTask: declarativeEvolution.createNativeDeclarativeEvolutionStagingTask,
     createNativeDeclarativeEvolutionActivationDecisionTask: declarativeEvolution.createNativeDeclarativeEvolutionActivationDecisionTask,
     createNativeDeclarativeEvolutionActivationTask: declarativeEvolution.createNativeDeclarativeEvolutionActivationTask,
+  });
+  const systemdIncidentObservationHandlers = createSystemdIncidentObservationCapabilityHandlers({
+    tasks,
+    fetchJson,
+    systemSenseUrl,
+    persistState,
+    publishEvent,
+    now,
   });
 
   function baseCapabilities() {
@@ -508,6 +517,10 @@ export function createCapabilityRuntime(deps) {
     if (declarativeEvolution.handled) {
       return declarativeEvolution.result;
     }
+    const systemdIncidentObservation = await systemdIncidentObservationHandlers.callBackend(capability, request);
+    if (systemdIncidentObservation.handled) {
+      return systemdIncidentObservation.result;
+    }
 
     if (capability.id === "sense.system.vitals") {
       return fetchJson(`${systemSenseUrl}/system/health`);
@@ -773,6 +786,13 @@ export function createCapabilityRuntime(deps) {
     const declarativeEvolutionSummary = declarativeEvolutionHandlers.summariseResult(capability, result);
     if (declarativeEvolutionSummary) {
       return declarativeEvolutionSummary;
+    }
+    const systemdIncidentObservationSummary = systemdIncidentObservationHandlers.summariseResult(
+      capability,
+      result,
+    );
+    if (systemdIncidentObservationSummary) {
+      return systemdIncidentObservationSummary;
     }
 
     if (capability.id === "sense.system.vitals") {
@@ -1110,6 +1130,16 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: engineeringPlanTodoValidationError },
+      };
+    }
+    const systemdIncidentObservationValidationError = systemdIncidentObservationHandlers.validateRequest(
+      capability,
+      request,
+    );
+    if (systemdIncidentObservationValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: systemdIncidentObservationValidationError },
       };
     }
     const engineeringRecoveryValidationError = engineeringRecoveryHandlers.validateRequest(capability, request);

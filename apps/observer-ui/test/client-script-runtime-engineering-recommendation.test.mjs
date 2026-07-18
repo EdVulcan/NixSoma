@@ -8,7 +8,10 @@ function element() {
   return { disabled: true, textContent: "" };
 }
 
-function createContext({ taskResponses = new Map() } = {}) {
+function createContext({
+  taskResponses = new Map(),
+  capabilityResult = { invoked: true, result: { ok: true } },
+} = {}) {
   const nodes = {
     action: element(),
     review: element(),
@@ -20,6 +23,8 @@ function createContext({ taskResponses = new Map() } = {}) {
   const messages = [];
   const recommendationLinks = [];
   const fetchCalls = [];
+  const capabilityCalls = [];
+  const renderedCapabilities = [];
   const refreshCalls = [];
   const systemdJournalEvidenceUnit = element();
   systemdJournalEvidenceUnit.value = "openclaw-system-sense.service";
@@ -54,7 +59,11 @@ function createContext({ taskResponses = new Map() } = {}) {
     invokeCapabilityFromUi: async (key) => calls.push(key),
     createOperatorReviewedSemanticClickTask: async (link) => recommendationLinks.push(link),
     observerConfig: { coreUrl: "http://core.invalid" },
-    fetchJson: async (url) => {
+    fetchJson: async (url, options = {}) => {
+      if (new URL(url).pathname === "/capabilities/invoke") {
+        capabilityCalls.push(JSON.parse(options.body));
+        return capabilityResult;
+      }
       fetchCalls.push(url);
       const taskId = decodeURIComponent(new URL(url).pathname.split("/").at(-1));
       if (!taskResponses.has(taskId)) {
@@ -75,6 +84,7 @@ function createContext({ taskResponses = new Map() } = {}) {
     renderPlanPanel: () => {},
     renderEngineeringVerificationFollowupReadback: () => {},
     renderCommandTranscriptFromTask: () => {},
+    renderCapabilityInvocation: (result) => renderedCapabilities.push(result),
     refreshSystemState: async () => refreshCalls.push("health"),
     refreshSystemdUnitInventory: async () => refreshCalls.push("unit-inventory"),
     refreshSystemdJournalEvidence: async () => {
@@ -89,12 +99,22 @@ function createContext({ taskResponses = new Map() } = {}) {
   };
   context.GOVERNED_PLAN_TODO_SUGGESTION_CONTROLS.refresh_systemd_incident_observation = {
     controlId: "refresh-systemd-journal-evidence-button",
-    capabilityId: null,
+    capabilityId: "act.openclaw.systemd_incident.observation_receipt",
     requiresApproval: false,
     run: async (link) => context.refreshBoundSystemdIncidentObservation(link),
   };
   vm.runInNewContext(observerClientRuntimeEngineeringRecommendationScript, context);
-  return { context, nodes, calls, messages, recommendationLinks, fetchCalls, refreshCalls };
+  return {
+    context,
+    nodes,
+    calls,
+    messages,
+    recommendationLinks,
+    fetchCalls,
+    capabilityCalls,
+    renderedCapabilities,
+    refreshCalls,
+  };
 }
 
 function validRecommendation(overrides = {}) {
@@ -243,6 +263,7 @@ test("Observer blocks a semantic-click recommendation without a provider source 
 function systemdIncidentTasks({
   persistedActionId = "review_systemd_incident_evidence",
   persistedControlId = "load-selected-task-button",
+  persistedCapabilityId = null,
 } = {}) {
   const receiptHash = `sha256:${"a".repeat(64)}`;
   const incidentTask = {
@@ -270,7 +291,7 @@ function systemdIncidentTasks({
         valid: true,
         actionId: persistedActionId,
         existingObserverControlId: persistedControlId,
-        existingCapabilityId: null,
+        existingCapabilityId: persistedCapabilityId,
         requiresOperatorReview: true,
         requiresApproval: false,
       },
@@ -394,6 +415,7 @@ test("Observer refreshes only read-only observation owners for the bound inciden
   const { providerTask, incidentTask } = systemdIncidentTasks({
     persistedActionId: "refresh_systemd_incident_observation",
     persistedControlId: "refresh-systemd-journal-evidence-button",
+    persistedCapabilityId: "act.openclaw.systemd_incident.observation_receipt",
   });
   const fixture = createContext({
     taskResponses: new Map([
@@ -409,7 +431,7 @@ test("Observer refreshes only read-only observation owners for the bound inciden
         label: "Refresh read-only health and journal observation for the bound systemd incident",
         reason: "Refresh current bounded observation before selecting another governed action.",
         existingObserverControlId: "refresh-systemd-journal-evidence-button",
-        existingCapabilityId: null,
+        existingCapabilityId: "act.openclaw.systemd_incident.observation_receipt",
         requiresApproval: false,
       }),
     },
@@ -421,6 +443,12 @@ test("Observer refreshes only read-only observation owners for the bound inciden
     "http://core.invalid/tasks/provider-task-17",
     "http://core.invalid/tasks/incident-task-17",
   ]);
+  assert.deepEqual(fixture.capabilityCalls, [{
+    capabilityId: "act.openclaw.systemd_incident.observation_receipt",
+    intent: "systemd_incident.observation_receipt",
+    params: { providerTaskId: "provider-task-17", confirm: true },
+  }]);
+  assert.equal(fixture.renderedCapabilities.length, 1);
   assert.deepEqual(fixture.refreshCalls.sort(), [
     "health",
     "journal:openclaw-event-hub.service",
@@ -429,4 +457,39 @@ test("Observer refreshes only read-only observation owners for the bound inciden
   assert.equal(fixture.context.systemdJournalEvidenceUnit.value, "openclaw-event-hub.service");
   assert.equal(fixture.context.selectedHistoryTaskId, null);
   assert.equal(fixture.nodes.review.textContent, "operator selected");
+});
+
+test("Observer does not refresh observation panels when receipt recording fails", async () => {
+  const { providerTask, incidentTask } = systemdIncidentTasks({
+    persistedActionId: "refresh_systemd_incident_observation",
+    persistedControlId: "refresh-systemd-journal-evidence-button",
+    persistedCapabilityId: "act.openclaw.systemd_incident.observation_receipt",
+  });
+  const fixture = createContext({
+    taskResponses: new Map([
+      [providerTask.id, providerTask],
+      [incidentTask.id, incidentTask],
+    ]),
+    capabilityResult: { invoked: false, result: { ok: false } },
+  });
+  fixture.context.renderEngineeringRecommendationFromOperatorResult({
+    task: { id: providerTask.id },
+    execution: {
+      recommendation: validRecommendation({
+        actionId: "refresh_systemd_incident_observation",
+        existingObserverControlId: "refresh-systemd-journal-evidence-button",
+        existingCapabilityId: "act.openclaw.systemd_incident.observation_receipt",
+        requiresApproval: false,
+      }),
+    },
+  });
+
+  await assert.rejects(
+    () => fixture.context.useEngineeringRecommendation(),
+    /observation receipt was not recorded/u,
+  );
+  assert.equal(fixture.capabilityCalls.length, 1);
+  assert.deepEqual(fixture.refreshCalls, []);
+  assert.equal(fixture.renderedCapabilities.length, 0);
+  assert.equal(fixture.context.systemdJournalEvidenceUnit.value, "openclaw-system-sense.service");
 });

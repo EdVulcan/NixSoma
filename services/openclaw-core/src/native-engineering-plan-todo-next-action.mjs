@@ -55,7 +55,7 @@ const ACTIONS = {
     actionId: "refresh_systemd_incident_observation",
     label: "Refresh read-only health and journal observation for the bound systemd incident",
     existingObserverControlId: "refresh-systemd-journal-evidence-button",
-    existingCapabilityId: null,
+    existingCapabilityId: "act.openclaw.systemd_incident.observation_receipt",
     requiresApproval: false,
   },
   semanticClick: {

@@ -1595,11 +1595,17 @@ That separately reviewed refresh is now complete through
 `refresh_systemd_incident_observation` reuses the same provider/source/receipt
 resolver, fixes the journal selector to the verified receipt unit, and refreshes
 only body health, fixed-unit inventory, and bounded journal Observer owners.
+It now records one compact hash-bound local receipt first through
+`act.openclaw.systemd_incident.observation_receipt`, as documented in
+`docs/plans/OPENCLAW_SYSTEMD_INCIDENT_OBSERVATION_RECEIPT_PLAN.md`. Audit
+publication must succeed before the provider task is updated, and the receipt
+excludes journal messages, provider output, commands, URLs, hostd evidence, and
+repair authority.
 
-The next real capability is one compact hash-bound local receipt for that new
-observation, associated with the provider task and source incident receipt. Do
-not retain journal messages, create automatic provider egress, or authorize
-repair.
+The next real capability is an operator-created fresh diagnosis task that binds
+this observation receipt hash to the existing incident evidence and provider
+request contract. Keep explicit approval before egress; do not create automatic
+provider requests, execute guidance, or authorize repair.
 
 ## Operator Identity And Mutation Boundary Checkpoint
 

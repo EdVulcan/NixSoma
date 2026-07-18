@@ -10,9 +10,10 @@ action is bound to the same terminal incident receipt as the approved provider
 task and refreshes only existing read-only Observer owners.
 
 This reuses `engineering_recommendation_v0`, protected Core task detail, body
-health, native fixed-unit inventory, and bounded service journal evidence. It
-adds no provider schema, Core route, task, approval, command path, or hostd
-operation.
+health, native fixed-unit inventory, and bounded service journal evidence. The
+completed follow-up adds one low-risk Core capability that records compact
+observation evidence, but no provider schema, task, approval, command path, or
+hostd operation.
 
 ## Delivered Flow
 
@@ -21,6 +22,7 @@ approved systemd incident provider task
 -> transient refresh_systemd_incident_observation recommendation
 -> explicit Use Recommendation selection in Observer
 -> reconstruct and verify provider task plus terminal incident receipt
+-> invoke the compact observation-receipt capability
 -> fix the journal selector to the receipt's unit
 -> refresh body health, native unit inventory, and bounded journal evidence
 -> show the new read-only observation in existing Observer panels
@@ -39,9 +41,12 @@ It is replaced with the unit from the verified terminal incident receipt.
 ## Authority Boundary
 
 - Explicit operator selection remains required.
-- The action has no executable capability id and no mutation approval.
+- The action invokes only
+  `act.openclaw.systemd_incident.observation_receipt` and needs no mutation
+  approval.
 - It reads body health, fixed-unit inventory, and bounded journal evidence only.
-- It creates no task, approval, provider request, command, retry, or repair.
+- It persists one compact local receipt but creates no task, approval, provider
+  request, command, retry, or repair.
 - It does not invoke system-heal, hostd, activation, or rollback.
 - Endpoint failure renders the existing panel offline and never falls back to a
   mutation or broader query.
@@ -54,9 +59,10 @@ It is replaced with the unit from the verified terminal incident receipt.
 - exact health, unit-inventory, and journal refresh-owner call test;
 - generated Observer client syntax and full workspace validation.
 
-## Next Real Capability
+## Delivered Follow-up
 
-Create one compact hash-bound local observation receipt from the reviewed
-refresh. Bind it to the provider task, source incident receipt, fixed unit,
-health booleans, journal availability/count, and observation time. Do not store
-journal messages, create automatic follow-up egress, or authorize repair.
+The compact hash-bound receipt is complete in
+`OPENCLAW_SYSTEMD_INCIDENT_OBSERVATION_RECEIPT_PLAN.md`. It binds the provider
+task, source incident receipt, fixed unit, health booleans, journal counts, and
+observation time without journal messages, automatic follow-up egress, or
+repair authority.
