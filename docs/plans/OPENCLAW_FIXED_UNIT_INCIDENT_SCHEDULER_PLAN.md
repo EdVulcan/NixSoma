@@ -30,6 +30,8 @@ Core starts with an explicitly configured interval
 -> audit and reserve one automatic dispatch without recovery/retry
 -> execute once through the existing fixed-target Executor and hostd boundary
 -> retain the existing incident receipt and post-repair health evidence
+-> on Core restart, reconcile terminal reservation state
+-> fail any non-terminal reserved dispatch closed without replay
 ```
 
 The NixOS module enables the scheduler by default at a five-minute interval.
@@ -47,7 +49,10 @@ fingerprint and derived workflow state, so a later regression creates a new
 incident; a Core restart does not duplicate an unchanged incident. Transient
 triage or promotion failure retains only a fixed error code and is retried on
 the next unchanged unhealthy tick. Approved dispatch persists a compact
-reservation and terminal outcome; it never retains Executor error text.
+reservation and terminal outcome; it never retains Executor error text. Core
+startup never replays a reserved dispatch: terminal tasks align state, while
+missing or non-terminal work receives one compact interrupted code and is
+failed closed.
 
 ## Authority Boundary
 
@@ -84,6 +89,9 @@ reservation and terminal outcome; it never retains Executor error text.
 - The systemd Executor requires that reservation for automatic promotions, so
   a stale, audit-blocked, failed, or directly invoked task cannot bypass the
   coordinator. Execution uses no automatic recovery or retry.
+- Startup reconciliation performs no observation, Executor call, hostd call,
+  or retry. A non-terminal reservation becomes explicit failed recovery
+  evidence and requires a newly observed incident/task chain.
 
 ## Evidence
 
@@ -93,7 +101,7 @@ reservation and terminal outcome; it never retains Executor error text.
 - real task-manager extension serialization and Core-state restoration tests;
 - generated Observer client syntax, compact task-detail assertions, and the
   explicit Triage action;
-- `882/882` workspace tests and full typecheck;
+- `884/884` workspace tests and full typecheck;
 - 811-entry milestone registry, script audit, and 160-character Windows path
   budget;
 - full `dev-body-config-check.sh`, including exact 222-file Core and 77-file
@@ -111,12 +119,12 @@ used.
 - automatic provider diagnosis;
 - automatic approval resolution;
 - arbitrary systemd targets;
+- deployment of this source baseline to the physical host;
 - real activation and rollback validation in a disposable mutation environment.
 
 ## Next Real Capability
 
-Reconcile an approved dispatch across Core restart without replaying a possible
-host mutation. A persisted queued `reserved` task may resume only when evidence
-proves Executor execution never started; a persisted `running` task must fail
-closed with explicit operator recovery. Keep automatic retry, second restart,
-provider, activation, and rollback disabled.
+With explicit physical-host authorization, build and switch the validated
+source baseline, then run non-mutating service health, authentication, scheduler
+and Observer probes. Do not create an incident, approve a repair, invoke hostd,
+activate another generation, or test rollback during that deployment check.

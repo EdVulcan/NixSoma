@@ -47,7 +47,7 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, and the local fixed-unit incident scheduler and
-triage/repair-promotion bridge. All 882 workspace tests and typecheck pass, the
+triage/repair-promotion bridge. All 884 workspace tests and typecheck pass, the
 body-config and event-audit integration checks pass, the 811-entry milestone
 registry audit passes, and the Windows path budget has no file over 160
 repository-relative characters.
@@ -1634,16 +1634,18 @@ approval/task binding, fixed target, and real-execution shape. A required audit
 precedes one persisted reservation and a single existing Executor call with
 automatic recovery disabled. The systemd handler rejects automatic promotions
 without that reservation, closing direct Operator-step bypass after stale or
-audit-blocked dispatch.
+audit-blocked dispatch. Startup reconciliation never replays a reserved host
+mutation: terminal tasks align compact state, while missing, queued, running,
+or paused work fails closed with `automatic_repair_dispatch_interrupted` and a
+new-observation recovery action.
 
 Freeze the provider/systemd diagnosis lane and do not add another evidence
-wrapper. Automatic low-risk local triage, pending repair promotion, and
-approval-triggered one-shot dispatch are complete in source. The next real
-capability is restart reconciliation for the persisted dispatch reservation:
-resume a queued task only when execution provably never started, and fail a
-persisted running task closed with explicit recovery. Do not add automatic
-retry or a second restart attempt. Real promoted repair execution requires an
-explicit/disposable mutation environment.
+wrapper. Automatic low-risk local triage, pending repair promotion,
+approval-triggered one-shot dispatch, and fail-closed startup reconciliation
+are complete in source. Freeze this lane. The next gate is an explicitly
+authorized physical-host source switch followed only by non-mutating health,
+auth, scheduler, and Observer probes. Do not trigger an incident, approval,
+hostd mutation, automatic retry, or rollback as part of deployment validation.
 
 ## Operator Identity And Mutation Boundary Checkpoint
 

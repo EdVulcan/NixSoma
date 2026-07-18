@@ -165,9 +165,12 @@ function normaliseUnitSchedulerState(value) {
     repairDispatchOutcomeStatus: ["completed", "failed"].includes(value.repairDispatchOutcomeStatus)
       ? value.repairDispatchOutcomeStatus
       : null,
-    repairDispatchFailure: value.repairDispatchFailure?.code === "automatic_repair_dispatch_failed"
+    repairDispatchFailure: [
+      "automatic_repair_dispatch_failed",
+      "automatic_repair_dispatch_interrupted",
+    ].includes(value.repairDispatchFailure?.code)
       ? {
-          code: "automatic_repair_dispatch_failed",
+          code: value.repairDispatchFailure.code,
           at: compactTimestamp(value.repairDispatchFailure.at),
         }
       : null,

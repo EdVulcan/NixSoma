@@ -7,7 +7,10 @@ import {
   hashFixedUnitIncidentObservation,
 } from "../src/fixed-unit-incident-scheduler.mjs";
 import { createFixedUnitIncidentTriageBuilders } from "../src/fixed-unit-incident-triage.mjs";
-import { createFixedUnitIncidentApprovedDispatcher } from "../src/fixed-unit-incident-approved-dispatch.mjs";
+import {
+  createFixedUnitIncidentApprovedDispatcher,
+  reconcileFixedUnitIncidentDispatchesAtStartup,
+} from "../src/fixed-unit-incident-approved-dispatch.mjs";
 
 const REAL_EXECUTION_REGISTRY = "openclaw-systemd-next-repair-real-execution-v0";
 const TARGET = {
@@ -252,4 +255,62 @@ test("fixed-unit repair dispatcher persists only a compact failure after Executo
     at: "2026-07-19T00:50:00.000Z",
   });
   assert.doesNotMatch(JSON.stringify(harness.schedulerState), /private executor failure detail/u);
+});
+
+test("startup reconciliation fails a reserved queued dispatch closed without replay", async () => {
+  const harness = await createHarness();
+  const unitState = harness.schedulerState.units[TARGET.unit];
+  Object.assign(unitState, {
+    repairDispatchTaskId: harness.promotion.task.id,
+    repairDispatchStatus: "reserved",
+    repairDispatchAt: "2026-07-19T00:50:00.000Z",
+  });
+  let failedDetails = null;
+
+  const result = reconcileFixedUnitIncidentDispatchesAtStartup({
+    tasks: harness.tasks,
+    schedulerState: harness.schedulerState,
+    failTask: (task, _reason, details) => {
+      task.status = "failed";
+      failedDetails = details;
+    },
+    now: () => "2026-07-19T01:00:00.000Z",
+  });
+
+  assert.equal(result.reconciledCount, 1);
+  assert.equal(result.automaticReplay, false);
+  assert.equal(harness.promotion.task.status, "failed");
+  assert.equal(failedDetails.code, "automatic_repair_dispatch_interrupted");
+  assert.equal(unitState.repairDispatchStatus, "failed");
+  assert.deepEqual(unitState.repairDispatchFailure, {
+    code: "automatic_repair_dispatch_interrupted",
+    at: "2026-07-19T01:00:00.000Z",
+  });
+  assert.equal(harness.executionCount(), 0);
+});
+
+test("startup reconciliation aligns a terminal reserved dispatch without failing it again", async () => {
+  const harness = await createHarness();
+  const unitState = harness.schedulerState.units[TARGET.unit];
+  harness.promotion.task.status = "completed";
+  Object.assign(unitState, {
+    repairDispatchTaskId: harness.promotion.task.id,
+    repairDispatchStatus: "reserved",
+    repairDispatchAt: "2026-07-19T00:50:00.000Z",
+  });
+  let failCalls = 0;
+
+  const result = reconcileFixedUnitIncidentDispatchesAtStartup({
+    tasks: harness.tasks,
+    schedulerState: harness.schedulerState,
+    failTask: () => { failCalls += 1; },
+    now: () => "2026-07-19T01:00:00.000Z",
+  });
+
+  assert.equal(result.items[0].outcome, "terminal_state_reconciled");
+  assert.equal(failCalls, 0);
+  assert.equal(unitState.repairDispatchStatus, "completed");
+  assert.equal(unitState.repairDispatchOutcomeStatus, "completed");
+  assert.equal(unitState.repairDispatchFailure, null);
+  assert.equal(harness.executionCount(), 0);
 });

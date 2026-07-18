@@ -19,7 +19,10 @@ import { createNativeEngineeringExperienceMemory } from "./native-engineering-ex
 import { createOperatorAuthenticator } from "./operator-auth.mjs";
 import { createExecutionGrantSigner } from "../../../packages/shared-utils/src/execution-grants.mjs";
 import { createFixedUnitIncidentScheduler } from "./fixed-unit-incident-scheduler.mjs";
-import { createFixedUnitIncidentApprovedDispatcher } from "./fixed-unit-incident-approved-dispatch.mjs";
+import {
+  createFixedUnitIncidentApprovedDispatcher,
+  reconcileFixedUnitIncidentDispatchesAtStartup,
+} from "./fixed-unit-incident-approved-dispatch.mjs";
 
 // configure state & client
 const host = process.env.OPENCLAW_CORE_HOST ?? "127.0.0.1";
@@ -281,6 +284,15 @@ if (!nativePluginRuntimeRestore.ok && nativePluginRuntimeRestore.restored === fa
 }
 taskManager.reconcileInterruptedTasksAtStartup();
 taskManager.reconcileInterruptedCapabilityReservationsAtStartup();
+const fixedUnitDispatchStartupRecovery = reconcileFixedUnitIncidentDispatchesAtStartup({
+  tasks: state.tasks,
+  schedulerState: state.fixedUnitIncidentSchedulerState,
+  failTask: (task, reason, details) => taskManager.failTask(task, reason, details),
+  persistState: state.persistState,
+});
+if (fixedUnitDispatchStartupRecovery.reconciledCount > 0) {
+  console.warn(`Failed ${fixedUnitDispatchStartupRecovery.reconciledCount} interrupted fixed-unit dispatch(es) closed.`);
+}
 taskManager.reconcileRuntimeState();
 fixedUnitIncidentScheduler = createFixedUnitIncidentScheduler({
   enabled: process.env.OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_ENABLED === "1",

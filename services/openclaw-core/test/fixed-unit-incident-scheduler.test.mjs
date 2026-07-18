@@ -565,6 +565,14 @@ test("fixed-unit scheduler restores dedupe state and discards unknown units", as
   };
   const first = createHarness({ responses, schedulerState: persisted });
   await first.scheduler.tick();
+  Object.assign(persisted.units["openclaw-event-hub.service"], {
+    repairDispatchTaskId: "repair-task-interrupted",
+    repairDispatchStatus: "failed",
+    repairDispatchFailure: {
+      code: "automatic_repair_dispatch_interrupted",
+      at: "2026-07-19T01:00:00.000Z",
+    },
+  });
   const second = createHarness({ responses, schedulerState: persisted });
 
   await second.scheduler.tick();
@@ -572,6 +580,10 @@ test("fixed-unit scheduler restores dedupe state and discards unknown units", as
   assert.equal(first.tasks.length, 1);
   assert.equal(second.tasks.length, 0);
   assert.equal(Object.hasOwn(second.scheduler.readState().units, "untrusted.service"), false);
+  assert.equal(
+    second.scheduler.readState().units["openclaw-event-hub.service"].repairDispatchFailure.code,
+    "automatic_repair_dispatch_interrupted",
+  );
   assert.deepEqual(listFixedUnitIncidentTargets().map((target) => target.unit).sort(), [
     "openclaw-event-hub.service",
     "openclaw-system-heal.service",

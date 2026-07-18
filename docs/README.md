@@ -14,7 +14,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
 | Capability source | Current `main` through the Level 3 fixed-unit incident scheduler, automatic local triage/promotion, and approval-triggered one-shot repair dispatch | Implemented; commit history is authoritative |
-| Local validation | 882 workspace tests and typecheck pass; body-config and event-audit integration pass; 811 registry entries pass | Validated |
+| Local validation | 884 workspace tests and typecheck pass; body-config and event-audit integration pass; 811 registry entries pass | Validated |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/gb72w3qavm6b0vv114ml723g7y8jv5qh-nixos-system-nixos-26.05.4808.569d57850992` | Current source baseline deployed 2026-07-18 |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
@@ -88,6 +88,8 @@ The completed bounded frontier is:
   exact automatic repair task, then enters the existing Executor once with
   automatic recovery disabled. The systemd handler rejects automatic tasks
   without that reservation.
+- Restart reconciliation that aligns terminal dispatch state and fails every
+  missing or non-terminal reservation closed without Executor/hostd replay.
 
 Real repair execution and rollback remain unproven on a disposable mutation
 environment. Level 4 graphics-stack ownership remains future work.
@@ -133,11 +135,11 @@ readiness wrapper. The validated source baseline is now deployed: all service
 health probes returned 200, anonymous protected reads/mutations returned 401,
 the journal endpoint is live, Observer contains both incident controls, and the
 first scheduler tick observed all fixed targets healthy. Automatic low-risk
-local triage, pending repair promotion, and one-shot dispatch after explicit
-approval are complete in source. The next real capability is restart-safe
-reconciliation of a reserved approved dispatch, distinguishing a safe queued
-resume from a fail-closed interrupted execution. This source baseline is not
-deployed; real hostd mutation and generation rollback remain deferred to an
+local triage, pending repair promotion, one-shot dispatch after explicit
+approval, and fail-closed restart reconciliation are complete in source. This
+source baseline is not deployed. The next gate is an explicitly authorized
+physical-host switch followed only by non-mutating health, auth, scheduler, and
+Observer probes; real repair and generation rollback remain deferred to an
 explicit/disposable mutation check.
 
 ## Progress Estimate

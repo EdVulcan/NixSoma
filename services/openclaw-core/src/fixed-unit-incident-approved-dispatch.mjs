@@ -7,6 +7,8 @@ import {
 
 export const FIXED_UNIT_INCIDENT_APPROVED_DISPATCH_REGISTRY =
   "openclaw-fixed-unit-incident-approved-dispatch-v0";
+export const FIXED_UNIT_INCIDENT_DISPATCH_INTERRUPTED_CODE =
+  "automatic_repair_dispatch_interrupted";
 
 function automaticPromotion(task) {
   const promotion = task?.systemdIncidentRepairPromotion;
@@ -256,5 +258,59 @@ export function createFixedUnitIncidentApprovedDispatcher({
     } finally {
       if (inFlightByTask.get(taskId) === operation) inFlightByTask.delete(taskId);
     }
+  };
+}
+
+export function reconcileFixedUnitIncidentDispatchesAtStartup({
+  tasks = new Map(),
+  schedulerState = {},
+  failTask = () => {},
+  persistState = () => {},
+  now = () => new Date().toISOString(),
+} = {}) {
+  const items = [];
+  for (const [unit, unitState] of Object.entries(schedulerState.units ?? {})) {
+    if (unitState?.repairDispatchStatus !== "reserved") continue;
+    const task = tasks.get(unitState.repairDispatchTaskId) ?? null;
+    if (task && ["completed", "failed"].includes(task.status)) {
+      Object.assign(unitState, {
+        repairDispatchStatus: "completed",
+        repairDispatchCompletedAt: unitState.repairDispatchCompletedAt ?? now(),
+        repairDispatchOutcomeStatus: task.status,
+        repairDispatchFailure: null,
+      });
+      items.push({ unit, taskId: task.id, outcome: "terminal_state_reconciled" });
+      continue;
+    }
+    if (task && ["queued", "running", "paused"].includes(task.status)) {
+      failTask(task, "Automatic fixed-unit repair dispatch was interrupted by Core restart.", {
+        executor: FIXED_UNIT_INCIDENT_APPROVED_DISPATCH_REGISTRY,
+        code: FIXED_UNIT_INCIDENT_DISPATCH_INTERRUPTED_CODE,
+        automaticReplay: false,
+        recoveryAction: "observe_current_incident_and_create_new_repair_task",
+      });
+    }
+    const interruptedAt = now();
+    Object.assign(unitState, {
+      repairDispatchStatus: "failed",
+      repairDispatchCompletedAt: interruptedAt,
+      repairDispatchOutcomeStatus: null,
+      repairDispatchFailure: {
+        code: FIXED_UNIT_INCIDENT_DISPATCH_INTERRUPTED_CODE,
+        at: interruptedAt,
+      },
+    });
+    items.push({
+      unit,
+      taskId: task?.id ?? unitState.repairDispatchTaskId ?? null,
+      outcome: "interrupted_failed_closed",
+    });
+  }
+  if (items.length > 0) persistState();
+  return {
+    registry: FIXED_UNIT_INCIDENT_APPROVED_DISPATCH_REGISTRY,
+    reconciledCount: items.length,
+    automaticReplay: false,
+    items,
   };
 }
