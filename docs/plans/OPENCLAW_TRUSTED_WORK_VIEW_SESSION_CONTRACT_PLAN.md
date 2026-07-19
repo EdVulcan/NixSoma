@@ -1,6 +1,21 @@
 # OpenClaw Trusted Work-View Session Contract Plan
 
-Updated: 2026-07-11
+Updated: 2026-07-19
+
+## Current Continuation
+
+The bounded Level 2 browser eye-hand contract described below is complete and
+frozen. Its current vertical continuation is the first Level 4 graphical owner:
+a resource-bounded login-user Weston headless compositor on fixed socket
+`nixsoma-ai-0`, with read-only session-manager and Observer evidence. The
+compositor is not yet attached to browser-runtime and has no pixel, input,
+projection, desktop-wide capture, root, host-mutation, or network authority.
+
+The next real capability after physical-host coexistence proof is to place only
+the existing AI-owned browser inside that nested session while reusing this
+plan's lease, capture, action, audit, recovery, and Observer contracts. The
+historical `Active Slice`, `Deferred`, and `Next Slice` sections below describe
+the Level 2 implementation sequence and are not current route instructions.
 
 ## Active Slice
 

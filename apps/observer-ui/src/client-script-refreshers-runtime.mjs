@@ -136,6 +136,7 @@ async function refreshWorkView() {
     const trustedSession = workView.trustedSession ?? data.trustedSession ?? {};
     const sessionIdentity = trustedSession.sessionIdentity ?? {};
     const helperRuntime = trustedSession.helperRuntime ?? {};
+    const aiGraphicalSession = workView.aiGraphicalSession ?? data.aiGraphicalSession ?? {};
     workViewSessionIdentity.textContent = sessionIdentity.status ?? "unknown";
     if (!desiredWorkViewUrlPinned && document.activeElement !== workViewUrlInput) {
       setDesiredWorkViewUrl(workView.activeUrl ?? workView.entryUrl ?? "https://example.com/work-view", {
@@ -146,6 +147,9 @@ async function refreshWorkView() {
     workViewJson.textContent = [
       "Helper Runtime: " + (helperRuntime.status ?? "unknown") + " authority=" + (helperRuntime.actionAuthority ?? "unknown") + " owner=" + (helperRuntime.owner ?? "unknown") + " lease=" + (helperRuntime.leaseId ?? "none") + " browserLease=" + (helperRuntime.browserLeaseId ?? "none") + " matched=" + Boolean(helperRuntime.leaseMatched),
       "Helper Runtime Boundary: inProcess=" + (helperRuntime.mode === "in_process_session_helper") + " externalProcess=" + Boolean(helperRuntime.externalProcessStarted) + " root=" + Boolean(helperRuntime.rootRequired) + " desktopWide=" + Boolean(helperRuntime.desktopWideCapture),
+      "AI Graphical Session: " + (aiGraphicalSession.status ?? "unknown") + " ready=" + Boolean(aiGraphicalSession.ready) + " owner=" + (aiGraphicalSession.owner ?? "unknown") + " level=" + (aiGraphicalSession.identityLevel ?? "unknown"),
+      "AI Graphical Socket: " + (aiGraphicalSession.socket?.name ?? "none") + " type=" + (aiGraphicalSession.socket?.type ?? "unknown") + " ownerMatched=" + Boolean(aiGraphicalSession.socket?.ownerMatched) + " mode=" + (aiGraphicalSession.socket?.mode ?? "unknown"),
+      "AI Graphical Boundary: headless=" + Boolean(aiGraphicalSession.output?.headless) + " parentDisplay=" + Boolean(aiGraphicalSession.boundary?.parentDisplayConnected) + " pixels=" + Boolean(aiGraphicalSession.boundary?.readsPixels) + " input=" + Boolean(aiGraphicalSession.boundary?.inputAuthority) + " browser=" + Boolean(aiGraphicalSession.boundary?.browserAttached),
       \`Session: \${data.session?.status ?? "unknown"}\`,
       \`Session ID: \${data.session?.sessionId ?? "none"}\`,
       \`Display: \${workView.displayTarget ?? "unknown"}\`,

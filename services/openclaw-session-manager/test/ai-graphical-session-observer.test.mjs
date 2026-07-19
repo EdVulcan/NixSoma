@@ -1,0 +1,88 @@
+import assert from "node:assert/strict";
+import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import net from "node:net";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import test from "node:test";
+
+import { createAiGraphicalSessionObserver } from "../src/ai-graphical-session-observer.mjs";
+
+function enabledEnv(runtimeDir, overrides = {}) {
+  return {
+    OPENCLAW_AI_GRAPHICAL_SESSION_ENABLED: "1",
+    OPENCLAW_AI_GRAPHICAL_SESSION_MODE: "nested_headless_wayland",
+    OPENCLAW_AI_GRAPHICAL_SESSION_SOCKET_NAME: "nixsoma-ai-0",
+    OPENCLAW_AI_GRAPHICAL_SESSION_WIDTH: "1280",
+    OPENCLAW_AI_GRAPHICAL_SESSION_HEIGHT: "720",
+    XDG_RUNTIME_DIR: runtimeDir,
+    ...overrides,
+  };
+}
+
+test("AI graphical session observer remains inert when disabled", () => {
+  const observe = createAiGraphicalSessionObserver({ env: {} });
+
+  const result = observe();
+
+  assert.equal(result.status, "disabled");
+  assert.equal(result.ready, false);
+  assert.equal(result.boundary.parentDisplayConnected, false);
+  assert.equal(result.boundary.desktopWideCapture, false);
+  assert.equal(result.boundary.inputAuthority, false);
+  assert.equal(result.boundary.hostMutation, false);
+});
+
+test("AI graphical session observer verifies one owner-only Wayland socket", async (t) => {
+  const runtimeDir = mkdtempSync(path.join(tmpdir(), "nixsoma-ai-runtime-"));
+  chmodSync(runtimeDir, 0o700);
+  const socketPath = path.join(runtimeDir, "nixsoma-ai-0");
+  const server = net.createServer();
+  t.after(() => {
+    server.close();
+    rmSync(runtimeDir, { recursive: true, force: true });
+  });
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(socketPath, resolve);
+  });
+
+  const result = createAiGraphicalSessionObserver({ env: enabledEnv(runtimeDir) })();
+
+  assert.equal(result.status, "ready");
+  assert.equal(result.ready, true);
+  assert.equal(result.identityLevel, "level_4_graphics_stack_native");
+  assert.equal(result.socket.name, "nixsoma-ai-0");
+  assert.equal(result.socket.type, "unix_socket");
+  assert.equal(result.socket.ownerMatched, true);
+  assert.equal(result.socket.groupOrOtherWritable, false);
+  assert.deepEqual(result.output, { width: 1280, height: 720, virtual: true, headless: true });
+  assert.equal(JSON.stringify(result).includes(runtimeDir), false);
+});
+
+test("AI graphical session observer rejects changed socket identity and regular files", (t) => {
+  const runtimeDir = mkdtempSync(path.join(tmpdir(), "nixsoma-ai-runtime-"));
+  chmodSync(runtimeDir, 0o700);
+  writeFileSync(path.join(runtimeDir, "nixsoma-ai-0"), "not a socket", "utf8");
+  t.after(() => rmSync(runtimeDir, { recursive: true, force: true }));
+
+  const changedName = createAiGraphicalSessionObserver({
+    env: enabledEnv(runtimeDir, { OPENCLAW_AI_GRAPHICAL_SESSION_SOCKET_NAME: "wayland-0" }),
+  })();
+  const regularFile = createAiGraphicalSessionObserver({ env: enabledEnv(runtimeDir) })();
+
+  assert.equal(changedName.status, "configuration_invalid");
+  assert.equal(regularFile.status, "socket_untrusted");
+  assert.equal(regularFile.socket.type, "unexpected");
+  assert.equal(regularFile.ready, false);
+});
+
+test("AI graphical session observer fails closed for an untrusted runtime directory", (t) => {
+  const runtimeDir = mkdtempSync(path.join(tmpdir(), "nixsoma-ai-runtime-"));
+  chmodSync(runtimeDir, 0o755);
+  t.after(() => rmSync(runtimeDir, { recursive: true, force: true }));
+
+  const result = createAiGraphicalSessionObserver({ env: enabledEnv(runtimeDir) })();
+
+  assert.equal(result.status, "runtime_directory_untrusted");
+  assert.equal(result.ready, false);
+});

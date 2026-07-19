@@ -100,6 +100,24 @@ approval counts. Audit and persistent hashes matched, and service health stayed
 green. Freeze this lane and select a distinct whitepaper capability instead of
 opening another readiness phase or provider-call surface.
 
+The selected active route is now Level 4 graphical identity:
+
+```text
+login-user systemd owner
+-> isolated Weston headless compositor
+-> fixed nixsoma-ai-0 Wayland socket
+-> existing session resource envelope
+-> session-manager ownership/health evidence
+-> Observer readback with explicit negative authority
+-> physical-host coexistence proof with GNOME wayland-0
+-> AI-owned browser attachment as the next real slice
+```
+
+The current source stops before browser attachment, pixel capture, input,
+projection, desktop-wide observation, root, host mutation, or network access.
+Do not reopen the completed provider or Level 2 action lanes while this Level 4
+vertical capability is incomplete.
+
 ## Completed Capability Evidence
 
 The following plan families are retained because they describe implemented

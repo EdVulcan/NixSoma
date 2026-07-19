@@ -284,12 +284,14 @@ async function refreshPhase3BackgroundWorkView() {
     const sessionIdentity = trustedSession.sessionIdentity ?? {};
     const helperRuntime = trustedSession.helperRuntime ?? {};
     const sidecar = helperRuntime.sidecar ?? {};
+    const aiGraphicalSession = workView.aiGraphicalSession ?? {};
     phase3BackgroundReady.textContent = String(Boolean(summary.ready));
     phase3BackgroundVisibility.textContent = workView.visibility ?? data.workViewContract?.defaultVisibility ?? "hidden";
     phase3BackgroundMode.textContent = workView.mode ?? data.workViewContract?.defaultMode ?? "background";
     phase3BackgroundJson.textContent = [
       "Helper Runtime: " + (helperRuntime.status ?? "unknown") + " owner=" + (helperRuntime.owner ?? "unknown") + " lease=" + (helperRuntime.leaseId ?? "none") + " browserLease=" + (helperRuntime.browserLeaseId ?? "none") + " matched=" + Boolean(helperRuntime.leaseMatched),
       "Helper Runtime Boundary: externalProcess=" + Boolean(helperRuntime.externalProcessStarted) + " root=" + Boolean(helperRuntime.rootRequired) + " desktopWide=" + Boolean(helperRuntime.desktopWideCapture),
+      "AI Graphical Session: " + (aiGraphicalSession.status ?? "unknown") + " ready=" + Boolean(aiGraphicalSession.ready) + " socket=" + (aiGraphicalSession.socket?.name ?? "none") + " parentDisplay=" + Boolean(aiGraphicalSession.boundary?.parentDisplayConnected) + " input=" + Boolean(aiGraphicalSession.boundary?.inputAuthority),
       "Registry: " + (data.registry ?? "openclaw-phase-3-background-work-view-v0"),
       "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
       "Ready: " + Boolean(summary.ready) + " checks=" + (summary.passed ?? 0) + "/" + (summary.total ?? 0),

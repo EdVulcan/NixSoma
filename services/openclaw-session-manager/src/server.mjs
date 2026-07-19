@@ -5,6 +5,7 @@ import { buildTrustedWorkViewContract } from "../../../packages/shared-utils/src
 import { createTrustedWorkViewHelperRuntime } from "./trusted-work-view-helper-runtime.mjs";
 import { createTrustedWorkViewSidecarSupervisor } from "./trusted-work-view-sidecar-supervisor.mjs";
 import { createTrustedWorkViewSidecarRecoveryStore } from "./trusted-work-view-sidecar-recovery-store.mjs";
+import { createAiGraphicalSessionObserver } from "./ai-graphical-session-observer.mjs";
 import { createServiceCredentialHeaders, readServiceCredential } from "../../../packages/shared-utils/src/service-credentials.mjs";
 
 const host = process.env.OPENCLAW_SESSION_MANAGER_HOST ?? "127.0.0.1";
@@ -21,6 +22,7 @@ const startDelayMs = Number.parseInt(process.env.OPENCLAW_SESSION_START_DELAY_MS
 const defaultWorkViewUrl = process.env.OPENCLAW_WORK_VIEW_URL ?? "https://example.com/work-view";
 const stateFilePath = process.env.OPENCLAW_SESSION_MANAGER_STATE_FILE ?? `/tmp/openclaw-session-manager-${port}.json`;
 const trustedWorkViewHelperRuntime = createTrustedWorkViewHelperRuntime();
+const observeAiGraphicalSession = createAiGraphicalSessionObserver();
 
 const sessionState = {
   sessionId: null,
@@ -113,7 +115,13 @@ function serialiseWorkViewState() {
     externalProcessStarted: sidecar.running,
     sidecar,
   };
-  const workView = { ...workViewState, helperRuntime, trustedSidecar: sidecar };
+  const aiGraphicalSession = observeAiGraphicalSession();
+  const workView = {
+    ...workViewState,
+    helperRuntime,
+    trustedSidecar: sidecar,
+    aiGraphicalSession,
+  };
   return {
     ...workView,
     trustedSession: buildTrustedWorkViewContract({
@@ -181,6 +189,7 @@ function buildStateResponse() {
     session: serialiseSessionState(),
     workView,
     trustedSession: workView.trustedSession,
+    aiGraphicalSession: workView.aiGraphicalSession,
   };
 }
 
@@ -467,6 +476,7 @@ const server = http.createServer(async (req, res) => {
       browserRuntimeUrl,
       startDelayMs,
       defaultWorkViewUrl,
+      aiGraphicalSession: observeAiGraphicalSession(),
     });
     return;
   }

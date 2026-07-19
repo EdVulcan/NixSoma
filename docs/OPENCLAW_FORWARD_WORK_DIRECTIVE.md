@@ -1794,6 +1794,31 @@ recommendation reason, raw response, or credential value. Core and system-heal
 remained active at zero restarts with no warning journal entries. Freeze this
 completed lane and select a distinct whitepaper capability.
 
+## Active Level 4 Isolated Graphical Session
+
+The selected distinct whitepaper capability is now the first real Level 4
+graphics-stack owner. A dedicated login-user `systemd --user` service starts
+Weston with the headless backend, pixman renderer, kiosk shell, fixed
+`nixsoma-ai-0` socket, and fixed 1280x720 virtual output. It belongs to the
+existing `openclaw-session.slice`, has a private runtime/log directory, closed
+device policy, Unix-only address family, strict filesystem protection, and no
+root requirement.
+
+Session-manager verifies the fixed Unix socket owner, type, and mode from the
+trusted user runtime directory and exposes bounded evidence through its existing
+health and work-view routes. Observer projects that state and the explicit
+negative authority boundary. The evidence never exposes the full Wayland socket
+path. Focused process/HTTP assembly checks, generated Observer syntax, Nix
+body-config validation, typecheck, and all 915 workspace tests pass.
+
+This first slice owns only a compositor and its observable identity. It does not
+connect to GNOME's parent display, attach browser-runtime, read pixels, inject
+input, project a surface, capture the desktop, access the network, mutate the
+host, or run as root. Do not add another observation wrapper after deployment.
+The next real Level 4 slice is to launch only the AI-owned browser inside this
+nested session and prove page ownership while retaining the existing Level 2
+lease, capture, action, audit, recovery, and Observer chain.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

@@ -10,6 +10,7 @@ mkOpenClawSourceClosure {
   files = [
     ../../services/openclaw-session-manager/package.json
     ../../services/openclaw-session-manager/src/server.mjs
+    ../../services/openclaw-session-manager/src/ai-graphical-session-observer.mjs
     ../../services/openclaw-session-manager/src/trusted-work-view-helper-runtime.mjs
     ../../services/openclaw-session-manager/src/trusted-work-view-sidecar-channel.mjs
     ../../services/openclaw-session-manager/src/trusted-work-view-sidecar-launcher.mjs

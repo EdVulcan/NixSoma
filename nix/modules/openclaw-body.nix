@@ -481,6 +481,8 @@ let
   delegationUser = cfg.hostdUser;
 in
 {
+  imports = [ ./openclaw-ai-graphical-session.nix ];
+
   options.services.openclaw = {
     enable = mkEnableOption "OpenClaw NixOS body services";
 

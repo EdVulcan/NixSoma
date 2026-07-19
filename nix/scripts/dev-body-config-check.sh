@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 BODY_MODULE="$REPO_ROOT/nix/modules/openclaw-body.nix"
+AI_GRAPHICAL_SESSION_MODULE="$REPO_ROOT/nix/modules/openclaw-ai-graphical-session.nix"
 DEV_PROFILE="$REPO_ROOT/nix/profiles/dev-body.nix"
 DESKTOP_PROFILE="$REPO_ROOT/nix/profiles/desktop-body.nix"
 LOCAL_HOST="$REPO_ROOT/nix/hosts/local-dev.nix"
@@ -12,6 +13,7 @@ FLAKE="$REPO_ROOT/flake.nix"
 
 required_files=(
   "$BODY_MODULE"
+  "$AI_GRAPHICAL_SESSION_MODULE"
   "$DEV_PROFILE"
   "$DESKTOP_PROFILE"
   "$LOCAL_HOST"
@@ -62,6 +64,7 @@ const root = process.argv[2];
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 
 const bodyModule = read("nix/modules/openclaw-body.nix");
+const aiGraphicalSessionModule = read("nix/modules/openclaw-ai-graphical-session.nix");
 const devProfile = read("nix/profiles/dev-body.nix");
 const desktopProfile = read("nix/profiles/desktop-body.nix");
 const localHost = read("nix/hosts/local-dev.nix");
@@ -134,6 +137,14 @@ const envNames = [
   "OPENCLAW_BROWSER_RUNTIME_AUTH_REQUIRED",
 ];
 
+const aiGraphicalSessionEnvNames = [
+  "OPENCLAW_AI_GRAPHICAL_SESSION_ENABLED",
+  "OPENCLAW_AI_GRAPHICAL_SESSION_MODE",
+  "OPENCLAW_AI_GRAPHICAL_SESSION_SOCKET_NAME",
+  "OPENCLAW_AI_GRAPHICAL_SESSION_WIDTH",
+  "OPENCLAW_AI_GRAPHICAL_SESSION_HEIGHT",
+];
+
 function requireIncludes(label, content, tokens) {
   const missing = tokens.filter((token) => !content.includes(token));
   if (missing.length > 0) {
@@ -143,6 +154,7 @@ function requireIncludes(label, content, tokens) {
 
 requireIncludes("openclaw-body module", bodyModule, [
   "options.services.openclaw",
+  "./openclaw-ai-graphical-session.nix",
   "systemd.services",
   "systemd.user.services",
   "openclaw-trusted-sidecar@",
@@ -207,6 +219,22 @@ requireIncludes("openclaw-body module", bodyModule, [
   ...envNames,
 ]);
 
+requireIncludes("AI graphical session module", aiGraphicalSessionModule, [
+  "options.services.openclaw.aiGraphicalSession",
+  "nixsoma-ai-graphical-session",
+  "--backend=headless",
+  "--renderer=pixman",
+  "--shell=kiosk",
+  "--socket=${socketName}",
+  "RuntimeDirectoryMode = \"0700\"",
+  "UMask = \"0077\"",
+  "PrivateDevices = true",
+  "DevicePolicy = \"closed\"",
+  "RestrictAddressFamilies = [ \"AF_UNIX\" ]",
+  "OPENCLAW_AI_GRAPHICAL_SESSION_ENABLED",
+  ...aiGraphicalSessionEnvNames,
+]);
+
 for (const legacyPath of [
   "nix/modules/openclaw-core.nix",
   "nix/modules/openclaw-event-hub.nix",
@@ -248,6 +276,7 @@ requireIncludes("desktop-body profile", desktopProfile, [
   "browserEngine.mode = \"firefox\"",
   "kernelEventCapture.enable = true",
   "resourceControl.enable = true",
+  "aiGraphicalSession.enable = true",
   "cloudProvider.enable = true",
   ...componentKeys,
 ]);
@@ -300,7 +329,7 @@ if command -v nix >/dev/null 2>&1; then
     .#nixosConfigurations.openclaw-local-dev.config \
     --apply 'config: let
       project = unit: {
-        inherit (unit) wantedBy partOf after environment;
+        inherit (unit) wantedBy partOf wants after before environment;
         serviceConfig = {
           User = unit.serviceConfig.User or null;
           Group = unit.serviceConfig.Group or null;
@@ -310,8 +339,15 @@ if command -v nix >/dev/null 2>&1; then
           RemainAfterExit = unit.serviceConfig.RemainAfterExit or null;
           LoadCredential = unit.serviceConfig.LoadCredential or [ ];
           UMask = unit.serviceConfig.UMask or null;
+          ExecStartPre = unit.serviceConfig.ExecStartPre or null;
+          ExecStopPost = unit.serviceConfig.ExecStopPost or null;
           RuntimeDirectory = unit.serviceConfig.RuntimeDirectory or null;
           RuntimeDirectoryMode = unit.serviceConfig.RuntimeDirectoryMode or null;
+          PrivateDevices = unit.serviceConfig.PrivateDevices or null;
+          ProtectSystem = unit.serviceConfig.ProtectSystem or null;
+          ProtectHome = unit.serviceConfig.ProtectHome or null;
+          DevicePolicy = unit.serviceConfig.DevicePolicy or null;
+          RestrictAddressFamilies = unit.serviceConfig.RestrictAddressFamilies or [ ];
           AmbientCapabilities = unit.serviceConfig.AmbientCapabilities or [ ];
           CapabilityBoundingSet = unit.serviceConfig.CapabilityBoundingSet or [ ];
           LimitMEMLOCK = unit.serviceConfig.LimitMEMLOCK or null;
@@ -339,6 +375,7 @@ if command -v nix >/dev/null 2>&1; then
       polkitExtraConfig = config.security.polkit.extraConfig;
       session = project config.systemd.user.services.openclaw-session-manager;
       browser = project config.systemd.user.services.openclaw-browser-runtime;
+      aiGraphicalSession = project config.systemd.user.services.nixsoma-ai-graphical-session;
       core = project config.systemd.services.openclaw-core;
       operatorTokenInit = project config.systemd.services.openclaw-operator-token-init;
       executionGrantInit = project config.systemd.services.openclaw-execution-grant-key-init;
@@ -433,6 +470,31 @@ if (ownership.browser.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || !String(ownership.browser.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-browser-runtime")
   || ownership.browser.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
   throw new Error(`browser-runtime must execute from its read-only Nix closure: ${JSON.stringify(ownership.browser)}`);
+}
+if (!ownership.aiGraphicalSession.wantedBy?.includes("graphical-session.target")
+  || !ownership.aiGraphicalSession.partOf?.includes("graphical-session.target")
+  || !ownership.aiGraphicalSession.before?.includes("openclaw-session-manager.service")
+  || ownership.aiGraphicalSession.serviceConfig?.User != null
+  || !String(ownership.aiGraphicalSession.serviceConfig?.ExecStart ?? "").includes("/bin/weston --backend=headless --renderer=pixman --shell=kiosk --socket=nixsoma-ai-0")
+  || ownership.aiGraphicalSession.serviceConfig?.RuntimeDirectory !== "nixsoma-ai-graphical-session"
+  || ownership.aiGraphicalSession.serviceConfig?.RuntimeDirectoryMode !== "0700"
+  || ownership.aiGraphicalSession.serviceConfig?.UMask !== "0077"
+  || ownership.aiGraphicalSession.serviceConfig?.Slice !== "openclaw-session.slice"
+  || ownership.aiGraphicalSession.serviceConfig?.PrivateDevices !== true
+  || ownership.aiGraphicalSession.serviceConfig?.ProtectSystem !== "strict"
+  || ownership.aiGraphicalSession.serviceConfig?.ProtectHome !== true
+  || ownership.aiGraphicalSession.serviceConfig?.DevicePolicy !== "closed"
+  || JSON.stringify(ownership.aiGraphicalSession.serviceConfig?.RestrictAddressFamilies) !== JSON.stringify(["AF_UNIX"])) {
+  throw new Error(`AI graphical session must be an isolated user-owned headless Weston service: ${JSON.stringify(ownership.aiGraphicalSession)}`);
+}
+if (!ownership.session.wants?.includes("nixsoma-ai-graphical-session.service")
+  || !ownership.session.after?.includes("nixsoma-ai-graphical-session.service")
+  || ownership.session.environment?.OPENCLAW_AI_GRAPHICAL_SESSION_ENABLED !== "1"
+  || ownership.session.environment?.OPENCLAW_AI_GRAPHICAL_SESSION_MODE !== "nested_headless_wayland"
+  || ownership.session.environment?.OPENCLAW_AI_GRAPHICAL_SESSION_SOCKET_NAME !== "nixsoma-ai-0"
+  || ownership.session.environment?.OPENCLAW_AI_GRAPHICAL_SESSION_WIDTH !== "1280"
+  || ownership.session.environment?.OPENCLAW_AI_GRAPHICAL_SESSION_HEIGHT !== "720") {
+  throw new Error(`session-manager must observe the fixed AI graphical session identity: ${JSON.stringify(ownership.session)}`);
 }
 if (!ownership.browser.after?.includes("openclaw-session-manager.service")) {
   throw new Error(`browser runtime must retain same-scope session-manager ordering: ${JSON.stringify(ownership.browser.after)}`);
@@ -722,6 +784,8 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-recovery.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-microcompact.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-provider-handoff.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-standing-provider-advisory.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/standing-provider-advisory.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-plugin-refresh.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-plan-todo.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-execution.mjs"
@@ -756,7 +820,7 @@ EOF
     || -w "$core_server"
     || -e "$core_out/share/openclaw/services/openclaw-core/test"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 222 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 224 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -876,12 +940,13 @@ EOF
   session_manager_server="$session_manager_working_dir/src/server.mjs"
   if [[ "$session_manager_out" != /nix/store/*
     || ! -f "$session_manager_server"
+    || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-graphical-session-observer.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/trusted-work-view-sidecar.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/work-view-trust.mjs"
     || -w "$session_manager_server"
     || -e "$session_manager_out/share/openclaw/services/openclaw-session-manager/test"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
-    || "$(find "$session_manager_out" -type f | wc -l)" -ne 15 ]]; then
+    || "$(find "$session_manager_out" -type f | wc -l)" -ne 16 ]]; then
     echo "session-manager Nix closure is not exact and read-only: $session_manager_out" >&2
     exit 1
   fi
