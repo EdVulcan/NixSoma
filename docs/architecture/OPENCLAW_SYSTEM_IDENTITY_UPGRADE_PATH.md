@@ -324,9 +324,13 @@ baseline；资源观测、趋势告警和 system/user cgroup envelope 已随
 generation 已通过 systemd `LoadCredential` 接入 root-only DeepSeek key，并完成
 一次 request-hash/approval 绑定、只返回建议且不自动执行的真实调用；prompt、
 建议理由和 credential value 均未进入持久状态。不要把 hostd 扩展成任意
-systemd API，也不要重做已经完成的 provider transport。下一步建立有 token/
-速率预算、上下文 allowlist、本地 fallback 且无动作执行权的低风险 standing
-advisory policy，以减少每次建议都要求人工批准。
+systemd API，也不要重做已经完成的 provider transport。低风险 standing
+advisory policy 已在源码完成：它只接受认证操作者的固定确认请求，由 Core
+生成三个固定 unit 的布尔/枚举健康上下文，强制 required audit、single-flight、
+15 分钟 cooldown、每日 3 次/4096 token 保守预算和本地 fallback。provider
+建议仍需人工审阅，且不能自动创建 task/approval，不能执行命令、修复或主机
+变更。下一步只做物理机启用和一次非变更型真实调用证明，然后转向另一条
+白皮书能力主线。
 
 ---
 

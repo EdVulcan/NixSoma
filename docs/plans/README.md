@@ -91,8 +91,12 @@ generation `6dm12j7...` delivers the root-only API key through Core
 advisory call. Both slices and all assigned services remain active; health,
 restart-count, auth, failed-unit, and warning journal probes passed. Freeze the
 resource and provider-transport lanes. Do not synthesize memory pressure on the
-only physical host. Next implement a bounded standing advisory policy instead
-of opening another readiness phase or one-off call surface.
+only physical host. The bounded standing advisory policy is now complete in
+source and validated through the common capability runtime. It cannot accept a
+caller prompt/model/context, create a task or approval, execute a recommendation,
+or mutate the host. Its remaining proof is physical-host enablement plus one
+non-mutating real call; after that, select a distinct whitepaper capability
+instead of opening another readiness phase or provider-call surface.
 
 ## Completed Capability Evidence
 

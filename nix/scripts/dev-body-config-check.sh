@@ -120,6 +120,10 @@ const envNames = [
   "OPENCLAW_CLOUD_PROVIDER_MODEL",
   "OPENCLAW_CLOUD_PROVIDER_LIVE_EGRESS",
   "OPENCLAW_CLOUD_PROVIDER_API_KEY_FILE",
+  "OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_ENABLED",
+  "OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_MAX_CALLS_PER_DAY",
+  "OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_MAX_TOKENS_PER_DAY",
+  "OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_COOLDOWN_SECONDS",
   "OPENCLAW_EVENT_HUB_TOKEN_FILE",
   "OPENCLAW_EVENT_HUB_TOKEN_MAP_FILE",
   "OPENCLAW_EVENT_HUB_AUTH_REQUIRED",
@@ -152,6 +156,7 @@ requireIncludes("openclaw-body module", bodyModule, [
   "Restart = \"no\"",
   "ReadWritePaths = [ \"%t/openclaw-sidecars\" ]",
   "systemd.tmpfiles.rules",
+  "openclaw-core-state.json 0600",
   "openclaw-event-log-ownership-migration",
   "openclaw-execution-grant-key-init",
   "eventHubCredentialMapFile",
@@ -165,6 +170,7 @@ requireIncludes("openclaw-body module", bodyModule, [
   "browser-runtime-token",
   "browser-runtime-auth-token",
   "cloudProvider",
+  "standingAdvisory",
   "deepseek-api-key",
   "LoadCredential",
   "ExecStartPre = [ \"+${eventLogOwnershipMigration}\" ]",
@@ -303,6 +309,7 @@ if command -v nix >/dev/null 2>&1; then
           Type = unit.serviceConfig.Type or null;
           RemainAfterExit = unit.serviceConfig.RemainAfterExit or null;
           LoadCredential = unit.serviceConfig.LoadCredential or [ ];
+          UMask = unit.serviceConfig.UMask or null;
           RuntimeDirectory = unit.serviceConfig.RuntimeDirectory or null;
           RuntimeDirectoryMode = unit.serviceConfig.RuntimeDirectoryMode or null;
           AmbientCapabilities = unit.serviceConfig.AmbientCapabilities or [ ];
@@ -454,8 +461,13 @@ if (ownership.core.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_ENDPOINT !== "https://api.deepseek.com"
   || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_MODEL !== "deepseek-chat"
   || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_LIVE_EGRESS !== "0"
+  || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_ENABLED !== "0"
+  || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_MAX_CALLS_PER_DAY !== "3"
+  || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_MAX_TOKENS_PER_DAY !== "4096"
+  || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_COOLDOWN_SECONDS !== "900"
   || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_API_KEY_FILE != null
   || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_API_KEY != null
+  || ownership.core.serviceConfig?.UMask !== "0077"
   || JSON.stringify(ownership.core.serviceConfig?.LoadCredential ?? []) !== JSON.stringify(["operator-token:/var/lib/openclaw/operator-token", "execution-grant-private:/var/lib/openclaw/execution-grant-private.pem"])
   || !String(ownership.core.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
   || !String(ownership.core.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-core")

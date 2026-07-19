@@ -3,7 +3,11 @@ import assert from "node:assert/strict";
 
 import { createPlanBuilder } from "../src/plan-builder.mjs";
 
-function createPlanBuilderHarness({ acpxDraft }) {
+function createPlanBuilderHarness({
+  acpxDraft,
+  createStandingProviderAdvisoryImpl,
+  publishAuditEvent,
+} = {}) {
   const tasks = new Map();
   const approvals = new Map();
   const runtimeState = {};
@@ -55,6 +59,7 @@ function createPlanBuilderHarness({ acpxDraft }) {
       approvals,
       policyAuditLog: [],
       capabilityInvocationLog: [],
+      standingProviderAdvisoryState: {},
       MAX_CAPABILITY_INVOCATION_ENTRIES: 100,
       CAPABILITY_HEALTH_TIMEOUT_MS: 10,
       autonomyMode: "guardian",
@@ -89,11 +94,22 @@ function createPlanBuilderHarness({ acpxDraft }) {
       publishTaskApprovalIfPending: asyncNoop,
     },
     policyEvaluator: {
-      evaluatePolicyIntent: () => ({ decision: "require_approval", approved: false }),
-      recordPolicyDecision: noop,
-      isPolicyExecutionAllowed: (decision) => decision?.approved === true || decision?.decision === "audit_only",
+      evaluatePolicyIntent: (input) => ({
+        id: "policy-plan-builder-harness",
+        decision: input.approved === true ? "audit_only" : "require_approval",
+        domain: input.domain,
+        risk: input.risk,
+        reason: input.approved === true ? "approved_and_audited" : "approval_required",
+        approved: input.approved === true,
+        autonomyMode: "guardian",
+        autonomous: false,
+      }),
+      recordPolicyDecision: (decision) => decision,
+      isPolicyExecutionAllowed: (decision) => decision?.decision === "audit_only",
     },
     publishEvent: asyncNoop,
+    publishAuditEvent,
+    createStandingProviderAdvisoryImpl,
     host: "127.0.0.1",
     port: 4100,
   });
@@ -127,4 +143,46 @@ test("plan builder exposes ACPX/Codex wrapper draft builder for executor handler
       },
     },
   );
+});
+
+test("plan builder assembles standing advisory with required audit and persistent budget state", async () => {
+  const assembly = [];
+  const requiredAudit = async () => ({ ok: true });
+  const planBuilder = createPlanBuilderHarness({
+    acpxDraft: () => ({ ok: true }),
+    publishAuditEvent: requiredAudit,
+    createStandingProviderAdvisoryImpl: (deps) => {
+      assembly.push(deps);
+      return {
+        restoreState: () => ({ ok: true, registry: "openclaw-standing-provider-advisory-v0" }),
+        invoke: async () => ({
+          ok: true,
+          status: "local_fallback",
+          fallback: { reason: "standing_advisory_disabled" },
+          evidence: {
+            actionId: "review_current_todo",
+            budget: { callsUsed: 0, callsLimit: 3, tokensUsed: 0, tokensLimit: 4096 },
+          },
+          governance: { providerCalled: false },
+        }),
+      };
+    },
+  });
+
+  const result = await planBuilder.invokeCapability({
+    capabilityId: "sense.openclaw.system.standing_advisory",
+    params: { confirm: true },
+  });
+
+  assert.equal(assembly.length, 1);
+  assert.equal(assembly[0].publishAuditEvent, requiredAudit);
+  assert.equal(typeof assembly[0].fetchJson, "function");
+  assert.equal(typeof assembly[0].persistState, "function");
+  assert.equal(assembly[0].systemSenseUrl, "http://127.0.0.1:4106");
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.policy.domain, "cross_boundary");
+  assert.equal(result.response.invocation.authorization.registry, "openclaw-standing-capability-authorization-v0");
+  assert.equal(result.response.summary.status, "local_fallback");
+  assert.equal(planBuilder.restoreStandingProviderAdvisoryState().ok, true);
 });

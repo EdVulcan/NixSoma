@@ -98,6 +98,7 @@ function createHarness(overrides = {}) {
       createNativeDeclarativeEvolutionStagingTask: overrides.pluginReview?.createNativeDeclarativeEvolutionStagingTask,
     },
     policyEvaluator,
+    standingProviderAdvisory: overrides.standingProviderAdvisory,
     publishEvent: async (name, body) => {
       events.push({ name, body });
     },
@@ -137,6 +138,88 @@ test("capability runtime builds the local body registry with service health", as
   );
   assert.equal(runtime.capabilityByIntent("cloud.provider.send")?.id, "boundary.cross_domain.approval");
   assert.ok(calls.health.some((url) => url === "http://127.0.0.1:4106/health"));
+});
+
+test("capability runtime exposes a cross-boundary standing advisory descriptor", async () => {
+  const { runtime } = createHarness();
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find((item) => item.id === "sense.openclaw.system.standing_advisory");
+
+  assert.equal(capability?.kind, "sensor");
+  assert.deepEqual(capability?.domains, ["cross_boundary"]);
+  assert.equal(capability?.risk, "medium");
+  assert.equal(capability?.governance, "standing_authorization");
+});
+
+test("capability runtime rejects caller approval and arbitrary standing advisory input", async () => {
+  let invoked = 0;
+  const { runtime, state } = createHarness({
+    standingProviderAdvisory: {
+      invoke: async () => { invoked += 1; return { ok: true }; },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "sense.openclaw.system.standing_advisory",
+    approved: true,
+    params: { confirm: true, prompt: "caller-controlled prompt" },
+  });
+
+  assert.equal(result.statusCode, 400);
+  assert.equal(invoked, 0);
+  assert.equal(state.capabilityInvocationLog.length, 0);
+});
+
+test("capability runtime applies server standing authorization without a task or approval", async () => {
+  const transientReason = "transient-provider-reason";
+  const { runtime, state, events } = createHarness({
+    standingProviderAdvisory: {
+      invoke: async () => ({
+        ok: true,
+        status: "recommendation_returned",
+        recommendation: {
+          actionId: "review_current_todo",
+          reason: transientReason,
+          requiresOperatorReview: true,
+          createsTaskAutomatically: false,
+          createsApprovalAutomatically: false,
+          executesAutomatically: false,
+        },
+        evidence: {
+          contextContentHash: "a".repeat(64),
+          requestContentHash: "b".repeat(64),
+          responseContentHash: "c".repeat(64),
+          actionId: "review_current_todo",
+          budget: { callsUsed: 1, callsLimit: 3, tokensUsed: 1024, tokensLimit: 4096 },
+        },
+        governance: {
+          providerCalled: true,
+          createsTask: false,
+          createsApproval: false,
+          executesRecommendation: false,
+          mutatesHost: false,
+        },
+      }),
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "sense.openclaw.system.standing_advisory",
+    params: { confirm: true },
+  });
+
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.policy.domain, "cross_boundary");
+  assert.equal(result.response.policy.decision, "audit_only");
+  assert.equal(result.response.invocation.authorization.registry, "openclaw-standing-capability-authorization-v0");
+  assert.equal(result.response.invocation.authorization.approved, true);
+  assert.equal(result.response.invocation.request.taskId, null);
+  assert.equal(result.response.result.recommendation.reason, transientReason);
+  assert.equal(result.response.summary.actionId, "review_current_todo");
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes(transientReason), false);
+  assert.deepEqual(events.slice(-2).map((event) => event.name), ["policy.evaluated", "capability.invoked"]);
 });
 
 test("capability runtime generates a validated managed Nix candidate without host mutation", async () => {

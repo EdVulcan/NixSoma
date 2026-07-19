@@ -410,6 +410,10 @@ let
         OPENCLAW_CLOUD_PROVIDER_ENDPOINT = cfg.cloudProvider.endpoint;
         OPENCLAW_CLOUD_PROVIDER_MODEL = cfg.cloudProvider.model;
         OPENCLAW_CLOUD_PROVIDER_LIVE_EGRESS = if cfg.cloudProvider.liveEgress then "1" else "0";
+        OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_ENABLED = if cfg.cloudProvider.standingAdvisory.enable then "1" else "0";
+        OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_MAX_CALLS_PER_DAY = toString cfg.cloudProvider.standingAdvisory.maxCallsPerDay;
+        OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_MAX_TOKENS_PER_DAY = toString cfg.cloudProvider.standingAdvisory.maxTokensPerDay;
+        OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_COOLDOWN_SECONDS = toString cfg.cloudProvider.standingAdvisory.cooldownSeconds;
       } // optionalAttrs (spec.key == "core" && cfg.cloudProvider.enable && cfg.cloudProvider.apiKeyFile != null) {
         OPENCLAW_CLOUD_PROVIDER_API_KEY_FILE = "%d/deepseek-api-key";
       } // optionalAttrs (builtins.elem spec.key [ "screenAct" "systemSense" ]) {
@@ -426,6 +430,8 @@ let
       } // optionalAttrs (!userScope && cfg.user != null) {
         User = cfg.user;
         Group = cfg.group;
+      } // optionalAttrs (!userScope && spec.key == "core") {
+        UMask = "0077";
       } // optionalAttrs (credentialLoads != [ ]) {
         LoadCredential = credentialLoads;
       } // optionalAttrs (!userScope && spec.key == "systemSense") {
@@ -766,6 +772,24 @@ in
         default = false;
         description = "Enable the network side of the existing approval-bound provider egress gate.";
       };
+      standingAdvisory = {
+        enable = mkEnableOption "budgeted standing DeepSeek advice over server-generated fixed-unit health context";
+        maxCallsPerDay = mkOption {
+          type = types.ints.between 1 24;
+          default = 3;
+          description = "Maximum standing advisory provider calls reserved per UTC day.";
+        };
+        maxTokensPerDay = mkOption {
+          type = types.ints.between 1024 65536;
+          default = 4096;
+          description = "Maximum conservative standing advisory token budget reserved per UTC day.";
+        };
+        cooldownSeconds = mkOption {
+          type = types.ints.between 30 86400;
+          default = 900;
+          description = "Minimum interval between standing advisory provider calls.";
+        };
+      };
     };
 
     resourceControl = {
@@ -916,6 +940,11 @@ in
           || (cfg.cloudProvider.enable && cfg.cloudProvider.apiKeyFile != null);
         message = "services.openclaw.cloudProvider.liveEgress requires an enabled provider and apiKeyFile.";
       }
+      {
+        assertion = !cfg.cloudProvider.standingAdvisory.enable
+          || (cfg.cloudProvider.enable && cfg.cloudProvider.liveEgress && cfg.cloudProvider.apiKeyFile != null);
+        message = "services.openclaw.cloudProvider.standingAdvisory.enable requires enabled live egress and apiKeyFile.";
+      }
     ];
 
     users.groups = optionalAttrs (cfg.user != null) {
@@ -942,6 +971,7 @@ in
 
     systemd.tmpfiles.rules = [
       "d ${cfg.stateDir} 0750 ${owner} ${group} - -"
+      "z ${cfg.stateDir}/openclaw-core-state.json 0600 ${owner} ${group} - -"
       "d ${cfg.logDir} 0750 ${owner} ${group} - -"
     ];
 

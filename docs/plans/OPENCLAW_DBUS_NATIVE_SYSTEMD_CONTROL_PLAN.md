@@ -459,7 +459,11 @@ observed. No memory pressure was synthesized.
 Freeze the cgroup implementation. Do not deliberately consume memory or force
 OOM on the sole physical host. Secure DeepSeek credential provisioning and one
 explicitly approved advisory call are now complete in generation `6dm12j7...`.
-Freeze provider transport as well. The next real capability is a budgeted,
-allowlisted standing advisory policy with no automatic task, approval, command,
-repair, or host-mutation authority; do not add another resource-envelope or
+Freeze provider transport as well. The budgeted, allowlisted standing advisory
+is complete in source through the common capability runtime. It uses only the
+three fixed health targets, required pre-egress audit, single flight, cooldown,
+daily call/token budgets, structured transient output, and local fallback. It
+has no automatic task, approval, command, repair, recommendation-execution, or
+host-mutation authority. The remaining gate is physical-host enablement and one
+non-mutating real invocation; do not add another resource-envelope or
 provider-readiness wrapper.

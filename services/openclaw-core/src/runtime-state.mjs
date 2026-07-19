@@ -19,6 +19,7 @@ const nativeEngineeringPlanTodoWorkbenchRecords = new Map();
 const acpxBridgeSessionRecords = new Map();
 const experienceMemoryRecords = new Map();
 const fixedUnitIncidentSchedulerState = {};
+const standingProviderAdvisoryState = {};
 const runtimeState = {
   status: "idle",
   currentTaskId: null,
@@ -164,6 +165,7 @@ function updateRuntimeState(patch) {
     acpxBridgeSessionRecords: [...acpxBridgeSessionRecords.values()],
     experienceMemoryRecords: [...experienceMemoryRecords.values()],
     fixedUnitIncidentSchedulerState,
+    standingProviderAdvisoryState,
   }));
 
   // L231-282
@@ -259,6 +261,9 @@ function loadPersistentState() {
     if (data?.fixedUnitIncidentSchedulerState && typeof data.fixedUnitIncidentSchedulerState === "object") {
       Object.assign(fixedUnitIncidentSchedulerState, data.fixedUnitIncidentSchedulerState);
     }
+    if (data?.standingProviderAdvisoryState && typeof data.standingProviderAdvisoryState === "object") {
+      Object.assign(standingProviderAdvisoryState, data.standingProviderAdvisoryState);
+    }
   } catch (error) {
     console.error("Failed to load persisted core state:", error);
   }
@@ -269,7 +274,7 @@ function getCurrentTask() {
 }
 
   return {
-    tasks, approvals, runtimeState, policyAuditLog, capabilityInvocationLog, nativeEngineeringLspLifecycleRecords, nativeEngineeringPlanTodoWorkbenchRecords, acpxBridgeSessionRecords, experienceMemoryRecords, fixedUnitIncidentSchedulerState,
+    tasks, approvals, runtimeState, policyAuditLog, capabilityInvocationLog, nativeEngineeringLspLifecycleRecords, nativeEngineeringPlanTodoWorkbenchRecords, acpxBridgeSessionRecords, experienceMemoryRecords, fixedUnitIncidentSchedulerState, standingProviderAdvisoryState,
     ACTIVE_TASK_STATUSES, MAX_TASK_ENTRIES, MAX_PHASE_HISTORY_ENTRIES,
     MAX_POLICY_AUDIT_ENTRIES, MAX_APPROVAL_ITEMS, MAX_CAPABILITY_INVOCATION_ENTRIES,
     MAX_NATIVE_ENGINEERING_LSP_LIFECYCLE_RECORDS, MAX_NATIVE_ENGINEERING_PLAN_TODO_WORKBENCH_RECORDS, MAX_ACPX_BRIDGE_SESSION_RECORDS, MAX_EXPERIENCE_MEMORY_RECORDS,

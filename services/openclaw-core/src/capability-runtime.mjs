@@ -26,6 +26,7 @@ import { createBrowserActionCapabilityHandlers } from "./capability-runtime-brow
 import { createScreenActionCapabilityHandlers } from "./capability-runtime-screen-actions.mjs";
 import { createDeclarativeEvolutionCapabilityHandlers } from "./capability-runtime-declarative-evolution.mjs";
 import { createSystemdIncidentObservationCapabilityHandlers } from "./capability-runtime-systemd-incident-observation.mjs";
+import { createStandingProviderAdvisoryCapabilityHandlers } from "./capability-runtime-standing-provider-advisory.mjs";
 import {
   abortCapabilityExecutionReservation,
   commitCapabilityExecutionReservation,
@@ -52,6 +53,7 @@ export function createCapabilityRuntime(deps) {
     buildExperienceMemoryReadModel = () => null,
     pluginRuntime = {},
     providerRuntime = {},
+    standingProviderAdvisory,
     declarativeEvolution = {},
     workspaceOps = {},
     serialiseTask,
@@ -217,6 +219,9 @@ export function createCapabilityRuntime(deps) {
     persistState,
     publishEvent,
     now,
+  });
+  const standingProviderAdvisoryHandlers = createStandingProviderAdvisoryCapabilityHandlers({
+    standingAdvisory: standingProviderAdvisory,
   });
 
   function baseCapabilities() {
@@ -385,6 +390,28 @@ export function createCapabilityRuntime(deps) {
 
   function buildCapabilityPolicyInput(capability, request) {
     const intent = capabilityRequestIntent(capability, request);
+    if (capability.id === "sense.openclaw.system.standing_advisory") {
+      const approved = request.serverApproval?.registry === "openclaw-standing-capability-authorization-v0"
+        && request.serverApproval.approved === true;
+      return {
+        type: "capability_invoke",
+        taskId: null,
+        intent,
+        domain: "cross_boundary",
+        risk: capability.risk,
+        requiresApproval: false,
+        approved,
+        audit: true,
+        policy: {
+          intent,
+          domain: "cross_boundary",
+          risk: capability.risk,
+          requiresApproval: false,
+          approved,
+          audit: true,
+        },
+      };
+    }
     const preferredDomain = capability.domains?.includes("cross_boundary")
       && !capability.domains?.includes("body_internal")
       ? "cross_boundary"
@@ -425,6 +452,10 @@ export function createCapabilityRuntime(deps) {
   }
 
   async function dispatchCapabilityBackend(capability, request) {
+    const standingProviderAdvisory = await standingProviderAdvisoryHandlers.callBackend(capability, request);
+    if (standingProviderAdvisory.handled) {
+      return standingProviderAdvisory.result;
+    }
     const engineeringToolSurface = engineeringToolSurfaceHandlers.callBackend(capability, request);
     if (engineeringToolSurface.handled) {
       return engineeringToolSurface.result;
@@ -695,6 +726,10 @@ export function createCapabilityRuntime(deps) {
   }
 
   function summariseCapabilityInvocationResult(capability, result) {
+    const standingProviderAdvisorySummary = standingProviderAdvisoryHandlers.summariseResult(capability, result);
+    if (standingProviderAdvisorySummary) {
+      return standingProviderAdvisorySummary;
+    }
     const engineeringToolSurfaceSummary = engineeringToolSurfaceHandlers.summariseResult(capability, result);
     if (engineeringToolSurfaceSummary) {
       return engineeringToolSurfaceSummary;
@@ -1098,7 +1133,7 @@ export function createCapabilityRuntime(deps) {
       };
     }
 
-    const serverApproval = validateCapabilityExecutionApproval({
+    let serverApproval = validateCapabilityExecutionApproval({
       capability,
       request,
       tasks,
@@ -1108,8 +1143,24 @@ export function createCapabilityRuntime(deps) {
       createId,
       reservationTtlMs,
     });
+    const standingAuthorization = standingProviderAdvisoryHandlers.authorizeRequest(capability, request, body);
+    if (standingAuthorization.handled) {
+      serverApproval = standingAuthorization.authorization;
+    }
     request.approved = serverApproval.approved;
     request.serverApproval = serverApproval;
+
+    const standingProviderAdvisoryValidationError = standingProviderAdvisoryHandlers.validateRequest(
+      capability,
+      request,
+      body,
+    );
+    if (standingProviderAdvisoryValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: standingProviderAdvisoryValidationError },
+      };
+    }
 
     const engineeringWorkViewValidationError = engineeringWorkViewHandlers.validateRequest(capability, request);
     if (engineeringWorkViewValidationError) {

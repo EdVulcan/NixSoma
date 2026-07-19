@@ -1757,6 +1757,36 @@ health oracle are proven locally; physical activation remains deferred until a
 separate disposable mutation environment is provisioned and explicitly
 authorized.
 
+## Completed Bounded Standing Provider Advisory
+
+The first reusable low-frequency AI advisory path is complete in source through
+`sense.openclaw.system.standing_advisory`. The authenticated operator request is
+fixed to `params.confirm=true`; caller task, approval, prompt, model, endpoint,
+credential reference, policy override, and context input are rejected. Core
+generates only boolean/enum health for the three fixed hostd targets and excludes
+URLs, errors, journal messages, commands, paths, credentials, and arbitrary
+caller content.
+
+The server issues the narrow standing authorization while preserving the
+`cross_boundary` policy domain. A required audit must succeed before a
+conservative budget reservation is synchronously persisted and before the
+existing DeepSeek sender can contact the endpoint. Single flight, a 15-minute
+cooldown, and default UTC-day budgets of three calls and 4096 conservatively
+charged tokens bound repeated use. Disabled, rate-limited, audit-blocked,
+context-failed, provider-failed, and contract-invalid requests return a local
+fallback without widening authority.
+
+`engineering_recommendation_v0` remains the only provider response contract.
+The recommendation reason is transient; persistent state and capability logs
+retain only compact hashes, counters, usage, status, and action id. The path
+creates no task or approval, executes no recommendation, invokes no hostd owner,
+and performs no command, repair, file, UI, generation, or rollback mutation.
+Core state writes are now `0600`, the system unit uses `UMask=0077`, and tmpfiles
+repairs an existing state file mode during activation. Focused, production-shape,
+Nix body-config, typecheck, and all 909 workspace tests pass. Physical-host
+enablement and one real non-mutating call are the remaining deployment proof;
+after that, freeze this lane.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

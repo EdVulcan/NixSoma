@@ -130,6 +130,7 @@ const planBuilder = createPlanBuilder({
   approvalEngine,
   policyEvaluator,
   publishEvent,
+  publishAuditEvent,
   host,
   port,
   listCommandTranscriptRecords: (options) => executor?.listCommandTranscriptRecords(options) ?? [],
@@ -278,6 +279,10 @@ process.once("SIGTERM", shutdown);
 process.once("SIGINT", shutdown);
 
 state.loadPersistentState();
+const standingProviderAdvisoryRestore = planBuilder.restoreStandingProviderAdvisoryState();
+if (!standingProviderAdvisoryRestore.ok) {
+  console.warn(`Standing provider advisory state was reset: ${standingProviderAdvisoryRestore.reason}`);
+}
 const nativePluginRuntimeRestore = planBuilder.restoreNativePluginRuntimeState();
 if (!nativePluginRuntimeRestore.ok && nativePluginRuntimeRestore.restored === false) {
   console.warn(`Native plugin runtime generation state was reset: ${nativePluginRuntimeRestore.reason}`);

@@ -13,13 +13,14 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current `main` through the Level 3 fixed-unit incident loop, resource-pressure observation, and declarative cgroup envelope | Implemented; commit history is authoritative |
-| Local validation | 893 workspace tests and typecheck pass; body-config, provider flake check, native inventory, and event-audit integration pass; 811 registry entries pass | Validated |
+| Capability source | Current `main` through the Level 3 fixed-unit incident loop, resource-pressure observation, declarative cgroup envelope, and bounded standing provider advisory | Implemented; commit history is authoritative |
+| Local validation | 909 workspace tests and typecheck pass; body-config, provider flake check, native inventory, and event-audit integration pass; 811 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/6dm12j7y7mj7chwaqq13nkwgd0v91v8c-nixos-system-nixos-26.05.4808.569d57850992` | Resource envelopes and governed DeepSeek sender deployed and probed 2026-07-19 |
 | Previous generation | `/nix/store/j5zj2b2z9yf3d7wkmmbwy9qf5m3dv1bj-nixos-system-nixos-26.05.4808.569d57850992` | Superseded without rollback or reboot |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
 | Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; one 252-token request-bound advisory completed | Deployed and proven without prompt, reason, or credential persistence |
+| Standing advisory source | Fixed three-unit context, required pre-egress audit, one-call single flight, 15-minute cooldown, 3-call/4096-token daily defaults, structured transient recommendation, and local fallback | Source-validated; physical-host enablement and one real call remain pending |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -168,8 +169,15 @@ now loads the separately provisioned root-only key through systemd
 call persisted only hashes, usage, and compact recommendation evidence; prompt,
 reason, and credential content remained transient. A deliberate memory-pressure
 test on the sole physical host remains out of scope. Freeze both the resource
-and provider-transport lanes. Next design the smallest budgeted standing
-advisory policy that cannot create approvals or execute actions automatically.
+and provider-transport lanes. The bounded standing advisory is now complete in
+source through `sense.openclaw.system.standing_advisory`: only an authenticated
+operator can request it, Core supplies the fixed three-unit context, and caller
+prompt/model/context/approval input is rejected. Required audit, single flight,
+cooldown, daily call/token budgets, local fallback, and transient structured
+recommendation are covered by the 909-test baseline. It creates no task or
+approval and executes no command, repair, recommendation, or host mutation.
+Physical-host enablement and one non-mutating real invocation remain the next
+deployment proof.
 
 ## Progress Estimate
 

@@ -36,6 +36,18 @@ export function buildBaseCapabilities({
       description: "Read host identity, service health, resources, network, and alerts.",
     },
     {
+      id: "sense.openclaw.system.standing_advisory",
+      name: "Standing System Advisory",
+      kind: "sensor",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/capabilities/invoke`,
+      intents: ["openclaw.system.standing_advisory"],
+      domains: ["cross_boundary"],
+      risk: "medium",
+      governance: "standing_authorization",
+      description: "Request one audited, budgeted provider recommendation over server-generated fixed-unit health context without creating or executing tasks, approvals, repairs, commands, or host mutations.",
+    },
+    {
       id: "sense.filesystem.read",
       name: "Filesystem Read Sense",
       kind: "sensor",

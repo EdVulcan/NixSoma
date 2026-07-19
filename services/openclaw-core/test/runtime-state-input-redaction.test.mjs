@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -166,4 +166,35 @@ test("core state persists and restores fixed-unit incident scheduler dedupe stat
     restored.fixedUnitIncidentSchedulerState.units["openclaw-system-heal.service"].repairDispatchFailure.code,
     "automatic_repair_dispatch_failed",
   );
+});
+
+test("core state persists standing advisory budget evidence with owner-only permissions", (t) => {
+  const root = mkdtempSync(path.join(tmpdir(), "openclaw-core-standing-advisory-state-"));
+  const stateFilePath = path.join(root, "state.json");
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+
+  const runtime = createRuntimeState({ stateFilePath, getTaskById: () => null });
+  Object.assign(runtime.standingProviderAdvisoryState, {
+    registry: "openclaw-standing-provider-advisory-v0",
+    day: "2026-07-19",
+    callsUsed: 1,
+    tokensUsed: 1024,
+    lastContextHash: "a".repeat(64),
+    lastRequestHash: "b".repeat(64),
+    lastResponseHash: "c".repeat(64),
+    lastActionId: "review_current_todo",
+    lastResult: "recommendation_returned",
+    lastUsageTokens: 130,
+  });
+  runtime.persistState.flush();
+
+  assert.equal(statSync(stateFilePath).mode & 0o777, 0o600);
+  const persistedText = readFileSync(stateFilePath, "utf8");
+  assert.equal(persistedText.includes("prompt"), false);
+  assert.equal(persistedText.includes("recommendationReason"), false);
+
+  const restored = createRuntimeState({ stateFilePath, getTaskById: () => null });
+  restored.loadPersistentState();
+  assert.equal(restored.standingProviderAdvisoryState.callsUsed, 1);
+  assert.equal(restored.standingProviderAdvisoryState.lastActionId, "review_current_todo");
 });

@@ -24,6 +24,7 @@ import { createRuntimeProfiler } from "./runtime-diagnostics.mjs";
 import { createRulePlanBuilders } from "./rule-plan-builders.mjs";
 import { createSystemdTaskBuilders } from "./systemd-task-builders.mjs";
 import { createFixedUnitIncidentTriageBuilders } from "./fixed-unit-incident-triage.mjs";
+import { createStandingProviderAdvisory } from "./standing-provider-advisory.mjs";
 
 export function createPlanBuilder(deps) {
   const profiler = createRuntimeProfiler("plan-builder");
@@ -36,6 +37,8 @@ export function createPlanBuilder(deps) {
     approvalEngine,
     policyEvaluator,
     publishEvent,
+    publishAuditEvent = async () => ({ ok: true }),
+    createStandingProviderAdvisoryImpl = createStandingProviderAdvisory,
     host,
     port,
     listCommandTranscriptRecords = () => [],
@@ -124,6 +127,13 @@ export function createPlanBuilder(deps) {
   let nativeDeclarativeEvolutionTaskBuilders = null;
   let nativeDeclarativeEvolutionActivationDecisionBuilders = null;
   let nativeDeclarativeEvolutionActivationBuilders = null;
+  const standingProviderAdvisory = createStandingProviderAdvisoryImpl({
+    state: state.standingProviderAdvisoryState,
+    fetchJson,
+    systemSenseUrl,
+    publishAuditEvent,
+    persistState,
+  });
   const capabilityRuntime = createCapabilityRuntime({
     host,
     port,
@@ -136,6 +146,7 @@ export function createPlanBuilder(deps) {
     serialiseApproval,
     policyEvaluator,
     publishEvent,
+    standingProviderAdvisory,
     listCommandTranscriptRecords,
     listFilesystemChangeRecords,
     buildExperienceMemoryReadModel,
@@ -213,6 +224,14 @@ export function createPlanBuilder(deps) {
 
   function restoreNativePluginRuntimeState() {
     return nativePluginRegistryStore.restore(runtimeState.nativePluginRegistryGeneration);
+  }
+
+  function restoreStandingProviderAdvisoryState() {
+    return standingProviderAdvisory.restoreState?.() ?? {
+      ok: false,
+      registry: "openclaw-standing-provider-advisory-v0",
+      reason: "standing_advisory_restore_unavailable",
+    };
   }
 
   nativePluginPlanBuilders = createNativePluginPlanBuilders({
@@ -799,6 +818,7 @@ function compactCloudConsciousnessEvidenceRef(evidence) {
 
   return {
     restoreNativePluginRuntimeState,
+    restoreStandingProviderAdvisoryState,
     refreshNativePluginRuntimeRegistry,
     buildNativePluginCapabilityInvokePlan,
     buildNativePluginRuntimePreflight,
