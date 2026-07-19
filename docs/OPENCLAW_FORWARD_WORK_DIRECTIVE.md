@@ -1874,6 +1874,38 @@ bounded read-only compositor-native frame for the AI-owned output, reusing the
 existing visual-frame limits and Observer path without adding input, projection,
 desktop-wide capture, provider authority, or host mutation.
 
+## Completed Level 4 Compositor-Native Frame
+
+The third vertical Level 4 slice is complete and deployed. Weston remains
+fail-closed for ordinary clients. A small loaded authority module watches one
+fixed request inside its current-user `0700` runtime and uses Weston's own
+`wet_client_start` identity to authorize only the exact Nix
+`weston-screenshooter` child. `--debug`, PipeWire, portals, parent Wayland,
+arbitrary helper paths, and caller-supplied capture arguments are not used.
+
+Session-manager owns the bounded capture lifecycle: single flight, fixed socket
+and runtime identity, 1.5 second timeout, trusted owner/mode/inode checks,
+1280x720 PNG parsing, the existing 256 KiB visual-frame ceiling, hash binding,
+and immediate deletion from `/run/user`. Only the explicit capture response
+contains the transient data URL. Work-view state, screen-sense, events, and
+Observer receive metadata with `dataExposed=false`; Firefox's systemd mount
+namespace cannot read the capture directory.
+
+All 928 workspace tests, typecheck, the native module build, body-config/store
+closure validation, and `dev-ai-compositor-frame-check.sh` pass. Physical
+generation `v3d2plnz...` produced a real 1280x720 PNG in 73 ms. The image
+contained Firefox chrome and had a different size, media type, dimensions, and
+hash from the existing Puppeteer 960x540 page frame. The compositor,
+session-manager, and browser-runtime remain active with zero restarts; the
+transient directory is empty after each response, failed-unit checks are empty,
+and warning journals are clear.
+
+Freeze read-only capture variants. The next real Level 4 capability is narrowly
+bounded compositor-native input for `nixsoma-ai-0`, bound to a current native
+frame and the existing work-view authority. It must not target GNOME, expose an
+arbitrary input device, create desktop-wide capture, add root/provider/host
+mutation authority, or reopen the completed browser action lane.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

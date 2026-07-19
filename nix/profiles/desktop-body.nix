@@ -19,6 +19,7 @@
     resourceControl.enable = true;
     aiGraphicalSession.enable = true;
     aiGraphicalSession.attachBrowser = true;
+    aiGraphicalSession.captureOutput = true;
     cloudProvider.enable = true;
     trustedSidecarUserUnit.enable = true;
     componentOwnership.user = [

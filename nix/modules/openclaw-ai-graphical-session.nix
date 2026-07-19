@@ -3,17 +3,58 @@
 let
   cfg = config.services.openclaw;
   sessionCfg = cfg.aiGraphicalSession;
-  inherit (lib) mkEnableOption mkIf mkOption optionalAttrs types;
+  inherit (lib) mkEnableOption mkIf mkOption optional optionalAttrs types;
   unitName = "nixsoma-ai-graphical-session";
   runtimeDirectory = unitName;
   socketName = "nixsoma-ai-0";
+  captureDirectory = "capture";
+  captureAuthorityPackage = pkgs.callPackage ../packages/nixsoma-weston-frame-auth.nix {
+    weston = sessionCfg.package;
+  };
+  westonArguments = [
+    "--backend=headless"
+    "--renderer=pixman"
+    "--shell=kiosk"
+    "--socket=${socketName}"
+    "--width=${toString sessionCfg.width}"
+    "--height=${toString sessionCfg.height}"
+    "--idle-time=0"
+    "--no-config"
+  ] ++ optional sessionCfg.captureOutput
+    "--modules=${captureAuthorityPackage}/lib/weston/nixsoma-weston-frame-auth.so";
+  prepareScript = pkgs.writeShellScript "nixsoma-ai-graphical-session-prepare" ''
+    set -euo pipefail
+    runtime_base="''${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}"
+    runtime_dir="$runtime_base/${runtimeDirectory}"
+    capture_dir="$runtime_dir/${captureDirectory}"
+    ${pkgs.coreutils}/bin/rm -f \
+      "$runtime_dir/${socketName}" \
+      "$runtime_dir/${socketName}.lock" \
+      "$capture_dir/request" \
+      "$capture_dir"/wayland-screenshot-*.png
+    ${pkgs.coreutils}/bin/install -d -m 0700 "$capture_dir"
+  '';
   cleanupScript = pkgs.writeShellScript "nixsoma-ai-graphical-session-cleanup" ''
     set -euo pipefail
     runtime_base="''${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}"
     runtime_dir="$runtime_base/${runtimeDirectory}"
+    capture_dir="$runtime_dir/${captureDirectory}"
     ${pkgs.coreutils}/bin/rm -f \
       "$runtime_dir/${socketName}" \
-      "$runtime_dir/${socketName}.lock"
+      "$runtime_dir/${socketName}.lock" \
+      "$capture_dir/request" \
+      "$capture_dir"/wayland-screenshot-*.png
+  '';
+  launchScript = pkgs.writeShellScript "nixsoma-ai-graphical-session-launch" ''
+    set -euo pipefail
+    runtime_base="''${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}"
+    runtime_dir="$runtime_base/${runtimeDirectory}"
+    cd "$runtime_dir/${captureDirectory}"
+    exec ${pkgs.coreutils}/bin/env \
+      XDG_RUNTIME_DIR="$runtime_dir" \
+      ${sessionCfg.package}/bin/weston \
+      --log="$runtime_dir/weston.log" \
+      ${lib.concatStringsSep " \\\n      " westonArguments}
   '';
 in
 {
@@ -38,6 +79,11 @@ in
       type = types.bool;
       default = false;
       description = "Launch the existing AI-owned Firefox inside the isolated Wayland session.";
+    };
+    captureOutput = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Allow bounded read-only capture of the isolated Weston output.";
     };
   };
 
@@ -71,21 +117,8 @@ in
       };
       serviceConfig = {
         Type = "simple";
-        ExecStartPre = cleanupScript;
-        ExecStart = lib.concatStringsSep " " [
-          "${pkgs.coreutils}/bin/env"
-          "XDG_RUNTIME_DIR=%t/${runtimeDirectory}"
-          "${sessionCfg.package}/bin/weston"
-          "--backend=headless"
-          "--renderer=pixman"
-          "--shell=kiosk"
-          "--socket=${socketName}"
-          "--width=${toString sessionCfg.width}"
-          "--height=${toString sessionCfg.height}"
-          "--idle-time=0"
-          "--no-config"
-          "--log=%t/${runtimeDirectory}/weston.log"
-        ];
+        ExecStartPre = prepareScript;
+        ExecStart = launchScript;
         ExecStopPost = cleanupScript;
         Restart = "on-failure";
         RestartSec = "2s";
@@ -98,6 +131,7 @@ in
           "WAYLAND_DISPLAY"
           "WAYLAND_SOCKET"
           "DBUS_SESSION_BUS_ADDRESS"
+          "XDG_PICTURES_DIR"
         ];
         Slice = "openclaw-session.slice";
         NoNewPrivileges = true;
@@ -122,6 +156,10 @@ in
         OPENCLAW_AI_GRAPHICAL_SESSION_SOCKET_NAME = socketName;
         OPENCLAW_AI_GRAPHICAL_SESSION_WIDTH = toString sessionCfg.width;
         OPENCLAW_AI_GRAPHICAL_SESSION_HEIGHT = toString sessionCfg.height;
+        OPENCLAW_AI_COMPOSITOR_CAPTURE_ENABLED = if sessionCfg.captureOutput then "1" else "0";
+        OPENCLAW_AI_COMPOSITOR_CAPTURE_DIRECTORY = captureDirectory;
+        OPENCLAW_AI_COMPOSITOR_CAPTURE_TIMEOUT_MS = "1500";
+        OPENCLAW_AI_COMPOSITOR_CAPTURE_POLL_MS = "20";
       };
     } // optionalAttrs cfg.resourceControl.enable {
       serviceConfig.Slice = "openclaw-session.slice";
@@ -142,6 +180,8 @@ in
         "WAYLAND_SOCKET"
         "DBUS_SESSION_BUS_ADDRESS"
       ];
+      serviceConfig.InaccessiblePaths = optional sessionCfg.captureOutput
+        "-%t/${runtimeDirectory}/${captureDirectory}";
     };
   };
 }

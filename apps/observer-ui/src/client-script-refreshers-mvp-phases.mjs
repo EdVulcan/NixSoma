@@ -292,6 +292,7 @@ async function refreshPhase3BackgroundWorkView() {
       "Helper Runtime: " + (helperRuntime.status ?? "unknown") + " owner=" + (helperRuntime.owner ?? "unknown") + " lease=" + (helperRuntime.leaseId ?? "none") + " browserLease=" + (helperRuntime.browserLeaseId ?? "none") + " matched=" + Boolean(helperRuntime.leaseMatched),
       "Helper Runtime Boundary: externalProcess=" + Boolean(helperRuntime.externalProcessStarted) + " root=" + Boolean(helperRuntime.rootRequired) + " desktopWide=" + Boolean(helperRuntime.desktopWideCapture),
       "AI Graphical Session: " + (aiGraphicalSession.status ?? "unknown") + " ready=" + Boolean(aiGraphicalSession.ready) + " socket=" + (aiGraphicalSession.socket?.name ?? "none") + " parentDisplay=" + Boolean(aiGraphicalSession.boundary?.parentDisplayConnected) + " input=" + Boolean(aiGraphicalSession.boundary?.inputAuthority),
+      "AI Compositor Frame: available=" + Boolean(aiGraphicalSession.compositorFrame?.available) + " native=" + Boolean(aiGraphicalSession.boundary?.compositorNativeCapture) + " pixels=" + Boolean(aiGraphicalSession.boundary?.readsPixels) + " desktopWide=" + Boolean(aiGraphicalSession.boundary?.desktopWideCapture) + " dataExposed=" + Boolean(aiGraphicalSession.compositorFrame?.dataExposed),
       "Registry: " + (data.registry ?? "openclaw-phase-3-background-work-view-v0"),
       "Mode: " + (data.mode ?? "unknown") + " status=" + (data.status ?? "unknown"),
       "Ready: " + Boolean(summary.ready) + " checks=" + (summary.passed ?? 0) + "/" + (summary.total ?? 0),

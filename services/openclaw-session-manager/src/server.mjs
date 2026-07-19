@@ -8,7 +8,10 @@ import { createTrustedWorkViewSidecarRecoveryStore } from "./trusted-work-view-s
 import {
   createAiGraphicalSessionObserver,
   projectAiGraphicalSessionBrowserAttachment,
+  projectAiGraphicalSessionCompositorFrame,
 } from "./ai-graphical-session-observer.mjs";
+import { createAiCompositorFrameCapture } from "./ai-compositor-frame-capture.mjs";
+import { createAiCompositorFrameRoute } from "./ai-compositor-frame-route.mjs";
 import { createServiceCredentialHeaders, readServiceCredential } from "../../../packages/shared-utils/src/service-credentials.mjs";
 
 const host = process.env.OPENCLAW_SESSION_MANAGER_HOST ?? "127.0.0.1";
@@ -26,6 +29,7 @@ const defaultWorkViewUrl = process.env.OPENCLAW_WORK_VIEW_URL ?? "https://exampl
 const stateFilePath = process.env.OPENCLAW_SESSION_MANAGER_STATE_FILE ?? `/tmp/openclaw-session-manager-${port}.json`;
 const trustedWorkViewHelperRuntime = createTrustedWorkViewHelperRuntime();
 const observeAiGraphicalSession = createAiGraphicalSessionObserver();
+const aiCompositorFrameCapture = createAiCompositorFrameCapture();
 
 const sessionState = {
   sessionId: null,
@@ -119,9 +123,12 @@ function serialiseWorkViewState() {
     externalProcessStarted: sidecar.running,
     sidecar,
   };
-  const aiGraphicalSession = projectAiGraphicalSessionBrowserAttachment(
-    observeAiGraphicalSession(),
-    workViewState.browserGraphicalSession,
+  const aiGraphicalSession = projectAiGraphicalSessionCompositorFrame(
+    projectAiGraphicalSessionBrowserAttachment(
+      observeAiGraphicalSession(),
+      workViewState.browserGraphicalSession,
+    ),
+    aiCompositorFrameCapture.snapshot(),
   );
   const workView = {
     ...workViewState,
@@ -215,6 +222,14 @@ function browserRuntimeHeaders(extraHeaders = {}) {
 }
 
 const publishEvent = createEventPublisher(eventHubUrl, "openclaw-session-manager");
+const handleAiCompositorFrameRoute = createAiCompositorFrameRoute({
+  capture: aiCompositorFrameCapture,
+  observeGraphicalSession: observeAiGraphicalSession,
+  projectGraphicalSession: projectAiGraphicalSessionCompositorFrame,
+  publishEvent,
+  createEventName,
+  sendJson,
+});
 
 
 async function ensureBrowserWorkView(url = workViewState.entryUrl || defaultWorkViewUrl) {
@@ -487,7 +502,10 @@ const server = http.createServer(async (req, res) => {
       browserRuntimeUrl,
       startDelayMs,
       defaultWorkViewUrl,
-      aiGraphicalSession: observeAiGraphicalSession(),
+      aiGraphicalSession: projectAiGraphicalSessionCompositorFrame(
+        observeAiGraphicalSession(),
+        aiCompositorFrameCapture.snapshot(),
+      ),
     });
     return;
   }
@@ -503,6 +521,8 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, buildStateResponse());
     return;
   }
+
+  if (await handleAiCompositorFrameRoute(req, res, requestUrl)) return;
 
   if (req.method === "POST" && requestUrl.pathname === "/session/start") {
     try {

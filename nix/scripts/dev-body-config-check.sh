@@ -231,7 +231,12 @@ requireIncludes("AI graphical session module", aiGraphicalSessionModule, [
   "--renderer=pixman",
   "--shell=kiosk",
   "--socket=${socketName}",
-  "XDG_RUNTIME_DIR=%t/${runtimeDirectory}",
+  "XDG_RUNTIME_DIR=\"$runtime_dir\"",
+  "--log=\"$runtime_dir/weston.log\"",
+  "nixsoma-weston-frame-auth.so",
+  "OPENCLAW_AI_COMPOSITOR_CAPTURE_ENABLED",
+  "OPENCLAW_AI_COMPOSITOR_CAPTURE_DIRECTORY",
+  "InaccessiblePaths",
   "RuntimeDirectoryMode = \"0700\"",
   "UMask = \"0077\"",
   "UnsetEnvironment",
@@ -243,6 +248,9 @@ requireIncludes("AI graphical session module", aiGraphicalSessionModule, [
   "OPENCLAW_AI_GRAPHICAL_SESSION_ENABLED",
   ...aiGraphicalSessionEnvNames,
 ]);
+if (aiGraphicalSessionModule.includes("--log=%t/")) {
+  throw new Error("AI graphical session launch script must not retain an unexpanded systemd runtime specifier.");
+}
 
 for (const legacyPath of [
   "nix/modules/openclaw-core.nix",
@@ -359,6 +367,7 @@ if command -v nix >/dev/null 2>&1; then
           ProtectHome = unit.serviceConfig.ProtectHome or null;
           DevicePolicy = unit.serviceConfig.DevicePolicy or null;
           RestrictAddressFamilies = unit.serviceConfig.RestrictAddressFamilies or [ ];
+          InaccessiblePaths = unit.serviceConfig.InaccessiblePaths or [ ];
           AmbientCapabilities = unit.serviceConfig.AmbientCapabilities or [ ];
           CapabilityBoundingSet = unit.serviceConfig.CapabilityBoundingSet or [ ];
           LimitMEMLOCK = unit.serviceConfig.LimitMEMLOCK or null;
@@ -478,6 +487,7 @@ if (ownership.browser.environment?.OPENCLAW_BROWSER_ENGINE_MODE !== "firefox"
   || ownership.browser.environment?.OPENCLAW_BROWSER_GRAPHICAL_SESSION_MODE !== "nested_headed_wayland"
   || ownership.browser.environment?.OPENCLAW_BROWSER_GRAPHICAL_SESSION_RUNTIME_DIRECTORY !== "nixsoma-ai-graphical-session"
   || ownership.browser.environment?.OPENCLAW_BROWSER_GRAPHICAL_SESSION_SOCKET_NAME !== "nixsoma-ai-0"
+  || JSON.stringify(ownership.browser.serviceConfig?.InaccessiblePaths) !== JSON.stringify(["-%t/nixsoma-ai-graphical-session/capture"])
   || !ownership.browser.wants?.includes("nixsoma-ai-graphical-session.service")
   || !ownership.browser.after?.includes("nixsoma-ai-graphical-session.service")
   || JSON.stringify(ownership.browser.serviceConfig?.UnsetEnvironment) !== JSON.stringify(["DISPLAY", "WAYLAND_DISPLAY", "WAYLAND_SOCKET", "DBUS_SESSION_BUS_ADDRESS"])) {
@@ -493,12 +503,12 @@ if (!ownership.aiGraphicalSession.wantedBy?.includes("graphical-session.target")
   || !ownership.aiGraphicalSession.partOf?.includes("graphical-session.target")
   || !ownership.aiGraphicalSession.before?.includes("openclaw-session-manager.service")
   || ownership.aiGraphicalSession.serviceConfig?.User != null
-  || !String(ownership.aiGraphicalSession.serviceConfig?.ExecStart ?? "").includes("/bin/env XDG_RUNTIME_DIR=%t/nixsoma-ai-graphical-session")
-  || !String(ownership.aiGraphicalSession.serviceConfig?.ExecStart ?? "").includes("/bin/weston --backend=headless --renderer=pixman --shell=kiosk --socket=nixsoma-ai-0")
+  || !String(ownership.aiGraphicalSession.serviceConfig?.ExecStart ?? "").includes("nixsoma-ai-graphical-session-launch")
+  || !String(ownership.aiGraphicalSession.serviceConfig?.ExecStartPre ?? "").includes("nixsoma-ai-graphical-session-prepare")
   || ownership.aiGraphicalSession.serviceConfig?.RuntimeDirectory !== "nixsoma-ai-graphical-session"
   || ownership.aiGraphicalSession.serviceConfig?.RuntimeDirectoryMode !== "0700"
   || ownership.aiGraphicalSession.serviceConfig?.UMask !== "0077"
-  || JSON.stringify(ownership.aiGraphicalSession.serviceConfig?.UnsetEnvironment) !== JSON.stringify(["DISPLAY", "WAYLAND_DISPLAY", "WAYLAND_SOCKET", "DBUS_SESSION_BUS_ADDRESS"])
+  || JSON.stringify(ownership.aiGraphicalSession.serviceConfig?.UnsetEnvironment) !== JSON.stringify(["DISPLAY", "WAYLAND_DISPLAY", "WAYLAND_SOCKET", "DBUS_SESSION_BUS_ADDRESS", "XDG_PICTURES_DIR"])
   || ownership.aiGraphicalSession.serviceConfig?.Slice !== "openclaw-session.slice"
   || ownership.aiGraphicalSession.serviceConfig?.PrivateDevices !== true
   || ownership.aiGraphicalSession.serviceConfig?.ProtectSystem !== "strict"
@@ -514,7 +524,9 @@ if (!ownership.session.wants?.includes("nixsoma-ai-graphical-session.service")
   || ownership.session.environment?.OPENCLAW_AI_GRAPHICAL_SESSION_RUNTIME_DIRECTORY !== "nixsoma-ai-graphical-session"
   || ownership.session.environment?.OPENCLAW_AI_GRAPHICAL_SESSION_SOCKET_NAME !== "nixsoma-ai-0"
   || ownership.session.environment?.OPENCLAW_AI_GRAPHICAL_SESSION_WIDTH !== "1280"
-  || ownership.session.environment?.OPENCLAW_AI_GRAPHICAL_SESSION_HEIGHT !== "720") {
+  || ownership.session.environment?.OPENCLAW_AI_GRAPHICAL_SESSION_HEIGHT !== "720"
+  || ownership.session.environment?.OPENCLAW_AI_COMPOSITOR_CAPTURE_ENABLED !== "1"
+  || ownership.session.environment?.OPENCLAW_AI_COMPOSITOR_CAPTURE_DIRECTORY !== "capture") {
   throw new Error(`session-manager must observe the fixed AI graphical session identity: ${JSON.stringify(ownership.session)}`);
 }
 if (!ownership.browser.after?.includes("openclaw-session-manager.service")) {
@@ -962,12 +974,15 @@ EOF
   if [[ "$session_manager_out" != /nix/store/*
     || ! -f "$session_manager_server"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-graphical-session-observer.mjs"
+    || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-compositor-frame-capture.mjs"
+    || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-compositor-frame-route.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/trusted-work-view-sidecar.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/work-view-trust.mjs"
     || -w "$session_manager_server"
     || -e "$session_manager_out/share/openclaw/services/openclaw-session-manager/test"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
-    || "$(find "$session_manager_out" -type f | wc -l)" -ne 16 ]]; then
+    || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/ai-compositor-frame.mjs"
+    || "$(find "$session_manager_out" -type f | wc -l)" -ne 19 ]]; then
     echo "session-manager Nix closure is not exact and read-only: $session_manager_out" >&2
     exit 1
   fi

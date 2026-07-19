@@ -12,6 +12,9 @@ test("Observer renders bounded Level 4 graphical-session evidence", () => {
     "aiGraphicalSession.socket?.name",
     "aiGraphicalSession.boundary?.parentDisplayConnected",
     "aiGraphicalSession.boundary?.inputAuthority",
+    "aiGraphicalSession.compositorFrame?.available",
+    "aiGraphicalSession.boundary?.compositorNativeCapture",
+    "aiGraphicalSession.compositorFrame?.dataExposed",
   ]) {
     assert.equal(
       observerClientRuntimeRefreshersScript.includes(token)
@@ -30,6 +33,8 @@ test("Observer renders bounded Level 4 graphical-session evidence", () => {
     "aiGraphicalSession.browserAttachment?.headed",
     "aiGraphicalSession.boundary?.browserNetworkAccess",
     "aiGraphicalSession.boundary?.networkAuthorityExpanded",
+    "aiGraphicalSession.compositorFrame?.captureApi",
+    "aiGraphicalSession.boundary?.browserScreenshotApi",
   ]) {
     assert.equal(observerClientRuntimeRefreshersScript.includes(token), true);
   }

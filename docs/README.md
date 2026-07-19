@@ -13,16 +13,17 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current `main` through the Level 4 isolated compositor and headed AI-owned Firefox attachment, plus the completed Level 3 baseline | Implemented; commit history is authoritative |
-| Local validation | 921 workspace tests and typecheck pass; body-config, provider flake check, native inventory, and event-audit integration pass; 811 registry entries pass | Validated |
+| Capability source | Current `main` through the Level 4 isolated compositor, headed AI-owned Firefox attachment, and compositor-native read-only frame, plus the completed Level 3 baseline | Implemented; commit history is authoritative |
+| Local validation | 928 workspace tests and typecheck pass; body-config, native frame, provider flake, native inventory, and event-audit integration checks pass; 811 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/pkhlbmqx94gsn5kbhq2njp0prdab2klp-nixos-system-nixos-26.05.4808.569d57850992` | Level 4 compositor and headed AI-owned Firefox attachment deployed and probed 2026-07-19 |
-| Previous generation | `/nix/store/lm2fq1w70w36kcapcmxb81mn84prwk9s-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by evidence-semantics correction without rollback or reboot |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/v3d2plnz2zpcbgjswpvz8q2jf5b6fgaa-nixos-system-nixos-26.05.4808.569d57850992` | Level 4 compositor-native frame deployed and probed 2026-07-19 |
+| Previous generation | `/nix/store/ywgmcy2pxjlli7bx490qk8fzmivhli0z-nixos-system-nixos-26.05.4808.569d57850992` | Superseded after the candidate probe caught an unexpanded wrapper runtime path |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
 | Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; one 252-token approval-bound call and one 459-token standing call completed | Deployed and proven without prompt, reason, or credential persistence |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, 15-minute cooldown, 3-call/4096-token daily defaults, structured transient recommendation, and local fallback | Deployed; returned `observe_current_screen` without creating a task, approval, or execution |
 | Level 4 graphical session | Fixed `nixsoma-ai-0` Weston headless compositor in a hardened, resource-bounded user unit; session-manager and Observer expose read-only ownership/health evidence | Deployed; coexists with GNOME `wayland-0` |
 | Level 4 browser attachment | Existing AI-owned Nix Firefox launches headed on the fixed nested socket, preserves Level 2 lease/capture/action ownership, and exposes compact attachment evidence | Deployed and proven through capture plus lease-bound action |
+| Level 4 compositor frame | Weston launches and authorizes one fixed screenshooter client; session-manager returns a bounded transient 1280x720 PNG and retains metadata only | Deployed; Firefox cannot read the capture directory |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -103,9 +104,9 @@ The completed bounded frontier is:
   missing or non-terminal reservation closed without Executor/hostd replay.
 
 Real repair execution and rollback remain unproven on a disposable mutation
-environment. Level 4 now owns a compositor boundary in source, but browser
-attachment, pixel capture, input, projection, and desktop takeover remain
-future work.
+environment. Level 4 now owns a compositor, headed browser, and read-only native
+frame; compositor-native input, projection, and desktop takeover remain future
+work.
 
 ## Active Route
 
@@ -228,6 +229,20 @@ bus or OpenClaw control environment; GNOME retained its PID and `wayland-0`.
 Evidence now distinguishes the networkless compositor from Firefox's existing
 browser network scope and records that network authority was not expanded.
 
+The third Level 4 slice is also complete. A 16 KiB Weston module watches only a
+fixed current-user runtime request and authorizes only the exact
+`weston-screenshooter` client launched by the compositor. Session-manager
+enforces single flight, a 1.5 second timeout, native 1280x720 PNG structure, the
+existing 256 KiB visual-frame ceiling, owner/mode/inode checks, and immediate
+runtime-file deletion. Generation `v3d2plnz...` returned a real 32,902-byte
+frame in 73 ms. It included Firefox chrome and differed from the existing
+960x540 JPEG page frame, proving a compositor source. Firefox receives an
+inaccessible mount for `capture/`; state, screen-sense, events, and Observer
+retain only hash/dimension/freshness metadata. All three user units are active
+with zero restarts and no warning journal entries. The next Level 4 capability
+is narrowly bounded compositor-native input for this AI-owned output, bound to
+a current native frame and never to GNOME or the whole desktop.
+
 ## Progress Estimate
 
 These figures are capability-maturity estimates, not test coverage:
@@ -237,7 +252,7 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 15%; compositor and browser attachment deployed |
+| Level 4 graphics-stack-native body | about 25%; compositor, browser attachment, and native read-only frame deployed |
 | Current bounded product scope | 75-80% |
 | Final whitepaper vision | 45-55% |
 

@@ -8,6 +8,7 @@ import test from "node:test";
 import {
   createAiGraphicalSessionObserver,
   projectAiGraphicalSessionBrowserAttachment,
+  projectAiGraphicalSessionCompositorFrame,
 } from "../src/ai-graphical-session-observer.mjs";
 
 function enabledEnv(runtimeDir, overrides = {}) {
@@ -142,4 +143,34 @@ test("AI graphical session projects only an exact headed browser attachment", ()
   assert.equal(attached.boundary.browserNetworkAccess, true);
   assert.equal(attached.boundary.networkAuthorityExpanded, false);
   assert.equal(rejected.browserAttachment, null);
+});
+
+test("AI graphical session projects compositor-native frame metadata without pixel data", () => {
+  const evidence = projectAiGraphicalSessionCompositorFrame({
+    status: "ready",
+    boundary: {
+      readsPixels: false,
+      inputAuthority: false,
+      desktopWideCapture: false,
+    },
+  }, {
+    registry: "nixsoma-ai-compositor-frame-v0",
+    available: true,
+    sourceScope: "ai_owned_nested_output_only",
+    captureApi: "weston_output_capture_v1",
+    browserScreenshotApi: false,
+    desktopWideCapture: false,
+    parentDisplayConnected: false,
+    inputAuthority: false,
+    persisted: false,
+    dataExposed: false,
+    sha256: "a".repeat(64),
+  });
+
+  assert.equal(evidence.compositorFrame.available, true);
+  assert.equal(evidence.boundary.readsPixels, true);
+  assert.equal(evidence.boundary.compositorNativeCapture, true);
+  assert.equal(evidence.boundary.browserScreenshotApi, false);
+  assert.equal(evidence.boundary.inputAuthority, false);
+  assert.equal(JSON.stringify(evidence).includes("data:image/"), false);
 });

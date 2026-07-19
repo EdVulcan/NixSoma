@@ -5,11 +5,11 @@ Updated: 2026-07-19
 ## Current Continuation
 
 The bounded Level 2 browser eye-hand contract described below is complete and
-frozen. Its current vertical continuation is the first Level 4 graphical owner:
-a resource-bounded login-user Weston headless compositor on fixed socket
-`nixsoma-ai-0`, with read-only session-manager and Observer evidence. The
-compositor is not yet attached to browser-runtime and has no pixel, input,
-projection, desktop-wide capture, root, host-mutation, or network authority.
+frozen. Its Level 4 vertical continuation now has a resource-bounded login-user
+Weston compositor on fixed socket `nixsoma-ai-0`, the existing headed AI-owned
+Firefox client, and one bounded compositor-native read-only frame. It still has
+no compositor-native input, projection, desktop-wide capture, root, or host-
+mutation authority; Firefox retains only its existing browser network scope.
 
 Physical-host generation `kxv2ypwp...` now proves the nested compositor
 coexists with unchanged GNOME `wayland-0`, no parent display environment or DRM
@@ -34,8 +34,17 @@ headed Firefox client, screen-sense returned a fresh bounded visual frame and
 semantic inventory, and an existing lease-bound new-tab changed the post-action
 page identity while attachment stayed active. Parent display/session bus and
 OpenClaw variables remained absent from Firefox; GNOME remained on `wayland-0`.
-The next Level 4 continuation is read-only compositor-native frame acquisition,
-while this Level 2 lease/action/recovery contract remains the governing chain.
+That browser deployment selected read-only compositor-native frame acquisition
+while this Level 2 lease/action/recovery contract remained the governing chain.
+
+That continuation is now deployed in generation `v3d2plnz...`. Weston
+authorizes only a fixed compositor-launched capture client; session-manager
+returns a bounded transient 1280x720 PNG and projects metadata through
+screen-sense and Observer. Firefox cannot read the capture directory, and no
+input, projection, parent-desktop, root, provider, or host authority was added.
+The next Level 4 continuation is current-frame-bound compositor-native input for
+the isolated output while this Level 2 lease/action/recovery contract remains
+the governing authority chain.
 
 ## Active Slice
 

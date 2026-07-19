@@ -110,13 +110,15 @@ login-user systemd owner
 -> session-manager ownership/health evidence
 -> Observer readback with explicit negative authority
 -> physical-host coexistence proof with GNOME wayland-0 (complete)
--> AI-owned browser attachment as the next real slice
+-> AI-owned browser attachment (complete)
+-> compositor-native bounded read-only frame (complete)
+-> current-frame-bound native input as the next real slice
 ```
 
-The current source stops before browser attachment, pixel capture, input,
-projection, desktop-wide observation, root, host mutation, or network access.
-Do not reopen the completed provider or Level 2 action lanes while this Level 4
-vertical capability is incomplete.
+The current source now stops before compositor-native input, projection,
+desktop-wide observation, root, or host mutation. Firefox retains only the
+existing browser-runtime network scope. Do not reopen the completed provider or
+Level 2 action lanes while this Level 4 vertical capability is incomplete.
 
 Generation `kxv2ypwp...` completed the coexistence proof with a current-user
 `0700` nested runtime/socket, no parent display environment or DRM handle, about
@@ -133,14 +135,23 @@ opened and closed a nested page without changing GNOME. A reviewed generation
 switch and live proof then exercised the existing Level 2 capture, lease, action,
 audit, and recovery path.
 
-Generation `pkhlbmqx...` completed the deployment proof: headed Firefox is a
+Generation `pkhlbmqx...` completed the browser deployment proof: headed Firefox is a
 client of `nixsoma-ai-0`, screen-sense retained fresh bounded visual/semantic
 evidence, and a lease-bound new-tab produced a new observed page identity.
 GNOME stayed on `wayland-0`, no parent/control environment reached Firefox, and
-the existing browser network scope was not widened. Freeze this lane. The next
-missing vertical behavior is bounded read-only compositor-native frame
-acquisition for the AI-owned output, not another browser action or evidence
-wrapper.
+the existing browser network scope was not widened. That deployment selected
+bounded read-only compositor-native frame acquisition for the AI-owned output,
+not another browser action or evidence wrapper.
+
+Generation `v3d2plnz...` completes the next vertical step. Weston authorizes
+only its fixed compositor-launched screenshooter client; session-manager returns
+one transient hash-bound 1280x720 PNG under the existing 256 KiB ceiling and
+deletes the runtime file before completing the response. Screen-sense and
+Observer receive metadata only, Firefox cannot read the capture directory, and
+the real frame differs from the 960x540 Puppeteer page frame. Freeze capture
+variants. The next route is compositor-native input constrained to
+`nixsoma-ai-0` and a current native frame, not GNOME, provider work, or another
+readiness wrapper.
 
 ## Completed Capability Evidence
 
