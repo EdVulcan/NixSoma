@@ -264,7 +264,14 @@ test("live execution rejects authorization flags that changed after approval", a
 
 test("approved live execution returns transient content but persists only compact evidence", async () => {
   const harness = createHarness();
-  const options = liveOptions();
+  const options = liveOptions({
+    requestEnvelope: {
+      model: "deepseek-chat",
+      messages: [{ role: "user", content: "Summarise this bounded test." }],
+      temperature: 0,
+      max_tokens: 300,
+    },
+  });
   const task = createBoundTask(options);
   let received;
   const result = await executeCloudConsciousnessLiveProviderRequest({
@@ -320,6 +327,8 @@ test("approved live execution returns transient content but persists only compac
   assert.equal(received.operatorAuthorization.state, "authorized");
   assert.equal(received.operatorAuthorization.taskId, "task-1");
   assert.equal(received.providerRequest.request.body.messages[0].content, "Summarise this bounded test.");
+  assert.equal(received.providerRequest.request.body.temperature, 0);
+  assert.equal(received.providerRequest.request.body.max_tokens, 300);
   assert.equal(harness.events.at(-1).name, "task.phase_changed");
   assert.equal(harness.calls.some((call) => call.name === "failTask"), false);
   assert.equal(result.summary.registry, CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_LIVE_EXECUTION_REGISTRY);

@@ -95,6 +95,12 @@ export function buildProviderRequest({
       authorizationState: operatorAuthorization.state ?? "not_authorized",
     },
   };
+  if (Object.prototype.hasOwnProperty.call(requestEnvelope, "temperature")) {
+    body.temperature = requestEnvelope.temperature;
+  }
+  if (Object.prototype.hasOwnProperty.call(requestEnvelope, "max_tokens")) {
+    body.max_tokens = requestEnvelope.max_tokens;
+  }
   const bodyText = stableJson(body);
   return {
     ok: true,
