@@ -9,12 +9,55 @@ generated units, repository files, task evidence, or command output.
 For persistent NixOS use, first provision a root-owned credential source outside
 the Nix store, then configure the module with its path:
 
+```bash
+sudo -v
+install_deepseek_credential() {
+  local deepseek_key
+  read -r -s -p 'New DeepSeek API key: ' deepseek_key
+  printf '\n'
+  if [ -z "$deepseek_key" ]; then
+    printf 'No key provided; nothing changed.\n' >&2
+    return 1
+  fi
+  printf '%s\n' "$deepseek_key" | sudo sh -c '
+    set -eu
+    umask 077
+    credential_dir=/var/lib/openclaw-credentials
+    install -d -o root -g root -m 0700 "$credential_dir"
+    target="$credential_dir/deepseek-api-key"
+    temporary="$(mktemp "$credential_dir/.deepseek-api-key.XXXXXX")"
+    trap '\''rm -f "$temporary"'\'' EXIT
+    cat > "$temporary"
+    chown root:root "$temporary"
+    chmod 0400 "$temporary"
+    mv -f "$temporary" "$target"
+    trap - EXIT
+  '
+}
+install_deepseek_credential
+unset -f install_deepseek_credential
+sudo stat -c 'path=%n mode=%a owner=%U group=%G' \
+  /var/lib/openclaw-credentials \
+  /var/lib/openclaw-credentials/deepseek-api-key
+```
+
+Enter a newly issued key at the hidden prompt. Do not paste the key into the
+command, a Nix expression, a repository file, or a chat transcript. The command
+atomically installs the credential source without printing its contents. The
+final `stat` output verifies only metadata. Repeating the command safely rotates
+the source file; restart Core through a reviewed NixOS generation afterwards so
+systemd refreshes the service credential copy. Keep this source out of
+`/var/lib/openclaw`: that service-owned state directory can be modified by the
+Core account, while the credential source directory must remain root-only.
+
+Then add the non-secret module configuration:
+
 ```nix
 services.openclaw.cloudProvider = {
   enable = true;
   endpoint = "https://api.deepseek.com";
   model = "deepseek-chat";
-  apiKeyFile = "/var/lib/openclaw/deepseek-api-key";
+  apiKeyFile = "/var/lib/openclaw-credentials/deepseek-api-key";
   liveEgress = true;
 };
 ```
