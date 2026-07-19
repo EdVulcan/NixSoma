@@ -15,6 +15,7 @@ mkOpenClawNpmRuntimeClosure {
     ../../services/openclaw-browser-runtime/package.json
     ../../services/openclaw-browser-runtime/package-lock.json
     ../../services/openclaw-browser-runtime/src/browser-engine-adapter.mjs
+    ../../services/openclaw-browser-runtime/src/browser-graphical-session-binding.mjs
     ../../services/openclaw-browser-runtime/src/browser-navigation.mjs
     ../../services/openclaw-browser-runtime/src/browser-runtime-auth.mjs
     ../../services/openclaw-browser-runtime/src/browser-workspace-store.mjs

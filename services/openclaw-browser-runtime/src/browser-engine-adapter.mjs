@@ -47,6 +47,7 @@ export function createBrowserEngineAdapter({
   navigationTimeoutMs = 10_000,
   allowLocalFixtureUrls = false,
   urlLookup,
+  graphicalSessionBinding = null,
   onDisconnected = () => {},
 } = {}) {
   if (!["chrome", "firefox"].includes(browserFamily)) {
@@ -205,6 +206,9 @@ export function createBrowserEngineAdapter({
       profileEphemeral: true,
       desktopWideCapture: false,
       rootRequired: false,
+      graphicalSession: graphicalSessionBinding?.inspect({
+        browserRunning: Boolean(browser?.connected),
+      }) ?? null,
     };
   }
 
@@ -213,10 +217,12 @@ export function createBrowserEngineAdapter({
     accessSync(browserExecutable, constants.X_OK);
     rmSync(boundedProfileDirectory, { recursive: true, force: true });
     mkdirSync(boundedProfileDirectory, { recursive: true, mode: 0o700 });
+    const graphicalLaunch = graphicalSessionBinding?.launchOptions() ?? { headless: true };
     browser = await puppeteerApi.launch({
       browser: browserFamily,
       executablePath: browserExecutable,
-      headless: true,
+      headless: graphicalLaunch.headless,
+      ...(graphicalLaunch.env ? { env: graphicalLaunch.env } : {}),
       userDataDir: boundedProfileDirectory,
       args: browserFamily === "chrome" ? [
         "--disable-background-networking",

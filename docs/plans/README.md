@@ -124,6 +124,16 @@ Generation `kxv2ypwp...` completed the coexistence proof with a current-user
 `wayland-0`. Session-manager reports `ready` and Observer serves the bounded
 Level 4 readback. Browser attachment is now the active missing vertical step.
 
+The attachment implementation is now source-validated. Browser-runtime owns a
+fixed nested-Wayland binding, validates the compositor socket before launch,
+starts the existing Nix Firefox headed with a credential-free child environment,
+and returns compact attachment through existing state. Session-manager and
+Observer reuse the existing Level 4 readback. A real isolated Puppeteer probe
+opened and closed a nested page without changing GNOME. The remaining gate is a
+reviewed generation switch and live proof through the existing Level 2 capture,
+lease, action, audit, and recovery path; do not open another graphics evidence
+wrapper before that proof.
+
 ## Completed Capability Evidence
 
 The following plan families are retained because they describe implemented

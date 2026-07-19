@@ -144,6 +144,10 @@ const aiGraphicalSessionEnvNames = [
   "OPENCLAW_AI_GRAPHICAL_SESSION_SOCKET_NAME",
   "OPENCLAW_AI_GRAPHICAL_SESSION_WIDTH",
   "OPENCLAW_AI_GRAPHICAL_SESSION_HEIGHT",
+  "OPENCLAW_BROWSER_GRAPHICAL_SESSION_ENABLED",
+  "OPENCLAW_BROWSER_GRAPHICAL_SESSION_MODE",
+  "OPENCLAW_BROWSER_GRAPHICAL_SESSION_RUNTIME_DIRECTORY",
+  "OPENCLAW_BROWSER_GRAPHICAL_SESSION_SOCKET_NAME",
 ];
 
 function requireIncludes(label, content, tokens) {
@@ -282,6 +286,7 @@ requireIncludes("desktop-body profile", desktopProfile, [
   "kernelEventCapture.enable = true",
   "resourceControl.enable = true",
   "aiGraphicalSession.enable = true",
+  "aiGraphicalSession.attachBrowser = true",
   "cloudProvider.enable = true",
   ...componentKeys,
 ]);
@@ -468,7 +473,14 @@ for (const [name, unit] of [["session", ownership.session], ["browser", ownershi
 }
 if (ownership.browser.environment?.OPENCLAW_BROWSER_ENGINE_MODE !== "firefox"
   || ownership.browser.environment?.OPENCLAW_BROWSER_PROFILE_DIR !== "%S/openclaw/browser-profile"
-  || !String(ownership.browser.environment?.OPENCLAW_BROWSER_EXECUTABLE ?? "").endsWith("/bin/firefox")) {
+  || !String(ownership.browser.environment?.OPENCLAW_BROWSER_EXECUTABLE ?? "").endsWith("/bin/firefox")
+  || ownership.browser.environment?.OPENCLAW_BROWSER_GRAPHICAL_SESSION_ENABLED !== "1"
+  || ownership.browser.environment?.OPENCLAW_BROWSER_GRAPHICAL_SESSION_MODE !== "nested_headed_wayland"
+  || ownership.browser.environment?.OPENCLAW_BROWSER_GRAPHICAL_SESSION_RUNTIME_DIRECTORY !== "nixsoma-ai-graphical-session"
+  || ownership.browser.environment?.OPENCLAW_BROWSER_GRAPHICAL_SESSION_SOCKET_NAME !== "nixsoma-ai-0"
+  || !ownership.browser.wants?.includes("nixsoma-ai-graphical-session.service")
+  || !ownership.browser.after?.includes("nixsoma-ai-graphical-session.service")
+  || JSON.stringify(ownership.browser.serviceConfig?.UnsetEnvironment) !== JSON.stringify(["DISPLAY", "WAYLAND_DISPLAY", "WAYLAND_SOCKET", "DBUS_SESSION_BUS_ADDRESS"])) {
   throw new Error(`desktop browser runtime must use the Nix-managed Firefox user profile: ${JSON.stringify(ownership.browser)}`);
 }
 if (ownership.browser.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
@@ -1057,12 +1069,13 @@ EOF
   if [[ "$browser_runtime_out" != /nix/store/*
     || ! -f "$browser_runtime_server"
     || ! -f "$browser_runtime_working_dir/node_modules/puppeteer-core/package.json"
+    || ! -f "$browser_runtime_working_dir/src/browser-graphical-session-binding.mjs"
     || ! -f "$browser_runtime_out/share/openclaw/packages/shared-utils/src/work-view-input-evidence.mjs"
     || ! -f "$browser_runtime_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
     || -w "$browser_runtime_server"
     || -e "$browser_runtime_working_dir/node_modules/@openclaw"
     || -e "$browser_runtime_working_dir/node_modules/typescript"
-    || "$browser_runtime_source_count" -ne 15 ]]; then
+    || "$browser_runtime_source_count" -ne 16 ]]; then
     echo "browser-runtime Nix closure is not exact, production-only, and read-only: $browser_runtime_out" >&2
     exit 1
   fi

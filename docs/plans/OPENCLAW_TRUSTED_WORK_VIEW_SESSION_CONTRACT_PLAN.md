@@ -19,6 +19,16 @@ plan's lease, capture, action, audit, recovery, and Observer contracts. The
 historical `Active Slice`, `Deferred`, and `Next Slice` sections below describe
 the Level 2 implementation sequence and are not current route instructions.
 
+That attachment is now implemented and source-validated. The existing
+browser-runtime verifies the fixed nested socket immediately before launch,
+starts Nix Firefox headed with a non-sensitive environment allowlist, and
+returns compact `ready`/`attached` evidence. Session-manager projects attachment
+only when the exact registry, mode, owner, socket, headed state, and negative
+authority contract match. A real isolated Puppeteer probe opened a local page
+inside the compositor and shut down without affecting GNOME. The remaining
+slice gate is physical generation deployment plus regression proof of this
+plan's existing capture, semantic action, lease, audit, and recovery chain.
+
 ## Active Slice
 
 Identity-upgrade bridge: trusted AI work-view session contract, session-manager

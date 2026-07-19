@@ -34,6 +34,11 @@ in
       default = 720;
       description = "Fixed virtual output height for the AI graphical session.";
     };
+    attachBrowser = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Launch the existing AI-owned Firefox inside the isolated Wayland session.";
+    };
   };
 
   config = mkIf (cfg.enable && sessionCfg.enable) {
@@ -46,6 +51,13 @@ in
       {
         assertion = cfg.resourceControl.enable;
         message = "services.openclaw.aiGraphicalSession.enable requires the existing user-session resource envelope.";
+      }
+      {
+        assertion = !sessionCfg.attachBrowser
+          || (builtins.elem "browserRuntime" cfg.components
+            && builtins.elem "browserRuntime" cfg.componentOwnership.user
+            && cfg.browserEngine.mode == "firefox");
+        message = "services.openclaw.aiGraphicalSession.attachBrowser requires a user-owned Firefox browserRuntime.";
       }
     ];
 
@@ -113,6 +125,23 @@ in
       };
     } // optionalAttrs cfg.resourceControl.enable {
       serviceConfig.Slice = "openclaw-session.slice";
+    };
+
+    systemd.user.services.openclaw-browser-runtime = mkIf sessionCfg.attachBrowser {
+      wants = [ "${unitName}.service" ];
+      after = [ "${unitName}.service" ];
+      environment = {
+        OPENCLAW_BROWSER_GRAPHICAL_SESSION_ENABLED = "1";
+        OPENCLAW_BROWSER_GRAPHICAL_SESSION_MODE = "nested_headed_wayland";
+        OPENCLAW_BROWSER_GRAPHICAL_SESSION_RUNTIME_DIRECTORY = runtimeDirectory;
+        OPENCLAW_BROWSER_GRAPHICAL_SESSION_SOCKET_NAME = socketName;
+      };
+      serviceConfig.UnsetEnvironment = [
+        "DISPLAY"
+        "WAYLAND_DISPLAY"
+        "WAYLAND_SOCKET"
+        "DBUS_SESSION_BUS_ADDRESS"
+      ];
     };
   };
 }

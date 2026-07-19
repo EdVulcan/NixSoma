@@ -1829,6 +1829,34 @@ checks are active; session-manager reports the compositor `ready`, and Observer
 serves the Level 4 session/socket/boundary lines. No reboot, rollback, browser
 attachment, pixel read, input action, or desktop takeover occurred.
 
+## Active Level 4 Browser Attachment
+
+The next vertical slice is complete in source and pending generation deployment.
+The existing browser-runtime now has one fixed nested-Wayland binding owner. It
+revalidates the current-user `0700` compositor runtime and `nixsoma-ai-0` socket
+immediately before Puppeteer launches Firefox. The disabled/default path remains
+headless; the enabled desktop profile launches Firefox headed only on that
+socket. The child environment is an explicit non-sensitive allowlist and omits
+the parent display, session bus, every OpenClaw credential/control variable, and
+arbitrary caller input.
+
+Browser-runtime exposes compact `ready`/`attached` evidence through its existing
+health and browser state. Session-manager accepts only the exact registry, mode,
+headed state, socket identity, owner match, and negative authority fields before
+setting `browserAttached=true`; Observer renders the result in the existing work-
+view panel. No new browser route, lease, action owner, capture path, persisted
+authority, provider call, root process, host mutation, or desktop-wide capture
+was added.
+
+Focused tests, production-shape server assembly, typecheck, body-config/store
+closure validation, and all 921 workspace tests pass. A real isolated
+browser-runtime/Puppeteer/Nix-Firefox probe opened a local fixture as a headed
+nested client, reported `attached`, inherited no OpenClaw variables or session
+bus, preserved GNOME's PID and `wayland-0`, and cleaned the browser/profile on
+SIGTERM. Build and inspect the physical candidate before switching; after
+deployment prove the Firefox PID environment, socket peer, existing visual
+capture, session-manager attachment, Observer readback, and unchanged GNOME.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

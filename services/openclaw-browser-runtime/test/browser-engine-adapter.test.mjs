@@ -191,6 +191,44 @@ test("browser engine adapter launches a bounded profile and delegates real page 
   assert.equal(existsSync(fake.profileDirectory), false);
 });
 
+test("browser engine adapter delegates a headed nested-Wayland launch without widening capture", async (t) => {
+  const fake = createFakePuppeteer(t);
+  const graphicalSessionBinding = {
+    launchOptions() {
+      return {
+        headless: false,
+        env: {
+          XDG_RUNTIME_DIR: "/run/user/1000/nixsoma-ai-graphical-session",
+          WAYLAND_DISPLAY: "nixsoma-ai-0",
+        },
+      };
+    },
+    inspect({ browserRunning = false } = {}) {
+      return {
+        registry: "nixsoma-browser-graphical-session-binding-v0",
+        status: browserRunning ? "attached" : "ready",
+        attached: browserRunning,
+        headed: true,
+      };
+    },
+  };
+  const adapter = createBrowserEngineAdapter({
+    executablePath: fake.executablePath,
+    profileDirectory: fake.profileDirectory,
+    puppeteerApi: fake.puppeteerApi,
+    allowLocalFixtureUrls: true,
+    graphicalSessionBinding,
+  });
+
+  const opened = await adapter.open({ url: "http://127.0.0.1/current" });
+
+  assert.equal(fake.launches[0].headless, false);
+  assert.equal(fake.launches[0].env.WAYLAND_DISPLAY, "nixsoma-ai-0");
+  assert.equal(opened.graphicalSession.status, "attached");
+  assert.equal(opened.desktopWideCapture, false);
+  await adapter.close();
+});
+
 test("browser engine adapter fails closed when an AI-owned frame exceeds the byte limit", async (t) => {
   const fake = createFakePuppeteer(t, {
     screenshotBytes: Buffer.alloc(WORK_VIEW_VISUAL_FRAME_MAX_BYTES + 1),

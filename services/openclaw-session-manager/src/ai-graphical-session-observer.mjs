@@ -3,6 +3,8 @@ import path from "node:path";
 
 export const AI_GRAPHICAL_SESSION_REGISTRY =
   "nixsoma-ai-graphical-session-observation-v0";
+const BROWSER_GRAPHICAL_SESSION_REGISTRY =
+  "nixsoma-browser-graphical-session-binding-v0";
 
 const EXPECTED_MODE = "nested_headless_wayland";
 const EXPECTED_RUNTIME_DIRECTORY = "nixsoma-ai-graphical-session";
@@ -10,6 +12,37 @@ const EXPECTED_SOCKET_NAME = "nixsoma-ai-0";
 
 function enabled(value) {
   return value === true || value === "1" || value === "true";
+}
+
+export function projectAiGraphicalSessionBrowserAttachment(evidence, candidate) {
+  const valid = evidence?.ready === true
+    && candidate?.registry === BROWSER_GRAPHICAL_SESSION_REGISTRY
+    && candidate?.enabled === true
+    && candidate?.mode === "nested_headed_wayland"
+    && candidate?.status === "attached"
+    && candidate?.attached === true
+    && candidate?.headed === true
+    && candidate?.socket?.name === EXPECTED_SOCKET_NAME
+    && candidate?.socket?.type === "unix_socket"
+    && candidate?.socket?.ownerMatched === true
+    && candidate?.boundary?.parentDisplayEnvironment === false
+    && candidate?.boundary?.desktopWideCapture === false
+    && candidate?.boundary?.inputAuthorityExpanded === false
+    && candidate?.boundary?.rootRequired === false;
+  return {
+    ...evidence,
+    browserAttachment: valid ? {
+      registry: candidate.registry,
+      status: candidate.status,
+      attached: true,
+      headed: true,
+      socketName: candidate.socket.name,
+    } : null,
+    boundary: {
+      ...evidence.boundary,
+      browserAttached: valid,
+    },
+  };
 }
 
 function boundedDimension(value, fallback, minimum, maximum) {

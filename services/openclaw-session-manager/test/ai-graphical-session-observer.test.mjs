@@ -5,7 +5,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { createAiGraphicalSessionObserver } from "../src/ai-graphical-session-observer.mjs";
+import {
+  createAiGraphicalSessionObserver,
+  projectAiGraphicalSessionBrowserAttachment,
+} from "../src/ai-graphical-session-observer.mjs";
 
 function enabledEnv(runtimeDir, overrides = {}) {
   return {
@@ -91,4 +94,47 @@ test("AI graphical session observer fails closed for an untrusted runtime direct
 
   assert.equal(result.status, "runtime_directory_untrusted");
   assert.equal(result.ready, false);
+});
+
+test("AI graphical session projects only an exact headed browser attachment", () => {
+  const evidence = {
+    ready: true,
+    boundary: { browserAttached: false },
+  };
+  const candidate = {
+    registry: "nixsoma-browser-graphical-session-binding-v0",
+    enabled: true,
+    mode: "nested_headed_wayland",
+    status: "attached",
+    attached: true,
+    headed: true,
+    socket: {
+      name: "nixsoma-ai-0",
+      type: "unix_socket",
+      ownerMatched: true,
+    },
+    boundary: {
+      parentDisplayEnvironment: false,
+      desktopWideCapture: false,
+      inputAuthorityExpanded: false,
+      rootRequired: false,
+    },
+  };
+
+  const attached = projectAiGraphicalSessionBrowserAttachment(evidence, candidate);
+  const rejected = projectAiGraphicalSessionBrowserAttachment(evidence, {
+    ...candidate,
+    socket: { ...candidate.socket, name: "wayland-0" },
+  });
+
+  assert.equal(attached.boundary.browserAttached, true);
+  assert.deepEqual(attached.browserAttachment, {
+    registry: "nixsoma-browser-graphical-session-binding-v0",
+    status: "attached",
+    attached: true,
+    headed: true,
+    socketName: "nixsoma-ai-0",
+  });
+  assert.equal(rejected.boundary.browserAttached, false);
+  assert.equal(rejected.browserAttachment, null);
 });

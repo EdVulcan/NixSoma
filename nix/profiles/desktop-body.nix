@@ -18,6 +18,7 @@
     kernelEventCapture.enable = true;
     resourceControl.enable = true;
     aiGraphicalSession.enable = true;
+    aiGraphicalSession.attachBrowser = true;
     cloudProvider.enable = true;
     trustedSidecarUserUnit.enable = true;
     componentOwnership.user = [

@@ -5,7 +5,10 @@ import { buildTrustedWorkViewContract } from "../../../packages/shared-utils/src
 import { createTrustedWorkViewHelperRuntime } from "./trusted-work-view-helper-runtime.mjs";
 import { createTrustedWorkViewSidecarSupervisor } from "./trusted-work-view-sidecar-supervisor.mjs";
 import { createTrustedWorkViewSidecarRecoveryStore } from "./trusted-work-view-sidecar-recovery-store.mjs";
-import { createAiGraphicalSessionObserver } from "./ai-graphical-session-observer.mjs";
+import {
+  createAiGraphicalSessionObserver,
+  projectAiGraphicalSessionBrowserAttachment,
+} from "./ai-graphical-session-observer.mjs";
 import { createServiceCredentialHeaders, readServiceCredential } from "../../../packages/shared-utils/src/service-credentials.mjs";
 
 const host = process.env.OPENCLAW_SESSION_MANAGER_HOST ?? "127.0.0.1";
@@ -41,6 +44,7 @@ const workViewState = {
   helperStatus: "idle",
   browserStatus: "stopped",
   browserSessionId: null,
+  browserGraphicalSession: null,
   mode: "background",
   displayTarget: "workspace-2",
   entryUrl: defaultWorkViewUrl,
@@ -115,7 +119,10 @@ function serialiseWorkViewState() {
     externalProcessStarted: sidecar.running,
     sidecar,
   };
-  const aiGraphicalSession = observeAiGraphicalSession();
+  const aiGraphicalSession = projectAiGraphicalSessionBrowserAttachment(
+    observeAiGraphicalSession(),
+    workViewState.browserGraphicalSession,
+  );
   const workView = {
     ...workViewState,
     helperRuntime,
@@ -241,6 +248,7 @@ async function ensureBrowserWorkView(url = workViewState.entryUrl || defaultWork
       helperStatus: helperRuntime.status === "active" ? "active" : "degraded",
       browserStatus: data.browser?.running ? "running" : "unknown",
       browserSessionId: data.browser?.sessionId ?? null,
+      browserGraphicalSession: data.browser?.engine?.graphicalSession ?? null,
       entryUrl: url,
       activeUrl: data.browser?.activeUrl ?? data.tab?.url ?? url,
     });
@@ -256,6 +264,7 @@ async function ensureBrowserWorkView(url = workViewState.entryUrl || defaultWork
       helperStatus: "degraded",
       browserStatus: "unavailable",
       browserSessionId: null,
+      browserGraphicalSession: null,
       entryUrl: url,
     });
 
@@ -291,6 +300,8 @@ async function syncBrowserHelperLease() {
     helperStatus: helperRuntime.status,
     browserStatus: data.browser?.running ? "running" : workViewState.browserStatus,
     browserSessionId: data.browser?.sessionId ?? workViewState.browserSessionId,
+    browserGraphicalSession: data.browser?.engine?.graphicalSession
+      ?? workViewState.browserGraphicalSession,
   });
   return { ok: true, synced: true, browser: data.browser ?? null, helperRuntime };
 }

@@ -19,6 +19,7 @@ import { buildWriteOnlyInputEvidence } from "../../../packages/shared-utils/src/
 import { normaliseBoundedBrowserUrl, validateBoundedBrowserUrl } from "./browser-navigation.mjs";
 import { createBrowserWorkspaceStore } from "./browser-workspace-store.mjs";
 import { createBrowserEngineAdapter } from "./browser-engine-adapter.mjs";
+import { createBrowserGraphicalSessionBinding } from "./browser-graphical-session-binding.mjs";
 import { createBrowserRuntimeAuthenticator } from "./browser-runtime-auth.mjs";
 
 
@@ -54,6 +55,7 @@ const workspaceStore = createBrowserWorkspaceStore({ stateFilePath, allowLocalFi
 const restoredWorkspace = workspaceStore.restore();
 const restoredIntent = restoredWorkspace.intent?.workspace ?? null;
 let browserEngine = null;
+const browserGraphicalSessionBinding = createBrowserGraphicalSessionBinding();
 const browserState = {
   running: false,
   browserPid: null,
@@ -83,6 +85,7 @@ const browserState = {
     profileEphemeral: engineMode === "firefox",
     desktopWideCapture: false,
     rootRequired: false,
+    graphicalSession: browserGraphicalSessionBinding.inspect(),
   },
   updatedAt: new Date().toISOString(),
 };
@@ -93,12 +96,17 @@ if (engineMode === "firefox") {
     profileDirectory: engineProfileDirectory,
     browserFamily: "firefox",
     allowLocalFixtureUrls,
+    graphicalSessionBinding: browserGraphicalSessionBinding,
     onDisconnected() {
       updateBrowserState({
         running: false,
         browserPid: null,
         trustedHelperLease: null,
-        engine: { ...browserState.engine, realEngine: false },
+        engine: {
+          ...browserState.engine,
+          realEngine: false,
+          graphicalSession: browserGraphicalSessionBinding.inspect(),
+        },
       });
     },
   });
@@ -133,6 +141,7 @@ function applyEngineSnapshot(snapshot) {
       profileEphemeral: snapshot.profileEphemeral,
       desktopWideCapture: snapshot.desktopWideCapture,
       rootRequired: snapshot.rootRequired,
+      graphicalSession: snapshot.graphicalSession,
     },
   });
 }
@@ -361,6 +370,9 @@ const server = http.createServer(async (req, res) => {
       eventHubUrl,
       sessionManagerUrl,
       engineMode,
+      graphicalSession: browserGraphicalSessionBinding.inspect({
+        browserRunning: browserState.running,
+      }),
     });
     return;
   }
