@@ -59,6 +59,8 @@ test("browser graphical binding verifies and attaches only to the fixed nested s
   assert.equal(attached.attached, true);
   assert.equal(attached.headed, true);
   assert.equal(attached.socket.ownerMatched, true);
+  assert.equal(attached.boundary.networkScope, "existing_browser_runtime");
+  assert.equal(attached.boundary.networkAuthorityExpanded, false);
   assert.equal(JSON.stringify(attached).includes(runtimeBaseDir), false);
 });
 

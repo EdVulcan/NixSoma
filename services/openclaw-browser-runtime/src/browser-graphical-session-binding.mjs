@@ -52,6 +52,8 @@ function baseEvidence(config) {
       parentSessionBusEnvironment: false,
       desktopWideCapture: false,
       inputAuthorityExpanded: false,
+      networkScope: "existing_browser_runtime",
+      networkAuthorityExpanded: false,
       rootRequired: false,
       hostMutation: false,
     },

@@ -28,6 +28,8 @@ export function projectAiGraphicalSessionBrowserAttachment(evidence, candidate) 
     && candidate?.boundary?.parentDisplayEnvironment === false
     && candidate?.boundary?.desktopWideCapture === false
     && candidate?.boundary?.inputAuthorityExpanded === false
+    && candidate?.boundary?.networkScope === "existing_browser_runtime"
+    && candidate?.boundary?.networkAuthorityExpanded === false
     && candidate?.boundary?.rootRequired === false;
   return {
     ...evidence,
@@ -37,10 +39,13 @@ export function projectAiGraphicalSessionBrowserAttachment(evidence, candidate) 
       attached: true,
       headed: true,
       socketName: candidate.socket.name,
+      networkScope: candidate.boundary.networkScope,
     } : null,
     boundary: {
       ...evidence.boundary,
       browserAttached: valid,
+      browserNetworkAccess: valid,
+      networkAuthorityExpanded: false,
     },
   };
 }
@@ -89,6 +94,8 @@ function baseEvidence(config) {
       hostMutation: false,
       rootRequired: false,
       networkAccess: false,
+      browserNetworkAccess: false,
+      networkAuthorityExpanded: false,
     },
   };
 }

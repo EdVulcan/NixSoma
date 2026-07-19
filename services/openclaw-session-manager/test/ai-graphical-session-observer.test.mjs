@@ -117,6 +117,8 @@ test("AI graphical session projects only an exact headed browser attachment", ()
       parentDisplayEnvironment: false,
       desktopWideCapture: false,
       inputAuthorityExpanded: false,
+      networkScope: "existing_browser_runtime",
+      networkAuthorityExpanded: false,
       rootRequired: false,
     },
   };
@@ -134,7 +136,10 @@ test("AI graphical session projects only an exact headed browser attachment", ()
     attached: true,
     headed: true,
     socketName: "nixsoma-ai-0",
+    networkScope: "existing_browser_runtime",
   });
   assert.equal(rejected.boundary.browserAttached, false);
+  assert.equal(attached.boundary.browserNetworkAccess, true);
+  assert.equal(attached.boundary.networkAuthorityExpanded, false);
   assert.equal(rejected.browserAttachment, null);
 });
