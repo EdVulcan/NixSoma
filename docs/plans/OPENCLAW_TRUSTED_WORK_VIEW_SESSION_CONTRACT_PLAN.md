@@ -11,7 +11,9 @@ a resource-bounded login-user Weston headless compositor on fixed socket
 compositor is not yet attached to browser-runtime and has no pixel, input,
 projection, desktop-wide capture, root, host-mutation, or network authority.
 
-The next real capability after physical-host coexistence proof is to place only
+Physical-host generation `kxv2ypwp...` now proves the nested compositor
+coexists with unchanged GNOME `wayland-0`, no parent display environment or DRM
+handle, and bounded runtime resources. The next real capability is to place only
 the existing AI-owned browser inside that nested session while reusing this
 plan's lease, capture, action, audit, recovery, and Observer contracts. The
 historical `Active Slice`, `Deferred`, and `Next Slice` sections below describe

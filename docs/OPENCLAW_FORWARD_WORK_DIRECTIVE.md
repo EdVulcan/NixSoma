@@ -1819,6 +1819,16 @@ The next real Level 4 slice is to launch only the AI-owned browser inside this
 nested session and prove page ownership while retaining the existing Level 2
 lease, capture, action, audit, recovery, and Observer chain.
 
+Physical-host generation `kxv2ypwp...` now deploys this owner. The exact
+generated unit was first started and removed as a runtime-only candidate: it
+used about 14 MiB, one task, zero restarts, a current-user `0700` runtime/socket,
+no parent display/session-bus environment, and no DRM file descriptor. GNOME's
+PID and `wayland-0` remained unchanged. After the switch, the permanent unit,
+session-manager, browser-runtime, Observer, and all existing system body health
+checks are active; session-manager reports the compositor `ready`, and Observer
+serves the Level 4 session/socket/boundary lines. No reboot, rollback, browser
+attachment, pixel read, input action, or desktop takeover occurred.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

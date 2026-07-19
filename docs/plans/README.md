@@ -109,7 +109,7 @@ login-user systemd owner
 -> existing session resource envelope
 -> session-manager ownership/health evidence
 -> Observer readback with explicit negative authority
--> physical-host coexistence proof with GNOME wayland-0
+-> physical-host coexistence proof with GNOME wayland-0 (complete)
 -> AI-owned browser attachment as the next real slice
 ```
 
@@ -117,6 +117,12 @@ The current source stops before browser attachment, pixel capture, input,
 projection, desktop-wide observation, root, host mutation, or network access.
 Do not reopen the completed provider or Level 2 action lanes while this Level 4
 vertical capability is incomplete.
+
+Generation `kxv2ypwp...` completed the coexistence proof with a current-user
+`0700` nested runtime/socket, no parent display environment or DRM handle, about
+14 MiB memory, one task, zero restarts, unchanged GNOME PID, and unchanged
+`wayland-0`. Session-manager reports `ready` and Observer serves the bounded
+Level 4 readback. Browser attachment is now the active missing vertical step.
 
 ## Completed Capability Evidence
 
