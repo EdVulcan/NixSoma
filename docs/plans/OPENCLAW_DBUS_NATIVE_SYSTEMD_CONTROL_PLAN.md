@@ -431,10 +431,10 @@ the user manager's `openclaw-session.slice`. Each slice declares
 requires the soft memory limit to remain below the hard limit.
 
 The boundary deliberately excludes `openclaw-hostd` and the operator-token and
-execution-grant key initializers so resource pressure in the ordinary body does
-not remove the fixed recovery or credential bootstrap owners. It adds no
-runtime `SetUnitProperties`, arbitrary cgroup input, process signal, hostd
-operation, task, approval, provider call, or automatic activation. Resource
+execution-grant key initializers so they are not charged against the ordinary
+body envelope. This does not guarantee their survival under host-wide OOM. It
+adds no runtime `SetUnitProperties`, arbitrary cgroup input, process signal,
+hostd operation, task, approval, provider call, or automatic activation. Resource
 trend warning classification now uses `EffectiveMemoryHigh` for soft pressure
 and retains `MemoryMax`/`EffectiveMemoryMax` as the critical hard boundary.
 
@@ -446,15 +446,18 @@ milestones pass. The complete physical-host candidate
 contains the generated units. Relative to the installed generation it adds the
 updated system-sense package, both slice units, and the updated Core package/unit
 for disabled-by-default provider configuration. Generated service-unit review
-confirms the assignments and the absence of a provider secret. It has not been
-switched.
+confirms the assignments and the absence of a provider secret. The generation
+was switched on the physical host and both slices reported the declared limits:
+the system body sampled about 192 MiB/53 tasks and the user session about
+50 MiB/14 tasks. All assigned services were active, failure restart counts were
+zero, nine health probes returned 200, four anonymous governance probes
+returned 401, and no failed unit or warning-level Core/system-sense journal entry was
+observed. No memory pressure was synthesized.
 
 ## Next Slice
 
-Freeze the cgroup implementation. A separately authorized physical-host switch
-may deploy the exact reviewed candidate, after which only non-mutating checks
-should confirm active slice properties, service assignment, service health,
-restart counts, and existing anonymous-auth rejection. Do not deliberately
-consume memory or force OOM on the sole physical host. After deployment evidence
-is recorded, select the next distinct Level 3 capability from the identity
-upgrade path instead of adding another resource-envelope wrapper.
+Freeze the cgroup implementation. Do not deliberately consume memory or force
+OOM on the sole physical host. The next real capability is secure provisioning
+of the already-supported DeepSeek credential file followed by one explicitly
+approved advisory call; do not add another resource-envelope or provider
+readiness wrapper.

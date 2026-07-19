@@ -55,19 +55,15 @@ workspace tests, milestone registry/script audit, and the same path budget on
 pushes and pull requests; Nix closure and physical-host checks remain local.
 
 The physical host now runs generation
-`/nix/store/yzjwwp67apgv4rrzpm3g2gz12bqkq7vj-nixos-system-nixos-26.05.4808.569d57850992`,
-which includes the automatic triage/promotion/approved-dispatch source through
-`1d00eea9`. Its closure diff from the preceding generation contained only
-`openclaw-core`, and the switch therefore restarted only that service. All eight
-system services and both user services remained active with zero restarts,
-seven HTTP health probes returned 200, and anonymous task, approval, triage,
-and repair requests returned 401. The live Core unit resolves to the expected
-`cjf36kmxla1qam738jj7sgv934bwbsmm-openclaw-core-0.1.0` store closure, and the
-first post-switch five-minute scheduler tick recorded all three fixed targets
-healthy without changing the existing 17 tasks or 16 approvals. Observer
-served both fixed-unit incident controls. This proves deployment and healthy
-observation, not a real repair, provider request, hostd mutation, generation
-rollback, or reboot.
+`/nix/store/9bbc00da4qg5n7v6n05x37azd491dxpn-nixos-system-nixos-26.05.4808.569d57850992`.
+It includes the automatic triage/promotion/approved-dispatch baseline, the
+resource-pressure owner, both declarative cgroup slices, and disabled-by-default
+DeepSeek service configuration. The switch restarted the seven body-slice
+system services and two user services but left hostd running. All eight system
+services and both user services are active with zero failure restarts, all nine
+HTTP health probes returned 200, and anonymous task, approval, triage, and
+repair requests returned 401. No failed unit or warning-level Core/system-sense
+journal entry was observed.
 
 The Event Hub audit-log blocker is closed in source through reverse bounded tail
 reads, streaming cached summaries, serialized rotation, and a fixed retained
@@ -75,11 +71,11 @@ segment policy. The post-repair diagnosis loop and its exact request-bound AI
 guidance handoff defined below are also complete in source; do not select work
 from an older phase number or historical `Next Slice` paragraph.
 
-The Level 3 resource-pressure slice is complete in source and in a reviewed,
-not-switched physical-host candidate. Native systemd inventory projects bounded
-current/peak memory, effective soft and hard limits, cumulative CPU, task, and
-managed OOM evidence; its four-sample in-memory trend uses the effective soft
-limit for warnings and the hard limit for critical state. The desktop profile
+The Level 3 resource-pressure slice is complete and deployed. Native systemd
+inventory projects bounded current/peak memory, effective soft and hard limits,
+cumulative CPU, task, and managed OOM evidence; its four-sample in-memory trend
+uses the effective soft limit for warnings and the hard limit for critical
+state. The desktop profile
 now places the seven ordinary system body services in `openclaw-body.slice` and
 the session manager, browser runtime, and trusted sidecar in
 `openclaw-session.slice`. Each scope independently applies a 1.5 GiB
@@ -87,20 +83,20 @@ the session manager, browser runtime, and trusted sidecar in
 initializers remain outside these slices, and no runtime `SetUnitProperties`,
 process signal, hostd expansion, or automatic activation was added.
 
-The candidate is
-`/nix/store/9bbc00da4qg5n7v6n05x37azd491dxpn-nixos-system-nixos-26.05.4808.569d57850992`.
-It passed the body configuration gate, 891 workspace tests, typecheck, both
-native inventory milestones, generated-unit review, and closure comparison.
-The same candidate gives Core the fixed DeepSeek endpoint and model with
+The deployed generation passed the body configuration gate, 891 workspace
+tests, typecheck, both native inventory milestones, generated-unit review, and
+closure comparison before switching. Runtime inspection now proves
+`openclaw-body.slice` at about 192 MiB and 53 tasks and
+`openclaw-session.slice` at about 50 MiB and 14 tasks at the deployment sample;
+both report the declared 1.5 GiB soft limit, 3 GiB hard limit, and 1024 task
+limit. Core has the fixed DeepSeek endpoint and model with
 `OPENCLAW_CLOUD_PROVIDER_LIVE_EGRESS=0`. It contains no API key environment
 value and no DeepSeek credential dependency. The module now supports an
 operator-provided key file through systemd `LoadCredential`, but enabling that
 credential and live egress requires a later explicit host configuration.
-The installed generation remains `yzjwwp67...`; do not claim runtime
-containment until a separately authorized switch and non-mutating post-switch
-probe confirm both active slices and service health. Do not deliberately create
-memory pressure on the sole physical host to prove the limits. After that
-deployment checkpoint, the next real AI capability is one explicitly approved
+Do not deliberately create memory pressure on the sole physical host to prove
+the limits, and do not claim these service slices contain ordinary terminal or
+build processes. The next real AI capability is one explicitly approved
 DeepSeek advisory call from the system service using the file credential; do
 not add another provider readiness wrapper.
 

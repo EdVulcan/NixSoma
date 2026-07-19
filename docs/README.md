@@ -16,9 +16,10 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Capability source | Current `main` through the Level 3 fixed-unit incident loop, resource-pressure observation, and declarative cgroup envelope | Implemented; commit history is authoritative |
 | Local validation | 891 workspace tests and typecheck pass; body-config, provider flake check, native inventory, and event-audit integration pass; 811 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Pending candidate | `/nix/store/9bbc00da4qg5n7v6n05x37azd491dxpn-nixos-system-nixos-26.05.4808.569d57850992` contains the reviewed cgroup envelopes and disabled-by-default DeepSeek service configuration | Built and reviewed; not switched |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/yzjwwp67apgv4rrzpm3g2gz12bqkq7vj-nixos-system-nixos-26.05.4808.569d57850992` | Approved-dispatch baseline deployed and probed 2026-07-19 |
-| Previous generation | `/nix/store/gb72w3qavm6b0vv114ml723g7y8jv5qh-nixos-system-nixos-26.05.4808.569d57850992`; closure diff was only `openclaw-core` | Superseded without rollback or reboot |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/9bbc00da4qg5n7v6n05x37azd491dxpn-nixos-system-nixos-26.05.4808.569d57850992` | Resource envelopes and disabled provider configuration deployed and probed 2026-07-19 |
+| Previous generation | `/nix/store/yzjwwp67apgv4rrzpm3g2gz12bqkq7vj-nixos-system-nixos-26.05.4808.569d57850992` | Superseded without rollback or reboot |
+| Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
+| Provider runtime | Fixed DeepSeek endpoint/model; `LIVE_EGRESS=0`; no API key environment or runtime credential | Safely disabled pending credential provisioning |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -149,26 +150,26 @@ approval change. Real repair, provider egress, hostd mutation, and generation
 rollback remain deferred to an explicit or disposable mutation check. Freeze
 this completed lane and select the next concrete whitepaper capability.
 
-The next Level 3 capability is complete in source and a reviewed candidate but
-is not yet deployed. Native systemd inventory reports bounded current/peak
-memory, effective soft and hard limits, CPU use, task counts, and managed OOM
-evidence, while the existing Observer panel renders the same read-only
-telemetry and four-sample trend. The desktop profile declares two independent
+The next Level 3 capability is deployed. Native systemd inventory reports
+bounded current/peak memory, effective soft and hard limits, CPU use, task
+counts, and managed OOM evidence, while the existing Observer panel renders the
+same read-only telemetry and four-sample trend. The desktop profile declares two
+independent
 cgroup envelopes: seven ordinary system body services use
 `openclaw-body.slice`, and session-manager, browser-runtime, and trusted
 sidecars use `openclaw-session.slice`. Each has 1.5 GiB `MemoryHigh`, 3 GiB
 `MemoryMax`, and `TasksMax=1024`; hostd and credential initializers remain
-outside the envelopes. Candidate `9bbc00da...` passed generated-unit and closure
-review without activation. Its Core unit fixes the DeepSeek endpoint and model
+outside the envelopes. Generation `9bbc00da...` passed generated-unit and
+closure review before activation, then runtime slice, service, health,
+restart-count, auth, failed-unit, and journal probes after activation. Its Core
+unit fixes the DeepSeek endpoint and model
 but keeps live egress disabled and contains no provider secret. The Nix module
 can now load a separately provisioned API key with systemd `LoadCredential`;
-the legacy environment value remains only a development fallback. The next
-operational step is a separately
-authorized switch followed only by service, slice, limit, restart-count, auth,
-and health probes. A deliberate memory-pressure test on the sole physical host
-is out of scope. After that checkpoint, configure the file credential and prove
-one exact approval-bound advisory call before considering standing low-risk AI
-policy or Level 4 work.
+the legacy environment value remains only a development fallback. A deliberate
+memory-pressure test on the sole physical host is out of scope, and these slices
+do not include ordinary terminal or build processes. The next operational step
+is to configure the file credential and prove one exact approval-bound advisory
+call before considering standing low-risk AI policy or Level 4 work.
 
 ## Progress Estimate
 
