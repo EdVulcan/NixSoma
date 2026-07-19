@@ -464,6 +464,8 @@ is complete in source through the common capability runtime. It uses only the
 three fixed health targets, required pre-egress audit, single flight, cooldown,
 daily call/token budgets, structured transient output, and local fallback. It
 has no automatic task, approval, command, repair, recommendation-execution, or
-host-mutation authority. The remaining gate is physical-host enablement and one
-non-mutating real invocation; do not add another resource-envelope or
-provider-readiness wrapper.
+host-mutation authority. Generation `czq8arvh...` now deploys it and one real
+459-token call returned `observe_current_screen` while task and approval counts
+remained unchanged. Required audit and compact state hashes matched; all body
+services remained active without warning logs. Freeze this provider/resource
+lane and do not add another resource-envelope or provider-readiness wrapper.

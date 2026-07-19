@@ -94,9 +94,11 @@ resource and provider-transport lanes. Do not synthesize memory pressure on the
 only physical host. The bounded standing advisory policy is now complete in
 source and validated through the common capability runtime. It cannot accept a
 caller prompt/model/context, create a task or approval, execute a recommendation,
-or mutate the host. Its remaining proof is physical-host enablement plus one
-non-mutating real call; after that, select a distinct whitepaper capability
-instead of opening another readiness phase or provider-call surface.
+or mutate the host. Generation `czq8arvh...` now deploys it, and one real
+459-token call returned `observe_current_screen` without changing task or
+approval counts. Audit and persistent hashes matched, and service health stayed
+green. Freeze this lane and select a distinct whitepaper capability instead of
+opening another readiness phase or provider-call surface.
 
 ## Completed Capability Evidence
 

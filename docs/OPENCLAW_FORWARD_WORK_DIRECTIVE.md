@@ -1784,8 +1784,15 @@ and performs no command, repair, file, UI, generation, or rollback mutation.
 Core state writes are now `0600`, the system unit uses `UMask=0077`, and tmpfiles
 repairs an existing state file mode during activation. Focused, production-shape,
 Nix body-config, typecheck, and all 909 workspace tests pass. Physical-host
-enablement and one real non-mutating call are the remaining deployment proof;
-after that, freeze this lane.
+generation `czq8arvh...` now enables the policy. One real no-per-call-approval
+invocation returned `observe_current_screen` at 0.95 confidence using 459 actual
+tokens and one 1024-token conservative budget charge. Task count remained 19,
+approval count remained 18, and all automatic creation/execution flags stayed
+false. The required pre-egress audit binding matched persisted context and
+request hashes; standing state and the compact invocation contained no prompt,
+recommendation reason, raw response, or credential value. Core and system-heal
+remained active at zero restarts with no warning journal entries. Freeze this
+completed lane and select a distinct whitepaper capability.
 
 ## Identity-Upgrade Alignment
 
