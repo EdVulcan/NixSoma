@@ -18,7 +18,7 @@ Only these documents should guide current route selection:
 | [`OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md`](./OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md) | Governed Level 1 engineering capability frontier. |
 | [`OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md`](./OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md) | Bounded Level 2 browser/work-view contract. |
 | [`OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md`](./OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md) | Operator identity, per-service credentials, and execution grants. |
-| [`OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md`](./OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Fixed Level 3 restart owners, bounded journal diagnosis, and resource-pressure sensing. |
+| [`OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md`](./OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Fixed Level 3 restart owners, bounded journal diagnosis, resource-pressure sensing, and declarative cgroup envelopes. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md) | Exact request-bound, guidance-only AI diagnosis from a compact terminal repair receipt. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md) | Local target-specific outcome absorption and advisory recall from verified incident receipts. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Up to three matching-target learned patterns inside the existing exact approved diagnosis request. |
@@ -78,16 +78,16 @@ whitepaper capability. Real hostd mutation, generation rollback, arbitrary
 systemd control, desktop-wide capture, and automatic provider egress remain
 deferred.
 
-The next active Level 3 route is bounded resource-pressure sensing through the
-existing native systemd inventory. Current/peak memory, configured memory-limit
-state, task counts, CPU usage, and managed OOM evidence are read from a fixed
-D-Bus property allowlist and rendered in the existing Observer panel. This
-adds no cgroup mutation, process signal, task, approval, scheduler, provider
-request, or hostd authority. A four-sample in-memory trend now emits fixed
-baseline, growth, limit, and managed-OOM warning states through the same
-Observer refresh. Freeze the sensing layer. The next real behavior is a
-declarative fixed-unit cgroup resource envelope in the Nix body module, built
-and validated before any separately authorized switch.
+The bounded resource-pressure route and its declarative envelope are complete
+in source. The native inventory and Observer retain the fixed read-only
+telemetry and four-sample trend. The desktop Nix profile adds independent
+`openclaw-body.slice` and `openclaw-session.slice` envelopes, each with 1.5 GiB
+`MemoryHigh`, 3 GiB `MemoryMax`, and `TasksMax=1024`; hostd and credential
+initializers remain excluded. The physical-host candidate `qsjfjrgs...` is
+built and reviewed but not switched. Freeze implementation of this lane. The
+next step is a separately authorized deployment followed by non-mutating slice,
+limit, service-health, restart-count, and auth probes; do not synthesize memory
+pressure on the only physical host.
 
 ## Completed Capability Evidence
 

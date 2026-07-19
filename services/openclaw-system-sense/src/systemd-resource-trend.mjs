@@ -16,12 +16,9 @@ function roundPercent(value) {
   return Number.isFinite(value) ? Math.round(value * 10) / 10 : null;
 }
 
-function selectLimit(memory = {}) {
+function selectHardLimit(memory = {}) {
   if (memory.maxLimited === true && finiteCounter(memory.maxBytes) !== null) {
     return { bytes: memory.maxBytes, source: "memory_max" };
-  }
-  if (memory.highLimited === true && finiteCounter(memory.highBytes) !== null) {
-    return { bytes: memory.highBytes, source: "memory_high" };
   }
   if (finiteCounter(memory.effectiveMaxBytes) !== null) {
     return { bytes: memory.effectiveMaxBytes, source: "effective_memory_max" };
@@ -29,10 +26,24 @@ function selectLimit(memory = {}) {
   return { bytes: null, source: "unavailable" };
 }
 
+function selectWarningLimit(memory = {}, hardLimit) {
+  if (memory.highLimited === true && finiteCounter(memory.highBytes) !== null) {
+    return { bytes: memory.highBytes, source: "memory_high" };
+  }
+  if (finiteCounter(memory.effectiveHighBytes) !== null) {
+    return { bytes: memory.effectiveHighBytes, source: "effective_memory_high" };
+  }
+  return hardLimit;
+}
+
 function classifyTrend(current, previous, options) {
-  const limit = selectLimit(current.memory);
-  const utilizationPercent = limit.bytes > 0
-    ? roundPercent((current.memoryCurrentBytes / limit.bytes) * 100)
+  const hardLimit = selectHardLimit(current.memory);
+  const warningLimit = selectWarningLimit(current.memory, hardLimit);
+  const utilizationPercent = hardLimit.bytes > 0
+    ? roundPercent((current.memoryCurrentBytes / hardLimit.bytes) * 100)
+    : null;
+  const warningUtilizationPercent = warningLimit.bytes > 0
+    ? roundPercent((current.memoryCurrentBytes / warningLimit.bytes) * 100)
     : null;
   const deltaBytes = previous ? current.memoryCurrentBytes - previous.memoryCurrentBytes : null;
   const deltaPercent = previous?.memoryCurrentBytes > 0
@@ -51,7 +62,7 @@ function classifyTrend(current, previous, options) {
   } else if (utilizationPercent !== null && utilizationPercent >= options.criticalPercent) {
     status = "critical";
     reason = "memory_limit_critical";
-  } else if (utilizationPercent !== null && utilizationPercent >= options.warningPercent) {
+  } else if (warningUtilizationPercent !== null && warningUtilizationPercent >= options.warningPercent) {
     status = "warning";
     reason = "memory_limit_warning";
   } else if (deltaBytes !== null
@@ -72,9 +83,12 @@ function classifyTrend(current, previous, options) {
     previousBytes: previous?.memoryCurrentBytes ?? null,
     deltaBytes,
     deltaPercent,
-    limitBytes: limit.bytes,
-    limitSource: limit.source,
+    limitBytes: hardLimit.bytes,
+    limitSource: hardLimit.source,
     utilizationPercent,
+    warningLimitBytes: warningLimit.bytes,
+    warningLimitSource: warningLimit.source,
+    warningUtilizationPercent,
     managedOomKills: current.managedOomKills,
     previousManagedOomKills: previous?.managedOomKills ?? null,
     readOnly: true,
@@ -96,6 +110,9 @@ function unavailableTrend(observedAt) {
     limitBytes: null,
     limitSource: "unavailable",
     utilizationPercent: null,
+    warningLimitBytes: null,
+    warningLimitSource: "unavailable",
+    warningUtilizationPercent: null,
     managedOomKills: null,
     previousManagedOomKills: null,
     readOnly: true,

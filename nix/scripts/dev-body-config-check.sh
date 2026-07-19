@@ -174,6 +174,14 @@ requireIncludes("openclaw-body module", bodyModule, [
   "runtimePackages.screenAct",
   "runtimePackages.systemSense",
   "kernelEventCapture",
+  "resourceControl",
+  "systemd.slices",
+  "systemd.user.slices",
+  "openclaw-body.slice",
+  "openclaw-session.slice",
+  "MemoryHigh",
+  "MemoryMax",
+  "TasksMax",
   "probePackage",
   "AmbientCapabilities",
   "CapabilityBoundingSet",
@@ -227,6 +235,7 @@ requireIncludes("desktop-body profile", desktopProfile, [
   "componentOwnership.user",
   "browserEngine.mode = \"firefox\"",
   "kernelEventCapture.enable = true",
+  "resourceControl.enable = true",
   ...componentKeys,
 ]);
 
@@ -291,6 +300,17 @@ if command -v nix >/dev/null 2>&1; then
           AmbientCapabilities = unit.serviceConfig.AmbientCapabilities or [ ];
           CapabilityBoundingSet = unit.serviceConfig.CapabilityBoundingSet or [ ];
           LimitMEMLOCK = unit.serviceConfig.LimitMEMLOCK or null;
+          Slice = unit.serviceConfig.Slice or null;
+        };
+      };
+      projectSlice = slice: {
+        inherit (slice) description;
+        sliceConfig = {
+          MemoryAccounting = slice.sliceConfig.MemoryAccounting or null;
+          MemoryHigh = slice.sliceConfig.MemoryHigh or null;
+          MemoryMax = slice.sliceConfig.MemoryMax or null;
+          TasksAccounting = slice.sliceConfig.TasksAccounting or null;
+          TasksMax = slice.sliceConfig.TasksMax or null;
         };
       };
     in {
@@ -313,6 +333,8 @@ if command -v nix >/dev/null 2>&1; then
       systemSense = project config.systemd.services.openclaw-system-sense;
       systemHeal = project config.systemd.services.openclaw-system-heal;
       observerUi = project config.systemd.services.observer-ui;
+      bodySlice = projectSlice config.systemd.slices.openclaw-body;
+      sessionSlice = projectSlice config.systemd.user.slices.openclaw-session;
       hostd = if builtins.hasAttr "openclaw-hostd" config.systemd.services
         then project config.systemd.services.openclaw-hostd
         else null;
@@ -343,6 +365,27 @@ for (const [name, unit] of Object.entries(ownership).filter(([name]) =>
     throw new Error(`${name} must run as the dedicated openclaw service user: ${JSON.stringify(unit)}`);
   }
 }
+const expectedResourceEnvelope = {
+  MemoryAccounting: true,
+  MemoryHigh: "1610612736",
+  MemoryMax: "3221225472",
+  TasksAccounting: true,
+  TasksMax: "1024",
+};
+if (JSON.stringify(ownership.bodySlice?.sliceConfig) !== JSON.stringify(expectedResourceEnvelope)
+  || JSON.stringify(ownership.sessionSlice?.sliceConfig) !== JSON.stringify(expectedResourceEnvelope)) {
+  throw new Error(`desktop body must expose both declarative resource slices: ${JSON.stringify({
+    body: ownership.bodySlice,
+    session: ownership.sessionSlice,
+  })}`);
+}
+for (const [name, unit] of Object.entries(ownership).filter(([name]) =>
+  ["core", "eventHub", "screenSense", "screenAct", "systemSense", "systemHeal", "observerUi"].includes(name)
+)) {
+  if (unit.serviceConfig?.Slice !== "openclaw-body.slice") {
+    throw new Error(`${name} must run inside the system-body resource envelope: ${JSON.stringify(unit.serviceConfig)}`);
+  }
+}
 if (ownership.polkitEnabled !== true
   || !ownership.polkitExtraConfig.includes('action.lookup("unit") == "openclaw-system-sense.service"')
   || !ownership.polkitExtraConfig.includes('action.lookup("unit") == "openclaw-event-hub.service"')
@@ -360,7 +403,8 @@ for (const [name, unit] of [["session", ownership.session], ["browser", ownershi
     || unit.serviceConfig?.User != null
     || unit.environment?.OPENCLAW_BODY_COMPONENT_SCOPE !== "user"
     || unit.environment?.OPENCLAW_BODY_STATE_DIR !== "%S/openclaw"
-    || unit.environment?.OPENCLAW_BODY_LOG_DIR !== "%L/openclaw") {
+    || unit.environment?.OPENCLAW_BODY_LOG_DIR !== "%L/openclaw"
+    || unit.serviceConfig?.Slice !== "openclaw-session.slice") {
     throw new Error(`unexpected ${name} user unit ownership: ${JSON.stringify(unit)}`);
   }
 }
@@ -498,6 +542,12 @@ console.log(JSON.stringify({
     systemSenseRuntimeSource: ownership.systemSense.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
     systemSenseWorkingDirectory: ownership.systemSense.serviceConfig.WorkingDirectory,
     systemSenseLimitMEMLOCK: ownership.systemSense.serviceConfig.LimitMEMLOCK,
+    resourceControl: {
+      bodySlice: ownership.bodySlice.sliceConfig,
+      sessionSlice: ownership.sessionSlice.sliceConfig,
+      systemServiceSlice: ownership.core.serviceConfig.Slice,
+      userServiceSlice: ownership.session.serviceConfig.Slice,
+    },
     systemHealRuntimeSource: ownership.systemHeal.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
     systemHealWorkingDirectory: ownership.systemHeal.serviceConfig.WorkingDirectory,
     observerUiRuntimeSource: ownership.observerUi.environment.OPENCLAW_BODY_RUNTIME_SOURCE,
@@ -513,7 +563,7 @@ EOF
       wantedBy = unit.wantedBy;
       environment = unit.environment;
       serviceConfig = {
-        inherit (service) Restart EnvironmentFile WorkingDirectory ExecStart NoNewPrivileges PrivateTmp ProtectSystem ProtectHome ReadWritePaths RestrictAddressFamilies;
+        inherit (service) Restart EnvironmentFile WorkingDirectory ExecStart NoNewPrivileges PrivateTmp ProtectSystem ProtectHome ReadWritePaths RestrictAddressFamilies Slice;
       };
     }')"
   node - <<'EOF' "$user_unit_json"
@@ -521,6 +571,7 @@ const unit = JSON.parse(process.argv[2]);
 const service = unit.serviceConfig ?? {};
 if ((unit.wantedBy ?? []).length !== 0
   || service.Restart !== "no"
+  || service.Slice !== "openclaw-session.slice"
   || service.EnvironmentFile !== "%t/openclaw-sidecars/%i.env"
   || unit.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || !String(service.WorkingDirectory ?? "").startsWith("/nix/store/")

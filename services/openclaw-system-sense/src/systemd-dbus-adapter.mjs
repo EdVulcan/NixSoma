@@ -21,6 +21,7 @@ const SERVICE_PROPERTY_NAMES = [
   "MemoryAvailable",
   "MemoryHigh",
   "MemoryMax",
+  "EffectiveMemoryHigh",
   "EffectiveMemoryMax",
   "CPUUsageNSec",
   "TasksCurrent",

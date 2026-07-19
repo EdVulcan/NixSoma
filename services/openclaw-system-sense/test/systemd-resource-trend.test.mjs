@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 import { createSystemdResourceTrend } from "../src/systemd-resource-trend.mjs";
 
-function unit({ current, max = 1024, oomKills = 0 } = {}) {
+function unit({ current, high = null, max = 1024, oomKills = 0 } = {}) {
   return {
     unit: "openclaw-core.service",
     resources: {
@@ -14,6 +14,7 @@ function unit({ current, max = 1024, oomKills = 0 } = {}) {
         maxLimited: true,
         highBytes: null,
         highLimited: false,
+        effectiveHighBytes: high ?? max,
         effectiveMaxBytes: max,
       },
       oom: { managedKills: oomKills },
@@ -49,6 +50,13 @@ test("resource trend warns on bounded growth and critical limit or OOM evidence"
   const critical = limit.observe([unit({ current: 970, max: 1000 })], "2026-07-19T01:00:00.000Z");
   assert.equal(critical.units[0].resourceTrend.status, "critical");
   assert.equal(critical.units[0].resourceTrend.reason, "memory_limit_critical");
+
+  const softLimit = createSystemdResourceTrend({ minSampleIntervalMs: 0 });
+  const warning = softLimit.observe([unit({ current: 850, high: 1000, max: 2000 })], "2026-07-19T01:00:00.000Z");
+  assert.equal(warning.units[0].resourceTrend.status, "warning");
+  assert.equal(warning.units[0].resourceTrend.reason, "memory_limit_warning");
+  assert.equal(warning.units[0].resourceTrend.warningLimitSource, "effective_memory_high");
+  assert.equal(warning.units[0].resourceTrend.limitSource, "memory_max");
 
   const oom = createSystemdResourceTrend({ minSampleIntervalMs: 0 });
   oom.observe([unit({ current: 100, oomKills: 0 })], "2026-07-19T01:00:00.000Z");

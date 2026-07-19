@@ -137,6 +137,8 @@ if (coreUnit.resources?.registry !== "openclaw-systemd-unit-resource-observation
   || coreUnit.resources?.observed !== true
   || !Number.isSafeInteger(coreUnit.resources?.memory?.currentBytes)
   || coreUnit.resources.memory.currentBytes <= 0
+  || !Number.isSafeInteger(coreUnit.resources?.memory?.effectiveHighBytes)
+  || coreUnit.resources.memory.effectiveHighBytes <= 0
   || typeof coreUnit.resources?.memory?.highLimited !== "boolean"
   || typeof coreUnit.resources?.memory?.maxLimited !== "boolean"
   || !Number.isSafeInteger(coreUnit.resources?.tasks?.current)

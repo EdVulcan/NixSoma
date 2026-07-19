@@ -13,6 +13,7 @@ test("systemd resource observation projects bounded read-only service properties
     MemoryAvailable: 1024 * 1024 * 1024,
     MemoryHigh: 1536 * 1024 * 1024,
     MemoryMax: 2 * 1024 * 1024 * 1024,
+    EffectiveMemoryHigh: 1536 * 1024 * 1024,
     EffectiveMemoryMax: 2 * 1024 * 1024 * 1024,
     CPUUsageNSec: 123_000_000,
     TasksCurrent: 7,
@@ -29,6 +30,7 @@ test("systemd resource observation projects bounded read-only service properties
   assert.equal(resources.memory.currentBytes, 48 * 1024 * 1024);
   assert.equal(resources.memory.highLimited, true);
   assert.equal(resources.memory.maxLimited, true);
+  assert.equal(resources.memory.effectiveHighBytes, 1536 * 1024 * 1024);
   assert.equal(resources.tasks.current, 7);
   assert.equal(resources.oom.policy, "stop");
   assert.doesNotMatch(JSON.stringify(resources), /SECRET_MUST_NOT_ESCAPE/u);

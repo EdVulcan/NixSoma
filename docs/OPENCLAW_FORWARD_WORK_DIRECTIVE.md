@@ -73,18 +73,26 @@ segment policy. The post-repair diagnosis loop and its exact request-bound AI
 guidance handoff defined below are also complete in source; do not select work
 from an older phase number or historical `Next Slice` paragraph.
 
-The next Level 3 mainline has started with bounded resource-pressure sensing in
-the existing native systemd inventory. A fixed D-Bus property allowlist now
-projects current/peak memory, configured memory-limit state, cumulative CPU,
-task counts, and managed OOM evidence for configured system-manager body units;
-Observer renders the compact values in its existing inventory panel. The same
-owner now retains four in-memory samples and emits fixed baseline, rising,
-limit, and managed-OOM warning states through Observer's existing five-second
-refresh. This read-only source evidence is not yet in the installed generation
-and adds no process signal, task, approval, scheduler, provider request, or
-hostd authority. Freeze this sensing layer. The next real behavior is a
-declarative fixed-unit cgroup resource envelope in the Nix body module; build
-and validate it without automatic physical-host activation.
+The Level 3 resource-pressure slice is complete in source and in a reviewed,
+not-switched physical-host candidate. Native systemd inventory projects bounded
+current/peak memory, effective soft and hard limits, cumulative CPU, task, and
+managed OOM evidence; its four-sample in-memory trend uses the effective soft
+limit for warnings and the hard limit for critical state. The desktop profile
+now places the seven ordinary system body services in `openclaw-body.slice` and
+the session manager, browser runtime, and trusted sidecar in
+`openclaw-session.slice`. Each scope independently applies a 1.5 GiB
+`MemoryHigh`, 3 GiB `MemoryMax`, and `TasksMax=1024`. Hostd and credential
+initializers remain outside these slices, and no runtime `SetUnitProperties`,
+process signal, hostd expansion, or automatic activation was added.
+
+The candidate is
+`/nix/store/qsjfjrgsb70r2z5hkw3f2ah84m8l2a2d-nixos-system-nixos-26.05.4808.569d57850992`.
+It passed the body configuration gate, 889 workspace tests, typecheck, both
+native inventory milestones, generated-unit review, and closure comparison.
+The installed generation remains `yzjwwp67...`; do not claim runtime
+containment until a separately authorized switch and non-mutating post-switch
+probe confirm both active slices and service health. Do not deliberately create
+memory pressure on the sole physical host to prove the limits.
 
 ## Governing Vision
 

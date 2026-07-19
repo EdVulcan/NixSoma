@@ -13,8 +13,9 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current `main` through the Level 3 fixed-unit incident loop and native resource-pressure observation | Implemented; commit history is authoritative |
-| Local validation | 889 workspace tests and typecheck pass; body-config and event-audit integration pass; 811 registry entries pass | Validated |
+| Capability source | Current `main` through the Level 3 fixed-unit incident loop, resource-pressure observation, and declarative cgroup envelope | Implemented; commit history is authoritative |
+| Local validation | 889 workspace tests and typecheck pass; body-config, native inventory, and event-audit integration pass; 811 registry entries pass | Validated |
+| Pending candidate | `/nix/store/qsjfjrgsb70r2z5hkw3f2ah84m8l2a2d-nixos-system-nixos-26.05.4808.569d57850992` contains the reviewed system/user cgroup envelopes | Built and reviewed; not switched |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/yzjwwp67apgv4rrzpm3g2gz12bqkq7vj-nixos-system-nixos-26.05.4808.569d57850992` | Approved-dispatch baseline deployed and probed 2026-07-19 |
 | Previous generation | `/nix/store/gb72w3qavm6b0vv114ml723g7y8jv5qh-nixos-system-nixos-26.05.4808.569d57850992`; closure diff was only `openclaw-core` | Superseded without rollback or reboot |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
@@ -147,16 +148,20 @@ approval change. Real repair, provider egress, hostd mutation, and generation
 rollback remain deferred to an explicit or disposable mutation check. Freeze
 this completed lane and select the next concrete whitepaper capability.
 
-The next Level 3 capability is implemented in the source checkout but is not
-yet deployed: the existing native systemd inventory now reports bounded
-current/peak memory, configured memory-limit state, CPU use, task counts, and
-managed OOM evidence for fixed body units, and the existing Observer panel
-renders that read-only telemetry. It performs no cgroup or host mutation. The
-same source now derives a four-sample in-memory resource trend and fixed warning
-states through Observer's existing refresh, without persistence or task
-creation. Freeze this sensing layer. The next real capability is a declarative
-fixed-unit cgroup resource envelope built and reviewed before any separately
-authorized physical-host switch.
+The next Level 3 capability is complete in source and a reviewed candidate but
+is not yet deployed. Native systemd inventory reports bounded current/peak
+memory, effective soft and hard limits, CPU use, task counts, and managed OOM
+evidence, while the existing Observer panel renders the same read-only
+telemetry and four-sample trend. The desktop profile declares two independent
+cgroup envelopes: seven ordinary system body services use
+`openclaw-body.slice`, and session-manager, browser-runtime, and trusted
+sidecars use `openclaw-session.slice`. Each has 1.5 GiB `MemoryHigh`, 3 GiB
+`MemoryMax`, and `TasksMax=1024`; hostd and credential initializers remain
+outside the envelopes. Candidate `qsjfjrgs...` passed generated-unit and closure
+review without activation. The next operational step is a separately
+authorized switch followed only by service, slice, limit, restart-count, auth,
+and health probes. A deliberate memory-pressure test on the sole physical host
+is out of scope.
 
 ## Progress Estimate
 

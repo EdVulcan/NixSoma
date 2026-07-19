@@ -420,11 +420,39 @@ started with the complete trend owner, observed seven system-manager units,
 moved from seven baseline samples to a normal second sample, and reported zero
 warning/critical units without mutation.
 
+## Twelfth Slice: Declarative Cgroup Envelope
+
+The desktop Nix profile now enables two independent static resource envelopes.
+Seven ordinary system-manager body services run in `openclaw-body.slice`; the
+session manager, browser runtime, and non-auto-started trusted sidecar run in
+the user manager's `openclaw-session.slice`. Each slice declares
+`MemoryAccounting=true`, `MemoryHigh=1610612736`,
+`MemoryMax=3221225472`, `TasksAccounting=true`, and `TasksMax=1024`. The module
+requires the soft memory limit to remain below the hard limit.
+
+The boundary deliberately excludes `openclaw-hostd` and the operator-token and
+execution-grant key initializers so resource pressure in the ordinary body does
+not remove the fixed recovery or credential bootstrap owners. It adds no
+runtime `SetUnitProperties`, arbitrary cgroup input, process signal, hostd
+operation, task, approval, provider call, or automatic activation. Resource
+trend warning classification now uses `EffectiveMemoryHigh` for soft pressure
+and retains `MemoryMax`/`EffectiveMemoryMax` as the critical hard boundary.
+
+The body configuration check builds store-native services and verifies both
+slice definitions, all service assignments, and trusted-sidecar assignment.
+Focused tests, typecheck, all 889 workspace tests, and both native inventory
+milestones pass. The complete physical-host candidate
+`/nix/store/qsjfjrgsb70r2z5hkw3f2ah84m8l2a2d-nixos-system-nixos-26.05.4808.569d57850992`
+contains the generated units. Its closure differs from the installed generation
+only by the updated system-sense package and the two new slice units; generated
+service-unit review confirms the assignments. It has not been switched.
+
 ## Next Slice
 
-Freeze the completed resource sensing layer. The next real Level 3 capability
-is a declarative fixed-unit cgroup resource envelope in the Nix body module,
-with explicit memory and task limits visible in generated unit evidence. Build
-and validate a candidate without runtime `SetUnitProperties`, process signals,
-hostd expansion, or automatic activation; switching the physical host remains
-a separate explicit decision.
+Freeze the cgroup implementation. A separately authorized physical-host switch
+may deploy the exact reviewed candidate, after which only non-mutating checks
+should confirm active slice properties, service assignment, service health,
+restart counts, and existing anonymous-auth rejection. Do not deliberately
+consume memory or force OOM on the sole physical host. After deployment evidence
+is recorded, select the next distinct Level 3 capability from the identity
+upgrade path instead of adding another resource-envelope wrapper.

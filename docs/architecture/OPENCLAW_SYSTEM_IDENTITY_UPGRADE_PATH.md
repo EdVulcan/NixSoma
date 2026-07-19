@@ -291,7 +291,7 @@
 
 ---
 
-## 六、当前证据化进度基线（2026-07-18）
+## 六、当前证据化进度基线（2026-07-19）
 
 进度不能再按历史 Phase 数量计算。以下比例是根据当前运行时代码、NixOS
 模块、任务闭环、Observer、测试证据和仍缺失的架构组件估算的能力成熟度，
@@ -301,7 +301,7 @@
 | --- | --- | --- |
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
-| Level 3 系统级特权组件 | 约 60% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 资源观测和有界趋势告警已形成。真实 repair/rollback、声明式 cgroup 限制执行和更广系统能力仍未建立。 |
+| Level 3 系统级特权组件 | 约 60% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 候选已形成。该 envelope 尚未切换到物理机；真实 repair/rollback、运行态资源隔离证据和更广系统能力仍未建立。 |
 | Level 4 图形栈内生组件 | 约 0-5% | 只有 AI-owned work-view 方向与接口预留；专属 session、nested compositor、原生图形输入输出尚未实现。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成

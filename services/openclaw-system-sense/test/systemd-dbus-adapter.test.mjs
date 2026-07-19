@@ -44,6 +44,7 @@ test("native systemd adapter reads fixed unit properties without mutation method
         ["MemoryAvailable", variant(500_000_000)],
         ["MemoryHigh", variant(800_000_000)],
         ["MemoryMax", variant(1_000_000_000)],
+        ["EffectiveMemoryHigh", variant(800_000_000)],
         ["EffectiveMemoryMax", variant(1_000_000_000)],
         ["CPUUsageNSec", variant(250_000_000)],
         ["TasksCurrent", variant(8)],

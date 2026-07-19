@@ -84,6 +84,7 @@ test("systemd inspection prefers native D-Bus without invoking commands", async 
               MemoryAvailable: 500_000_000,
               MemoryHigh: 800_000_000,
               MemoryMax: 1_000_000_000,
+              EffectiveMemoryHigh: 800_000_000,
               EffectiveMemoryMax: 1_000_000_000,
               CPUUsageNSec: 250_000_000,
               TasksCurrent: 8,

@@ -208,6 +208,15 @@ let
   browserRuntimeCredentialSources = map (spec: spec.name) (builtins.filter
     (spec: builtins.elem spec.key [ "sessionManager" "screenSense" "screenAct" ])
     enabledSpecs);
+  resourceSliceConfig = {
+    MemoryAccounting = true;
+    MemoryHigh = toString cfg.resourceControl.memoryHighBytes;
+    MemoryMax = toString cfg.resourceControl.memoryMaxBytes;
+    TasksAccounting = true;
+    TasksMax = toString cfg.resourceControl.tasksMax;
+  };
+  resourceSliceForScope = scope:
+    if scope == "user" then "openclaw-session.slice" else "openclaw-body.slice";
 
   trustedSidecarRuntimeRoot =
     if cfg.runtimePackages.sessionManager != null
@@ -414,6 +423,8 @@ let
         AmbientCapabilities = [ "CAP_BPF" "CAP_PERFMON" ];
         CapabilityBoundingSet = [ "CAP_BPF" "CAP_PERFMON" ];
         LimitMEMLOCK = "infinity";
+      } // optionalAttrs cfg.resourceControl.enable {
+        Slice = resourceSliceForScope scope;
       };
     };
 
@@ -441,6 +452,8 @@ let
       ProtectHome = true;
       ReadWritePaths = [ "%t/openclaw-sidecars" ];
       RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
+    } // optionalAttrs cfg.resourceControl.enable {
+      Slice = "openclaw-session.slice";
     };
   };
 
@@ -718,6 +731,25 @@ in
       };
     };
 
+    resourceControl = {
+      enable = mkEnableOption "declarative cgroup envelopes for OpenClaw system and user body scopes";
+      memoryHighBytes = mkOption {
+        type = types.ints.positive;
+        default = 1610612736;
+        description = "MemoryHigh applied independently to the OpenClaw system-body and user-session slices.";
+      };
+      memoryMaxBytes = mkOption {
+        type = types.ints.positive;
+        default = 3221225472;
+        description = "MemoryMax applied independently to the OpenClaw system-body and user-session slices.";
+      };
+      tasksMax = mkOption {
+        type = types.ints.positive;
+        default = 1024;
+        description = "TasksMax applied independently to the OpenClaw system-body and user-session slices.";
+      };
+    };
+
     kernelEventCapture = {
       enable = mkEnableOption "read-only eBPF process-exec event capture for system-sense";
       probePackage = mkOption {
@@ -833,6 +865,11 @@ in
             && cfg.kernelEventCapture.probePackage != null);
         message = "kernel event capture requires a non-root system-owned system-sense service and a probe package.";
       }
+      {
+        assertion = !cfg.resourceControl.enable
+          || cfg.resourceControl.memoryHighBytes < cfg.resourceControl.memoryMaxBytes;
+        message = "services.openclaw.resourceControl.memoryHighBytes must be lower than memoryMaxBytes.";
+      }
     ];
 
     users.groups = optionalAttrs (cfg.user != null) {
@@ -861,6 +898,20 @@ in
       "d ${cfg.stateDir} 0750 ${owner} ${group} - -"
       "d ${cfg.logDir} 0750 ${owner} ${group} - -"
     ];
+
+    systemd.slices = optionalAttrs (cfg.resourceControl.enable && systemOwnedSpecs != [ ]) {
+      openclaw-body = {
+        description = "OpenClaw System Body Resource Envelope";
+        sliceConfig = resourceSliceConfig;
+      };
+    };
+
+    systemd.user.slices = optionalAttrs (cfg.resourceControl.enable && userOwnedSpecs != [ ]) {
+      openclaw-session = {
+        description = "OpenClaw User Session Resource Envelope";
+        sliceConfig = resourceSliceConfig;
+      };
+    };
 
     systemd.services = builtins.listToAttrs (map
       (spec: {

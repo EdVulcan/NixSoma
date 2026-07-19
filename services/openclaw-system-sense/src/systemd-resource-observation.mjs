@@ -33,6 +33,7 @@ export function createSystemdUnitResourceObservation(properties = {}) {
     highLimited: highLimit.limited,
     maxBytes: maxLimit.bytes,
     maxLimited: maxLimit.limited,
+    effectiveHighBytes: optionalCounter(properties.EffectiveMemoryHigh),
     effectiveMaxBytes: optionalCounter(properties.EffectiveMemoryMax),
   };
   const cpu = {
