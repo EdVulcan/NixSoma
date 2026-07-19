@@ -440,12 +440,14 @@ and retains `MemoryMax`/`EffectiveMemoryMax` as the critical hard boundary.
 
 The body configuration check builds store-native services and verifies both
 slice definitions, all service assignments, and trusted-sidecar assignment.
-Focused tests, typecheck, all 889 workspace tests, and both native inventory
+Focused tests, typecheck, all 891 workspace tests, and both native inventory
 milestones pass. The complete physical-host candidate
-`/nix/store/qsjfjrgsb70r2z5hkw3f2ah84m8l2a2d-nixos-system-nixos-26.05.4808.569d57850992`
-contains the generated units. Its closure differs from the installed generation
-only by the updated system-sense package and the two new slice units; generated
-service-unit review confirms the assignments. It has not been switched.
+`/nix/store/9bbc00da4qg5n7v6n05x37azd491dxpn-nixos-system-nixos-26.05.4808.569d57850992`
+contains the generated units. Relative to the installed generation it adds the
+updated system-sense package, both slice units, and the updated Core package/unit
+for disabled-by-default provider configuration. Generated service-unit review
+confirms the assignments and the absence of a provider secret. It has not been
+switched.
 
 ## Next Slice
 

@@ -2,6 +2,7 @@ import {
   buildLiveProviderConfig,
   sendLiveProviderRequest,
   CLOUD_PROVIDER_API_KEY_ENV,
+  CLOUD_PROVIDER_API_KEY_FILE_ENV,
   CLOUD_PROVIDER_ENDPOINT_ENV,
   CLOUD_PROVIDER_MODEL_ENV,
   CLOUD_PROVIDER_LIVE_EGRESS_ENV,
@@ -70,6 +71,7 @@ const output = {
   configuration: {
     endpointEnv: CLOUD_PROVIDER_ENDPOINT_ENV,
     credentialEnv: CLOUD_PROVIDER_API_KEY_ENV,
+    credentialFileEnv: CLOUD_PROVIDER_API_KEY_FILE_ENV,
     modelEnv: CLOUD_PROVIDER_MODEL_ENV,
     liveEgressEnv: CLOUD_PROVIDER_LIVE_EGRESS_ENV,
     endpointHost: config.endpoint.host,

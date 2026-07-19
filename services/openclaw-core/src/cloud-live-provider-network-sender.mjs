@@ -1,7 +1,9 @@
 import { createHash } from "node:crypto";
+import { readServiceCredential } from "../../../packages/shared-utils/src/service-credentials.mjs";
 
 export const CLOUD_PROVIDER_ENDPOINT_ENV = "OPENCLAW_CLOUD_PROVIDER_ENDPOINT";
 export const CLOUD_PROVIDER_API_KEY_ENV = "OPENCLAW_CLOUD_PROVIDER_API_KEY";
+export const CLOUD_PROVIDER_API_KEY_FILE_ENV = "OPENCLAW_CLOUD_PROVIDER_API_KEY_FILE";
 export const CLOUD_PROVIDER_MODEL_ENV = "OPENCLAW_CLOUD_PROVIDER_MODEL";
 export const CLOUD_PROVIDER_LIVE_EGRESS_ENV = "OPENCLAW_CLOUD_PROVIDER_LIVE_EGRESS";
 export const DEEPSEEK_PROVIDER_HOST = "api.deepseek.com";
@@ -19,6 +21,7 @@ const MAX_RESPONSE_CONTENT_CHARS = 16_000;
 const MAX_TIMEOUT_MS = 60_000;
 const DEFAULT_TIMEOUT_MS = 15_000;
 const MAX_SOURCE_TASK_ID_CHARS = 200;
+const MAX_CREDENTIAL_CHARS = 4096;
 const ALLOWED_MESSAGE_ROLES = new Set(["system", "user", "assistant"]);
 
 function stableJson(value) {
@@ -112,6 +115,7 @@ export function buildLiveProviderConfig({ env = process.env } = {}) {
     },
     endpointFingerprint: endpoint.endpointFingerprint ?? null,
     credentialEnv: CLOUD_PROVIDER_API_KEY_ENV,
+    credentialFileEnv: CLOUD_PROVIDER_API_KEY_FILE_ENV,
     liveEgressEnabled: parseBoolean(env[CLOUD_PROVIDER_LIVE_EGRESS_ENV]),
     error: endpoint.ok ? null : endpoint.reason,
   };
@@ -361,6 +365,28 @@ function baseResult({ config, gate, credentialReference, requestContentHash = nu
   };
 }
 
+function resolveProviderCredential(env) {
+  const filePath = typeof env[CLOUD_PROVIDER_API_KEY_FILE_ENV] === "string"
+    && env[CLOUD_PROVIDER_API_KEY_FILE_ENV].trim().length > 0
+    ? env[CLOUD_PROVIDER_API_KEY_FILE_ENV]
+    : null;
+  let value;
+  try {
+    value = readServiceCredential({
+      filePath,
+      value: filePath ? null : env[CLOUD_PROVIDER_API_KEY_ENV],
+      label: "DeepSeek API key",
+    });
+  } catch {
+    return { ok: false, reason: "provider_credential_unavailable", value: "" };
+  }
+  if (!value) return { ok: false, reason: "provider_credential_missing", value: "" };
+  if (value.length > MAX_CREDENTIAL_CHARS) {
+    return { ok: false, reason: "provider_credential_out_of_bounds", value: "" };
+  }
+  return { ok: true, reason: null, value };
+}
+
 export async function sendLiveProviderRequest({
   providerRequest = {},
   credentialResolution = {},
@@ -386,10 +412,9 @@ export async function sendLiveProviderRequest({
   if (!outbound.ok) return { ...result, reason: outbound.reason };
   result.audit.requestContentHash = outbound.requestContentHash;
 
-  const credentialValue = typeof env[CLOUD_PROVIDER_API_KEY_ENV] === "string"
-    ? env[CLOUD_PROVIDER_API_KEY_ENV].trim()
-    : "";
-  if (credentialValue.length === 0) return { ...result, reason: "provider_credential_missing" };
+  const resolvedCredential = resolveProviderCredential(env);
+  if (!resolvedCredential.ok) return { ...result, reason: resolvedCredential.reason };
+  const credentialValue = resolvedCredential.value;
 
   const boundedTimeoutMs = Math.min(MAX_TIMEOUT_MS, Math.max(1, Number(timeoutMs) || DEFAULT_TIMEOUT_MS));
   const controller = new AbortController();

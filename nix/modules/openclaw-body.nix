@@ -346,13 +346,20 @@ let
         ++ (if spec.key == "browserRuntime" && cfg.browserRuntimeAuthTokenFile != null
           then [ "browser-runtime-auth-token:${cfg.browserRuntimeAuthTokenFile}" ]
           else [ ]);
+      cloudProviderCredentialLoads = if
+        spec.key == "core"
+        && cfg.cloudProvider.enable
+        && cfg.cloudProvider.apiKeyFile != null
+        then [ "deepseek-api-key:${cfg.cloudProvider.apiKeyFile}" ]
+        else [ ];
       credentialLoads =
         (if spec.key == "core"
           then (if cfg.operatorAuthTokenFile != null then [ "operator-token:${cfg.operatorAuthTokenFile}" ] else [ ])
             ++ [ "execution-grant-private:${cfg.executionGrantPrivateKeyFile}" ]
           else [ ])
         ++ eventHubCredentialLoads
-        ++ browserRuntimeCredentialLoads;
+        ++ browserRuntimeCredentialLoads
+        ++ cloudProviderCredentialLoads;
       executionGrantDependencyUnits = if
         builtins.elem spec.key [ "core" "screenAct" "systemSense" ]
         && builtins.elem spec.key cfg.components
@@ -399,6 +406,12 @@ let
         OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE = "%d/execution-grant-private";
         OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_ENABLED = if cfg.fixedUnitIncidentScheduler.enable then "1" else "0";
         OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_INTERVAL_MS = toString (cfg.fixedUnitIncidentScheduler.intervalSeconds * 1000);
+      } // optionalAttrs (spec.key == "core" && cfg.cloudProvider.enable) {
+        OPENCLAW_CLOUD_PROVIDER_ENDPOINT = cfg.cloudProvider.endpoint;
+        OPENCLAW_CLOUD_PROVIDER_MODEL = cfg.cloudProvider.model;
+        OPENCLAW_CLOUD_PROVIDER_LIVE_EGRESS = if cfg.cloudProvider.liveEgress then "1" else "0";
+      } // optionalAttrs (spec.key == "core" && cfg.cloudProvider.enable && cfg.cloudProvider.apiKeyFile != null) {
+        OPENCLAW_CLOUD_PROVIDER_API_KEY_FILE = "%d/deepseek-api-key";
       } // optionalAttrs (builtins.elem spec.key [ "screenAct" "systemSense" ]) {
         OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE = cfg.executionGrantPublicKeyFile;
       };
@@ -731,6 +744,30 @@ in
       };
     };
 
+    cloudProvider = {
+      enable = mkEnableOption "governed DeepSeek provider configuration for OpenClaw Core";
+      endpoint = mkOption {
+        type = types.enum [ "https://api.deepseek.com" "https://api.deepseek.com/v1" ];
+        default = "https://api.deepseek.com";
+        description = "Allowlisted DeepSeek API endpoint; this non-secret value is bound into approved requests.";
+      };
+      model = mkOption {
+        type = types.enum [ "deepseek-chat" "deepseek-reasoner" ];
+        default = "deepseek-chat";
+        description = "Default allowlisted DeepSeek model for governed provider requests.";
+      };
+      apiKeyFile = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "File containing the DeepSeek API key; Core receives it only through systemd LoadCredential.";
+      };
+      liveEgress = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable the network side of the existing approval-bound provider egress gate.";
+      };
+    };
+
     resourceControl = {
       enable = mkEnableOption "declarative cgroup envelopes for OpenClaw system and user body scopes";
       memoryHighBytes = mkOption {
@@ -869,6 +906,15 @@ in
         assertion = !cfg.resourceControl.enable
           || cfg.resourceControl.memoryHighBytes < cfg.resourceControl.memoryMaxBytes;
         message = "services.openclaw.resourceControl.memoryHighBytes must be lower than memoryMaxBytes.";
+      }
+      {
+        assertion = !cfg.cloudProvider.enable || builtins.elem "core" cfg.components;
+        message = "services.openclaw.cloudProvider.enable requires the Core component.";
+      }
+      {
+        assertion = !cfg.cloudProvider.liveEgress
+          || (cfg.cloudProvider.enable && cfg.cloudProvider.apiKeyFile != null);
+        message = "services.openclaw.cloudProvider.liveEgress requires an enabled provider and apiKeyFile.";
       }
     ];
 

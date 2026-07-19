@@ -1,17 +1,41 @@
 # DeepSeek Provider Setup
 
 The live provider sender is disabled by default. It accepts only the DeepSeek
-OpenAI-compatible endpoint and reads the API key from the process environment.
-The key is never part of repository files, task evidence, or command output.
+OpenAI-compatible endpoint. A deployed Core reads the API key from a systemd
+credential file; the legacy environment value remains available only for a
+temporary development process. The key is never part of Nix expressions,
+generated units, repository files, task evidence, or command output.
+
+For persistent NixOS use, first provision a root-owned credential source outside
+the Nix store, then configure the module with its path:
+
+```nix
+services.openclaw.cloudProvider = {
+  enable = true;
+  endpoint = "https://api.deepseek.com";
+  model = "deepseek-chat";
+  apiKeyFile = "/var/lib/openclaw/deepseek-api-key";
+  liveEgress = true;
+};
+```
+
+Core receives that source as `%d/deepseek-api-key` through
+`LoadCredential=`. Build and inspect the candidate before switching. The
+desktop profile preconfigures the endpoint and model but intentionally leaves
+live egress disabled until `apiKeyFile` is explicitly supplied.
 
 Configure a temporary shell session:
 
 ```bash
 export OPENCLAW_CLOUD_PROVIDER_ENDPOINT='https://api.deepseek.com'
 export OPENCLAW_CLOUD_PROVIDER_MODEL='deepseek-chat'
-read -r -s -p 'DeepSeek API key: ' OPENCLAW_CLOUD_PROVIDER_API_KEY
+read -r -s -p 'DeepSeek API key: ' temporary_deepseek_key
 printf '\n'
-export OPENCLAW_CLOUD_PROVIDER_API_KEY
+temporary_key_file="$(mktemp)"
+chmod 600 "$temporary_key_file"
+printf '%s\n' "$temporary_deepseek_key" > "$temporary_key_file"
+unset temporary_deepseek_key
+export OPENCLAW_CLOUD_PROVIDER_API_KEY_FILE="$temporary_key_file"
 export OPENCLAW_CLOUD_PROVIDER_LIVE_EGRESS=true
 ```
 
@@ -28,7 +52,8 @@ Clear the variables when finished:
 ```bash
 unset OPENCLAW_CLOUD_PROVIDER_ENDPOINT
 unset OPENCLAW_CLOUD_PROVIDER_MODEL
-unset OPENCLAW_CLOUD_PROVIDER_API_KEY
+rm -f "$OPENCLAW_CLOUD_PROVIDER_API_KEY_FILE"
+unset OPENCLAW_CLOUD_PROVIDER_API_KEY_FILE
 unset OPENCLAW_CLOUD_PROVIDER_LIVE_EGRESS
 ```
 

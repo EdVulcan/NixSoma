@@ -1,10 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import {
   buildLiveProviderConfig,
   buildLiveProviderEgressGate,
   sendLiveProviderRequest,
   CLOUD_PROVIDER_API_KEY_ENV,
+  CLOUD_PROVIDER_API_KEY_FILE_ENV,
   CLOUD_PROVIDER_ENDPOINT_ENV,
   CLOUD_PROVIDER_LIVE_EGRESS_ENV,
   DEEPSEEK_CREDENTIAL_REFERENCE,
@@ -70,7 +74,9 @@ test("a denied gate does not read the credential or call fetch", async () => {
     [CLOUD_PROVIDER_LIVE_EGRESS_ENV]: "false",
   }, {
     get(target, property, receiver) {
-      if (property === CLOUD_PROVIDER_API_KEY_ENV) credentialRead = true;
+      if (property === CLOUD_PROVIDER_API_KEY_ENV || property === CLOUD_PROVIDER_API_KEY_FILE_ENV) {
+        credentialRead = true;
+      }
       return Reflect.get(target, property, receiver);
     },
   });
@@ -89,6 +95,65 @@ test("a denied gate does not read the credential or call fetch", async () => {
   assert.equal(result.reason, "live_provider_egress_gate_not_satisfied");
   assert.equal(credentialRead, false);
   assert.equal(fetchCalled, false);
+});
+
+test("authorised DeepSeek request prefers a systemd credential file", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "openclaw-deepseek-credential-"));
+  const credentialFile = path.join(root, "deepseek-api-key");
+  const fileSecret = "file-secret-value";
+  await writeFile(credentialFile, `${fileSecret}\n`, { mode: 0o600 });
+  try {
+    let authorization;
+    const result = await sendLiveProviderRequest({
+      env: {
+        [CLOUD_PROVIDER_ENDPOINT_ENV]: "https://api.deepseek.com",
+        [CLOUD_PROVIDER_API_KEY_FILE_ENV]: credentialFile,
+        [CLOUD_PROVIDER_API_KEY_ENV]: "legacy-environment-secret",
+        [CLOUD_PROVIDER_LIVE_EGRESS_ENV]: "true",
+      },
+      providerRequest: providerRequest(),
+      credentialResolution: { credential: { reference: credentialReference } },
+      operatorAuthorization: authorised,
+      fetchImpl: async (_url, options) => {
+        authorization = options.headers.authorization;
+        return responseFromJson({
+          id: "chatcmpl-file-credential",
+          model: "deepseek-chat",
+          choices: [{ message: { role: "assistant", content: "credential file accepted" } }],
+        });
+      },
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(authorization, `Bearer ${fileSecret}`);
+    assert.equal(JSON.stringify(result).includes(fileSecret), false);
+    assert.equal(JSON.stringify(result).includes("legacy-environment-secret"), false);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("configured provider credential file fails closed when unavailable", async () => {
+  let fetchCalled = false;
+  const result = await sendLiveProviderRequest({
+    env: {
+      [CLOUD_PROVIDER_ENDPOINT_ENV]: "https://api.deepseek.com",
+      [CLOUD_PROVIDER_API_KEY_FILE_ENV]: "/missing/openclaw/deepseek-api-key",
+      [CLOUD_PROVIDER_LIVE_EGRESS_ENV]: "true",
+    },
+    providerRequest: providerRequest(),
+    credentialResolution: { credential: { reference: credentialReference } },
+    operatorAuthorization: authorised,
+    fetchImpl: async () => {
+      fetchCalled = true;
+      throw new Error("fetch should not run");
+    },
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "provider_credential_unavailable");
+  assert.equal(fetchCalled, false);
+  assert.doesNotMatch(JSON.stringify(result), /missing\/openclaw/u);
 });
 
 test("authorised DeepSeek request sends only bounded chat fields and redacts credential output", async () => {

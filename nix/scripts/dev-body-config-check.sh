@@ -116,6 +116,10 @@ const envNames = [
   "OPENCLAW_KERNEL_EVENT_CAPTURE_MAX_EVENTS",
   "OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE",
   "OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE",
+  "OPENCLAW_CLOUD_PROVIDER_ENDPOINT",
+  "OPENCLAW_CLOUD_PROVIDER_MODEL",
+  "OPENCLAW_CLOUD_PROVIDER_LIVE_EGRESS",
+  "OPENCLAW_CLOUD_PROVIDER_API_KEY_FILE",
   "OPENCLAW_EVENT_HUB_TOKEN_FILE",
   "OPENCLAW_EVENT_HUB_TOKEN_MAP_FILE",
   "OPENCLAW_EVENT_HUB_AUTH_REQUIRED",
@@ -160,6 +164,8 @@ requireIncludes("openclaw-body module", bodyModule, [
   "browser-runtime-token-map",
   "browser-runtime-token",
   "browser-runtime-auth-token",
+  "cloudProvider",
+  "deepseek-api-key",
   "LoadCredential",
   "ExecStartPre = [ \"+${eventLogOwnershipMigration}\" ]",
   "chown ${lib.escapeShellArg \"${owner}:${group}\"} \"$event_log\"",
@@ -236,11 +242,13 @@ requireIncludes("desktop-body profile", desktopProfile, [
   "browserEngine.mode = \"firefox\"",
   "kernelEventCapture.enable = true",
   "resourceControl.enable = true",
+  "cloudProvider.enable = true",
   ...componentKeys,
 ]);
 
 requireIncludes("local-dev host", localHost, [
   "../profiles/desktop-body.nix",
+  "boot.isContainer = true",
   "system.stateVersion",
 ]);
 
@@ -443,6 +451,11 @@ if (ownership.core.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || ownership.core.environment?.OPENCLAW_HOSTD_SOCKET_PATH !== "/run/openclaw/hostd.sock"
   || ownership.core.environment?.OPENCLAW_OPERATOR_TOKEN_FILE !== "%d/operator-token"
   || ownership.core.environment?.OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE !== "%d/execution-grant-private"
+  || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_ENDPOINT !== "https://api.deepseek.com"
+  || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_MODEL !== "deepseek-chat"
+  || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_LIVE_EGRESS !== "0"
+  || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_API_KEY_FILE != null
+  || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_API_KEY != null
   || JSON.stringify(ownership.core.serviceConfig?.LoadCredential ?? []) !== JSON.stringify(["operator-token:/var/lib/openclaw/operator-token", "execution-grant-private:/var/lib/openclaw/execution-grant-private.pem"])
   || !String(ownership.core.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
   || !String(ownership.core.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-core")

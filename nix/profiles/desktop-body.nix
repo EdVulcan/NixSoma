@@ -17,6 +17,7 @@
     systemdRepairAuthDelegation.enable = true;
     kernelEventCapture.enable = true;
     resourceControl.enable = true;
+    cloudProvider.enable = true;
     trustedSidecarUserUnit.enable = true;
     componentOwnership.user = [
       "sessionManager"

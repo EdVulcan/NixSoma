@@ -47,10 +47,12 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, and the local fixed-unit incident scheduler and
-triage/repair-promotion bridge. All 889 workspace tests and typecheck pass, the
+triage/repair-promotion bridge. All 891 workspace tests and typecheck pass, the
 body-config and event-audit integration checks pass, the 811-entry milestone
 registry audit passes, and the Windows path budget has no file over 160
-repository-relative characters.
+repository-relative characters. GitHub CI now enforces Node 22 typecheck,
+workspace tests, milestone registry/script audit, and the same path budget on
+pushes and pull requests; Nix closure and physical-host checks remain local.
 
 The physical host now runs generation
 `/nix/store/yzjwwp67apgv4rrzpm3g2gz12bqkq7vj-nixos-system-nixos-26.05.4808.569d57850992`,
@@ -86,13 +88,21 @@ initializers remain outside these slices, and no runtime `SetUnitProperties`,
 process signal, hostd expansion, or automatic activation was added.
 
 The candidate is
-`/nix/store/qsjfjrgsb70r2z5hkw3f2ah84m8l2a2d-nixos-system-nixos-26.05.4808.569d57850992`.
-It passed the body configuration gate, 889 workspace tests, typecheck, both
+`/nix/store/9bbc00da4qg5n7v6n05x37azd491dxpn-nixos-system-nixos-26.05.4808.569d57850992`.
+It passed the body configuration gate, 891 workspace tests, typecheck, both
 native inventory milestones, generated-unit review, and closure comparison.
+The same candidate gives Core the fixed DeepSeek endpoint and model with
+`OPENCLAW_CLOUD_PROVIDER_LIVE_EGRESS=0`. It contains no API key environment
+value and no DeepSeek credential dependency. The module now supports an
+operator-provided key file through systemd `LoadCredential`, but enabling that
+credential and live egress requires a later explicit host configuration.
 The installed generation remains `yzjwwp67...`; do not claim runtime
 containment until a separately authorized switch and non-mutating post-switch
 probe confirm both active slices and service health. Do not deliberately create
-memory pressure on the sole physical host to prove the limits.
+memory pressure on the sole physical host to prove the limits. After that
+deployment checkpoint, the next real AI capability is one explicitly approved
+DeepSeek advisory call from the system service using the file credential; do
+not add another provider readiness wrapper.
 
 ## Governing Vision
 

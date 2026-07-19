@@ -83,11 +83,15 @@ in source. The native inventory and Observer retain the fixed read-only
 telemetry and four-sample trend. The desktop Nix profile adds independent
 `openclaw-body.slice` and `openclaw-session.slice` envelopes, each with 1.5 GiB
 `MemoryHigh`, 3 GiB `MemoryMax`, and `TasksMax=1024`; hostd and credential
-initializers remain excluded. The physical-host candidate `qsjfjrgs...` is
-built and reviewed but not switched. Freeze implementation of this lane. The
-next step is a separately authorized deployment followed by non-mutating slice,
+initializers remain excluded. The physical-host candidate `9bbc00da...` is
+built and reviewed but not switched. It also preconfigures the fixed DeepSeek
+endpoint/model with live egress disabled and no secret dependency; the module's
+positive flake check proves that a later API key file is delivered only through
+Core `LoadCredential`. Freeze implementation of the resource lane. The next
+step is a separately authorized deployment followed by non-mutating slice,
 limit, service-health, restart-count, and auth probes; do not synthesize memory
-pressure on the only physical host.
+pressure on the only physical host. Then prove one explicitly approved real
+provider advisory call instead of opening another readiness phase.
 
 ## Completed Capability Evidence
 
