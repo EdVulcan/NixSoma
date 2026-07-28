@@ -468,7 +468,10 @@ Observer adds an authenticated `AI Run` control beside `AI Step`, disables
 manual scrolling while either run owns the workspace, and independently checks
 the one-or-two-step contract. The new physical gate verifies both per-step
 egress/completion records, the continuation and run-completion audit, nine
-health endpoints, and absence of text/target authority in Screen Act state.
+health endpoints, and absence of text/target authority in Screen Act state. It
+self-navigates through `act.browser.open` to the public httpbin form and defaults
+to the deterministic `scroll_down -> type_item` task whose target starts below
+the viewport, so one run proves both the type-route correction and continuation.
 All 1046 tests and typecheck pass. Store evidence is exact at 236 Core files
 (`rsszhq...`) and 80 Observer files (`2nb3f44...`); 812 registry entries, the
 998-script audit, Windows path budget, body-config gate, and combined candidate

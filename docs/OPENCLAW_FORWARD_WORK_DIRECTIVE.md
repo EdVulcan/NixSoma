@@ -2328,7 +2328,10 @@ manual scroll and both AI controls remain disabled while either run is active.
 The registered `dev-ai-bounded-run-live-check.sh` physical gate verifies the
 task/work-view binding, per-step provider and completion events, continuation
 and run-completion audit, Screen Act no-plaintext state, and all nine health
-endpoints. All 1046 workspace tests, full typecheck, 236-file Core closure
+endpoints. It uses governed navigation to open the public httpbin form and asks
+for the below-viewport Delivery instructions textbox, making the default proof
+`scroll_down -> type_item` without a local SSRF exception or manual page setup.
+All 1046 workspace tests, full typecheck, 236-file Core closure
 `rsszhq...`, 80-file Observer closure `2nb3f44...`, 812-entry registry,
 998-script audit, Windows path budget, body-config gate, and combined candidate
 `/nix/store/gbcvd8yd44231ppf72zgjhzpcrlmv6fn-nixos-system-nixos-26.05.4808.569d57850992`

@@ -318,7 +318,9 @@ id/objective/version binding is required before the second provider call.
 Click, type, no-op, fallback, missing evidence, and every second-step outcome
 terminate; there is no third call or automatic retry. Observer exposes `AI Run`
 and a registered live gate checks per-step plus run-level audit without input
-text. All 1046 tests, typecheck, exact 236-file Core and 80-file Observer
+text. The gate self-navigates to the public httpbin form and uses a textbox that
+starts below the viewport to target `scroll_down -> type_item`. All 1046 tests,
+typecheck, exact 236-file Core and 80-file Observer
 closures, 812-entry registry, 998-script audit, path budget, body-config gate,
 and combined candidate `gbcvd8...` pass. It also contains the pending semantic
 type correction; switch and physical proof remain pending.

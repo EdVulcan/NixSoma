@@ -325,7 +325,9 @@ click、type、no-op、fallback、证据不足和任何第二步结果都会终�
 自动重试或无限循环。未知结果使用 null 精确计数与已知下限，避免伪造完成事实。
 
 Observer 已加入 `AI Run`，运行期间禁止手动滚动与并发 AI step。物理 gate 已注册，
-但尚未在新 generation 执行。完整 1046 项测试、typecheck、236-file Core closure
+它通过既有 browser owner 打开公开 httpbin form，并默认使用初始 viewport 外的
+Delivery instructions textbox 验证 `scroll_down -> type_item`，但尚未在新 generation
+执行。完整 1046 项测试、typecheck、236-file Core closure
 `rsszhq...`、80-file Observer closure `2nb3f44...`、812-entry registry、998-script audit、
 Windows path budget、body-config 与包含 semantic-type 修复的 combined candidate
 `/nix/store/gbcvd8yd44231ppf72zgjhzpcrlmv6fn-nixos-system-nixos-26.05.4808.569d57850992`

@@ -11,8 +11,9 @@ SYSTEM_SENSE_URL="${OPENCLAW_SYSTEM_SENSE_URL:-http://127.0.0.1:4106}"
 SYSTEM_HEAL_URL="${OPENCLAW_SYSTEM_HEAL_URL:-http://127.0.0.1:4107}"
 OBSERVER_URL="${OPENCLAW_OBSERVER_URL:-http://127.0.0.1:4170}"
 export OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_OPERATOR_TOKEN_FILE:-${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/nixsoma/operator-token}"
-TASK_GOAL="${NIXSOMA_AI_BOUNDED_RUN_TASK_GOAL:-Scroll to find the requested control, then act on it once}"
-EXPECTED_STEPS="${NIXSOMA_AI_BOUNDED_RUN_EXPECT_STEPS:-1}"
+TARGET_URL="${NIXSOMA_AI_BOUNDED_RUN_URL:-https://httpbin.org/forms/post}"
+TASK_GOAL="${NIXSOMA_AI_BOUNDED_RUN_TASK_GOAL:-Scroll down to the Delivery instructions textbox, then type NixSoma into it}"
+EXPECTED_STEPS="${NIXSOMA_AI_BOUNDED_RUN_EXPECT_STEPS:-2}"
 
 if [[ ! "$EXPECTED_STEPS" =~ ^[12]$ ]]; then
   printf 'NIXSOMA_AI_BOUNDED_RUN_EXPECT_STEPS must be 1 or 2\n' >&2
@@ -32,7 +33,7 @@ tmp_dir="$(mktemp -d)"
 cleanup() {
   local status="$?"
   if (( status != 0 )); then
-    for name in prepare activate task bind run; do
+    for name in prepare navigate activate task bind run; do
       if [[ -s "$tmp_dir/$name.json" ]]; then
         printf 'AI bounded run failed response (%s.json):\n' "$name" >&2
         sed -n '1,120p' "$tmp_dir/$name.json" >&2
@@ -58,21 +59,37 @@ post_json "$CORE_URL/capabilities/invoke" \
   '{"capabilityId":"act.work_view.control","operation":"work_view.prepare","params":{"displayTarget":"workspace-2"}}' \
   > "$tmp_dir/prepare.json"
 
+stage "opening the public bounded-run form through the governed browser owner"
+navigate_payload="$(node -e '
+  console.log(JSON.stringify({
+    capabilityId: "act.browser.open",
+    operation: "browser.new_tab",
+    intent: "browser.new_tab",
+    params: { url: process.argv[1] },
+  }));
+' "$TARGET_URL")"
+post_json "$CORE_URL/capabilities/invoke" "$navigate_payload" > "$tmp_dir/navigate.json"
+
 for _ in $(seq 1 120); do
   curl -fsS "$SESSION_MANAGER_URL/work-view/state" > "$tmp_dir/state.json"
+  curl -fsS "$BROWSER_RUNTIME_URL/browser/state" > "$tmp_dir/browser.json"
   curl -fsS "$SCREEN_SENSE_URL/screen/semantic-scene" > "$tmp_dir/scene.json"
   if node -e '
     const fs = require("node:fs");
     const state = JSON.parse(fs.readFileSync(process.argv[1], "utf8")).workView ?? {};
-    const scene = JSON.parse(fs.readFileSync(process.argv[2], "utf8")).scene ?? {};
+    const browser = JSON.parse(fs.readFileSync(process.argv[2], "utf8")).browser ?? {};
+    const scene = JSON.parse(fs.readFileSync(process.argv[3], "utf8")).scene ?? {};
+    const expectedUrl = new URL(process.argv[4]).href;
     const surfaces = state.aiGraphicalSession?.surfaceInventory?.surfaces ?? [];
     process.exit(state.status === "prepared"
       && state.helperRuntime?.actionAuthority === "active"
       && state.helperRuntime?.leaseMatched === true
+      && browser.running === true
+      && browser.activeUrl === expectedUrl
       && scene.available === true
       && scene.itemCount > 0
       && surfaces.some((surface) => surface.pid === scene.browserPid) ? 0 : 1);
-  ' "$tmp_dir/state.json" "$tmp_dir/scene.json"; then
+  ' "$tmp_dir/state.json" "$tmp_dir/browser.json" "$tmp_dir/scene.json" "$TARGET_URL"; then
     break
   fi
   sleep 0.1
