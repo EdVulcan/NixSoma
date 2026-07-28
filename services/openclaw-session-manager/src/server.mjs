@@ -17,6 +17,7 @@ import { createAiCompositorFrameRoute } from "./ai-compositor-frame-route.mjs";
 import { createAiCompositorInputController } from "./ai-compositor-input-controller.mjs";
 import { createAiCompositorInputRoute } from "./ai-compositor-input-route.mjs";
 import { createAiSurfaceInventoryObserver } from "./ai-surface-inventory-observer.mjs";
+import { createAiSurfaceActivationRoute } from "./ai-surface-activation-route.mjs";
 import { createAiWorkbenchLifecycle } from "./ai-workbench-lifecycle.mjs";
 import { createAiWorkbenchLifecycleRoute } from "./ai-workbench-lifecycle-route.mjs";
 import { createExecutionGrantVerifier } from "../../../packages/shared-utils/src/execution-grants.mjs";
@@ -89,6 +90,7 @@ const aiCompositorInputController = createAiCompositorInputController({
     observeAiGraphicalSession(),
     workViewState.browserGraphicalSession,
   ),
+  observeSurfaceInventory: observeAiSurfaceInventory,
 });
 const sidecarRecoveryStore = createTrustedWorkViewSidecarRecoveryStore({ stateFilePath });
 let sidecarLifecycleIntent = sidecarRecoveryStore.snapshot();
@@ -195,6 +197,7 @@ function buildAiGraphicalSessionEvidence() {
       aiCompositorInputController.snapshot(),
     ),
     applicationLifecycle: aiWorkbenchLifecycle.snapshot(),
+    surfaceActivation: aiCompositorInputController.surfaceActivationSnapshot(),
   };
 }
 
@@ -282,6 +285,13 @@ const handleAiCompositorInputRoute = createAiCompositorInputRoute({
 });
 const handleAiWorkbenchLifecycleRoute = createAiWorkbenchLifecycleRoute({
   lifecycle: aiWorkbenchLifecycle,
+  executionGrantVerifier: sessionManagerExecutionGrantVerifier,
+  publishEvent,
+  createEventName,
+  sendJson,
+});
+const handleAiSurfaceActivationRoute = createAiSurfaceActivationRoute({
+  controller: aiCompositorInputController,
   executionGrantVerifier: sessionManagerExecutionGrantVerifier,
   publishEvent,
   createEventName,
@@ -579,6 +589,7 @@ const server = http.createServer(async (req, res) => {
   if (await handleAiCompositorFrameRoute(req, res, requestUrl)) return;
   if (await handleAiCompositorInputRoute(req, res, requestUrl)) return;
   if (await handleAiWorkbenchLifecycleRoute(req, res, requestUrl)) return;
+  if (await handleAiSurfaceActivationRoute(req, res, requestUrl)) return;
 
   if (req.method === "POST" && requestUrl.pathname === "/session/start") {
     try {

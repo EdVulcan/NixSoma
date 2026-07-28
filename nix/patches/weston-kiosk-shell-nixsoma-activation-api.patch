@@ -1,0 +1,77 @@
+diff --git a/kiosk-shell/kiosk-shell.c b/kiosk-shell/kiosk-shell.c
+index aeecf1ce..119bc8e2 100644
+--- a/kiosk-shell/kiosk-shell.c
++++ b/kiosk-shell/kiosk-shell.c
+@@ -36,0 +37,2 @@
++#include <libweston/nixsoma-kiosk-shell-activation-api.h>
++#include <libweston/plugin-registry.h>
+@@ -637,0 +640,60 @@ kiosk_shell_output_set_active_surface_tree(struct kiosk_shell_output *shoutput,
++static bool
++nixsoma_kiosk_shell_activate_surface(struct weston_compositor *compositor,
++				     struct weston_seat *seat,
++				     uint32_t surface_id)
++{
++	struct weston_view *view;
++	struct kiosk_shell_surface *target = NULL;
++	struct kiosk_shell_surface *root;
++	struct kiosk_shell_seat *kiosk_seat;
++
++	if (!compositor || !seat || surface_id == 0) {
++		weston_log("NixSoma kiosk activation rejected invalid authority input.\n");
++		return false;
++	}
++	kiosk_seat = get_kiosk_shell_seat(seat);
++	if (!kiosk_seat) {
++		weston_log("NixSoma kiosk activation rejected an unknown seat.\n");
++		return false;
++	}
++
++	wl_list_for_each(view, &compositor->view_list, link) {
++		struct weston_surface *surface = view->surface;
++
++		if (!surface || surface->s_id != surface_id ||
++		    !surface->is_mapped || !weston_view_is_mapped(view) ||
++		    !weston_surface_is_desktop_surface(surface) ||
++		    weston_surface_get_main_surface(surface) != surface)
++			continue;
++		target = get_kiosk_shell_surface(surface);
++		if (!target || target->shell->compositor != compositor ||
++		    !target->output || target->parent) {
++			weston_log("NixSoma kiosk activation rejected surface %u ownership.\n",
++				   surface_id);
++			return false;
++		}
++		break;
++	}
++	if (!target) {
++		weston_log("NixSoma kiosk activation could not find surface %u.\n",
++			   surface_id);
++		return false;
++	}
++
++	root = kiosk_shell_surface_get_parent_root(target);
++	if (!root || !root->output) {
++		weston_log("NixSoma kiosk activation rejected surface %u output.\n",
++			   surface_id);
++		return false;
++	}
++	kiosk_shell_output_set_active_surface_tree(root->output, root);
++	kiosk_shell_surface_activate(target, kiosk_seat,
++				     WESTON_ACTIVATE_FLAG_NONE);
++	return true;
++}
++
++static const struct nixsoma_kiosk_shell_activation_api
++nixsoma_kiosk_shell_activation_api = {
++	.activate_surface = nixsoma_kiosk_shell_activate_surface,
++};
++
+@@ -1534,0 +1597,8 @@ wet_shell_init(struct weston_compositor *ec,
++	if (weston_plugin_api_register(
++		    ec, NIXSOMA_KIOSK_SHELL_ACTIVATION_API_NAME,
++		    &nixsoma_kiosk_shell_activation_api,
++		    sizeof(nixsoma_kiosk_shell_activation_api)) < 0) {
++		weston_log("NixSoma kiosk surface activation API registration failed.\n");
++		return -1;
++	}
++

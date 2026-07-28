@@ -1,6 +1,7 @@
 { lib, stdenv, pkg-config, weston, wayland, pixman, libxkbcommon
 , nativeInput ? false, surfaceInventory ? false
-, outputWidth ? 1280, outputHeight ? 720 }:
+, outputWidth ? 1280, outputHeight ? 720
+, sessionManagerCgroupSuffix ? "/openclaw-session-manager.service" }:
 
 stdenv.mkDerivation {
   pname = "nixsoma-weston-frame-auth";
@@ -21,8 +22,10 @@ stdenv.mkDerivation {
       -DNIXSOMA_CAPTURE_HELPER='"${weston}/bin/weston-screenshooter"' \
       -DNIXSOMA_INPUT_ENABLED=${if nativeInput then "1" else "0"} \
       -DNIXSOMA_SURFACE_INVENTORY_ENABLED=${if surfaceInventory then "1" else "0"} \
+      -DNIXSOMA_SURFACE_ACTIVATION_ENABLED=${if surfaceInventory then "1" else "0"} \
       -DNIXSOMA_OUTPUT_WIDTH=${toString outputWidth} \
       -DNIXSOMA_OUTPUT_HEIGHT=${toString outputHeight} \
+      -DSESSION_MANAGER_CGROUP_SUFFIX='"${sessionManagerCgroupSuffix}"' \
       packages/weston-frame-auth/src/frame-auth.c \
       packages/weston-frame-auth/src/input-authority.c \
       packages/weston-frame-auth/src/surface-inventory.c \

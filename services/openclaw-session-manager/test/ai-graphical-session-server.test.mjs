@@ -146,6 +146,7 @@ test("session-manager exposes ready graphical-session evidence without its runti
   assert.equal(data.workView.aiGraphicalSession.surfaceInventory.status, "available");
   assert.equal(data.workView.aiGraphicalSession.surfaceInventory.count, 0);
   assert.equal(data.workView.aiGraphicalSession.applicationLifecycle.status, "disabled");
+  assert.equal(data.workView.aiGraphicalSession.surfaceActivation.status, "not_executed");
   assert.equal(JSON.stringify(data.workView.aiGraphicalSession).includes(runtimeDir), false);
 
   const captured = await waitForJson(`http://127.0.0.1:${port}/work-view/compositor-frame`);

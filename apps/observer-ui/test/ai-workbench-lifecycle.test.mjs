@@ -13,8 +13,10 @@ test("Observer exposes bounded fixed workbench lifecycle state and controls", ()
     'id="ai-workbench-status"',
     'id="ai-workbench-surface"',
     'id="ai-surface-count"',
+    'id="ai-surface-select"',
     'id="start-ai-workbench-button"',
     'id="stop-ai-workbench-button"',
+    'id="activate-ai-surface-button"',
   ]) {
     assert.equal(panel.includes(token), true, `AI work-view panel is missing ${token}`);
   }
@@ -28,17 +30,21 @@ test("Observer exposes bounded fixed workbench lifecycle state and controls", ()
     "surfaceInventory.boundary?.pixelsExposed",
     "startAiWorkbenchButton.disabled",
     "stopAiWorkbenchButton.disabled",
+    "activateAiSurfaceButton.disabled",
+    "aiSurfaceSelect.dataset.sequence",
   ]) {
     assert.equal(observerClientRuntimeRefreshersScript.includes(token), true, `refresh projection is missing ${token}`);
   }
   assert.equal(observerClientRuntimeBindingsScript.includes('/work-view/application/start'), true);
   assert.equal(observerClientRuntimeBindingsScript.includes('/work-view/application/stop'), true);
+  assert.equal(observerClientRuntimeBindingsScript.includes('/work-view/surface/activate'), true);
 });
 
 test("production Observer client assembles workbench controls through Core only", () => {
   const script = clientScript();
   assert.equal(script.includes('"/work-view/application/start": "work_view.application.start"'), true);
   assert.equal(script.includes('"/work-view/application/stop": "work_view.application.stop"'), true);
+  assert.equal(script.includes('"/work-view/surface/activate": "work_view.surface.activate"'), true);
   assert.equal(script.includes("observerConfig.sessionManagerUrl}/work-view/application"), false);
   assert.equal(script.includes("capabilityId: \"act.work_view.control\""), true);
 });

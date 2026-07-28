@@ -11,10 +11,12 @@ Firefox client, one bounded compositor-native read-only frame, and a
 physically proven current-frame-bound native left click. A fifth continuation
 has a deployed, physically proven operator projection of that frame in
 Observer. A sixth has a Weston-owned minimal surface inventory and a governed
-fixed Nix-managed Workbench start/stop path. It still has no desktop takeover,
-desktop-wide capture/input, arbitrary input device or process launch, root, or
-host-mutation authority; Firefox retains only its existing browser network
-scope.
+fixed Nix-managed Workbench start/stop path. A seventh candidate reuses those
+owners to activate one current numeric surface through kiosk shell with exact
+grant, inventory, peer receipt, and pre/post frame evidence. It still has no
+desktop takeover, desktop-wide capture/input, arbitrary input device or process
+launch, root, or host-mutation authority; Firefox retains only its existing
+browser network scope.
 
 Physical-host generation `kxv2ypwp...` now proves the nested compositor
 coexists with unchanged GNOME `wayland-0`, no parent display environment or DRM
@@ -80,6 +82,17 @@ without creating a separate approval. The physical check proved one matching
 PID/surface appears and disappears while anonymous direct start remains
 rejected. Arbitrary command/process selection, title/app-id/pixel publication,
 parent-display access, persistence, and new input authority remain absent.
+
+The governed surface-activation continuation is candidate-ready in
+`7ycsdd61...`. The Weston package is private to `nixsoma-ai-graphical-session`;
+its kiosk shell owns active-tree movement, focus accounting, xdg activation,
+and raise through one versioned plugin API. Frame-authority authenticates the
+session-manager peer and delegates one numeric id. A real candidate user-plane
+Observer gate activated fixture surface 2 and Workbench surface 4 in sequence,
+proved changing post-frames, stopped the Workbench, and restored all production
+units without warnings or runtime overrides. The active generation remains
+`vymmz8c3...`; deployment and a normal production rerun are the only remaining
+steps for this continuation.
 
 ## Active Slice
 

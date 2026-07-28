@@ -15,6 +15,8 @@ const EXPECTED_RUNTIME_DIRECTORY = "nixsoma-ai-graphical-session";
 const EXPECTED_INPUT_DIRECTORY = "input";
 const CONTROL_SOCKET_NAME = "control.sock";
 const RECEIPT_PATTERN = /^1 ([a-f0-9]{32}) ([a-f0-9]{64}) ([1-9][0-9]*) ([0-9]+) ([0-9]+) executed\n$/u;
+const SURFACE_ACTIVATION_RECEIPT_PATTERN = /^2 ([a-f0-9]{32}) ([a-f0-9]{64}) ([1-9][0-9]*) ([1-9][0-9]*) ([1-9][0-9]*) executed\n$/u;
+const SURFACE_ACTIVATION_REGISTRY = "nixsoma-ai-surface-activation-v0";
 
 function enabled(value) {
   return value === true || value === "1" || value === "true";
@@ -94,21 +96,84 @@ function assertReceipt(text, expected) {
   }
 }
 
+function assertSurfaceActivationReceipt(text, expected) {
+  const match = SURFACE_ACTIVATION_RECEIPT_PATTERN.exec(text);
+  if (!match) throw new Error("AI surface activation receipt is malformed.");
+  const [, requestId, sha256, frameSequence, inventorySequence, surfaceId] = match;
+  if (requestId !== expected.requestId
+    || sha256 !== expected.frame.sha256
+    || Number(frameSequence) !== expected.frame.sequence
+    || Number(inventorySequence) !== expected.inventorySequence
+    || Number(surfaceId) !== expected.surfaceId) {
+    throw new Error("AI surface activation receipt does not match the request.");
+  }
+}
+
+function frameReference(frame) {
+  return frame?.available === true ? {
+    sha256: frame.sha256,
+    sequence: frame.sequence,
+    width: frame.width,
+    height: frame.height,
+    socketName: frame.socketName,
+    dataExposed: false,
+  } : null;
+}
+
+function baseSurfaceActivationEvidence(status = "not_executed") {
+  return {
+    registry: SURFACE_ACTIVATION_REGISTRY,
+    status,
+    surfaceId: null,
+    inventorySequenceBefore: null,
+    inventorySequenceAfter: null,
+    activated: false,
+    receiptMatched: false,
+    frameSequenceAdvanced: false,
+    frameChanged: false,
+    beforeFrame: null,
+    afterFrame: null,
+    boundary: {
+      sourceScope: "ai_owned_nested_output_only",
+      numericSurfaceOnly: true,
+      arbitraryWindowControl: false,
+      parentDisplayConnected: false,
+      inputAuthorityExpanded: false,
+      pixelsPersisted: false,
+      rootRequired: false,
+      hostMutation: false,
+    },
+  };
+}
+
+function positiveInteger(value, label) {
+  if (!Number.isInteger(value) || value <= 0 || value > 0xffff_ffff) {
+    const error = new Error(`${label} must be a positive 32-bit integer.`);
+    error.code = "AI_SURFACE_ACTIVATION_REQUEST_INVALID";
+    error.statusCode = 400;
+    throw error;
+  }
+  return value;
+}
+
 export function createAiCompositorInputController({
   env = process.env,
   frameCapture,
   helperRuntime,
   observeGraphicalSession,
+  observeSurfaceInventory = () => null,
   expectedUid = typeof process.getuid === "function" ? process.getuid() : null,
   stat = lstatSync,
   list = readdirSync,
   sendRequest = sendSocketRequest,
+  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   now = () => Date.now(),
   createRequestId = () => randomBytes(16).toString("hex"),
 } = {}) {
   const config = buildAiCompositorInputConfig({ env });
-  let inputPromise = null;
+  let controlPromise = null;
   let lastEvidence = projectAiCompositorInputEvidence({ status: "not_executed" });
+  let lastSurfaceActivation = baseSurfaceActivationEvidence();
 
   function paths() {
     if (!path.isAbsolute(config.runtimeBaseDir)
@@ -145,9 +210,9 @@ export function createAiCompositorInputController({
 
   async function execute({ action: candidateAction, trustedHelperLease } = {}) {
     if (!config.enabled) throw new Error("AI compositor input is disabled.");
-    if (inputPromise) throw new Error("AI compositor input is already in flight.");
+    if (controlPromise) throw new Error("AI compositor control is already in flight.");
 
-    inputPromise = (async () => {
+    controlPromise = (async () => {
       const graphicalSession = observeGraphicalSession();
       if (graphicalSession?.ready !== true
         || graphicalSession?.socket?.name !== AI_COMPOSITOR_INPUT_SOCKET
@@ -199,15 +264,118 @@ export function createAiCompositorInputController({
     })();
 
     try {
-      return await inputPromise;
+      return await controlPromise;
     } finally {
-      inputPromise = null;
+      controlPromise = null;
+    }
+  }
+
+  async function activateSurface({ surfaceId: candidateSurfaceId, inventorySequence: candidateSequence } = {}) {
+    if (!config.enabled) throw new Error("AI surface activation is disabled.");
+    if (controlPromise) throw new Error("AI compositor control is already in flight.");
+
+    controlPromise = (async () => {
+      const surfaceId = positiveInteger(candidateSurfaceId, "AI surface activation surfaceId");
+      const inventorySequence = positiveInteger(
+        candidateSequence,
+        "AI surface activation inventorySequence",
+      );
+      const graphicalSession = observeGraphicalSession();
+      if (graphicalSession?.ready !== true
+        || graphicalSession?.socket?.name !== AI_COMPOSITOR_INPUT_SOCKET) {
+        throw new Error("AI surface activation requires the isolated graphical session.");
+      }
+      const inventory = observeSurfaceInventory();
+      const target = inventory?.available === true
+        && inventory.sequence === inventorySequence
+        ? inventory.surfaces?.find((surface) => surface.surfaceId === surfaceId)
+        : null;
+      if (!target) {
+        const error = new Error("AI surface activation target is stale or unavailable.");
+        error.code = "AI_SURFACE_ACTIVATION_TARGET_STALE";
+        error.statusCode = 409;
+        throw error;
+      }
+      if (target.activated === true) {
+        const error = new Error("AI surface activation target is already active.");
+        error.code = "AI_SURFACE_ALREADY_ACTIVE";
+        error.statusCode = 409;
+        throw error;
+      }
+
+      const beforeFrame = await frameCapture.capture();
+      if (beforeFrame?.available !== true || beforeFrame.fresh !== true) {
+        throw new Error("AI surface activation requires a fresh compositor frame.");
+      }
+      const { inputDir, socketPath } = paths();
+      assertTrustedDirectory(inputDir, expectedUid, stat);
+      if (list(inputDir).some((entry) => entry !== CONTROL_SOCKET_NAME)) {
+        throw new Error("AI compositor input directory contains an unexpected entry.");
+      }
+      assertTrustedSocket(socketPath, expectedUid, stat);
+
+      const request = {
+        requestId: createRequestId(),
+        surfaceId,
+        inventorySequence,
+        frame: beforeFrame,
+      };
+      const wire = `2 ${request.requestId} ${beforeFrame.sha256} ${beforeFrame.sequence} ${inventorySequence} ${surfaceId}\n`;
+      const receipt = await sendRequest({ socketPath, wire, timeoutMs: config.timeoutMs, request });
+      assertSurfaceActivationReceipt(receipt, request);
+
+      const deadline = now() + config.timeoutMs;
+      let settledInventory = null;
+      do {
+        const candidate = observeSurfaceInventory();
+        const settledTarget = candidate?.surfaces?.find((surface) => surface.surfaceId === surfaceId);
+        if (candidate?.available === true
+          && candidate.sequence > inventorySequence
+          && settledTarget?.activated === true) {
+          settledInventory = candidate;
+          break;
+        }
+        await sleep(20);
+      } while (now() < deadline);
+      if (!settledInventory) {
+        const error = new Error("AI surface activation did not reach the compositor inventory.");
+        error.code = "AI_SURFACE_ACTIVATION_SETTLE_TIMEOUT";
+        error.statusCode = 409;
+        throw error;
+      }
+
+      const afterFrame = await frameCapture.capture();
+      const frameSequenceAdvanced = afterFrame?.available === true
+        && afterFrame.sequence > beforeFrame.sequence;
+      lastSurfaceActivation = {
+        ...baseSurfaceActivationEvidence("activated"),
+        requestId: request.requestId,
+        surfaceId,
+        inventorySequenceBefore: inventorySequence,
+        inventorySequenceAfter: settledInventory.sequence,
+        activated: true,
+        receiptMatched: true,
+        frameSequenceAdvanced,
+        frameChanged: afterFrame?.available === true
+          && afterFrame.sha256 !== beforeFrame.sha256,
+        beforeFrame: frameReference(beforeFrame),
+        afterFrame: frameReference(afterFrame),
+      };
+      return structuredClone(lastSurfaceActivation);
+    })();
+
+    try {
+      return await controlPromise;
+    } finally {
+      controlPromise = null;
     }
   }
 
   return {
     execute,
+    activateSurface,
     snapshot: () => lastEvidence,
+    surfaceActivationSnapshot: () => structuredClone(lastSurfaceActivation),
     config: () => ({
       enabled: config.enabled,
       socketName: AI_COMPOSITOR_INPUT_SOCKET,

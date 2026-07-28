@@ -47,8 +47,8 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
-triage/repair-promotion bridge, and six physically proven Level 4 graphical
-identity slices through a fixed application/surface lifecycle. All 958 workspace
+triage/repair-promotion bridge, six deployed Level 4 graphical identity slices,
+and one candidate-ready governed surface-activation slice. All 966 workspace
 tests and typecheck pass, the body-config and event-audit integration checks
 pass, the 811-entry milestone registry audit passes, and the Windows path budget
 has no file over 160 repository-relative characters. GitHub CI now enforces
@@ -2021,6 +2021,42 @@ product behavior, but it must reuse this application owner and existing
 frame/input/projection authorities rather than introduce a generic process
 launcher, desktop window API, parent-display connection, or duplicate evidence
 chain.
+
+## Candidate-Ready Level 4 Governed Surface Activation
+
+The seventh vertical Level 4 slice is implemented, fully built, and physically
+proven through the user-owned candidate plane, but is not yet the active system
+generation. Candidate
+`/nix/store/7ycsdd61qrd6cqr7pmdbwi3lb4sdxcq5-nixos-system-nixos-26.05.4808.569d57850992`
+patches only the Weston package used by `nixsoma-ai-graphical-session`. Its kiosk
+shell registers a versioned plugin API that owns hidden/normal layer movement,
+focus accounting, xdg activation, and surface raise. The authenticated
+frame-authority module delegates to that API; it no longer treats the lower-level
+`weston_view_activate_input()` call as sufficient shell state.
+
+Core extends only the existing `act.work_view.control` owner with
+`work_view.surface.activate`. The grant binds an exact positive numeric
+`surfaceId` and current inventory sequence. Session-manager requires durable
+pre-execution audit, a fresh native frame, the exact mode-0600 socket peer, a
+matching Weston receipt, a newer inventory with the target activated, and a
+post-action native frame. Observer exposes one numeric selector and command;
+titles, app-ids, caller-defined selectors, generic window/process operations,
+parent display, root, provider, and host mutation remain absent.
+
+The native two-surface smoke switched both directions with peer-cgroup receipts.
+The candidate user-plane gate then used a real authenticated Firefox Observer to
+start the fixed Workbench, move foreground to fixture surface 2, move it back to
+Workbench surface 4, prove both frame changes, stop the Workbench, and return
+surface count `0 -> 2 -> 1 -> 0`. Anonymous direct mutation was rejected,
+durable audit was present, all 966 tests and typecheck pass, body/store/diff/path
+checks are green, and restoration left all nine production health endpoints
+green with no failed units, runtime overrides, restarts, or warning journals.
+
+Do not select another Level 4 capability before this exact candidate is switched
+and `dev-ai-app-lifecycle-check.sh` passes against the normal production Core,
+Observer, session-manager, and Weston units. The required switch is the remaining
+deployment step, not a reason to reopen shell, grant, inventory, or evidence
+variants.
 
 ## Identity-Upgrade Alignment
 

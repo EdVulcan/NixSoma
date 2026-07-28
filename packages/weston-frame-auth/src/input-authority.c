@@ -16,15 +16,21 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <libweston/desktop.h>
 #include <libweston/libweston.h>
+#include <libweston/plugin-registry.h>
 
 #include "input-authority.h"
+#include "nixsoma-kiosk-shell-activation-api.h"
 
 #ifndef NIXSOMA_INPUT_ENABLED
 #define NIXSOMA_INPUT_ENABLED 0
 #endif
 #ifndef NIXSOMA_OUTPUT_WIDTH
 #define NIXSOMA_OUTPUT_WIDTH 1280
+#endif
+#ifndef NIXSOMA_SURFACE_ACTIVATION_ENABLED
+#define NIXSOMA_SURFACE_ACTIVATION_ENABLED 0
 #endif
 #ifndef NIXSOMA_OUTPUT_HEIGHT
 #define NIXSOMA_OUTPUT_HEIGHT 720
@@ -33,7 +39,9 @@
 #define INPUT_DIRECTORY "input"
 #define INPUT_SOCKET "control.sock"
 #define INPUT_MAX_BYTES 256
+#ifndef SESSION_MANAGER_CGROUP_SUFFIX
 #define SESSION_MANAGER_CGROUP_SUFFIX "/openclaw-session-manager.service"
+#endif
 
 void
 notify_motion_absolute(struct weston_seat *seat, const struct timespec *time,
@@ -50,15 +58,22 @@ void
 weston_seat_release(struct weston_seat *seat);
 
 struct input_request {
+	enum {
+		INPUT_REQUEST_CLICK = 1,
+		INPUT_REQUEST_ACTIVATE_SURFACE = 2,
+	} operation;
 	char id[33];
 	char frame_sha256[65];
 	uint32_t sequence;
 	uint32_t x;
 	uint32_t y;
+	uint32_t inventory_sequence;
+	uint32_t surface_id;
 };
 
 struct nixsoma_input_authority {
 	struct weston_compositor *compositor;
+	const struct nixsoma_kiosk_shell_activation_api *surface_activation_api;
 	struct wl_event_source *socket_source;
 	int socket_fd;
 	char socket_path[PATH_MAX];
@@ -143,8 +158,21 @@ read_request(int fd, struct input_request *request)
 	    strlen(request->id) != 32 || strlen(request->frame_sha256) != 64 ||
 	    request->sequence == 0 || request->x >= NIXSOMA_OUTPUT_WIDTH ||
 	    request->y >= NIXSOMA_OUTPUT_HEIGHT || consumed + 1 != (int)total ||
-	    buffer[consumed] != '\n')
-		return false;
+	    buffer[consumed] != '\n') {
+		memset(request, 0, sizeof(*request));
+		consumed = 0;
+		if (sscanf(buffer, "2 %32[0-9a-f] %64[0-9a-f] %u %u %u%n",
+			   request->id, request->frame_sha256, &request->sequence,
+			   &request->inventory_sequence, &request->surface_id,
+			   &consumed) != 5 || strlen(request->id) != 32 ||
+		    strlen(request->frame_sha256) != 64 || request->sequence == 0 ||
+		    request->inventory_sequence == 0 || request->surface_id == 0 ||
+		    consumed + 1 != (int)total || buffer[consumed] != '\n')
+			return false;
+		request->operation = INPUT_REQUEST_ACTIVATE_SURFACE;
+		return true;
+	}
+	request->operation = INPUT_REQUEST_CLICK;
 	return true;
 }
 
@@ -169,13 +197,33 @@ execute_click(struct nixsoma_input_authority *authority,
 }
 
 static bool
+execute_surface_activation(struct nixsoma_input_authority *authority,
+			   const struct input_request *request)
+{
+	return authority->surface_activation_api &&
+		authority->surface_activation_api->activate_surface(
+			authority->compositor, &authority->seat,
+			request->surface_id);
+}
+
+static bool
 write_receipt(int fd, const struct input_request *request)
 {
 	char receipt[INPUT_MAX_BYTES + 1];
-	int length = snprintf(receipt, sizeof(receipt),
-			      "1 %s %s %u %u %u executed\n",
-			      request->id, request->frame_sha256, request->sequence,
-			      request->x, request->y);
+	int length;
+
+	if (request->operation == INPUT_REQUEST_ACTIVATE_SURFACE) {
+		length = snprintf(receipt, sizeof(receipt),
+				  "2 %s %s %u %u %u executed\n",
+				  request->id, request->frame_sha256,
+				  request->sequence, request->inventory_sequence,
+				  request->surface_id);
+	} else {
+		length = snprintf(receipt, sizeof(receipt),
+				  "1 %s %s %u %u %u executed\n",
+				  request->id, request->frame_sha256,
+				  request->sequence, request->x, request->y);
+	}
 	return length > 0 && (size_t)length < sizeof(receipt)
 		&& write_all(fd, receipt, (size_t)length);
 }
@@ -196,7 +244,10 @@ handle_connection(struct nixsoma_input_authority *authority, int fd)
 		weston_log("NixSoma input authority rejected an invalid request.\n");
 		return;
 	}
-	if (!execute_click(authority, &request) || !write_receipt(fd, &request)) {
+	if ((request.operation == INPUT_REQUEST_CLICK
+	     ? !execute_click(authority, &request)
+	     : !execute_surface_activation(authority, &request)) ||
+	    !write_receipt(fd, &request)) {
 		weston_log("NixSoma input authority could not execute request %.32s.\n",
 			   request.id);
 		return;
@@ -239,6 +290,13 @@ nixsoma_input_authority_create(struct weston_compositor *compositor)
 		return NULL;
 	authority->compositor = compositor;
 	authority->socket_fd = -1;
+#if NIXSOMA_SURFACE_ACTIVATION_ENABLED
+	authority->surface_activation_api = weston_plugin_api_get(
+		compositor, NIXSOMA_KIOSK_SHELL_ACTIVATION_API_NAME,
+		sizeof(*authority->surface_activation_api));
+	if (!authority->surface_activation_api)
+		goto fail;
+#endif
 	written = snprintf(authority->socket_path, sizeof(authority->socket_path),
 			   "%s/%s/%s", runtime_directory, INPUT_DIRECTORY,
 			   INPUT_SOCKET);

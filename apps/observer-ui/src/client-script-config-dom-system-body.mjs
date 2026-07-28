@@ -270,6 +270,7 @@ const revealWorkViewButton = document.querySelector("#reveal-work-view-button");
 const hideWorkViewButton = document.querySelector("#hide-work-view-button");
 const startAiWorkbenchButton = document.querySelector("#start-ai-workbench-button");
 const stopAiWorkbenchButton = document.querySelector("#stop-ai-workbench-button");
+const activateAiSurfaceButton = document.querySelector("#activate-ai-surface-button");
 const runRecommendedWorkViewActionButton = document.querySelector("#run-recommended-work-view-action-button");
 const createTrustedSidecarLifecycleTaskButton = document.querySelector("#create-trusted-sidecar-lifecycle-task-button");
 const startTrustedSidecarProbeButton = document.querySelector("#start-trusted-sidecar-probe-button");

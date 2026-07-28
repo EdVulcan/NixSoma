@@ -145,6 +145,26 @@ async function refreshWorkView() {
       ? \`#\${applicationLifecycle.matchingSurface?.surfaceId ?? "unknown"} pid=\${applicationLifecycle.mainPid ?? "unknown"}\`
       : "none";
     aiSurfaceCount.textContent = String(surfaceInventory.count ?? 0);
+    const priorSurfaceSelection = aiSurfaceSelect.value;
+    const surfaces = Array.isArray(surfaceInventory.surfaces) ? surfaceInventory.surfaces : [];
+    aiSurfaceSelect.replaceChildren();
+    for (const surface of surfaces) {
+      const option = document.createElement("option");
+      option.value = String(surface.surfaceId);
+      option.textContent = \`#\${surface.surfaceId} pid=\${surface.pid}\${surface.activated ? " active" : ""}\`;
+      option.dataset.activated = String(surface.activated === true);
+      aiSurfaceSelect.append(option);
+    }
+    const selectableSurface = surfaces.find((surface) =>
+      String(surface.surfaceId) === priorSurfaceSelection && surface.activated !== true)
+      ?? surfaces.find((surface) => surface.activated !== true)
+      ?? surfaces[0]
+      ?? null;
+    if (selectableSurface) aiSurfaceSelect.value = String(selectableSurface.surfaceId);
+    aiSurfaceSelect.dataset.sequence = String(surfaceInventory.sequence ?? "");
+    aiSurfaceSelect.disabled = surfaceInventory.available !== true || surfaces.length === 0;
+    const selectedSurface = surfaces.find((surface) => String(surface.surfaceId) === aiSurfaceSelect.value);
+    activateAiSurfaceButton.disabled = aiSurfaceSelect.disabled || selectedSurface?.activated === true;
     const lifecycleBusy = ["starting", "surface_pending", "stopping"].includes(applicationLifecycle.status);
     startAiWorkbenchButton.disabled = applicationLifecycle.enabled !== true
       || applicationLifecycle.active === true
@@ -166,6 +186,7 @@ async function refreshWorkView() {
       "AI Graphical Boundary: headless=" + Boolean(aiGraphicalSession.output?.headless) + " parentDisplay=" + Boolean(aiGraphicalSession.boundary?.parentDisplayConnected) + " pixels=" + Boolean(aiGraphicalSession.boundary?.readsPixels) + " input=" + Boolean(aiGraphicalSession.boundary?.inputAuthority) + " browser=" + Boolean(aiGraphicalSession.boundary?.browserAttached) + " attachment=" + (aiGraphicalSession.browserAttachment?.status ?? "none") + " headed=" + Boolean(aiGraphicalSession.browserAttachment?.headed) + " browserNetwork=" + Boolean(aiGraphicalSession.boundary?.browserNetworkAccess) + " networkExpanded=" + Boolean(aiGraphicalSession.boundary?.networkAuthorityExpanded),
       "AI Compositor Frame: status=" + (aiGraphicalSession.compositorFrame?.available ? "available" : aiGraphicalSession.compositorFrame?.reason ?? "unavailable") + " native=" + Boolean(aiGraphicalSession.boundary?.compositorNativeCapture) + " api=" + (aiGraphicalSession.compositorFrame?.captureApi ?? "none") + " socket=" + (aiGraphicalSession.compositorFrame?.socketName ?? "none") + " bytes=" + (aiGraphicalSession.compositorFrame?.byteLength ?? 0) + " dataExposed=" + Boolean(aiGraphicalSession.compositorFrame?.dataExposed) + " browserScreenshot=" + Boolean(aiGraphicalSession.boundary?.browserScreenshotApi),
       "AI Surface Inventory: status=" + (surfaceInventory.status ?? "unknown") + " sequence=" + (surfaceInventory.sequence ?? "none") + " count=" + (surfaceInventory.count ?? 0) + " truncated=" + Boolean(surfaceInventory.truncated) + " titles=" + Boolean(surfaceInventory.boundary?.titleExposed) + " pixels=" + Boolean(surfaceInventory.boundary?.pixelsExposed),
+      "AI Surface Activation: status=" + (aiGraphicalSession.surfaceActivation?.status ?? "not_executed") + " target=" + (aiGraphicalSession.surfaceActivation?.surfaceId ?? "none") + " inventory=" + (aiGraphicalSession.surfaceActivation?.inventorySequenceBefore ?? "none") + "->" + (aiGraphicalSession.surfaceActivation?.inventorySequenceAfter ?? "none") + " receipt=" + Boolean(aiGraphicalSession.surfaceActivation?.receiptMatched) + " frameChanged=" + Boolean(aiGraphicalSession.surfaceActivation?.frameChanged),
       "AI Workbench: status=" + (applicationLifecycle.status ?? "unknown") + " active=" + Boolean(applicationLifecycle.active) + " pid=" + (applicationLifecycle.mainPid ?? "none") + " surface=" + (applicationLifecycle.matchingSurface?.surfaceId ?? "none") + " attached=" + Boolean(applicationLifecycle.surfaceAttached) + " arbitraryProcess=" + Boolean(applicationLifecycle.boundary?.arbitraryProcessLaunch) + " root=" + Boolean(applicationLifecycle.boundary?.rootRequired),
       \`Session: \${data.session?.status ?? "unknown"}\`,
       \`Session ID: \${data.session?.sessionId ?? "none"}\`,
@@ -200,8 +221,12 @@ async function refreshWorkView() {
     aiWorkbenchStatus.textContent = "offline";
     aiWorkbenchSurface.textContent = "none";
     aiSurfaceCount.textContent = "0";
+    aiSurfaceSelect.replaceChildren();
+    aiSurfaceSelect.dataset.sequence = "";
+    aiSurfaceSelect.disabled = true;
     startAiWorkbenchButton.disabled = true;
     stopAiWorkbenchButton.disabled = true;
+    activateAiSurfaceButton.disabled = true;
     workViewJson.textContent = "Unable to read work view state.";
     updateDesiredUrlHint(null);
   }

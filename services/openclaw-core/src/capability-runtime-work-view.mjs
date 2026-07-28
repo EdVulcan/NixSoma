@@ -25,6 +25,10 @@ const CONTROL_OPERATIONS = new Map([
     action: "stop_ai_workbench",
     route: "/work-view/application/stop",
   }],
+  ["work_view.surface.activate", {
+    action: "activate_ai_surface",
+    route: "/work-view/surface/activate",
+  }],
 ]);
 
 const PUBLIC_WORK_VIEW_STATUSES = ["prepared", "ready", "degraded", "stopped"];
@@ -99,6 +103,13 @@ function normaliseEntryUrl(value) {
   return parsed.toString();
 }
 
+function normalisePositiveUint32(value, label) {
+  if (!Number.isInteger(value) || value <= 0 || value > 0xffff_ffff) {
+    throw new Error(`${label} must be a positive 32-bit integer.`);
+  }
+  return value;
+}
+
 function normaliseControlRequest(request) {
   const params = request.params ?? {};
   const operation = normaliseBoundedText(
@@ -132,6 +143,16 @@ function normaliseControlRequest(request) {
     const entryUrl = normaliseEntryUrl(params.entryUrl);
     if (entryUrl) payload.entryUrl = entryUrl;
   }
+  if (selected.action === "activate_ai_surface") {
+    payload.surfaceId = normalisePositiveUint32(
+      params.surfaceId,
+      "Trusted work-view surface activation surfaceId",
+    );
+    payload.inventorySequence = normalisePositiveUint32(
+      params.inventorySequence,
+      "Trusted work-view surface activation inventorySequence",
+    );
+  }
   return { ...selected, operation, payload };
 }
 
@@ -143,7 +164,9 @@ function projectControlResult(action, response) {
   const workView = response?.workView ?? {};
   const trustedSession = workView.trustedSession ?? {};
   const application = response?.application ?? {};
+  const surfaceActivation = response?.surfaceActivation ?? {};
   const applicationAction = action === "start_ai_workbench" || action === "stop_ai_workbench";
+  const surfaceAction = action === "activate_ai_surface";
   const result = {
     ok: response?.ok === true,
     registry: CONTROL_REGISTRY,
@@ -171,11 +194,32 @@ function projectControlResult(action, response) {
         ? application.matchingSurface.surfaceId
         : null,
     } : null,
+    surfaceActivation: surfaceAction ? {
+      registry: surfaceActivation.registry === "nixsoma-ai-surface-activation-v0"
+        ? surfaceActivation.registry
+        : null,
+      status: surfaceActivation.status === "activated" ? "activated" : null,
+      surfaceId: Number.isInteger(surfaceActivation.surfaceId)
+        ? surfaceActivation.surfaceId
+        : null,
+      inventorySequenceBefore: Number.isInteger(surfaceActivation.inventorySequenceBefore)
+        ? surfaceActivation.inventorySequenceBefore
+        : null,
+      inventorySequenceAfter: Number.isInteger(surfaceActivation.inventorySequenceAfter)
+        ? surfaceActivation.inventorySequenceAfter
+        : null,
+      activated: surfaceActivation.activated === true,
+      receiptMatched: surfaceActivation.receiptMatched === true,
+      frameSequenceAdvanced: surfaceActivation.frameSequenceAdvanced === true,
+      frameChanged: surfaceActivation.frameChanged === true,
+    } : null,
     governance: {
       mutatesWorkViewState: true,
       dispatchesExistingOwnerAction: true,
-      browserNavigation: !applicationAction && action !== "hide_work_view",
+      browserNavigation: action === "prepare_work_view" || action === "reveal_work_view",
       fixedApplicationLifecycle: applicationAction,
+      fixedSurfaceActivation: surfaceAction,
+      arbitraryWindowControl: false,
       arbitraryProcessLaunch: false,
       createsTask: false,
       createsApproval: false,
@@ -277,8 +321,12 @@ export function createEngineeringWorkViewCapabilityHandlers({
         applicationStatus: result?.application?.status ?? null,
         applicationActive: result?.application?.active === true,
         applicationSurfaceAttached: result?.application?.surfaceAttached === true,
+        surfaceActivationStatus: result?.surfaceActivation?.status ?? null,
+        surfaceActivationTarget: result?.surfaceActivation?.surfaceId ?? null,
+        surfaceActivationReceiptMatched: result?.surfaceActivation?.receiptMatched === true,
         mutatesWorkViewState: governance.mutatesWorkViewState === true,
         fixedApplicationLifecycle: governance.fixedApplicationLifecycle === true,
+        fixedSurfaceActivation: governance.fixedSurfaceActivation === true,
         browserNavigation: governance.browserNavigation === true,
         noProviderEgress: governance.providerEgress === false,
         noPayloadExposure: governance.exposesLeaseId === false

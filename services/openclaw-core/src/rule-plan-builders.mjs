@@ -114,6 +114,7 @@ export function createRulePlanBuilders(deps) {
       "work_view.hide": "act.work_view.control",
       "work_view.application.start": "act.work_view.control",
       "work_view.application.stop": "act.work_view.control",
+      "work_view.surface.activate": "act.work_view.control",
       "browser.open": "act.browser.open",
       "network.navigate": "act.browser.open",
       "screen.observe": "sense.screen.observe",

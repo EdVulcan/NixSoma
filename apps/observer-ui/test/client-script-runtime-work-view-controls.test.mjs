@@ -125,6 +125,22 @@ test("Observer routes fixed workbench start and stop through the governed work-v
   assert.equal(fixture.fetchCalls.some(({ url }) => url.includes("session.invalid/work-view/application")), false);
 });
 
+test("Observer binds numeric surface activation to the common work-view capability", async () => {
+  const fixture = createContext();
+  await fixture.context.postWorkView(
+    "/work-view/surface/activate",
+    { surfaceId: 44, inventorySequence: 19 },
+    { refresh: false },
+  );
+  assert.deepEqual(JSON.parse(fixture.fetchCalls[0].options.body), {
+    capabilityId: "act.work_view.control",
+    operation: "work_view.surface.activate",
+    params: { surfaceId: 44, inventorySequence: 19 },
+  });
+  assert.equal(fixture.fetchCalls[0].url, "http://core.invalid/capabilities/invoke");
+  assert.equal(fixture.fetchCalls.some(({ url }) => url.includes("session.invalid/work-view/surface")), false);
+});
+
 test("Observer maps explicit recovery recommendations to existing owner controls", async () => {
   const resume = createContext("resume_ai_action_authority");
   await resume.context.runRecommendedWorkViewAction();

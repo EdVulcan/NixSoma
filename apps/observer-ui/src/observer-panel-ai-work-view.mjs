@@ -10,9 +10,12 @@ export function observerAiWorkViewPanel() {
           <div class="metric"><span>Workbench</span><span id="ai-workbench-status">disabled</span></div>
           <div class="metric"><span>Workbench Surface</span><span id="ai-workbench-surface">none</span></div>
           <div class="metric"><span>AI Surfaces</span><span id="ai-surface-count">0</span></div>
+          <label for="ai-surface-select">Surface</label>
+          <select id="ai-surface-select" disabled></select>
           <div class="actions">
             <button id="start-ai-workbench-button" type="button">Start Workbench</button>
             <button id="stop-ai-workbench-button" class="secondary" type="button">Stop Workbench</button>
+            <button id="activate-ai-surface-button" class="secondary" type="button" disabled>Activate Surface</button>
           </div>
           <pre id="work-view-json">Loading work view state...</pre>
         </section>

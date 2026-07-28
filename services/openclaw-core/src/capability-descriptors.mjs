@@ -870,11 +870,12 @@ export function buildBaseCapabilities({
         "work_view.hide",
         "work_view.application.start",
         "work_view.application.stop",
+        "work_view.surface.activate",
       ],
       domains: ["user_task", "body_internal"],
       risk: "low",
       governance: "allow",
-      description: "Prepare, reveal, hide, and control the fixed application inside the observable AI work view.",
+      description: "Prepare, reveal, hide, control the fixed application, and activate a current numeric surface inside the observable AI work view.",
     },
     {
       id: "act.browser.open",

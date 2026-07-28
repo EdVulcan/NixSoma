@@ -65,6 +65,11 @@ const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "u
 
 const bodyModule = read("nix/modules/openclaw-body.nix");
 const aiGraphicalSessionModule = read("nix/modules/openclaw-ai-graphical-session.nix");
+const nixsomaWestonPackage = read("nix/packages/nixsoma-weston.nix");
+const westonFrameAuthPackage = read("nix/packages/nixsoma-weston-frame-auth.nix");
+const westonInputAuthority = read("packages/weston-frame-auth/src/input-authority.c");
+const westonActivationApi = read("packages/weston-frame-auth/src/nixsoma-kiosk-shell-activation-api.h");
+const westonActivationPatch = read("nix/patches/weston-kiosk-shell-nixsoma-activation-api.patch");
 const devProfile = read("nix/profiles/dev-body.nix");
 const desktopProfile = read("nix/profiles/desktop-body.nix");
 const localHost = read("nix/hosts/local-dev.nix");
@@ -262,6 +267,31 @@ requireIncludes("AI graphical session module", aiGraphicalSessionModule, [
   "OPENCLAW_AI_GRAPHICAL_SESSION_ENABLED",
   ...aiGraphicalSessionEnvNames,
 ]);
+requireIncludes("NixSoma Weston package", nixsomaWestonPackage, [
+  "nixsoma-weston",
+  "weston-kiosk-shell-nixsoma-activation-api.patch",
+  "nixsoma-kiosk-shell-activation-api.h",
+]);
+requireIncludes("Weston frame authority package", westonFrameAuthPackage, [
+  "NIXSOMA_SURFACE_ACTIVATION_ENABLED",
+  "SESSION_MANAGER_CGROUP_SUFFIX",
+]);
+requireIncludes("Weston surface activation API", westonActivationApi, [
+  "nixsoma_kiosk_shell_activation_v1",
+  "activate_surface",
+]);
+requireIncludes("Weston kiosk activation patch", westonActivationPatch, [
+  "weston_plugin_api_register",
+  "kiosk_shell_output_set_active_surface_tree",
+  "kiosk_shell_surface_activate",
+]);
+requireIncludes("Weston input authority", westonInputAuthority, [
+  "weston_plugin_api_get",
+  "surface_activation_api->activate_surface",
+]);
+if (westonInputAuthority.includes("weston_view_activate_input(")) {
+  throw new Error("frame authority must delegate surface activation to the owning kiosk shell API");
+}
 if (aiGraphicalSessionModule.includes("--log=%t/")) {
   throw new Error("AI graphical session launch script must not retain an unexpanded systemd runtime specifier.");
 }
@@ -1035,6 +1065,7 @@ EOF
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-compositor-input-controller.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-compositor-input-route.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-surface-inventory-observer.mjs"
+    || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-surface-activation-route.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-workbench-lifecycle.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-workbench-lifecycle-route.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/trusted-work-view-sidecar.mjs"
@@ -1045,7 +1076,7 @@ EOF
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/ai-compositor-frame.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/execution-grants.mjs"
-    || "$(find "$session_manager_out" -type f | wc -l)" -ne 26 ]]; then
+    || "$(find "$session_manager_out" -type f | wc -l)" -ne 27 ]]; then
     echo "session-manager Nix closure is not exact and read-only: $session_manager_out" >&2
     exit 1
   fi

@@ -1805,6 +1805,7 @@ test("capability runtime maps each canonical work-view control to its fixed owne
     { operation: "work_view.hide", params: {} },
     { operation: "work_view.application.start", params: {} },
     { operation: "work_view.application.stop", params: {} },
+    { operation: "work_view.surface.activate", params: { surfaceId: 31, inventorySequence: 12 } },
   ];
 
   for (const request of requests) {
@@ -1854,6 +1855,15 @@ test("capability runtime maps each canonical work-view control to its fixed owne
         recommendedAction: "stop_ai_workbench",
       },
     },
+    {
+      url: "http://127.0.0.1:4102/work-view/surface/activate",
+      body: {
+        operatorActionSource: "capability_runtime_work_view_control",
+        recommendedAction: "activate_ai_surface",
+        surfaceId: 31,
+        inventorySequence: 12,
+      },
+    },
   ]);
 });
 
@@ -1898,6 +1908,71 @@ test("capability runtime projects fixed application lifecycle metadata without s
   assert.equal(result.response.result.governance.arbitraryProcessLaunch, false);
   assert.equal(result.response.summary.applicationSurfaceAttached, true);
   assert.equal(JSON.stringify(result.response).includes("must-not-cross-core"), false);
+});
+
+test("capability runtime binds and projects one numeric surface activation", async () => {
+  const { runtime, calls } = createHarness({
+    postJsonResult: {
+      ok: true,
+      surfaceActivation: {
+        registry: "nixsoma-ai-surface-activation-v0",
+        status: "activated",
+        surfaceId: 55,
+        inventorySequenceBefore: 21,
+        inventorySequenceAfter: 22,
+        activated: true,
+        receiptMatched: true,
+        frameSequenceAdvanced: true,
+        frameChanged: true,
+        hiddenTitle: "must-not-cross-core",
+      },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.work_view.control",
+    operation: "work_view.surface.activate",
+    params: { surfaceId: 55, inventorySequence: 21 },
+  });
+
+  assert.equal(result.response.invoked, true);
+  assert.deepEqual(calls.postJson, [{
+    url: "http://127.0.0.1:4102/work-view/surface/activate",
+    body: {
+      operatorActionSource: "capability_runtime_work_view_control",
+      recommendedAction: "activate_ai_surface",
+      surfaceId: 55,
+      inventorySequence: 21,
+    },
+  }]);
+  assert.deepEqual(result.response.result.surfaceActivation, {
+    registry: "nixsoma-ai-surface-activation-v0",
+    status: "activated",
+    surfaceId: 55,
+    inventorySequenceBefore: 21,
+    inventorySequenceAfter: 22,
+    activated: true,
+    receiptMatched: true,
+    frameSequenceAdvanced: true,
+    frameChanged: true,
+  });
+  assert.equal(result.response.result.governance.fixedSurfaceActivation, true);
+  assert.equal(result.response.result.governance.arbitraryWindowControl, false);
+  assert.equal(result.response.result.governance.browserNavigation, false);
+  assert.equal(result.response.summary.surfaceActivationReceiptMatched, true);
+  assert.equal(JSON.stringify(result.response).includes("must-not-cross-core"), false);
+});
+
+test("capability runtime rejects invalid surface activation coordinates before dispatch", async () => {
+  const { runtime, calls } = createHarness();
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.work_view.control",
+    operation: "work_view.surface.activate",
+    params: { surfaceId: 0, inventorySequence: 2 },
+  });
+  assert.equal(result.statusCode, 400);
+  assert.match(result.response.error, /positive 32-bit integer/u);
+  assert.deepEqual(calls.postJson, []);
 });
 
 test("capability runtime rejects credential-bearing work-view URLs before dispatch", async () => {

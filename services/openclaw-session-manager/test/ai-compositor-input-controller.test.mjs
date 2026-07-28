@@ -131,3 +131,80 @@ test("native input rejects stale or replaced frames before creating a request", 
   );
   assert.deepEqual(readdirSync(inputDir), []);
 });
+
+test("native compositor control activates one current numeric surface and binds both frames", async (t) => {
+  const { env } = runtimeFixture(t);
+  const before = frame(8, "2026-07-28T04:10:00.000Z", "a");
+  const after = frame(9, "2026-07-28T04:10:00.100Z", "b");
+  let activated = false;
+  const inventory = () => ({
+    registry: "nixsoma-ai-surface-inventory-v0",
+    available: true,
+    sequence: activated ? 12 : 11,
+    surfaces: [
+      { surfaceId: 41, pid: 4100, width: 1280, height: 720, activated },
+      { surfaceId: 42, pid: 4200, width: 1280, height: 720, activated: !activated },
+    ],
+  });
+  let captureCount = 0;
+  const controller = createAiCompositorInputController({
+    env,
+    now: () => 1_000,
+    createRequestId: () => "d".repeat(32),
+    frameCapture: {
+      snapshot: () => before,
+      capture: async () => (++captureCount === 1 ? before : after),
+    },
+    helperRuntime: helperRuntime(),
+    observeGraphicalSession: () => ({
+      ready: true,
+      socket: { name: "nixsoma-ai-0" },
+    }),
+    observeSurfaceInventory: inventory,
+    stat: (target) => target.endsWith("control.sock")
+      ? { isSocket: () => true, uid: process.getuid(), mode: 0o600 }
+      : lstatSync(target),
+    list: () => ["control.sock"],
+    sendRequest: async ({ request, wire }) => {
+      assert.equal(wire, `2 ${"d".repeat(32)} ${before.sha256} 8 11 41\n`);
+      activated = true;
+      return `2 ${request.requestId} ${request.frame.sha256} ${request.frame.sequence} ${request.inventorySequence} ${request.surfaceId} executed\n`;
+    },
+  });
+
+  const evidence = await controller.activateSurface({ surfaceId: 41, inventorySequence: 11 });
+  assert.equal(evidence.status, "activated");
+  assert.equal(evidence.surfaceId, 41);
+  assert.equal(evidence.inventorySequenceBefore, 11);
+  assert.equal(evidence.inventorySequenceAfter, 12);
+  assert.equal(evidence.receiptMatched, true);
+  assert.equal(evidence.frameSequenceAdvanced, true);
+  assert.equal(evidence.frameChanged, true);
+  assert.equal(evidence.beforeFrame.sequence, 8);
+  assert.equal(evidence.afterFrame.sequence, 9);
+  assert.equal(JSON.stringify(evidence).includes("dataUrl"), false);
+  assert.equal(controller.surfaceActivationSnapshot().surfaceId, 41);
+});
+
+test("native surface activation rejects a stale inventory before compositor contact", async (t) => {
+  const { env } = runtimeFixture(t);
+  let sent = false;
+  const controller = createAiCompositorInputController({
+    env,
+    frameCapture: { snapshot: () => frame(1, "2026-07-28T04:00:00Z"), capture: async () => frame(2, "2026-07-28T04:00:01Z") },
+    helperRuntime: helperRuntime(),
+    observeGraphicalSession: () => ({ ready: true, socket: { name: "nixsoma-ai-0" } }),
+    observeSurfaceInventory: () => ({
+      available: true,
+      sequence: 7,
+      surfaces: [{ surfaceId: 9, pid: 900, width: 1280, height: 720, activated: false }],
+    }),
+    sendRequest: async () => { sent = true; },
+  });
+
+  await assert.rejects(
+    controller.activateSurface({ surfaceId: 9, inventorySequence: 6 }),
+    (error) => error.code === "AI_SURFACE_ACTIVATION_TARGET_STALE",
+  );
+  assert.equal(sent, false);
+});

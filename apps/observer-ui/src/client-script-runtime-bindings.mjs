@@ -297,6 +297,19 @@ stopAiWorkbenchButton.addEventListener("click", () => {
   });
 });
 
+activateAiSurfaceButton.addEventListener("click", () => {
+  const surfaceId = Number(aiSurfaceSelect.value);
+  const inventorySequence = Number(aiSurfaceSelect.dataset.sequence);
+  postWorkView("/work-view/surface/activate", { surfaceId, inventorySequence }).catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
+aiSurfaceSelect.addEventListener("change", () => {
+  activateAiSurfaceButton.disabled = aiSurfaceSelect.disabled
+    || aiSurfaceSelect.selectedOptions[0]?.dataset.activated === "true";
+});
+
 runRecommendedWorkViewActionButton.addEventListener("click", () => {
   runRecommendedWorkViewAction().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

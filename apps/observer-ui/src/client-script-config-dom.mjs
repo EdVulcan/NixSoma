@@ -50,6 +50,7 @@ const workViewJson = document.querySelector("#work-view-json");
 const aiWorkbenchStatus = document.querySelector("#ai-workbench-status");
 const aiWorkbenchSurface = document.querySelector("#ai-workbench-surface");
 const aiSurfaceCount = document.querySelector("#ai-surface-count");
+const aiSurfaceSelect = document.querySelector("#ai-surface-select");
 const controlResult = document.querySelector("#control-result");
 const eventsList = document.querySelector("#events-list");
 const coreHealth = document.querySelector("#core-health");

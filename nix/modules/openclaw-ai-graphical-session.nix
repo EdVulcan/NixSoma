@@ -12,8 +12,14 @@ let
   surfaceDirectory = "surfaces";
   workbenchHomeDirectory = "workbench-home";
   workbenchUnitName = "nixsoma-ai-workbench";
+  westonPackage = if sessionCfg.applicationLifecycle then
+    pkgs.callPackage ../packages/nixsoma-weston.nix {
+      weston = sessionCfg.package;
+    }
+  else
+    sessionCfg.package;
   captureAuthorityPackage = pkgs.callPackage ../packages/nixsoma-weston-frame-auth.nix {
-    weston = sessionCfg.package;
+    weston = westonPackage;
     nativeInput = sessionCfg.nativeInput;
     surfaceInventory = sessionCfg.applicationLifecycle;
     outputWidth = sessionCfg.width;
@@ -80,7 +86,7 @@ let
     cd "$runtime_dir/${captureDirectory}"
     exec ${pkgs.coreutils}/bin/env \
       XDG_RUNTIME_DIR="$runtime_dir" \
-      ${sessionCfg.package}/bin/weston \
+      ${westonPackage}/bin/weston \
       --log="$runtime_dir/weston.log" \
       ${lib.concatStringsSep " \\\n      " westonArguments}
   '';
@@ -114,7 +120,7 @@ let
       XDG_CACHE_HOME="$cache_home" \
       WAYLAND_DISPLAY="${socketName}" \
       XCURSOR_THEME="Adwaita" \
-      ${sessionCfg.package}/bin/weston-terminal \
+      ${westonPackage}/bin/weston-terminal \
       --fullscreen \
       --font="monospace" \
       --font-size=20 \
