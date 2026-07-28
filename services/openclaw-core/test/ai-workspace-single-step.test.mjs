@@ -528,6 +528,25 @@ test("AI workspace single-step revalidates the task objective before actuator co
   assert.equal(calls.audit.length, 0);
 });
 
+test("AI workspace single-step rejects an expected task binding before provider egress", async () => {
+  const { owner, calls } = harness();
+
+  const result = await owner.invoke({
+    taskId: TASK_ID,
+    expectedTaskBinding: {
+      taskId: TASK_ID,
+      objectiveContentHash: "0".repeat(64),
+      taskVersionHash: "1".repeat(64),
+    },
+  });
+
+  assert.equal(result.status, "local_fallback");
+  assert.equal(result.fallback.reason, "ai_workspace_single_step_context_unavailable");
+  assert.equal(result.governance.providerCalled, false);
+  assert.equal(calls.provider, 0);
+  assert.equal(calls.post.length, 0);
+});
+
 test("AI workspace single-step rejects unsafe task text before provider egress", async () => {
   const { owner, calls } = harness({
     taskGoal: "Open https://private.invalid and use api_key=secret-value",

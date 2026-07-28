@@ -100,6 +100,7 @@ function createHarness(overrides = {}) {
     policyEvaluator,
     standingProviderAdvisory: overrides.standingProviderAdvisory,
     aiWorkspaceSingleStep: overrides.aiWorkspaceSingleStep,
+    aiWorkspaceBoundedRun: overrides.aiWorkspaceBoundedRun,
     publishEvent: async (name, body) => {
       events.push({ name, body });
     },
@@ -163,6 +164,99 @@ test("capability runtime exposes the standing-authorized AI workspace single-ste
   assert.deepEqual(capability?.domains, ["cross_boundary"]);
   assert.equal(capability?.risk, "medium");
   assert.equal(capability?.governance, "standing_authorization");
+});
+
+test("capability runtime exposes the standing-authorized AI workspace bounded-run descriptor", async () => {
+  const { runtime } = createHarness();
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find((item) => item.id === "act.ai.workspace.bounded_run");
+
+  assert.equal(capability?.kind, "actuator");
+  assert.deepEqual(capability?.domains, ["cross_boundary"]);
+  assert.equal(capability?.risk, "medium");
+  assert.equal(capability?.governance, "standing_authorization");
+});
+
+test("capability runtime invokes only the fixed bounded-run request and records compact steps", async () => {
+  let invoked = 0;
+  const { runtime, state } = createHarness({
+    aiWorkspaceBoundedRun: {
+      invoke: async ({ taskId }) => {
+        invoked += 1;
+        return {
+          ok: true,
+          registry: "nixsoma-ai-workspace-bounded-run-v0",
+          status: "completed",
+          terminalReason: "second_step_terminal",
+          steps: [{
+            index: 1,
+            status: "executed",
+            actionId: "scroll_down",
+            providerCalled: true,
+            actionExecuted: true,
+            sceneContentHash: "a".repeat(64),
+          }, {
+            index: 2,
+            status: "no_op",
+            actionId: "no_op",
+            providerCalled: true,
+            actionExecuted: false,
+            sceneContentHash: "b".repeat(64),
+          }],
+          evidence: {
+            taskId,
+            objectiveContentHash: "c".repeat(64),
+            taskVersionHash: "d".repeat(64),
+            stepCount: 2,
+            providerCallCount: 2,
+            actionCount: 1,
+            continuationAudit: true,
+            runCompletionAudit: true,
+            outcomeUnknown: false,
+          },
+          governance: {
+            continuationAfterVerifiedScrollOnly: true,
+            continuedAfterVerifiedScroll: true,
+          },
+        };
+      },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.ai.workspace.bounded_run",
+    taskId: "task-reviewed-1",
+    params: { confirm: true },
+  });
+
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.invocation.authorization.policyId, "ai-workspace-explicit-bounded-run");
+  assert.equal(result.response.invocation.summary.kind, "ai.workspace.bounded_run");
+  assert.equal(result.response.invocation.summary.stepCount, 2);
+  assert.deepEqual(result.response.invocation.summary.steps.map((step) => step.actionId), ["scroll_down", "no_op"]);
+  assert.equal(invoked, 1);
+  assert.equal(state.capabilityInvocationLog.length, 1);
+});
+
+test("capability runtime rejects caller-controlled bounded-run budgets or actions", async () => {
+  let invoked = 0;
+  const { runtime } = createHarness({
+    aiWorkspaceBoundedRun: {
+      invoke: async () => { invoked += 1; return { ok: true }; },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.ai.workspace.bounded_run",
+    taskId: "task-reviewed-1",
+    params: { confirm: true, maximumSteps: 4, actionId: "type_item" },
+  });
+
+  assert.equal(result.statusCode, 400);
+  assert.equal(result.response.error.includes("only capabilityId"), true);
+  assert.equal(invoked, 0);
 });
 
 test("capability runtime rejects caller-controlled AI workspace step inputs", async () => {

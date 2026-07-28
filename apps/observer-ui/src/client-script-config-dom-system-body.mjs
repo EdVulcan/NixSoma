@@ -274,6 +274,7 @@ const activateAiSurfaceButton = document.querySelector("#activate-ai-surface-but
 const scrollAiSurfaceUpButton = document.querySelector("#scroll-ai-surface-up-button");
 const scrollAiSurfaceDownButton = document.querySelector("#scroll-ai-surface-down-button");
 const runAiWorkspaceSingleStepButton = document.querySelector("#run-ai-workspace-single-step-button");
+const runAiWorkspaceBoundedRunButton = document.querySelector("#run-ai-workspace-bounded-run-button");
 const runRecommendedWorkViewActionButton = document.querySelector("#run-recommended-work-view-action-button");
 const createTrustedSidecarLifecycleTaskButton = document.querySelector("#create-trusted-sidecar-lifecycle-task-button");
 const startTrustedSidecarProbeButton = document.querySelector("#start-trusted-sidecar-probe-button");

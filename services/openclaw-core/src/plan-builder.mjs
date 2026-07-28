@@ -26,6 +26,7 @@ import { createSystemdTaskBuilders } from "./systemd-task-builders.mjs";
 import { createFixedUnitIncidentTriageBuilders } from "./fixed-unit-incident-triage.mjs";
 import { createStandingProviderAdvisory } from "./standing-provider-advisory.mjs";
 import { createAiWorkspaceSingleStep } from "./ai-workspace-single-step.mjs";
+import { createAiWorkspaceRunCoordinator } from "./ai-workspace-run-coordinator.mjs";
 
 export function createPlanBuilder(deps) {
   const profiler = createRuntimeProfiler("plan-builder");
@@ -41,6 +42,7 @@ export function createPlanBuilder(deps) {
     publishAuditEvent = async () => ({ ok: true }),
     createStandingProviderAdvisoryImpl = createStandingProviderAdvisory,
     createAiWorkspaceSingleStepImpl = createAiWorkspaceSingleStep,
+    createAiWorkspaceRunCoordinatorImpl = createAiWorkspaceRunCoordinator,
     host,
     port,
     listCommandTranscriptRecords = () => [],
@@ -136,7 +138,7 @@ export function createPlanBuilder(deps) {
     publishAuditEvent,
     persistState,
   });
-  const aiWorkspaceSingleStep = createAiWorkspaceSingleStepImpl({
+  const aiWorkspaceSingleStepOwner = createAiWorkspaceSingleStepImpl({
     standingAdvisory: standingProviderAdvisory,
     fetchJson,
     postJson,
@@ -145,6 +147,10 @@ export function createPlanBuilder(deps) {
     screenActUrl,
     publishAuditEvent,
     getTaskById,
+  });
+  const aiWorkspaceRuns = createAiWorkspaceRunCoordinatorImpl({
+    singleStep: aiWorkspaceSingleStepOwner,
+    publishAuditEvent,
   });
   const capabilityRuntime = createCapabilityRuntime({
     host,
@@ -159,7 +165,8 @@ export function createPlanBuilder(deps) {
     policyEvaluator,
     publishEvent,
     standingProviderAdvisory,
-    aiWorkspaceSingleStep,
+    aiWorkspaceSingleStep: aiWorkspaceRuns.singleStep,
+    aiWorkspaceBoundedRun: aiWorkspaceRuns.boundedRun,
     listCommandTranscriptRecords,
     listFilesystemChangeRecords,
     buildExperienceMemoryReadModel,

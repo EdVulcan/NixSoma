@@ -28,6 +28,7 @@ import { createDeclarativeEvolutionCapabilityHandlers } from "./capability-runti
 import { createSystemdIncidentObservationCapabilityHandlers } from "./capability-runtime-systemd-incident-observation.mjs";
 import { createStandingProviderAdvisoryCapabilityHandlers } from "./capability-runtime-standing-provider-advisory.mjs";
 import { createAiWorkspaceSingleStepCapabilityHandlers } from "./capability-runtime-ai-workspace-single-step.mjs";
+import { createAiWorkspaceBoundedRunCapabilityHandlers } from "./capability-runtime-ai-workspace-bounded-run.mjs";
 import {
   abortCapabilityExecutionReservation,
   commitCapabilityExecutionReservation,
@@ -56,6 +57,7 @@ export function createCapabilityRuntime(deps) {
     providerRuntime = {},
     standingProviderAdvisory,
     aiWorkspaceSingleStep,
+    aiWorkspaceBoundedRun,
     declarativeEvolution = {},
     workspaceOps = {},
     serialiseTask,
@@ -227,6 +229,9 @@ export function createCapabilityRuntime(deps) {
   });
   const aiWorkspaceSingleStepHandlers = createAiWorkspaceSingleStepCapabilityHandlers({
     runtime: aiWorkspaceSingleStep,
+  });
+  const aiWorkspaceBoundedRunHandlers = createAiWorkspaceBoundedRunCapabilityHandlers({
+    runtime: aiWorkspaceBoundedRun,
   });
 
   function baseCapabilities() {
@@ -457,6 +462,10 @@ export function createCapabilityRuntime(deps) {
   }
 
   async function dispatchCapabilityBackend(capability, request) {
+    const aiWorkspaceBoundedRun = await aiWorkspaceBoundedRunHandlers.callBackend(capability, request);
+    if (aiWorkspaceBoundedRun.handled) {
+      return aiWorkspaceBoundedRun.result;
+    }
     const aiWorkspaceSingleStep = await aiWorkspaceSingleStepHandlers.callBackend(capability, request);
     if (aiWorkspaceSingleStep.handled) {
       return aiWorkspaceSingleStep.result;
@@ -735,6 +744,10 @@ export function createCapabilityRuntime(deps) {
   }
 
   function summariseCapabilityInvocationResult(capability, result) {
+    const aiWorkspaceBoundedRunSummary = aiWorkspaceBoundedRunHandlers.summariseResult(capability, result);
+    if (aiWorkspaceBoundedRunSummary) {
+      return aiWorkspaceBoundedRunSummary;
+    }
     const aiWorkspaceSingleStepSummary = aiWorkspaceSingleStepHandlers.summariseResult(capability, result);
     if (aiWorkspaceSingleStepSummary) {
       return aiWorkspaceSingleStepSummary;
@@ -1164,6 +1177,14 @@ export function createCapabilityRuntime(deps) {
     if (aiWorkspaceAuthorization.handled) {
       serverApproval = aiWorkspaceAuthorization.authorization;
     }
+    const aiWorkspaceBoundedRunAuthorization = aiWorkspaceBoundedRunHandlers.authorizeRequest(
+      capability,
+      request,
+      body,
+    );
+    if (aiWorkspaceBoundedRunAuthorization.handled) {
+      serverApproval = aiWorkspaceBoundedRunAuthorization.authorization;
+    }
     request.approved = serverApproval.approved;
     request.serverApproval = serverApproval;
 
@@ -1187,6 +1208,17 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: aiWorkspaceSingleStepValidationError },
+      };
+    }
+    const aiWorkspaceBoundedRunValidationError = aiWorkspaceBoundedRunHandlers.validateRequest(
+      capability,
+      request,
+      body,
+    );
+    if (aiWorkspaceBoundedRunValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: aiWorkspaceBoundedRunValidationError },
       };
     }
 

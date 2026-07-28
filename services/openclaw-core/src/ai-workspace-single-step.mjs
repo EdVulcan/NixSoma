@@ -158,6 +158,16 @@ function taskEvidence(binding) {
   };
 }
 
+function expectedTaskEvidenceMatches(expected, binding) {
+  if (expected === null || expected === undefined) return true;
+  const actual = taskEvidence(binding);
+  return expected && typeof expected === "object" && !Array.isArray(expected)
+    && Object.keys(expected).length === 3
+    && expected.taskId === actual.taskId
+    && expected.objectiveContentHash === actual.objectiveContentHash
+    && expected.taskVersionHash === actual.taskVersionHash;
+}
+
 function fallback(reason, standingAdvisory, {
   providerDecision = null,
   decisionContext = null,
@@ -301,7 +311,7 @@ export function createAiWorkspaceSingleStep({
     if (accepted?.ok !== true) throw new Error("required AI workspace single-step audit was not accepted");
   }
 
-  async function invoke({ taskId: requestedTaskId } = {}) {
+  async function invoke({ taskId: requestedTaskId, expectedTaskBinding = null } = {}) {
     const taskId = normaliseAiWorkspaceTaskId(requestedTaskId);
     if (!taskId || typeof getTaskById !== "function") {
       return fallback("task_objective_unavailable", standingAdvisory);
@@ -338,6 +348,9 @@ export function createAiWorkspaceSingleStep({
         });
         if (!taskObjectiveBinding.ok) {
           throw new Error(taskObjectiveBinding.reason);
+        }
+        if (!expectedTaskEvidenceMatches(expectedTaskBinding, taskObjectiveBinding)) {
+          throw new Error("ai_workspace_task_objective_changed");
         }
         decisionContext.taskObjectiveBinding = taskObjectiveBinding;
         decisionContext.provider.taskObjective = taskObjectiveBinding.providerProjection;
@@ -720,5 +733,9 @@ export function createAiWorkspaceSingleStep({
     };
   }
 
-  return { invoke, observeContext };
+  return {
+    invoke,
+    observeContext,
+    localFallback: (reason) => fallback(reason, standingAdvisory),
+  };
 }

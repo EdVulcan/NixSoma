@@ -20,6 +20,7 @@ test("Observer exposes bounded fixed workbench lifecycle state and controls", ()
     'id="scroll-ai-surface-up-button"',
     'id="scroll-ai-surface-down-button"',
     'id="run-ai-workspace-single-step-button"',
+    'id="run-ai-workspace-bounded-run-button"',
   ]) {
     assert.equal(panel.includes(token), true, `AI work-view panel is missing ${token}`);
   }
@@ -47,6 +48,7 @@ test("Observer exposes bounded fixed workbench lifecycle state and controls", ()
   assert.equal(script.includes('result.governance?.currentActiveSurfaceBound !== true'), true);
   assert.equal(script.includes('params: { ...binding, direction }'), true);
   assert.equal(script.includes('capabilityId: "act.ai.workspace.single_step"'), true);
+  assert.equal(script.includes('capabilityId: "act.ai.workspace.bounded_run"'), true);
   assert.equal(script.includes("taskId,"), true);
   assert.equal(script.includes('params: { confirm: true }'), true);
   assert.equal(script.includes("currentAiWorkspaceTaskId()"), true);
@@ -57,6 +59,9 @@ test("Observer exposes bounded fixed workbench lifecycle state and controls", ()
   assert.equal(script.includes("governance.providerGeneratedInput !== true"), true);
   assert.equal(script.includes("governance.inputTextPersisted !== false"), true);
   assert.equal(script.includes('result.action?.itemOrdinal'), true);
+  assert.equal(script.includes("governance.continuationAfterVerifiedScrollOnly !== true"), true);
+  assert.equal(script.includes("governance.terminalAfterSecondStep !== true"), true);
+  assert.equal(script.includes('steps[0].actionId'), true);
 });
 
 test("production Observer client assembles workbench controls through Core only", () => {

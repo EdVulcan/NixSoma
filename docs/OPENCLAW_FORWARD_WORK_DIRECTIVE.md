@@ -2304,6 +2304,37 @@ and candidate
 pass. Activation and one final physical typed-input proof remain; do not claim
 the thirteenth slice physically complete before that gate.
 
+## Level 4 Verified-Scroll-Only Bounded Run Candidate
+
+The fourteenth vertical slice adds the first deliberately finite autonomous
+continuation. `act.ai.workspace.bounded_run` accepts the same fixed task id and
+`confirm=true` shape as the single-step owner; callers cannot choose actions,
+prompts, values, step counts, or budgets. A shared coordinator serializes both
+capabilities and invokes the existing single-step primitive rather than copying
+provider, scene, task, grant, or actuator logic.
+
+Step 2 is authorized only when step 1 is `scroll_up` or `scroll_down`, status is
+exactly `executed`, the current frame and active surface were bound, the Weston
+receipt matched, completion audit succeeded, and post-frame sequence advanced.
+Before the second provider call, Core durably records a compact continuation
+audit and passes the first task id, objective hash, and task-version hash as a
+mandatory expected binding. No-op, semantic click, semantic type, fallback,
+unverified scroll, missing audit, or any second result terminates. There is no
+third call, action retry, or repeat. An unknown thrown outcome is reported with
+null exact provider/action counts plus known lower bounds.
+
+Observer exposes one `AI Run` command and independently enforces this contract;
+manual scroll and both AI controls remain disabled while either run is active.
+The registered `dev-ai-bounded-run-live-check.sh` physical gate verifies the
+task/work-view binding, per-step provider and completion events, continuation
+and run-completion audit, Screen Act no-plaintext state, and all nine health
+endpoints. All 1046 workspace tests, full typecheck, 236-file Core closure
+`rsszhq...`, 80-file Observer closure `2nb3f44...`, 812-entry registry,
+998-script audit, Windows path budget, body-config gate, and combined candidate
+`/nix/store/gbcvd8yd44231ppf72zgjhzpcrlmv6fn-nixos-system-nixos-26.05.4808.569d57850992`
+pass. The candidate also includes the pending semantic-type route correction;
+deployment and both physical gates remain pending.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

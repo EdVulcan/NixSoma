@@ -316,6 +316,21 @@ grant、capture、input 与 post-frame 回归。完整 1033 项 workspace tests�
 candidate `/nix/store/wbv72j63949amrpj7b10q85yv6fx9wjn-nixos-system-nixos-26.05.4808.569d57850992`
 均通过；switch 与最终物理输入验收仍待完成。
 
+第十四个切片把既有单步提升为严格有界的两步任务运行，而不是增加新的输入动作。
+Core 的共享 coordinator 同时串行化 single-step 与 bounded-run。只有首步为已执行的
+scroll，且 current frame/active surface、Weston receipt、completion audit 与推进后的
+post-frame 全部匹配，才在 required continuation audit 后重新观察并调用第二次 provider。
+首步 task id、objective hash 与 task-version hash 会成为第二次 provider 前的硬约束。
+click、type、no-op、fallback、证据不足和任何第二步结果都会终止；没有第三次调用、
+自动重试或无限循环。未知结果使用 null 精确计数与已知下限，避免伪造完成事实。
+
+Observer 已加入 `AI Run`，运行期间禁止手动滚动与并发 AI step。物理 gate 已注册，
+但尚未在新 generation 执行。完整 1046 项测试、typecheck、236-file Core closure
+`rsszhq...`、80-file Observer closure `2nb3f44...`、812-entry registry、998-script audit、
+Windows path budget、body-config 与包含 semantic-type 修复的 combined candidate
+`/nix/store/gbcvd8yd44231ppf72zgjhzpcrlmv6fn-nixos-system-nixos-26.05.4808.569d57850992`
+均通过。
+
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
 画面投影、应用生命周期、surface 激活、垂直滚动、AI 单步、semantic scene
@@ -429,10 +444,10 @@ host mutation 仍未包含。这证明 AI 已拥有独立图形空间的最小�
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 60% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。真实 repair/rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 61%（第十三个切片已部署，route 修复候选已构建） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision 与真实 semantic click 均已部署。`wbr2mdkw...` 已加入只保留 write-only evidence 的单次 semantic type，修正候选为 `wbv72j...`。像素/OCR、多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
+| Level 4 图形栈内生组件 | 约 63%（第十三个 route 修复与第十四个 bounded-run 候选已构建） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision 与真实 semantic click 均已部署。Combined candidate `gbcvd8...` 包含 write-only semantic type 修复和只在已验证滚动后继续一次的 bounded run。像素/OCR、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
-**49-57%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted
+**50-58%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted
 sidecar store 运行路径；Phase B 已完成原生只读 D-Bus inventory、三个由精确
 Polkit 和独立 hostd 所有的固定 native restart，以及 bounded journal
 diagnosis；Phase C 已完成首个只读 `sched_process_exec` eBPF 探针切片；Phase D

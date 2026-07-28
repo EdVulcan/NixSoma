@@ -208,7 +208,17 @@ test("plan builder assembles AI workspace single-step with the shared provider a
           registry: "nixsoma-ai-workspace-single-step-v0",
           status: "no_op",
           decision: { actionId: "no_op", reason: "transient", confidence: 1 },
-          evidence: { actionExecuted: false },
+          evidence: {
+            taskId: "task-reviewed-1",
+            objectiveContentHash: "a".repeat(64),
+            taskVersionHash: "b".repeat(64),
+            contextContentHash: "c".repeat(64),
+            requestContentHash: "d".repeat(64),
+            responseContentHash: "e".repeat(64),
+            sceneContentHash: "f".repeat(64),
+            sceneItemCount: 1,
+            actionExecuted: false,
+          },
           governance: {
             providerCalled: true,
             actionExecuted: false,
@@ -238,4 +248,14 @@ test("plan builder assembles AI workspace single-step with the shared provider a
   assert.equal(result.statusCode, 200);
   assert.equal(result.response.invocation.summary.kind, "ai.workspace.single_step");
   assert.equal(result.response.invocation.summary.actionId, "no_op");
+
+  const bounded = await planBuilder.invokeCapability({
+    capabilityId: "act.ai.workspace.bounded_run",
+    taskId: "task-reviewed-1",
+    params: { confirm: true },
+  });
+  assert.equal(bounded.statusCode, 200);
+  assert.equal(bounded.response.invocation.summary.kind, "ai.workspace.bounded_run");
+  assert.equal(bounded.response.invocation.summary.stepCount, 1);
+  assert.equal(bounded.response.invocation.summary.steps[0].actionId, "no_op");
 });

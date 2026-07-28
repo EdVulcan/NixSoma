@@ -1,27 +1,10 @@
+import { aiWorkspaceTaskRequestIsBounded } from "./ai-workspace-capability-request.mjs";
+
 export const AI_WORKSPACE_SINGLE_STEP_CAPABILITY_ID =
   "act.ai.workspace.single_step";
 
-const ALLOWED_BODY_KEYS = new Set(["capabilityId", "taskId", "params"]);
-const ALLOWED_PARAM_KEYS = new Set(["confirm"]);
-const MAX_TASK_ID_CHARS = 200;
-
 function isCapability(capability) {
   return capability?.id === AI_WORKSPACE_SINGLE_STEP_CAPABILITY_ID;
-}
-
-function requestIsBounded(request, rawBody) {
-  const taskId = typeof request?.taskId === "string" ? request.taskId.trim() : "";
-  if (request?.params?.confirm !== true
-    || !taskId
-    || taskId.length > MAX_TASK_ID_CHARS
-    || request.stepId !== null
-    || request.operation !== null
-    || request.intent !== null
-    || Object.keys(request.params ?? {}).some((key) => !ALLOWED_PARAM_KEYS.has(key))) {
-    return false;
-  }
-  return rawBody && typeof rawBody === "object" && !Array.isArray(rawBody)
-    && Object.keys(rawBody).every((key) => ALLOWED_BODY_KEYS.has(key));
 }
 
 function compactInputEvidence(evidence) {
@@ -48,7 +31,7 @@ function compactInputEvidence(evidence) {
 export function createAiWorkspaceSingleStepCapabilityHandlers({ runtime } = {}) {
   function authorizeRequest(capability, request, rawBody) {
     if (!isCapability(capability)) return { handled: false, authorization: null };
-    const approved = requestIsBounded(request, rawBody);
+    const approved = aiWorkspaceTaskRequestIsBounded(request, rawBody);
     return {
       handled: true,
       authorization: {
@@ -69,7 +52,7 @@ export function createAiWorkspaceSingleStepCapabilityHandlers({ runtime } = {}) 
 
   function validateRequest(capability, request, rawBody) {
     if (!isCapability(capability)) return null;
-    if (!requestIsBounded(request, rawBody)) {
+    if (!aiWorkspaceTaskRequestIsBounded(request, rawBody)) {
       return "AI workspace single-step accepts only capabilityId, one taskId, and params.confirm=true.";
     }
     if (!runtime || typeof runtime.invoke !== "function") {

@@ -310,6 +310,19 @@ all 1033 tests, typecheck, exact store closures, body-config gate, and corrected
 candidate `wbv72j...` pass. Activation and final physical typed-input proof are
 still pending.
 
+The next vertical capability is now source- and closure-complete as a bounded
+run, not another action variant. `act.ai.workspace.bounded_run` reuses the
+single-step primitive at most twice and continues only after a first verified
+scroll with receipt, completion audit, and newer post-frame. The original task
+id/objective/version binding is required before the second provider call.
+Click, type, no-op, fallback, missing evidence, and every second-step outcome
+terminate; there is no third call or automatic retry. Observer exposes `AI Run`
+and a registered live gate checks per-step plus run-level audit without input
+text. All 1046 tests, typecheck, exact 236-file Core and 80-file Observer
+closures, 812-entry registry, 998-script audit, path budget, body-config gate,
+and combined candidate `gbcvd8...` pass. It also contains the pending semantic
+type correction; switch and physical proof remain pending.
+
 ## Completed Capability Evidence
 
 The following plan families are retained because they describe implemented

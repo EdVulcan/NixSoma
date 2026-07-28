@@ -3,6 +3,7 @@ let aiWorkspaceProjectionMode = "browser";
 let aiWorkspaceProjectionRequest = null;
 let aiWorkspaceProjectionBinding = null;
 let aiWorkspaceSingleStepInFlight = false;
+let aiWorkspaceBoundedRunInFlight = false;
 
 function currentAiWorkspaceTask() {
   if (taskHistoryFocus === "selected-task") {
@@ -55,9 +56,11 @@ function currentAiSurfaceScrollBinding() {
 function updateAiSurfaceScrollControls() {
   const enabled = currentAiSurfaceScrollBinding() !== null;
   const taskId = currentAiWorkspaceTaskId();
-  scrollAiSurfaceUpButton.disabled = !enabled;
-  scrollAiSurfaceDownButton.disabled = !enabled;
-  runAiWorkspaceSingleStepButton.disabled = !enabled || !taskId || aiWorkspaceSingleStepInFlight;
+  const aiRunInFlight = aiWorkspaceSingleStepInFlight || aiWorkspaceBoundedRunInFlight;
+  scrollAiSurfaceUpButton.disabled = !enabled || aiRunInFlight;
+  scrollAiSurfaceDownButton.disabled = !enabled || aiRunInFlight;
+  runAiWorkspaceSingleStepButton.disabled = !enabled || !taskId || aiRunInFlight;
+  runAiWorkspaceBoundedRunButton.disabled = !enabled || !taskId || aiRunInFlight;
 }
 
 function clearAiWorkspaceProjection(reason = "unavailable") {
@@ -300,6 +303,115 @@ async function runAiWorkspaceSingleStep() {
 
 runAiWorkspaceSingleStepButton.addEventListener("click", () => {
   runAiWorkspaceSingleStep().catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
+async function runAiWorkspaceBoundedRun() {
+  if (aiWorkspaceSingleStepInFlight || aiWorkspaceBoundedRunInFlight) return;
+  aiWorkspaceBoundedRunInFlight = true;
+  updateAiSurfaceScrollControls();
+  try {
+    await refreshAiWorkspaceProjection();
+    await refreshWorkView();
+    await refreshRuntime();
+    if (!currentAiSurfaceScrollBinding()) {
+      throw new Error("A fresh active AI workspace projection is required.");
+    }
+    const taskId = currentAiWorkspaceTaskId();
+    if (!taskId) {
+      throw new Error("A current operator-reviewed task is required.");
+    }
+    const response = await fetchJson(observerConfig.coreUrl + "/capabilities/invoke", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        capabilityId: "act.ai.workspace.bounded_run",
+        taskId,
+        params: { confirm: true },
+      }),
+    });
+    const result = response.result ?? {};
+    const governance = result.governance ?? {};
+    const evidence = result.evidence ?? {};
+    const steps = Array.isArray(result.steps) ? result.steps : [];
+    const allowedStatuses = new Set([
+      "completed",
+      "stopped_after_first",
+      "stopped_after_second_fallback",
+      "first_step_outcome_unknown",
+      "second_step_outcome_unknown",
+      "runtime_unavailable",
+      "local_fallback",
+    ]);
+    const allowedActions = new Set([
+      "no_op", "scroll_up", "scroll_down", "click_item", "type_item",
+    ]);
+    const validStep = (step, index) => step?.index === index + 1
+      && typeof step.status === "string"
+      && allowedActions.has(step.actionId)
+      && typeof step.providerCalled === "boolean"
+      && typeof step.actionExecuted === "boolean"
+      && (!step.inputEvidence || (step.actionId === "type_item"
+        && Number.isInteger(step.inputEvidence.charCount)
+        && step.inputEvidence.charCount > 0
+        && step.inputEvidence.textExposed === false
+        && step.inputEvidence.persisted === false));
+    if (response.invoked !== true
+      || result.registry !== "nixsoma-ai-workspace-bounded-run-v0"
+      || !allowedStatuses.has(result.status)
+      || steps.length > 2
+      || !steps.every(validStep)
+      || evidence.stepCount !== steps.length
+      || !Number.isInteger(evidence.providerCallCountMinimum)
+      || evidence.providerCallCountMinimum < 0
+      || evidence.providerCallCountMinimum > 2
+      || !Number.isInteger(evidence.actionCountMinimum)
+      || evidence.actionCountMinimum < 0
+      || evidence.actionCountMinimum > 2
+      || (evidence.outcomeUnknown === true
+        ? evidence.providerCallCount !== null || evidence.actionCount !== null
+        : (!Number.isInteger(evidence.providerCallCount)
+          || evidence.providerCallCount < 0
+          || evidence.providerCallCount > 2
+          || !Number.isInteger(evidence.actionCount)
+          || evidence.actionCount < 0
+          || evidence.actionCount > 2))
+      || governance.maximumProviderCalls !== 2
+      || governance.maximumActions !== 2
+      || governance.providerCallCount !== evidence.providerCallCount
+      || governance.actionCount !== evidence.actionCount
+      || governance.continuationAfterVerifiedScrollOnly !== true
+      || governance.terminalAfterSecondStep !== true
+      || governance.automaticRepeat !== false
+      || governance.inputTextPersisted !== false
+      || governance.mutatesHost !== false
+      || JSON.stringify(result).includes('"inputText"')) {
+      throw new Error("AI workspace bounded-run result was invalid.");
+    }
+    if (steps.length === 2
+      && (!new Set(["scroll_up", "scroll_down"]).has(steps[0].actionId)
+        || steps[0].actionExecuted !== true
+        || evidence.continuationAudit !== true
+        || governance.continuedAfterVerifiedScroll !== true)) {
+      throw new Error("AI workspace bounded-run continuation was invalid.");
+    }
+    if (steps.length < 2 && governance.continuedAfterVerifiedScroll === true) {
+      throw new Error("AI workspace bounded-run continuation evidence diverged.");
+    }
+    const actionSummary = steps.map((step) => step.actionId).join(" -> ") || "no action";
+    setControlMessage("AI run: " + actionSummary + " (" + result.status + ").");
+    await refreshActionState();
+    await refreshWorkView();
+    await refreshAiWorkspaceProjection();
+  } finally {
+    aiWorkspaceBoundedRunInFlight = false;
+    updateAiSurfaceScrollControls();
+  }
+}
+
+runAiWorkspaceBoundedRunButton.addEventListener("click", () => {
+  runAiWorkspaceBoundedRun().catch((error) => {
     setControlMessage("Request failed: " + formatError(error));
   });
 });
