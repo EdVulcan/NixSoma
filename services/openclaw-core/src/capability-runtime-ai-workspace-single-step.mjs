@@ -24,6 +24,27 @@ function requestIsBounded(request, rawBody) {
     && Object.keys(rawBody).every((key) => ALLOWED_BODY_KEYS.has(key));
 }
 
+function compactInputEvidence(evidence) {
+  if (evidence?.registry !== "openclaw-write-only-input-evidence-v0"
+    || !Number.isInteger(evidence.charCount)
+    || evidence.charCount < 1
+    || !Number.isInteger(evidence.byteLength)
+    || evidence.byteLength < 1
+    || evidence.textExposed !== false
+    || evidence.persisted !== false) {
+    return null;
+  }
+  return {
+    registry: evidence.registry,
+    charCount: evidence.charCount,
+    byteLength: evidence.byteLength,
+    maxChars: Number.isInteger(evidence.maxChars) ? evidence.maxChars : null,
+    truncated: evidence.truncated === true,
+    textExposed: false,
+    persisted: false,
+  };
+}
+
 export function createAiWorkspaceSingleStepCapabilityHandlers({ runtime } = {}) {
   function authorizeRequest(capability, request, rawBody) {
     if (!isCapability(capability)) return { handled: false, authorization: null };
@@ -70,6 +91,7 @@ export function createAiWorkspaceSingleStepCapabilityHandlers({ runtime } = {}) 
       status: result?.status ?? null,
       actionId: result?.decision?.actionId ?? result?.fallback?.actionId ?? null,
       itemOrdinal: result?.decision?.itemOrdinal ?? null,
+      inputEvidence: compactInputEvidence(result?.evidence?.inputEvidence),
       contextContentHash: result?.evidence?.contextContentHash ?? null,
       requestContentHash: result?.evidence?.requestContentHash ?? null,
       responseContentHash: result?.evidence?.responseContentHash ?? null,
@@ -96,7 +118,9 @@ export function createAiWorkspaceSingleStepCapabilityHandlers({ runtime } = {}) 
       automaticRepeat: false,
       createsTask: false,
       createsApproval: false,
-      keyboardInput: false,
+      providerGeneratedInput: result?.governance?.providerGeneratedInput === true,
+      inputTextPersisted: result?.governance?.inputTextPersisted === true,
+      keyboardInput: result?.governance?.keyboardInput === true,
       mutatesHost: false,
     };
   }

@@ -188,7 +188,8 @@ function unresolvedSceneItem(reason, scene = null) {
   };
 }
 
-export function resolveWorkViewSemanticSceneClick({
+export function resolveWorkViewSemanticSceneAction({
+  operation,
   browser,
   capture,
   expectedSceneContentSha256,
@@ -197,6 +198,9 @@ export function resolveWorkViewSemanticSceneClick({
   itemOrdinal,
   now = Date.now(),
 } = {}) {
+  if (!["click", "type"].includes(operation)) {
+    return unresolvedSceneItem("semantic_scene_operation_invalid");
+  }
   const scene = buildWorkViewSemanticScene({ browser, capture, now });
   if (scene.available !== true) return unresolvedSceneItem(scene.reason, scene);
   if (scene.browserPid !== expectedBrowserPid) {
@@ -217,10 +221,13 @@ export function resolveWorkViewSemanticSceneClick({
   const selected = projectSceneEntries(targets)[itemOrdinal - 1];
   if (!selected) return unresolvedSceneItem("semantic_scene_item_unavailable", scene);
   if (selected.item.disabled) return unresolvedSceneItem("semantic_scene_item_disabled", scene);
+  if (operation === "type" && selected.item.role !== "textbox") {
+    return unresolvedSceneItem("semantic_scene_item_not_textbox", scene);
+  }
 
   const semanticTarget = normaliseWorkViewSemanticTargetReference({
     registry: WORK_VIEW_SEMANTIC_TARGET_REFERENCE_REGISTRY,
-    operation: "click",
+    operation,
     targetId: selected.target.targetId,
     inventorySha256: targets.inventorySha256,
     frame: {
@@ -237,7 +244,7 @@ export function resolveWorkViewSemanticSceneClick({
     itemOrdinal,
     semanticTarget,
     evidence: {
-      registry: "nixsoma-ai-browser-semantic-scene-click-resolution-v0",
+      registry: `nixsoma-ai-browser-semantic-scene-${operation}-resolution-v0`,
       sceneContentSha256: scene.sceneContentSha256,
       itemOrdinal,
       itemCount: scene.itemCount,
@@ -247,6 +254,14 @@ export function resolveWorkViewSemanticSceneClick({
       disabled: false,
     },
   };
+}
+
+export function resolveWorkViewSemanticSceneClick(options = {}) {
+  return resolveWorkViewSemanticSceneAction({ ...options, operation: "click" });
+}
+
+export function resolveWorkViewSemanticSceneType(options = {}) {
+  return resolveWorkViewSemanticSceneAction({ ...options, operation: "type" });
 }
 
 export function normaliseWorkViewSemanticScene(scene, { now = Date.now() } = {}) {

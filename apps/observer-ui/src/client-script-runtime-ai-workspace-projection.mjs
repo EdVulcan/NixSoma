@@ -251,13 +251,14 @@ async function runAiWorkspaceSingleStep() {
     const result = response.result ?? {};
     const governance = result.governance ?? {};
     const actionId = result.decision?.actionId ?? result.fallback?.actionId ?? "no_op";
+    const semanticType = actionId === "type_item";
     const providerDecisionReturned = result.status !== "local_fallback";
     if (response.invoked !== true
       || result.registry !== "nixsoma-ai-workspace-single-step-v0"
       || governance.maximumActions !== 1
       || governance.automaticRepeat !== false
       || governance.rawTaskGoalProviderEgress !== false
-      || governance.keyboardInput !== false
+      || governance.keyboardInput !== semanticType
       || governance.mutatesHost !== false
       || (providerDecisionReturned && (governance.taskObjectiveBound !== true
         || governance.taskObjectiveProviderEgress !== true
@@ -268,13 +269,23 @@ async function runAiWorkspaceSingleStep() {
         || result.status?.startsWith("executed"))) {
       throw new Error("AI workspace single-step result was invalid.");
     }
+    if (JSON.stringify(result).includes('"inputText"')
+      || (semanticType && (result.action?.inputEvidence?.textExposed !== false
+        || result.action?.inputEvidence?.persisted !== false
+        || !Number.isInteger(result.action?.inputEvidence?.charCount)
+        || result.action.inputEvidence.charCount < 1
+        || governance.providerGeneratedInput !== true
+        || governance.inputTextPersisted !== false))) {
+      throw new Error("AI workspace semantic input evidence was invalid.");
+    }
     if (result.status.startsWith("executed")
       && (governance.actionExecuted !== true
         || governance.currentFrameBound !== true
         || governance.currentActiveSurfaceBound !== true)) {
       throw new Error("AI workspace single-step execution evidence was incomplete.");
     }
-    const itemSuffix = actionId === "click_item" && Number.isInteger(result.action?.itemOrdinal)
+    const itemSuffix = ["click_item", "type_item"].includes(actionId)
+      && Number.isInteger(result.action?.itemOrdinal)
       ? " #" + result.action.itemOrdinal
       : "";
     setControlMessage("AI step: " + actionId + itemSuffix + " (" + result.status + ").");

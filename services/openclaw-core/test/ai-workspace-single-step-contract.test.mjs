@@ -10,9 +10,9 @@ import {
 test("AI workspace single-step instruction exposes only the fixed action set", () => {
   const instruction = buildAiWorkspaceSingleStepInstruction();
 
-  assert.match(instruction, /no_op, scroll_up, scroll_down, or click_item/u);
+  assert.match(instruction, /no_op, scroll_up, scroll_down, click_item, or type_item/u);
   assert.match(instruction, /1-based ordered semantic scene item number/u);
-  assert.equal(instruction.includes("keyboard.type"), false);
+  assert.match(instruction, /select type_item only for a textbox/u);
   assert.equal(instruction.includes("mouse.click"), false);
   assert.match(instruction, /semantic scene/u);
   assert.match(instruction, /role, name, disabled, and bounds/u);
@@ -26,6 +26,7 @@ test("AI workspace single-step parser accepts one bounded decision", () => {
     assistantContent: JSON.stringify({
       actionId: "scroll_down",
       itemOrdinal: null,
+      inputText: null,
       reason: "One current active surface is ready.",
       confidence: 0.9,
     }),
@@ -46,6 +47,7 @@ test("AI workspace single-step parser accepts one bounded scene item ordinal", (
     assistantContent: JSON.stringify({
       actionId: "click_item",
       itemOrdinal: 2,
+      inputText: null,
       reason: "The visible enabled button advances the current task.",
       confidence: 0.8,
     }),
@@ -57,13 +59,37 @@ test("AI workspace single-step parser accepts one bounded scene item ordinal", (
   assert.equal(result.decision.maximumActions, 1);
 });
 
+test("AI workspace single-step parser accepts one write-only semantic type decision", () => {
+  const result = parseAiWorkspaceSingleStepDecision({
+    contract: AI_WORKSPACE_SINGLE_STEP_RESPONSE_CONTRACT,
+    assistantContent: JSON.stringify({
+      actionId: "type_item",
+      itemOrdinal: 1,
+      inputText: "NixSoma",
+      reason: "The current task asks for this value in the visible textbox.",
+      confidence: 0.9,
+    }),
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.decision.actionId, "type_item");
+  assert.equal(result.decision.itemOrdinal, 1);
+  assert.equal(result.decision.inputText, "NixSoma");
+  assert.equal(result.evidence.inputEvidence.charCount, 7);
+  assert.equal(result.evidence.inputEvidence.textExposed, false);
+  assert.equal(JSON.stringify(result.evidence).includes("NixSoma"), false);
+});
+
 test("AI workspace single-step parser rejects widened or malformed decisions", () => {
   for (const assistantContent of [
-    JSON.stringify({ actionId: "keyboard_type", itemOrdinal: null, reason: "x", confidence: 1 }),
-    JSON.stringify({ actionId: "scroll_up", itemOrdinal: null, reason: "x", confidence: 1, count: 2 }),
-    JSON.stringify({ actionId: "scroll_up", itemOrdinal: 1, reason: "x", confidence: 1 }),
-    JSON.stringify({ actionId: "click_item", itemOrdinal: 13, reason: "x", confidence: 1 }),
-    JSON.stringify({ actionId: "scroll_up", itemOrdinal: null, reason: "", confidence: 1 }),
+    JSON.stringify({ actionId: "keyboard_type", itemOrdinal: null, inputText: null, reason: "x", confidence: 1 }),
+    JSON.stringify({ actionId: "scroll_up", itemOrdinal: null, inputText: null, reason: "x", confidence: 1, count: 2 }),
+    JSON.stringify({ actionId: "scroll_up", itemOrdinal: 1, inputText: null, reason: "x", confidence: 1 }),
+    JSON.stringify({ actionId: "click_item", itemOrdinal: 13, inputText: null, reason: "x", confidence: 1 }),
+    JSON.stringify({ actionId: "scroll_up", itemOrdinal: null, inputText: "unexpected", reason: "x", confidence: 1 }),
+    JSON.stringify({ actionId: "type_item", itemOrdinal: 1, inputText: "line one\nline two", reason: "x", confidence: 1 }),
+    JSON.stringify({ actionId: "type_item", itemOrdinal: 1, inputText: "", reason: "x", confidence: 1 }),
+    JSON.stringify({ actionId: "scroll_up", itemOrdinal: null, inputText: null, reason: "", confidence: 1 }),
     "not-json",
   ]) {
     const result = parseAiWorkspaceSingleStepDecision({

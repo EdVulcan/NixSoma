@@ -52,7 +52,10 @@ test("Observer exposes bounded fixed workbench lifecycle state and controls", ()
   assert.equal(script.includes("currentAiWorkspaceTaskId()"), true);
   assert.equal(script.includes('binding.mode === "operator_reviewed"'), true);
   assert.equal(script.includes("governance.taskObjectiveBound !== true"), true);
-  assert.equal(script.includes('actionId === "click_item"'), true);
+  assert.equal(script.includes('["click_item", "type_item"].includes(actionId)'), true);
+  assert.equal(script.includes('JSON.stringify(result).includes(\'"inputText"\')'), true);
+  assert.equal(script.includes("governance.providerGeneratedInput !== true"), true);
+  assert.equal(script.includes("governance.inputTextPersisted !== false"), true);
   assert.equal(script.includes('result.action?.itemOrdinal'), true);
 });
 

@@ -11,6 +11,13 @@ SYSTEM_HEAL_URL="${OPENCLAW_SYSTEM_HEAL_URL:-http://127.0.0.1:4107}"
 BROWSER_RUNTIME_URL="${OPENCLAW_BROWSER_RUNTIME_URL:-http://127.0.0.1:4103}"
 OBSERVER_URL="${OPENCLAW_OBSERVER_URL:-http://127.0.0.1:4170}"
 export OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_OPERATOR_TOKEN_FILE:-${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/nixsoma/operator-token}"
+TASK_GOAL="${NIXSOMA_AI_SCENE_TASK_GOAL:-Open the Learn more item to review the displayed product}"
+EXPECTED_ACTION="${NIXSOMA_AI_SCENE_EXPECTED_ACTION:-}"
+
+if [[ -n "$EXPECTED_ACTION" && ! "$EXPECTED_ACTION" =~ ^(no_op|scroll_up|scroll_down|click_item|type_item)$ ]]; then
+  printf 'Unsupported NIXSOMA_AI_SCENE_EXPECTED_ACTION: %s\n' "$EXPECTED_ACTION" >&2
+  exit 64
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
@@ -25,7 +32,7 @@ tmp_dir="$(mktemp -d)"
 cleanup() {
   local status="$?"
   if (( status != 0 )); then
-    for diagnostic in authority-control.json activated.json task.json task-bind.json single-step.json; do
+    for diagnostic in authority-control.json activated.json anonymous-type.json task.json task-bind.json single-step.json; do
       if [[ -s "$tmp_dir/$diagnostic" ]]; then
         printf 'AI browser scene live gate failed response (%s):\n' "$diagnostic" >&2
         sed -n '1,120p' "$tmp_dir/$diagnostic" >&2
@@ -142,9 +149,41 @@ for _ in $(seq 1 120); do
   sleep 0.1
 done
 
+if [[ "$EXPECTED_ACTION" == "type_item" ]]; then
+  stage "checking anonymous semantic type rejection"
+  anonymous_type_payload="$(node -e '
+    const fs = require("node:fs");
+    const scene = JSON.parse(fs.readFileSync(process.argv[1], "utf8")).scene ?? {};
+    process.stdout.write(JSON.stringify({
+      sceneContentSha256: scene.sceneContentSha256,
+      itemOrdinal: 1,
+      browserPid: scene.browserPid,
+      semanticFrame: {
+        sha256: scene.frame?.sha256,
+        sequence: scene.frame?.sequence,
+      },
+      text: "anonymous-direct-type-probe",
+    }));
+  ' "$tmp_dir/before-scene.json")"
+  curl --silent -X POST "$SCREEN_ACT_URL/act/keyboard/semantic-type" \
+    -H 'content-type: application/json' \
+    --data "$anonymous_type_payload" > "$tmp_dir/anonymous-type.json"
+  node -e '
+    const fs = require("node:fs");
+    const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+    if (data.code !== "EXECUTION_GRANT_REQUIRED") process.exit(1);
+  ' "$tmp_dir/anonymous-type.json"
+fi
+
 stage "creating one reviewed task objective bound to the current work view"
-post_json "$CORE_URL/tasks" \
-  '{"goal":"Open the Learn more item to review the displayed product","type":"browser_task","workViewStrategy":"ai-work-view"}' \
+task_payload="$(node -e '
+  process.stdout.write(JSON.stringify({
+    goal: process.argv[1],
+    type: "browser_task",
+    workViewStrategy: "ai-work-view",
+  }));
+' "$TASK_GOAL")"
+post_json "$CORE_URL/tasks" "$task_payload" \
   > "$tmp_dir/task.json"
 task_id="$(node -e '
   const fs = require("node:fs");
@@ -191,13 +230,15 @@ for url in "$CORE_URL" "$EVENT_HUB_URL" "$SESSION_MANAGER_URL" "$BROWSER_RUNTIME
 done
 
 stage "verifying scene binding, bounded egress, action limit, and durable audit"
-node - "$tmp_dir" "$browser_surface_id" "$task_id" <<'NODE'
+node - "$tmp_dir" "$browser_surface_id" "$task_id" "$TASK_GOAL" "$EXPECTED_ACTION" <<'NODE'
 const fs = require("node:fs");
 const path = require("node:path");
 
 const directory = process.argv[2];
 const browserSurfaceId = Number(process.argv[3]);
 const taskId = process.argv[4];
+const taskGoal = process.argv[5];
+const expectedAction = process.argv[6];
 const read = (name) => JSON.parse(fs.readFileSync(path.join(directory, name), "utf8"));
 const response = read("single-step.json");
 const beforeState = read("before-state.json");
@@ -208,6 +249,7 @@ const result = response.result ?? {};
 const governance = result.governance ?? {};
 const evidence = result.evidence ?? {};
 const actionId = result.decision?.actionId ?? null;
+const semanticType = actionId === "type_item";
 const hash = (value) => typeof value === "string" && /^[a-f0-9]{64}$/u.test(value);
 const beforeInput = beforeState.workView?.aiGraphicalSession?.compositorInput ?? {};
 const afterInput = afterState.workView?.aiGraphicalSession?.compositorInput ?? {};
@@ -233,7 +275,8 @@ const sceneNames = beforeScene.items?.map((item) => item.name).filter(Boolean) ?
 
 if (response.invoked !== true
   || result.registry !== "nixsoma-ai-workspace-single-step-v0"
-  || !["no_op", "scroll_up", "scroll_down", "click_item"].includes(actionId)
+  || !["no_op", "scroll_up", "scroll_down", "click_item", "type_item"].includes(actionId)
+  || (expectedAction && actionId !== expectedAction)
   || !(result.status === "no_op" || result.status?.startsWith("executed"))
   || governance.providerCalled !== true
   || governance.networkEgress !== true
@@ -248,7 +291,7 @@ if (response.invoked !== true
   || governance.inputValuesProviderEgress !== false
   || governance.maximumActions !== 1
   || governance.automaticRepeat !== false
-  || governance.keyboardInput !== false
+  || governance.keyboardInput !== semanticType
   || governance.processLaunch !== false
   || governance.parentDisplayConnected !== false
   || governance.mutatesHost !== false
@@ -273,8 +316,9 @@ if (response.invoked !== true
   || durableJson.includes("browserPid")
   || durableJson.includes("targetId")
   || durableJson.includes("selector")
-  || durableJson.includes("Open the Learn more item to review the displayed product")
+  || durableJson.includes(taskGoal)
   || sceneNames.some((name) => durableJson.includes(name))
+  || JSON.stringify(result).includes('"inputText"')
   || JSON.stringify(response).includes("data:image")) {
   throw new Error(`live semantic grounding evidence is incomplete: ${JSON.stringify({
     invoked: response.invoked,
@@ -311,6 +355,29 @@ if (actionId === "no_op") {
     || afterInput.requestId !== beforeInput.requestId) {
     throw new Error("scene-grounded semantic click evidence is incomplete");
   }
+} else if (actionId === "type_item") {
+  if (!result.status.startsWith("executed")
+    || governance.actionExecuted !== true
+    || governance.currentFrameBound !== true
+    || governance.currentActiveSurfaceBound !== true
+    || governance.semanticItemOrdinalBound !== true
+    || governance.providerGeneratedInput !== true
+    || governance.inputTextPersisted !== false
+    || !Number.isInteger(result.action?.itemOrdinal)
+    || result.action.itemOrdinal < 1
+    || result.action.itemOrdinal > beforeScene.itemCount
+    || result.action?.executed !== true
+    || result.action?.inputEvidence?.textExposed !== false
+    || result.action?.inputEvidence?.persisted !== false
+    || !Number.isInteger(result.action?.inputEvidence?.charCount)
+    || result.action.inputEvidence.charCount < 1
+    || evidence.itemOrdinal !== result.action.itemOrdinal
+    || evidence.inputEvidence?.charCount !== result.action.inputEvidence.charCount
+    || evidence.postActionVerified !== true
+    || evidence.postFrameSequenceAdvanced !== true
+    || afterInput.requestId !== beforeInput.requestId) {
+    throw new Error("scene-grounded semantic type evidence is incomplete");
+  }
 } else if (!result.status.startsWith("executed")
   || governance.actionExecuted !== true
   || governance.currentFrameBound !== true
@@ -346,7 +413,7 @@ console.log(JSON.stringify({
   durableCompletionAudit: true,
   maximumActions: 1,
   automaticRepeat: false,
-  keyboardInput: false,
+  keyboardInput: semanticType,
   parentDisplayConnected: false,
   rootRequired: false,
 }, null, 2));

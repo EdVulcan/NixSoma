@@ -917,6 +917,7 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-single-step.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-task-objective.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-semantic-click.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-semantic-type.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-single-step.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-plugin-refresh.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-plan-todo.mjs"
@@ -955,7 +956,7 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-frame.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 232 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 233 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -1402,9 +1403,10 @@ EOF
     || -e "$screen_act_out/share/openclaw/packages/shared-utils/test/http.test.mjs"
     || ! -f "$screen_act_out/share/openclaw/services/openclaw-screen-act/src/ai-compositor-pointer-dispatch.mjs"
     || ! -f "$screen_act_out/share/openclaw/services/openclaw-screen-act/src/semantic-scene-click-dispatch.mjs"
+    || ! -f "$screen_act_out/share/openclaw/services/openclaw-screen-act/src/semantic-scene-type-dispatch.mjs"
     || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
     || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
-    || "$(find "$screen_act_out" -type f | wc -l)" -ne 17 ]]; then
+    || "$(find "$screen_act_out" -type f | wc -l)" -ne 18 ]]; then
     echo "screen-act Nix closure is not exact and read-only: $screen_act_out" >&2
     exit 1
   fi

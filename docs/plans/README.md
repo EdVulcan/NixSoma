@@ -295,6 +295,17 @@ egress/completion audit. All nine health endpoints remained green; pixels, URLs,
 input values, selectors, target ids, objective text, repeated actions, keyboard
 authority, root, and host mutation remained excluded.
 
+The selected continuation is now a source-built thirteenth Level 4 slice.
+Provider contract v2 can choose `type_item` only for one current enabled textbox
+ordinal and one bounded single-line value. Core rechecks the task and scene,
+Screen Act resolves the private target after its own metadata recapture, and the
+existing Browser Runtime semantic type owner executes once. Raw input exists
+only in the current execution payload; Core/Screen Act state, audit, Observer,
+and persistence retain write-only length evidence. It does not submit, repeat,
+or start another provider step. All 1032 tests, typecheck, exact store closures,
+and candidate `wbr2mdkw...` pass; activation and physical provider selection are
+still pending.
+
 ## Completed Capability Evidence
 
 The following plan families are retained because they describe implemented

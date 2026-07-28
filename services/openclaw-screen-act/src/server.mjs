@@ -20,6 +20,10 @@ import {
   createSemanticSceneClickDispatch,
   normaliseSemanticSceneClickAction,
 } from "./semantic-scene-click-dispatch.mjs";
+import {
+  createSemanticSceneTypeDispatch,
+  normaliseSemanticSceneTypeAction,
+} from "./semantic-scene-type-dispatch.mjs";
 
 const host = process.env.OPENCLAW_SCREEN_ACT_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_PORT ?? "4105", 10);
@@ -42,6 +46,13 @@ const screenWaitMs = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_WAIT_MS ?? 
 const screenPollMs = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_POLL_MS ?? "100", 10);
 const dispatchAiCompositorPointer = createAiCompositorPointerDispatch({ sessionManagerUrl });
 const dispatchSemanticSceneClick = createSemanticSceneClickDispatch({
+  browserRuntimeUrl,
+  browserRuntimeHeaders: () => createServiceCredentialHeaders({
+    token: browserRuntimeAuthToken,
+    caller: browserRuntimeCaller,
+  }),
+});
+const dispatchSemanticSceneType = createSemanticSceneTypeDispatch({
   browserRuntimeUrl,
   browserRuntimeHeaders: () => createServiceCredentialHeaders({
     token: browserRuntimeAuthToken,
@@ -133,6 +144,24 @@ async function executeBrowserAction(kind, params, screen, context = {}) {
       };
     }
     return dispatchSemanticSceneClick({
+      action: params,
+      trustedHelperLease: leaseContext.trustedHelperLease,
+    });
+  }
+  if (kind === "keyboard.type" && context.semanticSceneType === true) {
+    const leaseContext = buildTrustedWorkViewActionLease(screen);
+    if (!leaseContext.ready) {
+      return {
+        registry: leaseContext.registry,
+        attempted: false,
+        required: leaseContext.required,
+        accepted: false,
+        status: "blocked",
+        reason: leaseContext.reason,
+        leaseMatched: false,
+      };
+    }
+    return dispatchSemanticSceneType({
       action: params,
       trustedHelperLease: leaseContext.trustedHelperLease,
     });
@@ -444,6 +473,23 @@ const server = http.createServer(async (req, res) => {
       const action = await executeAction("keyboard.type", {
         text: typeof body.text === "string" ? body.text : "",
         semanticTarget,
+      });
+      sendJson(res, 200, { ok: true, action });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, error.statusCode ?? 400, { ok: false, error: message, code: error.code ?? null });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/act/keyboard/semantic-type") {
+    try {
+      const body = await readJsonBody(req);
+      assertExecutionGrant({ verifier: executionGrantVerifier, req, requestUrl, body });
+      const actionParams = normaliseSemanticSceneTypeAction(body);
+      if (!actionParams) throw new Error("Invalid semantic scene type action.");
+      const action = await executeAction("keyboard.type", actionParams, {
+        semanticSceneType: true,
       });
       sendJson(res, 200, { ok: true, action });
     } catch (error) {

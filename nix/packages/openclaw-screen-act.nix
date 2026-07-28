@@ -12,6 +12,7 @@ mkOpenClawSourceClosure {
     ../../services/openclaw-screen-act/src/server.mjs
     ../../services/openclaw-screen-act/src/ai-compositor-pointer-dispatch.mjs
     ../../services/openclaw-screen-act/src/semantic-scene-click-dispatch.mjs
+    ../../services/openclaw-screen-act/src/semantic-scene-type-dispatch.mjs
     ../../services/openclaw-screen-act/src/trusted-work-view-action-mediation.mjs
     ../../packages/shared-events/src/event-factory.mjs
     ../../packages/shared-events/src/event-names.mjs

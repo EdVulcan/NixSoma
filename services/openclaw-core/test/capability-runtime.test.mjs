@@ -260,6 +260,82 @@ test("capability runtime records one server-owned semantic click without target 
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("selector"), false);
 });
 
+test("capability runtime records semantic type as write-only keyboard evidence", async () => {
+  const inputEvidence = {
+    registry: "openclaw-write-only-input-evidence-v0",
+    charCount: 7,
+    byteLength: 7,
+    maxChars: 2000,
+    truncated: false,
+    textExposed: false,
+    persisted: false,
+  };
+  const { runtime, state } = createHarness({
+    aiWorkspaceSingleStep: {
+      invoke: async () => ({
+        ok: true,
+        registry: "nixsoma-ai-workspace-single-step-v0",
+        status: "executed",
+        decision: {
+          actionId: "type_item",
+          itemOrdinal: 1,
+          inputEvidence,
+          reason: "transient",
+          confidence: 0.9,
+        },
+        evidence: {
+          contextContentHash: "a".repeat(64),
+          requestContentHash: "b".repeat(64),
+          responseContentHash: "c".repeat(64),
+          sceneContentHash: "d".repeat(64),
+          sceneItemCount: 1,
+          taskId: "task-reviewed-1",
+          taskStatus: "running",
+          objectiveContentHash: "e".repeat(64),
+          taskVersionHash: "f".repeat(64),
+          itemOrdinal: 1,
+          inputEvidence,
+          postActionVerified: true,
+        },
+        governance: {
+          providerCalled: true,
+          actionExecuted: true,
+          currentFrameBound: true,
+          currentActiveSurfaceBound: true,
+          semanticSceneBound: true,
+          currentBrowserSurfaceBound: true,
+          taskObjectiveBound: true,
+          taskObjectiveProviderEgress: true,
+          rawTaskGoalProviderEgress: false,
+          pixelsProviderEgress: false,
+          urlsProviderEgress: false,
+          inputValuesProviderEgress: false,
+          providerGeneratedInput: true,
+          inputTextPersisted: false,
+          keyboardInput: true,
+        },
+      }),
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.ai.workspace.single_step",
+    taskId: "task-reviewed-1",
+    params: { confirm: true },
+  });
+  const summary = result.response.invocation.summary;
+
+  assert.equal(summary.actionId, "type_item");
+  assert.equal(summary.itemOrdinal, 1);
+  assert.equal(summary.inputEvidence.charCount, 7);
+  assert.equal(summary.inputEvidence.textExposed, false);
+  assert.equal(summary.providerGeneratedInput, true);
+  assert.equal(summary.inputTextPersisted, false);
+  assert.equal(summary.keyboardInput, true);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("transient"), false);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes('"inputText":'), false);
+});
+
 test("capability runtime rejects caller approval and arbitrary standing advisory input", async () => {
   let invoked = 0;
   const { runtime, state } = createHarness({

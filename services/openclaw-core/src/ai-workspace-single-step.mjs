@@ -5,11 +5,16 @@ import {
 } from "../../../packages/shared-utils/src/work-view-semantic-scene.mjs";
 
 import {
+  AI_WORKSPACE_SINGLE_STEP_MAX_INPUT_CHARS,
   AI_WORKSPACE_SINGLE_STEP_RESPONSE_CONTRACT,
   buildAiWorkspaceSingleStepInstruction,
   parseAiWorkspaceSingleStepDecision,
 } from "./ai-workspace-single-step-contract.mjs";
 import { executeAiWorkspaceSemanticClick } from "./ai-workspace-semantic-click.mjs";
+import { executeAiWorkspaceSemanticType } from "./ai-workspace-semantic-type.mjs";
+import {
+  buildWriteOnlyInputEvidence,
+} from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 import {
   aiWorkspaceTaskObjectiveBindingMatches,
   buildAiWorkspaceTaskObjectiveBinding,
@@ -67,7 +72,7 @@ function compactProviderContext({
 }) {
   const helper = workView.helperRuntime;
   return {
-    registry: "nixsoma-ai-workspace-single-step-context-v1",
+    registry: "nixsoma-ai-workspace-single-step-context-v2",
     observedAt,
     workspace: {
       prepared: workView.status === "prepared",
@@ -97,8 +102,12 @@ function compactProviderContext({
     taskObjective,
     requestedBehavior: {
       maximumActions: 1,
-      allowedActions: ["no_op", "scroll_up", "scroll_down", "click_item"],
+      allowedActions: ["no_op", "scroll_up", "scroll_down", "click_item", "type_item"],
       semanticItemOrdinals: "one_based_ordered_items",
+      semanticTypeInput: {
+        maximumCharacters: AI_WORKSPACE_SINGLE_STEP_MAX_INPUT_CHARS,
+        writeOnlyExecutionPayload: true,
+      },
       automaticRepeat: false,
     },
     exclusions: {
@@ -108,7 +117,9 @@ function compactProviderContext({
       appIds: true,
       processIds: true,
       urls: true,
-      textInput: true,
+      existingInputValues: true,
+      callerInputText: true,
+      persistedInputText: true,
       commands: true,
       filePaths: true,
       credentials: true,
@@ -123,6 +134,17 @@ function compactProviderContext({
       taskMetadata: true,
       taskPaths: true,
     },
+  };
+}
+
+function publicDecision(decision) {
+  if (!decision || typeof decision !== "object") return null;
+  const { inputText, ...publicFields } = decision;
+  return {
+    ...publicFields,
+    inputEvidence: typeof inputText === "string"
+      ? buildWriteOnlyInputEvidence(inputText).evidence
+      : null,
   };
 }
 
@@ -302,6 +324,7 @@ export function createAiWorkspaceSingleStep({
       pixelsEgress: false,
       urlsEgress: false,
       inputValuesEgress: false,
+      providerGeneratedInputAllowed: true,
       rawTaskGoalEgress: false,
       taskObjectiveEgress: true,
     };
@@ -391,7 +414,7 @@ export function createAiWorkspaceSingleStep({
         ok: true,
         registry: AI_WORKSPACE_SINGLE_STEP_REGISTRY,
         status: "no_op",
-        decision,
+        decision: publicDecision(decision),
         evidence: {
           ...providerDecision.evidence,
           sceneContentHash: decisionContext.scene.sceneContentSha256,
@@ -452,7 +475,7 @@ export function createAiWorkspaceSingleStep({
         ok: true,
         registry: AI_WORKSPACE_SINGLE_STEP_REGISTRY,
         status: semanticClick.status,
-        decision,
+        decision: publicDecision(decision),
         action: semanticClick.action,
         evidence: {
           ...providerDecision.evidence,
@@ -482,6 +505,69 @@ export function createAiWorkspaceSingleStep({
           createsTask: false,
           createsApproval: false,
           keyboardInput: false,
+          arbitraryPointerInput: false,
+          processLaunch: false,
+          parentDisplayConnected: false,
+          mutatesHost: false,
+        },
+      };
+    }
+
+    if (decision.actionId === "type_item") {
+      const semanticType = await executeAiWorkspaceSemanticType({
+        decision,
+        executionContext,
+        decisionContext,
+        taskObjectiveBinding: decisionContext.taskObjectiveBinding,
+        taskObjectiveStillCurrent,
+        providerEvidence: providerDecision.evidence,
+        screenActUrl,
+        postJson,
+        publishRequiredAudit,
+        now,
+      });
+      if (!semanticType.ok) {
+        return fallback(semanticType.reason, standingAdvisory, {
+          providerDecision,
+          decisionContext,
+        });
+      }
+      return {
+        ok: true,
+        registry: AI_WORKSPACE_SINGLE_STEP_REGISTRY,
+        status: semanticType.status,
+        decision: publicDecision(decision),
+        action: semanticType.action,
+        evidence: {
+          ...providerDecision.evidence,
+          ...semanticType.evidence,
+          ...taskEvidence(decisionContext.taskObjectiveBinding),
+        },
+        governance: {
+          explicitOperatorTrigger: true,
+          standingAuthorization: true,
+          providerCalled: true,
+          networkEgress: true,
+          maximumActions: 1,
+          actionExecuted: true,
+          automaticRepeat: false,
+          currentFrameBound: true,
+          currentActiveSurfaceBound: true,
+          semanticSceneBound: true,
+          semanticItemOrdinalBound: true,
+          currentBrowserSurfaceBound: true,
+          taskObjectiveBound: true,
+          taskObjectiveProviderEgress: true,
+          rawTaskGoalProviderEgress: false,
+          sceneContentProviderEgress: true,
+          pixelsProviderEgress: false,
+          urlsProviderEgress: false,
+          inputValuesProviderEgress: false,
+          providerGeneratedInput: true,
+          inputTextPersisted: false,
+          createsTask: false,
+          createsApproval: false,
+          keyboardInput: true,
           arbitraryPointerInput: false,
           processLaunch: false,
           parentDisplayConnected: false,
@@ -578,7 +664,7 @@ export function createAiWorkspaceSingleStep({
       ok: true,
       registry: AI_WORKSPACE_SINGLE_STEP_REGISTRY,
       status: completionAudit ? "executed" : "executed_completion_audit_unavailable",
-      decision,
+      decision: publicDecision(decision),
       action: {
         actionId: decision.actionId,
         direction,

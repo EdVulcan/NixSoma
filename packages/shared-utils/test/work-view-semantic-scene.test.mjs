@@ -7,11 +7,12 @@ import {
   buildWorkViewSemanticScene,
   normaliseWorkViewSemanticScene,
   resolveWorkViewSemanticSceneClick,
+  resolveWorkViewSemanticSceneType,
 } from "../src/work-view-semantic-scene.mjs";
 
 const NOW = "2026-07-28T11:00:00.000Z";
 
-function capture(name = "Learn more", count = 1) {
+function capture(name = "Learn more", count = 1, role = "link") {
   const frame = {
     registry: "openclaw-browser-visual-frame-v0",
     available: true,
@@ -33,7 +34,7 @@ function capture(name = "Learn more", count = 1) {
       available: true,
       frame,
       items: Array.from({ length: count }, (_, index) => ({
-        role: "link",
+        role,
         tag: "a",
         name: index === 0 ? name : `Item ${index + 1}`,
         disabled: false,
@@ -156,6 +157,37 @@ test("semantic scene resolves a provider ordinal to the exact local target refer
   assert.equal(resolution.semanticTarget.targetId, "frame-7-target-2");
   assert.match(resolution.semanticTarget.inventorySha256, /^[a-f0-9]{64}$/u);
   assert.equal(JSON.stringify(resolution.evidence).includes("frame-7-target-2"), false);
+});
+
+test("semantic scene resolves type only for the exact current textbox ordinal", () => {
+  const browser = { running: true, browserPid: 8123 };
+  const currentCapture = capture("Search", 1, "textbox");
+  const scene = buildWorkViewSemanticScene({ browser, capture: currentCapture, now: Date.parse(NOW) });
+  const resolution = resolveWorkViewSemanticSceneType({
+    browser,
+    capture: currentCapture,
+    expectedSceneContentSha256: scene.sceneContentSha256,
+    expectedBrowserPid: scene.browserPid,
+    expectedFrame: scene.frame,
+    itemOrdinal: 1,
+    now: Date.parse(NOW),
+  });
+
+  assert.equal(resolution.ok, true);
+  assert.equal(resolution.semanticTarget.operation, "type");
+  assert.equal(JSON.stringify(resolution.evidence).includes(resolution.semanticTarget.targetId), false);
+
+  const linkCapture = capture("Learn more", 1, "link");
+  const linkScene = buildWorkViewSemanticScene({ browser, capture: linkCapture, now: Date.parse(NOW) });
+  assert.equal(resolveWorkViewSemanticSceneType({
+    browser,
+    capture: linkCapture,
+    expectedSceneContentSha256: linkScene.sceneContentSha256,
+    expectedBrowserPid: linkScene.browserPid,
+    expectedFrame: linkScene.frame,
+    itemOrdinal: 1,
+    now: Date.parse(NOW),
+  }).reason, "semantic_scene_item_not_textbox");
 });
 
 test("semantic scene click resolution fails closed for invalid, disabled, or changed selections", () => {

@@ -2261,8 +2261,39 @@ the prior local 3/3 state. DeepSeek selected `click_item` ordinal 1; Core
 revalidated the task objective and semantic scene, executed exactly one governed
 click, and matched durable egress and completion audit. No pixels, URLs, input
 values, target ids, selectors, or objective text entered durable evidence.
-Text input, arbitrary coordinates, loops, page script,
+In the active generation, text input, arbitrary coordinates, loops, page script,
 process/window APIs, root, and host mutation remain excluded.
+
+## Level 4 Write-Only Semantic Type Source Candidate
+
+The thirteenth vertical slice adds one real browser behavior without reopening
+the completed click lane. Provider contract v2 permits `type_item` only with a
+1-based current semantic-scene ordinal and one non-empty single-line value no
+longer than 200 characters. The selected item must be an enabled textbox. Core
+still accepts no caller prompt, action, target, or value override and still
+revalidates task objective/version, trusted work-view binding, active Weston
+surface, Browser PID, scene-content hash, and semantic frame after provider
+return.
+
+The value remains transient across Core -> Screen Act -> Browser Runtime. Core
+projects the provider decision through write-only input evidence, required
+action/completion audits store only character and byte counts, and Observer
+rejects any result containing an `inputText` field. Screen Act independently
+recaptures the metadata-only scene and locally resolves the ordinal to the
+existing frame-bound semantic type target before one Browser Runtime input.
+Target id, inventory hash, selector, current input value, provider reason, and
+typed text remain absent from public/durable evidence. A post-action frame is
+requested, but failure after typing is terminal and never retried.
+
+This slice does not press Enter, submit, click a follow-up control, repeat, or
+start another provider call. It adds no arbitrary keyboard/hotkey, coordinates,
+page script, process/window API, root, parent-display access, or host mutation.
+All 1032 workspace tests and typecheck pass. Store-native validation proves an
+exact 233-file Core closure, 18-file Screen Act closure, generated Observer
+client, and candidate
+`/nix/store/wbr2mdkwabwlhizdyxxzxy4bqkig47zw-nixos-system-nixos-26.05.4808.569d57850992`.
+The candidate is built but not activated; no real provider-selected type action
+has been claimed.
 
 ## Identity-Upgrade Alignment
 

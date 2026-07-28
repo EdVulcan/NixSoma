@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 
 import { buildWorkViewSemanticScene } from "../../../packages/shared-utils/src/work-view-semantic-scene.mjs";
+import { buildWriteOnlyInputEvidence } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 import { createAiWorkspaceSingleStep } from "../src/ai-workspace-single-step.mjs";
 
 const NOW = "2026-07-28T08:00:00.000Z";
@@ -82,6 +83,7 @@ function reviewedTask(overrides = {}) {
 }
 
 function semanticScene({
+  role = "link",
   name = "Learn more",
   frameSha256 = "c".repeat(64),
   frameSequence = 7,
@@ -114,7 +116,7 @@ function semanticScene({
         frame: visualFrame,
         items: [{
           targetId: "PRIVATE_TARGET_ID",
-          role: "link",
+          role,
           name,
           disabled,
           bounds: { x: 120, y: 180, width: 90, height: 24 },
@@ -136,7 +138,10 @@ function harness({
   nonBrowserSurface = false,
   rejectedAuditName = null,
   providerFailureReason = null,
-  itemOrdinal = actionId === "click_item" ? 1 : null,
+  itemOrdinal = ["click_item", "type_item"].includes(actionId) ? 1 : null,
+  inputText = actionId === "type_item" ? "NixSoma" : null,
+  sceneName = actionId === "type_item" ? "Search" : "Learn more",
+  sceneRole = actionId === "type_item" ? "textbox" : "link",
   disabledTarget = false,
   changedTask = false,
   changedTaskAfterActionAudit = false,
@@ -161,8 +166,8 @@ function harness({
       const prompt = options.buildPrompt(context);
       calls.prompt.push(prompt);
       calls.provider += 1;
-      assert.equal(prompt.includes("Learn more"), true);
-      assert.equal(prompt.includes("Open the Learn more item for NixSoma"), true);
+      assert.equal(prompt.includes(sceneName), true);
+      assert.equal(prompt.includes(taskGoal), true);
       assert.equal(prompt.includes(TASK_ID), false);
       assert.equal(prompt.includes("session-current"), false);
       assert.equal(prompt.includes("pid"), false);
@@ -188,6 +193,7 @@ function harness({
       const assistantContent = JSON.stringify({
         actionId,
         itemOrdinal,
+        inputText,
         reason: "Bounded test decision.",
         confidence: 0.8,
       });
@@ -253,7 +259,8 @@ function harness({
         return {
           ok: true,
           scene: semanticScene({
-            name: changedScene && sceneReads > 1 ? "Changed scene" : "Learn more",
+            role: sceneRole,
+            name: changedScene && sceneReads > 1 ? "Changed scene" : sceneName,
             frameSha256: changedSemanticFrame && sceneReads > 1
               ? "d".repeat(64)
               : "c".repeat(64),
@@ -266,6 +273,40 @@ function harness({
     },
     postJson: async (url, body, options) => {
       calls.post.push({ url, body, options });
+      if (url.endsWith("/act/keyboard/semantic-type")) {
+        const inputEvidence = buildWriteOnlyInputEvidence(body.text).evidence;
+        return {
+          ok: true,
+          action: {
+            kind: "keyboard.type",
+            params: {
+              sceneContentSha256: body.sceneContentSha256,
+              itemOrdinal: body.itemOrdinal,
+              browserPid: body.browserPid,
+              semanticFrame: body.semanticFrame,
+              inputEvidence,
+            },
+            result: "executed-browser-runtime",
+            mediation: {
+              accepted: true,
+              semanticType: {
+                registry: "nixsoma-ai-browser-semantic-scene-type-resolution-v0",
+                sceneContentHash: body.sceneContentSha256,
+                itemOrdinal: body.itemOrdinal,
+                itemCount: 1,
+                browserMatched: true,
+                frameMatched: true,
+                sceneMatched: true,
+                actionExecuted: true,
+                postActionVerified: true,
+                postFrameSequenceAdvanced: true,
+                postFrameChanged: true,
+                inputEvidence,
+              },
+            },
+          },
+        };
+      }
       if (url.endsWith("/act/mouse/semantic-click")) {
         return {
           ok: true,
@@ -408,6 +449,44 @@ test("AI workspace single-step executes one provider-selected semantic item with
   assert.equal(durableJson.includes('"semanticTarget"'), false);
 });
 
+test("AI workspace single-step executes one provider-selected write-only semantic type", async () => {
+  const privateInput = "NixSoma";
+  const { owner, calls } = harness({
+    actionId: "type_item",
+    itemOrdinal: 1,
+    inputText: privateInput,
+    sceneName: "Search",
+    sceneRole: "textbox",
+    taskGoal: "Enter NixSoma in the Search textbox",
+  });
+
+  const result = await owner.invoke({ taskId: TASK_ID });
+
+  assert.equal(result.status, "executed");
+  assert.equal(result.action.actionId, "type_item");
+  assert.equal(result.action.itemOrdinal, 1);
+  assert.equal(result.action.inputEvidence.charCount, privateInput.length);
+  assert.equal(result.action.executed, true);
+  assert.equal(result.governance.keyboardInput, true);
+  assert.equal(result.governance.providerGeneratedInput, true);
+  assert.equal(result.governance.inputTextPersisted, false);
+  assert.equal(calls.post.length, 1);
+  assert.equal(calls.post[0].url, "http://127.0.0.1:4105/act/keyboard/semantic-type");
+  assert.equal(calls.post[0].body.text, privateInput);
+  assert.equal(calls.post[0].body.itemOrdinal, 1);
+  assert.deepEqual(calls.post[0].options.grantContext, {
+    taskId: TASK_ID,
+    stepId: null,
+    capabilityId: "act.ai.workspace.single_step",
+    intent: "ai.workspace.semantic_type",
+  });
+  const durableJson = JSON.stringify({ result, audit: calls.audit });
+  assert.equal(durableJson.includes(privateInput), false);
+  assert.equal(durableJson.includes('"inputText"'), false);
+  assert.equal(durableJson.includes("PRIVATE_INPUT_VALUE"), false);
+  assert.equal(durableJson.includes("PRIVATE_TARGET_ID"), false);
+});
+
 test("AI workspace single-step rejects a disabled provider selection before actuator contact", async () => {
   const { owner, calls } = harness({
     actionId: "click_item",
@@ -465,11 +544,16 @@ test("AI workspace single-step rejects unsafe task text before provider egress",
 });
 
 test("AI workspace single-step rechecks task binding after action audit", async () => {
-  for (const actionId of ["scroll_down", "click_item"]) {
+  for (const actionId of ["scroll_down", "click_item", "type_item"]) {
     const { owner, calls } = harness({
       actionId,
-      itemOrdinal: actionId === "click_item" ? 1 : null,
+      itemOrdinal: ["click_item", "type_item"].includes(actionId) ? 1 : null,
       changedTaskAfterActionAudit: true,
+      sceneRole: actionId === "type_item" ? "textbox" : "link",
+      sceneName: actionId === "type_item" ? "Search" : "Learn more",
+      taskGoal: actionId === "type_item"
+        ? "Enter NixSoma in the Search textbox"
+        : "Open the Learn more item for NixSoma",
     });
 
     const result = await owner.invoke({ taskId: TASK_ID });
@@ -598,4 +682,23 @@ test("AI workspace semantic click does not retry when completion audit fails", a
   assert.equal(result.evidence.actionExecuted, true);
   assert.equal(result.evidence.completionAudit, false);
   assert.equal(calls.post.length, 1);
+});
+
+test("AI workspace semantic type does not retry or expose input when completion audit fails", async () => {
+  const { owner, calls } = harness({
+    actionId: "type_item",
+    itemOrdinal: 1,
+    sceneRole: "textbox",
+    sceneName: "Search",
+    taskGoal: "Enter NixSoma in the Search textbox",
+    rejectedAuditName: "ai_workspace.single_step_completed",
+  });
+
+  const result = await owner.invoke({ taskId: TASK_ID });
+
+  assert.equal(result.status, "executed_completion_audit_unavailable");
+  assert.equal(result.evidence.actionExecuted, true);
+  assert.equal(result.evidence.completionAudit, false);
+  assert.equal(calls.post.length, 1);
+  assert.equal(JSON.stringify({ result, audit: calls.audit }).includes("NixSoma"), false);
 });
