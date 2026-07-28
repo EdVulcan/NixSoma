@@ -12,11 +12,16 @@ SYSTEM_HEAL_URL="${OPENCLAW_SYSTEM_HEAL_URL:-http://127.0.0.1:4107}"
 OBSERVER_URL="${OPENCLAW_OBSERVER_URL:-http://127.0.0.1:4170}"
 export OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_OPERATOR_TOKEN_FILE:-${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/nixsoma/operator-token}"
 TARGET_URL="${NIXSOMA_AI_BOUNDED_RUN_URL:-https://httpbin.org/forms/post}"
-TASK_GOAL="${NIXSOMA_AI_BOUNDED_RUN_TASK_GOAL:-Scroll down to the Delivery instructions textbox, then type NixSoma into it}"
+TASK_GOAL="${NIXSOMA_AI_BOUNDED_RUN_TASK_GOAL:-Scroll down to inspect additional form controls below the current viewport}"
 EXPECTED_STEPS="${NIXSOMA_AI_BOUNDED_RUN_EXPECT_STEPS:-2}"
+PROVE_TYPE="${NIXSOMA_AI_BOUNDED_RUN_PROVE_TYPE:-1}"
 
 if [[ ! "$EXPECTED_STEPS" =~ ^[12]$ ]]; then
   printf 'NIXSOMA_AI_BOUNDED_RUN_EXPECT_STEPS must be 1 or 2\n' >&2
+  exit 64
+fi
+if [[ ! "$PROVE_TYPE" =~ ^[01]$ ]]; then
+  printf 'NIXSOMA_AI_BOUNDED_RUN_PROVE_TYPE must be 0 or 1\n' >&2
   exit 64
 fi
 
@@ -33,7 +38,7 @@ tmp_dir="$(mktemp -d)"
 cleanup() {
   local status="$?"
   if (( status != 0 )); then
-    for name in prepare navigate activate task bind run; do
+    for name in prepare navigate activate type-proof task bind run; do
       if [[ -s "$tmp_dir/$name.json" ]]; then
         printf 'AI bounded run failed response (%s.json):\n' "$name" >&2
         sed -n '1,120p' "$tmp_dir/$name.json" >&2
@@ -114,6 +119,13 @@ if [[ "$active" != "true" ]]; then
     }));
   ' "$surface_id" "$inventory_sequence")"
   post_json "$CORE_URL/capabilities/invoke" "$activation_payload" > "$tmp_dir/activate.json"
+fi
+
+if [[ "$PROVE_TYPE" == "1" ]]; then
+  stage "proving one write-only semantic type before the bounded continuation"
+  NIXSOMA_AI_SCENE_TASK_GOAL="Type NixSoma into the Customer name textbox" \
+  NIXSOMA_AI_SCENE_EXPECTED_ACTION="type_item" \
+    bash "$SCRIPT_DIR/dev-ai-browser-scene-grounding-live-check.sh" > "$tmp_dir/type-proof.json"
 fi
 
 stage "creating and binding one reviewed task"

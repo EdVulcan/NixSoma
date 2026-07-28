@@ -2329,8 +2329,11 @@ The registered `dev-ai-bounded-run-live-check.sh` physical gate verifies the
 task/work-view binding, per-step provider and completion events, continuation
 and run-completion audit, Screen Act no-plaintext state, and all nine health
 endpoints. It uses governed navigation to open the public httpbin form and asks
-for the below-viewport Delivery instructions textbox, making the default proof
-`scroll_down -> type_item` without a local SSRF exception or manual page setup.
+the existing one-step gate to type into `Customer name` before creating a
+separate two-step scroll task. A physical preflight showed the fixed Weston
+wheel step advances the frame but moves this page by only about one CSS pixel,
+so the gate does not widen input authority merely to combine both actions into
+one run. It needs no local SSRF exception or manual page setup.
 All 1046 workspace tests, full typecheck, 236-file Core closure
 `rsszhq...`, 80-file Observer closure `2nb3f44...`, 812-entry registry,
 998-script audit, Windows path budget, body-config gate, and combined candidate

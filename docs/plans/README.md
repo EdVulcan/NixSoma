@@ -319,7 +319,8 @@ Click, type, no-op, fallback, missing evidence, and every second-step outcome
 terminate; there is no third call or automatic retry. Observer exposes `AI Run`
 and a registered live gate checks per-step plus run-level audit without input
 text. The gate self-navigates to the public httpbin form and uses a textbox that
-starts below the viewport to target `scroll_down -> type_item`. All 1046 tests,
+is already visible for the existing one-step type proof, then creates a separate
+two-step scroll task for continuation proof. All 1046 tests,
 typecheck, exact 236-file Core and 80-file Observer
 closures, 812-entry registry, 998-script audit, path budget, body-config gate,
 and combined candidate `gbcvd8...` pass. It also contains the pending semantic
