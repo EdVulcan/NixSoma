@@ -15,6 +15,7 @@ import {
   summariseWorkViewSemanticTargets,
   unavailableWorkViewSemanticTargets,
 } from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
+import { projectBrowserSemanticActionEvidence } from "./browser-semantic-action-evidence.mjs";
 import { buildWriteOnlyInputEvidence } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 import { normaliseBoundedBrowserUrl, validateBoundedBrowserUrl } from "./browser-navigation.mjs";
 import { createBrowserWorkspaceStore } from "./browser-workspace-store.mjs";
@@ -588,7 +589,12 @@ const server = http.createServer(async (req, res) => {
         lastInput: inputEvidence,
       });
       const browser = serialiseBrowserState();
-      await publishEvent(createEventName("browser.updated"), { browser, action: "input", inputEvidence, effect });
+      await publishEvent(createEventName("browser.updated"), {
+        browser,
+        action: "input",
+        inputEvidence,
+        effect: projectBrowserSemanticActionEvidence(effect),
+      });
       sendJson(res, 200, { ok: true, browser, inputEvidence, effect, mediation });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -629,7 +635,12 @@ const server = http.createServer(async (req, res) => {
         lastClick: action,
       });
       const browser = serialiseBrowserState();
-      await publishEvent(createEventName("browser.updated"), { browser, action: "click", position: action, effect });
+      await publishEvent(createEventName("browser.updated"), {
+        browser,
+        action: "click",
+        position: action,
+        effect: projectBrowserSemanticActionEvidence(effect),
+      });
       sendJson(res, 200, { ok: true, browser, action, effect, mediation });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

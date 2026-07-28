@@ -927,3 +927,13 @@ remain outside this plan. Initial generation `7j28vnll8...` exposed a
 provider-free metadata-summary mismatch; active generation `jricbfds...`
 corrected it and a real scene-grounded call returned `no_op` without actuator
 contact. The next Level 4 slice remains separate from this frozen Level 1 plan.
+
+The separate eleventh Level 4 source candidate lets the fixed provider choose
+one bounded scene-item ordinal. Core never receives a semantic target reference;
+Screen Act privately recaptures and resolves the ordinal before reusing the
+existing Browser Runtime frame-bound click once, then performs a local
+post-action capture. This does not reopen the frozen engineering-tool plan or
+add an engineering prompt, keyboard/text input, repeated action loop, process
+authority, root, or host mutation. Deployment and physical proof remain pending.
+The separate candidate is built as `lb3mif3b...` after 1016 workspace tests,
+typecheck, exact body closure, registry/script audits, and path-budget checks.

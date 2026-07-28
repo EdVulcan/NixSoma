@@ -48,6 +48,8 @@ test("Observer exposes bounded fixed workbench lifecycle state and controls", ()
   assert.equal(script.includes('params: { ...binding, direction }'), true);
   assert.equal(script.includes('capabilityId: "act.ai.workspace.single_step"'), true);
   assert.equal(script.includes('params: { confirm: true }'), true);
+  assert.equal(script.includes('actionId === "click_item"'), true);
+  assert.equal(script.includes('result.action?.itemOrdinal'), true);
 });
 
 test("production Observer client assembles workbench controls through Core only", () => {

@@ -57,7 +57,7 @@ export function buildBaseCapabilities({
       domains: ["cross_boundary"],
       risk: "medium",
       governance: "standing_authorization",
-      description: "Request one audited, budgeted provider decision over server-generated isolated-workspace metadata and execute at most one existing active-surface scroll action without automatic repetition.",
+      description: "Request one audited, budgeted provider decision over a server-generated isolated-workspace semantic scene and execute at most one existing active-surface scroll or locally resolved semantic click without automatic repetition.",
     },
     {
       id: "sense.filesystem.read",

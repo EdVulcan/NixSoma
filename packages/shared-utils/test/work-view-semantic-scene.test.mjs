@@ -6,6 +6,7 @@ import {
   buildProviderWorkViewSemanticScene,
   buildWorkViewSemanticScene,
   normaliseWorkViewSemanticScene,
+  resolveWorkViewSemanticSceneClick,
 } from "../src/work-view-semantic-scene.mjs";
 
 const NOW = "2026-07-28T11:00:00.000Z";
@@ -130,4 +131,55 @@ test("semantic scene rejects stale, frame-divergent, or widened contracts", () =
     ...valid,
     sceneContentSha256: "b".repeat(64),
   }, { now: Date.parse(NOW) }), null);
+});
+
+test("semantic scene resolves a provider ordinal to the exact local target reference", () => {
+  const browser = { running: true, browserPid: 8123 };
+  const currentCapture = capture("First", 2);
+  const scene = buildWorkViewSemanticScene({
+    browser,
+    capture: currentCapture,
+    now: Date.parse(NOW),
+  });
+  const resolution = resolveWorkViewSemanticSceneClick({
+    browser,
+    capture: currentCapture,
+    expectedSceneContentSha256: scene.sceneContentSha256,
+    expectedBrowserPid: scene.browserPid,
+    expectedFrame: scene.frame,
+    itemOrdinal: 2,
+    now: Date.parse(NOW),
+  });
+
+  assert.equal(resolution.ok, true);
+  assert.equal(resolution.itemOrdinal, 2);
+  assert.equal(resolution.semanticTarget.targetId, "frame-7-target-2");
+  assert.match(resolution.semanticTarget.inventorySha256, /^[a-f0-9]{64}$/u);
+  assert.equal(JSON.stringify(resolution.evidence).includes("frame-7-target-2"), false);
+});
+
+test("semantic scene click resolution fails closed for invalid, disabled, or changed selections", () => {
+  const browser = { running: true, browserPid: 8123 };
+  const currentCapture = capture("First", 2);
+  const scene = buildWorkViewSemanticScene({ browser, capture: currentCapture, now: Date.parse(NOW) });
+  const resolve = (overrides = {}) => resolveWorkViewSemanticSceneClick({
+    browser,
+    capture: currentCapture,
+    expectedSceneContentSha256: scene.sceneContentSha256,
+    expectedBrowserPid: scene.browserPid,
+    expectedFrame: scene.frame,
+    itemOrdinal: 1,
+    now: Date.parse(NOW),
+    ...overrides,
+  });
+
+  assert.equal(resolve({ itemOrdinal: 3 }).reason, "semantic_scene_item_ordinal_invalid");
+  assert.equal(resolve({ expectedSceneContentSha256: "b".repeat(64) }).reason, "semantic_scene_changed");
+  assert.equal(resolve({ expectedFrame: { ...scene.frame, sequence: 8 } }).reason, "semantic_scene_frame_changed");
+
+  currentCapture.semanticTargets.items[0].disabled = true;
+  const disabledScene = buildWorkViewSemanticScene({ browser, capture: currentCapture, now: Date.parse(NOW) });
+  assert.equal(resolve({
+    expectedSceneContentSha256: disabledScene.sceneContentSha256,
+  }).reason, "semantic_scene_item_disabled");
 });

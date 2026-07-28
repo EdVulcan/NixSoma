@@ -57,6 +57,7 @@ function semanticScene({
   frameSha256 = "c".repeat(64),
   frameSequence = 7,
   browserPid = 999,
+  disabled = false,
 } = {}) {
   const visualFrame = {
     registry: "openclaw-browser-visual-frame-v0",
@@ -86,7 +87,7 @@ function semanticScene({
           targetId: "PRIVATE_TARGET_ID",
           role: "link",
           name,
-          disabled: false,
+          disabled,
           bounds: { x: 120, y: 180, width: 90, height: 24 },
           value: "PRIVATE_INPUT_VALUE",
           selector: "#private-selector",
@@ -106,6 +107,8 @@ function harness({
   nonBrowserSurface = false,
   rejectedAuditName = null,
   providerFailureReason = null,
+  itemOrdinal = actionId === "click_item" ? 1 : null,
+  disabledTarget = false,
 } = {}) {
   const calls = { fetch: [], post: [], audit: [], decision: [], prompt: [], provider: 0 };
   let captureSequence = 4;
@@ -148,6 +151,7 @@ function harness({
       }
       const assistantContent = JSON.stringify({
         actionId,
+        itemOrdinal,
         reason: "Bounded test decision.",
         confidence: 0.8,
       });
@@ -202,6 +206,7 @@ function harness({
               ? "d".repeat(64)
               : "c".repeat(64),
             frameSequence: changedSemanticFrame && sceneReads > 1 ? 8 : 7,
+            disabled: disabledTarget,
           }),
         };
       }
@@ -209,6 +214,31 @@ function harness({
     },
     postJson: async (url, body, options) => {
       calls.post.push({ url, body, options });
+      if (url.endsWith("/act/mouse/semantic-click")) {
+        return {
+          ok: true,
+          action: {
+            kind: "mouse.semantic_click",
+            result: "executed-browser-runtime",
+            mediation: {
+              accepted: true,
+              semanticClick: {
+                registry: "nixsoma-ai-browser-semantic-scene-click-resolution-v0",
+                sceneContentHash: body.sceneContentSha256,
+                itemOrdinal: body.itemOrdinal,
+                itemCount: 1,
+                browserMatched: true,
+                frameMatched: true,
+                sceneMatched: true,
+                actionExecuted: true,
+                postActionVerified: true,
+                postFrameSequenceAdvanced: true,
+                postFrameChanged: true,
+              },
+            },
+          },
+        };
+      }
       return {
         ok: true,
         action: {
@@ -288,6 +318,48 @@ test("AI workspace single-step honors provider no-op without actuator contact", 
   assert.equal(result.governance.sceneContentProviderEgress, true);
   assert.equal(calls.post.length, 0);
   assert.deepEqual(calls.audit.map((item) => item.name), ["ai_workspace.single_step_completed"]);
+});
+
+test("AI workspace single-step executes one provider-selected semantic item without target authority", async () => {
+  const { owner, calls } = harness({ actionId: "click_item", itemOrdinal: 1 });
+
+  const result = await owner.invoke();
+
+  assert.equal(result.status, "executed");
+  assert.equal(result.action.actionId, "click_item");
+  assert.equal(result.action.itemOrdinal, 1);
+  assert.equal(result.action.executed, true);
+  assert.equal(result.evidence.postActionVerified, true);
+  assert.equal(result.governance.semanticItemOrdinalBound, true);
+  assert.equal(calls.post.length, 1);
+  assert.equal(calls.post[0].url, "http://127.0.0.1:4105/act/mouse/semantic-click");
+  assert.equal(calls.post[0].body.itemOrdinal, 1);
+  assert.equal("semanticTarget" in calls.post[0].body, false);
+  assert.deepEqual(calls.post[0].options.grantContext, {
+    taskId: null,
+    stepId: null,
+    capabilityId: "act.ai.workspace.single_step",
+    intent: "ai.workspace.semantic_click",
+  });
+  const durableJson = JSON.stringify({ result, audit: calls.audit });
+  assert.equal(durableJson.includes("PRIVATE_TARGET_ID"), false);
+  assert.equal(durableJson.includes("#private-selector"), false);
+  assert.equal(durableJson.includes('"semanticTarget"'), false);
+});
+
+test("AI workspace single-step rejects a disabled provider selection before actuator contact", async () => {
+  const { owner, calls } = harness({
+    actionId: "click_item",
+    itemOrdinal: 1,
+    disabledTarget: true,
+  });
+
+  const result = await owner.invoke();
+
+  assert.equal(result.status, "local_fallback");
+  assert.equal(result.fallback.reason, "ai_workspace_single_step_semantic_click_not_actionable");
+  assert.equal(calls.post.length, 0);
+  assert.equal(calls.audit.length, 0);
 });
 
 test("AI workspace single-step revalidates changed semantic content before no-op completion", async () => {
@@ -392,6 +464,21 @@ test("AI workspace single-step requires action audit before actuator contact", a
 
 test("AI workspace single-step does not retry an executed action when completion audit fails", async () => {
   const { owner, calls } = harness({
+    rejectedAuditName: "ai_workspace.single_step_completed",
+  });
+
+  const result = await owner.invoke();
+
+  assert.equal(result.status, "executed_completion_audit_unavailable");
+  assert.equal(result.evidence.actionExecuted, true);
+  assert.equal(result.evidence.completionAudit, false);
+  assert.equal(calls.post.length, 1);
+});
+
+test("AI workspace semantic click does not retry when completion audit fails", async () => {
+  const { owner, calls } = harness({
+    actionId: "click_item",
+    itemOrdinal: 1,
     rejectedAuditName: "ai_workspace.single_step_completed",
   });
 

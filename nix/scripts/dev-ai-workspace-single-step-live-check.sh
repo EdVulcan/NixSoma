@@ -280,8 +280,8 @@ const completed = events.find((event) =>
 
 if (response.invoked !== true
   || result.registry !== "nixsoma-ai-workspace-single-step-v0"
-  || !["no_op", "scroll_up", "scroll_down"].includes(actionId)
-  || !["no_op", "executed", "executed_completion_audit_unavailable"].includes(result.status)
+  || !["no_op", "scroll_up", "scroll_down", "click_item"].includes(actionId)
+  || !(result.status === "no_op" || result.status?.startsWith("executed"))
   || governance.providerCalled !== true
   || governance.networkEgress !== true
   || governance.maximumActions !== 1
@@ -321,6 +321,21 @@ if (actionId === "no_op") {
     || governance.actionExecuted !== false
     || afterInput.requestId !== beforeInput.requestId) {
     throw new Error("provider no-op unexpectedly contacted the compositor actuator");
+  }
+} else if (actionId === "click_item") {
+  if (!result.status.startsWith("executed")
+    || governance.actionExecuted !== true
+    || governance.currentFrameBound !== true
+    || governance.currentActiveSurfaceBound !== true
+    || governance.semanticItemOrdinalBound !== true
+    || !Number.isInteger(result.action?.itemOrdinal)
+    || result.action.itemOrdinal < 1
+    || result.action?.executed !== true
+    || evidence.itemOrdinal !== result.action.itemOrdinal
+    || evidence.postActionVerified !== true
+    || evidence.postFrameSequenceAdvanced !== true
+    || afterInput.requestId !== beforeInput.requestId) {
+    throw new Error("live AI workspace semantic click evidence is incomplete");
   }
 } else if (!result.status.startsWith("executed")
   || governance.actionExecuted !== true

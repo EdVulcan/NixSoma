@@ -9,6 +9,7 @@ import {
   buildAiWorkspaceSingleStepInstruction,
   parseAiWorkspaceSingleStepDecision,
 } from "./ai-workspace-single-step-contract.mjs";
+import { executeAiWorkspaceSemanticClick } from "./ai-workspace-semantic-click.mjs";
 
 export const AI_WORKSPACE_SINGLE_STEP_REGISTRY =
   "nixsoma-ai-workspace-single-step-v0";
@@ -82,7 +83,8 @@ function compactProviderContext({ observedAt, workView, frame, inventory, surfac
     },
     requestedBehavior: {
       maximumActions: 1,
-      allowedActions: ["no_op", "scroll_up", "scroll_down"],
+      allowedActions: ["no_op", "scroll_up", "scroll_down", "click_item"],
+      semanticItemOrdinals: "one_based_ordered_items",
       automaticRepeat: false,
     },
     exclusions: {
@@ -330,6 +332,61 @@ export function createAiWorkspaceSingleStep({
           actionExecuted: false,
           automaticRepeat: false,
           semanticSceneBound: true,
+          currentBrowserSurfaceBound: true,
+          sceneContentProviderEgress: true,
+          pixelsProviderEgress: false,
+          urlsProviderEgress: false,
+          inputValuesProviderEgress: false,
+          createsTask: false,
+          createsApproval: false,
+          keyboardInput: false,
+          arbitraryPointerInput: false,
+          processLaunch: false,
+          parentDisplayConnected: false,
+          mutatesHost: false,
+        },
+      };
+    }
+
+    if (decision.actionId === "click_item") {
+      const semanticClick = await executeAiWorkspaceSemanticClick({
+        decision,
+        executionContext,
+        decisionContext,
+        providerEvidence: providerDecision.evidence,
+        screenActUrl,
+        postJson,
+        publishRequiredAudit,
+        now,
+      });
+      if (!semanticClick.ok) {
+        return fallback(semanticClick.reason, standingAdvisory, {
+          providerDecision,
+          decisionContext,
+        });
+      }
+      return {
+        ok: true,
+        registry: AI_WORKSPACE_SINGLE_STEP_REGISTRY,
+        status: semanticClick.status,
+        decision,
+        action: semanticClick.action,
+        evidence: {
+          ...providerDecision.evidence,
+          ...semanticClick.evidence,
+        },
+        governance: {
+          explicitOperatorTrigger: true,
+          standingAuthorization: true,
+          providerCalled: true,
+          networkEgress: true,
+          maximumActions: 1,
+          actionExecuted: true,
+          automaticRepeat: false,
+          currentFrameBound: true,
+          currentActiveSurfaceBound: true,
+          semanticSceneBound: true,
+          semanticItemOrdinalBound: true,
           currentBrowserSurfaceBound: true,
           sceneContentProviderEgress: true,
           pixelsProviderEgress: false,

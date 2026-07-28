@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 
 import {
+  WORK_VIEW_SEMANTIC_TARGET_REFERENCE_REGISTRY,
+  normaliseWorkViewSemanticTargetReference,
   projectWorkViewSemanticTargets,
 } from "./work-view-semantic-targets.mjs";
 import {
@@ -109,6 +111,13 @@ function projectItem(item) {
   };
 }
 
+function projectSceneEntries(targets) {
+  return targets.items
+    .map((target) => ({ item: projectItem(target), target }))
+    .filter((entry) => entry.item !== null)
+    .slice(0, WORK_VIEW_SEMANTIC_SCENE_MAX_ITEMS);
+}
+
 export function buildWorkViewSemanticScene({
   browser,
   capture,
@@ -133,7 +142,7 @@ export function buildWorkViewSemanticScene({
   }
 
   const sourceItems = targets.items.map(projectItem).filter(Boolean);
-  const items = sourceItems.slice(0, WORK_VIEW_SEMANTIC_SCENE_MAX_ITEMS);
+  const items = projectSceneEntries(targets).map((entry) => entry.item);
   if (items.length < 1) return unavailableWorkViewSemanticScene("semantic_scene_empty");
   const truncated = sourceItems.length > items.length || targets.truncated === true;
   const viewport = {
@@ -165,6 +174,78 @@ export function buildWorkViewSemanticScene({
     arbitraryPageScript: false,
     pixelsExposed: false,
     persisted: false,
+  };
+}
+
+function unresolvedSceneItem(reason, scene = null) {
+  return {
+    ok: false,
+    reason,
+    scene,
+    itemOrdinal: null,
+    semanticTarget: null,
+    evidence: null,
+  };
+}
+
+export function resolveWorkViewSemanticSceneClick({
+  browser,
+  capture,
+  expectedSceneContentSha256,
+  expectedBrowserPid,
+  expectedFrame,
+  itemOrdinal,
+  now = Date.now(),
+} = {}) {
+  const scene = buildWorkViewSemanticScene({ browser, capture, now });
+  if (scene.available !== true) return unresolvedSceneItem(scene.reason, scene);
+  if (scene.browserPid !== expectedBrowserPid) {
+    return unresolvedSceneItem("semantic_scene_browser_changed", scene);
+  }
+  if (scene.frame.sha256 !== expectedFrame?.sha256
+    || scene.frame.sequence !== expectedFrame?.sequence) {
+    return unresolvedSceneItem("semantic_scene_frame_changed", scene);
+  }
+  if (scene.sceneContentSha256 !== expectedSceneContentSha256) {
+    return unresolvedSceneItem("semantic_scene_changed", scene);
+  }
+  if (!Number.isInteger(itemOrdinal) || itemOrdinal < 1 || itemOrdinal > scene.itemCount) {
+    return unresolvedSceneItem("semantic_scene_item_ordinal_invalid", scene);
+  }
+
+  const targets = projectWorkViewSemanticTargets(capture?.semanticTargets);
+  const selected = projectSceneEntries(targets)[itemOrdinal - 1];
+  if (!selected) return unresolvedSceneItem("semantic_scene_item_unavailable", scene);
+  if (selected.item.disabled) return unresolvedSceneItem("semantic_scene_item_disabled", scene);
+
+  const semanticTarget = normaliseWorkViewSemanticTargetReference({
+    registry: WORK_VIEW_SEMANTIC_TARGET_REFERENCE_REGISTRY,
+    operation: "click",
+    targetId: selected.target.targetId,
+    inventorySha256: targets.inventorySha256,
+    frame: {
+      sha256: targets.frame.sha256,
+      sequence: targets.frame.sequence,
+    },
+  });
+  if (!semanticTarget) return unresolvedSceneItem("semantic_scene_target_reference_invalid", scene);
+
+  return {
+    ok: true,
+    reason: null,
+    scene,
+    itemOrdinal,
+    semanticTarget,
+    evidence: {
+      registry: "nixsoma-ai-browser-semantic-scene-click-resolution-v0",
+      sceneContentSha256: scene.sceneContentSha256,
+      itemOrdinal,
+      itemCount: scene.itemCount,
+      browserMatched: true,
+      frameMatched: true,
+      sceneMatched: true,
+      disabled: false,
+    },
   };
 }
 

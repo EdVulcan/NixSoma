@@ -264,6 +264,20 @@ switch。真实 gate 将一个 semantic item 与 active Browser/Weston surface �
 DeepSeek 返回 `no_op`，没有 actuator 调用；scene hash、egress/completion durable
 audit、九个健康端点全部匹配，相关服务零重启且无 warning journal。
 
+第十一个切片目前是源码候选，不能描述为已经部署。DeepSeek 的固定响应契约新增
+`click_item` 和一个 1-based `itemOrdinal`；Core 在 provider 返回后继续复验唯一
+active surface、Browser PID、semantic frame 与 scene content，并在序号越界或目标
+disabled 时于 actuator 前停止。Screen Act 只接收 scene hash、ordinal 与本地
+Browser/frame binding，使用既有 Browser Runtime credential 重新 capture，在本进程
+内把 ordinal 映射成既有 frame-bound semantic target，最多点击一次，再以相同
+Browser PID 和推进后的 fresh frame 做动作后验证。Target id、selector、URL、input
+value、pixel、caller prompt 与 provider reason 不进入 Core/provider/durable summary；
+键盘、文本输入、任意坐标、循环动作、任意 page script、进程/窗口 API、root 与 host
+mutation 仍不包含。1016 项 workspace tests、完整 typecheck、811 项 registry/script
+audit、Windows path budget 和精确 body closure 已通过；physical candidate
+`/nix/store/lb3mif3bad9ss4g3r9y6rig7nwflkabr-nixos-system-nixos-26.05.4808.569d57850992`
+已构建但尚未 switch。完成物理 switch 和真实 gate 后才能把本段提升为完成状态。
+
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
 画面投影、应用生命周期、surface 激活、垂直滚动、AI 单步和 semantic scene

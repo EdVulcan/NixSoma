@@ -16,6 +16,10 @@ import {
   createAiCompositorPointerDispatch,
   hasAiCompositorFrameBinding,
 } from "./ai-compositor-pointer-dispatch.mjs";
+import {
+  createSemanticSceneClickDispatch,
+  normaliseSemanticSceneClickAction,
+} from "./semantic-scene-click-dispatch.mjs";
 
 const host = process.env.OPENCLAW_SCREEN_ACT_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_PORT ?? "4105", 10);
@@ -37,6 +41,13 @@ const executionGrantVerifier = createExecutionGrantVerifier({
 const screenWaitMs = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_WAIT_MS ?? "1500", 10);
 const screenPollMs = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_POLL_MS ?? "100", 10);
 const dispatchAiCompositorPointer = createAiCompositorPointerDispatch({ sessionManagerUrl });
+const dispatchSemanticSceneClick = createSemanticSceneClickDispatch({
+  browserRuntimeUrl,
+  browserRuntimeHeaders: () => createServiceCredentialHeaders({
+    token: browserRuntimeAuthToken,
+    caller: browserRuntimeCaller,
+  }),
+});
 
 const actionState = {
   lastAction: null,
@@ -108,6 +119,24 @@ function updateActionState(action) {
 }
 
 async function executeBrowserAction(kind, params, screen, context = {}) {
+  if (kind === "mouse.semantic_click") {
+    const leaseContext = buildTrustedWorkViewActionLease(screen);
+    if (!leaseContext.ready) {
+      return {
+        registry: leaseContext.registry,
+        attempted: false,
+        required: leaseContext.required,
+        accepted: false,
+        status: "blocked",
+        reason: leaseContext.reason,
+        leaseMatched: false,
+      };
+    }
+    return dispatchSemanticSceneClick({
+      action: params,
+      trustedHelperLease: leaseContext.trustedHelperLease,
+    });
+  }
   const endpoint = kind === "mouse.click"
     ? "/browser/click"
     : kind === "keyboard.type"
@@ -354,6 +383,21 @@ const server = http.createServer(async (req, res) => {
           ...executionGrantContextHeaders(executionGrantContextFromHeaders(req.headers)),
         },
       });
+      sendJson(res, 200, { ok: true, action });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, error.statusCode ?? 400, { ok: false, error: message, code: error.code ?? null });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/act/mouse/semantic-click") {
+    try {
+      const body = await readJsonBody(req);
+      assertExecutionGrant({ verifier: executionGrantVerifier, req, requestUrl, body });
+      const actionParams = normaliseSemanticSceneClickAction(body);
+      if (!actionParams) throw new Error("Invalid semantic scene click action.");
+      const action = await executeAction("mouse.semantic_click", actionParams);
       sendJson(res, 200, { ok: true, action });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

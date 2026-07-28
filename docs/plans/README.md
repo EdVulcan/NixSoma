@@ -276,11 +276,17 @@ generation `jricbfds...` references Browser Runtime `ha9syr...` and Screen Sense
 contacted no actuator, matched durable egress/completion audit, and kept all
 nine health endpoints green.
 
-Freeze this slice. The next Level 4 capability may let the provider select one
-bounded scene-item ordinal that maps locally to the existing frame-bound
-semantic-click owner and executes once. Do not expose target ids/selectors or
-widen it into pixels/OCR, keyboard, text input, repeated loops, arbitrary
-process/window control, root, or host mutation.
+Freeze the deployed tenth slice. Its selected continuation now exists as an
+eleventh source candidate: the provider may return `click_item` with one
+1-based scene-item ordinal; Core recaptures and Screen Act privately resolves
+that ordinal to the existing current frame-bound semantic-click owner, executes
+once, and performs a local post-action capture. Target ids/selectors remain
+inside the actuator chain. Pixels/OCR, keyboard, text input, repeated loops,
+arbitrary process/window control, root, and host mutation remain excluded.
+Deployment and physical provider proof are still pending.
+The source candidate passes 1016 workspace tests, typecheck, exact body closure,
+811-entry registry/script audits, and Windows path budget. Physical generation
+`lb3mif3b...` is built but not switched.
 
 ## Completed Capability Evidence
 

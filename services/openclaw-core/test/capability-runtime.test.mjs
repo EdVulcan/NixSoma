@@ -183,20 +183,22 @@ test("capability runtime rejects caller-controlled AI workspace step inputs", as
   assert.equal(state.capabilityInvocationLog.length, 0);
 });
 
-test("capability runtime executes one server-owned AI workspace step without approval", async () => {
+test("capability runtime records one server-owned semantic click without target authority", async () => {
   const { runtime, state } = createHarness({
     aiWorkspaceSingleStep: {
       invoke: async () => ({
         ok: true,
         registry: "nixsoma-ai-workspace-single-step-v0",
         status: "executed",
-        decision: { actionId: "scroll_down", reason: "transient", confidence: 0.8 },
+        decision: { actionId: "click_item", itemOrdinal: 2, reason: "transient", confidence: 0.8 },
         evidence: {
           contextContentHash: "a".repeat(64),
           requestContentHash: "b".repeat(64),
           responseContentHash: "c".repeat(64),
           sceneContentHash: "d".repeat(64),
           sceneItemCount: 2,
+          itemOrdinal: 2,
+          postActionVerified: true,
         },
         governance: {
           providerCalled: true,
@@ -223,6 +225,9 @@ test("capability runtime executes one server-owned AI workspace step without app
   assert.equal(result.response.result.status, "executed");
   assert.equal(result.response.invocation.summary.kind, "ai.workspace.single_step");
   assert.equal(result.response.invocation.summary.actionExecuted, true);
+  assert.equal(result.response.invocation.summary.actionId, "click_item");
+  assert.equal(result.response.invocation.summary.itemOrdinal, 2);
+  assert.equal(result.response.invocation.summary.postActionVerified, true);
   assert.equal(result.response.invocation.summary.sceneContentHash, "d".repeat(64));
   assert.equal(result.response.invocation.summary.sceneItemCount, 2);
   assert.equal(result.response.invocation.summary.semanticSceneBound, true);
@@ -234,6 +239,8 @@ test("capability runtime executes one server-owned AI workspace step without app
   assert.equal(result.response.invocation.policy.approved, true);
   assert.equal(state.capabilityInvocationLog.length, 1);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("transient"), false);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("targetId"), false);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("selector"), false);
 });
 
 test("capability runtime rejects caller approval and arbitrary standing advisory input", async () => {

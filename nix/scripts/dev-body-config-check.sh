@@ -913,6 +913,7 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/standing-provider-advisory.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-single-step-contract.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-single-step.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-semantic-click.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-single-step.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-plugin-refresh.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-plan-todo.mjs"
@@ -951,7 +952,7 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-frame.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 230 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 231 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -1190,6 +1191,7 @@ EOF
   if [[ "$browser_runtime_out" != /nix/store/*
     || ! -f "$browser_runtime_server"
     || ! -f "$browser_runtime_working_dir/node_modules/puppeteer-core/package.json"
+    || ! -f "$browser_runtime_working_dir/src/browser-semantic-action-evidence.mjs"
     || ! -f "$browser_runtime_working_dir/src/browser-capture-query.mjs"
     || ! -f "$browser_runtime_working_dir/src/browser-graphical-session-binding.mjs"
     || ! -f "$browser_runtime_out/share/openclaw/packages/shared-utils/src/work-view-input-evidence.mjs"
@@ -1197,7 +1199,7 @@ EOF
     || -w "$browser_runtime_server"
     || -e "$browser_runtime_working_dir/node_modules/@openclaw"
     || -e "$browser_runtime_working_dir/node_modules/typescript"
-    || "$browser_runtime_source_count" -ne 17 ]]; then
+    || "$browser_runtime_source_count" -ne 18 ]]; then
     echo "browser-runtime Nix closure is not exact, production-only, and read-only: $browser_runtime_out" >&2
     exit 1
   fi
@@ -1396,8 +1398,10 @@ EOF
     || -w "$screen_act_server"
     || -e "$screen_act_out/share/openclaw/packages/shared-utils/test/http.test.mjs"
     || ! -f "$screen_act_out/share/openclaw/services/openclaw-screen-act/src/ai-compositor-pointer-dispatch.mjs"
+    || ! -f "$screen_act_out/share/openclaw/services/openclaw-screen-act/src/semantic-scene-click-dispatch.mjs"
     || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
-    || "$(find "$screen_act_out" -type f | wc -l)" -ne 15 ]]; then
+    || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
+    || "$(find "$screen_act_out" -type f | wc -l)" -ne 17 ]]; then
     echo "screen-act Nix closure is not exact and read-only: $screen_act_out" >&2
     exit 1
   fi

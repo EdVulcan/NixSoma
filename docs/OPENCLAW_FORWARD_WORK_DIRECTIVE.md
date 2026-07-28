@@ -2177,6 +2177,41 @@ frame-bound semantic-click target and executes at most once. Do not send target
 ids/selectors, add text input, keyboard authority, repeated loops, arbitrary
 page script, process/window APIs, root, or host mutation.
 
+## Level 4 Semantic Scene Click Source Candidate
+
+The eleventh vertical slice is implemented as a source candidate and must not
+yet be described as deployed or physically proven. Provider response contract
+v1 adds one `click_item` action whose `itemOrdinal` is a bounded 1-based index
+into the ordered provider scene; all other actions require a null ordinal.
+Core still accepts no caller prompt/action override and revalidates the exact
+surface, Browser PID, semantic frame, and scene-content hash after the provider
+response. It also rejects an out-of-range or disabled item before actuator
+contact.
+
+Core sends Screen Act only the scene-content hash, ordinal, and local
+Browser/frame bindings under one execution grant. Screen Act uses its existing
+Browser Runtime service credential for a fresh metadata-plus-items capture,
+rebuilds the same bounded scene locally, and privately maps the ordinal to the
+existing frame-bound semantic target. The private target reference is used once
+inside the actuator chain and is absent from Core, provider context, capability
+summary, and durable Core audit. Browser Runtime semantic-action effect evidence
+also drops target identity and inventory identity while retaining only bounded
+local action metadata.
+
+After a successful click, Screen Act performs a new metadata capture and
+requires the same Browser PID plus an advanced fresh semantic frame. If the
+post-action capture is unavailable, execution remains terminal and is never
+retried. `no_op` still does not contact an actuator. Keyboard/text input,
+arbitrary coordinates, multiple actions, repeated loops, arbitrary page script,
+desktop/process/window APIs, root, and host mutation remain outside this slice.
+All 1016 workspace tests, full typecheck, the 811-entry registry/script audits,
+Windows path budget, and exact store-native body closure checks pass. Physical
+candidate
+`/nix/store/lb3mif3bad9ss4g3r9y6rig7nwflkabr-nixos-system-nixos-26.05.4808.569d57850992`
+binds Core `5icv5idf...`, Browser Runtime `h7r2xvnz...`, and Screen Act
+`8cjlnkxn...`. A physical switch and one real provider gate are still required
+before this section can become a completed checkpoint.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

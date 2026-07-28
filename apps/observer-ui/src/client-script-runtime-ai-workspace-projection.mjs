@@ -226,7 +226,8 @@ async function runAiWorkspaceSingleStep() {
       || governance.automaticRepeat !== false
       || governance.keyboardInput !== false
       || governance.mutatesHost !== false
-      || !["executed", "executed_completion_audit_unavailable", "no_op", "local_fallback"].includes(result.status)) {
+      || !(["no_op", "local_fallback"].includes(result.status)
+        || result.status?.startsWith("executed"))) {
       throw new Error("AI workspace single-step result was invalid.");
     }
     if (result.status.startsWith("executed")
@@ -235,7 +236,10 @@ async function runAiWorkspaceSingleStep() {
         || governance.currentActiveSurfaceBound !== true)) {
       throw new Error("AI workspace single-step execution evidence was incomplete.");
     }
-    setControlMessage("AI step: " + actionId + " (" + result.status + ").");
+    const itemSuffix = actionId === "click_item" && Number.isInteger(result.action?.itemOrdinal)
+      ? " #" + result.action.itemOrdinal
+      : "";
+    setControlMessage("AI step: " + actionId + itemSuffix + " (" + result.status + ").");
     await refreshActionState();
     await refreshWorkView();
     await refreshAiWorkspaceProjection();

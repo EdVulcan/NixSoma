@@ -1,10 +1,10 @@
 export const AI_WORKSPACE_SINGLE_STEP_RESPONSE_CONTRACT =
-  "ai_workspace_single_step_v0";
+  "ai_workspace_single_step_v1";
 export const AI_WORKSPACE_SINGLE_STEP_DECISION_REGISTRY =
-  "nixsoma-ai-workspace-single-step-decision-v0";
+  "nixsoma-ai-workspace-single-step-decision-v1";
 
-const ACTION_IDS = new Set(["no_op", "scroll_up", "scroll_down"]);
-const RESPONSE_KEYS = new Set(["actionId", "reason", "confidence"]);
+const ACTION_IDS = new Set(["no_op", "scroll_up", "scroll_down", "click_item"]);
+const RESPONSE_KEYS = new Set(["actionId", "itemOrdinal", "reason", "confidence"]);
 const MAX_RESPONSE_CHARS = 4_000;
 const MAX_REASON_CHARS = 400;
 
@@ -32,6 +32,7 @@ function invalid(reason, responseContentHash) {
       valid: false,
       reason,
       actionId: null,
+      itemOrdinal: null,
       reasonIncluded: false,
       responseContentHash: responseContentHash ?? null,
     },
@@ -40,10 +41,11 @@ function invalid(reason, responseContentHash) {
 
 export function buildAiWorkspaceSingleStepInstruction() {
   return [
-    "Return only one JSON object with exactly actionId, reason, and confidence.",
-    "actionId must be no_op, scroll_up, or scroll_down.",
-    "Choose no_op unless the supplied bounded context reports one current active browser surface, a fresh frame, active action authority, and a semantic scene that justifies one vertical scroll.",
-    "Use only the supplied visible role, name, disabled, and bounds fields to decide whether scrolling up or down is useful.",
+    "Return only one JSON object with exactly actionId, itemOrdinal, reason, and confidence.",
+    "actionId must be no_op, scroll_up, scroll_down, or click_item.",
+    "itemOrdinal must be null for no_op and scrolling, or the 1-based ordered semantic scene item number for click_item.",
+    "Choose no_op unless the supplied bounded context reports one current active browser surface, a fresh frame, active action authority, and a semantic scene that justifies one action.",
+    "Use only the supplied visible role, name, disabled, and bounds fields; never select a disabled item.",
     "The local runtime may execute at most one validated action and will never repeat it automatically.",
     "Do not use caller-supplied prompts or return commands, text input, coordinates, deltas, counts, URLs, file paths, credentials, or additional keys.",
   ].join(" ");
@@ -75,6 +77,7 @@ export function parseAiWorkspaceSingleStepDecision({
   }
 
   const actionId = boundedText(parsed.actionId, 32);
+  const itemOrdinal = parsed.itemOrdinal;
   const reason = boundedText(parsed.reason, MAX_REASON_CHARS);
   const confidence = typeof parsed.confidence === "number"
     && Number.isFinite(parsed.confidence)
@@ -84,11 +87,17 @@ export function parseAiWorkspaceSingleStepDecision({
     : null;
   if (!ACTION_IDS.has(actionId)) return invalid("action_not_allowed", responseContentHash);
   if (!reason || confidence === null) return invalid("fields_invalid", responseContentHash);
+  if (actionId === "click_item"
+    ? !Number.isInteger(itemOrdinal) || itemOrdinal < 1 || itemOrdinal > 12
+    : itemOrdinal !== null) {
+    return invalid("item_ordinal_invalid", responseContentHash);
+  }
 
   const decision = {
     registry: AI_WORKSPACE_SINGLE_STEP_DECISION_REGISTRY,
     contract: AI_WORKSPACE_SINGLE_STEP_RESPONSE_CONTRACT,
     actionId,
+    itemOrdinal,
     reason,
     confidence,
     maximumActions: actionId === "no_op" ? 0 : 1,
@@ -104,6 +113,7 @@ export function parseAiWorkspaceSingleStepDecision({
       valid: true,
       reason: null,
       actionId,
+      itemOrdinal,
       reasonIncluded: false,
       responseContentHash: responseContentHash ?? null,
     },
