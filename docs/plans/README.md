@@ -117,7 +117,7 @@ login-user systemd owner
 -> minimal compositor-owned surface inventory (complete and physically proven)
 -> fixed Nix-managed Workbench start/stop (complete and physically proven)
 -> exact current-surface activation through kiosk shell (complete, deployed, and physically proven)
--> one current-frame- and active-surface-bound vertical scroll step (candidate-ready and physically proven)
+-> one current-frame- and active-surface-bound vertical scroll step (complete, deployed, and physically proven)
 ```
 
 The current source stops before desktop takeover, desktop-wide observation,
@@ -220,7 +220,7 @@ failed units or warning journals. Freeze this lane. The selected next Level 4
 behavior is one bounded current-frame- and active-surface-bound vertical scroll
 step through the existing pointer owner.
 
-That selected behavior is now candidate-ready in `b6qjcbfc...`. The existing
+That selected behavior is now deployed in `b6qjcbfc...`. The existing
 pointer capability accepts only one fixed-center `up` or `down` wheel step and
 binds it to the exact current compositor frame, active numeric surface, and
 inventory sequence. The request remains single-use and audit-first through
@@ -230,9 +230,12 @@ process control remain absent. A real candidate Observer gate scrolled fixture
 surface 2 in both directions with matching receipts and changed post-frames,
 rejected anonymous direct scroll, and restored production healthy. Browser
 Runtime now follows isolated-compositor restarts through `PartOf`, closing the
-stale attachment that an earlier gate exposed. Production remains on
-`7ycsdd61...`; switch `b6qjcbfc...` and rerun the normal lifecycle gate before
-marking the eighth slice deployed.
+stale attachment that an earlier gate exposed. The normal production gate then
+repeated both directions, durable audit, anonymous rejection, and the complete
+surface lifecycle with all nine health endpoints green. Freeze scroll variants.
+The selected next capability is one explicit, schema-bound provider decision
+over the current isolated workspace that can execute at most one existing
+low-risk scroll action before stopping and verifying.
 
 ## Completed Capability Evidence
 

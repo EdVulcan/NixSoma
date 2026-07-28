@@ -47,9 +47,8 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
-triage/repair-promotion bridge, seven deployed Level 4 graphical identity
-slices through governed current-surface activation, and one candidate-ready
-active-surface vertical-scroll slice. All 975 workspace
+triage/repair-promotion bridge, and eight deployed Level 4 graphical identity
+slices through governed active-surface vertical scroll. All 975 workspace
 tests and typecheck pass, the body-config and event-audit integration checks
 pass, the 811-entry milestone registry audit passes, and the Windows path budget
 has no file over 160 repository-relative characters. GitHub CI now enforces
@@ -58,10 +57,10 @@ same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/7ycsdd61qrd6cqr7pmdbwi3lb4sdxcq5-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/b6qjcbfcq1dy7jxjwlbckcw5s70mhszg-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
-grant path, governed surface activation, and Observer controls. The relevant
+grant path, governed surface activation and scroll, and Observer controls. The relevant
 system and user services remain active with zero restarts; the intentionally
 stopped Workbench is `inactive/dead` after its physical lifecycle gate.
 
@@ -2062,10 +2061,10 @@ vertical scroll step through the existing pointer owner; keyboard, hotkeys,
 generic axes/gestures, repeated input, and arbitrary window/process control stay
 deferred.
 
-## Candidate-Ready Level 4 Active-Surface Scroll
+## Completed Level 4 Active-Surface Scroll
 
-The eighth vertical Level 4 slice is implemented and physically proven in the
-non-activated candidate
+The eighth vertical Level 4 slice is implemented, deployed, and physically
+proven in
 `/nix/store/b6qjcbfcq1dy7jxjwlbckcw5s70mhszg-nixos-system-nixos-26.05.4808.569d57850992`.
 It extends only `act.screen.pointer_keyboard` with `mouse.scroll`: exactly one
 `up` or `down` wheel step at fixed compositor coordinates `(640, 360)`. The Core
@@ -2075,22 +2074,27 @@ intent; session-manager revalidates the active surface and frame, requires
 durable pre-execution audit, calls the peer-authenticated mode-0600 Weston socket,
 matches the version-3 receipt, and polls one advancing post-frame.
 
-The real candidate user-plane gate prepared the existing work view, started the
-fixed Workbench, activated fixture surface 2, scrolled it once up and once down,
+The candidate user-plane gate and normal production rerun prepared the existing
+work view, started the fixed Workbench, activated fixture surface 2, scrolled it
+once up and once down,
 returned activation to the Workbench, stopped it, and rejected anonymous direct
 scroll. Both scroll receipts matched the exact frame/surface/inventory request
 and both post-frames changed. The gate also exposed and closed one real lifecycle
 gap: Browser Runtime is now `PartOf=nixsoma-ai-graphical-session.service`, so a
 compositor restart cannot leave a stale headed browser process attached to the
 old socket. Candidate cleanup restored all nine production health endpoints at
-HTTP 200 with no failed units, runtime overrides, or warning journals.
+HTTP 200 with no failed units, runtime overrides, or warning journals. The
+production gate reported counts `0 -> 2 -> 3 -> 2 -> 1`, matching the browser,
+fixture, and fixed Workbench lifecycle.
 
-This slice is candidate-ready, not deployed. Production remains
-`7ycsdd61...` until an explicit generation switch and normal
-`dev-ai-app-lifecycle-check.sh` rerun pass. Do not add caller-defined deltas,
+This slice is deployed and frozen. The next real capability is one explicit,
+bounded AI workspace decision step: observe the current isolated workspace, ask
+the fixed provider for one schema-bound `no_op`, `scroll_up`, or `scroll_down`
+decision, locally revalidate it, execute at most once, and verify the result.
+Do not add caller-defined prompts, deltas,
 coordinates, counts, horizontal axes, gestures, keyboard devices, hotkeys,
-generic window/process control, parent-display access, root, provider, or host
-mutation while closing that deployment gate.
+generic window/process control, parent-display access, root, host mutation, or
+automatic repeated loops.
 
 ## Identity-Upgrade Alignment
 

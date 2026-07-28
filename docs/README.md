@@ -13,11 +13,11 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, and active-surface vertical scroll, plus the completed Level 3 baseline | Seven Level 4 slices deployed; the eighth is candidate-ready and physically proven |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, and active-surface vertical scroll, plus the completed Level 3 baseline | Eight Level 4 slices deployed and physically proven |
 | Local validation | 975 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 811 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/7ycsdd61qrd6cqr7pmdbwi3lb4sdxcq5-nixos-system-nixos-26.05.4808.569d57850992` | Governed current-surface activation deployed and physically proven 2026-07-28 |
-| Previous generation | `/nix/store/vymmz8c3r9gganjd25nwxkj8vyk7gmxd-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by governed surface activation |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/b6qjcbfcq1dy7jxjwlbckcw5s70mhszg-nixos-system-nixos-26.05.4808.569d57850992` | Governed active-surface scroll deployed and physically proven 2026-07-28 |
+| Previous generation | `/nix/store/7ycsdd61qrd6cqr7pmdbwi3lb4sdxcq5-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by governed active-surface scroll |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
 | Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; one 252-token approval-bound call and one 459-token standing call completed | Deployed and proven without prompt, reason, or credential persistence |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, 15-minute cooldown, 3-call/4096-token daily defaults, structured transient recommendation, and local fallback | Deployed; returned `observe_current_screen` without creating a task, approval, or execution |
@@ -29,7 +29,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 surface inventory | Weston publishes at most 16 numeric surface/PID/dimension/activation records through one owner-only atomic file; titles, app-ids, pixels, persistence, parent-display access, and added input authority are excluded | Deployed; physical count moved 0 -> 1 -> 0 with the fixed Workbench |
 | Level 4 application lifecycle | `act.work_view.control` and a single-use session-manager execution grant start or stop only `nixsoma-ai-workbench.service`; Observer provides authenticated controls and readback without repetitive approval | Deployed; real Observer proved start -> matching PID/surface -> stop -> disappearance |
 | Level 4 surface activation | The existing control owner binds one numeric surface id and inventory sequence; session-manager requires audit, fresh pre-frame, peer-authenticated shell receipt, newer activated inventory, and post-frame proof | Deployed; normal production Observer proved fixture 2 -> Workbench 4 with counts 0 -> 2 -> 1 -> 0 |
-| Level 4 active-surface scroll | Existing pointer authority accepts only one `up` or `down` wheel step at fixed output center, bound to the exact current frame, active numeric surface, inventory sequence, execution grant, peer receipt, audit, and post-frame | Candidate-ready in `b6qjcbfc...`; real Observer proved both directions on fixture surface 2 and restored production healthy |
+| Level 4 active-surface scroll | Existing pointer authority accepts only one `up` or `down` wheel step at fixed output center, bound to the exact current frame, active numeric surface, inventory sequence, execution grant, peer receipt, audit, and post-frame | Deployed in `b6qjcbfc...`; normal production Observer proved both directions on fixture surface 2 |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -331,19 +331,19 @@ Workbench 4, frame-bound receipts, durable audit, anonymous rejection, and full
 cleanup while all nine health endpoints remained green with no failed units,
 restarts, or warning journals.
 
-The eighth Level 4 slice is candidate-ready in
+The eighth Level 4 slice is deployed in
 `/nix/store/b6qjcbfcq1dy7jxjwlbckcw5s70mhszg-nixos-system-nixos-26.05.4808.569d57850992`.
 The existing `act.screen.pointer_keyboard` owner now permits one fixed-center
 vertical wheel step in either direction only when the caller supplies the exact
 current compositor frame, active numeric surface, and inventory sequence.
 Session-manager revalidates those bindings before the authenticated Weston
 socket call and retains only compact grant, audit, receipt, and post-frame
-evidence. The candidate Observer gate scrolled fixture surface 2 up and down,
-rejected anonymous direct scroll, and restored all nine production health
-endpoints with no failed units or warning journals. Browser Runtime is now
+evidence. The normal production Observer gate scrolled fixture surface 2 up and
+down, rejected anonymous direct scroll, and proved counts `0 -> 2 -> 3 -> 2 -> 1`
+across prepare, Workbench start/stop, and fixture cleanup. Browser Runtime is now
 `PartOf` the isolated graphical session so a compositor restart cannot retain a
-stale headed-browser attachment. Production remains on `7ycsdd61...` until the
-candidate is explicitly switched and the normal lifecycle gate is rerun.
+stale headed-browser attachment. All nine health endpoints are HTTP 200; relevant
+services are active with zero restarts, no failed units, and no warning journals.
 
 ## Progress Estimate
 
@@ -354,7 +354,7 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 50%; seven slices are deployed and the eighth active-surface-scroll slice is candidate-ready and physically proven |
+| Level 4 graphics-stack-native body | about 50%; eight slices through active-surface scroll are deployed and physically proven |
 | Current bounded product scope | 78-82% |
 | Final whitepaper vision | 48-56% |
 
