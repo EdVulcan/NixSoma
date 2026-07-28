@@ -57,6 +57,7 @@
         assert providerCheckUnit.environment.OPENCLAW_CLOUD_PROVIDER_ENDPOINT == "https://api.deepseek.com";
         assert providerCheckUnit.environment.OPENCLAW_CLOUD_PROVIDER_MODEL == "deepseek-chat";
         assert providerCheckUnit.environment.OPENCLAW_CLOUD_PROVIDER_LIVE_EGRESS == "1";
+        assert providerCheckUnit.environment.OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_ENFORCE_LIMITS == "1";
         assert providerCheckUnit.environment.OPENCLAW_CLOUD_PROVIDER_API_KEY_FILE == "%d/deepseek-api-key";
         assert !(providerCheckUnit.environment ? OPENCLAW_CLOUD_PROVIDER_API_KEY);
         assert builtins.elem

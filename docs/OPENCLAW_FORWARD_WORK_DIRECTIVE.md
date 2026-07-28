@@ -2120,8 +2120,9 @@ durable capability and audit evidence retains only bounded hashes, action id,
 status, budget, and execution facts.
 
 The shared standing advisory owner now supplies both system advice and this
-workspace decision through one single-flight lock, 15-minute cooldown, daily
-call budget, and conservative token budget. Focused tests, the complete
+workspace decision through one single-flight lock. Production/default module
+configuration enforces a 15-minute cooldown plus daily call and conservative
+token budgets; the development profile disables those usage limits. Focused tests, the complete
 workspace suite, typecheck, and the store-native body check pass. The separate
 `dev-ai-workspace-single-step-live-check.sh` gate reused a current healthy
 work-view, created and prepositioned fixture surface 17, consumed one real
@@ -2249,9 +2250,15 @@ carry the same task id. `no_op` remains actuator-free and scroll/click remain on
 action with no replay. All 1023 workspace tests, typecheck, the 811-entry registry,
 997-script audit, Windows path budget, shell syntax, exact 232-file Core closure,
 store-native Core behavior, and the physical-system candidate build pass.
-Today’s 3/3 standing provider budget was already consumed by the deployed
-eleventh-slice gate, so no additional real DeepSeek call was made for this source
-candidate. Text input, arbitrary coordinates, loops, page script,
+The development profile now disables the standing provider cooldown and daily
+call/token enforcement so iterative physical-host gates are not blocked by a
+local usage budget. Production/default module configuration keeps those limits
+enabled. Single-flight execution, pre-egress audit, task/objective/scene binding,
+response-contract validation, and actuator authorization remain mandatory.
+The physical-host candidate carrying this development setting is
+`/nix/store/z5qgq50f2v3sf1sx5k3s3w3j5mw1bzwi-nixos-system-nixos-26.05.4808.569d57850992`;
+it is built but not activated.
+Text input, arbitrary coordinates, loops, page script,
 process/window APIs, root, and host mutation remain excluded.
 
 ## Identity-Upgrade Alignment

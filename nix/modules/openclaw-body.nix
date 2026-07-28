@@ -413,6 +413,7 @@ let
         OPENCLAW_CLOUD_PROVIDER_MODEL = cfg.cloudProvider.model;
         OPENCLAW_CLOUD_PROVIDER_LIVE_EGRESS = if cfg.cloudProvider.liveEgress then "1" else "0";
         OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_ENABLED = if cfg.cloudProvider.standingAdvisory.enable then "1" else "0";
+        OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_ENFORCE_LIMITS = if cfg.cloudProvider.standingAdvisory.enforceLimits then "1" else "0";
         OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_MAX_CALLS_PER_DAY = toString cfg.cloudProvider.standingAdvisory.maxCallsPerDay;
         OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_MAX_TOKENS_PER_DAY = toString cfg.cloudProvider.standingAdvisory.maxTokensPerDay;
         OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_COOLDOWN_SECONDS = toString cfg.cloudProvider.standingAdvisory.cooldownSeconds;
@@ -777,7 +778,12 @@ in
         description = "Enable the network side of the existing approval-bound provider egress gate.";
       };
       standingAdvisory = {
-        enable = mkEnableOption "budgeted standing DeepSeek advice over server-generated fixed-unit health context";
+        enable = mkEnableOption "standing DeepSeek advice over server-generated fixed-unit health context";
+        enforceLimits = mkOption {
+          type = types.bool;
+          default = true;
+          description = "Enforce standing advisory cooldown and UTC-day call/token budgets; development profiles may disable only these usage limits.";
+        };
         maxCallsPerDay = mkOption {
           type = types.ints.between 1 24;
           default = 3;

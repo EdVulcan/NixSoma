@@ -23,6 +23,7 @@ const DEFAULT_MAX_TOKENS_PER_DAY = 4096;
 const DEFAULT_COOLDOWN_SECONDS = 900;
 const MAX_COMPLETION_TOKENS = 256;
 const CONSERVATIVE_TOKEN_CHARGE = 1024;
+const MAX_COUNTER = Number.MAX_SAFE_INTEGER;
 const ALLOWED_LOAD_STATES = new Set(["loaded", "not-found", "error", "masked", "stub"]);
 const ALLOWED_ACTIVE_STATES = new Set([
   "active", "reloading", "inactive", "failed", "activating", "deactivating",
@@ -46,6 +47,12 @@ function hashValue(value) {
 
 function parseBoolean(value) {
   return value === true || value === "true" || value === "1";
+}
+
+function parseBooleanDefaultTrue(value) {
+  return value === undefined || value === null || value === ""
+    ? true
+    : parseBoolean(value);
 }
 
 function boundedInteger(value, fallback, minimum, maximum) {
@@ -76,6 +83,9 @@ function safeHash(value) {
 export function buildStandingProviderAdvisoryConfig({ env = process.env } = {}) {
   return {
     enabled: parseBoolean(env.OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_ENABLED),
+    enforceLimits: parseBooleanDefaultTrue(
+      env.OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_ENFORCE_LIMITS,
+    ),
     maxCallsPerDay: boundedInteger(
       env.OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_MAX_CALLS_PER_DAY,
       DEFAULT_MAX_CALLS_PER_DAY,
@@ -110,15 +120,15 @@ export function normaliseStandingProviderAdvisoryState(state = {}, {
   Object.assign(state, {
     registry: STANDING_PROVIDER_ADVISORY_REGISTRY,
     day: currentDay,
-    callsUsed: sameDay ? boundedInteger(state.callsUsed, 0, 0, 24) : 0,
-    tokensUsed: sameDay ? boundedInteger(state.tokensUsed, 0, 0, 65_536) : 0,
+    callsUsed: sameDay ? boundedInteger(state.callsUsed, 0, 0, MAX_COUNTER) : 0,
+    tokensUsed: sameDay ? boundedInteger(state.tokensUsed, 0, 0, MAX_COUNTER) : 0,
     lastCallAt: safeTimestamp(state.lastCallAt),
     lastContextHash: safeHash(state.lastContextHash),
     lastRequestHash: safeHash(state.lastRequestHash),
     lastResponseHash: safeHash(state.lastResponseHash),
     lastActionId: typeof state.lastActionId === "string" ? state.lastActionId.slice(0, 80) : null,
     lastResult: typeof state.lastResult === "string" ? state.lastResult.slice(0, 80) : "not_called",
-    lastUsageTokens: boundedInteger(state.lastUsageTokens, 0, 0, 65_536),
+    lastUsageTokens: boundedInteger(state.lastUsageTokens, 0, 0, MAX_COUNTER),
   });
   for (const key of Object.keys(state)) {
     if (!["registry", "day", "callsUsed", "tokensUsed", "lastCallAt", "lastContextHash",
@@ -186,11 +196,12 @@ function fallbackResult(reason, state, config) {
       responseContentHash: null,
       actionId: "review_current_todo",
       budget: {
+        limitsEnforced: config.enforceLimits,
         day: state.day,
         callsUsed: state.callsUsed,
-        callsLimit: config.maxCallsPerDay,
+        callsLimit: config.enforceLimits ? config.maxCallsPerDay : null,
         tokensUsed: state.tokensUsed,
-        tokensLimit: config.maxTokensPerDay,
+        tokensLimit: config.enforceLimits ? config.maxTokensPerDay : null,
       },
     },
     governance: {
@@ -238,14 +249,16 @@ export function createStandingProviderAdvisory({
     const invocationAt = now();
     const lastCallMs = Date.parse(state.lastCallAt ?? "");
     const invocationMs = Date.parse(invocationAt);
-    if (Number.isFinite(lastCallMs) && Number.isFinite(invocationMs)
+    if (config.enforceLimits
+      && Number.isFinite(lastCallMs) && Number.isFinite(invocationMs)
       && invocationMs - lastCallMs < config.cooldownSeconds * 1000) {
       return { ok: false, reason: "cooldown" };
     }
-    if (state.callsUsed >= config.maxCallsPerDay) {
+    if (config.enforceLimits && state.callsUsed >= config.maxCallsPerDay) {
       return { ok: false, reason: "call_budget_exhausted" };
     }
-    if (state.tokensUsed + config.conservativeTokenCharge > config.maxTokensPerDay) {
+    if (config.enforceLimits
+      && state.tokensUsed + config.conservativeTokenCharge > config.maxTokensPerDay) {
       return { ok: false, reason: "token_budget_exhausted" };
     }
 
@@ -396,11 +409,12 @@ export function createStandingProviderAdvisory({
           model: providerResult.response?.model ?? binding.model,
           usage: providerResult.response?.usage ?? null,
           budget: {
+            limitsEnforced: config.enforceLimits,
             day: state.day,
             callsUsed: state.callsUsed,
-            callsLimit: config.maxCallsPerDay,
+            callsLimit: config.enforceLimits ? config.maxCallsPerDay : null,
             tokensUsed: state.tokensUsed,
-            tokensLimit: config.maxTokensPerDay,
+            tokensLimit: config.enforceLimits ? config.maxTokensPerDay : null,
           },
         },
       };

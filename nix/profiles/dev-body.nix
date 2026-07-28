@@ -9,6 +9,7 @@
     profile = lib.mkDefault "dev-body";
     repoRoot = "/opt/openclaw";
     operatorAuthTokenFile = lib.mkDefault "/var/lib/openclaw/operator-token";
+    cloudProvider.standingAdvisory.enforceLimits = lib.mkDefault false;
     components = [
       "eventHub"
       "core"

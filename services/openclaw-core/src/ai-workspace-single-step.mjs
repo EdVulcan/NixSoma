@@ -168,11 +168,16 @@ function fallback(reason, standingAdvisory, {
       actionId: "no_op",
       actionExecuted: false,
       budget: {
+        limitsEnforced: providerEvidence.budget?.limitsEnforced
+          ?? config.enforceLimits
+          ?? true,
         day: providerEvidence.budget?.day ?? state.day ?? null,
         callsUsed: providerEvidence.budget?.callsUsed ?? state.callsUsed ?? 0,
-        callsLimit: providerEvidence.budget?.callsLimit ?? config.maxCallsPerDay ?? null,
+        callsLimit: providerEvidence.budget?.callsLimit
+          ?? (config.enforceLimits === false ? null : config.maxCallsPerDay ?? null),
         tokensUsed: providerEvidence.budget?.tokensUsed ?? state.tokensUsed ?? 0,
-        tokensLimit: providerEvidence.budget?.tokensLimit ?? config.maxTokensPerDay ?? null,
+        tokensLimit: providerEvidence.budget?.tokensLimit
+          ?? (config.enforceLimits === false ? null : config.maxTokensPerDay ?? null),
       },
     },
     governance: {

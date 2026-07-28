@@ -9,6 +9,7 @@ const BASE_ENV = {
   OPENCLAW_CLOUD_PROVIDER_MODEL: "deepseek-chat",
   OPENCLAW_CLOUD_PROVIDER_LIVE_EGRESS: "1",
   OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_ENABLED: "1",
+  OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_ENFORCE_LIMITS: "1",
   OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_MAX_CALLS_PER_DAY: "3",
   OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_MAX_TOKENS_PER_DAY: "4096",
   OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_COOLDOWN_SECONDS: "900",
@@ -168,6 +169,25 @@ test("standing advisory enforces conservative daily token budget", async () => {
   assert.equal(result.fallback.reason, "standing_advisory_token_budget_exhausted");
   assert.equal(calls.fetch.length, 0);
   assert.equal(calls.send.length, 0);
+});
+
+test("standing advisory development mode skips cooldown and daily budgets", async () => {
+  const harness = createHarness({
+    state: { day: "2026-07-19", callsUsed: 24, tokensUsed: 65_536 },
+    env: { OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_ENFORCE_LIMITS: "0" },
+  });
+
+  const first = await harness.advisory.invoke();
+  const second = await harness.advisory.invoke();
+
+  assert.equal(first.status, "recommendation_returned");
+  assert.equal(second.status, "recommendation_returned");
+  assert.equal(second.evidence.budget.limitsEnforced, false);
+  assert.equal(second.evidence.budget.callsLimit, null);
+  assert.equal(second.evidence.budget.tokensLimit, null);
+  assert.equal(harness.calls.send.length, 2);
+  assert.equal(harness.state.callsUsed, 26);
+  assert.equal(harness.state.tokensUsed, 67_584);
 });
 
 test("standing advisory rolls daily budgets without restoring unknown state fields", async () => {

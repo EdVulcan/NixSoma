@@ -247,8 +247,9 @@ The fixed DeepSeek response contract allows only `no_op`, `scroll_up`, or
 `scroll_down`. Core refreshes the owner state after the provider response and
 reuses the existing frame/surface-bound `mouse.scroll` grant at most once.
 
-This source shares the standing advisory single-flight, cooldown, daily calls,
-and conservative token budget. Provider reason text remains transient, while
+This source shares the standing advisory single-flight owner. Production/default
+configuration enforces cooldown, daily-call, and conservative-token budgets;
+the development profile disables those usage limits. Provider reason text remains transient, while
 durable summaries retain hashes, action/status, and execution facts. All 991
 workspace tests, typecheck, and the store-native body check pass. The separate
 `dev-ai-workspace-single-step-live-check.sh` gate used real DeepSeek to select
