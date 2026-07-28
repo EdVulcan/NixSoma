@@ -2216,17 +2216,17 @@ restart reproduced restored-but-stopped state; the gate now uses idempotent
 surface, and completed a real contract-v1 DeepSeek call. DeepSeek returned
 `no_op`, so no actuator ran; scene/request hashes and durable egress/completion
 audit matched. The local click branch remains source/closure-proven but not yet
-provider-selected physically.
+provider-selected physically at that eleventh-slice checkpoint.
 
-Do not spend more provider calls trying to force a click. The current scene had
-one enabled `Learn more` link but no task objective, so conservative `no_op` was
-correct.
+At that checkpoint, additional provider calls were intentionally deferred. The
+scene had one enabled `Learn more` link but no task objective, so conservative
+`no_op` was correct and the next slice added server-owned objective binding.
 
-## Level 4 Task-Objective Binding Source Candidate
+## Deployed Level 4 Task-Objective Binding
 
-The twelfth vertical slice is implemented and built as system candidate
-`/nix/store/xv20sdiys622przz94226sacpq9yvgd8-nixos-system-nixos-26.05.4808.569d57850992`;
-it is not yet switched or physically provider-proven. `act.ai.workspace.single_step`
+The twelfth vertical slice is deployed in system generation
+`/nix/store/z5qgq50f2v3sf1sx5k3s3w3j5mw1bzwi-nixos-system-nixos-26.05.4808.569d57850992`.
+`act.ai.workspace.single_step`
 now requires the standard capability `taskId`. Core resolves that existing task
 locally and accepts only queued/running tasks with allow/audit-only policy, an
 explicit operator-reviewed trusted work-view binding, and current authoritative
@@ -2247,7 +2247,7 @@ after the provider response, and rechecks it once more after required action
 audit immediately before actuator dispatch. A changed goal, status, policy,
 version, or trusted binding stops without actuator contact. Execution grants now
 carry the same task id. `no_op` remains actuator-free and scroll/click remain one
-action with no replay. All 1023 workspace tests, typecheck, the 811-entry registry,
+action with no replay. All 1024 workspace tests, typecheck, the 811-entry registry,
 997-script audit, Windows path budget, shell syntax, exact 232-file Core closure,
 store-native Core behavior, and the physical-system candidate build pass.
 The development profile now disables the standing provider cooldown and daily
@@ -2255,9 +2255,12 @@ call/token enforcement so iterative physical-host gates are not blocked by a
 local usage budget. Production/default module configuration keeps those limits
 enabled. Single-flight execution, pre-egress audit, task/objective/scene binding,
 response-contract validation, and actuator authorization remain mandatory.
-The physical-host candidate carrying this development setting is
-`/nix/store/z5qgq50f2v3sf1sx5k3s3w3j5mw1bzwi-nixos-system-nixos-26.05.4808.569d57850992`;
-it is built but not activated.
+The physical switch succeeded and all nine services are active with HTTP 200
+health and zero observed restarts. A real task-grounded gate then passed beyond
+the prior local 3/3 state. DeepSeek selected `click_item` ordinal 1; Core
+revalidated the task objective and semantic scene, executed exactly one governed
+click, and matched durable egress and completion audit. No pixels, URLs, input
+values, target ids, selectors, or objective text entered durable evidence.
 Text input, arbitrary coordinates, loops, page script,
 process/window APIs, root, and host mutation remain excluded.
 

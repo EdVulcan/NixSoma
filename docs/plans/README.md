@@ -285,12 +285,15 @@ once, and performs a local post-action capture. Target ids/selectors remain
 inside the actuator chain. Pixels/OCR, keyboard, text input, repeated loops,
 arbitrary process/window control, root, and host mutation remain excluded.
 Generation deployment and a real provider gate are complete.
-The deployed contract passes 1016 workspace tests, typecheck, exact body closure,
+The deployed contract passes 1024 workspace tests, typecheck, exact body closure,
 811-entry registry/script audits, and Windows path budget. Physical generation
-`lb3mif3b...` is active. A restart recovery gate bound one enabled semantic
-item and received safe `no_op`; the click branch was not physically selected.
-The next slice should bind one bounded server-owned task objective without
-accepting caller prompt text.
+`lb3mif3b...` first proved the safe `no_op` branch. The task-objective
+continuation is now deployed in `z5qgq50f...` with development usage-limit
+enforcement disabled. A real task-grounded gate selected `click_item` ordinal 1
+and executed exactly one scene-bound click with matching durable
+egress/completion audit. All nine health endpoints remained green; pixels, URLs,
+input values, selectors, target ids, objective text, repeated actions, keyboard
+authority, root, and host mutation remained excluded.
 
 ## Completed Capability Evidence
 

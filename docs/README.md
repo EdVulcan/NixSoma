@@ -13,14 +13,14 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, one task-objective-bound provider-decided AI workspace step, bounded browser semantic-scene grounding, and a local semantic-item click contract, plus the completed Level 3 baseline | Eleven Level 4 slices deployed; task-grounded source candidate awaits activation and provider selection |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, one task-objective-bound provider-decided AI workspace step, bounded browser semantic-scene grounding, and a semantic-item click contract, plus the completed Level 3 baseline | Twelve Level 4 slices deployed; task-grounded DeepSeek selected and executed one semantic click |
 | Local validation | 1024 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 811 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/lb3mif3bad9ss4g3r9y6rig7nwflkabr-nixos-system-nixos-26.05.4808.569d57850992` | Semantic-click contract deployed; real DeepSeek v1 gate returned safe `no_op` with durable audit |
-| Previous generation | `/nix/store/jricbfdsixwn4h6jl12hiip7cmfvsnl3-nixos-system-nixos-26.05.4808.569d57850992` | Superseded after the semantic-click candidate switch |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/z5qgq50f2v3sf1sx5k3s3w3j5mw1bzwi-nixos-system-nixos-26.05.4808.569d57850992` | Unlimited development provider policy and task-objective binding deployed; real DeepSeek selected and executed `click_item` once |
+| Previous generation | `/nix/store/lb3mif3bad9ss4g3r9y6rig7nwflkabr-nixos-system-nixos-26.05.4808.569d57850992` | Superseded after the task-objective and development-provider-policy switch |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
-| Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; one approval-bound call and three standing-authorized workspace decisions completed today | Development source disables local cooldown and daily usage enforcement; provider billing remains external |
-| Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, production/default 15-minute cooldown and 3-call/4096-token daily limits, structured transient recommendation, and local fallback | Unlimited development candidate `z5qgq50f...` is built; deployment switch pending |
+| Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; one approval-bound call and four standing-authorized workspace decisions completed today | Deployed development profile disables local cooldown and daily usage enforcement; provider billing remains external |
+| Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, production/default 15-minute cooldown and 3-call/4096-token daily limits, structured transient recommendation, and local fallback | Development profile is deployed without local call/token/cooldown enforcement; a real provider gate passed beyond the prior 3/3 state |
 | Level 4 graphical session | Fixed `nixsoma-ai-0` Weston headless compositor in a hardened, resource-bounded user unit; session-manager and Observer expose read-only ownership/health evidence | Deployed; coexists with GNOME `wayland-0` |
 | Level 4 browser attachment | Existing AI-owned Nix Firefox launches headed on the fixed nested socket, preserves Level 2 lease/capture/action ownership, and exposes compact attachment evidence | Deployed and proven through capture plus lease-bound action |
 | Level 4 compositor frame | Weston launches and authorizes one fixed screenshooter client; session-manager returns a bounded transient 1280x720 PNG and retains metadata only | Deployed; Firefox cannot read the capture directory |
@@ -30,9 +30,9 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 application lifecycle | `act.work_view.control` and a single-use session-manager execution grant start or stop only `nixsoma-ai-workbench.service`; Observer provides authenticated controls and readback without repetitive approval | Deployed; real Observer proved start -> matching PID/surface -> stop -> disappearance |
 | Level 4 surface activation | The existing control owner binds one numeric surface id and inventory sequence; session-manager requires audit, fresh pre-frame, peer-authenticated shell receipt, newer activated inventory, and post-frame proof | Deployed; normal production Observer proved fixture 2 -> Workbench 4 with counts 0 -> 2 -> 1 -> 0 |
 | Level 4 active-surface scroll | Existing pointer authority accepts only one `up` or `down` wheel step at fixed output center, bound to the exact current frame, active numeric surface, inventory sequence, execution grant, peer receipt, audit, and post-frame | Deployed in `b6qjcbfc...`; normal production Observer proved both directions on fixture surface 2 |
-| Level 4 AI workspace single step | Explicit authenticated trigger builds server-owned structural workspace context, shares the standing DeepSeek single-flight owner, accepts only `no_op`/`scroll_up`/`scroll_down`, revalidates frame and active surface, and executes at most one existing scroll | Deployed in `6k51pmrglb...`; real DeepSeek selected and executed one frame/surface-bound `scroll_down` with durable audit |
+| Level 4 AI workspace single step | Explicit authenticated trigger builds a task-objective-bound structural workspace context, shares the standing DeepSeek single-flight owner, accepts only `no_op`/`scroll_up`/`scroll_down`/`click_item`, revalidates task, scene, frame, and active surface, and executes at most one existing action | Deployed in `z5qgq50f...`; real DeepSeek selected and executed one task/scene-bound `click_item` with durable audit |
 | Level 4 browser semantic grounding | Screen Sense projects at most 12 role/name/disabled/bounds items from an explicit metadata-plus-items Browser capture; Core locally binds Browser PID to the active Weston surface, sends no pixels/URL/input value/selector/target id/frame hash, and recaptures before at most one existing action | Deployed in `jricbfds...`; real DeepSeek selected `no_op`, no actuator ran, and scene hash plus durable audit matched |
-| Level 4 semantic item click | DeepSeek may select one 1-based scene ordinal; Core revalidates the scene and Screen Act privately maps that ordinal to the current Browser Runtime frame-bound semantic target, clicks once, then recaptures locally | Deployed in `lb3mif3b...`; real contract-v1 gate returned `no_op`, so the click branch remains source/closure-proven but not yet provider-selected physically |
+| Level 4 semantic item click | DeepSeek may select one 1-based scene ordinal; Core revalidates the scene and Screen Act privately maps that ordinal to the current Browser Runtime frame-bound semantic target, clicks once, then recaptures locally | Deployed in `z5qgq50f...`; task-grounded DeepSeek selected ordinal 1 and the governed click executed exactly once with durable audit |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -406,12 +406,12 @@ binds Core `5icv5idf...`, Browser Runtime `h7r2xvnz...`, and Screen Act
 physical gate recovered it with idempotent `work_view.prepare`, bound one
 enabled `Learn more` item, consumed the third daily standing call, and received
 DeepSeek `no_op`. No actuator ran; scene/request hashes and durable egress plus
-completion audit matched. The next capability must bind a bounded server-owned
-task objective so a semantic click can be justified without accepting a caller
-prompt.
+completion audit matched. That checkpoint selected a bounded server-owned task
+objective as the next capability so a semantic click could be justified without
+accepting a caller prompt.
 
-That task-objective binding is now a source-built twelfth-slice candidate, not
-yet the active generation. The common single-step capability requires an
+That task-objective binding is now the deployed twelfth slice in generation
+`z5qgq50f...`. The common single-step capability requires an
 existing task id, resolves only an executable allow/audit-only task that was
 explicitly bound to the current trusted work view, and projects one short
 non-sensitive objective. Paths, URLs, credentials, prompt-role/override text,
@@ -419,11 +419,13 @@ task metadata, and raw task objects are rejected before provider contact. Core
 binds objective/task-version hashes to the scene, rechecks both after provider
 return and after required action audit, and carries the task id through the
 existing actuator grant. Durable evidence never stores the objective text.
-All 1023 workspace tests, typecheck, registry/script/path checks, the exact 232-file Core
-closure, and candidate
-`/nix/store/xv20sdiys622przz94226sacpq9yvgd8-nixos-system-nixos-26.05.4808.569d57850992`
-pass. The standing provider budget is already 3/3 today, so deployment and one
-real task-grounded provider gate remain pending.
+All 1024 workspace tests, typecheck, registry/script/path checks, the exact 232-file Core
+closure, and generation
+`/nix/store/z5qgq50f2v3sf1sx5k3s3w3j5mw1bzwi-nixos-system-nixos-26.05.4808.569d57850992`
+pass. The development profile disables local usage-limit enforcement. One real
+task-grounded gate selected `click_item` ordinal 1, executed exactly once,
+matched the current scene and durable egress/completion audit, and kept all nine
+health endpoints green.
 
 ## Progress Estimate
 
@@ -434,8 +436,8 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 59%; eleven slices are deployed and a twelfth task-grounded decision slice is source-built |
-| Current bounded product scope | 79-83% |
+| Level 4 graphics-stack-native body | about 60%; twelve slices are deployed and task-grounded semantic click is physically proven |
+| Current bounded product scope | 80-84% |
 | Final whitepaper vision | 49-57% |
 
 ## Current Decision Records
