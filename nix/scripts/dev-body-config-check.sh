@@ -950,7 +950,8 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-frame.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 229 ]]; then
+    || ! -f "$core_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
+    || "$(find "$core_out" -type f | wc -l)" -ne 230 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -1305,10 +1306,12 @@ EOF
     || ! -f "$screen_sense_server"
     || ! -f "$screen_sense_out/share/openclaw/packages/shared-events/src/event-factory.mjs"
     || ! -f "$screen_sense_out/share/openclaw/packages/shared-utils/src/work-view-semantic-targets.mjs"
+    || ! -f "$screen_sense_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
     || ! -f "$screen_sense_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
+    || ! -f "$screen_sense_working_dir/src/browser-semantic-scene-route.mjs"
     || -w "$screen_sense_server"
     || -e "$screen_sense_out/share/openclaw/packages/shared-utils/test/work-view-trust.test.mjs"
-    || "$(find "$screen_sense_out" -type f | wc -l)" -ne 11 ]]; then
+    || "$(find "$screen_sense_out" -type f | wc -l)" -ne 13 ]]; then
     echo "screen-sense Nix closure is not exact and read-only: $screen_sense_out" >&2
     exit 1
   fi

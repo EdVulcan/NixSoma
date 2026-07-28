@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
 
+import { buildWorkViewSemanticScene } from "../../../packages/shared-utils/src/work-view-semantic-scene.mjs";
 import { createAiWorkspaceSingleStep } from "../src/ai-workspace-single-step.mjs";
 
 const NOW = "2026-07-28T08:00:00.000Z";
@@ -33,7 +34,7 @@ function frame(sequence = 4, sha256 = "a".repeat(64)) {
   };
 }
 
-function workView(sequence = 9) {
+function workView(sequence = 9, pid = 999) {
   return {
     status: "prepared",
     helperRuntime: { status: "active", actionAuthority: "active", leaseMatched: true },
@@ -45,21 +46,71 @@ function workView(sequence = 9) {
         socketName: "nixsoma-ai-0",
         sequence,
         count: 1,
-        surfaces: [{ surfaceId: 7, width: 1280, height: 720, activated: true, pid: 999 }],
+        surfaces: [{ surfaceId: 7, width: 1280, height: 720, activated: true, pid }],
       },
     },
   };
+}
+
+function semanticScene({
+  name = "Learn more",
+  frameSha256 = "c".repeat(64),
+  frameSequence = 7,
+  browserPid = 999,
+} = {}) {
+  const visualFrame = {
+    registry: "openclaw-browser-visual-frame-v0",
+    available: true,
+    sourceScope: "ai_owned_active_page_only",
+    desktopWideCapture: false,
+    persisted: false,
+    mediaType: "image/jpeg",
+    encoding: "base64_data_url",
+    width: 960,
+    height: 540,
+    byteLength: 120,
+    sha256: frameSha256,
+    capturedAt: NOW,
+    sequence: frameSequence,
+  };
+  return buildWorkViewSemanticScene({
+    browser: { running: true, browserPid },
+    capture: {
+      activeUrl: "https://private.invalid/must-not-egress",
+      visualFrame,
+      semanticTargets: {
+        available: true,
+        pageUrl: "https://private.invalid/must-not-egress",
+        frame: visualFrame,
+        items: [{
+          targetId: "PRIVATE_TARGET_ID",
+          role: "link",
+          name,
+          disabled: false,
+          bounds: { x: 120, y: 180, width: 90, height: 24 },
+          value: "PRIVATE_INPUT_VALUE",
+          selector: "#private-selector",
+        }],
+      },
+    },
+    now: Date.parse(NOW),
+  });
 }
 
 function harness({
   actionId = "scroll_down",
   invalidContext = false,
   changedContext = false,
+  changedScene = false,
+  changedSemanticFrame = false,
+  nonBrowserSurface = false,
   rejectedAuditName = null,
+  providerFailureReason = null,
 } = {}) {
-  const calls = { fetch: [], post: [], audit: [], decision: [] };
+  const calls = { fetch: [], post: [], audit: [], decision: [], prompt: [], provider: 0 };
   let captureSequence = 4;
   let stateReads = 0;
+  let sceneReads = 0;
   const standingAdvisory = {
     config: { maxCallsPerDay: 3, maxTokensPerDay: 4096 },
     state: { day: "2026-07-28", callsUsed: 1, tokensUsed: 1024 },
@@ -72,9 +123,29 @@ function harness({
         return { ok: false, reason: "context_unavailable" };
       }
       const prompt = options.buildPrompt(context);
+      calls.prompt.push(prompt);
+      calls.provider += 1;
+      assert.equal(prompt.includes("Learn more"), true);
       assert.equal(prompt.includes("pid"), false);
       assert.equal(prompt.includes("sha256"), false);
       assert.equal(prompt.includes("data:image"), false);
+      assert.equal(prompt.includes("https://private.invalid"), false);
+      assert.equal(prompt.includes("PRIVATE_TARGET_ID"), false);
+      assert.equal(prompt.includes("PRIVATE_INPUT_VALUE"), false);
+      assert.equal(prompt.includes("#private-selector"), false);
+      const contextContentHash = hash(JSON.stringify(context));
+      if (providerFailureReason) {
+        return {
+          ok: false,
+          reason: providerFailureReason,
+          evidence: {
+            contextContentHash,
+            requestContentHash: "b".repeat(64),
+            responseContentHash: "d".repeat(64),
+            budget: { callsUsed: 2, callsLimit: 3, tokensUsed: 1104, tokensLimit: 4096 },
+          },
+        };
+      }
       const assistantContent = JSON.stringify({
         actionId,
         reason: "Bounded test decision.",
@@ -89,7 +160,7 @@ function harness({
         ok: true,
         parsed,
         evidence: {
-          contextContentHash: hash(JSON.stringify(context)),
+          contextContentHash,
           requestContentHash: "b".repeat(64),
           responseContentHash: hash(assistantContent),
           actionId,
@@ -103,6 +174,7 @@ function harness({
   const owner = createAiWorkspaceSingleStep({
     standingAdvisory,
     sessionManagerUrl: "http://127.0.0.1:4102",
+    screenSenseUrl: "http://127.0.0.1:4104",
     screenActUrl: "http://127.0.0.1:4105",
     now: () => NOW,
     fetchJson: async (url) => {
@@ -111,10 +183,29 @@ function harness({
         captureSequence += 1;
         return { ok: true, frame: frame(captureSequence, String(captureSequence).padStart(64, "a")) };
       }
-      stateReads += 1;
-      const value = workView(changedContext && stateReads > 1 ? 10 : 9);
-      if (invalidContext) value.helperRuntime.actionAuthority = "suspended";
-      return { ok: true, workView: value };
+      if (url.endsWith("/work-view/state")) {
+        stateReads += 1;
+        const value = workView(
+          changedContext && stateReads > 1 ? 10 : 9,
+          nonBrowserSurface ? 1000 : 999,
+        );
+        if (invalidContext) value.helperRuntime.actionAuthority = "suspended";
+        return { ok: true, workView: value };
+      }
+      if (url.endsWith("/screen/semantic-scene")) {
+        sceneReads += 1;
+        return {
+          ok: true,
+          scene: semanticScene({
+            name: changedScene && sceneReads > 1 ? "Changed scene" : "Learn more",
+            frameSha256: changedSemanticFrame && sceneReads > 1
+              ? "d".repeat(64)
+              : "c".repeat(64),
+            frameSequence: changedSemanticFrame && sceneReads > 1 ? 8 : 7,
+          }),
+        };
+      }
+      throw new Error(`unexpected fetch: ${url}`);
     },
     postJson: async (url, body, options) => {
       calls.post.push({ url, body, options });
@@ -159,6 +250,13 @@ test("AI workspace single-step executes one provider-selected governed scroll", 
   assert.equal(result.governance.maximumActions, 1);
   assert.equal(result.governance.automaticRepeat, false);
   assert.equal(result.governance.currentActiveSurfaceBound, true);
+  assert.equal(result.governance.semanticSceneBound, true);
+  assert.equal(result.governance.currentBrowserSurfaceBound, true);
+  assert.equal(result.governance.pixelsProviderEgress, false);
+  assert.equal(result.governance.urlsProviderEgress, false);
+  assert.equal(result.governance.inputValuesProviderEgress, false);
+  assert.match(result.evidence.sceneContentHash, /^[a-f0-9]{64}$/u);
+  assert.equal(result.evidence.sceneItemCount, 1);
   assert.equal(calls.post.length, 1);
   assert.equal(calls.post[0].url, "http://127.0.0.1:4105/act/mouse/scroll");
   assert.equal(calls.post[0].body.direction, "down");
@@ -173,6 +271,10 @@ test("AI workspace single-step executes one provider-selected governed scroll", 
     "ai_workspace.single_step_completed",
   ]);
   assert.equal(JSON.stringify(result).includes("pid"), false);
+  const auditJson = JSON.stringify(calls.audit);
+  assert.equal(auditJson.includes("Learn more"), false);
+  assert.equal(auditJson.includes("Bounded test decision"), false);
+  assert.equal(auditJson.includes("999"), false);
 });
 
 test("AI workspace single-step honors provider no-op without actuator contact", async () => {
@@ -182,8 +284,22 @@ test("AI workspace single-step honors provider no-op without actuator contact", 
 
   assert.equal(result.status, "no_op");
   assert.equal(result.evidence.actionExecuted, false);
+  assert.equal(result.evidence.sceneItemCount, 1);
+  assert.equal(result.governance.sceneContentProviderEgress, true);
   assert.equal(calls.post.length, 0);
   assert.deepEqual(calls.audit.map((item) => item.name), ["ai_workspace.single_step_completed"]);
+});
+
+test("AI workspace single-step revalidates changed semantic content before no-op completion", async () => {
+  const { owner, calls } = harness({ actionId: "no_op", changedScene: true });
+
+  const result = await owner.invoke();
+
+  assert.equal(result.status, "local_fallback");
+  assert.equal(result.fallback.reason, "ai_workspace_single_step_execution_context_changed");
+  assert.equal(result.governance.providerCalled, true);
+  assert.equal(calls.post.length, 0);
+  assert.equal(calls.audit.length, 0);
 });
 
 test("AI workspace single-step fails local before provider when authority is not ready", async () => {
@@ -193,8 +309,22 @@ test("AI workspace single-step fails local before provider when authority is not
 
   assert.equal(result.status, "local_fallback");
   assert.equal(result.fallback.reason, "ai_workspace_single_step_context_unavailable");
+  assert.equal(result.governance.providerCalled, false);
+  assert.equal(calls.provider, 0);
   assert.equal(calls.post.length, 0);
   assert.equal(calls.audit.length, 0);
+});
+
+test("AI workspace single-step rejects a non-browser active surface before provider egress", async () => {
+  const { owner, calls } = harness({ nonBrowserSurface: true });
+
+  const result = await owner.invoke();
+
+  assert.equal(result.status, "local_fallback");
+  assert.equal(result.fallback.reason, "ai_workspace_single_step_context_unavailable");
+  assert.equal(result.governance.providerCalled, false);
+  assert.equal(calls.provider, 0);
+  assert.equal(calls.post.length, 0);
 });
 
 test("AI workspace single-step rejects changed inventory before actuator contact", async () => {
@@ -204,6 +334,50 @@ test("AI workspace single-step rejects changed inventory before actuator contact
 
   assert.equal(result.status, "local_fallback");
   assert.equal(result.fallback.reason, "ai_workspace_single_step_execution_context_changed");
+  assert.equal(result.governance.providerCalled, true);
+  assert.equal(result.governance.networkEgress, true);
+  assert.equal(result.governance.sceneContentProviderEgress, true);
+  assert.match(result.evidence.sceneContentHash, /^[a-f0-9]{64}$/u);
+  assert.equal(calls.post.length, 0);
+});
+
+test("AI workspace single-step rejects changed semantic content before actuator contact", async () => {
+  const { owner, calls } = harness({ changedScene: true });
+
+  const result = await owner.invoke();
+
+  assert.equal(result.status, "local_fallback");
+  assert.equal(result.fallback.reason, "ai_workspace_single_step_execution_context_changed");
+  assert.equal(result.governance.providerCalled, true);
+  assert.equal(calls.post.length, 0);
+});
+
+test("AI workspace single-step rejects a changed semantic frame before actuator contact", async () => {
+  const { owner, calls } = harness({ changedSemanticFrame: true });
+
+  const result = await owner.invoke();
+
+  assert.equal(result.status, "local_fallback");
+  assert.equal(result.fallback.reason, "ai_workspace_single_step_execution_context_changed");
+  assert.equal(result.governance.providerCalled, true);
+  assert.equal(calls.post.length, 0);
+});
+
+test("AI workspace single-step preserves provider egress evidence after response rejection", async () => {
+  const { owner, calls } = harness({ providerFailureReason: "response_invalid" });
+
+  const result = await owner.invoke();
+
+  assert.equal(result.status, "local_fallback");
+  assert.equal(result.fallback.reason, "ai_workspace_single_step_response_invalid");
+  assert.equal(result.governance.providerCalled, true);
+  assert.equal(result.governance.networkEgress, true);
+  assert.equal(result.governance.semanticSceneBound, true);
+  assert.equal(result.governance.sceneContentProviderEgress, true);
+  assert.match(result.evidence.contextContentHash, /^[a-f0-9]{64}$/u);
+  assert.match(result.evidence.sceneContentHash, /^[a-f0-9]{64}$/u);
+  assert.equal(result.evidence.sceneItemCount, 1);
+  assert.equal(result.evidence.budget.callsUsed, 2);
   assert.equal(calls.post.length, 0);
 });
 

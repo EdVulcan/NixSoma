@@ -42,10 +42,10 @@ export function buildAiWorkspaceSingleStepInstruction() {
   return [
     "Return only one JSON object with exactly actionId, reason, and confidence.",
     "actionId must be no_op, scroll_up, or scroll_down.",
-    "Choose no_op unless the supplied bounded context reports one current active surface, a fresh frame, and active action authority.",
-    "For this explicit one-step traversal, prefer scroll_down when all required context checks are true.",
+    "Choose no_op unless the supplied bounded context reports one current active browser surface, a fresh frame, active action authority, and a semantic scene that justifies one vertical scroll.",
+    "Use only the supplied visible role, name, disabled, and bounds fields to decide whether scrolling up or down is useful.",
     "The local runtime may execute at most one validated action and will never repeat it automatically.",
-    "Do not use caller-supplied prompts or include commands, text input, coordinates, deltas, counts, URLs, file paths, credentials, or additional keys.",
+    "Do not use caller-supplied prompts or return commands, text input, coordinates, deltas, counts, URLs, file paths, credentials, or additional keys.",
   ].join(" ");
 }
 

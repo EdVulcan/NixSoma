@@ -11,6 +11,7 @@ mkOpenClawSourceClosure {
     ../../services/openclaw-screen-sense/package.json
     ../../services/openclaw-screen-sense/src/server.mjs
     ../../services/openclaw-screen-sense/src/capture-adapter.mjs
+    ../../services/openclaw-screen-sense/src/browser-semantic-scene-route.mjs
     ../../packages/shared-events/src/event-factory.mjs
     ../../packages/shared-events/src/event-names.mjs
     ../../packages/shared-utils/package.json
@@ -19,5 +20,6 @@ mkOpenClawSourceClosure {
     ../../packages/shared-utils/src/work-view-trust.mjs
     ../../packages/shared-utils/src/work-view-visual-frame.mjs
     ../../packages/shared-utils/src/work-view-semantic-targets.mjs
+    ../../packages/shared-utils/src/work-view-semantic-scene.mjs
   ];
 }

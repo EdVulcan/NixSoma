@@ -50,7 +50,10 @@ DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
 triage/repair-promotion bridge, and nine deployed Level 4 graphical identity
 slices through one governed provider-decided workspace action. One explicit
 operator trigger can request a schema-bound provider decision and execute at
-most one existing active-surface scroll. All 991 workspace
+most one existing active-surface scroll. A tenth Level 4 slice is source- and
+store-closure-ready: that decision can now be grounded in a bounded semantic
+scene from the active AI-owned browser surface. It is not deployed or physically
+provider-proven yet. All 1002 workspace
 tests and typecheck pass, the body-config and event-audit integration checks
 pass, the 811-entry milestone registry audit passes, and the Windows path budget
 has no file over 160 repository-relative characters. GitHub CI now enforces
@@ -2129,12 +2132,44 @@ binding plus durable egress/action/completion audit, and cleaned the fixture.
 All nine health endpoints remained HTTP 200; relevant services have zero
 restarts, no failed units, and no warning journals.
 
-Do not describe this as visual understanding: the current provider request has
-no image or OCR content. Freeze this action loop. The next real Level 4 gap is a
-bounded, privacy-reviewed scene-content projection from the AI-owned output so
-one decision can be grounded in what the workspace contains. Do not add
-keyboard, multi-step loops, timers, arbitrary input, process/window APIs, root,
-or host mutation before that grounding contract exists.
+Do not describe this as visual understanding: the deployed provider request has
+no image or OCR content. Freeze this structural action loop. Its bounded
+scene-content continuation is the separate source candidate below.
+
+## Source-Validated Level 4 Browser Semantic Scene Grounding
+
+The tenth vertical Level 4 slice is complete in source and in the exact Core and
+Screen Sense Nix store closures. System candidate
+`/nix/store/7j28vnll8p7r6cfi8ysv2lvldpajvq8m-nixos-system-nixos-26.05.4808.569d57850992`
+was built and references those closures, but is not active; the physical host
+still runs generation `6k51pmrglb...`.
+Screen Sense obtains one Browser Runtime metadata-only capture through its
+existing service credential and projects at most 12 visible semantic items.
+Only role, bounded accessible name, disabled state, and integer bounds survive.
+Pixels, OCR, URL, input value, selector, target id, page script, and the full
+Browser Runtime response do not cross this owner boundary.
+
+Core accepts that scene only when it is fresh, internally hash-valid, and its
+local Browser PID exactly matches the sole active Weston surface PID. The
+provider projection removes both PIDs, semantic/compositor frame hashes, and all
+excluded browser fields while retaining the bounded visible items. DeepSeek is
+still restricted to `no_op`, `scroll_up`, or `scroll_down`; no caller prompt or
+action override is accepted.
+
+After a provider response, Core recaptures the work view and semantic scene. A
+surface id/PID, inventory sequence, scene-content hash, or semantic-frame hash
+change stops locally before screen-act. A valid scroll can still execute only
+once through the existing grant/audit/Weston receipt path, while `no_op` never
+contacts the actuator. Durable audit and capability summaries retain the scene
+hash and item count, not item names, Browser PID, or provider reason.
+
+All 1002 workspace tests, typecheck, the 811-entry milestone registry and script
+audits, Windows path budget, and the store-native body check pass. The immediate
+next step is a physical switch to the built candidate and one real active-browser
+scene-grounding gate. Until that generation is deployed and the gate passes, this is not a
+deployed semantic decision capability. Do not widen it to pixel egress, OCR,
+keyboard, click, multi-step loops, arbitrary page script, process/window APIs,
+root, or host mutation.
 
 ## Identity-Upgrade Alignment
 

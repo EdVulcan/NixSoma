@@ -13,7 +13,9 @@ test("AI workspace single-step instruction exposes only the fixed action set", (
   assert.match(instruction, /no_op, scroll_up, or scroll_down/u);
   assert.equal(instruction.includes("keyboard.type"), false);
   assert.equal(instruction.includes("mouse.click"), false);
-  assert.match(instruction, /include commands/u);
+  assert.match(instruction, /semantic scene/u);
+  assert.match(instruction, /role, name, disabled, and bounds/u);
+  assert.match(instruction, /return commands/u);
   assert.match(instruction, /caller-supplied prompts/u);
 });
 

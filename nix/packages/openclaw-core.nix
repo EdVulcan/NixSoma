@@ -31,6 +31,7 @@ mkOpenClawSourceClosure {
     ../../packages/shared-utils/src/work-view-input-evidence.mjs
     ../../packages/shared-utils/src/ai-compositor-input.mjs
     ../../packages/shared-utils/src/work-view-semantic-targets.mjs
+    ../../packages/shared-utils/src/work-view-semantic-scene.mjs
     ../../packages/shared-utils/src/work-view-visual-frame.mjs
     ../../packages/shared-systemd/src/openclaw-hostd-capabilities.json
     ../../packages/shared-systemd/src/openclaw-hostd-capabilities.mjs

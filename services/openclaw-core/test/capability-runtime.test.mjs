@@ -195,12 +195,19 @@ test("capability runtime executes one server-owned AI workspace step without app
           contextContentHash: "a".repeat(64),
           requestContentHash: "b".repeat(64),
           responseContentHash: "c".repeat(64),
+          sceneContentHash: "d".repeat(64),
+          sceneItemCount: 2,
         },
         governance: {
           providerCalled: true,
           actionExecuted: true,
           currentFrameBound: true,
           currentActiveSurfaceBound: true,
+          semanticSceneBound: true,
+          currentBrowserSurfaceBound: true,
+          pixelsProviderEgress: false,
+          urlsProviderEgress: false,
+          inputValuesProviderEgress: false,
         },
       }),
     },
@@ -216,6 +223,13 @@ test("capability runtime executes one server-owned AI workspace step without app
   assert.equal(result.response.result.status, "executed");
   assert.equal(result.response.invocation.summary.kind, "ai.workspace.single_step");
   assert.equal(result.response.invocation.summary.actionExecuted, true);
+  assert.equal(result.response.invocation.summary.sceneContentHash, "d".repeat(64));
+  assert.equal(result.response.invocation.summary.sceneItemCount, 2);
+  assert.equal(result.response.invocation.summary.semanticSceneBound, true);
+  assert.equal(result.response.invocation.summary.currentBrowserSurfaceBound, true);
+  assert.equal(result.response.invocation.summary.pixelsProviderEgress, false);
+  assert.equal(result.response.invocation.summary.urlsProviderEgress, false);
+  assert.equal(result.response.invocation.summary.inputValuesProviderEgress, false);
   assert.equal(result.response.invocation.summary.maximumActions, 1);
   assert.equal(result.response.invocation.policy.approved, true);
   assert.equal(state.capabilityInvocationLog.length, 1);

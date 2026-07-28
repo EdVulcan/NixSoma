@@ -257,11 +257,22 @@ frame/surface evidence and durable egress/action/completion audit, then restored
 the surface inventory to the browser-only baseline. All nine health endpoints
 remained green with no failed units, restarts, or warning journals.
 
-Freeze this checkpoint. The next Level 4 capability should provide one bounded,
-privacy-reviewed scene-content projection from the AI-owned output so the same
-single decision can be grounded in actual workspace content. Do not widen it
-into keyboard, repeated loops, arbitrary process/window control, or a claim of
-visual understanding before that contract is proven.
+Freeze that deployed checkpoint. Its selected continuation is now source- and
+store-closure-ready. Screen Sense obtains a metadata-only Browser capture and
+projects at most 12 visible role/name/disabled/bounds items. Core accepts it only
+when its local Browser PID matches the sole active Weston surface, removes PIDs,
+frame hashes, URLs, input values, selectors, target ids, page script, and pixels
+from provider context, then recaptures after the provider response. Changed
+surface, inventory, scene-content, or semantic-frame evidence stops before
+screen-act; `no_op` performs no action and scrolling remains single-step.
+
+All 1002 workspace tests, typecheck, the 811-entry registry/script audits,
+Windows path budget, and store-native body check pass. This tenth slice is not
+in generation `6k51pmrglb...` yet and has not consumed a real DeepSeek call. The
+system candidate `7j28vnll8...` is built and references the new closures. The
+next release step is its physical switch and one active-browser scene-grounding
+gate. Do not widen it into pixels/OCR, keyboard, click,
+repeated loops, arbitrary process/window control, root, or host mutation.
 
 ## Completed Capability Evidence
 

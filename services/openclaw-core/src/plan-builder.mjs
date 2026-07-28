@@ -141,6 +141,7 @@ export function createPlanBuilder(deps) {
     fetchJson,
     postJson,
     sessionManagerUrl,
+    screenSenseUrl,
     screenActUrl,
     publishAuditEvent,
   });

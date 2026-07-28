@@ -1,4 +1,8 @@
 import { projectAiCompositorFrame } from "../../../packages/shared-utils/src/ai-compositor-frame.mjs";
+import {
+  buildProviderWorkViewSemanticScene,
+  normaliseWorkViewSemanticScene,
+} from "../../../packages/shared-utils/src/work-view-semantic-scene.mjs";
 
 import {
   AI_WORKSPACE_SINGLE_STEP_RESPONSE_CONTRACT,
@@ -40,15 +44,16 @@ function activeSurface(inventory) {
   if (!surfaceId || !boundedInteger(surface.width) || !boundedInteger(surface.height)) return null;
   return {
     surfaceId,
+    pid: boundedInteger(surface.pid),
     width: surface.width,
     height: surface.height,
   };
 }
 
-function compactProviderContext({ observedAt, workView, frame, inventory, surface }) {
+function compactProviderContext({ observedAt, workView, frame, inventory, surface, semanticScene }) {
   const helper = workView.helperRuntime;
   return {
-    registry: "nixsoma-ai-workspace-single-step-context-v0",
+    registry: "nixsoma-ai-workspace-single-step-context-v1",
     observedAt,
     workspace: {
       prepared: workView.status === "prepared",
@@ -67,8 +72,13 @@ function compactProviderContext({ observedAt, workView, frame, inventory, surfac
         available: true,
         sequence: inventory.sequence,
         count: inventory.count,
-        activeSurface: surface,
+        activeSurface: {
+          surfaceId: surface.surfaceId,
+          width: surface.width,
+          height: surface.height,
+        },
       },
+      semanticScene,
     },
     requestedBehavior: {
       maximumActions: 1,
@@ -87,14 +97,25 @@ function compactProviderContext({ observedAt, workView, frame, inventory, surfac
       filePaths: true,
       credentials: true,
       callerPrompt: true,
+      semanticFrameHash: true,
+      browserPid: true,
+      targetIds: true,
+      selectors: true,
+      inputValues: true,
     },
   };
 }
 
-function fallback(reason, standingAdvisory) {
+function fallback(reason, standingAdvisory, {
+  providerDecision = null,
+  decisionContext = null,
+} = {}) {
   const state = standingAdvisory?.state ?? {};
   const config = standingAdvisory?.config ?? {};
-  const providerCalled = ["provider_failed", "response_invalid"].includes(reason);
+  const providerCalled = providerDecision?.ok === true
+    || ["provider_failed", "response_invalid"].includes(reason);
+  const providerEvidence = providerDecision?.evidence ?? {};
+  const scene = decisionContext?.scene ?? null;
   return {
     ok: true,
     registry: AI_WORKSPACE_SINGLE_STEP_REGISTRY,
@@ -104,17 +125,22 @@ function fallback(reason, standingAdvisory) {
       actionId: "no_op",
     },
     evidence: {
-      contextContentHash: null,
-      requestContentHash: null,
-      responseContentHash: null,
+      contextContentHash: providerEvidence.contextContentHash
+        ?? (providerCalled ? state.lastContextHash ?? null : null),
+      requestContentHash: providerEvidence.requestContentHash
+        ?? (providerCalled ? state.lastRequestHash ?? null : null),
+      responseContentHash: providerEvidence.responseContentHash
+        ?? (providerCalled ? state.lastResponseHash ?? null : null),
+      sceneContentHash: scene?.sceneContentSha256 ?? null,
+      sceneItemCount: scene?.itemCount ?? 0,
       actionId: "no_op",
       actionExecuted: false,
       budget: {
-        day: state.day ?? null,
-        callsUsed: state.callsUsed ?? 0,
-        callsLimit: config.maxCallsPerDay ?? null,
-        tokensUsed: state.tokensUsed ?? 0,
-        tokensLimit: config.maxTokensPerDay ?? null,
+        day: providerEvidence.budget?.day ?? state.day ?? null,
+        callsUsed: providerEvidence.budget?.callsUsed ?? state.callsUsed ?? 0,
+        callsLimit: providerEvidence.budget?.callsLimit ?? config.maxCallsPerDay ?? null,
+        tokensUsed: providerEvidence.budget?.tokensUsed ?? state.tokensUsed ?? 0,
+        tokensLimit: providerEvidence.budget?.tokensLimit ?? config.maxTokensPerDay ?? null,
       },
     },
     governance: {
@@ -125,6 +151,12 @@ function fallback(reason, standingAdvisory) {
       maximumActions: 1,
       actionExecuted: false,
       automaticRepeat: false,
+      semanticSceneBound: scene !== null,
+      currentBrowserSurfaceBound: scene !== null,
+      sceneContentProviderEgress: providerCalled && scene !== null,
+      pixelsProviderEgress: false,
+      urlsProviderEgress: false,
+      inputValuesProviderEgress: false,
       createsTask: false,
       createsApproval: false,
       keyboardInput: false,
@@ -141,24 +173,33 @@ export function createAiWorkspaceSingleStep({
   fetchJson,
   postJson,
   sessionManagerUrl,
+  screenSenseUrl,
   screenActUrl,
   publishAuditEvent = async () => ({ ok: true }),
   now = () => new Date().toISOString(),
 } = {}) {
   async function observeContext(observedAt) {
-    const frameResponse = await fetchJson(`${sessionManagerUrl}/work-view/compositor-frame`);
-    const stateResponse = await fetchJson(`${sessionManagerUrl}/work-view/state`);
+    const [frameResponse, stateResponse, sceneResponse] = await Promise.all([
+      fetchJson(`${sessionManagerUrl}/work-view/compositor-frame`),
+      fetchJson(`${sessionManagerUrl}/work-view/state`),
+      fetchJson(`${screenSenseUrl}/screen/semantic-scene`),
+    ]);
     const workView = stateResponse?.workView;
     const graphical = workView?.aiGraphicalSession;
     const helper = workView?.helperRuntime;
     const inventory = graphical?.surfaceInventory;
+    const validationNow = Date.parse(observedAt);
     const frame = projectAiCompositorFrame(frameResponse?.frame, {
       includeData: false,
-      now: Date.parse(observedAt),
+      now: validationNow,
       width: FRAME_WIDTH,
       height: FRAME_HEIGHT,
     });
     const surface = activeSurface(inventory);
+    const scene = normaliseWorkViewSemanticScene(sceneResponse?.scene, {
+      now: validationNow,
+    });
+    const providerScene = buildProviderWorkViewSemanticScene(scene);
     if (workView?.status !== "prepared"
       || helper?.status !== "active"
       || helper.actionAuthority !== "active"
@@ -168,14 +209,26 @@ export function createAiWorkspaceSingleStep({
       || frame.available !== true
       || frame.fresh !== true
       || frame.socketName !== SOCKET_NAME
-      || !surface) {
+      || !surface
+      || !surface.pid
+      || !scene
+      || !providerScene
+      || scene.browserPid !== surface.pid) {
       throw new Error("AI workspace single-step context is not ready.");
     }
     return {
-      provider: compactProviderContext({ observedAt, workView, frame, inventory, surface }),
+      provider: compactProviderContext({
+        observedAt,
+        workView,
+        frame,
+        inventory,
+        surface,
+        semanticScene: providerScene,
+      }),
       frame,
       inventorySequence: inventory.sequence,
       surface,
+      scene,
     };
   }
 
@@ -207,18 +260,49 @@ export function createAiWorkspaceSingleStep({
         maximumActions: 1,
         callerPromptAccepted: false,
         automaticRepeat: false,
+        semanticSceneRequired: true,
+        pixelsEgress: false,
+        urlsEgress: false,
+        inputValuesEgress: false,
       },
       successResult: "ai_workspace_single_step_decision_returned",
     });
-    if (!providerDecision.ok) return fallback(providerDecision.reason, standingAdvisory);
+    if (!providerDecision.ok) {
+      return fallback(providerDecision.reason, standingAdvisory, {
+        providerDecision,
+        decisionContext,
+      });
+    }
 
     const decision = providerDecision.parsed.decision;
+    let executionContext;
+    try {
+      executionContext = await observeContext(now());
+    } catch {
+      return fallback("execution_context_unavailable", standingAdvisory, {
+        providerDecision,
+        decisionContext,
+      });
+    }
+    if (executionContext.surface.surfaceId !== decisionContext.surface.surfaceId
+      || executionContext.surface.pid !== decisionContext.surface.pid
+      || executionContext.inventorySequence !== decisionContext.inventorySequence
+      || executionContext.scene.sceneContentSha256 !== decisionContext.scene.sceneContentSha256
+      || executionContext.scene.frame.sha256 !== decisionContext.scene.frame.sha256) {
+      return fallback("execution_context_changed", standingAdvisory, {
+        providerDecision,
+        decisionContext,
+      });
+    }
+
     if (decision.actionId === "no_op") {
       await publishRequiredAudit("ai_workspace.single_step_completed", {
         registry: AI_WORKSPACE_SINGLE_STEP_REGISTRY,
         at: now(),
         contextContentHash: providerDecision.evidence.contextContentHash,
         responseContentHash: providerDecision.evidence.responseContentHash,
+        sceneContentHash: decisionContext.scene.sceneContentSha256,
+        sceneItemCount: decisionContext.scene.itemCount,
         actionId: "no_op",
         actionExecuted: false,
         maximumActions: 1,
@@ -231,6 +315,8 @@ export function createAiWorkspaceSingleStep({
         decision,
         evidence: {
           ...providerDecision.evidence,
+          sceneContentHash: decisionContext.scene.sceneContentSha256,
+          sceneItemCount: decisionContext.scene.itemCount,
           actionExecuted: false,
           executionFrame: null,
           postFrame: null,
@@ -243,6 +329,12 @@ export function createAiWorkspaceSingleStep({
           maximumActions: 1,
           actionExecuted: false,
           automaticRepeat: false,
+          semanticSceneBound: true,
+          currentBrowserSurfaceBound: true,
+          sceneContentProviderEgress: true,
+          pixelsProviderEgress: false,
+          urlsProviderEgress: false,
+          inputValuesProviderEgress: false,
           createsTask: false,
           createsApproval: false,
           keyboardInput: false,
@@ -252,17 +344,6 @@ export function createAiWorkspaceSingleStep({
           mutatesHost: false,
         },
       };
-    }
-
-    let executionContext;
-    try {
-      executionContext = await observeContext(now());
-    } catch {
-      return fallback("execution_context_unavailable", standingAdvisory);
-    }
-    if (executionContext.surface.surfaceId !== decisionContext.surface.surfaceId
-      || executionContext.inventorySequence !== decisionContext.inventorySequence) {
-      return fallback("execution_context_changed", standingAdvisory);
     }
 
     const direction = decision.actionId === "scroll_up" ? "up" : "down";
@@ -285,6 +366,8 @@ export function createAiWorkspaceSingleStep({
       at: now(),
       contextContentHash: providerDecision.evidence.contextContentHash,
       responseContentHash: providerDecision.evidence.responseContentHash,
+      sceneContentHash: decisionContext.scene.sceneContentSha256,
+      sceneItemCount: decisionContext.scene.itemCount,
       actionId: decision.actionId,
       direction,
       surfaceId: actionBody.surfaceId,
@@ -323,6 +406,8 @@ export function createAiWorkspaceSingleStep({
         at: now(),
         contextContentHash: providerDecision.evidence.contextContentHash,
         responseContentHash: providerDecision.evidence.responseContentHash,
+        sceneContentHash: decisionContext.scene.sceneContentSha256,
+        sceneItemCount: decisionContext.scene.itemCount,
         actionId: decision.actionId,
         actionExecuted: true,
         direction,
@@ -351,6 +436,8 @@ export function createAiWorkspaceSingleStep({
       },
       evidence: {
         ...providerDecision.evidence,
+        sceneContentHash: decisionContext.scene.sceneContentSha256,
+        sceneItemCount: decisionContext.scene.itemCount,
         actionExecuted: true,
         executionFrame: {
           sha256: input.frame?.sha256 ?? actionBody.compositorFrame.sha256,
@@ -374,6 +461,12 @@ export function createAiWorkspaceSingleStep({
         automaticRepeat: false,
         currentFrameBound: true,
         currentActiveSurfaceBound: true,
+        semanticSceneBound: true,
+        currentBrowserSurfaceBound: true,
+        sceneContentProviderEgress: true,
+        pixelsProviderEgress: false,
+        urlsProviderEgress: false,
+        inputValuesProviderEgress: false,
         createsTask: false,
         createsApproval: false,
         keyboardInput: false,

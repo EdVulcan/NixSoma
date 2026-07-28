@@ -9,6 +9,10 @@ import {
   projectWorkViewSemanticTargets,
   summariseWorkViewSemanticTargets,
 } from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
+import {
+  createBrowserSemanticSceneReader,
+  createBrowserSemanticSceneRoute,
+} from "./browser-semantic-scene-route.mjs";
 
 function inputEvidenceText(evidence) {
   return evidence?.registry === "openclaw-write-only-input-evidence-v0"
@@ -78,6 +82,15 @@ function browserRuntimeHeaders(extraHeaders = {}) {
     extraHeaders,
   });
 }
+
+const readBrowserSemanticScene = createBrowserSemanticSceneReader({
+  browserRuntimeUrl,
+  browserRuntimeHeaders,
+});
+const handleBrowserSemanticSceneRoute = createBrowserSemanticSceneRoute({
+  readBrowserSemanticScene,
+  sendJson,
+});
 
 
 function updateScreenState(patch) {
@@ -417,6 +430,8 @@ const server = http.createServer(async (req, res) => {
     sendJson(res, 200, { ok: true, screen });
     return;
   }
+
+  if (await handleBrowserSemanticSceneRoute(req, res, requestUrl)) return;
 
   if (req.method === "GET" && requestUrl.pathname === "/screen/provider") {
     const upstream = await readUpstreamState();
