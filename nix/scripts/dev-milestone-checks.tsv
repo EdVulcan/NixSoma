@@ -24,6 +24,7 @@ openclaw-native-declarative-evolution-staging	dev-openclaw-native-declarative-ev
 body-config	dev-body-config-check.sh	NixOS body module, profiles, and systemd service skeleton
 state-settling	dev-state-settling-check.sh	Session/browser/screen first-frame settling
 ai-bounded-run-live	dev-ai-bounded-run-live-check.sh	Physical task-bound two-step AI workspace run with verified-scroll-only continuation
+ai-input-persistence-audit	dev-ai-input-persistence-audit-check.sh	Root read-only canary audit across AI workspace persistent state, logs, browser remnants, and journal
 openclaw-ai-work-view-capture	dev-openclaw-ai-work-view-capture-check.sh	Browser-runtime-backed AI work view capture metadata through screen-sense
 openclaw-ai-work-view-capture-summary	dev-openclaw-ai-work-view-capture-summary-check.sh	Structured AI work view capture summaries through browser-runtime and screen-sense
 openclaw-ai-work-view-task-verification-summary	dev-openclaw-ai-work-view-task-verification-summary-check.sh	Task verification records AI work view summary evidence

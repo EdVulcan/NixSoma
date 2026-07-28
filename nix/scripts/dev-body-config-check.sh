@@ -538,7 +538,10 @@ for (const [name, unit] of [["session", ownership.session], ["browser", ownershi
   }
 }
 if (ownership.browser.environment?.OPENCLAW_BROWSER_ENGINE_MODE !== "firefox"
-  || ownership.browser.environment?.OPENCLAW_BROWSER_PROFILE_DIR !== "%S/openclaw/browser-profile"
+  || ownership.browser.environment?.OPENCLAW_BROWSER_PROFILE_DIR !== "%t/openclaw-browser-runtime/profile"
+  || !String(ownership.browser.serviceConfig?.ExecStartPre ?? "").endsWith("/bin/rm -rf %S/openclaw/browser-profile")
+  || ownership.browser.serviceConfig?.RuntimeDirectory !== "openclaw-browser-runtime"
+  || ownership.browser.serviceConfig?.RuntimeDirectoryMode !== "0700"
   || !String(ownership.browser.environment?.OPENCLAW_BROWSER_EXECUTABLE ?? "").endsWith("/bin/firefox")
   || ownership.browser.environment?.OPENCLAW_BROWSER_GRAPHICAL_SESSION_ENABLED !== "1"
   || ownership.browser.environment?.OPENCLAW_BROWSER_GRAPHICAL_SESSION_MODE !== "nested_headed_wayland"
@@ -552,7 +555,7 @@ if (ownership.browser.environment?.OPENCLAW_BROWSER_ENGINE_MODE !== "firefox"
   || !ownership.browser.after?.includes("nixsoma-ai-graphical-session.service")
   || !ownership.browser.partOf?.includes("nixsoma-ai-graphical-session.service")
   || JSON.stringify(ownership.browser.serviceConfig?.UnsetEnvironment) !== JSON.stringify(["DISPLAY", "WAYLAND_DISPLAY", "WAYLAND_SOCKET", "DBUS_SESSION_BUS_ADDRESS"])) {
-  throw new Error(`desktop browser runtime must use the Nix-managed Firefox user profile: ${JSON.stringify(ownership.browser)}`);
+  throw new Error(`desktop browser runtime must use the Nix-managed Firefox runtime-only profile: ${JSON.stringify(ownership.browser)}`);
 }
 if (ownership.browser.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || !String(ownership.browser.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")

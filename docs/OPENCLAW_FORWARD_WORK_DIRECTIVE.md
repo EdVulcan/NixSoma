@@ -2333,13 +2333,21 @@ the existing one-step gate to type into `Customer name` before creating a
 separate two-step scroll task. A physical preflight showed the fixed Weston
 wheel step advances the frame but moves this page by only about one CSS pixel,
 so the gate does not widen input authority merely to combine both actions into
-one run. It needs no local SSRF exception or manual page setup.
+one run. The type task contains two separate canary fragments rather than the
+complete value; the gate verifies the exact typed character count and rejects
+the complete canary or an `inputText` field across all relevant live readbacks.
+The user Firefox profile has moved from persistent `%S` state to
+`%t/openclaw-browser-runtime/profile` on runtime tmpfs, and startup removes only
+the legacy AI profile directory. The registered
+`dev-ai-input-persistence-audit-check.sh` then performs a root read-only scan of
+system/user state, logs, browser remnants, and journal. It needs no local SSRF
+exception or manual page setup.
 All 1046 workspace tests, full typecheck, 236-file Core closure
-`rsszhq...`, 80-file Observer closure `2nb3f44...`, 812-entry registry,
-998-script audit, Windows path budget, body-config gate, and combined candidate
-`/nix/store/gbcvd8yd44231ppf72zgjhzpcrlmv6fn-nixos-system-nixos-26.05.4808.569d57850992`
+`rsszhq...`, 80-file Observer closure `2nb3f44...`, 813-entry registry,
+999-script audit, Windows path budget, body-config gate, and combined candidate
+`/nix/store/80lycg1gv8i95bm60ss1vc7058h195q9-nixos-system-nixos-26.05.4808.569d57850992`
 pass. The candidate also includes the pending semantic-type route correction;
-deployment and both physical gates remain pending.
+deployment, the live gate, and the root persistence audit remain pending.
 
 ## Identity-Upgrade Alignment
 

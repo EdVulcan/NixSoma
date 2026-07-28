@@ -312,7 +312,7 @@ let
       userScope = scope == "user";
       stateDir = if userScope then cfg.userService.stateDir else cfg.stateDir;
       logDir = if userScope then cfg.userService.logDir else cfg.logDir;
-      browserProfileDir = if userScope then "${stateDir}/browser-profile" else cfg.browserEngine.profileDir;
+      browserProfileDir = if userScope then "%t/openclaw-browser-runtime/profile" else cfg.browserEngine.profileDir;
       runtimeRoot =
         if spec ? runtimePackage && spec.runtimePackage != null
         then "${spec.runtimePackage}/share/openclaw"
@@ -433,6 +433,10 @@ let
       } // optionalAttrs (!userScope && cfg.user != null) {
         User = cfg.user;
         Group = cfg.group;
+      } // optionalAttrs (userScope && spec.key == "browserRuntime") {
+        ExecStartPre = [ "${pkgs.coreutils}/bin/rm -rf %S/openclaw/browser-profile" ];
+        RuntimeDirectory = "openclaw-browser-runtime";
+        RuntimeDirectoryMode = "0700";
       } // optionalAttrs (!userScope && spec.key == "core") {
         UMask = "0077";
       } // optionalAttrs (credentialLoads != [ ]) {

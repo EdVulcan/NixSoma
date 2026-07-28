@@ -320,11 +320,16 @@ terminate; there is no third call or automatic retry. Observer exposes `AI Run`
 and a registered live gate checks per-step plus run-level audit without input
 text. The gate self-navigates to the public httpbin form and uses a textbox that
 is already visible for the existing one-step type proof, then creates a separate
-two-step scroll task for continuation proof. All 1046 tests,
+two-step scroll task for continuation proof. The type task supplies two separate
+canary fragments, verifies the exact write-only character count, and rejects the
+complete value from all live readbacks. Firefox now keeps its ephemeral profile
+in user runtime tmpfs and removes only the legacy AI profile on startup, while a
+registered root read-only gate audits persistent
+state, logs, browser remnants, and journal after the run. All 1046 tests,
 typecheck, exact 236-file Core and 80-file Observer
-closures, 812-entry registry, 998-script audit, path budget, body-config gate,
-and combined candidate `gbcvd8...` pass. It also contains the pending semantic
-type correction; switch and physical proof remain pending.
+closures, 813-entry registry, 999-script audit, path budget, body-config gate,
+and combined candidate `80lycg...` pass. It also contains the pending semantic
+type correction; switch, physical proof, and root persistence audit remain pending.
 
 ## Completed Capability Evidence
 

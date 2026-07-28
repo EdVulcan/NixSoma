@@ -15,6 +15,10 @@ TARGET_URL="${NIXSOMA_AI_BOUNDED_RUN_URL:-https://httpbin.org/forms/post}"
 TASK_GOAL="${NIXSOMA_AI_BOUNDED_RUN_TASK_GOAL:-Scroll down to inspect additional form controls below the current viewport}"
 EXPECTED_STEPS="${NIXSOMA_AI_BOUNDED_RUN_EXPECT_STEPS:-2}"
 PROVE_TYPE="${NIXSOMA_AI_BOUNDED_RUN_PROVE_TYPE:-1}"
+TYPE_CANARY_PART_A="NXS4"
+TYPE_CANARY_PART_B="L4P729Q"
+TYPE_CANARY="${TYPE_CANARY_PART_A}${TYPE_CANARY_PART_B}"
+TYPE_TASK_GOAL="Type the exact concatenation of ${TYPE_CANARY_PART_A} and ${TYPE_CANARY_PART_B}, without spaces or punctuation, into the Customer name textbox"
 
 if [[ ! "$EXPECTED_STEPS" =~ ^[12]$ ]]; then
   printf 'NIXSOMA_AI_BOUNDED_RUN_EXPECT_STEPS must be 1 or 2\n' >&2
@@ -58,6 +62,19 @@ done
 for unit in nixsoma-ai-graphical-session.service openclaw-session-manager.service openclaw-browser-runtime.service; do
   [[ "$(systemctl --user is-active "$unit")" == "active" ]]
 done
+browser_environment="$(systemctl --user show openclaw-browser-runtime.service -p Environment --value)"
+browser_profile_dir=""
+for assignment in $browser_environment; do
+  case "$assignment" in
+    OPENCLAW_BROWSER_PROFILE_DIR=*)
+      browser_profile_dir="${assignment#OPENCLAW_BROWSER_PROFILE_DIR=}"
+      ;;
+  esac
+done
+if [[ -z "$browser_profile_dir" || "$browser_profile_dir" != "$XDG_RUNTIME_DIR/"* ]]; then
+  printf 'AI browser profile is not runtime-only: %s\n' "${browser_profile_dir:-missing}" >&2
+  exit 1
+fi
 
 stage "preparing current work-view authority"
 post_json "$CORE_URL/capabilities/invoke" \
@@ -123,9 +140,14 @@ fi
 
 if [[ "$PROVE_TYPE" == "1" ]]; then
   stage "proving one write-only semantic type before the bounded continuation"
-  NIXSOMA_AI_SCENE_TASK_GOAL="Type NixSoma into the Customer name textbox" \
+  NIXSOMA_AI_SCENE_TASK_GOAL="$TYPE_TASK_GOAL" \
   NIXSOMA_AI_SCENE_EXPECTED_ACTION="type_item" \
+  NIXSOMA_AI_SCENE_EXPECTED_INPUT_CHAR_COUNT="${#TYPE_CANARY}" \
     bash "$SCRIPT_DIR/dev-ai-browser-scene-grounding-live-check.sh" > "$tmp_dir/type-proof.json"
+  if grep -Fq -- "$TYPE_CANARY" "$tmp_dir/type-proof.json"; then
+    printf 'AI bounded run type proof exposed the write-only canary\n' >&2
+    exit 1
+  fi
 fi
 
 stage "creating and binding one reviewed task"
@@ -159,14 +181,28 @@ run_payload="$(node -e '
 post_json "$CORE_URL/capabilities/invoke" "$run_payload" > "$tmp_dir/run.json"
 curl -fsS "$EVENT_HUB_URL/events/audit?limit=400" > "$tmp_dir/events.json"
 curl -fsS "$SCREEN_ACT_URL/act/state" > "$tmp_dir/action-state.json"
+curl -fsS "$CORE_URL/capabilities/invocations?limit=100" > "$tmp_dir/invocations.json"
+curl -fsS "$CORE_URL/state/runtime" > "$tmp_dir/runtime.json"
+curl -fsS "$SESSION_MANAGER_URL/work-view/state" > "$tmp_dir/work-view.json"
+curl -fsS "$BROWSER_RUNTIME_URL/browser/state" > "$tmp_dir/browser-state.json"
+curl -fsS "$SCREEN_SENSE_URL/screen/semantic-scene" > "$tmp_dir/semantic-scene.json"
+browser_profile_filesystem="$(stat -f -c %T "$browser_profile_dir")"
+if [[ "$browser_profile_filesystem" != "tmpfs" ]]; then
+  printf 'AI browser profile filesystem is not tmpfs: %s\n' "$browser_profile_filesystem" >&2
+  exit 1
+fi
 
 stage "verifying bounded continuation, durable audit, and no plaintext state"
-node - "$tmp_dir" "$task_id" "$EXPECTED_STEPS" <<'NODE'
+node - "$tmp_dir" "$task_id" "$EXPECTED_STEPS" "$PROVE_TYPE" "$TYPE_CANARY" "$browser_profile_filesystem" <<'NODE'
+const { createHash } = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 const directory = process.argv[2];
 const taskId = process.argv[3];
 const expectedSteps = Number(process.argv[4]);
+const proveType = process.argv[5] === "1";
+const typeCanary = process.argv[6];
+const browserProfileFilesystem = process.argv[7];
 const read = (name) => JSON.parse(fs.readFileSync(path.join(directory, name), "utf8"));
 const response = read("run.json");
 const result = response.result ?? {};
@@ -192,6 +228,17 @@ const runCompleted = events.find((event) =>
   event.type === "ai_workspace.bounded_run_completed"
     && event.payload?.steps?.[0]?.taskId === taskId);
 const durable = JSON.stringify({ egress, completed, continuation, runCompleted, actionState });
+const typeProof = proveType ? read("type-proof.json") : null;
+const plaintextReadbacks = JSON.stringify({
+  typeProof,
+  events: read("events.json"),
+  invocations: read("invocations.json"),
+  runtime: read("runtime.json"),
+  workView: read("work-view.json"),
+  browserState: read("browser-state.json"),
+  semanticScene: read("semantic-scene.json"),
+  actionState,
+});
 
 if (response.invoked !== true
   || result.registry !== "nixsoma-ai-workspace-bounded-run-v0"
@@ -219,6 +266,13 @@ if (response.invoked !== true
   || egress.some((event) => !event)
   || completed.some((event) => !event)
   || !runCompleted
+  || browserProfileFilesystem !== "tmpfs"
+  || (proveType && (typeProof?.actionId !== "type_item"
+    || typeProof?.actionExecuted !== true
+    || typeProof?.keyboardInput !== true
+    || typeProof?.inputCharCount !== typeCanary.length))
+  || plaintextReadbacks.includes(typeCanary)
+  || plaintextReadbacks.includes('"inputText"')
   || (expectedSteps === 2 && (!continuation
     || !["scroll_up", "scroll_down"].includes(steps[0].actionId)
     || steps[0].actionExecuted !== true
@@ -239,6 +293,14 @@ console.log(JSON.stringify({
   actionCount: evidence.actionCount,
   continuationAudit: evidence.continuationAudit,
   runCompletionAudit: evidence.runCompletionAudit,
+  typeItemProved: proveType,
+  typeInputCharCount: typeProof?.inputCharCount ?? null,
+  inputCanarySha256: proveType
+    ? createHash("sha256").update(typeCanary).digest("hex")
+    : null,
+  plaintextCanaryExposedInReadbacks: false,
+  browserProfileFilesystem,
+  browserProfilePersistent: false,
   inputTextPersisted: governance.inputTextPersisted,
   automaticRepeat: governance.automaticRepeat,
 }, null, 2));

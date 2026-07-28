@@ -13,10 +13,22 @@ OBSERVER_URL="${OPENCLAW_OBSERVER_URL:-http://127.0.0.1:4170}"
 export OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_OPERATOR_TOKEN_FILE:-${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/nixsoma/operator-token}"
 TASK_GOAL="${NIXSOMA_AI_SCENE_TASK_GOAL:-Open the Learn more item to review the displayed product}"
 EXPECTED_ACTION="${NIXSOMA_AI_SCENE_EXPECTED_ACTION:-}"
+EXPECTED_INPUT_CHAR_COUNT="${NIXSOMA_AI_SCENE_EXPECTED_INPUT_CHAR_COUNT:-}"
 
 if [[ -n "$EXPECTED_ACTION" && ! "$EXPECTED_ACTION" =~ ^(no_op|scroll_up|scroll_down|click_item|type_item)$ ]]; then
   printf 'Unsupported NIXSOMA_AI_SCENE_EXPECTED_ACTION: %s\n' "$EXPECTED_ACTION" >&2
   exit 64
+fi
+if [[ -n "$EXPECTED_INPUT_CHAR_COUNT" ]]; then
+  if [[ "$EXPECTED_ACTION" != "type_item" ]]; then
+    printf 'NIXSOMA_AI_SCENE_EXPECTED_INPUT_CHAR_COUNT requires type_item\n' >&2
+    exit 64
+  fi
+  if [[ ! "$EXPECTED_INPUT_CHAR_COUNT" =~ ^[1-9][0-9]*$ ]] \
+    || (( EXPECTED_INPUT_CHAR_COUNT > 80 )); then
+    printf 'NIXSOMA_AI_SCENE_EXPECTED_INPUT_CHAR_COUNT must be between 1 and 80\n' >&2
+    exit 64
+  fi
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -230,7 +242,7 @@ for url in "$CORE_URL" "$EVENT_HUB_URL" "$SESSION_MANAGER_URL" "$BROWSER_RUNTIME
 done
 
 stage "verifying scene binding, bounded egress, action limit, and durable audit"
-node - "$tmp_dir" "$browser_surface_id" "$task_id" "$TASK_GOAL" "$EXPECTED_ACTION" <<'NODE'
+node - "$tmp_dir" "$browser_surface_id" "$task_id" "$TASK_GOAL" "$EXPECTED_ACTION" "$EXPECTED_INPUT_CHAR_COUNT" <<'NODE'
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -239,6 +251,7 @@ const browserSurfaceId = Number(process.argv[3]);
 const taskId = process.argv[4];
 const taskGoal = process.argv[5];
 const expectedAction = process.argv[6];
+const expectedInputCharCount = process.argv[7] ? Number(process.argv[7]) : null;
 const read = (name) => JSON.parse(fs.readFileSync(path.join(directory, name), "utf8"));
 const response = read("single-step.json");
 const beforeState = read("before-state.json");
@@ -371,6 +384,8 @@ if (actionId === "no_op") {
     || result.action?.inputEvidence?.persisted !== false
     || !Number.isInteger(result.action?.inputEvidence?.charCount)
     || result.action.inputEvidence.charCount < 1
+    || (expectedInputCharCount !== null
+      && result.action.inputEvidence.charCount !== expectedInputCharCount)
     || evidence.itemOrdinal !== result.action.itemOrdinal
     || evidence.inputEvidence?.charCount !== result.action.inputEvidence.charCount
     || evidence.postActionVerified !== true
@@ -414,6 +429,7 @@ console.log(JSON.stringify({
   maximumActions: 1,
   automaticRepeat: false,
   keyboardInput: semanticType,
+  inputCharCount: evidence.inputEvidence?.charCount ?? null,
   parentDisplayConnected: false,
   rootRequired: false,
 }, null, 2));
