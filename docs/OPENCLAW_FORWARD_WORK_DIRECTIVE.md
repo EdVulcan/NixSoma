@@ -52,8 +52,9 @@ slices through one governed provider-decided workspace action. One explicit
 operator trigger can request a schema-bound provider decision and execute at
 most one existing active-surface scroll. A tenth Level 4 slice is source- and
 store-closure-ready: that decision can now be grounded in a bounded semantic
-scene from the active AI-owned browser surface. It is not deployed or physically
-provider-proven yet. All 1002 workspace
+scene from the active AI-owned browser surface. The initial generation exposed
+one compatibility gap before provider contact; the corrected candidate is not
+deployed or physically provider-proven yet. All 1005 workspace
 tests and typecheck pass, the body-config and event-audit integration checks
 pass, the 811-entry milestone registry audit passes, and the Windows path budget
 has no file over 160 repository-relative characters. GitHub CI now enforces
@@ -62,7 +63,7 @@ same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/6k51pmrglbjdcfvakb1id4q34jhd9sgn-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/7j28vnll8p7r6cfi8ysv2lvldpajvq8m-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, and Observer controls. The relevant
@@ -2138,11 +2139,16 @@ scene-content continuation is the separate source candidate below.
 
 ## Source-Validated Level 4 Browser Semantic Scene Grounding
 
-The tenth vertical Level 4 slice is complete in source and in the exact Core and
-Screen Sense Nix store closures. System candidate
-`/nix/store/7j28vnll8p7r6cfi8ysv2lvldpajvq8m-nixos-system-nixos-26.05.4808.569d57850992`
-was built and references those closures, but is not active; the physical host
-still runs generation `6k51pmrglb...`.
+The tenth vertical Level 4 slice is complete in source and in exact store
+closures. Initial generation `7j28vnll8...` was activated, but its physical gate
+stopped before provider contact: Browser Runtime's compatible
+`visual=metadata` default returned a semantic summary without item records, so
+Screen Sense correctly reported `semantic_inventory_not_frame_bound`. The
+bounded correction adds explicit `semantic=items` while preserving both the
+metadata no-pixel mode and existing defaults. Corrected system candidate
+`/nix/store/jricbfdsixwn4h6jl12hiip7cmfvsnl3-nixos-system-nixos-26.05.4808.569d57850992`
+references Browser Runtime closure `ha9syr...` and Screen Sense closure
+`amkk77...`, but is not active yet.
 Screen Sense obtains one Browser Runtime metadata-only capture through its
 existing service credential and projects at most 12 visible semantic items.
 Only role, bounded accessible name, disabled state, and integer bounds survive.
@@ -2163,10 +2169,11 @@ once through the existing grant/audit/Weston receipt path, while `no_op` never
 contacts the actuator. Durable audit and capability summaries retain the scene
 hash and item count, not item names, Browser PID, or provider reason.
 
-All 1002 workspace tests, typecheck, the 811-entry milestone registry and script
+All 1005 workspace tests, typecheck, the 811-entry milestone registry and script
 audits, Windows path budget, and the store-native body check pass. The immediate
-next step is a physical switch to the built candidate and one real active-browser
-scene-grounding gate. Until that generation is deployed and the gate passes, this is not a
+next step is a physical switch to corrected candidate `jricbfds...` and one real
+active-browser scene-grounding gate. Until that generation is deployed and the
+gate passes, this is not a
 deployed semantic decision capability. Do not widen it to pixel egress, OCR,
 keyboard, click, multi-step loops, arbitrary page script, process/window APIs,
 root, or host mutation.

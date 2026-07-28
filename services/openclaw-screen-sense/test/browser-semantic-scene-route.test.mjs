@@ -63,7 +63,7 @@ test("screen-sense semantic scene reader requests metadata and projects content 
 
   const scene = await reader();
 
-  assert.equal(calls[0].url, "http://127.0.0.1:4103/browser/capture?visual=metadata");
+  assert.equal(calls[0].url, "http://127.0.0.1:4103/browser/capture?visual=metadata&semantic=items");
   assert.equal(calls[0].options.headers.authorization, "Bearer test");
   assert.equal(scene.available, true);
   assert.equal(scene.items[0].name, "Continue");

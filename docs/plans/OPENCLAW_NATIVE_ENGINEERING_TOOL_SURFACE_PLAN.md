@@ -924,4 +924,5 @@ before at most one existing scroll. It carries no engineering source, prompt,
 pixel, URL, input value, selector, target id, or page script. Automatic
 engineering actions, keyboard input, multi-step execution, and process authority
 remain outside this plan. Deployment and one real scene-grounded provider gate
-are still pending; system candidate `7j28vnll8...` is built but inactive.
+are still pending. Initial generation `7j28vnll8...` exposed a provider-free
+metadata-summary mismatch; corrected candidate `jricbfds...` is built but inactive.

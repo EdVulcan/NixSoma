@@ -266,11 +266,13 @@ from provider context, then recaptures after the provider response. Changed
 surface, inventory, scene-content, or semantic-frame evidence stops before
 screen-act; `no_op` performs no action and scrolling remains single-step.
 
-All 1002 workspace tests, typecheck, the 811-entry registry/script audits,
-Windows path budget, and store-native body check pass. This tenth slice is not
-in generation `6k51pmrglb...` yet and has not consumed a real DeepSeek call. The
-system candidate `7j28vnll8...` is built and references the new closures. The
-next release step is its physical switch and one active-browser scene-grounding
+All 1005 workspace tests, typecheck, the 811-entry registry/script audits,
+Windows path budget, and store-native body check pass. Initial generation
+`7j28vnll8...` reached the physical gate without consuming a DeepSeek call and
+exposed that metadata mode returned only the semantic summary. Explicit
+`semantic=items` now preserves no-pixel capture and existing defaults. Corrected
+candidate `jricbfds...` references Browser Runtime `ha9syr...` and Screen Sense
+`amkk77...`. The next release step is its physical switch and one active-browser scene-grounding
 gate. Do not widen it into pixels/OCR, keyboard, click,
 repeated loops, arbitrary process/window control, root, or host mutation.
 

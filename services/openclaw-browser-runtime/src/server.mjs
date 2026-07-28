@@ -21,6 +21,7 @@ import { createBrowserWorkspaceStore } from "./browser-workspace-store.mjs";
 import { createBrowserEngineAdapter } from "./browser-engine-adapter.mjs";
 import { createBrowserGraphicalSessionBinding } from "./browser-graphical-session-binding.mjs";
 import { createBrowserRuntimeAuthenticator } from "./browser-runtime-auth.mjs";
+import { parseBrowserCaptureQuery } from "./browser-capture-query.mjs";
 
 
 const host = process.env.OPENCLAW_BROWSER_RUNTIME_HOST ?? "127.0.0.1";
@@ -638,11 +639,12 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && requestUrl.pathname === "/browser/capture") {
-    const visualMode = requestUrl.searchParams.get("visual") ?? "full";
-    if (!["full", "metadata"].includes(visualMode)) {
-      sendJson(res, 400, { ok: false, error: "Browser capture visual mode must be full or metadata." });
+    const captureQuery = parseBrowserCaptureQuery(requestUrl);
+    if (!captureQuery.ok) {
+      sendJson(res, 400, { ok: false, error: captureQuery.error });
       return;
     }
+    const { visualMode } = captureQuery;
     let visualFrame = unavailableWorkViewVisualFrame(engineMode === "simulated" ? "simulated_engine" : "browser_not_running");
     let semanticTargets = unavailableWorkViewSemanticTargets(engineMode === "simulated" ? "simulated_engine" : "browser_not_running");
     if (browserEngine && browserState.running) {
@@ -670,7 +672,7 @@ const server = http.createServer(async (req, res) => {
       ok: true,
       running: true,
       capture: buildBrowserCapture(visualFrame, semanticTargets, {
-        includeSemanticItems: visualMode === "full",
+        includeSemanticItems: captureQuery.includeSemanticItems,
       }),
       browser: serialiseBrowserState(),
     });

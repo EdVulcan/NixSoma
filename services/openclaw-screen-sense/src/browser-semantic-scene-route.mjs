@@ -11,7 +11,7 @@ export function createBrowserSemanticSceneReader({
 } = {}) {
   return async function readBrowserSemanticScene() {
     try {
-      const response = await fetchImpl(`${browserRuntimeUrl}/browser/capture?visual=metadata`, {
+      const response = await fetchImpl(`${browserRuntimeUrl}/browser/capture?visual=metadata&semantic=items`, {
         headers: browserRuntimeHeaders(),
       });
       const data = await response.json().catch(() => null);

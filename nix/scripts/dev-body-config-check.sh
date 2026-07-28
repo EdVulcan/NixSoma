@@ -1190,13 +1190,14 @@ EOF
   if [[ "$browser_runtime_out" != /nix/store/*
     || ! -f "$browser_runtime_server"
     || ! -f "$browser_runtime_working_dir/node_modules/puppeteer-core/package.json"
+    || ! -f "$browser_runtime_working_dir/src/browser-capture-query.mjs"
     || ! -f "$browser_runtime_working_dir/src/browser-graphical-session-binding.mjs"
     || ! -f "$browser_runtime_out/share/openclaw/packages/shared-utils/src/work-view-input-evidence.mjs"
     || ! -f "$browser_runtime_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
     || -w "$browser_runtime_server"
     || -e "$browser_runtime_working_dir/node_modules/@openclaw"
     || -e "$browser_runtime_working_dir/node_modules/typescript"
-    || "$browser_runtime_source_count" -ne 16 ]]; then
+    || "$browser_runtime_source_count" -ne 17 ]]; then
     echo "browser-runtime Nix closure is not exact, production-only, and read-only: $browser_runtime_out" >&2
     exit 1
   fi

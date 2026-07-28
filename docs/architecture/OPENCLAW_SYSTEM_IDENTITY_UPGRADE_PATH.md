@@ -253,15 +253,20 @@ URL、input value、selector、target id、page script 和 pixels 后将场景�
 DeepSeek。Provider 返回后重新捕获；surface id/PID、inventory sequence、scene
 content hash 或 semantic frame hash 改变都会在 actuator 前 fail closed。
 `no_op` 不联系 screen-act，滚动仍最多一次。Durable evidence 只保存 scene hash
-和 item count。该候选已通过 1002 项工作区测试、typecheck、811 项 registry/script
-audit、Windows path budget 和 store-native body check。System candidate
-`/nix/store/7j28vnll8p7r6cfi8ysv2lvldpajvq8m-nixos-system-nixos-26.05.4808.569d57850992`
-已构建并绑定新的 Core/Screen Sense closure，但尚未 switch 或真实 provider 验证。
+和 item count。初始 generation `7j28vnll8...` 的物理 gate 在 provider 前发现
+Browser metadata 默认只返回 semantic summary、没有 items；Screen Sense 因此正确
+fail closed。修正后只有显式 `semantic=items` 才在无像素 metadata capture 中返回
+有界 items，默认行为不变。该候选已通过 1005 项工作区测试、typecheck、811 项
+registry/script audit、Windows path budget 和 store-native body check。修正版
+system candidate
+`/nix/store/jricbfdsixwn4h6jl12hiip7cmfvsnl3-nixos-system-nixos-26.05.4808.569d57850992`
+已绑定 Browser Runtime `ha9syr...` 与 Screen Sense `amkk77...` closure，但尚未
+switch 或真实 provider 验证。
 
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
 画面投影、应用生命周期、surface 激活、垂直滚动、AI 单步和 semantic scene
-候选已通过源码、1002 项工作区测试、body-config/store
+候选已通过源码、1005 项工作区测试、body-config/store
 closure、完整 system generation 与物理 Observer 验收。真实 Firefox 渲染了
 1280x720 原生画面，切换模式和退出登录都会释放像素；真实 Workbench 启动后
 PID 与 surface 匹配，停止后 surface 消失；服务状态和 audit 只保留摘要。桌面
