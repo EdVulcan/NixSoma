@@ -916,13 +916,14 @@ existing standing DeepSeek budget owner, and may reuse one existing governed
 scroll action at most once. A real-call physical check returned and executed
 `scroll_down` with durable audit and clean service health.
 
-The next Level 4 source candidate adds bounded Browser semantic-scene grounding
+The deployed tenth Level 4 slice adds bounded Browser semantic-scene grounding
 without reopening this Level 1 plan. It carries at most 12 visible
 role/name/disabled/bounds items through Screen Sense and the same fixed provider
 owner, locally binds Browser PID to the active Weston surface, and recaptures
 before at most one existing scroll. It carries no engineering source, prompt,
 pixel, URL, input value, selector, target id, or page script. Automatic
 engineering actions, keyboard input, multi-step execution, and process authority
-remain outside this plan. Deployment and one real scene-grounded provider gate
-are still pending. Initial generation `7j28vnll8...` exposed a provider-free
-metadata-summary mismatch; corrected candidate `jricbfds...` is built but inactive.
+remain outside this plan. Initial generation `7j28vnll8...` exposed a
+provider-free metadata-summary mismatch; active generation `jricbfds...`
+corrected it and a real scene-grounded call returned `no_op` without actuator
+contact. The next Level 4 slice remains separate from this frozen Level 1 plan.

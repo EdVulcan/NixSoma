@@ -257,8 +257,8 @@ frame/surface evidence and durable egress/action/completion audit, then restored
 the surface inventory to the browser-only baseline. All nine health endpoints
 remained green with no failed units, restarts, or warning journals.
 
-Freeze that deployed checkpoint. Its selected continuation is now source- and
-store-closure-ready. Screen Sense obtains a metadata-only Browser capture and
+Freeze that ninth deployed checkpoint. Its selected continuation is now also
+deployed. Screen Sense obtains a metadata-only Browser capture and
 projects at most 12 visible role/name/disabled/bounds items. Core accepts it only
 when its local Browser PID matches the sole active Weston surface, removes PIDs,
 frame hashes, URLs, input values, selectors, target ids, page script, and pixels
@@ -270,11 +270,17 @@ All 1005 workspace tests, typecheck, the 811-entry registry/script audits,
 Windows path budget, and store-native body check pass. Initial generation
 `7j28vnll8...` reached the physical gate without consuming a DeepSeek call and
 exposed that metadata mode returned only the semantic summary. Explicit
-`semantic=items` now preserves no-pixel capture and existing defaults. Corrected
-candidate `jricbfds...` references Browser Runtime `ha9syr...` and Screen Sense
-`amkk77...`. The next release step is its physical switch and one active-browser scene-grounding
-gate. Do not widen it into pixels/OCR, keyboard, click,
-repeated loops, arbitrary process/window control, root, or host mutation.
+`semantic=items` now preserves no-pixel capture and existing defaults. Active
+generation `jricbfds...` references Browser Runtime `ha9syr...` and Screen Sense
+`amkk77...`. The real gate bound one semantic item, received DeepSeek `no_op`,
+contacted no actuator, matched durable egress/completion audit, and kept all
+nine health endpoints green.
+
+Freeze this slice. The next Level 4 capability may let the provider select one
+bounded scene-item ordinal that maps locally to the existing frame-bound
+semantic-click owner and executes once. Do not expose target ids/selectors or
+widen it into pixels/OCR, keyboard, text input, repeated loops, arbitrary
+process/window control, root, or host mutation.
 
 ## Completed Capability Evidence
 

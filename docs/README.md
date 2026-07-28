@@ -13,14 +13,13 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, one provider-decided AI workspace step, and bounded browser semantic-scene grounding, plus the completed Level 3 baseline | Ten Level 4 slices in source; nine deployed and physically proven |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, one provider-decided AI workspace step, and bounded browser semantic-scene grounding, plus the completed Level 3 baseline | Ten Level 4 slices deployed and physically proven |
 | Local validation | 1005 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 811 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/7j28vnll8p7r6cfi8ysv2lvldpajvq8m-nixos-system-nixos-26.05.4808.569d57850992` | Initial semantic-grounding generation; gate stopped before provider because metadata capture omitted item records |
-| Built system candidate | `/nix/store/jricbfdsixwn4h6jl12hiip7cmfvsnl3-nixos-system-nixos-26.05.4808.569d57850992` | Corrects explicit metadata semantic-item delivery; not switched or physically provider-proven |
-| Previous generation | `/nix/store/6k51pmrglbjdcfvakb1id4q34jhd9sgn-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the initial semantic-grounding generation |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/jricbfdsixwn4h6jl12hiip7cmfvsnl3-nixos-system-nixos-26.05.4808.569d57850992` | Semantic grounding deployed; real DeepSeek returned `no_op` for one bound scene item with durable audit |
+| Previous generation | `/nix/store/7j28vnll8p7r6cfi8ysv2lvldpajvq8m-nixos-system-nixos-26.05.4808.569d57850992` | Superseded after its provider-free gate exposed the metadata-summary mismatch |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
-| Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; one 252-token approval-bound call, one 459-token standing system advisory, and one standing-authorized workspace decision completed | Deployed and proven without prompt, reason, or credential persistence |
+| Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; one 252-token approval-bound call, one 459-token standing system advisory, and two standing-authorized workspace decisions completed | Deployed and proven without prompt, reason, or credential persistence |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, 15-minute cooldown, 3-call/4096-token daily defaults, structured transient recommendation, and local fallback | Deployed; returned `observe_current_screen` without creating a task, approval, or execution |
 | Level 4 graphical session | Fixed `nixsoma-ai-0` Weston headless compositor in a hardened, resource-bounded user unit; session-manager and Observer expose read-only ownership/health evidence | Deployed; coexists with GNOME `wayland-0` |
 | Level 4 browser attachment | Existing AI-owned Nix Firefox launches headed on the fixed nested socket, preserves Level 2 lease/capture/action ownership, and exposes compact attachment evidence | Deployed and proven through capture plus lease-bound action |
@@ -32,7 +31,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 surface activation | The existing control owner binds one numeric surface id and inventory sequence; session-manager requires audit, fresh pre-frame, peer-authenticated shell receipt, newer activated inventory, and post-frame proof | Deployed; normal production Observer proved fixture 2 -> Workbench 4 with counts 0 -> 2 -> 1 -> 0 |
 | Level 4 active-surface scroll | Existing pointer authority accepts only one `up` or `down` wheel step at fixed output center, bound to the exact current frame, active numeric surface, inventory sequence, execution grant, peer receipt, audit, and post-frame | Deployed in `b6qjcbfc...`; normal production Observer proved both directions on fixture surface 2 |
 | Level 4 AI workspace single step | Explicit authenticated trigger builds server-owned structural workspace context, shares the standing DeepSeek call/token/cooldown budget, accepts only `no_op`/`scroll_up`/`scroll_down`, revalidates frame and active surface, and executes at most one existing scroll | Deployed in `6k51pmrglb...`; real DeepSeek selected and executed one frame/surface-bound `scroll_down` with durable audit |
-| Level 4 browser semantic grounding | Screen Sense projects at most 12 role/name/disabled/bounds items from an explicit metadata-plus-items Browser capture; Core locally binds Browser PID to the active Weston surface, sends no pixels/URL/input value/selector/target id/frame hash, and recaptures before at most one existing action | Corrected candidate `jricbfds...` built after a provider-free physical gate exposed the metadata-summary mismatch; switch and real DeepSeek gate pending |
+| Level 4 browser semantic grounding | Screen Sense projects at most 12 role/name/disabled/bounds items from an explicit metadata-plus-items Browser capture; Core locally binds Browser PID to the active Weston surface, sends no pixels/URL/input value/selector/target id/frame hash, and recaptures before at most one existing action | Deployed in `jricbfds...`; real DeepSeek selected `no_op`, no actuator ran, and scene hash plus durable audit matched |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -374,7 +373,7 @@ All nine health endpoints remained green with no failed units, restarts, or
 warning journals. This still does not provide visual understanding, because no
 pixels or OCR are sent.
 
-The tenth slice is source- and store-closure-ready. Screen Sense owns a
+The tenth slice is deployed and physically proven. Screen Sense owns a
 metadata-only semantic-scene route backed by the existing authenticated Browser
 Runtime capture. Core requires a fresh scene whose local Browser PID matches the
 sole active Weston surface, sends only at most 12 bounded role/name/disabled/bounds
@@ -382,9 +381,10 @@ items, and recaptures the scene after the provider response. Changed surface,
 inventory, scene-content, or semantic-frame evidence stops before screen-act;
 `no_op` never contacts the actuator. Durable evidence stores only hashes and
 counts. Initial generation `7j28vnll8...` exposed the metadata-summary mismatch
-before provider contact. Corrected candidate `jricbfds...` contains the explicit
-metadata-plus-items contract and exact new closures; its physical switch and the
-one-call real scene-grounding gate remain pending.
+before provider contact. Active generation `jricbfds...` contains the explicit
+metadata-plus-items contract and exact new closures. Its real gate bound one
+scene item, received DeepSeek `no_op`, performed no actuator call, matched durable
+egress/completion audit, and kept all nine health endpoints green.
 
 ## Progress Estimate
 
@@ -395,7 +395,7 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 55% in source; nine slices are deployed and the tenth semantic-grounding slice awaits physical proof |
+| Level 4 graphics-stack-native body | about 56%; ten slices through one semantic-scene-grounded provider decision are deployed and physically proven |
 | Current bounded product scope | 79-83% |
 | Final whitepaper vision | 49-57% |
 

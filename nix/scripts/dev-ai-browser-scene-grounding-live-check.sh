@@ -48,17 +48,20 @@ done
 
 stage "ensuring current work-view authority"
 curl -fsS "$SESSION_MANAGER_URL/work-view/state" > "$tmp_dir/state.json"
+curl -fsS "$BROWSER_RUNTIME_URL/browser/state" > "$tmp_dir/browser-state.json"
 if ! node -e '
   const fs = require("node:fs");
   const workView = JSON.parse(fs.readFileSync(process.argv[1], "utf8")).workView ?? {};
+  const browser = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
   const helper = workView.helperRuntime ?? {};
   const graphical = workView.aiGraphicalSession ?? {};
   process.exit(workView.status === "prepared"
     && helper.status === "active"
     && helper.actionAuthority === "active"
     && helper.leaseMatched === true
-    && graphical.browserAttachment?.attached === true ? 0 : 1);
-' "$tmp_dir/state.json"; then
+    && graphical.browserAttachment?.attached === true
+    && (browser.running ?? browser.browser?.running) === true ? 0 : 1);
+' "$tmp_dir/state.json" "$tmp_dir/browser-state.json"; then
   if node -e '
     const fs = require("node:fs");
     const workView = JSON.parse(fs.readFileSync(process.argv[1], "utf8")).workView ?? {};

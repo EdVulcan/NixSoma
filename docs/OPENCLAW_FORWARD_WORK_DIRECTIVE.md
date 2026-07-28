@@ -47,14 +47,11 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
-triage/repair-promotion bridge, and nine deployed Level 4 graphical identity
-slices through one governed provider-decided workspace action. One explicit
-operator trigger can request a schema-bound provider decision and execute at
-most one existing active-surface scroll. A tenth Level 4 slice is source- and
-store-closure-ready: that decision can now be grounded in a bounded semantic
-scene from the active AI-owned browser surface. The initial generation exposed
-one compatibility gap before provider contact; the corrected candidate is not
-deployed or physically provider-proven yet. All 1005 workspace
+triage/repair-promotion bridge, and ten deployed Level 4 graphical identity
+slices through one semantic-scene-grounded provider decision. One explicit
+operator trigger can request a schema-bound `no_op`/vertical-scroll decision
+over bounded active-browser content and execute at most one existing action.
+All 1005 workspace
 tests and typecheck pass, the body-config and event-audit integration checks
 pass, the 811-entry milestone registry audit passes, and the Windows path budget
 has no file over 160 repository-relative characters. GitHub CI now enforces
@@ -63,7 +60,7 @@ same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/7j28vnll8p7r6cfi8ysv2lvldpajvq8m-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/jricbfdsixwn4h6jl12hiip7cmfvsnl3-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, and Observer controls. The relevant
@@ -2137,18 +2134,16 @@ Do not describe this as visual understanding: the deployed provider request has
 no image or OCR content. Freeze this structural action loop. Its bounded
 scene-content continuation is the separate source candidate below.
 
-## Source-Validated Level 4 Browser Semantic Scene Grounding
+## Completed Level 4 Browser Semantic Scene Grounding
 
-The tenth vertical Level 4 slice is complete in source and in exact store
-closures. Initial generation `7j28vnll8...` was activated, but its physical gate
-stopped before provider contact: Browser Runtime's compatible
+The tenth vertical Level 4 slice is complete in source and deployed in
+generation `jricbfds...`. Initial generation `7j28vnll8...` exposed a bounded
+compatibility gap before provider contact: Browser Runtime's compatible
 `visual=metadata` default returned a semantic summary without item records, so
 Screen Sense correctly reported `semantic_inventory_not_frame_bound`. The
 bounded correction adds explicit `semantic=items` while preserving both the
-metadata no-pixel mode and existing defaults. Corrected system candidate
-`/nix/store/jricbfdsixwn4h6jl12hiip7cmfvsnl3-nixos-system-nixos-26.05.4808.569d57850992`
-references Browser Runtime closure `ha9syr...` and Screen Sense closure
-`amkk77...`, but is not active yet.
+metadata no-pixel mode and existing defaults. The active generation references
+Browser Runtime closure `ha9syr...` and Screen Sense closure `amkk77...`.
 Screen Sense obtains one Browser Runtime metadata-only capture through its
 existing service credential and projects at most 12 visible semantic items.
 Only role, bounded accessible name, disabled state, and integer bounds survive.
@@ -2170,13 +2165,17 @@ contacts the actuator. Durable audit and capability summaries retain the scene
 hash and item count, not item names, Browser PID, or provider reason.
 
 All 1005 workspace tests, typecheck, the 811-entry milestone registry and script
-audits, Windows path budget, and the store-native body check pass. The immediate
-next step is a physical switch to corrected candidate `jricbfds...` and one real
-active-browser scene-grounding gate. Until that generation is deployed and the
-gate passes, this is not a
-deployed semantic decision capability. Do not widen it to pixel egress, OCR,
-keyboard, click, multi-step loops, arbitrary page script, process/window APIs,
-root, or host mutation.
+audits, Windows path budget, and the store-native body check pass. The physical
+gate bound one real semantic item to the active Browser/Weston surface, consumed
+one DeepSeek call, received `no_op`, contacted no actuator, matched scene and
+request hashes plus durable egress/completion audit, and kept all nine health
+endpoints green. Relevant services have zero restarts and no warning journals.
+
+Freeze this bounded no-op/scroll loop. The next real Level 4 slice may let the
+provider choose one bounded scene-item ordinal that maps locally to the existing
+frame-bound semantic-click target and executes at most once. Do not send target
+ids/selectors, add text input, keyboard authority, repeated loops, arbitrary
+page script, process/window APIs, root, or host mutation.
 
 ## Identity-Upgrade Alignment
 

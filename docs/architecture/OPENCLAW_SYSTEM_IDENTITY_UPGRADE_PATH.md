@@ -203,8 +203,7 @@
 
 ### 当前实现前沿
 
-Level 4 已从第一个所有权边界推进到九个已部署切片和第十个源码/store
-候选：登录用户的
+Level 4 已从第一个所有权边界推进到十个已部署并物理证明的切片：登录用户的
 `systemd --user` 管理独立 Weston headless compositor 和固定
 `nixsoma-ai-0` 1280x720 输出；现有 AI-owned Nix Firefox 作为 headed client
 运行其中；session-manager 获取有界原生帧并只向状态面投影摘要；原生左键点击
@@ -256,17 +255,19 @@ content hash 或 semantic frame hash 改变都会在 actuator 前 fail closed。
 和 item count。初始 generation `7j28vnll8...` 的物理 gate 在 provider 前发现
 Browser metadata 默认只返回 semantic summary、没有 items；Screen Sense 因此正确
 fail closed。修正后只有显式 `semantic=items` 才在无像素 metadata capture 中返回
-有界 items，默认行为不变。该候选已通过 1005 项工作区测试、typecheck、811 项
+有界 items，默认行为不变。第十切片已通过 1005 项工作区测试、typecheck、811 项
 registry/script audit、Windows path budget 和 store-native body check。修正版
 system candidate
 `/nix/store/jricbfdsixwn4h6jl12hiip7cmfvsnl3-nixos-system-nixos-26.05.4808.569d57850992`
-已绑定 Browser Runtime `ha9syr...` 与 Screen Sense `amkk77...` closure，但尚未
-switch 或真实 provider 验证。
+已绑定 Browser Runtime `ha9syr...` 与 Screen Sense `amkk77...` closure 并完成
+switch。真实 gate 将一个 semantic item 与 active Browser/Weston surface 绑定，
+DeepSeek 返回 `no_op`，没有 actuator 调用；scene hash、egress/completion durable
+audit、九个健康端点全部匹配，相关服务零重启且无 warning journal。
 
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
 画面投影、应用生命周期、surface 激活、垂直滚动、AI 单步和 semantic scene
-候选已通过源码、1005 项工作区测试、body-config/store
+grounding 已通过源码、1005 项工作区测试、body-config/store
 closure、完整 system generation 与物理 Observer 验收。真实 Firefox 渲染了
 1280x720 原生画面，切换模式和退出登录都会释放像素；真实 Workbench 启动后
 PID 与 surface 匹配，停止后 surface 消失；服务状态和 audit 只保留摘要。桌面
@@ -376,7 +377,7 @@ host mutation 仍未包含。这证明 AI 已拥有独立图形空间的最小�
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 60% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。真实 repair/rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 55%（九个切片已部署，第十个源码候选待物理证明） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期和当前数字 surface 激活均已部署。Generation `b6qjcbfc...` 完成 active-surface 固定单步垂直滚动；`6k51pmrglb...` 完成共享 provider 预算、固定动作集且最多执行一次的 AI workspace decision。源码候选又加入 metadata-only semantic scene 和 Browser/Weston surface 绑定；像素/OCR、多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
+| Level 4 图形栈内生组件 | 约 56%（十个切片已部署并物理证明） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期和当前数字 surface 激活均已部署。Generation `6k51pmrglb...` 完成固定动作集且最多执行一次的 AI workspace decision；`jricbfds...` 又完成 metadata-only semantic scene、Browser/Weston surface 绑定和真实 DeepSeek `no_op`。像素/OCR、多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
 **49-57%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted
