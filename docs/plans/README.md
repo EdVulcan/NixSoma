@@ -295,15 +295,19 @@ egress/completion audit. All nine health endpoints remained green; pixels, URLs,
 input values, selectors, target ids, objective text, repeated actions, keyboard
 authority, root, and host mutation remained excluded.
 
-The selected continuation is now a source-built thirteenth Level 4 slice.
+The selected continuation is now a deployed thirteenth Level 4 slice.
 Provider contract v2 can choose `type_item` only for one current enabled textbox
 ordinal and one bounded single-line value. Core rechecks the task and scene,
 Screen Act resolves the private target after its own metadata recapture, and the
 existing Browser Runtime semantic type owner executes once. Raw input exists
 only in the current execution payload; Core/Screen Act state, audit, Observer,
 and persistence retain write-only length evidence. It does not submit, repeat,
-or start another provider step. All 1032 tests, typecheck, exact store closures,
-and candidate `wbr2mdkw...` pass; activation and physical provider selection are
+or start another provider step. Generation `wbr2mdkw...` is active, and a real
+public-form request made DeepSeek select `type_item` ordinal 1. The deployed
+route then failed closed before input because it normalized the action twice.
+That assembly defect is fixed with a production-shape HTTP/grant regression;
+all 1033 tests, typecheck, exact store closures, body-config gate, and corrected
+candidate `wbv72j...` pass. Activation and final physical typed-input proof are
 still pending.
 
 ## Completed Capability Evidence

@@ -47,11 +47,11 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
-triage/repair-promotion bridge, and ten deployed Level 4 graphical identity
-slices through one semantic-scene-grounded provider decision. One explicit
-operator trigger can request a schema-bound `no_op`/vertical-scroll decision
-over bounded active-browser content and execute at most one existing action.
-All 1005 workspace
+triage/repair-promotion bridge, and thirteen deployed Level 4 graphical identity
+slices through one task-bound semantic-scene provider decision. One explicit
+operator trigger can request a schema-bound no-op, vertical scroll, semantic
+click, or write-only semantic type decision over bounded active-browser content
+and execute at most one existing action. All 1033 workspace
 tests and typecheck pass, the body-config and event-audit integration checks
 pass, the 811-entry milestone registry audit passes, and the Windows path budget
 has no file over 160 repository-relative characters. GitHub CI now enforces
@@ -60,7 +60,7 @@ same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/jricbfdsixwn4h6jl12hiip7cmfvsnl3-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/wbr2mdkwabwlhizdyxxzxy4bqkig47zw-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, and Observer controls. The relevant
@@ -2264,7 +2264,7 @@ values, target ids, selectors, or objective text entered durable evidence.
 In the active generation, text input, arbitrary coordinates, loops, page script,
 process/window APIs, root, and host mutation remain excluded.
 
-## Level 4 Write-Only Semantic Type Source Candidate
+## Level 4 Write-Only Semantic Type Deployment Correction
 
 The thirteenth vertical slice adds one real browser behavior without reopening
 the completed click lane. Provider contract v2 permits `type_item` only with a
@@ -2288,12 +2288,21 @@ requested, but failure after typing is terminal and never retried.
 This slice does not press Enter, submit, click a follow-up control, repeat, or
 start another provider call. It adds no arbitrary keyboard/hotkey, coordinates,
 page script, process/window API, root, parent-display access, or host mutation.
-All 1032 workspace tests and typecheck pass. Store-native validation proves an
-exact 233-file Core closure, 18-file Screen Act closure, generated Observer
-client, and candidate
-`/nix/store/wbr2mdkwabwlhizdyxxzxy4bqkig47zw-nixos-system-nixos-26.05.4808.569d57850992`.
-The candidate is built but not activated; no real provider-selected type action
-has been claimed.
+Generation `wbr2mdkw...` is active. A real public-form request reached DeepSeek,
+which selected `type_item` ordinal 1 and generated a seven-character value.
+Core and Screen Act retained only the expected write-only length evidence, but
+Screen Act failed closed before Browser Runtime input because its HTTP route
+passed an already-normalized six-field internal action to a dispatch owner that
+requires and independently normalizes the raw five-field request. The route now
+validates the request while preserving that transient raw owner contract. A
+production-shape HTTP regression starts Screen Act, verifies an exact signed
+execution grant, captures the scene, performs one Browser Runtime input, checks
+the post-frame, and proves the response contains no text. All 1033 workspace
+tests, typecheck, corrected Screen Act closure `slgfl7...`, body-config gate,
+and candidate
+`/nix/store/wbv72j63949amrpj7b10q85yv6fx9wjn-nixos-system-nixos-26.05.4808.569d57850992`
+pass. Activation and one final physical typed-input proof remain; do not claim
+the thirteenth slice physically complete before that gate.
 
 ## Identity-Upgrade Alignment
 

@@ -486,9 +486,10 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readJsonBody(req);
       assertExecutionGrant({ verifier: executionGrantVerifier, req, requestUrl, body });
-      const actionParams = normaliseSemanticSceneTypeAction(body);
-      if (!actionParams) throw new Error("Invalid semantic scene type action.");
-      const action = await executeAction("keyboard.type", actionParams, {
+      if (!normaliseSemanticSceneTypeAction(body)) {
+        throw new Error("Invalid semantic scene type action.");
+      }
+      const action = await executeAction("keyboard.type", body, {
         semanticSceneType: true,
       });
       sendJson(res, 200, { ok: true, action });

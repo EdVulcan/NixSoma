@@ -300,17 +300,21 @@ call/token/cooldown enforcement；真实 task-grounded DeepSeek gate 选择 `cli
 ordinal 1，且只执行一次。Task/scene hash、egress/completion durable audit 与九个健康端点
 均匹配，输入值、URL、pixel、target id、selector 与 objective text 未进入持久证据。
 
-第十三个切片目前是源码与 system candidate，尚未 switch 或真实 provider 验收。
+第十三个切片已经随 `wbr2mdkw...` switch，并完成了真实 provider 选择。
 Provider contract v2 新增 `type_item`，只允许一个当前 enabled textbox ordinal 与一个
 最多 200 字符的单行值。Core 在 provider 返回后和 required action audit 后继续重验
 task/scene；Screen Act 独立重新 capture metadata scene，再在本地将 ordinal 解析为既有
 frame-bound semantic type target。原始文本只经过当前 Core -> Screen Act -> Browser
 Runtime 请求，不进入 Core/Screen Act state、audit、Observer 或 persistence；这些表面只
 保留 write-only char/byte evidence。该动作不按 Enter、不提交、不重复，也不触发第二次
-provider 调用。完整 1032 项 workspace tests、typecheck、233-file Core closure、18-file
-Screen Act closure 与 candidate
-`/nix/store/wbr2mdkwabwlhizdyxxzxy4bqkig47zw-nixos-system-nixos-26.05.4808.569d57850992`
-均通过。
+provider 调用。真实公共表单 gate 中 DeepSeek 选择了 `type_item` ordinal 1，且系统
+只保留 7 字符的 write-only evidence；随后 Screen Act 在 Browser Runtime 输入前
+fail closed，原因是 HTTP route 与 dispatch owner 对同一请求进行了两次标准化。当前
+修复保持 raw transient action 直到唯一 owner 标准化，并新增真实 HTTP service、签名
+grant、capture、input 与 post-frame 回归。完整 1033 项 workspace tests、typecheck、
+233-file Core closure、修正后的 18-file Screen Act closure `slgfl7...`、body-config 与
+candidate `/nix/store/wbv72j63949amrpj7b10q85yv6fx9wjn-nixos-system-nixos-26.05.4808.569d57850992`
+均通过；switch 与最终物理输入验收仍待完成。
 
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
@@ -425,7 +429,7 @@ host mutation 仍未包含。这证明 AI 已拥有独立图形空间的最小�
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 60% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。真实 repair/rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 61%（十二个切片已部署，第十三个源码候选已构建） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision 与真实 semantic click 均已部署。Candidate `wbr2mdkw...` 又加入只保留 write-only evidence 的单次 semantic type。像素/OCR、多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
+| Level 4 图形栈内生组件 | 约 61%（第十三个切片已部署，route 修复候选已构建） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision 与真实 semantic click 均已部署。`wbr2mdkw...` 已加入只保留 write-only evidence 的单次 semantic type，修正候选为 `wbv72j...`。像素/OCR、多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
 **49-57%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted
