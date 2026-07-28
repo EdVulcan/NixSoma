@@ -47,8 +47,8 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
-triage/repair-promotion bridge, six deployed Level 4 graphical identity slices,
-and one candidate-ready governed surface-activation slice. All 966 workspace
+triage/repair-promotion bridge, and seven deployed Level 4 graphical identity
+slices through governed current-surface activation. All 966 workspace
 tests and typecheck pass, the body-config and event-audit integration checks
 pass, the 811-entry milestone registry audit passes, and the Windows path budget
 has no file over 160 repository-relative characters. GitHub CI now enforces
@@ -57,13 +57,12 @@ same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/vymmz8c3r9gganjd25nwxkj8vyk7gmxd-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/7ycsdd61qrd6cqr7pmdbwi3lb4sdxcq5-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
-grant path, and Observer controls. The final switch changed only the Observer
-package path. The relevant system and user services remain active with zero
-restarts; the intentionally stopped Workbench is `inactive/success` after its
-physical lifecycle gate.
+grant path, governed surface activation, and Observer controls. The relevant
+system and user services remain active with zero restarts; the intentionally
+stopped Workbench is `inactive/dead` after its physical lifecycle gate.
 
 One real request-bound DeepSeek advisory call completed through task
 `62ba696a-945e-4f37-b65e-8a6783316386` and approval
@@ -2022,11 +2021,10 @@ frame/input/projection authorities rather than introduce a generic process
 launcher, desktop window API, parent-display connection, or duplicate evidence
 chain.
 
-## Candidate-Ready Level 4 Governed Surface Activation
+## Completed Level 4 Governed Surface Activation
 
-The seventh vertical Level 4 slice is implemented, fully built, and physically
-proven through the user-owned candidate plane, but is not yet the active system
-generation. Candidate
+The seventh vertical Level 4 slice is implemented, deployed, and physically
+proven in generation
 `/nix/store/7ycsdd61qrd6cqr7pmdbwi3lb4sdxcq5-nixos-system-nixos-26.05.4808.569d57850992`
 patches only the Weston package used by `nixsoma-ai-graphical-session`. Its kiosk
 shell registers a versioned plugin API that owns hidden/normal layer movement,
@@ -2044,7 +2042,7 @@ titles, app-ids, caller-defined selectors, generic window/process operations,
 parent display, root, provider, and host mutation remain absent.
 
 The native two-surface smoke switched both directions with peer-cgroup receipts.
-The candidate user-plane gate then used a real authenticated Firefox Observer to
+The candidate user-plane gate first used a real authenticated Firefox Observer to
 start the fixed Workbench, move foreground to fixture surface 2, move it back to
 Workbench surface 4, prove both frame changes, stop the Workbench, and return
 surface count `0 -> 2 -> 1 -> 0`. Anonymous direct mutation was rejected,
@@ -2052,11 +2050,16 @@ durable audit was present, all 966 tests and typecheck pass, body/store/diff/pat
 checks are green, and restoration left all nine production health endpoints
 green with no failed units, runtime overrides, restarts, or warning journals.
 
-Do not select another Level 4 capability before this exact candidate is switched
-and `dev-ai-app-lifecycle-check.sh` passes against the normal production Core,
-Observer, session-manager, and Weston units. The required switch is the remaining
-deployment step, not a reason to reopen shell, grant, inventory, or evidence
-variants.
+The exact generation switch and normal production
+`dev-ai-app-lifecycle-check.sh` rerun then passed with fixture surface 2 and
+Workbench surface 4, counts `0 -> 2 -> 1 -> 0`, durable audit, anonymous
+rejection, matching frame-bound activation receipts, all nine health endpoints
+at HTTP 200, zero relevant restarts, no failed units, and no warning journals.
+Freeze shell, grant, inventory, activation, and evidence variants. The selected
+next Level 4 product behavior is one current-frame- and active-surface-bound
+vertical scroll step through the existing pointer owner; keyboard, hotkeys,
+generic axes/gestures, repeated input, and arbitrary window/process control stay
+deferred.
 
 ## Identity-Upgrade Alignment
 

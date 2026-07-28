@@ -219,12 +219,12 @@ Workbench user unit；它不接受任意命令，也不需要每次另建 approv
 API 激活当前 inventory 中一个数字 surface。Core grant 精确绑定
 `surfaceId + inventorySequence`，session-manager 要求前置 audit、新鲜 pre-frame、
 peer receipt、更新后的 activated inventory 和 post-frame；Observer 只提供数字
-选择器。该切片已在 candidate 用户面完成真实双向切换，但 system generation
-尚未切换。
+选择器。该切片已在 generation `7ycsdd61...` 部署，并由正常生产 Observer
+完成真实双向切换。
 
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
-画面投影、应用生命周期和候选 surface 激活已通过源码、966 项工作区测试、body-config/store
+画面投影、应用生命周期和 surface 激活已通过源码、966 项工作区测试、body-config/store
 closure、完整 system generation 与物理 Observer 验收。真实 Firefox 渲染了
 1280x720 原生画面，切换模式和退出登录都会释放像素；真实 Workbench 启动后
 PID 与 surface 匹配，停止后 surface 消失；服务状态和 audit 只保留摘要。桌面
@@ -334,7 +334,7 @@ host mutation 仍未包含。这证明 AI 已拥有独立图形空间的最小�
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 60% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。真实 repair/rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 48%（六个切片已部署，第七个 candidate 已物理证明） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity 与固定 Workbench 生命周期均已部署。候选 `7ycsdd61...` 又通过 kiosk-shell owner、精确 grant/inventory、peer receipt 和 post-frame 完成当前数字 surface 激活；system switch 尚未执行。任意进程/窗口控制和桌面接管仍未完成。 |
+| Level 4 图形栈内生组件 | 约 48%（七个连续切片已部署并物理证明） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期和当前数字 surface 激活均已部署。Generation `7ycsdd61...` 通过 kiosk-shell owner、精确 grant/inventory、peer receipt 和 post-frame 完成真实双向切换。任意进程/窗口控制和桌面接管仍未完成。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
 **48-56%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted

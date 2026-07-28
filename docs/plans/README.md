@@ -116,7 +116,7 @@ login-user systemd owner
 -> bounded AI-owned output projection (complete and physically proven)
 -> minimal compositor-owned surface inventory (complete and physically proven)
 -> fixed Nix-managed Workbench start/stop (complete and physically proven)
--> exact current-surface activation through kiosk shell (candidate-ready and physically proven in the user plane)
+-> exact current-surface activation through kiosk shell (complete, deployed, and physically proven)
 ```
 
 The current source stops before desktop takeover, desktop-wide observation,
@@ -204,17 +204,19 @@ anonymous rejection, and cleanup while every service remained healthy. Freeze
 generic lifecycle and inventory variants; any continuation must add bounded
 product behavior through these owners, not arbitrary process/window launch.
 
-The next bounded behavior is now complete in candidate
+The next bounded behavior is now complete in active generation
 `7ycsdd61...`. A session-local Weston patch registers one versioned kiosk-shell
 activation API, and frame-authority delegates the exact numeric target instead
 of attempting to mutate shell state. Core binds `surfaceId + inventorySequence`
 into its existing single-use session-manager grant; session-manager requires
 durable audit, fresh pre-frame, peer receipt, newer activated inventory, and a
-post-frame. Observer provides one numeric selector. Native and real candidate
-user-plane checks switched fixture -> Workbench, changed both frames, rejected
-anonymous direct mutation, and cleaned surface count back to zero. The active
-generation remains `vymmz8c3...`; switch `7ycsdd61...` and rerun the same gate
-before selecting another Level 4 capability.
+post-frame. Observer provides one numeric selector. Native, candidate user-plane,
+and normal production checks switched fixture 2 -> Workbench 4, changed both
+frames, rejected anonymous direct mutation, and cleaned surface count back to
+zero. All nine health endpoints remain green with zero relevant restarts and no
+failed units or warning journals. Freeze this lane. The selected next Level 4
+behavior is one bounded current-frame- and active-surface-bound vertical scroll
+step through the existing pointer owner.
 
 ## Completed Capability Evidence
 
