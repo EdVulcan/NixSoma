@@ -288,9 +288,16 @@ requireIncludes("Weston kiosk activation patch", westonActivationPatch, [
 requireIncludes("Weston input authority", westonInputAuthority, [
   "weston_plugin_api_get",
   "surface_activation_api->activate_surface",
+  "INPUT_REQUEST_SCROLL",
+  "WL_POINTER_AXIS_VERTICAL_SCROLL",
+  "WL_POINTER_AXIS_SOURCE_WHEEL",
+  "notify_pointer_frame",
 ]);
 if (westonInputAuthority.includes("weston_view_activate_input(")) {
   throw new Error("frame authority must delegate surface activation to the owning kiosk shell API");
+}
+if (westonInputAuthority.includes("weston_seat_init_keyboard(")) {
+  throw new Error("bounded native scroll must not introduce a keyboard device");
 }
 if (aiGraphicalSessionModule.includes("--log=%t/")) {
   throw new Error("AI graphical session launch script must not retain an unexpanded systemd runtime specifier.");
@@ -542,6 +549,7 @@ if (ownership.browser.environment?.OPENCLAW_BROWSER_ENGINE_MODE !== "firefox"
   ])
   || !ownership.browser.wants?.includes("nixsoma-ai-graphical-session.service")
   || !ownership.browser.after?.includes("nixsoma-ai-graphical-session.service")
+  || !ownership.browser.partOf?.includes("nixsoma-ai-graphical-session.service")
   || JSON.stringify(ownership.browser.serviceConfig?.UnsetEnvironment) !== JSON.stringify(["DISPLAY", "WAYLAND_DISPLAY", "WAYLAND_SOCKET", "DBUS_SESSION_BUS_ADDRESS"])) {
   throw new Error(`desktop browser runtime must use the Nix-managed Firefox user profile: ${JSON.stringify(ownership.browser)}`);
 }

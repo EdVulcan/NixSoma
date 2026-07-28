@@ -1,12 +1,17 @@
-import { normaliseAiCompositorPointerAction } from "../../../packages/shared-utils/src/ai-compositor-input.mjs";
+import {
+  normaliseAiCompositorPointerAction,
+  normaliseAiCompositorScrollAction,
+} from "../../../packages/shared-utils/src/ai-compositor-input.mjs";
 
 const CAPABILITY_ID = "act.screen.pointer_keyboard";
 const KEYBOARD_OPERATION = "keyboard.type";
 const POINTER_OPERATION = "mouse.click";
-const OPERATIONS = new Set([KEYBOARD_OPERATION, POINTER_OPERATION]);
+const SCROLL_OPERATION = "mouse.scroll";
+const OPERATIONS = new Set([KEYBOARD_OPERATION, POINTER_OPERATION, SCROLL_OPERATION]);
 const REGISTRIES = Object.freeze({
   [KEYBOARD_OPERATION]: "openclaw-screen-keyboard-capability-v0",
   [POINTER_OPERATION]: "openclaw-screen-pointer-capability-v0",
+  [SCROLL_OPERATION]: "openclaw-screen-pointer-capability-v0",
 });
 const MAX_INPUT_CHARS = 2_000;
 const MAX_X = 959;
@@ -44,7 +49,7 @@ function normaliseOperation(request) {
 }
 
 function operationError() {
-  return new Error("Screen action capability only allows keyboard.type or mouse.click.");
+  return new Error("Screen action capability only allows keyboard.type, mouse.click, or mouse.scroll.");
 }
 
 function normaliseInput(value) {
@@ -105,6 +110,38 @@ function normaliseClickParams(params) {
   };
 }
 
+function normaliseScrollParams(params) {
+  const unsupportedParams = Object.keys(params)
+    .filter((key) => ![
+      "operation",
+      "direction",
+      "surfaceId",
+      "inventorySequence",
+      "compositorFrame",
+    ].includes(key));
+  if (unsupportedParams.length > 0) {
+    throw new Error("Screen scroll capability only accepts one direction, active surface binding, and native frame binding.");
+  }
+  const action = normaliseAiCompositorScrollAction(params);
+  if (!action.frame.fresh) {
+    throw new Error("Screen scroll native frame binding is stale.");
+  }
+  return {
+    direction: action.direction,
+    surfaceId: action.surfaceId,
+    inventorySequence: action.inventorySequence,
+    compositorFrame: {
+      registry: action.frame.registry,
+      socketName: action.frame.socketName,
+      width: action.frame.width,
+      height: action.frame.height,
+      sha256: action.frame.sha256,
+      sequence: action.frame.sequence,
+      capturedAt: action.frame.capturedAt,
+    },
+  };
+}
+
 function compactMediation(mediation) {
   return {
     attempted: mediation?.attempted === true,
@@ -123,6 +160,9 @@ function compactMediation(mediation) {
           frameMatched: mediation.visualGrounding.frameMatched === true,
           frameFresh: mediation.visualGrounding.frameFresh === true,
           receiptMatched: mediation.visualGrounding.receiptMatched === true,
+          frameChanged: mediation.visualGrounding.frameChanged === true,
+          inventoryMatched: mediation.visualGrounding.inventoryMatched === true,
+          surfaceMatched: mediation.visualGrounding.surfaceMatched === true,
           imageDataRetained: false,
           persisted: false,
         }
@@ -137,7 +177,12 @@ function projectOwnerResponse(response, operation) {
   const browserRuntimeExecuted = ownerContractMatched && action.result === "executed-browser-runtime";
   const compositorNativeExecuted = ownerContractMatched && action.result === "executed-ai-compositor";
   const writesBrowserInput = operation === KEYBOARD_OPERATION;
-  const pointerAction = operation === POINTER_OPERATION;
+  const pointerAction = operation === POINTER_OPERATION || operation === SCROLL_OPERATION;
+  const scrollAction = operation === SCROLL_OPERATION;
+  const currentActiveSurfaceBound = compositorNativeExecuted
+    && scrollAction
+    && mediation.visualGrounding?.inventoryMatched === true
+    && mediation.visualGrounding?.surfaceMatched === true;
   return {
     ok: response?.ok === true && ownerContractMatched && mediation.accepted === true,
     registry: registryForOperation(operation),
@@ -155,6 +200,7 @@ function projectOwnerResponse(response, operation) {
       requiresTrustedLease: true,
       writesBrowserInput,
       pointerAction,
+      scrollAction,
       browserNetworkNavigation: false,
       automaticDispatch: false,
       createsTask: false,
@@ -162,6 +208,7 @@ function projectOwnerResponse(response, operation) {
       mutatesBrowserState: browserRuntimeExecuted || compositorNativeExecuted,
       compositorNativeExecuted,
       currentFrameBound: compositorNativeExecuted,
+      currentActiveSurfaceBound,
       inputScope: compositorNativeExecuted ? "ai_owned_nested_output_only" : "active_browser_page",
       exposesNavigationUrl: false,
       exposesPagePayload: false,
@@ -185,6 +232,8 @@ function projectOwnerResponse(response, operation) {
       leaseMatched: mediation.leaseMatched,
       writesBrowserInput,
       pointerAction,
+      scrollAction,
+      currentActiveSurfaceBound,
       inputValueExposed: false,
       browserNetworkNavigation: false,
       noAutomaticDispatch: true,
@@ -196,7 +245,8 @@ function projectOwnerResponse(response, operation) {
 
 function unavailableOwnerResponse(operation) {
   const writesBrowserInput = operation === KEYBOARD_OPERATION;
-  const pointerAction = operation === POINTER_OPERATION;
+  const pointerAction = operation === POINTER_OPERATION || operation === SCROLL_OPERATION;
+  const scrollAction = operation === SCROLL_OPERATION;
   return {
     ok: false,
     registry: registryForOperation(operation),
@@ -222,6 +272,7 @@ function unavailableOwnerResponse(operation) {
       requiresTrustedLease: true,
       writesBrowserInput,
       pointerAction,
+      scrollAction,
       browserNetworkNavigation: false,
       automaticDispatch: false,
       createsTask: false,
@@ -229,6 +280,7 @@ function unavailableOwnerResponse(operation) {
       mutatesBrowserState: false,
       compositorNativeExecuted: false,
       currentFrameBound: false,
+      currentActiveSurfaceBound: false,
       inputScope: "none",
       exposesNavigationUrl: false,
       exposesPagePayload: false,
@@ -252,6 +304,8 @@ function unavailableOwnerResponse(operation) {
       leaseMatched: false,
       writesBrowserInput,
       pointerAction,
+      scrollAction,
+      currentActiveSurfaceBound: false,
       inputValueExposed: false,
       browserNetworkNavigation: false,
       noAutomaticDispatch: true,
@@ -286,6 +340,12 @@ export function createScreenActionCapabilityHandlers({
         payload: { text: normaliseInput(params.text) },
       };
     }
+    if (operation === SCROLL_OPERATION) {
+      return {
+        operation,
+        payload: normaliseScrollParams(params),
+      };
+    }
     return {
       operation,
       payload: normaliseClickParams(params),
@@ -300,7 +360,9 @@ export function createScreenActionCapabilityHandlers({
     try {
       const endpoint = action.operation === KEYBOARD_OPERATION
         ? "/act/keyboard/type"
-        : "/act/mouse/click";
+        : action.operation === SCROLL_OPERATION
+          ? "/act/mouse/scroll"
+          : "/act/mouse/click";
       const response = await postJson(`${screenActUrl}${endpoint}`, action.payload);
       return {
         handled: true,
@@ -332,6 +394,8 @@ export function createScreenActionCapabilityHandlers({
       leaseMatched: summary.leaseMatched === true,
       writesBrowserInput: governance.writesBrowserInput === true,
       pointerAction: governance.pointerAction === true,
+      scrollAction: governance.scrollAction === true,
+      currentActiveSurfaceBound: governance.currentActiveSurfaceBound === true,
       inputValueExposed: governance.exposesInputValue === true,
       browserNetworkNavigation: governance.browserNetworkNavigation === true,
       noAutomaticDispatch: governance.automaticDispatch === false,

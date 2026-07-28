@@ -41,6 +41,12 @@ test("Observer projection is operator-only, visible-tab bounded, validated, and 
     "boundary.serverPersistence !== false",
     "boundary.parentDisplayConnected !== false",
     "boundary.inputAuthorityExpanded !== false",
+    "aiWorkspaceProjectionBinding = null",
+    "currentAiSurfaceScrollBinding()",
+    "Date.now() - capturedAtMs <= 2000",
+    'operation: "mouse.scroll"',
+    'runAiSurfaceScroll("up")',
+    'runAiSurfaceScroll("down")',
   ]) {
     assert.equal(script.includes(token), true, `projection runtime is missing ${token}`);
   }

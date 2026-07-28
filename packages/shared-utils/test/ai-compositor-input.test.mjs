@@ -3,7 +3,9 @@ import test from "node:test";
 
 import {
   aiCompositorFrameMatches,
+  normaliseAiCompositorInputAction,
   normaliseAiCompositorPointerAction,
+  normaliseAiCompositorScrollAction,
   projectAiCompositorInputEvidence,
 } from "../src/ai-compositor-input.mjs";
 
@@ -43,6 +45,57 @@ test("native pointer action is bounded to one fresh fixed-output frame", () => {
   );
 });
 
+test("native scroll is one fixed-center step bound to a current numeric surface", () => {
+  const action = normaliseAiCompositorScrollAction({
+    direction: "up",
+    surfaceId: 17,
+    inventorySequence: 9,
+    compositorFrame,
+  }, { now: Date.parse(capturedAt) + 500 });
+
+  assert.deepEqual({
+    operation: action.operation,
+    x: action.x,
+    y: action.y,
+    direction: action.direction,
+    surfaceId: action.surfaceId,
+    inventorySequence: action.inventorySequence,
+    fresh: action.frame.fresh,
+  }, {
+    operation: "pointer_scroll",
+    x: 640,
+    y: 360,
+    direction: "up",
+    surfaceId: 17,
+    inventorySequence: 9,
+    fresh: true,
+  });
+  assert.equal(normaliseAiCompositorInputAction({
+    direction: "down",
+    surfaceId: 17,
+    inventorySequence: 9,
+    compositorFrame,
+  }, { now: Date.parse(capturedAt) + 500 }).operation, "pointer_scroll");
+  assert.throws(
+    () => normaliseAiCompositorScrollAction({
+      direction: "continuous",
+      surfaceId: 17,
+      inventorySequence: 9,
+      compositorFrame,
+    }),
+    /one up or down step/u,
+  );
+  assert.throws(
+    () => normaliseAiCompositorScrollAction({
+      direction: "down",
+      surfaceId: 0,
+      inventorySequence: 9,
+      compositorFrame,
+    }),
+    /positive 32-bit integer/u,
+  );
+});
+
 test("native input evidence retains hashes but never image data or broad authority", () => {
   const evidence = projectAiCompositorInputEvidence({
     status: "executed",
@@ -65,5 +118,39 @@ test("native input evidence retains hashes but never image data or broad authori
   assert.equal(evidence.sequenceAdvanced, true);
   assert.equal(evidence.desktopWideInput, false);
   assert.equal(evidence.parentDisplayConnected, false);
+  assert.equal(JSON.stringify(evidence).includes("dataUrl"), false);
+});
+
+test("native scroll evidence retains only bounded target and frame metadata", () => {
+  const evidence = projectAiCompositorInputEvidence({
+    status: "executed",
+    operation: "pointer_scroll",
+    requestId: "d".repeat(32),
+    socketName: "nixsoma-ai-0",
+    x: 640,
+    y: 360,
+    direction: "down",
+    surfaceId: 23,
+    inventorySequence: 11,
+    frame: compositorFrame,
+    postFrame: { ...compositorFrame, sha256: "e".repeat(64), sequence: 8 },
+    frameMatched: true,
+    frameFresh: true,
+    leaseMatched: true,
+    receiptMatched: true,
+    sequenceAdvanced: true,
+    frameChanged: true,
+    inventoryMatched: true,
+    surfaceMatched: true,
+    dataUrl: "must-not-survive",
+  });
+
+  assert.equal(evidence.operation, "pointer_scroll");
+  assert.equal(evidence.direction, "down");
+  assert.equal(evidence.surfaceId, 23);
+  assert.equal(evidence.inventorySequence, 11);
+  assert.equal(evidence.frameChanged, true);
+  assert.equal(evidence.inventoryMatched, true);
+  assert.equal(evidence.surfaceMatched, true);
   assert.equal(JSON.stringify(evidence).includes("dataUrl"), false);
 });

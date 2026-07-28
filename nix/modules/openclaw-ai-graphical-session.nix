@@ -308,6 +308,7 @@ in
     systemd.user.services.openclaw-browser-runtime = mkIf sessionCfg.attachBrowser {
       wants = [ "${unitName}.service" ];
       after = [ "${unitName}.service" ];
+      partOf = [ "${unitName}.service" ];
       environment = {
         OPENCLAW_BROWSER_GRAPHICAL_SESSION_ENABLED = "1";
         OPENCLAW_BROWSER_GRAPHICAL_SESSION_MODE = "nested_headed_wayland";

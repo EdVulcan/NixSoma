@@ -895,11 +895,11 @@ export function buildBaseCapabilities({
       kind: "actuator",
       service: "openclaw-screen-act",
       endpoint: `${screenActUrl}/act/state`,
-      intents: ["mouse.click", "keyboard.type", "keyboard.hotkey"],
+      intents: ["mouse.click", "mouse.scroll", "keyboard.type", "keyboard.hotkey"],
       domains: ["user_task"],
       risk: "medium",
       governance: "allow",
-      description: "Perform bounded pointer and keyboard actions through screen-act.",
+      description: "Perform bounded pointer, current-surface scroll, and keyboard actions through screen-act.",
     },
     {
       id: "act.system.heal",

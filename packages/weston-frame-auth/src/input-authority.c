@@ -50,6 +50,13 @@ void
 notify_button(struct weston_seat *seat, const struct timespec *time,
 	      int32_t button, enum wl_pointer_button_state state);
 void
+notify_axis(struct weston_seat *seat, const struct timespec *time,
+	    struct weston_pointer_axis_event *event);
+void
+notify_axis_source(struct weston_seat *seat, uint32_t source);
+void
+notify_pointer_frame(struct weston_seat *seat);
+void
 weston_seat_init(struct weston_seat *seat, struct weston_compositor *compositor,
 		 const char *seat_name);
 int
@@ -61,6 +68,7 @@ struct input_request {
 	enum {
 		INPUT_REQUEST_CLICK = 1,
 		INPUT_REQUEST_ACTIVATE_SURFACE = 2,
+		INPUT_REQUEST_SCROLL = 3,
 	} operation;
 	char id[33];
 	char frame_sha256[65];
@@ -69,6 +77,7 @@ struct input_request {
 	uint32_t y;
 	uint32_t inventory_sequence;
 	uint32_t surface_id;
+	int32_t direction;
 };
 
 struct nixsoma_input_authority {
@@ -167,8 +176,28 @@ read_request(int fd, struct input_request *request)
 			   &consumed) != 5 || strlen(request->id) != 32 ||
 		    strlen(request->frame_sha256) != 64 || request->sequence == 0 ||
 		    request->inventory_sequence == 0 || request->surface_id == 0 ||
-		    consumed + 1 != (int)total || buffer[consumed] != '\n')
-			return false;
+		    consumed + 1 != (int)total || buffer[consumed] != '\n') {
+			memset(request, 0, sizeof(*request));
+			consumed = 0;
+			if (sscanf(buffer,
+				   "3 %32[0-9a-f] %64[0-9a-f] %u %u %u %u %u %d%n",
+				   request->id, request->frame_sha256,
+				   &request->sequence, &request->inventory_sequence,
+				   &request->surface_id, &request->x, &request->y,
+				   &request->direction, &consumed) != 8 ||
+			    strlen(request->id) != 32 ||
+			    strlen(request->frame_sha256) != 64 ||
+			    request->sequence == 0 ||
+			    request->inventory_sequence == 0 ||
+			    request->surface_id == 0 ||
+			    request->x >= NIXSOMA_OUTPUT_WIDTH ||
+			    request->y >= NIXSOMA_OUTPUT_HEIGHT ||
+			    (request->direction != -1 && request->direction != 1) ||
+			    consumed + 1 != (int)total || buffer[consumed] != '\n')
+				return false;
+			request->operation = INPUT_REQUEST_SCROLL;
+			return true;
+		}
 		request->operation = INPUT_REQUEST_ACTIVATE_SURFACE;
 		return true;
 	}
@@ -207,6 +236,31 @@ execute_surface_activation(struct nixsoma_input_authority *authority,
 }
 
 static bool
+execute_scroll(struct nixsoma_input_authority *authority,
+	       const struct input_request *request)
+{
+	struct weston_pointer_axis_event event = {
+		.axis = WL_POINTER_AXIS_VERTICAL_SCROLL,
+		.value = (double)request->direction * 10.0,
+		.has_discrete = true,
+		.discrete = request->direction,
+	};
+	struct weston_coord_global position;
+	struct timespec time;
+
+	if (!weston_seat_get_pointer(&authority->seat) ||
+	    clock_gettime(CLOCK_MONOTONIC, &time) < 0)
+		return false;
+	position.c = weston_coord((double)request->x + 0.5,
+				  (double)request->y + 0.5);
+	notify_motion_absolute(&authority->seat, &time, position);
+	notify_axis_source(&authority->seat, WL_POINTER_AXIS_SOURCE_WHEEL);
+	notify_axis(&authority->seat, &time, &event);
+	notify_pointer_frame(&authority->seat);
+	return true;
+}
+
+static bool
 write_receipt(int fd, const struct input_request *request)
 {
 	char receipt[INPUT_MAX_BYTES + 1];
@@ -218,6 +272,13 @@ write_receipt(int fd, const struct input_request *request)
 				  request->id, request->frame_sha256,
 				  request->sequence, request->inventory_sequence,
 				  request->surface_id);
+	} else if (request->operation == INPUT_REQUEST_SCROLL) {
+		length = snprintf(receipt, sizeof(receipt),
+				  "3 %s %s %u %u %u %u %u %d executed\n",
+				  request->id, request->frame_sha256,
+				  request->sequence, request->inventory_sequence,
+				  request->surface_id, request->x, request->y,
+				  request->direction);
 	} else {
 		length = snprintf(receipt, sizeof(receipt),
 				  "1 %s %s %u %u %u executed\n",
@@ -233,6 +294,7 @@ handle_connection(struct nixsoma_input_authority *authority, int fd)
 {
 	struct timeval timeout = { .tv_sec = 0, .tv_usec = 200000 };
 	struct input_request request = { 0 };
+	bool executed;
 
 	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 	setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
@@ -244,10 +306,20 @@ handle_connection(struct nixsoma_input_authority *authority, int fd)
 		weston_log("NixSoma input authority rejected an invalid request.\n");
 		return;
 	}
-	if ((request.operation == INPUT_REQUEST_CLICK
-	     ? !execute_click(authority, &request)
-	     : !execute_surface_activation(authority, &request)) ||
-	    !write_receipt(fd, &request)) {
+	switch (request.operation) {
+	case INPUT_REQUEST_CLICK:
+		executed = execute_click(authority, &request);
+		break;
+	case INPUT_REQUEST_ACTIVATE_SURFACE:
+		executed = execute_surface_activation(authority, &request);
+		break;
+	case INPUT_REQUEST_SCROLL:
+		executed = execute_scroll(authority, &request);
+		break;
+	default:
+		executed = false;
+	}
+	if (!executed || !write_receipt(fd, &request)) {
 		weston_log("NixSoma input authority could not execute request %.32s.\n",
 			   request.id);
 		return;

@@ -16,6 +16,8 @@ export function observerAiWorkViewPanel() {
             <button id="start-ai-workbench-button" type="button">Start Workbench</button>
             <button id="stop-ai-workbench-button" class="secondary" type="button">Stop Workbench</button>
             <button id="activate-ai-surface-button" class="secondary" type="button" disabled>Activate Surface</button>
+            <button id="scroll-ai-surface-up-button" class="secondary" type="button" disabled title="Scroll active AI surface up" aria-label="Scroll active AI surface up">&#8593;</button>
+            <button id="scroll-ai-surface-down-button" class="secondary" type="button" disabled title="Scroll active AI surface down" aria-label="Scroll active AI surface down">&#8595;</button>
           </div>
           <pre id="work-view-json">Loading work view state...</pre>
         </section>

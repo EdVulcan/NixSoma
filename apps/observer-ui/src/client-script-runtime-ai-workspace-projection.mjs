@@ -1,11 +1,44 @@
 export const observerClientRuntimeAiWorkspaceProjectionScript = `const AI_WORKSPACE_PROJECTION_INTERVAL_MS = 5000;
 let aiWorkspaceProjectionMode = "browser";
 let aiWorkspaceProjectionRequest = null;
+let aiWorkspaceProjectionBinding = null;
+
+function currentAiSurfaceScrollBinding() {
+  const graphicalSession = latestWorkViewState?.aiGraphicalSession ?? {};
+  const inventory = graphicalSession.surfaceInventory ?? {};
+  const activeSurface = Array.isArray(inventory.surfaces)
+    ? inventory.surfaces.find((surface) => surface.activated === true)
+    : null;
+  const capturedAtMs = Date.parse(aiWorkspaceProjectionBinding?.capturedAt ?? "");
+  const frameFresh = Number.isFinite(capturedAtMs)
+    && Date.now() - capturedAtMs <= 2000;
+  if (aiWorkspaceProjectionMode !== "workspace"
+    || !operatorSession?.authenticated
+    || document.visibilityState !== "visible"
+    || !frameFresh
+    || inventory.available !== true
+    || !Number.isInteger(inventory.sequence)
+    || inventory.sequence < 1
+    || !activeSurface) return null;
+  return {
+    surfaceId: activeSurface.surfaceId,
+    inventorySequence: inventory.sequence,
+    compositorFrame: { ...aiWorkspaceProjectionBinding },
+  };
+}
+
+function updateAiSurfaceScrollControls() {
+  const enabled = currentAiSurfaceScrollBinding() !== null;
+  scrollAiSurfaceUpButton.disabled = !enabled;
+  scrollAiSurfaceDownButton.disabled = !enabled;
+}
 
 function clearAiWorkspaceProjection(reason = "unavailable") {
+  aiWorkspaceProjectionBinding = null;
   aiWorkspaceProjectionFrame.removeAttribute("src");
   aiWorkspaceProjectionFrame.hidden = true;
   aiWorkspaceProjectionStatus.textContent = reason;
+  updateAiSurfaceScrollControls();
 }
 
 async function validatedAiWorkspaceProjection(data) {
@@ -73,9 +106,19 @@ async function refreshAiWorkspaceProjection() {
       if (aiWorkspaceProjectionMode !== "workspace"
         || document.visibilityState !== "visible"
         || !operatorSession?.authenticated) return;
+      aiWorkspaceProjectionBinding = {
+        registry: frame.registry,
+        socketName: frame.socketName,
+        width: frame.width,
+        height: frame.height,
+        sha256: frame.sha256,
+        sequence: frame.sequence,
+        capturedAt: frame.capturedAt,
+      };
       aiWorkspaceProjectionFrame.src = frame.dataUrl;
       aiWorkspaceProjectionFrame.hidden = false;
       aiWorkspaceProjectionStatus.textContent = \`fresh \${frame.width}x\${frame.height} \${frame.byteLength}B seq=\${frame.sequence}\`;
+      updateAiSurfaceScrollControls();
     } catch {
       clearAiWorkspaceProjection("unavailable");
     } finally {
@@ -92,6 +135,7 @@ function selectAiWorkspaceProjectionMode(mode) {
   aiWorkspacePreviewTab.setAttribute("aria-selected", String(workspaceSelected));
   browserPagePreview.hidden = workspaceSelected;
   aiWorkspacePreview.hidden = !workspaceSelected;
+  updateAiSurfaceScrollControls();
   if (workspaceSelected) {
     refreshAiWorkspaceProjection();
   } else {
@@ -111,4 +155,45 @@ document.addEventListener("visibilitychange", () => {
 setInterval(() => {
   refreshAiWorkspaceProjection();
 }, AI_WORKSPACE_PROJECTION_INTERVAL_MS);
+
+async function runAiSurfaceScroll(direction) {
+  if (direction !== "up" && direction !== "down") {
+    throw new Error("AI surface scroll direction is invalid.");
+  }
+  await refreshAiWorkspaceProjection();
+  await refreshWorkView();
+  const binding = currentAiSurfaceScrollBinding();
+  if (!binding) throw new Error("A fresh active AI workspace projection is required.");
+  const response = await fetchJson(observerConfig.coreUrl + "/capabilities/invoke", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      capabilityId: "act.screen.pointer_keyboard",
+      operation: "mouse.scroll",
+      params: { ...binding, direction },
+    }),
+  });
+  const result = response.result ?? {};
+  if (response.invoked !== true
+    || result.summary?.accepted !== true
+    || result.governance?.currentActiveSurfaceBound !== true) {
+    throw new Error(result.action?.mediation?.reason ?? "AI surface scroll was rejected.");
+  }
+  setControlMessage("AI surface #" + binding.surfaceId + " scrolled " + direction + ".");
+  await refreshActionState();
+  await refreshWorkView();
+  await refreshAiWorkspaceProjection();
+}
+
+scrollAiSurfaceUpButton.addEventListener("click", () => {
+  runAiSurfaceScroll("up").catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
+scrollAiSurfaceDownButton.addEventListener("click", () => {
+  runAiSurfaceScroll("down").catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
 `;

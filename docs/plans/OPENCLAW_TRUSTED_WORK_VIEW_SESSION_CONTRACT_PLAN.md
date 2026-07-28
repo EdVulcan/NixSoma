@@ -13,7 +13,9 @@ has a deployed, physically proven operator projection of that frame in
 Observer. A sixth has a Weston-owned minimal surface inventory and a governed
 fixed Nix-managed Workbench start/stop path. A seventh deployed continuation
 reuses those owners to activate one current numeric surface through kiosk shell
-with exact grant, inventory, peer receipt, and pre/post frame evidence. It still has no
+with exact grant, inventory, peer receipt, and pre/post frame evidence. An eighth
+candidate-ready continuation permits one fixed-step vertical scroll only on the
+current active surface and exact current frame. It still has no
 desktop takeover, desktop-wide capture/input, arbitrary input device or process
 launch, root, or host-mutation authority; Firefox retains only its existing
 browser network scope.
@@ -93,6 +95,18 @@ surface 4 in sequence, proved changing post-frames, stopped the Workbench, and
 restored all production units without warnings or runtime overrides. Active
 generation `7ycsdd61...` has all nine health endpoints green, zero relevant
 restarts, and no failed units or warning journals. Freeze this continuation.
+
+The active-surface vertical-scroll continuation is candidate-ready in
+`b6qjcbfc...`. It reuses the existing pointer capability and accepts only one
+fixed-center `up` or `down` wheel step. Core, screen-act, session-manager, and
+Weston bind the exact current native frame, active numeric surface, inventory
+sequence, execution grant, audit, peer receipt, and post-frame; no caller delta,
+coordinate, count, axis, gesture, or keyboard device exists. A real Observer
+candidate gate scrolled fixture surface 2 in both directions and restored all
+production services healthy. Browser Runtime now has a `PartOf` relationship to
+the isolated graphical-session unit, preventing a stale headed-browser
+attachment after compositor restart. This continuation is not deployed until
+`b6qjcbfc...` is switched and the normal production lifecycle gate passes.
 
 ## Active Slice
 

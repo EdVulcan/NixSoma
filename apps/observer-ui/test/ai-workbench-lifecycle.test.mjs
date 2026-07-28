@@ -17,6 +17,8 @@ test("Observer exposes bounded fixed workbench lifecycle state and controls", ()
     'id="start-ai-workbench-button"',
     'id="stop-ai-workbench-button"',
     'id="activate-ai-surface-button"',
+    'id="scroll-ai-surface-up-button"',
+    'id="scroll-ai-surface-down-button"',
   ]) {
     assert.equal(panel.includes(token), true, `AI work-view panel is missing ${token}`);
   }
@@ -32,12 +34,17 @@ test("Observer exposes bounded fixed workbench lifecycle state and controls", ()
     "stopAiWorkbenchButton.disabled",
     "activateAiSurfaceButton.disabled",
     "aiSurfaceSelect.dataset.sequence",
+    "updateAiSurfaceScrollControls()",
   ]) {
     assert.equal(observerClientRuntimeRefreshersScript.includes(token), true, `refresh projection is missing ${token}`);
   }
   assert.equal(observerClientRuntimeBindingsScript.includes('/work-view/application/start'), true);
   assert.equal(observerClientRuntimeBindingsScript.includes('/work-view/application/stop'), true);
   assert.equal(observerClientRuntimeBindingsScript.includes('/work-view/surface/activate'), true);
+  const script = clientScript();
+  assert.equal(script.includes('operation: "mouse.scroll"'), true);
+  assert.equal(script.includes('result.governance?.currentActiveSurfaceBound !== true'), true);
+  assert.equal(script.includes('params: { ...binding, direction }'), true);
 });
 
 test("production Observer client assembles workbench controls through Core only", () => {

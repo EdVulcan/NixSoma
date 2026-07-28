@@ -1,6 +1,7 @@
 import {
   AI_COMPOSITOR_INPUT_REGISTRY,
-  normaliseAiCompositorPointerAction,
+  AI_COMPOSITOR_POINTER_SCROLL_OPERATION,
+  normaliseAiCompositorInputAction,
 } from "../../../packages/shared-utils/src/ai-compositor-input.mjs";
 
 export function hasAiCompositorFrameBinding(params) {
@@ -16,7 +17,8 @@ export function createAiCompositorPointerDispatch({
     trustedHelperLease,
     forwardedGrantHeaders = {},
   } = {}) {
-    const normalised = normaliseAiCompositorPointerAction(action);
+    const normalised = normaliseAiCompositorInputAction(action);
+    const scrollAction = normalised.operation === AI_COMPOSITOR_POINTER_SCROLL_OPERATION;
     try {
       const response = await fetchFn(`${sessionManagerUrl}/work-view/compositor-input`, {
         method: "POST",
@@ -31,7 +33,15 @@ export function createAiCompositorPointerDispatch({
       const accepted = response.ok
         && data?.ok === true
         && evidence?.registry === AI_COMPOSITOR_INPUT_REGISTRY
-        && ["executed", "executed_post_frame_unavailable"].includes(evidence.status);
+        && evidence.operation === normalised.operation
+        && ["executed", "executed_post_frame_unavailable"].includes(evidence.status)
+        && (!scrollAction || (
+          evidence.direction === normalised.direction
+          && evidence.surfaceId === normalised.surfaceId
+          && evidence.inventorySequence === normalised.inventorySequence
+          && evidence.inventoryMatched === true
+          && evidence.surfaceMatched === true
+        ));
       return {
         registry: "openclaw-trusted-work-view-action-mediation-v0",
         attempted: true,
@@ -52,6 +62,11 @@ export function createAiCompositorPointerDispatch({
           frameFresh: evidence?.frameFresh === true,
           receiptMatched: evidence?.receiptMatched === true,
           sequenceAdvanced: evidence?.sequenceAdvanced === true,
+          frameChanged: evidence?.frameChanged === true,
+          inventoryMatched: scrollAction ? evidence?.inventoryMatched === true : false,
+          surfaceMatched: scrollAction ? evidence?.surfaceMatched === true : false,
+          surfaceId: scrollAction ? normalised.surfaceId : null,
+          inventorySequence: scrollAction ? normalised.inventorySequence : null,
           imageDataRetained: false,
           persisted: false,
         },

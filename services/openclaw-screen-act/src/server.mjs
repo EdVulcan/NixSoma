@@ -113,6 +113,26 @@ async function executeBrowserAction(kind, params, screen, context = {}) {
     : kind === "keyboard.type"
       ? "/browser/input"
       : kind === "browser.new_tab" ? "/browser/new-tab" : null;
+  if (kind === "mouse.scroll" && hasAiCompositorFrameBinding(params)) {
+    const leaseContext = buildTrustedWorkViewActionLease(screen);
+    if (!leaseContext.ready) {
+      return {
+        registry: leaseContext.registry,
+        attempted: false,
+        required: leaseContext.required,
+        accepted: false,
+        status: "blocked",
+        reason: leaseContext.reason,
+        leaseMatched: false,
+      };
+    }
+    return dispatchAiCompositorPointer({
+      action: context.grantBoundAction ?? params,
+      trustedHelperLease: leaseContext.trustedHelperLease,
+      forwardedGrantHeaders: context.forwardedGrantHeaders,
+    });
+  }
+
   if (!endpoint) {
     return {
       registry: "openclaw-trusted-work-view-action-mediation-v0",
@@ -326,6 +346,30 @@ const server = http.createServer(async (req, res) => {
         y: semanticTarget ? null : typeof body.y === "number" ? body.y : null,
         button: typeof body.button === "string" ? body.button : "left",
         semanticTarget,
+        compositorFrame: body.compositorFrame ?? null,
+      }, {
+        grantBoundAction: body,
+        forwardedGrantHeaders: {
+          [EXECUTION_GRANT_HEADER]: req.headers[EXECUTION_GRANT_HEADER],
+          ...executionGrantContextHeaders(executionGrantContextFromHeaders(req.headers)),
+        },
+      });
+      sendJson(res, 200, { ok: true, action });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, error.statusCode ?? 400, { ok: false, error: message, code: error.code ?? null });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/act/mouse/scroll") {
+    try {
+      const body = await readJsonBody(req);
+      assertExecutionGrant({ verifier: executionGrantVerifier, req, requestUrl, body });
+      const action = await executeAction("mouse.scroll", {
+        direction: body.direction,
+        surfaceId: body.surfaceId,
+        inventorySequence: body.inventorySequence,
         compositorFrame: body.compositorFrame ?? null,
       }, {
         grantBoundAction: body,

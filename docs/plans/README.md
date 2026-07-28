@@ -117,15 +117,17 @@ login-user systemd owner
 -> minimal compositor-owned surface inventory (complete and physically proven)
 -> fixed Nix-managed Workbench start/stop (complete and physically proven)
 -> exact current-surface activation through kiosk shell (complete, deployed, and physically proven)
+-> one current-frame- and active-surface-bound vertical scroll step (candidate-ready and physically proven)
 ```
 
 The current source stops before desktop takeover, desktop-wide observation,
-parent-display access, added input, root, or host mutation. Firefox retains only
-the existing browser-runtime network scope. Native input remains limited to one
-frame-bound left click on `nixsoma-ai-0`; the projection is operator-authenticated,
+parent-display access, arbitrary input devices, root, or host mutation. Firefox
+retains only the existing browser-runtime network scope. Native input remains
+limited to one frame-bound left click and one fixed-center, active-surface-bound
+vertical step on `nixsoma-ai-0`; the projection is operator-authenticated,
 explicitly selected, no-store, and browser-memory-only. Do not reopen the
-completed provider or Level 2 action lanes or add horizontal input/projection
-variants.
+completed provider or Level 2 action lanes or add horizontal axes, generic
+gestures, repeated input, or projection variants.
 
 Generation `kxv2ypwp...` completed the coexistence proof with a current-user
 `0700` nested runtime/socket, no parent display environment or DRM handle, about
@@ -217,6 +219,20 @@ zero. All nine health endpoints remain green with zero relevant restarts and no
 failed units or warning journals. Freeze this lane. The selected next Level 4
 behavior is one bounded current-frame- and active-surface-bound vertical scroll
 step through the existing pointer owner.
+
+That selected behavior is now candidate-ready in `b6qjcbfc...`. The existing
+pointer capability accepts only one fixed-center `up` or `down` wheel step and
+binds it to the exact current compositor frame, active numeric surface, and
+inventory sequence. The request remains single-use and audit-first through
+Core, screen-act, session-manager, and the authenticated Weston socket; caller
+coordinates, deltas, counts, axes, gestures, keyboard, and generic window or
+process control remain absent. A real candidate Observer gate scrolled fixture
+surface 2 in both directions with matching receipts and changed post-frames,
+rejected anonymous direct scroll, and restored production healthy. Browser
+Runtime now follows isolated-compositor restarts through `PartOf`, closing the
+stale attachment that an earlier gate exposed. Production remains on
+`7ycsdd61...`; switch `b6qjcbfc...` and rerun the normal lifecycle gate before
+marking the eighth slice deployed.
 
 ## Completed Capability Evidence
 

@@ -878,6 +878,80 @@ test("capability runtime dispatches bounded left click through screen-act", asyn
   assert.equal(events.at(-1)?.name, "capability.invoked");
 });
 
+test("capability runtime dispatches one frame- and active-surface-bound scroll step", async () => {
+  const compositorFrame = {
+    registry: "nixsoma-ai-compositor-frame-v0",
+    socketName: "nixsoma-ai-0",
+    width: 1280,
+    height: 720,
+    sha256: "9".repeat(64),
+    sequence: 27,
+    capturedAt: new Date().toISOString(),
+  };
+  const { runtime, state, events, calls } = createHarness({
+    postJsonResult: {
+      ok: true,
+      action: {
+        kind: "mouse.scroll",
+        result: "executed-ai-compositor",
+        degraded: false,
+        mediation: {
+          attempted: true,
+          accepted: true,
+          status: "accepted",
+          reason: null,
+          leaseMatched: true,
+          transport: "ai-compositor-native",
+          visualGrounding: {
+            required: true,
+            status: "executed",
+            frameMatched: true,
+            frameFresh: true,
+            receiptMatched: true,
+            sequenceAdvanced: true,
+            frameChanged: true,
+            inventoryMatched: true,
+            surfaceMatched: true,
+          },
+        },
+      },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.screen.pointer_keyboard",
+    operation: "mouse.scroll",
+    params: {
+      direction: "up",
+      surfaceId: 44,
+      inventorySequence: 16,
+      compositorFrame,
+    },
+  });
+
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.policy.input.intent, "mouse.scroll");
+  assert.equal(result.response.summary.kind, "mouse.scroll");
+  assert.equal(result.response.summary.accepted, true);
+  assert.equal(result.response.summary.scrollAction, true);
+  assert.equal(result.response.summary.currentActiveSurfaceBound, true);
+  assert.equal(result.response.result.governance.currentFrameBound, true);
+  assert.equal(result.response.result.governance.currentActiveSurfaceBound, true);
+  assert.deepEqual(calls.postJson, [{
+    url: "http://127.0.0.1:4105/act/mouse/scroll",
+    body: {
+      direction: "up",
+      surfaceId: 44,
+      inventorySequence: 16,
+      compositorFrame,
+    },
+  }]);
+  assert.equal(JSON.stringify(result.response.invocation).includes(compositorFrame.sha256), false);
+  assert.equal(state.capabilityInvocationLog.at(-1)?.request.intent, "mouse.scroll");
+  assert.equal(events.at(-1)?.name, "capability.invoked");
+});
+
 test("capability runtime dispatches simulated system maintenance through system-heal", async () => {
   const { runtime, state, events, calls } = createHarness({
     postJsonResult: {

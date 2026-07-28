@@ -5,8 +5,9 @@ import path from "node:path";
 
 import {
   AI_COMPOSITOR_INPUT_SOCKET,
+  AI_COMPOSITOR_POINTER_SCROLL_OPERATION,
   aiCompositorFrameMatches,
-  normaliseAiCompositorPointerAction,
+  normaliseAiCompositorInputAction,
   projectAiCompositorInputEvidence,
 } from "../../../packages/shared-utils/src/ai-compositor-input.mjs";
 import { validateTrustedWorkViewActionLease } from "../../../packages/shared-utils/src/work-view-trust.mjs";
@@ -16,6 +17,7 @@ const EXPECTED_INPUT_DIRECTORY = "input";
 const CONTROL_SOCKET_NAME = "control.sock";
 const RECEIPT_PATTERN = /^1 ([a-f0-9]{32}) ([a-f0-9]{64}) ([1-9][0-9]*) ([0-9]+) ([0-9]+) executed\n$/u;
 const SURFACE_ACTIVATION_RECEIPT_PATTERN = /^2 ([a-f0-9]{32}) ([a-f0-9]{64}) ([1-9][0-9]*) ([1-9][0-9]*) ([1-9][0-9]*) executed\n$/u;
+const SCROLL_RECEIPT_PATTERN = /^3 ([a-f0-9]{32}) ([a-f0-9]{64}) ([1-9][0-9]*) ([1-9][0-9]*) ([1-9][0-9]*) ([0-9]+) ([0-9]+) (-?1) executed\n$/u;
 const SURFACE_ACTIVATION_REGISTRY = "nixsoma-ai-surface-activation-v0";
 
 function enabled(value) {
@@ -106,6 +108,25 @@ function assertSurfaceActivationReceipt(text, expected) {
     || Number(inventorySequence) !== expected.inventorySequence
     || Number(surfaceId) !== expected.surfaceId) {
     throw new Error("AI surface activation receipt does not match the request.");
+  }
+}
+
+function assertScrollReceipt(text, expected) {
+  const match = SCROLL_RECEIPT_PATTERN.exec(text);
+  if (!match) throw new Error("AI compositor scroll receipt is malformed.");
+  const [
+    , requestId, sha256, frameSequence, inventorySequence,
+    surfaceId, x, y, direction,
+  ] = match;
+  if (requestId !== expected.requestId
+    || sha256 !== expected.frame.sha256
+    || Number(frameSequence) !== expected.frame.sequence
+    || Number(inventorySequence) !== expected.inventorySequence
+    || Number(surfaceId) !== expected.surfaceId
+    || Number(x) !== expected.x
+    || Number(y) !== expected.y
+    || Number(direction) !== expected.direction) {
+    throw new Error("AI compositor scroll receipt does not match the request.");
   }
 }
 
@@ -219,11 +240,25 @@ export function createAiCompositorInputController({
         || graphicalSession?.browserAttachment?.attached !== true) {
         throw new Error("AI compositor input requires the attached isolated work view.");
       }
-      const action = normaliseAiCompositorPointerAction(candidateAction, { now: now() });
+      const action = normaliseAiCompositorInputAction(candidateAction, { now: now() });
+      const scrollAction = action.operation === AI_COMPOSITOR_POINTER_SCROLL_OPERATION;
       const currentFrame = frameCapture.snapshot();
       if (!action.frame.fresh || currentFrame?.fresh !== true
         || !aiCompositorFrameMatches(action.frame, currentFrame)) {
         throw new Error("AI compositor input frame is stale or no longer current.");
+      }
+      if (scrollAction) {
+        const inventory = observeSurfaceInventory();
+        const target = inventory?.available === true
+          && inventory.sequence === action.inventorySequence
+          ? inventory.surfaces?.find((surface) => surface.surfaceId === action.surfaceId)
+          : null;
+        if (target?.activated !== true) {
+          const error = new Error("AI compositor scroll target is stale or not active.");
+          error.code = "AI_COMPOSITOR_SCROLL_TARGET_STALE";
+          error.statusCode = 409;
+          throw error;
+        }
       }
       const mediation = assertAuthority(trustedHelperLease);
       const { inputDir, socketPath } = paths();
@@ -238,20 +273,50 @@ export function createAiCompositorInputController({
         x: action.x,
         y: action.y,
         frame: action.frame,
+        direction: scrollAction ? (action.direction === "up" ? -1 : 1) : null,
+        surfaceId: scrollAction ? action.surfaceId : null,
+        inventorySequence: scrollAction ? action.inventorySequence : null,
       };
-      const wire = `1 ${request.requestId} ${action.frame.sha256} ${action.frame.sequence} ${action.x} ${action.y}\n`;
+      const wire = scrollAction
+        ? `3 ${request.requestId} ${action.frame.sha256} ${action.frame.sequence} ${action.inventorySequence} ${action.surfaceId} ${action.x} ${action.y} ${request.direction}\n`
+        : `1 ${request.requestId} ${action.frame.sha256} ${action.frame.sequence} ${action.x} ${action.y}\n`;
       const receipt = await sendRequest({ socketPath, wire, timeoutMs: config.timeoutMs, request });
-      assertReceipt(receipt, request);
-      const postFrame = await frameCapture.capture();
+      if (scrollAction) assertScrollReceipt(receipt, request);
+      else assertReceipt(receipt, request);
+      const settledInventory = scrollAction ? observeSurfaceInventory() : null;
+      const inventoryMatched = !scrollAction || (
+        settledInventory?.available === true
+        && settledInventory.sequence >= action.inventorySequence
+      );
+      const surfaceMatched = !scrollAction || (
+        inventoryMatched
+        && settledInventory.surfaces?.find(
+          (surface) => surface.surfaceId === action.surfaceId,
+        )?.activated === true
+      );
+      const postFrameDeadline = now() + config.timeoutMs;
+      let postFrame;
+      do {
+        postFrame = await frameCapture.capture();
+        if (!scrollAction
+          || (postFrame?.available === true
+            && postFrame.sha256 !== action.frame.sha256)) break;
+        await sleep(20);
+      } while (now() < postFrameDeadline);
       const sequenceAdvanced = postFrame?.available === true
         && postFrame.sequence > action.frame.sequence;
       lastEvidence = projectAiCompositorInputEvidence({
-        status: sequenceAdvanced ? "executed" : "executed_post_frame_unavailable",
+        status: scrollAction && (!inventoryMatched || !surfaceMatched)
+          ? "executed_surface_diverged"
+          : sequenceAdvanced ? "executed" : "executed_post_frame_unavailable",
         operation: action.operation,
         requestId: request.requestId,
         socketName: AI_COMPOSITOR_INPUT_SOCKET,
         x: action.x,
         y: action.y,
+        direction: scrollAction ? action.direction : null,
+        surfaceId: scrollAction ? action.surfaceId : null,
+        inventorySequence: scrollAction ? action.inventorySequence : null,
         frame: action.frame,
         postFrame: postFrame?.available === true ? postFrame : null,
         frameMatched: true,
@@ -259,6 +324,10 @@ export function createAiCompositorInputController({
         leaseMatched: mediation.leaseMatched,
         receiptMatched: true,
         sequenceAdvanced,
+        frameChanged: postFrame?.available === true
+          && postFrame.sha256 !== action.frame.sha256,
+        inventoryMatched,
+        surfaceMatched,
       });
       return lastEvidence;
     })();

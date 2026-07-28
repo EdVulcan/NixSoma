@@ -5,6 +5,7 @@ import {
 import { readJsonBody } from "../../../packages/shared-utils/src/http.mjs";
 
 const SCREEN_ACT_POINTER_PATH = "/act/mouse/click";
+const SCREEN_ACT_SCROLL_PATH = "/act/mouse/scroll";
 
 export function createAiCompositorInputRoute({
   controller,
@@ -20,17 +21,33 @@ export function createAiCompositorInputRoute({
     try {
       const body = await readJsonBody(req, 16_384);
       const action = body?.action;
+      const grantContext = executionGrantContextFromHeaders(req.headers);
+      const scrollShape = action && typeof action === "object" && (
+        action.direction !== undefined
+        || action.surfaceId !== undefined
+        || action.inventorySequence !== undefined
+      );
+      const grantPath = scrollShape
+        ? SCREEN_ACT_SCROLL_PATH
+        : SCREEN_ACT_POINTER_PATH;
       const verification = executionGrantVerifier.verifyRequest({
         token: req.headers[EXECUTION_GRANT_HEADER],
         method: "POST",
-        path: SCREEN_ACT_POINTER_PATH,
+        path: grantPath,
         body: action,
-        context: executionGrantContextFromHeaders(req.headers),
+        context: grantContext,
       });
       if (!verification.ok) {
         const error = new Error(verification.reason);
         error.code = verification.code;
         error.statusCode = verification.statusCode;
+        throw error;
+      }
+      const expectedIntent = scrollShape ? "mouse.scroll" : "mouse.click";
+      if (grantContext.intent !== null && grantContext.intent !== expectedIntent) {
+        const error = new Error("AI compositor input intent does not match its operation shape.");
+        error.code = "AI_COMPOSITOR_INPUT_INTENT_MISMATCH";
+        error.statusCode = 400;
         throw error;
       }
       const audit = await publishEvent(createEventName("screen.updated"), {
@@ -45,9 +62,14 @@ export function createAiCompositorInputRoute({
           capabilityId: verification.grant.capabilityId,
         },
         input: {
-          operation: "pointer_click",
+          operation: scrollShape ? "pointer_scroll" : "pointer_click",
           x: action?.x ?? null,
           y: action?.y ?? null,
+          direction: scrollShape ? action?.direction ?? null : null,
+          surfaceId: scrollShape ? action?.surfaceId ?? null : null,
+          inventorySequence: scrollShape
+            ? action?.inventorySequence ?? null
+            : null,
           frameSha256: action?.compositorFrame?.sha256 ?? null,
           frameSequence: action?.compositorFrame?.sequence ?? null,
           socketName: action?.compositorFrame?.socketName ?? null,

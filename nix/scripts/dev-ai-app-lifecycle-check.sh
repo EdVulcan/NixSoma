@@ -4,6 +4,7 @@ set -euo pipefail
 CORE_URL="${OPENCLAW_CORE_URL:-http://127.0.0.1:4100}"
 EVENT_HUB_URL="${OPENCLAW_EVENT_HUB_URL:-http://127.0.0.1:4101}"
 SESSION_MANAGER_URL="${OPENCLAW_SESSION_MANAGER_URL:-http://127.0.0.1:4102}"
+BROWSER_RUNTIME_URL="${OPENCLAW_BROWSER_RUNTIME_URL:-http://127.0.0.1:4103}"
 OBSERVER_URL="${OBSERVER_URL:-http://127.0.0.1:4170}"
 APP_UNIT="nixsoma-ai-workbench.service"
 RUNTIME_DIR="${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/nixsoma-ai-graphical-session"
@@ -62,7 +63,7 @@ fixture_shell="$tmp_dir/fixture-shell"
 printf '%s\n' \
   "#!$(command -v bash)" \
   'set -eu' \
-  "printf '\\033[2J\\033[H%s\\n' 'NixSoma Surface Activation Fixture' '' 'Fixed temporary validation surface'" \
+  "for line in \$($(command -v seq) 1 120); do printf 'NixSoma Scroll Fixture %03d\\n' \"\$line\"; done" \
   "while :; do $(command -v sleep) 3600; done" \
   > "$fixture_shell"
 chmod 700 "$fixture_shell"
@@ -85,6 +86,11 @@ anonymous_status="$(command curl --silent --output "$tmp_dir/anonymous.json" --w
   --data '{"operatorActionSource":"capability_runtime_work_view_control","recommendedAction":"start_ai_workbench"}')"
 [[ "$anonymous_status" == "401" ]]
 [[ "$(systemctl --user is-active "$APP_UNIT" 2>/dev/null || true)" == "inactive" ]]
+anonymous_scroll_status="$(command curl --silent --output "$tmp_dir/anonymous-scroll.json" --write-out '%{http_code}' \
+  -X POST "$SESSION_MANAGER_URL/work-view/compositor-input" \
+  -H 'content-type: application/json' \
+  --data '{"action":{"direction":"down","surfaceId":1,"inventorySequence":1,"compositorFrame":{}},"trustedHelperLease":{}}')"
+[[ "$anonymous_scroll_status" == "401" ]]
 
 firefox_executable="$(systemctl --user show openclaw-browser-runtime.service -p Environment --value \
   | tr ' ' '\n' \
@@ -97,6 +103,7 @@ node --input-type=module - \
   "$OPENCLAW_OPERATOR_TOKEN_FILE" \
   "$firefox_executable" \
   "$SESSION_MANAGER_URL" \
+  "$BROWSER_RUNTIME_URL" \
   "$fixture_pid" \
   "$tmp_dir" <<'NODE'
 import { execFileSync } from "node:child_process";
@@ -104,7 +111,15 @@ import fs from "node:fs";
 import path from "node:path";
 import puppeteer from "puppeteer-core";
 
-const [observerUrl, tokenFile, executablePath, sessionManagerUrl, fixturePidText, outputDirectory] = process.argv.slice(2);
+const [
+  observerUrl,
+  tokenFile,
+  executablePath,
+  sessionManagerUrl,
+  browserRuntimeUrl,
+  fixturePidText,
+  outputDirectory,
+] = process.argv.slice(2);
 const fixturePid = Number(fixturePidText);
 const token = fs.readFileSync(tokenFile, "utf8").trim();
 const browser = await puppeteer.launch({ browser: "firefox", executablePath, headless: true });
@@ -139,6 +154,47 @@ try {
     return state.workView?.aiGraphicalSession?.surfaceInventory?.surfaces
       ?.some((surface) => surface.pid === pid);
   }, { timeout: 15_000 }, sessionManagerUrl, fixturePid);
+
+  await page.click("#prepare-work-view-button");
+  try {
+    await page.waitForFunction(async (url) => {
+      const state = await fetch(url + "/work-view/state").then((response) => response.json());
+      const helper = state.workView?.helperRuntime;
+      const graphical = state.workView?.aiGraphicalSession;
+      return helper?.status === "active"
+        && helper.actionAuthority === "active"
+        && helper.leaseMatched === true
+        && graphical?.browserAttachment?.attached === true;
+    }, { timeout: 15_000 }, sessionManagerUrl);
+  } catch (error) {
+    const diagnostic = await page.evaluate(async (sessionUrl, browserUrl) => ({
+      controlMessage: document.querySelector("#control-message")?.textContent ?? null,
+      state: await fetch(sessionUrl + "/work-view/state").then((response) => response.json()),
+      browserHealth: await fetch(browserUrl + "/health").then(async (response) => ({
+        status: response.status,
+        body: await response.json(),
+      })).catch((fetchError) => ({ error: fetchError.message })),
+    }), sessionManagerUrl, browserRuntimeUrl);
+    diagnostic.units = execFileSync("systemctl", [
+      "--user", "show",
+      "nixsoma-ai-graphical-session.service",
+      "openclaw-session-manager.service",
+      "openclaw-browser-runtime.service",
+      "-p", "Id", "-p", "ActiveState", "-p", "SubState", "-p", "MainPID",
+      "-p", "NRestarts", "-p", "PartOf",
+    ], { encoding: "utf8" });
+    diagnostic.journal = execFileSync("journalctl", [
+      "--user", "--no-pager", "-n", "40",
+      "-u", "nixsoma-ai-graphical-session.service",
+      "-u", "openclaw-session-manager.service",
+      "-u", "openclaw-browser-runtime.service",
+    ], { encoding: "utf8" });
+    throw new Error(`AI work view preparation did not settle: ${JSON.stringify(diagnostic)}`, {
+      cause: error,
+    });
+  }
+  const preparedState = await fetch(`${sessionManagerUrl}/work-view/state`).then((response) => response.json());
+  fs.writeFileSync(path.join(outputDirectory, "prepared.json"), JSON.stringify(preparedState));
 
   await page.click("#start-ai-workbench-button");
   await page.waitForFunction(() => {
@@ -211,6 +267,61 @@ try {
   const fixtureActiveState = await fetch(`${sessionManagerUrl}/work-view/state`).then((response) => response.json());
   fs.writeFileSync(path.join(outputDirectory, "fixture-active.json"), JSON.stringify(fixtureActiveState));
 
+  await page.click("#ai-workspace-preview-tab");
+  await page.waitForFunction(() =>
+    document.querySelector("#ai-workspace-projection-frame")?.hidden === false
+      && document.querySelector("#scroll-ai-surface-up-button")?.disabled === false,
+  { timeout: 15_000 });
+  await page.click("#scroll-ai-surface-up-button");
+  try {
+    await page.waitForFunction(async (url, surfaceId) => {
+      const state = await fetch(url + "/work-view/state").then((response) => response.json());
+      const input = state.workView?.aiGraphicalSession?.compositorInput;
+      return input?.status === "executed"
+        && input.operation === "pointer_scroll"
+        && input.direction === "up"
+        && input.surfaceId === surfaceId
+        && input.inventoryMatched === true
+        && input.surfaceMatched === true
+        && input.receiptMatched === true
+        && input.sequenceAdvanced === true
+        && input.frameChanged === true;
+    }, { timeout: 15_000 }, sessionManagerUrl, fixtureSurface.surfaceId);
+  } catch (error) {
+    const diagnostic = await page.evaluate(async (url) => ({
+      controlMessage: document.querySelector("#control-message")?.textContent ?? null,
+      scrollUpDisabled: document.querySelector("#scroll-ai-surface-up-button")?.disabled,
+      state: await fetch(url + "/work-view/state").then((response) => response.json()),
+    }), sessionManagerUrl);
+    throw new Error(`AI surface scroll up did not settle: ${JSON.stringify(diagnostic)}`, {
+      cause: error,
+    });
+  }
+  const scrollUpState = await fetch(`${sessionManagerUrl}/work-view/state`).then((response) => response.json());
+  const scrollUpRequestId = scrollUpState.workView?.aiGraphicalSession?.compositorInput?.requestId;
+  fs.writeFileSync(path.join(outputDirectory, "scroll-up.json"), JSON.stringify(scrollUpState));
+
+  await page.waitForFunction(() =>
+    document.querySelector("#scroll-ai-surface-down-button")?.disabled === false,
+  { timeout: 15_000 });
+  await page.click("#scroll-ai-surface-down-button");
+  await page.waitForFunction(async (url, surfaceId, priorRequestId) => {
+    const state = await fetch(url + "/work-view/state").then((response) => response.json());
+    const input = state.workView?.aiGraphicalSession?.compositorInput;
+    return input?.status === "executed"
+      && input.requestId !== priorRequestId
+      && input.operation === "pointer_scroll"
+      && input.direction === "down"
+      && input.surfaceId === surfaceId
+      && input.inventoryMatched === true
+      && input.surfaceMatched === true
+      && input.receiptMatched === true
+      && input.sequenceAdvanced === true
+      && input.frameChanged === true;
+  }, { timeout: 15_000 }, sessionManagerUrl, fixtureSurface.surfaceId, scrollUpRequestId);
+  const scrollDownState = await fetch(`${sessionManagerUrl}/work-view/state`).then((response) => response.json());
+  fs.writeFileSync(path.join(outputDirectory, "scroll-down.json"), JSON.stringify(scrollDownState));
+
   await page.select("#ai-surface-select", String(application.matchingSurface.surfaceId));
   await page.click("#activate-ai-surface-button");
   await page.waitForFunction(async (url, surfaceId) => {
@@ -275,39 +386,63 @@ const path = require("node:path");
 const directory = process.argv[2];
 const read = (name) => JSON.parse(fs.readFileSync(path.join(directory, name), "utf8"));
 const before = read("before.json");
+const prepared = read("prepared.json");
 const running = read("running.json");
 const fixtureActive = read("fixture-active.json");
 const workbenchActive = read("workbench-active.json");
+const scrollUp = read("scroll-up.json");
+const scrollDown = read("scroll-down.json");
 const stopped = read("stopped.json");
 const afterFixture = read("after-fixture.json");
 const observer = read("observer.json");
 const anonymous = read("anonymous.json");
+const anonymousScroll = read("anonymous-scroll.json");
 const events = read("events.json").items ?? [];
 const beforeInventory = before.workView?.aiGraphicalSession?.surfaceInventory ?? {};
+const preparedInventory = prepared.workView?.aiGraphicalSession?.surfaceInventory ?? {};
 const runningInventory = running.workView?.aiGraphicalSession?.surfaceInventory ?? {};
 const stoppedInventory = stopped.workView?.aiGraphicalSession?.surfaceInventory ?? {};
 const finalInventory = afterFixture.workView?.aiGraphicalSession?.surfaceInventory ?? {};
 const fixtureActivation = fixtureActive.workView?.aiGraphicalSession?.surfaceActivation ?? {};
 const workbenchActivation = workbenchActive.workView?.aiGraphicalSession?.surfaceActivation ?? {};
+const scrollUpInput = scrollUp.workView?.aiGraphicalSession?.compositorInput ?? {};
+const scrollDownInput = scrollDown.workView?.aiGraphicalSession?.compositorInput ?? {};
 const actions = new Set(events.map((event) => event.payload?.action));
 
 if (before.workView?.aiGraphicalSession?.applicationLifecycle?.status !== "stopped"
-  || runningInventory.count !== beforeInventory.count + 2
-  || stoppedInventory.count !== beforeInventory.count + 1
-  || finalInventory.count !== beforeInventory.count
+  || prepared.workView?.helperRuntime?.status !== "active"
+  || prepared.workView?.aiGraphicalSession?.browserAttachment?.attached !== true
+  || runningInventory.count !== preparedInventory.count + 1
+  || stoppedInventory.count !== preparedInventory.count
+  || finalInventory.count !== preparedInventory.count - 1
   || anonymous.code !== "EXECUTION_GRANT_REQUIRED"
+  || anonymousScroll.code !== "EXECUTION_GRANT_REQUIRED"
   || !actions.has("ai-workbench-start-requested")
   || !actions.has("ai-workbench-start-completed")
   || !actions.has("ai-workbench-stop-requested")
   || !actions.has("ai-workbench-stop-completed")
   || !actions.has("ai-surface-activation-requested")
   || !actions.has("ai-surface-activation-completed")
+  || !actions.has("ai-compositor-input-requested")
+  || !actions.has("ai-compositor-input-executed")
   || fixtureActivation.surfaceId !== observer.fixtureSurfaceId
   || workbenchActivation.surfaceId !== observer.surfaceId
   || fixtureActivation.receiptMatched !== true
   || workbenchActivation.receiptMatched !== true
   || fixtureActivation.frameChanged !== true
   || workbenchActivation.frameChanged !== true
+  || scrollUpInput.operation !== "pointer_scroll"
+  || scrollDownInput.operation !== "pointer_scroll"
+  || scrollUpInput.direction !== "up"
+  || scrollDownInput.direction !== "down"
+  || scrollUpInput.surfaceId !== observer.fixtureSurfaceId
+  || scrollDownInput.surfaceId !== observer.fixtureSurfaceId
+  || scrollUpInput.receiptMatched !== true
+  || scrollDownInput.receiptMatched !== true
+  || scrollUpInput.frameChanged !== true
+  || scrollDownInput.frameChanged !== true
+  || scrollUpInput.frame?.sha256 === scrollUpInput.postFrame?.sha256
+  || scrollDownInput.frame?.sha256 === scrollDownInput.postFrame?.sha256
   || JSON.stringify(runningInventory.surfaces).includes("title")
   || JSON.stringify(running).includes("API_KEY")) {
   throw new Error("physical application lifecycle evidence is incomplete");
@@ -318,14 +453,18 @@ console.log(JSON.stringify({
   fixtureSurfaceId: observer.fixtureSurfaceId,
   mainPid: observer.mainPid,
   beforeSurfaceCount: beforeInventory.count,
+  preparedSurfaceCount: preparedInventory.count,
   runningSurfaceCount: runningInventory.count,
   postWorkbenchStopSurfaceCount: stoppedInventory.count,
   stoppedSurfaceCount: finalInventory.count,
   observerRendered: true,
   anonymousDirectStartRejected: true,
+  anonymousDirectScrollRejected: true,
   durableAudit: true,
   surfaceActivationRoundTrip: true,
   frameBoundActivation: true,
+  nativeScrollRoundTrip: true,
+  activeSurfaceBoundScroll: true,
   devicePolicy: "closed",
   privateDevices: false,
   protectHome: "read-only",
