@@ -908,11 +908,12 @@ recorded in
 `OPENCLAW_NATIVE_ENGINEERING_CAPABILITY_RUNTIME_WORKSPACE_EDIT_TARGET_SELECTION_PLAN.md`.
 
 This Level 1 engineering-tool plan is now frozen relative to the active Level 4
-route. The current source candidate adds `act.ai.workspace.single_step` through
+route. Generation `6k51pmrglb...` adds `act.ai.workspace.single_step` through
 the common capability runtime, but it does not reopen ACPX, engineering context,
 or provider handoff work. It accepts no engineering prompt or source payload,
 uses only server-generated isolated-workspace structural metadata, shares the
 existing standing DeepSeek budget owner, and may reuse one existing governed
-scroll action at most once. Deployment and one real-call physical check remain
-pending; visual content, automatic engineering actions, keyboard input,
-multi-step execution, and process authority remain outside this plan.
+scroll action at most once. A real-call physical check returned and executed
+`scroll_down` with durable audit and clean service health. Visual content,
+automatic engineering actions, keyboard input, multi-step execution, and
+process authority remain outside this plan.

@@ -11,18 +11,34 @@ export OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_OPERATOR_TOKEN_FILE:-$XDG_RUNTIM
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
+export OPENCLAW_POST_JSON_FAILURE="${OPENCLAW_POST_JSON_FAILURE:-fail-with-body}"
+
+stage() {
+  printf 'AI workspace live gate: %s\n' "$1" >&2
+}
 
 tmp_dir="$(mktemp -d)"
 fixture_pid=""
 cleanup() {
+  local status="$?"
+  if (( status != 0 )); then
+    for diagnostic in authority-control.json activated.json setup-scroll.json single-step.json; do
+      if [[ -s "$tmp_dir/$diagnostic" ]]; then
+        printf 'AI workspace live gate failed response (%s):\n' "$diagnostic" >&2
+        sed -n '1,120p' "$tmp_dir/$diagnostic" >&2
+      fi
+    done
+  fi
   if [[ -n "$fixture_pid" ]] && kill -0 "$fixture_pid" 2>/dev/null; then
     kill "$fixture_pid" 2>/dev/null || true
     wait "$fixture_pid" 2>/dev/null || true
   fi
   rm -rf "$tmp_dir"
+  return "$status"
 }
 trap cleanup EXIT
 
+stage "checking deployed services and operator credential"
 [[ -s "$OPENCLAW_OPERATOR_TOKEN_FILE" ]]
 for unit in openclaw-core.service openclaw-event-hub.service openclaw-screen-act.service; do
   [[ "$(systemctl is-active "$unit")" == "active" ]]
@@ -33,11 +49,11 @@ done
 
 workbench_launcher="$(systemctl --user show "$APP_UNIT" -p ExecStart --value \
   | sed -E 's/^\{ path=([^ ;]+).*/\1/')"
-weston_terminal="$(printf '%s' "$workbench_launcher" \
-  | grep -o '/nix/store/[^ ]*/bin/weston-terminal' \
+weston_terminal="$(grep -o '/nix/store/[^ ]*/bin/weston-terminal' "$workbench_launcher" \
   | head -n 1)"
 [[ -x "$weston_terminal" ]]
 
+stage "launching fixed scroll fixture"
 install -d -m 700 "$tmp_dir/fixture-home" "$tmp_dir/fixture-cache"
 fixture_shell="$tmp_dir/fixture-shell"
 printf '%s\n' \
@@ -77,9 +93,40 @@ for _ in $(seq 1 120); do
   sleep 0.1
 done
 
-post_json "$CORE_URL/capabilities/invoke" \
-  '{"capabilityId":"act.work_view.control","operation":"work_view.prepare","params":{"displayTarget":"workspace-2","entryUrl":"https://example.com/work-view"}}' \
-  > "$tmp_dir/prepared.json"
+stage "ensuring current work-view authority"
+curl -fsS "$SESSION_MANAGER_URL/work-view/state" > "$tmp_dir/state.json"
+if ! node -e '
+  const fs = require("node:fs");
+  const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+  const workView = data.workView ?? {};
+  const helper = workView.helperRuntime ?? {};
+  const graphical = workView.aiGraphicalSession ?? {};
+  process.exit(workView.status === "prepared"
+    && helper.status === "active"
+    && helper.actionAuthority === "active"
+    && helper.leaseMatched === true
+    && graphical.browserAttachment?.attached === true ? 0 : 1);
+' "$tmp_dir/state.json"; then
+  if node -e '
+    const fs = require("node:fs");
+    const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+    const workView = data.workView ?? {};
+    const helper = workView.helperRuntime ?? {};
+    const graphical = workView.aiGraphicalSession ?? {};
+    process.exit(helper.status === "active"
+      && helper.actionAuthority === "active"
+      && helper.leaseMatched === true
+      && graphical.browserAttachment?.attached === true ? 0 : 1);
+  ' "$tmp_dir/state.json"; then
+    post_json "$CORE_URL/capabilities/invoke" \
+      '{"capabilityId":"act.work_view.control","operation":"work_view.hide","params":{}}' \
+      > "$tmp_dir/authority-control.json"
+  else
+    post_json "$CORE_URL/capabilities/invoke" \
+      '{"capabilityId":"act.work_view.control","operation":"work_view.prepare","params":{"displayTarget":"workspace-2"}}' \
+      > "$tmp_dir/authority-control.json"
+  fi
+fi
 
 for _ in $(seq 1 120); do
   curl -fsS "$SESSION_MANAGER_URL/work-view/state" > "$tmp_dir/state.json"
@@ -103,6 +150,7 @@ for _ in $(seq 1 120); do
   sleep 0.1
 done
 
+stage "ensuring fixture is the active surface"
 read -r fixture_surface_id inventory_sequence < <(node -e '
   const fs = require("node:fs");
   const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
@@ -110,21 +158,31 @@ read -r fixture_surface_id inventory_sequence < <(node -e '
   const inventory = data.workView?.aiGraphicalSession?.surfaceInventory ?? {};
   const surface = inventory.surfaces?.find((item) => item.pid === pid);
   if (!surface || !Number.isInteger(inventory.sequence)) process.exit(1);
-  process.stdout.write(`${surface.surfaceId} ${inventory.sequence}`);
+  console.log(`${surface.surfaceId} ${inventory.sequence}`);
 ' "$tmp_dir/state.json" "$fixture_pid")
 
-activation_payload="$(node -e '
-  console.log(JSON.stringify({
-    capabilityId: "act.work_view.control",
-    operation: "work_view.surface.activate",
-    params: {
-      surfaceId: Number(process.argv[1]),
-      inventorySequence: Number(process.argv[2]),
-    },
-  }));
-' "$fixture_surface_id" "$inventory_sequence")"
-post_json "$CORE_URL/capabilities/invoke" "$activation_payload" \
-  > "$tmp_dir/activated.json"
+if ! node -e '
+  const fs = require("node:fs");
+  const data = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+  const surfaceId = Number(process.argv[2]);
+  const surfaces = data.workView?.aiGraphicalSession?.surfaceInventory?.surfaces ?? [];
+  process.exit(surfaces.filter((surface) => surface.activated === true).length === 1
+    && surfaces.some((surface) => surface.surfaceId === surfaceId && surface.activated === true)
+    ? 0 : 1);
+' "$tmp_dir/state.json" "$fixture_surface_id"; then
+  activation_payload="$(node -e '
+    console.log(JSON.stringify({
+      capabilityId: "act.work_view.control",
+      operation: "work_view.surface.activate",
+      params: {
+        surfaceId: Number(process.argv[1]),
+        inventorySequence: Number(process.argv[2]),
+      },
+    }));
+  ' "$fixture_surface_id" "$inventory_sequence")"
+  post_json "$CORE_URL/capabilities/invoke" "$activation_payload" \
+    > "$tmp_dir/activated.json"
+fi
 
 for _ in $(seq 1 120); do
   curl -fsS "$SESSION_MANAGER_URL/work-view/state" > "$tmp_dir/activated-state.json"
@@ -142,6 +200,7 @@ for _ in $(seq 1 120); do
   sleep 0.1
 done
 
+stage "prepositioning fixture scrollback"
 curl -fsS "$SESSION_MANAGER_URL/work-view/compositor-frame" > "$tmp_dir/setup-frame.json"
 setup_scroll_payload="$(node -e '
   const fs = require("node:fs");
@@ -182,12 +241,14 @@ node -e '
 ' "$tmp_dir/setup-scroll.json"
 curl -fsS "$SESSION_MANAGER_URL/work-view/state" > "$tmp_dir/before-step.json"
 
+stage "requesting one live DeepSeek decision"
 post_json "$CORE_URL/capabilities/invoke" \
   '{"capabilityId":"act.ai.workspace.single_step","params":{"confirm":true}}' \
   > "$tmp_dir/single-step.json"
 curl -fsS "$SESSION_MANAGER_URL/work-view/state" > "$tmp_dir/after-step.json"
 curl -fsS "$EVENT_HUB_URL/events/audit?limit=300" > "$tmp_dir/events.json"
 
+stage "verifying action and durable audit"
 node - "$tmp_dir" "$fixture_surface_id" <<'NODE'
 const fs = require("node:fs");
 const path = require("node:path");

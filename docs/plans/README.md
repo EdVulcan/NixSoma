@@ -118,7 +118,7 @@ login-user systemd owner
 -> fixed Nix-managed Workbench start/stop (complete and physically proven)
 -> exact current-surface activation through kiosk shell (complete, deployed, and physically proven)
 -> one current-frame- and active-surface-bound vertical scroll step (complete, deployed, and physically proven)
--> one explicit provider-decided no-op or existing scroll step (source/store candidate; deployment proof pending)
+-> one explicit provider-decided no-op or existing scroll step (complete, deployed, and physically proven)
 ```
 
 The current source stops before desktop takeover, desktop-wide observation,
@@ -238,8 +238,8 @@ The selected next capability is one explicit, schema-bound provider decision
 over the current isolated workspace that can execute at most one existing
 low-risk scroll action before stopping and verifying.
 
-That selected capability is now complete in source and the exact Core/Observer
-store closures. `act.ai.workspace.single_step` accepts only an authenticated
+That selected capability is now complete in source, deployed in generation
+`6k51pmrglb...`, and physically proven. `act.ai.workspace.single_step` accepts only an authenticated
 explicit confirmation. Core generates a structural context from current helper,
 browser, frame, inventory, and sole-active-surface readiness; it sends no pixels,
 frame hashes, PIDs, titles, app-ids, URLs, paths, credentials, or caller prompt.
@@ -250,11 +250,18 @@ reuses the existing frame/surface-bound `mouse.scroll` grant at most once.
 This source shares the standing advisory single-flight, cooldown, daily calls,
 and conservative token budget. Provider reason text remains transient, while
 durable summaries retain hashes, action/status, and execution facts. All 991
-workspace tests, typecheck, and the store-native body check pass. The active
-generation remains `b6qjcbfc...`; one reviewed switch and the separate
-`dev-ai-workspace-single-step-live-check.sh` real-call gate are the current
-route. Do not widen this checkpoint into keyboard, repeated loops, arbitrary
-process/window control, or a claim of visual understanding.
+workspace tests, typecheck, and the store-native body check pass. The separate
+`dev-ai-workspace-single-step-live-check.sh` gate used real DeepSeek to select
+`scroll_down`, executed exactly once on fixture surface 17, matched current
+frame/surface evidence and durable egress/action/completion audit, then restored
+the surface inventory to the browser-only baseline. All nine health endpoints
+remained green with no failed units, restarts, or warning journals.
+
+Freeze this checkpoint. The next Level 4 capability should provide one bounded,
+privacy-reviewed scene-content projection from the AI-owned output so the same
+single decision can be grounded in actual workspace content. Do not widen it
+into keyboard, repeated loops, arbitrary process/window control, or a claim of
+visual understanding before that contract is proven.
 
 ## Completed Capability Evidence
 

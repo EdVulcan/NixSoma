@@ -13,13 +13,13 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, and one provider-decided AI workspace step, plus the completed Level 3 baseline | Nine Level 4 slices in source; eight deployed and physically proven |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, and one provider-decided AI workspace step, plus the completed Level 3 baseline | Nine Level 4 slices deployed and physically proven |
 | Local validation | 991 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 811 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/b6qjcbfcq1dy7jxjwlbckcw5s70mhszg-nixos-system-nixos-26.05.4808.569d57850992` | Governed active-surface scroll deployed and physically proven 2026-07-28 |
-| Previous generation | `/nix/store/7ycsdd61qrd6cqr7pmdbwi3lb4sdxcq5-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by governed active-surface scroll |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/6k51pmrglbjdcfvakb1id4q34jhd9sgn-nixos-system-nixos-26.05.4808.569d57850992` | Provider-decided AI workspace single step deployed and physically proven 2026-07-28 |
+| Previous generation | `/nix/store/b6qjcbfcq1dy7jxjwlbckcw5s70mhszg-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by governed AI workspace single step |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
-| Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; one 252-token approval-bound call and one 459-token standing call completed | Deployed and proven without prompt, reason, or credential persistence |
+| Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; one 252-token approval-bound call, one 459-token standing system advisory, and one standing-authorized workspace decision completed | Deployed and proven without prompt, reason, or credential persistence |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, 15-minute cooldown, 3-call/4096-token daily defaults, structured transient recommendation, and local fallback | Deployed; returned `observe_current_screen` without creating a task, approval, or execution |
 | Level 4 graphical session | Fixed `nixsoma-ai-0` Weston headless compositor in a hardened, resource-bounded user unit; session-manager and Observer expose read-only ownership/health evidence | Deployed; coexists with GNOME `wayland-0` |
 | Level 4 browser attachment | Existing AI-owned Nix Firefox launches headed on the fixed nested socket, preserves Level 2 lease/capture/action ownership, and exposes compact attachment evidence | Deployed and proven through capture plus lease-bound action |
@@ -30,7 +30,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 application lifecycle | `act.work_view.control` and a single-use session-manager execution grant start or stop only `nixsoma-ai-workbench.service`; Observer provides authenticated controls and readback without repetitive approval | Deployed; real Observer proved start -> matching PID/surface -> stop -> disappearance |
 | Level 4 surface activation | The existing control owner binds one numeric surface id and inventory sequence; session-manager requires audit, fresh pre-frame, peer-authenticated shell receipt, newer activated inventory, and post-frame proof | Deployed; normal production Observer proved fixture 2 -> Workbench 4 with counts 0 -> 2 -> 1 -> 0 |
 | Level 4 active-surface scroll | Existing pointer authority accepts only one `up` or `down` wheel step at fixed output center, bound to the exact current frame, active numeric surface, inventory sequence, execution grant, peer receipt, audit, and post-frame | Deployed in `b6qjcbfc...`; normal production Observer proved both directions on fixture surface 2 |
-| Level 4 AI workspace single step | Explicit authenticated trigger builds server-owned structural workspace context, shares the standing DeepSeek call/token/cooldown budget, accepts only `no_op`/`scroll_up`/`scroll_down`, revalidates frame and active surface, and executes at most one existing scroll | Source and store closures validated; physical generation switch and one real DeepSeek gate pending |
+| Level 4 AI workspace single step | Explicit authenticated trigger builds server-owned structural workspace context, shares the standing DeepSeek call/token/cooldown budget, accepts only `no_op`/`scroll_up`/`scroll_down`, revalidates frame and active surface, and executes at most one existing scroll | Deployed in `6k51pmrglb...`; real DeepSeek selected and executed one frame/surface-bound `scroll_down` with durable audit |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -78,11 +78,12 @@ The completed bounded frontier is:
   with exact grant, inventory, receipt, and frame proof. These paths never
   connect to the parent display, grant an arbitrary input device, or launch
   caller-selected processes.
-- The ninth Level 4 source slice adds one explicit AI decision step over that
+- The ninth Level 4 slice adds one explicit AI decision step over that
   isolated workspace. It accepts no caller prompt or action override, sends no
   pixels/OCR/frame hash/PID/title/URL/path/credential to the provider, and can
   only stop or reuse the existing one-step vertical scroll owner after local
-  revalidation. It is not present in the active generation yet.
+  revalidation. It is deployed and physically proven, but still has no visual
+  or OCR scene understanding.
 - Phase D candidate generation, approval-bound staging/build, real closure
   receipt, independent host-health oracle, controlled activation contract,
   manual rollback evidence, and a physical-host-safe failure rehearsal.
@@ -351,16 +352,19 @@ across prepare, Workbench start/stop, and fixture cleanup. Browser Runtime is no
 stale headed-browser attachment. All nine health endpoints are HTTP 200; relevant
 services are active with zero restarts, no failed units, and no warning journals.
 
-The ninth slice is now source- and store-closure-ready. The common capability
+The ninth slice is deployed in `6k51pmrglb...`. The common capability
 runtime exposes `act.ai.workspace.single_step`; Observer adds one authenticated
 `AI Step` command with no prompt field. DeepSeek shares the existing standing
 advisory single-flight, cooldown, and daily call/token budgets and may choose
 only `no_op`, `scroll_up`, or `scroll_down`. Core then refreshes and revalidates
 the current frame, inventory, and sole active numeric surface before at most one
 existing `mouse.scroll` dispatch. Durable summaries exclude the provider reason
-and all workspace payloads. This source does not provide visual understanding,
-because no pixels or OCR are sent. Deployment and the separate one-call live
-gate remain pending; generation `b6qjcbfc...` is still active.
+and all workspace payloads. The separate live gate prepared fixture surface 17,
+received `scroll_down` from real DeepSeek, executed it once with changed
+post-frame evidence, and found all required durable audit records before cleanup.
+All nine health endpoints remained green with no failed units, restarts, or
+warning journals. This still does not provide visual understanding, because no
+pixels or OCR are sent.
 
 ## Progress Estimate
 
@@ -371,9 +375,9 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 52% in source; eight slices are deployed and the ninth AI single-step slice awaits physical proof |
-| Current bounded product scope | 78-82% |
-| Final whitepaper vision | 48-56% |
+| Level 4 graphics-stack-native body | about 54%; nine slices through one provider-decided workspace action are deployed and physically proven |
+| Current bounded product scope | 79-83% |
+| Final whitepaper vision | 49-57% |
 
 ## Current Decision Records
 

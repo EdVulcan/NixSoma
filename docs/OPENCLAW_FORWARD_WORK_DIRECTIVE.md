@@ -47,11 +47,10 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
-triage/repair-promotion bridge, and eight deployed Level 4 graphical identity
-slices through governed active-surface vertical scroll. A ninth Level 4 slice
-is source- and store-closure-ready: one explicit operator trigger can request a
-schema-bound provider decision and execute at most one existing active-surface
-scroll. It is not yet deployed or physically provider-proven. All 991 workspace
+triage/repair-promotion bridge, and nine deployed Level 4 graphical identity
+slices through one governed provider-decided workspace action. One explicit
+operator trigger can request a schema-bound provider decision and execute at
+most one existing active-surface scroll. All 991 workspace
 tests and typecheck pass, the body-config and event-audit integration checks
 pass, the 811-entry milestone registry audit passes, and the Windows path budget
 has no file over 160 repository-relative characters. GitHub CI now enforces
@@ -60,7 +59,7 @@ same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/b6qjcbfcq1dy7jxjwlbckcw5s70mhszg-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/6k51pmrglbjdcfvakb1id4q34jhd9sgn-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, and Observer controls. The relevant
@@ -2099,11 +2098,10 @@ coordinates, counts, horizontal axes, gestures, keyboard devices, hotkeys,
 generic window/process control, parent-display access, root, host mutation, or
 automatic repeated loops.
 
-## Source-Validated Level 4 AI Workspace Single Step
+## Completed Level 4 AI Workspace Single Step
 
-The ninth vertical Level 4 slice is complete in source and in the exact Core and
-Observer Nix store closures, but it is not part of the active physical-host
-generation yet. `act.ai.workspace.single_step` accepts only
+The ninth vertical Level 4 slice is complete in source, deployed in generation
+`6k51pmrglb...`, and physically provider-proven. `act.ai.workspace.single_step` accepts only
 `params.confirm=true`; caller prompts, model choices, actions, directions,
 surfaces, frames, coordinates, deltas, and counts are rejected before provider
 contact. The server refreshes the isolated compositor frame and work-view state,
@@ -2124,15 +2122,19 @@ The shared standing advisory owner now supplies both system advice and this
 workspace decision through one single-flight lock, 15-minute cooldown, daily
 call budget, and conservative token budget. Focused tests, the complete
 workspace suite, typecheck, and the store-native body check pass. The separate
-`dev-ai-workspace-single-step-live-check.sh` gate will create and activate one
-fixed scroll fixture, consume one real DeepSeek call, verify durable egress and
-completion audit, and clean up only after the candidate generation is switched.
-Do not describe this as visual understanding: the current provider request has
-no image or OCR content.
+`dev-ai-workspace-single-step-live-check.sh` gate reused a current healthy
+work-view, created and prepositioned fixture surface 17, consumed one real
+DeepSeek call, received `scroll_down`, executed once, verified frame/surface
+binding plus durable egress/action/completion audit, and cleaned the fixture.
+All nine health endpoints remained HTTP 200; relevant services have zero
+restarts, no failed units, and no warning journals.
 
-The immediate next step is deployment and that one real gate, not keyboard,
-multi-step loops, timers, arbitrary input, process/window APIs, root, or host
-mutation.
+Do not describe this as visual understanding: the current provider request has
+no image or OCR content. Freeze this action loop. The next real Level 4 gap is a
+bounded, privacy-reviewed scene-content projection from the AI-owned output so
+one decision can be grounded in what the workspace contains. Do not add
+keyboard, multi-step loops, timers, arbitrary input, process/window APIs, root,
+or host mutation before that grounding contract exists.
 
 ## Identity-Upgrade Alignment
 
