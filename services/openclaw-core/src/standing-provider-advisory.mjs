@@ -220,49 +220,54 @@ export function createStandingProviderAdvisory({
   normaliseStandingProviderAdvisoryState(state, { now });
   let inFlight = false;
 
-  async function invoke() {
+  async function requestDecision({
+    buildContext,
+    instruction,
+    buildPrompt,
+    responseContract,
+    parseResponse,
+    readActionId,
+    auditEventName,
+    auditPayload = {},
+    successResult = "decision_returned",
+  } = {}) {
     normaliseStandingProviderAdvisoryState(state, { now });
-    if (!config.enabled) return fallbackResult("standing_advisory_disabled", state, config);
-    if (inFlight) return fallbackResult("standing_advisory_in_flight", state, config);
+    if (!config.enabled) return { ok: false, reason: "disabled" };
+    if (inFlight) return { ok: false, reason: "in_flight" };
 
     const invocationAt = now();
     const lastCallMs = Date.parse(state.lastCallAt ?? "");
     const invocationMs = Date.parse(invocationAt);
     if (Number.isFinite(lastCallMs) && Number.isFinite(invocationMs)
       && invocationMs - lastCallMs < config.cooldownSeconds * 1000) {
-      return fallbackResult("standing_advisory_cooldown", state, config);
+      return { ok: false, reason: "cooldown" };
     }
     if (state.callsUsed >= config.maxCallsPerDay) {
-      return fallbackResult("standing_advisory_call_budget_exhausted", state, config);
+      return { ok: false, reason: "call_budget_exhausted" };
     }
     if (state.tokensUsed + config.conservativeTokenCharge > config.maxTokensPerDay) {
-      return fallbackResult("standing_advisory_token_budget_exhausted", state, config);
+      return { ok: false, reason: "token_budget_exhausted" };
     }
 
     inFlight = true;
     try {
-      let health;
-      let inventory;
+      let context;
       try {
-        [health, inventory] = await Promise.all([
-          fetchJson(`${systemSenseUrl}/system/health`),
-          fetchJson(`${systemSenseUrl}/system/systemd/units`),
-        ]);
+        context = await buildContext(invocationAt);
       } catch {
-        return fallbackResult("standing_advisory_context_unavailable", state, config);
+        return { ok: false, reason: "context_unavailable" };
+      }
+      if (!context || typeof context !== "object" || Array.isArray(context)) {
+        return { ok: false, reason: "context_unavailable" };
       }
 
-      const context = compactContext({ health, inventory, observedAt: invocationAt });
       const contextContentHash = hashValue(context);
       const providerRequest = buildProviderRequest({
         executionPlan: { credentialReference: DEEPSEEK_CREDENTIAL_REFERENCE },
         requestEnvelope: {
           messages: [
-            { role: "system", content: buildCloudLiveProviderEngineeringRecommendationInstruction() },
-            {
-              role: "user",
-              content: `Select one operator-reviewed next action from this fixed-unit health context: ${stableJson(context)}`,
-            },
+            { role: "system", content: instruction },
+            { role: "user", content: buildPrompt(context) },
           ],
           temperature: 0,
           max_tokens: config.maxCompletionTokens,
@@ -271,17 +276,18 @@ export function createStandingProviderAdvisory({
       });
       const bindingResult = buildLiveProviderRequestBinding({
         providerRequest,
-        responseContract: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
+        responseContract,
         contextContentHash,
         env,
       });
       if (!bindingResult.ok) {
-        return fallbackResult("standing_advisory_request_invalid", state, config);
+        return { ok: false, reason: "request_invalid" };
       }
       const binding = bindingResult.binding;
 
       try {
-        const audit = await publishAuditEvent("cloud_provider.standing_advisory_egress_authorized", {
+        const audit = await publishAuditEvent(auditEventName, {
+          ...auditPayload,
           registry: STANDING_PROVIDER_ADVISORY_REGISTRY,
           at: invocationAt,
           contextContentHash,
@@ -293,6 +299,7 @@ export function createStandingProviderAdvisory({
           conservativeTokenCharge: config.conservativeTokenCharge,
           callsUsedBefore: state.callsUsed,
           tokensUsedBefore: state.tokensUsed,
+          responseContract,
           createsTask: false,
           createsApproval: false,
           executesRecommendation: false,
@@ -301,7 +308,7 @@ export function createStandingProviderAdvisory({
           throw new Error("required standing advisory audit was not accepted");
         }
       } catch {
-        return fallbackResult("standing_advisory_audit_unavailable", state, config);
+        return { ok: false, reason: "audit_unavailable" };
       }
 
       Object.assign(state, {
@@ -336,44 +343,56 @@ export function createStandingProviderAdvisory({
       } catch {
         state.lastResult = "provider_call_failed";
         persistState();
-        return fallbackResult("standing_advisory_provider_failed", state, config);
+        return { ok: false, reason: "provider_failed" };
       }
       if (!providerResult?.ok) {
         state.lastResult = "provider_call_failed";
         persistState();
-        return fallbackResult("standing_advisory_provider_failed", state, config);
+        return { ok: false, reason: "provider_failed" };
       }
 
-      const parsed = parseCloudLiveProviderEngineeringRecommendation({
-        contract: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
-        assistantContent: providerResult.response?.assistantContent,
-        responseContentHash: providerResult.response?.responseContentHash,
-      });
-      if (!parsed.ok) {
+      let parsed;
+      let actionId;
+      try {
+        parsed = parseResponse({
+          contract: responseContract,
+          assistantContent: providerResult.response?.assistantContent,
+          responseContentHash: providerResult.response?.responseContentHash,
+        });
+        actionId = parsed?.ok === true ? readActionId(parsed) : null;
+      } catch {
+        parsed = null;
+        actionId = null;
+      }
+      if (parsed?.ok !== true
+        || typeof actionId !== "string"
+        || !actionId.trim()
+        || actionId.length > 80) {
         state.lastResponseHash = safeHash(providerResult.response?.responseContentHash);
         state.lastResult = "response_contract_failed";
         state.lastUsageTokens = boundedInteger(providerResult.response?.usage?.total_tokens, 0, 0, 65_536);
         persistState();
-        return fallbackResult("standing_advisory_response_invalid", state, config);
+        return { ok: false, reason: "response_invalid", responseEvidence: parsed?.evidence ?? null };
       }
+      actionId = actionId.trim();
 
       Object.assign(state, {
         lastResponseHash: safeHash(providerResult.response?.responseContentHash),
-        lastActionId: parsed.recommendation.actionId,
-        lastResult: "recommendation_returned",
+        lastActionId: actionId,
+        lastResult: successResult,
         lastUsageTokens: boundedInteger(providerResult.response?.usage?.total_tokens, 0, 0, 65_536),
       });
       persistState();
       return {
         ok: true,
-        registry: STANDING_PROVIDER_ADVISORY_REGISTRY,
-        status: "recommendation_returned",
-        recommendation: parsed.recommendation,
+        status: successResult,
+        parsed,
         evidence: {
           contextContentHash,
           requestContentHash: binding.requestContentHash,
           responseContentHash: providerResult.response?.responseContentHash ?? null,
-          actionId: parsed.recommendation.actionId,
+          responseContract,
+          actionId,
           model: providerResult.response?.model ?? binding.model,
           usage: providerResult.response?.usage ?? null,
           budget: {
@@ -384,19 +403,49 @@ export function createStandingProviderAdvisory({
             tokensLimit: config.maxTokensPerDay,
           },
         },
-        governance: {
-          standingAuthorization: true,
-          providerCalled: true,
-          networkEgress: true,
-          createsTask: false,
-          createsApproval: false,
-          executesRecommendation: false,
-          mutatesHost: false,
-        },
       };
     } finally {
       inFlight = false;
     }
+  }
+
+  async function invoke() {
+    const decision = await requestDecision({
+      buildContext: async (invocationAt) => {
+        const [health, inventory] = await Promise.all([
+          fetchJson(`${systemSenseUrl}/system/health`),
+          fetchJson(`${systemSenseUrl}/system/systemd/units`),
+        ]);
+        return compactContext({ health, inventory, observedAt: invocationAt });
+      },
+      instruction: buildCloudLiveProviderEngineeringRecommendationInstruction(),
+      buildPrompt: (context) =>
+        `Select one operator-reviewed next action from this fixed-unit health context: ${stableJson(context)}`,
+      responseContract: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
+      parseResponse: parseCloudLiveProviderEngineeringRecommendation,
+      readActionId: (parsed) => parsed.recommendation.actionId,
+      auditEventName: "cloud_provider.standing_advisory_egress_authorized",
+      successResult: "recommendation_returned",
+    });
+    if (!decision.ok) {
+      return fallbackResult(`standing_advisory_${decision.reason}`, state, config);
+    }
+    return {
+      ok: true,
+      registry: STANDING_PROVIDER_ADVISORY_REGISTRY,
+      status: "recommendation_returned",
+      recommendation: decision.parsed.recommendation,
+      evidence: decision.evidence,
+      governance: {
+        standingAuthorization: true,
+        providerCalled: true,
+        networkEgress: true,
+        createsTask: false,
+        createsApproval: false,
+        executesRecommendation: false,
+        mutatesHost: false,
+      },
+    };
   }
 
   function restoreState() {
@@ -416,6 +465,7 @@ export function createStandingProviderAdvisory({
     config,
     state,
     invoke,
+    requestDecision,
     restoreState,
   };
 }

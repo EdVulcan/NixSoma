@@ -2,6 +2,7 @@ export const observerClientRuntimeAiWorkspaceProjectionScript = `const AI_WORKSP
 let aiWorkspaceProjectionMode = "browser";
 let aiWorkspaceProjectionRequest = null;
 let aiWorkspaceProjectionBinding = null;
+let aiWorkspaceSingleStepInFlight = false;
 
 function currentAiSurfaceScrollBinding() {
   const graphicalSession = latestWorkViewState?.aiGraphicalSession ?? {};
@@ -31,6 +32,7 @@ function updateAiSurfaceScrollControls() {
   const enabled = currentAiSurfaceScrollBinding() !== null;
   scrollAiSurfaceUpButton.disabled = !enabled;
   scrollAiSurfaceDownButton.disabled = !enabled;
+  runAiWorkspaceSingleStepButton.disabled = !enabled || aiWorkspaceSingleStepInFlight;
 }
 
 function clearAiWorkspaceProjection(reason = "unavailable") {
@@ -193,6 +195,58 @@ scrollAiSurfaceUpButton.addEventListener("click", () => {
 
 scrollAiSurfaceDownButton.addEventListener("click", () => {
   runAiSurfaceScroll("down").catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
+async function runAiWorkspaceSingleStep() {
+  if (aiWorkspaceSingleStepInFlight) return;
+  aiWorkspaceSingleStepInFlight = true;
+  updateAiSurfaceScrollControls();
+  try {
+    await refreshAiWorkspaceProjection();
+    await refreshWorkView();
+    if (!currentAiSurfaceScrollBinding()) {
+      throw new Error("A fresh active AI workspace projection is required.");
+    }
+    const response = await fetchJson(observerConfig.coreUrl + "/capabilities/invoke", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        capabilityId: "act.ai.workspace.single_step",
+        params: { confirm: true },
+      }),
+    });
+    const result = response.result ?? {};
+    const governance = result.governance ?? {};
+    const actionId = result.decision?.actionId ?? result.fallback?.actionId ?? "no_op";
+    if (response.invoked !== true
+      || result.registry !== "nixsoma-ai-workspace-single-step-v0"
+      || governance.maximumActions !== 1
+      || governance.automaticRepeat !== false
+      || governance.keyboardInput !== false
+      || governance.mutatesHost !== false
+      || !["executed", "executed_completion_audit_unavailable", "no_op", "local_fallback"].includes(result.status)) {
+      throw new Error("AI workspace single-step result was invalid.");
+    }
+    if (result.status.startsWith("executed")
+      && (governance.actionExecuted !== true
+        || governance.currentFrameBound !== true
+        || governance.currentActiveSurfaceBound !== true)) {
+      throw new Error("AI workspace single-step execution evidence was incomplete.");
+    }
+    setControlMessage("AI step: " + actionId + " (" + result.status + ").");
+    await refreshActionState();
+    await refreshWorkView();
+    await refreshAiWorkspaceProjection();
+  } finally {
+    aiWorkspaceSingleStepInFlight = false;
+    updateAiSurfaceScrollControls();
+  }
+}
+
+runAiWorkspaceSingleStepButton.addEventListener("click", () => {
+  runAiWorkspaceSingleStep().catch((error) => {
     setControlMessage("Request failed: " + formatError(error));
   });
 });

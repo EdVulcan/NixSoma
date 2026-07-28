@@ -27,6 +27,7 @@ import { createScreenActionCapabilityHandlers } from "./capability-runtime-scree
 import { createDeclarativeEvolutionCapabilityHandlers } from "./capability-runtime-declarative-evolution.mjs";
 import { createSystemdIncidentObservationCapabilityHandlers } from "./capability-runtime-systemd-incident-observation.mjs";
 import { createStandingProviderAdvisoryCapabilityHandlers } from "./capability-runtime-standing-provider-advisory.mjs";
+import { createAiWorkspaceSingleStepCapabilityHandlers } from "./capability-runtime-ai-workspace-single-step.mjs";
 import {
   abortCapabilityExecutionReservation,
   commitCapabilityExecutionReservation,
@@ -54,6 +55,7 @@ export function createCapabilityRuntime(deps) {
     pluginRuntime = {},
     providerRuntime = {},
     standingProviderAdvisory,
+    aiWorkspaceSingleStep,
     declarativeEvolution = {},
     workspaceOps = {},
     serialiseTask,
@@ -223,6 +225,9 @@ export function createCapabilityRuntime(deps) {
   const standingProviderAdvisoryHandlers = createStandingProviderAdvisoryCapabilityHandlers({
     standingAdvisory: standingProviderAdvisory,
   });
+  const aiWorkspaceSingleStepHandlers = createAiWorkspaceSingleStepCapabilityHandlers({
+    runtime: aiWorkspaceSingleStep,
+  });
 
   function baseCapabilities() {
     return buildBaseCapabilities({
@@ -390,7 +395,7 @@ export function createCapabilityRuntime(deps) {
 
   function buildCapabilityPolicyInput(capability, request) {
     const intent = capabilityRequestIntent(capability, request);
-    if (capability.id === "sense.openclaw.system.standing_advisory") {
+    if (capability.governance === "standing_authorization") {
       const approved = request.serverApproval?.registry === "openclaw-standing-capability-authorization-v0"
         && request.serverApproval.approved === true;
       return {
@@ -452,6 +457,10 @@ export function createCapabilityRuntime(deps) {
   }
 
   async function dispatchCapabilityBackend(capability, request) {
+    const aiWorkspaceSingleStep = await aiWorkspaceSingleStepHandlers.callBackend(capability, request);
+    if (aiWorkspaceSingleStep.handled) {
+      return aiWorkspaceSingleStep.result;
+    }
     const standingProviderAdvisory = await standingProviderAdvisoryHandlers.callBackend(capability, request);
     if (standingProviderAdvisory.handled) {
       return standingProviderAdvisory.result;
@@ -726,6 +735,10 @@ export function createCapabilityRuntime(deps) {
   }
 
   function summariseCapabilityInvocationResult(capability, result) {
+    const aiWorkspaceSingleStepSummary = aiWorkspaceSingleStepHandlers.summariseResult(capability, result);
+    if (aiWorkspaceSingleStepSummary) {
+      return aiWorkspaceSingleStepSummary;
+    }
     const standingProviderAdvisorySummary = standingProviderAdvisoryHandlers.summariseResult(capability, result);
     if (standingProviderAdvisorySummary) {
       return standingProviderAdvisorySummary;
@@ -1147,6 +1160,10 @@ export function createCapabilityRuntime(deps) {
     if (standingAuthorization.handled) {
       serverApproval = standingAuthorization.authorization;
     }
+    const aiWorkspaceAuthorization = aiWorkspaceSingleStepHandlers.authorizeRequest(capability, request, body);
+    if (aiWorkspaceAuthorization.handled) {
+      serverApproval = aiWorkspaceAuthorization.authorization;
+    }
     request.approved = serverApproval.approved;
     request.serverApproval = serverApproval;
 
@@ -1159,6 +1176,17 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: standingProviderAdvisoryValidationError },
+      };
+    }
+    const aiWorkspaceSingleStepValidationError = aiWorkspaceSingleStepHandlers.validateRequest(
+      capability,
+      request,
+      body,
+    );
+    if (aiWorkspaceSingleStepValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: aiWorkspaceSingleStepValidationError },
       };
     }
 

@@ -118,6 +118,7 @@ login-user systemd owner
 -> fixed Nix-managed Workbench start/stop (complete and physically proven)
 -> exact current-surface activation through kiosk shell (complete, deployed, and physically proven)
 -> one current-frame- and active-surface-bound vertical scroll step (complete, deployed, and physically proven)
+-> one explicit provider-decided no-op or existing scroll step (source/store candidate; deployment proof pending)
 ```
 
 The current source stops before desktop takeover, desktop-wide observation,
@@ -236,6 +237,24 @@ surface lifecycle with all nine health endpoints green. Freeze scroll variants.
 The selected next capability is one explicit, schema-bound provider decision
 over the current isolated workspace that can execute at most one existing
 low-risk scroll action before stopping and verifying.
+
+That selected capability is now complete in source and the exact Core/Observer
+store closures. `act.ai.workspace.single_step` accepts only an authenticated
+explicit confirmation. Core generates a structural context from current helper,
+browser, frame, inventory, and sole-active-surface readiness; it sends no pixels,
+frame hashes, PIDs, titles, app-ids, URLs, paths, credentials, or caller prompt.
+The fixed DeepSeek response contract allows only `no_op`, `scroll_up`, or
+`scroll_down`. Core refreshes the owner state after the provider response and
+reuses the existing frame/surface-bound `mouse.scroll` grant at most once.
+
+This source shares the standing advisory single-flight, cooldown, daily calls,
+and conservative token budget. Provider reason text remains transient, while
+durable summaries retain hashes, action/status, and execution facts. All 991
+workspace tests, typecheck, and the store-native body check pass. The active
+generation remains `b6qjcbfc...`; one reviewed switch and the separate
+`dev-ai-workspace-single-step-live-check.sh` real-call gate are the current
+route. Do not widen this checkpoint into keyboard, repeated loops, arbitrary
+process/window control, or a claim of visual understanding.
 
 ## Completed Capability Evidence
 

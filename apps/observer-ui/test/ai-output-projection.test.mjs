@@ -47,11 +47,17 @@ test("Observer projection is operator-only, visible-tab bounded, validated, and 
     'operation: "mouse.scroll"',
     'runAiSurfaceScroll("up")',
     'runAiSurfaceScroll("down")',
+    'capabilityId: "act.ai.workspace.single_step"',
+    "params: { confirm: true }",
+    "aiWorkspaceSingleStepInFlight",
+    'governance.automaticRepeat !== false',
+    'governance.currentActiveSurfaceBound !== true',
   ]) {
     assert.equal(script.includes(token), true, `projection runtime is missing ${token}`);
   }
   assert.equal(script.includes("localStorage"), false);
   assert.equal(script.includes("sessionStorage"), false);
+  assert.equal(script.includes("callerPrompt"), false);
   assert.equal(observerClientAuthScript.includes('clearAiWorkspaceProjection("operator auth required")'), true);
   assert.equal(observerClientRuntimeRefreshersScript.includes("/work-view/compositor-frame"), false);
   assert.equal(clientScript().includes("nixsoma-ai-output-projection-v0"), true);

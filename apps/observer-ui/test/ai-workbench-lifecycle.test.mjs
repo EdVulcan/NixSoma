@@ -19,6 +19,7 @@ test("Observer exposes bounded fixed workbench lifecycle state and controls", ()
     'id="activate-ai-surface-button"',
     'id="scroll-ai-surface-up-button"',
     'id="scroll-ai-surface-down-button"',
+    'id="run-ai-workspace-single-step-button"',
   ]) {
     assert.equal(panel.includes(token), true, `AI work-view panel is missing ${token}`);
   }
@@ -45,6 +46,8 @@ test("Observer exposes bounded fixed workbench lifecycle state and controls", ()
   assert.equal(script.includes('operation: "mouse.scroll"'), true);
   assert.equal(script.includes('result.governance?.currentActiveSurfaceBound !== true'), true);
   assert.equal(script.includes('params: { ...binding, direction }'), true);
+  assert.equal(script.includes('capabilityId: "act.ai.workspace.single_step"'), true);
+  assert.equal(script.includes('params: { confirm: true }'), true);
 });
 
 test("production Observer client assembles workbench controls through Core only", () => {

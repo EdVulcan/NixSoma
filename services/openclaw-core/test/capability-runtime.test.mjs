@@ -99,6 +99,7 @@ function createHarness(overrides = {}) {
     },
     policyEvaluator,
     standingProviderAdvisory: overrides.standingProviderAdvisory,
+    aiWorkspaceSingleStep: overrides.aiWorkspaceSingleStep,
     publishEvent: async (name, body) => {
       events.push({ name, body });
     },
@@ -150,6 +151,75 @@ test("capability runtime exposes a cross-boundary standing advisory descriptor",
   assert.deepEqual(capability?.domains, ["cross_boundary"]);
   assert.equal(capability?.risk, "medium");
   assert.equal(capability?.governance, "standing_authorization");
+});
+
+test("capability runtime exposes the standing-authorized AI workspace single-step descriptor", async () => {
+  const { runtime } = createHarness();
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find((item) => item.id === "act.ai.workspace.single_step");
+
+  assert.equal(capability?.kind, "actuator");
+  assert.deepEqual(capability?.domains, ["cross_boundary"]);
+  assert.equal(capability?.risk, "medium");
+  assert.equal(capability?.governance, "standing_authorization");
+});
+
+test("capability runtime rejects caller-controlled AI workspace step inputs", async () => {
+  let invoked = 0;
+  const { runtime, state } = createHarness({
+    aiWorkspaceSingleStep: {
+      invoke: async () => { invoked += 1; return { ok: true }; },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.ai.workspace.single_step",
+    params: { confirm: true, actionId: "scroll_down", prompt: "caller prompt" },
+  });
+
+  assert.equal(result.statusCode, 400);
+  assert.equal(invoked, 0);
+  assert.equal(state.capabilityInvocationLog.length, 0);
+});
+
+test("capability runtime executes one server-owned AI workspace step without approval", async () => {
+  const { runtime, state } = createHarness({
+    aiWorkspaceSingleStep: {
+      invoke: async () => ({
+        ok: true,
+        registry: "nixsoma-ai-workspace-single-step-v0",
+        status: "executed",
+        decision: { actionId: "scroll_down", reason: "transient", confidence: 0.8 },
+        evidence: {
+          contextContentHash: "a".repeat(64),
+          requestContentHash: "b".repeat(64),
+          responseContentHash: "c".repeat(64),
+        },
+        governance: {
+          providerCalled: true,
+          actionExecuted: true,
+          currentFrameBound: true,
+          currentActiveSurfaceBound: true,
+        },
+      }),
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.ai.workspace.single_step",
+    params: { confirm: true },
+  });
+
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.result.status, "executed");
+  assert.equal(result.response.invocation.summary.kind, "ai.workspace.single_step");
+  assert.equal(result.response.invocation.summary.actionExecuted, true);
+  assert.equal(result.response.invocation.summary.maximumActions, 1);
+  assert.equal(result.response.invocation.policy.approved, true);
+  assert.equal(state.capabilityInvocationLog.length, 1);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("transient"), false);
 });
 
 test("capability runtime rejects caller approval and arbitrary standing advisory input", async () => {

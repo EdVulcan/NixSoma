@@ -6,6 +6,7 @@ import { createPlanBuilder } from "../src/plan-builder.mjs";
 function createPlanBuilderHarness({
   acpxDraft,
   createStandingProviderAdvisoryImpl,
+  createAiWorkspaceSingleStepImpl,
   publishAuditEvent,
 } = {}) {
   const tasks = new Map();
@@ -110,6 +111,7 @@ function createPlanBuilderHarness({
     publishEvent: asyncNoop,
     publishAuditEvent,
     createStandingProviderAdvisoryImpl,
+    createAiWorkspaceSingleStepImpl,
     host: "127.0.0.1",
     port: 4100,
   });
@@ -185,4 +187,52 @@ test("plan builder assembles standing advisory with required audit and persisten
   assert.equal(result.response.invocation.authorization.registry, "openclaw-standing-capability-authorization-v0");
   assert.equal(result.response.summary.status, "local_fallback");
   assert.equal(planBuilder.restoreStandingProviderAdvisoryState().ok, true);
+});
+
+test("plan builder assembles AI workspace single-step with the shared provider and actuator owners", async () => {
+  const assembly = [];
+  const standingOwner = {
+    restoreState: () => ({ ok: true }),
+    requestDecision: async () => ({ ok: false, reason: "disabled" }),
+  };
+  const requiredAudit = async () => ({ ok: true });
+  const planBuilder = createPlanBuilderHarness({
+    acpxDraft: () => ({ ok: true }),
+    publishAuditEvent: requiredAudit,
+    createStandingProviderAdvisoryImpl: () => standingOwner,
+    createAiWorkspaceSingleStepImpl: (deps) => {
+      assembly.push(deps);
+      return {
+        invoke: async () => ({
+          ok: true,
+          registry: "nixsoma-ai-workspace-single-step-v0",
+          status: "no_op",
+          decision: { actionId: "no_op", reason: "transient", confidence: 1 },
+          evidence: { actionExecuted: false },
+          governance: {
+            providerCalled: true,
+            actionExecuted: false,
+            maximumActions: 1,
+            automaticRepeat: false,
+          },
+        }),
+      };
+    },
+  });
+
+  const result = await planBuilder.invokeCapability({
+    capabilityId: "act.ai.workspace.single_step",
+    params: { confirm: true },
+  });
+
+  assert.equal(assembly.length, 1);
+  assert.equal(assembly[0].standingAdvisory, standingOwner);
+  assert.equal(assembly[0].publishAuditEvent, requiredAudit);
+  assert.equal(assembly[0].sessionManagerUrl, "http://127.0.0.1:4102");
+  assert.equal(assembly[0].screenActUrl, "http://127.0.0.1:4105");
+  assert.equal(typeof assembly[0].fetchJson, "function");
+  assert.equal(typeof assembly[0].postJson, "function");
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invocation.summary.kind, "ai.workspace.single_step");
+  assert.equal(result.response.invocation.summary.actionId, "no_op");
 });

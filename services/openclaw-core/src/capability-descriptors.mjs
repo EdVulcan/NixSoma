@@ -48,6 +48,18 @@ export function buildBaseCapabilities({
       description: "Request one audited, budgeted provider recommendation over server-generated fixed-unit health context without creating or executing tasks, approvals, repairs, commands, or host mutations.",
     },
     {
+      id: "act.ai.workspace.single_step",
+      name: "AI Workspace Single Step",
+      kind: "actuator",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/capabilities/invoke`,
+      intents: ["ai.workspace.single_step"],
+      domains: ["cross_boundary"],
+      risk: "medium",
+      governance: "standing_authorization",
+      description: "Request one audited, budgeted provider decision over server-generated isolated-workspace metadata and execute at most one existing active-surface scroll action without automatic repetition.",
+    },
+    {
       id: "sense.filesystem.read",
       name: "Filesystem Read Sense",
       kind: "sensor",

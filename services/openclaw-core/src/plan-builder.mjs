@@ -25,6 +25,7 @@ import { createRulePlanBuilders } from "./rule-plan-builders.mjs";
 import { createSystemdTaskBuilders } from "./systemd-task-builders.mjs";
 import { createFixedUnitIncidentTriageBuilders } from "./fixed-unit-incident-triage.mjs";
 import { createStandingProviderAdvisory } from "./standing-provider-advisory.mjs";
+import { createAiWorkspaceSingleStep } from "./ai-workspace-single-step.mjs";
 
 export function createPlanBuilder(deps) {
   const profiler = createRuntimeProfiler("plan-builder");
@@ -39,6 +40,7 @@ export function createPlanBuilder(deps) {
     publishEvent,
     publishAuditEvent = async () => ({ ok: true }),
     createStandingProviderAdvisoryImpl = createStandingProviderAdvisory,
+    createAiWorkspaceSingleStepImpl = createAiWorkspaceSingleStep,
     host,
     port,
     listCommandTranscriptRecords = () => [],
@@ -134,6 +136,14 @@ export function createPlanBuilder(deps) {
     publishAuditEvent,
     persistState,
   });
+  const aiWorkspaceSingleStep = createAiWorkspaceSingleStepImpl({
+    standingAdvisory: standingProviderAdvisory,
+    fetchJson,
+    postJson,
+    sessionManagerUrl,
+    screenActUrl,
+    publishAuditEvent,
+  });
   const capabilityRuntime = createCapabilityRuntime({
     host,
     port,
@@ -147,6 +157,7 @@ export function createPlanBuilder(deps) {
     policyEvaluator,
     publishEvent,
     standingProviderAdvisory,
+    aiWorkspaceSingleStep,
     listCommandTranscriptRecords,
     listFilesystemChangeRecords,
     buildExperienceMemoryReadModel,

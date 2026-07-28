@@ -294,3 +294,82 @@ test("standing advisory rejects malformed provider recommendations without persi
   assert.equal(state.lastUsageTokens, 77);
   assert.equal(JSON.stringify(state).includes(assistantContent), false);
 });
+
+test("standing advisory shares cooldown and budget with an internal custom decision lane", async () => {
+  const assistantContent = JSON.stringify({ actionId: "scroll_down" });
+  const harness = createHarness({
+    sendProviderRequest: async (input) => {
+      harness.calls.send.push(input);
+      return {
+        ok: true,
+        response: {
+          model: "deepseek-chat",
+          assistantContent,
+          responseContentHash: hashText(assistantContent),
+          usage: { total_tokens: 44 },
+        },
+      };
+    },
+  });
+
+  const decision = await harness.advisory.requestDecision({
+    buildContext: async (observedAt) => ({ registry: "test-context-v0", observedAt }),
+    instruction: "Return one fixed JSON action.",
+    buildPrompt: (context) => JSON.stringify(context),
+    responseContract: "test_single_step_v0",
+    parseResponse: ({ assistantContent: content }) => ({
+      ok: true,
+      decision: JSON.parse(content),
+    }),
+    readActionId: (parsed) => parsed.decision.actionId,
+    auditEventName: "cloud_provider.test_single_step_egress_authorized",
+    successResult: "test_decision_returned",
+  });
+  const advisoryDuringCooldown = await harness.advisory.invoke();
+
+  assert.equal(decision.ok, true);
+  assert.equal(decision.evidence.responseContract, "test_single_step_v0");
+  assert.equal(decision.evidence.actionId, "scroll_down");
+  assert.equal(harness.calls.audit[0].payload.responseContract, "test_single_step_v0");
+  assert.equal(harness.state.callsUsed, 1);
+  assert.equal(harness.state.tokensUsed, 1024);
+  assert.equal(advisoryDuringCooldown.fallback.reason, "standing_advisory_cooldown");
+  assert.equal(harness.calls.send.length, 1);
+});
+
+test("custom decisions preserve authoritative audit fields and fail closed on parser errors", async () => {
+  const assistantContent = JSON.stringify({ actionId: "scroll_down" });
+  const harness = createHarness({
+    sendProviderRequest: async () => ({
+      ok: true,
+      response: {
+        model: "deepseek-chat",
+        assistantContent,
+        responseContentHash: hashText(assistantContent),
+        usage: { total_tokens: 22 },
+      },
+    }),
+  });
+
+  const decision = await harness.advisory.requestDecision({
+    buildContext: async (observedAt) => ({ registry: "test-context-v0", observedAt }),
+    instruction: "Return one fixed JSON action.",
+    buildPrompt: (context) => JSON.stringify(context),
+    responseContract: "test_single_step_v0",
+    parseResponse: () => { throw new Error("parser failed"); },
+    readActionId: () => "scroll_down",
+    auditEventName: "cloud_provider.test_single_step_egress_authorized",
+    auditPayload: {
+      registry: "forged-registry",
+      requestContentHash: "f".repeat(64),
+      createsTask: true,
+    },
+  });
+
+  assert.equal(decision.ok, false);
+  assert.equal(decision.reason, "response_invalid");
+  assert.equal(harness.state.lastResult, "response_contract_failed");
+  assert.equal(harness.calls.audit[0].payload.registry, "openclaw-standing-provider-advisory-v0");
+  assert.notEqual(harness.calls.audit[0].payload.requestContentHash, "f".repeat(64));
+  assert.equal(harness.calls.audit[0].payload.createsTask, false);
+});

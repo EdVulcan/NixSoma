@@ -911,6 +911,9 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-provider-handoff.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-standing-provider-advisory.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/standing-provider-advisory.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-single-step-contract.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-single-step.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-single-step.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-plugin-refresh.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-plan-todo.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-execution.mjs"
@@ -947,7 +950,7 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-frame.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 226 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 229 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi

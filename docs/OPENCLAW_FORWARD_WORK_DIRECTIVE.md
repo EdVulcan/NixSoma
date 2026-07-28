@@ -48,7 +48,10 @@ The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
 triage/repair-promotion bridge, and eight deployed Level 4 graphical identity
-slices through governed active-surface vertical scroll. All 975 workspace
+slices through governed active-surface vertical scroll. A ninth Level 4 slice
+is source- and store-closure-ready: one explicit operator trigger can request a
+schema-bound provider decision and execute at most one existing active-surface
+scroll. It is not yet deployed or physically provider-proven. All 991 workspace
 tests and typecheck pass, the body-config and event-audit integration checks
 pass, the 811-entry milestone registry audit passes, and the Windows path budget
 has no file over 160 repository-relative characters. GitHub CI now enforces
@@ -2095,6 +2098,41 @@ Do not add caller-defined prompts, deltas,
 coordinates, counts, horizontal axes, gestures, keyboard devices, hotkeys,
 generic window/process control, parent-display access, root, host mutation, or
 automatic repeated loops.
+
+## Source-Validated Level 4 AI Workspace Single Step
+
+The ninth vertical Level 4 slice is complete in source and in the exact Core and
+Observer Nix store closures, but it is not part of the active physical-host
+generation yet. `act.ai.workspace.single_step` accepts only
+`params.confirm=true`; caller prompts, model choices, actions, directions,
+surfaces, frames, coordinates, deltas, and counts are rejected before provider
+contact. The server refreshes the isolated compositor frame and work-view state,
+requires one active numeric surface plus current helper/browser authority, and
+sends DeepSeek only a bounded structural context. Pixels, frame hashes, PIDs,
+titles, app-ids, URLs, paths, credentials, and caller text remain local.
+
+DeepSeek may return only `no_op`, `scroll_up`, or `scroll_down`. The response is
+parsed locally; before any action, Core captures a new frame and rejects changed
+surface inventory. A selected scroll reuses the existing `mouse.scroll`
+execution grant, screen-act/session-manager owner chain, durable pre-action
+audit, Weston peer receipt, and post-frame verification. It executes at most
+once and never schedules or repeats itself. The provider reason is transient;
+durable capability and audit evidence retains only bounded hashes, action id,
+status, budget, and execution facts.
+
+The shared standing advisory owner now supplies both system advice and this
+workspace decision through one single-flight lock, 15-minute cooldown, daily
+call budget, and conservative token budget. Focused tests, the complete
+workspace suite, typecheck, and the store-native body check pass. The separate
+`dev-ai-workspace-single-step-live-check.sh` gate will create and activate one
+fixed scroll fixture, consume one real DeepSeek call, verify durable egress and
+completion audit, and clean up only after the candidate generation is switched.
+Do not describe this as visual understanding: the current provider request has
+no image or OCR content.
+
+The immediate next step is deployment and that one real gate, not keyboard,
+multi-step loops, timers, arbitrary input, process/window APIs, root, or host
+mutation.
 
 ## Identity-Upgrade Alignment
 
