@@ -13,11 +13,11 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native read-only frame, and current-frame-bound native click, plus the completed Level 3 baseline | Implemented and physically proven; commit history becomes authoritative after this checkpoint lands |
-| Local validation | 938 workspace tests and typecheck pass; body-config, native frame/input, provider flake, native inventory, and event-audit integration checks pass; 811 registry entries pass | Validated |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native read-only frame, current-frame-bound native click, and operator-visible transient AI workspace projection, plus the completed Level 3 baseline | Implemented, deployed, and physically proven |
+| Local validation | 942 workspace tests and typecheck pass; focused projection tests are 52/52; body-config, native frame/input, provider flake, native inventory, and event-audit integration checks pass; 811 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/mncd0bfp4fgyv9fsl018iyn7igci3p8y-nixos-system-nixos-26.05.4808.569d57850992` | Level 4 current-frame-bound native input deployed 2026-07-19 and physically proven 2026-07-28 |
-| Previous generation | `/nix/store/v3d2plnz2zpcbgjswpvz8q2jf5b6fgaa-nixos-system-nixos-26.05.4808.569d57850992` | Superseded after the compositor-native frame checkpoint |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/ll14clw2kbgix9g90hgi0p2my97lpkb9-nixos-system-nixos-26.05.4808.569d57850992` | Level 4 transient AI output projection deployed and physically proven 2026-07-28 |
+| Previous generation | `/nix/store/mncd0bfp4fgyv9fsl018iyn7igci3p8y-nixos-system-nixos-26.05.4808.569d57850992` | Superseded after the current-frame-bound native input checkpoint |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
 | Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; one 252-token approval-bound call and one 459-token standing call completed | Deployed and proven without prompt, reason, or credential persistence |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, 15-minute cooldown, 3-call/4096-token daily defaults, structured transient recommendation, and local fallback | Deployed; returned `observe_current_screen` without creating a task, approval, or execution |
@@ -25,6 +25,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 browser attachment | Existing AI-owned Nix Firefox launches headed on the fixed nested socket, preserves Level 2 lease/capture/action ownership, and exposes compact attachment evidence | Deployed and proven through capture plus lease-bound action |
 | Level 4 compositor frame | Weston launches and authorizes one fixed screenshooter client; session-manager returns a bounded transient 1280x720 PNG and retains metadata only | Deployed; Firefox cannot read the capture directory |
 | Level 4 compositor input | Existing screen pointer capability carries a fresh native-frame binding; session-manager requires the active work-view lease and Core grant, while Weston accepts only the session-manager peer on a fixed pointer-only Unix socket | Deployed; real click advanced native frame 1 to 2 with matching lease and receipt |
+| Level 4 output projection | Exact operator-authenticated Core route returns one revalidated fresh `nixsoma-ai-0` PNG to an explicitly selected Observer tab; pixels are no-store and browser-memory-only | Deployed; real Observer rendered 1280x720 and released pixels on mode switch and sign-out |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -106,9 +107,9 @@ The completed bounded frontier is:
   missing or non-terminal reservation closed without Executor/hostd replay.
 
 Real repair execution and rollback remain unproven on a disposable mutation
-environment. Level 4 now owns a compositor, headed browser, and read-only native
-frame in production. Its current candidate adds one governed native left click;
-projection and desktop takeover remain future work.
+environment. Level 4 now owns a compositor, headed browser, read-only native
+frame, governed native left click, and operator-visible transient projection in
+production. Desktop takeover remains future work.
 
 ## Active Route
 
@@ -263,9 +264,33 @@ relevant warning journals stayed clear.
 
 Freeze this lane. Keyboard, scroll, hotkeys, arbitrary
 devices, GNOME input, parent-display access, provider authority, root, and host
-mutation remain absent. The next vertical Level 4 capability is a bounded
-operator-visible projection of the AI-owned output, not another input variant
-or evidence wrapper.
+mutation remain absent.
+
+The fifth vertical Level 4 slice is implemented and deployed. Core adds
+only `/proxy/session-manager/work-view/compositor-frame`, requires the existing
+operator identity before contacting session-manager, and revalidates the fresh
+1280x720 PNG, digest, fixed `nixsoma-ai-0` socket, and negative authority
+contract. The response is explicitly no-store. Observer exposes `Browser Page`
+and `AI Workspace` tabs; it requests a frame only while authenticated, visible,
+and explicitly on the workspace tab, revalidates the PNG bytes and SHA-256 in
+browser memory, and removes the image source on tab switch, page hide, sign-out,
+or authentication loss. No pixel enters server state, events, browser storage,
+or durable artifacts, and the five-second refresh is independent of capture
+events to avoid recursion.
+
+Focused tests are 52/52, all 942 workspace tests and typecheck pass, the Windows
+path budget is clean, and body-config built the new Core and Observer closures.
+Generation `ll14clw2...` references those exact closures and is active. The
+existing native-frame check returned a distinct 1280x720 PNG in 73 ms, and the
+native-input check advanced frame sequence 6 to 7 in 186 ms with matching lease
+and receipt. The new stop gate rejected anonymous access before capture, rendered
+the native image in a real headless Firefox Observer session, retained a 261,642
+byte screenshot only in test memory, and removed the frame source on mode switch
+and sign-out. State and audit retained only hash/sequence metadata, capture
+storage ended empty, all system/user services remained active with zero restarts,
+failed-unit output stayed empty, and relevant warning journals were clear.
+Freeze projection variants; desktop takeover, parent display access, added input,
+root, provider authority, and host mutation remain deferred.
 
 ## Progress Estimate
 
@@ -276,7 +301,7 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 35%; compositor, browser attachment, native frame, and frame-bound native click deployed and physically proven |
+| Level 4 graphics-stack-native body | about 40%; compositor, browser attachment, native frame, frame-bound native click, and transient operator projection are deployed and physically proven |
 | Current bounded product scope | 75-80% |
 | Final whitepaper vision | 45-55% |
 

@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { Readable } from "node:stream";
 
 import { registerRoutes } from "../src/route-handlers.mjs";
@@ -148,6 +149,33 @@ function transientEngineeringRecommendation() {
   };
 }
 
+function compositorFrame(bytes = Buffer.from("bounded-native-output", "utf8")) {
+  return {
+    registry: "nixsoma-ai-compositor-frame-v0",
+    available: true,
+    reason: null,
+    sourceScope: "ai_owned_nested_output_only",
+    captureApi: "weston_output_capture_v1",
+    socketName: "nixsoma-ai-0",
+    mediaType: "image/png",
+    encoding: "base64_data_url",
+    width: 1280,
+    height: 720,
+    byteLength: bytes.length,
+    maxBytes: 262144,
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+    capturedAt: new Date().toISOString(),
+    sequence: 7,
+    browserScreenshotApi: false,
+    desktopWideCapture: false,
+    parentDisplayConnected: false,
+    inputAuthority: false,
+    persisted: false,
+    dataExposed: true,
+    dataUrl: `data:image/png;base64,${bytes.toString("base64")}`,
+  };
+}
+
 test("core infrastructure health route preserves service configuration readback", async () => {
   const deps = createBaseDeps();
 
@@ -183,6 +211,68 @@ test("core infrastructure proxy rejects mutation and unknown routes", async () =
 
   const unknown = await invokeRoute(deps, "GET", "/proxy/session-manager/work-view/unknown");
   assert.equal(unknown.statusCode, 404, JSON.stringify(unknown.body));
+});
+
+test("operator-authenticated Core projection validates and never caches compositor pixels", async () => {
+  let captureCalls = 0;
+  const operatorAuth = createOperatorAuthenticator({ token: "operator-secret" });
+  const deps = createBaseDeps({
+    deps: { operatorAuth },
+    client: {
+      fetchJson: async (url) => {
+        captureCalls += 1;
+        assert.equal(url, "http://127.0.0.1:4102/work-view/compositor-frame");
+        return { ok: true, frame: compositorFrame() };
+      },
+    },
+  });
+
+  const rejected = await invokeRoute(
+    deps,
+    "GET",
+    "/proxy/session-manager/work-view/compositor-frame",
+  );
+  assert.equal(rejected.statusCode, 401);
+  assert.equal(captureCalls, 0);
+
+  const accepted = await invokeRoute(
+    deps,
+    "GET",
+    "/proxy/session-manager/work-view/compositor-frame",
+    null,
+    { authorization: "Bearer operator-secret" },
+  );
+  assert.equal(accepted.statusCode, 200, JSON.stringify(accepted.body));
+  assert.equal(captureCalls, 1);
+  assert.equal(accepted.headers["cache-control"], "no-store, no-cache, must-revalidate");
+  assert.equal(accepted.body.registry, "nixsoma-ai-output-projection-v0");
+  assert.equal(accepted.body.mode, "operator_transient");
+  assert.equal(accepted.body.frame.dataExposed, true);
+  assert.match(accepted.body.frame.dataUrl, /^data:image\/png;base64,/u);
+  assert.equal(accepted.body.boundary.operatorAuthenticationRequired, true);
+  assert.equal(accepted.body.boundary.serverPersistence, false);
+  assert.equal(accepted.body.boundary.parentDisplayConnected, false);
+  assert.equal(accepted.body.boundary.inputAuthorityExpanded, false);
+  assert.equal("aiGraphicalSession" in accepted.body, false);
+});
+
+test("Core projection rejects an invalid upstream frame without returning pixels", async () => {
+  const deps = createBaseDeps({
+    client: {
+      fetchJson: async () => ({
+        ok: true,
+        frame: { ...compositorFrame(), socketName: "wayland-0" },
+      }),
+    },
+  });
+
+  const response = await invokeRoute(
+    deps,
+    "GET",
+    "/proxy/session-manager/work-view/compositor-frame",
+  );
+  assert.equal(response.statusCode, 502);
+  assert.equal(JSON.stringify(response.body).includes("data:image/"), false);
 });
 
 test("core infrastructure proxy route forwards read-only system kernel event routes", async () => {

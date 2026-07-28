@@ -94,6 +94,14 @@ test("operator origin policy rejects untrusted browser origins and keeps health 
   assert.equal(auth.requestRequiresAuth(request("GET"), new URL("/tasks", "http://127.0.0.1:4100")), true);
   assert.equal(auth.requestRequiresAuth(request("GET"), new URL("/approvals/summary", "http://127.0.0.1:4100")), true);
   assert.equal(auth.requestRequiresAuth(request("GET"), new URL("/capabilities/invocations", "http://127.0.0.1:4100")), true);
+  assert.equal(auth.requestRequiresAuth(
+    request("GET"),
+    new URL("/proxy/session-manager/work-view/compositor-frame", "http://127.0.0.1:4100"),
+  ), true);
+  assert.equal(auth.requestRequiresAuth(
+    request("GET"),
+    new URL("/proxy/session-manager/work-view/state", "http://127.0.0.1:4100"),
+  ), false);
   assert.equal(auth.requestRequiresAuth(request("GET"), new URL("/capabilities", "http://127.0.0.1:4100")), false);
   assert.equal(auth.requestRequiresAuth(request("POST"), new URL("/tasks", "http://127.0.0.1:4100")), true);
 });

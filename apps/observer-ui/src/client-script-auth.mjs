@@ -29,6 +29,9 @@ async function refreshOperatorSession() {
     operatorSession = null;
   }
   renderOperatorAuthState();
+  if (!operatorSession?.authenticated && typeof clearAiWorkspaceProjection === "function") {
+    clearAiWorkspaceProjection("operator auth required");
+  }
 }
 
 async function signInOperator() {
@@ -45,6 +48,9 @@ async function signInOperator() {
     operatorSession = { authenticated: true, operator: data.operator };
     operatorAuthTokenInput.value = "";
     renderOperatorAuthState();
+    if (typeof refreshAiWorkspaceProjection === "function") {
+      refreshAiWorkspaceProjection();
+    }
     setControlMessage(\`Operator session active for \${data.operator?.actor ?? "operator"}.\`);
   } finally {
     operatorAuthSignInButton.disabled = false;
@@ -63,6 +69,9 @@ async function signOutOperator() {
   } finally {
     operatorSession = null;
     renderOperatorAuthState();
+    if (typeof clearAiWorkspaceProjection === "function") {
+      clearAiWorkspaceProjection("operator auth required");
+    }
   }
 }
 

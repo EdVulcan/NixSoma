@@ -130,8 +130,8 @@ NODE
 [[ -z "$(find "$CAPTURE_DIR" -mindepth 1 -maxdepth 1 -print -quit)" ]]
 grep -Eq "NixSoma fixed output capture authority is ready" "$RUNTIME_DIR/weston.log"
 grep -Eq "launching '.*/weston-screenshooter'" "$RUNTIME_DIR/weston.log"
-if grep -Eq "unauthorized" "$RUNTIME_DIR/weston.log"; then
-  echo "Weston rejected the compositor-owned capture client." >&2
+if grep -Eq "NixSoma frame authority (could not start capture client|inotify read failed|initialization failed)" "$RUNTIME_DIR/weston.log"; then
+  echo "Weston frame authority reported a capture failure." >&2
   exit 1
 fi
 

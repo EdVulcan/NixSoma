@@ -1943,6 +1943,43 @@ root, or host mutation. The next real Level 4 capability is bounded projection
 of the AI-owned output so an operator can observe that independent workspace;
 desktop takeover remains deferred.
 
+## Completed Level 4 Operator-Visible Output Projection
+
+The fifth vertical Level 4 slice is implemented, source-validated, deployed, and
+physically proven in generation
+`/nix/store/ll14clw2kbgix9g90hgi0p2my97lpkb9-nixos-system-nixos-26.05.4808.569d57850992`.
+It reuses session-manager's compositor frame owner and adds one exact sensitive
+Core GET route. Core requires the existing operator identity before contacting
+session-manager, then revalidates a fresh 1280x720 PNG, its SHA-256 digest, the
+fixed `nixsoma-ai-0` socket, and the negative authority boundary. The response
+is no-store and is not copied into Core state or events.
+
+Observer adds an explicit `AI Workspace` tab beside the existing browser-page
+preview. Projection runs only while that tab is selected, the document is
+visible, and the operator session is authenticated. Browser code revalidates
+the PNG signature, length, dimensions, digest, registries, socket, freshness,
+and negative authority flags before assigning the in-memory data URL. Tab
+switch, page hide, sign-out, or authentication loss removes the image source.
+The independent five-second single-flight refresh is not driven by
+`screen.updated`, preventing capture-event recursion.
+
+All 942 workspace tests, typecheck, generated-client syntax, Windows path
+budget, focused 52-test projection/Core/Observer suite, and body-config/store
+closure checks pass. The active unit files reference Core closure `4dp2xr...`
+and Observer closure `5f15xv...`. Existing native frame/input checks returned a
+distinct 1280x720 PNG in 73 ms and advanced frame sequence 6 to 7 in 186 ms with
+matching lease/receipt. The projection stop gate rejected anonymous access
+before capture, rendered 1280x720 through a real headless Firefox Observer,
+kept its 261,642-byte screenshot in test memory only, released the image source
+on mode switch and sign-out, left capture storage empty, and retained only
+metadata in state/audit. Every service stayed active with zero restarts, failed
+unit output was empty, and relevant warning journals were clear.
+
+Freeze projection variants. Desktop takeover, parent-display access, added
+input, root, provider authority, and host mutation remain deferred. Select the
+next vertical Level 4 behavior from the identity path rather than reopening
+capture, input, projection, or evidence variants.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

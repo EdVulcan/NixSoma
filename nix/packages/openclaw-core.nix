@@ -25,6 +25,7 @@ mkOpenClawSourceClosure {
     ../../packages/shared-utils/package.json
     ../../packages/shared-utils/src/http.mjs
     ../../packages/shared-utils/src/service-credentials.mjs
+    ../../packages/shared-utils/src/ai-compositor-frame.mjs
     ../../packages/shared-utils/src/execution-grants.mjs
     ../../packages/shared-utils/src/persist.mjs
     ../../packages/shared-utils/src/work-view-input-evidence.mjs

@@ -1,4 +1,10 @@
 import { sendJson } from "../../../packages/shared-utils/src/http.mjs";
+import { projectAiCompositorFrame } from "../../../packages/shared-utils/src/ai-compositor-frame.mjs";
+
+const AI_COMPOSITOR_PROJECTION_PATH = "/work-view/compositor-frame";
+const AI_COMPOSITOR_PROJECTION_REGISTRY = "nixsoma-ai-output-projection-v0";
+const AI_COMPOSITOR_WIDTH = 1280;
+const AI_COMPOSITOR_HEIGHT = 720;
 
 const PROXY_TARGET_URL_KEYS = {
   "session-manager": "sessionManagerUrl",
@@ -10,7 +16,7 @@ const PROXY_TARGET_URL_KEYS = {
 };
 
 const READ_ONLY_PROXY_PATHS = {
-  "session-manager": new Set(["/health", "/session/state", "/work-view/state"]),
+  "session-manager": new Set(["/health", "/session/state", "/work-view/state", AI_COMPOSITOR_PROJECTION_PATH]),
   "screen-sense": new Set(["/health", "/screen/current", "/screen/provider", "/screen/windows", "/screen/ocr"]),
   "screen-act": new Set(["/health", "/act/state"]),
   "system-heal": new Set([
@@ -69,6 +75,34 @@ function proxySubpath(pathname) {
   return "/" + parts.slice(3).join("/");
 }
 
+function projectAiCompositorOutput(result) {
+  const frame = projectAiCompositorFrame(result?.frame, {
+    includeData: true,
+    width: AI_COMPOSITOR_WIDTH,
+    height: AI_COMPOSITOR_HEIGHT,
+  });
+  if (!frame.available || frame.socketName !== "nixsoma-ai-0" || frame.fresh !== true) {
+    return null;
+  }
+  return {
+    ok: true,
+    registry: AI_COMPOSITOR_PROJECTION_REGISTRY,
+    mode: "operator_transient",
+    frame,
+    boundary: {
+      sourceScope: "ai_owned_nested_output_only",
+      operatorAuthenticationRequired: true,
+      serverPersistence: false,
+      browserMemoryOnly: true,
+      parentDisplayConnected: false,
+      desktopWideCapture: false,
+      inputAuthorityExpanded: false,
+      rootRequired: false,
+      hostMutation: false,
+    },
+  };
+}
+
 async function handleProxyRoute({
   req,
   res,
@@ -96,9 +130,25 @@ async function handleProxyRoute({
   }
 
   try {
-    const targetUrl = new URL(proxySubpath(requestUrl.pathname), targetUrlBase);
+    const targetPath = proxySubpath(requestUrl.pathname);
+    const targetUrl = new URL(targetPath, targetUrlBase);
     targetUrl.search = requestUrl.search;
     const result = await client.fetchJson(targetUrl.toString());
+    if (targetService === "session-manager" && targetPath === AI_COMPOSITOR_PROJECTION_PATH) {
+      const projection = projectAiCompositorOutput(result);
+      if (!projection) {
+        sendJson(res, 502, { ok: false, error: "AI compositor projection returned an invalid or stale frame." });
+        return true;
+      }
+      res.openclawResponseHeaders = {
+        ...(res.openclawResponseHeaders ?? {}),
+        "cache-control": "no-store, no-cache, must-revalidate",
+        pragma: "no-cache",
+        expires: "0",
+      };
+      sendJson(res, 200, projection);
+      return true;
+    }
     sendJson(res, 200, result);
     return true;
   } catch (error) {

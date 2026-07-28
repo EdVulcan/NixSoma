@@ -869,7 +869,8 @@ EOF
     || -e "$core_out/share/openclaw/services/openclaw-core/test"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 225 ]]; then
+    || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-frame.mjs"
+    || "$(find "$core_out" -type f | wc -l)" -ne 226 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -1688,6 +1689,7 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-semantic-target-task.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-screen-observation.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-fixed-unit-incident-triage.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-declarative-evolution.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-auth.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-operator-auth.mjs"
@@ -1695,10 +1697,11 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-renderers-declarative-evolution.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panels-declarative-evolution.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panels-operator-auth.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panel-snapshot-preview.mjs"
     || ! -f "$observer_ui_out/share/openclaw/packages/shared-client/src/service-descriptors.mjs"
     || -w "$observer_ui_server"
     || -e "$observer_ui_out/share/openclaw/apps/observer-ui/scripts"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 77 ]]; then
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 79 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi
@@ -1752,7 +1755,11 @@ if (health.ok !== true
   || health.coreUrl !== upstreamUrl
   || !html.includes("<title>OpenClaw Observer UI</title>")
   || !html.includes('id="engineering-loop-state-kind"')
+  || !html.includes('id="ai-workspace-preview-tab"')
+  || !html.includes('id="ai-workspace-projection-frame"')
   || !client.includes("engineering-loop-state")
+  || !client.includes("nixsoma-ai-output-projection-v0")
+  || !client.includes("/proxy/session-manager/work-view/compositor-frame")
   || html.length < 250_000
   || client.length < 1_000_000) {
   throw new Error(`store-native observer-ui did not serve complete operator assets: ${JSON.stringify({ health, htmlChars: html.length, clientChars: client.length })}`);

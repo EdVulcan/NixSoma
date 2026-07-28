@@ -8,9 +8,11 @@ The bounded Level 2 browser eye-hand contract described below is complete and
 frozen. Its Level 4 vertical continuation now has a resource-bounded login-user
 Weston compositor on fixed socket `nixsoma-ai-0`, the existing headed AI-owned
 Firefox client, one bounded compositor-native read-only frame, and a
-source-validated current-frame-bound native left click. It still has no
-projection, desktop-wide capture/input, arbitrary input device, root, or host-
-mutation authority; Firefox retains only its existing browser network scope.
+physically proven current-frame-bound native left click. A fifth continuation
+now has a deployed, physically proven operator projection of that frame in
+Observer. It still has no desktop takeover, desktop-wide capture/input,
+arbitrary input device, root, or host-mutation authority; Firefox retains only
+its existing browser network scope.
 
 Physical-host generation `kxv2ypwp...` now proves the nested compositor
 coexists with unchanged GNOME `wayland-0`, no parent display environment or DRM
@@ -52,6 +54,18 @@ fixed pointer seat to click. Generation `mncd0bfp...` physically proved the
 same active lease, fresh frame, peer-authenticated receipt, and advancing
 post-frame in one real click. Freeze input variants and continue with bounded
 projection of the isolated AI-owned output.
+
+That bounded projection is now implemented without widening this plan's action
+authority. Core authenticates the operator before using session-manager's exact
+frame route, revalidates the fresh 1280x720 `nixsoma-ai-0` PNG, and returns it
+under a no-store contract. Observer exposes it only on an explicitly selected
+`AI Workspace` tab, validates the bytes and digest in browser memory, and drops
+the image source on mode, visibility, or authentication changes. State and
+audit retain frame metadata only. Generation `ll14clw2...` contains the exact
+new Core and Observer closures. A real Firefox Observer rendered 1280x720,
+released the image source on mode switch and sign-out, retained its screenshot
+only in test memory, and left runtime capture storage empty while all services
+remained stable. This continuation is deployed; freeze projection variants.
 
 ## Active Slice
 

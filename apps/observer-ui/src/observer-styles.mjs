@@ -122,6 +122,29 @@ export function observerStyles() {
       .work-view-frame[hidden] {
         display: none;
       }
+      .preview-tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: rgba(7, 11, 21, 0.7);
+      }
+      .preview-tab {
+        min-width: 0;
+        border-radius: 4px;
+        padding: 8px 10px;
+        background: transparent;
+        color: var(--muted);
+      }
+      .preview-tab[aria-selected="true"] {
+        background: var(--accent);
+        color: #04111c;
+      }
+      .preview-pane[hidden] {
+        display: none;
+      }
       ul {
         margin: 0;
         padding-left: 18px;

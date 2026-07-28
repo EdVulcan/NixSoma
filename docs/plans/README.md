@@ -113,14 +113,16 @@ login-user systemd owner
 -> AI-owned browser attachment (complete)
 -> compositor-native bounded read-only frame (complete)
 -> current-frame-bound native left click (complete and physically proven)
--> bounded AI-owned output projection as the next real slice
+-> bounded AI-owned output projection (complete and physically proven)
 ```
 
-The current source now stops before projection, desktop-wide observation, root,
-or host mutation. Firefox retains only the existing browser-runtime network
-scope. Native input is limited to one frame-bound left click on `nixsoma-ai-0`;
-do not reopen the completed provider or Level 2 action lanes or add horizontal
-input variants.
+The current source stops before desktop takeover, desktop-wide observation,
+parent-display access, added input, root, or host mutation. Firefox retains only
+the existing browser-runtime network scope. Native input remains limited to one
+frame-bound left click on `nixsoma-ai-0`; the projection is operator-authenticated,
+explicitly selected, no-store, and browser-memory-only. Do not reopen the
+completed provider or Level 2 action lanes or add horizontal input/projection
+variants.
 
 Generation `kxv2ypwp...` completed the coexistence proof with a current-user
 `0700` nested runtime/socket, no parent display environment or DRM handle, about
@@ -169,6 +171,23 @@ The check also proved an ordinary same-UID peer receives no receipt, retained no
 pixels, added no runtime directory entries, produced no warning journal, and
 caused no restart counter increase. Freeze native input and select bounded
 projection of the AI-owned output.
+
+That fifth vertical slice is now deployed and physically proven. One
+operator-protected Core GET reuses session-manager's current compositor frame,
+revalidates the fixed socket, freshness, dimensions, PNG bytes, digest, and
+negative authority, then returns a no-store envelope. Observer adds a separate
+`AI Workspace` tab and requests only while authenticated, visible, and selected;
+it validates the frame again in browser memory and clears the image source on
+mode switch, hide, sign-out, or auth loss. Pixels never enter service state,
+events, browser storage, or durable artifacts. Focused tests are 52/52, all 942
+workspace tests and typecheck pass, body-config built the new store packages,
+and active generation `ll14clw2...` references those closures. Native frame and
+input regressions returned a distinct 1280x720 PNG and advanced frame sequence
+6 to 7 with matching authority. The projection gate rejected anonymous capture,
+rendered the full native image in real Firefox, cleared it on mode switch and
+sign-out, retained only metadata, and left runtime storage empty. Services,
+restart counters, failed-unit checks, and warning journals stayed clean. Freeze
+this lane before selecting the next vertical Level 4 behavior.
 
 ## Completed Capability Evidence
 
