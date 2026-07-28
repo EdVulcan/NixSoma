@@ -3,13 +3,17 @@
 let
   cfg = config.services.openclaw;
   sessionCfg = cfg.aiGraphicalSession;
-  inherit (lib) mkEnableOption mkIf mkOption optional optionalAttrs types;
+  inherit (lib) mkEnableOption mkIf mkOption optional optionalAttrs optionalString types;
   unitName = "nixsoma-ai-graphical-session";
   runtimeDirectory = unitName;
   socketName = "nixsoma-ai-0";
   captureDirectory = "capture";
+  inputDirectory = "input";
   captureAuthorityPackage = pkgs.callPackage ../packages/nixsoma-weston-frame-auth.nix {
     weston = sessionCfg.package;
+    nativeInput = sessionCfg.nativeInput;
+    outputWidth = sessionCfg.width;
+    outputHeight = sessionCfg.height;
   };
   westonArguments = [
     "--backend=headless"
@@ -27,23 +31,32 @@ let
     runtime_base="''${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}"
     runtime_dir="$runtime_base/${runtimeDirectory}"
     capture_dir="$runtime_dir/${captureDirectory}"
+    input_dir="$runtime_dir/${inputDirectory}"
     ${pkgs.coreutils}/bin/rm -f \
       "$runtime_dir/${socketName}" \
       "$runtime_dir/${socketName}.lock" \
       "$capture_dir/request" \
       "$capture_dir"/wayland-screenshot-*.png
     ${pkgs.coreutils}/bin/install -d -m 0700 "$capture_dir"
+    ${optionalString sessionCfg.nativeInput ''
+      ${pkgs.coreutils}/bin/rm -f "$input_dir/control.sock"
+      ${pkgs.coreutils}/bin/install -d -m 0700 "$input_dir"
+    ''}
   '';
   cleanupScript = pkgs.writeShellScript "nixsoma-ai-graphical-session-cleanup" ''
     set -euo pipefail
     runtime_base="''${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}"
     runtime_dir="$runtime_base/${runtimeDirectory}"
     capture_dir="$runtime_dir/${captureDirectory}"
+    input_dir="$runtime_dir/${inputDirectory}"
     ${pkgs.coreutils}/bin/rm -f \
       "$runtime_dir/${socketName}" \
       "$runtime_dir/${socketName}.lock" \
       "$capture_dir/request" \
       "$capture_dir"/wayland-screenshot-*.png
+    ${optionalString sessionCfg.nativeInput ''
+      ${pkgs.coreutils}/bin/rm -f "$input_dir/control.sock"
+    ''}
   '';
   launchScript = pkgs.writeShellScript "nixsoma-ai-graphical-session-launch" ''
     set -euo pipefail
@@ -85,6 +98,11 @@ in
       default = false;
       description = "Allow bounded read-only capture of the isolated Weston output.";
     };
+    nativeInput = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Allow current-frame-bound pointer clicks inside the isolated Weston output.";
+    };
   };
 
   config = mkIf (cfg.enable && sessionCfg.enable) {
@@ -104,6 +122,10 @@ in
             && builtins.elem "browserRuntime" cfg.componentOwnership.user
             && cfg.browserEngine.mode == "firefox");
         message = "services.openclaw.aiGraphicalSession.attachBrowser requires a user-owned Firefox browserRuntime.";
+      }
+      {
+        assertion = !sessionCfg.nativeInput || (sessionCfg.captureOutput && sessionCfg.attachBrowser);
+        message = "services.openclaw.aiGraphicalSession.nativeInput requires captureOutput and attachBrowser.";
       }
     ];
 
@@ -160,6 +182,11 @@ in
         OPENCLAW_AI_COMPOSITOR_CAPTURE_DIRECTORY = captureDirectory;
         OPENCLAW_AI_COMPOSITOR_CAPTURE_TIMEOUT_MS = "1500";
         OPENCLAW_AI_COMPOSITOR_CAPTURE_POLL_MS = "20";
+        OPENCLAW_AI_COMPOSITOR_INPUT_ENABLED = if sessionCfg.nativeInput then "1" else "0";
+        OPENCLAW_AI_COMPOSITOR_INPUT_DIRECTORY = inputDirectory;
+        OPENCLAW_AI_COMPOSITOR_INPUT_TIMEOUT_MS = "1000";
+        OPENCLAW_AI_COMPOSITOR_INPUT_POLL_MS = "10";
+        OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE = cfg.executionGrantPublicKeyFile;
       };
     } // optionalAttrs cfg.resourceControl.enable {
       serviceConfig.Slice = "openclaw-session.slice";
@@ -181,7 +208,9 @@ in
         "DBUS_SESSION_BUS_ADDRESS"
       ];
       serviceConfig.InaccessiblePaths = optional sessionCfg.captureOutput
-        "-%t/${runtimeDirectory}/${captureDirectory}";
+        "-%t/${runtimeDirectory}/${captureDirectory}"
+        ++ optional sessionCfg.nativeInput
+        "-%t/${runtimeDirectory}/${inputDirectory}";
     };
   };
 }

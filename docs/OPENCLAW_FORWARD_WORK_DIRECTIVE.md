@@ -1,6 +1,6 @@
 # NixSoma Forward Work Directive
 
-Updated: 2026-07-19
+Updated: 2026-07-28
 
 This is the active guidance document for continuing NixSoma development. The
 enhanced source preservation and governed capability migration that originally
@@ -1905,6 +1905,43 @@ bounded compositor-native input for `nixsoma-ai-0`, bound to a current native
 frame and the existing work-view authority. It must not target GNOME, expose an
 arbitrary input device, create desktop-wide capture, add root/provider/host
 mutation authority, or reopen the completed browser action lane.
+
+## Completed Level 4 Current-Frame-Bound Native Input
+
+The fourth vertical Level 4 slice is implemented and deployed. The
+existing `act.screen.pointer_keyboard` capability accepts one optional
+compositor-frame binding for a left click inside the fixed 1280x720
+`nixsoma-ai-0` output. Core still owns the request-bound execution grant and
+screen-act remains the action dispatcher. Session-manager is the authoritative
+runtime gate: it requires the active matching work-view lease, the same grant,
+a fresh exact native frame, and a durable pre-execution audit before contacting
+the compositor.
+
+Weston owns a fixed pointer-only seat and mode-0600 Unix socket under the
+current-user graphical runtime. It authenticates the peer UID, PID, and exact
+`openclaw-session-manager.service` cgroup through `SO_PEERCRED`; an ordinary
+same-UID process cannot forge a click. The receipt binds request id, frame hash,
+frame sequence, and coordinates. Session-manager captures a new native frame
+after the action and reports whether its sequence advanced while retaining no
+pixels in state, events, or Observer.
+
+All 938 workspace tests, typecheck, native module build, body-config/store
+closure validation, Windows path budget, and focused input checks pass.
+Generation
+`/nix/store/mncd0bfp4fgyv9fsl018iyn7igci3p8y-nixos-system-nixos-26.05.4808.569d57850992`
+is active. `dev-ai-compositor-input-check.sh` completed the physical stop gate:
+an ordinary same-UID peer was rejected, then the governed click at `740,22`
+completed in 239 ms, advanced native frame sequence 1 to 2, changed its hash,
+and matched the active lease plus Weston receipt. No pixels persisted, no input
+directory entry remained beyond `control.sock`, every service stayed active,
+no restart counter increased during the check, failed-unit output was empty,
+and relevant warning journals were clear.
+
+Freeze native input. Do not add keyboard, scroll, hotkeys,
+arbitrary devices, parent-display access, GNOME input, provider authority,
+root, or host mutation. The next real Level 4 capability is bounded projection
+of the AI-owned output so an operator can observe that independent workspace;
+desktop takeover remains deferred.
 
 ## Identity-Upgrade Alignment
 

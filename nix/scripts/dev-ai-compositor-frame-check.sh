@@ -100,11 +100,17 @@ if (browserFrame.width !== 960
 if (afterGraphical.compositorFrame?.sha256 !== frame.sha256
   || afterGraphical.compositorFrame?.dataExposed !== false
   || afterGraphical.boundary?.readsPixels !== true
-  || afterGraphical.boundary?.inputAuthority !== false
+  || ![false, true].includes(afterGraphical.boundary?.inputAuthority)
   || screenGraphical.compositorFrame?.sha256 !== frame.sha256
   || JSON.stringify(after).includes("data:image/")
   || JSON.stringify(screen).includes("data:image/png")) {
   throw new Error("metadata projection leaked or lost compositor frame evidence");
+}
+if (afterGraphical.boundary?.inputAuthority === true
+  && (afterGraphical.boundary?.inputScope !== "ai_owned_nested_output_only"
+    || afterGraphical.boundary?.arbitraryInputDevice !== false
+    || afterGraphical.boundary?.desktopWideInput !== false)) {
+  throw new Error("compositor input authority escaped the isolated output boundary");
 }
 
 console.log(JSON.stringify({

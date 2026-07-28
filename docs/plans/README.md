@@ -1,6 +1,6 @@
 # NixSoma Plans Directory
 
-Updated: 2026-07-19
+Updated: 2026-07-28
 
 This directory contains current decision records and historical milestone
 evidence. It is not a queue ordered by phase number. Use
@@ -112,13 +112,15 @@ login-user systemd owner
 -> physical-host coexistence proof with GNOME wayland-0 (complete)
 -> AI-owned browser attachment (complete)
 -> compositor-native bounded read-only frame (complete)
--> current-frame-bound native input as the next real slice
+-> current-frame-bound native left click (complete and physically proven)
+-> bounded AI-owned output projection as the next real slice
 ```
 
-The current source now stops before compositor-native input, projection,
-desktop-wide observation, root, or host mutation. Firefox retains only the
-existing browser-runtime network scope. Do not reopen the completed provider or
-Level 2 action lanes while this Level 4 vertical capability is incomplete.
+The current source now stops before projection, desktop-wide observation, root,
+or host mutation. Firefox retains only the existing browser-runtime network
+scope. Native input is limited to one frame-bound left click on `nixsoma-ai-0`;
+do not reopen the completed provider or Level 2 action lanes or add horizontal
+input variants.
 
 Generation `kxv2ypwp...` completed the coexistence proof with a current-user
 `0700` nested runtime/socket, no parent display environment or DRM handle, about
@@ -152,6 +154,21 @@ the real frame differs from the 960x540 Puppeteer page frame. Freeze capture
 variants. The next route is compositor-native input constrained to
 `nixsoma-ai-0` and a current native frame, not GNOME, provider work, or another
 readiness wrapper.
+
+That fourth vertical slice is now implemented and source-validated. The common
+screen pointer capability carries an optional fresh compositor-frame binding
+through the existing Core grant and screen-act owner. Session-manager is the
+authoritative lease/frame gate and sends one fixed click request over a
+current-user mode-0600 Unix socket. Weston accepts only the exact
+session-manager peer and its user-unit cgroup, then returns a request/frame/
+coordinate-bound receipt; a new compositor frame supplies post-action proof.
+Generation `mncd0bfp...` replaced `v3d2plnz...` and completed the physical stop
+gate. A real click at `740,22` advanced native frame 1 to 2 in 239 ms, changed
+the visual hash, and matched the Core grant, active lease, and Weston receipt.
+The check also proved an ordinary same-UID peer receives no receipt, retained no
+pixels, added no runtime directory entries, produced no warning journal, and
+caused no restart counter increase. Freeze native input and select bounded
+projection of the AI-owned output.
 
 ## Completed Capability Evidence
 

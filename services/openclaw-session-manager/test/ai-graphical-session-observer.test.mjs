@@ -9,6 +9,7 @@ import {
   createAiGraphicalSessionObserver,
   projectAiGraphicalSessionBrowserAttachment,
   projectAiGraphicalSessionCompositorFrame,
+  projectAiGraphicalSessionCompositorInput,
 } from "../src/ai-graphical-session-observer.mjs";
 
 function enabledEnv(runtimeDir, overrides = {}) {
@@ -173,4 +174,34 @@ test("AI graphical session projects compositor-native frame metadata without pix
   assert.equal(evidence.boundary.browserScreenshotApi, false);
   assert.equal(evidence.boundary.inputAuthority, false);
   assert.equal(JSON.stringify(evidence).includes("data:image/"), false);
+});
+
+test("AI graphical session projects only isolated frame-bound input authority", () => {
+  const evidence = projectAiGraphicalSessionCompositorInput({
+    status: "ready",
+    boundary: { inputAuthority: false, parentDisplayConnected: false },
+  }, {
+    registry: "nixsoma-ai-compositor-input-v0",
+    status: "executed",
+    socketName: "nixsoma-ai-0",
+    imageDataRetained: false,
+    persisted: false,
+    desktopWideInput: false,
+    parentDisplayConnected: false,
+    rootRequired: false,
+    hostMutation: false,
+  });
+
+  assert.equal(evidence.boundary.inputAuthority, true);
+  assert.equal(evidence.boundary.compositorNativeInput, true);
+  assert.equal(evidence.boundary.inputScope, "ai_owned_nested_output_only");
+  assert.equal(evidence.boundary.arbitraryInputDevice, false);
+  assert.equal(evidence.boundary.desktopWideInput, false);
+
+  const rejected = projectAiGraphicalSessionCompositorInput(evidence, {
+    ...evidence.compositorInput,
+    socketName: "wayland-0",
+  });
+  assert.equal(rejected.compositorInput, null);
+  assert.equal(rejected.boundary.inputAuthority, false);
 });

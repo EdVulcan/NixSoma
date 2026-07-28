@@ -147,7 +147,7 @@ test("screen action capability validates the fixed keyboard and pointer contract
   assert.equal(handlers.validateRequest(capability, {
     operation: "mouse.click",
     params: { x: 640, y: 360, semanticTarget: { targetId: "target-1" } },
-  }), "Screen pointer capability only accepts params.x, params.y, and left button.");
+  }), "Screen pointer capability only accepts coordinates, left button, and an optional native frame binding.");
   assert.equal(handlers.validateRequest(capability, {
     operation: "mouse.click",
     params: { x: 640, y: 360, button: "left" },
@@ -177,6 +177,59 @@ test("screen action capability validates the fixed keyboard and pointer contract
     params: { text: "hello" },
   });
   assert.equal(unavailableResult.result.action.mediation.reason, "screen_action_owner_unavailable");
+});
+
+test("screen pointer capability preserves a fresh compositor frame binding", async () => {
+  const calls = [];
+  const compositorFrame = {
+    registry: "nixsoma-ai-compositor-frame-v0",
+    socketName: "nixsoma-ai-0",
+    width: 1280,
+    height: 720,
+    sha256: "a".repeat(64),
+    sequence: 9,
+    capturedAt: new Date().toISOString(),
+  };
+  const handlers = createScreenActionCapabilityHandlers({
+    screenActUrl: "http://screen-act",
+    postJson: async (url, body) => {
+      calls.push({ url, body });
+      return {
+        ok: true,
+        action: {
+          kind: "mouse.click",
+          result: "executed-ai-compositor",
+          degraded: false,
+          mediation: {
+            attempted: true,
+            accepted: true,
+            status: "accepted",
+            leaseMatched: true,
+            transport: "ai-compositor-native",
+            visualGrounding: {
+              required: true,
+              status: "executed",
+              frameMatched: true,
+              frameFresh: true,
+              receiptMatched: true,
+              sequenceAdvanced: true,
+            },
+          },
+        },
+      };
+    },
+  });
+
+  const backend = await handlers.callBackend(capability, {
+    operation: "mouse.click",
+    params: { x: 740, y: 22, button: "left", compositorFrame },
+  });
+  assert.deepEqual(calls[0].body, { x: 740, y: 22, button: "left", compositorFrame });
+  assert.equal(backend.result.ok, true);
+  assert.equal(backend.result.governance.compositorNativeExecuted, true);
+  assert.equal(backend.result.governance.currentFrameBound, true);
+  assert.equal(backend.result.governance.inputScope, "ai_owned_nested_output_only");
+  assert.equal(backend.result.action.mediation.visualGrounding.receiptMatched, true);
 });
 
 test("screen action capability leaves unrelated capabilities untouched", async () => {

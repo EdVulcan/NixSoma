@@ -10,6 +10,7 @@ mkOpenClawSourceClosure {
   files = [
     ../../services/openclaw-screen-act/package.json
     ../../services/openclaw-screen-act/src/server.mjs
+    ../../services/openclaw-screen-act/src/ai-compositor-pointer-dispatch.mjs
     ../../services/openclaw-screen-act/src/trusted-work-view-action-mediation.mjs
     ../../packages/shared-events/src/event-factory.mjs
     ../../packages/shared-events/src/event-names.mjs
@@ -21,5 +22,6 @@ mkOpenClawSourceClosure {
     ../../packages/shared-utils/src/work-view-visual-frame.mjs
     ../../packages/shared-utils/src/work-view-semantic-targets.mjs
     ../../packages/shared-utils/src/work-view-input-evidence.mjs
+    ../../packages/shared-utils/src/ai-compositor-input.mjs
   ];
 }

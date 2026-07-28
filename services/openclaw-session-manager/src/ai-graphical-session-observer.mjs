@@ -76,6 +76,31 @@ export function projectAiGraphicalSessionCompositorFrame(evidence, compositorFra
   };
 }
 
+export function projectAiGraphicalSessionCompositorInput(evidence, compositorInput) {
+  const valid = compositorInput?.registry === "nixsoma-ai-compositor-input-v0"
+    && compositorInput.socketName === EXPECTED_SOCKET_NAME
+    && compositorInput.imageDataRetained === false
+    && compositorInput.persisted === false
+    && compositorInput.desktopWideInput === false
+    && compositorInput.parentDisplayConnected === false
+    && compositorInput.rootRequired === false
+    && compositorInput.hostMutation === false;
+  const inputEnabled = valid && compositorInput.status !== "not_executed";
+  return {
+    ...evidence,
+    compositorInput: valid ? compositorInput : null,
+    boundary: {
+      ...evidence.boundary,
+      inputAuthority: inputEnabled,
+      compositorNativeInput: inputEnabled,
+      inputScope: inputEnabled ? "ai_owned_nested_output_only" : "none",
+      arbitraryInputDevice: false,
+      desktopWideInput: false,
+      parentDisplayConnected: false,
+    },
+  };
+}
+
 function boundedDimension(value, fallback, minimum, maximum) {
   const parsed = Number.parseInt(String(value ?? ""), 10);
   return Number.isInteger(parsed) && parsed >= minimum && parsed <= maximum

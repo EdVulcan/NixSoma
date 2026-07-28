@@ -53,8 +53,10 @@ let
     set -euo pipefail
     private_file=${lib.escapeShellArg cfg.executionGrantPrivateKeyFile}
     public_file=${lib.escapeShellArg cfg.executionGrantPublicKeyFile}
-    key_dir=$(${pkgs.coreutils}/bin/dirname "$private_file")
-    ${pkgs.coreutils}/bin/install -d -m 0750 -o ${lib.escapeShellArg owner} -g ${lib.escapeShellArg group} "$key_dir"
+    private_dir=$(${pkgs.coreutils}/bin/dirname "$private_file")
+    public_dir=$(${pkgs.coreutils}/bin/dirname "$public_file")
+    ${pkgs.coreutils}/bin/install -d -m 0750 -o ${lib.escapeShellArg owner} -g ${lib.escapeShellArg group} "$private_dir"
+    ${pkgs.coreutils}/bin/install -d -m 0755 -o ${lib.escapeShellArg owner} -g ${lib.escapeShellArg group} "$public_dir"
     if [ ! -s "$private_file" ]; then
       private_tmp="$private_file.tmp.$$"
       umask 0077
@@ -66,7 +68,7 @@ let
     public_tmp="$public_file.tmp.$$"
     ${pkgs.openssl}/bin/openssl pkey -in "$private_file" -pubout -out "$public_tmp" >/dev/null 2>&1
     ${pkgs.coreutils}/bin/chown ${lib.escapeShellArg "${owner}:${group}"} "$public_tmp"
-    ${pkgs.coreutils}/bin/chmod 0640 "$public_tmp"
+    ${pkgs.coreutils}/bin/chmod 0644 "$public_tmp"
     ${pkgs.coreutils}/bin/mv "$public_tmp" "$public_file"
   '';
   executionGrantKeyInitService = {
@@ -695,7 +697,7 @@ in
 
     executionGrantPublicKeyFile = mkOption {
       type = types.str;
-      default = "${cfg.stateDir}/execution-grant-public.pem";
+      default = "/var/lib/openclaw-public/execution-grant-public.pem";
       description = "Ed25519 public key file used by actuator services to verify Core execution grants.";
     };
 

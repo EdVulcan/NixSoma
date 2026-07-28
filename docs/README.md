@@ -1,6 +1,6 @@
 # NixSoma Documentation Control Room
 
-Updated: 2026-07-19
+Updated: 2026-07-28
 
 This is the canonical entry point for current NixSoma development. Historical
 OpenClaw names remain in service identifiers, environment variables, milestone
@@ -13,17 +13,18 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current `main` through the Level 4 isolated compositor, headed AI-owned Firefox attachment, and compositor-native read-only frame, plus the completed Level 3 baseline | Implemented; commit history is authoritative |
-| Local validation | 928 workspace tests and typecheck pass; body-config, native frame, provider flake, native inventory, and event-audit integration checks pass; 811 registry entries pass | Validated |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native read-only frame, and current-frame-bound native click, plus the completed Level 3 baseline | Implemented and physically proven; commit history becomes authoritative after this checkpoint lands |
+| Local validation | 938 workspace tests and typecheck pass; body-config, native frame/input, provider flake, native inventory, and event-audit integration checks pass; 811 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/v3d2plnz2zpcbgjswpvz8q2jf5b6fgaa-nixos-system-nixos-26.05.4808.569d57850992` | Level 4 compositor-native frame deployed and probed 2026-07-19 |
-| Previous generation | `/nix/store/ywgmcy2pxjlli7bx490qk8fzmivhli0z-nixos-system-nixos-26.05.4808.569d57850992` | Superseded after the candidate probe caught an unexpanded wrapper runtime path |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/mncd0bfp4fgyv9fsl018iyn7igci3p8y-nixos-system-nixos-26.05.4808.569d57850992` | Level 4 current-frame-bound native input deployed 2026-07-19 and physically proven 2026-07-28 |
+| Previous generation | `/nix/store/v3d2plnz2zpcbgjswpvz8q2jf5b6fgaa-nixos-system-nixos-26.05.4808.569d57850992` | Superseded after the compositor-native frame checkpoint |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
 | Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; one 252-token approval-bound call and one 459-token standing call completed | Deployed and proven without prompt, reason, or credential persistence |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, 15-minute cooldown, 3-call/4096-token daily defaults, structured transient recommendation, and local fallback | Deployed; returned `observe_current_screen` without creating a task, approval, or execution |
 | Level 4 graphical session | Fixed `nixsoma-ai-0` Weston headless compositor in a hardened, resource-bounded user unit; session-manager and Observer expose read-only ownership/health evidence | Deployed; coexists with GNOME `wayland-0` |
 | Level 4 browser attachment | Existing AI-owned Nix Firefox launches headed on the fixed nested socket, preserves Level 2 lease/capture/action ownership, and exposes compact attachment evidence | Deployed and proven through capture plus lease-bound action |
 | Level 4 compositor frame | Weston launches and authorizes one fixed screenshooter client; session-manager returns a bounded transient 1280x720 PNG and retains metadata only | Deployed; Firefox cannot read the capture directory |
+| Level 4 compositor input | Existing screen pointer capability carries a fresh native-frame binding; session-manager requires the active work-view lease and Core grant, while Weston accepts only the session-manager peer on a fixed pointer-only Unix socket | Deployed; real click advanced native frame 1 to 2 with matching lease and receipt |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -62,10 +63,11 @@ The completed bounded frontier is:
   fixed systemd repair targets, read-only eBPF process evidence, bounded journal
   diagnosis, and target-specific post-repair application health receipts in
   source.
-- Level 4 begins with a dedicated headless Weston compositor owned by the login
-  user's systemd manager. It has one fixed Wayland socket and virtual output,
-  runs inside the existing session resource slice, and is observable through
-  session-manager and Observer without connecting to the parent display.
+- Level 4 has a dedicated headless Weston compositor owned by the login user's
+  systemd manager, one fixed Wayland socket and virtual output, a headed
+  AI-owned browser, bounded native frames, and one physically proven
+  frame-bound left-click path. The input path never connects to the parent
+  display or grants an arbitrary input device.
 - Phase D candidate generation, approval-bound staging/build, real closure
   receipt, independent host-health oracle, controlled activation contract,
   manual rollback evidence, and a physical-host-safe failure rehearsal.
@@ -105,8 +107,8 @@ The completed bounded frontier is:
 
 Real repair execution and rollback remain unproven on a disposable mutation
 environment. Level 4 now owns a compositor, headed browser, and read-only native
-frame; compositor-native input, projection, and desktop takeover remain future
-work.
+frame in production. Its current candidate adds one governed native left click;
+projection and desktop takeover remain future work.
 
 ## Active Route
 
@@ -243,6 +245,28 @@ with zero restarts and no warning journal entries. The next Level 4 capability
 is narrowly bounded compositor-native input for this AI-owned output, bound to
 a current native frame and never to GNOME or the whole desktop.
 
+The fourth Level 4 slice is implemented and deployed. The existing
+`act.screen.pointer_keyboard` path accepts one optional native frame binding,
+but only for a left click inside the fixed 1280x720 `nixsoma-ai-0` output.
+Session-manager requires the active matching work-view lease, an exact
+request-bound Core execution grant, a fresh current compositor frame, and a
+durable pre-execution audit. Weston exposes only a mode-0600 Unix socket,
+authenticates the exact session-manager process through `SO_PEERCRED` and its
+user-unit cgroup, and owns a fixed pointer-only seat. A new post-action native
+frame must advance before the real milestone accepts the result. Generation
+`mncd0bfp...` completed that proof: the fixed click at `740,22` took 239 ms,
+advanced native frame sequence 1 to 2, changed the visual hash, and matched both
+the work-view lease and Weston receipt. The same check proved an ordinary
+same-UID peer receives no receipt. All services remained active, no restart
+counter increased during the check, failed-unit output stayed empty, and the
+relevant warning journals stayed clear.
+
+Freeze this lane. Keyboard, scroll, hotkeys, arbitrary
+devices, GNOME input, parent-display access, provider authority, root, and host
+mutation remain absent. The next vertical Level 4 capability is a bounded
+operator-visible projection of the AI-owned output, not another input variant
+or evidence wrapper.
+
 ## Progress Estimate
 
 These figures are capability-maturity estimates, not test coverage:
@@ -252,7 +276,7 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 25%; compositor, browser attachment, and native read-only frame deployed |
+| Level 4 graphics-stack-native body | about 35%; compositor, browser attachment, native frame, and frame-bound native click deployed and physically proven |
 | Current bounded product scope | 75-80% |
 | Final whitepaper vision | 45-55% |
 

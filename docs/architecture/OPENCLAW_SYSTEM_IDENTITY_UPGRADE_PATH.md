@@ -201,17 +201,21 @@
 - 截图、录制、输入控制都来自自己管理的图形层
 - 用户看到的是 AI 工作视图的投影或切换视图
 
-### 当前首个实现切片
+### 当前实现前沿
 
-当前源码已经实现 Level 4 的第一个最小所有权边界：登录用户的
-`systemd --user` 管理一个独立 Weston headless compositor，固定使用
-`nixsoma-ai-0` socket 和 1280x720 虚拟输出，并进入现有会话资源 slice。
-session-manager 只读验证 socket 的类型、所有者和权限，Observer 显示相同
-证据。这个 compositor 不连接 GNOME 的 `wayland-0`。
+Level 4 已从第一个所有权边界推进到四个连续切片：登录用户的
+`systemd --user` 管理独立 Weston headless compositor 和固定
+`nixsoma-ai-0` 1280x720 输出；现有 AI-owned Nix Firefox 作为 headed client
+运行其中；session-manager 获取有界原生帧并只向状态面投影摘要；当前候选再
+加入一个绑定新鲜原生帧、现有 work-view lease、Core execution grant 和前置
+审计的原生左键点击。Weston 只接受 session-manager 的 mode-0600 Unix socket
+连接，并用 `SO_PEERCRED`、PID 与 user-unit cgroup 认证调用者。
 
-该切片尚不包含 browser-runtime、像素读取、输入注入、画面投影、桌面接管、
-网络、root 或 host mutation。它证明的是“AI 已拥有独立图形空间的根”，不是
-“AI 已完整拥有图形眼手闭环”。
+compositor、browser、native frame 和 native input 已在物理机部署。真实点击
+已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。画面投影、桌面接管、
+键盘/滚轮/热键、任意输入设备、GNOME 输入、root 与 host mutation 仍未包含。
+这证明 AI 已开始拥有独立图形空间的原生眼手链，但尚未完成可投影、可接管的
+完整 AI 图形工作环境。
 
 ### 为什么这一阶段非常关键
 
@@ -314,7 +318,7 @@ session-manager 只读验证 socket 的类型、所有者和权限，Observer �
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 60% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。真实 repair/rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 25%（compositor、headed browser 与 native frame 已部署） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox 已作为 headed client 接入；Weston 只授权 compositor 自行启动的固定截图 client，session-manager 获取有界 1280x720 原生帧并只保留摘要。下一缺口是只作用于 `nixsoma-ai-0`、绑定当前帧的原生输入；投影与接管仍未完成。 |
+| Level 4 图形栈内生组件 | 约 35%（compositor、headed browser、native frame 与 native click 已部署） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox 已作为 headed client 接入；有界 1280x720 原生帧只保留摘要；由 lease、grant、fresh frame、audit、peer cgroup 和 post-frame 共同约束的固定左键点击已通过物理证明。下一缺口是 AI-owned output 的有界投影；接管仍未完成。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
 **45-55%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted

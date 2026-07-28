@@ -12,6 +12,8 @@
 #include <libweston/libweston.h>
 #include <weston.h>
 
+#include "input-authority.h"
+
 #ifndef NIXSOMA_CAPTURE_HELPER
 #error "NIXSOMA_CAPTURE_HELPER must name the fixed capture client"
 #endif
@@ -29,6 +31,7 @@ struct frame_authority {
 	int inotify_fd;
 	int watch_fd;
 	char request_path[PATH_MAX];
+	struct nixsoma_input_authority *input_authority;
 };
 
 static void
@@ -122,6 +125,7 @@ frame_authority_destroyed(struct wl_listener *listener, void *data)
 		inotify_rm_watch(authority->inotify_fd, authority->watch_fd);
 	if (authority->inotify_fd >= 0)
 		close(authority->inotify_fd);
+	nixsoma_input_authority_destroy(authority->input_authority);
 	wl_list_remove(&authority->authorization_listener.link);
 	wl_list_remove(&authority->compositor_destroy_listener.link);
 	free(authority);
@@ -149,6 +153,9 @@ wet_module_init(struct weston_compositor *compositor, int *argc, char *argv[])
 	authority->inotify_fd = -1;
 	authority->watch_fd = -1;
 	wl_list_init(&authority->client_destroy_listener.link);
+	authority->input_authority = nixsoma_input_authority_create(compositor);
+	if (!authority->input_authority)
+		goto fail;
 
 	written = snprintf(capture_directory, sizeof(capture_directory), "%s/%s",
 			   runtime_directory, CAPTURE_DIRECTORY);
@@ -193,6 +200,7 @@ fail:
 		inotify_rm_watch(authority->inotify_fd, authority->watch_fd);
 	if (authority->inotify_fd >= 0)
 		close(authority->inotify_fd);
+	nixsoma_input_authority_destroy(authority->input_authority);
 	free(authority);
 	return -1;
 }

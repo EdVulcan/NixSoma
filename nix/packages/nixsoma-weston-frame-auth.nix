@@ -1,4 +1,5 @@
-{ lib, stdenv, pkg-config, weston, wayland, pixman, libxkbcommon }:
+{ lib, stdenv, pkg-config, weston, wayland, pixman, libxkbcommon
+, nativeInput ? false, outputWidth ? 1280, outputHeight ? 720 }:
 
 stdenv.mkDerivation {
   pname = "nixsoma-weston-frame-auth";
@@ -17,7 +18,11 @@ stdenv.mkDerivation {
     $CC -std=c11 -O2 -fPIC -shared -Wall -Wextra -Werror \
       $(pkg-config --static --cflags weston libweston-15) \
       -DNIXSOMA_CAPTURE_HELPER='"${weston}/bin/weston-screenshooter"' \
+      -DNIXSOMA_INPUT_ENABLED=${if nativeInput then "1" else "0"} \
+      -DNIXSOMA_OUTPUT_WIDTH=${toString outputWidth} \
+      -DNIXSOMA_OUTPUT_HEIGHT=${toString outputHeight} \
       packages/weston-frame-auth/src/frame-auth.c \
+      packages/weston-frame-auth/src/input-authority.c \
       $(pkg-config --libs weston libweston-15) \
       -L${weston}/lib/weston -lexec_weston \
       -Wl,-rpath,${weston}/lib/weston \

@@ -4,8 +4,18 @@ import { createEventName } from "../../../packages/shared-events/src/event-facto
 import { buildTrustedWorkViewActionLease } from "./trusted-work-view-action-mediation.mjs";
 import { normaliseWorkViewSemanticTargetReference } from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
 import { redactWriteOnlyInputParams } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
-import { assertExecutionGrant, createExecutionGrantVerifier } from "../../../packages/shared-utils/src/execution-grants.mjs";
+import {
+  EXECUTION_GRANT_HEADER,
+  assertExecutionGrant,
+  createExecutionGrantVerifier,
+  executionGrantContextFromHeaders,
+  executionGrantContextHeaders,
+} from "../../../packages/shared-utils/src/execution-grants.mjs";
 import { createServiceCredentialHeaders, readServiceCredential } from "../../../packages/shared-utils/src/service-credentials.mjs";
+import {
+  createAiCompositorPointerDispatch,
+  hasAiCompositorFrameBinding,
+} from "./ai-compositor-pointer-dispatch.mjs";
 
 const host = process.env.OPENCLAW_SCREEN_ACT_HOST ?? "127.0.0.1";
 const port = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_PORT ?? "4105", 10);
@@ -26,6 +36,7 @@ const executionGrantVerifier = createExecutionGrantVerifier({
 });
 const screenWaitMs = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_WAIT_MS ?? "1500", 10);
 const screenPollMs = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_POLL_MS ?? "100", 10);
+const dispatchAiCompositorPointer = createAiCompositorPointerDispatch({ sessionManagerUrl });
 
 const actionState = {
   lastAction: null,
@@ -96,7 +107,7 @@ function updateActionState(action) {
   actionState.updatedAt = new Date().toISOString();
 }
 
-async function executeBrowserAction(kind, params, screen) {
+async function executeBrowserAction(kind, params, screen, context = {}) {
   const endpoint = kind === "mouse.click"
     ? "/browser/click"
     : kind === "keyboard.type"
@@ -125,6 +136,14 @@ async function executeBrowserAction(kind, params, screen) {
       reason: leaseContext.reason,
       leaseMatched: false,
     };
+  }
+
+  if (kind === "mouse.click" && hasAiCompositorFrameBinding(params)) {
+    return dispatchAiCompositorPointer({
+      action: context.grantBoundAction ?? params,
+      trustedHelperLease: leaseContext.trustedHelperLease,
+      forwardedGrantHeaders: context.forwardedGrantHeaders,
+    });
   }
 
   try {
@@ -192,7 +211,7 @@ async function executeBrowserAction(kind, params, screen) {
   }
 }
 
-async function executeAction(kind, params) {
+async function executeAction(kind, params, context = {}) {
   const actionId = randomUUID();
   const startedAt = new Date().toISOString();
   const publicParams = kind === "keyboard.type" ? redactWriteOnlyInputParams(params) : params;
@@ -214,7 +233,7 @@ async function executeAction(kind, params) {
     leaseMatched: false,
   };
   if (!degraded && screen?.focusedWindow?.pid) {
-    mediation = await executeBrowserAction(kind, params, screen);
+    mediation = await executeBrowserAction(kind, params, screen, context);
     if (!mediation.accepted) {
       actionDegraded = true;
     }
@@ -234,7 +253,9 @@ async function executeAction(kind, params) {
       : null,
     degraded: actionDegraded,
     result: mediation.accepted && mediation.attempted
-      ? "executed-browser-runtime"
+      ? mediation.transport === "ai-compositor-native"
+        ? "executed-ai-compositor"
+        : "executed-browser-runtime"
       : actionDegraded
         ? "blocked-or-degraded"
         : "simulated",
@@ -297,7 +318,7 @@ const server = http.createServer(async (req, res) => {
       const semanticTarget = body.semanticTarget
         ? normaliseWorkViewSemanticTargetReference(body.semanticTarget)
         : null;
-      if (body.semanticTarget && !semanticTarget) {
+      if (body.semanticTarget && (!semanticTarget || body.compositorFrame)) {
         throw new Error("Invalid frame-bound semantic target reference.");
       }
       const action = await executeAction("mouse.click", {
@@ -305,6 +326,13 @@ const server = http.createServer(async (req, res) => {
         y: semanticTarget ? null : typeof body.y === "number" ? body.y : null,
         button: typeof body.button === "string" ? body.button : "left",
         semanticTarget,
+        compositorFrame: body.compositorFrame ?? null,
+      }, {
+        grantBoundAction: body,
+        forwardedGrantHeaders: {
+          [EXECUTION_GRANT_HEADER]: req.headers[EXECUTION_GRANT_HEADER],
+          ...executionGrantContextHeaders(executionGrantContextFromHeaders(req.headers)),
+        },
       });
       sendJson(res, 200, { ok: true, action });
     } catch (error) {

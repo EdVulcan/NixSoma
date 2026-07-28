@@ -144,6 +144,10 @@ const aiGraphicalSessionEnvNames = [
   "OPENCLAW_AI_GRAPHICAL_SESSION_SOCKET_NAME",
   "OPENCLAW_AI_GRAPHICAL_SESSION_WIDTH",
   "OPENCLAW_AI_GRAPHICAL_SESSION_HEIGHT",
+  "OPENCLAW_AI_COMPOSITOR_CAPTURE_ENABLED",
+  "OPENCLAW_AI_COMPOSITOR_CAPTURE_DIRECTORY",
+  "OPENCLAW_AI_COMPOSITOR_INPUT_ENABLED",
+  "OPENCLAW_AI_COMPOSITOR_INPUT_DIRECTORY",
   "OPENCLAW_BROWSER_GRAPHICAL_SESSION_ENABLED",
   "OPENCLAW_BROWSER_GRAPHICAL_SESSION_MODE",
   "OPENCLAW_BROWSER_GRAPHICAL_SESSION_RUNTIME_DIRECTORY",
@@ -236,6 +240,9 @@ requireIncludes("AI graphical session module", aiGraphicalSessionModule, [
   "nixsoma-weston-frame-auth.so",
   "OPENCLAW_AI_COMPOSITOR_CAPTURE_ENABLED",
   "OPENCLAW_AI_COMPOSITOR_CAPTURE_DIRECTORY",
+  "OPENCLAW_AI_COMPOSITOR_INPUT_ENABLED",
+  "OPENCLAW_AI_COMPOSITOR_INPUT_DIRECTORY",
+  "nativeInput",
   "InaccessiblePaths",
   "RuntimeDirectoryMode = \"0700\"",
   "UMask = \"0077\"",
@@ -487,7 +494,10 @@ if (ownership.browser.environment?.OPENCLAW_BROWSER_ENGINE_MODE !== "firefox"
   || ownership.browser.environment?.OPENCLAW_BROWSER_GRAPHICAL_SESSION_MODE !== "nested_headed_wayland"
   || ownership.browser.environment?.OPENCLAW_BROWSER_GRAPHICAL_SESSION_RUNTIME_DIRECTORY !== "nixsoma-ai-graphical-session"
   || ownership.browser.environment?.OPENCLAW_BROWSER_GRAPHICAL_SESSION_SOCKET_NAME !== "nixsoma-ai-0"
-  || JSON.stringify(ownership.browser.serviceConfig?.InaccessiblePaths) !== JSON.stringify(["-%t/nixsoma-ai-graphical-session/capture"])
+  || JSON.stringify(ownership.browser.serviceConfig?.InaccessiblePaths) !== JSON.stringify([
+    "-%t/nixsoma-ai-graphical-session/capture",
+    "-%t/nixsoma-ai-graphical-session/input",
+  ])
   || !ownership.browser.wants?.includes("nixsoma-ai-graphical-session.service")
   || !ownership.browser.after?.includes("nixsoma-ai-graphical-session.service")
   || JSON.stringify(ownership.browser.serviceConfig?.UnsetEnvironment) !== JSON.stringify(["DISPLAY", "WAYLAND_DISPLAY", "WAYLAND_SOCKET", "DBUS_SESSION_BUS_ADDRESS"])) {
@@ -526,7 +536,10 @@ if (!ownership.session.wants?.includes("nixsoma-ai-graphical-session.service")
   || ownership.session.environment?.OPENCLAW_AI_GRAPHICAL_SESSION_WIDTH !== "1280"
   || ownership.session.environment?.OPENCLAW_AI_GRAPHICAL_SESSION_HEIGHT !== "720"
   || ownership.session.environment?.OPENCLAW_AI_COMPOSITOR_CAPTURE_ENABLED !== "1"
-  || ownership.session.environment?.OPENCLAW_AI_COMPOSITOR_CAPTURE_DIRECTORY !== "capture") {
+  || ownership.session.environment?.OPENCLAW_AI_COMPOSITOR_CAPTURE_DIRECTORY !== "capture"
+  || ownership.session.environment?.OPENCLAW_AI_COMPOSITOR_INPUT_ENABLED !== "1"
+  || ownership.session.environment?.OPENCLAW_AI_COMPOSITOR_INPUT_DIRECTORY !== "input"
+  || ownership.session.environment?.OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE !== "/var/lib/openclaw-public/execution-grant-public.pem") {
   throw new Error(`session-manager must observe the fixed AI graphical session identity: ${JSON.stringify(ownership.session)}`);
 }
 if (!ownership.browser.after?.includes("openclaw-session-manager.service")) {
@@ -602,6 +615,7 @@ if (ownership.screenSense.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-sto
   throw new Error(`screen-sense must execute from its read-only Nix closure: ${JSON.stringify(ownership.screenSense)}`);
 }
 if (ownership.screenAct.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
+  || ownership.screenAct.environment?.OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE !== "/var/lib/openclaw-public/execution-grant-public.pem"
   || !String(ownership.screenAct.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
   || !String(ownership.screenAct.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-screen-act")
   || ownership.screenAct.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
@@ -614,6 +628,7 @@ if (ownership.systemHeal.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-stor
   throw new Error(`system-heal must execute from its read-only Nix closure: ${JSON.stringify(ownership.systemHeal)}`);
 }
 if (ownership.systemSense.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
+  || ownership.systemSense.environment?.OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE !== "/var/lib/openclaw-public/execution-grant-public.pem"
   || !String(ownership.systemSense.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
   || !String(ownership.systemSense.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-system-sense")
   || ownership.systemSense.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
@@ -853,7 +868,8 @@ EOF
     || -w "$core_server"
     || -e "$core_out/share/openclaw/services/openclaw-core/test"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 224 ]]; then
+    || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
+    || "$(find "$core_out" -type f | wc -l)" -ne 225 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -976,13 +992,17 @@ EOF
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-graphical-session-observer.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-compositor-frame-capture.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-compositor-frame-route.mjs"
+    || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-compositor-input-controller.mjs"
+    || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-compositor-input-route.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/trusted-work-view-sidecar.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/work-view-trust.mjs"
     || -w "$session_manager_server"
     || -e "$session_manager_out/share/openclaw/services/openclaw-session-manager/test"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/ai-compositor-frame.mjs"
-    || "$(find "$session_manager_out" -type f | wc -l)" -ne 19 ]]; then
+    || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
+    || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/execution-grants.mjs"
+    || "$(find "$session_manager_out" -type f | wc -l)" -ne 23 ]]; then
     echo "session-manager Nix closure is not exact and read-only: $session_manager_out" >&2
     exit 1
   fi
@@ -1286,7 +1306,9 @@ EOF
     || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
     || -w "$screen_act_server"
     || -e "$screen_act_out/share/openclaw/packages/shared-utils/test/http.test.mjs"
-    || "$(find "$screen_act_out" -type f | wc -l)" -ne 13 ]]; then
+    || ! -f "$screen_act_out/share/openclaw/services/openclaw-screen-act/src/ai-compositor-pointer-dispatch.mjs"
+    || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
+    || "$(find "$screen_act_out" -type f | wc -l)" -ne 15 ]]; then
     echo "screen-act Nix closure is not exact and read-only: $screen_act_out" >&2
     exit 1
   fi

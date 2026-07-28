@@ -1,3 +1,5 @@
+import { normaliseAiCompositorPointerAction } from "../../../packages/shared-utils/src/ai-compositor-input.mjs";
+
 const CAPABILITY_ID = "act.screen.pointer_keyboard";
 const KEYBOARD_OPERATION = "keyboard.type";
 const POINTER_OPERATION = "mouse.click";
@@ -21,6 +23,9 @@ const SAFE_MEDIATION_REASONS = new Set([
   "authority_already_connected",
   "browser_action_owner_unavailable",
   "screen_action_owner_unavailable",
+  "ai_compositor_input_rejected",
+  "AI compositor input frame is stale or no longer current.",
+  "AI compositor input requires active work-view action authority.",
 ]);
 
 function registryForOperation(operation) {
@@ -61,12 +66,37 @@ function normaliseCoordinate(value, label, maximum) {
 
 function normaliseClickParams(params) {
   const unsupportedParams = Object.keys(params)
-    .filter((key) => !["operation", "x", "y", "button"].includes(key));
+    .filter((key) => !["operation", "x", "y", "button", "compositorFrame"].includes(key));
   if (unsupportedParams.length > 0) {
-    throw new Error("Screen pointer capability only accepts params.x, params.y, and left button.");
+    throw new Error("Screen pointer capability only accepts coordinates, left button, and an optional native frame binding.");
   }
   if (params.button !== undefined && params.button !== "left") {
     throw new Error("Screen pointer capability only allows the left button.");
+  }
+  if (params.compositorFrame) {
+    const nativeAction = normaliseAiCompositorPointerAction({
+      x: params.x,
+      y: params.y,
+      button: params.button,
+      compositorFrame: params.compositorFrame,
+    });
+    if (!nativeAction.frame.fresh) {
+      throw new Error("Screen pointer native frame binding is stale.");
+    }
+    return {
+      x: nativeAction.x,
+      y: nativeAction.y,
+      button: "left",
+      compositorFrame: {
+        registry: nativeAction.frame.registry,
+        socketName: nativeAction.frame.socketName,
+        width: nativeAction.frame.width,
+        height: nativeAction.frame.height,
+        sha256: nativeAction.frame.sha256,
+        sequence: nativeAction.frame.sequence,
+        capturedAt: nativeAction.frame.capturedAt,
+      },
+    };
   }
   return {
     x: normaliseCoordinate(params.x, "x", MAX_X),
@@ -90,6 +120,9 @@ function compactMediation(mediation) {
             ? mediation.visualGrounding.status.slice(0, 80)
             : null,
           sequenceAdvanced: mediation.visualGrounding.sequenceAdvanced === true,
+          frameMatched: mediation.visualGrounding.frameMatched === true,
+          frameFresh: mediation.visualGrounding.frameFresh === true,
+          receiptMatched: mediation.visualGrounding.receiptMatched === true,
           imageDataRetained: false,
           persisted: false,
         }
@@ -102,6 +135,7 @@ function projectOwnerResponse(response, operation) {
   const mediation = compactMediation(action.mediation);
   const ownerContractMatched = action.kind === operation;
   const browserRuntimeExecuted = ownerContractMatched && action.result === "executed-browser-runtime";
+  const compositorNativeExecuted = ownerContractMatched && action.result === "executed-ai-compositor";
   const writesBrowserInput = operation === KEYBOARD_OPERATION;
   const pointerAction = operation === POINTER_OPERATION;
   return {
@@ -125,7 +159,10 @@ function projectOwnerResponse(response, operation) {
       automaticDispatch: false,
       createsTask: false,
       createsApproval: false,
-      mutatesBrowserState: browserRuntimeExecuted,
+      mutatesBrowserState: browserRuntimeExecuted || compositorNativeExecuted,
+      compositorNativeExecuted,
+      currentFrameBound: compositorNativeExecuted,
+      inputScope: compositorNativeExecuted ? "ai_owned_nested_output_only" : "active_browser_page",
       exposesNavigationUrl: false,
       exposesPagePayload: false,
       exposesSelectors: false,
@@ -140,6 +177,8 @@ function projectOwnerResponse(response, operation) {
       actionAttempted: mediation.attempted,
       accepted: mediation.accepted,
       browserRuntimeExecuted,
+      compositorNativeExecuted,
+      currentFrameBound: compositorNativeExecuted,
       degraded: action.degraded === true,
       mediationStatus: mediation.status,
       mediationReason: mediation.reason,
@@ -188,6 +227,9 @@ function unavailableOwnerResponse(operation) {
       createsTask: false,
       createsApproval: false,
       mutatesBrowserState: false,
+      compositorNativeExecuted: false,
+      currentFrameBound: false,
+      inputScope: "none",
       exposesNavigationUrl: false,
       exposesPagePayload: false,
       exposesSelectors: false,
@@ -202,6 +244,8 @@ function unavailableOwnerResponse(operation) {
       actionAttempted: true,
       accepted: false,
       browserRuntimeExecuted: false,
+      compositorNativeExecuted: false,
+      currentFrameBound: false,
       degraded: true,
       mediationStatus: "unavailable",
       mediationReason: "screen_action_owner_unavailable",

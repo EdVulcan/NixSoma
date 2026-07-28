@@ -1,14 +1,15 @@
 # OpenClaw Trusted Work-View Session Contract Plan
 
-Updated: 2026-07-19
+Updated: 2026-07-28
 
 ## Current Continuation
 
 The bounded Level 2 browser eye-hand contract described below is complete and
 frozen. Its Level 4 vertical continuation now has a resource-bounded login-user
 Weston compositor on fixed socket `nixsoma-ai-0`, the existing headed AI-owned
-Firefox client, and one bounded compositor-native read-only frame. It still has
-no compositor-native input, projection, desktop-wide capture, root, or host-
+Firefox client, one bounded compositor-native read-only frame, and a
+source-validated current-frame-bound native left click. It still has no
+projection, desktop-wide capture/input, arbitrary input device, root, or host-
 mutation authority; Firefox retains only its existing browser network scope.
 
 Physical-host generation `kxv2ypwp...` now proves the nested compositor
@@ -42,9 +43,15 @@ authorizes only a fixed compositor-launched capture client; session-manager
 returns a bounded transient 1280x720 PNG and projects metadata through
 screen-sense and Observer. Firefox cannot read the capture directory, and no
 input, projection, parent-desktop, root, provider, or host authority was added.
-The next Level 4 continuation is current-frame-bound compositor-native input for
-the isolated output while this Level 2 lease/action/recovery contract remains
-the governing authority chain.
+The next Level 4 continuation is now deployed while this
+Level 2 lease/action/recovery contract remains the governing authority chain.
+The existing pointer capability carries a fresh native-frame binding through a
+Core request grant; session-manager revalidates the active lease and exact
+current frame, and only its authenticated user-unit process can ask Weston's
+fixed pointer seat to click. Generation `mncd0bfp...` physically proved the
+same active lease, fresh frame, peer-authenticated receipt, and advancing
+post-frame in one real click. Freeze input variants and continue with bounded
+projection of the isolated AI-owned output.
 
 ## Active Slice
 

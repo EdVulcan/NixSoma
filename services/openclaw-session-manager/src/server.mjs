@@ -9,9 +9,13 @@ import {
   createAiGraphicalSessionObserver,
   projectAiGraphicalSessionBrowserAttachment,
   projectAiGraphicalSessionCompositorFrame,
+  projectAiGraphicalSessionCompositorInput,
 } from "./ai-graphical-session-observer.mjs";
 import { createAiCompositorFrameCapture } from "./ai-compositor-frame-capture.mjs";
 import { createAiCompositorFrameRoute } from "./ai-compositor-frame-route.mjs";
+import { createAiCompositorInputController } from "./ai-compositor-input-controller.mjs";
+import { createAiCompositorInputRoute } from "./ai-compositor-input-route.mjs";
+import { createExecutionGrantVerifier } from "../../../packages/shared-utils/src/execution-grants.mjs";
 import { createServiceCredentialHeaders, readServiceCredential } from "../../../packages/shared-utils/src/service-credentials.mjs";
 
 const host = process.env.OPENCLAW_SESSION_MANAGER_HOST ?? "127.0.0.1";
@@ -60,6 +64,19 @@ const workViewState = {
   lastHiddenAt: null,
   updatedAt: new Date().toISOString(),
 };
+const screenActExecutionGrantVerifier = createExecutionGrantVerifier({
+  audience: "openclaw-screen-act",
+  publicKeyFilePath: process.env.OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE,
+  required: false,
+});
+const aiCompositorInputController = createAiCompositorInputController({
+  frameCapture: aiCompositorFrameCapture,
+  helperRuntime: trustedWorkViewHelperRuntime,
+  observeGraphicalSession: () => projectAiGraphicalSessionBrowserAttachment(
+    observeAiGraphicalSession(),
+    workViewState.browserGraphicalSession,
+  ),
+});
 const sidecarRecoveryStore = createTrustedWorkViewSidecarRecoveryStore({ stateFilePath });
 let sidecarLifecycleIntent = sidecarRecoveryStore.snapshot();
 const trustedWorkViewSidecarSupervisor = createTrustedWorkViewSidecarSupervisor({
@@ -123,12 +140,15 @@ function serialiseWorkViewState() {
     externalProcessStarted: sidecar.running,
     sidecar,
   };
-  const aiGraphicalSession = projectAiGraphicalSessionCompositorFrame(
-    projectAiGraphicalSessionBrowserAttachment(
-      observeAiGraphicalSession(),
-      workViewState.browserGraphicalSession,
+  const aiGraphicalSession = projectAiGraphicalSessionCompositorInput(
+    projectAiGraphicalSessionCompositorFrame(
+      projectAiGraphicalSessionBrowserAttachment(
+        observeAiGraphicalSession(),
+        workViewState.browserGraphicalSession,
+      ),
+      aiCompositorFrameCapture.snapshot(),
     ),
-    aiCompositorFrameCapture.snapshot(),
+    aiCompositorInputController.snapshot(),
   );
   const workView = {
     ...workViewState,
@@ -226,6 +246,13 @@ const handleAiCompositorFrameRoute = createAiCompositorFrameRoute({
   capture: aiCompositorFrameCapture,
   observeGraphicalSession: observeAiGraphicalSession,
   projectGraphicalSession: projectAiGraphicalSessionCompositorFrame,
+  publishEvent,
+  createEventName,
+  sendJson,
+});
+const handleAiCompositorInputRoute = createAiCompositorInputRoute({
+  controller: aiCompositorInputController,
+  executionGrantVerifier: screenActExecutionGrantVerifier,
   publishEvent,
   createEventName,
   sendJson,
@@ -502,9 +529,12 @@ const server = http.createServer(async (req, res) => {
       browserRuntimeUrl,
       startDelayMs,
       defaultWorkViewUrl,
-      aiGraphicalSession: projectAiGraphicalSessionCompositorFrame(
-        observeAiGraphicalSession(),
-        aiCompositorFrameCapture.snapshot(),
+      aiGraphicalSession: projectAiGraphicalSessionCompositorInput(
+        projectAiGraphicalSessionCompositorFrame(
+          observeAiGraphicalSession(),
+          aiCompositorFrameCapture.snapshot(),
+        ),
+        aiCompositorInputController.snapshot(),
       ),
     });
     return;
@@ -523,6 +553,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (await handleAiCompositorFrameRoute(req, res, requestUrl)) return;
+  if (await handleAiCompositorInputRoute(req, res, requestUrl)) return;
 
   if (req.method === "POST" && requestUrl.pathname === "/session/start") {
     try {
