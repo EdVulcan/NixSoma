@@ -10,6 +10,7 @@ import {
   projectAiGraphicalSessionBrowserAttachment,
   projectAiGraphicalSessionCompositorFrame,
   projectAiGraphicalSessionCompositorInput,
+  projectAiGraphicalSessionSurfaceInventory,
 } from "../src/ai-graphical-session-observer.mjs";
 
 function enabledEnv(runtimeDir, overrides = {}) {
@@ -204,4 +205,40 @@ test("AI graphical session projects only isolated frame-bound input authority", 
   });
   assert.equal(rejected.compositorInput, null);
   assert.equal(rejected.boundary.inputAuthority, false);
+});
+
+test("AI graphical session projects only bounded compositor surface inventory", () => {
+  const inventory = {
+    registry: "nixsoma-ai-surface-inventory-v0",
+    status: "available",
+    available: true,
+    sequence: 3,
+    socketName: "nixsoma-ai-0",
+    count: 1,
+    truncated: false,
+    surfaces: [{ surfaceId: 71, pid: 4242, width: 1280, height: 720, activated: true }],
+    boundary: {
+      sourceScope: "ai_owned_nested_output_only",
+      titleExposed: false,
+      pixelsExposed: false,
+      parentDisplayConnected: false,
+      inputAuthorityExpanded: false,
+      persisted: false,
+    },
+  };
+  const evidence = projectAiGraphicalSessionSurfaceInventory(
+    { status: "ready", boundary: {} },
+    inventory,
+  );
+  assert.equal(evidence.surfaceInventory, inventory);
+  assert.equal(evidence.boundary.compositorSurfaceInventory, true);
+  assert.equal(evidence.boundary.surfaceTitlesExposed, false);
+  assert.equal(evidence.boundary.surfacePixelsExposed, false);
+
+  const rejected = projectAiGraphicalSessionSurfaceInventory(evidence, {
+    ...inventory,
+    socketName: "wayland-0",
+  });
+  assert.equal(rejected.surfaceInventory, null);
+  assert.equal(rejected.boundary.compositorSurfaceInventory, false);
 });

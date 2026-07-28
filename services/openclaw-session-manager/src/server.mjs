@@ -10,11 +10,15 @@ import {
   projectAiGraphicalSessionBrowserAttachment,
   projectAiGraphicalSessionCompositorFrame,
   projectAiGraphicalSessionCompositorInput,
+  projectAiGraphicalSessionSurfaceInventory,
 } from "./ai-graphical-session-observer.mjs";
 import { createAiCompositorFrameCapture } from "./ai-compositor-frame-capture.mjs";
 import { createAiCompositorFrameRoute } from "./ai-compositor-frame-route.mjs";
 import { createAiCompositorInputController } from "./ai-compositor-input-controller.mjs";
 import { createAiCompositorInputRoute } from "./ai-compositor-input-route.mjs";
+import { createAiSurfaceInventoryObserver } from "./ai-surface-inventory-observer.mjs";
+import { createAiWorkbenchLifecycle } from "./ai-workbench-lifecycle.mjs";
+import { createAiWorkbenchLifecycleRoute } from "./ai-workbench-lifecycle-route.mjs";
 import { createExecutionGrantVerifier } from "../../../packages/shared-utils/src/execution-grants.mjs";
 import { createServiceCredentialHeaders, readServiceCredential } from "../../../packages/shared-utils/src/service-credentials.mjs";
 
@@ -33,6 +37,7 @@ const defaultWorkViewUrl = process.env.OPENCLAW_WORK_VIEW_URL ?? "https://exampl
 const stateFilePath = process.env.OPENCLAW_SESSION_MANAGER_STATE_FILE ?? `/tmp/openclaw-session-manager-${port}.json`;
 const trustedWorkViewHelperRuntime = createTrustedWorkViewHelperRuntime();
 const observeAiGraphicalSession = createAiGraphicalSessionObserver();
+const observeAiSurfaceInventory = createAiSurfaceInventoryObserver();
 const aiCompositorFrameCapture = createAiCompositorFrameCapture();
 
 const sessionState = {
@@ -68,6 +73,14 @@ const screenActExecutionGrantVerifier = createExecutionGrantVerifier({
   audience: "openclaw-screen-act",
   publicKeyFilePath: process.env.OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE,
   required: false,
+});
+const sessionManagerExecutionGrantVerifier = createExecutionGrantVerifier({
+  audience: "openclaw-session-manager",
+  publicKeyFilePath: process.env.OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE,
+  required: false,
+});
+const aiWorkbenchLifecycle = createAiWorkbenchLifecycle({
+  observeSurfaceInventory: observeAiSurfaceInventory,
 });
 const aiCompositorInputController = createAiCompositorInputController({
   frameCapture: aiCompositorFrameCapture,
@@ -140,16 +153,7 @@ function serialiseWorkViewState() {
     externalProcessStarted: sidecar.running,
     sidecar,
   };
-  const aiGraphicalSession = projectAiGraphicalSessionCompositorInput(
-    projectAiGraphicalSessionCompositorFrame(
-      projectAiGraphicalSessionBrowserAttachment(
-        observeAiGraphicalSession(),
-        workViewState.browserGraphicalSession,
-      ),
-      aiCompositorFrameCapture.snapshot(),
-    ),
-    aiCompositorInputController.snapshot(),
-  );
+  const aiGraphicalSession = buildAiGraphicalSessionEvidence();
   const workView = {
     ...workViewState,
     helperRuntime,
@@ -172,6 +176,25 @@ function serialiseWorkViewState() {
       browserRunning: workView.browserStatus === "running",
       visibleToObserver: true,
     }),
+  };
+}
+
+function buildAiGraphicalSessionEvidence() {
+  return {
+    ...projectAiGraphicalSessionCompositorInput(
+      projectAiGraphicalSessionCompositorFrame(
+        projectAiGraphicalSessionBrowserAttachment(
+          projectAiGraphicalSessionSurfaceInventory(
+            observeAiGraphicalSession(),
+            observeAiSurfaceInventory(),
+          ),
+          workViewState.browserGraphicalSession,
+        ),
+        aiCompositorFrameCapture.snapshot(),
+      ),
+      aiCompositorInputController.snapshot(),
+    ),
+    applicationLifecycle: aiWorkbenchLifecycle.snapshot(),
   };
 }
 
@@ -253,6 +276,13 @@ const handleAiCompositorFrameRoute = createAiCompositorFrameRoute({
 const handleAiCompositorInputRoute = createAiCompositorInputRoute({
   controller: aiCompositorInputController,
   executionGrantVerifier: screenActExecutionGrantVerifier,
+  publishEvent,
+  createEventName,
+  sendJson,
+});
+const handleAiWorkbenchLifecycleRoute = createAiWorkbenchLifecycleRoute({
+  lifecycle: aiWorkbenchLifecycle,
+  executionGrantVerifier: sessionManagerExecutionGrantVerifier,
   publishEvent,
   createEventName,
   sendJson,
@@ -529,13 +559,7 @@ const server = http.createServer(async (req, res) => {
       browserRuntimeUrl,
       startDelayMs,
       defaultWorkViewUrl,
-      aiGraphicalSession: projectAiGraphicalSessionCompositorInput(
-        projectAiGraphicalSessionCompositorFrame(
-          observeAiGraphicalSession(),
-          aiCompositorFrameCapture.snapshot(),
-        ),
-        aiCompositorInputController.snapshot(),
-      ),
+      aiGraphicalSession: buildAiGraphicalSessionEvidence(),
     });
     return;
   }
@@ -554,6 +578,7 @@ const server = http.createServer(async (req, res) => {
 
   if (await handleAiCompositorFrameRoute(req, res, requestUrl)) return;
   if (await handleAiCompositorInputRoute(req, res, requestUrl)) return;
+  if (await handleAiWorkbenchLifecycleRoute(req, res, requestUrl)) return;
 
   if (req.method === "POST" && requestUrl.pathname === "/session/start") {
     try {
@@ -894,6 +919,7 @@ async function startSessionManager() {
   if (sidecarLifecycleIntent?.status === "recovery_required") {
     await revokeStaleBrowserLeaseBeforeRecovery();
   }
+  await aiWorkbenchLifecycle.reconcile();
   server.listen(port, host, async () => {
     console.log(`openclaw-session-manager listening on http://${host}:${port}`);
     await registerService(eventHubUrl, "openclaw-session-manager", `http://${host}:${port}`);

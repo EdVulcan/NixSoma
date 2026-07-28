@@ -1,4 +1,5 @@
 import { observerSnapshotPreviewPanel } from "./observer-panel-snapshot-preview.mjs";
+import { observerAiWorkViewPanel } from "./observer-panel-ai-work-view.mjs";
 
 export function observerOperationsPanels() {
   return `        <section class="panel">
@@ -41,16 +42,7 @@ export function observerOperationsPanels() {
           </div>
           <pre id="control-result">Controls ready.</pre>
         </section>
-        <section class="panel">
-          <h2>AI Work View</h2>
-          <div class="metric"><span>Status</span><span id="work-view-status">idle</span></div>
-          <div class="metric"><span>Visibility</span><span id="work-view-visibility">hidden</span></div>
-          <div class="metric"><span>Mode</span><span id="work-view-mode">background</span></div>
-          <div class="metric"><span>Helper</span><span id="work-view-helper">idle</span></div>
-          <div class="metric"><span>Capture</span><span id="work-view-capture">browser-runtime</span></div>
-          <div class="metric"><span>Session Identity</span><span id="work-view-session-identity">pending</span></div>
-          <pre id="work-view-json">Loading work view state...</pre>
-        </section>
+${observerAiWorkViewPanel()}
         <section class="panel">
           <h2>Current Task</h2>
           <pre id="task-json">Loading task state...</pre>

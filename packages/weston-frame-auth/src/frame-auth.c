@@ -13,6 +13,7 @@
 #include <weston.h>
 
 #include "input-authority.h"
+#include "surface-inventory.h"
 
 #ifndef NIXSOMA_CAPTURE_HELPER
 #error "NIXSOMA_CAPTURE_HELPER must name the fixed capture client"
@@ -32,6 +33,7 @@ struct frame_authority {
 	int watch_fd;
 	char request_path[PATH_MAX];
 	struct nixsoma_input_authority *input_authority;
+	struct nixsoma_surface_inventory *surface_inventory;
 };
 
 static void
@@ -126,6 +128,7 @@ frame_authority_destroyed(struct wl_listener *listener, void *data)
 	if (authority->inotify_fd >= 0)
 		close(authority->inotify_fd);
 	nixsoma_input_authority_destroy(authority->input_authority);
+	nixsoma_surface_inventory_destroy(authority->surface_inventory);
 	wl_list_remove(&authority->authorization_listener.link);
 	wl_list_remove(&authority->compositor_destroy_listener.link);
 	free(authority);
@@ -155,6 +158,10 @@ wet_module_init(struct weston_compositor *compositor, int *argc, char *argv[])
 	wl_list_init(&authority->client_destroy_listener.link);
 	authority->input_authority = nixsoma_input_authority_create(compositor);
 	if (!authority->input_authority)
+		goto fail;
+	authority->surface_inventory =
+		nixsoma_surface_inventory_create(compositor);
+	if (!authority->surface_inventory)
 		goto fail;
 
 	written = snprintf(capture_directory, sizeof(capture_directory), "%s/%s",
@@ -201,6 +208,7 @@ fail:
 	if (authority->inotify_fd >= 0)
 		close(authority->inotify_fd);
 	nixsoma_input_authority_destroy(authority->input_authority);
+	nixsoma_surface_inventory_destroy(authority->surface_inventory);
 	free(authority);
 	return -1;
 }

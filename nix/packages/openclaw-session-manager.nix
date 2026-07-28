@@ -15,6 +15,9 @@ mkOpenClawSourceClosure {
     ../../services/openclaw-session-manager/src/ai-compositor-input-controller.mjs
     ../../services/openclaw-session-manager/src/ai-compositor-input-route.mjs
     ../../services/openclaw-session-manager/src/ai-graphical-session-observer.mjs
+    ../../services/openclaw-session-manager/src/ai-surface-inventory-observer.mjs
+    ../../services/openclaw-session-manager/src/ai-workbench-lifecycle.mjs
+    ../../services/openclaw-session-manager/src/ai-workbench-lifecycle-route.mjs
     ../../services/openclaw-session-manager/src/trusted-work-view-helper-runtime.mjs
     ../../services/openclaw-session-manager/src/trusted-work-view-sidecar-channel.mjs
     ../../services/openclaw-session-manager/src/trusted-work-view-sidecar-launcher.mjs

@@ -65,6 +65,24 @@ test("session-manager exposes ready graphical-session evidence without its runti
   mkdirSync(sessionRuntimeDir, { mode: 0o700 });
   const captureDir = path.join(sessionRuntimeDir, "capture");
   mkdirSync(captureDir, { mode: 0o700 });
+  const surfaceDir = path.join(sessionRuntimeDir, "surfaces");
+  mkdirSync(surfaceDir, { mode: 0o700 });
+  writeFileSync(path.join(surfaceDir, "current.json"), `${JSON.stringify({
+    registry: "nixsoma-ai-surface-inventory-v0",
+    sequence: 1,
+    socketName: "nixsoma-ai-0",
+    count: 0,
+    truncated: false,
+    surfaces: [],
+    boundary: {
+      sourceScope: "ai_owned_nested_output_only",
+      titleExposed: false,
+      pixelsExposed: false,
+      parentDisplayConnected: false,
+      inputAuthorityExpanded: false,
+      persisted: false,
+    },
+  })}\n`, { mode: 0o600 });
   let frameWritten = false;
   const captureWatcher = watch(captureDir, (_event, filename) => {
     if (filename !== "request" || frameWritten) return;
@@ -102,6 +120,8 @@ test("session-manager exposes ready graphical-session evidence without its runti
       OPENCLAW_AI_COMPOSITOR_CAPTURE_DIRECTORY: "capture",
       OPENCLAW_AI_COMPOSITOR_CAPTURE_TIMEOUT_MS: "500",
       OPENCLAW_AI_COMPOSITOR_CAPTURE_POLL_MS: "5",
+      OPENCLAW_AI_SURFACE_INVENTORY_ENABLED: "1",
+      OPENCLAW_AI_SURFACE_INVENTORY_DIRECTORY: "surfaces",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -123,6 +143,9 @@ test("session-manager exposes ready graphical-session evidence without its runti
   assert.equal(data.workView.aiGraphicalSession.socket.name, "nixsoma-ai-0");
   assert.equal(data.workView.aiGraphicalSession.boundary.parentDisplayConnected, false);
   assert.equal(data.workView.aiGraphicalSession.boundary.inputAuthority, false);
+  assert.equal(data.workView.aiGraphicalSession.surfaceInventory.status, "available");
+  assert.equal(data.workView.aiGraphicalSession.surfaceInventory.count, 0);
+  assert.equal(data.workView.aiGraphicalSession.applicationLifecycle.status, "disabled");
   assert.equal(JSON.stringify(data.workView.aiGraphicalSession).includes(runtimeDir), false);
 
   const captured = await waitForJson(`http://127.0.0.1:${port}/work-view/compositor-frame`);

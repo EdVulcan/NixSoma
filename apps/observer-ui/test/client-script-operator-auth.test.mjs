@@ -19,5 +19,6 @@ test("Observer exposes a credential-free operator session panel", () => {
   assert.match(observerClientAuthScript, /credentials: "include"/u);
   assert.match(observerClientAuthScript, /auth\/login/u);
   assert.match(observerClientAuthScript, /auth\/logout/u);
+  assert.match(observerClientAuthScript, /await refreshWorkView\(\)/u);
   assert.doesNotMatch(observerClientAuthScript, /localStorage/u);
 });

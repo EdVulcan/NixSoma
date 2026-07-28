@@ -81,6 +81,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/observer-panels-operator-auth.mjs
     ../../apps/observer-ui/src/observer-panels-kernel-events.mjs
     ../../apps/observer-ui/src/observer-panels-operations.mjs
+    ../../apps/observer-ui/src/observer-panel-ai-work-view.mjs
     ../../apps/observer-ui/src/observer-panel-snapshot-preview.mjs
     ../../apps/observer-ui/src/observer-panels-system.mjs
     ../../apps/observer-ui/src/observer-styles.mjs

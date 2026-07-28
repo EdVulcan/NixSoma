@@ -14,6 +14,7 @@ export function createServiceClient(urls, {
           screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl } = urls;
   const grantContextStorage = new AsyncLocalStorage();
   const grantTargets = executionGrantTargets ?? [
+    { audience: "openclaw-session-manager", url: sessionManagerUrl },
     { audience: "openclaw-screen-act", url: screenActUrl },
     { audience: "openclaw-system-sense", url: systemSenseUrl },
   ];

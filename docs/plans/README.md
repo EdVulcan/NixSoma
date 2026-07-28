@@ -114,6 +114,8 @@ login-user systemd owner
 -> compositor-native bounded read-only frame (complete)
 -> current-frame-bound native left click (complete and physically proven)
 -> bounded AI-owned output projection (complete and physically proven)
+-> minimal compositor-owned surface inventory (complete and physically proven)
+-> fixed Nix-managed Workbench start/stop (complete and physically proven)
 ```
 
 The current source stops before desktop takeover, desktop-wide observation,
@@ -181,13 +183,25 @@ it validates the frame again in browser memory and clears the image source on
 mode switch, hide, sign-out, or auth loss. Pixels never enter service state,
 events, browser storage, or durable artifacts. Focused tests are 52/52, all 942
 workspace tests and typecheck pass, body-config built the new store packages,
-and active generation `ll14clw2...` references those closures. Native frame and
+and generation `ll14clw2...` references those closures. Native frame and
 input regressions returned a distinct 1280x720 PNG and advanced frame sequence
 6 to 7 with matching authority. The projection gate rejected anonymous capture,
 rendered the full native image in real Firefox, cleared it on mode switch and
 sign-out, retained only metadata, and left runtime storage empty. Services,
 restart counters, failed-unit checks, and warning journals stayed clean. Freeze
 this lane before selecting the next vertical Level 4 behavior.
+
+That next vertical behavior is now complete in active generation `vymmz8c3...`.
+Weston atomically publishes at most 16 numeric surface/PID/dimension/activation
+records from `nixsoma-ai-0`; it does not publish title, app-id, pixels, or
+parent-display authority. A static non-autostarting `nixsoma-ai-workbench`
+user unit runs only the fixed Nix terminal/status shell. Core operator identity
+and a single-use execution grant protect the session-manager start/stop owner,
+which requires durable audit and reconciles the unit against its matching
+surface. Real Observer controls proved 0 -> 1 -> 0 surfaces, matching PID,
+anonymous rejection, and cleanup while every service remained healthy. Freeze
+generic lifecycle and inventory variants; any continuation must add bounded
+product behavior through these owners, not arbitrary process/window launch.
 
 ## Completed Capability Evidence
 

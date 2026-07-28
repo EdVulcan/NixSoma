@@ -285,6 +285,18 @@ hideWorkViewButton.addEventListener("click", () => {
   });
 });
 
+startAiWorkbenchButton.addEventListener("click", () => {
+  postWorkView("/work-view/application/start").catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
+stopAiWorkbenchButton.addEventListener("click", () => {
+  postWorkView("/work-view/application/stop").catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 runRecommendedWorkViewActionButton.addEventListener("click", () => {
   runRecommendedWorkViewAction().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

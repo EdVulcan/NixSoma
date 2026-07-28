@@ -1,0 +1,20 @@
+export function observerAiWorkViewPanel() {
+  return `        <section class="panel">
+          <h2>AI Work View</h2>
+          <div class="metric"><span>Status</span><span id="work-view-status">idle</span></div>
+          <div class="metric"><span>Visibility</span><span id="work-view-visibility">hidden</span></div>
+          <div class="metric"><span>Mode</span><span id="work-view-mode">background</span></div>
+          <div class="metric"><span>Helper</span><span id="work-view-helper">idle</span></div>
+          <div class="metric"><span>Capture</span><span id="work-view-capture">browser-runtime</span></div>
+          <div class="metric"><span>Session Identity</span><span id="work-view-session-identity">pending</span></div>
+          <div class="metric"><span>Workbench</span><span id="ai-workbench-status">disabled</span></div>
+          <div class="metric"><span>Workbench Surface</span><span id="ai-workbench-surface">none</span></div>
+          <div class="metric"><span>AI Surfaces</span><span id="ai-surface-count">0</span></div>
+          <div class="actions">
+            <button id="start-ai-workbench-button" type="button">Start Workbench</button>
+            <button id="stop-ai-workbench-button" class="secondary" type="button">Stop Workbench</button>
+          </div>
+          <pre id="work-view-json">Loading work view state...</pre>
+        </section>
+`;
+}

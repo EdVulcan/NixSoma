@@ -96,6 +96,35 @@ test("Observer routes work-view prepare, reveal, and hide through the common cap
   assert.doesNotMatch(observerClientRuntimeWorkViewControlsScript, /observerConfig\.sessionManagerUrl.*work-view\/(?:prepare|reveal|hide)/);
 });
 
+test("Observer routes fixed workbench start and stop through the governed work-view capability", async () => {
+  const fixture = createContext();
+  await fixture.context.postWorkView("/work-view/application/start", {}, { refresh: false });
+  await fixture.context.postWorkView("/work-view/application/stop", {}, { refresh: false });
+
+  assert.deepEqual(fixture.fetchCalls.map(({ url, options }) => ({
+    url,
+    body: JSON.parse(options.body),
+  })), [
+    {
+      url: "http://core.invalid/capabilities/invoke",
+      body: {
+        capabilityId: "act.work_view.control",
+        operation: "work_view.application.start",
+        params: {},
+      },
+    },
+    {
+      url: "http://core.invalid/capabilities/invoke",
+      body: {
+        capabilityId: "act.work_view.control",
+        operation: "work_view.application.stop",
+        params: {},
+      },
+    },
+  ]);
+  assert.equal(fixture.fetchCalls.some(({ url }) => url.includes("session.invalid/work-view/application")), false);
+});
+
 test("Observer maps explicit recovery recommendations to existing owner controls", async () => {
   const resume = createContext("resume_ai_action_authority");
   await resume.context.runRecommendedWorkViewAction();

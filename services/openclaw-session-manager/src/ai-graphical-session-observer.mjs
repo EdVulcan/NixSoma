@@ -101,6 +101,30 @@ export function projectAiGraphicalSessionCompositorInput(evidence, compositorInp
   };
 }
 
+export function projectAiGraphicalSessionSurfaceInventory(evidence, surfaceInventory) {
+  const valid = surfaceInventory?.registry === "nixsoma-ai-surface-inventory-v0"
+    && surfaceInventory.socketName === EXPECTED_SOCKET_NAME
+    && Array.isArray(surfaceInventory.surfaces)
+    && surfaceInventory.count === surfaceInventory.surfaces.length
+    && surfaceInventory.boundary?.sourceScope === "ai_owned_nested_output_only"
+    && surfaceInventory.boundary?.titleExposed === false
+    && surfaceInventory.boundary?.pixelsExposed === false
+    && surfaceInventory.boundary?.parentDisplayConnected === false
+    && surfaceInventory.boundary?.inputAuthorityExpanded === false
+    && surfaceInventory.boundary?.persisted === false;
+  return {
+    ...evidence,
+    surfaceInventory: valid ? surfaceInventory : null,
+    boundary: {
+      ...evidence.boundary,
+      compositorSurfaceInventory: valid && surfaceInventory.available === true,
+      surfaceTitlesExposed: false,
+      surfacePixelsExposed: false,
+      parentDisplayConnected: false,
+    },
+  };
+}
+
 function boundedDimension(value, fallback, minimum, maximum) {
   const parsed = Number.parseInt(String(value ?? ""), 10);
   return Number.isInteger(parsed) && parsed >= minimum && parsed <= maximum

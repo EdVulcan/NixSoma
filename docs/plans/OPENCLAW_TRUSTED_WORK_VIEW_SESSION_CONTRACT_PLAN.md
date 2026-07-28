@@ -9,10 +9,12 @@ frozen. Its Level 4 vertical continuation now has a resource-bounded login-user
 Weston compositor on fixed socket `nixsoma-ai-0`, the existing headed AI-owned
 Firefox client, one bounded compositor-native read-only frame, and a
 physically proven current-frame-bound native left click. A fifth continuation
-now has a deployed, physically proven operator projection of that frame in
-Observer. It still has no desktop takeover, desktop-wide capture/input,
-arbitrary input device, root, or host-mutation authority; Firefox retains only
-its existing browser network scope.
+has a deployed, physically proven operator projection of that frame in
+Observer. A sixth has a Weston-owned minimal surface inventory and a governed
+fixed Nix-managed Workbench start/stop path. It still has no desktop takeover,
+desktop-wide capture/input, arbitrary input device or process launch, root, or
+host-mutation authority; Firefox retains only its existing browser network
+scope.
 
 Physical-host generation `kxv2ypwp...` now proves the nested compositor
 coexists with unchanged GNOME `wayland-0`, no parent display environment or DRM
@@ -66,6 +68,18 @@ new Core and Observer closures. A real Firefox Observer rendered 1280x720,
 released the image source on mode switch and sign-out, retained its screenshot
 only in test memory, and left runtime capture storage empty while all services
 remained stable. This continuation is deployed; freeze projection variants.
+
+The fixed application/surface continuation is now deployed in generation
+`vymmz8c3...`. Weston publishes only surface id, client PID, dimensions, and
+activation for at most 16 mapped main surfaces. Session-manager validates the
+owner-only atomic inventory, starts or stops only
+`nixsoma-ai-workbench.service`, and requires the existing Core single-use
+execution grant plus durable pre-execution audit. Observer authenticates through
+Core, shows the matching surface, and exposes explicit Start/Stop controls
+without creating a separate approval. The physical check proved one matching
+PID/surface appears and disappears while anonymous direct start remains
+rejected. Arbitrary command/process selection, title/app-id/pixel publication,
+parent-display access, persistence, and new input authority remain absent.
 
 ## Active Slice
 

@@ -1803,6 +1803,8 @@ test("capability runtime maps each canonical work-view control to its fixed owne
       params: { entryUrl: "https://example.com/reveal" },
     },
     { operation: "work_view.hide", params: {} },
+    { operation: "work_view.application.start", params: {} },
+    { operation: "work_view.application.stop", params: {} },
   ];
 
   for (const request of requests) {
@@ -1838,7 +1840,64 @@ test("capability runtime maps each canonical work-view control to its fixed owne
         recommendedAction: "hide_work_view",
       },
     },
+    {
+      url: "http://127.0.0.1:4102/work-view/application/start",
+      body: {
+        operatorActionSource: "capability_runtime_work_view_control",
+        recommendedAction: "start_ai_workbench",
+      },
+    },
+    {
+      url: "http://127.0.0.1:4102/work-view/application/stop",
+      body: {
+        operatorActionSource: "capability_runtime_work_view_control",
+        recommendedAction: "stop_ai_workbench",
+      },
+    },
   ]);
+});
+
+test("capability runtime projects fixed application lifecycle metadata without surface text", async () => {
+  const { runtime } = createHarness({
+    postJsonResult: {
+      ok: true,
+      application: {
+        registry: "nixsoma-ai-workbench-lifecycle-v0",
+        status: "running",
+        active: true,
+        mainPid: 4242,
+        surfaceAttached: true,
+        matchingSurface: {
+          surfaceId: 71,
+          pid: 4242,
+          width: 1280,
+          height: 720,
+          activated: true,
+          title: "must-not-cross-core",
+        },
+      },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.work_view.control",
+    operation: "work_view.application.start",
+    params: {},
+  });
+
+  assert.equal(result.response.invoked, true);
+  assert.deepEqual(result.response.result.application, {
+    registry: "nixsoma-ai-workbench-lifecycle-v0",
+    status: "running",
+    active: true,
+    mainPid: 4242,
+    surfaceAttached: true,
+    surfaceId: 71,
+  });
+  assert.equal(result.response.result.governance.fixedApplicationLifecycle, true);
+  assert.equal(result.response.result.governance.arbitraryProcessLaunch, false);
+  assert.equal(result.response.summary.applicationSurfaceAttached, true);
+  assert.equal(JSON.stringify(result.response).includes("must-not-cross-core"), false);
 });
 
 test("capability runtime rejects credential-bearing work-view URLs before dispatch", async () => {

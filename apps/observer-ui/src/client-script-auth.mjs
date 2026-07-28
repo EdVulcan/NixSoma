@@ -51,6 +51,9 @@ async function signInOperator() {
     if (typeof refreshAiWorkspaceProjection === "function") {
       refreshAiWorkspaceProjection();
     }
+    if (typeof refreshWorkView === "function") {
+      await refreshWorkView();
+    }
     setControlMessage(\`Operator session active for \${data.operator?.actor ?? "operator"}.\`);
   } finally {
     operatorAuthSignInButton.disabled = false;

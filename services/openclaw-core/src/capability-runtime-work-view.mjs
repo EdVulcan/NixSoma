@@ -17,6 +17,14 @@ const CONTROL_OPERATIONS = new Map([
   ["work_view.prepare", { action: "prepare_work_view", route: "/work-view/prepare" }],
   ["work_view.reveal", { action: "reveal_work_view", route: "/work-view/reveal" }],
   ["work_view.hide", { action: "hide_work_view", route: "/work-view/hide" }],
+  ["work_view.application.start", {
+    action: "start_ai_workbench",
+    route: "/work-view/application/start",
+  }],
+  ["work_view.application.stop", {
+    action: "stop_ai_workbench",
+    route: "/work-view/application/stop",
+  }],
 ]);
 
 const PUBLIC_WORK_VIEW_STATUSES = ["prepared", "ready", "degraded", "stopped"];
@@ -31,6 +39,16 @@ const PUBLIC_RECOVERY_ACTIONS = [
   "hide_work_view",
   "resume_ai_action_authority",
   "restart_approved_trusted_sidecar",
+];
+const PUBLIC_APPLICATION_STATUSES = [
+  "disabled",
+  "not_observed",
+  "starting",
+  "surface_pending",
+  "running",
+  "stopping",
+  "stopped",
+  "degraded",
 ];
 
 function normaliseTaskId(value) {
@@ -124,6 +142,8 @@ function publicEnum(value, allowed) {
 function projectControlResult(action, response) {
   const workView = response?.workView ?? {};
   const trustedSession = workView.trustedSession ?? {};
+  const application = response?.application ?? {};
+  const applicationAction = action === "start_ai_workbench" || action === "stop_ai_workbench";
   const result = {
     ok: response?.ok === true,
     registry: CONTROL_REGISTRY,
@@ -139,10 +159,24 @@ function projectControlResult(action, response) {
         PUBLIC_RECOVERY_ACTIONS,
       ) ?? "none",
     },
+    application: applicationAction ? {
+      registry: application.registry === "nixsoma-ai-workbench-lifecycle-v0"
+        ? application.registry
+        : null,
+      status: publicEnum(application.status, PUBLIC_APPLICATION_STATUSES),
+      active: application.active === true,
+      mainPid: Number.isInteger(application.mainPid) ? application.mainPid : null,
+      surfaceAttached: application.surfaceAttached === true,
+      surfaceId: Number.isInteger(application.matchingSurface?.surfaceId)
+        ? application.matchingSurface.surfaceId
+        : null,
+    } : null,
     governance: {
       mutatesWorkViewState: true,
       dispatchesExistingOwnerAction: true,
-      browserNavigation: action !== "hide_work_view",
+      browserNavigation: !applicationAction && action !== "hide_work_view",
+      fixedApplicationLifecycle: applicationAction,
+      arbitraryProcessLaunch: false,
       createsTask: false,
       createsApproval: false,
       callsProvider: false,
@@ -240,7 +274,11 @@ export function createEngineeringWorkViewCapabilityHandlers({
         status: workView.status ?? null,
         visibility: workView.visibility ?? null,
         recoveryAction: workView.recoveryAction ?? "none",
+        applicationStatus: result?.application?.status ?? null,
+        applicationActive: result?.application?.active === true,
+        applicationSurfaceAttached: result?.application?.surfaceAttached === true,
         mutatesWorkViewState: governance.mutatesWorkViewState === true,
+        fixedApplicationLifecycle: governance.fixedApplicationLifecycle === true,
         browserNavigation: governance.browserNavigation === true,
         noProviderEgress: governance.providerEgress === false,
         noPayloadExposure: governance.exposesLeaseId === false

@@ -137,7 +137,21 @@ async function refreshWorkView() {
     const sessionIdentity = trustedSession.sessionIdentity ?? {};
     const helperRuntime = trustedSession.helperRuntime ?? {};
     const aiGraphicalSession = workView.aiGraphicalSession ?? data.aiGraphicalSession ?? {};
+    const surfaceInventory = aiGraphicalSession.surfaceInventory ?? {};
+    const applicationLifecycle = aiGraphicalSession.applicationLifecycle ?? {};
     workViewSessionIdentity.textContent = sessionIdentity.status ?? "unknown";
+    aiWorkbenchStatus.textContent = applicationLifecycle.status ?? "unknown";
+    aiWorkbenchSurface.textContent = applicationLifecycle.surfaceAttached
+      ? \`#\${applicationLifecycle.matchingSurface?.surfaceId ?? "unknown"} pid=\${applicationLifecycle.mainPid ?? "unknown"}\`
+      : "none";
+    aiSurfaceCount.textContent = String(surfaceInventory.count ?? 0);
+    const lifecycleBusy = ["starting", "surface_pending", "stopping"].includes(applicationLifecycle.status);
+    startAiWorkbenchButton.disabled = applicationLifecycle.enabled !== true
+      || applicationLifecycle.active === true
+      || lifecycleBusy;
+    stopAiWorkbenchButton.disabled = applicationLifecycle.enabled !== true
+      || applicationLifecycle.active !== true
+      || applicationLifecycle.status === "stopping";
     if (!desiredWorkViewUrlPinned && document.activeElement !== workViewUrlInput) {
       setDesiredWorkViewUrl(workView.activeUrl ?? workView.entryUrl ?? "https://example.com/work-view", {
         pinned: false,
@@ -151,6 +165,8 @@ async function refreshWorkView() {
       "AI Graphical Socket: " + (aiGraphicalSession.socket?.name ?? "none") + " type=" + (aiGraphicalSession.socket?.type ?? "unknown") + " ownerMatched=" + Boolean(aiGraphicalSession.socket?.ownerMatched) + " mode=" + (aiGraphicalSession.socket?.mode ?? "unknown"),
       "AI Graphical Boundary: headless=" + Boolean(aiGraphicalSession.output?.headless) + " parentDisplay=" + Boolean(aiGraphicalSession.boundary?.parentDisplayConnected) + " pixels=" + Boolean(aiGraphicalSession.boundary?.readsPixels) + " input=" + Boolean(aiGraphicalSession.boundary?.inputAuthority) + " browser=" + Boolean(aiGraphicalSession.boundary?.browserAttached) + " attachment=" + (aiGraphicalSession.browserAttachment?.status ?? "none") + " headed=" + Boolean(aiGraphicalSession.browserAttachment?.headed) + " browserNetwork=" + Boolean(aiGraphicalSession.boundary?.browserNetworkAccess) + " networkExpanded=" + Boolean(aiGraphicalSession.boundary?.networkAuthorityExpanded),
       "AI Compositor Frame: status=" + (aiGraphicalSession.compositorFrame?.available ? "available" : aiGraphicalSession.compositorFrame?.reason ?? "unavailable") + " native=" + Boolean(aiGraphicalSession.boundary?.compositorNativeCapture) + " api=" + (aiGraphicalSession.compositorFrame?.captureApi ?? "none") + " socket=" + (aiGraphicalSession.compositorFrame?.socketName ?? "none") + " bytes=" + (aiGraphicalSession.compositorFrame?.byteLength ?? 0) + " dataExposed=" + Boolean(aiGraphicalSession.compositorFrame?.dataExposed) + " browserScreenshot=" + Boolean(aiGraphicalSession.boundary?.browserScreenshotApi),
+      "AI Surface Inventory: status=" + (surfaceInventory.status ?? "unknown") + " sequence=" + (surfaceInventory.sequence ?? "none") + " count=" + (surfaceInventory.count ?? 0) + " truncated=" + Boolean(surfaceInventory.truncated) + " titles=" + Boolean(surfaceInventory.boundary?.titleExposed) + " pixels=" + Boolean(surfaceInventory.boundary?.pixelsExposed),
+      "AI Workbench: status=" + (applicationLifecycle.status ?? "unknown") + " active=" + Boolean(applicationLifecycle.active) + " pid=" + (applicationLifecycle.mainPid ?? "none") + " surface=" + (applicationLifecycle.matchingSurface?.surfaceId ?? "none") + " attached=" + Boolean(applicationLifecycle.surfaceAttached) + " arbitraryProcess=" + Boolean(applicationLifecycle.boundary?.arbitraryProcessLaunch) + " root=" + Boolean(applicationLifecycle.boundary?.rootRequired),
       \`Session: \${data.session?.status ?? "unknown"}\`,
       \`Session ID: \${data.session?.sessionId ?? "none"}\`,
       \`Display: \${workView.displayTarget ?? "unknown"}\`,
@@ -181,6 +197,11 @@ async function refreshWorkView() {
     workViewHelper.textContent = "offline";
     workViewCapture.textContent = "offline";
     workViewSessionIdentity.textContent = "offline";
+    aiWorkbenchStatus.textContent = "offline";
+    aiWorkbenchSurface.textContent = "none";
+    aiSurfaceCount.textContent = "0";
+    startAiWorkbenchButton.disabled = true;
+    stopAiWorkbenchButton.disabled = true;
     workViewJson.textContent = "Unable to read work view state.";
     updateDesiredUrlHint(null);
   }

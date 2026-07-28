@@ -9,9 +9,13 @@ let
   socketName = "nixsoma-ai-0";
   captureDirectory = "capture";
   inputDirectory = "input";
+  surfaceDirectory = "surfaces";
+  workbenchHomeDirectory = "workbench-home";
+  workbenchUnitName = "nixsoma-ai-workbench";
   captureAuthorityPackage = pkgs.callPackage ../packages/nixsoma-weston-frame-auth.nix {
     weston = sessionCfg.package;
     nativeInput = sessionCfg.nativeInput;
+    surfaceInventory = sessionCfg.applicationLifecycle;
     outputWidth = sessionCfg.width;
     outputHeight = sessionCfg.height;
   };
@@ -32,12 +36,19 @@ let
     runtime_dir="$runtime_base/${runtimeDirectory}"
     capture_dir="$runtime_dir/${captureDirectory}"
     input_dir="$runtime_dir/${inputDirectory}"
+    surface_dir="$runtime_dir/${surfaceDirectory}"
+    workbench_home="$runtime_dir/${workbenchHomeDirectory}"
     ${pkgs.coreutils}/bin/rm -f \
       "$runtime_dir/${socketName}" \
       "$runtime_dir/${socketName}.lock" \
       "$capture_dir/request" \
       "$capture_dir"/wayland-screenshot-*.png
     ${pkgs.coreutils}/bin/install -d -m 0700 "$capture_dir"
+    ${optionalString sessionCfg.applicationLifecycle ''
+      ${pkgs.coreutils}/bin/rm -f "$surface_dir/current.json" "$surface_dir/current.json.tmp"
+      ${pkgs.coreutils}/bin/install -d -m 0700 "$surface_dir"
+      ${pkgs.coreutils}/bin/install -d -m 0700 "$workbench_home"
+    ''}
     ${optionalString sessionCfg.nativeInput ''
       ${pkgs.coreutils}/bin/rm -f "$input_dir/control.sock"
       ${pkgs.coreutils}/bin/install -d -m 0700 "$input_dir"
@@ -49,11 +60,15 @@ let
     runtime_dir="$runtime_base/${runtimeDirectory}"
     capture_dir="$runtime_dir/${captureDirectory}"
     input_dir="$runtime_dir/${inputDirectory}"
+    surface_dir="$runtime_dir/${surfaceDirectory}"
     ${pkgs.coreutils}/bin/rm -f \
       "$runtime_dir/${socketName}" \
       "$runtime_dir/${socketName}.lock" \
       "$capture_dir/request" \
       "$capture_dir"/wayland-screenshot-*.png
+    ${optionalString sessionCfg.applicationLifecycle ''
+      ${pkgs.coreutils}/bin/rm -f "$surface_dir/current.json" "$surface_dir/current.json.tmp"
+    ''}
     ${optionalString sessionCfg.nativeInput ''
       ${pkgs.coreutils}/bin/rm -f "$input_dir/control.sock"
     ''}
@@ -68,6 +83,42 @@ let
       ${sessionCfg.package}/bin/weston \
       --log="$runtime_dir/weston.log" \
       ${lib.concatStringsSep " \\\n      " westonArguments}
+  '';
+  workbenchShell = pkgs.writeShellScript "nixsoma-ai-workbench-shell" ''
+    set -eu
+    trap 'exit 0' HUP INT TERM
+    ${pkgs.coreutils}/bin/printf '\033[2J\033[H'
+    ${pkgs.coreutils}/bin/printf '%s\n' \
+      'NixSoma AI Workbench' \
+      "" \
+      'Application lifecycle: active' \
+      'Compositor: nixsoma-ai-0' \
+      'Authority: fixed display-only process' \
+      "" \
+      'This surface is owned by the bounded NixSoma AI session.'
+    while :; do
+      ${pkgs.coreutils}/bin/sleep 3600
+    done
+  '';
+  workbenchLaunchScript = pkgs.writeShellScript "nixsoma-ai-workbench-launch" ''
+    set -euo pipefail
+    runtime_base="''${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}"
+    runtime_dir="$runtime_base/${runtimeDirectory}"
+    workbench_home="$runtime_dir/${workbenchHomeDirectory}"
+    cache_home="''${TMPDIR:-/tmp}/nixsoma-ai-workbench-cache"
+    ${pkgs.coreutils}/bin/install -d -m 0700 "$cache_home"
+    test -d "$workbench_home"
+    exec ${pkgs.coreutils}/bin/env -i \
+      HOME="$workbench_home" \
+      XDG_RUNTIME_DIR="$runtime_dir" \
+      XDG_CACHE_HOME="$cache_home" \
+      WAYLAND_DISPLAY="${socketName}" \
+      XCURSOR_THEME="Adwaita" \
+      ${sessionCfg.package}/bin/weston-terminal \
+      --fullscreen \
+      --font="monospace" \
+      --font-size=20 \
+      --shell=${workbenchShell}
   '';
 in
 {
@@ -103,6 +154,11 @@ in
       default = false;
       description = "Allow current-frame-bound pointer clicks inside the isolated Weston output.";
     };
+    applicationLifecycle = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Allow explicit start and stop of the fixed NixSoma AI workbench inside the isolated output.";
+    };
   };
 
   config = mkIf (cfg.enable && sessionCfg.enable) {
@@ -126,6 +182,11 @@ in
       {
         assertion = !sessionCfg.nativeInput || (sessionCfg.captureOutput && sessionCfg.attachBrowser);
         message = "services.openclaw.aiGraphicalSession.nativeInput requires captureOutput and attachBrowser.";
+      }
+      {
+        assertion = !sessionCfg.applicationLifecycle
+          || (sessionCfg.captureOutput && sessionCfg.attachBrowser);
+        message = "services.openclaw.aiGraphicalSession.applicationLifecycle requires the existing capture and browser attachment boundary.";
       }
     ];
 
@@ -186,10 +247,56 @@ in
         OPENCLAW_AI_COMPOSITOR_INPUT_DIRECTORY = inputDirectory;
         OPENCLAW_AI_COMPOSITOR_INPUT_TIMEOUT_MS = "1000";
         OPENCLAW_AI_COMPOSITOR_INPUT_POLL_MS = "10";
+        OPENCLAW_AI_SURFACE_INVENTORY_ENABLED = if sessionCfg.applicationLifecycle then "1" else "0";
+        OPENCLAW_AI_SURFACE_INVENTORY_DIRECTORY = surfaceDirectory;
+        OPENCLAW_AI_APPLICATION_LIFECYCLE_ENABLED = if sessionCfg.applicationLifecycle then "1" else "0";
+        OPENCLAW_AI_WORKBENCH_UNIT = "${workbenchUnitName}.service";
+        OPENCLAW_AI_WORKBENCH_SYSTEMCTL = "${pkgs.systemd}/bin/systemctl";
+        OPENCLAW_AI_WORKBENCH_COMMAND_TIMEOUT_MS = "3000";
+        OPENCLAW_AI_WORKBENCH_SETTLE_TIMEOUT_MS = "2000";
+        OPENCLAW_AI_WORKBENCH_POLL_MS = "25";
         OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE = cfg.executionGrantPublicKeyFile;
       };
     } // optionalAttrs cfg.resourceControl.enable {
       serviceConfig.Slice = "openclaw-session.slice";
+    };
+
+    systemd.user.services.${workbenchUnitName} = mkIf sessionCfg.applicationLifecycle {
+      description = "NixSoma Fixed AI Workbench";
+      requires = [ "${unitName}.service" ];
+      after = [ "${unitName}.service" ];
+      partOf = [ "${unitName}.service" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = workbenchLaunchScript;
+        Restart = "no";
+        TimeoutStartSec = "5s";
+        TimeoutStopSec = "3s";
+        UMask = "0077";
+        Slice = "openclaw-session.slice";
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        PrivateDevices = false;
+        ProtectSystem = "strict";
+        ProtectHome = "read-only";
+        DevicePolicy = "closed";
+        RestrictAddressFamilies = [ "AF_UNIX" ];
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
+        TasksMax = 16;
+        MemoryMax = "128M";
+        UnsetEnvironment = [
+          "DISPLAY"
+          "WAYLAND_DISPLAY"
+          "WAYLAND_SOCKET"
+          "DBUS_SESSION_BUS_ADDRESS"
+        ];
+        InaccessiblePaths = [
+          "-%t/${runtimeDirectory}/${captureDirectory}"
+          "-%t/${runtimeDirectory}/${inputDirectory}"
+          "-%t/${runtimeDirectory}/${surfaceDirectory}"
+        ];
+      };
     };
 
     systemd.user.services.openclaw-browser-runtime = mkIf sessionCfg.attachBrowser {

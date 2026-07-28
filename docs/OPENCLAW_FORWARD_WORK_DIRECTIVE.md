@@ -46,23 +46,24 @@ The risk is local drift:
 
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
-DeepSeek diagnosis handoff, and the local fixed-unit incident scheduler and
-triage/repair-promotion bridge. All 893 workspace tests and typecheck pass, the
-body-config and event-audit integration checks pass, the 811-entry milestone
-registry audit passes, and the Windows path budget has no file over 160
-repository-relative characters. GitHub CI now enforces Node 22 typecheck,
-workspace tests, milestone registry/script audit, and the same path budget on
-pushes and pull requests; Nix closure and physical-host checks remain local.
+DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
+triage/repair-promotion bridge, and six physically proven Level 4 graphical
+identity slices through a fixed application/surface lifecycle. All 958 workspace
+tests and typecheck pass, the body-config and event-audit integration checks
+pass, the 811-entry milestone registry audit passes, and the Windows path budget
+has no file over 160 repository-relative characters. GitHub CI now enforces
+Node 22 typecheck, workspace tests, milestone registry/script audit, and the
+same path budget on pushes and pull requests; Nix closure and physical-host
+checks remain local.
 
 The physical host now runs generation
-`/nix/store/6dm12j7y7mj7chwaqq13nkwgd0v91v8c-nixos-system-nixos-26.05.4808.569d57850992`.
-It includes the automatic triage/promotion/approved-dispatch baseline, the
-resource-pressure owner, both declarative cgroup slices, and the governed
-DeepSeek system-service credential and live sender. The final switch changed
-only the Core package path. Core remained active with zero failure restarts,
-all nine HTTP health probes returned 200, and anonymous task, approval,
-operator-step, and provider-task requests returned 401. No warning-level Core
-journal entry was observed.
+`/nix/store/vymmz8c3r9gganjd25nwxkj8vyk7gmxd-nixos-system-nixos-26.05.4808.569d57850992`.
+It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
+Weston-owned surface inventory, session-manager lifecycle owner, Core execution
+grant path, and Observer controls. The final switch changed only the Observer
+package path. The relevant system and user services remain active with zero
+restarts; the intentionally stopped Workbench is `inactive/success` after its
+physical lifecycle gate.
 
 One real request-bound DeepSeek advisory call completed through task
 `62ba696a-945e-4f37-b65e-8a6783316386` and approval
@@ -1979,6 +1980,47 @@ Freeze projection variants. Desktop takeover, parent-display access, added
 input, root, provider authority, and host mutation remain deferred. Select the
 next vertical Level 4 behavior from the identity path rather than reopening
 capture, input, projection, or evidence variants.
+
+## Completed Level 4 Fixed Application And Surface Lifecycle
+
+The sixth vertical Level 4 slice is implemented, deployed, and physically
+proven in generation
+`/nix/store/vymmz8c3r9gganjd25nwxkj8vyk7gmxd-nixos-system-nixos-26.05.4808.569d57850992`.
+Weston now publishes one owner-only, atomic, size-bounded surface inventory for
+the fixed `nixsoma-ai-0` output. Each of at most 16 entries contains only a
+numeric surface id, client PID, dimensions, and activation flag. Titles,
+app-ids, pixels, parent-display state, input authority, and persistence remain
+outside the contract.
+
+One static, non-autostarting `nixsoma-ai-workbench.service` provides the first
+Nix-managed application lifecycle. It launches only a fixed Weston terminal and
+non-command status shell, has no automatic restart, and cannot select an
+arbitrary executable or connect to the parent desktop. Session-manager reads the
+inventory through a bounded `O_NOFOLLOW` file-descriptor path, owns exact
+start/stop/reconcile behavior, requires a single-use Core execution grant, and
+requires durable pre-execution audit before changing the user unit. Core extends
+the existing `act.work_view.control` owner with only
+`work_view.application.start` and `.stop`; normal operator authentication is the
+human gate, so no extra per-click approval was introduced.
+
+Observer now shows Workbench state, matching surface id/count, and explicit
+Start/Stop controls routed only through Core. The physical gate used a real
+Observer login and buttons to prove start, matching main PID and compositor
+surface, Observer readback, stop, and surface disappearance. The started surface
+id was 2 with PID 38676; counts moved from 0 to 1 and back to 0. Anonymous direct
+start was rejected, durable audit was present, the unit retained
+`DevicePolicy=closed`, `ProtectHome=read-only`, 128 MiB/16-task limits and
+Unix-only networking, and no parent display, arbitrary process launch, root, or
+new input authority appeared.
+
+All 958 workspace tests, typecheck, native Weston build, body-config/store
+closure checks, Windows path budget, package tests, and
+`dev-ai-app-lifecycle-check.sh` pass. Freeze fixed-lifecycle and surface-inventory
+variants. A later Level 4 slice may give the AI-owned workspace another bounded
+product behavior, but it must reuse this application owner and existing
+frame/input/projection authorities rather than introduce a generic process
+launcher, desktop window API, parent-display connection, or duplicate evidence
+chain.
 
 ## Identity-Upgrade Alignment
 

@@ -21,6 +21,7 @@
     aiGraphicalSession.attachBrowser = true;
     aiGraphicalSession.captureOutput = true;
     aiGraphicalSession.nativeInput = true;
+    aiGraphicalSession.applicationLifecycle = true;
     cloudProvider.enable = true;
     trustedSidecarUserUnit.enable = true;
     componentOwnership.user = [

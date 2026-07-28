@@ -124,6 +124,56 @@ test("postJson signs configured actuator requests and binds async task context",
   assert.equal(verified.grant.capabilityId, "act.filesystem.write_text");
 });
 
+test("postJson signs fixed session-manager application lifecycle requests", async () => {
+  const { privateKey, publicKey } = generateKeyPairSync("ed25519");
+  const signer = createExecutionGrantSigner({
+    privateKey: privateKey.export({ type: "pkcs8", format: "pem" }),
+    createId: () => "session-manager-grant",
+    now: () => 2_000,
+  });
+  const verifier = createExecutionGrantVerifier({
+    publicKey: publicKey.export({ type: "spki", format: "pem" }),
+    audience: "openclaw-session-manager",
+    now: () => 2_000,
+  });
+  const originalFetch = globalThis.fetch;
+  let captured;
+  globalThis.fetch = async (url, options) => {
+    captured = { url, options };
+    return new Response(JSON.stringify({ ok: true }), { status: 200 });
+  };
+
+  try {
+    const client = createClient({}, { executionGrantSigner: signer });
+    await client.postJsonWithExecutionGrantContext(
+      {
+        capabilityId: "act.work_view.control",
+        intent: "work_view.application.start",
+      },
+      () => client.postJson(
+        "http://127.0.0.1:4102/work-view/application/start",
+        {
+          operatorActionSource: "capability_runtime_work_view_control",
+          recommendedAction: "start_ai_workbench",
+        },
+      ),
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  const verified = verifier.verifyRequest({
+    token: captured.options.headers["x-openclaw-execution-grant"],
+    method: captured.options.method,
+    path: new URL(captured.url).pathname,
+    body: JSON.parse(captured.options.body),
+    context: executionGrantContextFromHeaders(captured.options.headers),
+  });
+  assert.equal(verified.ok, true);
+  assert.equal(verified.grant.capabilityId, "act.work_view.control");
+  assert.equal(verified.grant.intent, "work_view.application.start");
+});
+
 test("readJsonFileIfPresent tolerates missing and malformed files", () => {
   const tempDir = mkdtempSync(path.join(tmpdir(), "openclaw-service-client-"));
   const validFile = path.join(tempDir, "valid.json");

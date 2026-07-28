@@ -13,11 +13,11 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native read-only frame, current-frame-bound native click, and operator-visible transient AI workspace projection, plus the completed Level 3 baseline | Implemented, deployed, and physically proven |
-| Local validation | 942 workspace tests and typecheck pass; focused projection tests are 52/52; body-config, native frame/input, provider flake, native inventory, and event-audit integration checks pass; 811 registry entries pass | Validated |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native read-only frame, current-frame-bound native click, operator-visible transient projection, and fixed Nix-managed Workbench/surface lifecycle, plus the completed Level 3 baseline | Implemented, deployed, and physically proven |
+| Local validation | 958 workspace tests and typecheck pass; session-manager has 43 tests and Observer has 56; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 811 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/ll14clw2kbgix9g90hgi0p2my97lpkb9-nixos-system-nixos-26.05.4808.569d57850992` | Level 4 transient AI output projection deployed and physically proven 2026-07-28 |
-| Previous generation | `/nix/store/mncd0bfp4fgyv9fsl018iyn7igci3p8y-nixos-system-nixos-26.05.4808.569d57850992` | Superseded after the current-frame-bound native input checkpoint |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/vymmz8c3r9gganjd25nwxkj8vyk7gmxd-nixos-system-nixos-26.05.4808.569d57850992` | Level 4 fixed application/surface lifecycle deployed and physically proven 2026-07-28 |
+| Previous generation | `/nix/store/ya4x5117g4grq1120b5zfr1wms5zaqya-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the final Observer authentication-refresh closure |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
 | Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; one 252-token approval-bound call and one 459-token standing call completed | Deployed and proven without prompt, reason, or credential persistence |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, 15-minute cooldown, 3-call/4096-token daily defaults, structured transient recommendation, and local fallback | Deployed; returned `observe_current_screen` without creating a task, approval, or execution |
@@ -26,6 +26,8 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 compositor frame | Weston launches and authorizes one fixed screenshooter client; session-manager returns a bounded transient 1280x720 PNG and retains metadata only | Deployed; Firefox cannot read the capture directory |
 | Level 4 compositor input | Existing screen pointer capability carries a fresh native-frame binding; session-manager requires the active work-view lease and Core grant, while Weston accepts only the session-manager peer on a fixed pointer-only Unix socket | Deployed; real click advanced native frame 1 to 2 with matching lease and receipt |
 | Level 4 output projection | Exact operator-authenticated Core route returns one revalidated fresh `nixsoma-ai-0` PNG to an explicitly selected Observer tab; pixels are no-store and browser-memory-only | Deployed; real Observer rendered 1280x720 and released pixels on mode switch and sign-out |
+| Level 4 surface inventory | Weston publishes at most 16 numeric surface/PID/dimension/activation records through one owner-only atomic file; titles, app-ids, pixels, persistence, parent-display access, and added input authority are excluded | Deployed; physical count moved 0 -> 1 -> 0 with the fixed Workbench |
+| Level 4 application lifecycle | `act.work_view.control` and a single-use session-manager execution grant start or stop only `nixsoma-ai-workbench.service`; Observer provides authenticated controls and readback without repetitive approval | Deployed; real Observer proved start -> matching PID/surface -> stop -> disappearance |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -66,9 +68,11 @@ The completed bounded frontier is:
   source.
 - Level 4 has a dedicated headless Weston compositor owned by the login user's
   systemd manager, one fixed Wayland socket and virtual output, a headed
-  AI-owned browser, bounded native frames, and one physically proven
-  frame-bound left-click path. The input path never connects to the parent
-  display or grants an arbitrary input device.
+  AI-owned browser, bounded native frames, one physically proven frame-bound
+  left-click path, a minimal Weston-owned surface inventory, and one fixed
+  Nix-managed Workbench with governed start/stop. These paths never connect to
+  the parent display, grant an arbitrary input device, or launch caller-selected
+  processes.
 - Phase D candidate generation, approval-bound staging/build, real closure
   receipt, independent host-health oracle, controlled activation contract,
   manual rollback evidence, and a physical-host-safe failure rehearsal.
@@ -108,8 +112,9 @@ The completed bounded frontier is:
 
 Real repair execution and rollback remain unproven on a disposable mutation
 environment. Level 4 now owns a compositor, headed browser, read-only native
-frame, governed native left click, and operator-visible transient projection in
-production. Desktop takeover remains future work.
+frame, governed native left click, operator-visible transient projection,
+minimal surface identity, and a fixed application lifecycle in production.
+Desktop takeover and generic process/window control remain future work.
 
 ## Active Route
 
@@ -292,6 +297,24 @@ failed-unit output stayed empty, and relevant warning journals were clear.
 Freeze projection variants; desktop takeover, parent display access, added input,
 root, provider authority, and host mutation remain deferred.
 
+The sixth vertical Level 4 slice is also deployed and physically proven. Weston
+atomically publishes at most 16 numeric surface/PID/dimension/activation records
+from `nixsoma-ai-0`; it publishes no titles, app-ids, pixels, persistence, parent
+display, or new input authority. A static non-autostarting
+`nixsoma-ai-workbench.service` runs only a fixed Nix terminal/status shell.
+Session-manager validates the owner-only inventory, requires a single-use Core
+execution grant and durable audit, and reconciles exact start/stop state against
+the matching surface. Observer routes authenticated Start/Stop through Core and
+shows the resulting Workbench and surface state without creating a repetitive
+approval step.
+
+All 958 workspace tests and typecheck pass. Generation `vymmz8c3...` is active.
+The physical Observer gate proved surface count 0 -> 1 -> 0, matched surface id
+2 to main PID 38676, rejected anonymous direct start, and left the Workbench
+`inactive/success` after cleanup. Relevant system and user services remain
+active with zero restarts. Freeze generic lifecycle and inventory variants;
+arbitrary process/window launch and desktop takeover remain deferred.
+
 ## Progress Estimate
 
 These figures are capability-maturity estimates, not test coverage:
@@ -301,9 +324,9 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 40%; compositor, browser attachment, native frame, frame-bound native click, and transient operator projection are deployed and physically proven |
-| Current bounded product scope | 75-80% |
-| Final whitepaper vision | 45-55% |
+| Level 4 graphics-stack-native body | about 45%; compositor, browser attachment, native frame, frame-bound native click, transient projection, minimal surface identity, and one fixed application lifecycle are deployed and physically proven |
+| Current bounded product scope | 78-82% |
+| Final whitepaper vision | 48-56% |
 
 ## Current Decision Records
 

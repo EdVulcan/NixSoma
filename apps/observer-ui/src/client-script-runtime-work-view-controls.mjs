@@ -3,6 +3,8 @@ export const observerClientRuntimeWorkViewControlsScript = `function workViewOpe
     "/work-view/prepare": "work_view.prepare",
     "/work-view/reveal": "work_view.reveal",
     "/work-view/hide": "work_view.hide",
+    "/work-view/application/start": "work_view.application.start",
+    "/work-view/application/stop": "work_view.application.stop",
   }[path] ?? null;
 }
 
@@ -43,7 +45,11 @@ async function postWorkView(path, payload = {}, { refresh = true } = {}) {
       });
     }
   }
-  setControlMessage(\`Work view \${result.workView?.status ?? "updated"} / \${result.workView?.visibility ?? "unknown"}\`);
+  if (result.application) {
+    setControlMessage(\`AI workbench \${result.application.status ?? "updated"} / surface=\${result.application.surfaceAttached ? "attached" : "absent"}\`);
+  } else {
+    setControlMessage(\`Work view \${result.workView?.status ?? "updated"} / \${result.workView?.visibility ?? "unknown"}\`);
+  }
   if (refresh) {
     await refreshRuntime();
     await refreshTaskList();
