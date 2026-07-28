@@ -6,6 +6,7 @@ import { buildWorkViewSemanticScene } from "../../../packages/shared-utils/src/w
 import { createAiWorkspaceSingleStep } from "../src/ai-workspace-single-step.mjs";
 
 const NOW = "2026-07-28T08:00:00.000Z";
+const TASK_ID = "task-reviewed-1";
 
 function hash(value) {
   return createHash("sha256").update(value).digest("hex");
@@ -35,9 +36,15 @@ function frame(sequence = 4, sha256 = "a".repeat(64)) {
 }
 
 function workView(sequence = 9, pid = 999) {
+  const helperRuntime = { status: "active", actionAuthority: "active", leaseMatched: true };
   return {
+    workViewId: "work-view-primary",
     status: "prepared",
-    helperRuntime: { status: "active", actionAuthority: "active", leaseMatched: true },
+    helperRuntime,
+    trustedSession: {
+      sessionIdentity: { status: "authoritative" },
+      helperRuntime,
+    },
     aiGraphicalSession: {
       ready: true,
       browserAttachment: { attached: true },
@@ -49,6 +56,28 @@ function workView(sequence = 9, pid = 999) {
         surfaces: [{ surfaceId: 7, width: 1280, height: 720, activated: true, pid }],
       },
     },
+  };
+}
+
+function reviewedTask(overrides = {}) {
+  return {
+    id: TASK_ID,
+    goal: "Open the Learn more item for NixSoma",
+    status: "running",
+    updatedAt: NOW,
+    policy: { decision: { decision: "allow" } },
+    workView: {
+      workViewId: "work-view-primary",
+      sessionId: "session-current",
+      trustedBinding: {
+        registry: "openclaw-native-engineering-work-view-bind-v0",
+        mode: "operator_reviewed",
+        authorityStatus: "authoritative",
+        leaseMatched: true,
+        boundAt: NOW,
+      },
+    },
+    ...overrides,
   };
 }
 
@@ -109,11 +138,15 @@ function harness({
   providerFailureReason = null,
   itemOrdinal = actionId === "click_item" ? 1 : null,
   disabledTarget = false,
+  changedTask = false,
+  changedTaskAfterActionAudit = false,
+  taskGoal = "Open the Learn more item for NixSoma",
 } = {}) {
   const calls = { fetch: [], post: [], audit: [], decision: [], prompt: [], provider: 0 };
   let captureSequence = 4;
   let stateReads = 0;
   let sceneReads = 0;
+  let taskReads = 0;
   const standingAdvisory = {
     config: { maxCallsPerDay: 3, maxTokensPerDay: 4096 },
     state: { day: "2026-07-28", callsUsed: 1, tokensUsed: 1024 },
@@ -129,6 +162,9 @@ function harness({
       calls.prompt.push(prompt);
       calls.provider += 1;
       assert.equal(prompt.includes("Learn more"), true);
+      assert.equal(prompt.includes("Open the Learn more item for NixSoma"), true);
+      assert.equal(prompt.includes(TASK_ID), false);
+      assert.equal(prompt.includes("session-current"), false);
       assert.equal(prompt.includes("pid"), false);
       assert.equal(prompt.includes("sha256"), false);
       assert.equal(prompt.includes("data:image"), false);
@@ -181,6 +217,18 @@ function harness({
     screenSenseUrl: "http://127.0.0.1:4104",
     screenActUrl: "http://127.0.0.1:4105",
     now: () => NOW,
+    getTaskById: (taskId) => {
+      taskReads += 1;
+      if (taskId !== TASK_ID) return null;
+      return reviewedTask({
+        goal: (changedTask && taskReads > 1) || (changedTaskAfterActionAudit && taskReads > 2)
+          ? "Open the Documentation item for NixSoma"
+          : taskGoal,
+        updatedAt: (changedTask && taskReads > 1) || (changedTaskAfterActionAudit && taskReads > 2)
+          ? "2026-07-28T08:00:01.000Z"
+          : NOW,
+      });
+    },
     fetchJson: async (url) => {
       calls.fetch.push(url);
       if (url.endsWith("/work-view/compositor-frame")) {
@@ -194,7 +242,11 @@ function harness({
           nonBrowserSurface ? 1000 : 999,
         );
         if (invalidContext) value.helperRuntime.actionAuthority = "suspended";
-        return { ok: true, workView: value };
+        return {
+          ok: true,
+          session: { sessionId: "session-current", status: "running", role: "ai-work-view" },
+          workView: value,
+        };
       }
       if (url.endsWith("/screen/semantic-scene")) {
         sceneReads += 1;
@@ -272,7 +324,7 @@ function harness({
 test("AI workspace single-step executes one provider-selected governed scroll", async () => {
   const { owner, calls } = harness();
 
-  const result = await owner.invoke();
+  const result = await owner.invoke({ taskId: TASK_ID });
 
   assert.equal(result.status, "executed");
   assert.equal(result.action.actionId, "scroll_down");
@@ -282,16 +334,25 @@ test("AI workspace single-step executes one provider-selected governed scroll", 
   assert.equal(result.governance.currentActiveSurfaceBound, true);
   assert.equal(result.governance.semanticSceneBound, true);
   assert.equal(result.governance.currentBrowserSurfaceBound, true);
+  assert.equal(result.governance.taskObjectiveBound, true);
+  assert.equal(result.governance.taskObjectiveProviderEgress, true);
+  assert.equal(result.governance.rawTaskGoalProviderEgress, false);
   assert.equal(result.governance.pixelsProviderEgress, false);
   assert.equal(result.governance.urlsProviderEgress, false);
   assert.equal(result.governance.inputValuesProviderEgress, false);
   assert.match(result.evidence.sceneContentHash, /^[a-f0-9]{64}$/u);
   assert.equal(result.evidence.sceneItemCount, 1);
+  assert.equal(result.evidence.taskId, TASK_ID);
+  assert.equal(result.evidence.taskStatus, "running");
+  assert.match(result.evidence.objectiveContentHash, /^[a-f0-9]{64}$/u);
+  assert.match(result.evidence.taskVersionHash, /^[a-f0-9]{64}$/u);
+  assert.equal(calls.decision[0].auditPayload.taskId, TASK_ID);
+  assert.equal(calls.decision[0].auditPayload.objectiveContentHash, result.evidence.objectiveContentHash);
   assert.equal(calls.post.length, 1);
   assert.equal(calls.post[0].url, "http://127.0.0.1:4105/act/mouse/scroll");
   assert.equal(calls.post[0].body.direction, "down");
   assert.deepEqual(calls.post[0].options.grantContext, {
-    taskId: null,
+    taskId: TASK_ID,
     stepId: null,
     capabilityId: "act.screen.pointer_keyboard",
     intent: "mouse.scroll",
@@ -310,7 +371,7 @@ test("AI workspace single-step executes one provider-selected governed scroll", 
 test("AI workspace single-step honors provider no-op without actuator contact", async () => {
   const { owner, calls } = harness({ actionId: "no_op" });
 
-  const result = await owner.invoke();
+  const result = await owner.invoke({ taskId: TASK_ID });
 
   assert.equal(result.status, "no_op");
   assert.equal(result.evidence.actionExecuted, false);
@@ -323,7 +384,7 @@ test("AI workspace single-step honors provider no-op without actuator contact", 
 test("AI workspace single-step executes one provider-selected semantic item without target authority", async () => {
   const { owner, calls } = harness({ actionId: "click_item", itemOrdinal: 1 });
 
-  const result = await owner.invoke();
+  const result = await owner.invoke({ taskId: TASK_ID });
 
   assert.equal(result.status, "executed");
   assert.equal(result.action.actionId, "click_item");
@@ -336,7 +397,7 @@ test("AI workspace single-step executes one provider-selected semantic item with
   assert.equal(calls.post[0].body.itemOrdinal, 1);
   assert.equal("semanticTarget" in calls.post[0].body, false);
   assert.deepEqual(calls.post[0].options.grantContext, {
-    taskId: null,
+    taskId: TASK_ID,
     stepId: null,
     capabilityId: "act.ai.workspace.single_step",
     intent: "ai.workspace.semantic_click",
@@ -354,7 +415,7 @@ test("AI workspace single-step rejects a disabled provider selection before actu
     disabledTarget: true,
   });
 
-  const result = await owner.invoke();
+  const result = await owner.invoke({ taskId: TASK_ID });
 
   assert.equal(result.status, "local_fallback");
   assert.equal(result.fallback.reason, "ai_workspace_single_step_semantic_click_not_actionable");
@@ -365,7 +426,7 @@ test("AI workspace single-step rejects a disabled provider selection before actu
 test("AI workspace single-step revalidates changed semantic content before no-op completion", async () => {
   const { owner, calls } = harness({ actionId: "no_op", changedScene: true });
 
-  const result = await owner.invoke();
+  const result = await owner.invoke({ taskId: TASK_ID });
 
   assert.equal(result.status, "local_fallback");
   assert.equal(result.fallback.reason, "ai_workspace_single_step_execution_context_changed");
@@ -374,10 +435,59 @@ test("AI workspace single-step revalidates changed semantic content before no-op
   assert.equal(calls.audit.length, 0);
 });
 
+test("AI workspace single-step revalidates the task objective before actuator contact", async () => {
+  const { owner, calls } = harness({ changedTask: true });
+
+  const result = await owner.invoke({ taskId: TASK_ID });
+
+  assert.equal(result.status, "local_fallback");
+  assert.equal(result.fallback.reason, "ai_workspace_single_step_task_objective_changed");
+  assert.equal(result.governance.providerCalled, true);
+  assert.equal(result.evidence.taskId, TASK_ID);
+  assert.equal(calls.provider, 1);
+  assert.equal(calls.post.length, 0);
+  assert.equal(calls.audit.length, 0);
+});
+
+test("AI workspace single-step rejects unsafe task text before provider egress", async () => {
+  const { owner, calls } = harness({
+    taskGoal: "Open https://private.invalid and use api_key=secret-value",
+  });
+
+  const result = await owner.invoke({ taskId: TASK_ID });
+
+  assert.equal(result.status, "local_fallback");
+  assert.equal(result.fallback.reason, "ai_workspace_single_step_context_unavailable");
+  assert.equal(result.governance.providerCalled, false);
+  assert.equal(calls.provider, 0);
+  assert.equal(calls.post.length, 0);
+  assert.equal(calls.audit.length, 0);
+});
+
+test("AI workspace single-step rechecks task binding after action audit", async () => {
+  for (const actionId of ["scroll_down", "click_item"]) {
+    const { owner, calls } = harness({
+      actionId,
+      itemOrdinal: actionId === "click_item" ? 1 : null,
+      changedTaskAfterActionAudit: true,
+    });
+
+    const result = await owner.invoke({ taskId: TASK_ID });
+
+    assert.equal(result.status, "local_fallback");
+    assert.equal(result.fallback.reason, "ai_workspace_single_step_task_objective_changed");
+    assert.equal(result.governance.providerCalled, true);
+    assert.equal(calls.post.length, 0);
+    assert.deepEqual(calls.audit.map((item) => item.name), [
+      "ai_workspace.single_step_action_authorized",
+    ]);
+  }
+});
+
 test("AI workspace single-step fails local before provider when authority is not ready", async () => {
   const { owner, calls } = harness({ invalidContext: true });
 
-  const result = await owner.invoke();
+  const result = await owner.invoke({ taskId: TASK_ID });
 
   assert.equal(result.status, "local_fallback");
   assert.equal(result.fallback.reason, "ai_workspace_single_step_context_unavailable");
@@ -390,7 +500,7 @@ test("AI workspace single-step fails local before provider when authority is not
 test("AI workspace single-step rejects a non-browser active surface before provider egress", async () => {
   const { owner, calls } = harness({ nonBrowserSurface: true });
 
-  const result = await owner.invoke();
+  const result = await owner.invoke({ taskId: TASK_ID });
 
   assert.equal(result.status, "local_fallback");
   assert.equal(result.fallback.reason, "ai_workspace_single_step_context_unavailable");
@@ -402,7 +512,7 @@ test("AI workspace single-step rejects a non-browser active surface before provi
 test("AI workspace single-step rejects changed inventory before actuator contact", async () => {
   const { owner, calls } = harness({ changedContext: true });
 
-  const result = await owner.invoke();
+  const result = await owner.invoke({ taskId: TASK_ID });
 
   assert.equal(result.status, "local_fallback");
   assert.equal(result.fallback.reason, "ai_workspace_single_step_execution_context_changed");
@@ -416,7 +526,7 @@ test("AI workspace single-step rejects changed inventory before actuator contact
 test("AI workspace single-step rejects changed semantic content before actuator contact", async () => {
   const { owner, calls } = harness({ changedScene: true });
 
-  const result = await owner.invoke();
+  const result = await owner.invoke({ taskId: TASK_ID });
 
   assert.equal(result.status, "local_fallback");
   assert.equal(result.fallback.reason, "ai_workspace_single_step_execution_context_changed");
@@ -427,7 +537,7 @@ test("AI workspace single-step rejects changed semantic content before actuator 
 test("AI workspace single-step rejects a changed semantic frame before actuator contact", async () => {
   const { owner, calls } = harness({ changedSemanticFrame: true });
 
-  const result = await owner.invoke();
+  const result = await owner.invoke({ taskId: TASK_ID });
 
   assert.equal(result.status, "local_fallback");
   assert.equal(result.fallback.reason, "ai_workspace_single_step_execution_context_changed");
@@ -438,7 +548,7 @@ test("AI workspace single-step rejects a changed semantic frame before actuator 
 test("AI workspace single-step preserves provider egress evidence after response rejection", async () => {
   const { owner, calls } = harness({ providerFailureReason: "response_invalid" });
 
-  const result = await owner.invoke();
+  const result = await owner.invoke({ taskId: TASK_ID });
 
   assert.equal(result.status, "local_fallback");
   assert.equal(result.fallback.reason, "ai_workspace_single_step_response_invalid");
@@ -458,7 +568,7 @@ test("AI workspace single-step requires action audit before actuator contact", a
     rejectedAuditName: "ai_workspace.single_step_action_authorized",
   });
 
-  await assert.rejects(owner.invoke(), /required AI workspace single-step audit/u);
+  await assert.rejects(owner.invoke({ taskId: TASK_ID }), /required AI workspace single-step audit/u);
   assert.equal(calls.post.length, 0);
 });
 
@@ -467,7 +577,7 @@ test("AI workspace single-step does not retry an executed action when completion
     rejectedAuditName: "ai_workspace.single_step_completed",
   });
 
-  const result = await owner.invoke();
+  const result = await owner.invoke({ taskId: TASK_ID });
 
   assert.equal(result.status, "executed_completion_audit_unavailable");
   assert.equal(result.evidence.actionExecuted, true);
@@ -482,7 +592,7 @@ test("AI workspace semantic click does not retry when completion audit fails", a
     rejectedAuditName: "ai_workspace.single_step_completed",
   });
 
-  const result = await owner.invoke();
+  const result = await owner.invoke({ taskId: TASK_ID });
 
   assert.equal(result.status, "executed_completion_audit_unavailable");
   assert.equal(result.evidence.actionExecuted, true);

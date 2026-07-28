@@ -913,6 +913,7 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/standing-provider-advisory.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-single-step-contract.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-single-step.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-task-objective.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-semantic-click.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-single-step.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-plugin-refresh.mjs"
@@ -952,7 +953,7 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-frame.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 231 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 232 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi

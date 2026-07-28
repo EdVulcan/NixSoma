@@ -410,6 +410,21 @@ completion audit matched. The next capability must bind a bounded server-owned
 task objective so a semantic click can be justified without accepting a caller
 prompt.
 
+That task-objective binding is now a source-built twelfth-slice candidate, not
+yet the active generation. The common single-step capability requires an
+existing task id, resolves only an executable allow/audit-only task that was
+explicitly bound to the current trusted work view, and projects one short
+non-sensitive objective. Paths, URLs, credentials, prompt-role/override text,
+task metadata, and raw task objects are rejected before provider contact. Core
+binds objective/task-version hashes to the scene, rechecks both after provider
+return and after required action audit, and carries the task id through the
+existing actuator grant. Durable evidence never stores the objective text.
+All 1023 workspace tests, typecheck, registry/script/path checks, the exact 232-file Core
+closure, and candidate
+`/nix/store/xv20sdiys622przz94226sacpq9yvgd8-nixos-system-nixos-26.05.4808.569d57850992`
+pass. The standing provider budget is already 3/3 today, so deployment and one
+real task-grounded provider gate remain pending.
+
 ## Progress Estimate
 
 These figures are capability-maturity estimates, not test coverage:
@@ -419,7 +434,7 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 56%; ten slices through one semantic-scene-grounded provider decision are deployed and physically proven |
+| Level 4 graphics-stack-native body | about 59%; eleven slices are deployed and a twelfth task-grounded decision slice is source-built |
 | Current bounded product scope | 79-83% |
 | Final whitepaper vision | 49-57% |
 

@@ -10,6 +10,11 @@ import {
   parseAiWorkspaceSingleStepDecision,
 } from "./ai-workspace-single-step-contract.mjs";
 import { executeAiWorkspaceSemanticClick } from "./ai-workspace-semantic-click.mjs";
+import {
+  aiWorkspaceTaskObjectiveBindingMatches,
+  buildAiWorkspaceTaskObjectiveBinding,
+  normaliseAiWorkspaceTaskId,
+} from "./ai-workspace-task-objective.mjs";
 
 export const AI_WORKSPACE_SINGLE_STEP_REGISTRY =
   "nixsoma-ai-workspace-single-step-v0";
@@ -51,7 +56,15 @@ function activeSurface(inventory) {
   };
 }
 
-function compactProviderContext({ observedAt, workView, frame, inventory, surface, semanticScene }) {
+function compactProviderContext({
+  observedAt,
+  workView,
+  frame,
+  inventory,
+  surface,
+  semanticScene,
+  taskObjective,
+}) {
   const helper = workView.helperRuntime;
   return {
     registry: "nixsoma-ai-workspace-single-step-context-v1",
@@ -81,6 +94,7 @@ function compactProviderContext({ observedAt, workView, frame, inventory, surfac
       },
       semanticScene,
     },
+    taskObjective,
     requestedBehavior: {
       maximumActions: 1,
       allowedActions: ["no_op", "scroll_up", "scroll_down", "click_item"],
@@ -104,7 +118,21 @@ function compactProviderContext({ observedAt, workView, frame, inventory, surfac
       targetIds: true,
       selectors: true,
       inputValues: true,
+      rawTaskGoal: true,
+      taskIds: true,
+      taskMetadata: true,
+      taskPaths: true,
     },
+  };
+}
+
+function taskEvidence(binding) {
+  const evidence = binding?.evidence ?? {};
+  return {
+    taskId: evidence.taskId ?? null,
+    taskStatus: evidence.taskStatus ?? null,
+    objectiveContentHash: evidence.objectiveContentHash ?? null,
+    taskVersionHash: evidence.taskVersionHash ?? null,
   };
 }
 
@@ -118,6 +146,7 @@ function fallback(reason, standingAdvisory, {
     || ["provider_failed", "response_invalid"].includes(reason);
   const providerEvidence = providerDecision?.evidence ?? {};
   const scene = decisionContext?.scene ?? null;
+  const objectiveBinding = decisionContext?.taskObjectiveBinding ?? null;
   return {
     ok: true,
     registry: AI_WORKSPACE_SINGLE_STEP_REGISTRY,
@@ -135,6 +164,7 @@ function fallback(reason, standingAdvisory, {
         ?? (providerCalled ? state.lastResponseHash ?? null : null),
       sceneContentHash: scene?.sceneContentSha256 ?? null,
       sceneItemCount: scene?.itemCount ?? 0,
+      ...taskEvidence(objectiveBinding),
       actionId: "no_op",
       actionExecuted: false,
       budget: {
@@ -155,6 +185,9 @@ function fallback(reason, standingAdvisory, {
       automaticRepeat: false,
       semanticSceneBound: scene !== null,
       currentBrowserSurfaceBound: scene !== null,
+      taskObjectiveBound: objectiveBinding?.ok === true,
+      taskObjectiveProviderEgress: providerCalled && objectiveBinding?.ok === true,
+      rawTaskGoalProviderEgress: false,
       sceneContentProviderEgress: providerCalled && scene !== null,
       pixelsProviderEgress: false,
       urlsProviderEgress: false,
@@ -177,6 +210,7 @@ export function createAiWorkspaceSingleStep({
   sessionManagerUrl,
   screenSenseUrl,
   screenActUrl,
+  getTaskById = () => null,
   publishAuditEvent = async () => ({ ok: true }),
   now = () => new Date().toISOString(),
 } = {}) {
@@ -231,6 +265,7 @@ export function createAiWorkspaceSingleStep({
       inventorySequence: inventory.sequence,
       surface,
       scene,
+      workViewState: stateResponse,
     };
   }
 
@@ -239,15 +274,46 @@ export function createAiWorkspaceSingleStep({
     if (accepted?.ok !== true) throw new Error("required AI workspace single-step audit was not accepted");
   }
 
-  async function invoke() {
+  async function invoke({ taskId: requestedTaskId } = {}) {
+    const taskId = normaliseAiWorkspaceTaskId(requestedTaskId);
+    if (!taskId || typeof getTaskById !== "function") {
+      return fallback("task_objective_unavailable", standingAdvisory);
+    }
     if (!standingAdvisory || typeof standingAdvisory.requestDecision !== "function") {
       return fallback("runtime_unavailable", standingAdvisory);
     }
 
     let decisionContext;
+    const egressAuditPayload = {
+      taskId,
+      taskStatus: null,
+      objectiveContentHash: null,
+      taskVersionHash: null,
+      registry: AI_WORKSPACE_SINGLE_STEP_REGISTRY,
+      maximumActions: 1,
+      callerPromptAccepted: false,
+      automaticRepeat: false,
+      semanticSceneRequired: true,
+      pixelsEgress: false,
+      urlsEgress: false,
+      inputValuesEgress: false,
+      rawTaskGoalEgress: false,
+      taskObjectiveEgress: true,
+    };
     const providerDecision = await standingAdvisory.requestDecision({
       buildContext: async (observedAt) => {
         decisionContext = await observeContext(observedAt);
+        const taskObjectiveBinding = buildAiWorkspaceTaskObjectiveBinding({
+          task: getTaskById(taskId),
+          taskId,
+          workViewState: decisionContext.workViewState,
+        });
+        if (!taskObjectiveBinding.ok) {
+          throw new Error(taskObjectiveBinding.reason);
+        }
+        decisionContext.taskObjectiveBinding = taskObjectiveBinding;
+        decisionContext.provider.taskObjective = taskObjectiveBinding.providerProjection;
+        Object.assign(egressAuditPayload, taskEvidence(taskObjectiveBinding));
         return decisionContext.provider;
       },
       instruction: buildAiWorkspaceSingleStepInstruction(),
@@ -257,16 +323,7 @@ export function createAiWorkspaceSingleStep({
       parseResponse: parseAiWorkspaceSingleStepDecision,
       readActionId: (parsed) => parsed.decision.actionId,
       auditEventName: "cloud_provider.ai_workspace_single_step_egress_authorized",
-      auditPayload: {
-        registry: AI_WORKSPACE_SINGLE_STEP_REGISTRY,
-        maximumActions: 1,
-        callerPromptAccepted: false,
-        automaticRepeat: false,
-        semanticSceneRequired: true,
-        pixelsEgress: false,
-        urlsEgress: false,
-        inputValuesEgress: false,
-      },
+      auditPayload: egressAuditPayload,
       successResult: "ai_workspace_single_step_decision_returned",
     });
     if (!providerDecision.ok) {
@@ -282,6 +339,20 @@ export function createAiWorkspaceSingleStep({
       executionContext = await observeContext(now());
     } catch {
       return fallback("execution_context_unavailable", standingAdvisory, {
+        providerDecision,
+        decisionContext,
+      });
+    }
+    const taskObjectiveStillCurrent = () => aiWorkspaceTaskObjectiveBindingMatches(
+      decisionContext.taskObjectiveBinding,
+      buildAiWorkspaceTaskObjectiveBinding({
+        task: getTaskById(taskId),
+        taskId,
+        workViewState: executionContext.workViewState,
+      }),
+    );
+    if (!taskObjectiveStillCurrent()) {
+      return fallback("task_objective_changed", standingAdvisory, {
         providerDecision,
         decisionContext,
       });
@@ -305,6 +376,7 @@ export function createAiWorkspaceSingleStep({
         responseContentHash: providerDecision.evidence.responseContentHash,
         sceneContentHash: decisionContext.scene.sceneContentSha256,
         sceneItemCount: decisionContext.scene.itemCount,
+        ...taskEvidence(decisionContext.taskObjectiveBinding),
         actionId: "no_op",
         actionExecuted: false,
         maximumActions: 1,
@@ -319,6 +391,7 @@ export function createAiWorkspaceSingleStep({
           ...providerDecision.evidence,
           sceneContentHash: decisionContext.scene.sceneContentSha256,
           sceneItemCount: decisionContext.scene.itemCount,
+          ...taskEvidence(decisionContext.taskObjectiveBinding),
           actionExecuted: false,
           executionFrame: null,
           postFrame: null,
@@ -333,6 +406,9 @@ export function createAiWorkspaceSingleStep({
           automaticRepeat: false,
           semanticSceneBound: true,
           currentBrowserSurfaceBound: true,
+          taskObjectiveBound: true,
+          taskObjectiveProviderEgress: true,
+          rawTaskGoalProviderEgress: false,
           sceneContentProviderEgress: true,
           pixelsProviderEgress: false,
           urlsProviderEgress: false,
@@ -353,6 +429,8 @@ export function createAiWorkspaceSingleStep({
         decision,
         executionContext,
         decisionContext,
+        taskObjectiveBinding: decisionContext.taskObjectiveBinding,
+        taskObjectiveStillCurrent,
         providerEvidence: providerDecision.evidence,
         screenActUrl,
         postJson,
@@ -374,6 +452,7 @@ export function createAiWorkspaceSingleStep({
         evidence: {
           ...providerDecision.evidence,
           ...semanticClick.evidence,
+          ...taskEvidence(decisionContext.taskObjectiveBinding),
         },
         governance: {
           explicitOperatorTrigger: true,
@@ -388,6 +467,9 @@ export function createAiWorkspaceSingleStep({
           semanticSceneBound: true,
           semanticItemOrdinalBound: true,
           currentBrowserSurfaceBound: true,
+          taskObjectiveBound: true,
+          taskObjectiveProviderEgress: true,
+          rawTaskGoalProviderEgress: false,
           sceneContentProviderEgress: true,
           pixelsProviderEgress: false,
           urlsProviderEgress: false,
@@ -425,6 +507,7 @@ export function createAiWorkspaceSingleStep({
       responseContentHash: providerDecision.evidence.responseContentHash,
       sceneContentHash: decisionContext.scene.sceneContentSha256,
       sceneItemCount: decisionContext.scene.itemCount,
+      ...taskEvidence(decisionContext.taskObjectiveBinding),
       actionId: decision.actionId,
       direction,
       surfaceId: actionBody.surfaceId,
@@ -434,10 +517,16 @@ export function createAiWorkspaceSingleStep({
       maximumActions: 1,
       automaticRepeat: false,
     });
+    if (!taskObjectiveStillCurrent()) {
+      return fallback("task_objective_changed", standingAdvisory, {
+        providerDecision,
+        decisionContext,
+      });
+    }
 
     const response = await postJson(`${screenActUrl}/act/mouse/scroll`, actionBody, {
       grantContext: {
-        taskId: null,
+        taskId,
         stepId: null,
         capabilityId: "act.screen.pointer_keyboard",
         intent: "mouse.scroll",
@@ -465,6 +554,7 @@ export function createAiWorkspaceSingleStep({
         responseContentHash: providerDecision.evidence.responseContentHash,
         sceneContentHash: decisionContext.scene.sceneContentSha256,
         sceneItemCount: decisionContext.scene.itemCount,
+        ...taskEvidence(decisionContext.taskObjectiveBinding),
         actionId: decision.actionId,
         actionExecuted: true,
         direction,
@@ -495,6 +585,7 @@ export function createAiWorkspaceSingleStep({
         ...providerDecision.evidence,
         sceneContentHash: decisionContext.scene.sceneContentSha256,
         sceneItemCount: decisionContext.scene.itemCount,
+        ...taskEvidence(decisionContext.taskObjectiveBinding),
         actionExecuted: true,
         executionFrame: {
           sha256: input.frame?.sha256 ?? actionBody.compositorFrame.sha256,
@@ -520,6 +611,9 @@ export function createAiWorkspaceSingleStep({
         currentActiveSurfaceBound: true,
         semanticSceneBound: true,
         currentBrowserSurfaceBound: true,
+        taskObjectiveBound: true,
+        taskObjectiveProviderEgress: true,
+        rawTaskGoalProviderEgress: false,
         sceneContentProviderEgress: true,
         pixelsProviderEgress: false,
         urlsProviderEgress: false,

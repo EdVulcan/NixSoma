@@ -4,6 +4,30 @@ let aiWorkspaceProjectionRequest = null;
 let aiWorkspaceProjectionBinding = null;
 let aiWorkspaceSingleStepInFlight = false;
 
+function currentAiWorkspaceTask() {
+  if (taskHistoryFocus === "selected-task") {
+    const taskId = selectedHistoryTaskId ?? getSelectedHistoryTaskId();
+    const selectedTask = recentTasksState.find((task) => task?.id === taskId)
+      ?? (latestHistoryTask?.id === taskId ? latestHistoryTask : null);
+    if (selectedTask) return selectedTask;
+  }
+  return currentTaskState;
+}
+
+function currentAiWorkspaceTaskId() {
+  const task = currentAiWorkspaceTask();
+  const binding = task?.workView?.trustedBinding ?? {};
+  const policyDecision = task?.policy?.decision?.decision;
+  const eligible = ["queued", "running"].includes(task?.status)
+    && ["allow", "audit_only"].includes(policyDecision)
+    && binding.registry === "openclaw-native-engineering-work-view-bind-v0"
+    && binding.mode === "operator_reviewed"
+    && binding.authorityStatus === "authoritative"
+    && binding.leaseMatched === true
+    && task.workView?.workViewId === latestWorkViewState?.workViewId;
+  return eligible ? task.id : null;
+}
+
 function currentAiSurfaceScrollBinding() {
   const graphicalSession = latestWorkViewState?.aiGraphicalSession ?? {};
   const inventory = graphicalSession.surfaceInventory ?? {};
@@ -30,9 +54,10 @@ function currentAiSurfaceScrollBinding() {
 
 function updateAiSurfaceScrollControls() {
   const enabled = currentAiSurfaceScrollBinding() !== null;
+  const taskId = currentAiWorkspaceTaskId();
   scrollAiSurfaceUpButton.disabled = !enabled;
   scrollAiSurfaceDownButton.disabled = !enabled;
-  runAiWorkspaceSingleStepButton.disabled = !enabled || aiWorkspaceSingleStepInFlight;
+  runAiWorkspaceSingleStepButton.disabled = !enabled || !taskId || aiWorkspaceSingleStepInFlight;
 }
 
 function clearAiWorkspaceProjection(reason = "unavailable") {
@@ -206,26 +231,39 @@ async function runAiWorkspaceSingleStep() {
   try {
     await refreshAiWorkspaceProjection();
     await refreshWorkView();
+    await refreshRuntime();
     if (!currentAiSurfaceScrollBinding()) {
       throw new Error("A fresh active AI workspace projection is required.");
+    }
+    const taskId = currentAiWorkspaceTaskId();
+    if (!taskId) {
+      throw new Error("A current operator-reviewed task is required.");
     }
     const response = await fetchJson(observerConfig.coreUrl + "/capabilities/invoke", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         capabilityId: "act.ai.workspace.single_step",
+        taskId,
         params: { confirm: true },
       }),
     });
     const result = response.result ?? {};
     const governance = result.governance ?? {};
     const actionId = result.decision?.actionId ?? result.fallback?.actionId ?? "no_op";
+    const providerDecisionReturned = result.status !== "local_fallback";
     if (response.invoked !== true
       || result.registry !== "nixsoma-ai-workspace-single-step-v0"
       || governance.maximumActions !== 1
       || governance.automaticRepeat !== false
+      || governance.rawTaskGoalProviderEgress !== false
       || governance.keyboardInput !== false
       || governance.mutatesHost !== false
+      || (providerDecisionReturned && (governance.taskObjectiveBound !== true
+        || governance.taskObjectiveProviderEgress !== true
+        || result.evidence?.taskId !== taskId
+        || !/^[a-f0-9]{64}$/u.test(result.evidence?.objectiveContentHash ?? "")
+        || !/^[a-f0-9]{64}$/u.test(result.evidence?.taskVersionHash ?? "")))
       || !(["no_op", "local_fallback"].includes(result.status)
         || result.status?.startsWith("executed"))) {
       throw new Error("AI workspace single-step result was invalid.");

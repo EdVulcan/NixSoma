@@ -144,6 +144,7 @@ export function createPlanBuilder(deps) {
     screenSenseUrl,
     screenActUrl,
     publishAuditEvent,
+    getTaskById,
   });
   const capabilityRuntime = createCapabilityRuntime({
     host,

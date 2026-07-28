@@ -48,10 +48,14 @@ test("Observer projection is operator-only, visible-tab bounded, validated, and 
     'runAiSurfaceScroll("up")',
     'runAiSurfaceScroll("down")',
     'capabilityId: "act.ai.workspace.single_step"',
+    "currentAiWorkspaceTaskId()",
+    "taskId,",
     "params: { confirm: true }",
     "aiWorkspaceSingleStepInFlight",
     'governance.automaticRepeat !== false',
     'governance.currentActiveSurfaceBound !== true',
+    "governance.taskObjectiveBound !== true",
+    "governance.rawTaskGoalProviderEgress !== false",
   ]) {
     assert.equal(script.includes(token), true, `projection runtime is missing ${token}`);
   }

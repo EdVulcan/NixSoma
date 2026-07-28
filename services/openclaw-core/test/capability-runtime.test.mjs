@@ -175,6 +175,7 @@ test("capability runtime rejects caller-controlled AI workspace step inputs", as
 
   const result = await runtime.invokeCapability({
     capabilityId: "act.ai.workspace.single_step",
+    taskId: "task-reviewed-1",
     params: { confirm: true, actionId: "scroll_down", prompt: "caller prompt" },
   });
 
@@ -197,6 +198,10 @@ test("capability runtime records one server-owned semantic click without target 
           responseContentHash: "c".repeat(64),
           sceneContentHash: "d".repeat(64),
           sceneItemCount: 2,
+          taskId: "task-reviewed-1",
+          taskStatus: "running",
+          objectiveContentHash: "e".repeat(64),
+          taskVersionHash: "f".repeat(64),
           itemOrdinal: 2,
           postActionVerified: true,
         },
@@ -207,6 +212,9 @@ test("capability runtime records one server-owned semantic click without target 
           currentActiveSurfaceBound: true,
           semanticSceneBound: true,
           currentBrowserSurfaceBound: true,
+          taskObjectiveBound: true,
+          taskObjectiveProviderEgress: true,
+          rawTaskGoalProviderEgress: false,
           pixelsProviderEgress: false,
           urlsProviderEgress: false,
           inputValuesProviderEgress: false,
@@ -217,6 +225,7 @@ test("capability runtime records one server-owned semantic click without target 
 
   const result = await runtime.invokeCapability({
     capabilityId: "act.ai.workspace.single_step",
+    taskId: "task-reviewed-1",
     params: { confirm: true },
   });
 
@@ -230,14 +239,22 @@ test("capability runtime records one server-owned semantic click without target 
   assert.equal(result.response.invocation.summary.postActionVerified, true);
   assert.equal(result.response.invocation.summary.sceneContentHash, "d".repeat(64));
   assert.equal(result.response.invocation.summary.sceneItemCount, 2);
+  assert.equal(result.response.invocation.summary.taskId, "task-reviewed-1");
+  assert.equal(result.response.invocation.summary.taskStatus, "running");
+  assert.equal(result.response.invocation.summary.objectiveContentHash, "e".repeat(64));
+  assert.equal(result.response.invocation.summary.taskVersionHash, "f".repeat(64));
   assert.equal(result.response.invocation.summary.semanticSceneBound, true);
   assert.equal(result.response.invocation.summary.currentBrowserSurfaceBound, true);
+  assert.equal(result.response.invocation.summary.taskObjectiveBound, true);
+  assert.equal(result.response.invocation.summary.taskObjectiveProviderEgress, true);
+  assert.equal(result.response.invocation.summary.rawTaskGoalProviderEgress, false);
   assert.equal(result.response.invocation.summary.pixelsProviderEgress, false);
   assert.equal(result.response.invocation.summary.urlsProviderEgress, false);
   assert.equal(result.response.invocation.summary.inputValuesProviderEgress, false);
   assert.equal(result.response.invocation.summary.maximumActions, 1);
   assert.equal(result.response.invocation.policy.approved, true);
   assert.equal(state.capabilityInvocationLog.length, 1);
+  assert.equal(state.capabilityInvocationLog[0].request.taskId, "task-reviewed-1");
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("transient"), false);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("targetId"), false);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("selector"), false);

@@ -43,6 +43,8 @@ export async function executeAiWorkspaceSemanticClick({
   decision,
   executionContext,
   decisionContext,
+  taskObjectiveBinding,
+  taskObjectiveStillCurrent = () => false,
   providerEvidence,
   screenActUrl,
   postJson,
@@ -50,6 +52,7 @@ export async function executeAiWorkspaceSemanticClick({
   now,
 } = {}) {
   const prepared = prepareSemanticClick(decision, executionContext);
+  const taskEvidence = taskObjectiveBinding?.evidence ?? {};
   if (!prepared) {
     return {
       ok: false,
@@ -65,6 +68,10 @@ export async function executeAiWorkspaceSemanticClick({
     responseContentHash: providerEvidence.responseContentHash,
     sceneContentHash: decisionContext.scene.sceneContentSha256,
     sceneItemCount: decisionContext.scene.itemCount,
+    taskId: taskEvidence.taskId ?? null,
+    taskStatus: taskEvidence.taskStatus ?? null,
+    objectiveContentHash: taskEvidence.objectiveContentHash ?? null,
+    taskVersionHash: taskEvidence.taskVersionHash ?? null,
     actionId: "click_item",
     itemOrdinal: prepared.itemOrdinal,
     semanticFrameSha256: prepared.body.semanticFrame.sha256,
@@ -72,13 +79,20 @@ export async function executeAiWorkspaceSemanticClick({
     maximumActions: 1,
     automaticRepeat: false,
   });
+  if (!taskObjectiveStillCurrent()) {
+    return {
+      ok: false,
+      reason: "task_objective_changed",
+      actionExecuted: false,
+    };
+  }
 
   const response = await postJson(
     `${screenActUrl}/act/mouse/semantic-click`,
     prepared.body,
     {
       grantContext: {
-        taskId: null,
+        taskId: taskEvidence.taskId ?? null,
         stepId: null,
         capabilityId: "act.ai.workspace.single_step",
         intent: "ai.workspace.semantic_click",
@@ -108,6 +122,10 @@ export async function executeAiWorkspaceSemanticClick({
       responseContentHash: providerEvidence.responseContentHash,
       sceneContentHash: decisionContext.scene.sceneContentSha256,
       sceneItemCount: decisionContext.scene.itemCount,
+      taskId: taskEvidence.taskId ?? null,
+      taskStatus: taskEvidence.taskStatus ?? null,
+      objectiveContentHash: taskEvidence.objectiveContentHash ?? null,
+      taskVersionHash: taskEvidence.taskVersionHash ?? null,
       actionId: "click_item",
       itemOrdinal: prepared.itemOrdinal,
       actionExecuted: true,

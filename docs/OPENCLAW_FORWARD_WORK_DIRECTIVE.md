@@ -2217,13 +2217,42 @@ surface, and completed a real contract-v1 DeepSeek call. DeepSeek returned
 audit matched. The local click branch remains source/closure-proven but not yet
 provider-selected physically.
 
-Do not spend more provider calls trying to force a click. The current scene has
-one enabled `Learn more` link but no task objective, so conservative `no_op` is
-correct. The next real Level 4 slice is a bounded server-owned task-objective
-binding for the same single step. It must load an existing task locally, project
-only a short non-sensitive objective, preserve the no-caller-prompt boundary,
-and still stop after one action. Text input, arbitrary coordinates, loops,
-page script, process/window APIs, root, and host mutation remain excluded.
+Do not spend more provider calls trying to force a click. The current scene had
+one enabled `Learn more` link but no task objective, so conservative `no_op` was
+correct.
+
+## Level 4 Task-Objective Binding Source Candidate
+
+The twelfth vertical slice is implemented and built as system candidate
+`/nix/store/xv20sdiys622przz94226sacpq9yvgd8-nixos-system-nixos-26.05.4808.569d57850992`;
+it is not yet switched or physically provider-proven. `act.ai.workspace.single_step`
+now requires the standard capability `taskId`. Core resolves that existing task
+locally and accepts only queued/running tasks with allow/audit-only policy, an
+explicit operator-reviewed trusted work-view binding, and current authoritative
+session/work-view identity. Observer sends only the current or explicitly
+selected structurally eligible task.
+
+The new objective owner rejects overlong, multiline, URL, path, network,
+credential, role/prompt-override, executable, or structured-payload text instead
+of truncating it. Only one normalized 180-character-or-shorter objective
+statement enters the transient provider context. Task id, policy, status,
+timestamps, work-view/session ids, paths, raw task metadata, and original task
+object do not. Durable egress/action/completion audit and capability summaries
+retain only task id/status plus objective and task-version hashes; objective
+text is absent.
+
+Core binds that objective evidence to the initial scene, re-resolves the task
+after the provider response, and rechecks it once more after required action
+audit immediately before actuator dispatch. A changed goal, status, policy,
+version, or trusted binding stops without actuator contact. Execution grants now
+carry the same task id. `no_op` remains actuator-free and scroll/click remain one
+action with no replay. All 1023 workspace tests, typecheck, the 811-entry registry,
+997-script audit, Windows path budget, shell syntax, exact 232-file Core closure,
+store-native Core behavior, and the physical-system candidate build pass.
+Today’s 3/3 standing provider budget was already consumed by the deployed
+eleventh-slice gate, so no additional real DeepSeek call was made for this source
+candidate. Text input, arbitrary coordinates, loops, page script,
+process/window APIs, root, and host mutation remain excluded.
 
 ## Identity-Upgrade Alignment
 

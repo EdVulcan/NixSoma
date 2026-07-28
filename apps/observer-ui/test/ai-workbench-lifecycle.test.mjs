@@ -47,7 +47,11 @@ test("Observer exposes bounded fixed workbench lifecycle state and controls", ()
   assert.equal(script.includes('result.governance?.currentActiveSurfaceBound !== true'), true);
   assert.equal(script.includes('params: { ...binding, direction }'), true);
   assert.equal(script.includes('capabilityId: "act.ai.workspace.single_step"'), true);
+  assert.equal(script.includes("taskId,"), true);
   assert.equal(script.includes('params: { confirm: true }'), true);
+  assert.equal(script.includes("currentAiWorkspaceTaskId()"), true);
+  assert.equal(script.includes('binding.mode === "operator_reviewed"'), true);
+  assert.equal(script.includes("governance.taskObjectiveBound !== true"), true);
   assert.equal(script.includes('actionId === "click_item"'), true);
   assert.equal(script.includes('result.action?.itemOrdinal'), true);
 });

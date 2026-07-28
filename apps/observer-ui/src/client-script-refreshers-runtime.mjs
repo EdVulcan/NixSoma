@@ -18,6 +18,7 @@ export const observerClientRuntimeRefreshersScript = `async function refreshRunt
     renderPlanPanel(currentTask ?? latestHistoryTask);
     renderEngineeringVerificationFollowupReadback(currentTask ?? latestHistoryTask);
     renderCommandTranscriptFromTask(currentTask ?? latestHistoryTask, { source: currentTask ? "current-task" : "latest-history" });
+    updateAiSurfaceScrollControls();
   } catch {
     currentTaskState = null;
     runtimeStatus.textContent = "offline";
@@ -112,6 +113,7 @@ async function refreshTaskHistoryDetail() {
     renderPlanPanel(currentTaskState ?? historyTask);
     renderEngineeringVerificationFollowupReadback(historyTask ?? currentTaskState);
     renderCommandTranscriptFromTask(historyTask ?? currentTaskState, { source: taskHistoryFocus });
+    updateAiSurfaceScrollControls();
   } catch {
     taskHistoryMeta.textContent = formatTaskFocusLabel(taskHistoryFocus, latestHistoryTask);
     taskHistoryJson.textContent = latestHistoryTask

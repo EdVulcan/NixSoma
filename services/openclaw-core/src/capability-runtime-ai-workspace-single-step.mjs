@@ -1,16 +1,19 @@
 export const AI_WORKSPACE_SINGLE_STEP_CAPABILITY_ID =
   "act.ai.workspace.single_step";
 
-const ALLOWED_BODY_KEYS = new Set(["capabilityId", "params"]);
+const ALLOWED_BODY_KEYS = new Set(["capabilityId", "taskId", "params"]);
 const ALLOWED_PARAM_KEYS = new Set(["confirm"]);
+const MAX_TASK_ID_CHARS = 200;
 
 function isCapability(capability) {
   return capability?.id === AI_WORKSPACE_SINGLE_STEP_CAPABILITY_ID;
 }
 
 function requestIsBounded(request, rawBody) {
+  const taskId = typeof request?.taskId === "string" ? request.taskId.trim() : "";
   if (request?.params?.confirm !== true
-    || request.taskId !== null
+    || !taskId
+    || taskId.length > MAX_TASK_ID_CHARS
     || request.stepId !== null
     || request.operation !== null
     || request.intent !== null
@@ -35,7 +38,7 @@ export function createAiWorkspaceSingleStepCapabilityHandlers({ runtime } = {}) 
         reason: approved ? null : "ai_workspace_single_step_request_invalid",
         policyId: "ai-workspace-explicit-single-step",
         policyVersion: 0,
-        taskId: null,
+        taskId: request.taskId,
         approvalId: null,
         bindingHash: null,
         reservation: null,
@@ -46,7 +49,7 @@ export function createAiWorkspaceSingleStepCapabilityHandlers({ runtime } = {}) 
   function validateRequest(capability, request, rawBody) {
     if (!isCapability(capability)) return null;
     if (!requestIsBounded(request, rawBody)) {
-      return "AI workspace single-step accepts only capabilityId and params.confirm=true.";
+      return "AI workspace single-step accepts only capabilityId, one taskId, and params.confirm=true.";
     }
     if (!runtime || typeof runtime.invoke !== "function") {
       return "AI workspace single-step runtime is unavailable.";
@@ -54,9 +57,9 @@ export function createAiWorkspaceSingleStepCapabilityHandlers({ runtime } = {}) 
     return null;
   }
 
-  async function callBackend(capability) {
+  async function callBackend(capability, request) {
     if (!isCapability(capability)) return { handled: false, result: null };
-    return { handled: true, result: await runtime.invoke() };
+    return { handled: true, result: await runtime.invoke({ taskId: request.taskId }) };
   }
 
   function summariseResult(capability, result) {
@@ -72,12 +75,19 @@ export function createAiWorkspaceSingleStepCapabilityHandlers({ runtime } = {}) 
       responseContentHash: result?.evidence?.responseContentHash ?? null,
       sceneContentHash: result?.evidence?.sceneContentHash ?? null,
       sceneItemCount: result?.evidence?.sceneItemCount ?? 0,
+      taskId: result?.evidence?.taskId ?? null,
+      taskStatus: result?.evidence?.taskStatus ?? null,
+      objectiveContentHash: result?.evidence?.objectiveContentHash ?? null,
+      taskVersionHash: result?.evidence?.taskVersionHash ?? null,
       providerCalled: result?.governance?.providerCalled === true,
       actionExecuted: result?.governance?.actionExecuted === true,
       currentFrameBound: result?.governance?.currentFrameBound === true,
       currentActiveSurfaceBound: result?.governance?.currentActiveSurfaceBound === true,
       semanticSceneBound: result?.governance?.semanticSceneBound === true,
       currentBrowserSurfaceBound: result?.governance?.currentBrowserSurfaceBound === true,
+      taskObjectiveBound: result?.governance?.taskObjectiveBound === true,
+      taskObjectiveProviderEgress: result?.governance?.taskObjectiveProviderEgress === true,
+      rawTaskGoalProviderEgress: result?.governance?.rawTaskGoalProviderEgress === true,
       pixelsProviderEgress: result?.governance?.pixelsProviderEgress === true,
       urlsProviderEgress: result?.governance?.urlsProviderEgress === true,
       inputValuesProviderEgress: result?.governance?.inputValuesProviderEgress === true,

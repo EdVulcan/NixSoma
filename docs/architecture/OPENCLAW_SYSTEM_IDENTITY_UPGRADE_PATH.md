@@ -282,6 +282,24 @@ audit、Windows path budget 和精确 body closure 已通过；physical candidat
 分支仍是源码与 closure 证明，尚未被 provider 在物理机选择。下一切片应绑定有界的
 服务器已有任务目标，使模型能在不接受 caller prompt 的前提下判断点击是否有意义。
 
+第十二个切片目前是源码与 system candidate，尚未 switch 或真实 provider 验收。
+`act.ai.workspace.single_step` 现在要求标准 `taskId`，只在本地解析 queued/running、
+policy 为 allow/audit-only、且由操作者显式绑定当前 trusted work view 的已有任务。
+目标投影最多 180 字符；包含 URL、路径、网络地址、凭据、prompt role/override、
+可执行命令形态、结构化 payload 或换行的任务目标会在 provider 前直接拒绝。Provider
+只接收短目标语句，不接收 task id、状态、policy、时间戳、session/work-view id 或原始
+任务对象。Durable evidence 只记录 task id/status、objective hash、task-version hash 与
+动作事实。
+
+Core 在 provider 返回后重新解析任务，并在 required action audit 返回后、actuator
+调用前再次同步重验；goal、status、policy、version 或 trusted binding 变化都会停止，
+execution grant 也携带同一 task id。`no_op` 仍不接触 actuator，scroll/click 最多一次且
+不重放。Workspace tests、typecheck、811-entry registry、997-script audit、Windows path
+budget、232-file Core closure 与 system candidate
+`/nix/store/xv20sdiys622przz94226sacpq9yvgd8-nixos-system-nixos-26.05.4808.569d57850992`
+均通过。当天 standing provider 3/3 预算已耗尽，因此该候选没有额外真实 DeepSeek
+调用，不能描述为 deployed 或 physically proven。完整 1023 项 workspace tests 已通过。
+
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
 画面投影、应用生命周期、surface 激活、垂直滚动、AI 单步和 semantic scene

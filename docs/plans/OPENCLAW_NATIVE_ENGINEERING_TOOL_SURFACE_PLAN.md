@@ -939,3 +939,11 @@ gate are complete; DeepSeek returned `no_op`, so click execution still awaits a
 task-grounded selection.
 The separate contract was built as `lb3mif3b...` after 1016 workspace tests,
 typecheck, exact body closure, registry/script audits, and path-budget checks.
+
+The twelfth Level 4 source candidate remains separate from this frozen Level 1
+plan. It uses the standard capability task id only to resolve an existing
+operator-reviewed task locally, applies a strict non-sensitive objective
+projection, and binds objective/task-version hashes through the existing
+single-step audit and actuator grant. It does not accept an engineering prompt,
+source packet, plan, command, write, or process authority. Candidate
+`xv20sdiys...` is built, but no switch or additional provider call has occurred.

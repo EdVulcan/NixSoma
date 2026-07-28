@@ -222,6 +222,7 @@ test("plan builder assembles AI workspace single-step with the shared provider a
 
   const result = await planBuilder.invokeCapability({
     capabilityId: "act.ai.workspace.single_step",
+    taskId: "task-reviewed-1",
     params: { confirm: true },
   });
 
@@ -231,6 +232,7 @@ test("plan builder assembles AI workspace single-step with the shared provider a
   assert.equal(assembly[0].sessionManagerUrl, "http://127.0.0.1:4102");
   assert.equal(assembly[0].screenSenseUrl, "http://127.0.0.1:4104");
   assert.equal(assembly[0].screenActUrl, "http://127.0.0.1:4105");
+  assert.equal(typeof assembly[0].getTaskById, "function");
   assert.equal(typeof assembly[0].fetchJson, "function");
   assert.equal(typeof assembly[0].postJson, "function");
   assert.equal(result.statusCode, 200);
