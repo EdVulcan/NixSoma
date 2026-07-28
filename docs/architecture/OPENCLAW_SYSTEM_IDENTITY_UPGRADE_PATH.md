@@ -264,7 +264,7 @@ switch。真实 gate 将一个 semantic item 与 active Browser/Weston surface �
 DeepSeek 返回 `no_op`，没有 actuator 调用；scene hash、egress/completion durable
 audit、九个健康端点全部匹配，相关服务零重启且无 warning journal。
 
-第十一个切片目前是源码候选，不能描述为已经部署。DeepSeek 的固定响应契约新增
+第十一个切片已经部署到 generation `lb3mif3b...`。DeepSeek 的固定响应契约新增
 `click_item` 和一个 1-based `itemOrdinal`；Core 在 provider 返回后继续复验唯一
 active surface、Browser PID、semantic frame 与 scene content，并在序号越界或目标
 disabled 时于 actuator 前停止。Screen Act 只接收 scene hash、ordinal 与本地
@@ -276,7 +276,11 @@ value、pixel、caller prompt 与 provider reason 不进入 Core/provider/durabl
 mutation 仍不包含。1016 项 workspace tests、完整 typecheck、811 项 registry/script
 audit、Windows path budget 和精确 body closure 已通过；physical candidate
 `/nix/store/lb3mif3bad9ss4g3r9y6rig7nwflkabr-nixos-system-nixos-26.05.4808.569d57850992`
-已构建但尚未 switch。完成物理 switch 和真实 gate 后才能把本段提升为完成状态。
+已完成 switch。物理 gate 在 Browser Runtime 重启后使用幂等 `prepare` 恢复浏览器，
+绑定一个启用的 `Learn more` 项目，并完成真实 contract-v1 DeepSeek 调用；模型返回
+`no_op`，因此没有 actuator 执行，scene/request hash 与 durable audit 全部匹配。点击
+分支仍是源码与 closure 证明，尚未被 provider 在物理机选择。下一切片应绑定有界的
+服务器已有任务目标，使模型能在不接受 caller prompt 的前提下判断点击是否有意义。
 
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。

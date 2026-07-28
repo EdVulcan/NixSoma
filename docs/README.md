@@ -13,13 +13,13 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, one provider-decided AI workspace step, bounded browser semantic-scene grounding, and a local semantic-item click candidate, plus the completed Level 3 baseline | Ten Level 4 slices deployed; eleventh source candidate validated and awaiting switch |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, one provider-decided AI workspace step, bounded browser semantic-scene grounding, and a local semantic-item click contract, plus the completed Level 3 baseline | Eleven Level 4 slices deployed; semantic-click execution awaits a task-grounded provider selection |
 | Local validation | 1016 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 811 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/jricbfdsixwn4h6jl12hiip7cmfvsnl3-nixos-system-nixos-26.05.4808.569d57850992` | Semantic grounding deployed; real DeepSeek returned `no_op` for one bound scene item with durable audit |
-| Previous generation | `/nix/store/7j28vnll8p7r6cfi8ysv2lvldpajvq8m-nixos-system-nixos-26.05.4808.569d57850992` | Superseded after its provider-free gate exposed the metadata-summary mismatch |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/lb3mif3bad9ss4g3r9y6rig7nwflkabr-nixos-system-nixos-26.05.4808.569d57850992` | Semantic-click contract deployed; real DeepSeek v1 gate returned safe `no_op` with durable audit |
+| Previous generation | `/nix/store/jricbfdsixwn4h6jl12hiip7cmfvsnl3-nixos-system-nixos-26.05.4808.569d57850992` | Superseded after the semantic-click candidate switch |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
-| Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; one 252-token approval-bound call, one 459-token standing system advisory, and two standing-authorized workspace decisions completed | Deployed and proven without prompt, reason, or credential persistence |
+| Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; one approval-bound call and three standing-authorized workspace decisions completed today | Daily 3-call standing budget exhausted without prompt, reason, or credential persistence |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, 15-minute cooldown, 3-call/4096-token daily defaults, structured transient recommendation, and local fallback | Deployed; returned `observe_current_screen` without creating a task, approval, or execution |
 | Level 4 graphical session | Fixed `nixsoma-ai-0` Weston headless compositor in a hardened, resource-bounded user unit; session-manager and Observer expose read-only ownership/health evidence | Deployed; coexists with GNOME `wayland-0` |
 | Level 4 browser attachment | Existing AI-owned Nix Firefox launches headed on the fixed nested socket, preserves Level 2 lease/capture/action ownership, and exposes compact attachment evidence | Deployed and proven through capture plus lease-bound action |
@@ -32,7 +32,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 active-surface scroll | Existing pointer authority accepts only one `up` or `down` wheel step at fixed output center, bound to the exact current frame, active numeric surface, inventory sequence, execution grant, peer receipt, audit, and post-frame | Deployed in `b6qjcbfc...`; normal production Observer proved both directions on fixture surface 2 |
 | Level 4 AI workspace single step | Explicit authenticated trigger builds server-owned structural workspace context, shares the standing DeepSeek call/token/cooldown budget, accepts only `no_op`/`scroll_up`/`scroll_down`, revalidates frame and active surface, and executes at most one existing scroll | Deployed in `6k51pmrglb...`; real DeepSeek selected and executed one frame/surface-bound `scroll_down` with durable audit |
 | Level 4 browser semantic grounding | Screen Sense projects at most 12 role/name/disabled/bounds items from an explicit metadata-plus-items Browser capture; Core locally binds Browser PID to the active Weston surface, sends no pixels/URL/input value/selector/target id/frame hash, and recaptures before at most one existing action | Deployed in `jricbfds...`; real DeepSeek selected `no_op`, no actuator ran, and scene hash plus durable audit matched |
-| Level 4 semantic item click | DeepSeek may select one 1-based scene ordinal; Core revalidates the scene and Screen Act privately maps that ordinal to the current Browser Runtime frame-bound semantic target, clicks once, then recaptures locally | Candidate `lb3mif3b...`; no target id/selector leaves the local actuator chain, and deployment/physical proof remain pending |
+| Level 4 semantic item click | DeepSeek may select one 1-based scene ordinal; Core revalidates the scene and Screen Act privately maps that ordinal to the current Browser Runtime frame-bound semantic target, clicks once, then recaptures locally | Deployed in `lb3mif3b...`; real contract-v1 gate returned `no_op`, so the click branch remains source/closure-proven but not yet provider-selected physically |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -387,7 +387,7 @@ metadata-plus-items contract and exact new closures. Its real gate bound one
 scene item, received DeepSeek `no_op`, performed no actuator call, matched durable
 egress/completion audit, and kept all nine health endpoints green.
 
-The eleventh slice is a source candidate, not yet a deployed claim. Response
+The eleventh slice is deployed in `lb3mif3b...`. Response
 contract v1 adds only `click_item` plus one 1-based `itemOrdinal`. Core rejects
 an out-of-range or disabled selection, recaptures the exact scene, and sends
 Screen Act only the scene hash, ordinal, and local Browser/frame bindings.
@@ -399,10 +399,16 @@ URL, input value, pixel, caller prompt, or provider reason. Keyboard/text input,
 arbitrary coordinates, repeated loops, page script, process/window APIs, root,
 and host mutation remain excluded.
 All 1016 workspace tests, full typecheck, 811-entry registry/script audits,
-Windows path budget, and store-native body closure checks pass. Candidate
+Windows path budget, and store-native body closure checks pass. Generation
 `/nix/store/lb3mif3bad9ss4g3r9y6rig7nwflkabr-nixos-system-nixos-26.05.4808.569d57850992`
 binds Core `5icv5idf...`, Browser Runtime `h7r2xvnz...`, and Screen Act
-`8cjlnkxn...`; it has not been switched.
+`8cjlnkxn...` and is active. After a deliberate Browser Runtime restart, the
+physical gate recovered it with idempotent `work_view.prepare`, bound one
+enabled `Learn more` item, consumed the third daily standing call, and received
+DeepSeek `no_op`. No actuator ran; scene/request hashes and durable egress plus
+completion audit matched. The next capability must bind a bounded server-owned
+task objective so a semantic click can be justified without accepting a caller
+prompt.
 
 ## Progress Estimate
 

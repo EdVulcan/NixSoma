@@ -62,23 +62,9 @@ if ! node -e '
     && graphical.browserAttachment?.attached === true
     && (browser.running ?? browser.browser?.running) === true ? 0 : 1);
 ' "$tmp_dir/state.json" "$tmp_dir/browser-state.json"; then
-  if node -e '
-    const fs = require("node:fs");
-    const workView = JSON.parse(fs.readFileSync(process.argv[1], "utf8")).workView ?? {};
-    const helper = workView.helperRuntime ?? {};
-    process.exit(helper.status === "active"
-      && helper.actionAuthority === "active"
-      && helper.leaseMatched === true
-      && workView.aiGraphicalSession?.browserAttachment?.attached === true ? 0 : 1);
-  ' "$tmp_dir/state.json"; then
-    post_json "$CORE_URL/capabilities/invoke" \
-      '{"capabilityId":"act.work_view.control","operation":"work_view.hide","params":{}}' \
-      > "$tmp_dir/authority-control.json"
-  else
-    post_json "$CORE_URL/capabilities/invoke" \
-      '{"capabilityId":"act.work_view.control","operation":"work_view.prepare","params":{"displayTarget":"workspace-2"}}' \
-      > "$tmp_dir/authority-control.json"
-  fi
+  post_json "$CORE_URL/capabilities/invoke" \
+    '{"capabilityId":"act.work_view.control","operation":"work_view.prepare","params":{"displayTarget":"workspace-2"}}' \
+    > "$tmp_dir/authority-control.json"
 fi
 
 for _ in $(seq 1 120); do

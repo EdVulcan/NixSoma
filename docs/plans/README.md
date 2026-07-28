@@ -277,16 +277,19 @@ contacted no actuator, matched durable egress/completion audit, and kept all
 nine health endpoints green.
 
 Freeze the deployed tenth slice. Its selected continuation now exists as an
-eleventh source candidate: the provider may return `click_item` with one
+deployed eleventh contract: the provider may return `click_item` with one
 1-based scene-item ordinal; Core recaptures and Screen Act privately resolves
 that ordinal to the existing current frame-bound semantic-click owner, executes
 once, and performs a local post-action capture. Target ids/selectors remain
 inside the actuator chain. Pixels/OCR, keyboard, text input, repeated loops,
 arbitrary process/window control, root, and host mutation remain excluded.
-Deployment and physical provider proof are still pending.
-The source candidate passes 1016 workspace tests, typecheck, exact body closure,
+Generation deployment and a real provider gate are complete.
+The deployed contract passes 1016 workspace tests, typecheck, exact body closure,
 811-entry registry/script audits, and Windows path budget. Physical generation
-`lb3mif3b...` is built but not switched.
+`lb3mif3b...` is active. A restart recovery gate bound one enabled semantic
+item and received safe `no_op`; the click branch was not physically selected.
+The next slice should bind one bounded server-owned task objective without
+accepting caller prompt text.
 
 ## Completed Capability Evidence
 

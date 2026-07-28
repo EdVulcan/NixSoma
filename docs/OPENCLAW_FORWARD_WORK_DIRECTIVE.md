@@ -2132,7 +2132,7 @@ restarts, no failed units, and no warning journals.
 
 Do not describe this as visual understanding: the deployed provider request has
 no image or OCR content. Freeze this structural action loop. Its bounded
-scene-content continuation is the separate source candidate below.
+scene-content continuation is the separately deployed checkpoint below.
 
 ## Completed Level 4 Browser Semantic Scene Grounding
 
@@ -2177,10 +2177,9 @@ frame-bound semantic-click target and executes at most once. Do not send target
 ids/selectors, add text input, keyboard authority, repeated loops, arbitrary
 page script, process/window APIs, root, or host mutation.
 
-## Level 4 Semantic Scene Click Source Candidate
+## Deployed Level 4 Semantic Scene Click Contract
 
-The eleventh vertical slice is implemented as a source candidate and must not
-yet be described as deployed or physically proven. Provider response contract
+The eleventh vertical slice is deployed in generation `lb3mif3b...`. Provider response contract
 v1 adds one `click_item` action whose `itemOrdinal` is a bounded 1-based index
 into the ordered provider scene; all other actions require a null ordinal.
 Core still accepts no caller prompt/action override and revalidates the exact
@@ -2206,11 +2205,25 @@ arbitrary coordinates, multiple actions, repeated loops, arbitrary page script,
 desktop/process/window APIs, root, and host mutation remain outside this slice.
 All 1016 workspace tests, full typecheck, the 811-entry registry/script audits,
 Windows path budget, and exact store-native body closure checks pass. Physical
-candidate
+generation
 `/nix/store/lb3mif3bad9ss4g3r9y6rig7nwflkabr-nixos-system-nixos-26.05.4808.569d57850992`
 binds Core `5icv5idf...`, Browser Runtime `h7r2xvnz...`, and Screen Act
-`8cjlnkxn...`. A physical switch and one real provider gate are still required
-before this section can become a completed checkpoint.
+`8cjlnkxn...`. The physical switch succeeded with all nine endpoints healthy,
+zero relevant restarts, and no warning journals. A deliberate Browser Runtime
+restart reproduced restored-but-stopped state; the gate now uses idempotent
+`work_view.prepare` instead of `hide`, recovered the browser, activated its
+surface, and completed a real contract-v1 DeepSeek call. DeepSeek returned
+`no_op`, so no actuator ran; scene/request hashes and durable egress/completion
+audit matched. The local click branch remains source/closure-proven but not yet
+provider-selected physically.
+
+Do not spend more provider calls trying to force a click. The current scene has
+one enabled `Learn more` link but no task objective, so conservative `no_op` is
+correct. The next real Level 4 slice is a bounded server-owned task-objective
+binding for the same single step. It must load an existing task locally, project
+only a short non-sensitive objective, preserve the no-caller-prompt boundary,
+and still stop after one action. Text input, arbitrary coordinates, loops,
+page script, process/window APIs, root, and host mutation remain excluded.
 
 ## Identity-Upgrade Alignment
 
