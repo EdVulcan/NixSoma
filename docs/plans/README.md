@@ -347,7 +347,14 @@ rematerializes an unchanged semantic decision against the fresh execution frame
 instead of requiring the excluded visual hash to remain equal. Screen Act still
 performs current-frame and private-target validation. All 1047 tests, typecheck,
 813-entry registry, 999-script audit, and exact 236-file Core closure `0lfjbf...`
-pass in candidate `hj1hmq...`. Only its switch and bounded-run rerun remain.
+pass in candidate `hj1hmq...`. That generation is active. The final physical
+gate made two task-bound provider calls and executed two governed `scroll_down`
+actions; both step completion events, continuation audit, and run-completion
+audit matched while all nine health endpoints stayed active. It retained no
+input text, exposed no plaintext canary, used the tmpfs browser profile, and did
+not repeat automatically. Semantic type, root persistence, fallback terminal
+audit, and the bounded run are physically complete. Freeze this lane and select
+the next vertical capability.
 
 ## Completed Capability Evidence
 

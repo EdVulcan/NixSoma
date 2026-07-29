@@ -2374,7 +2374,14 @@ fresh execution frame, after which Screen Act still enforces its current-frame
 and current-target checks. All 1047 tests, typecheck, registry and script audits,
 and exact 236-file Core closure `0lfjbf...` pass in system candidate
 `/nix/store/hj1hmq0brxgvgmv3scipzr9n47h9b0ld-nixos-system-nixos-26.05.4808.569d57850992`.
-Only deployment and the bounded-run rerun remain pending.
+That generation is now active. The final physical gate made two task-bound
+provider calls, executed two governed `scroll_down` actions, matched both
+single-step completion records plus continuation and run-completion audit, and
+stopped after the second step. All nine health endpoints remained active. The
+gate exposed no plaintext input, retained no input text, used the tmpfs browser
+profile, and performed no automatic repeat. The fourteenth Level 4 bounded-run
+slice is physically complete; freeze this lane and select the next vertical
+capability rather than adding another action or continuation variant.
 
 ## Identity-Upgrade Alignment
 
