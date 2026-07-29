@@ -2420,7 +2420,7 @@ the next vertical capability is explicit operator acceptance of a still-current
 verified `complete` assessment before the existing task owner may close that
 exact task. Provider output must never complete a task automatically.
 
-## Level 4 Assessment Acceptance Candidate
+## Level 4 Assessment Acceptance Physical Proof
 
 The sixteenth vertical Level 4 slice implements that operator boundary as
 `act.ai.workspace.accept_assessment`. It accepts only one reviewed task id,
@@ -2447,19 +2447,22 @@ reason remains absent.
 Observer exposes `Accept` only while the current authenticated task still owns
 the transient verified-complete receipt. All 1066 workspace tests, typecheck,
 815-entry registry, 1001-script audit, Windows path budget, exact 242-file Core
-closure `0fb60m...`, and 80-file Observer closure `7r0g23...` pass. Candidate
-`/nix/store/4rdhm51fm5ky585d1yv0sm27jgrpyi3l-nixos-system-nixos-26.05.4808.569d57850992`
-is built without activation. The registered physical gate will perform one real
-assessment and then prove one explicit acceptance with zero additional provider
-calls or workspace actions. Switch and physical acceptance remain pending.
+closure `0fb60m...`, and 80-file Observer closure `7r0g23...` pass. Generation
+`/nix/store/4bcxlk522vjfxjljqq3d4xkahpxh8vzp-nixos-system-nixos-26.05.4808.569d57850992`
+is active. The registered physical gate returned one scene-bound `complete`
+assessment with confidence 1 from one provider call over 11 items, then accepted
+the exact durable receipt with zero additional provider calls, zero actions,
+required authorization audit, task status `completed`, and no persisted provider
+reason. All nine service health endpoints remained active. This sixteenth Level
+4 slice is physically complete and frozen.
 
-That combined candidate also contains the default-off developer generation
+That deployed generation also contains the default-off developer generation
 switch module, explicitly enabled by the machine-specific desktop profile for
 `edvulcan`. Its generated sudoers file passed `visudo`, names the root-controlled
 system-profile link to one immutable Nix store helper, and grants no arbitrary
-shell or password transport. After this
-one candidate is manually activated, later reviewed prebuilt generations may be
-switched with `sudo -n nixsoma-dev-generation-switch <store-path>`.
+shell or password transport. The deployed helper uses the fixed root environment
+and `--no-reexec`; `sudo -n nixsoma-dev-generation-switch <store-path>` completed
+a real same-generation switch without requesting or transporting a password.
 
 ## Identity-Upgrade Alignment
 
@@ -2539,6 +2542,15 @@ fixed `nixos-rebuild switch --store-path --no-reexec` operation. It must be manu
 deployed once before `sudo -n nixsoma-dev-generation-switch <store-path>` is an
 available non-interactive route; it is an operator deployment mechanism, not a
 product capability or permission for arbitrary host mutation.
+
+GRUB's enabled `os-prober 1.84` currently emits four non-fatal `lsblk` warnings
+for `/dev/mapper/no*`, `block*`, `devices*`, and `found*`. The upstream dmraid
+branch splits the successful empty-array message `no block devices found` into
+four supposed RAID-set names and leaves unmatched partition globs literal.
+`/dev/mapper` contains only its normal control node, the real NVMe partitions
+are healthy, Windows Boot Manager is still found, and generation activation
+completes. Keep os-prober enabled while the operator needs the automatic Windows
+GRUB entry; treat these four missing mapper paths as known probe noise.
 
 ## Historical VM Agent Startup Checklist (Archived)
 

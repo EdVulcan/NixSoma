@@ -13,11 +13,11 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, and explicit assessment acceptance, plus the completed Level 3 baseline | Assessment is physically complete; operator acceptance is candidate-built and remains physically pending |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, and explicit assessment acceptance, plus the completed Level 3 baseline | Assessment and explicit operator acceptance are physically complete |
 | Local validation | 1066 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 815 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/5yfsg00fn3cslxfh18sf02z5q78pf4kx-nixos-system-nixos-26.05.4808.569d57850992` | One real task-bound assessment returned `complete` with confidence 1 while preserving zero action, zero task mutation, matching durable audit, and all nine healthy services |
-| Previous generation | `/nix/store/hj1hmq0brxgvgmv3scipzr9n47h9b0ld-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the read-only task-assessment deployment |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/4bcxlk522vjfxjljqq3d4xkahpxh8vzp-nixos-system-nixos-26.05.4808.569d57850992` | Exact assessment acceptance and the scoped developer generation switch are deployed and physically proven |
+| Previous generation | `/nix/store/4rdhm51fm5ky585d1yv0sm27jgrpyi3l-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the stable-path and `--no-reexec` developer switch correction |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
 | Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; approval-bound and standing-authorized provider calls have completed on the active host | Deployed development profile disables local cooldown and daily usage enforcement; provider billing remains external |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, production/default 15-minute cooldown and 3-call/4096-token daily limits, structured transient recommendation, and local fallback | Development profile is deployed without local call/token/cooldown enforcement; a real provider gate passed beyond the prior 3/3 state |
@@ -36,12 +36,12 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 semantic item type | DeepSeek may select one enabled textbox ordinal and return one bounded write-only value; Core and Screen Act retain only input length evidence while Screen Act resolves the private current target and types once | Deployed in `80lycg...`; public httpbin form executed ordinal 1 with 11-character evidence, and the root canary audit found no plaintext in five persistent roots or journal |
 | Level 4 bounded workspace run | One explicit operator trigger may execute a second fresh task-bound single step only after the first step is a receipt- and audit-verified scroll; click, type, no-op, fallback, unverified evidence, and the second step always terminate | Deployed in `hj1hmq...`; physical gate executed two governed scrolls from two provider calls with per-step, continuation, and run-completion audit |
 | Level 4 task assessment | One explicit task-bound provider call returns only complete/incomplete/blocked/unknown plus confidence after fresh task and semantic-scene revalidation; it performs no action, task mutation, or automatic continuation | Deployed in `5yfsg00f...`; physical gate returned `complete` with confidence 1 over 11 items and matched durable zero-mutation audit |
-| Level 4 assessment acceptance | One explicit operator command binds the exact persisted assessment invocation and objective/task-version/response/scene hashes to a still-current reviewed task, writes required authorization audit, then reuses the existing task completion owner | Source and exact closures pass in combined candidate `4rdhm51f...`; physical acceptance gate remains pending and provider output cannot close a task by itself |
+| Level 4 assessment acceptance | One explicit operator command binds the exact persisted assessment invocation and objective/task-version/response/scene hashes to a still-current reviewed task, writes required authorization audit, then reuses the existing task completion owner | Deployed in `4bcxlk52...`; physical gate completed the exact task with zero additional provider calls, zero actions, required audit, and no persisted provider reason |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
 | Privileged actions | Physical-host generation switch and governed provider egress are proven; real repair, hostd activation, and rollback | Remaining mutations deferred to explicit/disposable checks |
-| Developer deployment | Default-off immutable helper accepts one canonical, root-owned `nixos-system-nixos` closure through one explicit `edvulcan` sudoers rule | Combined candidate `4rdhm51f...` is built; one final password-authenticated switch is required before later switches can use `sudo -n` without password storage |
+| Developer deployment | Default-off immutable helper accepts one canonical, root-owned `nixos-system-nixos` closure through one explicit `edvulcan` sudoers rule | Deployed in `4bcxlk52...`; `sudo -n nixsoma-dev-generation-switch` completed a real same-generation switch without password transport |
 
 The current checkout is on the only available physical host
 (`systemd-detect-virt=none`). Historical VM results remain acceptance evidence,
@@ -552,11 +552,12 @@ reason stays absent. Observer enables `Accept` only for the current in-memory
 verified-complete receipt and clears it on task or authentication change. All
 1066 tests, typecheck, 815-entry registry, 1001-script audit, path budget,
 exact 242-file Core closure `0fb60m...`, and 80-file Observer closure `7r0g23...`
-pass. Candidate
-`/nix/store/4rdhm51fm5ky585d1yv0sm27jgrpyi3l-nixos-system-nixos-26.05.4808.569d57850992`
-is built without switching. The registered acceptance gate reuses one real
-assessment, performs no additional provider call or workspace action, and will
-verify the required audit plus exact task closure after deployment.
+pass. Generation
+`/nix/store/4bcxlk522vjfxjljqq3d4xkahpxh8vzp-nixos-system-nixos-26.05.4808.569d57850992`
+is active. The registered physical gate returned one scene-bound `complete`
+assessment from one provider call over 11 items, then accepted its exact receipt
+with zero additional provider calls, zero actions, required audit, and task
+status `completed`. No automatic continuation or provider reason persisted.
 
 ## Progress Estimate
 
@@ -567,7 +568,7 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 67%; semantic type, bounded run, and read-only task assessment are physically complete, while explicit assessment acceptance is candidate-built |
+| Level 4 graphics-stack-native body | about 67%; semantic type, bounded run, read-only task assessment, and explicit assessment acceptance are physically complete |
 | Current bounded product scope | 82-85% |
 | Final whitepaper vision | 50-58% |
 

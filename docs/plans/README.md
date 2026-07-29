@@ -387,10 +387,12 @@ the audit await, and delegates the terminal transition to the existing
 non-complete, forged, or replayed receipts stop before mutation. Observer keeps
 the receipt in memory and enables `Accept` only for the matching current task.
 All 1066 tests, typecheck, 815-entry registry, 1001-script audit, path budget,
-exact 242-file Core closure `0fb60m...`, 80-file Observer closure `7r0g23...`,
-and combined candidate `4rdhm51f...` pass. Switch and the registered physical acceptance
-gate remain pending; that gate will use one assessment and zero additional
-provider calls or workspace actions for acceptance.
+exact 242-file Core closure `0fb60m...` and 80-file Observer closure
+`7r0g23...` pass. Generation `4bcxlk52...` is active. The registered physical
+gate returned one `complete` assessment from one provider call, then accepted
+the exact receipt with zero additional provider calls, zero actions, required
+audit, task status `completed`, and no persisted provider reason. This lane is
+physically complete and frozen.
 
 ## Completed Capability Evidence
 
