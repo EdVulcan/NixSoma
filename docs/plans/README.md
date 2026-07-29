@@ -337,6 +337,17 @@ typecheck, exact 236-file Core and 80-file Observer
 closures, 813-entry registry, 999-script audit, path budget, body-config gate,
 and corrected Core/system candidate `9fiq5i...` pass. Only switch and the bounded
 run rerun remain pending; semantic type and root persistence proof are complete.
+That candidate is now active, and the rerun confirmed the provider-called
+fallback completion audit. The first step instead stopped with
+`execution_context_changed` because its private visual frame hash advanced
+during provider latency while the task binding, surface, Browser PID, inventory
+sequence, 11-item semantic scene, and semantic content hash stayed equal. Pixels
+and frame hashes are not projected to the provider, so the single-step owner now
+rematerializes an unchanged semantic decision against the fresh execution frame
+instead of requiring the excluded visual hash to remain equal. Screen Act still
+performs current-frame and private-target validation. All 1047 tests, typecheck,
+813-entry registry, 999-script audit, and exact 236-file Core closure `0lfjbf...`
+pass in candidate `hj1hmq...`. Only its switch and bounded-run rerun remain.
 
 ## Completed Capability Evidence
 

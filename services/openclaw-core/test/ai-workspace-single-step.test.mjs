@@ -642,15 +642,21 @@ test("AI workspace single-step rejects changed semantic content before actuator 
   assert.equal(calls.post.length, 0);
 });
 
-test("AI workspace single-step rejects a changed semantic frame before actuator contact", async () => {
-  const { owner, calls } = harness({ changedSemanticFrame: true });
+test("AI workspace single-step rebinds unchanged semantic content to the refreshed frame", async () => {
+  const { owner, calls } = harness({
+    actionId: "click_item",
+    itemOrdinal: 1,
+    changedSemanticFrame: true,
+  });
 
   const result = await owner.invoke({ taskId: TASK_ID });
 
-  assert.equal(result.status, "local_fallback");
-  assert.equal(result.fallback.reason, "ai_workspace_single_step_execution_context_changed");
+  assert.equal(result.status, "executed");
   assert.equal(result.governance.providerCalled, true);
-  assert.equal(calls.post.length, 0);
+  assert.equal(result.governance.semanticSceneBound, true);
+  assert.equal(calls.post.length, 1);
+  assert.equal(calls.post[0].body.semanticFrame.sha256, "d".repeat(64));
+  assert.equal(calls.post[0].body.semanticFrame.sequence, 8);
 });
 
 test("AI workspace single-step preserves provider egress evidence after response rejection", async () => {

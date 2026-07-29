@@ -2359,7 +2359,22 @@ workspace tests, full typecheck, 236-file Core closure
 `0g3av9...`, 80-file Observer closure `2nb3f44...`, 813-entry registry,
 999-script audit, Windows path budget, body-config gate, and combined candidate
 `/nix/store/9fiq5ixr1himr919h8k1ms5qs54ci34n-nixos-system-nixos-26.05.4808.569d57850992`
-pass. Only deployment and the corrected bounded-run rerun remain pending.
+pass. That candidate is now deployed. Its physical rerun proved the new
+provider-called fallback completion event, but the first decision stopped as
+`execution_context_changed`: provider latency changed the private visual frame
+hash even though the Browser surface, PID, inventory sequence, full semantic
+scene hash, and 11-item scene were unchanged.
+
+The provider receives the structural semantic scene, not pixels or the visual
+frame hash, so requiring that excluded hash to remain equal overbound execution
+to information the decision never used. Core now accepts visual-frame drift only
+while the same surface, Browser PID, inventory sequence, task binding, and full
+semantic scene content remain equal. It rematerializes the action against the
+fresh execution frame, after which Screen Act still enforces its current-frame
+and current-target checks. All 1047 tests, typecheck, registry and script audits,
+and exact 236-file Core closure `0lfjbf...` pass in system candidate
+`/nix/store/hj1hmq0brxgvgmv3scipzr9n47h9b0ld-nixos-system-nixos-26.05.4808.569d57850992`.
+Only deployment and the bounded-run rerun remain pending.
 
 ## Identity-Upgrade Alignment
 

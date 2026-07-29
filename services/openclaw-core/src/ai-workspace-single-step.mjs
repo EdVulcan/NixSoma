@@ -432,8 +432,7 @@ export function createAiWorkspaceSingleStep({
     if (executionContext.surface.surfaceId !== decisionContext.surface.surfaceId
       || executionContext.surface.pid !== decisionContext.surface.pid
       || executionContext.inventorySequence !== decisionContext.inventorySequence
-      || executionContext.scene.sceneContentSha256 !== decisionContext.scene.sceneContentSha256
-      || executionContext.scene.frame.sha256 !== decisionContext.scene.frame.sha256) {
+      || executionContext.scene.sceneContentSha256 !== decisionContext.scene.sceneContentSha256) {
       return finaliseFallback("execution_context_changed", {
         providerDecision,
         decisionContext,
