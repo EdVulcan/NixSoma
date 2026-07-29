@@ -158,6 +158,14 @@ test("browser engine adapter launches a bounded profile and delegates real page 
   assert.deepEqual(previousActivePage.typed, ["bounded input"]);
   assert.deepEqual(previousActivePage.clicked, [{ x: 10, y: 20 }]);
 
+  const closed = await adapter.closeCurrentTab();
+  assert.equal(closed.effect.status, "closed");
+  assert.equal(closed.effect.tabCountBefore, 4);
+  assert.equal(closed.effect.tabCountAfter, 3);
+  assert.equal(closed.effect.callerSelectedTab, false);
+  assert.equal(closed.snapshot.tabCount, 3);
+  assert.equal(fake.browser.pageList.some((page) => page.url() === "http://127.0.0.1/new-tab"), false);
+
   const frame = await adapter.captureVisualFrame();
   assert.equal(frame.available, true);
   assert.equal(frame.sourceScope, "ai_owned_active_page_only");
@@ -189,6 +197,21 @@ test("browser engine adapter launches a bounded profile and delegates real page 
   await adapter.close();
   assert.equal(disconnected, 1);
   assert.equal(existsSync(fake.profileDirectory), false);
+});
+
+test("browser engine adapter preserves the final current tab", async (t) => {
+  const fake = createFakePuppeteer(t);
+  const adapter = createBrowserEngineAdapter({
+    executablePath: fake.executablePath,
+    profileDirectory: fake.profileDirectory,
+    puppeteerApi: fake.puppeteerApi,
+    allowLocalFixtureUrls: true,
+  });
+
+  await adapter.open({ url: "http://127.0.0.1/only" });
+  await assert.rejects(adapter.closeCurrentTab(), /requires_multiple_tabs/u);
+  assert.equal((await adapter.snapshot()).tabCount, 1);
+  await adapter.close();
 });
 
 test("browser engine adapter delegates a headed nested-Wayland launch without widening capture", async (t) => {

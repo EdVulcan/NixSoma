@@ -23,6 +23,7 @@ import { createWorkspaceEditTargetCapabilityHandlers } from "./capability-runtim
 import { createWorkspaceMutationCapabilityHandlers } from "./capability-runtime-workspace-mutations.mjs";
 import { createScreenObservationCapabilityHandlers } from "./capability-runtime-screen.mjs";
 import { createBrowserActionCapabilityHandlers } from "./capability-runtime-browser-actions.mjs";
+import { createBrowserCurrentTabCloseCapabilityHandlers } from "./capability-runtime-browser-current-tab-close.mjs";
 import { createScreenActionCapabilityHandlers } from "./capability-runtime-screen-actions.mjs";
 import { createDeclarativeEvolutionCapabilityHandlers } from "./capability-runtime-declarative-evolution.mjs";
 import { createSystemdIncidentObservationCapabilityHandlers } from "./capability-runtime-systemd-incident-observation.mjs";
@@ -217,6 +218,10 @@ export function createCapabilityRuntime(deps) {
     fetchJson,
   });
   const browserActionHandlers = createBrowserActionCapabilityHandlers({
+    screenActUrl,
+    postJson,
+  });
+  const browserCurrentTabCloseHandlers = createBrowserCurrentTabCloseCapabilityHandlers({
     screenActUrl,
     postJson,
   });
@@ -654,6 +659,10 @@ export function createCapabilityRuntime(deps) {
     if (browserAction.handled) {
       return browserAction.result;
     }
+    const browserCurrentTabClose = await browserCurrentTabCloseHandlers.callBackend(capability, request);
+    if (browserCurrentTabClose.handled) {
+      return browserCurrentTabClose.result;
+    }
     const screenAction = await screenActionHandlers.callBackend(capability, request);
     if (screenAction.handled) {
       return screenAction.result;
@@ -973,6 +982,10 @@ export function createCapabilityRuntime(deps) {
     const browserActionSummary = browserActionHandlers.summariseResult(capability, result);
     if (browserActionSummary) {
       return browserActionSummary;
+    }
+    const browserCurrentTabCloseSummary = browserCurrentTabCloseHandlers.summariseResult(capability, result);
+    if (browserCurrentTabCloseSummary) {
+      return browserCurrentTabCloseSummary;
     }
     const screenActionSummary = screenActionHandlers.summariseResult(capability, result);
     if (screenActionSummary) {
@@ -1558,6 +1571,17 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: browserActionValidationError },
+      };
+    }
+    const browserCurrentTabCloseValidationError = browserCurrentTabCloseHandlers.validateRequest(
+      capability,
+      request,
+      body,
+    );
+    if (browserCurrentTabCloseValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: browserCurrentTabCloseValidationError },
       };
     }
     const screenActionValidationError = screenActionHandlers.validateRequest(capability, request);

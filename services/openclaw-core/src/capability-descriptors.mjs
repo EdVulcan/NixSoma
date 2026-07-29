@@ -1010,6 +1010,18 @@ export function buildBaseCapabilities({
       description: "Open target URLs inside the browser runtime body component.",
     },
     {
+      id: "act.browser.current_tab.close",
+      name: "AI Browser Current Tab Close",
+      kind: "actuator",
+      service: "openclaw-screen-act",
+      endpoint: `${screenActUrl}/act/browser/current-tab/close`,
+      intents: ["browser.current_tab.close"],
+      domains: ["user_task"],
+      risk: "medium",
+      governance: "allow",
+      description: "Close only the current AI-owned browser tab after explicit operator confirmation while preserving the final tab.",
+    },
+    {
       id: "act.screen.pointer_keyboard",
       name: "Pointer And Keyboard Action",
       kind: "actuator",

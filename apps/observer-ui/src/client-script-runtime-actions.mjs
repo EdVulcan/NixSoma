@@ -470,6 +470,34 @@ async function runBrowserOpenCapability(url) {
   await refreshWorkView();
 }
 
+async function runBrowserCurrentTabCloseCapability() {
+  const result = await fetchJson(observerConfig.coreUrl + "/capabilities/invoke", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      capabilityId: "act.browser.current_tab.close",
+      operation: "browser.current_tab.close",
+      params: { confirm: true },
+    }),
+  });
+  const summary = result.summary ?? {};
+  if (summary.browserRuntimeExecuted !== true
+    || summary.currentTabOnly !== true
+    || summary.noCallerTabSelection !== true
+    || summary.noAutomaticCleanup !== true
+    || summary.minimumTabPreserved !== true
+    || summary.noProcessOrWindowControl !== true) {
+    throw new Error("Current-tab close returned invalid governed evidence.");
+  }
+  setControlMessage(
+    "Current browser tab closed (" + summary.tabCountBefore + " -> " + summary.tabCountAfter + ")",
+  );
+  await refreshRuntime();
+  await refreshActionState();
+  await refreshScreen();
+  await refreshWorkView();
+}
+
 async function runMouseClickCapability(x, y) {
   const result = await fetchJson(observerConfig.coreUrl + "/capabilities/invoke", {
     method: "POST",

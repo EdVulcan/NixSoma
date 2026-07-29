@@ -20,6 +20,7 @@ import {
   unavailableWorkViewSemanticTargets,
 } from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
 import { buildWriteOnlyInputEvidence } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
+import { buildBrowserCurrentTabCloseEffect } from "../../../packages/shared-utils/src/browser-action-contract.mjs";
 import { isHttpUrl, validateBoundedBrowserUrl } from "./browser-navigation.mjs";
 
 const ENGINE_REGISTRY = "openclaw-browser-engine-adapter-v0";
@@ -284,6 +285,35 @@ export function createBrowserEngineAdapter({
     return snapshot();
   }
 
+  async function closeCurrentTab() {
+    if (!activePage || !browser?.connected) {
+      throw new Error("current_tab_close_browser_not_running");
+    }
+    const currentPage = activePage;
+    const before = await snapshot();
+    if (before.tabCount < 2) {
+      throw new Error("current_tab_close_requires_multiple_tabs");
+    }
+    if (activePage !== currentPage || !(await browser.pages()).includes(currentPage)) {
+      throw new Error("current_tab_close_active_page_changed");
+    }
+    await currentPage.close();
+    const remainingPages = await browser.pages();
+    const remainingVisiblePages = remainingPages.filter((page) => page.url() !== "about:blank");
+    activePage = remainingVisiblePages.at(-1) ?? remainingPages.at(-1) ?? null;
+    if (!activePage) throw new Error("current_tab_close_no_remaining_page");
+    await activePage.bringToFront();
+    invalidateVisualFrame();
+    const after = await snapshot();
+    return {
+      snapshot: after,
+      effect: buildBrowserCurrentTabCloseEffect({
+        tabCountBefore: before.tabCount,
+        tabCountAfter: after.tabCount,
+      }),
+    };
+  }
+
   async function type(text) {
     if (!activePage) throw new Error("Real browser engine has no active page.");
     await activePage.keyboard.type(String(text).slice(0, 2_000));
@@ -463,5 +493,17 @@ export function createBrowserEngineAdapter({
     return projectWorkViewSemanticTargets(semanticTargets);
   }
 
-  return { captureVisualFrame, click, clickSemanticTarget, close, newTab, open, semanticTargetInventory, snapshot, type, typeSemanticTarget };
+  return {
+    captureVisualFrame,
+    click,
+    clickSemanticTarget,
+    close,
+    closeCurrentTab,
+    newTab,
+    open,
+    semanticTargetInventory,
+    snapshot,
+    type,
+    typeSemanticTarget,
+  };
 }

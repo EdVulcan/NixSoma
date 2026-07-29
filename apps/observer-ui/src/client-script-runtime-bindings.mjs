@@ -358,6 +358,12 @@ newTabActionButton.addEventListener("click", () => {
   });
 });
 
+closeCurrentTabActionButton.addEventListener("click", () => {
+  runBrowserCurrentTabCloseCapability().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 healBrowserButton.addEventListener("click", () => {
   runHeal("openclaw-browser-runtime").catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

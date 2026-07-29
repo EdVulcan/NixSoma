@@ -1057,6 +1057,7 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-ocr-click.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-ocr-type.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-ocr-focus-type.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-browser-current-tab-close.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-assessment-acceptance.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-reviewed-cycle.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-plugin-refresh.mjs"
@@ -1096,9 +1097,10 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-frame.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-local-ocr.mjs"
+    || ! -f "$core_out/share/openclaw/packages/shared-utils/src/browser-action-contract.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-local-ocr.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 260 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 262 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -1238,7 +1240,8 @@ EOF
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/ai-local-ocr.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/execution-grants.mjs"
-    || "$(find "$session_manager_out" -type f | wc -l)" -ne 30 ]]; then
+    || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/browser-action-contract.mjs"
+    || "$(find "$session_manager_out" -type f | wc -l)" -ne 31 ]]; then
     echo "session-manager Nix closure is not exact and read-only: $session_manager_out" >&2
     exit 1
   fi
@@ -1341,14 +1344,16 @@ EOF
     || ! -f "$browser_runtime_server"
     || ! -f "$browser_runtime_working_dir/node_modules/puppeteer-core/package.json"
     || ! -f "$browser_runtime_working_dir/src/browser-semantic-action-evidence.mjs"
+    || ! -f "$browser_runtime_working_dir/src/browser-current-tab-lifecycle.mjs"
     || ! -f "$browser_runtime_working_dir/src/browser-capture-query.mjs"
     || ! -f "$browser_runtime_working_dir/src/browser-graphical-session-binding.mjs"
     || ! -f "$browser_runtime_out/share/openclaw/packages/shared-utils/src/work-view-input-evidence.mjs"
     || ! -f "$browser_runtime_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
+    || ! -f "$browser_runtime_out/share/openclaw/packages/shared-utils/src/browser-action-contract.mjs"
     || -w "$browser_runtime_server"
     || -e "$browser_runtime_working_dir/node_modules/@openclaw"
     || -e "$browser_runtime_working_dir/node_modules/typescript"
-    || "$browser_runtime_source_count" -ne 18 ]]; then
+    || "$browser_runtime_source_count" -ne 20 ]]; then
     echo "browser-runtime Nix closure is not exact, production-only, and read-only: $browser_runtime_out" >&2
     exit 1
   fi
@@ -1544,6 +1549,7 @@ EOF
     || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/work-view-input-evidence.mjs"
     || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/execution-grants.mjs"
     || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
+    || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/browser-action-contract.mjs"
     || -w "$screen_act_server"
     || -e "$screen_act_out/share/openclaw/packages/shared-utils/test/http.test.mjs"
     || ! -f "$screen_act_out/share/openclaw/services/openclaw-screen-act/src/ai-compositor-pointer-dispatch.mjs"
@@ -1551,7 +1557,7 @@ EOF
     || ! -f "$screen_act_out/share/openclaw/services/openclaw-screen-act/src/semantic-scene-type-dispatch.mjs"
     || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
     || ! -f "$screen_act_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
-    || "$(find "$screen_act_out" -type f | wc -l)" -ne 18 ]]; then
+    || "$(find "$screen_act_out" -type f | wc -l)" -ne 19 ]]; then
     echo "screen-act Nix closure is not exact and read-only: $screen_act_out" >&2
     exit 1
   fi
@@ -2016,6 +2022,9 @@ if (health.ok !== true
   || !client.includes("Clicked AI surface #")
   || !client.includes("write-only characters into AI surface")
   || !client.includes('capabilityId: "act.screen.pointer_keyboard"')
+  || !html.includes('id="close-current-tab-action-button"')
+  || !client.includes("act.browser.current_tab.close")
+  || !client.includes("browser.current_tab.close")
   || !html.includes('id="run-ai-workspace-local-ocr-button"')
   || !client.includes("sense.ai.workspace.local_ocr")
   || !client.includes("nixsoma-ai-workspace-local-ocr-v0")

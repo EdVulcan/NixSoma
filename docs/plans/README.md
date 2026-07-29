@@ -566,7 +566,28 @@ execution-evidence plaintext. OCR type and OCR click regressions passed. This
 lane is physically complete and frozen. The next real capability is a governed
 current-tab close/lifecycle owner inside the AI-owned browser, with arbitrary
 tab selection, process/window control, automatic cleanup, and desktop takeover
-still excluded.
+still excluded. That local source candidate is completed below.
+
+The twenty-fifth Level 4 source capability is
+`act.browser.current_tab.close`. The operator supplies only the exact operation
+and `confirm=true`; Core grants one fixed Screen Act request, and Screen Act plus
+the trusted sidecar use one shared Browser Runtime route descriptor. The real
+engine closes only `activePage`, refuses to close the final tab, moves to one
+remaining page, invalidates the old frame, persists the reduced tab intent, and
+returns only a one-tab count delta. Caller tab ids/indices/URLs, automatic
+cleanup or repeat, process/window control, provider calls, desktop takeover,
+and host mutation are excluded.
+
+All 1178 tests, typecheck, both capability-invoke service gates, the Screen Act
+grant attack regression, Observer build, and body-config pass. Store closure
+counts are Core 262, Session Manager 31,
+Browser Runtime 20, Screen Act 19, and Observer 87. The active physical
+generation remains `4mw7p3r3...`; this candidate is locally complete but not
+deployed. Physical candidate `rmpl42askkpkr0rhls9fzilw2mf0p634...` was built
+from the authoritative host configuration and passed the physical marker plus
+protected-path preflight. The next required gate is explicitly authorized
+guarded activation and real Firefox current-tab close proof, not another
+horizontal browser action.
 
 ## Completed Capability Evidence
 

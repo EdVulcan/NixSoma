@@ -13,8 +13,8 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, one-shot operator-authenticated projected click and bounded native type, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click, objective-bound OCR type, fixed OCR focus-then-type, and an explicit bounded run-plus-assessment cycle, plus the completed Level 3 baseline | The twenty-fourth Level 4 slice is physically complete |
-| Local validation | 1169 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1010-file script audit pass; 823 registry entries pass | Validated |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, one-shot operator-authenticated projected click and bounded native type, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click, objective-bound OCR type, fixed OCR focus-then-type, governed current-tab close, and an explicit bounded run-plus-assessment cycle, plus the completed Level 3 baseline | The twenty-fourth Level 4 slice is physically complete; the twenty-fifth is locally validated pending physical activation |
+| Local validation | 1178 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1010-file script audit pass; 823 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/4mw7p3r3amcfp48njvjz20zpykf14qcw-nixos-system-nixos-26.05.4808.569d57850992` | Fixed OCR focus-then-type and narrow operator credential access are deployed and physically proven |
 | Previous generation | `/nix/store/yzqrwjh514yd4kz8n22llap2fiikzv67-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the final operator-token directory traversal ACL correction |
@@ -737,6 +737,33 @@ for the AI-owned browser so repeated work cannot exhaust Browser Runtime;
 arbitrary tab selection, process/window control, automatic cleanup, and desktop
 takeover remain deferred.
 
+The twenty-fifth Level 4 source capability is
+`act.browser.current_tab.close`. An authenticated operator request may contain
+only the capability id, `operation=browser.current_tab.close`, and
+`params.confirm=true`. Core issues one execution grant for the fixed Screen Act
+route; Screen Act and the trusted sidecar resolve the same shared Browser
+Runtime endpoint. Browser Runtime closes only its engine-owned active page,
+switches to one remaining page, invalidates the old frame, persists the reduced
+workspace intent, and returns only an exact tab-count delta. The final tab is
+preserved. Caller tab ids, indices, URLs, automatic cleanup/repeat,
+process/window control, desktop takeover, provider calls, and host mutation are
+excluded.
+
+All 1178 workspace tests and typecheck pass. Both capability-invoke service
+gates close one tab through Core and Screen Act, the authenticated Browser
+Runtime subprocess rejects caller target fields and a final-tab close, and the
+Screen Act route subprocess rejects missing, wrong-audience, wrong-path,
+body-changed, caller-targeted, and replayed grants. The store-native body check
+proves exact 262-file Core, 31-file Session Manager,
+20-file Browser Runtime, 19-file Screen Act, and 87-file Observer closures.
+Generation `4mw7p3r3...` remains active and does not contain this source slice;
+no generation switch or reboot was performed. Physical candidate
+`/nix/store/rmpl42askkpkr0rhls9fzilw2mf0p634-nixos-system-nixos-26.05.4808.569d57850992`
+was built from the authoritative host configuration and passed the
+`bootIsContainer=false` marker plus kernel/initrd/fstab/GDM/NetworkManager/SSH
+path comparison. The next gate is separately authorized guarded activation and
+real Firefox current-tab close proof before this lane is called deployed.
+
 ## Progress Estimate
 
 These figures are capability-maturity estimates, not test coverage:
@@ -746,7 +773,7 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 85%; one-shot projected operator click, bounded native operator type, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, same-surface OCR click, objective-bound OCR type, and fixed OCR focus-then-type are physically complete |
+| Level 4 graphics-stack-native body | about 85%; one-shot projected operator click, bounded native operator type, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, same-surface OCR click, objective-bound OCR type, and fixed OCR focus-then-type are physically complete; governed current-tab close is locally validated pending physical activation |
 | Current bounded product scope | 84-87% |
 | Final whitepaper vision | 52-60% |
 

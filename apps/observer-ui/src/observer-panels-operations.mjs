@@ -31,6 +31,7 @@ export function observerOperationsPanels() {
               <button id="click-action-button" class="secondary">Simulate Click</button>
               <button id="type-action-button" class="secondary">Simulate Type</button>
               <button id="new-tab-action-button" class="secondary">Open New Tab</button>
+              <button id="close-current-tab-action-button" class="secondary">Close Current Tab</button>
               <button id="heal-browser-button" class="secondary">Simulate Browser Restart</button>
               <button id="run-maintenance-button" class="secondary">Run Maintenance Tick</button>
               <button id="complete-task-button" class="secondary">Complete Current Task</button>

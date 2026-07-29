@@ -63,6 +63,7 @@ cleanup() {
     "${WORK_VIEW_FILE:-}" \
     "${WORK_VIEW_CONTROL_FILE:-}" \
     "${BROWSER_OPEN_FILE:-}" \
+    "${BROWSER_CLOSE_FILE:-}" \
     "${SCREEN_KEYBOARD_FILE:-}" \
     "${SCREEN_POINTER_FILE:-}" \
     "${SYSTEM_HEAL_FILE:-}" \
@@ -108,6 +109,7 @@ WORKSPACE_PATCH_APPLY_FILE="$(mktemp)"
 WORK_VIEW_FILE="$(mktemp)"
 WORK_VIEW_CONTROL_FILE="$(mktemp)"
 BROWSER_OPEN_FILE="$(mktemp)"
+BROWSER_CLOSE_FILE="$(mktemp)"
 SCREEN_KEYBOARD_FILE="$(mktemp)"
 SCREEN_POINTER_FILE="$(mktemp)"
 SYSTEM_HEAL_FILE="$(mktemp)"
@@ -142,6 +144,7 @@ post_json "$CORE_URL/capabilities/invoke" "{\"capabilityId\":\"act.openclaw.work
 post_json "http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/observer-capability-work-view"}' > /dev/null
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.work_view.control","operation":"work_view.reveal","params":{"entryUrl":"https://example.com/observer-capability-work-view"}}' > "$WORK_VIEW_CONTROL_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.browser.open","operation":"browser.new_tab","params":{"url":"https://example.com/observer-capability-browser-action"}}' > "$BROWSER_OPEN_FILE"
+post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.browser.current_tab.close","operation":"browser.current_tab.close","params":{"confirm":true}}' > "$BROWSER_CLOSE_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.screen.pointer_keyboard","operation":"keyboard.type","params":{"text":"transient observer capability input"}}' > "$SCREEN_KEYBOARD_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.screen.pointer_keyboard","operation":"mouse.click","params":{"x":640,"y":360,"button":"left"}}' > "$SCREEN_POINTER_FILE"
 post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.system.heal","operation":"heal.restart-service","params":{"service":"openclaw-browser-runtime","mode":"simulated"}}' > "$SYSTEM_HEAL_FILE"
@@ -188,7 +191,8 @@ node - <<'EOF' \
   "$MAINTENANCE_FILE" \
   "$LSP_SELECTED_TARGET_READ_FILE" \
   "$ENGINEERING_TOOL_SURFACE_FILE" \
-  "$ENGINEERING_VERIFY_TASK_FILE"
+  "$ENGINEERING_VERIFY_TASK_FILE" \
+  "$BROWSER_CLOSE_FILE"
 const fs = require("node:fs");
 const html = fs.readFileSync(process.argv[2], "utf8");
 const client = fs.readFileSync(process.argv[3], "utf8");
@@ -222,6 +226,7 @@ const maintenance = JSON.parse(fs.readFileSync(process.argv[30], "utf8"));
 const lspSelectedTargetRead = JSON.parse(fs.readFileSync(process.argv[31], "utf8"));
 const engineeringToolSurface = JSON.parse(fs.readFileSync(process.argv[32], "utf8"));
 const engineeringVerifyTask = JSON.parse(fs.readFileSync(process.argv[33], "utf8"));
+const browserClose = JSON.parse(fs.readFileSync(process.argv[34], "utf8"));
 
 for (const token of [
   "invoke-vitals-button",
@@ -241,6 +246,8 @@ for (const token of [
   "workspace-text-write-task-button",
   "workspace-patch-apply-task-button",
   "new-tab-action-button",
+  "close-current-tab-action-button",
+  "Close Current Tab",
   "type-action-button",
   "click-action-button",
 ]) {
@@ -276,6 +283,9 @@ for (const token of [
   "runBrowserOpenCapability",
   "act.browser.open",
   "browser.new_tab",
+  "runBrowserCurrentTabCloseCapability",
+  "act.browser.current_tab.close",
+  "browser.current_tab.close",
   "runKeyboardTypeCapability",
   "act.screen.pointer_keyboard",
   "keyboard.type",
@@ -545,6 +555,34 @@ if (
   || JSON.stringify(browserOpen).includes("observer-capability-browser-action")
 ) {
   throw new Error("Observer browser new-tab capability should use the existing screen-act owner with compact evidence");
+}
+if (
+  !browserClose.ok
+  || browserClose.invoked !== true
+  || browserClose.capability?.id !== "act.browser.current_tab.close"
+  || browserClose.policy?.subject?.intent !== "browser.current_tab.close"
+  || browserClose.invocation?.request?.intent !== "browser.current_tab.close"
+  || browserClose.result?.registry !== "openclaw-browser-current-tab-close-capability-v0"
+  || browserClose.result?.action?.mediation?.effect?.registry !== "openclaw-browser-current-tab-close-v0"
+  || browserClose.result?.governance?.currentTabOnly !== true
+  || browserClose.result?.governance?.callerTabSelection !== false
+  || browserClose.result?.governance?.automaticCleanup !== false
+  || browserClose.summary?.kind !== "browser.current_tab.close"
+  || browserClose.summary?.browserRuntimeExecuted !== true
+  || !Number.isInteger(browserClose.summary?.tabCountBefore)
+  || browserClose.summary.tabCountBefore < 2
+  || browserClose.summary?.tabCountAfter !== browserClose.summary.tabCountBefore - 1
+  || browserClose.summary.tabCountAfter < 1
+  || browserClose.summary?.minimumTabPreserved !== true
+  || browserClose.summary?.noCallerTabSelection !== true
+  || browserClose.summary?.noAutomaticCleanup !== true
+  || browserClose.summary?.noProcessOrWindowControl !== true
+  || browserClose.summary?.noPayloadExposure !== true
+  || browserClose.summary?.noProviderEgress !== true
+  || JSON.stringify(browserClose).includes("observer-capability-browser-action")
+  || JSON.stringify(browserClose).includes("tabId")
+) {
+  throw new Error("Observer current-tab close should use the fixed owner chain with compact evidence");
 }
 if (
   !screenKeyboard.ok

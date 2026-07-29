@@ -47,8 +47,9 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
-triage/repair-promotion bridge, and twenty-four deployed Level 4 graphical
-identity slices through one fixed OCR focus-then-type interaction. One
+triage/repair-promotion bridge, twenty-four deployed Level 4 graphical
+identity slices through one fixed OCR focus-then-type interaction, and one
+locally validated current-tab close candidate pending physical activation. One
 explicit operator trigger can request a schema-bound no-op, vertical scroll,
 semantic click, or write-only semantic type decision over bounded active-browser
 content and execute at most one existing action; separate explicit reads can
@@ -56,7 +57,7 @@ return bounded transient local OCR or one read-only provider assessment without
 pixel egress. Direct operator interaction also includes one armed projected
 click and one write-only 1-32 character native type; one reviewed task may
 also request that one objective-selected OCR item be focused and receive its
-exact allowlisted objective value through a fixed two-action sequence. All 1169 workspace tests
+exact allowlisted objective value through a fixed two-action sequence. All 1178 workspace tests
 and typecheck pass, the body-config and event-audit integration checks pass, the
 823-entry milestone registry and 1010-file script audit pass, and
 the Windows path budget has no file over 160 repository-relative characters.
@@ -2768,7 +2769,39 @@ the built candidate before switching. Freeze this focus-and-type lane. The next
 real candidate is a governed current-tab close/lifecycle owner for the AI-owned
 browser, motivated by the physically observed tab accumulation and BiDi timeout;
 arbitrary tab selection, automatic background cleanup, process/window control,
-and desktop takeover remain deferred.
+and desktop takeover remain deferred. That source candidate is completed below.
+
+## Local Level 4 Browser Current Tab Close Candidate
+
+The twenty-fifth Level 4 source capability is
+`act.browser.current_tab.close`. Its public request accepts only the capability
+id, the exact `browser.current_tab.close` operation, and `params.confirm=true`.
+Core sends an empty grant-bound action to one fixed Screen Act endpoint. Screen
+Act and the trusted sidecar derive their Browser Runtime routes from one shared
+descriptor, so no caller can provide a tab id, index, URL, selector, or alternate
+endpoint.
+
+The real engine closes only its current `activePage`, requires at least two
+tabs, selects one remaining page, brings it forward, invalidates prior visual
+evidence, and persists the reduced workspace intent. Success requires an exact
+`tabCountAfter = tabCountBefore - 1` receipt with at least one tab preserved.
+Evidence contains no page id or URL. Automatic cleanup/repeat, browser process
+or window control, desktop takeover, provider calls, task mutation, and host
+mutation remain false.
+
+All 1178 workspace tests and typecheck pass. The Core and Observer
+capability-invoke gates exercise the full user-space service chain; an
+authenticated Browser Runtime child proves target-field rejection, one close,
+and final-tab preservation. A Screen Act child rejects missing, wrong-audience,
+wrong-path, body-changed, caller-targeted, and replayed grants. Body-config
+proves exact 262-file Core, 31-file
+Session Manager, 20-file Browser Runtime, 19-file Screen Act, and 87-file
+Observer store closures. The physical host still runs `4mw7p3r3...`; this
+candidate has not been activated and no reboot was performed. Authoritative
+physical candidate `rmpl42askkpkr0rhls9fzilw2mf0p634...` passed the physical
+marker and protected kernel/initrd/fstab/GDM/NetworkManager/SSH path preflight.
+Freeze feature growth here until an explicitly authorized guarded switch and
+real Firefox close receipt complete the deployment gate.
 
 ## Identity-Upgrade Alignment
 

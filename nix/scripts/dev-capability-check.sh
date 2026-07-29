@@ -29,6 +29,10 @@ cleanup() {
 }
 trap cleanup EXIT
 
+OPENCLAW_POST_JSON_DATA_FLAG="-d"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
+
 "$SCRIPT_DIR/dev-up.sh"
 
 HTML_FILE="$(mktemp)"
@@ -55,7 +59,7 @@ EOF
 
 capabilities="$(curl --silent --fail "$CORE_URL/capabilities")"
 summary="$(curl --silent --fail "$CORE_URL/capabilities/summary")"
-refresh="$(curl --silent --fail -X POST "$CORE_URL/capabilities/refresh")"
+refresh="$(post_json "$CORE_URL/capabilities/refresh" '{}')"
 audit="$(curl --silent --fail "$EVENT_HUB_URL/events/audit?type=capability.updated&source=openclaw-core&limit=5")"
 
 node - <<'EOF' "$capabilities" "$summary" "$refresh" "$audit"
@@ -78,6 +82,7 @@ for (const id of [
   "memory.event.audit",
   "act.work_view.control",
   "act.browser.open",
+  "act.browser.current_tab.close",
   "act.screen.pointer_keyboard",
   "act.system.heal",
   "govern.policy.evaluate",
@@ -97,6 +102,11 @@ if (byId["act.system.heal"].domains?.[0] !== "body_internal" || byId["act.system
 }
 if (byId["act.browser.open"].risk !== "medium" || !byId["act.browser.open"].intents?.includes("browser.open")) {
   throw new Error("browser open capability should carry medium-risk browser.open intent");
+}
+if (byId["act.browser.current_tab.close"].risk !== "medium"
+  || byId["act.browser.current_tab.close"].governance !== "allow"
+  || JSON.stringify(byId["act.browser.current_tab.close"].intents) !== JSON.stringify(["browser.current_tab.close"])) {
+  throw new Error("browser current-tab close should expose one fixed medium-risk intent");
 }
 
 const requiredKinds = ["sensor", "actuator", "governance", "memory", "operator", "boundary"];
@@ -140,6 +150,10 @@ console.log(JSON.stringify({
     browserOpen: {
       risk: byId["act.browser.open"].risk,
       governance: byId["act.browser.open"].governance,
+    },
+    browserCurrentTabClose: {
+      risk: byId["act.browser.current_tab.close"].risk,
+      governance: byId["act.browser.current_tab.close"].governance,
     },
     crossBoundary: {
       risk: byId["boundary.cross_domain.approval"].risk,

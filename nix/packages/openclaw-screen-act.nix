@@ -17,6 +17,7 @@ mkOpenClawSourceClosure {
     ../../packages/shared-events/src/event-factory.mjs
     ../../packages/shared-events/src/event-names.mjs
     ../../packages/shared-utils/package.json
+    ../../packages/shared-utils/src/browser-action-contract.mjs
     ../../packages/shared-utils/src/http.mjs
     ../../packages/shared-utils/src/service-credentials.mjs
     ../../packages/shared-utils/src/execution-grants.mjs

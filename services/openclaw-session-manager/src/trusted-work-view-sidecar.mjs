@@ -7,6 +7,7 @@ import {
 } from "./trusted-work-view-sidecar-channel.mjs";
 import { createServiceCredentialHeaders } from "../../../packages/shared-utils/src/service-credentials.mjs";
 import { projectWorkViewVisualFrame } from "../../../packages/shared-utils/src/work-view-visual-frame.mjs";
+import { browserActionDescriptor } from "../../../packages/shared-utils/src/browser-action-contract.mjs";
 
 const HEARTBEAT_REGISTRY = "openclaw-trusted-work-view-sidecar-heartbeat-v0";
 const socketPath = process.env.OPENCLAW_SIDECAR_SOCKET_PATH ?? null;
@@ -257,7 +258,7 @@ async function executeBrowserAction(message) {
     ? "/browser/input"
     : message.kind === "mouse.click"
       ? "/browser/click"
-      : message.kind === "browser.new_tab" ? "/browser/new-tab" : null;
+      : browserActionDescriptor(message.kind)?.runtimeEndpoint ?? null;
   if (!endpoint) {
     send("action_result", { requestId: message.requestId, result: { ok: false, reason: "unsupported_action" } });
     return;

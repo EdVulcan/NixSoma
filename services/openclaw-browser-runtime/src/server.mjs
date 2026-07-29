@@ -17,7 +17,9 @@ import {
 } from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
 import { projectBrowserSemanticActionEvidence } from "./browser-semantic-action-evidence.mjs";
 import { buildWriteOnlyInputEvidence } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
+import { BROWSER_CURRENT_TAB_CLOSE_ACTION } from "../../../packages/shared-utils/src/browser-action-contract.mjs";
 import { normaliseBoundedBrowserUrl, validateBoundedBrowserUrl } from "./browser-navigation.mjs";
+import { createBrowserCurrentTabCloseRoute } from "./browser-current-tab-lifecycle.mjs";
 import { createBrowserWorkspaceStore } from "./browser-workspace-store.mjs";
 import { createBrowserEngineAdapter } from "./browser-engine-adapter.mjs";
 import { createBrowserGraphicalSessionBinding } from "./browser-graphical-session-binding.mjs";
@@ -344,6 +346,17 @@ function buildBrowserCapture(
   };
 }
 
+const handleBrowserCurrentTabClose = createBrowserCurrentTabCloseRoute({
+  browserState,
+  getBrowserEngine: () => browserEngine,
+  validateBrowserActionMediation,
+  applyEngineSnapshot,
+  updateBrowserState,
+  persistWorkspace: () => workspaceStore.persist(browserState),
+  serialiseBrowserState,
+  publishEvent,
+});
+
 const server = http.createServer(async (req, res) => {
   const requestUrl = new URL(req.url ?? "/", `http://${req.headers.host ?? `${host}:${port}`}`);
 
@@ -496,6 +509,11 @@ const server = http.createServer(async (req, res) => {
       const message = error instanceof Error ? error.message : "Unknown error";
       sendJson(res, 400, { ok: false, error: message });
     }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === BROWSER_CURRENT_TAB_CLOSE_ACTION.runtimeEndpoint) {
+    await handleBrowserCurrentTabClose(req, res);
     return;
   }
 

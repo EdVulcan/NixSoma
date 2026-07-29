@@ -121,6 +121,51 @@ test("browser runtime protects state and returns the helper lease only to authen
   assert.equal(opened.status, 201);
   assert.equal((await opened.json()).browser.trustedHelperLease.leaseId, trustedHelperLease.leaseId);
 
+  const actionHeaders = {
+    ...headers,
+    authorization: `Bearer ${otherToken}`,
+    "x-openclaw-service-caller": "openclaw-screen-act",
+  };
+  const newTab = await fetch(`${baseUrl}/browser/new-tab`, {
+    method: "POST",
+    headers: actionHeaders,
+    body: JSON.stringify({ url: "https://example.com/second", trustedHelperLease }),
+  });
+  assert.equal(newTab.status, 201);
+  assert.equal((await newTab.json()).browser.tabs.length, 2);
+
+  const callerSelectedClose = await fetch(`${baseUrl}/browser/current-tab/close`, {
+    method: "POST",
+    headers: actionHeaders,
+    body: JSON.stringify({ tabId: "caller-selected-tab", trustedHelperLease }),
+  });
+  assert.equal(callerSelectedClose.status, 400);
+  assert.equal((await callerSelectedClose.json()).error, "current_tab_close_rejects_caller_target");
+
+  const closed = await fetch(`${baseUrl}/browser/current-tab/close`, {
+    method: "POST",
+    headers: actionHeaders,
+    body: JSON.stringify({ trustedHelperLease }),
+  });
+  const closedBody = await closed.json();
+  assert.equal(closed.status, 200);
+  assert.equal(closedBody.effect.status, "closed");
+  assert.equal(closedBody.effect.tabCountBefore, 2);
+  assert.equal(closedBody.effect.tabCountAfter, 1);
+  assert.equal(closedBody.effect.callerSelectedTab, false);
+  assert.equal(closedBody.browser.tabs.length, 1);
+
+  const finalTabClose = await fetch(`${baseUrl}/browser/current-tab/close`, {
+    method: "POST",
+    headers: actionHeaders,
+    body: JSON.stringify({ trustedHelperLease }),
+  });
+  const finalTabCloseBody = await finalTabClose.json();
+  assert.equal(finalTabClose.status, 409);
+  assert.equal(finalTabCloseBody.error, "current_tab_close_requires_multiple_tabs");
+  const stateAfterBlockedClose = await fetch(`${baseUrl}/browser/state`, { headers });
+  assert.equal((await stateAfterBlockedClose.json()).browser.tabs.length, 1);
+
   const rebound = await fetch(`${baseUrl}/browser/trusted-helper-lease`, {
     method: "POST",
     headers,

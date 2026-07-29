@@ -1816,6 +1816,79 @@ test("capability runtime dispatches browser new-tab through screen-act with a bo
   assert.equal(events.at(-1)?.name, "capability.invoked");
 });
 
+test("capability runtime closes only the current browser tab after explicit confirmation", async () => {
+  const { runtime, state, events, calls } = createHarness({
+    postJsonResult: {
+      ok: true,
+      action: {
+        kind: "browser.current_tab.close",
+        result: "executed-browser-runtime",
+        degraded: false,
+        params: {},
+        mediation: {
+          attempted: true,
+          accepted: true,
+          status: "accepted",
+          reason: null,
+          leaseMatched: true,
+          transport: "trusted-sidecar-ipc",
+          effect: {
+            registry: "openclaw-browser-current-tab-close-v0",
+            operation: "browser.current_tab.close",
+            status: "closed",
+            tabCountBefore: 4,
+            tabCountAfter: 3,
+            currentTabClosed: true,
+            activeTabChanged: true,
+            lastTabPreserved: true,
+            callerSelectedTab: false,
+            automaticCleanup: false,
+            browserProcessControlled: false,
+            browserWindowControlled: false,
+            desktopTakeover: false,
+          },
+        },
+      },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.browser.current_tab.close",
+    operation: "browser.current_tab.close",
+    params: { confirm: true },
+  });
+
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.capability.id, "act.browser.current_tab.close");
+  assert.equal(result.response.policy.input.intent, "browser.current_tab.close");
+  assert.equal(result.response.invocation.request.intent, "browser.current_tab.close");
+  assert.equal(result.response.summary.kind, "browser.current_tab.close");
+  assert.equal(result.response.summary.browserRuntimeExecuted, true);
+  assert.equal(result.response.summary.tabCountBefore, 4);
+  assert.equal(result.response.summary.tabCountAfter, 3);
+  assert.equal(result.response.summary.minimumTabPreserved, true);
+  assert.equal(result.response.summary.noCallerTabSelection, true);
+  assert.equal(result.response.summary.noAutomaticCleanup, true);
+  assert.equal(result.response.summary.noProcessOrWindowControl, true);
+  assert.equal(result.response.summary.noPayloadExposure, true);
+  assert.equal(result.response.summary.noProviderEgress, true);
+  assert.deepEqual(calls.postJson, [{
+    url: "http://127.0.0.1:4105/act/browser/current-tab/close",
+    body: {},
+  }]);
+  assert.equal(state.capabilityInvocationLog.at(-1)?.request.intent, "browser.current_tab.close");
+  assert.equal(events.at(-1)?.name, "capability.invoked");
+
+  const rejected = await runtime.invokeCapability({
+    capabilityId: "act.browser.current_tab.close",
+    operation: "browser.current_tab.close",
+    params: { confirm: true, tabId: "caller-selected-tab" },
+  });
+  assert.equal(rejected.statusCode, 400);
+  assert.match(rejected.response.error, /accepts only/u);
+});
+
 test("capability runtime dispatches bounded keyboard type through screen-act without persisting input", async () => {
   const input = "transient-capability-input";
   const { runtime, state, events, calls } = createHarness({

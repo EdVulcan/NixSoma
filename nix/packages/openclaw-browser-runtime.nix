@@ -15,6 +15,7 @@ mkOpenClawNpmRuntimeClosure {
     ../../services/openclaw-browser-runtime/package.json
     ../../services/openclaw-browser-runtime/package-lock.json
     ../../services/openclaw-browser-runtime/src/browser-engine-adapter.mjs
+    ../../services/openclaw-browser-runtime/src/browser-current-tab-lifecycle.mjs
     ../../services/openclaw-browser-runtime/src/browser-semantic-action-evidence.mjs
     ../../services/openclaw-browser-runtime/src/browser-capture-query.mjs
     ../../services/openclaw-browser-runtime/src/browser-graphical-session-binding.mjs
@@ -25,6 +26,7 @@ mkOpenClawNpmRuntimeClosure {
     ../../packages/shared-events/src/event-factory.mjs
     ../../packages/shared-events/src/event-names.mjs
     ../../packages/shared-utils/package.json
+    ../../packages/shared-utils/src/browser-action-contract.mjs
     ../../packages/shared-utils/src/http.mjs
     ../../packages/shared-utils/src/service-credentials.mjs
     ../../packages/shared-utils/src/work-view-input-evidence.mjs

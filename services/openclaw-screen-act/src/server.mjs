@@ -5,6 +5,10 @@ import { buildTrustedWorkViewActionLease } from "./trusted-work-view-action-medi
 import { normaliseWorkViewSemanticTargetReference } from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
 import { redactWriteOnlyInputParams } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 import {
+  BROWSER_CURRENT_TAB_CLOSE_ACTION,
+  browserActionDescriptor,
+} from "../../../packages/shared-utils/src/browser-action-contract.mjs";
+import {
   EXECUTION_GRANT_HEADER,
   assertExecutionGrant,
   createExecutionGrantVerifier,
@@ -191,7 +195,7 @@ async function executeBrowserAction(kind, params, screen, context = {}) {
     ? "/browser/click"
     : kind === "keyboard.type"
       ? "/browser/input"
-      : kind === "browser.new_tab" ? "/browser/new-tab" : null;
+      : browserActionDescriptor(kind)?.runtimeEndpoint ?? null;
   if (kind === "mouse.scroll" && hasAiCompositorFrameBinding(params)) {
     const leaseContext = buildTrustedWorkViewActionLease(screen);
     if (!leaseContext.ready) {
@@ -252,10 +256,12 @@ async function executeBrowserAction(kind, params, screen, context = {}) {
         : { x: params.x, y: params.y }
       : kind === "browser.new_tab"
         ? { url: params.url }
-        : {
-          text: params.text ?? "",
-          ...(params.semanticTarget ? { semanticTarget: params.semanticTarget } : {}),
-        };
+        : kind === BROWSER_CURRENT_TAB_CLOSE_ACTION.kind
+          ? {}
+          : {
+              text: params.text ?? "",
+              ...(params.semanticTarget ? { semanticTarget: params.semanticTarget } : {}),
+            };
     const sidecarActive = Boolean(
       screen?.trustedSession?.helperRuntime?.sidecar?.taskId
       && screen.trustedSession.helperRuntime.sidecar.status === "running"
@@ -541,6 +547,22 @@ const server = http.createServer(async (req, res) => {
       const action = await executeAction("browser.new_tab", {
         url: typeof body.url === "string" ? body.url : "",
       });
+      sendJson(res, 200, { ok: true, action });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, error.statusCode ?? 400, { ok: false, error: message, code: error.code ?? null });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === BROWSER_CURRENT_TAB_CLOSE_ACTION.screenActEndpoint) {
+    try {
+      const body = await readJsonBody(req);
+      assertExecutionGrant({ verifier: executionGrantVerifier, req, requestUrl, body });
+      if (Object.keys(body).length !== 0) {
+        throw new Error("Current-tab close screen action accepts no target parameters.");
+      }
+      const action = await executeAction(BROWSER_CURRENT_TAB_CLOSE_ACTION.kind, {});
       sendJson(res, 200, { ok: true, action });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
