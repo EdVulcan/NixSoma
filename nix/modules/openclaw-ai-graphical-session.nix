@@ -10,6 +10,7 @@ let
   captureDirectory = "capture";
   inputDirectory = "input";
   surfaceDirectory = "surfaces";
+  workbenchActionDirectory = "workbench-action";
   workbenchHomeDirectory = "workbench-home";
   workbenchUnitName = "nixsoma-ai-workbench";
   westonPackage = if sessionCfg.applicationLifecycle then
@@ -43,6 +44,7 @@ let
     capture_dir="$runtime_dir/${captureDirectory}"
     input_dir="$runtime_dir/${inputDirectory}"
     surface_dir="$runtime_dir/${surfaceDirectory}"
+    action_dir="$runtime_dir/${workbenchActionDirectory}"
     workbench_home="$runtime_dir/${workbenchHomeDirectory}"
     ${pkgs.coreutils}/bin/rm -f \
       "$runtime_dir/${socketName}" \
@@ -53,6 +55,8 @@ let
     ${optionalString sessionCfg.applicationLifecycle ''
       ${pkgs.coreutils}/bin/rm -f "$surface_dir/current.json" "$surface_dir/current.json.tmp"
       ${pkgs.coreutils}/bin/install -d -m 0700 "$surface_dir"
+      ${pkgs.coreutils}/bin/rm -f "$action_dir/acknowledged"
+      ${pkgs.coreutils}/bin/install -d -m 0700 "$action_dir"
       ${pkgs.coreutils}/bin/install -d -m 0700 "$workbench_home"
     ''}
     ${optionalString sessionCfg.nativeInput ''
@@ -67,6 +71,7 @@ let
     capture_dir="$runtime_dir/${captureDirectory}"
     input_dir="$runtime_dir/${inputDirectory}"
     surface_dir="$runtime_dir/${surfaceDirectory}"
+    action_dir="$runtime_dir/${workbenchActionDirectory}"
     ${pkgs.coreutils}/bin/rm -f \
       "$runtime_dir/${socketName}" \
       "$runtime_dir/${socketName}.lock" \
@@ -74,6 +79,7 @@ let
       "$capture_dir"/wayland-screenshot-*.png
     ${optionalString sessionCfg.applicationLifecycle ''
       ${pkgs.coreutils}/bin/rm -f "$surface_dir/current.json" "$surface_dir/current.json.tmp"
+      ${pkgs.coreutils}/bin/rm -f "$action_dir/acknowledged"
     ''}
     ${optionalString sessionCfg.nativeInput ''
       ${pkgs.coreutils}/bin/rm -f "$input_dir/control.sock"
@@ -92,16 +98,40 @@ let
   '';
   workbenchShell = pkgs.writeShellScript "nixsoma-ai-workbench-shell" ''
     set -eu
-    trap 'exit 0' HUP INT TERM
-    ${pkgs.coreutils}/bin/printf '\033[2J\033[H'
-    ${pkgs.coreutils}/bin/printf '%s\n' \
-      'NixSoma AI Workbench' \
-      "" \
-      'Application lifecycle: active' \
-      'Compositor: nixsoma-ai-0' \
-      'Authority: fixed display-only process' \
-      "" \
-      'This surface is owned by the bounded NixSoma AI session.'
+    action_file="''${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/${workbenchActionDirectory}/acknowledged"
+    trap '${pkgs.coreutils}/bin/rm -f "$action_file"; exit 0' HUP INT TERM
+
+    render_pending() {
+      ${pkgs.coreutils}/bin/printf '\033[2J\033[H'
+      ${pkgs.coreutils}/bin/printf '%s\n' \
+        'NixSoma AI Workbench' \
+        "" \
+        'Application lifecycle: active' \
+        'Compositor: nixsoma-ai-0' \
+        'Authority: fixed one-action process' \
+        "" \
+        'OCR action target:' \
+        'CONFIRM' \
+        'OCR action status: pending'
+    }
+
+    render_complete() {
+      ${pkgs.coreutils}/bin/printf '\033[2J\033[H'
+      ${pkgs.coreutils}/bin/printf '%s\n' \
+        'NixSoma AI Workbench' \
+        "" \
+        'Application lifecycle: active' \
+        'Compositor: nixsoma-ai-0' \
+        'Authority: fixed one-action process' \
+        "" \
+        'OCR action completed: acknowledged'
+    }
+
+    render_pending
+    while [[ ! -s "$action_file" ]]; do
+      ${pkgs.coreutils}/bin/sleep 0.02
+    done
+    render_complete
     while :; do
       ${pkgs.coreutils}/bin/sleep 3600
     done
@@ -111,8 +141,10 @@ let
     runtime_base="''${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}"
     runtime_dir="$runtime_base/${runtimeDirectory}"
     workbench_home="$runtime_dir/${workbenchHomeDirectory}"
+    action_file="$runtime_dir/${workbenchActionDirectory}/acknowledged"
     cache_home="''${TMPDIR:-/tmp}/nixsoma-ai-workbench-cache"
     ${pkgs.coreutils}/bin/install -d -m 0700 "$cache_home"
+    ${pkgs.coreutils}/bin/rm -f "$action_file"
     test -d "$workbench_home"
     exec ${pkgs.coreutils}/bin/env -i \
       HOME="$workbench_home" \
@@ -125,6 +157,12 @@ let
       --font="monospace" \
       --font-size=20 \
       --shell=${workbenchShell}
+  '';
+  workbenchCleanupScript = pkgs.writeShellScript "nixsoma-ai-workbench-cleanup" ''
+    set -euo pipefail
+    runtime_base="''${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}"
+    ${pkgs.coreutils}/bin/rm -f \
+      "$runtime_base/${runtimeDirectory}/${workbenchActionDirectory}/acknowledged"
   '';
 in
 {
@@ -290,6 +328,7 @@ in
       serviceConfig = {
         Type = "simple";
         ExecStart = workbenchLaunchScript;
+        ExecStopPost = workbenchCleanupScript;
         Restart = "no";
         TimeoutStartSec = "5s";
         TimeoutStopSec = "3s";
@@ -317,6 +356,9 @@ in
           "-%t/${runtimeDirectory}/${inputDirectory}"
           "-%t/${runtimeDirectory}/${surfaceDirectory}"
         ];
+        ReadWritePaths = [
+          "%t/${runtimeDirectory}/${workbenchActionDirectory}"
+        ];
       };
     };
 
@@ -339,7 +381,9 @@ in
       serviceConfig.InaccessiblePaths = optional sessionCfg.captureOutput
         "-%t/${runtimeDirectory}/${captureDirectory}"
         ++ optional sessionCfg.nativeInput
-        "-%t/${runtimeDirectory}/${inputDirectory}";
+        "-%t/${runtimeDirectory}/${inputDirectory}"
+        ++ optional sessionCfg.applicationLifecycle
+        "-%t/${runtimeDirectory}/${workbenchActionDirectory}";
     };
   };
 }

@@ -435,6 +435,30 @@ all nine health endpoints active, and stopped the Workbench on exit. This lane
 is frozen. The smallest next real Level 4 candidate is one separately governed,
 same-surface OCR-ordinal action; no such action is selected or enabled here.
 
+The nineteenth Level 4 capability is physically complete as
+`act.ai.workspace.ocr_click`. It reuses the reviewed task, standing-provider
+single flight, bounded OCR owner, and exact task/surface/inventory rebinding,
+but has a separate response contract that permits only `click_item` with one
+1-based OCR ordinal or `no_op`. Coordinates are derived locally from current
+OCR bounds and never accepted from the caller or provider. The existing native
+input chain adds a distinct opcode-4 frame/inventory/active-surface receipt;
+opcode-1 clicks and opcode-3 scrolls remain unchanged. A third newer OCR
+observation must prove the selected text disappeared after the single click.
+OCR text and provider reason remain transient; hashes, ordinal, numeric bounds,
+coordinates, receipt and negative-authority facts form the durable evidence.
+Generation
+`/nix/store/zh9r98yqc80bfbg1kl8nz4f03h99icjx-nixos-system-nixos-26.05.4808.569d57850992`
+is active. All 1114 tests, typecheck, 818-entry registry, 1005-file script audit,
+Windows path budget, body-config, and exact 250-file Core, 30-file Session
+Manager, 18-file Screen Act, and 82-file Observer closures pass. The physical
+gate bound task `cbbc8ac9-0613-4000-a2d3-c2b9a68146f2`, item 9, surface 33,
+inventory 56, and frames 75 -> 76 -> 78 to one opcode-4 receipt and a post-action
+OCR scene without the selected text. It executed one action from one provider
+call, left the task unchanged, retained no local OCR plaintext, sent no pixels,
+accepted no arbitrary coordinates, and kept all nine endpoints healthy. The
+same gate explicitly stopped the Workbench and proved its volatile action marker
+absent before success. This lane is frozen.
+
 ## Completed Capability Evidence
 
 The following plan families are retained because they describe implemented

@@ -71,9 +71,17 @@ function normaliseCoordinate(value, label, maximum) {
 
 function normaliseClickParams(params) {
   const unsupportedParams = Object.keys(params)
-    .filter((key) => !["operation", "x", "y", "button", "compositorFrame"].includes(key));
+    .filter((key) => ![
+      "operation",
+      "x",
+      "y",
+      "button",
+      "surfaceId",
+      "inventorySequence",
+      "compositorFrame",
+    ].includes(key));
   if (unsupportedParams.length > 0) {
-    throw new Error("Screen pointer capability only accepts coordinates, left button, and an optional native frame binding.");
+    throw new Error("Screen pointer capability only accepts coordinates, left button, and optional native frame/surface bindings.");
   }
   if (params.button !== undefined && params.button !== "left") {
     throw new Error("Screen pointer capability only allows the left button.");
@@ -83,6 +91,8 @@ function normaliseClickParams(params) {
       x: params.x,
       y: params.y,
       button: params.button,
+      surfaceId: params.surfaceId,
+      inventorySequence: params.inventorySequence,
       compositorFrame: params.compositorFrame,
     });
     if (!nativeAction.frame.fresh) {
@@ -92,6 +102,10 @@ function normaliseClickParams(params) {
       x: nativeAction.x,
       y: nativeAction.y,
       button: "left",
+      ...(Number.isInteger(nativeAction.surfaceId) ? {
+        surfaceId: nativeAction.surfaceId,
+        inventorySequence: nativeAction.inventorySequence,
+      } : {}),
       compositorFrame: {
         registry: nativeAction.frame.registry,
         socketName: nativeAction.frame.socketName,
@@ -180,7 +194,6 @@ function projectOwnerResponse(response, operation) {
   const pointerAction = operation === POINTER_OPERATION || operation === SCROLL_OPERATION;
   const scrollAction = operation === SCROLL_OPERATION;
   const currentActiveSurfaceBound = compositorNativeExecuted
-    && scrollAction
     && mediation.visualGrounding?.inventoryMatched === true
     && mediation.visualGrounding?.surfaceMatched === true;
   return {

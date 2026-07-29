@@ -18,6 +18,7 @@ const CONTROL_SOCKET_NAME = "control.sock";
 const RECEIPT_PATTERN = /^1 ([a-f0-9]{32}) ([a-f0-9]{64}) ([1-9][0-9]*) ([0-9]+) ([0-9]+) executed\n$/u;
 const SURFACE_ACTIVATION_RECEIPT_PATTERN = /^2 ([a-f0-9]{32}) ([a-f0-9]{64}) ([1-9][0-9]*) ([1-9][0-9]*) ([1-9][0-9]*) executed\n$/u;
 const SCROLL_RECEIPT_PATTERN = /^3 ([a-f0-9]{32}) ([a-f0-9]{64}) ([1-9][0-9]*) ([1-9][0-9]*) ([1-9][0-9]*) ([0-9]+) ([0-9]+) (-?1) executed\n$/u;
+const SURFACE_CLICK_RECEIPT_PATTERN = /^4 ([a-f0-9]{32}) ([a-f0-9]{64}) ([1-9][0-9]*) ([1-9][0-9]*) ([1-9][0-9]*) ([0-9]+) ([0-9]+) executed\n$/u;
 const SURFACE_ACTIVATION_REGISTRY = "nixsoma-ai-surface-activation-v0";
 
 function enabled(value) {
@@ -127,6 +128,24 @@ function assertScrollReceipt(text, expected) {
     || Number(y) !== expected.y
     || Number(direction) !== expected.direction) {
     throw new Error("AI compositor scroll receipt does not match the request.");
+  }
+}
+
+function assertSurfaceClickReceipt(text, expected) {
+  const match = SURFACE_CLICK_RECEIPT_PATTERN.exec(text);
+  if (!match) throw new Error("AI compositor surface-bound click receipt is malformed.");
+  const [
+    , requestId, sha256, frameSequence, inventorySequence,
+    surfaceId, x, y,
+  ] = match;
+  if (requestId !== expected.requestId
+    || sha256 !== expected.frame.sha256
+    || Number(frameSequence) !== expected.frame.sequence
+    || Number(inventorySequence) !== expected.inventorySequence
+    || Number(surfaceId) !== expected.surfaceId
+    || Number(x) !== expected.x
+    || Number(y) !== expected.y) {
+    throw new Error("AI compositor surface-bound click receipt does not match the request.");
   }
 }
 
@@ -242,20 +261,24 @@ export function createAiCompositorInputController({
       }
       const action = normaliseAiCompositorInputAction(candidateAction, { now: now() });
       const scrollAction = action.operation === AI_COMPOSITOR_POINTER_SCROLL_OPERATION;
+      const surfaceBoundClick = !scrollAction && Number.isInteger(action.surfaceId);
+      const targetBoundAction = scrollAction || surfaceBoundClick;
       const currentFrame = frameCapture.snapshot();
       if (!action.frame.fresh || currentFrame?.fresh !== true
         || !aiCompositorFrameMatches(action.frame, currentFrame)) {
         throw new Error("AI compositor input frame is stale or no longer current.");
       }
-      if (scrollAction) {
+      if (targetBoundAction) {
         const inventory = observeSurfaceInventory();
         const target = inventory?.available === true
           && inventory.sequence === action.inventorySequence
           ? inventory.surfaces?.find((surface) => surface.surfaceId === action.surfaceId)
           : null;
         if (target?.activated !== true) {
-          const error = new Error("AI compositor scroll target is stale or not active.");
-          error.code = "AI_COMPOSITOR_SCROLL_TARGET_STALE";
+          const error = new Error("AI compositor input target is stale or not active.");
+          error.code = scrollAction
+            ? "AI_COMPOSITOR_SCROLL_TARGET_STALE"
+            : "AI_COMPOSITOR_CLICK_TARGET_STALE";
           error.statusCode = 409;
           throw error;
         }
@@ -274,21 +297,24 @@ export function createAiCompositorInputController({
         y: action.y,
         frame: action.frame,
         direction: scrollAction ? (action.direction === "up" ? -1 : 1) : null,
-        surfaceId: scrollAction ? action.surfaceId : null,
-        inventorySequence: scrollAction ? action.inventorySequence : null,
+        surfaceId: targetBoundAction ? action.surfaceId : null,
+        inventorySequence: targetBoundAction ? action.inventorySequence : null,
       };
       const wire = scrollAction
         ? `3 ${request.requestId} ${action.frame.sha256} ${action.frame.sequence} ${action.inventorySequence} ${action.surfaceId} ${action.x} ${action.y} ${request.direction}\n`
-        : `1 ${request.requestId} ${action.frame.sha256} ${action.frame.sequence} ${action.x} ${action.y}\n`;
+        : surfaceBoundClick
+          ? `4 ${request.requestId} ${action.frame.sha256} ${action.frame.sequence} ${action.inventorySequence} ${action.surfaceId} ${action.x} ${action.y}\n`
+          : `1 ${request.requestId} ${action.frame.sha256} ${action.frame.sequence} ${action.x} ${action.y}\n`;
       const receipt = await sendRequest({ socketPath, wire, timeoutMs: config.timeoutMs, request });
       if (scrollAction) assertScrollReceipt(receipt, request);
+      else if (surfaceBoundClick) assertSurfaceClickReceipt(receipt, request);
       else assertReceipt(receipt, request);
-      const settledInventory = scrollAction ? observeSurfaceInventory() : null;
-      const inventoryMatched = !scrollAction || (
+      const settledInventory = targetBoundAction ? observeSurfaceInventory() : null;
+      const inventoryMatched = !targetBoundAction || (
         settledInventory?.available === true
         && settledInventory.sequence >= action.inventorySequence
       );
-      const surfaceMatched = !scrollAction || (
+      const surfaceMatched = !targetBoundAction || (
         inventoryMatched
         && settledInventory.surfaces?.find(
           (surface) => surface.surfaceId === action.surfaceId,
@@ -298,7 +324,7 @@ export function createAiCompositorInputController({
       let postFrame;
       do {
         postFrame = await frameCapture.capture();
-        if (!scrollAction
+        if (!targetBoundAction
           || (postFrame?.available === true
             && postFrame.sha256 !== action.frame.sha256)) break;
         await sleep(20);
@@ -306,7 +332,7 @@ export function createAiCompositorInputController({
       const sequenceAdvanced = postFrame?.available === true
         && postFrame.sequence > action.frame.sequence;
       lastEvidence = projectAiCompositorInputEvidence({
-        status: scrollAction && (!inventoryMatched || !surfaceMatched)
+        status: targetBoundAction && (!inventoryMatched || !surfaceMatched)
           ? "executed_surface_diverged"
           : sequenceAdvanced ? "executed" : "executed_post_frame_unavailable",
         operation: action.operation,
@@ -315,8 +341,8 @@ export function createAiCompositorInputController({
         x: action.x,
         y: action.y,
         direction: scrollAction ? action.direction : null,
-        surfaceId: scrollAction ? action.surfaceId : null,
-        inventorySequence: scrollAction ? action.inventorySequence : null,
+        surfaceId: targetBoundAction ? action.surfaceId : null,
+        inventorySequence: targetBoundAction ? action.inventorySequence : null,
         frame: action.frame,
         postFrame: postFrame?.available === true ? postFrame : null,
         frameMatched: true,

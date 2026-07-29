@@ -22,11 +22,8 @@ export function createAiCompositorInputRoute({
       const body = await readJsonBody(req, 16_384);
       const action = body?.action;
       const grantContext = executionGrantContextFromHeaders(req.headers);
-      const scrollShape = action && typeof action === "object" && (
-        action.direction !== undefined
-        || action.surfaceId !== undefined
-        || action.inventorySequence !== undefined
-      );
+      const scrollShape = action && typeof action === "object"
+        && action.direction !== undefined;
       const grantPath = scrollShape
         ? SCREEN_ACT_SCROLL_PATH
         : SCREEN_ACT_POINTER_PATH;
@@ -66,10 +63,8 @@ export function createAiCompositorInputRoute({
           x: action?.x ?? null,
           y: action?.y ?? null,
           direction: scrollShape ? action?.direction ?? null : null,
-          surfaceId: scrollShape ? action?.surfaceId ?? null : null,
-          inventorySequence: scrollShape
-            ? action?.inventorySequence ?? null
-            : null,
+          surfaceId: action?.surfaceId ?? null,
+          inventorySequence: action?.inventorySequence ?? null,
           frameSha256: action?.compositorFrame?.sha256 ?? null,
           frameSequence: action?.compositorFrame?.sequence ?? null,
           socketName: action?.compositorFrame?.socketName ?? null,

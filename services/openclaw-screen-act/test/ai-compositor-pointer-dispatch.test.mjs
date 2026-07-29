@@ -105,6 +105,51 @@ test("native scroll dispatch requires exact surface and inventory evidence", asy
   assert.equal(mediation.visualGrounding.frameChanged, true);
 });
 
+test("surface-bound click dispatch requires exact target and receipt evidence", async () => {
+  const dispatch = createAiCompositorPointerDispatch({
+    sessionManagerUrl: "http://session-manager",
+    fetchFn: async () => ({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        input: {
+          registry: "nixsoma-ai-compositor-input-v0",
+          status: "executed",
+          operation: "pointer_click",
+          surfaceId: 24,
+          inventorySequence: 10,
+          leaseMatched: true,
+          frameMatched: true,
+          frameFresh: true,
+          receiptMatched: true,
+          sequenceAdvanced: true,
+          frameChanged: true,
+          inventoryMatched: true,
+          surfaceMatched: true,
+        },
+      }),
+    }),
+  });
+  const mediation = await dispatch({
+    action: {
+      x: 200,
+      y: 140,
+      button: "left",
+      surfaceId: 24,
+      inventorySequence: 10,
+      compositorFrame,
+    },
+    trustedHelperLease: { leaseId: "lease-click", sessionId: "session-click" },
+    forwardedGrantHeaders: { "x-openclaw-execution-grant": "click-signed" },
+  });
+  assert.equal(mediation.accepted, true);
+  assert.equal(mediation.visualGrounding.surfaceId, 24);
+  assert.equal(mediation.visualGrounding.inventorySequence, 10);
+  assert.equal(mediation.visualGrounding.inventoryMatched, true);
+  assert.equal(mediation.visualGrounding.surfaceMatched, true);
+  assert.equal(mediation.visualGrounding.frameChanged, true);
+});
+
 test("native scroll dispatch rejects a divergent surface receipt", async () => {
   const dispatch = createAiCompositorPointerDispatch({
     sessionManagerUrl: "http://session-manager",

@@ -4,6 +4,7 @@ export const AI_WORKSPACE_BOUNDED_RUN_REGISTRY =
 const SINGLE_STEP_REGISTRY = "nixsoma-ai-workspace-single-step-v0";
 const ASSESSMENT_REGISTRY = "nixsoma-ai-workspace-task-assessment-v0";
 const OCR_ASSESSMENT_REGISTRY = "nixsoma-ai-workspace-ocr-assessment-v0";
+const OCR_CLICK_REGISTRY = "nixsoma-ai-workspace-ocr-click-v0";
 const SCROLL_ACTIONS = new Set(["scroll_up", "scroll_down"]);
 const ALLOWED_ACTIONS = new Set([
   "no_op", "scroll_up", "scroll_down", "click_item", "type_item",
@@ -156,6 +157,7 @@ export function createAiWorkspaceRunCoordinator({
   singleStep,
   assessment,
   ocrAssessment,
+  ocrClick,
   publishAuditEvent = async () => ({ ok: true }),
   now = () => new Date().toISOString(),
 } = {}) {
@@ -318,6 +320,57 @@ export function createAiWorkspaceRunCoordinator({
     );
   }
 
+  async function invokeOcrClick(input) {
+    if (inFlight) {
+      return typeof ocrClick?.localFallback === "function"
+        ? ocrClick.localFallback("workspace_run_in_flight")
+        : {
+            ok: true,
+            registry: OCR_CLICK_REGISTRY,
+            status: "local_fallback",
+            decision: { actionId: "no_op", itemOrdinal: null, confidence: null },
+            action: { actionId: "no_op", itemOrdinal: null, executed: false },
+            fallback: { reason: "ai_workspace_ocr_click_workspace_run_in_flight" },
+            evidence: { taskId: input?.taskId ?? null, completionAudit: false },
+            governance: {
+              providerCalled: false,
+              maximumProviderCalls: 1,
+              maximumActions: 1,
+              actionExecuted: false,
+              taskMutated: false,
+              automaticContinuation: false,
+            },
+          };
+    }
+    if (!ocrClick || typeof ocrClick.invoke !== "function") {
+      return typeof ocrClick?.localFallback === "function"
+        ? ocrClick.localFallback("runtime_unavailable")
+        : {
+            ok: false,
+            registry: OCR_CLICK_REGISTRY,
+            status: "local_fallback",
+            decision: { actionId: "no_op", itemOrdinal: null, confidence: null },
+            action: { actionId: "no_op", itemOrdinal: null, executed: false },
+            fallback: { reason: "ai_workspace_ocr_click_runtime_unavailable" },
+            evidence: { taskId: input?.taskId ?? null, completionAudit: false },
+            governance: {
+              providerCalled: false,
+              maximumProviderCalls: 1,
+              maximumActions: 1,
+              actionExecuted: false,
+              taskMutated: false,
+              automaticContinuation: false,
+            },
+          };
+    }
+    inFlight = true;
+    try {
+      return await ocrClick.invoke(input);
+    } finally {
+      inFlight = false;
+    }
+  }
+
   async function invokeBounded(input) {
     if (inFlight) return busyBoundedRun();
     if (!singleStep || typeof singleStep.invoke !== "function") {
@@ -442,5 +495,6 @@ export function createAiWorkspaceRunCoordinator({
     boundedRun: { invoke: invokeBounded },
     assessment: { invoke: invokeAssessment },
     ocrAssessment: { invoke: invokeOcrAssessment },
+    ocrClick: { invoke: invokeOcrClick },
   };
 }

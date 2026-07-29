@@ -105,6 +105,96 @@ test("native input executes one frame-bound click and advances compositor eviden
   assert.deepEqual(readdirSync(inputDir), []);
 });
 
+test("native input executes opcode 4 only for the current active surface", async (t) => {
+  const { env } = runtimeFixture(t);
+  const before = frame(24, "2026-07-29T07:00:00.000Z", "a");
+  const after = frame(25, "2026-07-29T07:00:00.100Z", "b");
+  const helper = helperRuntime();
+  const inventory = () => ({
+    registry: "nixsoma-ai-surface-inventory-v0",
+    available: true,
+    sequence: 41,
+    surfaces: [{ surfaceId: 83, pid: 8300, width: 1280, height: 720, activated: true }],
+  });
+  const controller = createAiCompositorInputController({
+    env,
+    now: () => Date.parse("2026-07-29T07:00:00.500Z"),
+    createRequestId: () => "f".repeat(32),
+    frameCapture: { snapshot: () => before, capture: async () => after },
+    helperRuntime: helper,
+    observeGraphicalSession: () => ({
+      ready: true,
+      socket: { name: "nixsoma-ai-0" },
+      browserAttachment: { attached: true },
+    }),
+    observeSurfaceInventory: inventory,
+    stat: (target) => target.endsWith("control.sock")
+      ? { isSocket: () => true, uid: process.getuid(), mode: 0o600 }
+      : lstatSync(target),
+    list: () => ["control.sock"],
+    sendRequest: async ({ request, wire }) => {
+      assert.equal(
+        wire,
+        `4 ${"f".repeat(32)} ${before.sha256} 24 41 83 200 140\n`,
+      );
+      return `4 ${request.requestId} ${request.frame.sha256} ${request.frame.sequence} ${request.inventorySequence} ${request.surfaceId} ${request.x} ${request.y} executed\n`;
+    },
+  });
+  const evidence = await controller.execute({
+    action: {
+      x: 200,
+      y: 140,
+      button: "left",
+      surfaceId: 83,
+      inventorySequence: 41,
+      compositorFrame: before,
+    },
+    trustedHelperLease: helper.candidate,
+  });
+  assert.equal(evidence.operation, "pointer_click");
+  assert.equal(evidence.surfaceId, 83);
+  assert.equal(evidence.inventorySequence, 41);
+  assert.equal(evidence.inventoryMatched, true);
+  assert.equal(evidence.surfaceMatched, true);
+  assert.equal(evidence.frameChanged, true);
+  assert.equal(evidence.receiptMatched, true);
+});
+
+test("surface-bound click rejects stale active-surface authority before Weston contact", async (t) => {
+  const { env } = runtimeFixture(t);
+  const current = frame(26, "2026-07-29T07:10:00.000Z", "c");
+  const helper = helperRuntime();
+  let sent = false;
+  const controller = createAiCompositorInputController({
+    env,
+    now: () => Date.parse("2026-07-29T07:10:00.500Z"),
+    frameCapture: { snapshot: () => current, capture: async () => current },
+    helperRuntime: helper,
+    observeGraphicalSession: () => ({
+      ready: true,
+      socket: { name: "nixsoma-ai-0" },
+      browserAttachment: { attached: true },
+    }),
+    observeSurfaceInventory: () => ({
+      available: true,
+      sequence: 42,
+      surfaces: [{ surfaceId: 84, width: 1280, height: 720, activated: false }],
+    }),
+    sendRequest: async () => { sent = true; },
+  });
+  await assert.rejects(controller.execute({
+    action: {
+      x: 200,
+      y: 140,
+      surfaceId: 84,
+      inventorySequence: 42,
+      compositorFrame: current,
+    },
+    trustedHelperLease: helper.candidate,
+  }), (error) => error.code === "AI_COMPOSITOR_CLICK_TARGET_STALE");
+  assert.equal(sent, false);
+});
+
 test("native input rejects stale or replaced frames before creating a request", async (t) => {
   const { inputDir, env } = runtimeFixture(t);
   const before = frame(4, "2026-07-19T06:00:00.000Z", "a");

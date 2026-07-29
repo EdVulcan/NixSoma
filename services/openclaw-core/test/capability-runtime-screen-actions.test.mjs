@@ -190,6 +190,69 @@ test("screen pointer capability delegates one active-surface-bound native scroll
   assert.equal(summary.currentActiveSurfaceBound, true);
 });
 
+test("screen pointer capability preserves one active-surface-bound native click", async () => {
+  const calls = [];
+  const compositorFrame = {
+    registry: "nixsoma-ai-compositor-frame-v0",
+    socketName: "nixsoma-ai-0",
+    width: 1280,
+    height: 720,
+    sha256: "e".repeat(64),
+    sequence: 19,
+    capturedAt: new Date().toISOString(),
+  };
+  const handlers = createScreenActionCapabilityHandlers({
+    screenActUrl: "http://screen-act",
+    postJson: async (url, body) => {
+      calls.push({ url, body });
+      return {
+        ok: true,
+        action: {
+          kind: "mouse.click",
+          result: "executed-ai-compositor",
+          degraded: false,
+          mediation: {
+            attempted: true,
+            accepted: true,
+            status: "accepted",
+            leaseMatched: true,
+            transport: "ai-compositor-native",
+            visualGrounding: {
+              required: true,
+              status: "executed",
+              frameMatched: true,
+              frameFresh: true,
+              receiptMatched: true,
+              sequenceAdvanced: true,
+              frameChanged: true,
+              inventoryMatched: true,
+              surfaceMatched: true,
+            },
+          },
+        },
+      };
+    },
+  });
+  const backend = await handlers.callBackend(capability, {
+    operation: "mouse.click",
+    params: {
+      x: 200,
+      y: 140,
+      button: "left",
+      surfaceId: 71,
+      inventorySequence: 22,
+      compositorFrame,
+    },
+  });
+  assert.equal(calls[0].body.surfaceId, 71);
+  assert.equal(calls[0].body.inventorySequence, 22);
+  assert.equal(backend.result.governance.compositorNativeExecuted, true);
+  assert.equal(backend.result.governance.currentFrameBound, true);
+  assert.equal(backend.result.governance.currentActiveSurfaceBound, true);
+  assert.equal(handlers.summariseResult(capability, backend.result)
+    .currentActiveSurfaceBound, true);
+});
+
 test("screen action capability validates the fixed keyboard and pointer contracts", async () => {
   const handlers = createScreenActionCapabilityHandlers({ screenActUrl: "http://screen-act" });
 
@@ -220,7 +283,7 @@ test("screen action capability validates the fixed keyboard and pointer contract
   assert.equal(handlers.validateRequest(capability, {
     operation: "mouse.click",
     params: { x: 640, y: 360, semanticTarget: { targetId: "target-1" } },
-  }), "Screen pointer capability only accepts coordinates, left button, and an optional native frame binding.");
+  }), "Screen pointer capability only accepts coordinates, left button, and optional native frame/surface bindings.");
   assert.equal(handlers.validateRequest(capability, {
     operation: "mouse.click",
     params: { x: 640, y: 360, button: "left" },

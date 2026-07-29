@@ -19,6 +19,7 @@ export function createAiCompositorPointerDispatch({
   } = {}) {
     const normalised = normaliseAiCompositorInputAction(action);
     const scrollAction = normalised.operation === AI_COMPOSITOR_POINTER_SCROLL_OPERATION;
+    const targetBoundAction = scrollAction || Number.isInteger(normalised.surfaceId);
     try {
       const response = await fetchFn(`${sessionManagerUrl}/work-view/compositor-input`, {
         method: "POST",
@@ -35,8 +36,8 @@ export function createAiCompositorPointerDispatch({
         && evidence?.registry === AI_COMPOSITOR_INPUT_REGISTRY
         && evidence.operation === normalised.operation
         && ["executed", "executed_post_frame_unavailable"].includes(evidence.status)
-        && (!scrollAction || (
-          evidence.direction === normalised.direction
+        && (!targetBoundAction || (
+          (!scrollAction || evidence.direction === normalised.direction)
           && evidence.surfaceId === normalised.surfaceId
           && evidence.inventorySequence === normalised.inventorySequence
           && evidence.inventoryMatched === true
@@ -63,10 +64,10 @@ export function createAiCompositorPointerDispatch({
           receiptMatched: evidence?.receiptMatched === true,
           sequenceAdvanced: evidence?.sequenceAdvanced === true,
           frameChanged: evidence?.frameChanged === true,
-          inventoryMatched: scrollAction ? evidence?.inventoryMatched === true : false,
-          surfaceMatched: scrollAction ? evidence?.surfaceMatched === true : false,
-          surfaceId: scrollAction ? normalised.surfaceId : null,
-          inventorySequence: scrollAction ? normalised.inventorySequence : null,
+          inventoryMatched: targetBoundAction ? evidence?.inventoryMatched === true : false,
+          surfaceMatched: targetBoundAction ? evidence?.surfaceMatched === true : false,
+          surfaceId: targetBoundAction ? normalised.surfaceId : null,
+          inventorySequence: targetBoundAction ? normalised.inventorySequence : null,
           imageDataRetained: false,
           persisted: false,
         },

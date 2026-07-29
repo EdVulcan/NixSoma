@@ -120,6 +120,54 @@ test("native scroll route verifies the forwarded scroll grant and audits compact
   assert.equal(calls.response.status, 200);
 });
 
+test("surface-bound native click keeps click grant intent and audits numeric target binding", async () => {
+  const action = {
+    x: 200,
+    y: 140,
+    button: "left",
+    surfaceId: 33,
+    inventorySequence: 12,
+    compositorFrame: { sha256: "c".repeat(64), sequence: 5, socketName: "nixsoma-ai-0" },
+  };
+  const calls = { verify: null, execute: null, response: null, events: [] };
+  const handler = createAiCompositorInputRoute({
+    controller: {
+      execute: async (value) => {
+        calls.execute = value;
+        return { registry: "nixsoma-ai-compositor-input-v0", status: "executed",
+          operation: "pointer_click" };
+      },
+      snapshot: () => ({ status: "not_executed" }),
+    },
+    executionGrantVerifier: {
+      verifyRequest(value) {
+        calls.verify = value;
+        return { ok: true, grant: { issuer: "openclaw-core", audience: "openclaw-screen-act",
+          grantId: "grant-click", taskId: "task-1" } };
+      },
+    },
+    publishEvent: async (name, payload) => {
+      calls.events.push({ name, payload });
+      return { ok: true };
+    },
+    createEventName: (name) => name,
+    sendJson: (_res, status, body) => { calls.response = { status, body }; },
+  });
+  await handler(
+    request({ action, trustedHelperLease: { leaseId: "lease-click" } },
+      "click-grant", "mouse.click"),
+    {},
+    new URL("http://local/work-view/compositor-input"),
+  );
+  assert.equal(calls.verify.path, "/act/mouse/click");
+  assert.equal(calls.verify.context.intent, "mouse.click");
+  assert.deepEqual(calls.verify.body, action);
+  assert.equal(calls.events[0].payload.input.operation, "pointer_click");
+  assert.equal(calls.events[0].payload.input.surfaceId, 33);
+  assert.equal(calls.events[0].payload.input.inventorySequence, 12);
+  assert.equal(calls.response.status, 200);
+});
+
 test("native input route rejects a scroll body carried under click intent", async () => {
   let verifications = 0;
   let executions = 0;

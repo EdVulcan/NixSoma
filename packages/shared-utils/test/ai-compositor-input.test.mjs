@@ -45,6 +45,32 @@ test("native pointer action is bounded to one fresh fixed-output frame", () => {
   );
 });
 
+test("native pointer action optionally binds one current surface and inventory", () => {
+  const action = normaliseAiCompositorPointerAction({
+    x: 200,
+    y: 140,
+    button: "left",
+    surfaceId: 42,
+    inventorySequence: 9,
+    compositorFrame,
+  }, { now: Date.parse(capturedAt) + 500 });
+  assert.equal(action.surfaceId, 42);
+  assert.equal(action.inventorySequence, 9);
+  assert.equal(normaliseAiCompositorInputAction({
+    x: 200,
+    y: 140,
+    surfaceId: 42,
+    inventorySequence: 9,
+    compositorFrame,
+  }, { now: Date.parse(capturedAt) + 500 }).operation, "pointer_click");
+  assert.throws(() => normaliseAiCompositorPointerAction({
+    x: 200,
+    y: 140,
+    surfaceId: 42,
+    compositorFrame,
+  }), /requires both surfaceId and inventorySequence/u);
+});
+
 test("native scroll is one fixed-center step bound to a current numeric surface", () => {
   const action = normaliseAiCompositorScrollAction({
     direction: "up",
@@ -150,6 +176,36 @@ test("native scroll evidence retains only bounded target and frame metadata", ()
   assert.equal(evidence.surfaceId, 23);
   assert.equal(evidence.inventorySequence, 11);
   assert.equal(evidence.frameChanged, true);
+  assert.equal(evidence.inventoryMatched, true);
+  assert.equal(evidence.surfaceMatched, true);
+  assert.equal(JSON.stringify(evidence).includes("dataUrl"), false);
+});
+
+test("surface-bound click evidence retains target matching without image data", () => {
+  const evidence = projectAiCompositorInputEvidence({
+    status: "executed",
+    operation: "pointer_click",
+    requestId: "f".repeat(32),
+    socketName: "nixsoma-ai-0",
+    x: 200,
+    y: 140,
+    surfaceId: 42,
+    inventorySequence: 9,
+    frame: compositorFrame,
+    postFrame: { ...compositorFrame, sha256: "b".repeat(64), sequence: 8 },
+    frameMatched: true,
+    frameFresh: true,
+    leaseMatched: true,
+    receiptMatched: true,
+    sequenceAdvanced: true,
+    frameChanged: true,
+    inventoryMatched: true,
+    surfaceMatched: true,
+    dataUrl: "must-not-survive",
+  });
+  assert.equal(evidence.operation, "pointer_click");
+  assert.equal(evidence.surfaceId, 42);
+  assert.equal(evidence.inventorySequence, 9);
   assert.equal(evidence.inventoryMatched, true);
   assert.equal(evidence.surfaceMatched, true);
   assert.equal(JSON.stringify(evidence).includes("dataUrl"), false);

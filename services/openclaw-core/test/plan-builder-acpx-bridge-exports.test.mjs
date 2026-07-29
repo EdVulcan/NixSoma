@@ -8,6 +8,7 @@ function createPlanBuilderHarness({
   createStandingProviderAdvisoryImpl,
   createAiWorkspaceAssessmentImpl,
   createAiWorkspaceOcrAssessmentImpl,
+  createAiWorkspaceOcrClickImpl,
   createAiWorkspaceSingleStepImpl,
   publishAuditEvent,
 } = {}) {
@@ -115,6 +116,7 @@ function createPlanBuilderHarness({
     createStandingProviderAdvisoryImpl,
     createAiWorkspaceAssessmentImpl,
     createAiWorkspaceOcrAssessmentImpl,
+    createAiWorkspaceOcrClickImpl,
     createAiWorkspaceSingleStepImpl,
     host: "127.0.0.1",
     port: 4100,
@@ -400,4 +402,73 @@ test("plan builder assembles task-bound OCR assessment with shared provider auth
   assert.equal(result.response.invocation.summary.kind, "ai.workspace.ocr_assessment");
   assert.equal(result.response.invocation.summary.ocrTextProviderEgress, true);
   assert.equal(result.response.invocation.summary.pixelsProviderEgress, false);
+});
+
+test("plan builder assembles OCR click with shared provider and screen action owners", async () => {
+  const assembly = [];
+  const standingOwner = {
+    restoreState: () => ({ ok: true }),
+    requestDecision: async () => ({ ok: false, reason: "disabled" }),
+  };
+  const requiredAudit = async () => ({ ok: true });
+  const planBuilder = createPlanBuilderHarness({
+    acpxDraft: () => ({ ok: true }),
+    publishAuditEvent: requiredAudit,
+    createStandingProviderAdvisoryImpl: () => standingOwner,
+    createAiWorkspaceOcrClickImpl: (deps) => {
+      assembly.push(deps);
+      return {
+        invoke: async ({ taskId }) => ({
+          ok: true,
+          registry: "nixsoma-ai-workspace-ocr-click-v0",
+          status: "executed",
+          decision: { actionId: "click_item", itemOrdinal: 1, confidence: 0.9 },
+          action: { actionId: "click_item", itemOrdinal: 1, surfaceId: 42,
+            inventorySequence: 9, executed: true },
+          evidence: {
+            taskId,
+            actionExecuted: true,
+            receiptMatched: true,
+            frameChanged: true,
+            postActionVerified: true,
+            completionAudit: true,
+          },
+          governance: {
+            providerCalled: true,
+            localOcrBound: true,
+            localOcrRevalidated: true,
+            currentFrameBound: true,
+            currentActiveSurfaceBound: true,
+            ocrItemOrdinalBound: true,
+            taskObjectiveBound: true,
+            taskObjectiveProviderEgress: true,
+            rawTaskGoalProviderEgress: false,
+            ocrTextProviderEgress: true,
+            ocrTextPersistedLocally: false,
+            pixelsProviderEgress: false,
+            arbitraryPointerInput: false,
+            providerRetentionControlledExternally: true,
+          },
+        }),
+        localFallback: () => ({ status: "local_fallback" }),
+      };
+    },
+  });
+  const result = await planBuilder.invokeCapability({
+    capabilityId: "act.ai.workspace.ocr_click",
+    taskId: "task-reviewed-1",
+    params: { confirm: true },
+  });
+  assert.equal(assembly.length, 1);
+  assert.equal(assembly[0].standingAdvisory, standingOwner);
+  assert.equal(assembly[0].publishAuditEvent, requiredAudit);
+  assert.equal(assembly[0].sessionManagerUrl, "http://127.0.0.1:4102");
+  assert.equal(assembly[0].screenActUrl, "http://127.0.0.1:4105");
+  assert.equal(typeof assembly[0].getTaskById, "function");
+  assert.equal(typeof assembly[0].fetchJson, "function");
+  assert.equal(typeof assembly[0].postJson, "function");
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invocation.summary.kind, "ai.workspace.ocr_click");
+  assert.equal(result.response.invocation.summary.actionExecuted, true);
+  assert.equal(result.response.invocation.summary.postActionVerified, true);
 });

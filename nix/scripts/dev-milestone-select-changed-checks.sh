@@ -158,6 +158,58 @@ const aiWorkspaceOcrAssessmentSlice = changedFiles.length > 0
   && changedFiles.every((file) => aiWorkspaceOcrAssessmentFiles.has(file))
   && changedFiles.some((file) =>
     file === "services/openclaw-core/src/ai-workspace-ocr-assessment.mjs");
+const aiWorkspaceOcrClickFiles = new Set([
+  "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
+  "apps/observer-ui/src/client-script-runtime-actions.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-assessment.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-click.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs",
+  "apps/observer-ui/src/observer-panel-ai-work-view.mjs",
+  "apps/observer-ui/test/ai-workspace-ocr-click.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/README.md",
+  "nix/modules/openclaw-ai-graphical-session.nix",
+  "nix/packages/observer-ui.nix",
+  "nix/scripts/dev-ai-workspace-ocr-click-live-check.sh",
+  "nix/scripts/dev-ai-workspace-local-ocr-workbench-helper.sh",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-checks.tsv",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "packages/shared-utils/src/ai-compositor-input.mjs",
+  "packages/shared-utils/test/ai-compositor-input.test.mjs",
+  "packages/weston-frame-auth/src/input-authority.c",
+  "services/openclaw-core/src/ai-workspace-ocr-assessment.mjs",
+  "services/openclaw-core/src/ai-workspace-ocr-click-contract.mjs",
+  "services/openclaw-core/src/ai-workspace-ocr-click.mjs",
+  "services/openclaw-core/src/ai-workspace-ocr-context.mjs",
+  "services/openclaw-core/src/ai-workspace-run-coordinator.mjs",
+  "services/openclaw-core/src/ai-workspace-runtime.mjs",
+  "services/openclaw-core/src/capability-descriptors.mjs",
+  "services/openclaw-core/src/capability-runtime-ai-workspace-ocr-click.mjs",
+  "services/openclaw-core/src/capability-runtime-screen-actions.mjs",
+  "services/openclaw-core/src/capability-runtime.mjs",
+  "services/openclaw-core/src/plan-builder.mjs",
+  "services/openclaw-core/test/ai-workspace-ocr-click-contract.test.mjs",
+  "services/openclaw-core/test/ai-workspace-ocr-click.test.mjs",
+  "services/openclaw-core/test/ai-workspace-run-coordinator.test.mjs",
+  "services/openclaw-core/test/capability-runtime-ai-workspace-ocr-click.test.mjs",
+  "services/openclaw-core/test/capability-runtime-screen-actions.test.mjs",
+  "services/openclaw-core/test/capability-runtime.test.mjs",
+  "services/openclaw-core/test/plan-builder-acpx-bridge-exports.test.mjs",
+  "services/openclaw-screen-act/src/ai-compositor-pointer-dispatch.mjs",
+  "services/openclaw-screen-act/src/server.mjs",
+  "services/openclaw-screen-act/test/ai-compositor-pointer-dispatch.test.mjs",
+  "services/openclaw-session-manager/src/ai-compositor-input-controller.mjs",
+  "services/openclaw-session-manager/src/ai-compositor-input-route.mjs",
+  "services/openclaw-session-manager/test/ai-compositor-input-controller.test.mjs",
+  "services/openclaw-session-manager/test/ai-compositor-input-route.test.mjs",
+]);
+const aiWorkspaceOcrClickSlice = changedFiles.length > 0
+  && changedFiles.every((file) => aiWorkspaceOcrClickFiles.has(file))
+  && changedFiles.some((file) =>
+    file === "services/openclaw-core/src/ai-workspace-ocr-click.mjs");
 const aiWorkspaceLocalOcrFiles = new Set([
   "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
   "apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs",
@@ -969,6 +1021,16 @@ function selectSourceHeuristics(file) {
 }
 
 for (const file of changedFiles) {
+  if (aiWorkspaceOcrClickSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-shared-package-contracts");
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("ai-workspace-ocr-click-live");
+    continue;
+  }
   if (aiWorkspaceOcrAssessmentSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");

@@ -67,9 +67,13 @@ function updateAiSurfaceScrollControls() {
   if (aiWorkspaceOcrAssessmentTaskId && aiWorkspaceOcrAssessmentTaskId !== taskId) {
     clearAiWorkspaceOcrAssessment();
   }
+  if (aiWorkspaceOcrClickTaskId && aiWorkspaceOcrClickTaskId !== taskId) {
+    clearAiWorkspaceOcrClick();
+  }
   const aiRunInFlight = aiWorkspaceSingleStepInFlight
     || aiWorkspaceLocalOcrInFlight
     || aiWorkspaceOcrAssessmentInFlight
+    || aiWorkspaceOcrClickInFlight
     || aiWorkspaceBoundedRunInFlight
     || aiWorkspaceAssessmentInFlight
     || aiWorkspaceAssessmentAcceptanceInFlight;
@@ -77,6 +81,7 @@ function updateAiSurfaceScrollControls() {
   scrollAiSurfaceDownButton.disabled = !enabled || aiRunInFlight;
   runAiWorkspaceLocalOcrButton.disabled = !enabled || aiRunInFlight;
   ocrAssessAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
+  ocrClickAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceSingleStepButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceBoundedRunButton.disabled = !enabled || !taskId || aiRunInFlight;
   assessAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
@@ -103,6 +108,7 @@ function clearAiWorkspaceProjection(reason = "unavailable") {
   aiWorkspaceProjectionStatus.textContent = reason;
   clearAiWorkspaceLocalOcr(reason);
   clearAiWorkspaceOcrAssessment(reason);
+  clearAiWorkspaceOcrClick(reason);
   updateAiSurfaceScrollControls();
 }
 

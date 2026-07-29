@@ -404,6 +404,8 @@ const server = http.createServer(async (req, res) => {
         y: semanticTarget ? null : typeof body.y === "number" ? body.y : null,
         button: typeof body.button === "string" ? body.button : "left",
         semanticTarget,
+        surfaceId: body.surfaceId ?? null,
+        inventorySequence: body.inventorySequence ?? null,
         compositorFrame: body.compositorFrame ?? null,
       }, {
         grantBoundAction: body,

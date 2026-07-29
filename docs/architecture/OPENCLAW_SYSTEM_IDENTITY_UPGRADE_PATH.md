@@ -203,7 +203,7 @@
 
 ### 当前实现前沿
 
-Level 4 已从第一个所有权边界推进到十八个已部署并物理证明的切片：登录用户的
+Level 4 已从第一个所有权边界推进到十九个已部署并物理证明的切片：登录用户的
 `systemd --user` 管理独立 Weston headless compositor 和固定
 `nixsoma-ai-0` 1280x720 输出；现有 AI-owned Nix Firefox 作为 headed client
 运行其中；session-manager 获取有界原生帧并只向状态面投影摘要；原生左键点击
@@ -434,6 +434,31 @@ audit、Windows path budget、body-config，以及 246-file Core、30-file Sessi
 81-file Observer exact closure 均通过。该 lane 已冻结；下一最小真实候选是独立治理的
 same-surface OCR ordinal action，而不是继续增加只读 assessment 变体。
 
+第十九个 Level 4 纵向切片已完成部署与物理证明，能力 id 为
+`act.ai.workspace.ocr_click`。操作者只能为一个现有 reviewed task 显式触发一次；
+provider 只接收最多 24 个 OCR item、1200 个字符、数值 bounds 和受限 task
+objective，并且只能返回 `click_item + itemOrdinal` 或 `no_op`。调用方和 provider
+都不能提供坐标、重复次数、第二步、自动继续或 task completion。坐标只由 Core
+在 task/OCR/active surface/inventory 全部重新校验后，从当前 OCR bounds 中心计算。
+
+Weston 输入协议新增独立 opcode 4，把 fresh frame、inventory sequence、active
+surface id 与本地坐标绑定到同一 peer-authenticated receipt；旧 opcode 1 click 与
+opcode 3 scroll 保持兼容。执行一次 click 后，Core 必须取得第三个更新的同 surface
+OCR frame，并证明 OCR scene 已改变且所选 target 原文已消失。持久投影只允许哈希、
+ordinal、数值 bounds/坐标、surface/inventory、receipt 与 negative-authority 事实；
+OCR 原文和 provider reason 保持瞬时。像素、frame hash、browser API、task id、raw
+task metadata、命令、路径和 credential 均不外发，provider retention 仍属于外部策略。
+Active generation 为
+`/nix/store/zh9r98yqc80bfbg1kl8nz4f03h99icjx-nixos-system-nixos-26.05.4808.569d57850992`。
+1114 项测试、typecheck、818-entry registry、1005-file script audit、Windows path
+budget、body-config，以及 250-file Core、30-file Session Manager、18-file Screen
+Act、82-file Observer exact closure 均通过。物理 gate 将 task
+`cbbc8ac9-0613-4000-a2d3-c2b9a68146f2`、item 9、surface 33、inventory 56 与 frame
+75 -> 76 -> 78 绑定到一次 opcode-4 receipt，并由 post-action OCR 证明所选原文消失。
+一次 provider call 只执行一次 action，task 未变化，本地不持久化 OCR 原文、不外发
+pixel、不接受任意坐标，九个健康端点保持在线。该 lane 已冻结；任意坐标、多动作、
+自动重试/续步、桌面接管、parent display、root 与 host mutation 继续排除。
+
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
 画面投影、应用生命周期、surface 激活、垂直滚动、AI 单步、semantic scene
@@ -547,7 +572,7 @@ host mutation 仍未包含。这证明 AI 已拥有独立图形空间的最小�
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 60% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。真实 repair/rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 74%（semantic type、bounded run、task assessment/acceptance、bounded local OCR 与 task-bound OCR assessment 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、root no-plaintext audit、verified-scroll-only 两步 run、瞬时本地 OCR 与无 pixel egress 的 OCR provider assessment 已部署。`8x2xbjpk...` 的 OCR assessment gate 绑定 8 个区域和 162 个字符，以单次 provider call 返回 `complete`/0.95，并用更新 frame 重新校验，同时保持零 action/task mutation、无本地文本持久化和无像素外发。OCR-grounded action、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
+| Level 4 图形栈内生组件 | 约 76%（semantic type、bounded run、task assessment/acceptance、bounded local OCR、OCR assessment 与 same-surface OCR click 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、root no-plaintext audit、verified-scroll-only 两步 run、瞬时本地 OCR、无 pixel egress 的 OCR provider assessment 与 ordinal-grounded one-click action 已部署。`zh9r98yq...` gate 以 item 9、surface 33、inventory 56 和 frame 75 -> 76 -> 78 证明 receipt-bound click/post-action OCR，并在 governed stop 后证明 runtime acknowledgement 已删除，同时保持零 task mutation、本地 OCR 明文持久化、pixel egress 和 arbitrary coordinate authority。开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
 **50-58%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted

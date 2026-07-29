@@ -39,6 +39,8 @@
 #define INPUT_DIRECTORY "input"
 #define INPUT_SOCKET "control.sock"
 #define INPUT_MAX_BYTES 256
+#define WORKBENCH_ACTION_DIRECTORY "workbench-action"
+#define WORKBENCH_ACTION_FILE "acknowledged"
 #ifndef SESSION_MANAGER_CGROUP_SUFFIX
 #define SESSION_MANAGER_CGROUP_SUFFIX "/openclaw-session-manager.service"
 #endif
@@ -69,6 +71,7 @@ struct input_request {
 		INPUT_REQUEST_CLICK = 1,
 		INPUT_REQUEST_ACTIVATE_SURFACE = 2,
 		INPUT_REQUEST_SCROLL = 3,
+		INPUT_REQUEST_SURFACE_CLICK = 4,
 	} operation;
 	char id[33];
 	char frame_sha256[65];
@@ -193,8 +196,26 @@ read_request(int fd, struct input_request *request)
 			    request->x >= NIXSOMA_OUTPUT_WIDTH ||
 			    request->y >= NIXSOMA_OUTPUT_HEIGHT ||
 			    (request->direction != -1 && request->direction != 1) ||
-			    consumed + 1 != (int)total || buffer[consumed] != '\n')
-				return false;
+				    consumed + 1 != (int)total || buffer[consumed] != '\n') {
+				memset(request, 0, sizeof(*request));
+				consumed = 0;
+				if (sscanf(buffer,
+					   "4 %32[0-9a-f] %64[0-9a-f] %u %u %u %u %u%n",
+					   request->id, request->frame_sha256,
+					   &request->sequence, &request->inventory_sequence,
+					   &request->surface_id, &request->x, &request->y,
+					   &consumed) != 7 || strlen(request->id) != 32 ||
+				    strlen(request->frame_sha256) != 64 ||
+				    request->sequence == 0 ||
+				    request->inventory_sequence == 0 ||
+				    request->surface_id == 0 ||
+				    request->x >= NIXSOMA_OUTPUT_WIDTH ||
+				    request->y >= NIXSOMA_OUTPUT_HEIGHT ||
+				    consumed + 1 != (int)total || buffer[consumed] != '\n')
+					return false;
+				request->operation = INPUT_REQUEST_SURFACE_CLICK;
+				return true;
+			}
 			request->operation = INPUT_REQUEST_SCROLL;
 			return true;
 		}
@@ -261,6 +282,46 @@ execute_scroll(struct nixsoma_input_authority *authority,
 }
 
 static bool
+write_workbench_acknowledgement(void)
+{
+	const char *runtime_dir = getenv("XDG_RUNTIME_DIR");
+	char path[PATH_MAX];
+	struct stat status;
+	int fd;
+	int length;
+	bool written;
+
+	if (!runtime_dir || runtime_dir[0] != '/')
+		return false;
+	length = snprintf(path, sizeof(path), "%s/%s/%s", runtime_dir,
+			  WORKBENCH_ACTION_DIRECTORY, WORKBENCH_ACTION_FILE);
+	if (length < 0 || (size_t)length >= sizeof(path))
+		return false;
+	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC | O_NOFOLLOW,
+		  0600);
+	if (fd < 0)
+		return false;
+	if (fstat(fd, &status) < 0 || !S_ISREG(status.st_mode) ||
+	    status.st_uid != getuid() || (status.st_mode & 077) != 0) {
+		close(fd);
+		return false;
+	}
+	written = write_all(fd, "1\n", 2) && fsync(fd) == 0;
+	if (close(fd) < 0)
+		written = false;
+	return written;
+}
+
+static bool
+execute_surface_click(struct nixsoma_input_authority *authority,
+		      const struct input_request *request)
+{
+	return execute_surface_activation(authority, request) &&
+		execute_click(authority, request) &&
+		write_workbench_acknowledgement();
+}
+
+static bool
 write_receipt(int fd, const struct input_request *request)
 {
 	char receipt[INPUT_MAX_BYTES + 1];
@@ -279,6 +340,12 @@ write_receipt(int fd, const struct input_request *request)
 				  request->sequence, request->inventory_sequence,
 				  request->surface_id, request->x, request->y,
 				  request->direction);
+	} else if (request->operation == INPUT_REQUEST_SURFACE_CLICK) {
+		length = snprintf(receipt, sizeof(receipt),
+				  "4 %s %s %u %u %u %u %u executed\n",
+				  request->id, request->frame_sha256,
+				  request->sequence, request->inventory_sequence,
+				  request->surface_id, request->x, request->y);
 	} else {
 		length = snprintf(receipt, sizeof(receipt),
 				  "1 %s %s %u %u %u executed\n",
@@ -315,6 +382,9 @@ handle_connection(struct nixsoma_input_authority *authority, int fd)
 		break;
 	case INPUT_REQUEST_SCROLL:
 		executed = execute_scroll(authority, &request);
+		break;
+	case INPUT_REQUEST_SURFACE_CLICK:
+		executed = execute_surface_click(authority, &request);
 		break;
 	default:
 		executed = false;

@@ -47,15 +47,15 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
-triage/repair-promotion bridge, and eighteen deployed Level 4 graphical
-identity slices through task-bound provider assessment of bounded local OCR. One
+triage/repair-promotion bridge, and nineteen deployed Level 4 graphical
+identity slices through a same-surface OCR ordinal click. One
 explicit operator trigger can request a schema-bound no-op, vertical scroll,
 semantic click, or write-only semantic type decision over bounded active-browser
 content and execute at most one existing action; separate explicit reads can
 return bounded transient local OCR or one read-only provider assessment without
-pixel egress. All 1093 workspace tests and typecheck pass, the body-config and
-event-audit integration checks pass, the 817-entry milestone registry and
-1004-script audits pass, and
+pixel egress. All 1114 workspace tests and typecheck pass, the body-config and
+event-audit integration checks pass, the 818-entry milestone registry and
+1005-file script audits pass, and
 the Windows path budget has no file over 160 repository-relative characters.
 GitHub CI now enforces
 Node 22 typecheck, workspace tests, milestone registry/script audit, and the
@@ -63,11 +63,11 @@ same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/8x2xbjpkxjfvjs8ylypk9q4hf9xhaxn4-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/zh9r98yqc80bfbg1kl8nz4f03h99icjx-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, bounded local OCR, the
-task-bound OCR assessment owner, and Observer controls. All nine health
+task-bound OCR assessment and OCR ordinal-click owners, and Observer controls. All nine health
 endpoints pass.
 
 One real request-bound DeepSeek advisory call completed through task
@@ -2546,6 +2546,53 @@ readbacks or persistent user roots, sent no pixels, kept all nine health
 endpoints active, and stopped the fixed Workbench during cleanup. Freeze this
 lane. The smallest next real Level 4 candidate is a separately governed
 same-surface OCR-ordinal action, not another read-only assessment variant.
+
+## Completed Level 4 Same-Surface OCR Ordinal Click
+
+The nineteenth Level 4 vertical slice is deployed and physically complete as
+`act.ai.workspace.ocr_click`. One explicit reviewed task may trigger one
+standing-provider call over the same bounded 24-item/1200-character local OCR
+projection. The response contract accepts only `click_item + itemOrdinal` or
+`no_op`; it accepts no caller prompt, OCR payload, ordinal, coordinates, repeat,
+or continuation. OCR text remains untrusted visual data and may contain visible
+URLs or values. Pixels, frame hashes, browser APIs, task ids, raw task metadata,
+commands, paths, credentials, and locally derived coordinates remain outside
+provider egress. Provider retention remains externally governed.
+
+For `click_item`, Core obtains a newer matching OCR observation, revalidates the
+exact reviewed task, active numeric surface and inventory, derives the center of
+the selected OCR bounds locally, writes a required action-authorization audit,
+and revalidates the task again before dispatch. Session Manager extends the
+existing peer-authenticated Weston input protocol with opcode 4, which binds the
+same frame, inventory sequence, active surface id, and local coordinates in one
+receipt. Existing opcode-1 clicks and opcode-3 scrolls remain compatible.
+
+After one executed click, Core requires another newer same-surface OCR frame, a
+changed OCR scene, and disappearance of the exact selected target text. Durable
+evidence contains only hashes, ordinal, numeric bounds/coordinates,
+surface/inventory metadata, action receipt facts, and negative-authority flags;
+OCR text and provider reason remain transient. The fixed Workbench supplies one
+real visual transition from the isolated `CONFIRM` target to an acknowledged state.
+
+The stop condition is met in active generation
+`/nix/store/zh9r98yqc80bfbg1kl8nz4f03h99icjx-nixos-system-nixos-26.05.4808.569d57850992`.
+All 1114 workspace tests, typecheck, 818 registry entries, the 1005-file script
+audit, Windows path budget, body-config, and exact 250-file Core, 30-file Session
+Manager, 18-file Screen Act, and 82-file Observer closures pass. The physical
+gate bound task `cbbc8ac9-0613-4000-a2d3-c2b9a68146f2`, provider-selected OCR
+item 9, surface 33 and inventory 56. Frames 75, 76, and 78 prove initial,
+pre-action revalidation, and post-action OCR; the opcode-4 receipt matched and
+the selected target disappeared after exactly one click. Task state remained
+unchanged, OCR text and provider reason did not enter local durable projections,
+no pixels left the host, no arbitrary coordinate authority was accepted, and
+all nine health endpoints remained active. The Workbench uses a fixed ephemeral
+runtime acknowledgement written only after Weston activates and clicks the
+surface; it contains no OCR/provider/task content and is removed on application
+start/stop and compositor cleanup. The successful gate explicitly stopped the
+Workbench, observed the unit inactive, and proved the marker absent before its
+final health checks. Freeze this lane. Arbitrary coordinates,
+multiple actions, automatic continuation/retry, task completion, desktop-wide
+input, parent-display access, root, and host mutation remain deferred.
 
 ## Identity-Upgrade Alignment
 

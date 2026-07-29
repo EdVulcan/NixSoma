@@ -128,6 +128,7 @@ function createHarness(overrides = {}) {
     standingProviderAdvisory: overrides.standingProviderAdvisory,
     aiWorkspaceAssessment: overrides.aiWorkspaceAssessment,
     aiWorkspaceOcrAssessment: overrides.aiWorkspaceOcrAssessment,
+    aiWorkspaceOcrClick: overrides.aiWorkspaceOcrClick,
     aiWorkspaceSingleStep: overrides.aiWorkspaceSingleStep,
     aiWorkspaceBoundedRun: overrides.aiWorkspaceBoundedRun,
     publishAuditEvent: overrides.publishAuditEvent,
@@ -307,6 +308,81 @@ test("capability runtime exposes and invokes standing-authorized OCR assessment 
   assert.equal(response.response.invocation.summary.ocrTextPersistedLocally, false);
   assert.equal(response.response.invocation.summary.pixelsProviderEgress, false);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("NixSoma AI Workbench"), false);
+});
+
+test("capability runtime exposes standing-authorized OCR ordinal click with compact evidence", async () => {
+  const taskId = "task-ocr-click";
+  const { runtime, state } = createHarness({
+    aiWorkspaceOcrClick: {
+      invoke: async () => ({
+        ok: true,
+        registry: "nixsoma-ai-workspace-ocr-click-v0",
+        status: "executed",
+        decision: { actionId: "click_item", itemOrdinal: 1, confidence: 0.95 },
+        action: { actionId: "click_item", itemOrdinal: 1, surfaceId: 42,
+          inventorySequence: 9, executed: true },
+        evidence: {
+          taskId,
+          taskStatus: "running",
+          objectiveContentHash: "a".repeat(64),
+          taskVersionHash: "b".repeat(64),
+          contextContentHash: "c".repeat(64),
+          requestContentHash: "d".repeat(64),
+          responseContentHash: "e".repeat(64),
+          frameContentHash: "f".repeat(64),
+          frameSequence: 7,
+          ocrSceneContentHash: "1".repeat(64),
+          ocrBindingHash: "2".repeat(64),
+          ocrItemCount: 8,
+          ocrCharacterCount: 162,
+          verificationFrameContentHash: "3".repeat(64),
+          verificationFrameSequence: 8,
+          verificationOcrSceneContentHash: "4".repeat(64),
+          postActionFrameContentHash: "5".repeat(64),
+          postActionFrameSequence: 9,
+          postActionOcrSceneContentHash: "6".repeat(64),
+          actionExecuted: true,
+          receiptMatched: true,
+          frameChanged: true,
+          postActionVerified: true,
+          completionAudit: true,
+        },
+        governance: {
+          providerCalled: true,
+          localOcrBound: true,
+          localOcrRevalidated: true,
+          currentFrameBound: true,
+          currentActiveSurfaceBound: true,
+          ocrItemOrdinalBound: true,
+          taskObjectiveBound: true,
+          taskObjectiveProviderEgress: true,
+          rawTaskGoalProviderEgress: false,
+          ocrTextProviderEgress: true,
+          ocrTextPersistedLocally: false,
+          pixelsProviderEgress: false,
+          arbitraryPointerInput: false,
+          providerRetentionControlledExternally: true,
+        },
+      }),
+    },
+  });
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find((item) => item.id === "act.ai.workspace.ocr_click");
+  assert.equal(capability?.kind, "actuator");
+  assert.deepEqual(capability?.domains, ["cross_boundary"]);
+  assert.equal(capability?.governance, "standing_authorization");
+  const response = await runtime.invokeCapability({
+    capabilityId: "act.ai.workspace.ocr_click",
+    taskId,
+    params: { confirm: true },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.response.result.status, "executed");
+  assert.equal(response.response.invocation.summary.kind, "ai.workspace.ocr_click");
+  assert.equal(response.response.invocation.summary.itemOrdinal, 1);
+  assert.equal(response.response.invocation.summary.postActionVerified, true);
+  assert.equal(response.response.invocation.summary.arbitraryPointerInput, false);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("Acknowledge action"), false);
 });
 
 test("capability runtime rejects caller-controlled local OCR fields", async () => {

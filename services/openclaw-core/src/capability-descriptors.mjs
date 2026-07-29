@@ -84,6 +84,18 @@ export function buildBaseCapabilities({
       description: "Request one audited task-bound provider assessment over bounded local OCR text without pixel egress, actions, task mutation, or automatic continuation.",
     },
     {
+      id: "act.ai.workspace.ocr_click",
+      name: "AI Workspace OCR Click",
+      kind: "actuator",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/capabilities/invoke`,
+      intents: ["ai.workspace.ocr_click"],
+      domains: ["cross_boundary"],
+      risk: "medium",
+      governance: "standing_authorization",
+      description: "Request one audited task-bound provider selection of a bounded local OCR ordinal and execute at most one same-surface native click with post-action OCR verification.",
+    },
+    {
       id: "act.ai.workspace.accept_assessment",
       name: "Accept AI Workspace Assessment",
       kind: "actuator",

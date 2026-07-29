@@ -1,12 +1,12 @@
-export const observerClientRuntimeAiWorkspaceOcrAssessmentScript = `let aiWorkspaceOcrAssessmentInFlight = false;
-let aiWorkspaceOcrAssessmentTaskId = null;
+export const observerClientRuntimeAiWorkspaceOcrClickScript = `let aiWorkspaceOcrClickInFlight = false;
+let aiWorkspaceOcrClickTaskId = null;
 
-function clearAiWorkspaceOcrAssessment(reason = "not assessed") {
-  aiWorkspaceOcrAssessmentTaskId = null;
-  aiWorkspaceOcrAssessmentStatus.textContent = reason;
+function clearAiWorkspaceOcrClick(reason = "not run") {
+  aiWorkspaceOcrClickTaskId = null;
+  aiWorkspaceOcrClickStatus.textContent = reason;
 }
 
-async function assessAiWorkspaceWithOcr() {
+async function clickAiWorkspaceOcrItem() {
   if (aiWorkspaceLocalOcrInFlight
     || aiWorkspaceOcrAssessmentInFlight
     || aiWorkspaceOcrClickInFlight
@@ -14,7 +14,7 @@ async function assessAiWorkspaceWithOcr() {
     || aiWorkspaceBoundedRunInFlight
     || aiWorkspaceAssessmentInFlight
     || aiWorkspaceAssessmentAcceptanceInFlight) return;
-  aiWorkspaceOcrAssessmentInFlight = true;
+  aiWorkspaceOcrClickInFlight = true;
   updateAiSurfaceScrollControls();
   try {
     await refreshAiWorkspaceProjection();
@@ -25,46 +25,54 @@ async function assessAiWorkspaceWithOcr() {
     }
     const taskId = currentAiWorkspaceTaskId();
     if (!taskId) throw new Error("A current operator-reviewed task is required.");
-    aiWorkspaceOcrAssessmentStatus.textContent = "assessing";
+    aiWorkspaceOcrClickStatus.textContent = "running";
     const response = await fetchJson(observerConfig.coreUrl + "/capabilities/invoke", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        capabilityId: "sense.ai.workspace.ocr_assessment",
+        capabilityId: "act.ai.workspace.ocr_click",
         taskId,
         params: { confirm: true },
       }),
     });
     const result = response.result ?? {};
-    const assessment = result.assessment ?? {};
+    const decision = result.decision ?? {};
+    const action = result.action ?? {};
     const evidence = result.evidence ?? {};
     const governance = result.governance ?? {};
-    const assessed = result.status === "assessed";
+    const executed = result.status === "executed";
     const hash = (value) => /^[a-f0-9]{64}$/u.test(value ?? "");
     if (response.invoked !== true
-      || result.registry !== "nixsoma-ai-workspace-ocr-assessment-v0"
-      || !["assessed", "local_fallback"].includes(result.status)
-      || !new Set(["complete", "incomplete", "blocked", "unknown"]).has(assessment.outcome)
-      || (assessment.confidence !== null
-        && (typeof assessment.confidence !== "number"
-          || assessment.confidence < 0
-          || assessment.confidence > 1))
+      || result.registry !== "nixsoma-ai-workspace-ocr-click-v0"
+      || !new Set(["executed", "no_action", "local_fallback"]).has(result.status)
+      || !new Set(["click_item", "no_op"]).has(decision.actionId)
+      || (decision.itemOrdinal !== null
+        && (!Number.isInteger(decision.itemOrdinal)
+          || decision.itemOrdinal < 1
+          || decision.itemOrdinal > 24))
       || governance.maximumProviderCalls !== 1
-      || governance.maximumActions !== 0
-      || governance.actionExecuted !== false
+      || governance.maximumActions !== 1
       || governance.taskMutated !== false
       || governance.automaticContinuation !== false
       || governance.rawTaskGoalProviderEgress !== false
       || governance.ocrTextPersistedLocally !== false
       || governance.pixelsProviderEgress !== false
-      || governance.renderedTextMayContainVisibleUrlsOrValues !== true
+      || governance.arbitraryPointerInput !== false
       || governance.providerRetentionControlledExternally !== true
       || governance.mutatesHost !== false
       || Object.prototype.hasOwnProperty.call(result, "items")
-      || (assessed && (governance.providerCalled !== true
+      || Object.prototype.hasOwnProperty.call(result, "reason")
+      || (executed && (decision.actionId !== "click_item"
+        || action.actionId !== "click_item"
+        || action.executed !== true
+        || !Number.isInteger(action.itemOrdinal)
+        || action.itemOrdinal !== decision.itemOrdinal
+        || governance.providerCalled !== true
         || governance.localOcrBound !== true
         || governance.localOcrRevalidated !== true
+        || governance.currentFrameBound !== true
         || governance.currentActiveSurfaceBound !== true
+        || governance.ocrItemOrdinalBound !== true
         || governance.taskObjectiveBound !== true
         || governance.taskObjectiveProviderEgress !== true
         || governance.ocrTextProviderEgress !== true
@@ -75,37 +83,37 @@ async function assessAiWorkspaceWithOcr() {
         || !hash(evidence.requestContentHash)
         || !hash(evidence.responseContentHash)
         || !hash(evidence.frameContentHash)
-        || !hash(evidence.ocrSceneContentHash)
-        || !hash(evidence.ocrBindingHash)
         || !hash(evidence.verificationFrameContentHash)
-        || !hash(evidence.verificationOcrSceneContentHash)
+        || !hash(evidence.postActionFrameContentHash)
         || !Number.isInteger(evidence.frameSequence)
         || !Number.isInteger(evidence.verificationFrameSequence)
+        || !Number.isInteger(evidence.postActionFrameSequence)
         || evidence.verificationFrameSequence <= evidence.frameSequence
-        || !Number.isInteger(evidence.ocrItemCount)
-        || evidence.ocrItemCount < 1
-        || evidence.ocrItemCount > 24
-        || !Number.isInteger(evidence.ocrCharacterCount)
-        || evidence.ocrCharacterCount < 1
-        || evidence.ocrCharacterCount > 1200
+        || evidence.postActionFrameSequence <= evidence.verificationFrameSequence
+        || evidence.receiptMatched !== true
+        || evidence.frameChanged !== true
+        || evidence.postActionVerified !== true
         || evidence.completionAudit !== true))) {
-      throw new Error("AI workspace OCR assessment result was invalid.");
+      throw new Error("AI workspace OCR click result was invalid.");
     }
-    aiWorkspaceOcrAssessmentTaskId = taskId;
-    aiWorkspaceOcrAssessmentStatus.textContent = assessment.outcome
-      + (typeof assessment.confidence === "number"
-        ? " " + Math.round(assessment.confidence * 100) + "%"
-        : "");
-    setControlMessage("OCR assessment: " + assessment.outcome + ".");
+    aiWorkspaceOcrClickTaskId = taskId;
+    aiWorkspaceOcrClickStatus.textContent = executed
+      ? "executed item " + action.itemOrdinal
+      : result.status.replace("_", " ");
+    clearAiWorkspaceOcrAssessment("workspace changed");
+    setControlMessage("OCR click: " + aiWorkspaceOcrClickStatus.textContent + ".");
+    await refreshActionState();
+    await refreshWorkView();
+    await refreshAiWorkspaceProjection();
   } finally {
-    aiWorkspaceOcrAssessmentInFlight = false;
+    aiWorkspaceOcrClickInFlight = false;
     updateAiSurfaceScrollControls();
   }
 }
 
-ocrAssessAiWorkspaceButton.addEventListener("click", () => {
-  assessAiWorkspaceWithOcr().catch((error) => {
-    clearAiWorkspaceOcrAssessment("unavailable");
+ocrClickAiWorkspaceButton.addEventListener("click", () => {
+  clickAiWorkspaceOcrItem().catch((error) => {
+    clearAiWorkspaceOcrClick("unavailable");
     setControlMessage("Request failed: " + formatError(error));
   });
 });

@@ -57,11 +57,22 @@ export function normaliseAiCompositorPointerAction(value, options = {}) {
     || !Number.isInteger(value.y) || value.y < 0 || value.y >= AI_COMPOSITOR_INPUT_HEIGHT) {
     throw new Error("AI compositor input coordinates are outside the fixed output.");
   }
+  const surfaceBound = value.surfaceId !== undefined
+    || value.inventorySequence !== undefined;
+  if (surfaceBound && (value.surfaceId === undefined || value.inventorySequence === undefined)) {
+    throw new Error("AI compositor pointer surface binding requires both surfaceId and inventorySequence.");
+  }
   return {
     operation: AI_COMPOSITOR_POINTER_CLICK_OPERATION,
     x: value.x,
     y: value.y,
     button: "left",
+    surfaceId: surfaceBound
+      ? positiveUint32(value.surfaceId, "AI compositor pointer surfaceId")
+      : null,
+    inventorySequence: surfaceBound
+      ? positiveUint32(value.inventorySequence, "AI compositor pointer inventorySequence")
+      : null,
     frame: normaliseAiCompositorFrameBinding(value.compositorFrame, options),
   };
 }
@@ -96,8 +107,6 @@ export function normaliseAiCompositorScrollAction(value, options = {}) {
 
 export function normaliseAiCompositorInputAction(value, options = {}) {
   return value?.direction !== undefined
-    || value?.surfaceId !== undefined
-    || value?.inventorySequence !== undefined
     ? normaliseAiCompositorScrollAction(value, options)
     : normaliseAiCompositorPointerAction(value, options);
 }
@@ -132,12 +141,10 @@ export function projectAiCompositorInputEvidence(value) {
       && ["up", "down"].includes(value.direction)
       ? value.direction
       : null,
-    surfaceId: operation === AI_COMPOSITOR_POINTER_SCROLL_OPERATION
-      && Number.isInteger(value.surfaceId)
+    surfaceId: Number.isInteger(value.surfaceId)
       ? value.surfaceId
       : null,
-    inventorySequence: operation === AI_COMPOSITOR_POINTER_SCROLL_OPERATION
-      && Number.isInteger(value.inventorySequence)
+    inventorySequence: Number.isInteger(value.inventorySequence)
       ? value.inventorySequence
       : null,
     frame: value.frame ? {
@@ -156,10 +163,10 @@ export function projectAiCompositorInputEvidence(value) {
     receiptMatched: value.receiptMatched === true,
     sequenceAdvanced: value.sequenceAdvanced === true,
     frameChanged: value.frameChanged === true,
-    inventoryMatched: operation === AI_COMPOSITOR_POINTER_SCROLL_OPERATION
+    inventoryMatched: Number.isInteger(value.surfaceId)
       ? value.inventoryMatched === true
       : false,
-    surfaceMatched: operation === AI_COMPOSITOR_POINTER_SCROLL_OPERATION
+    surfaceMatched: Number.isInteger(value.surfaceId)
       ? value.surfaceMatched === true
       : false,
     imageDataRetained: false,
