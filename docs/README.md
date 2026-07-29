@@ -36,11 +36,12 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 semantic item type | DeepSeek may select one enabled textbox ordinal and return one bounded write-only value; Core and Screen Act retain only input length evidence while Screen Act resolves the private current target and types once | Deployed in `80lycg...`; public httpbin form executed ordinal 1 with 11-character evidence, and the root canary audit found no plaintext in five persistent roots or journal |
 | Level 4 bounded workspace run | One explicit operator trigger may execute a second fresh task-bound single step only after the first step is a receipt- and audit-verified scroll; click, type, no-op, fallback, unverified evidence, and the second step always terminate | Deployed in `hj1hmq...`; physical gate executed two governed scrolls from two provider calls with per-step, continuation, and run-completion audit |
 | Level 4 task assessment | One explicit task-bound provider call returns only complete/incomplete/blocked/unknown plus confidence after fresh task and semantic-scene revalidation; it performs no action, task mutation, or automatic continuation | Deployed in `5yfsg00f...`; physical gate returned `complete` with confidence 1 over 11 items and matched durable zero-mutation audit |
-| Level 4 assessment acceptance | One explicit operator command binds the exact persisted assessment invocation and objective/task-version/response/scene hashes to a still-current reviewed task, writes required authorization audit, then reuses the existing task completion owner | Source and exact closures pass in candidate `45zrk2zj...`; physical acceptance gate remains pending and provider output cannot close a task by itself |
+| Level 4 assessment acceptance | One explicit operator command binds the exact persisted assessment invocation and objective/task-version/response/scene hashes to a still-current reviewed task, writes required authorization audit, then reuses the existing task completion owner | Source and exact closures pass in combined candidate `4rdhm51f...`; physical acceptance gate remains pending and provider output cannot close a task by itself |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
 | Privileged actions | Physical-host generation switch and governed provider egress are proven; real repair, hostd activation, and rollback | Remaining mutations deferred to explicit/disposable checks |
+| Developer deployment | Default-off immutable helper accepts one canonical, root-owned `nixos-system-nixos` closure through one explicit `edvulcan` sudoers rule | Combined candidate `4rdhm51f...` is built; one final password-authenticated switch is required before later switches can use `sudo -n` without password storage |
 
 The current checkout is on the only available physical host
 (`systemd-detect-virt=none`). Historical VM results remain acceptance evidence,
@@ -552,7 +553,7 @@ verified-complete receipt and clears it on task or authentication change. All
 1066 tests, typecheck, 815-entry registry, 1001-script audit, path budget,
 exact 242-file Core closure `0fb60m...`, and 80-file Observer closure `7r0g23...`
 pass. Candidate
-`/nix/store/45zrk2zjw96f3bkmv5s9awc2zq9d763n-nixos-system-nixos-26.05.4808.569d57850992`
+`/nix/store/4rdhm51fm5ky585d1yv0sm27jgrpyi3l-nixos-system-nixos-26.05.4808.569d57850992`
 is built without switching. The registered acceptance gate reuses one real
 assessment, performs no additional provider call or workspace action, and will
 verify the required audit plus exact task closure after deployment.

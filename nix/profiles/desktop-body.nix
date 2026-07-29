@@ -2,6 +2,7 @@
   imports = [
     ./dev-body.nix
     ./clash-verge.nix
+    ../modules/nixsoma-developer-generation-switch.nix
   ];
 
   nix.settings = {
@@ -23,6 +24,10 @@
     aiGraphicalSession.nativeInput = true;
     aiGraphicalSession.applicationLifecycle = true;
     cloudProvider.enable = true;
+    developerGenerationSwitch = {
+      enable = true;
+      user = "edvulcan";
+    };
     trustedSidecarUserUnit.enable = true;
     componentOwnership.user = [
       "sessionManager"

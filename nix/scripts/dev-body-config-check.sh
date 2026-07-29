@@ -6,6 +6,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 BODY_MODULE="$REPO_ROOT/nix/modules/openclaw-body.nix"
 AI_GRAPHICAL_SESSION_MODULE="$REPO_ROOT/nix/modules/openclaw-ai-graphical-session.nix"
+DEVELOPER_GENERATION_SWITCH_MODULE="$REPO_ROOT/nix/modules/nixsoma-developer-generation-switch.nix"
 DEV_PROFILE="$REPO_ROOT/nix/profiles/dev-body.nix"
 DESKTOP_PROFILE="$REPO_ROOT/nix/profiles/desktop-body.nix"
 LOCAL_HOST="$REPO_ROOT/nix/hosts/local-dev.nix"
@@ -14,6 +15,7 @@ FLAKE="$REPO_ROOT/flake.nix"
 required_files=(
   "$BODY_MODULE"
   "$AI_GRAPHICAL_SESSION_MODULE"
+  "$DEVELOPER_GENERATION_SWITCH_MODULE"
   "$DEV_PROFILE"
   "$DESKTOP_PROFILE"
   "$LOCAL_HOST"
@@ -65,6 +67,7 @@ const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "u
 
 const bodyModule = read("nix/modules/openclaw-body.nix");
 const aiGraphicalSessionModule = read("nix/modules/openclaw-ai-graphical-session.nix");
+const developerGenerationSwitchModule = read("nix/modules/nixsoma-developer-generation-switch.nix");
 const nixsomaWestonPackage = read("nix/packages/nixsoma-weston.nix");
 const westonFrameAuthPackage = read("nix/packages/nixsoma-weston-frame-auth.nix");
 const westonInputAuthority = read("packages/weston-frame-auth/src/input-authority.c");
@@ -268,6 +271,17 @@ requireIncludes("AI graphical session module", aiGraphicalSessionModule, [
   "OPENCLAW_AI_GRAPHICAL_SESSION_ENABLED",
   ...aiGraphicalSessionEnvNames,
 ]);
+requireIncludes("developer generation switch module", developerGenerationSwitchModule, [
+  "options.services.openclaw.developerGenerationSwitch",
+  "nixsoma-dev-generation-switch",
+  "nixos-rebuild switch --store-path",
+  "nix-store --query --hash",
+  "switch-to-configuration",
+  "nixsoma-dev-generation-switch.lock",
+  "security.sudo.extraRules",
+  "NOPASSWD",
+  "NOSETENV",
+]);
 requireIncludes("NixSoma Weston package", nixsomaWestonPackage, [
   "nixsoma-weston",
   "weston-kiosk-shell-nixsoma-activation-api.patch",
@@ -349,6 +363,9 @@ requireIncludes("desktop-body profile", desktopProfile, [
   "aiGraphicalSession.attachBrowser = true",
   "aiGraphicalSession.applicationLifecycle = true",
   "cloudProvider.enable = true",
+  "../modules/nixsoma-developer-generation-switch.nix",
+  "developerGenerationSwitch",
+  "user = \"edvulcan\"",
   ...componentKeys,
 ]);
 
@@ -467,6 +484,13 @@ if command -v nix >/dev/null 2>&1; then
       hostd = if builtins.hasAttr "openclaw-hostd" config.systemd.services
         then project config.systemd.services.openclaw-hostd
         else null;
+      developerGenerationSwitch = {
+        enable = config.services.openclaw.developerGenerationSwitch.enable;
+        user = config.services.openclaw.developerGenerationSwitch.user;
+        systemName = config.services.openclaw.developerGenerationSwitch.systemName;
+        sudoRules = config.security.sudo.extraRules;
+        systemPackages = map builtins.toString config.environment.systemPackages;
+      };
     }')"
   node - <<'EOF' "$ownership_json"
 const ownership = JSON.parse(process.argv[2]);
@@ -690,6 +714,25 @@ if (ownership.hostd == null
   || ownership.hostd.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
   throw new Error(`hostd must execute from its fixed read-only Nix closure: ${JSON.stringify(ownership.hostd)}`);
 }
+const developerSwitch = ownership.developerGenerationSwitch ?? {};
+const developerSwitchRule = developerSwitch.sudoRules?.find((rule) =>
+  JSON.stringify(rule.users) === JSON.stringify(["edvulcan"]));
+const developerSwitchCommand = developerSwitchRule?.commands?.find((command) =>
+  String(command.command ?? "").endsWith("/bin/nixsoma-dev-generation-switch"));
+const developerSwitchPackage = developerSwitch.systemPackages?.find((packagePath) =>
+  String(packagePath).endsWith("-nixsoma-dev-generation-switch"));
+if (developerSwitch.enable !== true
+  || developerSwitch.user !== "edvulcan"
+  || developerSwitch.systemName !== "nixos"
+  || developerSwitchRule?.runAs !== "root"
+  || developerSwitchRule?.host !== "ALL"
+  || JSON.stringify(developerSwitchRule?.groups) !== JSON.stringify([])
+  || JSON.stringify(developerSwitchCommand?.options) !== JSON.stringify(["NOPASSWD", "NOSETENV"])
+  || !String(developerSwitchCommand?.command ?? "").startsWith("/nix/store/")
+  || !developerSwitchPackage
+  || !developerSwitchCommand.command.startsWith(`${developerSwitchPackage}/bin/`)) {
+  throw new Error(`developer generation switching must expose one immutable, explicit sudo command: ${JSON.stringify(developerSwitch)}`);
+}
 if (ownership.screenSense.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || !String(ownership.screenSense.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
   || !String(ownership.screenSense.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-screen-sense")
@@ -739,6 +782,12 @@ console.log(JSON.stringify({
     duplicated: userOwned.filter((name) => ownership.system.includes(name)),
     hostdServiceUser: ownership.hostd.serviceConfig.User,
     hostdSocketGroup: ownership.hostd.serviceConfig.Group,
+    developerGenerationSwitch: {
+      user: developerSwitch.user,
+      systemName: developerSwitch.systemName,
+      command: developerSwitchCommand.command,
+      passwordless: true,
+    },
     browserEngine: ownership.browser.environment.OPENCLAW_BROWSER_ENGINE_MODE,
     browserProfile: ownership.browser.environment.OPENCLAW_BROWSER_PROFILE_DIR,
     browserRuntimeSource: ownership.browser.environment.OPENCLAW_BODY_RUNTIME_SOURCE,

@@ -114,6 +114,23 @@ Run the NixOS body-config slice directly:
 npm run dev:milestone-check:unix -- body-config
 ```
 
+The desktop development profile explicitly installs one immutable generation
+switch helper for the local development user. After the generation containing
+that opt-in rule has been activated once, later prebuilt candidates can be
+switched without storing or forwarding a sudo password:
+
+```bash
+sudo -n nixsoma-dev-generation-switch \
+  /nix/store/<hash>-nixos-system-nixos-<version>
+```
+
+The helper accepts exactly one canonical, root-owned `nixos-system-nixos`
+closure with a switch script, validates it through `nix-store`, serializes
+concurrent switches, and invokes only the fixed `nixos-rebuild switch
+--store-path` command under a fixed root-owned environment. The sudo rule also
+rejects caller-provided environment changes. The underlying module is disabled by default; the
+machine-specific `desktop-body` profile opts in for `edvulcan`.
+
 To run only a subset:
 
 ```bash

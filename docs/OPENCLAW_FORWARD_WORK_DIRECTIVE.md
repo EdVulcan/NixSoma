@@ -2448,10 +2448,17 @@ Observer exposes `Accept` only while the current authenticated task still owns
 the transient verified-complete receipt. All 1066 workspace tests, typecheck,
 815-entry registry, 1001-script audit, Windows path budget, exact 242-file Core
 closure `0fb60m...`, and 80-file Observer closure `7r0g23...` pass. Candidate
-`/nix/store/45zrk2zjw96f3bkmv5s9awc2zq9d763n-nixos-system-nixos-26.05.4808.569d57850992`
+`/nix/store/4rdhm51fm5ky585d1yv0sm27jgrpyi3l-nixos-system-nixos-26.05.4808.569d57850992`
 is built without activation. The registered physical gate will perform one real
 assessment and then prove one explicit acceptance with zero additional provider
 calls or workspace actions. Switch and physical acceptance remain pending.
+
+That combined candidate also contains the default-off developer generation
+switch module, explicitly enabled by the machine-specific desktop profile for
+`edvulcan`. Its generated sudoers file passed `visudo`, names one immutable Nix
+store helper, and grants no arbitrary shell or password transport. After this
+one candidate is manually activated, later reviewed prebuilt generations may be
+switched with `sudo -n nixsoma-dev-generation-switch <store-path>`.
 
 ## Identity-Upgrade Alignment
 
@@ -2520,10 +2527,17 @@ below remain evidence of earlier acceptance only; they are not executable
 instructions for the current agent.
 
 On this physical host, normal development is user-space and read-only with
-respect to the host: do not run `sudo`, `nixos-rebuild switch`, generation
-activation, real hostd activation, or rollback. Use injected clients, dry-run
-builders, local service lanes, and unit/Observer evidence for unsafe host
-boundaries until a separate mutation environment is explicitly provisioned.
+respect to the host: do not accept or persist sudo passwords, invoke arbitrary
+sudo commands, perform real hostd activation, or roll back. Use injected
+clients, dry-run builders, local service lanes, and unit/Observer evidence for
+unsafe host boundaries. The one explicit development exception is the
+default-off `services.openclaw.developerGenerationSwitch` module when a machine
+profile opts in a named user. Its immutable sudo command accepts exactly one
+canonical, root-owned `nixos-system-<host>` store closure and invokes only the
+fixed `nixos-rebuild switch --store-path` operation. It must be manually
+deployed once before `sudo -n nixsoma-dev-generation-switch <store-path>` is an
+available non-interactive route; it is an operator deployment mechanism, not a
+product capability or permission for arbitrary host mutation.
 
 ## Historical VM Agent Startup Checklist (Archived)
 
