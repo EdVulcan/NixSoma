@@ -76,6 +76,15 @@ test("task objective projects one reviewed task without provider authority metad
   assert.equal(JSON.stringify(result.evidence).includes("Learn more"), false);
   assert.equal(JSON.stringify(result.providerProjection).includes(TASK_ID), false);
   assert.equal(JSON.stringify(result.providerProjection).includes("session-current"), false);
+
+  const readOnly = buildAiWorkspaceTaskObjectiveBinding({
+    task: task(),
+    taskId: TASK_ID,
+    workViewState: workViewState(),
+    maximumActions: 0,
+  });
+  assert.equal(readOnly.providerProjection.maximumActions, 0);
+  assert.equal(readOnly.evidence.taskVersionHash, result.evidence.taskVersionHash);
 });
 
 test("task objective rejects sensitive and instruction-shaped goal text", () => {

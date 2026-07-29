@@ -24,9 +24,7 @@ import { createRuntimeProfiler } from "./runtime-diagnostics.mjs";
 import { createRulePlanBuilders } from "./rule-plan-builders.mjs";
 import { createSystemdTaskBuilders } from "./systemd-task-builders.mjs";
 import { createFixedUnitIncidentTriageBuilders } from "./fixed-unit-incident-triage.mjs";
-import { createStandingProviderAdvisory } from "./standing-provider-advisory.mjs";
-import { createAiWorkspaceSingleStep } from "./ai-workspace-single-step.mjs";
-import { createAiWorkspaceRunCoordinator } from "./ai-workspace-run-coordinator.mjs";
+import { createAiWorkspaceRuntimes } from "./ai-workspace-runtime.mjs";
 
 export function createPlanBuilder(deps) {
   const profiler = createRuntimeProfiler("plan-builder");
@@ -40,9 +38,11 @@ export function createPlanBuilder(deps) {
     policyEvaluator,
     publishEvent,
     publishAuditEvent = async () => ({ ok: true }),
-    createStandingProviderAdvisoryImpl = createStandingProviderAdvisory,
-    createAiWorkspaceSingleStepImpl = createAiWorkspaceSingleStep,
-    createAiWorkspaceRunCoordinatorImpl = createAiWorkspaceRunCoordinator,
+    createAiWorkspaceRuntimesImpl = createAiWorkspaceRuntimes,
+    createStandingProviderAdvisoryImpl,
+    createAiWorkspaceAssessmentImpl,
+    createAiWorkspaceSingleStepImpl,
+    createAiWorkspaceRunCoordinatorImpl,
     host,
     port,
     listCommandTranscriptRecords = () => [],
@@ -131,27 +131,23 @@ export function createPlanBuilder(deps) {
   let nativeDeclarativeEvolutionTaskBuilders = null;
   let nativeDeclarativeEvolutionActivationDecisionBuilders = null;
   let nativeDeclarativeEvolutionActivationBuilders = null;
-  const standingProviderAdvisory = createStandingProviderAdvisoryImpl({
-    state: state.standingProviderAdvisoryState,
-    fetchJson,
-    systemSenseUrl,
-    publishAuditEvent,
-    persistState,
-  });
-  const aiWorkspaceSingleStepOwner = createAiWorkspaceSingleStepImpl({
-    standingAdvisory: standingProviderAdvisory,
+  const aiWorkspaceRuntimes = createAiWorkspaceRuntimesImpl({
+    state,
     fetchJson,
     postJson,
     sessionManagerUrl,
     screenSenseUrl,
     screenActUrl,
+    systemSenseUrl,
     publishAuditEvent,
+    persistState,
     getTaskById,
+    createStandingProviderAdvisoryImpl,
+    createAiWorkspaceAssessmentImpl,
+    createAiWorkspaceSingleStepImpl,
+    createAiWorkspaceRunCoordinatorImpl,
   });
-  const aiWorkspaceRuns = createAiWorkspaceRunCoordinatorImpl({
-    singleStep: aiWorkspaceSingleStepOwner,
-    publishAuditEvent,
-  });
+  const { standingProviderAdvisory } = aiWorkspaceRuntimes;
   const capabilityRuntime = createCapabilityRuntime({
     host,
     port,
@@ -165,8 +161,9 @@ export function createPlanBuilder(deps) {
     policyEvaluator,
     publishEvent,
     standingProviderAdvisory,
-    aiWorkspaceSingleStep: aiWorkspaceRuns.singleStep,
-    aiWorkspaceBoundedRun: aiWorkspaceRuns.boundedRun,
+    aiWorkspaceAssessment: aiWorkspaceRuntimes.assessment,
+    aiWorkspaceSingleStep: aiWorkspaceRuntimes.singleStep,
+    aiWorkspaceBoundedRun: aiWorkspaceRuntimes.boundedRun,
     listCommandTranscriptRecords,
     listFilesystemChangeRecords,
     buildExperienceMemoryReadModel,

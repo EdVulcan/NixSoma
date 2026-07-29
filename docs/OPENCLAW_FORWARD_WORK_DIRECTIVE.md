@@ -2383,6 +2383,38 @@ profile, and performed no automatic repeat. The fourteenth Level 4 bounded-run
 slice is physically complete; freeze this lane and select the next vertical
 capability rather than adding another action or continuation variant.
 
+## Level 4 Task Assessment Candidate
+
+The fifteenth vertical Level 4 slice is one explicit read-only task assessment,
+not another action or continuation variant. `sense.ai.workspace.assessment`
+accepts only the same operator-reviewed task id and `confirm=true` request. It
+reuses the shared standing-provider single flight and the extracted workspace
+context owner, then asks for exactly one `complete`, `incomplete`, `blocked`, or
+`unknown` result with confidence. The provider sees the same bounded task
+objective and role/name/disabled/bounds semantic scene used by the action lane;
+it receives no pixels, URLs, input values, frame hashes, Browser PID, target ids,
+selectors, caller prompt, or raw task metadata.
+
+After the provider responds, Core re-resolves the task and recaptures the work
+view. Task/version, surface, Browser PID, inventory sequence, and full semantic
+content must still match; private frame drift is rebound exactly as in the
+physically proven single-step owner. Assessment is serialized with `AI Step`
+and `AI Run`, executes zero actions, mutates no task, creates no task or approval,
+and cannot continue automatically. Provider reason remains transient. Durable
+egress, completion, and invocation evidence retains only outcome, confidence,
+hashes, item count, and zero-mutation facts.
+
+Observer adds one `Assess` command and clears its compact result when task focus
+or operator authentication changes. The registered
+`dev-ai-workspace-assessment-live-check.sh` opens the public httpbin form, binds
+one reviewed visibility objective, and will verify one real assessment, unchanged
+task status/version, no action audit, matching egress/completion audit, and all
+nine health endpoints. All 1060 workspace tests, typecheck, 814-entry registry,
+1000-script audit, Windows path budget, exact body-config checks, 241-file Core
+closure `fcagc5...`, and 80-file Observer closure `rd0mfr...` pass in candidate
+`/nix/store/5yfsg00fn3cslxfh18sf02z5q78pf4kx-nixos-system-nixos-26.05.4808.569d57850992`.
+Deployment and one physical provider assessment remain pending.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

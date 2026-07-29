@@ -27,6 +27,7 @@ import { createScreenActionCapabilityHandlers } from "./capability-runtime-scree
 import { createDeclarativeEvolutionCapabilityHandlers } from "./capability-runtime-declarative-evolution.mjs";
 import { createSystemdIncidentObservationCapabilityHandlers } from "./capability-runtime-systemd-incident-observation.mjs";
 import { createStandingProviderAdvisoryCapabilityHandlers } from "./capability-runtime-standing-provider-advisory.mjs";
+import { createAiWorkspaceAssessmentCapabilityHandlers } from "./capability-runtime-ai-workspace-assessment.mjs";
 import { createAiWorkspaceSingleStepCapabilityHandlers } from "./capability-runtime-ai-workspace-single-step.mjs";
 import { createAiWorkspaceBoundedRunCapabilityHandlers } from "./capability-runtime-ai-workspace-bounded-run.mjs";
 import {
@@ -56,6 +57,7 @@ export function createCapabilityRuntime(deps) {
     pluginRuntime = {},
     providerRuntime = {},
     standingProviderAdvisory,
+    aiWorkspaceAssessment,
     aiWorkspaceSingleStep,
     aiWorkspaceBoundedRun,
     declarativeEvolution = {},
@@ -226,6 +228,9 @@ export function createCapabilityRuntime(deps) {
   });
   const standingProviderAdvisoryHandlers = createStandingProviderAdvisoryCapabilityHandlers({
     standingAdvisory: standingProviderAdvisory,
+  });
+  const aiWorkspaceAssessmentHandlers = createAiWorkspaceAssessmentCapabilityHandlers({
+    runtime: aiWorkspaceAssessment,
   });
   const aiWorkspaceSingleStepHandlers = createAiWorkspaceSingleStepCapabilityHandlers({
     runtime: aiWorkspaceSingleStep,
@@ -462,6 +467,10 @@ export function createCapabilityRuntime(deps) {
   }
 
   async function dispatchCapabilityBackend(capability, request) {
+    const aiWorkspaceAssessment = await aiWorkspaceAssessmentHandlers.callBackend(capability, request);
+    if (aiWorkspaceAssessment.handled) {
+      return aiWorkspaceAssessment.result;
+    }
     const aiWorkspaceBoundedRun = await aiWorkspaceBoundedRunHandlers.callBackend(capability, request);
     if (aiWorkspaceBoundedRun.handled) {
       return aiWorkspaceBoundedRun.result;
@@ -744,6 +753,10 @@ export function createCapabilityRuntime(deps) {
   }
 
   function summariseCapabilityInvocationResult(capability, result) {
+    const aiWorkspaceAssessmentSummary = aiWorkspaceAssessmentHandlers.summariseResult(capability, result);
+    if (aiWorkspaceAssessmentSummary) {
+      return aiWorkspaceAssessmentSummary;
+    }
     const aiWorkspaceBoundedRunSummary = aiWorkspaceBoundedRunHandlers.summariseResult(capability, result);
     if (aiWorkspaceBoundedRunSummary) {
       return aiWorkspaceBoundedRunSummary;
@@ -1173,6 +1186,14 @@ export function createCapabilityRuntime(deps) {
     if (standingAuthorization.handled) {
       serverApproval = standingAuthorization.authorization;
     }
+    const aiWorkspaceAssessmentAuthorization = aiWorkspaceAssessmentHandlers.authorizeRequest(
+      capability,
+      request,
+      body,
+    );
+    if (aiWorkspaceAssessmentAuthorization.handled) {
+      serverApproval = aiWorkspaceAssessmentAuthorization.authorization;
+    }
     const aiWorkspaceAuthorization = aiWorkspaceSingleStepHandlers.authorizeRequest(capability, request, body);
     if (aiWorkspaceAuthorization.handled) {
       serverApproval = aiWorkspaceAuthorization.authorization;
@@ -1197,6 +1218,17 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: standingProviderAdvisoryValidationError },
+      };
+    }
+    const aiWorkspaceAssessmentValidationError = aiWorkspaceAssessmentHandlers.validateRequest(
+      capability,
+      request,
+      body,
+    );
+    if (aiWorkspaceAssessmentValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: aiWorkspaceAssessmentValidationError },
       };
     }
     const aiWorkspaceSingleStepValidationError = aiWorkspaceSingleStepHandlers.validateRequest(

@@ -4,6 +4,8 @@ let aiWorkspaceProjectionRequest = null;
 let aiWorkspaceProjectionBinding = null;
 let aiWorkspaceSingleStepInFlight = false;
 let aiWorkspaceBoundedRunInFlight = false;
+let aiWorkspaceAssessmentInFlight = false;
+let aiWorkspaceAssessmentTaskId = null;
 
 function currentAiWorkspaceTask() {
   if (taskHistoryFocus === "selected-task") {
@@ -56,11 +58,22 @@ function currentAiSurfaceScrollBinding() {
 function updateAiSurfaceScrollControls() {
   const enabled = currentAiSurfaceScrollBinding() !== null;
   const taskId = currentAiWorkspaceTaskId();
-  const aiRunInFlight = aiWorkspaceSingleStepInFlight || aiWorkspaceBoundedRunInFlight;
+  if (aiWorkspaceAssessmentTaskId && aiWorkspaceAssessmentTaskId !== taskId) {
+    clearAiWorkspaceAssessment();
+  }
+  const aiRunInFlight = aiWorkspaceSingleStepInFlight
+    || aiWorkspaceBoundedRunInFlight
+    || aiWorkspaceAssessmentInFlight;
   scrollAiSurfaceUpButton.disabled = !enabled || aiRunInFlight;
   scrollAiSurfaceDownButton.disabled = !enabled || aiRunInFlight;
   runAiWorkspaceSingleStepButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceBoundedRunButton.disabled = !enabled || !taskId || aiRunInFlight;
+  assessAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
+}
+
+function clearAiWorkspaceAssessment(reason = "not assessed") {
+  aiWorkspaceAssessmentTaskId = null;
+  aiWorkspaceAssessmentStatus.textContent = reason;
 }
 
 function clearAiWorkspaceProjection(reason = "unavailable") {
@@ -412,6 +425,80 @@ async function runAiWorkspaceBoundedRun() {
 
 runAiWorkspaceBoundedRunButton.addEventListener("click", () => {
   runAiWorkspaceBoundedRun().catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
+async function assessAiWorkspace() {
+  if (aiWorkspaceSingleStepInFlight
+    || aiWorkspaceBoundedRunInFlight
+    || aiWorkspaceAssessmentInFlight) return;
+  aiWorkspaceAssessmentInFlight = true;
+  updateAiSurfaceScrollControls();
+  try {
+    await refreshAiWorkspaceProjection();
+    await refreshWorkView();
+    await refreshRuntime();
+    if (!currentAiSurfaceScrollBinding()) {
+      throw new Error("A fresh active AI workspace projection is required.");
+    }
+    const taskId = currentAiWorkspaceTaskId();
+    if (!taskId) throw new Error("A current operator-reviewed task is required.");
+    const response = await fetchJson(observerConfig.coreUrl + "/capabilities/invoke", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        capabilityId: "sense.ai.workspace.assessment",
+        taskId,
+        params: { confirm: true },
+      }),
+    });
+    const result = response.result ?? {};
+    const assessment = result.assessment ?? {};
+    const governance = result.governance ?? {};
+    const assessed = result.status === "assessed";
+    const allowedOutcomes = new Set(["complete", "incomplete", "blocked", "unknown"]);
+    if (response.invoked !== true
+      || result.registry !== "nixsoma-ai-workspace-task-assessment-v0"
+      || !["assessed", "local_fallback"].includes(result.status)
+      || !allowedOutcomes.has(assessment.outcome)
+      || (assessment.confidence !== null
+        && (typeof assessment.confidence !== "number"
+          || assessment.confidence < 0
+          || assessment.confidence > 1))
+      || governance.maximumProviderCalls !== 1
+      || governance.maximumActions !== 0
+      || governance.actionExecuted !== false
+      || governance.taskMutated !== false
+      || governance.automaticContinuation !== false
+      || governance.rawTaskGoalProviderEgress !== false
+      || governance.pixelsProviderEgress !== false
+      || governance.urlsProviderEgress !== false
+      || governance.inputValuesProviderEgress !== false
+      || governance.mutatesHost !== false
+      || (assessed && (governance.providerCalled !== true
+        || governance.semanticSceneBound !== true
+        || governance.currentBrowserSurfaceBound !== true
+        || governance.taskObjectiveBound !== true
+        || governance.taskObjectiveProviderEgress !== true
+        || result.evidence?.taskId !== taskId
+        || result.evidence?.completionAudit !== true))) {
+      throw new Error("AI workspace assessment result was invalid.");
+    }
+    aiWorkspaceAssessmentTaskId = taskId;
+    const confidence = typeof assessment.confidence === "number"
+      ? " " + Math.round(assessment.confidence * 100) + "%"
+      : "";
+    aiWorkspaceAssessmentStatus.textContent = assessment.outcome + confidence;
+    setControlMessage("AI assessment: " + assessment.outcome + confidence + ".");
+  } finally {
+    aiWorkspaceAssessmentInFlight = false;
+    updateAiSurfaceScrollControls();
+  }
+}
+
+assessAiWorkspaceButton.addEventListener("click", () => {
+  assessAiWorkspace().catch((error) => {
     setControlMessage("Request failed: " + formatError(error));
   });
 });

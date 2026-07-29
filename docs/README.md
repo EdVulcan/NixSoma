@@ -13,8 +13,8 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, and a verified-scroll-only two-step run, plus the completed Level 3 baseline | Thirteenth semantic type and fourteenth bounded run are physically complete |
-| Local validation | 1047 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 813 registry entries pass | Validated |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, and read-only task assessment, plus the completed Level 3 baseline | Fourteenth bounded run is physically complete; fifteenth read-only assessment is candidate-built |
+| Local validation | 1060 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 814 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/hj1hmq0brxgvgmv3scipzr9n47h9b0ld-nixos-system-nixos-26.05.4808.569d57850992` | Semantic type, root no-plaintext audit, provider-called fallback completion audit, and the two-step verified-scroll bounded run are physically proven |
 | Previous generation | `/nix/store/9fiq5ixr1himr919h8k1ms5qs54ci34n-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the fresh-frame semantic rebind correction |
@@ -30,11 +30,12 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 application lifecycle | `act.work_view.control` and a single-use session-manager execution grant start or stop only `nixsoma-ai-workbench.service`; Observer provides authenticated controls and readback without repetitive approval | Deployed; real Observer proved start -> matching PID/surface -> stop -> disappearance |
 | Level 4 surface activation | The existing control owner binds one numeric surface id and inventory sequence; session-manager requires audit, fresh pre-frame, peer-authenticated shell receipt, newer activated inventory, and post-frame proof | Deployed; normal production Observer proved fixture 2 -> Workbench 4 with counts 0 -> 2 -> 1 -> 0 |
 | Level 4 active-surface scroll | Existing pointer authority accepts only one `up` or `down` wheel step at fixed output center, bound to the exact current frame, active numeric surface, inventory sequence, execution grant, peer receipt, audit, and post-frame | Deployed in `b6qjcbfc...`; normal production Observer proved both directions on fixture surface 2 |
-| Level 4 AI workspace single step | Explicit authenticated trigger builds a task-objective-bound structural workspace context, shares the standing DeepSeek single-flight owner, and revalidates task, scene, frame, and active surface before at most one existing action | Deployed v2 selected `type_item`; corrected route assembly remains candidate-only with no automatic follow-up |
+| Level 4 AI workspace single step | Explicit authenticated trigger builds a task-objective-bound structural workspace context, shares the standing DeepSeek single-flight owner, and revalidates task, scene, frame, and active surface before at most one existing action | Deployed v2 selected `type_item`; corrected route and no-plaintext persistence boundary are physically proven with no automatic follow-up |
 | Level 4 browser semantic grounding | Screen Sense projects at most 12 role/name/disabled/bounds items from an explicit metadata-plus-items Browser capture; Core locally binds Browser PID to the active Weston surface, sends no pixels/URL/input value/selector/target id/frame hash, and recaptures before at most one existing action | Deployed in `jricbfds...`; real DeepSeek selected `no_op`, no actuator ran, and scene hash plus durable audit matched |
 | Level 4 semantic item click | DeepSeek may select one 1-based scene ordinal; Core revalidates the scene and Screen Act privately maps that ordinal to the current Browser Runtime frame-bound semantic target, clicks once, then recaptures locally | Deployed in `z5qgq50f...`; task-grounded DeepSeek selected ordinal 1 and the governed click executed exactly once with durable audit |
 | Level 4 semantic item type | DeepSeek may select one enabled textbox ordinal and return one bounded write-only value; Core and Screen Act retain only input length evidence while Screen Act resolves the private current target and types once | Deployed in `80lycg...`; public httpbin form executed ordinal 1 with 11-character evidence, and the root canary audit found no plaintext in five persistent roots or journal |
 | Level 4 bounded workspace run | One explicit operator trigger may execute a second fresh task-bound single step only after the first step is a receipt- and audit-verified scroll; click, type, no-op, fallback, unverified evidence, and the second step always terminate | Deployed in `hj1hmq...`; physical gate executed two governed scrolls from two provider calls with per-step, continuation, and run-completion audit |
+| Level 4 task assessment | One explicit task-bound provider call returns only complete/incomplete/blocked/unknown plus confidence after fresh task and semantic-scene revalidation; it performs no action, task mutation, or automatic continuation | Source and closures pass in candidate `5yfsg00f...`; physical provider gate remains pending |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -516,6 +517,21 @@ endpoints active. It retained no input text, exposed no plaintext canary, used
 the tmpfs browser profile, and performed no automatic repeat. The bounded-run
 slice is physically complete and frozen.
 
+The selected fifteenth Level 4 slice adds `sense.ai.workspace.assessment` as an
+explicit read-only task outcome check. It reuses the same operator-reviewed task,
+semantic scene, standing-provider single flight, and post-response task/surface/
+PID/inventory/content revalidation as the action lane. Its strict response is
+`complete`, `incomplete`, `blocked`, or `unknown` plus confidence; provider reason
+is transient. It executes zero actions, does not change task status or version,
+creates no task or approval, and never continues automatically. Observer exposes
+one mutually exclusive `Assess` command with task-bound compact readback. All
+1060 tests, typecheck, 814-entry registry, 1000-script audit, path budget,
+body-config, exact 241-file Core closure `fcagc5...`, and 80-file Observer closure
+`rd0mfr...` pass in candidate
+`/nix/store/5yfsg00fn3cslxfh18sf02z5q78pf4kx-nixos-system-nixos-26.05.4808.569d57850992`.
+The registered live gate will prove one real assessment and zero task/action
+mutation after deployment.
+
 ## Progress Estimate
 
 These figures are capability-maturity estimates, not test coverage:
@@ -525,7 +541,7 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 65%; semantic type and the verified-scroll-only bounded run are physically complete |
+| Level 4 graphics-stack-native body | about 66%; semantic type and bounded run are physically complete, while read-only task assessment is candidate-built |
 | Current bounded product scope | 82-85% |
 | Final whitepaper vision | 50-58% |
 

@@ -2,6 +2,7 @@ export const AI_WORKSPACE_BOUNDED_RUN_REGISTRY =
   "nixsoma-ai-workspace-bounded-run-v0";
 
 const SINGLE_STEP_REGISTRY = "nixsoma-ai-workspace-single-step-v0";
+const ASSESSMENT_REGISTRY = "nixsoma-ai-workspace-task-assessment-v0";
 const SCROLL_ACTIONS = new Set(["scroll_up", "scroll_down"]);
 const ALLOWED_ACTIONS = new Set([
   "no_op", "scroll_up", "scroll_down", "click_item", "type_item",
@@ -152,6 +153,7 @@ function busyBoundedRun() {
 
 export function createAiWorkspaceRunCoordinator({
   singleStep,
+  assessment,
   publishAuditEvent = async () => ({ ok: true }),
   now = () => new Date().toISOString(),
 } = {}) {
@@ -242,6 +244,55 @@ export function createAiWorkspaceRunCoordinator({
     inFlight = true;
     try {
       return await singleStep.invoke(input);
+    } finally {
+      inFlight = false;
+    }
+  }
+
+  async function invokeAssessment(input) {
+    if (inFlight) {
+      return typeof assessment?.localFallback === "function"
+        ? assessment.localFallback("workspace_run_in_flight")
+        : {
+            ok: true,
+            registry: ASSESSMENT_REGISTRY,
+            status: "local_fallback",
+            assessment: { outcome: "unknown", confidence: null },
+            fallback: { reason: "ai_workspace_assessment_workspace_run_in_flight" },
+            evidence: { taskId: input?.taskId ?? null, completionAudit: false },
+            governance: {
+              providerCalled: false,
+              maximumProviderCalls: 1,
+              maximumActions: 0,
+              actionExecuted: false,
+              taskMutated: false,
+              automaticContinuation: false,
+            },
+          };
+    }
+    if (!assessment || typeof assessment.invoke !== "function") {
+      return typeof assessment?.localFallback === "function"
+        ? assessment.localFallback("runtime_unavailable")
+        : {
+            ok: false,
+            registry: ASSESSMENT_REGISTRY,
+            status: "local_fallback",
+            assessment: { outcome: "unknown", confidence: null },
+            fallback: { reason: "ai_workspace_assessment_runtime_unavailable" },
+            evidence: { taskId: input?.taskId ?? null, completionAudit: false },
+            governance: {
+              providerCalled: false,
+              maximumProviderCalls: 1,
+              maximumActions: 0,
+              actionExecuted: false,
+              taskMutated: false,
+              automaticContinuation: false,
+            },
+          };
+    }
+    inFlight = true;
+    try {
+      return await assessment.invoke(input);
     } finally {
       inFlight = false;
     }
@@ -369,5 +420,6 @@ export function createAiWorkspaceRunCoordinator({
   return {
     singleStep: { invoke: invokeSingle },
     boundedRun: { invoke: invokeBounded },
+    assessment: { invoke: invokeAssessment },
   };
 }

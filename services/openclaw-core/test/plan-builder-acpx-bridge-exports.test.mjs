@@ -6,6 +6,7 @@ import { createPlanBuilder } from "../src/plan-builder.mjs";
 function createPlanBuilderHarness({
   acpxDraft,
   createStandingProviderAdvisoryImpl,
+  createAiWorkspaceAssessmentImpl,
   createAiWorkspaceSingleStepImpl,
   publishAuditEvent,
 } = {}) {
@@ -111,6 +112,7 @@ function createPlanBuilderHarness({
     publishEvent: asyncNoop,
     publishAuditEvent,
     createStandingProviderAdvisoryImpl,
+    createAiWorkspaceAssessmentImpl,
     createAiWorkspaceSingleStepImpl,
     host: "127.0.0.1",
     port: 4100,
@@ -258,4 +260,70 @@ test("plan builder assembles AI workspace single-step with the shared provider a
   assert.equal(bounded.response.invocation.summary.kind, "ai.workspace.bounded_run");
   assert.equal(bounded.response.invocation.summary.stepCount, 1);
   assert.equal(bounded.response.invocation.summary.steps[0].actionId, "no_op");
+});
+
+test("plan builder assembles read-only AI workspace assessment with shared authority", async () => {
+  const assembly = [];
+  const standingOwner = {
+    restoreState: () => ({ ok: true }),
+    requestDecision: async () => ({ ok: false, reason: "disabled" }),
+  };
+  const requiredAudit = async () => ({ ok: true });
+  const planBuilder = createPlanBuilderHarness({
+    acpxDraft: () => ({ ok: true }),
+    publishAuditEvent: requiredAudit,
+    createStandingProviderAdvisoryImpl: () => standingOwner,
+    createAiWorkspaceAssessmentImpl: (deps) => {
+      assembly.push(deps);
+      return {
+        invoke: async ({ taskId }) => ({
+          ok: true,
+          registry: "nixsoma-ai-workspace-task-assessment-v0",
+          status: "assessed",
+          assessment: { outcome: "incomplete", confidence: 0.7 },
+          evidence: {
+            taskId,
+            taskStatus: "running",
+            objectiveContentHash: "a".repeat(64),
+            taskVersionHash: "b".repeat(64),
+            contextContentHash: "c".repeat(64),
+            requestContentHash: "d".repeat(64),
+            responseContentHash: "e".repeat(64),
+            sceneContentHash: "f".repeat(64),
+            sceneItemCount: 1,
+            completionAudit: true,
+          },
+          governance: {
+            providerCalled: true,
+            semanticSceneBound: true,
+            currentBrowserSurfaceBound: true,
+            taskObjectiveBound: true,
+            taskObjectiveProviderEgress: true,
+            rawTaskGoalProviderEgress: false,
+            pixelsProviderEgress: false,
+            urlsProviderEgress: false,
+            inputValuesProviderEgress: false,
+          },
+        }),
+        localFallback: () => ({ status: "local_fallback" }),
+      };
+    },
+  });
+
+  const result = await planBuilder.invokeCapability({
+    capabilityId: "sense.ai.workspace.assessment",
+    taskId: "task-reviewed-1",
+    params: { confirm: true },
+  });
+
+  assert.equal(assembly.length, 1);
+  assert.equal(assembly[0].standingAdvisory, standingOwner);
+  assert.equal(assembly[0].publishAuditEvent, requiredAudit);
+  assert.equal(assembly[0].sessionManagerUrl, "http://127.0.0.1:4102");
+  assert.equal(assembly[0].screenSenseUrl, "http://127.0.0.1:4104");
+  assert.equal(typeof assembly[0].getTaskById, "function");
+  assert.equal(typeof assembly[0].fetchJson, "function");
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invocation.summary.kind, "ai.workspace.assessment");
+  assert.equal(result.response.invocation.summary.outcome, "incomplete");
 });

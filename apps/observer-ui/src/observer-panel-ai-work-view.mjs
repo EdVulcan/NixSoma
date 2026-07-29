@@ -10,6 +10,7 @@ export function observerAiWorkViewPanel() {
           <div class="metric"><span>Workbench</span><span id="ai-workbench-status">disabled</span></div>
           <div class="metric"><span>Workbench Surface</span><span id="ai-workbench-surface">none</span></div>
           <div class="metric"><span>AI Surfaces</span><span id="ai-surface-count">0</span></div>
+          <div class="metric"><span>Assessment</span><span id="ai-workspace-assessment-status">not assessed</span></div>
           <label for="ai-surface-select">Surface</label>
           <select id="ai-surface-select" disabled></select>
           <div class="actions">
@@ -20,6 +21,7 @@ export function observerAiWorkViewPanel() {
             <button id="scroll-ai-surface-down-button" class="secondary" type="button" disabled title="Scroll active AI surface down" aria-label="Scroll active AI surface down">&#8595;</button>
             <button id="run-ai-workspace-single-step-button" type="button" disabled>AI Step</button>
             <button id="run-ai-workspace-bounded-run-button" type="button" disabled>AI Run</button>
+            <button id="assess-ai-workspace-button" class="secondary" type="button" disabled>Assess</button>
           </div>
           <pre id="work-view-json">Loading work view state...</pre>
         </section>

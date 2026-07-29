@@ -99,6 +99,7 @@ function createHarness(overrides = {}) {
     },
     policyEvaluator,
     standingProviderAdvisory: overrides.standingProviderAdvisory,
+    aiWorkspaceAssessment: overrides.aiWorkspaceAssessment,
     aiWorkspaceSingleStep: overrides.aiWorkspaceSingleStep,
     aiWorkspaceBoundedRun: overrides.aiWorkspaceBoundedRun,
     publishEvent: async (name, body) => {
@@ -164,6 +165,98 @@ test("capability runtime exposes the standing-authorized AI workspace single-ste
   assert.deepEqual(capability?.domains, ["cross_boundary"]);
   assert.equal(capability?.risk, "medium");
   assert.equal(capability?.governance, "standing_authorization");
+});
+
+test("capability runtime exposes the standing-authorized read-only AI workspace assessment", async () => {
+  const { runtime } = createHarness();
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find((item) => item.id === "sense.ai.workspace.assessment");
+
+  assert.equal(capability?.kind, "sensor");
+  assert.deepEqual(capability?.domains, ["cross_boundary"]);
+  assert.equal(capability?.risk, "medium");
+  assert.equal(capability?.governance, "standing_authorization");
+});
+
+test("capability runtime records one compact AI workspace assessment without provider reason", async () => {
+  let invoked = 0;
+  const { runtime, state } = createHarness({
+    aiWorkspaceAssessment: {
+      invoke: async ({ taskId }) => {
+        invoked += 1;
+        return {
+          ok: true,
+          registry: "nixsoma-ai-workspace-task-assessment-v0",
+          status: "assessed",
+          assessment: { outcome: "complete", confidence: 0.85 },
+          privateReason: "must not be summarized",
+          evidence: {
+            contextContentHash: "a".repeat(64),
+            requestContentHash: "b".repeat(64),
+            responseContentHash: "c".repeat(64),
+            sceneContentHash: "d".repeat(64),
+            sceneItemCount: 2,
+            taskId,
+            taskStatus: "running",
+            objectiveContentHash: "e".repeat(64),
+            taskVersionHash: "f".repeat(64),
+            completionAudit: true,
+          },
+          governance: {
+            providerCalled: true,
+            semanticSceneBound: true,
+            currentBrowserSurfaceBound: true,
+            taskObjectiveBound: true,
+            taskObjectiveProviderEgress: true,
+            rawTaskGoalProviderEgress: false,
+            pixelsProviderEgress: false,
+            urlsProviderEgress: false,
+            inputValuesProviderEgress: false,
+          },
+        };
+      },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "sense.ai.workspace.assessment",
+    taskId: "task-reviewed-1",
+    params: { confirm: true },
+  });
+
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invoked, true);
+  assert.equal(result.response.invocation.authorization.policyId, "ai-workspace-explicit-task-assessment");
+  assert.equal(result.response.invocation.summary.kind, "ai.workspace.assessment");
+  assert.equal(result.response.invocation.summary.outcome, "complete");
+  assert.equal(result.response.invocation.summary.confidence, 0.85);
+  assert.equal(result.response.invocation.summary.maximumActions, 0);
+  assert.equal(result.response.invocation.summary.taskMutated, false);
+  assert.equal(result.response.invocation.summary.automaticContinuation, false);
+  assert.equal(result.response.invocation.summary.completionAudit, true);
+  assert.equal(invoked, 1);
+  assert.equal(state.capabilityInvocationLog.length, 1);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("must not be summarized"), false);
+});
+
+test("capability runtime rejects caller-controlled AI workspace assessment fields", async () => {
+  let invoked = 0;
+  const { runtime } = createHarness({
+    aiWorkspaceAssessment: {
+      invoke: async () => { invoked += 1; return { ok: true }; },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "sense.ai.workspace.assessment",
+    taskId: "task-reviewed-1",
+    params: { confirm: true, outcome: "complete", prompt: "caller prompt" },
+  });
+
+  assert.equal(result.statusCode, 400);
+  assert.equal(result.response.error.includes("only capabilityId"), true);
+  assert.equal(invoked, 0);
 });
 
 test("capability runtime exposes the standing-authorized AI workspace bounded-run descriptor", async () => {

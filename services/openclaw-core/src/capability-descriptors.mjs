@@ -48,6 +48,18 @@ export function buildBaseCapabilities({
       description: "Request one audited, budgeted provider recommendation over server-generated fixed-unit health context without creating or executing tasks, approvals, repairs, commands, or host mutations.",
     },
     {
+      id: "sense.ai.workspace.assessment",
+      name: "AI Workspace Task Assessment",
+      kind: "sensor",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/capabilities/invoke`,
+      intents: ["ai.workspace.assess"],
+      domains: ["cross_boundary"],
+      risk: "medium",
+      governance: "standing_authorization",
+      description: "Request one audited provider assessment of an operator-reviewed task against the current semantic workspace without actions, task mutation, or automatic continuation.",
+    },
+    {
       id: "act.ai.workspace.single_step",
       name: "AI Workspace Single Step",
       kind: "actuator",

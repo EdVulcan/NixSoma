@@ -356,6 +356,20 @@ not repeat automatically. Semantic type, root persistence, fallback terminal
 audit, and the bounded run are physically complete. Freeze this lane and select
 the next vertical capability.
 
+The selected fifteenth Level 4 capability is one explicit read-only task
+assessment. `sense.ai.workspace.assessment` accepts only a reviewed task id and
+confirmation, sends the same bounded task objective plus role/name/disabled/
+bounds semantic scene through the shared standing-provider owner, and accepts
+only complete/incomplete/blocked/unknown plus confidence. Core recaptures and
+revalidates task/version, surface, Browser PID, inventory, and full semantic
+content before accepting the result. It is serialized with Step/Run, performs
+zero actions, mutates no task, creates no task or approval, and has no automatic
+continuation. Provider reason stays transient; Observer shows one task-bound
+compact `Assess` result. All 1060 tests, typecheck, 814-entry registry,
+1000-script audit, path budget, body-config, exact 241-file Core and 80-file
+Observer closures, and candidate `5yfsg00f...` pass. The registered physical
+gate remains pending.
+
 ## Completed Capability Evidence
 
 The following plan families are retained because they describe implemented

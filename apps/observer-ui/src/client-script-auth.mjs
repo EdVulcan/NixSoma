@@ -31,6 +31,7 @@ async function refreshOperatorSession() {
   renderOperatorAuthState();
   if (!operatorSession?.authenticated && typeof clearAiWorkspaceProjection === "function") {
     clearAiWorkspaceProjection("operator auth required");
+    clearAiWorkspaceAssessment("operator auth required");
   }
 }
 
@@ -74,6 +75,7 @@ async function signOutOperator() {
     renderOperatorAuthState();
     if (typeof clearAiWorkspaceProjection === "function") {
       clearAiWorkspaceProjection("operator auth required");
+      clearAiWorkspaceAssessment("operator auth required");
     }
   }
 }

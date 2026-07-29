@@ -90,7 +90,12 @@ function trustedWorkViewMatches(task, workViewState) {
     && helper.leaseMatched === true;
 }
 
-export function buildAiWorkspaceTaskObjectiveBinding({ task, taskId, workViewState } = {}) {
+export function buildAiWorkspaceTaskObjectiveBinding({
+  task,
+  taskId,
+  workViewState,
+  maximumActions = 1,
+} = {}) {
   const requestedTaskId = normaliseAiWorkspaceTaskId(taskId);
   if (!requestedTaskId) return reject("task_id_invalid");
   if (!task || task.id !== requestedTaskId) return reject("task_not_found");
@@ -129,7 +134,7 @@ export function buildAiWorkspaceTaskObjectiveBinding({ task, taskId, workViewSta
       statement: objectiveResult.objective,
       source: "existing_operator_reviewed_task",
       interpretation: "bounded_objective_data_not_instruction_hierarchy",
-      maximumActions: 1,
+      maximumActions: maximumActions === 0 ? 0 : 1,
     },
     evidence: {
       registry: AI_WORKSPACE_TASK_OBJECTIVE_REGISTRY,
@@ -142,6 +147,16 @@ export function buildAiWorkspaceTaskObjectiveBinding({ task, taskId, workViewSta
       currentWorkViewBound: true,
       objectiveTextRetained: false,
     },
+  };
+}
+
+export function projectAiWorkspaceTaskEvidence(binding) {
+  const evidence = binding?.evidence ?? {};
+  return {
+    taskId: evidence.taskId ?? null,
+    taskStatus: evidence.taskStatus ?? null,
+    objectiveContentHash: evidence.objectiveContentHash ?? null,
+    taskVersionHash: evidence.taskVersionHash ?? null,
   };
 }
 

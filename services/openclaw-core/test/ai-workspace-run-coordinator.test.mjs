@@ -202,17 +202,66 @@ test("workspace run coordinator serializes bounded and single-step invocations",
       governance: { providerCalled: false, actionExecuted: false },
     }),
   };
-  const coordinator = createAiWorkspaceRunCoordinator({ singleStep: primitive });
+  const assessment = {
+    async invoke() {
+      return { status: "assessed" };
+    },
+    localFallback: (reason) => ({
+      status: "local_fallback",
+      fallback: { reason },
+      assessment: { outcome: "unknown", confidence: null },
+    }),
+  };
+  const coordinator = createAiWorkspaceRunCoordinator({ singleStep: primitive, assessment });
   const bounded = coordinator.boundedRun.invoke({ taskId: TASK_ID });
   await started;
 
   const concurrent = await coordinator.singleStep.invoke({ taskId: TASK_ID });
   assert.equal(concurrent.status, "local_fallback");
   assert.equal(concurrent.fallback.reason, "workspace_run_in_flight");
+  const concurrentAssessment = await coordinator.assessment.invoke({ taskId: TASK_ID });
+  assert.equal(concurrentAssessment.status, "local_fallback");
+  assert.equal(concurrentAssessment.fallback.reason, "workspace_run_in_flight");
 
   releaseFirst();
   const completed = await bounded;
   assert.equal(completed.status, "stopped_after_first");
+});
+
+test("workspace run coordinator blocks steps while assessment is in flight", async () => {
+  let releaseAssessment;
+  let assessmentStarted;
+  const started = new Promise((resolve) => { assessmentStarted = resolve; });
+  const release = new Promise((resolve) => { releaseAssessment = resolve; });
+  const primitive = {
+    async invoke() {
+      return stepResult({ actionId: "no_op", actionExecuted: false });
+    },
+    localFallback: (reason) => ({
+      status: "local_fallback",
+      fallback: { reason, actionId: "no_op" },
+    }),
+  };
+  const assessment = {
+    async invoke() {
+      assessmentStarted();
+      await release;
+      return { status: "assessed", assessment: { outcome: "complete", confidence: 1 } };
+    },
+    localFallback: (reason) => ({ status: "local_fallback", fallback: { reason } }),
+  };
+  const coordinator = createAiWorkspaceRunCoordinator({ singleStep: primitive, assessment });
+  const pendingAssessment = coordinator.assessment.invoke({ taskId: TASK_ID });
+  await started;
+
+  const concurrentStep = await coordinator.singleStep.invoke({ taskId: TASK_ID });
+  const concurrentRun = await coordinator.boundedRun.invoke({ taskId: TASK_ID });
+  assert.equal(concurrentStep.fallback.reason, "workspace_run_in_flight");
+  assert.equal(concurrentRun.terminalReason, "workspace_run_in_flight");
+
+  releaseAssessment();
+  const completed = await pendingAssessment;
+  assert.equal(completed.status, "assessed");
 });
 
 test("bounded workspace run reports an unknown second outcome without retry", async () => {
