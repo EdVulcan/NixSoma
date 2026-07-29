@@ -2383,7 +2383,7 @@ profile, and performed no automatic repeat. The fourteenth Level 4 bounded-run
 slice is physically complete; freeze this lane and select the next vertical
 capability rather than adding another action or continuation variant.
 
-## Level 4 Task Assessment Candidate
+## Level 4 Task Assessment Physical Proof
 
 The fifteenth vertical Level 4 slice is one explicit read-only task assessment,
 not another action or continuation variant. `sense.ai.workspace.assessment`
@@ -2405,15 +2405,20 @@ egress, completion, and invocation evidence retains only outcome, confidence,
 hashes, item count, and zero-mutation facts.
 
 Observer adds one `Assess` command and clears its compact result when task focus
-or operator authentication changes. The registered
-`dev-ai-workspace-assessment-live-check.sh` opens the public httpbin form, binds
-one reviewed visibility objective, and will verify one real assessment, unchanged
-task status/version, no action audit, matching egress/completion audit, and all
-nine health endpoints. All 1060 workspace tests, typecheck, 814-entry registry,
-1000-script audit, Windows path budget, exact body-config checks, 241-file Core
-closure `fcagc5...`, and 80-file Observer closure `rd0mfr...` pass in candidate
-`/nix/store/5yfsg00fn3cslxfh18sf02z5q78pf4kx-nixos-system-nixos-26.05.4808.569d57850992`.
-Deployment and one physical provider assessment remain pending.
+or operator authentication changes. All 1060 workspace tests, typecheck,
+814-entry registry, 1000-script audit, Windows path budget, exact body-config
+checks, 241-file Core closure `fcagc5...`, and 80-file Observer closure
+`rd0mfr...` pass. Generation
+`/nix/store/5yfsg00fn3cslxfh18sf02z5q78pf4kx-nixos-system-nixos-26.05.4808.569d57850992`
+is active. The registered physical gate opened the public httpbin form, bound
+one reviewed visibility objective, and received `complete` with confidence 1
+from one provider call over an 11-item scene. Matching completion audit was
+durable, all nine health endpoints remained active, and the task status/version
+remained unchanged with zero action, zero task mutation, no automatic
+continuation, and no persisted provider reason. Freeze assessment generation;
+the next vertical capability is explicit operator acceptance of a still-current
+verified `complete` assessment before the existing task owner may close that
+exact task. Provider output must never complete a task automatically.
 
 ## Identity-Upgrade Alignment
 

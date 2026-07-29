@@ -367,8 +367,14 @@ zero actions, mutates no task, creates no task or approval, and has no automatic
 continuation. Provider reason stays transient; Observer shows one task-bound
 compact `Assess` result. All 1060 tests, typecheck, 814-entry registry,
 1000-script audit, path budget, body-config, exact 241-file Core and 80-file
-Observer closures, and candidate `5yfsg00f...` pass. The registered physical
-gate remains pending.
+Observer closures pass. Generation `5yfsg00f...` is active. The registered
+physical gate returned `complete` with confidence 1 from one provider call over
+11 scene items, preserved the task status/version, performed zero actions,
+matched durable completion audit, and retained neither automatic continuation
+nor provider reason. Freeze assessment generation. The next vertical capability
+is explicit operator acceptance bound to the still-current task/version and
+verified `complete` assessment before the existing task owner closes that exact
+task. Provider output must never complete the task automatically.
 
 ## Completed Capability Evidence
 
