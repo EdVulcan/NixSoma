@@ -29,6 +29,7 @@ import { createSystemdIncidentObservationCapabilityHandlers } from "./capability
 import { createStandingProviderAdvisoryCapabilityHandlers } from "./capability-runtime-standing-provider-advisory.mjs";
 import { createAiWorkspaceAssessmentCapabilityHandlers } from "./capability-runtime-ai-workspace-assessment.mjs";
 import { createAiWorkspaceLocalOcrCapabilityHandlers } from "./capability-runtime-ai-workspace-local-ocr.mjs";
+import { createAiWorkspaceOcrAssessmentCapabilityHandlers } from "./capability-runtime-ai-workspace-ocr-assessment.mjs";
 import { createAiWorkspaceAssessmentAcceptanceCapabilityHandlers } from "./capability-runtime-ai-workspace-assessment-acceptance.mjs";
 import { createAiWorkspaceSingleStepCapabilityHandlers } from "./capability-runtime-ai-workspace-single-step.mjs";
 import { createAiWorkspaceBoundedRunCapabilityHandlers } from "./capability-runtime-ai-workspace-bounded-run.mjs";
@@ -61,6 +62,7 @@ export function createCapabilityRuntime(deps) {
     providerRuntime = {},
     standingProviderAdvisory,
     aiWorkspaceAssessment,
+    aiWorkspaceOcrAssessment,
     aiWorkspaceSingleStep,
     aiWorkspaceBoundedRun,
     declarativeEvolution = {},
@@ -234,6 +236,9 @@ export function createCapabilityRuntime(deps) {
   });
   const aiWorkspaceAssessmentHandlers = createAiWorkspaceAssessmentCapabilityHandlers({
     runtime: aiWorkspaceAssessment,
+  });
+  const aiWorkspaceOcrAssessmentHandlers = createAiWorkspaceOcrAssessmentCapabilityHandlers({
+    runtime: aiWorkspaceOcrAssessment,
   });
   const aiWorkspaceLocalOcrHandlers = createAiWorkspaceLocalOcrCapabilityHandlers({
     sessionManagerUrl,
@@ -488,6 +493,13 @@ export function createCapabilityRuntime(deps) {
     const aiWorkspaceLocalOcr = await aiWorkspaceLocalOcrHandlers.callBackend(capability, request);
     if (aiWorkspaceLocalOcr.handled) {
       return aiWorkspaceLocalOcr.result;
+    }
+    const aiWorkspaceOcrAssessment = await aiWorkspaceOcrAssessmentHandlers.callBackend(
+      capability,
+      request,
+    );
+    if (aiWorkspaceOcrAssessment.handled) {
+      return aiWorkspaceOcrAssessment.result;
     }
     const aiWorkspaceAssessmentAcceptance =
       await aiWorkspaceAssessmentAcceptanceHandlers.callBackend(capability, request);
@@ -783,6 +795,11 @@ export function createCapabilityRuntime(deps) {
     const aiWorkspaceLocalOcrSummary = aiWorkspaceLocalOcrHandlers.summariseResult(capability, result);
     if (aiWorkspaceLocalOcrSummary) {
       return aiWorkspaceLocalOcrSummary;
+    }
+    const aiWorkspaceOcrAssessmentSummary =
+      aiWorkspaceOcrAssessmentHandlers.summariseResult(capability, result);
+    if (aiWorkspaceOcrAssessmentSummary) {
+      return aiWorkspaceOcrAssessmentSummary;
     }
     const aiWorkspaceAssessmentAcceptanceSummary =
       aiWorkspaceAssessmentAcceptanceHandlers.summariseResult(capability, result);
@@ -1222,6 +1239,11 @@ export function createCapabilityRuntime(deps) {
     if (standingAuthorization.handled) {
       serverApproval = standingAuthorization.authorization;
     }
+    const aiWorkspaceOcrAssessmentAuthorization =
+      aiWorkspaceOcrAssessmentHandlers.authorizeRequest(capability, request, body);
+    if (aiWorkspaceOcrAssessmentAuthorization.handled) {
+      serverApproval = aiWorkspaceOcrAssessmentAuthorization.authorization;
+    }
     const aiWorkspaceAssessmentAuthorization = aiWorkspaceAssessmentHandlers.authorizeRequest(
       capability,
       request,
@@ -1265,6 +1287,14 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: aiWorkspaceLocalOcrValidationError },
+      };
+    }
+    const aiWorkspaceOcrAssessmentValidationError =
+      aiWorkspaceOcrAssessmentHandlers.validateRequest(capability, request, body);
+    if (aiWorkspaceOcrAssessmentValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: aiWorkspaceOcrAssessmentValidationError },
       };
     }
     const aiWorkspaceAssessmentValidationError = aiWorkspaceAssessmentHandlers.validateRequest(

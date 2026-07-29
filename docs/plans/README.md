@@ -407,9 +407,33 @@ zero provider calls, actions, text persistence, pixel egress, and browser
 storage while all nine health endpoints remained active. All 1080 tests,
 typecheck, 816-entry registry, 1002-script audit, body-config, shared contracts,
 and exact 244-file Core, 30-file Session Manager, and 80-file Observer closures
-pass. The next candidate is task-bound/provider use of bounded local OCR text
-without pixel egress; defer it to a separate slice rather than reopening this
-read-only lane.
+pass. Task-bound/provider use of bounded local OCR text was kept in the separate
+slice completed below rather than reopening this read-only lane.
+
+The eighteenth Level 4 capability is deployed as
+`sense.ai.workspace.ocr_assessment`. It reuses the reviewed task objective,
+standing-provider single flight, four-outcome assessment parser, and local OCR
+owner. At most 24 recognized regions and 1200 text characters plus numeric
+bounds may reach the provider; pixels, frame hashes, browser APIs, process ids,
+caller prompts, raw task metadata, commands, paths, and credentials remain
+excluded. OCR text is explicitly untrusted and may contain rendered URLs or
+visible values. NixSoma retains only frame-bound observation/task/request/response
+hashes and counts, while provider retention remains an external policy. A newer
+post-provider OCR observation must match the task version, active surface,
+inventory, and projected OCR content before a required completion audit can
+close the assessment. Zero actions, task mutation, automatic continuation, and
+assessment acceptance occur. Generation
+`/nix/store/8x2xbjpkxjfvjs8ylypk9q4hf9xhaxn4-nixos-system-nixos-26.05.4808.569d57850992`
+is active. All 1093 tests, typecheck, the 817-entry registry, 1004-script audit,
+Windows path budget, body-config, and exact 246-file Core, 30-file Session
+Manager, and 81-file Observer closures pass. The physical gate sent 8 regions
+and 162 characters for task `f4cb629d-f36f-48fc-a3b4-a1b322916da3`, returned
+`complete` at 0.95 confidence from one provider call, and matched frame sequence
+3 to a newer sequence 4 before its required completion audit. It performed zero
+actions or task mutation, persisted no OCR text locally, sent no pixels, kept
+all nine health endpoints active, and stopped the Workbench on exit. This lane
+is frozen. The smallest next real Level 4 candidate is one separately governed,
+same-surface OCR-ordinal action; no such action is selected or enabled here.
 
 ## Completed Capability Evidence
 

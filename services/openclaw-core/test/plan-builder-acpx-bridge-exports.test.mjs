@@ -7,6 +7,7 @@ function createPlanBuilderHarness({
   acpxDraft,
   createStandingProviderAdvisoryImpl,
   createAiWorkspaceAssessmentImpl,
+  createAiWorkspaceOcrAssessmentImpl,
   createAiWorkspaceSingleStepImpl,
   publishAuditEvent,
 } = {}) {
@@ -113,6 +114,7 @@ function createPlanBuilderHarness({
     publishAuditEvent,
     createStandingProviderAdvisoryImpl,
     createAiWorkspaceAssessmentImpl,
+    createAiWorkspaceOcrAssessmentImpl,
     createAiWorkspaceSingleStepImpl,
     host: "127.0.0.1",
     port: 4100,
@@ -326,4 +328,76 @@ test("plan builder assembles read-only AI workspace assessment with shared autho
   assert.equal(result.statusCode, 200);
   assert.equal(result.response.invocation.summary.kind, "ai.workspace.assessment");
   assert.equal(result.response.invocation.summary.outcome, "incomplete");
+});
+
+test("plan builder assembles task-bound OCR assessment with shared provider authority", async () => {
+  const assembly = [];
+  const standingOwner = {
+    restoreState: () => ({ ok: true }),
+    requestDecision: async () => ({ ok: false, reason: "disabled" }),
+  };
+  const requiredAudit = async () => ({ ok: true });
+  const planBuilder = createPlanBuilderHarness({
+    acpxDraft: () => ({ ok: true }),
+    publishAuditEvent: requiredAudit,
+    createStandingProviderAdvisoryImpl: () => standingOwner,
+    createAiWorkspaceOcrAssessmentImpl: (deps) => {
+      assembly.push(deps);
+      return {
+        invoke: async ({ taskId }) => ({
+          ok: true,
+          registry: "nixsoma-ai-workspace-ocr-assessment-v0",
+          status: "assessed",
+          assessment: { outcome: "complete", confidence: 0.9 },
+          evidence: {
+            taskId,
+            taskStatus: "running",
+            objectiveContentHash: "a".repeat(64),
+            taskVersionHash: "b".repeat(64),
+            contextContentHash: "c".repeat(64),
+            requestContentHash: "d".repeat(64),
+            responseContentHash: "e".repeat(64),
+            frameContentHash: "f".repeat(64),
+            ocrSceneContentHash: "1".repeat(64),
+            ocrBindingHash: "2".repeat(64),
+            ocrItemCount: 1,
+            ocrCharacterCount: 21,
+            verificationFrameContentHash: "3".repeat(64),
+            verificationOcrSceneContentHash: "4".repeat(64),
+            completionAudit: true,
+          },
+          governance: {
+            providerCalled: true,
+            localOcrBound: true,
+            localOcrRevalidated: true,
+            currentActiveSurfaceBound: true,
+            taskObjectiveBound: true,
+            taskObjectiveProviderEgress: true,
+            rawTaskGoalProviderEgress: false,
+            ocrTextProviderEgress: true,
+            ocrTextPersistedLocally: false,
+            pixelsProviderEgress: false,
+          },
+        }),
+        localFallback: () => ({ status: "local_fallback" }),
+      };
+    },
+  });
+
+  const result = await planBuilder.invokeCapability({
+    capabilityId: "sense.ai.workspace.ocr_assessment",
+    taskId: "task-reviewed-1",
+    params: { confirm: true },
+  });
+
+  assert.equal(assembly.length, 1);
+  assert.equal(assembly[0].standingAdvisory, standingOwner);
+  assert.equal(assembly[0].publishAuditEvent, requiredAudit);
+  assert.equal(assembly[0].sessionManagerUrl, "http://127.0.0.1:4102");
+  assert.equal(typeof assembly[0].getTaskById, "function");
+  assert.equal(typeof assembly[0].fetchJson, "function");
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invocation.summary.kind, "ai.workspace.ocr_assessment");
+  assert.equal(result.response.invocation.summary.ocrTextProviderEgress, true);
+  assert.equal(result.response.invocation.summary.pixelsProviderEgress, false);
 });

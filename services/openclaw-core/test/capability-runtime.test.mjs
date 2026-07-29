@@ -127,6 +127,7 @@ function createHarness(overrides = {}) {
     policyEvaluator,
     standingProviderAdvisory: overrides.standingProviderAdvisory,
     aiWorkspaceAssessment: overrides.aiWorkspaceAssessment,
+    aiWorkspaceOcrAssessment: overrides.aiWorkspaceOcrAssessment,
     aiWorkspaceSingleStep: overrides.aiWorkspaceSingleStep,
     aiWorkspaceBoundedRun: overrides.aiWorkspaceBoundedRun,
     publishAuditEvent: overrides.publishAuditEvent,
@@ -237,6 +238,75 @@ test("capability runtime exposes and invokes bounded local OCR without persistin
   assert.equal(response.response.invocation.summary.textPersisted, false);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("NIXSOMA_OCR_TRANSIENT_CANARY"), false);
   assert.equal(calls.includes("http://127.0.0.1:4102/work-view/local-ocr"), true);
+});
+
+test("capability runtime exposes and invokes standing-authorized OCR assessment without text persistence", async () => {
+  const taskId = "task-ocr-assessment";
+  const { runtime, state } = createHarness({
+    aiWorkspaceOcrAssessment: {
+      invoke: async () => ({
+        ok: true,
+        registry: "nixsoma-ai-workspace-ocr-assessment-v0",
+        status: "assessed",
+        assessment: { outcome: "complete", confidence: 0.95 },
+        evidence: {
+          taskId,
+          taskStatus: "running",
+          objectiveContentHash: "a".repeat(64),
+          taskVersionHash: "b".repeat(64),
+          contextContentHash: "c".repeat(64),
+          requestContentHash: "d".repeat(64),
+          responseContentHash: "e".repeat(64),
+          frameContentHash: "f".repeat(64),
+          frameSequence: 7,
+          ocrSceneContentHash: "1".repeat(64),
+          ocrBindingHash: "2".repeat(64),
+          ocrItemCount: 8,
+          ocrCharacterCount: 162,
+          verificationFrameContentHash: "3".repeat(64),
+          verificationFrameSequence: 8,
+          verificationOcrSceneContentHash: "4".repeat(64),
+          surfaceId: 42,
+          inventorySequence: 9,
+          completionAudit: true,
+        },
+        governance: {
+          providerCalled: true,
+          localOcrBound: true,
+          localOcrRevalidated: true,
+          currentActiveSurfaceBound: true,
+          taskObjectiveBound: true,
+          taskObjectiveProviderEgress: true,
+          rawTaskGoalProviderEgress: false,
+          ocrTextProviderEgress: true,
+          ocrTextPersistedLocally: false,
+          pixelsProviderEgress: false,
+          renderedTextMayContainVisibleUrlsOrValues: true,
+          providerRetentionControlledExternally: true,
+        },
+      }),
+    },
+  });
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find(
+    (item) => item.id === "sense.ai.workspace.ocr_assessment",
+  );
+  assert.equal(capability?.kind, "sensor");
+  assert.deepEqual(capability?.domains, ["cross_boundary"]);
+  assert.equal(capability?.governance, "standing_authorization");
+
+  const response = await runtime.invokeCapability({
+    capabilityId: "sense.ai.workspace.ocr_assessment",
+    taskId,
+    params: { confirm: true },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.response.result.assessment.outcome, "complete");
+  assert.equal(response.response.invocation.summary.kind, "ai.workspace.ocr_assessment");
+  assert.equal(response.response.invocation.summary.ocrTextProviderEgress, true);
+  assert.equal(response.response.invocation.summary.ocrTextPersistedLocally, false);
+  assert.equal(response.response.invocation.summary.pixelsProviderEgress, false);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("NixSoma AI Workbench"), false);
 });
 
 test("capability runtime rejects caller-controlled local OCR fields", async () => {

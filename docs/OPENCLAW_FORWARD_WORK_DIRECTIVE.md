@@ -47,14 +47,15 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
-triage/repair-promotion bridge, and seventeen deployed Level 4 graphical
-identity slices through bounded local OCR of the active AI-owned surface. One
+triage/repair-promotion bridge, and eighteen deployed Level 4 graphical
+identity slices through task-bound provider assessment of bounded local OCR. One
 explicit operator trigger can request a schema-bound no-op, vertical scroll,
 semantic click, or write-only semantic type decision over bounded active-browser
-content and execute at most one existing action; a separate explicit read can
-return bounded transient local OCR without provider or pixel egress. All 1080
-workspace tests and typecheck pass, the body-config and event-audit integration
-checks pass, the 816-entry milestone registry and 1002-script audits pass, and
+content and execute at most one existing action; separate explicit reads can
+return bounded transient local OCR or one read-only provider assessment without
+pixel egress. All 1093 workspace tests and typecheck pass, the body-config and
+event-audit integration checks pass, the 817-entry milestone registry and
+1004-script audits pass, and
 the Windows path budget has no file over 160 repository-relative characters.
 GitHub CI now enforces
 Node 22 typecheck, workspace tests, milestone registry/script audit, and the
@@ -62,12 +63,12 @@ same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/lh0jkd7ncw23avmzapq3fk4y5fwnvk86-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/8x2xbjpkxjfvjs8ylypk9q4hf9xhaxn4-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
-grant path, governed surface activation and scroll, bounded local OCR, and
-Observer controls. The relevant system and user services remain active with
-zero restarts, and all nine health endpoints pass.
+grant path, governed surface activation and scroll, bounded local OCR, the
+task-bound OCR assessment owner, and Observer controls. All nine health
+endpoints pass.
 
 One real request-bound DeepSeek advisory call completed through task
 `62ba696a-945e-4f37-b65e-8a6783316386` and approval
@@ -2499,7 +2500,52 @@ egress, and no browser storage.
 
 Do not add OCR variants to this frozen lane. The smallest next candidate,
 deferred to a separate commit, is task-bound/provider use of bounded local OCR
-text without pixel egress.
+text without pixel egress. That separate capability is completed below; the
+local-only OCR lane remains frozen.
+
+## Completed Level 4 Task-Bound OCR Assessment
+
+The eighteenth Level 4 vertical slice is one explicit task-bound provider
+assessment over locally recognized text. `sense.ai.workspace.ocr_assessment`
+reuses the existing reviewed task objective binding, standing-provider
+single flight, four-outcome assessment contract, active-surface local OCR owner,
+and required completion audit. The provider projection is capped at 24 OCR
+regions and 1200 text characters with numeric bounds. It carries no pixels,
+frame hash, browser API output, process id, caller prompt, raw task metadata,
+command, path, or credential.
+
+OCR text is untrusted visual data, not instruction authority. Because rendered
+text may itself contain visible URLs or values, this capability must disclose
+that bounded OCR text is leaving the local boundary rather than claiming those
+strings are absent. NixSoma persists only frame/scene/observation binding,
+request/response, task objective/version hashes and counts; no OCR text or
+provider reason enters local state, events, invocation summaries, journal, or
+browser storage. Provider-side retention remains governed externally and is
+not represented as a local no-retention guarantee.
+
+After the provider returns, Core must obtain a newer local OCR observation and
+revalidate the exact task version, active surface, inventory sequence, and
+provider-projected OCR content in memory. Drift fails closed. The slice permits
+one provider call, zero actions, zero task mutation, zero automatic continuation,
+and no assessment acceptance. Its stop condition was source validation, exact
+Core/Observer Nix closures, one deployed physical gate returning a task-bound
+outcome from recognized Workbench text, two matching internal OCR observations,
+compact durable audit, no local OCR plaintext, no pixel egress, and all nine
+health endpoints remaining active.
+
+That stop condition is met in active generation
+`/nix/store/8x2xbjpkxjfvjs8ylypk9q4hf9xhaxn4-nixos-system-nixos-26.05.4808.569d57850992`.
+All 1093 tests, typecheck, the 817-entry registry, 1004-script audit, Windows
+path budget, shell checks, body-config, and exact 246-file Core, 30-file Session
+Manager, and 81-file Observer closures pass. The physical gate bound task
+`f4cb629d-f36f-48fc-a3b4-a1b322916da3` to 8 OCR regions and 162 characters,
+returned `complete` at 0.95 confidence from one provider call, and revalidated
+frame sequence 3 with newer sequence 4. It recorded the required compact audit,
+performed zero actions or task mutation, found no OCR text in local durable
+readbacks or persistent user roots, sent no pixels, kept all nine health
+endpoints active, and stopped the fixed Workbench during cleanup. Freeze this
+lane. The smallest next real Level 4 candidate is a separately governed
+same-surface OCR-ordinal action, not another read-only assessment variant.
 
 ## Identity-Upgrade Alignment
 

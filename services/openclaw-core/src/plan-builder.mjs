@@ -41,6 +41,7 @@ export function createPlanBuilder(deps) {
     createAiWorkspaceRuntimesImpl = createAiWorkspaceRuntimes,
     createStandingProviderAdvisoryImpl,
     createAiWorkspaceAssessmentImpl,
+    createAiWorkspaceOcrAssessmentImpl,
     createAiWorkspaceSingleStepImpl,
     createAiWorkspaceRunCoordinatorImpl,
     host,
@@ -144,6 +145,7 @@ export function createPlanBuilder(deps) {
     getTaskById,
     createStandingProviderAdvisoryImpl,
     createAiWorkspaceAssessmentImpl,
+    createAiWorkspaceOcrAssessmentImpl,
     createAiWorkspaceSingleStepImpl,
     createAiWorkspaceRunCoordinatorImpl,
   });
@@ -163,6 +165,7 @@ export function createPlanBuilder(deps) {
     publishAuditEvent,
     standingProviderAdvisory,
     aiWorkspaceAssessment: aiWorkspaceRuntimes.assessment,
+    aiWorkspaceOcrAssessment: aiWorkspaceRuntimes.ocrAssessment,
     aiWorkspaceSingleStep: aiWorkspaceRuntimes.singleStep,
     aiWorkspaceBoundedRun: aiWorkspaceRuntimes.boundedRun,
     listCommandTranscriptRecords,

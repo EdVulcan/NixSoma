@@ -3,6 +3,7 @@ export const AI_WORKSPACE_BOUNDED_RUN_REGISTRY =
 
 const SINGLE_STEP_REGISTRY = "nixsoma-ai-workspace-single-step-v0";
 const ASSESSMENT_REGISTRY = "nixsoma-ai-workspace-task-assessment-v0";
+const OCR_ASSESSMENT_REGISTRY = "nixsoma-ai-workspace-ocr-assessment-v0";
 const SCROLL_ACTIONS = new Set(["scroll_up", "scroll_down"]);
 const ALLOWED_ACTIONS = new Set([
   "no_op", "scroll_up", "scroll_down", "click_item", "type_item",
@@ -154,6 +155,7 @@ function busyBoundedRun() {
 export function createAiWorkspaceRunCoordinator({
   singleStep,
   assessment,
+  ocrAssessment,
   publishAuditEvent = async () => ({ ok: true }),
   now = () => new Date().toISOString(),
 } = {}) {
@@ -249,16 +251,16 @@ export function createAiWorkspaceRunCoordinator({
     }
   }
 
-  async function invokeAssessment(input) {
+  async function invokeReadOnlyAssessment(owner, input, registry, fallbackPrefix) {
     if (inFlight) {
-      return typeof assessment?.localFallback === "function"
-        ? assessment.localFallback("workspace_run_in_flight")
+      return typeof owner?.localFallback === "function"
+        ? owner.localFallback("workspace_run_in_flight")
         : {
             ok: true,
-            registry: ASSESSMENT_REGISTRY,
+            registry,
             status: "local_fallback",
             assessment: { outcome: "unknown", confidence: null },
-            fallback: { reason: "ai_workspace_assessment_workspace_run_in_flight" },
+            fallback: { reason: `${fallbackPrefix}_workspace_run_in_flight` },
             evidence: { taskId: input?.taskId ?? null, completionAudit: false },
             governance: {
               providerCalled: false,
@@ -270,15 +272,15 @@ export function createAiWorkspaceRunCoordinator({
             },
           };
     }
-    if (!assessment || typeof assessment.invoke !== "function") {
-      return typeof assessment?.localFallback === "function"
-        ? assessment.localFallback("runtime_unavailable")
+    if (!owner || typeof owner.invoke !== "function") {
+      return typeof owner?.localFallback === "function"
+        ? owner.localFallback("runtime_unavailable")
         : {
             ok: false,
-            registry: ASSESSMENT_REGISTRY,
+            registry,
             status: "local_fallback",
             assessment: { outcome: "unknown", confidence: null },
-            fallback: { reason: "ai_workspace_assessment_runtime_unavailable" },
+            fallback: { reason: `${fallbackPrefix}_runtime_unavailable` },
             evidence: { taskId: input?.taskId ?? null, completionAudit: false },
             governance: {
               providerCalled: false,
@@ -292,10 +294,28 @@ export function createAiWorkspaceRunCoordinator({
     }
     inFlight = true;
     try {
-      return await assessment.invoke(input);
+      return await owner.invoke(input);
     } finally {
       inFlight = false;
     }
+  }
+
+  function invokeAssessment(input) {
+    return invokeReadOnlyAssessment(
+      assessment,
+      input,
+      ASSESSMENT_REGISTRY,
+      "ai_workspace_assessment",
+    );
+  }
+
+  function invokeOcrAssessment(input) {
+    return invokeReadOnlyAssessment(
+      ocrAssessment,
+      input,
+      OCR_ASSESSMENT_REGISTRY,
+      "ai_workspace_ocr_assessment",
+    );
   }
 
   async function invokeBounded(input) {
@@ -421,5 +441,6 @@ export function createAiWorkspaceRunCoordinator({
     singleStep: { invoke: invokeSingle },
     boundedRun: { invoke: invokeBounded },
     assessment: { invoke: invokeAssessment },
+    ocrAssessment: { invoke: invokeOcrAssessment },
   };
 }

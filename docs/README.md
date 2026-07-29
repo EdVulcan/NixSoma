@@ -13,11 +13,11 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, and explicit assessment acceptance, plus the completed Level 3 baseline | Assessment and explicit operator acceptance are physically complete |
-| Local validation | 1066 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 815 registry entries pass | Validated |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, and task-bound OCR assessment, plus the completed Level 3 baseline | The eighteenth Level 4 slice is physically complete |
+| Local validation | 1093 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 817 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/4bcxlk522vjfxjljqq3d4xkahpxh8vzp-nixos-system-nixos-26.05.4808.569d57850992` | Exact assessment acceptance and the scoped developer generation switch are deployed and physically proven |
-| Previous generation | `/nix/store/4rdhm51fm5ky585d1yv0sm27jgrpyi3l-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the stable-path and `--no-reexec` developer switch correction |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/8x2xbjpkxjfvjs8ylypk9q4hf9xhaxn4-nixos-system-nixos-26.05.4808.569d57850992` | Task-bound OCR assessment is deployed and physically proven |
+| Previous generation | `/nix/store/lh0jkd7ncw23avmzapq3fk4y5fwnvk86-nixos-system-nixos-26.05.4808.569d57850992` | Superseded after the bounded local OCR lane |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
 | Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; approval-bound and standing-authorized provider calls have completed on the active host | Deployed development profile disables local cooldown and daily usage enforcement; provider billing remains external |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, production/default 15-minute cooldown and 3-call/4096-token daily limits, structured transient recommendation, and local fallback | Development profile is deployed without local call/token/cooldown enforcement; a real provider gate passed beyond the prior 3/3 state |
@@ -38,6 +38,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 task assessment | One explicit task-bound provider call returns only complete/incomplete/blocked/unknown plus confidence after fresh task and semantic-scene revalidation; it performs no action, task mutation, or automatic continuation | Deployed in `5yfsg00f...`; physical gate returned `complete` with confidence 1 over 11 items and matched durable zero-mutation audit |
 | Level 4 assessment acceptance | One explicit operator command binds the exact persisted assessment invocation and objective/task-version/response/scene hashes to a still-current reviewed task, writes required authorization audit, then reuses the existing task completion owner | Deployed in `4bcxlk52...`; physical gate completed the exact task with zero additional provider calls, zero actions, required audit, and no persisted provider reason |
 | Level 4 bounded local OCR | One explicit authenticated read passes a fresh active-surface compositor frame to fixed local Tesseract over stdin/stdout and returns at most 64 transient text regions while persisting only hashes/counts | Deployed in `lh0jkd7...`; physical gate recognized 8 regions/162 characters with zero provider calls/actions, no text persistence, no pixel egress, and no browser storage |
+| Level 4 OCR assessment | One explicit reviewed task may send at most 24 local OCR regions/1200 characters plus bounds to the standing provider, then requires a newer matching local OCR observation before accepting the read-only outcome | Deployed in `8x2xbjpk...`; physical gate returned `complete` at 0.95 confidence over 8 regions/162 characters with frame 3 -> 4, one provider call, zero actions/task mutation, no local OCR plaintext, and no pixel egress |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -576,8 +577,35 @@ the fixed Workbench across 8 regions and 162 characters, kept runtime capture
 storage empty, and reported zero provider calls, zero actions, no OCR text
 persistence, no pixel provider egress, and no browser storage. This lane is
 physically complete and frozen. Task-bound/provider use of bounded OCR text
-without pixel egress is the next candidate and remains deferred to a separate
-slice.
+without pixel egress was kept as a separate eighteenth slice and is now
+deployed below; the local-only OCR lane remains frozen.
+
+The eighteenth slice deploys `sense.ai.workspace.ocr_assessment`. It
+binds one existing reviewed task objective to at most 24 local OCR regions and
+1200 text characters plus numeric bounds, then reuses the standing-provider
+single flight and strict complete/incomplete/blocked/unknown response. OCR text
+is treated as untrusted visual data and may contain rendered URLs or visible
+values; that text egress is explicit. Pixels, frame hashes, browser APIs,
+process ids, caller prompts, raw task metadata, commands, paths, and credentials
+remain excluded. Core obtains a newer OCR observation after the provider return
+and requires the task version, active surface, inventory, and provider OCR
+projection to remain unchanged. Local durable evidence contains only frame-bound
+observation/task/request/response hashes and counts. Provider-side retention is
+external and is not described as local no-retention. The capability performs
+zero actions, task mutation, automatic continuation, or assessment acceptance.
+All 1093 workspace tests, typecheck, the 817-entry registry, 1004-script audit,
+Windows path budget, shell checks, body-config, and exact 246-file Core,
+30-file Session Manager, and 81-file Observer closures pass. Generation
+`/nix/store/8x2xbjpkxjfvjs8ylypk9q4hf9xhaxn4-nixos-system-nixos-26.05.4808.569d57850992`
+is active. Its physical gate returned `complete` with 0.95 confidence for task
+`f4cb629d-f36f-48fc-a3b4-a1b322916da3`, sent 8 regions and 162 characters in
+one provider call, revalidated frame sequence 3 with sequence 4, wrote the
+required compact completion audit, performed zero actions or task mutation,
+and found no OCR plaintext in local durable readbacks or persistent user roots.
+Pixels did not leave the local boundary, all nine health endpoints remained
+active, and the Workbench was stopped after the gate. This lane is complete and
+frozen. The smallest next real Level 4 candidate is a separately governed,
+same-surface OCR-ordinal action; it is not selected or enabled by this slice.
 
 ## Progress Estimate
 
@@ -588,7 +616,7 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 71%; semantic type, bounded run, task assessment/acceptance, and bounded local OCR are physically complete |
+| Level 4 graphics-stack-native body | about 74%; semantic type, bounded run, task assessment/acceptance, bounded local OCR, and task-bound OCR assessment are physically complete |
 | Current bounded product scope | 82-85% |
 | Final whitepaper vision | 50-58% |
 

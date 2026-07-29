@@ -64,14 +64,19 @@ function updateAiSurfaceScrollControls() {
   if (aiWorkspaceAssessmentTaskId && aiWorkspaceAssessmentTaskId !== taskId) {
     clearAiWorkspaceAssessment();
   }
+  if (aiWorkspaceOcrAssessmentTaskId && aiWorkspaceOcrAssessmentTaskId !== taskId) {
+    clearAiWorkspaceOcrAssessment();
+  }
   const aiRunInFlight = aiWorkspaceSingleStepInFlight
     || aiWorkspaceLocalOcrInFlight
+    || aiWorkspaceOcrAssessmentInFlight
     || aiWorkspaceBoundedRunInFlight
     || aiWorkspaceAssessmentInFlight
     || aiWorkspaceAssessmentAcceptanceInFlight;
   scrollAiSurfaceUpButton.disabled = !enabled || aiRunInFlight;
   scrollAiSurfaceDownButton.disabled = !enabled || aiRunInFlight;
   runAiWorkspaceLocalOcrButton.disabled = !enabled || aiRunInFlight;
+  ocrAssessAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceSingleStepButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceBoundedRunButton.disabled = !enabled || !taskId || aiRunInFlight;
   assessAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
@@ -97,6 +102,7 @@ function clearAiWorkspaceProjection(reason = "unavailable") {
   aiWorkspaceProjectionFrame.hidden = true;
   aiWorkspaceProjectionStatus.textContent = reason;
   clearAiWorkspaceLocalOcr(reason);
+  clearAiWorkspaceOcrAssessment(reason);
   updateAiSurfaceScrollControls();
 }
 

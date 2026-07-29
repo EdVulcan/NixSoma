@@ -264,6 +264,47 @@ test("workspace run coordinator blocks steps while assessment is in flight", asy
   assert.equal(completed.status, "assessed");
 });
 
+test("workspace run coordinator serializes OCR assessment with steps and semantic assessment", async () => {
+  let releaseOcr;
+  let ocrStarted;
+  const started = new Promise((resolve) => { ocrStarted = resolve; });
+  const release = new Promise((resolve) => { releaseOcr = resolve; });
+  const singleStep = {
+    invoke: async () => stepResult({ actionId: "no_op", actionExecuted: false }),
+    localFallback: (reason) => ({
+      status: "local_fallback",
+      fallback: { reason },
+    }),
+  };
+  const assessment = {
+    invoke: async () => ({ status: "assessed" }),
+    localFallback: (reason) => ({ status: "local_fallback", fallback: { reason } }),
+  };
+  const ocrAssessment = {
+    async invoke() {
+      ocrStarted();
+      await release;
+      return { status: "assessed", assessment: { outcome: "complete", confidence: 1 } };
+    },
+    localFallback: (reason) => ({ status: "local_fallback", fallback: { reason } }),
+  };
+  const coordinator = createAiWorkspaceRunCoordinator({
+    singleStep,
+    assessment,
+    ocrAssessment,
+  });
+  const pending = coordinator.ocrAssessment.invoke({ taskId: TASK_ID });
+  await started;
+
+  const blockedStep = await coordinator.singleStep.invoke({ taskId: TASK_ID });
+  const blockedAssessment = await coordinator.assessment.invoke({ taskId: TASK_ID });
+  assert.equal(blockedStep.fallback.reason, "workspace_run_in_flight");
+  assert.equal(blockedAssessment.fallback.reason, "workspace_run_in_flight");
+
+  releaseOcr();
+  assert.equal((await pending).status, "assessed");
+});
+
 test("bounded workspace run reports an unknown second outcome without retry", async () => {
   const { calls, coordinator } = harness([
     stepResult({ actionId: "scroll_up" }),

@@ -986,6 +986,7 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-runtime.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-assessment-contract.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-assessment.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-ocr-assessment.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-capability-request.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-run-coordinator.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-task-objective.mjs"
@@ -994,6 +995,7 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-bounded-run.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-single-step.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-assessment.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-ocr-assessment.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-assessment-acceptance.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-plugin-refresh.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-plan-todo.mjs"
@@ -1034,7 +1036,7 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-local-ocr.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-local-ocr.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 244 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 246 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -1868,6 +1870,7 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-screen-observation.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-fixed-unit-incident-triage.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-assessment.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-declarative-evolution.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-auth.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-operator-auth.mjs"
@@ -1880,7 +1883,7 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/packages/shared-client/src/service-descriptors.mjs"
     || -w "$observer_ui_server"
     || -e "$observer_ui_out/share/openclaw/apps/observer-ui/scripts"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 80 ]]; then
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 81 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi
@@ -1942,6 +1945,9 @@ if (health.ok !== true
   || !html.includes('id="run-ai-workspace-local-ocr-button"')
   || !client.includes("sense.ai.workspace.local_ocr")
   || !client.includes("nixsoma-ai-workspace-local-ocr-v0")
+  || !html.includes('id="ocr-assess-ai-workspace-button"')
+  || !client.includes("sense.ai.workspace.ocr_assessment")
+  || !client.includes("nixsoma-ai-workspace-ocr-assessment-v0")
   || html.length < 250_000
   || client.length < 1_000_000) {
   throw new Error(`store-native observer-ui did not serve complete operator assets: ${JSON.stringify({ health, htmlChars: html.length, clientChars: client.length })}`);
