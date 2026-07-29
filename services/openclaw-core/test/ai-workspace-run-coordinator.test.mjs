@@ -104,6 +104,7 @@ test("bounded workspace run continues once after a verified scroll and keeps typ
   assert.equal(result.status, "completed");
   assert.equal(result.steps.length, 2);
   assert.deepEqual(result.steps.map((step) => step.actionId), ["scroll_down", "type_item"]);
+  assert.deepEqual(result.steps.map((step) => step.completionAudit), [true, true]);
   assert.equal(result.steps[1].inputEvidence.charCount, PRIVATE_TEXT.length);
   assert.equal(result.evidence.providerCallCount, 2);
   assert.equal(result.evidence.actionCount, 2);

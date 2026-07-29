@@ -311,6 +311,37 @@ export function createAiWorkspaceSingleStep({
     if (accepted?.ok !== true) throw new Error("required AI workspace single-step audit was not accepted");
   }
 
+  async function finaliseFallback(reason, options = {}) {
+    const result = fallback(reason, standingAdvisory, options);
+    if (result.governance.providerCalled !== true) return result;
+
+    let completionAudit = true;
+    try {
+      await publishRequiredAudit("ai_workspace.single_step_completed", {
+        registry: AI_WORKSPACE_SINGLE_STEP_REGISTRY,
+        at: now(),
+        contextContentHash: result.evidence.contextContentHash,
+        responseContentHash: result.evidence.responseContentHash,
+        sceneContentHash: result.evidence.sceneContentHash,
+        sceneItemCount: result.evidence.sceneItemCount,
+        taskId: result.evidence.taskId ?? null,
+        taskStatus: result.evidence.taskStatus ?? null,
+        objectiveContentHash: result.evidence.objectiveContentHash ?? null,
+        taskVersionHash: result.evidence.taskVersionHash ?? null,
+        status: "local_fallback",
+        fallbackReason: result.fallback.reason,
+        actionId: "no_op",
+        actionExecuted: false,
+        maximumActions: 1,
+        automaticRepeat: false,
+      });
+    } catch {
+      completionAudit = false;
+    }
+    result.evidence.completionAudit = completionAudit;
+    return result;
+  }
+
   async function invoke({ taskId: requestedTaskId, expectedTaskBinding = null } = {}) {
     const taskId = normaliseAiWorkspaceTaskId(requestedTaskId);
     if (!taskId || typeof getTaskById !== "function") {
@@ -368,7 +399,7 @@ export function createAiWorkspaceSingleStep({
       successResult: "ai_workspace_single_step_decision_returned",
     });
     if (!providerDecision.ok) {
-      return fallback(providerDecision.reason, standingAdvisory, {
+      return finaliseFallback(providerDecision.reason, {
         providerDecision,
         decisionContext,
       });
@@ -379,7 +410,7 @@ export function createAiWorkspaceSingleStep({
     try {
       executionContext = await observeContext(now());
     } catch {
-      return fallback("execution_context_unavailable", standingAdvisory, {
+      return finaliseFallback("execution_context_unavailable", {
         providerDecision,
         decisionContext,
       });
@@ -393,7 +424,7 @@ export function createAiWorkspaceSingleStep({
       }),
     );
     if (!taskObjectiveStillCurrent()) {
-      return fallback("task_objective_changed", standingAdvisory, {
+      return finaliseFallback("task_objective_changed", {
         providerDecision,
         decisionContext,
       });
@@ -403,7 +434,7 @@ export function createAiWorkspaceSingleStep({
       || executionContext.inventorySequence !== decisionContext.inventorySequence
       || executionContext.scene.sceneContentSha256 !== decisionContext.scene.sceneContentSha256
       || executionContext.scene.frame.sha256 !== decisionContext.scene.frame.sha256) {
-      return fallback("execution_context_changed", standingAdvisory, {
+      return finaliseFallback("execution_context_changed", {
         providerDecision,
         decisionContext,
       });
@@ -434,6 +465,7 @@ export function createAiWorkspaceSingleStep({
           sceneItemCount: decisionContext.scene.itemCount,
           ...taskEvidence(decisionContext.taskObjectiveBinding),
           actionExecuted: false,
+          completionAudit: true,
           executionFrame: null,
           postFrame: null,
         },
@@ -479,7 +511,7 @@ export function createAiWorkspaceSingleStep({
         now,
       });
       if (!semanticClick.ok) {
-        return fallback(semanticClick.reason, standingAdvisory, {
+        return finaliseFallback(semanticClick.reason, {
           providerDecision,
           decisionContext,
         });
@@ -540,7 +572,7 @@ export function createAiWorkspaceSingleStep({
         now,
       });
       if (!semanticType.ok) {
-        return fallback(semanticType.reason, standingAdvisory, {
+        return finaliseFallback(semanticType.reason, {
           providerDecision,
           decisionContext,
         });
@@ -622,7 +654,7 @@ export function createAiWorkspaceSingleStep({
       automaticRepeat: false,
     });
     if (!taskObjectiveStillCurrent()) {
-      return fallback("task_objective_changed", standingAdvisory, {
+      return finaliseFallback("task_objective_changed", {
         providerDecision,
         decisionContext,
       });

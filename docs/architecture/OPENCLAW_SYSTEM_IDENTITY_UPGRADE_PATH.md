@@ -333,12 +333,18 @@ continuation。物理预检证明固定 wheel step 虽推进 frame、但页面�
 readback。Firefox 临时 profile 也已从持久 `%S` state 移入
 `%t/openclaw-browser-runtime/profile` runtime tmpfs；新增的 root 只读 gate 会在运行后
 扫描系统/用户 state、日志、浏览器残留和 journal，启动时只清理旧 AI profile 目录。
-该 gate 尚未在新 generation 执行。完整 1046 项
-测试、typecheck、236-file Core closure
-`rsszhq...`、80-file Observer closure `2nb3f44...`、813-entry registry、999-script audit、
-Windows path budget、body-config 与包含 semantic-type 修复的 combined candidate
-`/nix/store/80lycg1gv8i95bm60ss1vc7058h195q9-nixos-system-nixos-26.05.4808.569d57850992`
-均通过。
+Generation `80lycg...` 已激活：公开 httpbin form 上 DeepSeek 选择 ordinal 1 的
+`type_item`，Screen Act 只返回 11 字符 write-only evidence，九个 health endpoint
+通过；root audit 扫描五个持久 root 与 journal 后没有发现完整 canary。因此 semantic
+type 与不落盘证明已经物理完成。随后 bounded run 完成两次 provider call，首步真实
+scroll、receipt、completion 与 continuation 均匹配，第二步确定性停止为 local fallback，
+但 gate 发现该 provider-called fallback 没有单步 completion event。Core 现为所有
+egress 后 fallback 写入无明文终止 audit，并把 `completionAudit` 投影进 compact step；
+pre-egress 本地拒绝仍不写事件。完整 1047 项测试、typecheck、236-file Core closure
+`0g3av9...`、80-file Observer closure `2nb3f44...`、813-entry registry、999-script audit、
+Windows path budget、body-config 与修正 candidate
+`/nix/store/9fiq5ixr1himr919h8k1ms5qs54ci34n-nixos-system-nixos-26.05.4808.569d57850992`
+均通过；只剩 switch 后重跑 bounded gate。
 
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
@@ -453,7 +459,7 @@ host mutation 仍未包含。这证明 AI 已拥有独立图形空间的最小�
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 60% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。真实 repair/rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 63%（第十三个 route 修复与第十四个 bounded-run 候选已构建） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision 与真实 semantic click 均已部署。Combined candidate `80lycg...` 包含 write-only semantic type 修复、只在已验证滚动后继续一次的 bounded run，以及 runtime-tmpfs browser profile；物理 type/run 与 root no-plaintext audit 尚待 switch 后完成。像素/OCR、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
+| Level 4 图形栈内生组件 | 约 65%（第十三个 semantic type 已物理完成，第十四个 bounded-run 正在最终复验） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type 与 root no-plaintext audit 已部署。Candidate `9fiq5i...` 补齐 provider-called fallback 的单步终止 audit；两次调用与 verified-scroll continuation 已物理证明，只剩修正版 rerun。像素/OCR、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
 **50-58%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted

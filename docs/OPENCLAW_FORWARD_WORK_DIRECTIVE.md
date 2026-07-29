@@ -2342,12 +2342,24 @@ the legacy AI profile directory. The registered
 `dev-ai-input-persistence-audit-check.sh` then performs a root read-only scan of
 system/user state, logs, browser remnants, and journal. It needs no local SSRF
 exception or manual page setup.
-All 1046 workspace tests, full typecheck, 236-file Core closure
-`rsszhq...`, 80-file Observer closure `2nb3f44...`, 813-entry registry,
+Generation `80lycg...` is active. The public httpbin form made DeepSeek select
+`type_item` ordinal 1; Screen Act executed it once and returned only 11-character
+write-only evidence. Nine health endpoints passed. The root audit scanned five
+persistent roots and journal without finding the complete canary, so semantic
+type and no-plaintext proof are physically complete.
+
+The following bounded run made two task-bound provider calls. Step 1 executed a
+receipt-verified scroll, wrote completion audit, and authorized continuation.
+Step 2 terminated as a known provider-called local fallback, and run completion
+was durable, but the gate found no matching single-step completion event. The
+single-step owner now records one redacted terminal completion audit for every
+fallback after provider egress while pre-egress local rejection remains event-free;
+compact run steps expose the resulting `completionAudit` boolean. All 1047
+workspace tests, full typecheck, 236-file Core closure
+`0g3av9...`, 80-file Observer closure `2nb3f44...`, 813-entry registry,
 999-script audit, Windows path budget, body-config gate, and combined candidate
-`/nix/store/80lycg1gv8i95bm60ss1vc7058h195q9-nixos-system-nixos-26.05.4808.569d57850992`
-pass. The candidate also includes the pending semantic-type route correction;
-deployment, the live gate, and the root persistence audit remain pending.
+`/nix/store/9fiq5ixr1himr919h8k1ms5qs54ci34n-nixos-system-nixos-26.05.4808.569d57850992`
+pass. Only deployment and the corrected bounded-run rerun remain pending.
 
 ## Identity-Upgrade Alignment
 

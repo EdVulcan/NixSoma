@@ -498,8 +498,11 @@ test("AI workspace single-step rejects a disabled provider selection before actu
 
   assert.equal(result.status, "local_fallback");
   assert.equal(result.fallback.reason, "ai_workspace_single_step_semantic_click_not_actionable");
+  assert.equal(result.evidence.completionAudit, true);
   assert.equal(calls.post.length, 0);
-  assert.equal(calls.audit.length, 0);
+  assert.deepEqual(calls.audit.map((item) => item.name), ["ai_workspace.single_step_completed"]);
+  assert.equal(calls.audit[0].payload.fallbackReason, result.fallback.reason);
+  assert.equal(calls.audit[0].payload.actionExecuted, false);
 });
 
 test("AI workspace single-step revalidates changed semantic content before no-op completion", async () => {
@@ -510,8 +513,9 @@ test("AI workspace single-step revalidates changed semantic content before no-op
   assert.equal(result.status, "local_fallback");
   assert.equal(result.fallback.reason, "ai_workspace_single_step_execution_context_changed");
   assert.equal(result.governance.providerCalled, true);
+  assert.equal(result.evidence.completionAudit, true);
   assert.equal(calls.post.length, 0);
-  assert.equal(calls.audit.length, 0);
+  assert.deepEqual(calls.audit.map((item) => item.name), ["ai_workspace.single_step_completed"]);
 });
 
 test("AI workspace single-step revalidates the task objective before actuator contact", async () => {
@@ -525,7 +529,7 @@ test("AI workspace single-step revalidates the task objective before actuator co
   assert.equal(result.evidence.taskId, TASK_ID);
   assert.equal(calls.provider, 1);
   assert.equal(calls.post.length, 0);
-  assert.equal(calls.audit.length, 0);
+  assert.deepEqual(calls.audit.map((item) => item.name), ["ai_workspace.single_step_completed"]);
 });
 
 test("AI workspace single-step rejects an expected task binding before provider egress", async () => {
@@ -583,6 +587,7 @@ test("AI workspace single-step rechecks task binding after action audit", async 
     assert.equal(calls.post.length, 0);
     assert.deepEqual(calls.audit.map((item) => item.name), [
       "ai_workspace.single_step_action_authorized",
+      "ai_workspace.single_step_completed",
     ]);
   }
 });
@@ -663,6 +668,25 @@ test("AI workspace single-step preserves provider egress evidence after response
   assert.match(result.evidence.sceneContentHash, /^[a-f0-9]{64}$/u);
   assert.equal(result.evidence.sceneItemCount, 1);
   assert.equal(result.evidence.budget.callsUsed, 2);
+  assert.equal(result.evidence.completionAudit, true);
+  assert.equal(calls.post.length, 0);
+  assert.deepEqual(calls.audit.map((item) => item.name), ["ai_workspace.single_step_completed"]);
+  assert.equal(JSON.stringify(calls.audit).includes('"inputText"'), false);
+});
+
+test("AI workspace single-step reports a known provider fallback when terminal audit is unavailable", async () => {
+  const { owner, calls } = harness({
+    providerFailureReason: "response_invalid",
+    rejectedAuditName: "ai_workspace.single_step_completed",
+  });
+
+  const result = await owner.invoke({ taskId: TASK_ID });
+
+  assert.equal(result.status, "local_fallback");
+  assert.equal(result.fallback.reason, "ai_workspace_single_step_response_invalid");
+  assert.equal(result.governance.providerCalled, true);
+  assert.equal(result.evidence.completionAudit, false);
+  assert.equal(calls.audit.length, 1);
   assert.equal(calls.post.length, 0);
 });
 

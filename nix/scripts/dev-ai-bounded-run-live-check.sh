@@ -262,6 +262,7 @@ if (response.invoked !== true
     || !hash(step.requestContentHash)
     || !hash(step.responseContentHash)
     || !hash(step.sceneContentHash)
+    || step.completionAudit !== true
     || step.taskId !== taskId)
   || egress.some((event) => !event)
   || completed.some((event) => !event)

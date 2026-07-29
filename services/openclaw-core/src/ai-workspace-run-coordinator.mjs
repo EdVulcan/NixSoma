@@ -55,6 +55,7 @@ function compactStep(result, index) {
     responseContentHash: boundedHash(evidence.responseContentHash),
     sceneContentHash: boundedHash(evidence.sceneContentHash),
     sceneItemCount: Number.isInteger(evidence.sceneItemCount) ? evidence.sceneItemCount : 0,
+    completionAudit: evidence.completionAudit === true,
     postActionVerified: evidence.postActionVerified === true,
   };
 }

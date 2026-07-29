@@ -325,11 +325,18 @@ canary fragments, verifies the exact write-only character count, and rejects the
 complete value from all live readbacks. Firefox now keeps its ephemeral profile
 in user runtime tmpfs and removes only the legacy AI profile on startup, while a
 registered root read-only gate audits persistent
-state, logs, browser remnants, and journal after the run. All 1046 tests,
+state, logs, browser remnants, and journal after the run. Generation `80lycg...`
+is active: public httpbin `type_item` executed ordinal 1 with 11-character
+write-only evidence, nine health endpoints passed, and the root audit found no
+complete canary in five persistent roots or journal. The following bounded run
+proved two provider calls and verified-scroll continuation but exposed that a
+known second-step local fallback had no single-step completion event. The owner
+now emits a redacted terminal event after provider egress and compact steps carry
+`completionAudit`. All 1047 tests,
 typecheck, exact 236-file Core and 80-file Observer
 closures, 813-entry registry, 999-script audit, path budget, body-config gate,
-and combined candidate `80lycg...` pass. It also contains the pending semantic
-type correction; switch, physical proof, and root persistence audit remain pending.
+and corrected Core/system candidate `9fiq5i...` pass. Only switch and the bounded
+run rerun remain pending; semantic type and root persistence proof are complete.
 
 ## Completed Capability Evidence
 

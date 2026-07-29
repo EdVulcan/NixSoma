@@ -33,8 +33,8 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 AI workspace single step | Explicit authenticated trigger builds a task-objective-bound structural workspace context, shares the standing DeepSeek single-flight owner, and revalidates task, scene, frame, and active surface before at most one existing action | Deployed v2 selected `type_item`; corrected route assembly remains candidate-only with no automatic follow-up |
 | Level 4 browser semantic grounding | Screen Sense projects at most 12 role/name/disabled/bounds items from an explicit metadata-plus-items Browser capture; Core locally binds Browser PID to the active Weston surface, sends no pixels/URL/input value/selector/target id/frame hash, and recaptures before at most one existing action | Deployed in `jricbfds...`; real DeepSeek selected `no_op`, no actuator ran, and scene hash plus durable audit matched |
 | Level 4 semantic item click | DeepSeek may select one 1-based scene ordinal; Core revalidates the scene and Screen Act privately maps that ordinal to the current Browser Runtime frame-bound semantic target, clicks once, then recaptures locally | Deployed in `z5qgq50f...`; task-grounded DeepSeek selected ordinal 1 and the governed click executed exactly once with durable audit |
-| Level 4 semantic item type | DeepSeek may select one enabled textbox ordinal and return one bounded write-only value; Core and Screen Act retain only input length evidence while Screen Act resolves the private current target and types once | `wbr2mdkw...` is deployed; real selection reached Screen Act, and combined corrected/runtime-profile candidate `80lycg...` awaits switch, final physical proof, and root no-plaintext audit |
-| Level 4 bounded workspace run | One explicit operator trigger may execute a second fresh task-bound single step only after the first step is a receipt- and audit-verified scroll; click, type, no-op, fallback, unverified evidence, and the second step always terminate | Source/closure complete in candidate `80lycg...`; physical two-step proof remains pending |
+| Level 4 semantic item type | DeepSeek may select one enabled textbox ordinal and return one bounded write-only value; Core and Screen Act retain only input length evidence while Screen Act resolves the private current target and types once | Deployed in `80lycg...`; public httpbin form executed ordinal 1 with 11-character evidence, and the root canary audit found no plaintext in five persistent roots or journal |
+| Level 4 bounded workspace run | One explicit operator trigger may execute a second fresh task-bound single step only after the first step is a receipt- and audit-verified scroll; click, type, no-op, fallback, unverified evidence, and the second step always terminate | Physical run proved two provider calls and verified-scroll continuation; corrected fallback completion-audit candidate `9fiq5i...` awaits switch and rerun |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -481,13 +481,21 @@ readbacks. The user-owned Firefox profile now lives under
 `%S` state, and startup removes only the legacy AI profile directory. A separate
 registered root read-only audit scans system/user state,
 logs, browser remnants, and journal after the live proof.
-All 1046 tests and typecheck pass. Store evidence is exact at 236 Core files
+Generation `80lycg...` is active. DeepSeek selected `type_item` ordinal 1 on the
+public httpbin form, Screen Act executed it once with 11-character write-only
+evidence, all nine health endpoints passed, and the root audit scanned five
+persistent roots plus journal without finding the complete canary. The same run
+then performed two task-bound provider calls: step 1 executed a receipt-verified
+scroll and authorized continuation; step 2 terminated as a known local fallback.
+The gate correctly found that provider-called fallback lacked its own
+`single_step_completed` event even though run completion was durable. Core now
+records that redacted terminal audit and carries `completionAudit` in each compact
+step. All 1047 tests and typecheck pass. Store evidence is exact at 236 Core files
 (`rsszhq...`) and 80 Observer files (`2nb3f44...`); 813 registry entries, the
 999-script audit, Windows path budget, body-config gate, and combined candidate
-`/nix/store/80lycg1gv8i95bm60ss1vc7058h195q9-nixos-system-nixos-26.05.4808.569d57850992`
-pass. This candidate also contains the semantic-type route correction. Neither
-correction nor bounded run/no-plaintext audit is claimed physically complete
-before switch and their respective live gates.
+`/nix/store/9fiq5ixr1himr919h8k1ms5qs54ci34n-nixos-system-nixos-26.05.4808.569d57850992`
+pass with Core closure `0g3av9...`. Only the corrected bounded-run rerun remains;
+semantic type and the no-plaintext audit are physically complete.
 
 ## Progress Estimate
 
