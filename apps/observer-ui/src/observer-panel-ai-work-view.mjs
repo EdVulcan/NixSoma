@@ -22,6 +22,7 @@ export function observerAiWorkViewPanel() {
             <button id="run-ai-workspace-single-step-button" type="button" disabled>AI Step</button>
             <button id="run-ai-workspace-bounded-run-button" type="button" disabled>AI Run</button>
             <button id="assess-ai-workspace-button" class="secondary" type="button" disabled>Assess</button>
+            <button id="accept-ai-workspace-assessment-button" type="button" disabled>Accept</button>
           </div>
           <pre id="work-view-json">Loading work view state...</pre>
         </section>

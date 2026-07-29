@@ -2420,6 +2420,39 @@ the next vertical capability is explicit operator acceptance of a still-current
 verified `complete` assessment before the existing task owner may close that
 exact task. Provider output must never complete a task automatically.
 
+## Level 4 Assessment Acceptance Candidate
+
+The sixteenth vertical Level 4 slice implements that operator boundary as
+`act.ai.workspace.accept_assessment`. It accepts only one reviewed task id,
+`confirm=true`, the exact persisted assessment invocation id, and the matching
+objective, task-version, provider-response, and scene hashes. Core resolves the
+compact capability invocation already persisted by the assessment owner and
+requires `status=assessed`, `outcome=complete`, `completionAudit=true`, one
+provider call, zero actions, zero task mutation, and the original standing
+authorization. Caller-supplied outcome, confidence, reason, prompt, task details,
+or alternative authority are rejected.
+
+The acceptance owner rebuilds the current trusted task binding and compares its
+objective/task-version hashes with the receipt. It publishes the required
+`ai_workspace.assessment_acceptance_authorized` audit before mutation, then
+rechecks the task version after that await boundary. Only the existing
+`taskManager.completeTask` may perform the terminal transition and publish the
+ordinary `task.completed` event. Provider output never invokes this capability,
+non-complete/stale/replayed receipts fail closed, and no provider call, workspace
+action, automatic continuation, host mutation, task creation, or approval
+creation is added. Durable task evidence contains only receipt id,
+outcome/confidence, hashes, explicit confirmation, and acceptance time; provider
+reason remains absent.
+
+Observer exposes `Accept` only while the current authenticated task still owns
+the transient verified-complete receipt. All 1066 workspace tests, typecheck,
+815-entry registry, 1001-script audit, Windows path budget, exact 242-file Core
+closure `0fb60m...`, and 80-file Observer closure `7r0g23...` pass. Candidate
+`/nix/store/45zrk2zjw96f3bkmv5s9awc2zq9d763n-nixos-system-nixos-26.05.4808.569d57850992`
+is built without activation. The registered physical gate will perform one real
+assessment and then prove one explicit acceptance with zero additional provider
+calls or workspace actions. Switch and physical acceptance remain pending.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

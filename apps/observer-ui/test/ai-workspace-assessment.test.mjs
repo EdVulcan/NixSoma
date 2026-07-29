@@ -10,10 +10,16 @@ test("Observer exposes one task-bound AI workspace assessment command", () => {
   const panel = observerAiWorkViewPanel();
   assert.equal(panel.includes('id="ai-workspace-assessment-status"'), true);
   assert.equal(panel.includes('id="assess-ai-workspace-button"'), true);
+  assert.equal(panel.includes('id="accept-ai-workspace-assessment-button"'), true);
 
   const script = observerClientRuntimeAiWorkspaceProjectionScript;
   for (const token of [
     'capabilityId: "sense.ai.workspace.assessment"',
+    'capabilityId: "act.ai.workspace.accept_assessment"',
+    'result.registry !== "nixsoma-ai-workspace-assessment-acceptance-v0"',
+    "aiWorkspaceAssessmentReceipt?.taskId !== taskId",
+    "evidence.requiredAudit !== true",
+    "governance.providerTriggeredCompletion !== false",
     'result.registry !== "nixsoma-ai-workspace-task-assessment-v0"',
     'new Set(["complete", "incomplete", "blocked", "unknown"])',
     "governance.maximumProviderCalls !== 1",

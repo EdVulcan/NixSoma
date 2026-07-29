@@ -376,6 +376,22 @@ is explicit operator acceptance bound to the still-current task/version and
 verified `complete` assessment before the existing task owner closes that exact
 task. Provider output must never complete the task automatically.
 
+The selected sixteenth Level 4 capability now implements that boundary as
+`act.ai.workspace.accept_assessment`. The operator must submit `confirm=true`
+with the exact persisted assessment invocation id and its objective,
+task-version, provider-response, and scene hashes. Core accepts only a durable
+audited `complete` assessment for the still-current reviewed task, writes the
+required authorization audit before mutation, rechecks the task version after
+the audit await, and delegates the terminal transition to the existing
+`taskManager.completeTask`. Provider output cannot invoke acceptance; stale,
+non-complete, forged, or replayed receipts stop before mutation. Observer keeps
+the receipt in memory and enables `Accept` only for the matching current task.
+All 1066 tests, typecheck, 815-entry registry, 1001-script audit, path budget,
+exact 242-file Core closure `0fb60m...`, 80-file Observer closure `7r0g23...`,
+and candidate `45zrk2zj...` pass. Switch and the registered physical acceptance
+gate remain pending; that gate will use one assessment and zero additional
+provider calls or workspace actions for acceptance.
+
 ## Completed Capability Evidence
 
 The following plan families are retained because they describe implemented

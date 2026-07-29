@@ -160,6 +160,7 @@ export function createPlanBuilder(deps) {
     serialiseApproval,
     policyEvaluator,
     publishEvent,
+    publishAuditEvent,
     standingProviderAdvisory,
     aiWorkspaceAssessment: aiWorkspaceRuntimes.assessment,
     aiWorkspaceSingleStep: aiWorkspaceRuntimes.singleStep,

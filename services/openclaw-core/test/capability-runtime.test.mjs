@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import { createCapabilityRuntime } from "../src/capability-runtime.mjs";
 import { buildCapabilityApprovalBinding } from "../src/capability-runtime-approval-binding.mjs";
+import { buildAiWorkspaceTaskObjectiveBinding } from "../src/ai-workspace-task-objective.mjs";
 
 function createHarness(overrides = {}) {
   const events = [];
@@ -102,6 +103,7 @@ function createHarness(overrides = {}) {
     aiWorkspaceAssessment: overrides.aiWorkspaceAssessment,
     aiWorkspaceSingleStep: overrides.aiWorkspaceSingleStep,
     aiWorkspaceBoundedRun: overrides.aiWorkspaceBoundedRun,
+    publishAuditEvent: overrides.publishAuditEvent,
     publishEvent: async (name, body) => {
       events.push({ name, body });
     },
@@ -177,6 +179,158 @@ test("capability runtime exposes the standing-authorized read-only AI workspace 
   assert.deepEqual(capability?.domains, ["cross_boundary"]);
   assert.equal(capability?.risk, "medium");
   assert.equal(capability?.governance, "standing_authorization");
+});
+
+test("capability runtime exposes explicit operator assessment acceptance", async () => {
+  const { runtime } = createHarness();
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find(
+    (item) => item.id === "act.ai.workspace.accept_assessment",
+  );
+
+  assert.equal(capability?.kind, "actuator");
+  assert.deepEqual(capability?.domains, ["user_task"]);
+  assert.equal(capability?.risk, "medium");
+  assert.equal(capability?.governance, "allow");
+});
+
+test("capability runtime closes only the task bound to an accepted complete assessment", async () => {
+  const taskId = "task-assessment-acceptance";
+  const task = {
+    id: taskId,
+    goal: "Confirm the visible completion marker",
+    status: "running",
+    updatedAt: "2026-07-08T00:00:00.000Z",
+    policy: { decision: { decision: "allow" } },
+    workView: {
+      workViewId: "work-view-primary",
+      sessionId: "session-current",
+      trustedBinding: {
+        registry: "openclaw-native-engineering-work-view-bind-v0",
+        mode: "operator_reviewed",
+        authorityStatus: "authoritative",
+        leaseMatched: true,
+        boundAt: "2026-07-08T00:00:00.000Z",
+      },
+    },
+  };
+  const workViewState = {
+    session: {
+      sessionId: "session-current",
+      status: "running",
+      role: "ai-work-view",
+    },
+    workView: {
+      workViewId: "work-view-primary",
+      status: "prepared",
+      trustedSession: {
+        sessionIdentity: { status: "authoritative" },
+        helperRuntime: {
+          status: "active",
+          actionAuthority: "active",
+          leaseMatched: true,
+        },
+      },
+    },
+  };
+  const binding = buildAiWorkspaceTaskObjectiveBinding({
+    task,
+    taskId,
+    workViewState,
+    maximumActions: 0,
+  });
+  const hashes = {
+    objectiveContentHash: binding.evidence.objectiveContentHash,
+    taskVersionHash: binding.evidence.taskVersionHash,
+    responseContentHash: "c".repeat(64),
+    sceneContentHash: "d".repeat(64),
+  };
+  const assessmentInvocation = {
+    id: "assessment-invocation-integrated",
+    capability: { id: "sense.ai.workspace.assessment" },
+    request: { taskId },
+    authorization: {
+      policyId: "ai-workspace-explicit-task-assessment",
+      approved: true,
+    },
+    policy: {
+      decision: "audit_only",
+      domain: "cross_boundary",
+      approved: true,
+    },
+    invoked: true,
+    blocked: false,
+    summary: {
+      kind: "ai.workspace.assessment",
+      status: "assessed",
+      outcome: "complete",
+      confidence: 1,
+      taskId,
+      ...hashes,
+      completionAudit: true,
+      providerCalled: true,
+      semanticSceneBound: true,
+      currentBrowserSurfaceBound: true,
+      taskObjectiveBound: true,
+      taskObjectiveProviderEgress: true,
+      rawTaskGoalProviderEgress: false,
+      pixelsProviderEgress: false,
+      urlsProviderEgress: false,
+      inputValuesProviderEgress: false,
+      maximumActions: 0,
+      actionExecuted: false,
+      taskMutated: false,
+      automaticContinuation: false,
+    },
+  };
+  const audit = [];
+  const { runtime, state, events } = createHarness({
+    state: {
+      tasks: new Map([[taskId, task]]),
+      capabilityInvocationLog: [assessmentInvocation],
+    },
+    taskManager: {
+      getTaskById: (id) => id === taskId ? task : null,
+      completeTask: (value, details) => {
+        value.status = "completed";
+        value.closedAt = "2026-07-08T00:00:01.000Z";
+        value.outcome = { kind: "completed", details };
+        return value;
+      },
+      serialiseTask: (value) => ({
+        id: value.id,
+        status: value.status,
+        outcome: value.outcome,
+      }),
+    },
+    readWorkViewState: async () => workViewState,
+    publishAuditEvent: async (name, payload) => {
+      audit.push({ name, payload });
+      return { ok: true };
+    },
+  });
+
+  const response = await runtime.invokeCapability({
+    capabilityId: "act.ai.workspace.accept_assessment",
+    taskId,
+    params: {
+      confirm: true,
+      assessmentInvocationId: assessmentInvocation.id,
+      ...hashes,
+    },
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.response.invoked, true);
+  assert.equal(response.response.result.status, "accepted");
+  assert.equal(response.response.result.task.status, "completed");
+  assert.equal(response.response.invocation.summary.taskCompleted, true);
+  assert.equal(response.response.invocation.summary.providerTriggeredCompletion, false);
+  assert.equal(task.outcome.details.assessmentAcceptance.assessmentInvocationId, assessmentInvocation.id);
+  assert.equal(audit[0].name, "ai_workspace.assessment_acceptance_authorized");
+  assert.equal(events.some((event) => event.name === "task.completed"), true);
+  assert.equal(state.capabilityInvocationLog.at(-1).capability.id, "act.ai.workspace.accept_assessment");
 });
 
 test("capability runtime records one compact AI workspace assessment without provider reason", async () => {

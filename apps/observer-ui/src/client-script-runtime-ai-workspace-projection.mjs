@@ -5,7 +5,9 @@ let aiWorkspaceProjectionBinding = null;
 let aiWorkspaceSingleStepInFlight = false;
 let aiWorkspaceBoundedRunInFlight = false;
 let aiWorkspaceAssessmentInFlight = false;
+let aiWorkspaceAssessmentAcceptanceInFlight = false;
 let aiWorkspaceAssessmentTaskId = null;
+let aiWorkspaceAssessmentReceipt = null;
 
 function currentAiWorkspaceTask() {
   if (taskHistoryFocus === "selected-task") {
@@ -63,17 +65,22 @@ function updateAiSurfaceScrollControls() {
   }
   const aiRunInFlight = aiWorkspaceSingleStepInFlight
     || aiWorkspaceBoundedRunInFlight
-    || aiWorkspaceAssessmentInFlight;
+    || aiWorkspaceAssessmentInFlight
+    || aiWorkspaceAssessmentAcceptanceInFlight;
   scrollAiSurfaceUpButton.disabled = !enabled || aiRunInFlight;
   scrollAiSurfaceDownButton.disabled = !enabled || aiRunInFlight;
   runAiWorkspaceSingleStepButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceBoundedRunButton.disabled = !enabled || !taskId || aiRunInFlight;
   assessAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
+  acceptAiWorkspaceAssessmentButton.disabled = aiRunInFlight
+    || aiWorkspaceAssessmentReceipt?.taskId !== taskId;
 }
 
 function clearAiWorkspaceAssessment(reason = "not assessed") {
   aiWorkspaceAssessmentTaskId = null;
+  aiWorkspaceAssessmentReceipt = null;
   aiWorkspaceAssessmentStatus.textContent = reason;
+  acceptAiWorkspaceAssessmentButton.disabled = true;
 }
 
 function clearAiWorkspaceProjection(reason = "unavailable") {
@@ -485,7 +492,30 @@ async function assessAiWorkspace() {
         || result.evidence?.completionAudit !== true))) {
       throw new Error("AI workspace assessment result was invalid.");
     }
+    const assessmentReceiptValid = assessed
+      && typeof response.invocation?.id === "string"
+      && response.invocation.id.length > 0
+      && response.invocation.id.length <= 200
+      && [
+        result.evidence?.objectiveContentHash,
+        result.evidence?.taskVersionHash,
+        result.evidence?.responseContentHash,
+        result.evidence?.sceneContentHash,
+      ].every((value) => /^[a-f0-9]{64}$/u.test(value ?? ""));
+    if (assessed && !assessmentReceiptValid) {
+      throw new Error("AI workspace assessment receipt was invalid.");
+    }
     aiWorkspaceAssessmentTaskId = taskId;
+    aiWorkspaceAssessmentReceipt = assessed && assessment.outcome === "complete"
+      ? {
+          taskId,
+          assessmentInvocationId: response.invocation.id,
+          objectiveContentHash: result.evidence.objectiveContentHash,
+          taskVersionHash: result.evidence.taskVersionHash,
+          responseContentHash: result.evidence.responseContentHash,
+          sceneContentHash: result.evidence.sceneContentHash,
+        }
+      : null;
     const confidence = typeof assessment.confidence === "number"
       ? " " + Math.round(assessment.confidence * 100) + "%"
       : "";
@@ -499,6 +529,78 @@ async function assessAiWorkspace() {
 
 assessAiWorkspaceButton.addEventListener("click", () => {
   assessAiWorkspace().catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
+async function acceptAiWorkspaceAssessment() {
+  if (aiWorkspaceSingleStepInFlight
+    || aiWorkspaceBoundedRunInFlight
+    || aiWorkspaceAssessmentInFlight
+    || aiWorkspaceAssessmentAcceptanceInFlight) return;
+  const receipt = aiWorkspaceAssessmentReceipt;
+  const taskId = currentAiWorkspaceTaskId();
+  if (!receipt || receipt.taskId !== taskId) {
+    throw new Error("A current verified complete assessment is required.");
+  }
+  const {
+    taskId: receiptTaskId,
+    ...assessmentReceipt
+  } = receipt;
+  aiWorkspaceAssessmentAcceptanceInFlight = true;
+  updateAiSurfaceScrollControls();
+  try {
+    const response = await fetchJson(observerConfig.coreUrl + "/capabilities/invoke", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        capabilityId: "act.ai.workspace.accept_assessment",
+        taskId,
+        params: { confirm: true, ...assessmentReceipt },
+      }),
+    });
+    const result = response.result ?? {};
+    const evidence = result.evidence ?? {};
+    const governance = result.governance ?? {};
+    if (response.invoked !== true
+      || result.registry !== "nixsoma-ai-workspace-assessment-acceptance-v0"
+      || result.status !== "accepted"
+      || result.task?.id !== taskId
+      || receiptTaskId !== taskId
+      || result.task?.status !== "completed"
+      || evidence.taskId !== taskId
+      || evidence.assessmentInvocationId !== receipt.assessmentInvocationId
+      || evidence.taskVersionHash !== receipt.taskVersionHash
+      || evidence.responseContentHash !== receipt.responseContentHash
+      || evidence.requiredAudit !== true
+      || evidence.taskCompleted !== true
+      || governance.explicitOperatorConfirmation !== true
+      || governance.providerCalled !== false
+      || governance.providerTriggeredCompletion !== false
+      || governance.maximumActions !== 0
+      || governance.actionExecuted !== false
+      || governance.automaticContinuation !== false
+      || governance.mutatesTask !== true
+      || governance.mutatesHost !== false) {
+      throw new Error(result.reason ?? "AI workspace assessment acceptance was rejected.");
+    }
+    taskHistoryFocus = "latest-finished";
+    selectedHistoryTaskId = result.task.id;
+    taskDetailIdInput.value = result.task.id;
+    clearAiWorkspaceAssessment("accepted");
+    setControlMessage("Accepted verified completion for task " + taskId + ".");
+    await refreshRuntime();
+    await refreshTaskList();
+    await refreshTaskHistoryDetail();
+    await refreshWorkView();
+  } finally {
+    aiWorkspaceAssessmentAcceptanceInFlight = false;
+    updateAiSurfaceScrollControls();
+  }
+}
+
+acceptAiWorkspaceAssessmentButton.addEventListener("click", () => {
+  acceptAiWorkspaceAssessment().catch((error) => {
     setControlMessage("Request failed: " + formatError(error));
   });
 });

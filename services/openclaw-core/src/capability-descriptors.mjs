@@ -60,6 +60,18 @@ export function buildBaseCapabilities({
       description: "Request one audited provider assessment of an operator-reviewed task against the current semantic workspace without actions, task mutation, or automatic continuation.",
     },
     {
+      id: "act.ai.workspace.accept_assessment",
+      name: "Accept AI Workspace Assessment",
+      kind: "actuator",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/capabilities/invoke`,
+      intents: ["ai.workspace.accept_assessment"],
+      domains: ["user_task"],
+      risk: "medium",
+      governance: "allow",
+      description: "Close one still-current reviewed task only after explicit operator acceptance of its exact durable verified-complete workspace assessment receipt.",
+    },
+    {
       id: "act.ai.workspace.single_step",
       name: "AI Workspace Single Step",
       kind: "actuator",

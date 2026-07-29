@@ -377,6 +377,23 @@ task status/version 保持不变，actionCount=0，matching completion audit 已
 `complete` assessment，再交给现有 task owner 关闭该任务；provider 输出不得自动
 完成任务。
 
+第十六个 Level 4 纵向切片把该人工边界实现为
+`act.ai.workspace.accept_assessment`。请求只允许当前 reviewed task id、
+`confirm=true`、持久 assessment invocation id 及 objective/task-version/
+response/scene 四个哈希。Core 从现有 capability invocation log 取回
+`assessed + complete + completionAudit` receipt，重新计算当前 trusted task
+binding，在 mutation 前写入必需 acceptance authorization audit，并在该 await
+边界后再次校验 task version；只有现有 `taskManager.completeTask` 可以执行最终
+状态转换。Provider 不能调用验收，旧版本、非 complete、伪造或重放 receipt 均在
+task mutation 前失败。持久 outcome 只包含 receipt id、outcome/confidence、哈希、
+显式确认和时间，不包含 provider reason。Observer 的 `Accept` 只在当前登录与 task
+仍绑定同一 transient verified-complete receipt 时可用。1066 项测试、typecheck、
+815-entry registry、1001-script audit、242-file Core closure `0fb60m...` 与 80-file
+Observer closure `7r0g23...` 均通过；candidate
+`/nix/store/45zrk2zjw96f3bkmv5s9awc2zq9d763n-nixos-system-nixos-26.05.4808.569d57850992`
+已构建但未激活。物理 gate 将复用一次真实 assessment，并以零额外 provider call、
+零 workspace action 验证显式验收与 task closure。
+
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
 画面投影、应用生命周期、surface 激活、垂直滚动、AI 单步、semantic scene
@@ -490,7 +507,7 @@ host mutation 仍未包含。这证明 AI 已拥有独立图形空间的最小�
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 60% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。真实 repair/rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 66%（semantic type、bounded run 与 task assessment 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、root no-plaintext audit 与 verified-scroll-only 两步 run 已部署。`5yfsg00f...` 的真实 assessment 以零动作、零 task mutation、无自动 continuation 返回 `complete`/confidence 1 并匹配持久审计。像素/OCR、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
+| Level 4 图形栈内生组件 | 约 67%（semantic type、bounded run 与 task assessment 已物理完成，显式 assessment acceptance 已构建） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、root no-plaintext audit 与 verified-scroll-only 两步 run 已部署。`5yfsg00f...` 的真实 assessment 以零动作、零 task mutation、无自动 continuation 返回 `complete`/confidence 1 并匹配持久审计；`45zrk2zj...` 新增 exact-receipt、operator-confirmed task closure，待物理 gate。像素/OCR、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
 **50-58%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted

@@ -96,6 +96,31 @@ const nativeEngineeringLspObserverCheck = "observer-openclaw-native-engineering-
 const nativeDeclarativeEvolutionCoreCheck = "openclaw-native-declarative-evolution-staging";
 const nativeDeclarativeEvolutionObserverCheck = "observer-openclaw-native-declarative-evolution-staging";
 const windowsPathBudgetCheck = "windows-path-budget";
+const aiWorkspaceAssessmentAcceptanceFiles = new Set([
+  "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs",
+  "apps/observer-ui/src/observer-panel-ai-work-view.mjs",
+  "apps/observer-ui/test/ai-workspace-assessment.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/README.md",
+  "nix/scripts/dev-ai-workspace-assessment-acceptance-live-check.sh",
+  "nix/scripts/dev-ai-workspace-assessment-live-check.sh",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-checks.tsv",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "services/openclaw-core/src/capability-descriptors.mjs",
+  "services/openclaw-core/src/capability-runtime-ai-workspace-assessment-acceptance.mjs",
+  "services/openclaw-core/src/capability-runtime.mjs",
+  "services/openclaw-core/src/plan-builder.mjs",
+  "services/openclaw-core/test/ai-workspace-assessment-acceptance.test.mjs",
+  "services/openclaw-core/test/capability-runtime.test.mjs",
+]);
+const aiWorkspaceAssessmentAcceptanceSlice = changedFiles.length > 0
+  && changedFiles.every((file) => aiWorkspaceAssessmentAcceptanceFiles.has(file))
+  && changedFiles.some((file) =>
+    file === "services/openclaw-core/src/capability-runtime-ai-workspace-assessment-acceptance.mjs");
 
 function physicalScriptsForManifestRow(phase, slug, forceShort = false) {
   const legacy = {
@@ -870,6 +895,16 @@ function selectSourceHeuristics(file) {
 }
 
 for (const file of changedFiles) {
+  if (aiWorkspaceAssessmentAcceptanceSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("ai-workspace-assessment-acceptance-live");
+    continue;
+  }
+
   if (isHttpJsonHelperExtractionOnly(file)) {
     selectName("milestone-script-audit");
     selectName(httpJsonHelperCheck);

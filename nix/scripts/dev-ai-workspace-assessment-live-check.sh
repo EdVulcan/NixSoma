@@ -14,9 +14,18 @@ export OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_OPERATOR_TOKEN_FILE:-${XDG_RUNTI
 TARGET_URL="${NIXSOMA_AI_ASSESSMENT_URL:-https://httpbin.org/forms/post}"
 TASK_GOAL="${NIXSOMA_AI_ASSESSMENT_TASK_GOAL:-Determine whether the Customer name textbox is visible}"
 EXPECTED_OUTCOME="${NIXSOMA_AI_ASSESSMENT_EXPECTED_OUTCOME:-complete}"
+ACCEPT_COMPLETE="${NIXSOMA_AI_ASSESSMENT_ACCEPT_COMPLETE:-0}"
 
 if [[ ! "$EXPECTED_OUTCOME" =~ ^(complete|incomplete|blocked|unknown)$ ]]; then
   printf 'Unsupported NIXSOMA_AI_ASSESSMENT_EXPECTED_OUTCOME: %s\n' "$EXPECTED_OUTCOME" >&2
+  exit 64
+fi
+if [[ "$ACCEPT_COMPLETE" != "0" && "$ACCEPT_COMPLETE" != "1" ]]; then
+  printf 'Unsupported NIXSOMA_AI_ASSESSMENT_ACCEPT_COMPLETE: %s\n' "$ACCEPT_COMPLETE" >&2
+  exit 64
+fi
+if [[ "$ACCEPT_COMPLETE" == "1" && "$EXPECTED_OUTCOME" != "complete" ]]; then
+  printf 'Assessment acceptance requires NIXSOMA_AI_ASSESSMENT_EXPECTED_OUTCOME=complete.\n' >&2
   exit 64
 fi
 
@@ -33,7 +42,7 @@ tmp_dir="$(mktemp -d)"
 cleanup() {
   local status="$?"
   if (( status != 0 )); then
-    for name in prepare navigate activate task bind assessment task-before task-after; do
+    for name in prepare navigate activate task bind assessment accept task-before task-after task-accepted; do
       if [[ -s "$tmp_dir/$name.json" ]]; then
         printf 'AI workspace assessment failed response (%s.json):\n' "$name" >&2
         sed -n '1,120p' "$tmp_dir/$name.json" >&2
@@ -274,3 +283,144 @@ console.log(JSON.stringify({
   providerReasonPersisted: false,
 }, null, 2));
 NODE
+
+if [[ "$ACCEPT_COMPLETE" == "1" ]]; then
+  stage "accepting the exact verified complete assessment"
+  acceptance_payload="$(node -e '
+    const fs = require("node:fs");
+    const response = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+    const result = response.result ?? {};
+    const evidence = result.evidence ?? {};
+    if (response.invoked !== true
+      || result.status !== "assessed"
+      || result.assessment?.outcome !== "complete"
+      || typeof response.invocation?.id !== "string") process.exit(1);
+    console.log(JSON.stringify({
+      capabilityId: "act.ai.workspace.accept_assessment",
+      taskId: process.argv[2],
+      params: {
+        confirm: true,
+        assessmentInvocationId: response.invocation.id,
+        objectiveContentHash: evidence.objectiveContentHash,
+        taskVersionHash: evidence.taskVersionHash,
+        responseContentHash: evidence.responseContentHash,
+        sceneContentHash: evidence.sceneContentHash,
+      },
+    }));
+  ' "$tmp_dir/assessment.json" "$task_id")"
+  post_json "$CORE_URL/capabilities/invoke" "$acceptance_payload" > "$tmp_dir/accept.json"
+  curl -fsS "$CORE_URL/tasks/$task_id" > "$tmp_dir/task-accepted.json"
+  curl -fsS "$EVENT_HUB_URL/events/audit?limit=400" > "$tmp_dir/events-accepted.json"
+  curl -fsS "$CORE_URL/capabilities/invocations?limit=100" > "$tmp_dir/invocations-accepted.json"
+  curl -fsS "$OBSERVER_URL/client-v5.js" > "$tmp_dir/observer-client.js"
+  for token in 'act.ai.workspace.accept_assessment' \
+    'nixsoma-ai-workspace-assessment-acceptance-v0' \
+    'accept-ai-workspace-assessment-button'; do
+    rg -Fq "$token" "$tmp_dir/observer-client.js"
+  done
+
+  stage "checking post-acceptance service health"
+  for url in "$CORE_URL" "$EVENT_HUB_URL" "$SESSION_MANAGER_URL" "$BROWSER_RUNTIME_URL" \
+    "$SCREEN_SENSE_URL" "$SCREEN_ACT_URL" "$SYSTEM_SENSE_URL" "$SYSTEM_HEAL_URL" "$OBSERVER_URL"; do
+    curl -fsS "$url/health" > /dev/null
+  done
+
+  stage "verifying explicit acceptance, durable audit, and task closure"
+  node - "$tmp_dir" "$task_id" "$TASK_GOAL" <<'NODE'
+const fs = require("node:fs");
+const path = require("node:path");
+const directory = process.argv[2];
+const taskId = process.argv[3];
+const taskGoal = process.argv[4];
+const read = (name) => JSON.parse(fs.readFileSync(path.join(directory, name), "utf8"));
+const assessmentResponse = read("assessment.json");
+const assessment = assessmentResponse.result ?? {};
+const assessmentEvidence = assessment.evidence ?? {};
+const response = read("accept.json");
+const result = response.result ?? {};
+const evidence = result.evidence ?? {};
+const governance = result.governance ?? {};
+const task = read("task-accepted.json").task ?? {};
+const events = read("events-accepted.json").items ?? [];
+const invocations = read("invocations-accepted.json").items ?? [];
+const acceptanceAudit = events.find((event) =>
+  event.type === "ai_workspace.assessment_acceptance_authorized"
+    && event.payload?.taskId === taskId
+    && event.payload?.assessmentInvocationId === assessmentResponse.invocation?.id
+    && event.payload?.taskVersionHash === assessmentEvidence.taskVersionHash);
+const completionEvent = events.find((event) =>
+  event.type === "task.completed"
+    && event.payload?.task?.id === taskId
+    && event.payload?.assessmentAcceptance?.assessmentInvocationId
+      === assessmentResponse.invocation?.id);
+const invocation = invocations.find((item) =>
+  item.summary?.kind === "ai.workspace.assessment_acceptance"
+    && item.summary?.taskId === taskId
+    && item.summary?.assessmentInvocationId === assessmentResponse.invocation?.id);
+const taskAcceptance = task.outcome?.details?.assessmentAcceptance ?? {};
+const providerEgress = events.filter((event) =>
+  event.type === "cloud_provider.ai_workspace_assessment_egress_authorized"
+    && event.payload?.taskId === taskId);
+const boundedReceipt = JSON.stringify({
+  acceptanceAudit,
+  invocationSummary: invocation?.summary,
+  taskAcceptance,
+});
+
+if (response.invoked !== true
+  || result.registry !== "nixsoma-ai-workspace-assessment-acceptance-v0"
+  || result.status !== "accepted"
+  || result.task?.id !== taskId
+  || result.task?.status !== "completed"
+  || evidence.taskId !== taskId
+  || evidence.assessmentInvocationId !== assessmentResponse.invocation?.id
+  || evidence.outcome !== "complete"
+  || evidence.objectiveContentHash !== assessmentEvidence.objectiveContentHash
+  || evidence.taskVersionHash !== assessmentEvidence.taskVersionHash
+  || evidence.responseContentHash !== assessmentEvidence.responseContentHash
+  || evidence.sceneContentHash !== assessmentEvidence.sceneContentHash
+  || evidence.requiredAudit !== true
+  || evidence.taskCompleted !== true
+  || governance.explicitOperatorConfirmation !== true
+  || governance.providerCalled !== false
+  || governance.providerTriggeredCompletion !== false
+  || governance.maximumActions !== 0
+  || governance.actionExecuted !== false
+  || governance.automaticContinuation !== false
+  || governance.mutatesTask !== true
+  || governance.mutatesHost !== false
+  || task.status !== "completed"
+  || task.executionPhase !== "completed"
+  || task.closedAt !== task.updatedAt
+  || taskAcceptance.registry !== result.registry
+  || taskAcceptance.assessmentInvocationId !== assessmentResponse.invocation?.id
+  || taskAcceptance.taskVersionHash !== assessmentEvidence.taskVersionHash
+  || taskAcceptance.providerTriggeredCompletion !== false
+  || !acceptanceAudit
+  || !completionEvent
+  || !invocation
+  || invocation.summary?.requiredAudit !== true
+  || invocation.summary?.taskCompleted !== true
+  || invocation.summary?.providerTriggeredCompletion !== false
+  || providerEgress.length !== 1
+  || boundedReceipt.includes(taskGoal)
+  || JSON.stringify(taskAcceptance).includes('"reason"')) {
+  throw new Error(`assessment acceptance evidence invalid: ${JSON.stringify({ result, task, acceptanceAudit, completionEvent, invocation, providerEgress })}`);
+}
+
+console.log(JSON.stringify({
+  registry: result.registry,
+  taskId,
+  assessmentInvocationId: evidence.assessmentInvocationId,
+  outcome: evidence.outcome,
+  taskStatus: task.status,
+  providerCallCount: 0,
+  actionCount: 0,
+  requiredAudit: evidence.requiredAudit,
+  explicitOperatorConfirmation: governance.explicitOperatorConfirmation,
+  providerTriggeredCompletion: governance.providerTriggeredCompletion,
+  automaticContinuation: governance.automaticContinuation,
+  providerReasonPersisted: false,
+}, null, 2));
+NODE
+fi
