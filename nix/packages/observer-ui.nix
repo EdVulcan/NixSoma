@@ -58,6 +58,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-assessment.mjs
     ../../apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-click.mjs
     ../../apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs
+    ../../apps/observer-ui/src/client-script-runtime-ai-workspace-reviewed-cycle.mjs
     ../../apps/observer-ui/src/client-script-runtime-approval-tasks.mjs
     ../../apps/observer-ui/src/client-script-runtime-bindings.mjs
     ../../apps/observer-ui/src/client-script-runtime-engineering-loop-controls.mjs

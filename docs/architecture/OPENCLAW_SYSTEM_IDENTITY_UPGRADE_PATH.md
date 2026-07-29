@@ -203,7 +203,7 @@
 
 ### 当前实现前沿
 
-Level 4 已从第一个所有权边界推进到十九个已部署并物理证明的切片：登录用户的
+Level 4 已从第一个所有权边界推进到二十个已部署并物理证明的切片：登录用户的
 `systemd --user` 管理独立 Weston headless compositor 和固定
 `nixsoma-ai-0` 1280x720 输出；现有 AI-owned Nix Firefox 作为 headed client
 运行其中；session-manager 获取有界原生帧并只向状态面投影摘要；原生左键点击
@@ -459,6 +459,33 @@ Act、82-file Observer exact closure 均通过。物理 gate 将 task
 pixel、不接受任意坐标，九个健康端点保持在线。该 lane 已冻结；任意坐标、多动作、
 自动重试/续步、桌面接管、parent display、root 与 host mutation 继续排除。
 
+第二十个 Level 4 纵向切片已完成源码实现，能力 id 为
+`act.ai.workspace.reviewed_cycle`。一次操作者显式触发在现有 workspace
+single-flight owner 内组合既有最多两步 bounded run 与一次只读 semantic
+assessment；只有 run 结果已知、第一步不是 local fallback、task/objective/version
+哈希完整、bounded-run completion audit 成功，并写入独立 assessment continuation
+audit 后，才允许 assessment provider egress。组合预算固定为最多三次 provider
+call 和两次 action。
+
+cycle 本身不修改或完成 task，也不会自动接受 assessment。只有 run、assessment、
+cycle 三层 completion audit 均成功，且 nested outcome 为 `complete` 时，外层
+capability invocation 才产生一个 compact eligible subreceipt。现有
+`act.ai.workspace.accept_assessment` 仍是唯一可消费该 receipt 的 owner，并在重新
+校验 task version 后调用既有 task completion owner。Observer 新增 `Run + Assess`，
+但 `Accept` 保持独立显式命令。caller prompt、预算、action、assessment outcome、
+自动接受、开放循环、任意进程/窗口/输入、parent display、root 与 host mutation
+均未扩权。focused Core/Observer 测试已通过；Nix closure、generation 部署与物理
+live gate 已完成。Active generation 为
+`/nix/store/p4wdy50lnagh4hcbxfnsx81w9yjcm744-nixos-system-nixos-26.05.4808.569d57850992`；
+1125 项测试、typecheck、819-entry registry、1006-script audit、Windows path
+budget、body-config，以及 252-file Core、83-file Observer exact closure 均通过。
+物理 gate 为 task `869baa66-cf17-46b1-8777-b475a55ea6bc` 以两次 provider call、
+零 action 返回 `complete` 与 confidence 1，四层审计全部匹配，Accept 前 task 保持
+不变。随后既有 Accept owner 消费外层 invocation
+`570d6349-6e9d-4bd9-b046-639b8fb6751d`，没有新增 provider call 或 action，并且只在
+显式 operator confirmation 后完成 task。九个健康端点保持在线，provider reason
+未持久化。该 bounded cycle 已物理完成并冻结。
+
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
 画面投影、应用生命周期、surface 激活、垂直滚动、AI 单步、semantic scene
@@ -572,7 +599,7 @@ host mutation 仍未包含。这证明 AI 已拥有独立图形空间的最小�
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 60% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。真实 repair/rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 76%（semantic type、bounded run、task assessment/acceptance、bounded local OCR、OCR assessment 与 same-surface OCR click 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、root no-plaintext audit、verified-scroll-only 两步 run、瞬时本地 OCR、无 pixel egress 的 OCR provider assessment 与 ordinal-grounded one-click action 已部署。`zh9r98yq...` gate 以 item 9、surface 33、inventory 56 和 frame 75 -> 76 -> 78 证明 receipt-bound click/post-action OCR，并在 governed stop 后证明 runtime acknowledgement 已删除，同时保持零 task mutation、本地 OCR 明文持久化、pixel egress 和 arbitrary coordinate authority。开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
+| Level 4 图形栈内生组件 | 约 78%（semantic type、bounded run、reviewed cycle/acceptance、bounded local OCR、OCR assessment 与 same-surface OCR click 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、verified-scroll-only 两步 run、显式 run-plus-assessment cycle、瞬时本地 OCR、无 pixel egress 的 OCR provider assessment 与 ordinal-grounded one-click action 已部署。`p4wdy50l...` gate 以 2 次 provider call、0 action、四层审计和独立 Accept owner 证明 task 在 acceptance 前不变且不会被 provider 自动完成。开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
 **50-58%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted

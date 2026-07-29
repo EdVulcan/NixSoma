@@ -66,8 +66,49 @@ function stepResult({
   };
 }
 
-function harness(results, { rejectContinuationAudit = false } = {}) {
-  const calls = { invoke: [], audit: [], order: [] };
+function assessmentResult({ outcome = "complete" } = {}) {
+  return {
+    ok: true,
+    registry: "nixsoma-ai-workspace-task-assessment-v0",
+    status: "assessed",
+    assessment: { outcome, confidence: 0.9 },
+    evidence: {
+      taskId: TASK_ID,
+      objectiveContentHash: "a".repeat(64),
+      taskVersionHash: "b".repeat(64),
+      contextContentHash: "c".repeat(64),
+      requestContentHash: "d".repeat(64),
+      responseContentHash: "e".repeat(64),
+      sceneContentHash: "f".repeat(64),
+      completionAudit: true,
+    },
+    governance: {
+      providerCalled: true,
+      semanticSceneBound: true,
+      currentBrowserSurfaceBound: true,
+      taskObjectiveBound: true,
+      taskObjectiveProviderEgress: true,
+      rawTaskGoalProviderEgress: false,
+      pixelsProviderEgress: false,
+      urlsProviderEgress: false,
+      inputValuesProviderEgress: false,
+      maximumActions: 0,
+      actionExecuted: false,
+      taskMutated: false,
+      automaticContinuation: false,
+      createsTask: false,
+      createsApproval: false,
+      mutatesHost: false,
+    },
+  };
+}
+
+function harness(results, {
+  rejectContinuationAudit = false,
+  rejectRunCompletionAudit = false,
+  rejectAssessmentContinuationAudit = false,
+} = {}) {
+  const calls = { invoke: [], assessment: [], audit: [], order: [] };
   const queue = [...results];
   const coordinator = createAiWorkspaceRunCoordinator({
     singleStep: {
@@ -82,10 +123,27 @@ function harness(results, { rejectContinuationAudit = false } = {}) {
         return stepResult({ actionId: "no_op", status: "local_fallback", actionExecuted: false, reason });
       },
     },
+    assessment: {
+      async invoke(input) {
+        calls.assessment.push(input);
+        calls.order.push("assessment");
+        return assessmentResult();
+      },
+      localFallback: (reason) => ({
+        registry: "nixsoma-ai-workspace-task-assessment-v0",
+        status: "local_fallback",
+        fallback: { reason },
+      }),
+    },
     publishAuditEvent: async (name, payload) => {
       calls.audit.push({ name, payload });
       calls.order.push(`audit:${name}`);
-      return { ok: !(rejectContinuationAudit && name.endsWith("continuation_authorized")) };
+      return { ok: !(
+        (rejectContinuationAudit && name === "ai_workspace.bounded_run_continuation_authorized")
+        || (rejectRunCompletionAudit && name === "ai_workspace.bounded_run_completed")
+        || (rejectAssessmentContinuationAudit
+          && name === "ai_workspace.reviewed_cycle_assessment_authorized")
+      ) };
     },
     now: () => "2026-07-29T01:00:00.000Z",
   });
@@ -354,4 +412,62 @@ test("bounded workspace run reports an unknown second outcome without retry", as
   assert.equal(result.evidence.actionCountMinimum, 1);
   assert.equal(calls.invoke.length, 2);
   assert.equal(JSON.stringify(result).includes("private actuator detail"), false);
+});
+
+test("reviewed workspace cycle assesses a complete receipt after one audited no-op run", async () => {
+  const { calls, coordinator } = harness([
+    stepResult({ actionId: "no_op", actionExecuted: false }),
+  ]);
+
+  const result = await coordinator.reviewedCycle.invoke({ taskId: TASK_ID });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.status, "assessed");
+  assert.equal(result.assessment.assessment.outcome, "complete");
+  assert.equal(result.evidence.providerCallCount, 2);
+  assert.equal(result.evidence.actionCount, 0);
+  assert.equal(result.evidence.runCompletionAudit, true);
+  assert.equal(result.evidence.assessmentContinuationAudit, true);
+  assert.equal(result.evidence.assessmentCompletionAudit, true);
+  assert.equal(result.evidence.cycleCompletionAudit, true);
+  assert.equal(result.evidence.assessmentReceiptEligible, true);
+  assert.equal(result.governance.automaticTaskCompletion, false);
+  assert.equal(result.governance.requiresOperatorAcceptance, true);
+  assert.equal(calls.assessment.length, 1);
+  assert.deepEqual(calls.assessment[0].expectedTaskBinding, {
+    taskId: TASK_ID,
+    objectiveContentHash: "a".repeat(64),
+    taskVersionHash: "b".repeat(64),
+  });
+  assert.deepEqual(calls.order, [
+    "step:1",
+    "audit:ai_workspace.bounded_run_completed",
+    "audit:ai_workspace.reviewed_cycle_assessment_authorized",
+    "assessment",
+    "audit:ai_workspace.reviewed_cycle_completed",
+  ]);
+});
+
+test("reviewed workspace cycle does not assess fallback or unaudited run evidence", async () => {
+  const fallback = stepResult({
+    actionId: "no_op",
+    status: "local_fallback",
+    actionExecuted: false,
+  });
+  fallback.evidence.taskId = null;
+  fallback.evidence.objectiveContentHash = null;
+  fallback.evidence.taskVersionHash = null;
+  fallback.governance.providerCalled = false;
+  const localFallback = harness([fallback]);
+  const fallbackResult = await localFallback.coordinator.reviewedCycle.invoke({ taskId: TASK_ID });
+  assert.equal(fallbackResult.terminalReason, "run_not_assessable");
+  assert.equal(localFallback.calls.assessment.length, 0);
+
+  const unaudited = harness([
+    stepResult({ actionId: "no_op", actionExecuted: false }),
+  ], { rejectRunCompletionAudit: true });
+  const unauditedResult = await unaudited.coordinator.reviewedCycle.invoke({ taskId: TASK_ID });
+  assert.equal(unauditedResult.terminalReason, "run_not_assessable");
+  assert.equal(unauditedResult.evidence.runCompletionAudit, false);
+  assert.equal(unaudited.calls.assessment.length, 0);
 });

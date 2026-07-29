@@ -30,6 +30,17 @@ function contextMatches(decisionContext, verificationContext) {
     && verificationContext.scene.sceneContentSha256 === decisionContext.scene.sceneContentSha256;
 }
 
+function expectedTaskBindingMatches(expected, current) {
+  if (expected === null || expected === undefined) return true;
+  const evidence = current?.evidence ?? {};
+  return normaliseAiWorkspaceTaskId(expected?.taskId) !== null
+    && expected.taskId === evidence.taskId
+    && typeof expected.objectiveContentHash === "string"
+    && expected.objectiveContentHash === evidence.objectiveContentHash
+    && typeof expected.taskVersionHash === "string"
+    && expected.taskVersionHash === evidence.taskVersionHash;
+}
+
 function fallback(reason, standingAdvisory, {
   providerDecision = null,
   decisionContext = null,
@@ -151,7 +162,7 @@ export function createAiWorkspaceAssessment({
     return result;
   }
 
-  async function invoke({ taskId: requestedTaskId } = {}) {
+  async function invoke({ taskId: requestedTaskId, expectedTaskBinding = null } = {}) {
     const taskId = normaliseAiWorkspaceTaskId(requestedTaskId);
     if (!taskId || typeof getTaskById !== "function") {
       return fallback("task_objective_unavailable", standingAdvisory);
@@ -161,6 +172,7 @@ export function createAiWorkspaceAssessment({
     }
 
     let decisionContext;
+    let expectedBindingChanged = false;
     const egressAuditPayload = {
       taskId,
       taskStatus: null,
@@ -187,6 +199,10 @@ export function createAiWorkspaceAssessment({
           maximumActions: 0,
         });
         if (!taskObjectiveBinding.ok) throw new Error(taskObjectiveBinding.reason);
+        if (!expectedTaskBindingMatches(expectedTaskBinding, taskObjectiveBinding)) {
+          expectedBindingChanged = true;
+          throw new Error("expected task binding changed");
+        }
         decisionContext.taskObjectiveBinding = taskObjectiveBinding;
         decisionContext.provider = buildAiWorkspaceProviderContext({
           registry: "nixsoma-ai-workspace-task-assessment-context-v0",
@@ -218,7 +234,9 @@ export function createAiWorkspaceAssessment({
       successResult: "ai_workspace_assessment_returned",
     });
     if (!providerDecision.ok) {
-      return finaliseFallback(providerDecision.reason, {
+      return finaliseFallback(expectedBindingChanged
+        ? "task_objective_changed_before_egress"
+        : providerDecision.reason, {
         providerDecision,
         decisionContext,
       });

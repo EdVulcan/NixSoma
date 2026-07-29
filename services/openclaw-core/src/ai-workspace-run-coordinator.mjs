@@ -1,3 +1,5 @@
+import { createAiWorkspaceReviewedCycle } from "./ai-workspace-reviewed-cycle.mjs";
+
 export const AI_WORKSPACE_BOUNDED_RUN_REGISTRY =
   "nixsoma-ai-workspace-bounded-run-v0";
 
@@ -222,6 +224,7 @@ export function createAiWorkspaceRunCoordinator({
         continuedAfterVerifiedScroll,
         terminalAfterSecondStep: true,
         automaticRepeat: false,
+        taskMutated: false,
         createsTask: false,
         createsApproval: false,
         keyboardInput: steps.some((step) => step.actionId === "type_item" && step.actionExecuted),
@@ -371,8 +374,7 @@ export function createAiWorkspaceRunCoordinator({
     }
   }
 
-  async function invokeBounded(input) {
-    if (inFlight) return busyBoundedRun();
+  async function runBounded(input) {
     if (!singleStep || typeof singleStep.invoke !== "function") {
       return completeRun({
         ok: false,
@@ -382,109 +384,131 @@ export function createAiWorkspaceRunCoordinator({
         continuationAudit: false,
       });
     }
-    inFlight = true;
+    let firstResult;
     try {
-      let firstResult;
-      try {
-        firstResult = await singleStep.invoke(input);
-      } catch {
-        return completeRun({
-          ok: false,
-          status: "first_step_outcome_unknown",
-          terminalReason: "first_step_failed",
-          steps: [],
-          continuationAudit: false,
-          outcomeUnknown: true,
-        });
-      }
-      const firstStep = compactStep(firstResult, 1);
-      if (!validStep(firstStep)) {
-        return completeRun({
-          ok: false,
-          status: "first_step_outcome_unknown",
-          terminalReason: "first_step_result_invalid",
-          steps: [],
-          continuationAudit: false,
-          outcomeUnknown: true,
-        });
-      }
-      const terminalReason = firstTerminalReason(firstResult, firstStep);
-      if (terminalReason) {
-        return completeRun({
-          ok: firstResult?.ok === true,
-          status: "stopped_after_first",
-          terminalReason,
-          steps: [firstStep],
-          continuationAudit: false,
-        });
-      }
-
-      let continuationAudit = false;
-      try {
-        const accepted = await publishAuditEvent("ai_workspace.bounded_run_continuation_authorized", {
-          registry: AI_WORKSPACE_BOUNDED_RUN_REGISTRY,
-          at: now(),
-          taskId: firstStep.taskId,
-          objectiveContentHash: firstStep.objectiveContentHash,
-          taskVersionHash: firstStep.taskVersionHash,
-          firstStep,
-          nextStep: 2,
-          continuationReason: "verified_scroll",
-          maximumProviderCalls: 2,
-          maximumActions: 2,
-          automaticRepeat: false,
-        });
-        continuationAudit = accepted?.ok === true;
-      } catch {
-        continuationAudit = false;
-      }
-      if (!continuationAudit) {
-        return completeRun({
-          status: "stopped_after_first",
-          terminalReason: "continuation_audit_unavailable",
-          steps: [firstStep],
-          continuationAudit: false,
-        });
-      }
-
-      let secondResult;
-      try {
-        secondResult = await singleStep.invoke({
-          ...input,
-          expectedTaskBinding: taskBindingFromStep(firstStep),
-        });
-      } catch {
-        return completeRun({
-          ok: false,
-          status: "second_step_outcome_unknown",
-          terminalReason: "second_step_failed",
-          steps: [firstStep],
-          continuationAudit: true,
-          outcomeUnknown: true,
-          continuedAfterVerifiedScroll: true,
-        });
-      }
-      const secondStep = compactStep(secondResult, 2);
-      if (!validStep(secondStep)
-        || (secondStep.status !== "local_fallback" && !sameTaskBinding(firstStep, secondStep))) {
-        return completeRun({
-          ok: false,
-          status: "second_step_outcome_unknown",
-          terminalReason: "second_step_result_invalid",
-          steps: [firstStep],
-          continuationAudit: true,
-          outcomeUnknown: true,
-          continuedAfterVerifiedScroll: true,
-        });
-      }
+      firstResult = await singleStep.invoke(input);
+    } catch {
       return completeRun({
-        ok: secondResult?.ok === true,
-        status: secondStep.status === "local_fallback" ? "stopped_after_second_fallback" : "completed",
-        terminalReason: "second_step_terminal",
-        steps: [firstStep, secondStep],
+        ok: false,
+        status: "first_step_outcome_unknown",
+        terminalReason: "first_step_failed",
+        steps: [],
+        continuationAudit: false,
+        outcomeUnknown: true,
+      });
+    }
+    const firstStep = compactStep(firstResult, 1);
+    if (!validStep(firstStep)) {
+      return completeRun({
+        ok: false,
+        status: "first_step_outcome_unknown",
+        terminalReason: "first_step_result_invalid",
+        steps: [],
+        continuationAudit: false,
+        outcomeUnknown: true,
+      });
+    }
+    const terminalReason = firstTerminalReason(firstResult, firstStep);
+    if (terminalReason) {
+      return completeRun({
+        ok: firstResult?.ok === true,
+        status: "stopped_after_first",
+        terminalReason,
+        steps: [firstStep],
+        continuationAudit: false,
+      });
+    }
+
+    let continuationAudit = false;
+    try {
+      const accepted = await publishAuditEvent("ai_workspace.bounded_run_continuation_authorized", {
+        registry: AI_WORKSPACE_BOUNDED_RUN_REGISTRY,
+        at: now(),
+        taskId: firstStep.taskId,
+        objectiveContentHash: firstStep.objectiveContentHash,
+        taskVersionHash: firstStep.taskVersionHash,
+        firstStep,
+        nextStep: 2,
+        continuationReason: "verified_scroll",
+        maximumProviderCalls: 2,
+        maximumActions: 2,
+        automaticRepeat: false,
+      });
+      continuationAudit = accepted?.ok === true;
+    } catch {
+      continuationAudit = false;
+    }
+    if (!continuationAudit) {
+      return completeRun({
+        status: "stopped_after_first",
+        terminalReason: "continuation_audit_unavailable",
+        steps: [firstStep],
+        continuationAudit: false,
+      });
+    }
+
+    let secondResult;
+    try {
+      secondResult = await singleStep.invoke({
+        ...input,
+        expectedTaskBinding: taskBindingFromStep(firstStep),
+      });
+    } catch {
+      return completeRun({
+        ok: false,
+        status: "second_step_outcome_unknown",
+        terminalReason: "second_step_failed",
+        steps: [firstStep],
         continuationAudit: true,
+        outcomeUnknown: true,
         continuedAfterVerifiedScroll: true,
       });
+    }
+    const secondStep = compactStep(secondResult, 2);
+    if (!validStep(secondStep)
+      || (secondStep.status !== "local_fallback" && !sameTaskBinding(firstStep, secondStep))) {
+      return completeRun({
+        ok: false,
+        status: "second_step_outcome_unknown",
+        terminalReason: "second_step_result_invalid",
+        steps: [firstStep],
+        continuationAudit: true,
+        outcomeUnknown: true,
+        continuedAfterVerifiedScroll: true,
+      });
+    }
+    return completeRun({
+      ok: secondResult?.ok === true,
+      status: secondStep.status === "local_fallback" ? "stopped_after_second_fallback" : "completed",
+      terminalReason: "second_step_terminal",
+      steps: [firstStep, secondStep],
+      continuationAudit: true,
+      continuedAfterVerifiedScroll: true,
+    });
+  }
+
+  async function invokeBounded(input) {
+    if (inFlight) return busyBoundedRun();
+    inFlight = true;
+    try {
+      return await runBounded(input);
+    } finally {
+      inFlight = false;
+    }
+  }
+
+  const reviewedCycleOwner = createAiWorkspaceReviewedCycle({
+    runBounded,
+    assessment,
+    publishAuditEvent,
+    now,
+  });
+
+  async function invokeReviewedCycle(input) {
+    if (inFlight) return reviewedCycleOwner.busy();
+    inFlight = true;
+    try {
+      return await reviewedCycleOwner.invoke(input);
     } finally {
       inFlight = false;
     }
@@ -493,6 +517,7 @@ export function createAiWorkspaceRunCoordinator({
   return {
     singleStep: { invoke: invokeSingle },
     boundedRun: { invoke: invokeBounded },
+    reviewedCycle: { invoke: invokeReviewedCycle },
     assessment: { invoke: invokeAssessment },
     ocrAssessment: { invoke: invokeOcrAssessment },
     ocrClick: { invoke: invokeOcrClick },

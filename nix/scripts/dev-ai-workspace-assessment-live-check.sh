@@ -11,10 +11,11 @@ SYSTEM_SENSE_URL="${OPENCLAW_SYSTEM_SENSE_URL:-http://127.0.0.1:4106}"
 SYSTEM_HEAL_URL="${OPENCLAW_SYSTEM_HEAL_URL:-http://127.0.0.1:4107}"
 OBSERVER_URL="${OPENCLAW_OBSERVER_URL:-http://127.0.0.1:4170}"
 export OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_OPERATOR_TOKEN_FILE:-${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/nixsoma/operator-token}"
-TARGET_URL="${NIXSOMA_AI_ASSESSMENT_URL:-https://httpbin.org/forms/post}"
+TARGET_URL="${NIXSOMA_AI_ASSESSMENT_URL:-https://httpbingo.org/forms/post}"
 TASK_GOAL="${NIXSOMA_AI_ASSESSMENT_TASK_GOAL:-Determine whether the Customer name textbox is visible}"
 EXPECTED_OUTCOME="${NIXSOMA_AI_ASSESSMENT_EXPECTED_OUTCOME:-complete}"
 ACCEPT_COMPLETE="${NIXSOMA_AI_ASSESSMENT_ACCEPT_COMPLETE:-0}"
+REVIEWED_CYCLE="${NIXSOMA_AI_ASSESSMENT_REVIEWED_CYCLE:-0}"
 
 if [[ ! "$EXPECTED_OUTCOME" =~ ^(complete|incomplete|blocked|unknown)$ ]]; then
   printf 'Unsupported NIXSOMA_AI_ASSESSMENT_EXPECTED_OUTCOME: %s\n' "$EXPECTED_OUTCOME" >&2
@@ -22,6 +23,10 @@ if [[ ! "$EXPECTED_OUTCOME" =~ ^(complete|incomplete|blocked|unknown)$ ]]; then
 fi
 if [[ "$ACCEPT_COMPLETE" != "0" && "$ACCEPT_COMPLETE" != "1" ]]; then
   printf 'Unsupported NIXSOMA_AI_ASSESSMENT_ACCEPT_COMPLETE: %s\n' "$ACCEPT_COMPLETE" >&2
+  exit 64
+fi
+if [[ "$REVIEWED_CYCLE" != "0" && "$REVIEWED_CYCLE" != "1" ]]; then
+  printf 'Unsupported NIXSOMA_AI_ASSESSMENT_REVIEWED_CYCLE: %s\n' "$REVIEWED_CYCLE" >&2
   exit 64
 fi
 if [[ "$ACCEPT_COMPLETE" == "1" && "$EXPECTED_OUTCOME" != "complete" ]]; then
@@ -166,14 +171,20 @@ bind_payload="$(node -e '
 post_json "$CORE_URL/capabilities/invoke" "$bind_payload" > "$tmp_dir/bind.json"
 curl -fsS "$CORE_URL/tasks/$task_id" > "$tmp_dir/task-before.json"
 
-stage "requesting one task-bound read-only assessment"
+if [[ "$REVIEWED_CYCLE" == "1" ]]; then
+  assessment_capability="act.ai.workspace.reviewed_cycle"
+  stage "requesting one task-bound reviewed run and assessment cycle"
+else
+  assessment_capability="sense.ai.workspace.assessment"
+  stage "requesting one task-bound read-only assessment"
+fi
 assessment_payload="$(node -e '
   console.log(JSON.stringify({
-    capabilityId: "sense.ai.workspace.assessment",
+    capabilityId: process.argv[2],
     taskId: process.argv[1],
     params: { confirm: true },
   }));
-' "$task_id")"
+' "$task_id" "$assessment_capability")"
 post_json "$CORE_URL/capabilities/invoke" "$assessment_payload" > "$tmp_dir/assessment.json"
 curl -fsS "$CORE_URL/tasks/$task_id" > "$tmp_dir/task-after.json"
 curl -fsS "$EVENT_HUB_URL/events/audit?limit=400" > "$tmp_dir/events.json"
@@ -186,18 +197,25 @@ for url in "$CORE_URL" "$EVENT_HUB_URL" "$SESSION_MANAGER_URL" "$BROWSER_RUNTIME
 done
 
 stage "verifying task binding, durable audit, and zero mutation"
-node - "$tmp_dir" "$task_id" "$TASK_GOAL" "$EXPECTED_OUTCOME" <<'NODE'
+node - "$tmp_dir" "$task_id" "$TASK_GOAL" "$EXPECTED_OUTCOME" "$REVIEWED_CYCLE" <<'NODE'
 const fs = require("node:fs");
 const path = require("node:path");
 const directory = process.argv[2];
 const taskId = process.argv[3];
 const taskGoal = process.argv[4];
 const expectedOutcome = process.argv[5];
+const reviewedCycle = process.argv[6] === "1";
 const read = (name) => JSON.parse(fs.readFileSync(path.join(directory, name), "utf8"));
 const response = read("assessment.json");
-const result = response.result ?? {};
+const outerResult = response.result ?? {};
+const result = reviewedCycle ? outerResult.assessment ?? {} : outerResult;
 const evidence = result.evidence ?? {};
 const governance = result.governance ?? {};
+const cycleEvidence = outerResult.evidence ?? {};
+const cycleGovernance = outerResult.governance ?? {};
+const run = reviewedCycle ? outerResult.run ?? {} : null;
+const runEvidence = run?.evidence ?? {};
+const steps = run?.steps ?? [];
 const events = read("events.json").items ?? [];
 const invocations = read("invocations.json").items ?? [];
 const before = read("task-before.json").task ?? {};
@@ -217,47 +235,112 @@ const actionAudit = events.find((event) =>
   event.payload?.taskId === taskId
     && (event.type === "ai_workspace.single_step_action_authorized"
       || event.type === "ai_workspace.single_step_completed"));
-const invocation = invocations.find((item) => item.summary?.kind === "ai.workspace.assessment"
+const runCompleted = events.find((event) =>
+  event.type === "ai_workspace.bounded_run_completed"
+    && event.payload?.steps?.[0]?.taskId === taskId);
+const assessmentContinuation = events.find((event) =>
+  event.type === "ai_workspace.reviewed_cycle_assessment_authorized"
+    && event.payload?.taskId === taskId);
+const cycleCompleted = events.find((event) =>
+  event.type === "ai_workspace.reviewed_cycle_completed"
+    && event.payload?.taskId === taskId);
+const expectedInvocationKind = reviewedCycle
+  ? "ai.workspace.reviewed_cycle"
+  : "ai.workspace.assessment";
+const invocation = invocations.find((item) => item.summary?.kind === expectedInvocationKind
   && item.summary?.taskId === taskId
-  && item.summary?.responseContentHash === evidence.responseContentHash);
-const durable = JSON.stringify({ egress, completed, invocationSummary: invocation?.summary });
+  && (reviewedCycle
+    ? item.summary?.assessment?.responseContentHash === evidence.responseContentHash
+    : item.summary?.responseContentHash === evidence.responseContentHash));
+const durable = JSON.stringify({
+  egress,
+  completed,
+  runCompleted,
+  assessmentContinuation,
+  cycleCompleted,
+  invocationSummary: invocation?.summary,
+});
+
+const assessmentValid = result.registry === "nixsoma-ai-workspace-task-assessment-v0"
+  && result.status === "assessed"
+  && result.assessment?.outcome === expectedOutcome
+  && typeof result.assessment?.confidence === "number"
+  && result.assessment.confidence >= 0
+  && result.assessment.confidence <= 1
+  && hash(evidence.contextContentHash)
+  && hash(evidence.requestContentHash)
+  && hash(evidence.responseContentHash)
+  && hash(evidence.sceneContentHash)
+  && hash(evidence.objectiveContentHash)
+  && hash(evidence.taskVersionHash)
+  && evidence.taskId === taskId
+  && evidence.completionAudit === true
+  && governance.providerCalled === true
+  && governance.maximumProviderCalls === 1
+  && governance.maximumActions === 0
+  && governance.actionExecuted === false
+  && governance.taskMutated === false
+  && governance.automaticContinuation === false
+  && governance.semanticSceneBound === true
+  && governance.currentBrowserSurfaceBound === true
+  && governance.taskObjectiveBound === true
+  && governance.taskObjectiveProviderEgress === true
+  && governance.rawTaskGoalProviderEgress === false
+  && governance.pixelsProviderEgress === false
+  && governance.urlsProviderEgress === false
+  && governance.inputValuesProviderEgress === false
+  && governance.createsTask === false
+  && governance.createsApproval === false
+  && governance.mutatesHost === false;
+const directValid = !reviewedCycle
+  || (outerResult.registry === "nixsoma-ai-workspace-reviewed-cycle-v0"
+    && outerResult.status === "assessed"
+    && run.registry === "nixsoma-ai-workspace-bounded-run-v0"
+    && steps.length >= 1
+    && steps.length <= 2
+    && steps[0].status !== "local_fallback"
+    && steps.every((step) => step.providerCalled === true
+      && step.completionAudit === true
+      && step.taskId === taskId
+      && step.objectiveContentHash === evidence.objectiveContentHash
+      && step.taskVersionHash === evidence.taskVersionHash)
+    && runEvidence.runCompletionAudit === true
+    && runEvidence.outcomeUnknown === false
+    && cycleEvidence.taskId === taskId
+    && cycleEvidence.objectiveContentHash === evidence.objectiveContentHash
+    && cycleEvidence.taskVersionHash === evidence.taskVersionHash
+    && cycleEvidence.providerCallCount === runEvidence.providerCallCount + 1
+    && cycleEvidence.providerCallCount >= 2
+    && cycleEvidence.providerCallCount <= 3
+    && cycleEvidence.actionCount === runEvidence.actionCount
+    && cycleEvidence.runCompletionAudit === true
+    && cycleEvidence.assessmentContinuationAudit === true
+    && cycleEvidence.assessmentCompletionAudit === true
+    && cycleEvidence.cycleCompletionAudit === true
+    && cycleEvidence.assessmentReceiptEligible === (expectedOutcome === "complete")
+    && cycleEvidence.outcomeUnknown === false
+    && cycleGovernance.maximumProviderCalls === 3
+    && cycleGovernance.maximumActions === 2
+    && cycleGovernance.taskMutated === false
+    && cycleGovernance.automaticTaskCompletion === false
+    && cycleGovernance.requiresOperatorAcceptance === true
+    && cycleGovernance.providerTriggeredCompletion === false
+    && cycleGovernance.mutatesHost === false
+    && runCompleted
+    && assessmentContinuation
+    && cycleCompleted
+    && actionAudit?.type === "ai_workspace.single_step_completed"
+    && invocation?.summary?.cycleCompletionAudit === true
+    && invocation?.summary?.assessmentReceiptEligible === (expectedOutcome === "complete")
+    && invocation?.summary?.assessment?.responseContentHash === evidence.responseContentHash);
 
 if (response.invoked !== true
-  || result.registry !== "nixsoma-ai-workspace-task-assessment-v0"
-  || result.status !== "assessed"
-  || result.assessment?.outcome !== expectedOutcome
-  || typeof result.assessment?.confidence !== "number"
-  || result.assessment.confidence < 0
-  || result.assessment.confidence > 1
-  || !hash(evidence.contextContentHash)
-  || !hash(evidence.requestContentHash)
-  || !hash(evidence.responseContentHash)
-  || !hash(evidence.sceneContentHash)
-  || !hash(evidence.objectiveContentHash)
-  || !hash(evidence.taskVersionHash)
-  || evidence.taskId !== taskId
-  || evidence.completionAudit !== true
-  || governance.providerCalled !== true
-  || governance.maximumProviderCalls !== 1
-  || governance.maximumActions !== 0
-  || governance.actionExecuted !== false
-  || governance.taskMutated !== false
-  || governance.automaticContinuation !== false
-  || governance.semanticSceneBound !== true
-  || governance.currentBrowserSurfaceBound !== true
-  || governance.taskObjectiveBound !== true
-  || governance.taskObjectiveProviderEgress !== true
-  || governance.rawTaskGoalProviderEgress !== false
-  || governance.pixelsProviderEgress !== false
-  || governance.urlsProviderEgress !== false
-  || governance.inputValuesProviderEgress !== false
-  || governance.createsTask !== false
-  || governance.createsApproval !== false
-  || governance.mutatesHost !== false
+  || !assessmentValid
+  || !directValid
   || !egress
   || !completed
   || !invocation
-  || actionAudit
+  || (!reviewedCycle && actionAudit)
   || before.id !== taskId
   || after.id !== taskId
   || before.status !== after.status
@@ -266,20 +349,31 @@ if (response.invoked !== true
   || durable.includes('"reason"')
   || durable.includes("targetId")
   || durable.includes("selector")) {
-  throw new Error(`assessment evidence invalid: ${JSON.stringify({ result, egress, completed, invocation, before, after })}`);
+  throw new Error(`assessment evidence invalid: ${JSON.stringify({ outerResult, egress, completed, runCompleted, assessmentContinuation, cycleCompleted, invocation, before, after })}`);
 }
 
 console.log(JSON.stringify({
-  registry: result.registry,
+  registry: outerResult.registry,
   taskId,
   outcome: result.assessment.outcome,
   confidence: result.assessment.confidence,
   sceneItemCount: evidence.sceneItemCount,
-  providerCallCount: 1,
-  actionCount: 0,
+  providerCallCount: reviewedCycle ? cycleEvidence.providerCallCount : 1,
+  actionCount: reviewedCycle ? cycleEvidence.actionCount : 0,
+  runCompletionAudit: reviewedCycle ? cycleEvidence.runCompletionAudit : null,
+  assessmentContinuationAudit: reviewedCycle
+    ? cycleEvidence.assessmentContinuationAudit
+    : null,
   completionAudit: evidence.completionAudit,
+  cycleCompletionAudit: reviewedCycle ? cycleEvidence.cycleCompletionAudit : null,
   taskMutated: governance.taskMutated,
-  automaticContinuation: governance.automaticContinuation,
+  automaticContinuation: reviewedCycle ? null : governance.automaticContinuation,
+  automaticTaskCompletion: reviewedCycle
+    ? cycleGovernance.automaticTaskCompletion
+    : null,
+  requiresOperatorAcceptance: reviewedCycle
+    ? cycleGovernance.requiresOperatorAcceptance
+    : null,
   providerReasonPersisted: false,
 }, null, 2));
 NODE
@@ -289,7 +383,10 @@ if [[ "$ACCEPT_COMPLETE" == "1" ]]; then
   acceptance_payload="$(node -e '
     const fs = require("node:fs");
     const response = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
-    const result = response.result ?? {};
+    const outerResult = response.result ?? {};
+    const result = outerResult.registry === "nixsoma-ai-workspace-reviewed-cycle-v0"
+      ? outerResult.assessment ?? {}
+      : outerResult;
     const evidence = result.evidence ?? {};
     if (response.invoked !== true
       || result.status !== "assessed"
@@ -315,7 +412,9 @@ if [[ "$ACCEPT_COMPLETE" == "1" ]]; then
   curl -fsS "$OBSERVER_URL/client-v5.js" > "$tmp_dir/observer-client.js"
   for token in 'act.ai.workspace.accept_assessment' \
     'nixsoma-ai-workspace-assessment-acceptance-v0' \
-    'accept-ai-workspace-assessment-button'; do
+    'accept-ai-workspace-assessment-button' \
+    'act.ai.workspace.reviewed_cycle' \
+    'run-ai-workspace-reviewed-cycle-button'; do
     grep -Fq -- "$token" "$tmp_dir/observer-client.js"
   done
 
@@ -334,7 +433,10 @@ const taskId = process.argv[3];
 const taskGoal = process.argv[4];
 const read = (name) => JSON.parse(fs.readFileSync(path.join(directory, name), "utf8"));
 const assessmentResponse = read("assessment.json");
-const assessment = assessmentResponse.result ?? {};
+const assessmentOuter = assessmentResponse.result ?? {};
+const assessment = assessmentOuter.registry === "nixsoma-ai-workspace-reviewed-cycle-v0"
+  ? assessmentOuter.assessment ?? {}
+  : assessmentOuter;
 const assessmentEvidence = assessment.evidence ?? {};
 const response = read("accept.json");
 const result = response.result ?? {};

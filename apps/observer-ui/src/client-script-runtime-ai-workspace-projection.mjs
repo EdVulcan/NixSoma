@@ -5,6 +5,7 @@ let aiWorkspaceProjectionBinding = null;
 let aiWorkspaceLocalOcrInFlight = false;
 let aiWorkspaceSingleStepInFlight = false;
 let aiWorkspaceBoundedRunInFlight = false;
+let aiWorkspaceReviewedCycleInFlight = false;
 let aiWorkspaceAssessmentInFlight = false;
 let aiWorkspaceAssessmentAcceptanceInFlight = false;
 let aiWorkspaceAssessmentTaskId = null;
@@ -75,6 +76,7 @@ function updateAiSurfaceScrollControls() {
     || aiWorkspaceOcrAssessmentInFlight
     || aiWorkspaceOcrClickInFlight
     || aiWorkspaceBoundedRunInFlight
+    || aiWorkspaceReviewedCycleInFlight
     || aiWorkspaceAssessmentInFlight
     || aiWorkspaceAssessmentAcceptanceInFlight;
   scrollAiSurfaceUpButton.disabled = !enabled || aiRunInFlight;
@@ -84,6 +86,7 @@ function updateAiSurfaceScrollControls() {
   ocrClickAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceSingleStepButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceBoundedRunButton.disabled = !enabled || !taskId || aiRunInFlight;
+  runAiWorkspaceReviewedCycleButton.disabled = !enabled || !taskId || aiRunInFlight;
   assessAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
   acceptAiWorkspaceAssessmentButton.disabled = aiRunInFlight
     || aiWorkspaceAssessmentReceipt?.taskId !== taskId;
@@ -93,6 +96,7 @@ function clearAiWorkspaceAssessment(reason = "not assessed") {
   aiWorkspaceAssessmentTaskId = null;
   aiWorkspaceAssessmentReceipt = null;
   aiWorkspaceAssessmentStatus.textContent = reason;
+  aiWorkspaceReviewedCycleStatus.textContent = reason;
   acceptAiWorkspaceAssessmentButton.disabled = true;
 }
 
@@ -441,7 +445,9 @@ runAiWorkspaceSingleStepButton.addEventListener("click", () => {
 });
 
 async function runAiWorkspaceBoundedRun() {
-  if (aiWorkspaceSingleStepInFlight || aiWorkspaceBoundedRunInFlight) return;
+  if (aiWorkspaceSingleStepInFlight
+    || aiWorkspaceBoundedRunInFlight
+    || aiWorkspaceReviewedCycleInFlight) return;
   aiWorkspaceBoundedRunInFlight = true;
   updateAiSurfaceScrollControls();
   try {
@@ -552,6 +558,7 @@ runAiWorkspaceBoundedRunButton.addEventListener("click", () => {
 async function assessAiWorkspace() {
   if (aiWorkspaceSingleStepInFlight
     || aiWorkspaceBoundedRunInFlight
+    || aiWorkspaceReviewedCycleInFlight
     || aiWorkspaceAssessmentInFlight) return;
   aiWorkspaceAssessmentInFlight = true;
   updateAiSurfaceScrollControls();
@@ -649,6 +656,7 @@ assessAiWorkspaceButton.addEventListener("click", () => {
 async function acceptAiWorkspaceAssessment() {
   if (aiWorkspaceSingleStepInFlight
     || aiWorkspaceBoundedRunInFlight
+    || aiWorkspaceReviewedCycleInFlight
     || aiWorkspaceAssessmentInFlight
     || aiWorkspaceAssessmentAcceptanceInFlight) return;
   const receipt = aiWorkspaceAssessmentReceipt;

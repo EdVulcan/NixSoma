@@ -78,5 +78,6 @@ export function createAiWorkspaceRuntimes({
     ocrClick: runs.ocrClick,
     singleStep: runs.singleStep,
     boundedRun: runs.boundedRun,
+    reviewedCycle: runs.reviewedCycle,
   };
 }

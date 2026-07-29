@@ -7,6 +7,7 @@ export const AI_WORKSPACE_ASSESSMENT_ACCEPTANCE_REGISTRY =
   "nixsoma-ai-workspace-assessment-acceptance-v0";
 
 const ASSESSMENT_CAPABILITY_ID = "sense.ai.workspace.assessment";
+const REVIEWED_CYCLE_CAPABILITY_ID = "act.ai.workspace.reviewed_cycle";
 const ALLOWED_BODY_KEYS = new Set(["capabilityId", "taskId", "params"]);
 const ALLOWED_PARAM_KEYS = new Set([
   "confirm",
@@ -74,19 +75,69 @@ function rejected(reason, taskId = null, { requiredAudit = false } = {}) {
   };
 }
 
-function assessmentReceiptMatches(entry, request) {
+function assessmentReceiptCandidate(entry, request) {
+  if (entry?.id !== request.params.assessmentInvocationId
+    || entry?.invoked !== true
+    || entry?.blocked !== false
+    || entry?.request?.taskId !== request.taskId
+    || entry?.authorization?.approved !== true
+    || entry?.policy?.decision !== "audit_only"
+    || entry?.policy?.domain !== "cross_boundary"
+    || entry?.policy?.approved !== true) return null;
+  if (entry.capability?.id === ASSESSMENT_CAPABILITY_ID
+    && entry.authorization.policyId === "ai-workspace-explicit-task-assessment") {
+    return entry.summary ?? null;
+  }
+  const summary = entry.summary ?? {};
+  if (entry.capability?.id !== REVIEWED_CYCLE_CAPABILITY_ID
+    || entry.authorization.policyId !== "ai-workspace-explicit-reviewed-cycle"
+    || summary.kind !== "ai.workspace.reviewed_cycle"
+    || summary.ok !== true
+    || summary.status !== "assessed"
+    || summary.taskId !== request.taskId
+    || summary.objectiveContentHash !== request.params.objectiveContentHash
+    || summary.taskVersionHash !== request.params.taskVersionHash
+    || summary.runCompletionAudit !== true
+    || summary.assessmentContinuationAudit !== true
+    || summary.assessmentCompletionAudit !== true
+    || summary.cycleCompletionAudit !== true
+    || summary.assessmentReceiptEligible !== true
+    || summary.outcomeUnknown !== false
+    || summary.run?.runCompletionAudit !== true
+    || summary.run?.outcomeUnknown !== false
+    || !Number.isInteger(summary.providerCallCount)
+    || summary.providerCallCount < 2
+    || summary.providerCallCount > 3
+    || !Number.isInteger(summary.run?.providerCallCount)
+    || summary.run.providerCallCount < 1
+    || summary.run.providerCallCount > 2
+    || summary.providerCallCount !== summary.run.providerCallCount + 1
+    || !Number.isInteger(summary.actionCount)
+    || summary.actionCount < 0
+    || summary.actionCount > 2
+    || summary.actionCount !== summary.run?.actionCount
+    || !Array.isArray(summary.run?.steps)
+    || summary.run.steps.length < 1
+    || summary.run.steps.length > 2
+    || summary.run.steps[0]?.status === "local_fallback"
+    || summary.run.steps[0]?.providerCalled !== true
+    || summary.run.steps[0]?.completionAudit !== true
+    || summary.maximumProviderCalls !== 3
+    || summary.maximumActions !== 2
+    || summary.taskMutated !== false
+    || summary.automaticTaskCompletion !== false
+    || summary.requiresOperatorAcceptance !== true
+    || summary.providerTriggeredCompletion !== false
+    || summary.mutatesHost !== false) return null;
+  return summary.assessment
+    ? { ...summary.assessment, kind: "ai.workspace.assessment" }
+    : null;
+}
+
+function assessmentReceipt(entry, request) {
   const params = request.params;
-  const summary = entry?.summary ?? {};
-  return entry?.id === params.assessmentInvocationId
-    && entry?.capability?.id === ASSESSMENT_CAPABILITY_ID
-    && entry?.invoked === true
-    && entry?.blocked === false
-    && entry?.request?.taskId === request.taskId
-    && entry?.authorization?.policyId === "ai-workspace-explicit-task-assessment"
-    && entry?.authorization?.approved === true
-    && entry?.policy?.decision === "audit_only"
-    && entry?.policy?.domain === "cross_boundary"
-    && entry?.policy?.approved === true
+  const summary = assessmentReceiptCandidate(entry, request);
+  const matched = summary !== null
     && summary.kind === "ai.workspace.assessment"
     && summary.status === "assessed"
     && summary.outcome === "complete"
@@ -112,6 +163,7 @@ function assessmentReceiptMatches(entry, request) {
     && summary.actionExecuted === false
     && summary.taskMutated === false
     && summary.automaticContinuation === false;
+  return matched ? summary : null;
 }
 
 function taskBindingMatchesReceipt(binding, request) {
@@ -151,7 +203,8 @@ export function createAiWorkspaceAssessmentAcceptanceCapabilityHandlers({
     const assessmentInvocation = capabilityInvocationLog.find(
       (entry) => entry?.id === request.params.assessmentInvocationId,
     );
-    if (!assessmentReceiptMatches(assessmentInvocation, request)) {
+    const receipt = assessmentReceipt(assessmentInvocation, request);
+    if (!receipt) {
       return {
         handled: true,
         result: rejected("assessment_receipt_invalid", request.taskId),
@@ -187,7 +240,7 @@ export function createAiWorkspaceAssessmentAcceptanceCapabilityHandlers({
       taskId: request.taskId,
       assessmentInvocationId: request.params.assessmentInvocationId,
       outcome: "complete",
-      confidence: assessmentInvocation.summary.confidence,
+      confidence: receipt.confidence,
       objectiveContentHash: request.params.objectiveContentHash,
       taskVersionHash: request.params.taskVersionHash,
       responseContentHash: request.params.responseContentHash,
@@ -225,7 +278,7 @@ export function createAiWorkspaceAssessmentAcceptanceCapabilityHandlers({
       registry: AI_WORKSPACE_ASSESSMENT_ACCEPTANCE_REGISTRY,
       assessmentInvocationId: request.params.assessmentInvocationId,
       outcome: "complete",
-      confidence: assessmentInvocation.summary.confidence,
+      confidence: receipt.confidence,
       objectiveContentHash: request.params.objectiveContentHash,
       taskVersionHash: request.params.taskVersionHash,
       responseContentHash: request.params.responseContentHash,

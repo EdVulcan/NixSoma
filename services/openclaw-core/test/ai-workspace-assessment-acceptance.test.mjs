@@ -53,7 +53,13 @@ function workViewState() {
   };
 }
 
-function createHarness({ outcome = "complete", auditOk = true, mutateDuringAudit = false } = {}) {
+function createHarness({
+  outcome = "complete",
+  auditOk = true,
+  mutateDuringAudit = false,
+  reviewedCycle = false,
+  cycleCompletionAudit = true,
+} = {}) {
   const currentTask = task();
   const currentWorkView = workViewState();
   const binding = buildAiWorkspaceTaskObjectiveBinding({
@@ -106,6 +112,45 @@ function createHarness({ outcome = "complete", auditOk = true, mutateDuringAudit
       automaticContinuation: false,
     },
   };
+  if (reviewedCycle) {
+    invocation.capability.id = "act.ai.workspace.reviewed_cycle";
+    invocation.authorization.policyId = "ai-workspace-explicit-reviewed-cycle";
+    invocation.summary = {
+      kind: "ai.workspace.reviewed_cycle",
+      ok: true,
+      status: "assessed",
+      taskId: TASK_ID,
+      objectiveContentHash: hashes.objectiveContentHash,
+      taskVersionHash: hashes.taskVersionHash,
+      runCompletionAudit: true,
+      assessmentContinuationAudit: true,
+      assessmentCompletionAudit: true,
+      cycleCompletionAudit,
+      assessmentReceiptEligible: true,
+      outcomeUnknown: false,
+      providerCallCount: 2,
+      actionCount: 0,
+      run: {
+        providerCallCount: 1,
+        actionCount: 0,
+        runCompletionAudit: true,
+        outcomeUnknown: false,
+        steps: [{
+          status: "executed",
+          providerCalled: true,
+          completionAudit: true,
+        }],
+      },
+      assessment: { ...invocation.summary },
+      maximumProviderCalls: 3,
+      maximumActions: 2,
+      taskMutated: false,
+      automaticTaskCompletion: false,
+      requiresOperatorAcceptance: true,
+      providerTriggeredCompletion: false,
+      mutatesHost: false,
+    };
+  }
   const calls = [];
   const handlers = createAiWorkspaceAssessmentAcceptanceCapabilityHandlers({
     capabilityInvocationLog: [invocation],
@@ -185,6 +230,26 @@ test("assessment acceptance audits before the existing task owner completes", as
     "complete",
     "task.completed",
   ]);
+});
+
+test("assessment acceptance accepts an exact audited reviewed-cycle subreceipt", async () => {
+  const { handlers, currentTask, calls, request } = createHarness({ reviewedCycle: true });
+  const response = await handlers.callBackend(capability, request);
+
+  assert.equal(response.result.status, "accepted");
+  assert.equal(response.result.task.status, "completed");
+  assert.equal(currentTask.outcome.details.assessmentAcceptance.assessmentInvocationId,
+    "assessment-invocation-1");
+  assert.equal(calls.some((call) => call.name === "complete"), true);
+});
+
+test("assessment acceptance rejects a reviewed cycle without its completion audit", async () => {
+  const invalid = createHarness({ reviewedCycle: true, cycleCompletionAudit: false });
+  const response = await invalid.handlers.callBackend(capability, invalid.request);
+
+  assert.equal(response.result.reason, "assessment_receipt_invalid");
+  assert.equal(invalid.currentTask.status, "running");
+  assert.equal(invalid.calls.length, 0);
 });
 
 test("assessment acceptance rejects non-complete and stale receipts without mutation", async () => {

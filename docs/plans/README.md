@@ -459,6 +459,28 @@ accepted no arbitrary coordinates, and kept all nine endpoints healthy. The
 same gate explicitly stopped the Workbench and proved its volatile action marker
 absent before success. This lane is frozen.
 
+The twentieth Level 4 capability is selected and implemented in source as
+`act.ai.workspace.reviewed_cycle`. It owns one explicit bounded run followed by
+one read-only semantic assessment under the existing workspace single-flight
+coordinator. It accepts only a reviewed task id and confirmation, caps the
+composed request at three provider calls and two actions, and binds assessment
+to the run's exact task/objective/version hashes after a required continuation
+audit. A required compact cycle completion audit records the terminal evidence.
+The cycle never mutates or completes the task. Only the existing explicit
+assessment-acceptance owner may consume an eligible outer complete subreceipt
+and call the existing task completion owner. Observer adds `Run + Assess` while
+keeping `Accept` separate. All 1125 tests, typecheck, 819 registry entries,
+1006-script audit, path budget, body-config, and exact 252-file Core and 83-file
+Observer closures pass. Generation `p4wdy50l...` is active. The physical gate
+returned a complete cycle for task `869baa66-cf17-46b1-8777-b475a55ea6bc`
+from two provider calls and zero actions, matched all required audits, preserved
+the task before acceptance, and then proved that only existing Accept owner
+completed it from outer invocation `570d6349-6e9d-4bd9-b046-639b8fb6751d`.
+All nine health endpoints remained active and provider reason stayed absent.
+This bounded lane is physically complete and frozen. Automatic acceptance, open
+loops, arbitrary process/window/input authority, root, and host mutation remain
+deferred.
+
 ## Completed Capability Evidence
 
 The following plan families are retained because they describe implemented

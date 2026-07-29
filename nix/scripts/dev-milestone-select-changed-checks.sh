@@ -121,6 +121,43 @@ const aiWorkspaceAssessmentAcceptanceSlice = changedFiles.length > 0
   && changedFiles.every((file) => aiWorkspaceAssessmentAcceptanceFiles.has(file))
   && changedFiles.some((file) =>
     file === "services/openclaw-core/src/capability-runtime-ai-workspace-assessment-acceptance.mjs");
+const aiWorkspaceReviewedCycleFiles = new Set([
+  "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
+  "apps/observer-ui/src/client-script-runtime-actions.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-reviewed-cycle.mjs",
+  "apps/observer-ui/src/observer-panel-ai-work-view.mjs",
+  "apps/observer-ui/test/ai-workspace-reviewed-cycle.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/README.md",
+  "nix/packages/observer-ui.nix",
+  "nix/scripts/dev-ai-workspace-assessment-live-check.sh",
+  "nix/scripts/dev-ai-workspace-reviewed-cycle-live-check.sh",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-checks.tsv",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "services/openclaw-core/src/ai-workspace-assessment.mjs",
+  "services/openclaw-core/src/ai-workspace-reviewed-cycle.mjs",
+  "services/openclaw-core/src/ai-workspace-run-coordinator.mjs",
+  "services/openclaw-core/src/ai-workspace-runtime.mjs",
+  "services/openclaw-core/src/capability-descriptors.mjs",
+  "services/openclaw-core/src/capability-runtime-ai-workspace-assessment-acceptance.mjs",
+  "services/openclaw-core/src/capability-runtime-ai-workspace-reviewed-cycle.mjs",
+  "services/openclaw-core/src/capability-runtime.mjs",
+  "services/openclaw-core/src/plan-builder.mjs",
+  "services/openclaw-core/test/ai-workspace-assessment-acceptance.test.mjs",
+  "services/openclaw-core/test/ai-workspace-assessment.test.mjs",
+  "services/openclaw-core/test/ai-workspace-run-coordinator.test.mjs",
+  "services/openclaw-core/test/capability-runtime-ai-workspace-reviewed-cycle.test.mjs",
+  "services/openclaw-core/test/capability-runtime.test.mjs",
+  "services/openclaw-core/test/plan-builder-acpx-bridge-exports.test.mjs",
+]);
+const aiWorkspaceReviewedCycleSlice = changedFiles.length > 0
+  && changedFiles.every((file) => aiWorkspaceReviewedCycleFiles.has(file))
+  && changedFiles.some((file) =>
+    file === "services/openclaw-core/src/ai-workspace-reviewed-cycle.mjs");
 const aiWorkspaceOcrAssessmentFiles = new Set([
   "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
   "apps/observer-ui/src/client-script-runtime-actions.mjs",
@@ -1058,6 +1095,15 @@ for (const file of changedFiles) {
     selectName("openclaw-core-service-unit-tests");
     selectName("body-config");
     selectName("ai-workspace-assessment-acceptance-live");
+    continue;
+  }
+  if (aiWorkspaceReviewedCycleSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("ai-workspace-reviewed-cycle-live");
     continue;
   }
 

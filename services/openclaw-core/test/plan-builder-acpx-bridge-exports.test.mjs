@@ -10,6 +10,7 @@ function createPlanBuilderHarness({
   createAiWorkspaceOcrAssessmentImpl,
   createAiWorkspaceOcrClickImpl,
   createAiWorkspaceSingleStepImpl,
+  createAiWorkspaceRunCoordinatorImpl,
   publishAuditEvent,
 } = {}) {
   const tasks = new Map();
@@ -118,6 +119,7 @@ function createPlanBuilderHarness({
     createAiWorkspaceOcrAssessmentImpl,
     createAiWorkspaceOcrClickImpl,
     createAiWorkspaceSingleStepImpl,
+    createAiWorkspaceRunCoordinatorImpl,
     host: "127.0.0.1",
     port: 4100,
   });
@@ -330,6 +332,87 @@ test("plan builder assembles read-only AI workspace assessment with shared autho
   assert.equal(result.statusCode, 200);
   assert.equal(result.response.invocation.summary.kind, "ai.workspace.assessment");
   assert.equal(result.response.invocation.summary.outcome, "incomplete");
+});
+
+test("plan builder exports the reviewed-cycle coordinator through capability runtime", async () => {
+  let reviewedInvocations = 0;
+  const planBuilder = createPlanBuilderHarness({
+    acpxDraft: () => ({ ok: true }),
+    publishAuditEvent: async () => ({ ok: true }),
+    createStandingProviderAdvisoryImpl: () => ({
+      restoreState: () => ({ ok: true }),
+      requestDecision: async () => ({ ok: false, reason: "disabled" }),
+    }),
+    createAiWorkspaceRunCoordinatorImpl: (owners) => ({
+      singleStep: owners.singleStep,
+      assessment: owners.assessment,
+      ocrAssessment: owners.ocrAssessment,
+      ocrClick: owners.ocrClick,
+      boundedRun: { invoke: async () => ({ ok: true }) },
+      reviewedCycle: {
+        invoke: async ({ taskId }) => {
+          reviewedInvocations += 1;
+          return {
+            ok: true,
+            status: "assessed",
+            terminalReason: "assessment_terminal",
+            run: {
+              status: "stopped_after_first",
+              steps: [],
+              evidence: { runCompletionAudit: true, outcomeUnknown: false },
+            },
+            assessment: {
+              status: "assessed",
+              assessment: { outcome: "incomplete", confidence: 0.7 },
+              evidence: {
+                taskId,
+                objectiveContentHash: "a".repeat(64),
+                taskVersionHash: "b".repeat(64),
+                completionAudit: true,
+              },
+              governance: {
+                providerCalled: true,
+                semanticSceneBound: true,
+                currentBrowserSurfaceBound: true,
+                taskObjectiveBound: true,
+                taskObjectiveProviderEgress: true,
+                maximumActions: 0,
+                actionExecuted: false,
+                taskMutated: false,
+                automaticContinuation: false,
+              },
+            },
+            evidence: {
+              taskId,
+              objectiveContentHash: "a".repeat(64),
+              taskVersionHash: "b".repeat(64),
+              providerCallCount: 2,
+              providerCallCountMinimum: 2,
+              actionCount: 0,
+              actionCountMinimum: 0,
+              runCompletionAudit: true,
+              assessmentContinuationAudit: true,
+              assessmentCompletionAudit: true,
+              cycleCompletionAudit: true,
+              assessmentReceiptEligible: false,
+              outcomeUnknown: false,
+            },
+          };
+        },
+      },
+    }),
+  });
+
+  const result = await planBuilder.invokeCapability({
+    capabilityId: "act.ai.workspace.reviewed_cycle",
+    taskId: "task-reviewed-1",
+    params: { confirm: true },
+  });
+
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invocation.summary.kind, "ai.workspace.reviewed_cycle");
+  assert.equal(result.response.invocation.summary.assessment.outcome, "incomplete");
+  assert.equal(reviewedInvocations, 1);
 });
 
 test("plan builder assembles task-bound OCR assessment with shared provider authority", async () => {

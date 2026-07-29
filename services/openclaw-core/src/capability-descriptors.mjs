@@ -132,6 +132,18 @@ export function buildBaseCapabilities({
       description: "Run at most two task-bound workspace decisions, continuing automatically only after a first verified scroll and always terminating after the second step.",
     },
     {
+      id: "act.ai.workspace.reviewed_cycle",
+      name: "AI Workspace Reviewed Cycle",
+      kind: "actuator",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/capabilities/invoke`,
+      intents: ["ai.workspace.reviewed_cycle"],
+      domains: ["cross_boundary"],
+      risk: "medium",
+      governance: "standing_authorization",
+      description: "Run one bounded task-bound workspace cycle and one read-only assessment while requiring separate explicit operator acceptance for task completion.",
+    },
+    {
       id: "sense.filesystem.read",
       name: "Filesystem Read Sense",
       kind: "sensor",

@@ -131,6 +131,7 @@ function createHarness(overrides = {}) {
     aiWorkspaceOcrClick: overrides.aiWorkspaceOcrClick,
     aiWorkspaceSingleStep: overrides.aiWorkspaceSingleStep,
     aiWorkspaceBoundedRun: overrides.aiWorkspaceBoundedRun,
+    aiWorkspaceReviewedCycle: overrides.aiWorkspaceReviewedCycle,
     publishAuditEvent: overrides.publishAuditEvent,
     publishEvent: async (name, body) => {
       events.push({ name, body });
@@ -719,6 +720,125 @@ test("capability runtime rejects caller-controlled bounded-run budgets or action
 
   assert.equal(result.statusCode, 400);
   assert.equal(result.response.error.includes("only capabilityId"), true);
+  assert.equal(invoked, 0);
+});
+
+test("capability runtime exposes and invokes the reviewed workspace cycle", async () => {
+  let invoked = 0;
+  const { runtime, state } = createHarness({
+    aiWorkspaceReviewedCycle: {
+      invoke: async ({ taskId }) => {
+        invoked += 1;
+        return {
+          ok: true,
+          status: "assessed",
+          terminalReason: "assessment_terminal",
+          run: {
+            status: "stopped_after_first",
+            terminalReason: "first_step_no_op",
+            steps: [{
+              index: 1,
+              status: "executed",
+              actionId: "no_op",
+              providerCalled: true,
+              actionExecuted: false,
+              completionAudit: true,
+            }],
+            evidence: {
+              stepCount: 1,
+              providerCallCount: 1,
+              providerCallCountMinimum: 1,
+              actionCount: 0,
+              actionCountMinimum: 0,
+              runCompletionAudit: true,
+              outcomeUnknown: false,
+            },
+          },
+          assessment: {
+            status: "assessed",
+            assessment: { outcome: "complete", confidence: 0.9 },
+            evidence: {
+              taskId,
+              objectiveContentHash: "a".repeat(64),
+              taskVersionHash: "b".repeat(64),
+              responseContentHash: "c".repeat(64),
+              sceneContentHash: "d".repeat(64),
+              completionAudit: true,
+            },
+            governance: {
+              providerCalled: true,
+              semanticSceneBound: true,
+              currentBrowserSurfaceBound: true,
+              taskObjectiveBound: true,
+              taskObjectiveProviderEgress: true,
+              maximumActions: 0,
+              actionExecuted: false,
+              taskMutated: false,
+              automaticContinuation: false,
+            },
+          },
+          evidence: {
+            taskId,
+            objectiveContentHash: "a".repeat(64),
+            taskVersionHash: "b".repeat(64),
+            providerCallCount: 2,
+            providerCallCountMinimum: 2,
+            actionCount: 0,
+            actionCountMinimum: 0,
+            runCompletionAudit: true,
+            assessmentContinuationAudit: true,
+            assessmentCompletionAudit: true,
+            cycleCompletionAudit: true,
+            assessmentReceiptEligible: true,
+            outcomeUnknown: false,
+          },
+          governance: {
+            taskMutated: false,
+            automaticTaskCompletion: false,
+            requiresOperatorAcceptance: true,
+            providerTriggeredCompletion: false,
+          },
+        };
+      },
+    },
+  });
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find(
+    (item) => item.id === "act.ai.workspace.reviewed_cycle",
+  );
+  assert.equal(capability?.kind, "actuator");
+  assert.deepEqual(capability?.domains, ["cross_boundary"]);
+  assert.equal(capability?.governance, "standing_authorization");
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.ai.workspace.reviewed_cycle",
+    taskId: "task-reviewed-1",
+    params: { confirm: true },
+  });
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invocation.authorization.policyId,
+    "ai-workspace-explicit-reviewed-cycle");
+  assert.equal(result.response.invocation.summary.kind, "ai.workspace.reviewed_cycle");
+  assert.equal(result.response.invocation.summary.assessment.outcome, "complete");
+  assert.equal(result.response.invocation.summary.automaticTaskCompletion, false);
+  assert.equal(invoked, 1);
+  assert.equal(state.capabilityInvocationLog.length, 1);
+});
+
+test("capability runtime rejects caller-controlled reviewed-cycle fields", async () => {
+  let invoked = 0;
+  const { runtime } = createHarness({
+    aiWorkspaceReviewedCycle: {
+      invoke: async () => { invoked += 1; return { ok: true }; },
+    },
+  });
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.ai.workspace.reviewed_cycle",
+    taskId: "task-reviewed-1",
+    params: { confirm: true, acceptAssessment: true },
+  });
+  assert.equal(result.statusCode, 400);
   assert.equal(invoked, 0);
 });
 

@@ -2594,6 +2594,42 @@ final health checks. Freeze this lane. Arbitrary coordinates,
 multiple actions, automatic continuation/retry, task completion, desktop-wide
 input, parent-display access, root, and host mutation remain deferred.
 
+## Selected Level 4 Operator-Reviewed Task Cycle
+
+The twentieth Level 4 vertical slice is implemented in source as
+`act.ai.workspace.reviewed_cycle`. One explicit operator trigger holds the
+existing workspace single-flight owner across the existing at-most-two-step
+bounded run and one read-only semantic assessment. Assessment starts only after
+known non-fallback run evidence, an exact task/objective/version binding, the
+bounded-run completion audit, and a separate assessment-continuation audit.
+The cycle has fixed ceilings of three provider calls and two actions.
+
+The cycle never accepts its own assessment and never completes or otherwise
+mutates the task. A `complete` nested assessment becomes eligible only as one
+compact outer invocation subreceipt after run, assessment, and cycle completion
+audits all succeed. The existing `act.ai.workspace.accept_assessment` owner is
+the only route that may consume that exact receipt and call the existing task
+completion owner after a new task-version check. Observer exposes `Run + Assess`
+and keeps the receipt in memory; `Accept` remains a separate explicit command.
+Caller prompts, budgets, actions, assessment outcomes, and acceptance are not
+accepted as cycle input. Open loops, automatic task acceptance, arbitrary
+process/window/input authority, parent-display access, root, and host mutation
+remain deferred. All 1125 workspace tests, typecheck, 819 registry entries, the
+1006-file script audit, Windows path budget, body-config, and exact 252-file
+Core and 83-file Observer closures pass. Generation
+`/nix/store/p4wdy50lnagh4hcbxfnsx81w9yjcm744-nixos-system-nixos-26.05.4808.569d57850992`
+is active. The physical gate used the public httpbingo form after httpbin
+returned 503, bound task `869baa66-cf17-46b1-8777-b475a55ea6bc`, and returned
+`complete` with confidence 1 from two provider calls and zero actions. Run,
+assessment continuation, assessment completion, and cycle completion audits
+all matched while the task remained unchanged. The existing Accept owner then
+consumed outer invocation `570d6349-6e9d-4bd9-b046-639b8fb6751d` with zero
+additional provider calls or actions and completed the task only after explicit
+operator confirmation. All nine health endpoints remained active and no
+provider reason persisted. This bounded cycle is physically complete and
+frozen; automatic acceptance, open loops, and broader authority remain
+deferred.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

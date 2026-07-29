@@ -14,6 +14,7 @@ export function observerAiWorkViewPanel() {
           <div class="metric"><span>OCR Assessment</span><span id="ai-workspace-ocr-assessment-status">not assessed</span></div>
           <div class="metric"><span>OCR Click</span><span id="ai-workspace-ocr-click-status">not run</span></div>
           <div class="metric"><span>Assessment</span><span id="ai-workspace-assessment-status">not assessed</span></div>
+          <div class="metric"><span>Cycle</span><span id="ai-workspace-reviewed-cycle-status">not run</span></div>
           <label for="ai-surface-select">Surface</label>
           <select id="ai-surface-select" disabled></select>
           <div class="actions">
@@ -27,6 +28,7 @@ export function observerAiWorkViewPanel() {
             <button id="ocr-click-ai-workspace-button" class="secondary" type="button" disabled>OCR Click</button>
             <button id="run-ai-workspace-single-step-button" type="button" disabled>AI Step</button>
             <button id="run-ai-workspace-bounded-run-button" type="button" disabled>AI Run</button>
+            <button id="run-ai-workspace-reviewed-cycle-button" type="button" disabled>Run + Assess</button>
             <button id="assess-ai-workspace-button" class="secondary" type="button" disabled>Assess</button>
             <button id="accept-ai-workspace-assessment-button" type="button" disabled>Accept</button>
           </div>

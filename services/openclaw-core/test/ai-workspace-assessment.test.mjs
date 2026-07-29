@@ -281,6 +281,28 @@ test("AI workspace assessment keeps pre-egress rejection event-free and audits p
   assert.equal(providerFailure.calls.audit.length, 1);
 });
 
+test("AI workspace assessment rejects an expected task-binding mismatch before provider egress", async () => {
+  const { owner, calls } = harness();
+  const result = await owner.invoke({
+    taskId: TASK_ID,
+    expectedTaskBinding: {
+      taskId: TASK_ID,
+      objectiveContentHash: "0".repeat(64),
+      taskVersionHash: "1".repeat(64),
+    },
+  });
+
+  assert.equal(result.status, "local_fallback");
+  assert.equal(
+    result.fallback.reason,
+    "ai_workspace_assessment_task_objective_changed_before_egress",
+  );
+  assert.equal(result.governance.providerCalled, false);
+  assert.equal(calls.provider, 0);
+  assert.equal(calls.prompts.length, 0);
+  assert.equal(calls.audit.length, 0);
+});
+
 test("AI workspace assessment requires its terminal audit", async () => {
   const { owner } = harness({ rejectAudit: true });
   await assert.rejects(owner.invoke({ taskId: TASK_ID }), /assessment audit/u);

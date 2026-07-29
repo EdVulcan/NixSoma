@@ -13,11 +13,11 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, and a same-surface OCR ordinal click, plus the completed Level 3 baseline | The nineteenth Level 4 slice is physically complete |
-| Local validation | 1114 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 818 registry entries pass | Validated |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click, and an explicit bounded run-plus-assessment cycle, plus the completed Level 3 baseline | The twentieth Level 4 slice is physically complete |
+| Local validation | 1125 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 819 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/zh9r98yqc80bfbg1kl8nz4f03h99icjx-nixos-system-nixos-26.05.4808.569d57850992` | Same-surface OCR ordinal click and volatile acknowledgement cleanup are deployed and physically proven |
-| Previous generation | `/nix/store/r3iwdwgq7k4skq1icjvgir3dhl2ac0zh-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the isolated fixed OCR-target deployment |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/p4wdy50lnagh4hcbxfnsx81w9yjcm744-nixos-system-nixos-26.05.4808.569d57850992` | Explicit reviewed run-plus-assessment and existing acceptance owner are deployed and physically proven |
+| Previous generation | `/nix/store/zh9r98yqc80bfbg1kl8nz4f03h99icjx-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the reviewed-cycle deployment |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
 | Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; approval-bound and standing-authorized provider calls have completed on the active host | Deployed development profile disables local cooldown and daily usage enforcement; provider billing remains external |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, production/default 15-minute cooldown and 3-call/4096-token daily limits, structured transient recommendation, and local fallback | Development profile is deployed without local call/token/cooldown enforcement; a real provider gate passed beyond the prior 3/3 state |
@@ -608,6 +608,28 @@ active, and the Workbench was stopped after the gate. This lane is complete and
 frozen. The smallest next real Level 4 candidate is a separately governed,
 same-surface OCR-ordinal action; it is not selected or enabled by this slice.
 
+The selected twentieth Level 4 capability is implemented in source as
+`act.ai.workspace.reviewed_cycle`. It composes the existing bounded run and one
+read-only semantic assessment under the same workspace single-flight lock, with
+fixed limits of three provider calls and two actions. Exact task/objective/version
+binding, bounded-run completion audit, assessment-continuation audit, assessment
+completion audit, and cycle completion audit are required before a compact
+outer `complete` subreceipt can be offered to the operator. The task remains
+unchanged throughout the cycle. Observer exposes `Run + Assess`, but the
+existing `Accept` command and task completion owner remain a separate explicit
+step. No automatic acceptance/completion, caller-selected action/outcome/budget,
+open loop, process/window control, parent-display input, root, or host mutation
+is added. All 1125 tests, typecheck, 819 registry entries, 1006-script audit,
+Windows path budget, body-config, and exact 252-file Core and 83-file Observer
+closures pass. Generation `p4wdy50l...` is active. The physical gate bound task
+`869baa66-cf17-46b1-8777-b475a55ea6bc`, returned `complete` at confidence 1
+from two provider calls and zero actions, matched all cycle audits, and left the
+task unchanged before explicit acceptance. The existing Accept owner consumed
+outer invocation `570d6349-6e9d-4bd9-b046-639b8fb6751d` with no additional
+provider call or action and completed the task. Nine health endpoints remained
+active and no provider reason persisted. This lane is physically complete and
+frozen.
+
 ## Progress Estimate
 
 These figures are capability-maturity estimates, not test coverage:
@@ -617,7 +639,7 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 74%; semantic type, bounded run, task assessment/acceptance, bounded local OCR, and task-bound OCR assessment are physically complete |
+| Level 4 graphics-stack-native body | about 78%; semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, and same-surface OCR click are physically complete |
 | Current bounded product scope | 82-85% |
 | Final whitepaper vision | 50-58% |
 

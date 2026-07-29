@@ -171,6 +171,7 @@ export function createPlanBuilder(deps) {
     aiWorkspaceOcrClick: aiWorkspaceRuntimes.ocrClick,
     aiWorkspaceSingleStep: aiWorkspaceRuntimes.singleStep,
     aiWorkspaceBoundedRun: aiWorkspaceRuntimes.boundedRun,
+    aiWorkspaceReviewedCycle: aiWorkspaceRuntimes.reviewedCycle,
     listCommandTranscriptRecords,
     listFilesystemChangeRecords,
     buildExperienceMemoryReadModel,
