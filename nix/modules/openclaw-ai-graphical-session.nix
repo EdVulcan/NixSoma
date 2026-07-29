@@ -201,7 +201,7 @@ in
     nativeInput = mkOption {
       type = types.bool;
       default = false;
-      description = "Allow current-frame-bound pointer clicks inside the isolated Weston output.";
+      description = "Allow current-frame-bound pointer and short write-only text input inside the isolated Weston output.";
     };
     applicationLifecycle = mkOption {
       type = types.bool;

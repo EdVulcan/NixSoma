@@ -96,6 +96,42 @@ const nativeEngineeringLspObserverCheck = "observer-openclaw-native-engineering-
 const nativeDeclarativeEvolutionCoreCheck = "openclaw-native-declarative-evolution-staging";
 const nativeDeclarativeEvolutionObserverCheck = "observer-openclaw-native-declarative-evolution-staging";
 const windowsPathBudgetCheck = "windows-path-budget";
+const aiWorkspaceOperatorTypeFiles = new Set([
+  "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
+  "apps/observer-ui/src/client-script-runtime-actions.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-operator-type.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs",
+  "apps/observer-ui/src/observer-panel-snapshot-preview.mjs",
+  "apps/observer-ui/src/observer-styles.mjs",
+  "apps/observer-ui/test/ai-workspace-operator-type.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/README.md",
+  "nix/modules/openclaw-ai-graphical-session.nix",
+  "nix/packages/observer-ui.nix",
+  "nix/scripts/dev-ai-workspace-operator-type-live-check.sh",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-checks.tsv",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "nix/scripts/dev-openclaw-shared-package-contracts-check.sh",
+  "packages/shared-utils/src/ai-compositor-input.mjs",
+  "packages/shared-utils/test/ai-compositor-input.test.mjs",
+  "packages/weston-frame-auth/src/input-authority.c",
+  "services/openclaw-core/src/capability-runtime-screen-actions.mjs",
+  "services/openclaw-core/test/capability-runtime-screen-actions.test.mjs",
+  "services/openclaw-screen-act/src/ai-compositor-pointer-dispatch.mjs",
+  "services/openclaw-screen-act/src/server.mjs",
+  "services/openclaw-screen-act/test/ai-compositor-pointer-dispatch.test.mjs",
+  "services/openclaw-session-manager/src/ai-compositor-input-controller.mjs",
+  "services/openclaw-session-manager/src/ai-compositor-input-route.mjs",
+  "services/openclaw-session-manager/test/ai-compositor-input-controller.test.mjs",
+  "services/openclaw-session-manager/test/ai-compositor-input-route.test.mjs",
+]);
+const aiWorkspaceOperatorTypeSlice = changedFiles.length > 0
+  && changedFiles.every((file) => aiWorkspaceOperatorTypeFiles.has(file))
+  && changedFiles.some((file) =>
+    file === "apps/observer-ui/src/client-script-runtime-ai-workspace-operator-type.mjs");
 const aiWorkspaceOperatorClickFiles = new Set([
   "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
   "apps/observer-ui/src/client-script-runtime-actions.mjs",
@@ -1080,6 +1116,16 @@ function selectSourceHeuristics(file) {
 }
 
 for (const file of changedFiles) {
+  if (aiWorkspaceOperatorTypeSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-shared-package-contracts");
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("ai-workspace-operator-type-live");
+    continue;
+  }
   if (aiWorkspaceOperatorClickSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");

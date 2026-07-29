@@ -318,17 +318,23 @@ requireIncludes("Weston input authority", westonInputAuthority, [
   "surface_activation_api->activate_surface",
   "INPUT_REQUEST_SCROLL",
   "INPUT_REQUEST_SURFACE_CLICK",
+  "INPUT_REQUEST_SURFACE_TYPE",
   "execute_surface_click",
+  "execute_surface_type",
   "write_workbench_acknowledgement",
   "WL_POINTER_AXIS_VERTICAL_SCROLL",
   "WL_POINTER_AXIS_SOURCE_WHEEL",
   "notify_pointer_frame",
+  "weston_seat_init_keyboard",
+  "notify_key",
 ]);
 if (westonInputAuthority.includes("weston_view_activate_input(")) {
   throw new Error("frame authority must delegate surface activation to the owning kiosk shell API");
 }
-if (westonInputAuthority.includes("weston_seat_init_keyboard(")) {
-  throw new Error("bounded native scroll must not introduce a keyboard device");
+if (westonInputAuthority.includes("KEY_ENTER")
+  || westonInputAuthority.includes("KEY_LEFTCTRL")
+  || westonInputAuthority.includes("KEY_LEFTALT")) {
+  throw new Error("bounded native type must not introduce Enter or hotkey authority");
 }
 if (aiGraphicalSessionModule.includes("--log=%t/")) {
   throw new Error("AI graphical session launch script must not retain an unexpanded systemd runtime specifier.");
@@ -1892,6 +1898,7 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-fixed-unit-incident-triage.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-operator-click.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-operator-type.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-reviewed-cycle.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-assessment.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-click.mjs"
@@ -1907,7 +1914,7 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/packages/shared-client/src/service-descriptors.mjs"
     || -w "$observer_ui_server"
     || -e "$observer_ui_out/share/openclaw/apps/observer-ui/scripts"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 84 ]]; then
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 85 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi
@@ -1964,10 +1971,13 @@ if (health.ok !== true
   || !html.includes('id="ai-workspace-preview-tab"')
   || !html.includes('id="ai-workspace-projection-frame"')
   || !html.includes('id="ai-workspace-operator-click-toggle"')
+  || !html.includes('id="ai-workspace-operator-type-input"')
+  || !html.includes('id="ai-workspace-operator-type-button"')
   || !client.includes("engineering-loop-state")
   || !client.includes("nixsoma-ai-output-projection-v0")
   || !client.includes("/proxy/session-manager/work-view/compositor-frame")
   || !client.includes("Clicked AI surface #")
+  || !client.includes("write-only characters into AI surface")
   || !client.includes('capabilityId: "act.screen.pointer_keyboard"')
   || !html.includes('id="run-ai-workspace-local-ocr-button"')
   || !client.includes("sense.ai.workspace.local_ocr")

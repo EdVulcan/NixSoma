@@ -30,6 +30,12 @@ export function observerSnapshotPreviewPanel() {
               </label>
               <span id="ai-workspace-operator-click-status">off</span>
             </div>
+            <div class="projection-type-row">
+              <label for="ai-workspace-operator-type-input">Text</label>
+              <input id="ai-workspace-operator-type-input" type="text" maxlength="32" autocomplete="off" spellcheck="false" disabled />
+              <button id="ai-workspace-operator-type-button" class="secondary" type="button" disabled>Type</button>
+              <span id="ai-workspace-operator-type-status">empty</span>
+            </div>
             <img id="ai-workspace-projection-frame" class="work-view-frame" alt="NixSoma AI-owned compositor output" hidden />
           </div>
         </section>

@@ -195,6 +195,60 @@ test("surface-bound click rejects stale active-surface authority before Weston c
   assert.equal(sent, false);
 });
 
+test("native input executes opcode 5 with write-only text evidence", async (t) => {
+  const { env } = runtimeFixture(t);
+  const before = frame(27, "2026-07-29T08:00:00.000Z", "a");
+  const after = frame(28, "2026-07-29T08:00:00.100Z", "b");
+  const helper = helperRuntime();
+  const inventory = () => ({
+    registry: "nixsoma-ai-surface-inventory-v0",
+    available: true,
+    sequence: 43,
+    surfaces: [{ surfaceId: 85, pid: 8500, width: 1280, height: 720, activated: true }],
+  });
+  const controller = createAiCompositorInputController({
+    env,
+    now: () => Date.parse("2026-07-29T08:00:00.500Z"),
+    createRequestId: () => "8".repeat(32),
+    frameCapture: { snapshot: () => before, capture: async () => after },
+    helperRuntime: helper,
+    observeGraphicalSession: () => ({
+      ready: true,
+      socket: { name: "nixsoma-ai-0" },
+      browserAttachment: { attached: true },
+    }),
+    observeSurfaceInventory: inventory,
+    stat: (target) => target.endsWith("control.sock")
+      ? { isSocket: () => true, uid: process.getuid(), mode: 0o600 }
+      : lstatSync(target),
+    list: () => ["control.sock"],
+    sendRequest: async ({ request, wire }) => {
+      assert.equal(
+        wire,
+        `5 ${"8".repeat(32)} ${before.sha256} 27 43 85 4e6978536f6d6120696e707574203237\n`,
+      );
+      return `5 ${request.requestId} ${request.frame.sha256} ${request.frame.sequence} ${request.inventorySequence} ${request.surfaceId} ${request.inputCharCount} executed\n`;
+    },
+  });
+  const evidence = await controller.execute({
+    action: {
+      text: "NixSoma input 27",
+      surfaceId: 85,
+      inventorySequence: 43,
+      compositorFrame: before,
+    },
+    trustedHelperLease: helper.candidate,
+  });
+  assert.equal(evidence.operation, "keyboard_type");
+  assert.equal(evidence.inputCharCount, 16);
+  assert.equal(evidence.keyboardInput, true);
+  assert.equal(evidence.inputTextExposed, false);
+  assert.equal(evidence.inputTextPersisted, false);
+  assert.equal(evidence.receiptMatched, true);
+  assert.equal(evidence.frameChanged, true);
+  assert.equal(JSON.stringify(evidence).includes("NixSoma input 27"), false);
+});
+
 test("native input rejects stale or replaced frames before creating a request", async (t) => {
   const { inputDir, env } = runtimeFixture(t);
   const before = frame(4, "2026-07-19T06:00:00.000Z", "a");

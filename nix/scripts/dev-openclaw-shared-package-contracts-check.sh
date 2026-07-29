@@ -4,6 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+if ! command -v tsc >/dev/null 2>&1 && [[ -x "$REPO_ROOT/node_modules/.bin/tsc" ]]; then
+  export PATH="$REPO_ROOT/node_modules/.bin:$PATH"
+fi
+
 if ! command -v tsc >/dev/null 2>&1; then
   if [[ "${OPENCLAW_SHARED_PACKAGE_CONTRACTS_NIX_SHELL:-false}" != "true" ]] && command -v nix >/dev/null 2>&1; then
     OPENCLAW_SHARED_PACKAGE_CONTRACTS_NIX_SHELL=true \

@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createAiCompositorPointerDispatch } from "../src/ai-compositor-pointer-dispatch.mjs";
+import {
+  createAiCompositorKeyboardDispatch,
+  createAiCompositorPointerDispatch,
+} from "../src/ai-compositor-pointer-dispatch.mjs";
 
 const compositorFrame = {
   registry: "nixsoma-ai-compositor-frame-v0",
@@ -181,4 +184,61 @@ test("native scroll dispatch rejects a divergent surface receipt", async () => {
   });
   assert.equal(mediation.accepted, false);
   assert.equal(mediation.status, "rejected");
+});
+
+test("native keyboard dispatch exposes only write-only length evidence", async () => {
+  let request;
+  const dispatch = createAiCompositorKeyboardDispatch({
+    sessionManagerUrl: "http://session-manager",
+    fetchFn: async (url, options) => {
+      request = { url, options, body: JSON.parse(options.body) };
+      return {
+        ok: true,
+        json: async () => ({
+          ok: true,
+          input: {
+            registry: "nixsoma-ai-compositor-input-v0",
+            status: "executed",
+            operation: "keyboard_type",
+            inputCharCount: 16,
+            inputTextExposed: false,
+            inputTextPersisted: false,
+            keyboardInput: true,
+            hotkeyInput: false,
+            enterKeyInput: false,
+            automaticRepeat: false,
+            surfaceId: 24,
+            inventorySequence: 10,
+            leaseMatched: true,
+            frameMatched: true,
+            frameFresh: true,
+            receiptMatched: true,
+            sequenceAdvanced: true,
+            frameChanged: true,
+            inventoryMatched: true,
+            surfaceMatched: true,
+          },
+        }),
+      };
+    },
+  });
+  const action = {
+    text: "NixSoma input 27",
+    surfaceId: 24,
+    inventorySequence: 10,
+    compositorFrame,
+  };
+  const mediation = await dispatch({
+    action,
+    trustedHelperLease: { leaseId: "lease-type", sessionId: "session-type" },
+    forwardedGrantHeaders: { "x-openclaw-execution-grant": "type-signed" },
+  });
+  assert.deepEqual(request.body.action, action);
+  assert.equal(request.options.headers["x-openclaw-execution-grant"], "type-signed");
+  assert.equal(mediation.accepted, true);
+  assert.equal(mediation.visualGrounding.inputCharCount, 16);
+  assert.equal(mediation.visualGrounding.inputTextExposed, false);
+  assert.equal(mediation.visualGrounding.inputTextPersisted, false);
+  assert.equal(mediation.visualGrounding.keyboardInput, true);
+  assert.equal(JSON.stringify(mediation).includes("NixSoma input 27"), false);
 });

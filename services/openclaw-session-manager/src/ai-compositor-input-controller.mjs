@@ -5,6 +5,7 @@ import path from "node:path";
 
 import {
   AI_COMPOSITOR_INPUT_SOCKET,
+  AI_COMPOSITOR_KEYBOARD_TYPE_OPERATION,
   AI_COMPOSITOR_POINTER_SCROLL_OPERATION,
   aiCompositorFrameMatches,
   normaliseAiCompositorInputAction,
@@ -19,6 +20,7 @@ const RECEIPT_PATTERN = /^1 ([a-f0-9]{32}) ([a-f0-9]{64}) ([1-9][0-9]*) ([0-9]+)
 const SURFACE_ACTIVATION_RECEIPT_PATTERN = /^2 ([a-f0-9]{32}) ([a-f0-9]{64}) ([1-9][0-9]*) ([1-9][0-9]*) ([1-9][0-9]*) executed\n$/u;
 const SCROLL_RECEIPT_PATTERN = /^3 ([a-f0-9]{32}) ([a-f0-9]{64}) ([1-9][0-9]*) ([1-9][0-9]*) ([1-9][0-9]*) ([0-9]+) ([0-9]+) (-?1) executed\n$/u;
 const SURFACE_CLICK_RECEIPT_PATTERN = /^4 ([a-f0-9]{32}) ([a-f0-9]{64}) ([1-9][0-9]*) ([1-9][0-9]*) ([1-9][0-9]*) ([0-9]+) ([0-9]+) executed\n$/u;
+const SURFACE_TYPE_RECEIPT_PATTERN = /^5 ([a-f0-9]{32}) ([a-f0-9]{64}) ([1-9][0-9]*) ([1-9][0-9]*) ([1-9][0-9]*) ([1-9][0-9]*) executed\n$/u;
 const SURFACE_ACTIVATION_REGISTRY = "nixsoma-ai-surface-activation-v0";
 
 function enabled(value) {
@@ -149,6 +151,23 @@ function assertSurfaceClickReceipt(text, expected) {
   }
 }
 
+function assertSurfaceTypeReceipt(text, expected) {
+  const match = SURFACE_TYPE_RECEIPT_PATTERN.exec(text);
+  if (!match) throw new Error("AI compositor surface-bound type receipt is malformed.");
+  const [
+    , requestId, sha256, frameSequence, inventorySequence,
+    surfaceId, inputCharCount,
+  ] = match;
+  if (requestId !== expected.requestId
+    || sha256 !== expected.frame.sha256
+    || Number(frameSequence) !== expected.frame.sequence
+    || Number(inventorySequence) !== expected.inventorySequence
+    || Number(surfaceId) !== expected.surfaceId
+    || Number(inputCharCount) !== expected.inputCharCount) {
+    throw new Error("AI compositor surface-bound type receipt does not match the request.");
+  }
+}
+
 function frameReference(frame) {
   return frame?.available === true ? {
     sha256: frame.sha256,
@@ -260,9 +279,11 @@ export function createAiCompositorInputController({
         throw new Error("AI compositor input requires the attached isolated work view.");
       }
       const action = normaliseAiCompositorInputAction(candidateAction, { now: now() });
+      const keyboardAction = action.operation === AI_COMPOSITOR_KEYBOARD_TYPE_OPERATION;
       const scrollAction = action.operation === AI_COMPOSITOR_POINTER_SCROLL_OPERATION;
-      const surfaceBoundClick = !scrollAction && Number.isInteger(action.surfaceId);
-      const targetBoundAction = scrollAction || surfaceBoundClick;
+      const surfaceBoundClick = !keyboardAction && !scrollAction
+        && Number.isInteger(action.surfaceId);
+      const targetBoundAction = keyboardAction || scrollAction || surfaceBoundClick;
       const currentFrame = frameCapture.snapshot();
       if (!action.frame.fresh || currentFrame?.fresh !== true
         || !aiCompositorFrameMatches(action.frame, currentFrame)) {
@@ -278,7 +299,9 @@ export function createAiCompositorInputController({
           const error = new Error("AI compositor input target is stale or not active.");
           error.code = scrollAction
             ? "AI_COMPOSITOR_SCROLL_TARGET_STALE"
-            : "AI_COMPOSITOR_CLICK_TARGET_STALE";
+            : keyboardAction
+              ? "AI_COMPOSITOR_TYPE_TARGET_STALE"
+              : "AI_COMPOSITOR_CLICK_TARGET_STALE";
           error.statusCode = 409;
           throw error;
         }
@@ -297,16 +320,21 @@ export function createAiCompositorInputController({
         y: action.y,
         frame: action.frame,
         direction: scrollAction ? (action.direction === "up" ? -1 : 1) : null,
+        text: keyboardAction ? action.text : null,
+        inputCharCount: keyboardAction ? action.inputCharCount : null,
         surfaceId: targetBoundAction ? action.surfaceId : null,
         inventorySequence: targetBoundAction ? action.inventorySequence : null,
       };
-      const wire = scrollAction
-        ? `3 ${request.requestId} ${action.frame.sha256} ${action.frame.sequence} ${action.inventorySequence} ${action.surfaceId} ${action.x} ${action.y} ${request.direction}\n`
-        : surfaceBoundClick
-          ? `4 ${request.requestId} ${action.frame.sha256} ${action.frame.sequence} ${action.inventorySequence} ${action.surfaceId} ${action.x} ${action.y}\n`
-          : `1 ${request.requestId} ${action.frame.sha256} ${action.frame.sequence} ${action.x} ${action.y}\n`;
+      const wire = keyboardAction
+        ? `5 ${request.requestId} ${action.frame.sha256} ${action.frame.sequence} ${action.inventorySequence} ${action.surfaceId} ${Buffer.from(action.text, "ascii").toString("hex")}\n`
+        : scrollAction
+          ? `3 ${request.requestId} ${action.frame.sha256} ${action.frame.sequence} ${action.inventorySequence} ${action.surfaceId} ${action.x} ${action.y} ${request.direction}\n`
+          : surfaceBoundClick
+            ? `4 ${request.requestId} ${action.frame.sha256} ${action.frame.sequence} ${action.inventorySequence} ${action.surfaceId} ${action.x} ${action.y}\n`
+            : `1 ${request.requestId} ${action.frame.sha256} ${action.frame.sequence} ${action.x} ${action.y}\n`;
       const receipt = await sendRequest({ socketPath, wire, timeoutMs: config.timeoutMs, request });
-      if (scrollAction) assertScrollReceipt(receipt, request);
+      if (keyboardAction) assertSurfaceTypeReceipt(receipt, request);
+      else if (scrollAction) assertScrollReceipt(receipt, request);
       else if (surfaceBoundClick) assertSurfaceClickReceipt(receipt, request);
       else assertReceipt(receipt, request);
       const settledInventory = targetBoundAction ? observeSurfaceInventory() : null;
@@ -341,6 +369,7 @@ export function createAiCompositorInputController({
         x: action.x,
         y: action.y,
         direction: scrollAction ? action.direction : null,
+        inputCharCount: keyboardAction ? action.inputCharCount : null,
         surfaceId: targetBoundAction ? action.surfaceId : null,
         inventorySequence: targetBoundAction ? action.inventorySequence : null,
         frame: action.frame,

@@ -13,6 +13,7 @@ import {
 } from "../../../packages/shared-utils/src/execution-grants.mjs";
 import { createServiceCredentialHeaders, readServiceCredential } from "../../../packages/shared-utils/src/service-credentials.mjs";
 import {
+  createAiCompositorKeyboardDispatch,
   createAiCompositorPointerDispatch,
   hasAiCompositorFrameBinding,
 } from "./ai-compositor-pointer-dispatch.mjs";
@@ -45,6 +46,7 @@ const executionGrantVerifier = createExecutionGrantVerifier({
 const screenWaitMs = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_WAIT_MS ?? "1500", 10);
 const screenPollMs = Number.parseInt(process.env.OPENCLAW_SCREEN_ACT_POLL_MS ?? "100", 10);
 const dispatchAiCompositorPointer = createAiCompositorPointerDispatch({ sessionManagerUrl });
+const dispatchAiCompositorKeyboard = createAiCompositorKeyboardDispatch({ sessionManagerUrl });
 const dispatchSemanticSceneClick = createSemanticSceneClickDispatch({
   browserRuntimeUrl,
   browserRuntimeHeaders: () => createServiceCredentialHeaders({
@@ -164,6 +166,25 @@ async function executeBrowserAction(kind, params, screen, context = {}) {
     return dispatchSemanticSceneType({
       action: params,
       trustedHelperLease: leaseContext.trustedHelperLease,
+    });
+  }
+  if (kind === "keyboard.type" && hasAiCompositorFrameBinding(params)) {
+    const leaseContext = buildTrustedWorkViewActionLease(screen);
+    if (!leaseContext.ready) {
+      return {
+        registry: leaseContext.registry,
+        attempted: false,
+        required: leaseContext.required,
+        accepted: false,
+        status: "blocked",
+        reason: leaseContext.reason,
+        leaseMatched: false,
+      };
+    }
+    return dispatchAiCompositorKeyboard({
+      action: context.grantBoundAction ?? params,
+      trustedHelperLease: leaseContext.trustedHelperLease,
+      forwardedGrantHeaders: context.forwardedGrantHeaders,
     });
   }
   const endpoint = kind === "mouse.click"
@@ -475,6 +496,17 @@ const server = http.createServer(async (req, res) => {
       const action = await executeAction("keyboard.type", {
         text: typeof body.text === "string" ? body.text : "",
         semanticTarget,
+        ...(body.compositorFrame ? {
+          surfaceId: body.surfaceId ?? null,
+          inventorySequence: body.inventorySequence ?? null,
+          compositorFrame: body.compositorFrame,
+        } : {}),
+      }, {
+        grantBoundAction: body,
+        forwardedGrantHeaders: {
+          [EXECUTION_GRANT_HEADER]: req.headers[EXECUTION_GRANT_HEADER],
+          ...executionGrantContextHeaders(executionGrantContextFromHeaders(req.headers)),
+        },
       });
       sendJson(res, 200, { ok: true, action });
     } catch (error) {

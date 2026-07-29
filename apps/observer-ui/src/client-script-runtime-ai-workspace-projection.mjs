@@ -3,6 +3,7 @@ let aiWorkspaceProjectionMode = "browser";
 let aiWorkspaceProjectionRequest = null;
 let aiWorkspaceProjectionBinding = null;
 let aiWorkspaceOperatorClickInFlight = false;
+let aiWorkspaceOperatorTypeInFlight = false;
 let aiWorkspaceLocalOcrInFlight = false;
 let aiWorkspaceSingleStepInFlight = false;
 let aiWorkspaceBoundedRunInFlight = false;
@@ -78,6 +79,7 @@ function updateAiSurfaceScrollControls() {
   }
   const aiRunInFlight = aiWorkspaceSingleStepInFlight
     || aiWorkspaceOperatorClickInFlight
+    || aiWorkspaceOperatorTypeInFlight
     || aiWorkspaceLocalOcrInFlight
     || aiWorkspaceOcrAssessmentInFlight
     || aiWorkspaceOcrClickInFlight
@@ -97,6 +99,7 @@ function updateAiSurfaceScrollControls() {
   acceptAiWorkspaceAssessmentButton.disabled = aiRunInFlight
     || aiWorkspaceAssessmentReceipt?.taskId !== taskId;
   syncAiWorkspaceOperatorClickControl({ bindingReady: enabled, busy: aiRunInFlight });
+  syncAiWorkspaceOperatorTypeControl({ bindingReady: enabled, busy: aiRunInFlight });
 }
 
 function clearAiWorkspaceAssessment(reason = "not assessed") {
@@ -115,6 +118,7 @@ function clearAiWorkspaceLocalOcr(reason = "not observed") {
 function clearAiWorkspaceProjection(reason = "unavailable") {
   aiWorkspaceProjectionBinding = null;
   resetAiWorkspaceOperatorClick(reason);
+  resetAiWorkspaceOperatorType(reason);
   aiWorkspaceProjectionFrame.removeAttribute("src");
   aiWorkspaceProjectionFrame.hidden = true;
   aiWorkspaceProjectionStatus.textContent = reason;

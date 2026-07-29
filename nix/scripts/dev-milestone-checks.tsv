@@ -28,6 +28,7 @@ ai-workspace-assessment-live	dev-ai-workspace-assessment-live-check.sh	Physical 
 ai-workspace-assessment-acceptance-live	dev-ai-workspace-assessment-acceptance-live-check.sh	Physical explicit operator acceptance of one exact verified-complete workspace assessment before task closure
 ai-workspace-reviewed-cycle-live	dev-ai-workspace-reviewed-cycle-live-check.sh	Physical bounded task run, read-only assessment, unchanged pre-acceptance task, and explicit acceptance through one exact outer receipt
 ai-workspace-operator-click-live	dev-ai-workspace-operator-click-live-check.sh	Physical authenticated one-shot click through the Observer projection with exact native frame, active-surface receipt, and zero provider calls
+ai-workspace-operator-type-live	dev-ai-workspace-operator-type-live-check.sh	Physical authenticated short write-only native type through the Observer projection with exact active-surface receipt, local visual verification, and zero provider calls
 ai-workspace-local-ocr-live	dev-ai-workspace-local-ocr-live-check.sh	Physical bounded local OCR over one active AI-owned surface with transient text and compact no-provider no-action evidence
 ai-workspace-ocr-assessment-live	dev-ai-workspace-ocr-assessment-live-check.sh	Physical task-bound provider assessment over bounded local OCR text with post-egress rebinding and no pixel egress
 ai-workspace-ocr-click-live	dev-ai-workspace-ocr-click-live-check.sh	Physical task-bound provider-selected OCR ordinal click with same-surface native receipt and post-action OCR verification

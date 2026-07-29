@@ -1,6 +1,6 @@
 # NixSoma Forward Work Directive
 
-Updated: 2026-07-28
+Updated: 2026-07-29
 
 This is the active guidance document for continuing NixSoma development. The
 enhanced source preservation and governed capability migration that originally
@@ -47,15 +47,16 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
-triage/repair-promotion bridge, and nineteen deployed Level 4 graphical
-identity slices through a same-surface OCR ordinal click. One
+triage/repair-promotion bridge, and twenty-two deployed Level 4 graphical
+identity slices through a one-shot bounded native operator type. One
 explicit operator trigger can request a schema-bound no-op, vertical scroll,
 semantic click, or write-only semantic type decision over bounded active-browser
 content and execute at most one existing action; separate explicit reads can
 return bounded transient local OCR or one read-only provider assessment without
-pixel egress. All 1114 workspace tests and typecheck pass, the body-config and
-event-audit integration checks pass, the 818-entry milestone registry and
-1005-file script audits pass, and
+pixel egress. Direct operator interaction also includes one armed projected
+click and one write-only 1-32 character native type. All 1137 workspace tests
+and typecheck pass, the body-config and event-audit integration checks pass, the
+821-entry milestone registry and 1008-file script audit pass, and
 the Windows path budget has no file over 160 repository-relative characters.
 GitHub CI now enforces
 Node 22 typecheck, workspace tests, milestone registry/script audit, and the
@@ -63,12 +64,12 @@ same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/zh9r98yqc80bfbg1kl8nz4f03h99icjx-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/aifc3p1nzarmidghkyh85ap9f3d3d466-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, bounded local OCR, the
-task-bound OCR assessment and OCR ordinal-click owners, and Observer controls. All nine health
-endpoints pass.
+task-bound OCR assessment and OCR ordinal-click owners, and Observer controls
+for one-shot click and bounded native type. All nine health endpoints pass.
 
 One real request-bound DeepSeek advisory call completed through task
 `62ba696a-945e-4f37-b65e-8a6783316386` and approval
@@ -2655,6 +2656,39 @@ unchanged, and kept all nine production health endpoints active. This closes
 bounded operator interaction inside the isolated AI workspace; it is not
 general desktop takeover. Freeze this lane and keep broader input authority
 deferred.
+
+## Completed Level 4 Bounded Native Operator Type
+
+The twenty-second Level 4 vertical slice is deployed as one explicit
+operator-authenticated write-only type into the current active surface of the
+isolated AI Workspace. It reuses `act.screen.pointer_keyboard` and adds Weston
+input opcode 5 without creating another Core capability id. The accepted value
+is exactly 1-32 characters matching `[A-Za-z0-9 .,_-]`; Enter, hotkeys,
+modifiers, repeat, arbitrary key events, and caller-selected devices are not
+accepted.
+
+The existing owner chain binds the request to the current compositor frame,
+active numeric surface, inventory sequence, trusted work-view lease, single-use
+Core execution grant, durable pre-execution audit, peer-authenticated Weston
+receipt, and a newer post-action frame. Observer clears the plaintext before
+dispatch finishes. Durable state records only input length and authority facts,
+never the text. This capability makes no provider call, creates or mutates no
+task, never connects to the parent display, requires no root, and mutates no
+host state.
+
+All 1137 workspace tests, typecheck, 821 registry entries, the 1008-file script
+audit, Windows path budget, shared contracts, body-config, and exact 85-file
+Observer closure pass. Generation
+`/nix/store/aifc3p1nzarmidghkyh85ap9f3d3d466-nixos-system-nixos-26.05.4808.569d57850992`
+is active; `0sc4azki...` is the previous generation. The physical gate typed a
+20-character canary on surface 9 and inventory 7, advanced frame sequence 1 to
+2, matched the native receipt, verified the rendered text transiently through
+local OCR, and found no plaintext in governed readbacks. Provider-call count
+remained zero and task state was unchanged. A separate opcode-4 click regression
+also passed. This is bounded native text input, not a general keyboard proxy or
+desktop takeover. Freeze this lane and keep Enter, hotkeys, broad keyboard
+authority, repeat, arbitrary process/window control, parent-display input, root,
+and host mutation deferred.
 
 ## Identity-Upgrade Alignment
 

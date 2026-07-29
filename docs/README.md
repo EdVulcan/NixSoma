@@ -13,20 +13,21 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, a one-shot operator-authenticated projected click, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click, and an explicit bounded run-plus-assessment cycle, plus the completed Level 3 baseline | The twenty-first Level 4 slice is physically complete |
-| Local validation | 1128 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 820 registry entries pass | Validated |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, one-shot operator-authenticated projected click and bounded native type, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click, and an explicit bounded run-plus-assessment cycle, plus the completed Level 3 baseline | The twenty-second Level 4 slice is physically complete |
+| Local validation | 1137 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1008-file script audit pass; 821 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/0sc4azki40rzxn7qzzvpmbvwm354w4y4-nixos-system-nixos-26.05.4808.569d57850992` | One-shot operator-authenticated projected click is deployed and physically proven |
-| Previous generation | `/nix/store/p4wdy50lnagh4hcbxfnsx81w9yjcm744-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the operator-click deployment |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/aifc3p1nzarmidghkyh85ap9f3d3d466-nixos-system-nixos-26.05.4808.569d57850992` | One-shot operator-authenticated bounded native type is deployed and physically proven |
+| Previous generation | `/nix/store/0sc4azki40rzxn7qzzvpmbvwm354w4y4-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the native-type deployment |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
 | Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; approval-bound and standing-authorized provider calls have completed on the active host | Deployed development profile disables local cooldown and daily usage enforcement; provider billing remains external |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, production/default 15-minute cooldown and 3-call/4096-token daily limits, structured transient recommendation, and local fallback | Development profile is deployed without local call/token/cooldown enforcement; a real provider gate passed beyond the prior 3/3 state |
 | Level 4 graphical session | Fixed `nixsoma-ai-0` Weston headless compositor in a hardened, resource-bounded user unit; session-manager and Observer expose read-only ownership/health evidence | Deployed; coexists with GNOME `wayland-0` |
 | Level 4 browser attachment | Existing AI-owned Nix Firefox launches headed on the fixed nested socket, preserves Level 2 lease/capture/action ownership, and exposes compact attachment evidence | Deployed and proven through capture plus lease-bound action |
 | Level 4 compositor frame | Weston launches and authorizes one fixed screenshooter client; session-manager returns a bounded transient 1280x720 PNG and retains metadata only | Deployed; Firefox cannot read the capture directory |
-| Level 4 compositor input | Existing screen pointer capability carries a fresh native-frame binding; session-manager requires the active work-view lease and Core grant, while Weston accepts only the session-manager peer on a fixed pointer-only Unix socket | Deployed; real click advanced native frame 1 to 2 with matching lease and receipt |
+| Level 4 compositor input | Existing screen pointer/keyboard capability carries a fresh native-frame binding; session-manager requires the active work-view lease and Core grant, while Weston accepts only the session-manager peer on one fixed input socket | Deployed; native click and bounded type each advanced the frame with matching lease and receipt |
 | Level 4 output projection | Exact operator-authenticated Core route returns one revalidated fresh `nixsoma-ai-0` PNG to an explicitly selected Observer tab; pixels are no-store and browser-memory-only | Deployed; real Observer rendered 1280x720 and released pixels on mode switch and sign-out |
 | Level 4 projected operator click | Observer requires an explicit one-use arm before mapping one trusted click on the current transient 1280x720 projection to the existing active-surface opcode-4 owner; stale frame/surface/inventory state, mode changes, sign-out, hidden documents, and concurrent AI/OCR work clear the arm | Deployed in `0sc4azki...`; a real click at rendered coordinates `(47,181)` matched surface 53, inventory 104, native receipt, frame 189 -> 191, and a visual change, then disarmed with zero provider calls or task mutation |
+| Level 4 bounded native operator type | Observer accepts one authenticated 1-32 character value from `[A-Za-z0-9 .,_-]`, clears it before dispatch completes, and binds opcode 5 to the current frame, active surface, inventory, lease, Core grant, audit, native receipt, and post-frame | Deployed in `aifc3p1n...`; a 20-character canary rendered on surface 9 with frame 1 -> 2, matching receipt, zero provider calls/task mutation, and no plaintext in governed readbacks |
 | Level 4 surface inventory | Weston publishes at most 16 numeric surface/PID/dimension/activation records through one owner-only atomic file; titles, app-ids, pixels, persistence, parent-display access, and added input authority are excluded | Deployed; physical count moved 0 -> 1 -> 0 with the fixed Workbench |
 | Level 4 application lifecycle | `act.work_view.control` and a single-use session-manager execution grant start or stop only `nixsoma-ai-workbench.service`; Observer provides authenticated controls and readback without repetitive approval | Deployed; real Observer proved start -> matching PID/surface -> stop -> disappearance |
 | Level 4 surface activation | The existing control owner binds one numeric surface id and inventory sequence; session-manager requires audit, fresh pre-frame, peer-authenticated shell receipt, newer activated inventory, and post-frame proof | Deployed; normal production Observer proved fixture 2 -> Workbench 4 with counts 0 -> 2 -> 1 -> 0 |
@@ -102,6 +103,12 @@ The completed bounded frontier is:
   bounds, and the reviewed objective projection; local PID/frame/content/task
   bindings reject drift. No pixels, OCR, URL, current input value, selector,
   target id, or arbitrary page script leave the local body.
+- The twenty-first and twenty-second slices add direct operator interaction to
+  the transient AI Workspace projection: one explicitly armed click and one
+  bounded 1-32 character native type. Both bind the current frame, active
+  surface, inventory, lease, audit, native receipt, and post-frame; neither
+  grants Enter, hotkeys, modifier combinations, repeat, a general keyboard
+  proxy, desktop-wide input, or parent-display access.
 - Phase D candidate generation, approval-bound staging/build, real closure
   receipt, independent host-health oracle, controlled activation contract,
   manual rollback evidence, and a physical-host-safe failure rehearsal.
@@ -141,9 +148,10 @@ The completed bounded frontier is:
 
 Real repair execution and rollback remain unproven on a disposable mutation
 environment. Level 4 now owns a compositor, headed browser, read-only native
-frame, governed native left click, operator-visible transient projection,
-minimal surface identity, and a fixed application lifecycle in production.
-Desktop takeover and generic process/window control remain future work.
+frame, governed native left click and bounded short text input, operator-visible
+transient projection, minimal surface identity, and a fixed application
+lifecycle in production. General keyboard authority, desktop takeover, and
+generic process/window control remain future work.
 
 ## Active Route
 
@@ -652,6 +660,25 @@ endpoints active. This is bounded operator interaction inside the isolated AI
 workspace, not general desktop takeover. The lane is physically complete and
 frozen.
 
+The twenty-second Level 4 capability adds one authenticated write-only native
+type into the current active surface of the isolated AI Workspace. It extends
+the existing `act.screen.pointer_keyboard` owner with Weston opcode 5 and accepts
+exactly 1-32 characters from `[A-Za-z0-9 .,_-]`. Core, Screen Act, session-
+manager, and Weston bind the request to the current compositor frame, active
+surface, inventory sequence, trusted lease, single-use grant, pre-audit, native
+receipt, and a newer post-frame. Observer clears the value before dispatch
+finishes, while durable evidence retains only the character count and authority
+facts. All 1137 tests, typecheck, 821 registry entries, the 1008-file script
+audit, Windows path budget, shared contracts, body-config, and exact 85-file
+Observer closure pass. Generation `aifc3p1n...` is active and `0sc4azki...` is
+the previous generation. The physical gate rendered a 20-character canary on
+surface 9, inventory 7, advanced frame 1 to 2, matched the native receipt, and
+found no plaintext in governed readbacks; it made zero provider calls and did
+not mutate a task. The opcode-4 click regression also passed. Enter, hotkeys,
+modifier combinations, repeat, arbitrary keyboard input, desktop-wide or
+parent-display input, root, and host mutation remain excluded. This lane is
+physically complete and frozen.
+
 ## Progress Estimate
 
 These figures are capability-maturity estimates, not test coverage:
@@ -661,7 +688,7 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 80%; one-shot projected operator click, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, and same-surface OCR click are physically complete |
+| Level 4 graphics-stack-native body | about 82%; one-shot projected operator click, bounded native operator type, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, and same-surface OCR click are physically complete |
 | Current bounded product scope | 82-85% |
 | Final whitepaper vision | 50-58% |
 

@@ -1,6 +1,7 @@
 import {
   normaliseAiCompositorPointerAction,
   normaliseAiCompositorScrollAction,
+  normaliseAiCompositorTypeAction,
 } from "../../../packages/shared-utils/src/ai-compositor-input.mjs";
 
 const CAPABILITY_ID = "act.screen.pointer_keyboard";
@@ -60,6 +61,48 @@ function normaliseInput(value) {
     throw new Error("Screen keyboard capability input must be within 2000 characters.");
   }
   return value;
+}
+
+function normaliseKeyboardParams(params) {
+  const unsupportedParams = Object.keys(params)
+    .filter((key) => ![
+      "operation",
+      "text",
+      "surfaceId",
+      "inventorySequence",
+      "compositorFrame",
+    ].includes(key));
+  if (unsupportedParams.length > 0) {
+    throw new Error("Screen keyboard capability only accepts text and optional native frame/surface bindings.");
+  }
+  const text = normaliseInput(params.text);
+  const nativeBindingPresent = params.compositorFrame !== undefined
+    || params.surfaceId !== undefined
+    || params.inventorySequence !== undefined;
+  if (!nativeBindingPresent) return { text };
+  const action = normaliseAiCompositorTypeAction({
+    text,
+    surfaceId: params.surfaceId,
+    inventorySequence: params.inventorySequence,
+    compositorFrame: params.compositorFrame,
+  });
+  if (!action.frame.fresh) {
+    throw new Error("Screen keyboard native frame binding is stale.");
+  }
+  return {
+    text: action.text,
+    surfaceId: action.surfaceId,
+    inventorySequence: action.inventorySequence,
+    compositorFrame: {
+      registry: action.frame.registry,
+      socketName: action.frame.socketName,
+      width: action.frame.width,
+      height: action.frame.height,
+      sha256: action.frame.sha256,
+      sequence: action.frame.sequence,
+      capturedAt: action.frame.capturedAt,
+    },
+  };
 }
 
 function normaliseCoordinate(value, label, maximum) {
@@ -177,6 +220,15 @@ function compactMediation(mediation) {
           frameChanged: mediation.visualGrounding.frameChanged === true,
           inventoryMatched: mediation.visualGrounding.inventoryMatched === true,
           surfaceMatched: mediation.visualGrounding.surfaceMatched === true,
+          inputCharCount: Number.isInteger(mediation.visualGrounding.inputCharCount)
+            ? mediation.visualGrounding.inputCharCount
+            : null,
+          inputTextExposed: false,
+          inputTextPersisted: false,
+          keyboardInput: mediation.visualGrounding.keyboardInput === true,
+          hotkeyInput: false,
+          enterKeyInput: false,
+          automaticRepeat: false,
           imageDataRetained: false,
           persisted: false,
         }
@@ -193,6 +245,7 @@ function projectOwnerResponse(response, operation) {
   const writesBrowserInput = operation === KEYBOARD_OPERATION;
   const pointerAction = operation === POINTER_OPERATION || operation === SCROLL_OPERATION;
   const scrollAction = operation === SCROLL_OPERATION;
+  const nativeTextInput = operation === KEYBOARD_OPERATION && compositorNativeExecuted;
   const currentActiveSurfaceBound = compositorNativeExecuted
     && mediation.visualGrounding?.inventoryMatched === true
     && mediation.visualGrounding?.surfaceMatched === true;
@@ -214,6 +267,7 @@ function projectOwnerResponse(response, operation) {
       writesBrowserInput,
       pointerAction,
       scrollAction,
+      nativeTextInput,
       browserNetworkNavigation: false,
       automaticDispatch: false,
       createsTask: false,
@@ -246,6 +300,12 @@ function projectOwnerResponse(response, operation) {
       writesBrowserInput,
       pointerAction,
       scrollAction,
+      nativeTextInput,
+      inputCharCount: nativeTextInput ? mediation.visualGrounding?.inputCharCount ?? null : null,
+      inputTextPersisted: false,
+      hotkeyInput: false,
+      enterKeyInput: false,
+      automaticRepeat: false,
       currentActiveSurfaceBound,
       inputValueExposed: false,
       browserNetworkNavigation: false,
@@ -286,6 +346,7 @@ function unavailableOwnerResponse(operation) {
       writesBrowserInput,
       pointerAction,
       scrollAction,
+      nativeTextInput: false,
       browserNetworkNavigation: false,
       automaticDispatch: false,
       createsTask: false,
@@ -318,6 +379,12 @@ function unavailableOwnerResponse(operation) {
       writesBrowserInput,
       pointerAction,
       scrollAction,
+      nativeTextInput: false,
+      inputCharCount: null,
+      inputTextPersisted: false,
+      hotkeyInput: false,
+      enterKeyInput: false,
+      automaticRepeat: false,
       currentActiveSurfaceBound: false,
       inputValueExposed: false,
       browserNetworkNavigation: false,
@@ -343,14 +410,9 @@ export function createScreenActionCapabilityHandlers({
     }
     const params = request?.params ?? {};
     if (operation === KEYBOARD_OPERATION) {
-      const unsupportedParams = Object.keys(params)
-        .filter((key) => !["operation", "text"].includes(key));
-      if (unsupportedParams.length > 0) {
-        throw new Error("Screen keyboard capability only accepts params.text.");
-      }
       return {
         operation,
-        payload: { text: normaliseInput(params.text) },
+        payload: normaliseKeyboardParams(params),
       };
     }
     if (operation === SCROLL_OPERATION) {
@@ -401,6 +463,8 @@ export function createScreenActionCapabilityHandlers({
       actionAttempted: summary.actionAttempted === true,
       accepted: summary.accepted === true,
       browserRuntimeExecuted: summary.browserRuntimeExecuted === true,
+      compositorNativeExecuted: summary.compositorNativeExecuted === true,
+      currentFrameBound: summary.currentFrameBound === true,
       degraded: summary.degraded === true,
       mediationStatus: summary.mediationStatus ?? null,
       mediationReason: summary.mediationReason ?? null,
@@ -408,6 +472,12 @@ export function createScreenActionCapabilityHandlers({
       writesBrowserInput: governance.writesBrowserInput === true,
       pointerAction: governance.pointerAction === true,
       scrollAction: governance.scrollAction === true,
+      nativeTextInput: governance.nativeTextInput === true,
+      inputCharCount: Number.isInteger(summary.inputCharCount) ? summary.inputCharCount : null,
+      inputTextPersisted: false,
+      hotkeyInput: false,
+      enterKeyInput: false,
+      automaticRepeat: false,
       currentActiveSurfaceBound: governance.currentActiveSurfaceBound === true,
       inputValueExposed: governance.exposesInputValue === true,
       browserNetworkNavigation: governance.browserNetworkNavigation === true,

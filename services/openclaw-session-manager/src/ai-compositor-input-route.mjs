@@ -6,6 +6,7 @@ import { readJsonBody } from "../../../packages/shared-utils/src/http.mjs";
 
 const SCREEN_ACT_POINTER_PATH = "/act/mouse/click";
 const SCREEN_ACT_SCROLL_PATH = "/act/mouse/scroll";
+const SCREEN_ACT_KEYBOARD_PATH = "/act/keyboard/type";
 
 export function createAiCompositorInputRoute({
   controller,
@@ -22,11 +23,15 @@ export function createAiCompositorInputRoute({
       const body = await readJsonBody(req, 16_384);
       const action = body?.action;
       const grantContext = executionGrantContextFromHeaders(req.headers);
+      const keyboardShape = action && typeof action === "object"
+        && action.text !== undefined;
       const scrollShape = action && typeof action === "object"
         && action.direction !== undefined;
-      const grantPath = scrollShape
-        ? SCREEN_ACT_SCROLL_PATH
-        : SCREEN_ACT_POINTER_PATH;
+      const grantPath = keyboardShape
+        ? SCREEN_ACT_KEYBOARD_PATH
+        : scrollShape
+          ? SCREEN_ACT_SCROLL_PATH
+          : SCREEN_ACT_POINTER_PATH;
       const verification = executionGrantVerifier.verifyRequest({
         token: req.headers[EXECUTION_GRANT_HEADER],
         method: "POST",
@@ -40,7 +45,9 @@ export function createAiCompositorInputRoute({
         error.statusCode = verification.statusCode;
         throw error;
       }
-      const expectedIntent = scrollShape ? "mouse.scroll" : "mouse.click";
+      const expectedIntent = keyboardShape
+        ? "keyboard.type"
+        : scrollShape ? "mouse.scroll" : "mouse.click";
       if (grantContext.intent !== null && grantContext.intent !== expectedIntent) {
         const error = new Error("AI compositor input intent does not match its operation shape.");
         error.code = "AI_COMPOSITOR_INPUT_INTENT_MISMATCH";
@@ -59,16 +66,23 @@ export function createAiCompositorInputRoute({
           capabilityId: verification.grant.capabilityId,
         },
         input: {
-          operation: scrollShape ? "pointer_scroll" : "pointer_click",
+          operation: keyboardShape
+            ? "keyboard_type"
+            : scrollShape ? "pointer_scroll" : "pointer_click",
           x: action?.x ?? null,
           y: action?.y ?? null,
           direction: scrollShape ? action?.direction ?? null : null,
+          inputCharCount: keyboardShape && typeof action?.text === "string"
+            ? action.text.length
+            : null,
           surfaceId: action?.surfaceId ?? null,
           inventorySequence: action?.inventorySequence ?? null,
           frameSha256: action?.compositorFrame?.sha256 ?? null,
           frameSequence: action?.compositorFrame?.sequence ?? null,
           socketName: action?.compositorFrame?.socketName ?? null,
           imageDataRetained: false,
+          inputTextExposed: false,
+          inputTextPersisted: false,
           persisted: false,
         },
       });

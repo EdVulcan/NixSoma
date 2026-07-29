@@ -12,6 +12,7 @@ import { observerClientRuntimeSemanticTargetTaskScript } from "./client-script-r
 import { observerClientRuntimeWorkViewControlsScript } from "./client-script-runtime-work-view-controls.mjs";
 import { observerClientRuntimeAiWorkspaceProjectionScript } from "./client-script-runtime-ai-workspace-projection.mjs";
 import { observerClientRuntimeAiWorkspaceOperatorClickScript } from "./client-script-runtime-ai-workspace-operator-click.mjs";
+import { observerClientRuntimeAiWorkspaceOperatorTypeScript } from "./client-script-runtime-ai-workspace-operator-type.mjs";
 import { observerClientRuntimeAiWorkspaceReviewedCycleScript } from "./client-script-runtime-ai-workspace-reviewed-cycle.mjs";
 import { observerClientRuntimeAiWorkspaceOcrAssessmentScript } from "./client-script-runtime-ai-workspace-ocr-assessment.mjs";
 import { observerClientRuntimeAiWorkspaceOcrClickScript } from "./client-script-runtime-ai-workspace-ocr-click.mjs";
@@ -82,7 +83,7 @@ async function createPlannedTask() {
   await refreshOperatorState();
 }
 
-${observerClientRuntimeApprovalTasksScript}${observerClientRuntimeEngineeringLoopControlsScript}${observerClientRuntimeEngineeringLspTargetSelectionScript}${observerClientRuntimeEngineeringSuggestedActionScript}${observerClientRuntimeEngineeringRecommendationScript}${observerClientRuntimeEngineeringPlanScript}${observerClientNativeRuntimeRefreshTasksScript}${observerClientRuntimeSystemHealScript}${observerClientRuntimeScreenObservationScript}${observerClientRuntimeSemanticTargetTaskScript}${observerClientRuntimeWorkViewControlsScript}${observerClientRuntimeAiWorkspaceProjectionScript}${observerClientRuntimeAiWorkspaceOperatorClickScript}${observerClientRuntimeAiWorkspaceReviewedCycleScript}${observerClientRuntimeAiWorkspaceOcrAssessmentScript}${observerClientRuntimeAiWorkspaceOcrClickScript}async function runOperatorStepFromUi() {
+${observerClientRuntimeApprovalTasksScript}${observerClientRuntimeEngineeringLoopControlsScript}${observerClientRuntimeEngineeringLspTargetSelectionScript}${observerClientRuntimeEngineeringSuggestedActionScript}${observerClientRuntimeEngineeringRecommendationScript}${observerClientRuntimeEngineeringPlanScript}${observerClientNativeRuntimeRefreshTasksScript}${observerClientRuntimeSystemHealScript}${observerClientRuntimeScreenObservationScript}${observerClientRuntimeSemanticTargetTaskScript}${observerClientRuntimeWorkViewControlsScript}${observerClientRuntimeAiWorkspaceProjectionScript}${observerClientRuntimeAiWorkspaceOperatorClickScript}${observerClientRuntimeAiWorkspaceOperatorTypeScript}${observerClientRuntimeAiWorkspaceReviewedCycleScript}${observerClientRuntimeAiWorkspaceOcrAssessmentScript}${observerClientRuntimeAiWorkspaceOcrClickScript}async function runOperatorStepFromUi() {
   const result = await fetchJson(\`\${observerConfig.coreUrl}/operator/step\`, {
     method: "POST",
     headers: { "content-type": "application/json" },

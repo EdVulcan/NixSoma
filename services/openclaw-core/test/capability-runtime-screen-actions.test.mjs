@@ -253,6 +253,86 @@ test("screen pointer capability preserves one active-surface-bound native click"
     .currentActiveSurfaceBound, true);
 });
 
+test("screen keyboard capability preserves one active-surface native write-only type", async () => {
+  const calls = [];
+  const compositorFrame = {
+    registry: "nixsoma-ai-compositor-frame-v0",
+    socketName: "nixsoma-ai-0",
+    width: 1280,
+    height: 720,
+    sha256: "d".repeat(64),
+    sequence: 20,
+    capturedAt: new Date().toISOString(),
+  };
+  const handlers = createScreenActionCapabilityHandlers({
+    screenActUrl: "http://screen-act",
+    postJson: async (url, body) => {
+      calls.push({ url, body });
+      return {
+        ok: true,
+        action: {
+          kind: "keyboard.type",
+          result: "executed-ai-compositor",
+          degraded: false,
+          mediation: {
+            attempted: true,
+            accepted: true,
+            status: "accepted",
+            leaseMatched: true,
+            transport: "ai-compositor-native",
+            visualGrounding: {
+              required: true,
+              status: "executed",
+              frameMatched: true,
+              frameFresh: true,
+              receiptMatched: true,
+              sequenceAdvanced: true,
+              frameChanged: true,
+              inventoryMatched: true,
+              surfaceMatched: true,
+              inputCharCount: 16,
+              inputTextExposed: false,
+              inputTextPersisted: false,
+              keyboardInput: true,
+              hotkeyInput: false,
+              enterKeyInput: false,
+              automaticRepeat: false,
+            },
+          },
+        },
+      };
+    },
+  });
+  const input = "NixSoma input 27";
+  const backend = await handlers.callBackend(capability, {
+    operation: "keyboard.type",
+    params: {
+      text: input,
+      surfaceId: 72,
+      inventorySequence: 23,
+      compositorFrame,
+    },
+  });
+  assert.deepEqual(calls, [{
+    url: "http://screen-act/act/keyboard/type",
+    body: {
+      text: input,
+      surfaceId: 72,
+      inventorySequence: 23,
+      compositorFrame,
+    },
+  }]);
+  assert.equal(backend.result.ok, true);
+  assert.equal(backend.result.governance.compositorNativeExecuted, true);
+  assert.equal(backend.result.governance.nativeTextInput, true);
+  assert.equal(backend.result.governance.currentFrameBound, true);
+  assert.equal(backend.result.governance.currentActiveSurfaceBound, true);
+  assert.equal(backend.result.action.mediation.visualGrounding.inputCharCount, 16);
+  assert.equal(backend.result.action.mediation.visualGrounding.inputTextExposed, false);
+  assert.equal(handlers.summariseResult(capability, backend.result).nativeTextInput, true);
+  assert.equal(JSON.stringify(backend.result).includes(input), false);
+});
+
 test("screen action capability validates the fixed keyboard and pointer contracts", async () => {
   const handlers = createScreenActionCapabilityHandlers({ screenActUrl: "http://screen-act" });
 
@@ -263,7 +343,7 @@ test("screen action capability validates the fixed keyboard and pointer contract
   assert.equal(handlers.validateRequest(capability, {
     operation: "keyboard.type",
     params: { text: "hello", semanticTarget: { targetId: "target-1" } },
-  }), "Screen keyboard capability only accepts params.text.");
+  }), "Screen keyboard capability only accepts text and optional native frame/surface bindings.");
   assert.equal(handlers.validateRequest(capability, {
     operation: "keyboard.type",
     params: { text: "x".repeat(2_001) },
@@ -272,6 +352,15 @@ test("screen action capability validates the fixed keyboard and pointer contract
     operation: "keyboard.type",
     params: { text: "hello" },
   }), null);
+  assert.match(handlers.validateRequest(capability, {
+    operation: "keyboard.type",
+    params: {
+      text: "submit\n",
+      surfaceId: 2,
+      inventorySequence: 3,
+      compositorFrame: {},
+    },
+  }), /bounded ASCII/u);
   assert.equal(handlers.validateRequest(capability, {
     operation: "mouse.click",
     params: { x: 640, y: 360, button: "right" },

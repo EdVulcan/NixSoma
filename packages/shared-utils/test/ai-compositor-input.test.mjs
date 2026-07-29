@@ -6,6 +6,7 @@ import {
   normaliseAiCompositorInputAction,
   normaliseAiCompositorPointerAction,
   normaliseAiCompositorScrollAction,
+  normaliseAiCompositorTypeAction,
   projectAiCompositorInputEvidence,
 } from "../src/ai-compositor-input.mjs";
 
@@ -122,6 +123,38 @@ test("native scroll is one fixed-center step bound to a current numeric surface"
   );
 });
 
+test("native type is short, write-only, and bound to one active surface", () => {
+  const action = normaliseAiCompositorTypeAction({
+    text: "NixSoma input 27",
+    surfaceId: 17,
+    inventorySequence: 9,
+    compositorFrame,
+  }, { now: Date.parse(capturedAt) + 500 });
+
+  assert.equal(action.operation, "keyboard_type");
+  assert.equal(action.text, "NixSoma input 27");
+  assert.equal(action.inputCharCount, 16);
+  assert.equal(action.surfaceId, 17);
+  assert.equal(normaliseAiCompositorInputAction({
+    text: "short_value",
+    surfaceId: 17,
+    inventorySequence: 9,
+    compositorFrame,
+  }, { now: Date.parse(capturedAt) + 500 }).operation, "keyboard_type");
+  assert.throws(() => normaliseAiCompositorTypeAction({
+    text: "submit\n",
+    surfaceId: 17,
+    inventorySequence: 9,
+    compositorFrame,
+  }), /bounded ASCII/u);
+  assert.throws(() => normaliseAiCompositorTypeAction({
+    text: "x".repeat(33),
+    surfaceId: 17,
+    inventorySequence: 9,
+    compositorFrame,
+  }), /1-32/u);
+});
+
 test("native input evidence retains hashes but never image data or broad authority", () => {
   const evidence = projectAiCompositorInputEvidence({
     status: "executed",
@@ -209,4 +242,37 @@ test("surface-bound click evidence retains target matching without image data", 
   assert.equal(evidence.inventoryMatched, true);
   assert.equal(evidence.surfaceMatched, true);
   assert.equal(JSON.stringify(evidence).includes("dataUrl"), false);
+});
+
+test("native type evidence retains only length and authority facts", () => {
+  const evidence = projectAiCompositorInputEvidence({
+    status: "executed",
+    operation: "keyboard_type",
+    requestId: "9".repeat(32),
+    socketName: "nixsoma-ai-0",
+    inputCharCount: 16,
+    text: "NixSoma input 27",
+    surfaceId: 17,
+    inventorySequence: 9,
+    frame: compositorFrame,
+    postFrame: { ...compositorFrame, sha256: "f".repeat(64), sequence: 8 },
+    frameMatched: true,
+    frameFresh: true,
+    leaseMatched: true,
+    receiptMatched: true,
+    sequenceAdvanced: true,
+    frameChanged: true,
+    inventoryMatched: true,
+    surfaceMatched: true,
+  });
+
+  assert.equal(evidence.operation, "keyboard_type");
+  assert.equal(evidence.inputCharCount, 16);
+  assert.equal(evidence.keyboardInput, true);
+  assert.equal(evidence.inputTextExposed, false);
+  assert.equal(evidence.inputTextPersisted, false);
+  assert.equal(evidence.hotkeyInput, false);
+  assert.equal(evidence.enterKeyInput, false);
+  assert.equal(evidence.automaticRepeat, false);
+  assert.equal(JSON.stringify(evidence).includes("NixSoma input 27"), false);
 });

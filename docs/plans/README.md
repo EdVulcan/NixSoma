@@ -1,6 +1,6 @@
 # NixSoma Plans Directory
 
-Updated: 2026-07-28
+Updated: 2026-07-29
 
 This directory contains current decision records and historical milestone
 evidence. It is not a queue ordered by phase number. Use
@@ -499,6 +499,24 @@ rendered coordinates `(47,181)` to one native receipt, advanced frame 189 to
 calls, left task state unchanged, and kept all nine production health endpoints
 active. This is bounded interaction inside the isolated AI workspace, not
 general desktop takeover. The lane is physically complete and frozen.
+
+The twenty-second Level 4 capability is deployed as one authenticated
+write-only native type into the current active surface. It reuses
+`act.screen.pointer_keyboard`, adds Weston opcode 5, accepts only 1-32
+characters matching `[A-Za-z0-9 .,_-]`, and binds the request to the exact
+current frame, active surface, inventory sequence, trusted lease, Core grant,
+pre-audit, native receipt, and newer post-frame. Observer clears the input before
+dispatch completes; durable evidence retains only character count and authority
+facts. All 1137 tests, typecheck, 821 registry entries, the 1008-file script
+audit, path budget, shared contracts, body-config, and exact 85-file Observer
+closure pass. Generation `aifc3p1n...` is active and `0sc4azki...` is previous.
+The physical gate rendered a 20-character canary on surface 9 and inventory 7,
+advanced frame 1 to 2, matched the native receipt, found no plaintext in
+governed readbacks, made zero provider calls, and left task state unchanged. The
+opcode-4 click regression also passed. Enter, hotkeys, modifiers, repeat,
+arbitrary keyboard input, desktop-wide or parent-display input, root, and host
+mutation remain excluded. This bounded native text lane is physically complete
+and frozen; it is not a general keyboard proxy or desktop takeover.
 
 ## Completed Capability Evidence
 

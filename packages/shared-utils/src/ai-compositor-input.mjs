@@ -3,12 +3,15 @@ import { WORK_VIEW_VISUAL_FRAME_FRESHNESS_MS } from "./work-view-visual-frame.mj
 export const AI_COMPOSITOR_INPUT_REGISTRY = "nixsoma-ai-compositor-input-v0";
 export const AI_COMPOSITOR_POINTER_CLICK_OPERATION = "pointer_click";
 export const AI_COMPOSITOR_POINTER_SCROLL_OPERATION = "pointer_scroll";
+export const AI_COMPOSITOR_KEYBOARD_TYPE_OPERATION = "keyboard_type";
 export const AI_COMPOSITOR_INPUT_OPERATION = AI_COMPOSITOR_POINTER_CLICK_OPERATION;
 export const AI_COMPOSITOR_INPUT_SOCKET = "nixsoma-ai-0";
 export const AI_COMPOSITOR_INPUT_WIDTH = 1280;
 export const AI_COMPOSITOR_INPUT_HEIGHT = 720;
 export const AI_COMPOSITOR_SCROLL_X = 640;
 export const AI_COMPOSITOR_SCROLL_Y = 360;
+export const AI_COMPOSITOR_TYPE_MAX_CHARS = 32;
+export const AI_COMPOSITOR_TYPE_PATTERN = /^[A-Za-z0-9 .,_-]+$/u;
 
 function boundedString(value, maximum = 100) {
   return typeof value === "string" && value.trim()
@@ -105,10 +108,33 @@ export function normaliseAiCompositorScrollAction(value, options = {}) {
   };
 }
 
+export function normaliseAiCompositorTypeAction(value, options = {}) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("AI compositor type action must be an object.");
+  }
+  if (typeof value.text !== "string"
+    || value.text.length < 1
+    || value.text.length > AI_COMPOSITOR_TYPE_MAX_CHARS
+    || !AI_COMPOSITOR_TYPE_PATTERN.test(value.text)) {
+    throw new Error("AI compositor type only allows 1-32 bounded ASCII characters.");
+  }
+  return {
+    operation: AI_COMPOSITOR_KEYBOARD_TYPE_OPERATION,
+    text: value.text,
+    inputCharCount: value.text.length,
+    surfaceId: positiveUint32(value.surfaceId, "AI compositor type surfaceId"),
+    inventorySequence: positiveUint32(
+      value.inventorySequence,
+      "AI compositor type inventorySequence",
+    ),
+    frame: normaliseAiCompositorFrameBinding(value.compositorFrame, options),
+  };
+}
+
 export function normaliseAiCompositorInputAction(value, options = {}) {
-  return value?.direction !== undefined
-    ? normaliseAiCompositorScrollAction(value, options)
-    : normaliseAiCompositorPointerAction(value, options);
+  if (value?.text !== undefined) return normaliseAiCompositorTypeAction(value, options);
+  if (value?.direction !== undefined) return normaliseAiCompositorScrollAction(value, options);
+  return normaliseAiCompositorPointerAction(value, options);
 }
 
 export function aiCompositorFrameMatches(binding, frame) {
@@ -126,6 +152,7 @@ export function projectAiCompositorInputEvidence(value) {
   const operation = [
     AI_COMPOSITOR_POINTER_CLICK_OPERATION,
     AI_COMPOSITOR_POINTER_SCROLL_OPERATION,
+    AI_COMPOSITOR_KEYBOARD_TYPE_OPERATION,
   ].includes(value.operation) ? value.operation : null;
   return {
     registry: AI_COMPOSITOR_INPUT_REGISTRY,
@@ -140,6 +167,10 @@ export function projectAiCompositorInputEvidence(value) {
     direction: operation === AI_COMPOSITOR_POINTER_SCROLL_OPERATION
       && ["up", "down"].includes(value.direction)
       ? value.direction
+      : null,
+    inputCharCount: operation === AI_COMPOSITOR_KEYBOARD_TYPE_OPERATION
+      && Number.isInteger(value.inputCharCount)
+      ? value.inputCharCount
       : null,
     surfaceId: Number.isInteger(value.surfaceId)
       ? value.surfaceId
@@ -170,6 +201,12 @@ export function projectAiCompositorInputEvidence(value) {
       ? value.surfaceMatched === true
       : false,
     imageDataRetained: false,
+    inputTextExposed: false,
+    inputTextPersisted: false,
+    keyboardInput: operation === AI_COMPOSITOR_KEYBOARD_TYPE_OPERATION,
+    hotkeyInput: false,
+    enterKeyInput: false,
+    automaticRepeat: false,
     persisted: false,
     desktopWideInput: false,
     parentDisplayConnected: false,

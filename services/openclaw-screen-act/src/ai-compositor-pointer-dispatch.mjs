@@ -1,5 +1,6 @@
 import {
   AI_COMPOSITOR_INPUT_REGISTRY,
+  AI_COMPOSITOR_KEYBOARD_TYPE_OPERATION,
   AI_COMPOSITOR_POINTER_SCROLL_OPERATION,
   normaliseAiCompositorInputAction,
 } from "../../../packages/shared-utils/src/ai-compositor-input.mjs";
@@ -8,18 +9,20 @@ export function hasAiCompositorFrameBinding(params) {
   return Boolean(params?.compositorFrame);
 }
 
-export function createAiCompositorPointerDispatch({
+function createAiCompositorInputDispatch({
   sessionManagerUrl,
   fetchFn = fetch,
 } = {}) {
-  return async function dispatchAiCompositorPointer({
+  return async function dispatchAiCompositorInput({
     action,
     trustedHelperLease,
     forwardedGrantHeaders = {},
   } = {}) {
     const normalised = normaliseAiCompositorInputAction(action);
+    const keyboardAction = normalised.operation === AI_COMPOSITOR_KEYBOARD_TYPE_OPERATION;
     const scrollAction = normalised.operation === AI_COMPOSITOR_POINTER_SCROLL_OPERATION;
-    const targetBoundAction = scrollAction || Number.isInteger(normalised.surfaceId);
+    const targetBoundAction = keyboardAction || scrollAction
+      || Number.isInteger(normalised.surfaceId);
     try {
       const response = await fetchFn(`${sessionManagerUrl}/work-view/compositor-input`, {
         method: "POST",
@@ -38,6 +41,15 @@ export function createAiCompositorPointerDispatch({
         && ["executed", "executed_post_frame_unavailable"].includes(evidence.status)
         && (!targetBoundAction || (
           (!scrollAction || evidence.direction === normalised.direction)
+          && (!keyboardAction || (
+            evidence.inputCharCount === normalised.inputCharCount
+            && evidence.inputTextExposed === false
+            && evidence.inputTextPersisted === false
+            && evidence.keyboardInput === true
+            && evidence.hotkeyInput === false
+            && evidence.enterKeyInput === false
+            && evidence.automaticRepeat === false
+          ))
           && evidence.surfaceId === normalised.surfaceId
           && evidence.inventorySequence === normalised.inventorySequence
           && evidence.inventoryMatched === true
@@ -68,6 +80,13 @@ export function createAiCompositorPointerDispatch({
           surfaceMatched: targetBoundAction ? evidence?.surfaceMatched === true : false,
           surfaceId: targetBoundAction ? normalised.surfaceId : null,
           inventorySequence: targetBoundAction ? normalised.inventorySequence : null,
+          inputCharCount: keyboardAction ? normalised.inputCharCount : null,
+          inputTextExposed: false,
+          inputTextPersisted: false,
+          keyboardInput: keyboardAction,
+          hotkeyInput: false,
+          enterKeyInput: false,
+          automaticRepeat: false,
           imageDataRetained: false,
           persisted: false,
         },
@@ -92,6 +111,13 @@ export function createAiCompositorPointerDispatch({
           frameFresh: normalised.frame.fresh,
           receiptMatched: false,
           sequenceAdvanced: false,
+          inputCharCount: keyboardAction ? normalised.inputCharCount : null,
+          inputTextExposed: false,
+          inputTextPersisted: false,
+          keyboardInput: keyboardAction,
+          hotkeyInput: false,
+          enterKeyInput: false,
+          automaticRepeat: false,
           imageDataRetained: false,
           persisted: false,
         },
@@ -99,4 +125,12 @@ export function createAiCompositorPointerDispatch({
       };
     }
   };
+}
+
+export function createAiCompositorPointerDispatch(options = {}) {
+  return createAiCompositorInputDispatch(options);
+}
+
+export function createAiCompositorKeyboardDispatch(options = {}) {
+  return createAiCompositorInputDispatch(options);
 }

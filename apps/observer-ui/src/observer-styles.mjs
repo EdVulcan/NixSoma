@@ -149,6 +149,29 @@ export function observerStyles() {
         cursor: default;
         color: var(--muted);
       }
+      .projection-type-row {
+        display: grid;
+        grid-template-columns: auto minmax(140px, 1fr) auto auto;
+        align-items: center;
+        gap: 8px;
+        margin: 8px 0;
+      }
+      .projection-type-row input {
+        min-width: 0;
+      }
+      .projection-type-row span {
+        min-width: 72px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      @media (max-width: 640px) {
+        .projection-type-row {
+          grid-template-columns: auto minmax(0, 1fr) auto;
+        }
+        .projection-type-row span {
+          grid-column: 2 / 4;
+        }
+      }
       .preview-tabs {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
