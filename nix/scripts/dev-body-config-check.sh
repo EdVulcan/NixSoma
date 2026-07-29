@@ -207,6 +207,10 @@ requireIncludes("openclaw-body module", bodyModule, [
   "browser-runtime-token-map",
   "browser-runtime-token",
   "browser-runtime-auth-token",
+  "operatorAuthTokenReaders",
+  "setfacl --remove-all",
+  "user:${reader}:--x",
+  "user:${reader}:r--",
   "cloudProvider",
   "standingAdvisory",
   "deepseek-api-key",
@@ -291,6 +295,11 @@ requireIncludes("developer generation switch module", developerGenerationSwitchM
   "nix-store --query --hash",
   "switch-to-configuration",
   "nixsoma-dev-generation-switch.lock",
+  "nixsoma-developer-generation-switch-target-v0",
+  "bootIsContainer=false",
+  "generation is not bound to the current physical NixSoma deployment target",
+  "generation changes protected physical-host path",
+  "${pkgs.diffutils}/bin/cmp --silent",
   "security.sudo.extraRules",
   "NOPASSWD",
   "NOSETENV",
@@ -375,6 +384,8 @@ requireIncludes("desktop-body profile", desktopProfile, [
   "profile = \"desktop-body\"",
   "user = \"openclaw-service\"",
   "hostdUser = \"openclaw-hostd\"",
+  "operatorAuthTokenReaders = [ \"edvulcan\" ]",
+  "environment.sessionVariables.OPENCLAW_OPERATOR_TOKEN_FILE",
   "systemdRepairAuthDelegation.enable = true",
   "trustedSidecarUserUnit.enable = true",
   "componentOwnership.user",
@@ -497,6 +508,8 @@ if command -v nix >/dev/null 2>&1; then
       aiWorkbench = project config.systemd.user.services.nixsoma-ai-workbench;
       core = project config.systemd.services.openclaw-core;
       operatorTokenInit = project config.systemd.services.openclaw-operator-token-init;
+      operatorTokenReaders = config.services.openclaw.operatorAuthTokenReaders;
+      operatorTokenSessionFile = config.environment.sessionVariables.OPENCLAW_OPERATOR_TOKEN_FILE or null;
       executionGrantInit = project config.systemd.services.openclaw-execution-grant-key-init;
       eventHub = project config.systemd.services.openclaw-event-hub;
       screenSense = project config.systemd.services.openclaw-screen-sense;
@@ -513,6 +526,8 @@ if command -v nix >/dev/null 2>&1; then
         enable = config.services.openclaw.developerGenerationSwitch.enable;
         user = config.services.openclaw.developerGenerationSwitch.user;
         systemName = config.services.openclaw.developerGenerationSwitch.systemName;
+        bootIsContainer = config.boot.isContainer;
+        targetMarker = config.environment.etc."nixsoma/developer-generation-switch-target".text;
         sudoRules = config.security.sudo.extraRules;
         systemPackages = map builtins.toString config.environment.systemPackages;
       };
@@ -731,6 +746,10 @@ if (!ownership.operatorTokenInit.wantedBy?.includes("multi-user.target")
   || !String(ownership.operatorTokenInit.serviceConfig?.ExecStart ?? "").includes("openclaw-operator-token-init")) {
   throw new Error(`core operator credential initializer is not durable and pre-started: ${JSON.stringify(ownership.operatorTokenInit)}`);
 }
+if (JSON.stringify(ownership.operatorTokenReaders) !== JSON.stringify(["edvulcan"])
+  || ownership.operatorTokenSessionFile !== "/var/lib/openclaw/operator-token") {
+  throw new Error(`operator credential access must remain bound to the explicit local operator and file reference: ${JSON.stringify(ownership)}`);
+}
 if (!ownership.executionGrantInit.wantedBy?.includes("multi-user.target")
   || ownership.executionGrantInit.serviceConfig?.Type !== "oneshot"
   || ownership.executionGrantInit.serviceConfig?.RemainAfterExit !== true
@@ -761,6 +780,14 @@ const developerSwitchPackage = developerSwitch.systemPackages?.find((packagePath
 if (developerSwitch.enable !== true
   || developerSwitch.user !== "edvulcan"
   || developerSwitch.systemName !== "nixos"
+  || developerSwitch.bootIsContainer !== true
+  || developerSwitch.targetMarker !== [
+    "registry=nixsoma-developer-generation-switch-target-v0",
+    "systemName=nixos",
+    "profile=desktop-body",
+    "bootIsContainer=true",
+    "",
+  ].join("\n")
   || developerSwitchRule?.runAs !== "root"
   || developerSwitchRule?.host !== "ALL"
   || JSON.stringify(developerSwitchRule?.groups) !== JSON.stringify([])
@@ -1012,6 +1039,9 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-ocr-click-contract.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-ocr-click.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-ocr-decision-session.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-ocr-native-actions.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-ocr-focus-type-contract.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-ocr-focus-type.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-ocr-type-contract.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-ocr-type.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-capability-request.mjs"
@@ -1026,6 +1056,7 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-ocr-assessment.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-ocr-click.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-ocr-type.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-ocr-focus-type.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-assessment-acceptance.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-reviewed-cycle.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-plugin-refresh.mjs"
@@ -1067,7 +1098,7 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-local-ocr.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-local-ocr.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 256 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 260 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -1907,6 +1938,7 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-assessment.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-click.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-type.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-focus-type.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-declarative-evolution.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-auth.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-operator-auth.mjs"
@@ -1919,7 +1951,7 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/packages/shared-client/src/service-descriptors.mjs"
     || -w "$observer_ui_server"
     || -e "$observer_ui_out/share/openclaw/apps/observer-ui/scripts"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 86 ]]; then
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 87 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi
@@ -1996,6 +2028,9 @@ if (health.ok !== true
   || !html.includes('id="ocr-type-ai-workspace-button"')
   || !client.includes("act.ai.workspace.ocr_type")
   || !client.includes("nixsoma-ai-workspace-ocr-type-v0")
+  || !html.includes('id="ocr-focus-type-ai-workspace-button"')
+  || !client.includes("act.ai.workspace.ocr_focus_type")
+  || !client.includes("nixsoma-ai-workspace-ocr-focus-type-v0")
   || !html.includes('id="run-ai-workspace-reviewed-cycle-button"')
   || !client.includes("act.ai.workspace.reviewed_cycle")
   || !client.includes("nixsoma-ai-workspace-reviewed-cycle-v0")

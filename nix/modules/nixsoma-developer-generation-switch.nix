@@ -4,6 +4,22 @@ let
   inherit (lib) mkEnableOption mkIf mkOption types;
   cfg = config.services.openclaw.developerGenerationSwitch;
   commandName = "nixsoma-dev-generation-switch";
+  markerPath = "nixsoma/developer-generation-switch-target";
+  markerText = ''
+    registry=nixsoma-developer-generation-switch-target-v0
+    systemName=${cfg.systemName}
+    profile=${config.services.openclaw.profile}
+    bootIsContainer=${if config.boot.isContainer then "true" else "false"}
+  '';
+  protectedPaths = [
+    "kernel"
+    "initrd"
+    "etc/fstab"
+    "etc/systemd/system/display-manager.service"
+    "etc/systemd/system/NetworkManager.service"
+    "etc/systemd/system/sshd.service"
+  ];
+  protectedPathArgs = builtins.concatStringsSep " " (map lib.escapeShellArg protectedPaths);
   switchHelper = pkgs.writeShellApplication {
     name = commandName;
     text = ''
@@ -43,6 +59,27 @@ let
         printf '%s\n' 'generation is not a root-owned switchable NixOS closure.' >&2
         exit 65
       fi
+
+      current_marker="/run/current-system/etc/${markerPath}"
+      candidate_marker="$generation/etc/${markerPath}"
+      if [[ ! -f "$current_marker" || ! -f "$candidate_marker" ]] \
+        || ! ${pkgs.gnugrep}/bin/grep -Fxq -- 'bootIsContainer=false' "$current_marker" \
+        || ! ${pkgs.diffutils}/bin/cmp --silent -- "$current_marker" "$candidate_marker"; then
+        printf '%s\n' 'generation is not bound to the current physical NixSoma deployment target.' >&2
+        exit 65
+      fi
+
+      for relative_path in ${protectedPathArgs}; do
+        current_path="/run/current-system/$relative_path"
+        candidate_path="$generation/$relative_path"
+        if [[ ! -e "$current_path" \
+          || ! -e "$candidate_path" \
+          || "$(${pkgs.coreutils}/bin/realpath -e -- "$current_path")" \
+            != "$(${pkgs.coreutils}/bin/realpath -e -- "$candidate_path")" ]]; then
+          printf 'generation changes protected physical-host path: %s\n' "$relative_path" >&2
+          exit 65
+        fi
+      done
       ${pkgs.nix}/bin/nix-store --query --hash "$generation" >/dev/null
 
       exec 9> /run/lock/nixsoma-dev-generation-switch.lock
@@ -85,6 +122,7 @@ in
     ];
 
     environment.systemPackages = [ switchHelper ];
+    environment.etc.${markerPath}.text = markerText;
     security.sudo.enable = true;
     security.sudo.extraRules = [
       {

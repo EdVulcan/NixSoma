@@ -5,6 +5,10 @@ import {
 } from "./ai-workspace-ocr-click-contract.mjs";
 import { createAiWorkspaceOcrDecisionSession } from "./ai-workspace-ocr-decision-session.mjs";
 import {
+  executeAiWorkspaceOcrNativeClick,
+  projectAiWorkspaceOcrClickTarget,
+} from "./ai-workspace-ocr-native-actions.mjs";
+import {
   aiWorkspaceOcrSurfaceMatches,
   compactAiWorkspaceOcrEvidence,
 } from "./ai-workspace-ocr-context.mjs";
@@ -27,20 +31,6 @@ function publicDecision(decision) {
     actionId: decision?.actionId === "click_item" ? "click_item" : "no_op",
     itemOrdinal: Number.isInteger(decision?.itemOrdinal) ? decision.itemOrdinal : null,
     confidence: typeof decision?.confidence === "number" ? decision.confidence : null,
-  };
-}
-
-function selectedItemEvidence(item) {
-  return item ? {
-    itemOrdinal: item.ordinal,
-    itemBounds: item.bounds,
-    targetX: Math.floor(item.bounds.x + item.bounds.width / 2),
-    targetY: Math.floor(item.bounds.y + item.bounds.height / 2),
-  } : {
-    itemOrdinal: null,
-    itemBounds: null,
-    targetX: null,
-    targetY: null,
   };
 }
 
@@ -287,23 +277,16 @@ export function createAiWorkspaceOcrClick({
         verificationContext,
       });
     }
-    const target = selectedItemEvidence(item);
-    const actionBody = {
-      x: target.targetX,
-      y: target.targetY,
-      button: "left",
-      surfaceId: verificationContext.observation.surface.surfaceId,
-      inventorySequence: verificationContext.observation.inventorySequence,
-      compositorFrame: {
-        registry: verificationContext.observation.frame.registry,
-        socketName: verificationContext.observation.frame.socketName,
-        width: verificationContext.observation.frame.width,
-        height: verificationContext.observation.frame.height,
-        sha256: verificationContext.observation.frame.sha256,
-        sequence: verificationContext.observation.frame.sequence,
-        capturedAt: verificationContext.observation.frame.capturedAt,
-      },
-    };
+    const target = projectAiWorkspaceOcrClickTarget(item);
+    if (!target) {
+      return finaliseFallback("item_ordinal_unavailable", {
+        providerDecision,
+        decisionContext,
+        verificationContext,
+      });
+    }
+    const surfaceId = verificationContext.observation.surface.surfaceId;
+    const inventorySequence = verificationContext.observation.inventorySequence;
     await publishRequiredAudit("ai_workspace.ocr_click_action_authorized", {
       registry: AI_WORKSPACE_OCR_CLICK_REGISTRY,
       at: now(),
@@ -316,8 +299,8 @@ export function createAiWorkspaceOcrClick({
       ...projectAiWorkspaceTaskEvidence(decisionContext.taskObjectiveBinding),
       actionId: "click_item",
       ...target,
-      surfaceId: actionBody.surfaceId,
-      inventorySequence: actionBody.inventorySequence,
+      surfaceId,
+      inventorySequence,
       maximumActions: 1,
       automaticContinuation: false,
     });
@@ -338,60 +321,21 @@ export function createAiWorkspaceOcrClick({
       });
     }
 
-    let response;
-    try {
-      response = await postJson(`${screenActUrl}/act/mouse/click`, actionBody, {
-        grantContext: {
-          taskId,
-          stepId: null,
-          capabilityId: "act.screen.pointer_keyboard",
-          intent: "mouse.click",
-        },
-      });
-    } catch {
-      return finaliseFallback("action_outcome_unknown", {
+    const execution = await executeAiWorkspaceOcrNativeClick({
+      postJson,
+      screenActUrl,
+      taskId,
+      context: verificationContext,
+      item,
+    });
+    if (!execution.ok) {
+      return finaliseFallback(execution.reason, {
         providerDecision,
         decisionContext,
         verificationContext,
       });
     }
-    const mediation = response?.action?.mediation;
-    const input = mediation?.nativeInput;
-    const actionExecuted = response?.action?.kind === "mouse.click"
-      && response.action.result === "executed-ai-compositor"
-      && mediation?.accepted === true
-      && input?.operation === "pointer_click"
-      && input.x === actionBody.x
-      && input.y === actionBody.y
-      && input.surfaceId === actionBody.surfaceId
-      && input.inventorySequence === actionBody.inventorySequence
-      && input.receiptMatched === true
-      && input.inventoryMatched === true
-      && input.surfaceMatched === true
-      && input.frameMatched === true
-      && input.frameFresh === true
-      && input.sequenceAdvanced === true
-      && input.frameChanged === true;
-    if (!actionExecuted) {
-      return finaliseFallback("action_rejected", {
-        providerDecision,
-        decisionContext,
-        verificationContext,
-      });
-    }
-
-    const action = {
-      actionId: "click_item",
-      itemOrdinal: item.ordinal,
-      bounds: item.bounds,
-      x: actionBody.x,
-      y: actionBody.y,
-      surfaceId: actionBody.surfaceId,
-      inventorySequence: actionBody.inventorySequence,
-      executed: true,
-      receiptMatched: true,
-      frameChanged: true,
-    };
+    const action = execution.action;
     let postActionContext;
     try {
       postActionContext = await observeContext(now());
@@ -446,8 +390,8 @@ export function createAiWorkspaceOcrClick({
       status: "executed",
       actionId: "click_item",
       ...target,
-      surfaceId: actionBody.surfaceId,
-      inventorySequence: actionBody.inventorySequence,
+      surfaceId: action.surfaceId,
+      inventorySequence: action.inventorySequence,
       receiptMatched: true,
       frameChanged: true,
       actionExecuted: true,

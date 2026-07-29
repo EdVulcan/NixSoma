@@ -8,6 +8,7 @@ const ASSESSMENT_REGISTRY = "nixsoma-ai-workspace-task-assessment-v0";
 const OCR_ASSESSMENT_REGISTRY = "nixsoma-ai-workspace-ocr-assessment-v0";
 const OCR_CLICK_REGISTRY = "nixsoma-ai-workspace-ocr-click-v0";
 const OCR_TYPE_REGISTRY = "nixsoma-ai-workspace-ocr-type-v0";
+const OCR_FOCUS_TYPE_REGISTRY = "nixsoma-ai-workspace-ocr-focus-type-v0";
 const SCROLL_ACTIONS = new Set(["scroll_up", "scroll_down"]);
 const ALLOWED_ACTIONS = new Set([
   "no_op", "scroll_up", "scroll_down", "click_item", "type_item",
@@ -162,6 +163,7 @@ export function createAiWorkspaceRunCoordinator({
   ocrAssessment,
   ocrClick,
   ocrType,
+  ocrFocusType,
   publishAuditEvent = async () => ({ ok: true }),
   now = () => new Date().toISOString(),
 } = {}) {
@@ -330,6 +332,8 @@ export function createAiWorkspaceRunCoordinator({
     fallbackPrefix,
     decision,
     action,
+    actions,
+    maximumActions = 1,
   }) {
     if (inFlight) {
       return typeof owner?.localFallback === "function"
@@ -340,12 +344,13 @@ export function createAiWorkspaceRunCoordinator({
             status: "local_fallback",
             decision,
             action,
+            actions,
             fallback: { reason: `${fallbackPrefix}_workspace_run_in_flight` },
             evidence: { taskId: input?.taskId ?? null, completionAudit: false },
             governance: {
               providerCalled: false,
               maximumProviderCalls: 1,
-              maximumActions: 1,
+              maximumActions,
               actionExecuted: false,
               taskMutated: false,
               automaticContinuation: false,
@@ -361,12 +366,13 @@ export function createAiWorkspaceRunCoordinator({
             status: "local_fallback",
             decision,
             action,
+            actions,
             fallback: { reason: `${fallbackPrefix}_runtime_unavailable` },
             evidence: { taskId: input?.taskId ?? null, completionAudit: false },
             governance: {
               providerCalled: false,
               maximumProviderCalls: 1,
-              maximumActions: 1,
+              maximumActions,
               actionExecuted: false,
               taskMutated: false,
               automaticContinuation: false,
@@ -411,6 +417,31 @@ export function createAiWorkspaceRunCoordinator({
         inventorySequence: null,
         executed: false,
       },
+    });
+  }
+
+  function invokeOcrFocusType(input) {
+    const inputEvidence = {
+      registry: "openclaw-write-only-input-evidence-v0",
+      charCount: 0,
+      byteLength: 0,
+      maxChars: 32,
+      truncated: false,
+      textExposed: false,
+      persisted: false,
+    };
+    return invokeOcrAction(ocrFocusType, input, {
+      registry: OCR_FOCUS_TYPE_REGISTRY,
+      fallbackPrefix: "ai_workspace_ocr_focus_type",
+      decision: {
+        actionId: "no_op",
+        itemOrdinal: null,
+        inputEvidence,
+        confidence: null,
+      },
+      action: null,
+      actions: [],
+      maximumActions: 2,
     });
   }
 
@@ -562,5 +593,6 @@ export function createAiWorkspaceRunCoordinator({
     ocrAssessment: { invoke: invokeOcrAssessment },
     ocrClick: { invoke: invokeOcrClick },
     ocrType: { invoke: invokeOcrType },
+    ocrFocusType: { invoke: invokeOcrFocusType },
   };
 }

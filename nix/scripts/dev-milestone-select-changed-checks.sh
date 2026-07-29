@@ -323,6 +323,24 @@ const aiWorkspaceOcrTypeSlice = changedFiles.length > 0
   && changedFiles.every((file) => aiWorkspaceOcrTypeFiles.has(file))
   && changedFiles.some((file) =>
     file === "services/openclaw-core/src/ai-workspace-ocr-type.mjs");
+const aiWorkspaceOcrFocusTypeFiles = new Set([
+  ...aiWorkspaceOcrTypeFiles,
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-focus-type.mjs",
+  "apps/observer-ui/test/ai-workspace-ocr-focus-type.test.mjs",
+  "nix/modules/nixsoma-developer-generation-switch.nix",
+  "nix/scripts/dev-ai-workspace-ocr-focus-type-live-check.sh",
+  "services/openclaw-core/src/ai-workspace-ocr-native-actions.mjs",
+  "services/openclaw-core/src/ai-workspace-ocr-focus-type-contract.mjs",
+  "services/openclaw-core/src/ai-workspace-ocr-focus-type.mjs",
+  "services/openclaw-core/src/capability-runtime-ai-workspace-ocr-focus-type.mjs",
+  "services/openclaw-core/test/ai-workspace-ocr-focus-type-contract.test.mjs",
+  "services/openclaw-core/test/ai-workspace-ocr-focus-type.test.mjs",
+  "services/openclaw-core/test/capability-runtime-ai-workspace-ocr-focus-type.test.mjs",
+]);
+const aiWorkspaceOcrFocusTypeSlice = changedFiles.length > 0
+  && changedFiles.every((file) => aiWorkspaceOcrFocusTypeFiles.has(file))
+  && changedFiles.some((file) =>
+    file === "services/openclaw-core/src/ai-workspace-ocr-focus-type.mjs");
 const aiWorkspaceLocalOcrFiles = new Set([
   "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
   "apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs",
@@ -1150,6 +1168,16 @@ for (const file of changedFiles) {
     selectName(windowsPathBudgetCheck);
     selectName("body-config");
     selectName("ai-workspace-operator-click-live");
+    continue;
+  }
+  if (aiWorkspaceOcrFocusTypeSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-shared-package-contracts");
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("ai-workspace-ocr-focus-type-live");
     continue;
   }
   if (aiWorkspaceOcrTypeSlice) {

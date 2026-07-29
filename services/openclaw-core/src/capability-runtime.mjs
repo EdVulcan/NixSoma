@@ -31,6 +31,7 @@ import { createAiWorkspaceAssessmentCapabilityHandlers } from "./capability-runt
 import { createAiWorkspaceLocalOcrCapabilityHandlers } from "./capability-runtime-ai-workspace-local-ocr.mjs";
 import { createAiWorkspaceOcrAssessmentCapabilityHandlers } from "./capability-runtime-ai-workspace-ocr-assessment.mjs";
 import { createAiWorkspaceOcrClickCapabilityHandlers } from "./capability-runtime-ai-workspace-ocr-click.mjs";
+import { createAiWorkspaceOcrFocusTypeCapabilityHandlers } from "./capability-runtime-ai-workspace-ocr-focus-type.mjs";
 import { createAiWorkspaceOcrTypeCapabilityHandlers } from "./capability-runtime-ai-workspace-ocr-type.mjs";
 import { createAiWorkspaceAssessmentAcceptanceCapabilityHandlers } from "./capability-runtime-ai-workspace-assessment-acceptance.mjs";
 import { createAiWorkspaceSingleStepCapabilityHandlers } from "./capability-runtime-ai-workspace-single-step.mjs";
@@ -67,6 +68,7 @@ export function createCapabilityRuntime(deps) {
     aiWorkspaceAssessment,
     aiWorkspaceOcrAssessment,
     aiWorkspaceOcrClick,
+    aiWorkspaceOcrFocusType,
     aiWorkspaceOcrType,
     aiWorkspaceSingleStep,
     aiWorkspaceBoundedRun,
@@ -248,6 +250,9 @@ export function createCapabilityRuntime(deps) {
   });
   const aiWorkspaceOcrClickHandlers = createAiWorkspaceOcrClickCapabilityHandlers({
     runtime: aiWorkspaceOcrClick,
+  });
+  const aiWorkspaceOcrFocusTypeHandlers = createAiWorkspaceOcrFocusTypeCapabilityHandlers({
+    runtime: aiWorkspaceOcrFocusType,
   });
   const aiWorkspaceOcrTypeHandlers = createAiWorkspaceOcrTypeCapabilityHandlers({
     runtime: aiWorkspaceOcrType,
@@ -522,6 +527,13 @@ export function createCapabilityRuntime(deps) {
     );
     if (aiWorkspaceOcrClick.handled) {
       return aiWorkspaceOcrClick.result;
+    }
+    const aiWorkspaceOcrFocusType = await aiWorkspaceOcrFocusTypeHandlers.callBackend(
+      capability,
+      request,
+    );
+    if (aiWorkspaceOcrFocusType.handled) {
+      return aiWorkspaceOcrFocusType.result;
     }
     const aiWorkspaceOcrType = await aiWorkspaceOcrTypeHandlers.callBackend(
       capability,
@@ -841,6 +853,11 @@ export function createCapabilityRuntime(deps) {
       aiWorkspaceOcrClickHandlers.summariseResult(capability, result);
     if (aiWorkspaceOcrClickSummary) {
       return aiWorkspaceOcrClickSummary;
+    }
+    const aiWorkspaceOcrFocusTypeSummary =
+      aiWorkspaceOcrFocusTypeHandlers.summariseResult(capability, result);
+    if (aiWorkspaceOcrFocusTypeSummary) {
+      return aiWorkspaceOcrFocusTypeSummary;
     }
     const aiWorkspaceOcrTypeSummary =
       aiWorkspaceOcrTypeHandlers.summariseResult(capability, result);
@@ -1300,6 +1317,11 @@ export function createCapabilityRuntime(deps) {
     if (aiWorkspaceOcrClickAuthorization.handled) {
       serverApproval = aiWorkspaceOcrClickAuthorization.authorization;
     }
+    const aiWorkspaceOcrFocusTypeAuthorization =
+      aiWorkspaceOcrFocusTypeHandlers.authorizeRequest(capability, request, body);
+    if (aiWorkspaceOcrFocusTypeAuthorization.handled) {
+      serverApproval = aiWorkspaceOcrFocusTypeAuthorization.authorization;
+    }
     const aiWorkspaceOcrTypeAuthorization =
       aiWorkspaceOcrTypeHandlers.authorizeRequest(capability, request, body);
     if (aiWorkspaceOcrTypeAuthorization.handled) {
@@ -1369,6 +1391,14 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: aiWorkspaceOcrClickValidationError },
+      };
+    }
+    const aiWorkspaceOcrFocusTypeValidationError =
+      aiWorkspaceOcrFocusTypeHandlers.validateRequest(capability, request, body);
+    if (aiWorkspaceOcrFocusTypeValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: aiWorkspaceOcrFocusTypeValidationError },
       };
     }
     const aiWorkspaceOcrTypeValidationError =

@@ -26,6 +26,7 @@ export function createAiWorkspaceOcrDecisionSession({
   readActionId,
   auditEventName,
   successResult,
+  maximumActions = 1,
   egressAudit = {},
   now = () => new Date().toISOString(),
 } = {}) {
@@ -51,7 +52,7 @@ export function createAiWorkspaceOcrDecisionSession({
       objectiveContentHash: null,
       taskVersionHash: null,
       registry,
-      maximumActions: 1,
+      maximumActions,
       allowedActions: [...allowedActions],
       callerPromptAccepted: false,
       automaticContinuation: false,
@@ -73,7 +74,7 @@ export function createAiWorkspaceOcrDecisionSession({
           task: getTaskById(taskId),
           taskId,
           workViewState: decisionContext.workViewState,
-          maximumActions: 1,
+          maximumActions,
         });
         if (!taskObjectiveBinding.ok) throw new Error(taskObjectiveBinding.reason);
         decisionContext.taskObjectiveBinding = taskObjectiveBinding;
@@ -126,7 +127,7 @@ export function createAiWorkspaceOcrDecisionSession({
       task: getTaskById(taskId),
       taskId,
       workViewState: verificationContext.workViewState,
-      maximumActions: 1,
+      maximumActions,
     });
     if (!aiWorkspaceTaskObjectiveBindingMatches(
       decisionContext.taskObjectiveBinding,

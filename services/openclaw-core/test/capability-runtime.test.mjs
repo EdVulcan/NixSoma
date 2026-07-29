@@ -129,6 +129,7 @@ function createHarness(overrides = {}) {
     aiWorkspaceAssessment: overrides.aiWorkspaceAssessment,
     aiWorkspaceOcrAssessment: overrides.aiWorkspaceOcrAssessment,
     aiWorkspaceOcrClick: overrides.aiWorkspaceOcrClick,
+    aiWorkspaceOcrFocusType: overrides.aiWorkspaceOcrFocusType,
     aiWorkspaceOcrType: overrides.aiWorkspaceOcrType,
     aiWorkspaceSingleStep: overrides.aiWorkspaceSingleStep,
     aiWorkspaceBoundedRun: overrides.aiWorkspaceBoundedRun,
@@ -477,6 +478,105 @@ test("capability runtime exposes standing-authorized objective-bound OCR type", 
   assert.equal(response.response.invocation.summary.postActionVerified, true);
   assert.equal(response.response.invocation.summary.arbitraryKeyboardInput, false);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("K7M2Q9"), false);
+});
+
+test("capability runtime exposes standing-authorized fixed OCR focus and type", async () => {
+  const taskId = "task-ocr-focus-type";
+  const inputEvidence = {
+    registry: "openclaw-write-only-input-evidence-v0",
+    charCount: 6,
+    byteLength: 6,
+    maxChars: 32,
+    truncated: false,
+    textExposed: false,
+    persisted: false,
+  };
+  const { runtime, state } = createHarness({
+    aiWorkspaceOcrFocusType: {
+      invoke: async () => ({
+        ok: true,
+        registry: "nixsoma-ai-workspace-ocr-focus-type-v0",
+        status: "executed",
+        decision: { actionId: "focus_and_type", itemOrdinal: 7, inputEvidence, confidence: 0.95 },
+        actions: [
+          { index: 1, actionId: "focus_item", itemOrdinal: 7, surfaceId: 42, executed: true },
+          { index: 2, actionId: "type_text", inputEvidence, surfaceId: 42, executed: true },
+        ],
+        evidence: {
+          taskId,
+          taskStatus: "running",
+          objectiveContentHash: "a".repeat(64),
+          taskVersionHash: "b".repeat(64),
+          contextContentHash: "c".repeat(64),
+          requestContentHash: "d".repeat(64),
+          responseContentHash: "e".repeat(64),
+          frameContentHash: "f".repeat(64),
+          frameSequence: 7,
+          ocrSceneContentHash: "1".repeat(64),
+          ocrBindingHash: "2".repeat(64),
+          verificationFrameContentHash: "3".repeat(64),
+          verificationFrameSequence: 8,
+          focusFrameContentHash: "4".repeat(64),
+          focusFrameSequence: 10,
+          postActionFrameContentHash: "5".repeat(64),
+          postActionFrameSequence: 12,
+          itemOrdinal: 7,
+          inputEvidence,
+          actionCount: 2,
+          focusActionExecuted: true,
+          focusActionVerified: true,
+          typeActionExecuted: true,
+          postActionVerified: true,
+          completionAudit: true,
+        },
+        governance: {
+          providerCalled: true,
+          localOcrBound: true,
+          localOcrRevalidated: true,
+          focusRevalidated: true,
+          currentFrameBound: true,
+          currentActiveSurfaceBound: true,
+          ocrItemOrdinalBound: true,
+          taskObjectiveInputBound: true,
+          providerGeneratedInput: true,
+          pointerInput: true,
+          keyboardInput: true,
+          hotkeyInput: false,
+          enterKeyInput: false,
+          inputTextExposed: false,
+          inputTextPersisted: false,
+          taskObjectiveBound: true,
+          taskObjectiveProviderEgress: true,
+          rawTaskGoalProviderEgress: false,
+          ocrTextProviderEgress: true,
+          ocrTextPersistedLocally: false,
+          pixelsProviderEgress: false,
+          arbitraryPointerInput: false,
+          arbitraryKeyboardInput: false,
+          providerRetentionControlledExternally: true,
+        },
+      }),
+    },
+  });
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find(
+    (item) => item.id === "act.ai.workspace.ocr_focus_type",
+  );
+  assert.equal(capability?.kind, "actuator");
+  assert.deepEqual(capability?.domains, ["cross_boundary"]);
+  assert.equal(capability?.governance, "standing_authorization");
+  const response = await runtime.invokeCapability({
+    capabilityId: "act.ai.workspace.ocr_focus_type",
+    taskId,
+    params: { confirm: true },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.response.result.status, "executed");
+  assert.equal(response.response.invocation.summary.kind, "ai.workspace.ocr_focus_type");
+  assert.equal(response.response.invocation.summary.actionCount, 2);
+  assert.equal(response.response.invocation.summary.maximumActions, 2);
+  assert.equal(response.response.invocation.summary.postActionVerified, true);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("QWERTY"), false);
 });
 
 test("capability runtime rejects caller-controlled local OCR fields", async () => {

@@ -1,6 +1,6 @@
 # NixSoma Forward Work Directive
 
-Updated: 2026-07-29
+Updated: 2026-07-30
 
 This is the active guidance document for continuing NixSoma development. The
 enhanced source preservation and governed capability migration that originally
@@ -47,18 +47,18 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
-triage/repair-promotion bridge, and twenty-three deployed Level 4 graphical
-identity slices through one objective-bound OCR native type. One
+triage/repair-promotion bridge, and twenty-four deployed Level 4 graphical
+identity slices through one fixed OCR focus-then-type interaction. One
 explicit operator trigger can request a schema-bound no-op, vertical scroll,
 semantic click, or write-only semantic type decision over bounded active-browser
 content and execute at most one existing action; separate explicit reads can
 return bounded transient local OCR or one read-only provider assessment without
 pixel egress. Direct operator interaction also includes one armed projected
 click and one write-only 1-32 character native type; one reviewed task may
-also request that its exact allowlisted objective value be typed after
-provider selection and local OCR revalidation. All 1152 workspace tests
+also request that one objective-selected OCR item be focused and receive its
+exact allowlisted objective value through a fixed two-action sequence. All 1169 workspace tests
 and typecheck pass, the body-config and event-audit integration checks pass, the
-822-entry milestone registry and 1009-file script audit pass, and
+823-entry milestone registry and 1010-file script audit pass, and
 the Windows path budget has no file over 160 repository-relative characters.
 GitHub CI now enforces
 Node 22 typecheck, workspace tests, milestone registry/script audit, and the
@@ -66,13 +66,16 @@ same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/m392zajqa4h91023swznpbhcjaa1ilq0-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/4mw7p3r3amcfp48njvjz20zpykf14qcw-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, bounded local OCR, the
-task-bound OCR assessment, OCR ordinal-click, and objective-bound OCR-type
-owners, plus Observer controls for one-shot click and bounded native type. All
-nine health endpoints pass.
+task-bound OCR assessment, OCR ordinal-click, objective-bound OCR-type, and
+fixed OCR focus-then-type owners, plus Observer controls for one-shot click and
+bounded native type. Core still receives the operator token through systemd
+`LoadCredential`; only `edvulcan` has exact-file read plus directory-traverse
+ACL, without directory listing or execution-private-key access. All nine health
+endpoints pass.
 
 One real request-bound DeepSeek advisory call completed through task
 `62ba696a-945e-4f37-b65e-8a6783316386` and approval
@@ -2724,7 +2727,48 @@ from execution evidence all matched. Direct operator type and OCR click
 regressions also passed. Freeze this one-shot lane. The next real candidate is
 a separately reviewed fixed two-action OCR focus-then-type form interaction;
 Enter, repeat, open loops, broad keyboard/process/window authority,
-parent-display access, root, and host mutation remain deferred.
+parent-display access, root, and host mutation remain deferred. That candidate
+is completed below.
+
+## Completed Level 4 OCR Focus Then Type
+
+The twenty-fourth Level 4 vertical slice is deployed as
+`act.ai.workspace.ocr_focus_type`. The caller provides only a reviewed
+`taskId` and `confirm=true`; the entire objective must match
+`Focus the OCR item containing "TARGET" and type exact text "VALUE" into the active surface`.
+`TARGET` is a bounded safe substring and `VALUE` is 1-32 characters from
+`[A-Za-z0-9 .,_-]`. One standing-provider call may return only
+`focus_and_type + itemOrdinal +` the exact objective value, or `no_op`.
+
+Core requires the provider-visible OCR projection, task objective, surface,
+inventory, and authority to remain unchanged before action. It verifies the
+selected current item contains `TARGET`, derives coordinates locally, executes
+one native opcode-4 click, obtains a fresh same-surface OCR/frame/task binding,
+then executes one native opcode-5 type and requires final OCR containing
+`VALUE`. Both actions require independent pre-audits and native receipts. The
+capability has one provider call, at most two actions, no retry or loop, and no
+Enter, hotkey, alternate input value, arbitrary coordinate, task mutation,
+parent-display access, root, or host mutation.
+
+All 1169 workspace tests, typecheck, 823 registry entries, the 1010-file script
+audit, Windows path budget, shared contracts, body-config, and exact 260-file
+Core and 87-file Observer closures pass. Generation
+`/nix/store/4mw7p3r3amcfp48njvjz20zpykf14qcw-nixos-system-nixos-26.05.4808.569d57850992`
+is active; `yzqrwjh...` is previous. The physical gate bound task
+`158bd267-e2b2-4a13-9a38-ce722ac6db28`, surface 14, and matching provider and
+preprobe ordinal 14 to one provider call, native opcodes `[4,5]`, four owner OCR
+observations, two receipts, final OCR, completion audit, an unchanged task, and
+no canary in execution evidence. Objective-bound OCR type and OCR ordinal-click
+regressions also passed.
+
+The physical deployment path now rejects repository container-harness closures
+and any candidate that changes kernel, initrd, fstab, GDM, NetworkManager, or
+SSH paths. The fixed helper's absolute executable dependencies are checked in
+the built candidate before switching. Freeze this focus-and-type lane. The next
+real candidate is a governed current-tab close/lifecycle owner for the AI-owned
+browser, motivated by the physically observed tab accumulation and BiDi timeout;
+arbitrary tab selection, automatic background cleanup, process/window control,
+and desktop takeover remain deferred.
 
 ## Identity-Upgrade Alignment
 

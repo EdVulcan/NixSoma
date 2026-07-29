@@ -9,6 +9,7 @@ function createPlanBuilderHarness({
   createAiWorkspaceAssessmentImpl,
   createAiWorkspaceOcrAssessmentImpl,
   createAiWorkspaceOcrClickImpl,
+  createAiWorkspaceOcrFocusTypeImpl,
   createAiWorkspaceOcrTypeImpl,
   createAiWorkspaceSingleStepImpl,
   createAiWorkspaceRunCoordinatorImpl,
@@ -119,6 +120,7 @@ function createPlanBuilderHarness({
     createAiWorkspaceAssessmentImpl,
     createAiWorkspaceOcrAssessmentImpl,
     createAiWorkspaceOcrClickImpl,
+    createAiWorkspaceOcrFocusTypeImpl,
     createAiWorkspaceOcrTypeImpl,
     createAiWorkspaceSingleStepImpl,
     createAiWorkspaceRunCoordinatorImpl,
@@ -640,5 +642,99 @@ test("plan builder assembles OCR type with shared provider and screen action own
   assert.equal(result.statusCode, 200);
   assert.equal(result.response.invocation.summary.kind, "ai.workspace.ocr_type");
   assert.equal(result.response.invocation.summary.inputEvidence.charCount, 6);
+  assert.equal(result.response.invocation.summary.postActionVerified, true);
+});
+
+test("plan builder assembles OCR focus type through the shared one-call coordinator", async () => {
+  const assembly = [];
+  const standingOwner = {
+    restoreState: () => ({ ok: true }),
+    requestDecision: async () => ({ ok: false, reason: "disabled" }),
+  };
+  const requiredAudit = async () => ({ ok: true });
+  const inputEvidence = {
+    registry: "openclaw-write-only-input-evidence-v0",
+    charCount: 6,
+    byteLength: 6,
+    maxChars: 32,
+    truncated: false,
+    textExposed: false,
+    persisted: false,
+  };
+  const planBuilder = createPlanBuilderHarness({
+    acpxDraft: () => ({ ok: true }),
+    publishAuditEvent: requiredAudit,
+    createStandingProviderAdvisoryImpl: () => standingOwner,
+    createAiWorkspaceOcrFocusTypeImpl: (deps) => {
+      assembly.push(deps);
+      return {
+        invoke: async ({ taskId }) => ({
+          ok: true,
+          registry: "nixsoma-ai-workspace-ocr-focus-type-v0",
+          status: "executed",
+          decision: { actionId: "focus_and_type", itemOrdinal: 7, inputEvidence, confidence: 0.9 },
+          actions: [
+            { index: 1, actionId: "focus_item", itemOrdinal: 7, surfaceId: 42, executed: true },
+            { index: 2, actionId: "type_text", inputEvidence, surfaceId: 42, executed: true },
+          ],
+          evidence: {
+            taskId,
+            itemOrdinal: 7,
+            inputEvidence,
+            actionCount: 2,
+            focusActionExecuted: true,
+            focusActionVerified: true,
+            typeActionExecuted: true,
+            postActionVerified: true,
+            completionAudit: true,
+          },
+          governance: {
+            providerCalled: true,
+            localOcrBound: true,
+            localOcrRevalidated: true,
+            focusRevalidated: true,
+            currentFrameBound: true,
+            currentActiveSurfaceBound: true,
+            ocrItemOrdinalBound: true,
+            taskObjectiveInputBound: true,
+            providerGeneratedInput: true,
+            pointerInput: true,
+            keyboardInput: true,
+            hotkeyInput: false,
+            enterKeyInput: false,
+            inputTextExposed: false,
+            inputTextPersisted: false,
+            taskObjectiveBound: true,
+            taskObjectiveProviderEgress: true,
+            rawTaskGoalProviderEgress: false,
+            ocrTextProviderEgress: true,
+            ocrTextPersistedLocally: false,
+            pixelsProviderEgress: false,
+            arbitraryPointerInput: false,
+            arbitraryKeyboardInput: false,
+            providerRetentionControlledExternally: true,
+          },
+        }),
+        localFallback: () => ({ status: "local_fallback" }),
+      };
+    },
+  });
+  const result = await planBuilder.invokeCapability({
+    capabilityId: "act.ai.workspace.ocr_focus_type",
+    taskId: "task-reviewed-1",
+    params: { confirm: true },
+  });
+  assert.equal(assembly.length, 1);
+  assert.equal(assembly[0].standingAdvisory, standingOwner);
+  assert.equal(assembly[0].publishAuditEvent, requiredAudit);
+  assert.equal(assembly[0].sessionManagerUrl, "http://127.0.0.1:4102");
+  assert.equal(assembly[0].screenActUrl, "http://127.0.0.1:4105");
+  assert.equal(typeof assembly[0].getTaskById, "function");
+  assert.equal(typeof assembly[0].fetchJson, "function");
+  assert.equal(typeof assembly[0].postJson, "function");
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invocation.summary.kind, "ai.workspace.ocr_focus_type");
+  assert.equal(result.response.invocation.summary.actionCount, 2);
+  assert.equal(result.response.invocation.summary.maximumActions, 2);
   assert.equal(result.response.invocation.summary.postActionVerified, true);
 });

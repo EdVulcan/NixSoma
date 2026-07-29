@@ -191,7 +191,7 @@ function harness({
       throw new Error(`unexpected fetch: ${url}`);
     },
     postJson: async (url, body, options) => {
-      calls.action.push({ url, body, options });
+      calls.action.push({ url, body: structuredClone(body), options });
       if (throwAction) throw new Error("transport detail");
       if (rejectAction) return { ok: false };
       return {

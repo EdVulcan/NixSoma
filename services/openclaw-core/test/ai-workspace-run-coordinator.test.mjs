@@ -447,6 +447,39 @@ test("workspace run coordinator serializes OCR type with every workspace decisio
   assert.equal((await pending).status, "executed");
 });
 
+test("workspace run coordinator serializes OCR focus type and retains its two-action budget", async () => {
+  let releaseFocusType;
+  let focusTypeStarted;
+  const started = new Promise((resolve) => { focusTypeStarted = resolve; });
+  const release = new Promise((resolve) => { releaseFocusType = resolve; });
+  const localFallback = (reason) => ({ status: "local_fallback", fallback: { reason } });
+  const singleStep = {
+    invoke: async () => stepResult({ actionId: "no_op", actionExecuted: false }),
+    localFallback,
+  };
+  const ocrFocusType = {
+    async invoke() {
+      focusTypeStarted();
+      await release;
+      return { status: "executed", actions: [{ actionId: "focus_item" }, { actionId: "type_text" }] };
+    },
+    localFallback,
+  };
+  const coordinator = createAiWorkspaceRunCoordinator({ singleStep, ocrFocusType });
+  const pending = coordinator.ocrFocusType.invoke({ taskId: TASK_ID });
+  await started;
+  const blocked = await coordinator.ocrType.invoke({ taskId: TASK_ID });
+  assert.equal(blocked.status, "local_fallback");
+  assert.equal(blocked.fallback.reason, "ai_workspace_ocr_type_workspace_run_in_flight");
+  releaseFocusType();
+  assert.equal((await pending).status, "executed");
+
+  const unavailable = createAiWorkspaceRunCoordinator({ singleStep });
+  const result = await unavailable.ocrFocusType.invoke({ taskId: TASK_ID });
+  assert.equal(result.governance.maximumActions, 2);
+  assert.deepEqual(result.actions, []);
+});
+
 test("bounded workspace run reports an unknown second outcome without retry", async () => {
   const { calls, coordinator } = harness([
     stepResult({ actionId: "scroll_up" }),

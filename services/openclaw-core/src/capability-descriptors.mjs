@@ -108,6 +108,18 @@ export function buildBaseCapabilities({
       description: "Request one audited task-bound provider decision and type only the exact bounded value named by the reviewed objective into the same OCR-observed active surface with post-action OCR verification.",
     },
     {
+      id: "act.ai.workspace.ocr_focus_type",
+      name: "AI Workspace OCR Focus And Type",
+      kind: "actuator",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/capabilities/invoke`,
+      intents: ["ai.workspace.ocr_focus_type"],
+      domains: ["cross_boundary"],
+      risk: "medium",
+      governance: "standing_authorization",
+      description: "Request one audited task-bound provider selection of an OCR target and exact objective value, then execute only the fixed same-surface focus-and-type sequence with native receipts and final OCR verification.",
+    },
+    {
       id: "act.ai.workspace.accept_assessment",
       name: "Accept AI Workspace Assessment",
       kind: "actuator",

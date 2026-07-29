@@ -203,7 +203,7 @@
 
 ### 当前实现前沿
 
-Level 4 已从第一个所有权边界推进到二十三个已部署并物理证明的切片：登录用户的
+Level 4 已从第一个所有权边界推进到二十四个已部署并物理证明的切片：登录用户的
 `systemd --user` 管理独立 Weston headless compositor 和固定
 `nixsoma-ai-0` 1280x720 输出；现有 AI-owned Nix Firefox 作为 headed client
 运行其中；session-manager 获取有界原生帧并只向状态面投影摘要；原生左键点击
@@ -547,14 +547,36 @@ OCR、completion audit 和 unchanged task，并证明 execution evidence 无输�
 operator type 与 OCR click regression 也通过。该 one-shot lane 已冻结；下一真实候选是
 独立 reviewed 的固定两动作 OCR focus-then-type form interaction。Enter、repeat、开放
 循环、广泛 keyboard/process/window authority、parent display、root 与 host mutation
-继续排除。
+继续排除；该候选已在下文完成。
+
+第二十四个 Level 4 纵向切片已完成部署与物理证明，能力 id 为
+`act.ai.workspace.ocr_focus_type`。完整 reviewed task objective 同时固定一个 OCR
+target substring 和一个 1-32 字符 allowlisted value；一次 provider call 只能返回
+`focus_and_type + itemOrdinal +` 该精确值或 `no_op`。Core 在动作前要求 provider
+所见 OCR 投影、task、surface、inventory 与 authority 保持一致，本地验证所选项目
+包含 target，派生中心坐标并执行 opcode 4；随后重新观察 task/frame/OCR/surface，
+再执行 opcode 5，并要求最终 OCR 包含 value。两次动作分别要求前置 audit 和 native
+receipt；没有 retry、Enter、hotkey、替代值、caller coordinate、开放循环、root 或
+host mutation。
+
+Active generation 为
+`/nix/store/4mw7p3r3amcfp48njvjz20zpykf14qcw-nixos-system-nixos-26.05.4808.569d57850992`，
+上一代为 `yzqrwjh...`。1169 项测试、typecheck、823-entry registry、1010-file
+script audit、Windows path budget、shared contracts、body-config，以及 260-file
+Core/87-file Observer exact closure 均通过。物理 gate 将 task
+`158bd267-e2b2-4a13-9a38-ce722ac6db28`、surface 14、provider/preprobe ordinal 14、
+一次 provider call、原生 opcodes `[4,5]`、四次 owner OCR observation 与两张 receipt
+绑定到 final OCR、completion audit、unchanged task 和无 execution-evidence 明文。
+OCR type 与 OCR click regression 也通过。该 lane 已冻结；下一真实候选是 AI-owned
+browser 的 governed current-tab close/lifecycle owner，不能扩展为任意 tab、process、
+window 控制或 desktop takeover。
 
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
 画面投影、应用生命周期、surface 激活、垂直滚动、AI 单步、semantic scene
 grounding、task-grounded semantic click/type、bounded run/assessment、local OCR、
-OCR click 与 objective-bound OCR type 已通过源码、1152 项工作区测试、body-config/store
-closure、完整 system generation 与物理验收。真实 Firefox 渲染了
+OCR click、objective-bound OCR type 与 fixed OCR focus-then-type 已通过源码、1169
+项工作区测试、body-config/store closure、完整 system generation 与物理验收。真实 Firefox 渲染了
 1280x720 原生画面，切换模式和退出登录都会释放像素；真实 Workbench 启动后
 PID 与 surface 匹配，停止后 surface 消失；服务状态和 audit 只保留摘要。桌面
 接管、通用键盘/Enter/热键、通用滚轮/手势/任意输入设备、任意进程/窗口 API、
@@ -663,10 +685,10 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 60% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。真实 repair/rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 84%（one-shot projected operator click、bounded native operator type、semantic type、bounded run、reviewed cycle/acceptance、bounded local OCR、OCR assessment、same-surface OCR click 与 objective-bound OCR type 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、verified-scroll-only 两步 run、显式 run-plus-assessment cycle、瞬时本地 OCR、无 pixel egress 的 OCR provider assessment、ordinal-grounded one-click action 与 objective-bound one-shot OCR type 已部署。`m392zajq...` gate 把 reviewed task、surface 31、inventory 72、一次 provider call、一次 opcode-5 action 和三次 OCR observation 绑定到 matching receipt 与 post-action OCR，证明 task 不变且 execution evidence 无输入明文。Enter、hotkey、repeat、通用键盘代理、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
+| Level 4 图形栈内生组件 | 约 85%（one-shot projected operator click、bounded native operator type、semantic type、bounded run、reviewed cycle/acceptance、bounded local OCR、OCR assessment、same-surface OCR click、objective-bound OCR type 与 fixed OCR focus-then-type 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、verified-scroll-only 两步 run、显式 run-plus-assessment cycle、瞬时本地 OCR、无 pixel egress 的 OCR provider assessment、ordinal-grounded one-click action、objective-bound one-shot OCR type 与固定两动作 focus/type 已部署。`4mw7p3r3...` gate 把 reviewed task、surface 14、ordinal 14、一次 provider call、opcodes `[4,5]`、四次 OCR observation 与两张 receipt 绑定到 final OCR，证明 task 不变且 execution evidence 无输入明文。Enter、hotkey、repeat、通用键盘代理、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
-**51-59%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted
+**52-60%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted
 sidecar store 运行路径；Phase B 已完成原生只读 D-Bus inventory、三个由精确
 Polkit 和独立 hostd 所有的固定 native restart，以及 bounded journal
 diagnosis；Phase C 已完成首个只读 `sched_process_exec` eBPF 探针切片；Phase D

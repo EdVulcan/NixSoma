@@ -38,6 +38,11 @@ let
       ${pkgs.coreutils}/bin/chown ${lib.escapeShellArg "${owner}:${group}"} "$token_file"
       ${pkgs.coreutils}/bin/chmod 0640 "$token_file"
     fi
+    ${pkgs.acl}/bin/setfacl --remove-all "$token_file"
+    ${lib.concatMapStringsSep "\n" (reader: ''
+      ${pkgs.acl}/bin/setfacl --modify ${lib.escapeShellArg "user:${reader}:--x"} "$token_dir"
+      ${pkgs.acl}/bin/setfacl --modify ${lib.escapeShellArg "user:${reader}:r--"} "$token_file"
+    '') cfg.operatorAuthTokenReaders}
   '';
   operatorTokenInitService = {
     description = "OpenClaw operator credential initialization";
@@ -692,6 +697,12 @@ in
       type = types.nullOr types.str;
       default = null;
       description = "File containing the Core operator token; the value is loaded with systemd LoadCredential and never placed in the Nix store environment.";
+    };
+
+    operatorAuthTokenReaders = mkOption {
+      type = types.listOf types.str;
+      default = [ ];
+      description = "Explicit local operator users granted read-only ACL access to the operator token file.";
     };
 
     executionGrantPrivateKeyFile = mkOption {

@@ -541,7 +541,32 @@ plaintext in execution evidence. Direct operator type and OCR click regressions
 also passed. This lane is physically complete and frozen. The next real
 candidate is a separately reviewed fixed two-action OCR focus-then-type form
 interaction. Enter, repeat, open loops, broad keyboard/process/window authority,
-parent-display access, root, and host mutation remain deferred.
+parent-display access, root, and host mutation remain deferred. That candidate
+is completed below.
+
+The twenty-fourth Level 4 capability is deployed as
+`act.ai.workspace.ocr_focus_type`. One reviewed task objective fixes both a
+bounded OCR target substring and an exact allowlisted input value. One provider
+call may choose only `focus_and_type + itemOrdinal +` that value, or `no_op`.
+Core verifies the unchanged provider OCR projection and objective-selected item,
+derives its coordinates locally, executes one opcode-4 focus click, re-observes
+the task/frame/OCR/surface, executes one opcode-5 type, and requires final OCR
+containing the value. The owner permits at most two actions and no retry, Enter,
+hotkey, alternate value, caller coordinate, loop, task mutation, root, or host
+mutation.
+
+All 1169 tests, typecheck, 823 registry entries, the 1010-file script audit,
+path budget, shared contracts, body-config, and exact 260-file Core and 87-file
+Observer closures pass. Generation `4mw7p3r3...` is active and `yzqrwjh...` is
+previous. The physical gate bound task
+`158bd267-e2b2-4a13-9a38-ce722ac6db28`, surface 14, and provider/preprobe
+ordinal 14 to one provider call, native opcodes `[4,5]`, four OCR observations,
+two matching receipts, final OCR, completion audit, unchanged task, and no
+execution-evidence plaintext. OCR type and OCR click regressions passed. This
+lane is physically complete and frozen. The next real capability is a governed
+current-tab close/lifecycle owner inside the AI-owned browser, with arbitrary
+tab selection, process/window control, automatic cleanup, and desktop takeover
+still excluded.
 
 ## Completed Capability Evidence
 

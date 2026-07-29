@@ -1,6 +1,6 @@
 # NixSoma Documentation Control Room
 
-Updated: 2026-07-29
+Updated: 2026-07-30
 
 This is the canonical entry point for current NixSoma development. Historical
 OpenClaw names remain in service identifiers, environment variables, milestone
@@ -13,11 +13,11 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, one-shot operator-authenticated projected click and bounded native type, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click and objective-bound OCR type, and an explicit bounded run-plus-assessment cycle, plus the completed Level 3 baseline | The twenty-third Level 4 slice is physically complete |
-| Local validation | 1152 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1009-file script audit pass; 822 registry entries pass | Validated |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, one-shot operator-authenticated projected click and bounded native type, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click, objective-bound OCR type, fixed OCR focus-then-type, and an explicit bounded run-plus-assessment cycle, plus the completed Level 3 baseline | The twenty-fourth Level 4 slice is physically complete |
+| Local validation | 1169 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1010-file script audit pass; 823 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/m392zajqa4h91023swznpbhcjaa1ilq0-nixos-system-nixos-26.05.4808.569d57850992` | Task-bound objective-exact OCR type is deployed and physically proven |
-| Previous generation | `/nix/store/aifc3p1nzarmidghkyh85ap9f3d3d466-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the OCR-type deployment |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/4mw7p3r3amcfp48njvjz20zpykf14qcw-nixos-system-nixos-26.05.4808.569d57850992` | Fixed OCR focus-then-type and narrow operator credential access are deployed and physically proven |
+| Previous generation | `/nix/store/yzqrwjh514yd4kz8n22llap2fiikzv67-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the final operator-token directory traversal ACL correction |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
 | Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; approval-bound and standing-authorized provider calls have completed on the active host | Deployed development profile disables local cooldown and daily usage enforcement; provider billing remains external |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, production/default 15-minute cooldown and 3-call/4096-token daily limits, structured transient recommendation, and local fallback | Development profile is deployed without local call/token/cooldown enforcement; a real provider gate passed beyond the prior 3/3 state |
@@ -43,11 +43,13 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 OCR assessment | One explicit reviewed task may send at most 24 local OCR regions/1200 characters plus bounds to the standing provider, then requires a newer matching local OCR observation before accepting the read-only outcome | Deployed in `8x2xbjpk...`; physical gate returned `complete` at 0.95 confidence over 8 regions/162 characters with frame 3 -> 4, one provider call, zero actions/task mutation, no local OCR plaintext, and no pixel egress |
 | Level 4 OCR ordinal click | One explicit reviewed task lets the standing provider select only `click_item + itemOrdinal` or `no_op`; Core derives coordinates locally, revalidates task/OCR/surface/inventory, executes at most one opcode-4 surface click, and requires newer OCR without the selected text | Deployed in `zh9r98yq...`; provider selected item 9 on surface 33, frame 75 -> 76 -> 78 proved one receipt-bound click and post-action OCR with zero task mutation, local OCR persistence, pixel egress, or arbitrary coordinates; governed stop then proved the volatile marker absent |
 | Level 4 objective-bound OCR type | One explicit reviewed task whose entire objective matches `Type exact text "VALUE" into the active surface` may receive one provider decision for exactly that 1-32 character allowlisted value; Core revalidates task/OCR/frame/surface/inventory before one opcode-5 type and requires newer OCR containing the value | Deployed in `m392zajq...`; one provider call typed a 6-character canary on surface 31/inventory 72, matched one native receipt and three owner OCR observations, verified the newer scene, left the task unchanged, and copied no plaintext into execution evidence; provider retention remains externally governed |
+| Level 4 OCR focus then type | One explicit reviewed task whose objective fixes both an OCR target substring and exact allowlisted value may receive one `focus_and_type + ordinal + value` decision; Core requires unchanged provider OCR, objective-local target verification, opcode-4 receipt, fresh task/frame/OCR revalidation, opcode-5 receipt, and final OCR containing the value | Deployed in `4mw7p3r3...`; task `158bd267...` bound provider/preprobe ordinal 14 on surface 14 to one call, opcodes `[4,5]`, four owner OCR observations, two receipts, final OCR, unchanged task, completion audit, and no execution-evidence plaintext |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
 | Privileged actions | Physical-host generation switch and governed provider egress are proven; real repair, hostd activation, and rollback | Remaining mutations deferred to explicit/disposable checks |
-| Developer deployment | Default-off immutable helper accepts one canonical, root-owned `nixos-system-nixos` closure through one explicit `edvulcan` sudoers rule | Deployed in `4bcxlk52...`; `sudo -n nixsoma-dev-generation-switch` completed a real same-generation switch without password transport |
+| Operator credential reference | Core still receives the root-managed token through `LoadCredential`; only `edvulcan` receives read ACL on the exact token plus traverse-only ACL on its directory | Deployed in `4mw7p3r3...`; the operator cannot list `/var/lib/openclaw` or read the execution-grant private key, and no credential value enters environment, command line, store, or logs |
+| Developer deployment | Default-off immutable helper accepts one canonical, root-owned physical `nixos-system-nixos` closure through one explicit `edvulcan` sudoers rule and rejects container markers or changes to kernel/initrd/fstab/GDM/NetworkManager/SSH paths | Deployed in `yzqrwjh...`; its built helper dependencies are verified before use, and `sudo -n nixsoma-dev-generation-switch` activated `4mw7p3r3...` without password transport |
 
 The current checkout is on the only available physical host
 (`systemd-detect-virt=none`). Historical VM results remain acceptance evidence,
@@ -704,7 +706,36 @@ plaintext all matched. The direct operator type regression passed with
 and post-OCR checks. Enter, hotkeys, modifiers, repeat, arbitrary keyboard
 input, automatic continuation, parent-display access, root, and host mutation
 remain excluded. The next real candidate is a separately reviewed, fixed
-two-action OCR focus-then-type form interaction with no Enter or open loop.
+two-action OCR focus-then-type form interaction with no Enter or open loop;
+that candidate is completed below.
+
+The twenty-fourth Level 4 capability adds
+`act.ai.workspace.ocr_focus_type`. The caller supplies only a reviewed
+`taskId + confirm`; the entire objective fixes one OCR target substring and one
+exact 1-32 character `[A-Za-z0-9 .,_-]` value. One provider call may return
+only `focus_and_type + itemOrdinal +` that exact value, or `no_op`. Core keeps
+the provider-visible OCR projection unchanged through decision revalidation,
+verifies the selected current item contains the objective target, executes one
+opcode-4 focus click, obtains a fresh same-surface OCR/frame/task binding, then
+executes one opcode-5 type and requires final OCR containing the value. There
+is no retry, loop, Enter, hotkey, caller-selected coordinate, alternate value,
+task mutation, parent-display access, root, or host mutation.
+
+All 1169 tests, typecheck, 823 registry entries, the 1010-file script audit,
+Windows path budget, shared contracts, body-config, and exact 260-file Core and
+87-file Observer closures pass. Generation `4mw7p3r3...` is active and
+`yzqrwjh...` is previous. The physical gate bound task
+`158bd267-e2b2-4a13-9a38-ce722ac6db28`, surface 14, and provider/preprobe
+ordinal 14 to one provider call, two native actions with opcodes `[4,5]`, four
+owner OCR observations, both receipts, final OCR, completion audit, an unchanged
+task, and no canary in execution evidence. OCR type and OCR click regressions
+also passed. The deployment additionally gives only `edvulcan` exact-file read
+and directory-traverse ACLs for the operator token while preserving no-listing
+and no execution-private-key access. This lane is physically complete and
+frozen. The next real candidate is a governed current-tab close/lifecycle owner
+for the AI-owned browser so repeated work cannot exhaust Browser Runtime;
+arbitrary tab selection, process/window control, automatic cleanup, and desktop
+takeover remain deferred.
 
 ## Progress Estimate
 
@@ -715,9 +746,9 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 84%; one-shot projected operator click, bounded native operator type, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, same-surface OCR click, and objective-bound OCR type are physically complete |
-| Current bounded product scope | 83-86% |
-| Final whitepaper vision | 51-59% |
+| Level 4 graphics-stack-native body | about 85%; one-shot projected operator click, bounded native operator type, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, same-surface OCR click, objective-bound OCR type, and fixed OCR focus-then-type are physically complete |
+| Current bounded product scope | 84-87% |
+| Final whitepaper vision | 52-60% |
 
 ## Current Decision Records
 

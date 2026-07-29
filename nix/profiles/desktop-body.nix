@@ -15,6 +15,7 @@
     profile = "desktop-body";
     user = "openclaw-service";
     hostdUser = "openclaw-hostd";
+    operatorAuthTokenReaders = [ "edvulcan" ];
     systemdRepairAuthDelegation.enable = true;
     kernelEventCapture.enable = true;
     resourceControl.enable = true;
@@ -47,4 +48,6 @@
       "observerUi"
     ];
   };
+
+  environment.sessionVariables.OPENCLAW_OPERATOR_TOKEN_FILE = "/var/lib/openclaw/operator-token";
 }

@@ -4,6 +4,7 @@ import {
   parseAiWorkspaceOcrTypeDecision,
 } from "./ai-workspace-ocr-type-contract.mjs";
 import { createAiWorkspaceOcrDecisionSession } from "./ai-workspace-ocr-decision-session.mjs";
+import { executeAiWorkspaceOcrNativeType } from "./ai-workspace-ocr-native-actions.mjs";
 import {
   aiWorkspaceOcrSurfaceMatches,
   compactAiWorkspaceOcrEvidence,
@@ -369,20 +370,8 @@ export function createAiWorkspaceOcrType({
         });
       }
 
-      const actionBody = {
-        text: inputText,
-        surfaceId: verificationContext.observation.surface.surfaceId,
-        inventorySequence: verificationContext.observation.inventorySequence,
-        compositorFrame: {
-          registry: verificationContext.observation.frame.registry,
-          socketName: verificationContext.observation.frame.socketName,
-          width: verificationContext.observation.frame.width,
-          height: verificationContext.observation.frame.height,
-          sha256: verificationContext.observation.frame.sha256,
-          sequence: verificationContext.observation.frame.sequence,
-          capturedAt: verificationContext.observation.frame.capturedAt,
-        },
-      };
+      const surfaceId = verificationContext.observation.surface.surfaceId;
+      const inventorySequence = verificationContext.observation.inventorySequence;
       await publishRequiredAudit("ai_workspace.ocr_type_action_authorized", {
         registry: AI_WORKSPACE_OCR_TYPE_REGISTRY,
         at: now(),
@@ -395,8 +384,8 @@ export function createAiWorkspaceOcrType({
         ...projectAiWorkspaceTaskEvidence(decisionContext.taskObjectiveBinding),
         actionId: "type_text",
         inputEvidence,
-        surfaceId: actionBody.surfaceId,
-        inventorySequence: actionBody.inventorySequence,
+        surfaceId,
+        inventorySequence,
         taskObjectiveInputBound: true,
         maximumActions: 1,
         automaticContinuation: false,
@@ -423,64 +412,23 @@ export function createAiWorkspaceOcrType({
         });
       }
 
-      let response;
-      try {
-        response = await postJson(`${screenActUrl}/act/keyboard/type`, actionBody, {
-          grantContext: {
-            taskId,
-            stepId: null,
-            capabilityId: "act.screen.pointer_keyboard",
-            intent: "keyboard.type",
-          },
-        });
-      } catch {
-        return await finaliseFallback("action_outcome_unknown", {
-          providerDecision,
-          decisionContext,
-          verificationContext,
-        });
-      }
-      const mediation = response?.action?.mediation;
-      const input = mediation?.nativeInput;
-      const actionExecuted = response?.action?.kind === "keyboard.type"
-        && response.action.result === "executed-ai-compositor"
-        && mediation?.accepted === true
-        && input?.operation === "keyboard_type"
-        && input.inputCharCount === inputEvidence.charCount
-        && input.inputTextExposed === false
-        && input.inputTextPersisted === false
-        && input.keyboardInput === true
-        && input.hotkeyInput === false
-        && input.enterKeyInput === false
-        && input.automaticRepeat === false
-        && input.surfaceId === actionBody.surfaceId
-        && input.inventorySequence === actionBody.inventorySequence
-        && input.frame?.sha256 === actionBody.compositorFrame.sha256
-        && input.frame?.sequence === actionBody.compositorFrame.sequence
-        && input.receiptMatched === true
-        && input.inventoryMatched === true
-        && input.surfaceMatched === true
-        && input.frameMatched === true
-        && input.frameFresh === true
-        && input.sequenceAdvanced === true
-        && input.frameChanged === true;
-      if (!actionExecuted) {
-        return await finaliseFallback("action_rejected", {
-          providerDecision,
-          decisionContext,
-          verificationContext,
-        });
-      }
-
-      const action = {
-        actionId: "type_text",
+      const execution = await executeAiWorkspaceOcrNativeType({
+        postJson,
+        screenActUrl,
+        taskId,
+        context: verificationContext,
+        inputText,
         inputEvidence,
-        surfaceId: actionBody.surfaceId,
-        inventorySequence: actionBody.inventorySequence,
-        executed: true,
-        receiptMatched: true,
-        frameChanged: true,
-      };
+      });
+      if (!execution.ok) {
+        return await finaliseFallback(execution.reason, {
+          providerDecision,
+          decisionContext,
+          verificationContext,
+        });
+      }
+      const action = execution.action;
+      const input = execution.nativeInput;
       let postActionContext;
       try {
         postActionContext = await observeContext(now());
@@ -536,8 +484,8 @@ export function createAiWorkspaceOcrType({
         status: "executed",
         actionId: "type_text",
         inputEvidence,
-        surfaceId: actionBody.surfaceId,
-        inventorySequence: actionBody.inventorySequence,
+        surfaceId: action.surfaceId,
+        inventorySequence: action.inventorySequence,
         taskObjectiveInputBound: true,
         receiptMatched: true,
         frameChanged: true,

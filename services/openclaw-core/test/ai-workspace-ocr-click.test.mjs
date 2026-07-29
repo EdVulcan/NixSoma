@@ -189,6 +189,11 @@ function harness({
               y: body.y,
               surfaceId: body.surfaceId,
               inventorySequence: body.inventorySequence,
+              frame: {
+                sha256: body.compositorFrame.sha256,
+                sequence: body.compositorFrame.sequence,
+              },
+              postFrame: { sha256: "c".repeat(64), sequence: 9 },
               receiptMatched: true,
               inventoryMatched: true,
               surfaceMatched: true,
