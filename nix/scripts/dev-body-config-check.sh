@@ -718,7 +718,7 @@ const developerSwitch = ownership.developerGenerationSwitch ?? {};
 const developerSwitchRule = developerSwitch.sudoRules?.find((rule) =>
   JSON.stringify(rule.users) === JSON.stringify(["edvulcan"]));
 const developerSwitchCommand = developerSwitchRule?.commands?.find((command) =>
-  String(command.command ?? "").endsWith("/bin/nixsoma-dev-generation-switch"));
+  command.command === "/run/current-system/sw/bin/nixsoma-dev-generation-switch");
 const developerSwitchPackage = developerSwitch.systemPackages?.find((packagePath) =>
   String(packagePath).endsWith("-nixsoma-dev-generation-switch"));
 if (developerSwitch.enable !== true
@@ -728,9 +728,8 @@ if (developerSwitch.enable !== true
   || developerSwitchRule?.host !== "ALL"
   || JSON.stringify(developerSwitchRule?.groups) !== JSON.stringify([])
   || JSON.stringify(developerSwitchCommand?.options) !== JSON.stringify(["NOPASSWD", "NOSETENV"])
-  || !String(developerSwitchCommand?.command ?? "").startsWith("/nix/store/")
   || !developerSwitchPackage
-  || !developerSwitchCommand.command.startsWith(`${developerSwitchPackage}/bin/`)) {
+  || !String(developerSwitchPackage).startsWith("/nix/store/")) {
   throw new Error(`developer generation switching must expose one immutable, explicit sudo command: ${JSON.stringify(developerSwitch)}`);
 }
 if (ownership.screenSense.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"

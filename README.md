@@ -124,10 +124,11 @@ sudo -n nixsoma-dev-generation-switch \
   /nix/store/<hash>-nixos-system-nixos-<version>
 ```
 
-The helper accepts exactly one canonical, root-owned `nixos-system-nixos`
+The stable command is a root-controlled system-profile link to an immutable
+helper. It accepts exactly one canonical, root-owned `nixos-system-nixos`
 closure with a switch script, validates it through `nix-store`, serializes
 concurrent switches, and invokes only the fixed `nixos-rebuild switch
---store-path` command under a fixed root-owned environment. The sudo rule also
+--store-path --no-reexec` command under a fixed root-owned environment. The sudo rule also
 rejects caller-provided environment changes. The underlying module is disabled by default; the
 machine-specific `desktop-body` profile opts in for `edvulcan`.
 

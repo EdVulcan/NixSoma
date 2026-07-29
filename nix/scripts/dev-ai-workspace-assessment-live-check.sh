@@ -316,7 +316,7 @@ if [[ "$ACCEPT_COMPLETE" == "1" ]]; then
   for token in 'act.ai.workspace.accept_assessment' \
     'nixsoma-ai-workspace-assessment-acceptance-v0' \
     'accept-ai-workspace-assessment-button'; do
-    rg -Fq "$token" "$tmp_dir/observer-client.js"
+    grep -Fq -- "$token" "$tmp_dir/observer-client.js"
   done
 
   stage "checking post-acceptance service health"

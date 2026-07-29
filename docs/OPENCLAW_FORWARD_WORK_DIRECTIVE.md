@@ -2455,8 +2455,9 @@ calls or workspace actions. Switch and physical acceptance remain pending.
 
 That combined candidate also contains the default-off developer generation
 switch module, explicitly enabled by the machine-specific desktop profile for
-`edvulcan`. Its generated sudoers file passed `visudo`, names one immutable Nix
-store helper, and grants no arbitrary shell or password transport. After this
+`edvulcan`. Its generated sudoers file passed `visudo`, names the root-controlled
+system-profile link to one immutable Nix store helper, and grants no arbitrary
+shell or password transport. After this
 one candidate is manually activated, later reviewed prebuilt generations may be
 switched with `sudo -n nixsoma-dev-generation-switch <store-path>`.
 
@@ -2534,7 +2535,7 @@ unsafe host boundaries. The one explicit development exception is the
 default-off `services.openclaw.developerGenerationSwitch` module when a machine
 profile opts in a named user. Its immutable sudo command accepts exactly one
 canonical, root-owned `nixos-system-<host>` store closure and invokes only the
-fixed `nixos-rebuild switch --store-path` operation. It must be manually
+fixed `nixos-rebuild switch --store-path --no-reexec` operation. It must be manually
 deployed once before `sudo -n nixsoma-dev-generation-switch <store-path>` is an
 available non-interactive route; it is an operator deployment mechanism, not a
 product capability or permission for arbitrary host mutation.

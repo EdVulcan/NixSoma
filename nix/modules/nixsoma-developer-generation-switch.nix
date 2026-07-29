@@ -51,7 +51,7 @@ let
         exit 75
       fi
 
-      exec ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --store-path "$generation"
+      exec ${pkgs.nixos-rebuild}/bin/nixos-rebuild switch --store-path "$generation" --no-reexec
     '';
   };
 in
@@ -92,7 +92,7 @@ in
         runAs = "root";
         commands = [
           {
-            command = "${switchHelper}/bin/${commandName}";
+            command = "/run/current-system/sw/bin/${commandName}";
             options = [ "NOPASSWD" "NOSETENV" ];
           }
         ];
