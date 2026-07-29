@@ -155,6 +155,11 @@ in
       default = false;
       description = "Allow bounded read-only capture of the isolated Weston output.";
     };
+    localOcr = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Allow bounded local-only OCR of one active isolated-output frame.";
+    };
     nativeInput = mkOption {
       type = types.bool;
       default = false;
@@ -188,6 +193,11 @@ in
       {
         assertion = !sessionCfg.nativeInput || (sessionCfg.captureOutput && sessionCfg.attachBrowser);
         message = "services.openclaw.aiGraphicalSession.nativeInput requires captureOutput and attachBrowser.";
+      }
+      {
+        assertion = !sessionCfg.localOcr
+          || (sessionCfg.captureOutput && sessionCfg.applicationLifecycle);
+        message = "services.openclaw.aiGraphicalSession.localOcr requires captureOutput and applicationLifecycle.";
       }
       {
         assertion = !sessionCfg.applicationLifecycle
@@ -249,6 +259,9 @@ in
         OPENCLAW_AI_COMPOSITOR_CAPTURE_DIRECTORY = captureDirectory;
         OPENCLAW_AI_COMPOSITOR_CAPTURE_TIMEOUT_MS = "1500";
         OPENCLAW_AI_COMPOSITOR_CAPTURE_POLL_MS = "20";
+        OPENCLAW_AI_LOCAL_OCR_ENABLED = if sessionCfg.localOcr then "1" else "0";
+        OPENCLAW_AI_LOCAL_OCR_TESSERACT_PATH = "${pkgs.tesseract}/bin/tesseract";
+        OPENCLAW_AI_LOCAL_OCR_TIMEOUT_MS = "5000";
         OPENCLAW_AI_COMPOSITOR_INPUT_ENABLED = if sessionCfg.nativeInput then "1" else "0";
         OPENCLAW_AI_COMPOSITOR_INPUT_DIRECTORY = inputDirectory;
         OPENCLAW_AI_COMPOSITOR_INPUT_TIMEOUT_MS = "1000";
@@ -265,6 +278,8 @@ in
       };
     } // optionalAttrs cfg.resourceControl.enable {
       serviceConfig.Slice = "openclaw-session.slice";
+    } // optionalAttrs sessionCfg.localOcr {
+      serviceConfig.PrivateTmp = true;
     };
 
     systemd.user.services.${workbenchUnitName} = mkIf sessionCfg.applicationLifecycle {

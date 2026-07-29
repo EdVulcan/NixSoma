@@ -26,6 +26,7 @@ state-settling	dev-state-settling-check.sh	Session/browser/screen first-frame se
 ai-bounded-run-live	dev-ai-bounded-run-live-check.sh	Physical task-bound two-step AI workspace run with verified-scroll-only continuation
 ai-workspace-assessment-live	dev-ai-workspace-assessment-live-check.sh	Physical task-bound read-only AI workspace completion assessment with zero actions or task mutation
 ai-workspace-assessment-acceptance-live	dev-ai-workspace-assessment-acceptance-live-check.sh	Physical explicit operator acceptance of one exact verified-complete workspace assessment before task closure
+ai-workspace-local-ocr-live	dev-ai-workspace-local-ocr-live-check.sh	Physical bounded local OCR over one active AI-owned surface with transient text and compact no-provider no-action evidence
 ai-input-persistence-audit	dev-ai-input-persistence-audit-check.sh	Root read-only canary audit across AI workspace persistent state, logs, browser remnants, and journal
 openclaw-ai-work-view-capture	dev-openclaw-ai-work-view-capture-check.sh	Browser-runtime-backed AI work view capture metadata through screen-sense
 openclaw-ai-work-view-capture-summary	dev-openclaw-ai-work-view-capture-summary-check.sh	Structured AI work view capture summaries through browser-runtime and screen-sense

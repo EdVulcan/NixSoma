@@ -394,6 +394,23 @@ the exact receipt with zero additional provider calls, zero actions, required
 audit, task status `completed`, and no persisted provider reason. This lane is
 physically complete and frozen.
 
+The seventeenth Level 4 capability is physically complete and frozen in active
+generation `lh0jkd7...`. `sense.ai.workspace.local_ocr` reuses one fresh active
+`nixsoma-ai-0` compositor PNG, passes it over stdin/stdout to fixed Nix-store
+Tesseract with English and PSM 11, and returns at most 64 lines, 160 characters
+per line, and 4096 characters total only to the authenticated operator and
+Observer memory. Persistent evidence contains only frame/scene hashes, counts,
+engine metadata, surface identity, and negative-authority flags. The physical
+gate bound surface 67 and frame sequence 3, recognized the Workbench across 8
+regions and 162 characters, left runtime capture storage empty, and reported
+zero provider calls, actions, text persistence, pixel egress, and browser
+storage while all nine health endpoints remained active. All 1080 tests,
+typecheck, 816-entry registry, 1002-script audit, body-config, shared contracts,
+and exact 244-file Core, 30-file Session Manager, and 80-file Observer closures
+pass. The next candidate is task-bound/provider use of bounded local OCR text
+without pixel egress; defer it to a separate slice rather than reopening this
+read-only lane.
+
 ## Completed Capability Evidence
 
 The following plan families are retained because they describe implemented

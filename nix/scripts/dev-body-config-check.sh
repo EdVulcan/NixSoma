@@ -155,6 +155,9 @@ const aiGraphicalSessionEnvNames = [
   "OPENCLAW_AI_GRAPHICAL_SESSION_HEIGHT",
   "OPENCLAW_AI_COMPOSITOR_CAPTURE_ENABLED",
   "OPENCLAW_AI_COMPOSITOR_CAPTURE_DIRECTORY",
+  "OPENCLAW_AI_LOCAL_OCR_ENABLED",
+  "OPENCLAW_AI_LOCAL_OCR_TESSERACT_PATH",
+  "OPENCLAW_AI_LOCAL_OCR_TIMEOUT_MS",
   "OPENCLAW_AI_COMPOSITOR_INPUT_ENABLED",
   "OPENCLAW_AI_COMPOSITOR_INPUT_DIRECTORY",
   "OPENCLAW_AI_SURFACE_INVENTORY_ENABLED",
@@ -254,6 +257,10 @@ requireIncludes("AI graphical session module", aiGraphicalSessionModule, [
   "nixsoma-weston-frame-auth.so",
   "OPENCLAW_AI_COMPOSITOR_CAPTURE_ENABLED",
   "OPENCLAW_AI_COMPOSITOR_CAPTURE_DIRECTORY",
+  "OPENCLAW_AI_LOCAL_OCR_ENABLED",
+  "OPENCLAW_AI_LOCAL_OCR_TESSERACT_PATH",
+  "localOcr",
+  "pkgs.tesseract",
   "OPENCLAW_AI_COMPOSITOR_INPUT_ENABLED",
   "OPENCLAW_AI_COMPOSITOR_INPUT_DIRECTORY",
   "nativeInput",
@@ -361,6 +368,7 @@ requireIncludes("desktop-body profile", desktopProfile, [
   "resourceControl.enable = true",
   "aiGraphicalSession.enable = true",
   "aiGraphicalSession.attachBrowser = true",
+  "aiGraphicalSession.localOcr = true",
   "aiGraphicalSession.applicationLifecycle = true",
   "cloudProvider.enable = true",
   "../modules/nixsoma-developer-generation-switch.nix",
@@ -432,6 +440,7 @@ if command -v nix >/dev/null 2>&1; then
           RuntimeDirectory = unit.serviceConfig.RuntimeDirectory or null;
           RuntimeDirectoryMode = unit.serviceConfig.RuntimeDirectoryMode or null;
           UnsetEnvironment = unit.serviceConfig.UnsetEnvironment or [ ];
+          PrivateTmp = unit.serviceConfig.PrivateTmp or null;
           PrivateDevices = unit.serviceConfig.PrivateDevices or null;
           ProtectSystem = unit.serviceConfig.ProtectSystem or null;
           ProtectHome = unit.serviceConfig.ProtectHome or null;
@@ -637,6 +646,10 @@ if (!ownership.session.wants?.includes("nixsoma-ai-graphical-session.service")
   || ownership.session.environment?.OPENCLAW_AI_GRAPHICAL_SESSION_HEIGHT !== "720"
   || ownership.session.environment?.OPENCLAW_AI_COMPOSITOR_CAPTURE_ENABLED !== "1"
   || ownership.session.environment?.OPENCLAW_AI_COMPOSITOR_CAPTURE_DIRECTORY !== "capture"
+  || ownership.session.environment?.OPENCLAW_AI_LOCAL_OCR_ENABLED !== "1"
+  || !String(ownership.session.environment?.OPENCLAW_AI_LOCAL_OCR_TESSERACT_PATH ?? "").startsWith("/nix/store/")
+  || !String(ownership.session.environment?.OPENCLAW_AI_LOCAL_OCR_TESSERACT_PATH ?? "").endsWith("/bin/tesseract")
+  || ownership.session.environment?.OPENCLAW_AI_LOCAL_OCR_TIMEOUT_MS !== "5000"
   || ownership.session.environment?.OPENCLAW_AI_COMPOSITOR_INPUT_ENABLED !== "1"
   || ownership.session.environment?.OPENCLAW_AI_COMPOSITOR_INPUT_DIRECTORY !== "input"
   || ownership.session.environment?.OPENCLAW_AI_SURFACE_INVENTORY_ENABLED !== "1"
@@ -656,6 +669,9 @@ if (ownership.session.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || !String(ownership.session.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-session-manager")
   || ownership.session.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
   throw new Error(`session-manager must execute from its read-only Nix closure with writable user state: ${JSON.stringify(ownership.session)}`);
+}
+if (ownership.session.serviceConfig?.PrivateTmp !== true) {
+  throw new Error(`session-manager local OCR must run with a private temporary namespace: ${JSON.stringify(ownership.session.serviceConfig)}`);
 }
 if (ownership.eventHub.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || !String(ownership.eventHub.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
@@ -1015,8 +1031,10 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-compositor-frame.mjs"
+    || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-local-ocr.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-local-ocr.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 242 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 244 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -1139,6 +1157,8 @@ EOF
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-graphical-session-observer.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-compositor-frame-capture.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-compositor-frame-route.mjs"
+    || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-local-ocr-engine.mjs"
+    || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-local-ocr-route.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-compositor-input-controller.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-compositor-input-route.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-surface-inventory-observer.mjs"
@@ -1151,9 +1171,10 @@ EOF
     || -e "$session_manager_out/share/openclaw/services/openclaw-session-manager/test"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/service-credentials.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/ai-compositor-frame.mjs"
+    || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/ai-local-ocr.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/execution-grants.mjs"
-    || "$(find "$session_manager_out" -type f | wc -l)" -ne 27 ]]; then
+    || "$(find "$session_manager_out" -type f | wc -l)" -ne 30 ]]; then
     echo "session-manager Nix closure is not exact and read-only: $session_manager_out" >&2
     exit 1
   fi
@@ -1918,6 +1939,9 @@ if (health.ok !== true
   || !client.includes("engineering-loop-state")
   || !client.includes("nixsoma-ai-output-projection-v0")
   || !client.includes("/proxy/session-manager/work-view/compositor-frame")
+  || !html.includes('id="run-ai-workspace-local-ocr-button"')
+  || !client.includes("sense.ai.workspace.local_ocr")
+  || !client.includes("nixsoma-ai-workspace-local-ocr-v0")
   || html.length < 250_000
   || client.length < 1_000_000) {
   throw new Error(`store-native observer-ui did not serve complete operator assets: ${JSON.stringify({ health, htmlChars: html.length, clientChars: client.length })}`);

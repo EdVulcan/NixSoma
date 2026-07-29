@@ -50,6 +50,7 @@ test("Observer projection is operator-only, visible-tab bounded, validated, and 
     'capabilityId: "act.ai.workspace.single_step"',
     'capabilityId: "act.ai.workspace.bounded_run"',
     'capabilityId: "sense.ai.workspace.assessment"',
+    'capabilityId: "sense.ai.workspace.local_ocr"',
     "currentAiWorkspaceTaskId()",
     "taskId,",
     "params: { confirm: true }",

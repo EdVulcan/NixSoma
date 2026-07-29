@@ -28,6 +28,7 @@ import { createDeclarativeEvolutionCapabilityHandlers } from "./capability-runti
 import { createSystemdIncidentObservationCapabilityHandlers } from "./capability-runtime-systemd-incident-observation.mjs";
 import { createStandingProviderAdvisoryCapabilityHandlers } from "./capability-runtime-standing-provider-advisory.mjs";
 import { createAiWorkspaceAssessmentCapabilityHandlers } from "./capability-runtime-ai-workspace-assessment.mjs";
+import { createAiWorkspaceLocalOcrCapabilityHandlers } from "./capability-runtime-ai-workspace-local-ocr.mjs";
 import { createAiWorkspaceAssessmentAcceptanceCapabilityHandlers } from "./capability-runtime-ai-workspace-assessment-acceptance.mjs";
 import { createAiWorkspaceSingleStepCapabilityHandlers } from "./capability-runtime-ai-workspace-single-step.mjs";
 import { createAiWorkspaceBoundedRunCapabilityHandlers } from "./capability-runtime-ai-workspace-bounded-run.mjs";
@@ -233,6 +234,10 @@ export function createCapabilityRuntime(deps) {
   });
   const aiWorkspaceAssessmentHandlers = createAiWorkspaceAssessmentCapabilityHandlers({
     runtime: aiWorkspaceAssessment,
+  });
+  const aiWorkspaceLocalOcrHandlers = createAiWorkspaceLocalOcrCapabilityHandlers({
+    sessionManagerUrl,
+    fetchJson,
   });
   const aiWorkspaceAssessmentAcceptanceHandlers =
     createAiWorkspaceAssessmentAcceptanceCapabilityHandlers({
@@ -480,6 +485,10 @@ export function createCapabilityRuntime(deps) {
   }
 
   async function dispatchCapabilityBackend(capability, request) {
+    const aiWorkspaceLocalOcr = await aiWorkspaceLocalOcrHandlers.callBackend(capability, request);
+    if (aiWorkspaceLocalOcr.handled) {
+      return aiWorkspaceLocalOcr.result;
+    }
     const aiWorkspaceAssessmentAcceptance =
       await aiWorkspaceAssessmentAcceptanceHandlers.callBackend(capability, request);
     if (aiWorkspaceAssessmentAcceptance.handled) {
@@ -771,6 +780,10 @@ export function createCapabilityRuntime(deps) {
   }
 
   function summariseCapabilityInvocationResult(capability, result) {
+    const aiWorkspaceLocalOcrSummary = aiWorkspaceLocalOcrHandlers.summariseResult(capability, result);
+    if (aiWorkspaceLocalOcrSummary) {
+      return aiWorkspaceLocalOcrSummary;
+    }
     const aiWorkspaceAssessmentAcceptanceSummary =
       aiWorkspaceAssessmentAcceptanceHandlers.summariseResult(capability, result);
     if (aiWorkspaceAssessmentAcceptanceSummary) {
@@ -1241,6 +1254,17 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: standingProviderAdvisoryValidationError },
+      };
+    }
+    const aiWorkspaceLocalOcrValidationError = aiWorkspaceLocalOcrHandlers.validateRequest(
+      capability,
+      request,
+      body,
+    );
+    if (aiWorkspaceLocalOcrValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: aiWorkspaceLocalOcrValidationError },
       };
     }
     const aiWorkspaceAssessmentValidationError = aiWorkspaceAssessmentHandlers.validateRequest(

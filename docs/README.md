@@ -37,6 +37,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 bounded workspace run | One explicit operator trigger may execute a second fresh task-bound single step only after the first step is a receipt- and audit-verified scroll; click, type, no-op, fallback, unverified evidence, and the second step always terminate | Deployed in `hj1hmq...`; physical gate executed two governed scrolls from two provider calls with per-step, continuation, and run-completion audit |
 | Level 4 task assessment | One explicit task-bound provider call returns only complete/incomplete/blocked/unknown plus confidence after fresh task and semantic-scene revalidation; it performs no action, task mutation, or automatic continuation | Deployed in `5yfsg00f...`; physical gate returned `complete` with confidence 1 over 11 items and matched durable zero-mutation audit |
 | Level 4 assessment acceptance | One explicit operator command binds the exact persisted assessment invocation and objective/task-version/response/scene hashes to a still-current reviewed task, writes required authorization audit, then reuses the existing task completion owner | Deployed in `4bcxlk52...`; physical gate completed the exact task with zero additional provider calls, zero actions, required audit, and no persisted provider reason |
+| Level 4 bounded local OCR | One explicit authenticated read passes a fresh active-surface compositor frame to fixed local Tesseract over stdin/stdout and returns at most 64 transient text regions while persisting only hashes/counts | Deployed in `lh0jkd7...`; physical gate recognized 8 regions/162 characters with zero provider calls/actions, no text persistence, no pixel egress, and no browser storage |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -559,6 +560,25 @@ assessment from one provider call over 11 items, then accepted its exact receipt
 with zero additional provider calls, zero actions, required audit, and task
 status `completed`. No automatic continuation or provider reason persisted.
 
+The seventeenth Level 4 slice adds `sense.ai.workspace.local_ocr` as one
+explicit read-only observation of the current active `nixsoma-ai-0` surface. A
+fresh compositor PNG enters fixed Nix-store Tesseract over stdin and bounded TSV
+leaves over stdout; English PSM 11 output is limited to 64 lines, 160 characters
+per line, and 4096 characters total. OCR text exists only in the transient
+response and Observer memory. Durable evidence retains frame/scene hashes,
+counts, engine and surface metadata, and negative-authority flags, while Session
+Manager runs with `PrivateTmp=true`. All 1080 tests, typecheck, 816-entry
+registry, 1002-script audit, shared contracts, body-config, exact 244-file Core,
+30-file Session Manager, and 80-file Observer closures pass. Generation
+`/nix/store/lh0jkd7ncw23avmzapq3fk4y5fwnvk86-nixos-system-nixos-26.05.4808.569d57850992`
+is active. Its physical gate bound surface 67 and frame sequence 3, recognized
+the fixed Workbench across 8 regions and 162 characters, kept runtime capture
+storage empty, and reported zero provider calls, zero actions, no OCR text
+persistence, no pixel provider egress, and no browser storage. This lane is
+physically complete and frozen. Task-bound/provider use of bounded OCR text
+without pixel egress is the next candidate and remains deferred to a separate
+slice.
+
 ## Progress Estimate
 
 These figures are capability-maturity estimates, not test coverage:
@@ -568,7 +588,7 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 67%; semantic type, bounded run, read-only task assessment, and explicit assessment acceptance are physically complete |
+| Level 4 graphics-stack-native body | about 71%; semantic type, bounded run, task assessment/acceptance, and bounded local OCR are physically complete |
 | Current bounded product scope | 82-85% |
 | Final whitepaper vision | 50-58% |
 

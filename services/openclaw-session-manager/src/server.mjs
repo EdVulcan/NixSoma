@@ -14,6 +14,8 @@ import {
 } from "./ai-graphical-session-observer.mjs";
 import { createAiCompositorFrameCapture } from "./ai-compositor-frame-capture.mjs";
 import { createAiCompositorFrameRoute } from "./ai-compositor-frame-route.mjs";
+import { createAiLocalOcrEngine } from "./ai-local-ocr-engine.mjs";
+import { createAiLocalOcrRoute } from "./ai-local-ocr-route.mjs";
 import { createAiCompositorInputController } from "./ai-compositor-input-controller.mjs";
 import { createAiCompositorInputRoute } from "./ai-compositor-input-route.mjs";
 import { createAiSurfaceInventoryObserver } from "./ai-surface-inventory-observer.mjs";
@@ -40,6 +42,7 @@ const trustedWorkViewHelperRuntime = createTrustedWorkViewHelperRuntime();
 const observeAiGraphicalSession = createAiGraphicalSessionObserver();
 const observeAiSurfaceInventory = createAiSurfaceInventoryObserver();
 const aiCompositorFrameCapture = createAiCompositorFrameCapture();
+const aiLocalOcrEngine = createAiLocalOcrEngine();
 
 const sessionState = {
   sessionId: null,
@@ -272,6 +275,15 @@ const handleAiCompositorFrameRoute = createAiCompositorFrameRoute({
   capture: aiCompositorFrameCapture,
   observeGraphicalSession: observeAiGraphicalSession,
   projectGraphicalSession: projectAiGraphicalSessionCompositorFrame,
+  publishEvent,
+  createEventName,
+  sendJson,
+});
+const handleAiLocalOcrRoute = createAiLocalOcrRoute({
+  engine: aiLocalOcrEngine,
+  capture: aiCompositorFrameCapture,
+  observeGraphicalSession: observeAiGraphicalSession,
+  observeSurfaceInventory: observeAiSurfaceInventory,
   publishEvent,
   createEventName,
   sendJson,
@@ -587,6 +599,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (await handleAiCompositorFrameRoute(req, res, requestUrl)) return;
+  if (await handleAiLocalOcrRoute(req, res, requestUrl)) return;
   if (await handleAiCompositorInputRoute(req, res, requestUrl)) return;
   if (await handleAiWorkbenchLifecycleRoute(req, res, requestUrl)) return;
   if (await handleAiSurfaceActivationRoute(req, res, requestUrl)) return;

@@ -60,6 +60,18 @@ export function buildBaseCapabilities({
       description: "Request one audited provider assessment of an operator-reviewed task against the current semantic workspace without actions, task mutation, or automatic continuation.",
     },
     {
+      id: "sense.ai.workspace.local_ocr",
+      name: "AI Workspace Local OCR",
+      kind: "sensor",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/capabilities/invoke`,
+      intents: ["ai.workspace.local_ocr"],
+      domains: ["user_task"],
+      risk: "medium",
+      governance: "audit_only",
+      description: "Recognize bounded text regions from one fresh active AI-owned compositor frame using local Tesseract without provider calls, actions, task mutation, or persistent text.",
+    },
+    {
       id: "act.ai.workspace.accept_assessment",
       name: "Accept AI Workspace Assessment",
       kind: "actuator",

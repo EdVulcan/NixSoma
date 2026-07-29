@@ -47,25 +47,27 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
-triage/repair-promotion bridge, and thirteen deployed Level 4 graphical identity
-slices through one task-bound semantic-scene provider decision. One explicit
-operator trigger can request a schema-bound no-op, vertical scroll, semantic
-click, or write-only semantic type decision over bounded active-browser content
-and execute at most one existing action. All 1033 workspace
-tests and typecheck pass, the body-config and event-audit integration checks
-pass, the 811-entry milestone registry audit passes, and the Windows path budget
-has no file over 160 repository-relative characters. GitHub CI now enforces
+triage/repair-promotion bridge, and seventeen deployed Level 4 graphical
+identity slices through bounded local OCR of the active AI-owned surface. One
+explicit operator trigger can request a schema-bound no-op, vertical scroll,
+semantic click, or write-only semantic type decision over bounded active-browser
+content and execute at most one existing action; a separate explicit read can
+return bounded transient local OCR without provider or pixel egress. All 1080
+workspace tests and typecheck pass, the body-config and event-audit integration
+checks pass, the 816-entry milestone registry and 1002-script audits pass, and
+the Windows path budget has no file over 160 repository-relative characters.
+GitHub CI now enforces
 Node 22 typecheck, workspace tests, milestone registry/script audit, and the
 same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/wbr2mdkwabwlhizdyxxzxy4bqkig47zw-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/lh0jkd7ncw23avmzapq3fk4y5fwnvk86-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
-grant path, governed surface activation and scroll, and Observer controls. The relevant
-system and user services remain active with zero restarts; the intentionally
-stopped Workbench is `inactive/dead` after its physical lifecycle gate.
+grant path, governed surface activation and scroll, bounded local OCR, and
+Observer controls. The relevant system and user services remain active with
+zero restarts, and all nine health endpoints pass.
 
 One real request-bound DeepSeek advisory call completed through task
 `62ba696a-945e-4f37-b65e-8a6783316386` and approval
@@ -2463,6 +2465,41 @@ system-profile link to one immutable Nix store helper, and grants no arbitrary
 shell or password transport. The deployed helper uses the fixed root environment
 and `--no-reexec`; `sudo -n nixsoma-dev-generation-switch <store-path>` completed
 a real same-generation switch without requesting or transporting a password.
+
+## Completed Level 4 Bounded Local OCR Observation
+
+The seventeenth Level 4 vertical slice is implemented, deployed, physically
+proved, and frozen in generation
+`/nix/store/lh0jkd7ncw23avmzapq3fk4y5fwnvk86-nixos-system-nixos-26.05.4808.569d57850992`.
+`sense.ai.workspace.local_ocr` reuses one fresh transient `nixsoma-ai-0`
+compositor frame, passes PNG bytes directly to fixed Nix-store Tesseract with
+English and PSM 11 over stdin/stdout, and exposes at most 64 lines, 160
+characters per line, and 4096 characters total only in the explicit response
+and Observer memory. Pixels, OCR text, process output, and input values do not
+enter Core state, events, audit summaries, browser storage, or filesystem
+artifacts; durable evidence is limited to frame/scene hashes, item and character
+counts, numeric bounds, engine metadata, and negative-authority flags.
+
+This first visual-understanding slice is read-only. It performs zero provider
+calls, zero workspace actions, zero task mutation, and no automatic
+continuation. It remains limited to the exactly one active numeric surface on
+the isolated output and does not add parent-display capture, arbitrary windows,
+process launch, desktop takeover, root, or host mutation. Session Manager runs
+with `PrivateTmp=true`.
+
+All 1080 workspace tests, typecheck, shared package contracts, body-config and
+exact Nix closure checks pass. The deployed closures contain 244 Core files, 30
+Session Manager files, and 80 Observer files; the registry has 816 entries and
+the script audit covers 1002 files. The physical gate bound surface 67 and frame
+sequence 3, recognized the fixed Workbench across 8 regions and 162 characters,
+kept the capture directory empty, found no OCR plaintext in persistent state or
+journal, and kept all nine health endpoints active. Its final evidence reports
+zero provider calls, zero actions, no text persistence, no pixel provider
+egress, and no browser storage.
+
+Do not add OCR variants to this frozen lane. The smallest next candidate,
+deferred to a separate commit, is task-bound/provider use of bounded local OCR
+text without pixel egress.
 
 ## Identity-Upgrade Alignment
 

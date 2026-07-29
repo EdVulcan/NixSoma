@@ -21,6 +21,7 @@
     aiGraphicalSession.enable = true;
     aiGraphicalSession.attachBrowser = true;
     aiGraphicalSession.captureOutput = true;
+    aiGraphicalSession.localOcr = true;
     aiGraphicalSession.nativeInput = true;
     aiGraphicalSession.applicationLifecycle = true;
     cloudProvider.enable = true;

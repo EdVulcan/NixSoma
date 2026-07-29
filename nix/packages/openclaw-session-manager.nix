@@ -12,6 +12,8 @@ mkOpenClawSourceClosure {
     ../../services/openclaw-session-manager/src/server.mjs
     ../../services/openclaw-session-manager/src/ai-compositor-frame-capture.mjs
     ../../services/openclaw-session-manager/src/ai-compositor-frame-route.mjs
+    ../../services/openclaw-session-manager/src/ai-local-ocr-engine.mjs
+    ../../services/openclaw-session-manager/src/ai-local-ocr-route.mjs
     ../../services/openclaw-session-manager/src/ai-compositor-input-controller.mjs
     ../../services/openclaw-session-manager/src/ai-compositor-input-route.mjs
     ../../services/openclaw-session-manager/src/ai-graphical-session-observer.mjs
@@ -32,6 +34,7 @@ mkOpenClawSourceClosure {
     ../../packages/shared-utils/src/service-credentials.mjs
     ../../packages/shared-utils/src/execution-grants.mjs
     ../../packages/shared-utils/src/ai-compositor-frame.mjs
+    ../../packages/shared-utils/src/ai-local-ocr.mjs
     ../../packages/shared-utils/src/ai-compositor-input.mjs
     ../../packages/shared-utils/src/work-view-trust.mjs
     ../../packages/shared-utils/src/work-view-visual-frame.mjs

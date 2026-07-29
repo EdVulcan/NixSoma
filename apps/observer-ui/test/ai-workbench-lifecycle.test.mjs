@@ -21,6 +21,7 @@ test("Observer exposes bounded fixed workbench lifecycle state and controls", ()
     'id="scroll-ai-surface-down-button"',
     'id="run-ai-workspace-single-step-button"',
     'id="run-ai-workspace-bounded-run-button"',
+    'id="run-ai-workspace-local-ocr-button"',
     'id="assess-ai-workspace-button"',
     'id="ai-workspace-assessment-status"',
   ]) {
@@ -52,6 +53,7 @@ test("Observer exposes bounded fixed workbench lifecycle state and controls", ()
   assert.equal(script.includes('capabilityId: "act.ai.workspace.single_step"'), true);
   assert.equal(script.includes('capabilityId: "act.ai.workspace.bounded_run"'), true);
   assert.equal(script.includes('capabilityId: "sense.ai.workspace.assessment"'), true);
+  assert.equal(script.includes('capabilityId: "sense.ai.workspace.local_ocr"'), true);
   assert.equal(script.includes("taskId,"), true);
   assert.equal(script.includes('params: { confirm: true }'), true);
   assert.equal(script.includes("currentAiWorkspaceTaskId()"), true);

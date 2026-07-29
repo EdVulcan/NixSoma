@@ -4,6 +4,32 @@ import assert from "node:assert/strict";
 import { createCapabilityRuntime } from "../src/capability-runtime.mjs";
 import { buildCapabilityApprovalBinding } from "../src/capability-runtime-approval-binding.mjs";
 import { buildAiWorkspaceTaskObjectiveBinding } from "../src/ai-workspace-task-objective.mjs";
+import { buildAiLocalOcrObservation } from "../../../packages/shared-utils/src/ai-local-ocr.mjs";
+
+function localOcrObservation() {
+  return buildAiLocalOcrObservation({
+    observedAt: "2026-07-08T00:00:00.000Z",
+    frame: {
+      registry: "nixsoma-ai-compositor-frame-v0",
+      socketName: "nixsoma-ai-0",
+      width: 1280,
+      height: 720,
+      sha256: "a".repeat(64),
+      sequence: 7,
+      capturedAt: "2026-07-08T00:00:00.000Z",
+    },
+    surface: { surfaceId: 42, width: 1280, height: 720 },
+    inventorySequence: 9,
+    items: [{
+      ordinal: 1,
+      text: "NIXSOMA_OCR_TRANSIENT_CANARY",
+      confidence: 0.9,
+      bounds: { x: 10, y: 20, width: 300, height: 30 },
+    }],
+    sourceItemCount: 1,
+    truncated: false,
+  });
+}
 
 function createHarness(overrides = {}) {
   const events = [];
@@ -179,6 +205,50 @@ test("capability runtime exposes the standing-authorized read-only AI workspace 
   assert.deepEqual(capability?.domains, ["cross_boundary"]);
   assert.equal(capability?.risk, "medium");
   assert.equal(capability?.governance, "standing_authorization");
+});
+
+test("capability runtime exposes and invokes bounded local OCR without persisting text", async () => {
+  const calls = [];
+  const { runtime, state } = createHarness({
+    client: {
+      fetchJson: async (url) => {
+        calls.push(url);
+        return { ok: true, observation: localOcrObservation() };
+      },
+    },
+  });
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find(
+    (item) => item.id === "sense.ai.workspace.local_ocr",
+  );
+  assert.equal(capability?.kind, "sensor");
+  assert.deepEqual(capability?.domains, ["user_task"]);
+  assert.equal(capability?.governance, "audit_only");
+
+  const response = await runtime.invokeCapability({
+    capabilityId: "sense.ai.workspace.local_ocr",
+    params: { confirm: true },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.response.result.items[0].text, "NIXSOMA_OCR_TRANSIENT_CANARY");
+  assert.equal(response.response.invocation.summary.kind, "ai.workspace.local_ocr");
+  assert.equal(response.response.invocation.summary.maximumProviderCalls, 0);
+  assert.equal(response.response.invocation.summary.maximumActions, 0);
+  assert.equal(response.response.invocation.summary.textPersisted, false);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("NIXSOMA_OCR_TRANSIENT_CANARY"), false);
+  assert.equal(calls.includes("http://127.0.0.1:4102/work-view/local-ocr"), true);
+});
+
+test("capability runtime rejects caller-controlled local OCR fields", async () => {
+  const { runtime, state } = createHarness();
+  const response = await runtime.invokeCapability({
+    capabilityId: "sense.ai.workspace.local_ocr",
+    params: { confirm: true, includePixels: true },
+  });
+
+  assert.equal(response.statusCode, 400);
+  assert.equal(response.response.error.includes("accepts only"), true);
+  assert.equal(state.capabilityInvocationLog.length, 0);
 });
 
 test("capability runtime exposes explicit operator assessment acceptance", async () => {

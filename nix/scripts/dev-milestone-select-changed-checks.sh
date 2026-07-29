@@ -121,6 +121,43 @@ const aiWorkspaceAssessmentAcceptanceSlice = changedFiles.length > 0
   && changedFiles.every((file) => aiWorkspaceAssessmentAcceptanceFiles.has(file))
   && changedFiles.some((file) =>
     file === "services/openclaw-core/src/capability-runtime-ai-workspace-assessment-acceptance.mjs");
+const aiWorkspaceLocalOcrFiles = new Set([
+  "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs",
+  "apps/observer-ui/src/observer-panel-ai-work-view.mjs",
+  "apps/observer-ui/test/ai-output-projection.test.mjs",
+  "apps/observer-ui/test/ai-workbench-lifecycle.test.mjs",
+  "apps/observer-ui/test/ai-workspace-local-ocr.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/README.md",
+  "nix/modules/openclaw-ai-graphical-session.nix",
+  "nix/packages/openclaw-core.nix",
+  "nix/packages/openclaw-session-manager.nix",
+  "nix/profiles/desktop-body.nix",
+  "nix/scripts/dev-ai-workspace-local-ocr-live-check.sh",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-checks.tsv",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "packages/shared-utils/package.json",
+  "packages/shared-utils/src/ai-local-ocr.mjs",
+  "packages/shared-utils/test/ai-local-ocr.test.mjs",
+  "services/openclaw-core/src/capability-descriptors.mjs",
+  "services/openclaw-core/src/capability-runtime-ai-workspace-local-ocr.mjs",
+  "services/openclaw-core/src/capability-runtime.mjs",
+  "services/openclaw-core/test/capability-runtime-ai-workspace-local-ocr.test.mjs",
+  "services/openclaw-core/test/capability-runtime.test.mjs",
+  "services/openclaw-session-manager/src/ai-local-ocr-engine.mjs",
+  "services/openclaw-session-manager/src/ai-local-ocr-route.mjs",
+  "services/openclaw-session-manager/src/server.mjs",
+  "services/openclaw-session-manager/test/ai-local-ocr-engine.test.mjs",
+  "services/openclaw-session-manager/test/ai-local-ocr-route.test.mjs",
+]);
+const aiWorkspaceLocalOcrSlice = changedFiles.length > 0
+  && changedFiles.every((file) => aiWorkspaceLocalOcrFiles.has(file))
+  && changedFiles.some((file) =>
+    file === "services/openclaw-core/src/capability-runtime-ai-workspace-local-ocr.mjs");
 
 function physicalScriptsForManifestRow(phase, slug, forceShort = false) {
   const legacy = {
@@ -895,6 +932,16 @@ function selectSourceHeuristics(file) {
 }
 
 for (const file of changedFiles) {
+  if (aiWorkspaceLocalOcrSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-shared-package-contracts");
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("ai-workspace-local-ocr-live");
+    continue;
+  }
   if (aiWorkspaceAssessmentAcceptanceSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");

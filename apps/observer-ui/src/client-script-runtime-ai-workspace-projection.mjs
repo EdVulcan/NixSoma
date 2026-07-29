@@ -2,6 +2,7 @@ export const observerClientRuntimeAiWorkspaceProjectionScript = `const AI_WORKSP
 let aiWorkspaceProjectionMode = "browser";
 let aiWorkspaceProjectionRequest = null;
 let aiWorkspaceProjectionBinding = null;
+let aiWorkspaceLocalOcrInFlight = false;
 let aiWorkspaceSingleStepInFlight = false;
 let aiWorkspaceBoundedRunInFlight = false;
 let aiWorkspaceAssessmentInFlight = false;
@@ -64,11 +65,13 @@ function updateAiSurfaceScrollControls() {
     clearAiWorkspaceAssessment();
   }
   const aiRunInFlight = aiWorkspaceSingleStepInFlight
+    || aiWorkspaceLocalOcrInFlight
     || aiWorkspaceBoundedRunInFlight
     || aiWorkspaceAssessmentInFlight
     || aiWorkspaceAssessmentAcceptanceInFlight;
   scrollAiSurfaceUpButton.disabled = !enabled || aiRunInFlight;
   scrollAiSurfaceDownButton.disabled = !enabled || aiRunInFlight;
+  runAiWorkspaceLocalOcrButton.disabled = !enabled || aiRunInFlight;
   runAiWorkspaceSingleStepButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceBoundedRunButton.disabled = !enabled || !taskId || aiRunInFlight;
   assessAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
@@ -83,11 +86,17 @@ function clearAiWorkspaceAssessment(reason = "not assessed") {
   acceptAiWorkspaceAssessmentButton.disabled = true;
 }
 
+function clearAiWorkspaceLocalOcr(reason = "not observed") {
+  aiWorkspaceLocalOcrStatus.textContent = reason;
+  aiWorkspaceLocalOcrOutput.textContent = reason;
+}
+
 function clearAiWorkspaceProjection(reason = "unavailable") {
   aiWorkspaceProjectionBinding = null;
   aiWorkspaceProjectionFrame.removeAttribute("src");
   aiWorkspaceProjectionFrame.hidden = true;
   aiWorkspaceProjectionStatus.textContent = reason;
+  clearAiWorkspaceLocalOcr(reason);
   updateAiSurfaceScrollControls();
 }
 
@@ -243,6 +252,98 @@ scrollAiSurfaceUpButton.addEventListener("click", () => {
 
 scrollAiSurfaceDownButton.addEventListener("click", () => {
   runAiSurfaceScroll("down").catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
+async function runAiWorkspaceLocalOcr() {
+  if (aiWorkspaceLocalOcrInFlight) return;
+  aiWorkspaceLocalOcrInFlight = true;
+  updateAiSurfaceScrollControls();
+  try {
+    await refreshAiWorkspaceProjection();
+    await refreshWorkView();
+    const binding = currentAiSurfaceScrollBinding();
+    if (!binding) throw new Error("A fresh active AI workspace projection is required.");
+    aiWorkspaceLocalOcrStatus.textContent = "observing";
+    const response = await fetchJson(observerConfig.coreUrl + "/capabilities/invoke", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        capabilityId: "sense.ai.workspace.local_ocr",
+        params: { confirm: true },
+      }),
+    });
+    const result = response.result ?? {};
+    const governance = result.governance ?? {};
+    const items = Array.isArray(result.items) ? result.items : [];
+    const validBounds = (bounds) => Number.isInteger(bounds?.x)
+      && Number.isInteger(bounds?.y)
+      && Number.isInteger(bounds?.width)
+      && Number.isInteger(bounds?.height)
+      && bounds.x >= 0
+      && bounds.y >= 0
+      && bounds.width > 0
+      && bounds.height > 0
+      && bounds.x + bounds.width <= 1280
+      && bounds.y + bounds.height <= 720;
+    const validItem = (item, index) => item?.ordinal === index + 1
+      && typeof item.text === "string"
+      && item.text.length > 0
+      && item.text.length <= 160
+      && typeof item.confidence === "number"
+      && item.confidence >= 0
+      && item.confidence <= 1
+      && validBounds(item.bounds);
+    if (response.invoked !== true
+      || result.registry !== "nixsoma-ai-workspace-local-ocr-v0"
+      || result.status !== "observed"
+      || result.frame?.registry !== "nixsoma-ai-compositor-frame-v0"
+      || result.frame?.socketName !== "nixsoma-ai-0"
+      || result.frame?.width !== 1280
+      || result.frame?.height !== 720
+      || !/^[a-f0-9]{64}$/u.test(result.frame?.sha256 ?? "")
+      || !/^[a-f0-9]{64}$/u.test(result.sceneContentSha256 ?? "")
+      || result.surface?.surfaceId !== binding.surfaceId
+      || result.inventorySequence !== binding.inventorySequence
+      || result.itemCount !== items.length
+      || items.length > 64
+      || result.characterCount !== items.reduce((total, item) => total + String(item?.text ?? "").length, 0)
+      || result.characterCount > 4096
+      || !items.every(validItem)
+      || governance.localOcr !== true
+      || governance.providerCalled !== false
+      || governance.networkEgress !== false
+      || governance.pixelsProviderEgress !== false
+      || governance.maximumProviderCalls !== 0
+      || governance.maximumActions !== 0
+      || governance.actionExecuted !== false
+      || governance.taskMutated !== false
+      || governance.automaticContinuation !== false
+      || governance.textTransient !== true
+      || governance.textPersisted !== false
+      || governance.browserStorage !== false
+      || governance.parentDisplayConnected !== false
+      || governance.desktopWideCapture !== false
+      || governance.processLaunchExpanded !== false
+      || governance.mutatesHost !== false
+      || Object.prototype.hasOwnProperty.call(result.frame ?? {}, "dataUrl")) {
+      throw new Error("AI workspace local OCR result was invalid.");
+    }
+    aiWorkspaceLocalOcrStatus.textContent = items.length + " lines seq=" + result.frame.sequence;
+    aiWorkspaceLocalOcrOutput.textContent = items.length > 0
+      ? items.map((item) => item.text).join("\\n")
+      : "no text";
+    setControlMessage("Local OCR observed " + items.length + " text lines.");
+  } finally {
+    aiWorkspaceLocalOcrInFlight = false;
+    updateAiSurfaceScrollControls();
+  }
+}
+
+runAiWorkspaceLocalOcrButton.addEventListener("click", () => {
+  runAiWorkspaceLocalOcr().catch((error) => {
+    clearAiWorkspaceLocalOcr("unavailable");
     setControlMessage("Request failed: " + formatError(error));
   });
 });
