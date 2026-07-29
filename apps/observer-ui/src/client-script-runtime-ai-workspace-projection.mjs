@@ -2,6 +2,7 @@ export const observerClientRuntimeAiWorkspaceProjectionScript = `const AI_WORKSP
 let aiWorkspaceProjectionMode = "browser";
 let aiWorkspaceProjectionRequest = null;
 let aiWorkspaceProjectionBinding = null;
+let aiWorkspaceOperatorClickInFlight = false;
 let aiWorkspaceLocalOcrInFlight = false;
 let aiWorkspaceSingleStepInFlight = false;
 let aiWorkspaceBoundedRunInFlight = false;
@@ -35,7 +36,7 @@ function currentAiWorkspaceTaskId() {
   return eligible ? task.id : null;
 }
 
-function currentAiSurfaceScrollBinding() {
+function currentAiSurfaceActionBinding() {
   const graphicalSession = latestWorkViewState?.aiGraphicalSession ?? {};
   const inventory = graphicalSession.surfaceInventory ?? {};
   const activeSurface = Array.isArray(inventory.surfaces)
@@ -59,8 +60,12 @@ function currentAiSurfaceScrollBinding() {
   };
 }
 
+function currentAiSurfaceScrollBinding() {
+  return currentAiSurfaceActionBinding();
+}
+
 function updateAiSurfaceScrollControls() {
-  const enabled = currentAiSurfaceScrollBinding() !== null;
+  const enabled = currentAiSurfaceActionBinding() !== null;
   const taskId = currentAiWorkspaceTaskId();
   if (aiWorkspaceAssessmentTaskId && aiWorkspaceAssessmentTaskId !== taskId) {
     clearAiWorkspaceAssessment();
@@ -72,6 +77,7 @@ function updateAiSurfaceScrollControls() {
     clearAiWorkspaceOcrClick();
   }
   const aiRunInFlight = aiWorkspaceSingleStepInFlight
+    || aiWorkspaceOperatorClickInFlight
     || aiWorkspaceLocalOcrInFlight
     || aiWorkspaceOcrAssessmentInFlight
     || aiWorkspaceOcrClickInFlight
@@ -90,6 +96,7 @@ function updateAiSurfaceScrollControls() {
   assessAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
   acceptAiWorkspaceAssessmentButton.disabled = aiRunInFlight
     || aiWorkspaceAssessmentReceipt?.taskId !== taskId;
+  syncAiWorkspaceOperatorClickControl({ bindingReady: enabled, busy: aiRunInFlight });
 }
 
 function clearAiWorkspaceAssessment(reason = "not assessed") {
@@ -107,6 +114,7 @@ function clearAiWorkspaceLocalOcr(reason = "not observed") {
 
 function clearAiWorkspaceProjection(reason = "unavailable") {
   aiWorkspaceProjectionBinding = null;
+  resetAiWorkspaceOperatorClick(reason);
   aiWorkspaceProjectionFrame.removeAttribute("src");
   aiWorkspaceProjectionFrame.hidden = true;
   aiWorkspaceProjectionStatus.textContent = reason;
@@ -237,7 +245,7 @@ async function runAiSurfaceScroll(direction) {
   }
   await refreshAiWorkspaceProjection();
   await refreshWorkView();
-  const binding = currentAiSurfaceScrollBinding();
+  const binding = currentAiSurfaceActionBinding();
   if (!binding) throw new Error("A fresh active AI workspace projection is required.");
   const response = await fetchJson(observerConfig.coreUrl + "/capabilities/invoke", {
     method: "POST",

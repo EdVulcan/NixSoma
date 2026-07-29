@@ -2630,6 +2630,32 @@ provider reason persisted. This bounded cycle is physically complete and
 frozen; automatic acceptance, open loops, and broader authority remain
 deferred.
 
+## Selected Level 4 One-Shot Projected Operator Click
+
+The twenty-first Level 4 vertical slice is deployed as one explicit
+operator-authenticated click inside the transient AI Workspace projection.
+Observer requires a fresh one-use arm, maps the trusted rendered point to the
+current 1280x720 native frame, active numeric surface, and inventory sequence,
+and invokes the existing `act.screen.pointer_keyboard` opcode-4 owner. The arm
+is consumed after every attempt and is also cleared on stale projection, mode
+switch, sign-out, hidden document, or concurrent AI/OCR operation.
+
+This slice adds no Core capability wrapper or provider authority. It does not
+accept keyboard input, drag, repetition, an open loop, desktop-wide or parent-
+display input, arbitrary process/window control, root, or host mutation. All
+1128 workspace tests, typecheck, 820 registry entries, the 1007-file script
+audit, Windows path budget, body-config, and the exact 84-file Observer closure
+pass. Generation
+`/nix/store/0sc4azki40rzxn7qzzvpmbvwm354w4y4-nixos-system-nixos-26.05.4808.569d57850992`
+is active; `p4wdy50l...` is the previous generation. The physical gate bound
+surface 53, inventory 104, and rendered coordinates `(47,181)` to one native
+receipt, advanced frame sequence 189 to 191, proved a Workbench visual change,
+and observed automatic disarm. It made zero provider calls, left task state
+unchanged, and kept all nine production health endpoints active. This closes
+bounded operator interaction inside the isolated AI workspace; it is not
+general desktop takeover. Freeze this lane and keep broader input authority
+deferred.
+
 ## Identity-Upgrade Alignment
 
 Every new capability must state which identity level it serves:

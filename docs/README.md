@@ -13,11 +13,11 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click, and an explicit bounded run-plus-assessment cycle, plus the completed Level 3 baseline | The twentieth Level 4 slice is physically complete |
-| Local validation | 1125 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 819 registry entries pass | Validated |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, a one-shot operator-authenticated projected click, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click, and an explicit bounded run-plus-assessment cycle, plus the completed Level 3 baseline | The twenty-first Level 4 slice is physically complete |
+| Local validation | 1128 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration checks pass; 820 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/p4wdy50lnagh4hcbxfnsx81w9yjcm744-nixos-system-nixos-26.05.4808.569d57850992` | Explicit reviewed run-plus-assessment and existing acceptance owner are deployed and physically proven |
-| Previous generation | `/nix/store/zh9r98yqc80bfbg1kl8nz4f03h99icjx-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the reviewed-cycle deployment |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/0sc4azki40rzxn7qzzvpmbvwm354w4y4-nixos-system-nixos-26.05.4808.569d57850992` | One-shot operator-authenticated projected click is deployed and physically proven |
+| Previous generation | `/nix/store/p4wdy50lnagh4hcbxfnsx81w9yjcm744-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the operator-click deployment |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
 | Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; approval-bound and standing-authorized provider calls have completed on the active host | Deployed development profile disables local cooldown and daily usage enforcement; provider billing remains external |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, production/default 15-minute cooldown and 3-call/4096-token daily limits, structured transient recommendation, and local fallback | Development profile is deployed without local call/token/cooldown enforcement; a real provider gate passed beyond the prior 3/3 state |
@@ -26,6 +26,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 compositor frame | Weston launches and authorizes one fixed screenshooter client; session-manager returns a bounded transient 1280x720 PNG and retains metadata only | Deployed; Firefox cannot read the capture directory |
 | Level 4 compositor input | Existing screen pointer capability carries a fresh native-frame binding; session-manager requires the active work-view lease and Core grant, while Weston accepts only the session-manager peer on a fixed pointer-only Unix socket | Deployed; real click advanced native frame 1 to 2 with matching lease and receipt |
 | Level 4 output projection | Exact operator-authenticated Core route returns one revalidated fresh `nixsoma-ai-0` PNG to an explicitly selected Observer tab; pixels are no-store and browser-memory-only | Deployed; real Observer rendered 1280x720 and released pixels on mode switch and sign-out |
+| Level 4 projected operator click | Observer requires an explicit one-use arm before mapping one trusted click on the current transient 1280x720 projection to the existing active-surface opcode-4 owner; stale frame/surface/inventory state, mode changes, sign-out, hidden documents, and concurrent AI/OCR work clear the arm | Deployed in `0sc4azki...`; a real click at rendered coordinates `(47,181)` matched surface 53, inventory 104, native receipt, frame 189 -> 191, and a visual change, then disarmed with zero provider calls or task mutation |
 | Level 4 surface inventory | Weston publishes at most 16 numeric surface/PID/dimension/activation records through one owner-only atomic file; titles, app-ids, pixels, persistence, parent-display access, and added input authority are excluded | Deployed; physical count moved 0 -> 1 -> 0 with the fixed Workbench |
 | Level 4 application lifecycle | `act.work_view.control` and a single-use session-manager execution grant start or stop only `nixsoma-ai-workbench.service`; Observer provides authenticated controls and readback without repetitive approval | Deployed; real Observer proved start -> matching PID/surface -> stop -> disappearance |
 | Level 4 surface activation | The existing control owner binds one numeric surface id and inventory sequence; session-manager requires audit, fresh pre-frame, peer-authenticated shell receipt, newer activated inventory, and post-frame proof | Deployed; normal production Observer proved fixture 2 -> Workbench 4 with counts 0 -> 2 -> 1 -> 0 |
@@ -630,6 +631,27 @@ provider call or action and completed the task. Nine health endpoints remained
 active and no provider reason persisted. This lane is physically complete and
 frozen.
 
+The twenty-first Level 4 capability adds a one-shot authenticated operator click
+inside the transient AI Workspace projection. Observer requires the operator to
+arm each attempt explicitly, binds the rendered point to the current 1280x720
+frame, active numeric surface, and inventory sequence, and then reuses the
+existing `act.screen.pointer_keyboard` opcode-4 owner for exactly one real
+browser click. It disarms after every attempt and also clears or disables the
+arm when the projection becomes stale, the view mode changes, the operator
+signs out, the document is hidden, or another AI/OCR operation is active. No
+Core capability wrapper, provider call, task mutation, keyboard, drag, repeat,
+open loop, desktop-wide input, parent-display access, root, or host mutation is
+added. All 1128 tests, typecheck, 820 registry entries, 1007-file script audit,
+Windows path budget, body-config, and the exact 84-file Observer closure pass.
+Generation `0sc4azki...` is active and `p4wdy50l...` is the previous generation.
+The physical gate bound surface 53 and inventory 104 to rendered coordinates
+`(47,181)`, matched the native input receipt, advanced frame 189 to 191, proved
+the Workbench visual change, and observed automatic disarm. It made zero
+provider calls, did not mutate a task, and kept all nine production health
+endpoints active. This is bounded operator interaction inside the isolated AI
+workspace, not general desktop takeover. The lane is physically complete and
+frozen.
+
 ## Progress Estimate
 
 These figures are capability-maturity estimates, not test coverage:
@@ -639,7 +661,7 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 78%; semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, and same-surface OCR click are physically complete |
+| Level 4 graphics-stack-native body | about 80%; one-shot projected operator click, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, and same-surface OCR click are physically complete |
 | Current bounded product scope | 82-85% |
 | Final whitepaper vision | 50-58% |
 

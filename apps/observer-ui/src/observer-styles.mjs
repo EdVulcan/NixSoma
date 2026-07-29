@@ -122,6 +122,33 @@ export function observerStyles() {
       .work-view-frame[hidden] {
         display: none;
       }
+      .work-view-frame.operator-click-ready {
+        cursor: crosshair;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px rgba(110, 231, 200, 0.3);
+      }
+      .projection-control-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 32px;
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .projection-control-row label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text);
+        cursor: pointer;
+      }
+      .projection-control-row input:disabled + span,
+      .projection-control-row label:has(input:disabled) {
+        cursor: default;
+        color: var(--muted);
+      }
       .preview-tabs {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -96,6 +96,28 @@ const nativeEngineeringLspObserverCheck = "observer-openclaw-native-engineering-
 const nativeDeclarativeEvolutionCoreCheck = "openclaw-native-declarative-evolution-staging";
 const nativeDeclarativeEvolutionObserverCheck = "observer-openclaw-native-declarative-evolution-staging";
 const windowsPathBudgetCheck = "windows-path-budget";
+const aiWorkspaceOperatorClickFiles = new Set([
+  "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
+  "apps/observer-ui/src/client-script-runtime-actions.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-operator-click.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs",
+  "apps/observer-ui/src/observer-panel-snapshot-preview.mjs",
+  "apps/observer-ui/src/observer-styles.mjs",
+  "apps/observer-ui/test/ai-workspace-operator-click.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/README.md",
+  "nix/packages/observer-ui.nix",
+  "nix/scripts/dev-ai-workspace-operator-click-live-check.sh",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-checks.tsv",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+]);
+const aiWorkspaceOperatorClickSlice = changedFiles.length > 0
+  && changedFiles.every((file) => aiWorkspaceOperatorClickFiles.has(file))
+  && changedFiles.some((file) =>
+    file === "apps/observer-ui/src/client-script-runtime-ai-workspace-operator-click.mjs");
 const aiWorkspaceAssessmentAcceptanceFiles = new Set([
   "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
   "apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs",
@@ -1058,6 +1080,14 @@ function selectSourceHeuristics(file) {
 }
 
 for (const file of changedFiles) {
+  if (aiWorkspaceOperatorClickSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("body-config");
+    selectName("ai-workspace-operator-click-live");
+    continue;
+  }
   if (aiWorkspaceOcrClickSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");

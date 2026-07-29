@@ -486,6 +486,25 @@ budget、body-config，以及 252-file Core、83-file Observer exact closure 均
 显式 operator confirmation 后完成 task。九个健康端点保持在线，provider reason
 未持久化。该 bounded cycle 已物理完成并冻结。
 
+第二十一个 Level 4 纵向切片已完成部署与物理证明。它在 Observer 的瞬时 AI
+Workspace 投影中增加一次显式认证的操作者点击。操作者必须为每次尝试单独武装；
+Observer 把可信渲染点绑定到当前 1280x720 frame、active numeric surface 与
+inventory sequence，然后复用现有 `act.screen.pointer_keyboard` opcode-4 owner
+执行一次真实 browser click。每次尝试后自动解除武装；projection stale、模式切换、
+退出登录、document hidden 或并发 AI/OCR 操作也会清除或禁用武装状态。
+
+该切片没有增加 Core capability wrapper 或 provider authority，也不允许 keyboard、
+drag、重复点击、开放循环、desktop-wide input、parent display、任意进程/窗口控制、
+root 或 host mutation。Active generation 为
+`/nix/store/0sc4azki40rzxn7qzzvpmbvwm354w4y4-nixos-system-nixos-26.05.4808.569d57850992`，
+上一代为 `p4wdy50l...`。1128 项测试、typecheck、820-entry registry、1007-file
+script audit、Windows path budget、body-config 与 84-file Observer exact closure
+均通过。物理 gate 将 surface 53、inventory 104 和渲染坐标 `(47,181)` 绑定到一次
+native receipt，frame sequence 从 189 推进到 191，证明 Workbench 视觉变化与
+one-shot 自动解除武装；providerCallCount=0，task 未变化，九个 production health
+endpoint 均保持 active。这是隔离 AI workspace 内的有界操作者交互，不是通用桌面
+接管。该 lane 已物理完成并冻结。
+
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
 画面投影、应用生命周期、surface 激活、垂直滚动、AI 单步、semantic scene
@@ -599,7 +618,7 @@ host mutation 仍未包含。这证明 AI 已拥有独立图形空间的最小�
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 60% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。真实 repair/rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 78%（semantic type、bounded run、reviewed cycle/acceptance、bounded local OCR、OCR assessment 与 same-surface OCR click 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、verified-scroll-only 两步 run、显式 run-plus-assessment cycle、瞬时本地 OCR、无 pixel egress 的 OCR provider assessment 与 ordinal-grounded one-click action 已部署。`p4wdy50l...` gate 以 2 次 provider call、0 action、四层审计和独立 Accept owner 证明 task 在 acceptance 前不变且不会被 provider 自动完成。开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
+| Level 4 图形栈内生组件 | 约 80%（one-shot projected operator click、semantic type、bounded run、reviewed cycle/acceptance、bounded local OCR、OCR assessment 与 same-surface OCR click 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、verified-scroll-only 两步 run、显式 run-plus-assessment cycle、瞬时本地 OCR、无 pixel egress 的 OCR provider assessment 与 ordinal-grounded one-click action 已部署。`0sc4azki...` gate 把一次显式武装的投影点击绑定到 current frame/surface/inventory/native receipt，证明视觉变化与自动解除武装，且 providerCallCount=0、task 不变。开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
 **50-58%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted

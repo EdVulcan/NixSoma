@@ -1891,6 +1891,7 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-screen-observation.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-fixed-unit-incident-triage.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-operator-click.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-reviewed-cycle.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-assessment.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-click.mjs"
@@ -1906,7 +1907,7 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/packages/shared-client/src/service-descriptors.mjs"
     || -w "$observer_ui_server"
     || -e "$observer_ui_out/share/openclaw/apps/observer-ui/scripts"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 83 ]]; then
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 84 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi
@@ -1962,9 +1963,12 @@ if (health.ok !== true
   || !html.includes('id="engineering-loop-state-kind"')
   || !html.includes('id="ai-workspace-preview-tab"')
   || !html.includes('id="ai-workspace-projection-frame"')
+  || !html.includes('id="ai-workspace-operator-click-toggle"')
   || !client.includes("engineering-loop-state")
   || !client.includes("nixsoma-ai-output-projection-v0")
   || !client.includes("/proxy/session-manager/work-view/compositor-frame")
+  || !client.includes("Clicked AI surface #")
+  || !client.includes('capabilityId: "act.screen.pointer_keyboard"')
   || !html.includes('id="run-ai-workspace-local-ocr-button"')
   || !client.includes("sense.ai.workspace.local_ocr")
   || !client.includes("nixsoma-ai-workspace-local-ocr-v0")

@@ -481,6 +481,25 @@ This bounded lane is physically complete and frozen. Automatic acceptance, open
 loops, arbitrary process/window/input authority, root, and host mutation remain
 deferred.
 
+The twenty-first Level 4 capability is deployed as a one-shot authenticated
+operator click inside the transient AI Workspace projection. Observer requires
+one explicit arm for each attempt, binds the trusted rendered point to the
+current 1280x720 frame, active numeric surface, and inventory sequence, and
+reuses the existing `act.screen.pointer_keyboard` opcode-4 owner. It disarms
+after every attempt and clears the arm on stale projection, mode switch,
+sign-out, hidden document, or concurrent AI/OCR work. This adds no Core
+capability wrapper, provider call, task mutation, keyboard, drag, repeat, open
+loop, desktop-wide input, parent-display access, arbitrary process/window
+control, root, or host mutation. All 1128 tests, typecheck, 820 registry entries,
+1007-file script audit, path budget, body-config, and the exact 84-file Observer
+closure pass. Generation `0sc4azki...` is active and `p4wdy50l...` is the
+previous generation. The physical gate bound surface 53, inventory 104, and
+rendered coordinates `(47,181)` to one native receipt, advanced frame 189 to
+191, proved a Workbench visual change and automatic disarm, made zero provider
+calls, left task state unchanged, and kept all nine production health endpoints
+active. This is bounded interaction inside the isolated AI workspace, not
+general desktop takeover. The lane is physically complete and frozen.
+
 ## Completed Capability Evidence
 
 The following plan families are retained because they describe implemented

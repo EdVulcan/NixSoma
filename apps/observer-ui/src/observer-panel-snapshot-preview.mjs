@@ -23,6 +23,13 @@ export function observerSnapshotPreviewPanel() {
           </div>
           <div id="ai-workspace-preview" class="preview-pane" role="tabpanel" aria-labelledby="ai-workspace-preview-tab" hidden>
             <div class="metric"><span>Native Frame</span><span id="ai-workspace-projection-status">not selected</span></div>
+            <div class="projection-control-row">
+              <label for="ai-workspace-operator-click-toggle">
+                <input id="ai-workspace-operator-click-toggle" type="checkbox" disabled />
+                One click
+              </label>
+              <span id="ai-workspace-operator-click-status">off</span>
+            </div>
             <img id="ai-workspace-projection-frame" class="work-view-frame" alt="NixSoma AI-owned compositor output" hidden />
           </div>
         </section>
