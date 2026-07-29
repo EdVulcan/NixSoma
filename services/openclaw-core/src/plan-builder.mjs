@@ -43,6 +43,7 @@ export function createPlanBuilder(deps) {
     createAiWorkspaceAssessmentImpl,
     createAiWorkspaceOcrAssessmentImpl,
     createAiWorkspaceOcrClickImpl,
+    createAiWorkspaceOcrTypeImpl,
     createAiWorkspaceSingleStepImpl,
     createAiWorkspaceRunCoordinatorImpl,
     host,
@@ -148,6 +149,7 @@ export function createPlanBuilder(deps) {
     createAiWorkspaceAssessmentImpl,
     createAiWorkspaceOcrAssessmentImpl,
     createAiWorkspaceOcrClickImpl,
+    createAiWorkspaceOcrTypeImpl,
     createAiWorkspaceSingleStepImpl,
     createAiWorkspaceRunCoordinatorImpl,
   });
@@ -169,6 +171,7 @@ export function createPlanBuilder(deps) {
     aiWorkspaceAssessment: aiWorkspaceRuntimes.assessment,
     aiWorkspaceOcrAssessment: aiWorkspaceRuntimes.ocrAssessment,
     aiWorkspaceOcrClick: aiWorkspaceRuntimes.ocrClick,
+    aiWorkspaceOcrType: aiWorkspaceRuntimes.ocrType,
     aiWorkspaceSingleStep: aiWorkspaceRuntimes.singleStep,
     aiWorkspaceBoundedRun: aiWorkspaceRuntimes.boundedRun,
     aiWorkspaceReviewedCycle: aiWorkspaceRuntimes.reviewedCycle,

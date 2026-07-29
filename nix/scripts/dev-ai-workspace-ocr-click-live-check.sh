@@ -12,7 +12,7 @@ SYSTEM_HEAL_URL="${OPENCLAW_SYSTEM_HEAL_URL:-http://127.0.0.1:4107}"
 OBSERVER_URL="${OPENCLAW_OBSERVER_URL:-http://127.0.0.1:4170}"
 export OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_OPERATOR_TOKEN_FILE:-${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/nixsoma/operator-token}"
 AUTHORITY_URL="${NIXSOMA_AI_OCR_CLICK_AUTHORITY_URL:-https://example.org/}"
-TASK_GOAL="${NIXSOMA_AI_OCR_CLICK_TASK_GOAL:-Click the visible CONFIRM OCR action target once}"
+TASK_GOAL="${NIXSOMA_AI_OCR_CLICK_TASK_GOAL:-}"
 RUNTIME_DIR="$XDG_RUNTIME_DIR/nixsoma-ai-graphical-session"
 CAPTURE_DIR="$RUNTIME_DIR/capture"
 WORKBENCH_ACTION_MARKER="$RUNTIME_DIR/workbench-action/acknowledged"
@@ -115,9 +115,12 @@ for _ in $(seq 1 20); do
 const fs = require("node:fs");
 const response = JSON.parse(fs.readFileSync(3, "utf8"));
 const items = response.result?.items ?? [];
-const targets = items.filter((item) => /^confirm\b/iu.test(item?.text?.trim() ?? ""));
-const target = targets[0];
-if (targets.length !== 1 || !Number.isInteger(target?.ordinal)) process.exit(1);
+const confirmTargets = items.filter((item) => /^confirm\b/iu.test(item?.text?.trim() ?? ""));
+const labelTargets = items.filter((item) => /^ocr action target:?$/iu.test(item?.text?.trim() ?? ""));
+const target = confirmTargets.length === 1
+  ? confirmTargets[0]
+  : labelTargets.length === 1 ? labelTargets[0] : null;
+if (!Number.isInteger(target?.ordinal)) process.exit(1);
 process.stdout.write(target.text);
 NODE
 )"; then
@@ -126,6 +129,9 @@ NODE
   sleep 0.1
 done
 [[ -n "$target_canary" ]]
+if [[ -z "$TASK_GOAL" ]]; then
+  TASK_GOAL="Click the OCR item whose text is exactly \"$target_canary\" once"
+fi
 
 stage "creating and binding one reviewed OCR click task"
 task_payload="$(node -e '

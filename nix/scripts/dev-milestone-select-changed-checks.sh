@@ -305,6 +305,24 @@ const aiWorkspaceOcrClickSlice = changedFiles.length > 0
   && changedFiles.every((file) => aiWorkspaceOcrClickFiles.has(file))
   && changedFiles.some((file) =>
     file === "services/openclaw-core/src/ai-workspace-ocr-click.mjs");
+const aiWorkspaceOcrTypeFiles = new Set([
+  ...aiWorkspaceOcrClickFiles,
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-type.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-reviewed-cycle.mjs",
+  "apps/observer-ui/test/ai-workspace-ocr-type.test.mjs",
+  "nix/scripts/dev-ai-workspace-ocr-type-live-check.sh",
+  "services/openclaw-core/src/ai-workspace-ocr-decision-session.mjs",
+  "services/openclaw-core/src/ai-workspace-ocr-type-contract.mjs",
+  "services/openclaw-core/src/ai-workspace-ocr-type.mjs",
+  "services/openclaw-core/src/capability-runtime-ai-workspace-ocr-type.mjs",
+  "services/openclaw-core/test/ai-workspace-ocr-type-contract.test.mjs",
+  "services/openclaw-core/test/ai-workspace-ocr-type.test.mjs",
+  "services/openclaw-core/test/capability-runtime-ai-workspace-ocr-type.test.mjs",
+]);
+const aiWorkspaceOcrTypeSlice = changedFiles.length > 0
+  && changedFiles.every((file) => aiWorkspaceOcrTypeFiles.has(file))
+  && changedFiles.some((file) =>
+    file === "services/openclaw-core/src/ai-workspace-ocr-type.mjs");
 const aiWorkspaceLocalOcrFiles = new Set([
   "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
   "apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs",
@@ -1132,6 +1150,16 @@ for (const file of changedFiles) {
     selectName(windowsPathBudgetCheck);
     selectName("body-config");
     selectName("ai-workspace-operator-click-live");
+    continue;
+  }
+  if (aiWorkspaceOcrTypeSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-shared-package-contracts");
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("ai-workspace-ocr-type-live");
     continue;
   }
   if (aiWorkspaceOcrClickSlice) {

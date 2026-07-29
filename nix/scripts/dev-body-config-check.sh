@@ -1011,6 +1011,9 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-ocr-context.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-ocr-click-contract.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-ocr-click.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-ocr-decision-session.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-ocr-type-contract.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-ocr-type.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-capability-request.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-run-coordinator.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-reviewed-cycle.mjs"
@@ -1022,6 +1025,7 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-assessment.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-ocr-assessment.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-ocr-click.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-ocr-type.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-assessment-acceptance.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-reviewed-cycle.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-plugin-refresh.mjs"
@@ -1063,7 +1067,7 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/ai-local-ocr.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-local-ocr.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 252 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 256 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -1902,6 +1906,7 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-reviewed-cycle.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-assessment.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-click.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-type.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-declarative-evolution.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-auth.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-operator-auth.mjs"
@@ -1914,7 +1919,7 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/packages/shared-client/src/service-descriptors.mjs"
     || -w "$observer_ui_server"
     || -e "$observer_ui_out/share/openclaw/apps/observer-ui/scripts"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 85 ]]; then
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 86 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi
@@ -1988,6 +1993,9 @@ if (health.ok !== true
   || !html.includes('id="ocr-click-ai-workspace-button"')
   || !client.includes("act.ai.workspace.ocr_click")
   || !client.includes("nixsoma-ai-workspace-ocr-click-v0")
+  || !html.includes('id="ocr-type-ai-workspace-button"')
+  || !client.includes("act.ai.workspace.ocr_type")
+  || !client.includes("nixsoma-ai-workspace-ocr-type-v0")
   || !html.includes('id="run-ai-workspace-reviewed-cycle-button"')
   || !client.includes("act.ai.workspace.reviewed_cycle")
   || !client.includes("nixsoma-ai-workspace-reviewed-cycle-v0")

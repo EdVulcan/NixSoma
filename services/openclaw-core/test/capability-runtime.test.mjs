@@ -129,6 +129,7 @@ function createHarness(overrides = {}) {
     aiWorkspaceAssessment: overrides.aiWorkspaceAssessment,
     aiWorkspaceOcrAssessment: overrides.aiWorkspaceOcrAssessment,
     aiWorkspaceOcrClick: overrides.aiWorkspaceOcrClick,
+    aiWorkspaceOcrType: overrides.aiWorkspaceOcrType,
     aiWorkspaceSingleStep: overrides.aiWorkspaceSingleStep,
     aiWorkspaceBoundedRun: overrides.aiWorkspaceBoundedRun,
     aiWorkspaceReviewedCycle: overrides.aiWorkspaceReviewedCycle,
@@ -384,6 +385,98 @@ test("capability runtime exposes standing-authorized OCR ordinal click with comp
   assert.equal(response.response.invocation.summary.postActionVerified, true);
   assert.equal(response.response.invocation.summary.arbitraryPointerInput, false);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("Acknowledge action"), false);
+});
+
+test("capability runtime exposes standing-authorized objective-bound OCR type", async () => {
+  const taskId = "task-ocr-type";
+  const inputEvidence = {
+    registry: "openclaw-write-only-input-evidence-v0",
+    charCount: 6,
+    byteLength: 6,
+    maxChars: 32,
+    truncated: false,
+    textExposed: false,
+    persisted: false,
+  };
+  const { runtime, state } = createHarness({
+    aiWorkspaceOcrType: {
+      invoke: async () => ({
+        ok: true,
+        registry: "nixsoma-ai-workspace-ocr-type-v0",
+        status: "executed",
+        decision: { actionId: "type_text", inputEvidence, confidence: 0.95 },
+        action: { actionId: "type_text", inputEvidence, surfaceId: 42,
+          inventorySequence: 9, executed: true },
+        evidence: {
+          taskId,
+          taskStatus: "running",
+          objectiveContentHash: "a".repeat(64),
+          taskVersionHash: "b".repeat(64),
+          contextContentHash: "c".repeat(64),
+          requestContentHash: "d".repeat(64),
+          responseContentHash: "e".repeat(64),
+          frameContentHash: "f".repeat(64),
+          frameSequence: 7,
+          ocrSceneContentHash: "1".repeat(64),
+          ocrBindingHash: "2".repeat(64),
+          ocrItemCount: 8,
+          ocrCharacterCount: 162,
+          verificationFrameContentHash: "3".repeat(64),
+          verificationFrameSequence: 8,
+          verificationOcrSceneContentHash: "4".repeat(64),
+          postActionFrameContentHash: "5".repeat(64),
+          postActionFrameSequence: 10,
+          postActionOcrSceneContentHash: "6".repeat(64),
+          inputEvidence,
+          actionExecuted: true,
+          receiptMatched: true,
+          frameChanged: true,
+          postActionVerified: true,
+          completionAudit: true,
+        },
+        governance: {
+          providerCalled: true,
+          localOcrBound: true,
+          localOcrRevalidated: true,
+          currentFrameBound: true,
+          currentActiveSurfaceBound: true,
+          taskObjectiveInputBound: true,
+          providerGeneratedInput: true,
+          keyboardInput: true,
+          hotkeyInput: false,
+          enterKeyInput: false,
+          inputTextExposed: false,
+          inputTextPersisted: false,
+          taskObjectiveBound: true,
+          taskObjectiveProviderEgress: true,
+          rawTaskGoalProviderEgress: false,
+          ocrTextProviderEgress: true,
+          ocrTextPersistedLocally: false,
+          pixelsProviderEgress: false,
+          arbitraryKeyboardInput: false,
+          providerRetentionControlledExternally: true,
+        },
+      }),
+    },
+  });
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find((item) => item.id === "act.ai.workspace.ocr_type");
+  assert.equal(capability?.kind, "actuator");
+  assert.deepEqual(capability?.domains, ["cross_boundary"]);
+  assert.equal(capability?.governance, "standing_authorization");
+
+  const response = await runtime.invokeCapability({
+    capabilityId: "act.ai.workspace.ocr_type",
+    taskId,
+    params: { confirm: true },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.response.result.status, "executed");
+  assert.equal(response.response.invocation.summary.kind, "ai.workspace.ocr_type");
+  assert.equal(response.response.invocation.summary.inputEvidence.charCount, 6);
+  assert.equal(response.response.invocation.summary.postActionVerified, true);
+  assert.equal(response.response.invocation.summary.arbitraryKeyboardInput, false);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("K7M2Q9"), false);
 });
 
 test("capability runtime rejects caller-controlled local OCR fields", async () => {

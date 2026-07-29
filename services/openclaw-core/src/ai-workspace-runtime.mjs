@@ -1,6 +1,7 @@
 import { createAiWorkspaceAssessment } from "./ai-workspace-assessment.mjs";
 import { createAiWorkspaceOcrAssessment } from "./ai-workspace-ocr-assessment.mjs";
 import { createAiWorkspaceOcrClick } from "./ai-workspace-ocr-click.mjs";
+import { createAiWorkspaceOcrType } from "./ai-workspace-ocr-type.mjs";
 import { createAiWorkspaceRunCoordinator } from "./ai-workspace-run-coordinator.mjs";
 import { createAiWorkspaceSingleStep } from "./ai-workspace-single-step.mjs";
 import { createStandingProviderAdvisory } from "./standing-provider-advisory.mjs";
@@ -20,6 +21,7 @@ export function createAiWorkspaceRuntimes({
   createAiWorkspaceAssessmentImpl = createAiWorkspaceAssessment,
   createAiWorkspaceOcrAssessmentImpl = createAiWorkspaceOcrAssessment,
   createAiWorkspaceOcrClickImpl = createAiWorkspaceOcrClick,
+  createAiWorkspaceOcrTypeImpl = createAiWorkspaceOcrType,
   createAiWorkspaceSingleStepImpl = createAiWorkspaceSingleStep,
   createAiWorkspaceRunCoordinatorImpl = createAiWorkspaceRunCoordinator,
 } = {}) {
@@ -64,11 +66,21 @@ export function createAiWorkspaceRuntimes({
     publishAuditEvent,
     getTaskById,
   });
+  const ocrTypeOwner = createAiWorkspaceOcrTypeImpl({
+    standingAdvisory: standingProviderAdvisory,
+    fetchJson,
+    postJson,
+    sessionManagerUrl,
+    screenActUrl,
+    publishAuditEvent,
+    getTaskById,
+  });
   const runs = createAiWorkspaceRunCoordinatorImpl({
     singleStep: singleStepOwner,
     assessment: assessmentOwner,
     ocrAssessment: ocrAssessmentOwner,
     ocrClick: ocrClickOwner,
+    ocrType: ocrTypeOwner,
     publishAuditEvent,
   });
   return {
@@ -76,6 +88,7 @@ export function createAiWorkspaceRuntimes({
     assessment: runs.assessment,
     ocrAssessment: runs.ocrAssessment,
     ocrClick: runs.ocrClick,
+    ocrType: runs.ocrType,
     singleStep: runs.singleStep,
     boundedRun: runs.boundedRun,
     reviewedCycle: runs.reviewedCycle,

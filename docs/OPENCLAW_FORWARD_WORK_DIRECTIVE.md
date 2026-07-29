@@ -47,16 +47,18 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
-triage/repair-promotion bridge, and twenty-two deployed Level 4 graphical
-identity slices through a one-shot bounded native operator type. One
+triage/repair-promotion bridge, and twenty-three deployed Level 4 graphical
+identity slices through one objective-bound OCR native type. One
 explicit operator trigger can request a schema-bound no-op, vertical scroll,
 semantic click, or write-only semantic type decision over bounded active-browser
 content and execute at most one existing action; separate explicit reads can
 return bounded transient local OCR or one read-only provider assessment without
 pixel egress. Direct operator interaction also includes one armed projected
-click and one write-only 1-32 character native type. All 1137 workspace tests
+click and one write-only 1-32 character native type; one reviewed task may
+also request that its exact allowlisted objective value be typed after
+provider selection and local OCR revalidation. All 1152 workspace tests
 and typecheck pass, the body-config and event-audit integration checks pass, the
-821-entry milestone registry and 1008-file script audit pass, and
+822-entry milestone registry and 1009-file script audit pass, and
 the Windows path budget has no file over 160 repository-relative characters.
 GitHub CI now enforces
 Node 22 typecheck, workspace tests, milestone registry/script audit, and the
@@ -64,12 +66,13 @@ same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/aifc3p1nzarmidghkyh85ap9f3d3d466-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/m392zajqa4h91023swznpbhcjaa1ilq0-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, bounded local OCR, the
-task-bound OCR assessment and OCR ordinal-click owners, and Observer controls
-for one-shot click and bounded native type. All nine health endpoints pass.
+task-bound OCR assessment, OCR ordinal-click, and objective-bound OCR-type
+owners, plus Observer controls for one-shot click and bounded native type. All
+nine health endpoints pass.
 
 One real request-bound DeepSeek advisory call completed through task
 `62ba696a-945e-4f37-b65e-8a6783316386` and approval
@@ -2689,6 +2692,39 @@ also passed. This is bounded native text input, not a general keyboard proxy or
 desktop takeover. Freeze this lane and keep Enter, hotkeys, broad keyboard
 authority, repeat, arbitrary process/window control, parent-display input, root,
 and host mutation deferred.
+
+## Completed Level 4 Objective-Bound OCR Type
+
+The twenty-third Level 4 vertical slice is deployed as
+`act.ai.workspace.ocr_type`. The caller provides only a reviewed `taskId` and
+`confirm=true`; the entire task objective must match
+`Type exact text "VALUE" into the active surface`, where `VALUE` is 1-32
+characters from `[A-Za-z0-9 .,_-]`. One standing-provider call may return only
+that exact `type_text` action or `no_op`. The capability accepts no caller text,
+provider-selected alternate value, Enter, modifier, repeat, continuation, or
+general keyboard authority.
+
+Core reuses a shared OCR decision/revalidation owner and requires the task,
+local OCR, compositor frame, active surface, inventory, lease, execution grant,
+pre-action audit, and native opcode-5 receipt to remain bound. One executed
+action must then produce a newer same-surface OCR observation containing the
+exact objective value. Execution evidence contains only hashes, counts, receipt
+facts, and write-only input evidence; the reviewed task objective remains
+ordinary task data, and provider retention remains externally governed.
+
+All 1152 workspace tests, typecheck, 822 registry entries, the 1009-file script
+audit, Windows path budget, shared contracts, body-config, and exact 256-file
+Core and 86-file Observer closures pass. Generation
+`/nix/store/m392zajqa4h91023swznpbhcjaa1ilq0-nixos-system-nixos-26.05.4808.569d57850992`
+is active; `aifc3p1n...` is the previous generation. The physical gate bound
+task `80841418-8c75-4bc9-bc7d-955985d36f34`, surface 31, inventory 72, one
+provider call, one opcode-5 action, and three owner OCR observations. The native
+receipt, newer OCR, completion audit, unchanged task, and absence of plaintext
+from execution evidence all matched. Direct operator type and OCR click
+regressions also passed. Freeze this one-shot lane. The next real candidate is
+a separately reviewed fixed two-action OCR focus-then-type form interaction;
+Enter, repeat, open loops, broad keyboard/process/window authority,
+parent-display access, root, and host mutation remain deferred.
 
 ## Identity-Upgrade Alignment
 

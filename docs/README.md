@@ -13,11 +13,11 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, one-shot operator-authenticated projected click and bounded native type, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click, and an explicit bounded run-plus-assessment cycle, plus the completed Level 3 baseline | The twenty-second Level 4 slice is physically complete |
-| Local validation | 1137 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1008-file script audit pass; 821 registry entries pass | Validated |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, one-shot operator-authenticated projected click and bounded native type, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click and objective-bound OCR type, and an explicit bounded run-plus-assessment cycle, plus the completed Level 3 baseline | The twenty-third Level 4 slice is physically complete |
+| Local validation | 1152 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1009-file script audit pass; 822 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/aifc3p1nzarmidghkyh85ap9f3d3d466-nixos-system-nixos-26.05.4808.569d57850992` | One-shot operator-authenticated bounded native type is deployed and physically proven |
-| Previous generation | `/nix/store/0sc4azki40rzxn7qzzvpmbvwm354w4y4-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the native-type deployment |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/m392zajqa4h91023swznpbhcjaa1ilq0-nixos-system-nixos-26.05.4808.569d57850992` | Task-bound objective-exact OCR type is deployed and physically proven |
+| Previous generation | `/nix/store/aifc3p1nzarmidghkyh85ap9f3d3d466-nixos-system-nixos-26.05.4808.569d57850992` | Superseded by the OCR-type deployment |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
 | Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; approval-bound and standing-authorized provider calls have completed on the active host | Deployed development profile disables local cooldown and daily usage enforcement; provider billing remains external |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, production/default 15-minute cooldown and 3-call/4096-token daily limits, structured transient recommendation, and local fallback | Development profile is deployed without local call/token/cooldown enforcement; a real provider gate passed beyond the prior 3/3 state |
@@ -42,6 +42,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 bounded local OCR | One explicit authenticated read passes a fresh active-surface compositor frame to fixed local Tesseract over stdin/stdout and returns at most 64 transient text regions while persisting only hashes/counts | Deployed in `lh0jkd7...`; physical gate recognized 8 regions/162 characters with zero provider calls/actions, no text persistence, no pixel egress, and no browser storage |
 | Level 4 OCR assessment | One explicit reviewed task may send at most 24 local OCR regions/1200 characters plus bounds to the standing provider, then requires a newer matching local OCR observation before accepting the read-only outcome | Deployed in `8x2xbjpk...`; physical gate returned `complete` at 0.95 confidence over 8 regions/162 characters with frame 3 -> 4, one provider call, zero actions/task mutation, no local OCR plaintext, and no pixel egress |
 | Level 4 OCR ordinal click | One explicit reviewed task lets the standing provider select only `click_item + itemOrdinal` or `no_op`; Core derives coordinates locally, revalidates task/OCR/surface/inventory, executes at most one opcode-4 surface click, and requires newer OCR without the selected text | Deployed in `zh9r98yq...`; provider selected item 9 on surface 33, frame 75 -> 76 -> 78 proved one receipt-bound click and post-action OCR with zero task mutation, local OCR persistence, pixel egress, or arbitrary coordinates; governed stop then proved the volatile marker absent |
+| Level 4 objective-bound OCR type | One explicit reviewed task whose entire objective matches `Type exact text "VALUE" into the active surface` may receive one provider decision for exactly that 1-32 character allowlisted value; Core revalidates task/OCR/frame/surface/inventory before one opcode-5 type and requires newer OCR containing the value | Deployed in `m392zajq...`; one provider call typed a 6-character canary on surface 31/inventory 72, matched one native receipt and three owner OCR observations, verified the newer scene, left the task unchanged, and copied no plaintext into execution evidence; provider retention remains externally governed |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
@@ -679,6 +680,32 @@ modifier combinations, repeat, arbitrary keyboard input, desktop-wide or
 parent-display input, root, and host mutation remain excluded. This lane is
 physically complete and frozen.
 
+The twenty-third Level 4 capability adds `act.ai.workspace.ocr_type`. The
+caller supplies only a reviewed `taskId + confirm`; the entire task objective
+must be `Type exact text "VALUE" into the active surface`, where `VALUE` is 1-32
+characters from `[A-Za-z0-9 .,_-]`. One standing-provider decision may return
+only that exact value or `no_op`. Core revalidates the task, local OCR, frame,
+active surface, inventory, lease, grant, and required audit before one existing
+opcode-5 action, then requires a newer same-surface OCR scene containing the
+value. Result, audit, invocation, work-view, action-state, and journal evidence
+contain only hashes, counts, receipt facts, and write-only input evidence; the
+reviewed task objective remains ordinary task data, and provider retention is
+externally governed.
+
+All 1152 tests, typecheck, 822 registry entries, the 1009-file script audit,
+path budget, shared contracts, body-config, and exact 256-file Core/86-file
+Observer closures pass. Generation `m392zajq...` is active and `aifc3p1n...` is
+previous. The physical gate used task
+`80841418-8c75-4bc9-bc7d-955985d36f34`, surface 31, inventory 72, one provider
+call, one opcode-5 action, and three owner OCR observations; receipt,
+post-action OCR, completion audit, unchanged task, and no execution-evidence
+plaintext all matched. The direct operator type regression passed with
+`TYPEOK`; the OCR click regression selected item 8 and passed opcode-4 receipt
+and post-OCR checks. Enter, hotkeys, modifiers, repeat, arbitrary keyboard
+input, automatic continuation, parent-display access, root, and host mutation
+remain excluded. The next real candidate is a separately reviewed, fixed
+two-action OCR focus-then-type form interaction with no Enter or open loop.
+
 ## Progress Estimate
 
 These figures are capability-maturity estimates, not test coverage:
@@ -688,9 +715,9 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 60% |
-| Level 4 graphics-stack-native body | about 82%; one-shot projected operator click, bounded native operator type, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, and same-surface OCR click are physically complete |
-| Current bounded product scope | 82-85% |
-| Final whitepaper vision | 50-58% |
+| Level 4 graphics-stack-native body | about 84%; one-shot projected operator click, bounded native operator type, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, same-surface OCR click, and objective-bound OCR type are physically complete |
+| Current bounded product scope | 83-86% |
+| Final whitepaper vision | 51-59% |
 
 ## Current Decision Records
 

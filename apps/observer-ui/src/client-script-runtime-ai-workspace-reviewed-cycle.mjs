@@ -4,6 +4,7 @@ export const observerClientRuntimeAiWorkspaceReviewedCycleScript = `function val
 
 async function runAiWorkspaceReviewedCycle() {
   if (aiWorkspaceReviewedCycleInFlight
+    || aiWorkspaceOcrTypeInFlight
     || aiWorkspaceSingleStepInFlight
     || aiWorkspaceBoundedRunInFlight
     || aiWorkspaceAssessmentInFlight

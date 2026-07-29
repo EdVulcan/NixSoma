@@ -13,6 +13,7 @@ export function observerAiWorkViewPanel() {
           <div class="metric"><span>Local OCR</span><span id="ai-workspace-local-ocr-status">not observed</span></div>
           <div class="metric"><span>OCR Assessment</span><span id="ai-workspace-ocr-assessment-status">not assessed</span></div>
           <div class="metric"><span>OCR Click</span><span id="ai-workspace-ocr-click-status">not run</span></div>
+          <div class="metric"><span>OCR Type</span><span id="ai-workspace-ocr-type-status">not run</span></div>
           <div class="metric"><span>Assessment</span><span id="ai-workspace-assessment-status">not assessed</span></div>
           <div class="metric"><span>Cycle</span><span id="ai-workspace-reviewed-cycle-status">not run</span></div>
           <label for="ai-surface-select">Surface</label>
@@ -26,6 +27,7 @@ export function observerAiWorkViewPanel() {
             <button id="run-ai-workspace-local-ocr-button" class="secondary" type="button" disabled>OCR</button>
             <button id="ocr-assess-ai-workspace-button" class="secondary" type="button" disabled>OCR Assess</button>
             <button id="ocr-click-ai-workspace-button" class="secondary" type="button" disabled>OCR Click</button>
+            <button id="ocr-type-ai-workspace-button" class="secondary" type="button" disabled>OCR Type</button>
             <button id="run-ai-workspace-single-step-button" type="button" disabled>AI Step</button>
             <button id="run-ai-workspace-bounded-run-button" type="button" disabled>AI Run</button>
             <button id="run-ai-workspace-reviewed-cycle-button" type="button" disabled>Run + Assess</button>

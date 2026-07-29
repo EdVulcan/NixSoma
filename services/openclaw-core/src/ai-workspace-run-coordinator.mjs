@@ -7,6 +7,7 @@ const SINGLE_STEP_REGISTRY = "nixsoma-ai-workspace-single-step-v0";
 const ASSESSMENT_REGISTRY = "nixsoma-ai-workspace-task-assessment-v0";
 const OCR_ASSESSMENT_REGISTRY = "nixsoma-ai-workspace-ocr-assessment-v0";
 const OCR_CLICK_REGISTRY = "nixsoma-ai-workspace-ocr-click-v0";
+const OCR_TYPE_REGISTRY = "nixsoma-ai-workspace-ocr-type-v0";
 const SCROLL_ACTIONS = new Set(["scroll_up", "scroll_down"]);
 const ALLOWED_ACTIONS = new Set([
   "no_op", "scroll_up", "scroll_down", "click_item", "type_item",
@@ -160,6 +161,7 @@ export function createAiWorkspaceRunCoordinator({
   assessment,
   ocrAssessment,
   ocrClick,
+  ocrType,
   publishAuditEvent = async () => ({ ok: true }),
   now = () => new Date().toISOString(),
 } = {}) {
@@ -323,17 +325,22 @@ export function createAiWorkspaceRunCoordinator({
     );
   }
 
-  async function invokeOcrClick(input) {
+  async function invokeOcrAction(owner, input, {
+    registry,
+    fallbackPrefix,
+    decision,
+    action,
+  }) {
     if (inFlight) {
-      return typeof ocrClick?.localFallback === "function"
-        ? ocrClick.localFallback("workspace_run_in_flight")
+      return typeof owner?.localFallback === "function"
+        ? owner.localFallback("workspace_run_in_flight")
         : {
             ok: true,
-            registry: OCR_CLICK_REGISTRY,
+            registry,
             status: "local_fallback",
-            decision: { actionId: "no_op", itemOrdinal: null, confidence: null },
-            action: { actionId: "no_op", itemOrdinal: null, executed: false },
-            fallback: { reason: "ai_workspace_ocr_click_workspace_run_in_flight" },
+            decision,
+            action,
+            fallback: { reason: `${fallbackPrefix}_workspace_run_in_flight` },
             evidence: { taskId: input?.taskId ?? null, completionAudit: false },
             governance: {
               providerCalled: false,
@@ -345,16 +352,16 @@ export function createAiWorkspaceRunCoordinator({
             },
           };
     }
-    if (!ocrClick || typeof ocrClick.invoke !== "function") {
-      return typeof ocrClick?.localFallback === "function"
-        ? ocrClick.localFallback("runtime_unavailable")
+    if (!owner || typeof owner.invoke !== "function") {
+      return typeof owner?.localFallback === "function"
+        ? owner.localFallback("runtime_unavailable")
         : {
             ok: false,
-            registry: OCR_CLICK_REGISTRY,
+            registry,
             status: "local_fallback",
-            decision: { actionId: "no_op", itemOrdinal: null, confidence: null },
-            action: { actionId: "no_op", itemOrdinal: null, executed: false },
-            fallback: { reason: "ai_workspace_ocr_click_runtime_unavailable" },
+            decision,
+            action,
+            fallback: { reason: `${fallbackPrefix}_runtime_unavailable` },
             evidence: { taskId: input?.taskId ?? null, completionAudit: false },
             governance: {
               providerCalled: false,
@@ -368,10 +375,43 @@ export function createAiWorkspaceRunCoordinator({
     }
     inFlight = true;
     try {
-      return await ocrClick.invoke(input);
+      return await owner.invoke(input);
     } finally {
       inFlight = false;
     }
+  }
+
+  function invokeOcrClick(input) {
+    return invokeOcrAction(ocrClick, input, {
+      registry: OCR_CLICK_REGISTRY,
+      fallbackPrefix: "ai_workspace_ocr_click",
+      decision: { actionId: "no_op", itemOrdinal: null, confidence: null },
+      action: { actionId: "no_op", itemOrdinal: null, executed: false },
+    });
+  }
+
+  function invokeOcrType(input) {
+    const inputEvidence = {
+      registry: "openclaw-write-only-input-evidence-v0",
+      charCount: 0,
+      byteLength: 0,
+      maxChars: 32,
+      truncated: false,
+      textExposed: false,
+      persisted: false,
+    };
+    return invokeOcrAction(ocrType, input, {
+      registry: OCR_TYPE_REGISTRY,
+      fallbackPrefix: "ai_workspace_ocr_type",
+      decision: { actionId: "no_op", inputEvidence, confidence: null },
+      action: {
+        actionId: "no_op",
+        inputEvidence,
+        surfaceId: null,
+        inventorySequence: null,
+        executed: false,
+      },
+    });
   }
 
   async function runBounded(input) {
@@ -521,5 +561,6 @@ export function createAiWorkspaceRunCoordinator({
     assessment: { invoke: invokeAssessment },
     ocrAssessment: { invoke: invokeOcrAssessment },
     ocrClick: { invoke: invokeOcrClick },
+    ocrType: { invoke: invokeOcrType },
   };
 }

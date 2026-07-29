@@ -3,18 +3,14 @@ import {
   buildAiWorkspaceOcrClickInstruction,
   parseAiWorkspaceOcrClickDecision,
 } from "./ai-workspace-ocr-click-contract.mjs";
-import { stableAiWorkspaceJson } from "./ai-workspace-context.mjs";
+import { createAiWorkspaceOcrDecisionSession } from "./ai-workspace-ocr-decision-session.mjs";
 import {
-  aiWorkspaceOcrContextsMatch,
   aiWorkspaceOcrSurfaceMatches,
-  buildAiWorkspaceOcrProviderContext,
   compactAiWorkspaceOcrEvidence,
-  createAiWorkspaceOcrContextReader,
 } from "./ai-workspace-ocr-context.mjs";
 import {
   aiWorkspaceTaskObjectiveBindingMatches,
   buildAiWorkspaceTaskObjectiveBinding,
-  normaliseAiWorkspaceTaskId,
   projectAiWorkspaceTaskEvidence,
 } from "./ai-workspace-task-objective.mjs";
 
@@ -152,7 +148,32 @@ export function createAiWorkspaceOcrClick({
   publishAuditEvent = async () => ({ ok: true }),
   now = () => new Date().toISOString(),
 } = {}) {
-  const observeContext = createAiWorkspaceOcrContextReader({ fetchJson, sessionManagerUrl });
+  const decisionSession = createAiWorkspaceOcrDecisionSession({
+    standingAdvisory,
+    fetchJson,
+    sessionManagerUrl,
+    getTaskById,
+    registry: AI_WORKSPACE_OCR_CLICK_REGISTRY,
+    providerContextRegistry: "nixsoma-ai-workspace-ocr-click-context-v0",
+    allowedActions: ["click_item", "no_op"],
+    requestedBehavior: {
+      allowedActions: ["click_item", "no_op"],
+      coordinatesDerivedLocally: true,
+      selectedOrdinalMustNameTarget: true,
+      maximumActions: 1,
+      taskMutation: false,
+      automaticContinuation: false,
+    },
+    instruction: buildAiWorkspaceOcrClickInstruction(),
+    responseContract: AI_WORKSPACE_OCR_CLICK_RESPONSE_CONTRACT,
+    parseResponse: parseAiWorkspaceOcrClickDecision,
+    readActionId: (parsed) => parsed.decision.actionId,
+    auditEventName: "cloud_provider.ai_workspace_ocr_click_egress_authorized",
+    successResult: "ai_workspace_ocr_click_returned",
+    egressAudit: { providerCoordinatesAllowed: false },
+    now,
+  });
+  const { observeContext } = decisionSession;
 
   async function publishRequiredAudit(name, payload) {
     const accepted = await publishAuditEvent(name, payload);
@@ -196,122 +217,12 @@ export function createAiWorkspaceOcrClick({
   }
 
   async function invoke({ taskId: requestedTaskId } = {}) {
-    const taskId = normaliseAiWorkspaceTaskId(requestedTaskId);
-    if (!taskId || typeof getTaskById !== "function") {
-      return fallback("task_objective_unavailable", standingAdvisory);
-    }
-    if (!standingAdvisory || typeof standingAdvisory.requestDecision !== "function"
-      || typeof postJson !== "function") {
+    if (typeof postJson !== "function") {
       return fallback("runtime_unavailable", standingAdvisory);
     }
-
-    let decisionContext;
-    const egressAuditPayload = {
-      taskId,
-      taskStatus: null,
-      objectiveContentHash: null,
-      taskVersionHash: null,
-      registry: AI_WORKSPACE_OCR_CLICK_REGISTRY,
-      maximumActions: 1,
-      allowedActions: ["click_item", "no_op"],
-      callerPromptAccepted: false,
-      automaticContinuation: false,
-      localOcrRequired: true,
-      ocrTextEgress: true,
-      ocrTextPersistedLocally: false,
-      renderedTextMayContainVisibleUrlsOrValues: true,
-      providerRetentionControlledExternally: true,
-      pixelsEgress: false,
-      frameHashEgress: false,
-      rawTaskGoalEgress: false,
-      taskObjectiveEgress: true,
-      providerCoordinatesAllowed: false,
-    };
-    const providerDecision = await standingAdvisory.requestDecision({
-      buildContext: async (observedAt) => {
-        decisionContext = await observeContext(observedAt);
-        const taskObjectiveBinding = buildAiWorkspaceTaskObjectiveBinding({
-          task: getTaskById(taskId),
-          taskId,
-          workViewState: decisionContext.workViewState,
-          maximumActions: 1,
-        });
-        if (!taskObjectiveBinding.ok) throw new Error(taskObjectiveBinding.reason);
-        decisionContext.taskObjectiveBinding = taskObjectiveBinding;
-        decisionContext.provider = buildAiWorkspaceOcrProviderContext({
-          registry: "nixsoma-ai-workspace-ocr-click-context-v0",
-          context: decisionContext,
-          taskObjective: taskObjectiveBinding.providerProjection,
-          requestedBehavior: {
-            allowedActions: ["click_item", "no_op"],
-            coordinatesDerivedLocally: true,
-            selectedOrdinalMustNameTarget: true,
-            maximumActions: 1,
-            taskMutation: false,
-            automaticContinuation: false,
-          },
-        });
-        Object.assign(
-          egressAuditPayload,
-          projectAiWorkspaceTaskEvidence(taskObjectiveBinding),
-          {
-            frameSequence: decisionContext.observation.frame.sequence,
-            surfaceId: decisionContext.observation.surface.surfaceId,
-            inventorySequence: decisionContext.observation.inventorySequence,
-            ocrBindingHash: decisionContext.ocrBindingHash,
-            ocrItemCount: decisionContext.providerOcr.itemCount,
-            ocrCharacterCount: decisionContext.providerOcr.characterCount,
-            ocrTruncated: decisionContext.providerOcr.truncated,
-          },
-        );
-        return decisionContext.provider;
-      },
-      instruction: buildAiWorkspaceOcrClickInstruction(),
-      buildPrompt: (context) =>
-        `Choose at most one server-bounded local OCR item action: ${stableAiWorkspaceJson(context)}`,
-      responseContract: AI_WORKSPACE_OCR_CLICK_RESPONSE_CONTRACT,
-      parseResponse: parseAiWorkspaceOcrClickDecision,
-      readActionId: (parsed) => parsed.decision.actionId,
-      auditEventName: "cloud_provider.ai_workspace_ocr_click_egress_authorized",
-      auditPayload: egressAuditPayload,
-      successResult: "ai_workspace_ocr_click_returned",
-    });
-    if (!providerDecision.ok) {
-      return finaliseFallback(providerDecision.reason, { providerDecision, decisionContext });
-    }
-
-    let verificationContext;
-    try {
-      verificationContext = await observeContext(now());
-    } catch {
-      return finaliseFallback("verification_context_unavailable", {
-        providerDecision,
-        decisionContext,
-      });
-    }
-    const currentTaskBinding = buildAiWorkspaceTaskObjectiveBinding({
-      task: getTaskById(taskId),
-      taskId,
-      workViewState: verificationContext.workViewState,
-      maximumActions: 1,
-    });
-    if (!aiWorkspaceTaskObjectiveBindingMatches(
-      decisionContext.taskObjectiveBinding,
-      currentTaskBinding,
-    )) {
-      return finaliseFallback("task_objective_changed", {
-        providerDecision,
-        decisionContext,
-        verificationContext,
-      });
-    }
-    if (!aiWorkspaceOcrContextsMatch(decisionContext, verificationContext)) {
-      return finaliseFallback("verification_context_changed", {
-        providerDecision,
-        decisionContext,
-        verificationContext,
-      });
-    }
+    const session = await decisionSession.decide({ taskId: requestedTaskId });
+    const { taskId, providerDecision, decisionContext, verificationContext } = session;
+    if (!session.ok) return finaliseFallback(session.reason, session);
 
     const decision = providerDecision.parsed.decision;
     if (decision.actionId === "no_op") {

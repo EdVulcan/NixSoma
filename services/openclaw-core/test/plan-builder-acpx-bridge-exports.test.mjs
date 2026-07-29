@@ -9,6 +9,7 @@ function createPlanBuilderHarness({
   createAiWorkspaceAssessmentImpl,
   createAiWorkspaceOcrAssessmentImpl,
   createAiWorkspaceOcrClickImpl,
+  createAiWorkspaceOcrTypeImpl,
   createAiWorkspaceSingleStepImpl,
   createAiWorkspaceRunCoordinatorImpl,
   publishAuditEvent,
@@ -118,6 +119,7 @@ function createPlanBuilderHarness({
     createAiWorkspaceAssessmentImpl,
     createAiWorkspaceOcrAssessmentImpl,
     createAiWorkspaceOcrClickImpl,
+    createAiWorkspaceOcrTypeImpl,
     createAiWorkspaceSingleStepImpl,
     createAiWorkspaceRunCoordinatorImpl,
     host: "127.0.0.1",
@@ -553,5 +555,90 @@ test("plan builder assembles OCR click with shared provider and screen action ow
   assert.equal(result.statusCode, 200);
   assert.equal(result.response.invocation.summary.kind, "ai.workspace.ocr_click");
   assert.equal(result.response.invocation.summary.actionExecuted, true);
+  assert.equal(result.response.invocation.summary.postActionVerified, true);
+});
+
+test("plan builder assembles OCR type with shared provider and screen action owners", async () => {
+  const assembly = [];
+  const standingOwner = {
+    restoreState: () => ({ ok: true }),
+    requestDecision: async () => ({ ok: false, reason: "disabled" }),
+  };
+  const requiredAudit = async () => ({ ok: true });
+  const inputEvidence = {
+    registry: "openclaw-write-only-input-evidence-v0",
+    charCount: 6,
+    byteLength: 6,
+    maxChars: 32,
+    truncated: false,
+    textExposed: false,
+    persisted: false,
+  };
+  const planBuilder = createPlanBuilderHarness({
+    acpxDraft: () => ({ ok: true }),
+    publishAuditEvent: requiredAudit,
+    createStandingProviderAdvisoryImpl: () => standingOwner,
+    createAiWorkspaceOcrTypeImpl: (deps) => {
+      assembly.push(deps);
+      return {
+        invoke: async ({ taskId }) => ({
+          ok: true,
+          registry: "nixsoma-ai-workspace-ocr-type-v0",
+          status: "executed",
+          decision: { actionId: "type_text", inputEvidence, confidence: 0.9 },
+          action: { actionId: "type_text", inputEvidence, surfaceId: 42,
+            inventorySequence: 9, executed: true },
+          evidence: {
+            taskId,
+            inputEvidence,
+            actionExecuted: true,
+            receiptMatched: true,
+            frameChanged: true,
+            postActionVerified: true,
+            completionAudit: true,
+          },
+          governance: {
+            providerCalled: true,
+            localOcrBound: true,
+            localOcrRevalidated: true,
+            currentFrameBound: true,
+            currentActiveSurfaceBound: true,
+            taskObjectiveInputBound: true,
+            providerGeneratedInput: true,
+            keyboardInput: true,
+            hotkeyInput: false,
+            enterKeyInput: false,
+            inputTextExposed: false,
+            inputTextPersisted: false,
+            taskObjectiveBound: true,
+            taskObjectiveProviderEgress: true,
+            rawTaskGoalProviderEgress: false,
+            ocrTextProviderEgress: true,
+            ocrTextPersistedLocally: false,
+            pixelsProviderEgress: false,
+            arbitraryKeyboardInput: false,
+            providerRetentionControlledExternally: true,
+          },
+        }),
+        localFallback: () => ({ status: "local_fallback" }),
+      };
+    },
+  });
+  const result = await planBuilder.invokeCapability({
+    capabilityId: "act.ai.workspace.ocr_type",
+    taskId: "task-reviewed-1",
+    params: { confirm: true },
+  });
+  assert.equal(assembly.length, 1);
+  assert.equal(assembly[0].standingAdvisory, standingOwner);
+  assert.equal(assembly[0].publishAuditEvent, requiredAudit);
+  assert.equal(assembly[0].sessionManagerUrl, "http://127.0.0.1:4102");
+  assert.equal(assembly[0].screenActUrl, "http://127.0.0.1:4105");
+  assert.equal(typeof assembly[0].getTaskById, "function");
+  assert.equal(typeof assembly[0].fetchJson, "function");
+  assert.equal(typeof assembly[0].postJson, "function");
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invocation.summary.kind, "ai.workspace.ocr_type");
+  assert.equal(result.response.invocation.summary.inputEvidence.charCount, 6);
   assert.equal(result.response.invocation.summary.postActionVerified, true);
 });

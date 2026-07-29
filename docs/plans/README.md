@@ -518,6 +518,31 @@ arbitrary keyboard input, desktop-wide or parent-display input, root, and host
 mutation remain excluded. This bounded native text lane is physically complete
 and frozen; it is not a general keyboard proxy or desktop takeover.
 
+The twenty-third Level 4 capability is deployed as
+`act.ai.workspace.ocr_type`. The caller supplies only a reviewed `taskId` and
+confirmation, while the complete task objective must be
+`Type exact text "VALUE" into the active surface` with a 1-32 character
+`[A-Za-z0-9 .,_-]` value. One standing-provider call may return only that exact
+value or `no_op`. Core revalidates task, OCR, frame, active surface, inventory,
+lease, grant, audit, and receipt before one opcode-5 type, then requires newer
+same-surface OCR containing the value. Execution evidence retains only hashes,
+counts, receipt facts, and write-only input evidence; the reviewed task
+objective remains ordinary task data and provider retention remains externally
+governed.
+
+All 1152 tests, typecheck, 822 registry entries, the 1009-file script audit,
+path budget, shared contracts, body-config, and exact 256-file Core and 86-file
+Observer closures pass. Generation `m392zajq...` is active and `aifc3p1n...` is
+previous. The physical gate bound task
+`80841418-8c75-4bc9-bc7d-955985d36f34`, surface 31, inventory 72, one provider
+call, one opcode-5 action, and three owner OCR observations to a matching
+receipt, newer OCR verification, completion audit, unchanged task, and no
+plaintext in execution evidence. Direct operator type and OCR click regressions
+also passed. This lane is physically complete and frozen. The next real
+candidate is a separately reviewed fixed two-action OCR focus-then-type form
+interaction. Enter, repeat, open loops, broad keyboard/process/window authority,
+parent-display access, root, and host mutation remain deferred.
+
 ## Completed Capability Evidence
 
 The following plan families are retained because they describe implemented

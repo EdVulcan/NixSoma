@@ -1,21 +1,35 @@
-export const observerClientRuntimeAiWorkspaceOcrClickScript = `let aiWorkspaceOcrClickInFlight = false;
-let aiWorkspaceOcrClickTaskId = null;
+export const observerClientRuntimeAiWorkspaceOcrTypeScript = `let aiWorkspaceOcrTypeInFlight = false;
+let aiWorkspaceOcrTypeTaskId = null;
 
-function clearAiWorkspaceOcrClick(reason = "not run") {
-  aiWorkspaceOcrClickTaskId = null;
-  aiWorkspaceOcrClickStatus.textContent = reason;
+function clearAiWorkspaceOcrType(reason = "not run") {
+  aiWorkspaceOcrTypeTaskId = null;
+  aiWorkspaceOcrTypeStatus.textContent = reason;
 }
 
-async function clickAiWorkspaceOcrItem() {
+function validOcrTypeInputEvidence(value) {
+  return value?.registry === "openclaw-write-only-input-evidence-v0"
+    && Number.isInteger(value.charCount)
+    && value.charCount >= 0
+    && value.charCount <= 32
+    && Number.isInteger(value.byteLength)
+    && value.byteLength === value.charCount
+    && value.maxChars === 32
+    && value.truncated === false
+    && value.textExposed === false
+    && value.persisted === false;
+}
+
+async function typeAiWorkspaceOcrObjectiveValue() {
   if (aiWorkspaceLocalOcrInFlight
     || aiWorkspaceOcrAssessmentInFlight
     || aiWorkspaceOcrClickInFlight
     || aiWorkspaceOcrTypeInFlight
     || aiWorkspaceSingleStepInFlight
     || aiWorkspaceBoundedRunInFlight
+    || aiWorkspaceReviewedCycleInFlight
     || aiWorkspaceAssessmentInFlight
     || aiWorkspaceAssessmentAcceptanceInFlight) return;
-  aiWorkspaceOcrClickInFlight = true;
+  aiWorkspaceOcrTypeInFlight = true;
   updateAiSurfaceScrollControls();
   try {
     await refreshAiWorkspaceProjection();
@@ -26,12 +40,12 @@ async function clickAiWorkspaceOcrItem() {
     }
     const taskId = currentAiWorkspaceTaskId();
     if (!taskId) throw new Error("A current operator-reviewed task is required.");
-    aiWorkspaceOcrClickStatus.textContent = "running";
+    aiWorkspaceOcrTypeStatus.textContent = "running";
     const response = await fetchJson(observerConfig.coreUrl + "/capabilities/invoke", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        capabilityId: "act.ai.workspace.ocr_click",
+        capabilityId: "act.ai.workspace.ocr_type",
         taskId,
         params: { confirm: true },
       }),
@@ -44,13 +58,12 @@ async function clickAiWorkspaceOcrItem() {
     const executed = result.status === "executed";
     const hash = (value) => /^[a-f0-9]{64}$/u.test(value ?? "");
     if (response.invoked !== true
-      || result.registry !== "nixsoma-ai-workspace-ocr-click-v0"
+      || result.registry !== "nixsoma-ai-workspace-ocr-type-v0"
       || !new Set(["executed", "no_action", "local_fallback"]).has(result.status)
-      || !new Set(["click_item", "no_op"]).has(decision.actionId)
-      || (decision.itemOrdinal !== null
-        && (!Number.isInteger(decision.itemOrdinal)
-          || decision.itemOrdinal < 1
-          || decision.itemOrdinal > 24))
+      || !new Set(["type_text", "no_op"]).has(decision.actionId)
+      || !validOcrTypeInputEvidence(decision.inputEvidence)
+      || !validOcrTypeInputEvidence(action.inputEvidence)
+      || !validOcrTypeInputEvidence(evidence.inputEvidence)
       || governance.maximumProviderCalls !== 1
       || governance.maximumActions !== 1
       || governance.taskMutated !== false
@@ -58,22 +71,29 @@ async function clickAiWorkspaceOcrItem() {
       || governance.rawTaskGoalProviderEgress !== false
       || governance.ocrTextPersistedLocally !== false
       || governance.pixelsProviderEgress !== false
-      || governance.arbitraryPointerInput !== false
+      || governance.arbitraryKeyboardInput !== false
+      || governance.hotkeyInput !== false
+      || governance.enterKeyInput !== false
+      || governance.inputTextExposed !== false
+      || governance.inputTextPersisted !== false
       || governance.providerRetentionControlledExternally !== true
       || governance.mutatesHost !== false
+      || JSON.stringify(result).includes('"inputText"')
       || Object.prototype.hasOwnProperty.call(result, "items")
       || Object.prototype.hasOwnProperty.call(result, "reason")
-      || (executed && (decision.actionId !== "click_item"
-        || action.actionId !== "click_item"
+      || (executed && (decision.actionId !== "type_text"
+        || action.actionId !== "type_text"
         || action.executed !== true
-        || !Number.isInteger(action.itemOrdinal)
-        || action.itemOrdinal !== decision.itemOrdinal
+        || action.inputEvidence.charCount < 1
+        || action.inputEvidence.charCount !== evidence.inputEvidence.charCount
         || governance.providerCalled !== true
         || governance.localOcrBound !== true
         || governance.localOcrRevalidated !== true
         || governance.currentFrameBound !== true
         || governance.currentActiveSurfaceBound !== true
-        || governance.ocrItemOrdinalBound !== true
+        || governance.taskObjectiveInputBound !== true
+        || governance.providerGeneratedInput !== true
+        || governance.keyboardInput !== true
         || governance.taskObjectiveBound !== true
         || governance.taskObjectiveProviderEgress !== true
         || governance.ocrTextProviderEgress !== true
@@ -95,26 +115,27 @@ async function clickAiWorkspaceOcrItem() {
         || evidence.frameChanged !== true
         || evidence.postActionVerified !== true
         || evidence.completionAudit !== true))) {
-      throw new Error("AI workspace OCR click result was invalid.");
+      throw new Error("AI workspace OCR type result was invalid.");
     }
-    aiWorkspaceOcrClickTaskId = taskId;
-    aiWorkspaceOcrClickStatus.textContent = executed
-      ? "executed item " + action.itemOrdinal
+    aiWorkspaceOcrTypeTaskId = taskId;
+    aiWorkspaceOcrTypeStatus.textContent = executed
+      ? "typed " + action.inputEvidence.charCount
       : result.status.replace("_", " ");
     clearAiWorkspaceOcrAssessment("workspace changed");
-    setControlMessage("OCR click: " + aiWorkspaceOcrClickStatus.textContent + ".");
+    clearAiWorkspaceOcrClick("workspace changed");
+    setControlMessage("OCR type: " + aiWorkspaceOcrTypeStatus.textContent + ".");
     await refreshActionState();
     await refreshWorkView();
     await refreshAiWorkspaceProjection();
   } finally {
-    aiWorkspaceOcrClickInFlight = false;
+    aiWorkspaceOcrTypeInFlight = false;
     updateAiSurfaceScrollControls();
   }
 }
 
-ocrClickAiWorkspaceButton.addEventListener("click", () => {
-  clickAiWorkspaceOcrItem().catch((error) => {
-    clearAiWorkspaceOcrClick("unavailable");
+ocrTypeAiWorkspaceButton.addEventListener("click", () => {
+  typeAiWorkspaceOcrObjectiveValue().catch((error) => {
+    clearAiWorkspaceOcrType("unavailable");
     setControlMessage("Request failed: " + formatError(error));
   });
 });

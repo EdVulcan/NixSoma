@@ -395,6 +395,58 @@ test("workspace run coordinator serializes OCR click with every workspace decisi
   assert.equal((await pending).status, "executed");
 });
 
+test("workspace run coordinator serializes OCR type with every workspace decision", async () => {
+  let releaseType;
+  let typeStarted;
+  const started = new Promise((resolve) => { typeStarted = resolve; });
+  const release = new Promise((resolve) => { releaseType = resolve; });
+  const localFallback = (reason) => ({
+    status: "local_fallback",
+    fallback: { reason },
+  });
+  const singleStep = {
+    invoke: async () => stepResult({ actionId: "no_op", actionExecuted: false }),
+    localFallback,
+  };
+  const assessment = { invoke: async () => ({ status: "assessed" }), localFallback };
+  const ocrAssessment = { invoke: async () => ({ status: "assessed" }), localFallback };
+  const ocrClick = { invoke: async () => ({ status: "executed" }), localFallback };
+  const ocrType = {
+    async invoke() {
+      typeStarted();
+      await release;
+      return { status: "executed", action: { actionId: "type_text", executed: true } };
+    },
+    localFallback,
+  };
+  const coordinator = createAiWorkspaceRunCoordinator({
+    singleStep,
+    assessment,
+    ocrAssessment,
+    ocrClick,
+    ocrType,
+  });
+  const pending = coordinator.ocrType.invoke({ taskId: TASK_ID });
+  await started;
+
+  const blocked = await Promise.all([
+    coordinator.singleStep.invoke({ taskId: TASK_ID }),
+    coordinator.assessment.invoke({ taskId: TASK_ID }),
+    coordinator.ocrAssessment.invoke({ taskId: TASK_ID }),
+    coordinator.ocrClick.invoke({ taskId: TASK_ID }),
+    coordinator.boundedRun.invoke({ taskId: TASK_ID }),
+    coordinator.reviewedCycle.invoke({ taskId: TASK_ID }),
+  ]);
+  assert.equal(blocked[0].fallback.reason, "workspace_run_in_flight");
+  assert.equal(blocked[1].fallback.reason, "workspace_run_in_flight");
+  assert.equal(blocked[2].fallback.reason, "workspace_run_in_flight");
+  assert.equal(blocked[3].fallback.reason, "workspace_run_in_flight");
+  assert.equal(blocked[4].terminalReason, "workspace_run_in_flight");
+  assert.equal(blocked[5].terminalReason, "workspace_run_in_flight");
+  releaseType();
+  assert.equal((await pending).status, "executed");
+});
+
 test("bounded workspace run reports an unknown second outcome without retry", async () => {
   const { calls, coordinator } = harness([
     stepResult({ actionId: "scroll_up" }),

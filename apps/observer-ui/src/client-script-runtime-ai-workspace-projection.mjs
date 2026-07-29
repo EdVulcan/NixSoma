@@ -77,12 +77,16 @@ function updateAiSurfaceScrollControls() {
   if (aiWorkspaceOcrClickTaskId && aiWorkspaceOcrClickTaskId !== taskId) {
     clearAiWorkspaceOcrClick();
   }
+  if (aiWorkspaceOcrTypeTaskId && aiWorkspaceOcrTypeTaskId !== taskId) {
+    clearAiWorkspaceOcrType();
+  }
   const aiRunInFlight = aiWorkspaceSingleStepInFlight
     || aiWorkspaceOperatorClickInFlight
     || aiWorkspaceOperatorTypeInFlight
     || aiWorkspaceLocalOcrInFlight
     || aiWorkspaceOcrAssessmentInFlight
     || aiWorkspaceOcrClickInFlight
+    || aiWorkspaceOcrTypeInFlight
     || aiWorkspaceBoundedRunInFlight
     || aiWorkspaceReviewedCycleInFlight
     || aiWorkspaceAssessmentInFlight
@@ -92,6 +96,7 @@ function updateAiSurfaceScrollControls() {
   runAiWorkspaceLocalOcrButton.disabled = !enabled || aiRunInFlight;
   ocrAssessAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
   ocrClickAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
+  ocrTypeAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceSingleStepButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceBoundedRunButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceReviewedCycleButton.disabled = !enabled || !taskId || aiRunInFlight;
@@ -125,6 +130,7 @@ function clearAiWorkspaceProjection(reason = "unavailable") {
   clearAiWorkspaceLocalOcr(reason);
   clearAiWorkspaceOcrAssessment(reason);
   clearAiWorkspaceOcrClick(reason);
+  clearAiWorkspaceOcrType(reason);
   updateAiSurfaceScrollControls();
 }
 
@@ -377,7 +383,7 @@ runAiWorkspaceLocalOcrButton.addEventListener("click", () => {
 });
 
 async function runAiWorkspaceSingleStep() {
-  if (aiWorkspaceSingleStepInFlight) return;
+  if (aiWorkspaceSingleStepInFlight || aiWorkspaceOcrTypeInFlight) return;
   aiWorkspaceSingleStepInFlight = true;
   updateAiSurfaceScrollControls();
   try {
@@ -459,7 +465,8 @@ runAiWorkspaceSingleStepButton.addEventListener("click", () => {
 async function runAiWorkspaceBoundedRun() {
   if (aiWorkspaceSingleStepInFlight
     || aiWorkspaceBoundedRunInFlight
-    || aiWorkspaceReviewedCycleInFlight) return;
+    || aiWorkspaceReviewedCycleInFlight
+    || aiWorkspaceOcrTypeInFlight) return;
   aiWorkspaceBoundedRunInFlight = true;
   updateAiSurfaceScrollControls();
   try {
@@ -571,7 +578,8 @@ async function assessAiWorkspace() {
   if (aiWorkspaceSingleStepInFlight
     || aiWorkspaceBoundedRunInFlight
     || aiWorkspaceReviewedCycleInFlight
-    || aiWorkspaceAssessmentInFlight) return;
+    || aiWorkspaceAssessmentInFlight
+    || aiWorkspaceOcrTypeInFlight) return;
   aiWorkspaceAssessmentInFlight = true;
   updateAiSurfaceScrollControls();
   try {
@@ -670,7 +678,8 @@ async function acceptAiWorkspaceAssessment() {
     || aiWorkspaceBoundedRunInFlight
     || aiWorkspaceReviewedCycleInFlight
     || aiWorkspaceAssessmentInFlight
-    || aiWorkspaceAssessmentAcceptanceInFlight) return;
+    || aiWorkspaceAssessmentAcceptanceInFlight
+    || aiWorkspaceOcrTypeInFlight) return;
   const receipt = aiWorkspaceAssessmentReceipt;
   const taskId = currentAiWorkspaceTaskId();
   if (!receipt || receipt.taskId !== taskId) {

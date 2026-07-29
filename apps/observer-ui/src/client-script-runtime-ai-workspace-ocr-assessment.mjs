@@ -10,6 +10,7 @@ async function assessAiWorkspaceWithOcr() {
   if (aiWorkspaceLocalOcrInFlight
     || aiWorkspaceOcrAssessmentInFlight
     || aiWorkspaceOcrClickInFlight
+    || aiWorkspaceOcrTypeInFlight
     || aiWorkspaceSingleStepInFlight
     || aiWorkspaceBoundedRunInFlight
     || aiWorkspaceAssessmentInFlight
