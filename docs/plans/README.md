@@ -568,7 +568,7 @@ current-tab close/lifecycle owner inside the AI-owned browser, with arbitrary
 tab selection, process/window control, automatic cleanup, and desktop takeover
 still excluded. That local source candidate is completed below.
 
-The twenty-fifth Level 4 source capability is
+The twenty-fifth Level 4 capability is
 `act.browser.current_tab.close`. The operator supplies only the exact operation
 and `confirm=true`; Core grants one fixed Screen Act request, and Screen Act plus
 the trusted sidecar use one shared Browser Runtime route descriptor. The real
@@ -581,13 +581,19 @@ and host mutation are excluded.
 All 1178 tests, typecheck, both capability-invoke service gates, the Screen Act
 grant attack regression, Observer build, and body-config pass. Store closure
 counts are Core 262, Session Manager 31,
-Browser Runtime 20, Screen Act 19, and Observer 87. The active physical
-generation remains `4mw7p3r3...`; this candidate is locally complete but not
-deployed. Physical candidate `rmpl42askkpkr0rhls9fzilw2mf0p634...` was built
-from the authoritative host configuration and passed the physical marker plus
-protected-path preflight. The next required gate is explicitly authorized
-guarded activation and real Firefox current-tab close proof, not another
-horizontal browser action.
+Browser Runtime 20, Screen Act 19, and Observer 87. Guarded activation moved
+the current and system profile to physical generation `rmpl42askkpkr0rhls9fzilw2mf0p634...`
+after the physical marker and protected paths matched. The final gate kept real
+headed Firefox PID 63947 stable while the target tab closed with count 5 -> 4;
+helper lease, Browser Runtime audit, Screen Act audit, and compact Core evidence
+matched. Provider calls, automatic cleanup/repeat, service restarts, failed
+units, and reboot remained zero. Physical live gates now explicitly select the
+ACL-readable `/var/lib/openclaw/operator-token` via the shared HTTP helper,
+streaming its bearer through curl's stdin config and replacing their removed
+runtime-copy default plus token-bearing argv without changing ordinary dev
+credentials. This capability is physically complete and frozen. The next
+required slice is a whitepaper route review, not another horizontal browser
+action.
 
 ## Completed Capability Evidence
 

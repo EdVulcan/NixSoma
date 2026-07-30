@@ -4,6 +4,10 @@ OPENCLAW_HTTP_JSON_HELPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "$OPENCLAW_HTTP_JSON_HELPER_DIR/dev-openclaw-host-mutation-guard.sh"
 
+openclaw_use_deployed_operator_token() {
+  export OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_OPERATOR_TOKEN_FILE:-/var/lib/openclaw/operator-token}"
+}
+
 openclaw_read_operator_token() {
   local operator_token_file="${OPENCLAW_OPERATOR_TOKEN_FILE:-$OPENCLAW_HTTP_JSON_HELPER_DIR/../../.artifacts/openclaw-operator-token}"
   local operator_token=""
@@ -56,6 +60,17 @@ openclaw_execute_curl() {
   command curl "$@"
 }
 
+openclaw_execute_curl_with_bearer() {
+  local operator_token="$1"
+  shift
+  if [[ ! "$operator_token" =~ ^[A-Za-z0-9._~-]{1,512}$ ]]; then
+    echo "OpenClaw operator token is not a bounded bearer token." >&2
+    return 2
+  fi
+  printf 'header = "authorization: Bearer %s"\n' "$operator_token" \
+    | command curl --config - "$@"
+}
+
 openclaw_curl() {
   local curl_args=("$@")
   local argument=""
@@ -73,7 +88,8 @@ openclaw_curl() {
       local operator_token
       operator_token="$(openclaw_read_operator_token)"
       if [[ -n "$operator_token" ]]; then
-        curl_args+=(-H "authorization: Bearer $operator_token")
+        openclaw_execute_curl_with_bearer "$operator_token" "${curl_args[@]}"
+        return
       fi
     fi
   fi
@@ -110,10 +126,6 @@ openclaw_post_json() {
   esac
 
   curl_args+=(-X POST "$url" -H 'content-type: application/json')
-  if [[ -n "$operator_token" ]]; then
-    curl_args+=(-H "authorization: Bearer $operator_token")
-  fi
-
   case "$payload_mode" in
     data)
       curl_args+=("$data_flag" "$payload")
@@ -131,7 +143,11 @@ openclaw_post_json() {
     openclaw_guard_systemd_execute_payload "$url" "$payload" || return $?
   fi
 
-  curl "${curl_args[@]}"
+  if [[ -n "$operator_token" ]]; then
+    openclaw_execute_curl_with_bearer "$operator_token" "${curl_args[@]}"
+  else
+    openclaw_execute_curl "${curl_args[@]}"
+  fi
 }
 
 post_json() {

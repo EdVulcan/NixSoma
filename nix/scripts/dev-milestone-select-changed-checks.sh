@@ -787,7 +787,8 @@ function isAllowedHttpJsonHelperExtractionAddition(text) {
     || /^OPENCLAW_POST_JSON_PAYLOAD_MODE="file"$/.test(text)
     || /^OPENCLAW_POST_JSON_DATA_FLAG="-d"$/.test(text)
     || text === "# shellcheck source=/dev/null"
-    || text === 'source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"';
+    || text === 'source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"'
+    || text === "openclaw_use_deployed_operator_token";
 }
 
 function isAllowedHttpJsonHelperExtractionRemoval(text) {
@@ -797,6 +798,8 @@ function isAllowedHttpJsonHelperExtractionRemoval(text) {
     || /^  curl --silent( --show-error)?( --fail| --fail-with-body)? -X POST "\$(url|1)" -H ['"]content-type: application\/json['"] (-(d)|--data) "\$(body|payload|2)"$/.test(text)
     || /^  curl --silent( --fail)? -H "content-type: application\/json" -d "\$payload" "\$url"$/.test(text)
     || /^  curl --silent( --fail)? -X POST "\$(url|1)" -H ['"]content-type: application\/json['"] --data-binary "@\$(file|2)"$/.test(text)
+    || (text.startsWith('export OPENCLAW_OPERATOR_TOKEN_FILE="')
+      && text.includes("/nixsoma/operator-token"))
     || text === "}";
 }
 

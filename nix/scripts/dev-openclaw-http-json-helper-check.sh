@@ -3,16 +3,27 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+unset OPENCLAW_OPERATOR_TOKEN_FILE
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
+openclaw_use_deployed_operator_token
+[[ "$OPENCLAW_OPERATOR_TOKEN_FILE" == "/var/lib/openclaw/operator-token" ]]
 
 # Keep the argument-shape assertions independent of a developer's persisted
 # operator credential used by real milestone services.
 export OPENCLAW_OPERATOR_TOKEN_FILE=/dev/null
 
 LAST_CURL_ARGS=()
+LAST_BEARER=""
 
 openclaw_execute_curl() {
+  LAST_BEARER=""
+  LAST_CURL_ARGS=("$@")
+}
+
+openclaw_execute_curl_with_bearer() {
+  LAST_BEARER="$1"
+  shift
   LAST_CURL_ARGS=("$@")
 }
 
@@ -34,30 +45,50 @@ assert_args() {
   done
 }
 
+assert_bearer() {
+  local label="$1"
+  local expected="$2"
+  if [[ "$LAST_BEARER" != "$expected" ]]; then
+    echo "$label: expected bearer '$expected', got '$LAST_BEARER'" >&2
+    exit 1
+  fi
+}
+
 export OPENCLAW_CORE_PORT=4100
 export OPENCLAW_OPERATOR_TOKEN=operator-test-secret
 curl --silent --fail "http://127.0.0.1:4100/tasks?limit=1"
 assert_args core-read \
-  --silent --fail "http://127.0.0.1:4100/tasks?limit=1" -H "authorization: Bearer operator-test-secret"
+  --silent --fail "http://127.0.0.1:4100/tasks?limit=1"
+assert_bearer core-read operator-test-secret
 
 operator_token_file="$(mktemp)"
 printf '%s\n' file-backed-secret > "$operator_token_file"
 export OPENCLAW_OPERATOR_TOKEN_FILE="$operator_token_file"
 curl --silent --fail "http://127.0.0.1:4100/tasks?limit=1"
 assert_args core-read-file-first \
-  --silent --fail "http://127.0.0.1:4100/tasks?limit=1" -H "authorization: Bearer file-backed-secret"
+  --silent --fail "http://127.0.0.1:4100/tasks?limit=1"
+assert_bearer core-read-file-first file-backed-secret
 rm -f "$operator_token_file"
 export OPENCLAW_OPERATOR_TOKEN_FILE=/dev/null
 
 curl --silent --fail "http://127.0.0.1:4101/events/audit?limit=1"
 assert_args non-core-read --silent --fail "http://127.0.0.1:4101/events/audit?limit=1"
+assert_bearer non-core-read ""
 
 unset OPENCLAW_OPERATOR_TOKEN
 
 unset OPENCLAW_POST_JSON_FAILURE OPENCLAW_POST_JSON_PAYLOAD_MODE OPENCLAW_POST_JSON_DATA_FLAG
+export OPENCLAW_OPERATOR_TOKEN=operator-post-secret
+post_json "http://127.0.0.1/authenticated" '{"ok":true}'
+assert_args authenticated \
+  --silent --fail -X POST "http://127.0.0.1/authenticated" -H "content-type: application/json" --data '{"ok":true}'
+assert_bearer authenticated operator-post-secret
+unset OPENCLAW_OPERATOR_TOKEN
+
 post_json "http://127.0.0.1/default" '{"ok":true}'
 assert_args default \
   --silent --fail -X POST "http://127.0.0.1/default" -H "content-type: application/json" --data '{"ok":true}'
+assert_bearer default ""
 
 OPENCLAW_POST_JSON_DATA_FLAG="-d"
 post_json "http://127.0.0.1/d" '{"ok":true}'

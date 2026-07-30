@@ -47,9 +47,8 @@ The risk is local drift:
 The current capability baseline includes bounded journal evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
-triage/repair-promotion bridge, twenty-four deployed Level 4 graphical
-identity slices through one fixed OCR focus-then-type interaction, and one
-locally validated current-tab close candidate pending physical activation. One
+triage/repair-promotion bridge, and twenty-five deployed Level 4 graphical
+identity slices through one governed current-tab close interaction. One
 explicit operator trigger can request a schema-bound no-op, vertical scroll,
 semantic click, or write-only semantic type decision over bounded active-browser
 content and execute at most one existing action; separate explicit reads can
@@ -59,7 +58,7 @@ click and one write-only 1-32 character native type; one reviewed task may
 also request that one objective-selected OCR item be focused and receive its
 exact allowlisted objective value through a fixed two-action sequence. All 1178 workspace tests
 and typecheck pass, the body-config and event-audit integration checks pass, the
-823-entry milestone registry and 1010-file script audit pass, and
+824-entry milestone registry and 1011-file script audit pass, and
 the Windows path budget has no file over 160 repository-relative characters.
 GitHub CI now enforces
 Node 22 typecheck, workspace tests, milestone registry/script audit, and the
@@ -67,7 +66,7 @@ same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/4mw7p3r3amcfp48njvjz20zpykf14qcw-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/rmpl42askkpkr0rhls9fzilw2mf0p634-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, bounded local OCR, the
@@ -2771,7 +2770,7 @@ browser, motivated by the physically observed tab accumulation and BiDi timeout;
 arbitrary tab selection, automatic background cleanup, process/window control,
 and desktop takeover remain deferred. That source candidate is completed below.
 
-## Local Level 4 Browser Current Tab Close Candidate
+## Deployed Level 4 Browser Current Tab Close
 
 The twenty-fifth Level 4 source capability is
 `act.browser.current_tab.close`. Its public request accepts only the capability
@@ -2796,12 +2795,19 @@ and final-tab preservation. A Screen Act child rejects missing, wrong-audience,
 wrong-path, body-changed, caller-targeted, and replayed grants. Body-config
 proves exact 262-file Core, 31-file
 Session Manager, 20-file Browser Runtime, 19-file Screen Act, and 87-file
-Observer store closures. The physical host still runs `4mw7p3r3...`; this
-candidate has not been activated and no reboot was performed. Authoritative
-physical candidate `rmpl42askkpkr0rhls9fzilw2mf0p634...` passed the physical
-marker and protected kernel/initrd/fstab/GDM/NetworkManager/SSH path preflight.
-Freeze feature growth here until an explicitly authorized guarded switch and
-real Firefox close receipt complete the deployment gate.
+Observer store closures. The guarded noninteractive helper activated physical
+generation `rmpl42askkpkr0rhls9fzilw2mf0p634...` only after the marker and
+kernel/initrd/fstab/GDM/NetworkManager/SSH protected paths matched. Current and
+system-profile paths agree. The final gate kept real headed Firefox PID 63947
+stable while one explicit target tab closed with count 5 -> 4; helper lease,
+Browser Runtime audit, Screen Act audit, and compact Core evidence matched.
+Provider calls, automatic cleanup/repeat, service restarts, failed units, and
+reboot remained zero. Physical live checks now explicitly select the deployed
+`/var/lib/openclaw/operator-token` ACL file through the shared HTTP helper and
+stream its bearer header through curl's stdin config; the obsolete runtime-copy
+default and token-bearing argv are gone. This lane is physically complete and
+frozen. Perform a whitepaper route review before selecting another capability,
+and do not add another horizontal browser action.
 
 ## Identity-Upgrade Alignment
 

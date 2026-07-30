@@ -10,7 +10,6 @@ SYSTEM_SENSE_URL="${OPENCLAW_SYSTEM_SENSE_URL:-http://127.0.0.1:4106}"
 SYSTEM_HEAL_URL="${OPENCLAW_SYSTEM_HEAL_URL:-http://127.0.0.1:4107}"
 BROWSER_RUNTIME_URL="${OPENCLAW_BROWSER_RUNTIME_URL:-http://127.0.0.1:4103}"
 OBSERVER_URL="${OPENCLAW_OBSERVER_URL:-http://127.0.0.1:4170}"
-export OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_OPERATOR_TOKEN_FILE:-${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/nixsoma/operator-token}"
 TASK_GOAL="${NIXSOMA_AI_SCENE_TASK_GOAL:-Open the Learn more item to review the displayed product}"
 EXPECTED_ACTION="${NIXSOMA_AI_SCENE_EXPECTED_ACTION:-}"
 EXPECTED_INPUT_CHAR_COUNT="${NIXSOMA_AI_SCENE_EXPECTED_INPUT_CHAR_COUNT:-}"
@@ -34,6 +33,7 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
+openclaw_use_deployed_operator_token
 export OPENCLAW_POST_JSON_FAILURE="${OPENCLAW_POST_JSON_FAILURE:-fail-with-body}"
 
 stage() {

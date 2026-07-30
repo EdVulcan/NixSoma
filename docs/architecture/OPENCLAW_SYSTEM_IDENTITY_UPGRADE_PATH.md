@@ -581,12 +581,15 @@ desktop takeover 与 host mutation 均被排除。
 
 1178 项 workspace test、typecheck、Core/Observer capability-invoke 服务门、Screen Act
 grant attack regression、Observer build 与 body-config 均通过；精确 store closure 为 Core 262、Session Manager 31、
-Browser Runtime 20、Screen Act 19、Observer 87。当前物理 generation 仍为
-`4mw7p3r3...`，本候选尚未激活，也未执行 reboot。下一 gate 是单独授权后的物理
-候选 `rmpl42askkpkr0rhls9fzilw2mf0p634...` 已完成 authoritative build，并通过
-physical marker 与 kernel/initrd/fstab/GDM/NetworkManager/SSH protected-path
-preflight。下一 gate 是单独授权后的受保护 switch 与真实 Firefox current-tab close
-receipt；在此之前不继续扩展其它横向 browser action。
+Browser Runtime 20、Screen Act 19、Observer 87。受保护 helper 已激活物理 generation
+`rmpl42askkpkr0rhls9fzilw2mf0p634...`，current 与 system profile 一致，且没有 reboot。
+真实 headed Firefox PID 63947 在显式关闭中保持不变，目标 tab 数量 5 -> 4；helper
+lease、Browser Runtime/Screen Act durable audit 与紧凑 Core 证据一致，provider call、
+automatic cleanup/repeat、service restart 和 failed unit 均为 0。physical live gate
+通过 shared HTTP helper 显式选择 `/var/lib/openclaw/operator-token` ACL 文件，不再依赖
+已移除的 runtime copy，并通过 curl stdin config 传递 bearer，不进入命令参数。该 lane
+已物理完成并冻结；下一步先按白皮书重新选择纵向能力，
+不继续扩展横向 browser action。
 
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
@@ -702,7 +705,7 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 60% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。真实 repair/rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 85%（one-shot projected operator click、bounded native operator type、semantic type、bounded run、reviewed cycle/acceptance、bounded local OCR、OCR assessment、same-surface OCR click、objective-bound OCR type 与 fixed OCR focus-then-type 已物理完成；governed current-tab close 已本地完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、verified-scroll-only 两步 run、显式 run-plus-assessment cycle、瞬时本地 OCR、无 pixel egress 的 OCR provider assessment、ordinal-grounded one-click action、objective-bound one-shot OCR type 与固定两动作 focus/type 已部署。`4mw7p3r3...` gate 把 reviewed task、surface 14、ordinal 14、一次 provider call、opcodes `[4,5]`、四次 OCR observation 与两张 receipt 绑定到 final OCR，证明 task 不变且 execution evidence 无输入明文。current-tab close 仍待物理激活和真实 Firefox receipt；Enter、hotkey、repeat、通用键盘代理、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
+| Level 4 图形栈内生组件 | 约 85%（one-shot projected operator click、bounded native operator type、semantic type、bounded run、reviewed cycle/acceptance、bounded local OCR、OCR assessment、same-surface OCR click、objective-bound OCR type、fixed OCR focus-then-type 与 governed current-tab close 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、verified-scroll-only 两步 run、显式 run-plus-assessment cycle、瞬时本地 OCR、无 pixel egress 的 OCR provider assessment、ordinal-grounded one-click action、objective-bound one-shot OCR type、固定两动作 focus/type 与当前 tab 生命周期 owner 已部署。`rmpl42...` gate 在 Firefox PID 不变时关闭当前页 5 -> 4，并绑定 lease、两层 durable audit 与零自动重复。Enter、hotkey、repeat、通用键盘代理、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
 **52-60%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted

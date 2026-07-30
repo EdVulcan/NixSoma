@@ -10,7 +10,6 @@ SCREEN_ACT_URL="${OPENCLAW_SCREEN_ACT_URL:-http://127.0.0.1:4105}"
 SYSTEM_SENSE_URL="${OPENCLAW_SYSTEM_SENSE_URL:-http://127.0.0.1:4106}"
 SYSTEM_HEAL_URL="${OPENCLAW_SYSTEM_HEAL_URL:-http://127.0.0.1:4107}"
 OBSERVER_URL="${OPENCLAW_OBSERVER_URL:-http://127.0.0.1:4170}"
-export OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_OPERATOR_TOKEN_FILE:-${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/nixsoma/operator-token}"
 TARGET_URL="${NIXSOMA_AI_ASSESSMENT_URL:-https://httpbingo.org/forms/post}"
 TASK_GOAL="${NIXSOMA_AI_ASSESSMENT_TASK_GOAL:-Determine whether the Customer name textbox is visible}"
 EXPECTED_OUTCOME="${NIXSOMA_AI_ASSESSMENT_EXPECTED_OUTCOME:-complete}"
@@ -37,6 +36,7 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
+openclaw_use_deployed_operator_token
 export OPENCLAW_POST_JSON_FAILURE="${OPENCLAW_POST_JSON_FAILURE:-fail-with-body}"
 
 stage() {

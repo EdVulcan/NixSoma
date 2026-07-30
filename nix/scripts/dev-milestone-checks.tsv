@@ -34,6 +34,7 @@ ai-workspace-ocr-assessment-live	dev-ai-workspace-ocr-assessment-live-check.sh	P
 ai-workspace-ocr-click-live	dev-ai-workspace-ocr-click-live-check.sh	Physical task-bound provider-selected OCR ordinal click with same-surface native receipt and post-action OCR verification
 ai-workspace-ocr-type-live	dev-ai-workspace-ocr-type-live-check.sh	Physical task-bound provider decision typing only the exact objective value with same-surface native receipt, post-action OCR verification, and no plaintext persistence
 ai-workspace-ocr-focus-type-live	dev-ai-workspace-ocr-focus-type-live-check.sh	Physical one-call fixed OCR focus-and-type sequence with two native receipts, final OCR verification, and no execution-evidence plaintext
+ai-browser-current-tab-close-live	dev-ai-browser-current-tab-close-live-check.sh	Physical explicit current-tab close in real Firefox with exact count delta, final-tab preservation, durable owner audit, and zero automatic cleanup
 ai-input-persistence-audit	dev-ai-input-persistence-audit-check.sh	Root read-only canary audit across AI workspace persistent state, logs, browser remnants, and journal
 openclaw-ai-work-view-capture	dev-openclaw-ai-work-view-capture-check.sh	Browser-runtime-backed AI work view capture metadata through screen-sense
 openclaw-ai-work-view-capture-summary	dev-openclaw-ai-work-view-capture-summary-check.sh	Structured AI work view capture summaries through browser-runtime and screen-sense

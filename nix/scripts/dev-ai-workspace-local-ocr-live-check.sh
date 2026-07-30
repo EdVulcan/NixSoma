@@ -5,13 +5,13 @@ CORE_URL="${OPENCLAW_CORE_URL:-http://127.0.0.1:4100}"
 EVENT_HUB_URL="${OPENCLAW_EVENT_HUB_URL:-http://127.0.0.1:4101}"
 SESSION_MANAGER_URL="${OPENCLAW_SESSION_MANAGER_URL:-http://127.0.0.1:4102}"
 OBSERVER_URL="${OPENCLAW_OBSERVER_URL:-http://127.0.0.1:4170}"
-export OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_OPERATOR_TOKEN_FILE:-${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/nixsoma/operator-token}"
 RUNTIME_DIR="$XDG_RUNTIME_DIR/nixsoma-ai-graphical-session"
 CAPTURE_DIR="$RUNTIME_DIR/capture"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
+openclaw_use_deployed_operator_token
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-ai-workspace-local-ocr-workbench-helper.sh"
 export OPENCLAW_POST_JSON_FAILURE="${OPENCLAW_POST_JSON_FAILURE:-fail-with-body}"

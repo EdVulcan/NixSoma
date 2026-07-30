@@ -8,7 +8,6 @@ BROWSER_RUNTIME_URL="${OPENCLAW_BROWSER_RUNTIME_URL:-http://127.0.0.1:4103}"
 SCREEN_SENSE_URL="${OPENCLAW_SCREEN_SENSE_URL:-http://127.0.0.1:4104}"
 SCREEN_ACT_URL="${OPENCLAW_SCREEN_ACT_URL:-http://127.0.0.1:4105}"
 OBSERVER_URL="${OPENCLAW_OBSERVER_URL:-http://127.0.0.1:4170}"
-export OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_OPERATOR_TOKEN_FILE:-${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}/nixsoma/operator-token}"
 TARGET_URL="${NIXSOMA_AI_OCR_FOCUS_TYPE_URL:-https://httpbingo.org/forms/post}"
 TARGET_SUBSTRING="${NIXSOMA_AI_OCR_FOCUS_TYPE_TARGET:-Customer}"
 CANARY="${NIXSOMA_AI_OCR_FOCUS_TYPE_CANARY:-$(date +%H%M%S | tr '0123456789' 'ABCDEFGHJK')}"
@@ -19,6 +18,7 @@ CAPTURE_DIR="$RUNTIME_DIR/capture"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
+openclaw_use_deployed_operator_token
 export OPENCLAW_POST_JSON_FAILURE="${OPENCLAW_POST_JSON_FAILURE:-fail-with-body}"
 
 stage() {
