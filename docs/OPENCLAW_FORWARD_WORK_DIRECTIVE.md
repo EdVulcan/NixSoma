@@ -1561,7 +1561,10 @@ post-action health through the Core-owned host-health oracle; rollback remains
 manual-only.
 
 Hostd exposes only `hostd.activate_managed_config`, fixed to
-`/etc/nixos/openclaw-managed.nix` and a configured flake rebuild command.
+`/etc/nixos/openclaw-managed.nix` and the NixOS-generated root helper. That
+helper accepts only the bound candidate hash and evaluated NixOS store closure,
+then invokes `nixos-rebuild switch --store-path` without evaluating a
+caller-supplied flake.
 `OPENCLAW_HOSTD_ACTIVATION_ENABLED=false` remains the default. The Core and
 Observer Phase D pair proves the zero-confirmation path creates no activation
 task or approval and performs no hostd call, managed-config write, generation

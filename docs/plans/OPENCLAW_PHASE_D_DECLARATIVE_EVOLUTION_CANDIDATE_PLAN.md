@@ -121,10 +121,12 @@ health fingerprint, task lineage, and bounded expiry into the activation task.
 Execution revalidates those fields, requires the generic step-bound approval,
 calls hostd only through its Unix socket peer boundary, validates an immutable
 receipt, and reads post-action health through `openclaw-system-sense`. The hostd
-descriptor fixes the target to `/etc/nixos/openclaw-managed.nix` and the command
-to the configured flake rebuild; `OPENCLAW_HOSTD_ACTIVATION_ENABLED=false` is
-the default, so the real NixOS mutation remains opt-in and is not exercised by
-the daily milestone.
+descriptor fixes the target to `/etc/nixos/openclaw-managed.nix` and delegates
+only to the NixOS-generated root helper. The helper accepts the bound candidate
+hash and evaluated closure, then invokes `nixos-rebuild switch --store-path`
+without evaluating a caller-supplied flake. The default remains
+`OPENCLAW_HOSTD_ACTIVATION_ENABLED=false`, so the real NixOS mutation is opt-in
+and is not exercised by the daily milestone.
 
 When a validated hostd receipt reports a successful generation switch but the
 independent post-activation health oracle reports a non-healthy result, Core

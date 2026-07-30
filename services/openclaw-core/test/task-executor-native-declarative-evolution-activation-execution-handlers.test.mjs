@@ -58,7 +58,15 @@ function createReceipt(taskId) {
       targetInstalled: true,
       rollbackExecuted: false,
     },
-    command: { executable: "/run/current-system/sw/bin/nixos-rebuild", args: ["switch", "--flake", "/etc/nixos#openclaw-local-dev"] },
+    command: {
+      executable: "/run/wrappers/bin/sudo",
+      args: [
+        "--non-interactive",
+        "/nix/store/helper/bin/nixsoma-managed-config-activation",
+        candidateHash,
+        closurePath,
+      ],
+    },
     status: "passed",
     activationExecuted: true,
     generationSwitched: true,

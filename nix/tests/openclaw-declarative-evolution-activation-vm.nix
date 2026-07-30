@@ -96,9 +96,7 @@ in
     auth_config = "/run/openclaw-activation-vm-curl.conf"
     core_url = "http://127.0.0.1:4100"
     event_hub_url = "http://127.0.0.1:4101"
-    target_path = "/etc/nixos/openclaw-managed.nix"
     prebuilt_candidate_toplevel = "${prebuiltCandidateToplevel}"
-    prebuilt_candidate_derivation = "${prebuiltCandidateDerivation}"
     candidate_cache_archive = "${candidateCacheArchive}"
 
     def command_output(command):
@@ -208,6 +206,8 @@ in
     assert "OPENCLAW_HOSTD_ACTIVATION_ENABLED=true" in hostd_environment
     assert "OPENCLAW_HOSTD_ACTIVATION_HELPER=/nix/store/" in hostd_environment
     assert "OPENCLAW_HOSTD_ACTIVATION_SUDO=/run/wrappers/bin/sudo" in hostd_environment
+    assert "OPENCLAW_NIXOS_FLAKE=" not in hostd_environment
+    assert "OPENCLAW_NIXOS_FLAKE_ATTRIBUTE=" not in hostd_environment
     assert command_output(
         "systemctl show openclaw-hostd.service --property=NoNewPrivileges --value"
     ) == "no"
