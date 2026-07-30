@@ -1231,6 +1231,7 @@ EOF
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-surface-activation-route.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-workbench-lifecycle.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-workbench-lifecycle-route.mjs"
+    || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/work-view-prepare-reuse.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/trusted-work-view-sidecar.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/work-view-trust.mjs"
     || -w "$session_manager_server"
@@ -1241,7 +1242,7 @@ EOF
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/execution-grants.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/browser-action-contract.mjs"
-    || "$(find "$session_manager_out" -type f | wc -l)" -ne 31 ]]; then
+    || "$(find "$session_manager_out" -type f | wc -l)" -ne 32 ]]; then
     echo "session-manager Nix closure is not exact and read-only: $session_manager_out" >&2
     exit 1
   fi

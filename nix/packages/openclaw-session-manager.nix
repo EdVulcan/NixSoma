@@ -10,6 +10,7 @@ mkOpenClawSourceClosure {
   files = [
     ../../services/openclaw-session-manager/package.json
     ../../services/openclaw-session-manager/src/server.mjs
+    ../../services/openclaw-session-manager/src/work-view-prepare-reuse.mjs
     ../../services/openclaw-session-manager/src/ai-compositor-frame-capture.mjs
     ../../services/openclaw-session-manager/src/ai-compositor-frame-route.mjs
     ../../services/openclaw-session-manager/src/ai-local-ocr-engine.mjs

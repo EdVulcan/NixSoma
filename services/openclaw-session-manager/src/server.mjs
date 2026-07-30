@@ -6,6 +6,10 @@ import { createTrustedWorkViewHelperRuntime } from "./trusted-work-view-helper-r
 import { createTrustedWorkViewSidecarSupervisor } from "./trusted-work-view-sidecar-supervisor.mjs";
 import { createTrustedWorkViewSidecarRecoveryStore } from "./trusted-work-view-sidecar-recovery-store.mjs";
 import {
+  WORK_VIEW_PREPARE_REUSE_REGISTRY,
+  decideWorkViewPrepareReuse,
+} from "./work-view-prepare-reuse.mjs";
+import {
   createAiGraphicalSessionObserver,
   projectAiGraphicalSessionBrowserAttachment,
   projectAiGraphicalSessionCompositorFrame,
@@ -369,6 +373,29 @@ async function ensureBrowserWorkView(url = workViewState.entryUrl || defaultWork
   }
 }
 
+async function inspectBrowserWorkView() {
+  try {
+    const response = await fetch(`${browserRuntimeUrl}/browser/state`, {
+      headers: browserRuntimeHeaders(),
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || data?.ok !== true) {
+      return {
+        ok: false,
+        error: data?.error ?? "browser state inspection failed",
+        browser: null,
+      };
+    }
+    return { ok: true, browser: data.browser ?? null };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "browser state inspection failed",
+      browser: null,
+    };
+  }
+}
+
 async function syncBrowserHelperLease() {
   const trustedHelperLease = trustedWorkViewHelperRuntime.leaseEnvelope();
   if (!trustedHelperLease) {
@@ -515,19 +542,68 @@ async function startSession(displayTarget) {
 async function prepareWorkView(displayTarget, entryUrl = workViewState.entryUrl || defaultWorkViewUrl) {
   if (sessionState.status !== "running" || !sessionState.sessionId) {
     await startSession(displayTarget);
-  } else {
+    const browser = await ensureBrowserWorkView(entryUrl);
+    return {
+      ...browser,
+      reused: false,
+      reuse: {
+        registry: WORK_VIEW_PREPARE_REUSE_REGISTRY,
+        reused: false,
+        reason: "session_started",
+      },
+    };
+  }
+
+  const inspected = await inspectBrowserWorkView();
+  const reuse = decideWorkViewPrepareReuse({
+    session: sessionState,
+    workView: workViewState,
+    helperRuntime: trustedWorkViewHelperRuntime.snapshot(),
+    browser: inspected.browser,
+    displayTarget,
+    entryUrl,
+  });
+
+  if (reuse.reused) {
+    const helperRuntime = trustedWorkViewHelperRuntime.heartbeat({
+      sessionId: sessionState.sessionId,
+      visibility: "hidden",
+      action: "reuse_browser_work_view",
+    });
     updateWorkViewState({
       status: "prepared",
       visibility: "hidden",
-      helperStatus: "active",
+      helperStatus: helperRuntime.status,
+      browserStatus: "running",
+      browserSessionId: inspected.browser.sessionId,
+      browserGraphicalSession: inspected.browser.engine?.graphicalSession
+        ?? workViewState.browserGraphicalSession,
       displayTarget,
       entryUrl,
+      activeUrl: inspected.browser.activeUrl ?? workViewState.activeUrl,
       preparedAt: workViewState.preparedAt ?? new Date().toISOString(),
       mode: "background",
     });
+    return {
+      ok: true,
+      reused: true,
+      reuse,
+      browser: inspected.browser,
+      tab: null,
+    };
   }
 
-  return ensureBrowserWorkView(entryUrl);
+  updateWorkViewState({
+    status: "prepared",
+    visibility: "hidden",
+    helperStatus: "active",
+    displayTarget,
+    entryUrl,
+    preparedAt: workViewState.preparedAt ?? new Date().toISOString(),
+    mode: "background",
+  });
+  const browser = await ensureBrowserWorkView(entryUrl);
+  return { ...browser, reused: false, reuse };
 }
 
 async function revealWorkView(entryUrl = workViewState.entryUrl || defaultWorkViewUrl) {
@@ -694,7 +770,13 @@ const server = http.createServer(async (req, res) => {
         workView,
         browser,
       });
-      sendJson(res, 200, { ok: true, session, workView, browser });
+      sendJson(res, 200, {
+        ok: true,
+        reused: browser.reused === true,
+        session,
+        workView,
+        browser,
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       sendJson(res, 400, { ok: false, error: message });

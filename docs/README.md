@@ -750,12 +750,12 @@ preserved. Caller tab ids, indices, URLs, automatic cleanup/repeat,
 process/window control, desktop takeover, provider calls, and host mutation are
 excluded.
 
-All 1178 workspace tests and typecheck pass. Both capability-invoke service
+All 1196 workspace tests and typecheck pass. Both capability-invoke service
 gates close one tab through Core and Screen Act, the authenticated Browser
 Runtime subprocess rejects caller target fields and a final-tab close, and the
 Screen Act route subprocess rejects missing, wrong-audience, wrong-path,
 body-changed, caller-targeted, and replayed grants. The store-native body check
-proves exact 262-file Core, 31-file Session Manager,
+proves exact 262-file Core, 32-file Session Manager,
 20-file Browser Runtime, 19-file Screen Act, and 87-file Observer closures.
 Generation
 `/nix/store/rmpl42askkpkr0rhls9fzilw2mf0p634-nixos-system-nixos-26.05.4808.569d57850992`
@@ -771,6 +771,16 @@ stdin config, replacing the removed runtime-copy default and token-bearing argv
 without changing ordinary development-token behavior. This lane is deployed
 and frozen; the next slice is a whitepaper route review, not another horizontal
 browser action.
+
+The follow-up source lifecycle correction makes repeated same-authority
+`work_view.prepare` calls browser-mutation-free. Session Manager reuses only a
+running browser with the same session/display/entry authority, active matched
+helper lease, and at least one tab; it ignores the current active URL so normal
+operator navigation is preserved. Phase 3 Core and Observer gates prove the
+second prepare keeps one session, one lease, and one tab. Changed or stale
+authority still falls through to the existing open/recovery path. The source
+candidate is built but not activated; physical generation `rmpl42...` remains
+current.
 
 ## Progress Estimate
 

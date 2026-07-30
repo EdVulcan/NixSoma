@@ -1040,3 +1040,40 @@ lease, inventory/frame identity, target presence, and visual grounding. The
 Observer entry does not add direct semantic capability invocation, coordinate
 dispatch, selectors, page scripts, automatic execution, provider egress, or
 network authority.
+
+## Same-Authority Prepare Idempotence Closure
+
+The current-tab lifecycle physical gate exposed one authority ownership bug:
+repeating `work_view.prepare` for an already-valid authority always called
+Browser Runtime `/browser/open`, which creates a new page when Firefox is
+already connected. That could recreate the tab accumulation that governed
+current-tab close was added to control.
+
+Session Manager now performs one authenticated read-only Browser Runtime state
+inspection before prepare. It reuses the existing browser only when all of the
+following remain true:
+
+- the Session Manager session is running and its display target matches;
+- work-view status is prepared/ready with the same display target and entry URL;
+- cached browser status/session still match the authoritative session;
+- helper runtime is active with active action authority and an exact matched lease;
+- Browser Runtime is running under Session Manager authority for that session;
+- Browser Runtime still owns at least one tab.
+
+Current active URL is intentionally excluded because operator navigation does
+not change the requested authority. A new session, changed display/entry
+authority, suspended or divergent lease, stopped browser, session mismatch, or
+empty tab set falls through to the existing `/browser/open` recovery behavior.
+The reuse path only hides/prepares the work view, refreshes helper heartbeat and
+browser projection, and returns `openclaw-work-view-prepare-reuse-v0` evidence;
+it does not navigate, create a task/approval, call a provider, or mutate the
+host.
+
+Focused tests cover the successful operator-navigation case and every rejection
+condition. Existing Phase 3 Core and Observer service gates each prepare twice
+and prove `reused=true`, unchanged tab count, unchanged session/lease, and
+working Core-granted input mediation. State-settling and MVP readiness also
+pass on run-scoped service state and current credential/grant paths. The exact
+Session Manager store closure is 32 files. A repository NixOS candidate was
+built without activation; physical generation `rmpl42...` and its boot ID were
+left unchanged.

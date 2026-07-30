@@ -56,7 +56,7 @@ return bounded transient local OCR or one read-only provider assessment without
 pixel egress. Direct operator interaction also includes one armed projected
 click and one write-only 1-32 character native type; one reviewed task may
 also request that one objective-selected OCR item be focused and receive its
-exact allowlisted objective value through a fixed two-action sequence. All 1178 workspace tests
+exact allowlisted objective value through a fixed two-action sequence. All 1196 workspace tests
 and typecheck pass, the body-config and event-audit integration checks pass, the
 824-entry milestone registry and 1011-file script audit pass, and
 the Windows path budget has no file over 160 repository-relative characters.
@@ -76,6 +76,21 @@ bounded native type. Core still receives the operator token through systemd
 `LoadCredential`; only `edvulcan` has exact-file read plus directory-traverse
 ACL, without directory listing or execution-private-key access. All nine health
 endpoints pass.
+
+The source work-view lifecycle now makes an already-valid same-authority
+`work_view.prepare` idempotent. Session Manager reads Browser Runtime state and
+reuses the existing browser only when the running session, display target,
+entry URL, active helper authority, matched lease, browser session, and
+non-empty tab set all still agree. The current active URL is deliberately not
+part of that decision, so operator navigation is preserved. First prepare,
+changed authority, stale lease, stopped browser, session drift, and an empty tab
+set retain the existing open/recovery path. Both Phase 3 service gates prove a
+second prepare keeps one session, lease, and tab; all 1196 tests, typecheck,
+body-config, MVP readiness, and the exact 32-file Session Manager closure pass.
+The non-activated repository system build is
+`/nix/store/5n2vnrby6xa72ghl0i12q51838scg8rx-nixos-system-nixos-26.05.19700101.dirty`.
+The deployed physical generation remains `rmpl42...`; no switch or reboot was
+performed for this correction.
 
 One real request-bound DeepSeek advisory call completed through task
 `62ba696a-945e-4f37-b65e-8a6783316386` and approval

@@ -13,14 +13,19 @@ export OPENCLAW_SCREEN_ACT_PORT="${OPENCLAW_SCREEN_ACT_PORT:-4115}"
 export OPENCLAW_SYSTEM_SENSE_PORT="${OPENCLAW_SYSTEM_SENSE_PORT:-4116}"
 export OPENCLAW_SYSTEM_HEAL_PORT="${OPENCLAW_SYSTEM_HEAL_PORT:-4117}"
 export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-4180}"
+export OPENCLAW_DEV_RUN_ID="${OPENCLAW_DEV_RUN_ID:-state-settling-$$}"
+export OPENCLAW_DEV_STATE_FILE="${OPENCLAW_DEV_STATE_FILE:-$REPO_ROOT/.artifacts/dev-services-unix-$OPENCLAW_DEV_RUN_ID.tsv}"
 
+CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 SESSION_MANAGER_URL="http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT"
 BROWSER_RUNTIME_URL="http://127.0.0.1:$OPENCLAW_BROWSER_RUNTIME_PORT"
 SCREEN_SENSE_URL="http://127.0.0.1:$OPENCLAW_SCREEN_SENSE_PORT"
-SCREEN_ACT_URL="http://127.0.0.1:$OPENCLAW_SCREEN_ACT_PORT"
 
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/dev-openclaw-wait-helper.sh"
+OPENCLAW_POST_JSON_FAILURE="fail-with-body"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp"
@@ -42,22 +47,22 @@ node -e "const data=JSON.parse(process.argv[1]); if(!['warming_up','ready'].incl
 
 browser=""
 for attempt in 1 2 3 4 5; do
-  browser="$(curl --silent -X POST "$BROWSER_RUNTIME_URL/browser/open" -H 'content-type: application/json' -d '{"url":"https://example.com/state-check"}')"
-  if node -e "const data=JSON.parse(process.argv[1]); process.exit(data.ok && data.browser && data.browser.sessionId ? 0 : 1);" "$browser"; then
+  browser="$(post_json "$SESSION_MANAGER_URL/work-view/prepare" '{"displayTarget":"workspace-2","entryUrl":"https://example.com/state-check"}')"
+  if node -e "const data=JSON.parse(process.argv[1]); process.exit(data.ok && data.session?.sessionId && data.browser?.browser?.sessionId ? 0 : 1);" "$browser"; then
     break
   fi
   openclaw_wait_interval 0.4
 done
-node -e "const data=JSON.parse(process.argv[1]); if(!(data.ok && data.browser && data.browser.sessionId)){throw new Error(\`Expected browser sessionId, got: \${JSON.stringify(data)}\`);}" "$browser"
+node -e "const data=JSON.parse(process.argv[1]); if(!(data.ok && data.session?.sessionId && data.browser?.browser?.sessionId)){throw new Error(\`Expected browser sessionId, got: \${JSON.stringify(data)}\`);}" "$browser"
 
 ready_screen="$(curl --silent "$SCREEN_SENSE_URL/screen/current")"
 node -e "const data=JSON.parse(process.argv[1]); if(data.screen.readiness!=='ready'){throw new Error('Expected ready screen readiness.');} if(!data.screen.sessionId){throw new Error('Expected ready screen sessionId.');}" "$ready_screen"
 
-ready_action="$(curl --silent -X POST "$SCREEN_ACT_URL/act/mouse/click" -H 'content-type: application/json' -d '{"x":320,"y":240,"button":"left"}')"
-node -e "const data=JSON.parse(process.argv[1]); if(data.action.degraded!==false){throw new Error('Expected ready action degraded=false.');}" "$ready_action"
+ready_action="$(post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.screen.pointer_keyboard","operation":"mouse.click","params":{"x":320,"y":240,"button":"left"}}')"
+node -e "const data=JSON.parse(process.argv[1]); if(data.result?.action?.degraded!==false){throw new Error('Expected ready action degraded=false.');}" "$ready_action"
 
-session_pid="$(awk -F $'\t' '$1=="openclaw-session-manager" { print $2 }' "$REPO_ROOT/.artifacts/dev-services-unix.tsv")"
-browser_pid="$(awk -F $'\t' '$1=="openclaw-browser-runtime" { print $2 }' "$REPO_ROOT/.artifacts/dev-services-unix.tsv")"
+session_pid="$(awk -F $'\t' '$1=="openclaw-session-manager" { print $2 }' "$OPENCLAW_DEV_STATE_FILE")"
+browser_pid="$(awk -F $'\t' '$1=="openclaw-browser-runtime" { print $2 }' "$OPENCLAW_DEV_STATE_FILE")"
 kill "$session_pid" >/dev/null 2>&1 || true
 kill "$browser_pid" >/dev/null 2>&1 || true
 wait_http_down "$SESSION_MANAGER_URL/health" || true
@@ -66,25 +71,25 @@ wait_http_down "$BROWSER_RUNTIME_URL/health" || true
 degraded_screen="$(curl --silent "$SCREEN_SENSE_URL/screen/current")"
 node -e "const data=JSON.parse(process.argv[1]); if(data.screen.readiness!=='degraded'){throw new Error('Expected degraded screen readiness.');}" "$degraded_screen"
 
-degraded_action="$(curl --silent -X POST "$SCREEN_ACT_URL/act/mouse/click" -H 'content-type: application/json' -d '{"x":10,"y":10,"button":"left"}')"
-node -e "const data=JSON.parse(process.argv[1]); if(data.action.degraded!==true){throw new Error('Expected degraded action degraded=true.');}" "$degraded_action"
+degraded_action="$(post_json "$CORE_URL/capabilities/invoke" '{"capabilityId":"act.screen.pointer_keyboard","operation":"mouse.click","params":{"x":10,"y":10,"button":"left"}}')"
+node -e "const data=JSON.parse(process.argv[1]); if(data.result?.action?.degraded!==true){throw new Error('Expected degraded action degraded=true.');}" "$degraded_action"
 
 node - <<'EOF' "$warming_screen" "$ready_screen" "$ready_action" "$degraded_screen" "$degraded_action"
 const warming = JSON.parse(process.argv[2]);
 const ready = JSON.parse(process.argv[3]);
-const readyAction = JSON.parse(process.argv[4]);
+const readyAction = JSON.parse(process.argv[4]).result.action;
 const degraded = JSON.parse(process.argv[5]);
-const degradedAction = JSON.parse(process.argv[6]);
+const degradedAction = JSON.parse(process.argv[6]).result.action;
 console.log(JSON.stringify({
   warming_up: warming.screen.readiness,
   ready: {
     readiness: ready.screen.readiness,
     sessionId: ready.screen.sessionId,
-    actionDegraded: readyAction.action.degraded,
+    actionDegraded: readyAction.degraded,
   },
   degraded: {
     readiness: degraded.screen.readiness,
-    actionDegraded: degradedAction.action.degraded,
+    actionDegraded: degradedAction.degraded,
   },
 }, null, 2));
 EOF

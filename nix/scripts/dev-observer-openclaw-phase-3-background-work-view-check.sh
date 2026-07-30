@@ -13,12 +13,12 @@ export OPENCLAW_SCREEN_ACT_PORT="${OPENCLAW_SCREEN_ACT_PORT:-6755}"
 export OPENCLAW_SYSTEM_SENSE_PORT="${OPENCLAW_SYSTEM_SENSE_PORT:-6756}"
 export OPENCLAW_SYSTEM_HEAL_PORT="${OPENCLAW_SYSTEM_HEAL_PORT:-6757}"
 export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-6758}"
+export OPENCLAW_DEV_RUN_ID="${OPENCLAW_DEV_RUN_ID:-observer-phase3-background-work-view-$$}"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-observer-phase-3-background-work-view-check.json}"
 export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-system-heal-observer-phase-3-background-work-view-check.json}"
 
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 SESSION_MANAGER_URL="http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT"
-SCREEN_ACT_URL="http://127.0.0.1:$OPENCLAW_SCREEN_ACT_PORT"
 OBSERVER_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
 LEDGER_DIR="$REPO_ROOT/.artifacts/openclaw-body-evidence-ledger"
 
@@ -27,20 +27,32 @@ rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_SYS
 rm -rf "$LEDGER_DIR"
 
 cleanup() {
-  rm -f "${HTML_FILE:-}" "${CLIENT_FILE:-}" "${BACKGROUND_FILE:-}" "${ACTION_FILE:-}"
+  rm -f \
+    "${FIRST_PREPARE_FILE:-}" \
+    "${SECOND_PREPARE_FILE:-}" \
+    "${HTML_FILE:-}" \
+    "${CLIENT_FILE:-}" \
+    "${BACKGROUND_FILE:-}" \
+    "${ACTION_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
+OPENCLAW_POST_JSON_FAILURE="fail-with-body"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
+
 "$SCRIPT_DIR/dev-up.sh"
-curl --silent --fail -X POST "$SESSION_MANAGER_URL/work-view/prepare" \
-  -H 'content-type: application/json' \
-  --data '{"displayTarget":"workspace-2","entryUrl":"https://example.com/observer-phase-3-background","operatorActionSource":"observer_phase_3_background_milestone","recommendedAction":"prepare_work_view"}' >/dev/null
+FIRST_PREPARE_FILE="$(mktemp)"
+post_json "$SESSION_MANAGER_URL/work-view/prepare" \
+  '{"displayTarget":"workspace-2","entryUrl":"https://example.com/observer-phase-3-background","operatorActionSource":"observer_phase_3_background_milestone","recommendedAction":"prepare_work_view"}' > "$FIRST_PREPARE_FILE"
+SECOND_PREPARE_FILE="$(mktemp)"
+post_json "$SESSION_MANAGER_URL/work-view/prepare" \
+  '{"displayTarget":"workspace-2","entryUrl":"https://example.com/observer-phase-3-background","operatorActionSource":"observer_phase_3_background_milestone","recommendedAction":"prepare_work_view"}' > "$SECOND_PREPARE_FILE"
 
 ACTION_FILE="$(mktemp)"
-curl --silent --fail -X POST "$SCREEN_ACT_URL/act/mouse/click" \
-  -H 'content-type: application/json' \
-  --data '{"x":640,"y":360,"button":"left"}' > "$ACTION_FILE"
+post_json "$CORE_URL/capabilities/invoke" \
+  '{"capabilityId":"act.screen.pointer_keyboard","operation":"mouse.click","params":{"x":640,"y":360,"button":"left"}}' > "$ACTION_FILE"
 
 HTML_FILE="$(mktemp)"
 CLIENT_FILE="$(mktemp)"
@@ -49,12 +61,30 @@ curl --silent --fail "$OBSERVER_URL/" > "$HTML_FILE"
 curl --silent --fail "$OBSERVER_URL/client-v5.js" > "$CLIENT_FILE"
 curl --silent --fail "$CORE_URL/phase-3/background-work-view" > "$BACKGROUND_FILE"
 
-node - <<'EOF' "$HTML_FILE" "$CLIENT_FILE" "$BACKGROUND_FILE" "$ACTION_FILE"
+node - <<'EOF' "$FIRST_PREPARE_FILE" "$SECOND_PREPARE_FILE" "$HTML_FILE" "$CLIENT_FILE" "$BACKGROUND_FILE" "$ACTION_FILE"
 const fs = require("node:fs");
-const html = fs.readFileSync(process.argv[2], "utf8");
-const client = fs.readFileSync(process.argv[3], "utf8");
-const background = JSON.parse(fs.readFileSync(process.argv[4], "utf8"));
-const actionResponse = JSON.parse(fs.readFileSync(process.argv[5], "utf8"));
+const firstPrepare = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const secondPrepare = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+const html = fs.readFileSync(process.argv[4], "utf8");
+const client = fs.readFileSync(process.argv[5], "utf8");
+const background = JSON.parse(fs.readFileSync(process.argv[6], "utf8"));
+const actionResponse = JSON.parse(fs.readFileSync(process.argv[7], "utf8"));
+const action = actionResponse.result?.action;
+
+const firstTabs = firstPrepare.browser?.browser?.tabs;
+const secondTabs = secondPrepare.browser?.browser?.tabs;
+if (firstPrepare.reused !== false
+  || secondPrepare.reused !== true
+  || secondPrepare.browser?.reuse?.reason !== "same_authority"
+  || !Array.isArray(firstTabs)
+  || !Array.isArray(secondTabs)
+  || secondTabs.length !== firstTabs.length
+  || secondPrepare.session?.sessionId !== firstPrepare.session?.sessionId
+  || secondPrepare.workView?.helperRuntime?.leaseId !== firstPrepare.workView?.helperRuntime?.leaseId
+  || secondPrepare.workView?.helperRuntime?.browserLeaseId !== firstPrepare.workView?.helperRuntime?.browserLeaseId
+  || secondPrepare.workView?.helperRuntime?.leaseMatched !== true) {
+  throw new Error(`Observer Phase 3 repeated prepare should preserve one authority and tab set: ${JSON.stringify({ firstPrepare, secondPrepare })}`);
+}
 
 for (const token of ["Phase 3 Background Work View", "phase3-background-work-view-panel", "phase3-background-visibility", "phase3-background-mode", "work-view-session-identity", "run-recommended-work-view-action-button"]) {
   if (!html.includes(token)) {
@@ -98,10 +128,14 @@ if (background.current?.workView?.lastOperatorAction?.action !== "prepare_work_v
   throw new Error(`Observer Phase 3 background work view should expose operator action result: ${JSON.stringify(background.current?.workView?.lastOperatorAction)}`);
 }
 if (!actionResponse.ok
-  || actionResponse.action?.result !== "executed-browser-runtime"
-  || actionResponse.action?.mediation?.required !== true
-  || actionResponse.action?.mediation?.accepted !== true
-  || actionResponse.action?.mediation?.leaseMatched !== true) {
+  || actionResponse.invoked !== true
+  || actionResponse.result?.operation !== "mouse.click"
+  || actionResponse.result?.governance?.requiresTrustedLease !== true
+  || action?.result !== "executed-browser-runtime"
+  || action?.mediation?.attempted !== true
+  || action?.mediation?.accepted !== true
+  || action?.mediation?.leaseMatched !== true
+  || action?.mediation?.transport !== "browser-runtime-direct") {
   throw new Error(`Observer Phase 3 action readback should expose accepted helper-lease mediation: ${JSON.stringify(actionResponse)}`);
 }
 
@@ -109,13 +143,15 @@ console.log(JSON.stringify({
   observerOpenClawPhase3BackgroundWorkView: {
     status: "passed",
     panel: "Phase 3 Background Work View",
+    repeatedPrepareReused: secondPrepare.reused,
+    repeatedPrepareTabCount: secondTabs.length,
     visibility: background.current.workView.visibility,
     mode: background.current.workView.mode,
     trustedSession: trustedSession.identityLevel,
     sessionIdentity: trustedSession.sessionIdentity.status,
     helperRuntime: trustedSession.helperRuntime.status,
     helperLeaseMatched: trustedSession.helperRuntime.leaseMatched,
-    actionMediation: actionResponse.action.mediation.status,
+    actionMediation: action.mediation.status,
     recoveryRecommendation: trustedSession.recoveryRecommendation.action,
     lastOperatorAction: background.current.workView.lastOperatorAction.action,
     sidecarContract: trustedSession.sidecarContract.status,

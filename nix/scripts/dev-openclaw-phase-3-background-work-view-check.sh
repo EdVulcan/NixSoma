@@ -13,13 +13,14 @@ export OPENCLAW_SCREEN_ACT_PORT="${OPENCLAW_SCREEN_ACT_PORT:-6705}"
 export OPENCLAW_SYSTEM_SENSE_PORT="${OPENCLAW_SYSTEM_SENSE_PORT:-6706}"
 export OPENCLAW_SYSTEM_HEAL_PORT="${OPENCLAW_SYSTEM_HEAL_PORT:-6707}"
 export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-6708}"
+export OPENCLAW_DEV_RUN_ID="${OPENCLAW_DEV_RUN_ID:-phase3-background-work-view-$$}"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-phase-3-background-work-view-check.json}"
 export OPENCLAW_SYSTEM_HEAL_STATE_FILE="${OPENCLAW_SYSTEM_HEAL_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-system-heal-phase-3-background-work-view-check.json}"
 
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 SESSION_MANAGER_URL="http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT"
-SCREEN_ACT_URL="http://127.0.0.1:$OPENCLAW_SCREEN_ACT_PORT"
 BROWSER_URL="http://127.0.0.1:$OPENCLAW_BROWSER_RUNTIME_PORT"
+BROWSER_OPERATOR_TOKEN_FILE="$REPO_ROOT/.artifacts/openclaw-browser-runtime-credentials-$OPENCLAW_DEV_RUN_ID/openclaw-operator"
 LEDGER_DIR="$REPO_ROOT/.artifacts/openclaw-body-evidence-ledger"
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
@@ -27,23 +28,49 @@ rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_SYS
 rm -rf "$LEDGER_DIR"
 
 cleanup() {
-  rm -f "${BACKGROUND_FILE:-}" "${ACTION_FILE:-}" "${REJECTED_ACTION_FILE:-}"
+  rm -f \
+    "${FIRST_PREPARE_FILE:-}" \
+    "${SECOND_PREPARE_FILE:-}" \
+    "${BACKGROUND_FILE:-}" \
+    "${ACTION_FILE:-}" \
+    "${REJECTED_ACTION_FILE:-}"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
+OPENCLAW_POST_JSON_FAILURE="fail-with-body"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
+
+browser_operator_curl() {
+  local token
+  if [[ ! -s "$BROWSER_OPERATOR_TOKEN_FILE" ]]; then
+    echo "Missing Browser Runtime operator credential: $BROWSER_OPERATOR_TOKEN_FILE" >&2
+    return 1
+  fi
+  token="$(tr -d '\r\n' < "$BROWSER_OPERATOR_TOKEN_FILE")"
+  if [[ ! "$token" =~ ^[A-Za-z0-9._~-]{1,512}$ ]]; then
+    echo "Browser Runtime operator credential is not bounded." >&2
+    return 1
+  fi
+  printf 'header = "authorization: Bearer %s"\nheader = "x-openclaw-service-caller: openclaw-operator"\n' "$token" \
+    | command curl --config - "$@"
+}
+
 "$SCRIPT_DIR/dev-up.sh"
-curl --silent --fail -X POST "$SESSION_MANAGER_URL/work-view/prepare" \
-  -H 'content-type: application/json' \
-  --data '{"displayTarget":"workspace-2","entryUrl":"https://example.com/phase-3-background","operatorActionSource":"phase_3_background_milestone","recommendedAction":"prepare_work_view"}' >/dev/null
+FIRST_PREPARE_FILE="$(mktemp)"
+post_json "$SESSION_MANAGER_URL/work-view/prepare" \
+  '{"displayTarget":"workspace-2","entryUrl":"https://example.com/phase-3-background","operatorActionSource":"phase_3_background_milestone","recommendedAction":"prepare_work_view"}' > "$FIRST_PREPARE_FILE"
+SECOND_PREPARE_FILE="$(mktemp)"
+post_json "$SESSION_MANAGER_URL/work-view/prepare" \
+  '{"displayTarget":"workspace-2","entryUrl":"https://example.com/phase-3-background","operatorActionSource":"phase_3_background_milestone","recommendedAction":"prepare_work_view"}' > "$SECOND_PREPARE_FILE"
 
 ACTION_FILE="$(mktemp)"
-curl --silent --fail -X POST "$SCREEN_ACT_URL/act/keyboard/type" \
-  -H 'content-type: application/json' \
-  --data '{"text":"phase 3 trusted helper action mediation"}' > "$ACTION_FILE"
+post_json "$CORE_URL/capabilities/invoke" \
+  '{"capabilityId":"act.screen.pointer_keyboard","operation":"keyboard.type","params":{"text":"phase 3 trusted helper action mediation"}}' > "$ACTION_FILE"
 
 REJECTED_ACTION_FILE="$(mktemp)"
-rejected_status="$(curl --silent --output "$REJECTED_ACTION_FILE" --write-out '%{http_code}' \
+rejected_status="$(browser_operator_curl --silent --output "$REJECTED_ACTION_FILE" --write-out '%{http_code}' \
   -X POST "$BROWSER_URL/browser/input" \
   -H 'content-type: application/json' \
   --data '{"text":"must be rejected without trusted helper lease"}')"
@@ -55,12 +82,39 @@ fi
 BACKGROUND_FILE="$(mktemp)"
 curl --silent --fail "$CORE_URL/phase-3/background-work-view" > "$BACKGROUND_FILE"
 
-node - <<'EOF' "$BACKGROUND_FILE" "$ACTION_FILE" "$REJECTED_ACTION_FILE"
+node - <<'EOF' "$FIRST_PREPARE_FILE" "$SECOND_PREPARE_FILE" "$BACKGROUND_FILE" "$ACTION_FILE" "$REJECTED_ACTION_FILE"
 const fs = require("node:fs");
-const background = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
-const actionResponse = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
-const rejectedAction = JSON.parse(fs.readFileSync(process.argv[4], "utf8"));
-const action = actionResponse.action;
+const firstPrepare = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const secondPrepare = JSON.parse(fs.readFileSync(process.argv[3], "utf8"));
+const background = JSON.parse(fs.readFileSync(process.argv[4], "utf8"));
+const actionResponse = JSON.parse(fs.readFileSync(process.argv[5], "utf8"));
+const rejectedAction = JSON.parse(fs.readFileSync(process.argv[6], "utf8"));
+const action = actionResponse.result?.action;
+
+const firstTabs = firstPrepare.browser?.browser?.tabs;
+const secondTabs = secondPrepare.browser?.browser?.tabs;
+if (firstPrepare.ok !== true
+  || firstPrepare.reused !== false
+  || firstPrepare.browser?.reused !== false
+  || firstPrepare.browser?.reuse?.reason !== "session_started"
+  || !Array.isArray(firstTabs)
+  || firstTabs.length < 1) {
+  throw new Error(`first prepare should establish one fresh browser authority: ${JSON.stringify(firstPrepare)}`);
+}
+if (secondPrepare.ok !== true
+  || secondPrepare.reused !== true
+  || secondPrepare.browser?.reused !== true
+  || secondPrepare.browser?.reuse?.registry !== "openclaw-work-view-prepare-reuse-v0"
+  || secondPrepare.browser?.reuse?.reason !== "same_authority"
+  || !Array.isArray(secondTabs)
+  || secondTabs.length !== firstTabs.length
+  || secondPrepare.session?.sessionId !== firstPrepare.session?.sessionId
+  || secondPrepare.workView?.browserSessionId !== firstPrepare.workView?.browserSessionId
+  || secondPrepare.workView?.helperRuntime?.leaseId !== firstPrepare.workView?.helperRuntime?.leaseId
+  || secondPrepare.workView?.helperRuntime?.browserLeaseId !== firstPrepare.workView?.helperRuntime?.browserLeaseId
+  || secondPrepare.workView?.helperRuntime?.leaseMatched !== true) {
+  throw new Error(`second prepare should reuse the exact browser authority without adding a tab: ${JSON.stringify(secondPrepare)}`);
+}
 
 if (!background.ok
   || background.registry !== "openclaw-phase-3-background-work-view-v0"
@@ -85,13 +139,16 @@ if (background.current?.workView?.lastOperatorAction?.action !== "prepare_work_v
   throw new Error(`current work view should record prepare action evidence: ${JSON.stringify(background.current?.workView?.lastOperatorAction)}`);
 }
 if (!actionResponse.ok
+  || actionResponse.invoked !== true
+  || actionResponse.result?.operation !== "keyboard.type"
+  || actionResponse.result?.governance?.requiresTrustedLease !== true
   || action?.degraded !== false
   || action?.result !== "executed-browser-runtime"
-  || action?.mediation?.registry !== "openclaw-trusted-work-view-action-mediation-v0"
-  || action?.mediation?.required !== true
+  || action?.mediation?.attempted !== true
   || action?.mediation?.accepted !== true
   || action?.mediation?.status !== "accepted"
-  || action?.mediation?.leaseMatched !== true) {
+  || action?.mediation?.leaseMatched !== true
+  || action?.mediation?.transport !== "browser-runtime-direct") {
   throw new Error(`background work-view action should require and accept the trusted helper lease: ${JSON.stringify(actionResponse)}`);
 }
 if (rejectedAction.ok !== false
@@ -138,6 +195,8 @@ console.log(JSON.stringify({
   openclawPhase3BackgroundWorkView: {
     status: "passed",
     registry: background.registry,
+    repeatedPrepareReused: secondPrepare.reused,
+    repeatedPrepareTabCount: secondTabs.length,
     visibility: background.current.workView.visibility,
     mode: background.current.workView.mode,
     trustedSession: trustedSession.identityLevel,

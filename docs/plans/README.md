@@ -578,9 +578,9 @@ returns only a one-tab count delta. Caller tab ids/indices/URLs, automatic
 cleanup or repeat, process/window control, provider calls, desktop takeover,
 and host mutation are excluded.
 
-All 1178 tests, typecheck, both capability-invoke service gates, the Screen Act
+All 1196 tests, typecheck, both capability-invoke service gates, the Screen Act
 grant attack regression, Observer build, and body-config pass. Store closure
-counts are Core 262, Session Manager 31,
+counts are Core 262, Session Manager 32,
 Browser Runtime 20, Screen Act 19, and Observer 87. Guarded activation moved
 the current and system profile to physical generation `rmpl42askkpkr0rhls9fzilw2mf0p634...`
 after the physical marker and protected paths matched. The final gate kept real
@@ -594,6 +594,16 @@ runtime-copy default plus token-bearing argv without changing ordinary dev
 credentials. This capability is physically complete and frozen. The next
 required slice is a whitepaper route review, not another horizontal browser
 action.
+
+A blocking lifecycle correction after that physical gate is complete in source:
+repeating `work_view.prepare` for the same still-valid session, display target,
+entry URL, active matched helper lease, Browser Runtime session, and non-empty
+tab set now returns `reused=true` without opening another page. Active URL is
+not compared, so operator navigation remains intact. First prepare and every
+stale or changed authority case keep the existing open/recovery behavior. The
+Phase 3 Core/Observer pair, state-settling, MVP readiness, body-config, and a
+non-activated repository system build pass; `rmpl42...` remains the deployed
+physical generation.
 
 ## Completed Capability Evidence
 

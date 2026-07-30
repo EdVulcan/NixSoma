@@ -579,8 +579,8 @@ endpoint。真实引擎只关闭当前 `activePage`，至少保留一个 tab，�
 caller tab 选择、automatic cleanup/repeat、process/window 控制、provider call、
 desktop takeover 与 host mutation 均被排除。
 
-1178 项 workspace test、typecheck、Core/Observer capability-invoke 服务门、Screen Act
-grant attack regression、Observer build 与 body-config 均通过；精确 store closure 为 Core 262、Session Manager 31、
+1196 项 workspace test、typecheck、Core/Observer capability-invoke 服务门、Screen Act
+grant attack regression、Observer build 与 body-config 均通过；精确 store closure 为 Core 262、Session Manager 32、
 Browser Runtime 20、Screen Act 19、Observer 87。受保护 helper 已激活物理 generation
 `rmpl42askkpkr0rhls9fzilw2mf0p634...`，current 与 system profile 一致，且没有 reboot。
 真实 headed Firefox PID 63947 在显式关闭中保持不变，目标 tab 数量 5 -> 4；helper
@@ -590,6 +590,15 @@ automatic cleanup/repeat、service restart 和 failed unit 均为 0。physical l
 已移除的 runtime copy，并通过 curl stdin config 传递 bearer，不进入命令参数。该 lane
 已物理完成并冻结；下一步先按白皮书重新选择纵向能力，
 不继续扩展横向 browser action。
+
+物理 gate 后发现的 authority 生命周期缺陷已在源码关闭：只有 running session、
+display target、entry URL、active helper authority、matched lease、Browser Runtime
+session 与非空 tab set 全部一致时，重复 `work_view.prepare` 才返回 `reused=true`，
+且不再调用 `/browser/open`。当前 active URL 不参与比较，因此操作者导航不会触发
+额外标签页；首次 prepare、stale lease、session drift、stopped browser 或空 tab set
+仍走既有恢复路径。Phase 3 Core/Observer、state-settling、MVP readiness、body-config
+与非激活 system build 均通过；物理 generation 仍为 `rmpl42...`，本次没有 switch
+或 reboot。
 
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
