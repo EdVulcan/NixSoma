@@ -435,6 +435,8 @@ let
         RestartSec = "2s";
         StateDirectory = "openclaw";
         LogsDirectory = "openclaw";
+      } // optionalAttrs (!userScope) {
+        StateDirectoryMode = "0750";
       } // optionalAttrs (!userScope && cfg.user != null) {
         User = cfg.user;
         Group = cfg.group;
@@ -444,6 +446,10 @@ let
         RuntimeDirectoryMode = "0700";
       } // optionalAttrs (!userScope && spec.key == "core") {
         UMask = "0077";
+      } // optionalAttrs (!userScope && spec.key == "core" && cfg.operatorAuthTokenFile != null) {
+        # Reapply the narrow reader ACL on every core start so service
+        # lifecycle changes cannot leave its mask stale.
+        ExecStartPre = [ "+${operatorTokenInitScript}" ];
       } // optionalAttrs (credentialLoads != [ ]) {
         LoadCredential = credentialLoads;
       } // optionalAttrs (!userScope && spec.key == "systemSense") {

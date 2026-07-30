@@ -14,10 +14,10 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
 | Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, one-shot operator-authenticated projected click and bounded native type, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click, objective-bound OCR type, fixed OCR focus-then-type, governed current-tab close, and an explicit bounded run-plus-assessment cycle, plus the completed Level 3 baseline | The twenty-fifth Level 4 slice is physically complete and frozen |
-| Local validation | 1178 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1011-file script audit pass; 824 registry entries pass | Validated |
+| Local validation | 1196 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1011-file script audit pass; 824 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
-| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/rmpl42askkpkr0rhls9fzilw2mf0p634-nixos-system-nixos-26.05.4808.569d57850992` | Governed real-Firefox current-tab close and the prior Level 4 capabilities are deployed and physically proven |
-| Previous generation | `/nix/store/4mw7p3r3amcfp48njvjz20zpykf14qcw-nixos-system-nixos-26.05.4808.569d57850992` | Fixed OCR focus-then-type and narrow operator credential access remain the protected deployment baseline |
+| Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/pfiwq5p3z284rpdqdlk35s8c4kg5cmkr-nixos-system-nixos-26.05.4808.569d57850992` | Same-authority prepare reuse, governed current-tab close, durable narrow operator-token ACLs, and the prior Level 4 capabilities are deployed and physically proven |
+| Previous generation | `/nix/store/ilybrrpmla5dvfxzsz4vb61jij4cv2q7-nixos-system-nixos-26.05.4808.569d57850992` | Superseded because the first ACL replay correction still left the shared system state directory at systemd's default `0755` mode |
 | Deployed resource envelopes | System body: 1.5/3 GiB and 1024 tasks; user session: 1.5/3 GiB and 1024 tasks; all assigned services active | Deployed and probed without pressure injection |
 | Provider runtime | Fixed DeepSeek endpoint/model; root-only source delivered by `LoadCredential`; `LIVE_EGRESS=1`; approval-bound and standing-authorized provider calls have completed on the active host | Deployed development profile disables local cooldown and daily usage enforcement; provider billing remains external |
 | Standing advisory | Fixed three-unit context, required pre-egress audit, one-call single flight, production/default 15-minute cooldown and 3-call/4096-token daily limits, structured transient recommendation, and local fallback | Development profile is deployed without local call/token/cooldown enforcement; a real provider gate passed beyond the prior 3/3 state |
@@ -44,13 +44,13 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 OCR ordinal click | One explicit reviewed task lets the standing provider select only `click_item + itemOrdinal` or `no_op`; Core derives coordinates locally, revalidates task/OCR/surface/inventory, executes at most one opcode-4 surface click, and requires newer OCR without the selected text | Deployed in `zh9r98yq...`; provider selected item 9 on surface 33, frame 75 -> 76 -> 78 proved one receipt-bound click and post-action OCR with zero task mutation, local OCR persistence, pixel egress, or arbitrary coordinates; governed stop then proved the volatile marker absent |
 | Level 4 objective-bound OCR type | One explicit reviewed task whose entire objective matches `Type exact text "VALUE" into the active surface` may receive one provider decision for exactly that 1-32 character allowlisted value; Core revalidates task/OCR/frame/surface/inventory before one opcode-5 type and requires newer OCR containing the value | Deployed in `m392zajq...`; one provider call typed a 6-character canary on surface 31/inventory 72, matched one native receipt and three owner OCR observations, verified the newer scene, left the task unchanged, and copied no plaintext into execution evidence; provider retention remains externally governed |
 | Level 4 OCR focus then type | One explicit reviewed task whose objective fixes both an OCR target substring and exact allowlisted value may receive one `focus_and_type + ordinal + value` decision; Core requires unchanged provider OCR, objective-local target verification, opcode-4 receipt, fresh task/frame/OCR revalidation, opcode-5 receipt, and final OCR containing the value | Deployed in `4mw7p3r3...`; task `158bd267...` bound provider/preprobe ordinal 14 on surface 14 to one call, opcodes `[4,5]`, four owner OCR observations, two receipts, final OCR, unchanged task, completion audit, and no execution-evidence plaintext |
-| Level 4 current-tab close | One explicit authenticated request carries only `browser.current_tab.close` plus `confirm=true`; Core grants one fixed Screen Act route and Browser Runtime closes only its current `activePage` while preserving the final tab | Deployed in `rmpl42...`; real headed Firefox PID 63947 stayed stable while the exact target page closed with count 5 -> 4, helper lease plus Browser Runtime/Screen Act audit matched, and provider calls, automatic cleanup/repeat, service restarts, and reboot remained zero |
+| Level 4 current-tab close | One explicit authenticated request carries only `browser.current_tab.close` plus `confirm=true`; Core grants one fixed Screen Act route and Browser Runtime closes only its current `activePage` while preserving the final tab | Deployed in `pfiwq5p3...`; real headed Firefox PID 63947 stayed stable while the prepare-reuse test page closed with count 5 -> 4, helper lease plus Browser Runtime/Screen Act audit matched, and provider calls, automatic cleanup/repeat, user-service restarts, and reboot remained zero |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
 | Privileged actions | Physical-host generation switch and governed provider egress are proven; real repair, hostd activation, and rollback | Remaining mutations deferred to explicit/disposable checks |
-| Operator credential reference | Core still receives the root-managed token through `LoadCredential`; only `edvulcan` receives read ACL on the exact token plus traverse-only ACL on its directory | Deployed in `rmpl42...`; physical gates explicitly select `/var/lib/openclaw/operator-token`, the operator cannot list its directory or read the execution-grant private key, and no credential value enters environment, command line, store, or logs |
-| Developer deployment | Default-off immutable helper accepts one canonical, root-owned physical `nixos-system-nixos` closure through one explicit `edvulcan` sudoers rule and rejects container markers or changes to kernel/initrd/fstab/GDM/NetworkManager/SSH paths | The fixed noninteractive helper activated `rmpl42...` after every marker and protected-path check passed; current/profile match and no reboot occurred |
+| Operator credential reference | Core still receives the root-managed token through `LoadCredential`; only `edvulcan` receives read ACL on the exact token plus traverse-only ACL on its directory | Deployed in `pfiwq5p3...`; every system-scope owner fixes the shared state directory at `0750`, Core reapplies the ACL on start, the operator cannot list the directory or read the execution-grant private key, and no credential value enters environment, command line, store, or logs |
+| Developer deployment | Default-off immutable helper accepts one canonical, root-owned physical `nixos-system-nixos` closure through one explicit `edvulcan` sudoers rule and rejects container markers or changes to kernel/initrd/fstab/GDM/NetworkManager/SSH paths | The fixed noninteractive helper activated `pfiwq5p3...` after every marker and protected-path check passed; current/profile match and no reboot occurred |
 
 The current checkout is on the only available physical host
 (`systemd-detect-virt=none`). Historical VM results remain acceptance evidence,
@@ -758,7 +758,7 @@ body-changed, caller-targeted, and replayed grants. The store-native body check
 proves exact 262-file Core, 32-file Session Manager,
 20-file Browser Runtime, 19-file Screen Act, and 87-file Observer closures.
 Generation
-`/nix/store/rmpl42askkpkr0rhls9fzilw2mf0p634-nixos-system-nixos-26.05.4808.569d57850992`
+`/nix/store/pfiwq5p3z284rpdqdlk35s8c4kg5cmkr-nixos-system-nixos-26.05.4808.569d57850992`
 is active and matches the system profile. The guarded helper accepted the
 root-owned physical marker and matching kernel/initrd/fstab/GDM/NetworkManager/SSH
 paths. The final physical gate kept real headed Firefox PID 63947 stable while
@@ -772,15 +772,21 @@ without changing ordinary development-token behavior. This lane is deployed
 and frozen; the next slice is a whitepaper route review, not another horizontal
 browser action.
 
-The follow-up source lifecycle correction makes repeated same-authority
+The follow-up lifecycle correction makes repeated same-authority
 `work_view.prepare` calls browser-mutation-free. Session Manager reuses only a
 running browser with the same session/display/entry authority, active matched
 helper lease, and at least one tab; it ignores the current active URL so normal
 operator navigation is preserved. Phase 3 Core and Observer gates prove the
 second prepare keeps one session, one lease, and one tab. Changed or stale
-authority still falls through to the existing open/recovery path. The source
-candidate is built but not activated; physical generation `rmpl42...` remains
-current.
+authority still falls through to the existing open/recovery path. Physical
+generation `pfiwq5p3...` records `session_started` followed 11 ms later by
+`same_authority` for session `47e6a200...`, Firefox PID 63947, a matched lease,
+and the same five tabs. One explicit governed close then removed only the test
+tab with count 5 -> 4 and matching Core, Browser Runtime, and Screen Act audit.
+The deployment also fixes the shared system `StateDirectory` at `0750` and
+reapplies the exact operator-token ACL on every Core start; physical checks
+prove token read, traverse without listing, no execution-private-key access,
+all nine health endpoints, zero failed units, and an unchanged boot ID.
 
 ## Progress Estimate
 

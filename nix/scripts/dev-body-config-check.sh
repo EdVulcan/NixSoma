@@ -211,6 +211,7 @@ requireIncludes("openclaw-body module", bodyModule, [
   "setfacl --remove-all",
   "user:${reader}:--x",
   "user:${reader}:r--",
+  "ExecStartPre = [ \"+${operatorTokenInitScript}\" ]",
   "cloudProvider",
   "standingAdvisory",
   "deepseek-api-key",
@@ -218,6 +219,7 @@ requireIncludes("openclaw-body module", bodyModule, [
   "ExecStartPre = [ \"+${eventLogOwnershipMigration}\" ]",
   "chown ${lib.escapeShellArg \"${owner}:${group}\"} \"$event_log\"",
   "StateDirectory = \"openclaw\"",
+  "StateDirectoryMode = \"0750\"",
   "LogsDirectory = \"openclaw\"",
   "ExecStart = \"${cfg.nodePackage}/bin/node src/server.mjs\"",
   "runtimePackages.eventHub",
@@ -465,6 +467,7 @@ if command -v nix >/dev/null 2>&1; then
           ExecStopPost = unit.serviceConfig.ExecStopPost or null;
           RuntimeDirectory = unit.serviceConfig.RuntimeDirectory or null;
           RuntimeDirectoryMode = unit.serviceConfig.RuntimeDirectoryMode or null;
+          StateDirectoryMode = unit.serviceConfig.StateDirectoryMode or null;
           UnsetEnvironment = unit.serviceConfig.UnsetEnvironment or [ ];
           PrivateTmp = unit.serviceConfig.PrivateTmp or null;
           PrivateDevices = unit.serviceConfig.PrivateDevices or null;
@@ -715,6 +718,19 @@ if (ownership.eventHub.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || ownership.eventHub.serviceConfig?.WorkingDirectory?.includes("/opt/openclaw")) {
   throw new Error(`event hub must execute from its read-only Nix closure: ${JSON.stringify(ownership.eventHub)}`);
 }
+for (const [name, unit] of Object.entries({
+  eventHub: ownership.eventHub,
+  core: ownership.core,
+  screenSense: ownership.screenSense,
+  screenAct: ownership.screenAct,
+  systemSense: ownership.systemSense,
+  systemHeal: ownership.systemHeal,
+  observerUi: ownership.observerUi,
+})) {
+  if (unit.serviceConfig?.StateDirectoryMode !== "0750") {
+    throw new Error(`${name} must preserve the shared system state directory at mode 0750: ${JSON.stringify(unit.serviceConfig)}`);
+  }
+}
 if (ownership.core.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || ownership.core.environment?.OPENCLAW_BODY_USER_OWNED_UNITS !== "openclaw-session-manager,openclaw-browser-runtime"
   || ownership.core.environment?.OPENCLAW_CORE_STATE_FILE !== "/var/lib/openclaw/openclaw-core-state.json"
@@ -734,6 +750,10 @@ if (ownership.core.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_API_KEY_FILE != null
   || ownership.core.environment?.OPENCLAW_CLOUD_PROVIDER_API_KEY != null
   || ownership.core.serviceConfig?.UMask !== "0077"
+  || !Array.isArray(ownership.core.serviceConfig?.ExecStartPre)
+  || ownership.core.serviceConfig.ExecStartPre.length !== 1
+  || !String(ownership.core.serviceConfig.ExecStartPre[0]).startsWith("+")
+  || !String(ownership.core.serviceConfig.ExecStartPre[0]).includes("openclaw-operator-token-init")
   || JSON.stringify(ownership.core.serviceConfig?.LoadCredential ?? []) !== JSON.stringify(["operator-token:/var/lib/openclaw/operator-token", "execution-grant-private:/var/lib/openclaw/execution-grant-private.pem"])
   || !String(ownership.core.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
   || !String(ownership.core.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/services/openclaw-core")

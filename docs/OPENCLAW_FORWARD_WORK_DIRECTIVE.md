@@ -66,7 +66,7 @@ same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/rmpl42askkpkr0rhls9fzilw2mf0p634-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/pfiwq5p3z284rpdqdlk35s8c4kg5cmkr-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, bounded local OCR, the
@@ -77,7 +77,7 @@ bounded native type. Core still receives the operator token through systemd
 ACL, without directory listing or execution-private-key access. All nine health
 endpoints pass.
 
-The source work-view lifecycle now makes an already-valid same-authority
+The work-view lifecycle now makes an already-valid same-authority
 `work_view.prepare` idempotent. Session Manager reads Browser Runtime state and
 reuses the existing browser only when the running session, display target,
 entry URL, active helper authority, matched lease, browser session, and
@@ -87,10 +87,16 @@ changed authority, stale lease, stopped browser, session drift, and an empty tab
 set retain the existing open/recovery path. Both Phase 3 service gates prove a
 second prepare keeps one session, lease, and tab; all 1196 tests, typecheck,
 body-config, MVP readiness, and the exact 32-file Session Manager closure pass.
-The non-activated repository system build is
-`/nix/store/5n2vnrby6xa72ghl0i12q51838scg8rx-nixos-system-nixos-26.05.19700101.dirty`.
-The deployed physical generation remains `rmpl42...`; no switch or reboot was
-performed for this correction.
+The physical prepare pair recorded `session_started` followed 11 ms later by
+`same_authority`, preserving session `47e6a200...`, Firefox PID 63947, the
+matched helper lease, and five tabs. A single governed current-tab close then
+removed only the explicit test page with count 5 -> 4 and matching Core,
+Browser Runtime, and Screen Act audit. The shared system state directory is now
+declared `0750` by every system-scope owner, and Core reapplies the narrow token
+ACL on every start. Physical checks prove exact token read plus directory
+traverse for `edvulcan`, no listing, no execution-private-key access, all nine
+health endpoints, zero failed units, matching current/profile paths, and no
+reboot.
 
 One real request-bound DeepSeek advisory call completed through task
 `62ba696a-945e-4f37-b65e-8a6783316386` and approval
