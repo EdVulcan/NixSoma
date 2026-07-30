@@ -1,5 +1,10 @@
 # Phase D: Declarative Evolution Candidate
 
+The source contract and physical-host-safe rehearsal in this record are
+complete. Real generation activation and rollback remain a separate later
+release gate after the selected fixed-target Level 3 repair proof; the
+historical `Next Real Slice` section below is not current route authority.
+
 ## Status
 
 Complete on 2026-07-18 as the first bounded Phase D capability, its

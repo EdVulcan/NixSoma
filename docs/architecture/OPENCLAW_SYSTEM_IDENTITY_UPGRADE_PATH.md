@@ -203,7 +203,7 @@
 
 ### 当前实现前沿
 
-Level 4 已从第一个所有权边界推进到二十四个已部署并物理证明的切片：登录用户的
+Level 4 已从第一个所有权边界推进到二十五个已部署并物理证明的切片：登录用户的
 `systemd --user` 管理独立 Weston headless compositor 和固定
 `nixsoma-ai-0` 1280x720 输出；现有 AI-owned Nix Firefox 作为 headed client
 运行其中；session-manager 获取有界原生帧并只向状态面投影摘要；原生左键点击
@@ -571,7 +571,7 @@ OCR type 与 OCR click regression 也通过。该 lane 已冻结；下一真实�
 browser 的 governed current-tab close/lifecycle owner，不能扩展为任意 tab、process、
 window 控制或 desktop takeover。该源码候选已在下文完成。
 
-第二十五个 Level 4 源码能力为 `act.browser.current_tab.close`。公开调用只能包含
+第二十五个 Level 4 已部署能力为 `act.browser.current_tab.close`。公开调用只能包含
 精确 operation 与 `confirm=true`；Core 为固定 Screen Act route 签发一次 execution
 grant，Screen Act 与 trusted sidecar 从同一 shared descriptor 解析 Browser Runtime
 endpoint。真实引擎只关闭当前 `activePage`，至少保留一个 tab，切换到剩余页面并
@@ -582,29 +582,31 @@ desktop takeover 与 host mutation 均被排除。
 1196 项 workspace test、typecheck、Core/Observer capability-invoke 服务门、Screen Act
 grant attack regression、Observer build 与 body-config 均通过；精确 store closure 为 Core 262、Session Manager 32、
 Browser Runtime 20、Screen Act 19、Observer 87。受保护 helper 已激活物理 generation
-`rmpl42askkpkr0rhls9fzilw2mf0p634...`，current 与 system profile 一致，且没有 reboot。
+`pfiwq5p3z284rpdqdlk35s8c4kg5cmkr...`，current 与 system profile 一致，且没有 reboot。
 真实 headed Firefox PID 63947 在显式关闭中保持不变，目标 tab 数量 5 -> 4；helper
 lease、Browser Runtime/Screen Act durable audit 与紧凑 Core 证据一致，provider call、
 automatic cleanup/repeat、service restart 和 failed unit 均为 0。physical live gate
 通过 shared HTTP helper 显式选择 `/var/lib/openclaw/operator-token` ACL 文件，不再依赖
 已移除的 runtime copy，并通过 curl stdin config 传递 bearer，不进入命令参数。该 lane
-已物理完成并冻结；下一步先按白皮书重新选择纵向能力，
+已物理完成并冻结；路线评审已选择上文的可丢弃 VM 固定 Level 3 repair 证明，
 不继续扩展横向 browser action。
 
-物理 gate 后发现的 authority 生命周期缺陷已在源码关闭：只有 running session、
+物理 gate 后发现的 authority 生命周期缺陷已部署关闭：只有 running session、
 display target、entry URL、active helper authority、matched lease、Browser Runtime
 session 与非空 tab set 全部一致时，重复 `work_view.prepare` 才返回 `reused=true`，
 且不再调用 `/browser/open`。当前 active URL 不参与比较，因此操作者导航不会触发
 额外标签页；首次 prepare、stale lease、session drift、stopped browser 或空 tab set
 仍走既有恢复路径。Phase 3 Core/Observer、state-settling、MVP readiness、body-config
-与非激活 system build 均通过；物理 generation 仍为 `rmpl42...`，本次没有 switch
-或 reboot。
+与 32-file Session Manager closure 均通过。物理 generation `pfiwq5p3...` 记录同一
+session、lease、Firefox PID 63947 和五个 tab 上的 `session_started -> same_authority`；
+受治理 current-tab close 随后恢复原四个 tab。该 generation 同时固定 system-scope
+共享 `StateDirectoryMode=0750` 并在 Core 启动时重放精确 operator-token ACL；无 reboot。
 
 compositor、browser、native frame 和 native input 已在物理机部署。真实点击
 已证明同一 active lease、fresh frame、Weston receipt 与推进后的原生帧。
 画面投影、应用生命周期、surface 激活、垂直滚动、AI 单步、semantic scene
 grounding、task-grounded semantic click/type、bounded run/assessment、local OCR、
-OCR click、objective-bound OCR type 与 fixed OCR focus-then-type 已通过源码、1169
+OCR click、objective-bound OCR type、fixed OCR focus-then-type 与 governed current-tab close 已通过源码、1196
 项工作区测试、body-config/store closure、完整 system generation 与物理验收。真实 Firefox 渲染了
 1280x720 原生画面，切换模式和退出登录都会释放像素；真实 Workbench 启动后
 PID 与 surface 匹配，停止后 surface 消失；服务状态和 audit 只保留摘要。桌面
@@ -694,16 +696,18 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 当前主线应该是：
 
 - 保持已完成的用户态控制面、bounded AI 工作视图和固定 Level 3 owner 稳定
-- 沿独立 `nixsoma-ai-0` 推进有产品价值的 Level 4 垂直能力
-- 复用现有 frame、input、projection、surface 和 application lifecycle owner
+- 冻结已完成的 Level 4 浏览器动作族，不增加横向 action 变体
+- 在可丢弃 NixOS VM 中证明固定 `openclaw-system-heal.service` 的完整 Level 3
+  repair 链：观察、incident、triage、promotion、人工审批、单次 hostd restart 与 post-health receipt
 - 分开记录源码完成、验证通过、system generation 部署和真实物理动作
-- 在独立 mutation 环境出现前保持真实 repair/rollback 禁用
+- 在独立 mutation 环境出现前保持真实 repair 禁用；generation activation/rollback
+  继续作为后续独立 Phase D release gate
 
 而这些能力，已经比“强行抓整个用户桌面”更接近 OpenClaw 的长期产品形态。
 
 ---
 
-## 六、当前证据化进度基线（2026-07-29）
+## 六、当前证据化进度基线（2026-07-30）
 
 进度不能再按历史 Phase 数量计算。以下比例是根据当前运行时代码、NixOS
 模块、任务闭环、Observer、测试证据和仍缺失的架构组件估算的能力成熟度，
@@ -714,7 +718,7 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 60% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。真实 repair/rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 85%（one-shot projected operator click、bounded native operator type、semantic type、bounded run、reviewed cycle/acceptance、bounded local OCR、OCR assessment、same-surface OCR click、objective-bound OCR type、fixed OCR focus-then-type 与 governed current-tab close 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、verified-scroll-only 两步 run、显式 run-plus-assessment cycle、瞬时本地 OCR、无 pixel egress 的 OCR provider assessment、ordinal-grounded one-click action、objective-bound one-shot OCR type、固定两动作 focus/type 与当前 tab 生命周期 owner 已部署。`rmpl42...` gate 在 Firefox PID 不变时关闭当前页 5 -> 4，并绑定 lease、两层 durable audit 与零自动重复。Enter、hotkey、repeat、通用键盘代理、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
+| Level 4 图形栈内生组件 | 约 85%（one-shot projected operator click、bounded native operator type、semantic type、bounded run、reviewed cycle/acceptance、bounded local OCR、OCR assessment、same-surface OCR click、objective-bound OCR type、fixed OCR focus-then-type 与 governed current-tab close 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、verified-scroll-only 两步 run、显式 run-plus-assessment cycle、瞬时本地 OCR、无 pixel egress 的 OCR provider assessment、ordinal-grounded one-click action、objective-bound one-shot OCR type、固定两动作 focus/type 与当前 tab 生命周期 owner 已部署。`pfiwq5p3...` gate 在 Firefox PID 不变时证明 same-authority prepare 复用，并通过受治理关闭将测试 tab 从 5 恢复到 4，绑定 lease、两层 durable audit 与零自动重复。Enter、hotkey、repeat、通用键盘代理、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
 **52-60%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted

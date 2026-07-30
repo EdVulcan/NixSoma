@@ -138,11 +138,27 @@ copy; no key value is present in its environment, unit, repository, or task
 state.
 Do not deliberately create memory pressure on the sole physical host to prove
 the limits, and do not claim these service slices contain ordinary terminal or
-build processes. Freeze provider transport and request-binding work. The next
-real AI capability is a narrowly allowlisted standing advisory policy with
-explicit token/rate budgets, bounded non-secret contexts, local fallback, and
-no authority to create approvals or execute actions. Do not add another
-provider readiness wrapper or another one-off call surface.
+build processes. The narrowly allowlisted standing advisory described at this
+checkpoint is complete and deployed. Freeze provider transport and
+request-binding work; do not add another provider readiness wrapper or another
+one-off call surface.
+
+## Selected Next Real Capability
+
+Select one disposable-environment proof of the existing fixed Level 3 repair
+loop for `openclaw-system-heal.service`. In a disposable NixOS VM, create one
+controlled service interruption, require the existing observation, incident,
+triage, repair-promotion, and explicit approval chain, dispatch exactly one
+hostd-owned fixed restart, and bind the result to target-specific post-health
+and incident receipts. Restart reconciliation must prove that a closed or
+interrupted reservation never replays the mutation.
+
+Do not run this proof on the current physical host. Do not add a hostd target,
+arbitrary systemd method, automatic approval, retry, provider schema, browser
+action, or generation mutation. If no disposable VM exists, provisioning and
+verifying that environment is the only prerequisite work; it is not permission
+to open another horizontal capability lane. Real generation activation and
+rollback remain a separate later Phase D release gate.
 
 ## Governing Vision
 
@@ -2827,8 +2843,8 @@ reboot remained zero. Physical live checks now explicitly select the deployed
 `/var/lib/openclaw/operator-token` ACL file through the shared HTTP helper and
 stream its bearer header through curl's stdin config; the obsolete runtime-copy
 default and token-bearing argv are gone. This lane is physically complete and
-frozen. Perform a whitepaper route review before selecting another capability,
-and do not add another horizontal browser action.
+frozen. The completed route review selected the disposable fixed-target Level 3
+repair proof above; do not add another horizontal browser action.
 
 ## Identity-Upgrade Alignment
 

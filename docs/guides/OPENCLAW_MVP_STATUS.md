@@ -1,5 +1,10 @@
 # NixSoma MVP Status
 
+Historical checkpoint: this file preserves the first-stage MVP status and
+tokens consumed by milestone checks. Its percentages and `Next Phase Boundary`
+are not the current project estimate or route; use `docs/README.md` and
+`docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md` for current development decisions.
+
 Updated: 2026-05-19
 
 ## Status

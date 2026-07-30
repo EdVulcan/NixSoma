@@ -1,5 +1,15 @@
 # OpenClaw Native D-Bus Systemd Control Plan
 
+## Current Continuation
+
+The fixed hostd ownership and source repair lifecycle in this record are
+complete. The current selected continuation is a disposable-NixOS-VM proof for
+the existing `openclaw-system-heal.service` capability: controlled
+interruption, current observation/triage/promotion, explicit approval, one
+hostd restart, post-health receipt, and no replay. The historical `Next Slice`
+section below does not override the canonical route in `docs/README.md` and
+`docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md`.
+
 ## Purpose
 
 Advance kernel-whitepaper Phase B by replacing command-line `systemctl`

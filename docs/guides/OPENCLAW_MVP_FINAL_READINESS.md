@@ -1,5 +1,9 @@
 # NixSoma MVP Final Readiness
 
+Historical checkpoint: this file records the first MVP exit gate. It does not
+describe the current deployed frontier or select new work; use
+`docs/README.md` and `docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md` for those.
+
 Updated: 2026-05-22
 
 ## Status

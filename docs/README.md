@@ -157,6 +157,29 @@ transient projection, minimal surface identity, and a fixed application
 lifecycle in production. General keyboard authority, desktop takeover, and
 generic process/window control remain future work.
 
+## Selected Next Capability
+
+The next real capability is one disposable-environment proof of the existing
+fixed Level 3 repair loop for `openclaw-system-heal.service`:
+
+```text
+controlled service interruption in a disposable NixOS VM
+-> fixed-unit observation and incident task
+-> automatic local triage and pending repair promotion
+-> explicit operator approval
+-> one hostd-owned fixed restart
+-> target-specific post-health and incident receipt
+-> restart reconciliation with no mutation replay
+```
+
+This slice adds no hostd target, provider schema, browser action, automatic
+approval, retry loop, or arbitrary systemd authority. Its entry gate is a
+disposable NixOS VM that matches the physical deployment contract; the current
+physical host is evidence-only for this mutation class. Its stop condition is
+one successful fixed-target repair receipt plus proof that unrelated units,
+the physical host, and generation state were untouched. Real generation
+activation and rollback remain a separate later Phase D release gate.
+
 ## Active Route
 
 The Event Hub development-log blocker is closed in validated source. Tail
@@ -221,8 +244,8 @@ sidecars use `openclaw-session.slice`. Each has 1.5 GiB `MemoryHigh`, 3 GiB
 outside the envelopes. Generation `9bbc00da...` passed generated-unit and
 closure review before activation, then runtime slice, service, health,
 restart-count, auth, failed-unit, and journal probes after activation. Its Core
-unit established the disabled provider baseline. Current generation `6dm12j7...`
-now loads the separately provisioned root-only key through systemd
+unit established the disabled provider baseline. Generation `6dm12j7...` later
+loaded the separately provisioned root-only key through systemd
 `LoadCredential` and has completed one exact approval-bound advisory call. The
 call persisted only hashes, usage, and compact recommendation evidence; prompt,
 reason, and credential content remained transient. A deliberate memory-pressure
@@ -769,8 +792,8 @@ HTTP helper now gives physical gates one explicit deployment-token selector for
 `/var/lib/openclaw/operator-token` and streams its bearer header through curl's
 stdin config, replacing the removed runtime-copy default and token-bearing argv
 without changing ordinary development-token behavior. This lane is deployed
-and frozen; the next slice is a whitepaper route review, not another horizontal
-browser action.
+and frozen. The completed route review selected the disposable fixed-target
+Level 3 repair proof above, not another horizontal browser action.
 
 The follow-up lifecycle correction makes repeated same-authority
 `work_view.prepare` calls browser-mutation-free. Session Manager reuses only a

@@ -1,6 +1,6 @@
 # NixSoma Plans Directory
 
-Updated: 2026-07-29
+Updated: 2026-07-30
 
 This directory contains current decision records and historical milestone
 evidence. It is not a queue ordered by phase number. Use
@@ -9,7 +9,9 @@ and route baseline.
 
 ## Active Decision Records
 
-Only these documents should guide current route selection:
+The canonical README, forward directive, and identity path select the route.
+The remaining records constrain implemented ownership and safety boundaries;
+their historical `Next Slice` sections do not independently select new work:
 
 | Document | Decision owned |
 | --- | --- |
@@ -34,6 +36,27 @@ The kernel whitepaper remains the long-horizon authority:
 [`KERNEL_LEVEL_EVOLUTION_WHITEPAPER.md`](../architecture/KERNEL_LEVEL_EVOLUTION_WHITEPAPER.md).
 
 ## Current Route
+
+The only current deployment baseline is physical generation
+`/nix/store/pfiwq5p3z284rpdqdlk35s8c4kg5cmkr-nixos-system-nixos-26.05.4808.569d57850992`.
+Generation-specific `active` wording later in this section records the state at
+each historical checkpoint and does not override this baseline.
+
+The selected next real capability is one disposable-NixOS-VM proof of the
+existing fixed Level 3 repair loop for `openclaw-system-heal.service`:
+controlled interruption, fixed observation, incident task, automatic triage,
+pending repair promotion, explicit approval, one hostd restart, target-specific
+post-health receipt, and no replay after reconciliation. The physical host must
+remain evidence-only. Generation activation/rollback, new hostd targets,
+arbitrary systemd authority, retries, automatic approval, provider wrappers,
+and additional browser actions are outside this slice.
+
+### Historical Route Evidence
+
+The remainder of this section is chronological evidence for completed
+capability families. References to a selected continuation, active generation,
+or next slice record the checkpoint where they appear; they do not override the
+current baseline and selected VM proof above.
 
 Completed capability families must not be reopened for another wrapper,
 readiness marker, readback mirror, or horizontal variant. The completed Level 3
@@ -69,8 +92,10 @@ This route advances the Level 3 body loop without widening hostd authority and
 without introducing a new provider response schema. The deployed baseline is
 proven through non-mutating health, auth, scheduler, and Observer probes, and
 automatic local triage, pending repair promotion, approval-triggered one-shot
-dispatch, and fail-closed restart reconciliation are deployed in generation
-`/nix/store/yzjwwp67apgv4rrzpm3g2gz12bqkq7vj-nixos-system-nixos-26.05.4808.569d57850992`.
+dispatch, and fail-closed restart reconciliation were first deployed in
+generation
+`/nix/store/yzjwwp67apgv4rrzpm3g2gz12bqkq7vj-nixos-system-nixos-26.05.4808.569d57850992`
+and remain present in the current `pfiwq5p3...` generation.
 Non-mutating health, auth, scheduler, live-closure, and Observer probes passed;
 the first post-switch tick observed all fixed targets healthy without changing
 task or approval counts. Freeze this lane and select a distinct concrete
@@ -581,7 +606,7 @@ and host mutation are excluded.
 All 1196 tests, typecheck, both capability-invoke service gates, the Screen Act
 grant attack regression, Observer build, and body-config pass. Store closure
 counts are Core 262, Session Manager 32,
-Browser Runtime 20, Screen Act 19, and Observer 87. Guarded activation moved
+Browser Runtime 20, Screen Act 19, and Observer 87. Guarded activation first moved
 the current and system profile to physical generation `rmpl42askkpkr0rhls9fzilw2mf0p634...`
 after the physical marker and protected paths matched. The final gate kept real
 headed Firefox PID 63947 stable while the target tab closed with count 5 -> 4;
@@ -591,19 +616,23 @@ units, and reboot remained zero. Physical live gates now explicitly select the
 ACL-readable `/var/lib/openclaw/operator-token` via the shared HTTP helper,
 streaming its bearer through curl's stdin config and replacing their removed
 runtime-copy default plus token-bearing argv without changing ordinary dev
-credentials. This capability is physically complete and frozen. The next
-required slice is a whitepaper route review, not another horizontal browser
-action.
+credentials. This capability is physically complete and frozen. The completed
+route review selected the disposable fixed-target Level 3 repair proof above,
+not another horizontal browser action.
 
-A blocking lifecycle correction after that physical gate is complete in source:
+A blocking lifecycle correction after that physical gate is now deployed:
 repeating `work_view.prepare` for the same still-valid session, display target,
 entry URL, active matched helper lease, Browser Runtime session, and non-empty
 tab set now returns `reused=true` without opening another page. Active URL is
 not compared, so operator navigation remains intact. First prepare and every
 stale or changed authority case keep the existing open/recovery behavior. The
-Phase 3 Core/Observer pair, state-settling, MVP readiness, body-config, and a
-non-activated repository system build pass; `rmpl42...` remains the deployed
-physical generation.
+Phase 3 Core/Observer pair, state-settling, MVP readiness, body-config, and the
+exact 32-file Session Manager closure pass. Physical generation `pfiwq5p3...`
+records `session_started` followed by `same_authority` for the same session,
+lease, Firefox PID 63947, and five tabs. A governed close restored the original
+four tabs. The same generation fixes every system-scope shared
+`StateDirectory` owner at `0750` and reapplies the narrow operator-token ACL on
+Core start; current/profile paths match and no reboot occurred.
 
 ## Completed Capability Evidence
 
