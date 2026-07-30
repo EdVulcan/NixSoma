@@ -6,8 +6,9 @@ The fixed hostd ownership and source repair lifecycle in this record are
 complete and physically proven in a disposable NixOS VM for
 `openclaw-system-heal.service`: controlled interruption, current
 observation/triage/promotion, explicit approval, one hostd restart, post-health
-receipt, and completed/interrupted no-replay reconciliation. The current
-selected continuation is the separate Phase D controlled-activation VM gate.
+receipt, and completed/interrupted no-replay reconciliation. The separate Phase
+D controlled-activation VM gate is also complete; the current continuation is
+its separately governed fixed rollback owner and disposable-VM proof.
 The historical `Next Slice` section below does not override the canonical route
 in `docs/README.md` and `docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md`.
 
@@ -322,7 +323,8 @@ when manager ownership is unknown.
   including arbitrary unit names, methods, arguments, or caller-supplied D-Bus
   paths.
 - Additional eBPF event kinds beyond the existing bounded process-exec slice,
-  and real Phase D generation activation or rollback.
+  physical-host Phase D activation, and any rollback outside its separately
+  governed fixed disposable-VM gate.
 
 ## Eighth Slice: Incident Repair Loop
 

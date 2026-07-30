@@ -70,6 +70,10 @@
         openclaw-system-heal-repair-loop-vm =
           pkgs.testers.runNixOSTest
             (import ./nix/tests/openclaw-system-heal-repair-loop.nix);
+
+        openclaw-declarative-evolution-activation-vm =
+          pkgs.testers.runNixOSTest
+            (import ./nix/tests/openclaw-declarative-evolution-activation-vm.nix);
       };
 
       packages.${system} = {

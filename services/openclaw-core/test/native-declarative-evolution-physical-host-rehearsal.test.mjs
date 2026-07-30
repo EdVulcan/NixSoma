@@ -6,6 +6,7 @@ import vm from "node:vm";
 import { observerClientDeclarativeEvolutionRenderersScript } from "../../../apps/observer-ui/src/client-script-renderers-declarative-evolution.mjs";
 import {
   HOSTD_ACTIVATION_OPERATION,
+  HOSTD_ACTIVATION_HELPER_RECEIPT_REGISTRY,
   HOSTD_ACTIVATION_RECEIPT_REGISTRY,
   HOSTD_ACTIVATION_TARGET_PATH,
   hashManagedConfigActivationReceipt,
@@ -23,6 +24,7 @@ const closureIntegrityReceiptHash = "d".repeat(64);
 const approvalRecordHash = "e".repeat(64);
 const preActivationHealthHash = "c".repeat(64);
 const postActivationHealthHash = "f".repeat(64);
+const previousGenerationPath = "/nix/store/old123-nixos-system-nixos-test";
 
 function createReceipt(taskId) {
   const receipt = {
@@ -40,6 +42,21 @@ function createReceipt(taskId) {
     activationDecisionTaskId: "task-decision-physical-rehearsal",
     activationTaskId: taskId,
     previousTargetHash: null,
+    previousGenerationPath,
+    activatedGenerationPath: closurePath,
+    activatedProfilePath: closurePath,
+    helperEvidence: {
+      registry: HOSTD_ACTIVATION_HELPER_RECEIPT_REGISTRY,
+      candidateHash,
+      evaluatedClosurePath: closurePath,
+      previousTargetHash: null,
+      generationBefore: previousGenerationPath,
+      generationAfter: closurePath,
+      profileAfter: closurePath,
+      targetHashAfter: candidateHash,
+      targetInstalled: true,
+      rollbackExecuted: false,
+    },
     command: {
       executable: "/run/current-system/sw/bin/nixos-rebuild",
       args: ["switch", "--flake", "/etc/nixos#openclaw-local-dev"],

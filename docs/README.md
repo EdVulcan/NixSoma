@@ -48,8 +48,9 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Disposable Level 3 repair loop | `checks.x86_64-linux.openclaw-system-heal-repair-loop-vm` stops `openclaw-system-heal.service` inside KVM, observes and triages the incident, promotes one approval-gated repair, executes one native hostd restart, verifies post-health, and reconciles terminal state | Passed with one completed reservation and one interrupted reservation both proving no replay; no provider egress or generation mutation |
+| Disposable Phase D activation | `checks.x86_64-linux.openclaw-declarative-evolution-activation-vm` builds one approved managed-config closure, invokes the fixed hostd activation once, switches the guest generation, and verifies health independently | Passed with candidate `aed7e917...`, preserved Core/hostd PIDs, approval replay rejection, zero failed units, no provider/browser activity, and `rollbackExecuted=false` |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
-| Privileged actions | Physical-host generation switch and governed provider egress are proven; fixed System Heal repair is additionally proven in a disposable VM | Hostd generation activation and rollback remain deferred to explicit disposable checks |
+| Privileged actions | Physical-host developer generation switch and governed provider egress are proven; fixed System Heal repair and fixed hostd generation activation are additionally proven in disposable VMs | Physical Phase D activation and every rollback actuator/execution remain deferred |
 | Operator credential reference | Core still receives the root-managed token through `LoadCredential`; only `edvulcan` receives read ACL on the exact token plus traverse-only ACL on its directory | Deployed in `pfiwq5p3...`; every system-scope owner fixes the shared state directory at `0750`, Core reapplies the ACL on start, the operator cannot list the directory or read the execution-grant private key, and no credential value enters environment, command line, store, or logs |
 | Developer deployment | Default-off immutable helper accepts one canonical, root-owned physical `nixos-system-nixos` closure through one explicit `edvulcan` sudoers rule and rejects container markers or changes to kernel/initrd/fstab/GDM/NetworkManager/SSH paths | The fixed noninteractive helper activated `pfiwq5p3...` after every marker and protected-path check passed; current/profile match and no reboot occurred |
 
@@ -164,25 +165,24 @@ desktop takeover, and generic process/window control remain future work.
 
 ## Selected Next Capability
 
-The next real capability is the smallest truthful Phase D mutation proof in a
-disposable NixOS VM:
+The controlled Phase D activation release gate is complete in a disposable
+NixOS VM. The next real capability is a separately governed fixed rollback
+owner and its own disposable-VM proof:
 
 ```text
-approved and hash-bound managed-config candidate
--> one real fixed-target hostd activation
--> immutable generation-switch receipt
--> independent post-activation host-health verification
--> healthy completion or bounded manual-rollback evidence
+reviewed activation receipt and exact previous generation
+-> explicit operator confirmation and step-bound approval
+-> one fixed hostd rollback
+-> immutable rollback receipt
+-> independent post-rollback host-health verification
 ```
 
-The stop condition is one real controlled activation whose target, staged
-candidate, evaluated closure, approval, receipt, and independent post-health
-all remain bound. A degraded post-health result may produce the existing
-`deferred_manual_operator` evidence, but actual rollback execution is a later
-separate capability because no rollback actuator exists. The physical host
-remains evidence-only. This slice adds no arbitrary NixOS path or command,
-automatic activation/rollback, provider call, browser action, new hostd target,
-or general root/systemd authority.
+The stop condition is one rollback to the exact `previousGenerationPath` bound
+by a verified activation receipt, with replay rejection and independent healthy
+post-state. The physical host remains evidence-only. This slice must not accept
+an arbitrary closure, path, command, or flake target; infer rollback from
+provider output; retry automatically; or widen hostd into general root/systemd
+authority.
 
 ## Active Route
 

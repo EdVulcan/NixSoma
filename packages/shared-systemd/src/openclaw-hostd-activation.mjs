@@ -10,6 +10,7 @@ export const HOSTD_ACTIVATION_CAPABILITY_ID = activation.capabilityId;
 export const HOSTD_ACTIVATION_PROTOCOL_VERSION = 1;
 export const HOSTD_ACTIVATION_RESPONSE_REGISTRY = "openclaw-hostd-managed-config-activation-response-v0";
 export const HOSTD_ACTIVATION_RECEIPT_REGISTRY = "openclaw-hostd-managed-config-activation-receipt-v0";
+export const HOSTD_ACTIVATION_HELPER_RECEIPT_REGISTRY = "nixsoma-managed-config-activation-helper-v0";
 export const HOSTD_ACTIVATION_REQUEST_MAX_BYTES = 8192;
 export const HOSTD_ACTIVATION_MAX_AGE_MS = 5 * 60 * 1000;
 
@@ -62,11 +63,33 @@ export function hashManagedConfigActivationReceipt(receipt) {
 
 export function validateManagedConfigActivationReceipt(receipt) {
   if (!receipt || typeof receipt !== "object" || receipt.registry !== HOSTD_ACTIVATION_RECEIPT_REGISTRY) return false;
-  return typeof receipt.receiptHash === "string"
+  const baseValid = typeof receipt.receiptHash === "string"
     && receipt.receiptHash === hashManagedConfigActivationReceipt(receipt)
     && receipt.operation === HOSTD_ACTIVATION_OPERATION
     && receipt.targetPath === HOSTD_ACTIVATION_TARGET_PATH
     && isSha256(receipt.candidateHash)
     && isNixStorePath(receipt.evaluatedClosurePath)
     && receipt.rollbackExecuted === false;
+  if (!baseValid) return false;
+  if (receipt.status !== "passed") {
+    return receipt.generationSwitched === false;
+  }
+  const helper = receipt.helperEvidence;
+  return receipt.activationExecuted === true
+    && receipt.generationSwitched === true
+    && helper?.registry === HOSTD_ACTIVATION_HELPER_RECEIPT_REGISTRY
+    && helper.candidateHash === receipt.candidateHash
+    && helper.evaluatedClosurePath === receipt.evaluatedClosurePath
+    && (helper.previousTargetHash === null || isSha256(helper.previousTargetHash))
+    && helper.previousTargetHash === receipt.previousTargetHash
+    && isNixStorePath(helper.generationBefore)
+    && helper.generationBefore !== receipt.evaluatedClosurePath
+    && helper.generationAfter === receipt.evaluatedClosurePath
+    && helper.profileAfter === receipt.evaluatedClosurePath
+    && helper.targetHashAfter === receipt.candidateHash
+    && helper.targetInstalled === true
+    && helper.rollbackExecuted === false
+    && receipt.previousGenerationPath === helper.generationBefore
+    && receipt.activatedGenerationPath === helper.generationAfter
+    && receipt.activatedProfilePath === helper.profileAfter;
 }

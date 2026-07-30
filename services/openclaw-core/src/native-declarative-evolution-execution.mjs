@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { validateNativeDeclarativeEvolutionNixFile } from "./native-declarative-evolution-builders.mjs";
@@ -44,14 +44,16 @@ function buildNixOsExpression({
   body,
 }) {
   const nixpkgsExpression = nixpkgsPath
-    ? `builtins.getFlake ${JSON.stringify(path.resolve(nixpkgsPath))}`
-    : "flake.inputs.nixpkgs";
+    ? nixPathLiteral(nixpkgsPath)
+    : `(builtins.getFlake ${JSON.stringify(flakePath)}).inputs.nixpkgs`;
+  const nixosSystemExpression = nixpkgsPath
+    ? `import (nixpkgs + "/nixos/lib/eval-config.nix")`
+    : "nixpkgs.lib.nixosSystem";
   return [
-    `let flake = builtins.getFlake ${JSON.stringify(flakePath)};`,
-    `nixpkgs = ${nixpkgsExpression};`,
+    `let nixpkgs = ${nixpkgsExpression};`,
     `candidate = ${nixPathLiteral(stagedPath)};`,
     `base = ${nixPathLiteral(baseModulePath)};`,
-    `system = nixpkgs.lib.nixosSystem { system = ${JSON.stringify(system)}; modules = [ base candidate { fileSystems."/" = { device = "none"; fsType = "tmpfs"; }; boot.loader.grub.devices = [ "nodev" ]; } ]; };`,
+    `system = ${nixosSystemExpression} { system = ${JSON.stringify(system)}; modules = [ base candidate ({ lib, ... }: { fileSystems."/" = { device = "none"; fsType = "tmpfs"; }; boot.loader.grub.devices = lib.mkForce [ "nodev" ]; }) ]; };`,
     `in ${body}`,
   ].join(" ");
 }
@@ -161,6 +163,7 @@ export function createNativeDeclarativeEvolutionExecution({
   timeoutMs = Number.parseInt(process.env.OPENCLAW_NIXOS_BUILD_TIMEOUT_MS ?? `${DEFAULT_TIMEOUT_MS}`, 10),
   validateCandidateFile = validateNativeDeclarativeEvolutionNixFile,
   runNixCommand = (args, options) => defaultRunNixCommand(nixCommand, args, options),
+  chmodImpl = chmod,
   mkdirImpl = mkdir,
   readFileImpl = readFile,
   writeFileImpl = writeFile,
@@ -191,6 +194,7 @@ export function createNativeDeclarativeEvolutionExecution({
     }
 
     await mkdirImpl(resolvedStagingDir, { recursive: true, mode: 0o750 });
+    await chmodImpl(resolvedStagingDir, 0o750);
     const candidatePath = stagedCandidatePath(expectedHash);
     try {
       await writeFileImpl(candidatePath, candidateText, {
@@ -207,6 +211,7 @@ export function createNativeDeclarativeEvolutionExecution({
         throw new Error("Existing declarative evolution staging file failed hash verification.");
       }
     }
+    await chmodImpl(candidatePath, 0o640);
 
     return {
       status: "staged",
@@ -238,7 +243,7 @@ export function createNativeDeclarativeEvolutionExecution({
       };
     }
 
-    if (!resolvedFlakePath || !resolvedBaseModulePath) {
+    if ((!resolvedFlakePath && !resolvedNixpkgsPath) || !resolvedBaseModulePath) {
       return {
         status: "blocked",
         reason: "nixos_flake_unconfigured",

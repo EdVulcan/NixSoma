@@ -253,7 +253,7 @@ let
       OPENCLAW_MANAGED_CONFIG_STAGING_DIR = "${cfg.stateDir}/managed-config-staging";
       OPENCLAW_NIXOS_FLAKE = cfg.repoRoot;
       OPENCLAW_NIXOS_FLAKE_ATTRIBUTE = "openclaw-local-dev";
-      OPENCLAW_HOSTD_ACTIVATION_ENABLED = "false";
+      OPENCLAW_HOSTD_ACTIVATION_ENABLED = if cfg.managedConfigActivation.enable then "true" else "false";
       OPENCLAW_BODY_RUNTIME_SOURCE = if cfg.runtimePackages.hostd != null then "nix-store" else "mutable-repo";
     };
     serviceConfig = {
@@ -265,9 +265,9 @@ let
       RuntimeDirectory = "openclaw";
       RuntimeDirectoryMode = "0750";
       UMask = "0007";
-      NoNewPrivileges = true;
+      NoNewPrivileges = !cfg.managedConfigActivation.enable;
       PrivateTmp = true;
-      ProtectSystem = "strict";
+      ProtectSystem = if cfg.managedConfigActivation.enable then true else "strict";
       ProtectHome = true;
       RestrictAddressFamilies = [ "AF_UNIX" ];
     } // optionalAttrs (cfg.user != null) {
@@ -499,7 +499,10 @@ let
   delegationUser = cfg.hostdUser;
 in
 {
-  imports = [ ./openclaw-ai-graphical-session.nix ];
+  imports = [
+    ./openclaw-ai-graphical-session.nix
+    ./openclaw-managed-config-activation.nix
+  ];
 
   options.services.openclaw = {
     enable = mkEnableOption "OpenClaw NixOS body services";

@@ -50,20 +50,26 @@ post-health, and no replay for either completed or interrupted reservations.
 It found and fixed stopped-target `MainPID=0` handling. Physical generation
 `pfiwq5p3...` remains unchanged and does not contain that hostd correction.
 
-The selected next real capability is one disposable-VM proof of the existing
-Phase D controlled activation path through fixed hostd ownership and an
-independent post-activation health result. Actual rollback execution remains a
-separate later capability because current runtime authority ends at bounded
-`deferred_manual_operator` evidence. The physical host must remain
-evidence-only; arbitrary paths/commands, automatic activation or rollback,
-provider wrappers, and additional browser actions remain outside this slice.
+The Phase D controlled activation path now passes its disposable-VM release
+gate. `openclaw-declarative-evolution-activation-vm` proves one approved,
+hash-bound managed-config closure, a real fixed hostd generation switch,
+independent healthy post-state, preserved Core/hostd PIDs, rejected approval
+replay, zero failed units, and no provider/browser/rollback activity.
+
+The selected next real capability is a separately governed fixed rollback owner
+and disposable-VM proof. It may use only the exact previous generation from a
+verified activation receipt, after explicit confirmation and step-bound
+approval, and must return an immutable receipt plus independent post-rollback
+health. The physical host remains evidence-only; arbitrary paths/commands,
+provider-driven or automatic rollback, retries, and wider hostd authority are
+outside this slice.
 
 ### Historical Route Evidence
 
 The remainder of this section is chronological evidence for completed
 capability families. References to a selected continuation, active generation,
 or next slice record the checkpoint where they appear; they do not override the
-current baseline and selected Phase D VM proof above.
+current baseline and selected fixed rollback VM proof above.
 
 Completed capability families must not be reopened for another wrapper,
 readiness marker, readback mirror, or horizontal variant. The completed Level 3

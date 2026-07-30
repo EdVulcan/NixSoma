@@ -8,6 +8,7 @@ import path from "node:path";
 import {
   HOSTD_ACTIVATION_CAPABILITY_ID,
   HOSTD_ACTIVATION_CAPABILITY_REGISTRY,
+  HOSTD_ACTIVATION_HELPER_RECEIPT_REGISTRY,
   HOSTD_ACTIVATION_OPERATION,
   HOSTD_ACTIVATION_RESPONSE_REGISTRY,
   HOSTD_ACTIVATION_TARGET_PATH,
@@ -28,6 +29,7 @@ const FIXED_NOW = Date.now();
 const candidateText = "{ services.openclaw.enable = true; }\n";
 const candidateHash = createHash("sha256").update(candidateText, "utf8").digest("hex");
 const closurePath = "/nix/store/abc123-openclaw-system";
+const previousGenerationPath = "/nix/store/old123-nixos-system-nixos-test";
 
 function request(overrides = {}) {
   return {
@@ -48,33 +50,42 @@ function request(overrides = {}) {
 
 function createFakeRunner({ enabled = true } = {}) {
   const stagingDirectory = "/var/lib/openclaw/managed-config-staging";
-  const writes = [];
-  const renames = [];
   const commands = [];
   const runner = createManagedConfigActivationRunner({
     enabled,
     stagingDirectory,
+    activationHelper: "/nix/store/helper/bin/nixsoma-managed-config-activation",
+    sudoExecutable: "/run/wrappers/bin/sudo",
     now: () => FIXED_NOW,
     accessImpl: async () => {},
     readFileImpl: async (filePath) => {
       if (filePath.endsWith(`openclaw-managed-${candidateHash}.nix`)) return candidateText;
       throw Object.assign(new Error("not found"), { code: "ENOENT" });
     },
-    lstatImpl: async () => {
-      throw Object.assign(new Error("not found"), { code: "ENOENT" });
-    },
-    writeFileImpl: async (filePath, text) => writes.push({ filePath, text }),
-    renameImpl: async (from, to) => renames.push({ from, to }),
     execFileImpl: async (executable, args) => {
       commands.push({ executable, args });
-      return { stdout: "activation ok", stderr: "" };
+      return {
+        stdout: JSON.stringify({
+          registry: HOSTD_ACTIVATION_HELPER_RECEIPT_REGISTRY,
+          candidateHash,
+          evaluatedClosurePath: closurePath,
+          previousTargetHash: null,
+          generationBefore: previousGenerationPath,
+          generationAfter: closurePath,
+          profileAfter: closurePath,
+          targetHashAfter: candidateHash,
+          targetInstalled: true,
+          rollbackExecuted: false,
+        }),
+        stderr: "",
+      };
     },
   });
-  return { runner, writes, renames, commands };
+  return { runner, commands };
 }
 
 test("managed config activation runner binds staging bytes and returns an immutable receipt", async () => {
-  const { runner, writes, renames, commands } = createFakeRunner();
+  const { runner, commands } = createFakeRunner();
   const result = await runner(request({
     stagingPath: `/var/lib/openclaw/managed-config-staging/openclaw-managed-${candidateHash}.nix`,
   }));
@@ -85,13 +96,20 @@ test("managed config activation runner binds staging bytes and returns an immuta
   assert.equal(result.rollbackExecuted, false);
   assert.equal(result.candidateHash, candidateHash);
   assert.equal(result.evaluatedClosurePath, closurePath);
+  assert.equal(result.previousGenerationPath, previousGenerationPath);
+  assert.equal(result.activatedGenerationPath, closurePath);
+  assert.equal(result.activatedProfilePath, closurePath);
+  assert.equal(result.helperEvidence.targetHashAfter, candidateHash);
   assert.equal(validateManagedConfigActivationReceipt(result), true);
   assert.equal(JSON.stringify(result).includes(candidateText), false);
-  assert.equal(writes.length, 1);
-  assert.equal(renames[0].to, HOSTD_ACTIVATION_TARGET_PATH);
   assert.deepEqual(commands, [{
-    executable: "/run/current-system/sw/bin/nixos-rebuild",
-    args: ["switch", "--flake", "/etc/nixos#openclaw-local-dev"],
+    executable: "/run/wrappers/bin/sudo",
+    args: [
+      "--non-interactive",
+      "/nix/store/helper/bin/nixsoma-managed-config-activation",
+      candidateHash,
+      closurePath,
+    ],
   }]);
 });
 
@@ -107,11 +125,11 @@ test("managed config activation is fail-closed when disabled or candidate bytes 
   const mismatch = createManagedConfigActivationRunner({
     enabled: true,
     stagingDirectory: "/var/lib/openclaw/managed-config-staging",
+    activationHelper: "/nix/store/helper/bin/nixsoma-managed-config-activation",
+    sudoExecutable: "/run/wrappers/bin/sudo",
     now: () => FIXED_NOW,
     accessImpl: async () => {},
     readFileImpl: async (filePath) => filePath.endsWith(".nix") ? "tampered" : "",
-    lstatImpl: async () => { throw Object.assign(new Error("not found"), { code: "ENOENT" }); },
-    writeFileImpl: async () => { throw new Error("must not write"); },
     execFileImpl: async () => { throw new Error("must not execute"); },
   });
   const result = await mismatch(request({

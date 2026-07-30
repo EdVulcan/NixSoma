@@ -1,12 +1,13 @@
 import { createHash, randomUUID } from "node:crypto";
 import { execFile as nodeExecFile } from "node:child_process";
-import { access, lstat, readFile, rename, writeFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import { promisify } from "node:util";
 import path from "node:path";
 
 import {
   HOSTD_ACTIVATION_CAPABILITY_REGISTRY,
   HOSTD_ACTIVATION_CAPABILITY_ID,
+  HOSTD_ACTIVATION_HELPER_RECEIPT_REGISTRY,
   HOSTD_ACTIVATION_MAX_AGE_MS,
   HOSTD_ACTIVATION_OPERATION,
   HOSTD_ACTIVATION_RECEIPT_REGISTRY,
@@ -19,8 +20,6 @@ import {
 
 const execFile = promisify(nodeExecFile);
 const DEFAULT_STAGING_DIRECTORY = "/var/lib/openclaw/managed-config-staging";
-const DEFAULT_NIXOS_REBUILD = "/run/current-system/sw/bin/nixos-rebuild";
-const DEFAULT_FLAKE_ATTRIBUTE = "openclaw-local-dev";
 const MAX_OUTPUT_CHARS = 4096;
 
 function sha256(text) {
@@ -47,6 +46,28 @@ function activationError(message, code = "activation_failed") {
   return error;
 }
 
+function parseHelperEvidence(stdout) {
+  try {
+    return JSON.parse(String(stdout ?? "").trim());
+  } catch {
+    throw activationError("Managed config activation helper returned invalid evidence.", "activation_helper_evidence_invalid");
+  }
+}
+
+function validateHelperEvidence(evidence, request) {
+  return evidence?.registry === HOSTD_ACTIVATION_HELPER_RECEIPT_REGISTRY
+    && evidence.candidateHash === request.candidateHash
+    && evidence.evaluatedClosurePath === request.evaluatedClosurePath
+    && (evidence.previousTargetHash === null || isSha256(evidence.previousTargetHash))
+    && isNixStorePath(evidence.generationBefore)
+    && evidence.generationBefore !== request.evaluatedClosurePath
+    && evidence.generationAfter === request.evaluatedClosurePath
+    && evidence.profileAfter === request.evaluatedClosurePath
+    && evidence.targetHashAfter === request.candidateHash
+    && evidence.targetInstalled === true
+    && evidence.rollbackExecuted === false;
+}
+
 function buildReceipt({
   request,
   status,
@@ -54,6 +75,7 @@ function buildReceipt({
   candidateBytes = null,
   previousTargetHash = null,
   command = null,
+  helperEvidence = null,
   result = null,
   startedAt,
   completedAt,
@@ -74,6 +96,10 @@ function buildReceipt({
     activationTaskId: request.activationTaskId ?? null,
     activationDecisionTaskId: request.activationDecisionTaskId ?? null,
     previousTargetHash,
+    previousGenerationPath: helperEvidence?.generationBefore ?? null,
+    activatedGenerationPath: helperEvidence?.generationAfter ?? null,
+    activatedProfilePath: helperEvidence?.profileAfter ?? null,
+    helperEvidence,
     command,
     status,
     activationExecuted,
@@ -93,15 +119,11 @@ export function createManagedConfigActivationRunner({
   enabled = process.env.OPENCLAW_HOSTD_ACTIVATION_ENABLED === "true",
   stagingDirectory = process.env.OPENCLAW_MANAGED_CONFIG_STAGING_DIR ?? DEFAULT_STAGING_DIRECTORY,
   targetPath = HOSTD_ACTIVATION_TARGET_PATH,
-  nixosRebuild = process.env.OPENCLAW_NIXOS_REBUILD ?? DEFAULT_NIXOS_REBUILD,
-  flakePath = process.env.OPENCLAW_NIXOS_FLAKE ?? "/etc/nixos",
-  flakeAttribute = process.env.OPENCLAW_NIXOS_FLAKE_ATTRIBUTE ?? DEFAULT_FLAKE_ATTRIBUTE,
+  activationHelper = process.env.OPENCLAW_HOSTD_ACTIVATION_HELPER ?? null,
+  sudoExecutable = process.env.OPENCLAW_HOSTD_ACTIVATION_SUDO ?? null,
   now = () => Date.now(),
   readFileImpl = readFile,
-  lstatImpl = lstat,
   accessImpl = access,
-  renameImpl = rename,
-  writeFileImpl = writeFile,
   execFileImpl = execFile,
 } = {}) {
   const resolvedStagingDirectory = path.resolve(stagingDirectory);
@@ -111,6 +133,7 @@ export function createManagedConfigActivationRunner({
     let candidateBytes = null;
     let previousTargetHash = null;
     let command = null;
+    let helperEvidence = null;
     let activationExecuted = false;
     try {
       if (enabled !== true) throw activationError("Managed config activation is disabled on this host.", "activation_disabled");
@@ -119,6 +142,10 @@ export function createManagedConfigActivationRunner({
       }
       if (!isSha256(request.candidateHash) || !isNixStorePath(request.evaluatedClosurePath)) {
         throw activationError("Managed config activation requires a bound candidate hash and Nix store closure.", "binding_rejected");
+      }
+      if (typeof activationHelper !== "string" || !path.isAbsolute(activationHelper)
+        || typeof sudoExecutable !== "string" || !path.isAbsolute(sudoExecutable)) {
+        throw activationError("Managed config activation requires one fixed privileged helper.", "activation_helper_unconfigured");
       }
       const remainingLifetime = requestAgeMs(request.expiresAt, now());
       if (remainingLifetime === null || remainingLifetime < 0 || remainingLifetime > HOSTD_ACTIVATION_MAX_AGE_MS) {
@@ -135,28 +162,22 @@ export function createManagedConfigActivationRunner({
         throw activationError("Managed config activation candidate hash does not match staging bytes.", "candidate_hash_mismatch");
       }
 
-      try {
-        const previousStat = await lstatImpl(targetPath);
-        if (previousStat.isSymbolicLink()) throw activationError("Managed config activation refuses a symlink target.", "target_symlink_rejected");
-        previousTargetHash = sha256(await readFileImpl(targetPath, { encoding: "utf8" }));
-      } catch (error) {
-        if (error?.code !== "ENOENT") throw error;
-      }
-
-      const temporaryTarget = `${targetPath}.openclaw-${request.requestId}.tmp`;
-      await writeFileImpl(temporaryTarget, candidateText, { encoding: "utf8", mode: 0o640, flag: "wx" });
-      await renameImpl(temporaryTarget, targetPath);
       command = {
-        executable: nixosRebuild,
-        args: ["switch", "--flake", `${flakePath}#${flakeAttribute}`],
+        executable: sudoExecutable,
+        args: ["--non-interactive", activationHelper, request.candidateHash, request.evaluatedClosurePath],
       };
       activationExecuted = true;
-      const result = await execFileImpl(nixosRebuild, command.args, {
-        cwd: "/etc/nixos",
+      const result = await execFileImpl(command.executable, command.args, {
+        cwd: resolvedStagingDirectory,
         timeout: 120000,
         maxBuffer: 1024 * 1024,
         windowsHide: true,
       });
+      helperEvidence = parseHelperEvidence(result.stdout);
+      if (!validateHelperEvidence(helperEvidence, request)) {
+        throw activationError("Managed config activation helper evidence did not match the bound candidate and generation.", "activation_helper_evidence_mismatch");
+      }
+      previousTargetHash = helperEvidence.previousTargetHash;
       const completedAt = new Date(now()).toISOString();
       return buildReceipt({
         request,
@@ -165,7 +186,8 @@ export function createManagedConfigActivationRunner({
         candidateBytes,
         previousTargetHash,
         command,
-        result: { exitCode: 0, stdout: result.stdout, stderr: result.stderr },
+        helperEvidence,
+        result: { exitCode: 0, stdout: "", stderr: "" },
         startedAt,
         completedAt,
       });
@@ -178,6 +200,7 @@ export function createManagedConfigActivationRunner({
         candidateBytes,
         previousTargetHash,
         command,
+        helperEvidence,
         result: error?.stdout || error?.stderr ? { exitCode: error.code ?? 1, stdout: error.stdout, stderr: error.stderr } : null,
         startedAt,
         completedAt,

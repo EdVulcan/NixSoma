@@ -87,6 +87,16 @@ test("declarative evolution execution stages only the approved candidate hash an
     assert.equal(calls.filter((call) => call.name === "eval").length, 1);
     assert.equal(calls.filter((call) => call.name === "build").length, 1);
     assert.equal(calls.every((call) => JSON.stringify(call).includes(result.staging.path)), true);
+    const evaluationExpression = calls.find((call) => call.name === "eval").args.at(-1);
+    assert.match(
+      evaluationExpression,
+      /import \(nixpkgs \+ "\/nixos\/lib\/eval-config\.nix"\)/u,
+    );
+    assert.match(evaluationExpression, /boot\.loader\.grub\.devices = lib\.mkForce/u);
+    assert.doesNotMatch(
+      evaluationExpression,
+      /builtins\.getFlake "\/nix\/store\/current-nixpkgs"/u,
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -100,6 +110,31 @@ test("declarative evolution execution rejects a candidate body whose hash was ch
       () => execution.stageCandidate({ candidateText: "changed", candidateHash: "a".repeat(64) }),
       /hash does not match candidate text/,
     );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("declarative evolution execution restores the reviewed staging modes after creation", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "openclaw-declarative-execution-mode-"));
+  const candidateText = "{ ... }: { services.openclaw.enable = true; }\n";
+  const candidateHash = hash(candidateText);
+  const chmodCalls = [];
+  try {
+    const execution = createNativeDeclarativeEvolutionExecution({
+      stagingDir: root,
+      chmodImpl: async (candidatePath, mode) => chmodCalls.push({ candidatePath, mode }),
+      writeFileImpl: async (_candidatePath, _candidateText, options) => {
+        assert.equal(options.mode, 0o640);
+        assert.equal(options.flag, "wx");
+      },
+    });
+
+    const staged = await execution.stageCandidate({ candidateText, candidateHash });
+    assert.deepEqual(chmodCalls, [
+      { candidatePath: staged.directory, mode: 0o750 },
+      { candidatePath: staged.path, mode: 0o640 },
+    ]);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

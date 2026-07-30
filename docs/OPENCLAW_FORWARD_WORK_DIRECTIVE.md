@@ -157,19 +157,18 @@ one-off call surface.
 
 ## Selected Next Real Capability
 
-Select one disposable-NixOS-VM proof of the existing Phase D controlled
-activation path. Reuse the approved candidate, staged-file hash, evaluated
-closure, host-health oracle, fixed hostd activation protocol, and immutable
-receipt. Execute one real activation inside the guest and require an independent
-post-activation health result before reporting completion.
+The disposable-NixOS-VM controlled activation gate is complete. Select one
+separately governed fixed rollback owner and prove it in a disposable NixOS VM.
+It must accept only the exact previous generation bound by a verified immutable
+activation receipt, require explicit operator confirmation plus the existing
+step-bound approval, execute once through fixed hostd ownership, reject replay,
+and bind an independent post-rollback health result.
 
-Do not run this proof on the current physical host. Keep the target fixed to
-`/etc/nixos/openclaw-managed.nix`, activation opt-in, approval-bound, and
-single-use. A degraded post-health result may emit the existing bounded
-`deferred_manual_operator` rollback evidence, but rollback execution is not
-part of this slice because the runtime has no rollback actuator. Do not add an
-arbitrary path or command, automatic activation/rollback, provider schema,
-browser action, new hostd target, or general root/systemd authority.
+Do not run this proof on the current physical host. Do not accept an arbitrary
+closure, path, command, or flake target; infer rollback from provider output;
+retry automatically; add browser behavior; or widen hostd into general
+root/systemd authority. The existing `deferred_manual_operator` evidence remains
+truthful until this separate actuator and release gate exist.
 
 ## Governing Vision
 
@@ -1476,7 +1475,7 @@ This closes the Level 1 navigation boundary and stops here; it does not add
 another LSP request, generic tool dispatcher, task, approval, mutation,
 provider call, or network path.
 
-## Completed Phase D Candidate, Staging, Health-Gate, Activation-Decision, And Controlled Activation Contract
+## Completed Phase D Candidate, Staging, Health-Gate, Activation-Decision, And Disposable Controlled Activation
 
 The first real Phase D declarative-evolution capability is complete. Core
 accepts only structured allowlisted changes, generates a transient
@@ -1566,8 +1565,8 @@ Hostd exposes only `hostd.activate_managed_config`, fixed to
 `OPENCLAW_HOSTD_ACTIVATION_ENABLED=false` remains the default. The Core and
 Observer Phase D pair proves the zero-confirmation path creates no activation
 task or approval and performs no hostd call, managed-config write, generation
-switch, or rollback. This is a controlled activation contract, not evidence
-that a host generation has already been switched.
+switch, or rollback. The daily Core/Observer pair is a controlled activation
+contract, not evidence that a host generation has already been switched.
 
 The closure-integrity receipt contract and fail-closed daily lane are now
 implemented and positively proven: when a real output exists, every health-gate
@@ -1585,8 +1584,9 @@ avoids rebuilding the pinned `26.11` flake closure when the deployed host is
 real closure receipt, healthy-host review, approved future activation decision,
 and Core/Observer checks now pass. The pinned flake remains the default outside
 that host optimization and its cold materialization remains a long-running
-resource check. No lane writes `/etc/nixos`, switches a generation, activates a
-system, or rolls back. The local manual rollback evidence contract is complete;
+resource check. No daily or physical-host-safe lane writes `/etc/nixos`,
+switches a generation, activates a system, or rolls back. The local manual
+rollback evidence contract is complete;
 the physical-host-safe activation/health-failure rehearsal now dispatches
 through the production executor with injected receipt/oracle inputs and renders
 the failed task through the existing Observer readback. It does not connect to
@@ -1594,8 +1594,22 @@ real hostd, write `/etc/nixos`, run `nixos-rebuild`, switch a generation, or
 execute rollback. Phase D local evidence is complete; do not add another
 activation readiness/evidence wrapper. The next separately justified Level 3
 operator gap was bounded journal evidence, which is now closed below. Treat any
-disposable-VM mutation test as a future release gate rather than a current
-workspace assumption.
+disposable-VM mutation test as a release gate rather than a current workspace
+assumption.
+
+That release gate now passes as
+`checks.x86_64-linux.openclaw-declarative-evolution-activation-vm`. In a
+disposable KVM guest, candidate `aed7e917...` is rebuilt and bound to its staged
+bytes and evaluated closure, fixed hostd installs
+`/etc/nixos/openclaw-managed.nix`, and the real
+`switch-to-configuration switch` moves both `/run/current-system` and the
+system profile to that closure. `observer-ui.service` becomes active, the
+independent post-activation oracle reports `healthy`, Core and hostd PIDs remain
+stable, approval replay is rejected, and failed units remain zero. The result
+registry is `nixsoma-declarative-evolution-activation-vm-v0`; provider egress,
+browser action, physical-host mutation, and rollback execution are all false.
+The next new behavior is the separately governed fixed rollback owner selected
+above, not another activation wrapper.
 
 ## Completed Level 3 Bounded Journal Evidence
 

@@ -1,18 +1,19 @@
 # Phase D: Declarative Evolution Candidate
 
-The source contract and physical-host-safe rehearsal in this record are
-complete. The prerequisite fixed-target Level 3 repair proof now passes in a
-disposable KVM guest. The selected continuation is a real controlled activation
-and independent post-health proof in that disposable environment. Actual
-rollback execution remains a separate later capability because current runtime
-authority ends at manual rollback evidence.
+The source contract, physical-host-safe rehearsal, and real controlled
+activation release gate in this record are complete. The activation proof runs
+only in a disposable KVM guest; the physical host remains unchanged. The
+selected continuation is a separately governed fixed rollback owner and its own
+disposable-VM proof.
 
 ## Status
 
-Complete on 2026-07-18 as the first bounded Phase D capability, its
+Complete through the controlled activation VM gate on 2026-07-30. This includes
+the first bounded Phase D capability, its
 approval-bound staging/build loop, read-only health-gate assessment, explicit
 host-health-bound activation decision boundary, and controlled hostd activation
-contract. Physical generation activation remains disabled by default.
+contract, plus one real guest generation switch with independent post-health.
+Physical generation activation remains disabled by default.
 
 ## Delivered Capability
 
@@ -185,6 +186,9 @@ services/openclaw-hostd/src/hostd-activation-protocol.mjs
 services/openclaw-hostd/src/managed-config-activation.mjs
 services/openclaw-hostd/test/hostd-activation.test.mjs
 packages/shared-systemd/src/openclaw-hostd-activation.mjs
+nix/modules/openclaw-managed-config-activation.nix
+nix/tests/openclaw-declarative-evolution-activation-base.nix
+nix/tests/openclaw-declarative-evolution-activation-vm.nix
 ```
 
 The focused builder, closure-query/receipt, execution, task-builder, route,
@@ -199,24 +203,29 @@ capability registry, blocked confirmation and missing-task fail-closed paths,
 invocation history, and no candidate-text exposure. The pinned `26.11` flake
 remains the default outside this host optimization; its cold materialization
 can exceed the bounded check timeout. No managed config write, generation
-switch, activation, or rollback is performed.
+switch, activation, or rollback is performed by the daily or physical-host-safe
+lanes.
+
+The release check
+`checks.x86_64-linux.openclaw-declarative-evolution-activation-vm` passes in
+KVM. It stages candidate `aed7e917...`, resolves the exact evaluated closure,
+executes the fixed hostd helper once, and moves the guest's current generation
+and system profile to that closure. `observer-ui.service` becomes active and
+the independent post-activation oracle returns `healthy`; Core and hostd PIDs
+are preserved, approval replay is rejected, and failed units remain zero. The
+result registry is `nixsoma-declarative-evolution-activation-vm-v0` with no
+provider egress, browser action, physical-host mutation, or rollback execution.
 
 ## Next Real Slice
 
-Use a disposable NixOS VM to exercise the existing controlled activation path
-without widening it. The VM must create or use one approved, hash-bound managed
-config candidate, revalidate the staged file and evaluated closure, invoke the
-fixed `openclaw-hostd` activation protocol once, validate the immutable receipt,
-and obtain an independent post-activation result from the existing host-health
-oracle. The proof must distinguish source, guest generation, and physical-host
-state and retain zero provider/browser activity.
+Add one separately governed fixed rollback owner and prove it in a disposable
+NixOS VM. It may accept only a verified activation receipt and the exact
+`previousGenerationPath` already bound by that receipt. Execution requires
+explicit operator confirmation, the existing step-bound approval, current
+receipt/task revalidation, one fixed hostd call, an immutable rollback receipt,
+replay rejection, and independent post-rollback health.
 
-The stop condition is one real healthy activation with all bindings preserved,
-plus fail-closed evidence for a degraded post-health result if that branch is
-exercised. Degradation may create only the existing
-`deferred_manual_operator` evidence. It must not call hostd again, create a
-rollback command, or claim rollback execution. A separately governed rollback
-actuator and its own disposable-VM proof are the next gate after controlled
-activation, not part of this slice. Do not add another Phase D readiness wrapper
-or arbitrary path, command, flake target, automatic activation, or automatic
-rollback authority.
+Do not run the proof on the physical host or widen it into an arbitrary closure,
+path, command, flake target, provider-driven decision, automatic retry, or
+general root/systemd API. The existing `deferred_manual_operator` evidence must
+remain the only runtime claim until this distinct actuator and KVM gate exist.
