@@ -19,11 +19,12 @@ async function readState(transport, unit = HOSTD_TARGET_UNIT) {
     transport.getAll(path, "org.freedesktop.systemd1.Unit"),
     transport.getAll(path, "org.freedesktop.systemd1.Service"),
   ]);
+  const mainPid = Number(service.MainPID);
   return {
     loadState: unitProperties.LoadState ?? "unknown",
     activeState: unitProperties.ActiveState ?? "unknown",
     subState: unitProperties.SubState ?? "unknown",
-    mainPid: Number(service.MainPID) || null,
+    mainPid: Number.isInteger(mainPid) && mainPid >= 0 ? mainPid : null,
   };
 }
 

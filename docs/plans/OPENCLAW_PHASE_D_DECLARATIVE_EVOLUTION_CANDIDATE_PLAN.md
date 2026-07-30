@@ -1,9 +1,11 @@
 # Phase D: Declarative Evolution Candidate
 
 The source contract and physical-host-safe rehearsal in this record are
-complete. Real generation activation and rollback remain a separate later
-release gate after the selected fixed-target Level 3 repair proof; the
-historical `Next Real Slice` section below is not current route authority.
+complete. The prerequisite fixed-target Level 3 repair proof now passes in a
+disposable KVM guest. The selected continuation is a real controlled activation
+and independent post-health proof in that disposable environment. Actual
+rollback execution remains a separate later capability because current runtime
+authority ends at manual rollback evidence.
 
 ## Status
 
@@ -201,19 +203,20 @@ switch, activation, or rollback is performed.
 
 ## Next Real Slice
 
-The closure-integrity receipt contract, positive real-output materialization
-proof, and fail-closed daily lane are complete. The Core-owned
-`openclaw-native-declarative-evolution-host-health-oracle-v0` now independently
-evaluates fresh bounded system-sense facts and emits the authority split used
-by the activation decision and post-action readback: health is owned by the
-oracle, activation by fixed `openclaw-hostd`, and rollback by a manual operator.
-This is an independent decision module, not a separate privileged daemon. The
-Core manual rollback evidence contract and its physical-host-safe
-activation/health-failure rehearsal are now complete. The rehearsal dispatches
-through the production task executor with an injected validated hostd receipt
-and degraded oracle result, then renders the failed task through the existing
-Observer execution readback. It does not connect to the real hostd socket,
-write `/etc/nixos`, run `nixos-rebuild`, switch a generation, or execute
-rollback. A disposable VM may be a later release gate if one is provisioned;
-it is not a current workspace precondition. Do not add another Phase D
-readiness/evidence wrapper; select the next concrete user-space capability.
+Use a disposable NixOS VM to exercise the existing controlled activation path
+without widening it. The VM must create or use one approved, hash-bound managed
+config candidate, revalidate the staged file and evaluated closure, invoke the
+fixed `openclaw-hostd` activation protocol once, validate the immutable receipt,
+and obtain an independent post-activation result from the existing host-health
+oracle. The proof must distinguish source, guest generation, and physical-host
+state and retain zero provider/browser activity.
+
+The stop condition is one real healthy activation with all bindings preserved,
+plus fail-closed evidence for a degraded post-health result if that branch is
+exercised. Degradation may create only the existing
+`deferred_manual_operator` evidence. It must not call hostd again, create a
+rollback command, or claim rollback execution. A separately governed rollback
+actuator and its own disposable-VM proof are the next gate after controlled
+activation, not part of this slice. Do not add another Phase D readiness wrapper
+or arbitrary path, command, flake target, automatic activation, or automatic
+rollback authority.

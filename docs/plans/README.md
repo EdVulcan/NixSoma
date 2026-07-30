@@ -42,21 +42,28 @@ The only current deployment baseline is physical generation
 Generation-specific `active` wording later in this section records the state at
 each historical checkpoint and does not override this baseline.
 
-The selected next real capability is one disposable-NixOS-VM proof of the
-existing fixed Level 3 repair loop for `openclaw-system-heal.service`:
-controlled interruption, fixed observation, incident task, automatic triage,
-pending repair promotion, explicit approval, one hostd restart, target-specific
-post-health receipt, and no replay after reconciliation. The physical host must
-remain evidence-only. Generation activation/rollback, new hostd targets,
-arbitrary systemd authority, retries, automatic approval, provider wrappers,
-and additional browser actions are outside this slice.
+The fixed Level 3 repair loop is now complete in a disposable NixOS VM. The
+`openclaw-system-heal-repair-loop-vm` check proves controlled interruption,
+fixed observation, incident creation, automatic triage, pending repair
+promotion, explicit approval, one native hostd restart, target-specific
+post-health, and no replay for either completed or interrupted reservations.
+It found and fixed stopped-target `MainPID=0` handling. Physical generation
+`pfiwq5p3...` remains unchanged and does not contain that hostd correction.
+
+The selected next real capability is one disposable-VM proof of the existing
+Phase D controlled activation path through fixed hostd ownership and an
+independent post-activation health result. Actual rollback execution remains a
+separate later capability because current runtime authority ends at bounded
+`deferred_manual_operator` evidence. The physical host must remain
+evidence-only; arbitrary paths/commands, automatic activation or rollback,
+provider wrappers, and additional browser actions remain outside this slice.
 
 ### Historical Route Evidence
 
 The remainder of this section is chronological evidence for completed
 capability families. References to a selected continuation, active generation,
 or next slice record the checkpoint where they appear; they do not override the
-current baseline and selected VM proof above.
+current baseline and selected Phase D VM proof above.
 
 Completed capability families must not be reopened for another wrapper,
 readiness marker, readback mirror, or horizontal variant. The completed Level 3

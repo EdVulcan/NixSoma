@@ -47,14 +47,16 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 current-tab close | One explicit authenticated request carries only `browser.current_tab.close` plus `confirm=true`; Core grants one fixed Screen Act route and Browser Runtime closes only its current `activePage` while preserving the final tab | Deployed in `pfiwq5p3...`; real headed Firefox PID 63947 stayed stable while the prepare-reuse test page closed with count 5 -> 4, helper lease plus Browser Runtime/Screen Act audit matched, and provider calls, automatic cleanup/repeat, user-service restarts, and reboot remained zero |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
+| Disposable Level 3 repair loop | `checks.x86_64-linux.openclaw-system-heal-repair-loop-vm` stops `openclaw-system-heal.service` inside KVM, observes and triages the incident, promotes one approval-gated repair, executes one native hostd restart, verifies post-health, and reconciles terminal state | Passed with one completed reservation and one interrupted reservation both proving no replay; no provider egress or generation mutation |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
-| Privileged actions | Physical-host generation switch and governed provider egress are proven; real repair, hostd activation, and rollback | Remaining mutations deferred to explicit/disposable checks |
+| Privileged actions | Physical-host generation switch and governed provider egress are proven; fixed System Heal repair is additionally proven in a disposable VM | Hostd generation activation and rollback remain deferred to explicit disposable checks |
 | Operator credential reference | Core still receives the root-managed token through `LoadCredential`; only `edvulcan` receives read ACL on the exact token plus traverse-only ACL on its directory | Deployed in `pfiwq5p3...`; every system-scope owner fixes the shared state directory at `0750`, Core reapplies the ACL on start, the operator cannot list the directory or read the execution-grant private key, and no credential value enters environment, command line, store, or logs |
 | Developer deployment | Default-off immutable helper accepts one canonical, root-owned physical `nixos-system-nixos` closure through one explicit `edvulcan` sudoers rule and rejects container markers or changes to kernel/initrd/fstab/GDM/NetworkManager/SSH paths | The fixed noninteractive helper activated `pfiwq5p3...` after every marker and protected-path check passed; current/profile match and no reboot occurred |
 
 The current checkout is on the only available physical host
-(`systemd-detect-virt=none`). Historical VM results remain acceptance evidence,
-not an available execution environment.
+(`systemd-detect-virt=none`). A disposable KVM environment is available through
+the NixOS VM check, but there is no persistent VM workspace or permission to
+mutate the physical host implicitly.
 
 ## Start Here
 
@@ -83,8 +85,9 @@ The completed bounded frontier is:
   recovery, and Observer control within the bounded AI-owned workspace.
 - Level 3 independent hostd ownership, exact Polkit and peer boundaries, three
   fixed systemd repair targets, read-only eBPF process evidence, bounded journal
-  diagnosis, and target-specific post-repair application health receipts in
-  source.
+  diagnosis, and target-specific post-repair application health receipts. The
+  full stopped-System-Heal scheduler-to-repair chain is physically proven in a
+  disposable KVM guest, including completed and interrupted no-replay cases.
 - Level 4 has a dedicated headless Weston compositor owned by the login user's
   systemd manager, one fixed Wayland socket and virtual output, a headed
   AI-owned browser, bounded native frames, one physically proven frame-bound
@@ -150,35 +153,36 @@ The completed bounded frontier is:
 - Restart reconciliation that aligns terminal dispatch state and fails every
   missing or non-terminal reservation closed without Executor/hostd replay.
 
-Real repair execution and rollback remain unproven on a disposable mutation
-environment. Level 4 now owns a compositor, headed browser, read-only native
-frame, governed native left click and bounded short text input, operator-visible
-transient projection, minimal surface identity, and a fixed application
-lifecycle in production. General keyboard authority, desktop takeover, and
-generic process/window control remain future work.
+The fixed System Heal repair is now proven on a disposable mutation
+environment. That proof exposed and fixed hostd's incorrect conversion of a
+valid stopped-service `MainPID=0` to `null`; physical generation `pfiwq5p3...`
+does not yet contain this source fix. Level 4 now owns a compositor, headed
+browser, read-only native frame, governed native left click and bounded short
+text input, operator-visible transient projection, minimal surface identity,
+and a fixed application lifecycle in production. General keyboard authority,
+desktop takeover, and generic process/window control remain future work.
 
 ## Selected Next Capability
 
-The next real capability is one disposable-environment proof of the existing
-fixed Level 3 repair loop for `openclaw-system-heal.service`:
+The next real capability is the smallest truthful Phase D mutation proof in a
+disposable NixOS VM:
 
 ```text
-controlled service interruption in a disposable NixOS VM
--> fixed-unit observation and incident task
--> automatic local triage and pending repair promotion
--> explicit operator approval
--> one hostd-owned fixed restart
--> target-specific post-health and incident receipt
--> restart reconciliation with no mutation replay
+approved and hash-bound managed-config candidate
+-> one real fixed-target hostd activation
+-> immutable generation-switch receipt
+-> independent post-activation host-health verification
+-> healthy completion or bounded manual-rollback evidence
 ```
 
-This slice adds no hostd target, provider schema, browser action, automatic
-approval, retry loop, or arbitrary systemd authority. Its entry gate is a
-disposable NixOS VM that matches the physical deployment contract; the current
-physical host is evidence-only for this mutation class. Its stop condition is
-one successful fixed-target repair receipt plus proof that unrelated units,
-the physical host, and generation state were untouched. Real generation
-activation and rollback remain a separate later Phase D release gate.
+The stop condition is one real controlled activation whose target, staged
+candidate, evaluated closure, approval, receipt, and independent post-health
+all remain bound. A degraded post-health result may produce the existing
+`deferred_manual_operator` evidence, but actual rollback execution is a later
+separate capability because no rollback actuator exists. The physical host
+remains evidence-only. This slice adds no arbitrary NixOS path or command,
+automatic activation/rollback, provider call, browser action, new hostd target,
+or general root/systemd authority.
 
 ## Active Route
 

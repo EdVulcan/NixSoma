@@ -178,6 +178,39 @@ test("hostd restart control uses the same bounded evidence for system-heal", asy
   });
 });
 
+test("hostd restart control preserves the zero PID when starting stopped system-heal", async () => {
+  let readIndex = 0;
+  const transport = {
+    async getUnitPath(unitName) {
+      assert.equal(unitName, "openclaw-system-heal.service");
+      return "/org/freedesktop/systemd1/unit/openclaw_2dsystem_2dheal_2eservice";
+    },
+    async getAll(_path, interfaceName) {
+      const state = readIndex === 0
+        ? { activeState: "inactive", subState: "dead", mainPid: 0 }
+        : { activeState: "active", subState: "running", mainPid: 700 };
+      if (interfaceName.endsWith(".Unit")) {
+        return { LoadState: "loaded", ActiveState: state.activeState, SubState: state.subState };
+      }
+      readIndex += 1;
+      return { MainPID: state.mainPid };
+    },
+    async restartUnit(unitName) {
+      assert.equal(unitName, "openclaw-system-heal.service");
+      return "/org/freedesktop/systemd1/job/45";
+    },
+    close() {},
+  };
+
+  const result = await runFixedSystemdRestart({
+    unit: "openclaw-system-heal.service",
+    createTransport: () => transport,
+    pollIntervalMs: 0,
+  });
+  assert.equal(result.before.mainPid, 0);
+  assert.equal(result.after.mainPid, 700);
+});
+
 test("hostd socket boundary carries compact owner evidence to the core client", async () => {
   const socketPath = path.join(mkdtempSync(path.join(tmpdir(), "openclaw-hostd-test-")), "hostd.sock");
   const runtime = createHostdServer({

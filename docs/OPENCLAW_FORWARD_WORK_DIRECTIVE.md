@@ -77,6 +77,18 @@ bounded native type. Core still receives the operator token through systemd
 ACL, without directory listing or execution-private-key access. All nine health
 endpoints pass.
 
+The fixed Level 3 repair loop now also has a real disposable-KVM proof through
+`checks.x86_64-linux.openclaw-system-heal-repair-loop-vm`. The guest stopped
+`openclaw-system-heal.service`, created the scheduler incident, completed local
+triage and pending repair promotion, required explicit approval, executed one
+native D-Bus/Polkit hostd restart, and bound the restored application health to
+the incident receipt. A completed reservation stayed closed across Core restart
+and an injected interrupted reservation failed closed without replay. The test
+made no provider call, browser action, physical-host mutation, or generation
+change. It exposed a real hostd defect where stopped-service `MainPID=0` became
+`null`; source now preserves zero as valid evidence, while physical generation
+`pfiwq5p3...` does not yet include that correction.
+
 The work-view lifecycle now makes an already-valid same-authority
 `work_view.prepare` idempotent. Session Manager reads Browser Runtime state and
 reuses the existing browser only when the running session, display target,
@@ -145,20 +157,19 @@ one-off call surface.
 
 ## Selected Next Real Capability
 
-Select one disposable-environment proof of the existing fixed Level 3 repair
-loop for `openclaw-system-heal.service`. In a disposable NixOS VM, create one
-controlled service interruption, require the existing observation, incident,
-triage, repair-promotion, and explicit approval chain, dispatch exactly one
-hostd-owned fixed restart, and bind the result to target-specific post-health
-and incident receipts. Restart reconciliation must prove that a closed or
-interrupted reservation never replays the mutation.
+Select one disposable-NixOS-VM proof of the existing Phase D controlled
+activation path. Reuse the approved candidate, staged-file hash, evaluated
+closure, host-health oracle, fixed hostd activation protocol, and immutable
+receipt. Execute one real activation inside the guest and require an independent
+post-activation health result before reporting completion.
 
-Do not run this proof on the current physical host. Do not add a hostd target,
-arbitrary systemd method, automatic approval, retry, provider schema, browser
-action, or generation mutation. If no disposable VM exists, provisioning and
-verifying that environment is the only prerequisite work; it is not permission
-to open another horizontal capability lane. Real generation activation and
-rollback remain a separate later Phase D release gate.
+Do not run this proof on the current physical host. Keep the target fixed to
+`/etc/nixos/openclaw-managed.nix`, activation opt-in, approval-bound, and
+single-use. A degraded post-health result may emit the existing bounded
+`deferred_manual_operator` rollback evidence, but rollback execution is not
+part of this slice because the runtime has no rollback actuator. Do not add an
+arbitrary path or command, automatic activation/rollback, provider schema,
+browser action, new hostd target, or general root/systemd authority.
 
 ## Governing Vision
 
@@ -1634,6 +1645,16 @@ streamed summary for Observer refreshes. The incident loop must not add
 arbitrary journal queries, arbitrary systemd units, automatic restart, or a new
 provider contract.
 
+The disposable NixOS VM release gate now proves this loop against the real
+systemd manager and production hostd boundary. It stopped the fixed System Heal
+unit, observed `MainPID=0`, completed the scheduler/triage/promotion chain,
+required explicit approval, restored the service with one native restart, and
+verified both the incident receipt and application health. Completed and
+interrupted reservation states both remained non-replayable. The first VM run
+found that hostd incorrectly normalized `MainPID=0` to `null`; the corrected
+source and regression preserve zero, and the final VM build passes without
+credential material in its log.
+
 ### Completed Governed Incident AI Handoff
 
 The compact terminal incident receipt now enters the existing explicitly
@@ -2906,11 +2927,12 @@ should be stopped or merged into a more meaningful slice.
 
 ## Current Execution Environment
 
-As of 2026-07-18, `/home/edvulcan/OpenClaw_On_NixOS` is running on the only
-available physical host (`systemd-detect-virt=none`). There is no VM workspace,
-VM IP, or SSH handoff available for current development. Historical VM claims
-below remain evidence of earlier acceptance only; they are not executable
-instructions for the current agent.
+As of 2026-07-30, `/home/edvulcan/OpenClaw_On_NixOS` is running on the only
+available physical host (`systemd-detect-virt=none`). There is no persistent VM
+workspace, VM IP, or SSH handoff. Disposable KVM guests are available only
+through explicit NixOS VM checks such as
+`checks.x86_64-linux.openclaw-system-heal-repair-loop-vm`; that check is an
+executable release gate, not authority to mutate the host.
 
 On this physical host, normal development is user-space and read-only with
 respect to the host: do not accept or persist sudo passwords, invoke arbitrary

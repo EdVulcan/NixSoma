@@ -30,8 +30,8 @@
         ];
       };
 
-      checks.${system}.openclaw-cloud-provider-config =
-        let
+      checks.${system} = {
+        openclaw-cloud-provider-config = let
           providerCheckConfig = (nixpkgs.lib.nixosSystem {
             inherit system;
             modules = [
@@ -66,6 +66,11 @@
         pkgs.runCommand "openclaw-cloud-provider-config-check" { } ''
           touch "$out"
         '';
+
+        openclaw-system-heal-repair-loop-vm =
+          pkgs.testers.runNixOSTest
+            (import ./nix/tests/openclaw-system-heal-repair-loop.nix);
+      };
 
       packages.${system} = {
         firefox = pkgs.firefox;

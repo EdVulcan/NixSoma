@@ -3,12 +3,13 @@
 ## Current Continuation
 
 The fixed hostd ownership and source repair lifecycle in this record are
-complete. The current selected continuation is a disposable-NixOS-VM proof for
-the existing `openclaw-system-heal.service` capability: controlled
-interruption, current observation/triage/promotion, explicit approval, one
-hostd restart, post-health receipt, and no replay. The historical `Next Slice`
-section below does not override the canonical route in `docs/README.md` and
-`docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md`.
+complete and physically proven in a disposable NixOS VM for
+`openclaw-system-heal.service`: controlled interruption, current
+observation/triage/promotion, explicit approval, one hostd restart, post-health
+receipt, and completed/interrupted no-replay reconciliation. The current
+selected continuation is the separate Phase D controlled-activation VM gate.
+The historical `Next Slice` section below does not override the canonical route
+in `docs/README.md` and `docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md`.
 
 ## Purpose
 
@@ -346,8 +347,24 @@ automatic restart, retry, scheduler, activation, or rollback authority. Focused
 tests use an injected hostd client and prove target-specific health mapping,
 bounded readiness polling, journal-message non-persistence, successful receipt
 binding, and fail-closed handling when systemd is running but the application
-remains unhealthy. Installed real-mutation checks are updated as future release
-gates but are not executed on the sole physical host.
+remains unhealthy.
+
+The release gate is now implemented as
+`checks.x86_64-linux.openclaw-system-heal-repair-loop-vm`. Inside a disposable
+KVM guest it stops System Heal, waits for the production scheduler to create and
+triage the incident and promote one pending repair, explicitly approves that
+repair, and observes one native D-Bus/Polkit hostd restart plus restored service
+health and durable audit. A completed reservation remains closed across Core
+restart; an injected interrupted `reserved` snapshot fails closed without
+another hostd call. Unrelated service PIDs and the guest generation remain
+unchanged, and no provider egress occurs.
+
+The first VM run exposed a production defect: `Number(MainPID) || null`
+discarded the valid stopped-state PID `0`, so Core rejected an otherwise
+successful start receipt. Hostd now preserves every non-negative integer PID,
+and a stopped-System-Heal regression plus the final VM build prove the fix.
+Physical generation `pfiwq5p3...` remains untouched and does not contain this
+source correction.
 
 ## Ninth Slice: Governed Incident AI Handoff
 
