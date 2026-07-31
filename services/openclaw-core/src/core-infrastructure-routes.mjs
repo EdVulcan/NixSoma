@@ -69,6 +69,7 @@ const READ_ONLY_PROXY_PATHS = {
     "/system/systemd/boot-evidence",
     "/system/kernel/process-exec-events",
     "/system/kernel/network-connect-events",
+    "/system/kernel/file-open-events",
   ]),
 };
 

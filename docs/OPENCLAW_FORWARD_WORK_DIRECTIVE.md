@@ -192,6 +192,16 @@ non-zero family and no destination, port, payload, or persistence fields. All
 nine health endpoints and failed-unit checks remained healthy. Phase D and the
 kernel network lane are frozen.
 
+The current distinct Level 3 slice is the bounded Phase C file open-attempt
+observation in `OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md`. It attaches at
+`fentry/do_sys_openat2` and emits exactly timestamp, PID, UID, comm, flags, and
+mode. The filename pointer is deliberately ignored; path, content, inode, mount
+identity, syscall result, persistence, policy execution, provider/browser
+activity, and host mutation remain false. Source, focused tests, closures,
+installed-gate wiring, and disposable-KVM evidence belong to this slice.
+Physical generation activation is not included and requires a separate explicit
+authorization after the source/KVM release gate is green.
+
 The bounded read-only boot/restart evidence route selected for the recent
 restart investigation is already deployed in generation `1xh4x8ls...`. Direct
 System Sense and Core proxy requests return HTTP 200. Its required acceptance is

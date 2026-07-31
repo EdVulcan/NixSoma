@@ -3,6 +3,7 @@ import { sendJson } from "../../../packages/shared-utils/src/http.mjs";
 const KERNEL_EVENT_GET_ROUTES = new Map([
   ["/system/kernel/process-exec-events", "buildKernelProcessExecEvents"],
   ["/system/kernel/network-connect-events", "buildKernelNetworkConnectEvents"],
+  ["/system/kernel/file-open-events", "buildKernelFileOpenEvents"],
 ]);
 
 export async function handleSystemKernelEventRoutes({ req, res, requestUrl, builders }) {

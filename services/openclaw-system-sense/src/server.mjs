@@ -13,6 +13,7 @@ import { createSystemHealthGovernance } from "./system-health-governance.mjs";
 import { handleSystemHealthRoutes } from "./system-health-routes.mjs";
 import { createKernelProcessExecCapture } from "./kernel-process-exec-capture.mjs";
 import { createKernelNetworkConnectCapture } from "./kernel-network-connect-capture.mjs";
+import { createKernelFileOpenCapture } from "./kernel-file-open-capture.mjs";
 import { handleSystemKernelEventRoutes } from "./system-kernel-event-routes.mjs";
 import { createSystemdDbusAdapter } from "./systemd-dbus-adapter.mjs";
 import { createSystemdInspection } from "./systemd-inspection.mjs";
@@ -66,6 +67,13 @@ const kernelNetworkConnectCapture = createKernelNetworkConnectCapture({
   probeCommand: process.env.OPENCLAW_KERNEL_NETWORK_PROBE ?? "",
   durationMs: process.env.OPENCLAW_KERNEL_NETWORK_CAPTURE_DURATION_MS ?? "1000",
   maxEvents: process.env.OPENCLAW_KERNEL_NETWORK_CAPTURE_MAX_EVENTS ?? "128",
+  execFile: execFileAsync,
+});
+const kernelFileOpenCapture = createKernelFileOpenCapture({
+  enabled: process.env.OPENCLAW_KERNEL_FILE_CAPTURE_ENABLED === "1",
+  probeCommand: process.env.OPENCLAW_KERNEL_FILE_PROBE ?? "",
+  durationMs: process.env.OPENCLAW_KERNEL_FILE_CAPTURE_DURATION_MS ?? "1000",
+  maxEvents: process.env.OPENCLAW_KERNEL_FILE_CAPTURE_MAX_EVENTS ?? "128",
   execFile: execFileAsync,
 });
 const SYSTEMD_UNIT_INVENTORY_REGISTRY = "openclaw-systemd-unit-inventory-v0";
@@ -483,6 +491,7 @@ const bodyEvidenceRouteBuilders = {
 const kernelEventRouteBuilders = {
   buildKernelProcessExecEvents: () => kernelProcessExecCapture.capture(),
   buildKernelNetworkConnectEvents: () => kernelNetworkConnectCapture.capture(),
+  buildKernelFileOpenEvents: () => kernelFileOpenCapture.capture(),
 };
 
 const {

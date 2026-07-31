@@ -114,3 +114,27 @@ test("system kernel event route exposes the read-only network connect model", as
   assert.equal(payload.readback.destinationCaptured, undefined);
   assert.equal(payload.readback.persisted, false);
 });
+
+test("system kernel event route exposes the read-only file open model", async () => {
+  const res = responseCapture();
+  const handled = await handleSystemKernelEventRoutes({
+    req: { method: "GET" },
+    res,
+    requestUrl: new URL("http://127.0.0.1/system/kernel/file-open-events"),
+    builders: {
+      buildKernelFileOpenEvents: async () => ({
+        ok: true,
+        registry: "openclaw-kernel-file-open-v0",
+        status: "captured",
+        mode: "read_only",
+        events: [],
+        readback: { registry: "openclaw-kernel-file-open-readback-v0", persisted: false },
+      }),
+    },
+  });
+  assert.equal(handled, true);
+  assert.equal(res.statusCode, 200);
+  const payload = JSON.parse(res.body);
+  assert.equal(payload.registry, "openclaw-kernel-file-open-v0");
+  assert.equal(payload.readback.persisted, false);
+});

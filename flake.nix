@@ -78,6 +78,10 @@
         openclaw-kernel-network-connect-capture-vm =
           pkgs.testers.runNixOSTest
             (import ./nix/tests/openclaw-kernel-network-connect-capture-vm.nix);
+
+        openclaw-kernel-file-open-capture-vm =
+          pkgs.testers.runNixOSTest
+            (import ./nix/tests/openclaw-kernel-file-open-capture-vm.nix);
       };
 
       packages.${system} = {

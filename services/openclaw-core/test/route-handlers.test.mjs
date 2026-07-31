@@ -350,6 +350,44 @@ test("core infrastructure proxy forwards the bounded network-connect route", asy
   assert.equal(response.body.readback.networkPayloadCaptured, false);
 });
 
+test("core infrastructure proxy forwards the bounded file-open route", async () => {
+  let observedUrl = null;
+  const deps = createBaseDeps({
+    client: {
+      fetchJson: async (url) => {
+        observedUrl = url;
+        return {
+          ok: true,
+          registry: "openclaw-kernel-file-open-v0",
+          mode: "read_only",
+          source: {
+            flagsCaptured: true,
+            modeCaptured: true,
+            pathCaptured: false,
+            contentCaptured: false,
+            resultCaptured: false,
+          },
+          readback: {
+            registry: "openclaw-kernel-file-open-readback-v0",
+            persisted: false,
+            pathCaptured: false,
+            contentCaptured: false,
+            resultCaptured: false,
+          },
+        };
+      },
+    },
+  });
+
+  const response = await invokeRoute(deps, "GET", "/proxy/system-sense/system/kernel/file-open-events");
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(observedUrl, "http://127.0.0.1:4106/system/kernel/file-open-events");
+  assert.equal(response.body.registry, "openclaw-kernel-file-open-v0");
+  assert.equal(response.body.source.pathCaptured, false);
+  assert.equal(response.body.readback.persisted, false);
+});
+
 test("core infrastructure proxy forwards bounded boot evidence", async () => {
   let observedUrl = null;
   const deps = createBaseDeps({

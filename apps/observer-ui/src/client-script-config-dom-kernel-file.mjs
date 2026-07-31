@@ -1,0 +1,14 @@
+export const observerClientConfigDomKernelFileScript = `const kernelFileOpenStatus = document.querySelector("#kernel-file-open-status");
+const kernelFileOpenAvailable = document.querySelector("#kernel-file-open-available");
+const kernelFileOpenEventCount = document.querySelector("#kernel-file-open-event-count");
+const kernelFileOpenUniqueCommCount = document.querySelector("#kernel-file-open-unique-comm-count");
+const kernelFileOpenUniqueFlagCount = document.querySelector("#kernel-file-open-unique-flag-count");
+const kernelFileOpenUniquePidCount = document.querySelector("#kernel-file-open-unique-pid-count");
+const kernelFileOpenUniqueUidCount = document.querySelector("#kernel-file-open-unique-uid-count");
+const kernelFileOpenContinuityStatus = document.querySelector("#kernel-file-open-continuity-status");
+const kernelFileOpenCaptureSequence = document.querySelector("#kernel-file-open-capture-sequence");
+const kernelFileOpenActivity = document.querySelector("#kernel-file-open-activity");
+const kernelFileOpenNewCommCount = document.querySelector("#kernel-file-open-new-comm-count");
+const kernelFileOpenReadbackJson = document.querySelector("#kernel-file-open-readback-json");
+const kernelFileOpenJson = document.querySelector("#kernel-file-open-json");
+`;

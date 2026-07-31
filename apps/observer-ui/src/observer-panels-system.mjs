@@ -1,8 +1,9 @@
 import { observerKernelEventPanels } from "./observer-panels-kernel-events.mjs";
 import { observerKernelNetworkPanels } from "./observer-panels-kernel-network.mjs";
+import { observerKernelFilePanels } from "./observer-panels-kernel-file.mjs";
 
 export function observerSystemPanels() {
-  return `${observerKernelEventPanels()}${observerKernelNetworkPanels()}        <section class="panel" id="system-health-trends">
+  return `${observerKernelEventPanels()}${observerKernelNetworkPanels()}${observerKernelFilePanels()}        <section class="panel" id="system-health-trends">
           <h2>Health Trends</h2>
           <div class="metric"><span>Samples</span><span id="health-trend-sample-count">0</span></div>
           <div class="metric"><span>Stable Services</span><span id="health-trend-stable-services">0</span></div>

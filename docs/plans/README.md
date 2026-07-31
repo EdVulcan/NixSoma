@@ -36,6 +36,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_SYSTEMD_OBSERVATION_AI_HANDOFF_PLAN.md`](./OPENCLAW_SYSTEMD_OBSERVATION_AI_HANDOFF_PLAN.md) | Exact approval-bound AI diagnosis and reviewed readback from the compact observation receipt. |
 | [`OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md`](./OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md) | Periodic local observation and restart-safe deduplicated incident tasks for fixed units. |
 | [`OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md) | Bounded read-only network connect-attempt observation through the existing Level 3 body nerve owner. |
+| [`OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md) | Bounded file open-attempt metadata without filename, path, content, result, persistence, or physical mutation. |
 | [`OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md`](./OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Declarative-evolution candidate, controlled activation, and exact rollback evidence plus deferred physical/automatic mutation boundaries. |
 | [`OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md`](./OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md) | Measured validation, runtime, and review debt that blocks the mainline. |
 
@@ -79,7 +80,11 @@ system-sense/Core/Observer path, uses `fentry/__sys_connect`, and reads only
 sockaddr family metadata. Its disposable KVM proof and authorized physical
 deployment are release evidence; the final Core and Observer gates captured 27
 `curl` events with non-zero family and no destination, port, payload, or
-persistence fields. No new kernel hook is selected while this lane is frozen.
+persistence fields. That lane is frozen. The next separate Phase C hook is the
+privacy-bounded `fentry/do_sys_openat2` observation in
+[`OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md).
+It carries flags and mode but never filename/path/content/result data. Its
+source and disposable-KVM evidence do not authorize physical deployment.
 
 The bounded boot/restart evidence route is also deployed in current generation
 `1xh4x8ls...`. Its registered Core/Observer gates, deployed direct/proxy

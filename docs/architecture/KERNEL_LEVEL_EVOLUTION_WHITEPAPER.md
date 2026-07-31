@@ -103,14 +103,17 @@ AI 对系统的自主修改不应该通过脆弱的、命令式的命令行脚�
 ### 📡 Phase C: eBPF 内核神经网构建
 - **任务**：用 C 或 Rust 编写极简的内核 eBPF 探测代码，在 NixOS 中进行内核模块装载。
 - **目标**：通过 Linux Ring Buffer 将内核态的文件、进程和网络事件低延迟地推送到用户态的事件黑匣子中。
-- **当前证据（2026-07-31）**：只读 `sched_process_exec` 与 `fentry/__sys_connect`
-  探针已经形成两个独立的 bounded body-nerve 切片。网络切片仅返回时间戳、进程
+- **当前证据（2026-07-31）**：只读 `sched_process_exec`、`fentry/__sys_connect`
+  与 `fentry/do_sys_openat2` 探针已经形成三个独立的 bounded body-nerve 切片。网络切片仅返回时间戳、进程
   身份、sockaddr family 和 address length；它只从用户 sockaddr 读取前两个字节，
   不读取目标地址、端口、地址字节或 payload。两个切片都通过 system-sense 的
   `CAP_BPF`/`CAP_PERFMON` service boundary、Core proxy、Observer readback 和
-  disposable KVM evidence；网络切片已通过固定 noninteractive helper 部署到物理
+  disposable KVM evidence。file-open 切片只返回进程身份、flags 和 mode，BPF
+  程序明确忽略 filename 指针，不返回 path、content、inode、mount 或 syscall result；
+  网络切片已通过固定 noninteractive helper 部署到物理
   generation `gd9ps40...`，并通过 Core/Observer 安装版门禁捕获真实 `curl` 连接，仍不
-  包含网络拦截、blocking、持久化事件黑匣子或策略执行。
+  包含网络拦截、blocking、持久化事件黑匣子或策略执行。file-open 目前只属于
+  source/disposable-KVM release evidence，物理部署尚未授权。
 
 ### 🔄 Phase D: 声明式自进化闭环
 - **任务**：打通 Nix 配置文件生成器与 `nixos-rebuild` 执行沙箱。

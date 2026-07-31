@@ -196,8 +196,12 @@ desktop takeover, and generic process/window control remain future work.
 ## Selected Active Route
 
 The Phase C network connect-attempt slice is complete in source, disposable
-KVM, and physical generation `5zlz2s6z...`; the kernel network lane and
-completed Phase D evidence lane remain frozen.
+KVM, and physical generation `5zlz2s6z...`; that lane and the completed Phase D
+evidence lane remain frozen. The next distinct Level 3 body nerve is a bounded
+`fentry/do_sys_openat2` file open-attempt observation. It exposes only process
+identity, flags, and mode through System Sense/Core/Observer. Filename, path,
+content, inode, mount identity, syscall result, persistence, policy execution,
+and physical deployment remain excluded.
 
 1. **Required boot-evidence acceptance is complete.** The two registered gates,
    deployed direct/proxy routes, Observer panel, boot binding, no-journal-payload
@@ -889,7 +893,7 @@ These figures are capability-maturity estimates, not test coverage:
 | --- | --- |
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
-| Level 3 controlled system body | about 68-72%; network observation, the `MainPID=0` correction, and boot evidence are deployed, while physical Phase D mutation and broader body nerves remain incomplete |
+| Level 3 controlled system body | about 70-74%; process exec and network connect-attempt observation are deployed, bounded file open-attempt observation is implemented in source/KVM release evidence, and physical Phase D mutation plus broader body nerves remain incomplete |
 | Level 4 graphics-stack-native body | about 85%; one-shot projected operator click, bounded native operator type, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, same-surface OCR click, objective-bound OCR type, fixed OCR focus-then-type, and governed current-tab close are physically complete |
 | Current bounded product scope | 84-87% |
 | Final whitepaper vision | 52-60% |
@@ -914,6 +918,7 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md](./plans/OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md) | Completed periodic local observation and deduplicated incident task creation for fixed units. |
 | [OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md](./plans/OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md) | Completed first bounded read-only kernel event slice. |
 | [OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md](./plans/OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md) | Completed bounded read-only network connect-attempt metadata slice; physical deployment is complete and rollback/variants remain deferred. |
+| [OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md](./plans/OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md) | Bounded read-only file open-attempt metadata slice; filename/path/content/result and physical deployment remain excluded. |
 | [OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md](./plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Current declarative-evolution evidence and explicitly deferred activation boundary. |
 | [OPENCLAW_MONOLITH_REDUCTION_PLAN.md](./plans/OPENCLAW_MONOLITH_REDUCTION_PLAN.md) | Active coupling and maintainability debt record. |
 | [OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md](./plans/OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md) | Active validation and expert-review debt record. |

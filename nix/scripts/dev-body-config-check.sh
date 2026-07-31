@@ -1735,6 +1735,8 @@ EOF
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-process-exec-readback.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-network-connect-capture.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-network-connect-readback.mjs"
+    || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-file-open-capture.mjs"
+    || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-file-open-readback.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/system-kernel-event-routes.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/system-health-governance.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-dbus-adapter.mjs"
@@ -1752,7 +1754,7 @@ EOF
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-dbus-transport.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-boot-evidence.mjs"
     || ! -f "$system_sense_out/share/openclaw/packages/shared-systemd/src/systemd-dbus-transport.mjs"
-    || "$system_sense_source_count" -ne 33 ]]; then
+    || "$system_sense_source_count" -ne 35 ]]; then
     echo "system-sense Nix closure is not exact, production-only, and read-only: $system_sense_out" >&2
     exit 1
   fi
@@ -1765,7 +1767,10 @@ EOF
     || ! -x "$kernel_probe_out/libexec/openclaw-kernel-process-exec-loader"
     || ! -x "$kernel_probe_out/bin/openclaw-kernel-network-connect"
     || ! -f "$kernel_probe_out/lib/openclaw-kernel-network-connect.bpf.o"
-    || ! -x "$kernel_probe_out/libexec/openclaw-kernel-network-connect-loader" ]]; then
+    || ! -x "$kernel_probe_out/libexec/openclaw-kernel-network-connect-loader"
+    || ! -x "$kernel_probe_out/bin/openclaw-kernel-file-open"
+    || ! -f "$kernel_probe_out/lib/openclaw-kernel-file-open.bpf.o"
+    || ! -x "$kernel_probe_out/libexec/openclaw-kernel-file-open-loader" ]]; then
     echo "kernel event probe package is incomplete: $kernel_probe_out" >&2
     exit 1
   fi
@@ -2016,7 +2021,10 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/packages/shared-client/src/service-descriptors.mjs"
     || -w "$observer_ui_server"
     || -e "$observer_ui_out/share/openclaw/apps/observer-ui/scripts"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 91 ]]; then
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-kernel-file.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-refreshers-kernel-file.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panels-kernel-file.mjs"
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 94 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi
