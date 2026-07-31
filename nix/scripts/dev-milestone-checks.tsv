@@ -201,6 +201,7 @@ openclaw-cloud-consciousness-live-provider-credential-value-local-read-execution
 openclaw-phase-2-plan	dev-openclaw-phase-2-plan-check.sh	Whitepaper-aligned Phase 2 route selection
 openclaw-systemd-unit-inventory	dev-openclaw-systemd-unit-inventory-check.sh	Read-only OpenClaw systemd unit inventory for Phase 2 body governance
 openclaw-systemd-journal-evidence	dev-openclaw-systemd-journal-evidence-check.sh	Bounded read-only journal evidence for fixed OpenClaw systemd repair targets
+openclaw-systemd-boot-evidence	dev-openclaw-systemd-boot-evidence-check.sh	Bounded read-only boot and restart evidence without journal payloads or recovery
 openclaw-systemd-repair-plan	dev-openclaw-systemd-repair-plan-check.sh	Plan-only systemd repair proposal for one OpenClaw body unit
 openclaw-systemd-repair-dry-run	dev-openclaw-systemd-repair-dry-run-check.sh	Operator-visible dry-run envelope for OpenClaw systemd repair proposals
 openclaw-systemd-repair-execution-route	dev-openclaw-systemd-repair-execution-route-check.sh	Route gate for operator-reviewed real OpenClaw systemd repair execution
@@ -665,6 +666,7 @@ observer-openclaw-cloud-consciousness-live-provider-credential-value-local-read-
 observer-openclaw-native-declarative-evolution-staging	dev-observer-openclaw-native-declarative-evolution-staging-check.sh	Observer served activation-decision panel, capability registry, health review, and fail-closed confirmation visibility for declarative evolution
 observer-openclaw-systemd-unit-inventory	dev-observer-openclaw-systemd-unit-inventory-check.sh	Observer visibility for read-only OpenClaw systemd unit inventory
 observer-openclaw-systemd-journal-evidence	dev-observer-openclaw-systemd-journal-evidence-check.sh	Observer visibility for bounded OpenClaw systemd journal evidence
+observer-openclaw-systemd-boot-evidence	dev-observer-openclaw-systemd-boot-evidence-check.sh	Observer visibility for bounded boot and restart evidence
 observer-openclaw-kernel-process-exec-capture	dev-observer-openclaw-kernel-process-exec-capture-check.sh	Observer visibility for real read-only eBPF process-exec events
 observer-openclaw-kernel-network-connect-capture	dev-observer-openclaw-kernel-network-connect-capture-check.sh	Observer visibility for real read-only eBPF network connect-attempt metadata
 observer-openclaw-systemd-repair-plan	dev-observer-openclaw-systemd-repair-plan-check.sh	Observer visibility for plan-only OpenClaw systemd repair proposals

@@ -350,6 +350,17 @@ export function observerSystemPanels() {
           </div>
           <pre id="systemd-journal-evidence-json">Loading bounded service journal evidence...</pre>
         </section>
+        <section class="panel" id="systemd-boot-evidence-panel">
+          <h2>Boot and Restart Evidence</h2>
+          <div class="metric"><span>Current Boot</span><span id="systemd-boot-evidence-current">unknown</span></div>
+          <div class="metric"><span>Previous Boot</span><span id="systemd-boot-evidence-previous">unknown</span></div>
+          <div class="metric"><span>Assessment</span><span id="systemd-boot-evidence-assessment">unknown</span></div>
+          <div class="metric"><span>Mode</span><span id="systemd-boot-evidence-mode">read_only</span></div>
+          <div class="actions tight">
+            <button id="refresh-systemd-boot-evidence-button" class="secondary">Refresh Boot Evidence</button>
+          </div>
+          <pre id="systemd-boot-evidence-json">Loading bounded boot and restart evidence...</pre>
+        </section>
         <section class="panel" id="systemd-dependency-map">
           <h2>Body Dependency Map</h2>
           <div class="metric"><span>Nodes</span><span id="systemd-dependency-node-count">0</span></div>

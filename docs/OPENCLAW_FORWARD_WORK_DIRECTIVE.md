@@ -44,7 +44,7 @@ The risk is local drift:
 
 ## Current Validated Frontier
 
-The current capability baseline includes bounded journal evidence, the bounded
+The current capability baseline includes bounded journal evidence, source-complete bounded boot/restart evidence, the bounded
 Event Hub audit store, the fixed Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
 triage/repair-promotion bridge, and twenty-five deployed Level 4 graphical
@@ -56,9 +56,9 @@ return bounded transient local OCR or one read-only provider assessment without
 pixel egress. Direct operator interaction also includes one armed projected
 click and one write-only 1-32 character native type; one reviewed task may
 also request that one objective-selected OCR item be focused and receive its
-exact allowlisted objective value through a fixed two-action sequence. All 1224 workspace tests
+exact allowlisted objective value through a fixed two-action sequence. All 1232 workspace tests
 and typecheck pass, the body-config and event-audit integration checks pass, the
-826-entry milestone registry and 1013-file script audit pass, and
+828-entry milestone registry and 1016-file script audit pass, and
 the Windows path budget has no file over 160 repository-relative characters.
 GitHub CI now enforces
 Node 22 typecheck, workspace tests, milestone registry/script audit, and the
@@ -97,7 +97,7 @@ non-empty tab set all still agree. The current active URL is deliberately not
 part of that decision, so operator navigation is preserved. First prepare,
 changed authority, stale lease, stopped browser, session drift, and an empty tab
 set retain the existing open/recovery path. Both Phase 3 service gates prove a
-second prepare keeps one session, lease, and tab; all 1224 tests, typecheck,
+second prepare keeps one session, lease, and tab; all 1232 tests, typecheck,
 body-config, MVP readiness, and the exact 32-file Session Manager closure pass.
 The physical prepare pair recorded `session_started` followed 11 ms later by
 `same_authority`, preserving session `47e6a200...`, Firefox PID 63947, the
@@ -166,8 +166,13 @@ non-zero family and no destination, port, payload, or persistence fields. All
 nine health endpoints and failed-unit checks remained healthy. Phase D and the
 kernel network lane are frozen.
 
-No new capability is selected by this deployment. The next work item must be a
-fresh canonical route review tied to a concrete operator gap. Do not add VFS,
+The fresh canonical route review selected a bounded read-only boot/restart
+evidence capability for the concrete operator gap observed during the recent
+restart investigation. Source and isolated Core/Observer service checks are
+complete, but the route is not in physical generation `gd9ps40...`; no physical
+switch, reboot, recovery, or host mutation was performed in this slice. The
+current physical host remains evidence-only. After a separately authorized
+physical deployment check, return to canonical route review. Do not add VFS,
 destination/port, socket-state, `fexit`, enforcement, persistence, provider,
 browser-action, or physical-mutation variants merely because they appear in the
 whitepaper inventory.
@@ -1657,6 +1662,26 @@ availability, non-allowlisted rejection, readback redaction, generated client
 syntax, and no task, approval, restart, activation, or rollback. The next
 Level 3 capability must again be selected from a concrete operator gap; do not
 turn this read model into arbitrary journal queries or a new readiness chain.
+
+## Source-Complete Level 3 Boot/Restart Evidence
+
+The restart investigation exposed a second concrete operator gap: the existing
+health and journal routes did not provide a bounded answer about whether the
+previous boot reached a systemd reboot/poweroff sequence or contained a clear
+abnormal watchdog, kernel fault, OOM, or Ctrl+Alt+Delete marker. The new
+`GET /system/systemd/boot-evidence` route reads fixed JSON boot summaries and at
+most 64 terminal records, then returns only normalized boot identity,
+timestamps, marker names, and one finite classification. It returns no journal
+messages and does not infer the original trigger or user intent.
+
+Core exposes the route through the existing read-only system-sense proxy, and
+Observer shows current/previous boot, classification, marker names, and the
+unchanged non-mutating governance state. Normal hardware-watchdog shutdown
+messages and normal OOM-service lifecycle messages are not treated as abnormal
+causes. Unit tests and isolated Core/Observer checks prove UUID binding,
+classification, payload exclusion, route forwarding, generated client syntax,
+and zero task/approval/recovery/mutation activity. Physical generation switch
+and physical route proof remain separately authorized work.
 
 ### Completed Level 3 Incident Repair Loop
 

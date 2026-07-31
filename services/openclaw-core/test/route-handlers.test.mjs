@@ -350,6 +350,54 @@ test("core infrastructure proxy forwards the bounded network-connect route", asy
   assert.equal(response.body.readback.networkPayloadCaptured, false);
 });
 
+test("core infrastructure proxy forwards bounded boot evidence", async () => {
+  let observedUrl = null;
+  const deps = createBaseDeps({
+    client: {
+      fetchJson: async (url) => {
+        observedUrl = url;
+        return {
+          ok: true,
+          registry: "openclaw-systemd-boot-evidence-v0",
+          mode: "read_only",
+          available: true,
+          currentBoot: {
+            bootId: "e8a6a4fa094b43d5b43fd9ec584ec0e4",
+            idMatchesKernel: true,
+          },
+          previousBoot: {
+            available: true,
+            bootId: "e534bb99bd774bbc89e9e58099e89c0a",
+          },
+          assessment: {
+            classification: "explicit_reboot_sequence",
+            markers: ["systemd_reboot_sequence"],
+          },
+          governance: {
+            readOnlyCommand: true,
+            hostMutation: false,
+            persistentEvidence: false,
+          },
+          source: {
+            messagesIncluded: false,
+            persistentEvidence: false,
+          },
+        };
+      },
+    },
+  });
+
+  const response = await invokeRoute(deps, "GET", "/proxy/system-sense/system/systemd/boot-evidence");
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(observedUrl, "http://127.0.0.1:4106/system/systemd/boot-evidence");
+  assert.equal(response.body.registry, "openclaw-systemd-boot-evidence-v0");
+  assert.equal(response.body.currentBoot.idMatchesKernel, true);
+  assert.equal(response.body.assessment.classification, "explicit_reboot_sequence");
+  assert.equal(response.body.governance.hostMutation, false);
+  assert.equal(response.body.source.messagesIncluded, false);
+});
+
 test("core runtime read route reconciles and serialises current task", async () => {
   const task = { id: "task-current", status: "running" };
   let reconciled = false;

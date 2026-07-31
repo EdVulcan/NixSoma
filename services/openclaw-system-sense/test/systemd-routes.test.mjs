@@ -120,3 +120,27 @@ test("systemd routes dispatch bounded journal evidence with query parameters", a
     },
   });
 });
+
+test("systemd routes dispatch bounded boot evidence without query parameters", async () => {
+  const res = createResponseCapture();
+  const handled = await handleSystemdRoutes({
+    req: { method: "GET" },
+    res,
+    requestUrl: new URL("http://127.0.0.1/system/systemd/boot-evidence"),
+    builders: {
+      buildSystemdBootEvidence: async () => ({
+        ok: true,
+        registry: "openclaw-systemd-boot-evidence-v0",
+        mode: "read_only",
+      }),
+    },
+  });
+
+  assert.equal(handled, true);
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(parseResponse(res), {
+    ok: true,
+    registry: "openclaw-systemd-boot-evidence-v0",
+    mode: "read_only",
+  });
+});

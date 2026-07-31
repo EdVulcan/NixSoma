@@ -15,6 +15,7 @@ const SYSTEMD_GET_ROUTES = new Map([
   ["/system/systemd/next-repair-dry-run", "buildSystemdNextRepairDryRun"],
   ["/system/systemd/next-repair-task-route", "buildSystemdNextRepairTaskRoute"],
   ["/system/systemd/journal-evidence", "buildSystemdJournalEvidence"],
+  ["/system/systemd/boot-evidence", "buildSystemdBootEvidence"],
 ]);
 
 function sendSystemdError(res, error) {

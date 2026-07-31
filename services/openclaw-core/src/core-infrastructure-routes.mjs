@@ -66,6 +66,7 @@ const READ_ONLY_PROXY_PATHS = {
     "/system/systemd/next-repair-task-route",
     "/system/systemd/repair-plan",
     "/system/systemd/repair-dry-run",
+    "/system/systemd/boot-evidence",
     "/system/kernel/process-exec-events",
     "/system/kernel/network-connect-events",
   ]),

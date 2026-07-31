@@ -539,6 +539,37 @@ async function refreshSystemdJournalEvidence() {
   }
 }
 
+async function refreshSystemdBootEvidence() {
+  try {
+    const data = await fetchJson(\`\${observerConfig.systemSenseUrl}/system/systemd/boot-evidence\`);
+    const current = data.currentBoot ?? {};
+    const previous = data.previousBoot ?? {};
+    const assessment = data.assessment ?? {};
+    const markers = Array.isArray(assessment.markers) ? assessment.markers : [];
+    systemdBootEvidenceCurrent.textContent = current.bootId ?? "unavailable";
+    systemdBootEvidencePrevious.textContent = previous.available === true
+      ? (previous.bootId ?? "available")
+      : "unavailable";
+    systemdBootEvidenceAssessment.textContent = assessment.classification ?? "unknown";
+    systemdBootEvidenceMode.textContent = data.mode ?? "read_only";
+    systemdBootEvidenceJson.textContent = [
+      \`Registry: \${data.registry ?? "unknown"}\`,
+      \`Current: \${current.bootId ?? "unknown"} started=\${current.firstEntryAt ?? "unknown"} durationSeconds=\${current.durationSeconds ?? "unknown"}\`,
+      \`Previous: \${previous.available === true ? (previous.bootId ?? "available") : "unavailable"} started=\${previous.firstEntryAt ?? "unknown"} durationSeconds=\${previous.durationSeconds ?? "unknown"}\`,
+      \`Assessment: \${assessment.classification ?? "unknown"} markers=\${markers.join(", ") || "none"} inspectedEntries=\${assessment.inspectedEntries ?? 0}\`,
+      \`Governance: readOnly=\${Boolean(data.governance?.readOnlyCommand)} messagesIncluded=\${Boolean(data.source?.messagesIncluded)} persistentEvidence=\${Boolean(data.governance?.persistentEvidence)} hostMutation=\${Boolean(data.governance?.hostMutation)}\`,
+      \`Terminal read: \${assessment.terminalReadAvailable === false ? (assessment.errorCode ?? "unavailable") : "available"}\`,
+      \`Next: \${data.next?.recommendedSlice ?? "canonical-route-review"} boundary=\${data.next?.boundary ?? "read-only boot evidence"}\`,
+    ].join("\\n");
+  } catch {
+    systemdBootEvidenceCurrent.textContent = "unavailable";
+    systemdBootEvidencePrevious.textContent = "unavailable";
+    systemdBootEvidenceAssessment.textContent = "unknown";
+    systemdBootEvidenceMode.textContent = "offline";
+    systemdBootEvidenceJson.textContent = "Unable to read bounded boot and restart evidence.";
+  }
+}
+
 async function refreshSystemdRepairPlan() {
   try {
     const [plan, dryRun] = await Promise.all([

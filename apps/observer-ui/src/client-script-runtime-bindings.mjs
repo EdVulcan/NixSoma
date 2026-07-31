@@ -414,6 +414,14 @@ refreshSystemdJournalEvidenceButton.addEventListener("click", () => {
   });
 });
 
+refreshSystemdBootEvidenceButton.addEventListener("click", () => {
+  refreshSystemdBootEvidence().then(() => {
+    setControlMessage("Boot and restart evidence refreshed.");
+  }).catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 createBodyEvidenceLedgerDirectoryTaskButton.addEventListener("click", () => {
   createBodyEvidenceLedgerDirectoryTask().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

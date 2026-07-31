@@ -20,6 +20,7 @@ import { createSystemdNextRepairPlanning } from "./systemd-next-repair-planning.
 import { createSystemdRepairCandidatePlanning } from "./systemd-repair-candidate-planning.mjs";
 import { createSystemdRepairProposals } from "./systemd-repair-proposals.mjs";
 import { createSystemdJournalEvidence, JOURNAL_EVIDENCE_REGISTRY } from "./systemd-journal-evidence.mjs";
+import { createSystemdBootEvidence } from "./systemd-boot-evidence.mjs";
 import { handleSystemdRoutes } from "./systemd-routes.mjs";
 import { createExecutionGrantVerifier } from "../../../packages/shared-utils/src/execution-grants.mjs";
 
@@ -383,6 +384,11 @@ const { buildSystemdJournalEvidence } = createSystemdJournalEvidence({
   registry: JOURNAL_EVIDENCE_REGISTRY,
 });
 
+const { buildSystemdBootEvidence } = createSystemdBootEvidence({
+  journalctlPath: process.env.OPENCLAW_SYSTEM_JOURNALCTL_PATH ?? "journalctl",
+  timeoutMs: serviceTimeoutMs,
+});
+
 function normaliseUnitName(value) {
   const raw = typeof value === "string" && value.trim()
     ? value.trim()
@@ -538,6 +544,7 @@ const systemdRouteBuilders = {
   buildSystemdRepairPlan,
   buildSystemdRepairDryRun,
   buildSystemdJournalEvidence,
+  buildSystemdBootEvidence,
 };
 async function refreshSystemState() {
   const entries = await Promise.all(

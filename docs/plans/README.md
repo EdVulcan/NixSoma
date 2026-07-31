@@ -21,6 +21,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md`](./OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md) | Bounded Level 2 browser/work-view contract. |
 | [`OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md`](./OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md) | Operator identity, per-service credentials, and execution grants. |
 | [`OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md`](./OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Fixed Level 3 restart owners, bounded journal diagnosis, resource-pressure sensing, and declarative cgroup envelopes. |
+| [`OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md`](./OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md) | Bounded read-only boot/restart classification without journal payloads or recovery authority. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md) | Exact request-bound, guidance-only AI diagnosis from a compact terminal repair receipt. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md) | Local target-specific outcome absorption and advisory recall from verified incident receipts. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Up to three matching-target learned patterns inside the existing exact approved diagnosis request. |

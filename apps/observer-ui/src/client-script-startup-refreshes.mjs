@@ -322,7 +322,10 @@ export const OBSERVER_STARTUP_REFRESH_GROUPS = [
 ];
 
 export const OBSERVER_STARTUP_REFRESH_NAMES = OBSERVER_STARTUP_REFRESH_GROUPS.flatMap((group) => group.refreshNames);
-export const OBSERVER_STARTUP_INITIAL_REFRESH_NAMES = ["refreshSystemdJournalEvidence"];
+export const OBSERVER_STARTUP_INITIAL_REFRESH_NAMES = [
+  "refreshSystemdJournalEvidence",
+  "refreshSystemdBootEvidence",
+];
 
 export function renderObserverClientStartupScript() {
   return [

@@ -13,8 +13,8 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, one-shot operator-authenticated projected click and bounded native type, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click, objective-bound OCR type, fixed OCR focus-then-type, governed current-tab close, and an explicit bounded run-plus-assessment cycle, plus the completed Level 3 baseline | The twenty-fifth Level 4 slice is physically complete and frozen |
-| Local validation | 1224 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1013-file script audit pass; 826 registry entries pass | Validated |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, one-shot operator-authenticated projected click and bounded native type, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click, objective-bound OCR type, fixed OCR focus-then-type, governed current-tab close, an explicit bounded run-plus-assessment cycle, and the bounded Level 3 boot/restart evidence route, plus the completed Level 3 baseline | The twenty-fifth Level 4 slice remains physically complete; boot/restart evidence is source-complete and awaiting separately authorized deployment |
+| Local validation | 1232 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1016-file script audit pass; 828 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/gd9ps40vz9qj4ll5sikxb0c0g3xnx7gc-nixos-system-nixos-26.05.4808.569d57850992` | Same-authority prepare reuse, governed current-tab close, bounded Level 3 network observation, durable narrow operator-token ACLs, and the prior Level 4 capabilities are deployed and physically proven |
 | Previous generation | `/nix/store/ilybrrpmla5dvfxzsz4vb61jij4cv2q7-nixos-system-nixos-26.05.4808.569d57850992` | Superseded because the first ACL replay correction still left the shared system state directory at systemd's default `0755` mode |
@@ -47,6 +47,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 current-tab close | One explicit authenticated request carries only `browser.current_tab.close` plus `confirm=true`; Core grants one fixed Screen Act route and Browser Runtime closes only its current `activePage` while preserving the final tab | Physically proven in `pfiwq5p3...` and present in current `gd9ps40...`; real headed Firefox PID 63947 stayed stable while the prepare-reuse test page closed with count 5 -> 4, helper lease plus Browser Runtime/Screen Act audit matched, and provider calls, automatic cleanup/repeat, user-service restarts, and reboot remained zero |
 | Level 3 network observation | Fixed `fentry/__sys_connect` eBPF probe sends only timestamp, process identity, sockaddr family, and address length through the system-sense/Core/Observer read-only path; only the first two sockaddr bytes are read and destination, port, address bytes, payload, persistence, and policy execution remain excluded | Physically deployed in `gd9ps40...`; Core and Observer gates captured 27 `curl` events with non-zero family and no destination, port, payload, or persistence |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
+| Level 3 boot/restart evidence | `/system/systemd/boot-evidence` summarizes current/previous boot identity, bounded terminal markers, and a finite classification without returning journal messages; Core proxy and Observer checks are present | Source-complete and locally probed; not in physical generation `gd9ps40...` |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Disposable Level 3 repair loop | `checks.x86_64-linux.openclaw-system-heal-repair-loop-vm` stops `openclaw-system-heal.service` inside KVM, observes and triages the incident, promotes one approval-gated repair, executes one native hostd restart, verifies post-health, and reconciles terminal state | Passed with one completed reservation and one interrupted reservation both proving no replay; no provider egress or generation mutation |
 | Disposable Phase D activation and rollback | `checks.x86_64-linux.openclaw-declarative-evolution-activation-vm` builds one approved managed-config closure, switches the guest through fixed hostd, then explicitly restores the exact previous generation and managed-source state through the separate fixed rollback owner | Passed with candidate `aed7e917...`, healthy post-activation/post-rollback evidence, preserved Core/hostd PIDs, consumed root snapshot, activation/rollback/snapshot replay rejection, zero failed units, and no provider/browser/automatic rollback activity |
@@ -168,13 +169,15 @@ desktop takeover, and generic process/window control remain future work.
 
 ## Selected Next Capability
 
-The Phase C network connect-attempt slice is now complete in source, disposable
-KVM, and the physical generation `gd9ps40...`. Freeze the kernel network lane
-and the completed Phase D evidence lane. No new product capability is selected
-by this deployment; the next work item must come from a fresh canonical route
-review tied to a concrete operator gap. Do not manufacture a VFS/network
-variant, provider wrapper, browser action variant, or physical host mutation
-from the whitepaper inventory alone.
+The Phase C network connect-attempt slice is complete in source, disposable
+KVM, and the physical generation `gd9ps40...`; the kernel network lane and
+completed Phase D evidence lane remain frozen. The fresh route review selected
+source-complete bounded boot/restart evidence for the recent restart
+investigation. Its isolated Core/Observer checks pass, but physical deployment
+and physical route proof remain separately authorized. After that bounded
+deployment check, return to canonical route review. Do not manufacture a
+VFS/network variant, provider wrapper, browser action variant, or physical host
+mutation from the whitepaper inventory alone.
 
 ## Active Route
 
@@ -829,6 +832,7 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md](./plans/OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md) | Completed bounded Level 2 browser/work-view contract. |
 | [OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md](./plans/OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md) | Current operator, service identity, and execution-grant boundary. |
 | [OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md](./plans/OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Current fixed Level 3 restart and journal-diagnosis boundary. |
+| [OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md](./plans/OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md) | Source-complete bounded boot/restart classification and physical-deployment boundary. |
 | [OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md) | Completed exact request-bound incident diagnosis handoff and provider boundary. |
 | [OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md) | Completed local incident outcome absorption and matching-target advisory recall. |
 | [OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Completed learned-pattern inclusion in the exact approved incident diagnosis request. |

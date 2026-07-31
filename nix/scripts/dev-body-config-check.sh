@@ -1181,6 +1181,7 @@ EOF
       OPENCLAW_SYSTEM_HEAL_URL="$upstream_url" \
       OPENCLAW_CORE_STATE_FILE="$state_file" \
       OPENCLAW_OPERATOR_TOKEN="$operator_token" \
+      OPENCLAW_OPERATOR_TOKEN_FILE="" \
       OPENCLAW_WORKSPACE_ROOTS="$runtime_dir" \
       OPENCLAW_BODY_RUNTIME_SOURCE=nix-store \
         node src/server.mjs >"$runtime_dir/core.log" 2>&1 &
@@ -1736,8 +1737,9 @@ EOF
     || -e "$system_sense_working_dir/node_modules/puppeteer-core"
     || -e "$system_sense_working_dir/node_modules/typescript"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-dbus-transport.mjs"
+    || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-boot-evidence.mjs"
     || ! -f "$system_sense_out/share/openclaw/packages/shared-systemd/src/systemd-dbus-transport.mjs"
-    || "$system_sense_source_count" -ne 32 ]]; then
+    || "$system_sense_source_count" -ne 33 ]]; then
     echo "system-sense Nix closure is not exact, production-only, and read-only: $system_sense_out" >&2
     exit 1
   fi
