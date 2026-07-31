@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { createTaskManager } from "../src/task-manager.mjs";
 import { EXECUTION_RESERVATION_REGISTRY } from "../src/capability-runtime-approval-binding.mjs";
+import { recommendationExecutionEvidence } from "./native-engineering-recommendation-receipt-fixture.mjs";
 
 function createHarness({ buildRulePlan = () => null, shouldBuildPlan = () => false, recordTaskExperience = () => null } = {}) {
   const tasks = new Map();
@@ -122,6 +123,10 @@ test("task manager recomputes provider recommendation provenance before serializ
     engineeringRecommendationApplicationReceipt: {
       downstreamTaskId: "caller-controlled-task",
     },
+    engineeringRecommendationExecutionReceipt: {
+      downstreamTaskId: "caller-controlled-task",
+      status: "verified_action_executed",
+    },
   });
 
   assert.equal(task.engineeringRecommendationLink.registry, "openclaw-native-engineering-recommendation-link-v0");
@@ -135,14 +140,26 @@ test("task manager recomputes provider recommendation provenance before serializ
   assert.equal(task.engineeringRecommendationApplicationReceipt.governance.downstreamExecutionProven, false);
   assert.equal(task.engineeringRecommendationApplicationReceipt.governance.downstreamOutcomeProven, false);
   assert.equal(task.engineeringRecommendationApplicationReceipt.governance.causalAttribution, false);
+  assert.equal(task.engineeringRecommendationExecutionReceipt, undefined);
   assert.equal(manager.serialiseTask(task).engineeringRecommendationLink.source.taskId, providerTask.id);
   assert.equal(manager.serialiseTask(task).engineeringRecommendationApplicationReceipt.downstreamTaskId, task.id);
+
+  const executionReceipt = manager.recordRecommendationExecution(task,
+    recommendationExecutionEvidence({ downstreamTaskId: task.id }));
+  assert.equal(executionReceipt.downstreamTaskId, task.id);
+  assert.equal(executionReceipt.governance.downstreamActionExecutionProven, true);
+  assert.equal(task.engineeringRecommendationExecutionReceipt.receiptHash, executionReceipt.receiptHash);
+  assert.equal(manager.serialiseTask(task).engineeringRecommendationExecutionReceipt.receiptHash,
+    executionReceipt.receiptHash);
 
   manager.completeTask(task, { summary: "Completed reviewed semantic click task." });
   assert.equal(task.engineeringRecommendationOutcomeReceipt.downstreamTaskId, task.id);
   assert.equal(task.engineeringRecommendationOutcomeReceipt.terminalOutcome, "completed");
   assert.equal(task.engineeringRecommendationOutcomeReceipt.applicationReceiptHash,
     task.engineeringRecommendationApplicationReceipt.receiptHash);
+  assert.equal(task.engineeringRecommendationOutcomeReceipt.executionReceiptHash,
+    task.engineeringRecommendationExecutionReceipt.receiptHash);
+  assert.equal(task.engineeringRecommendationOutcomeReceipt.governance.downstreamActionExecutionProven, true);
   assert.equal(task.engineeringRecommendationOutcomeReceipt.governance.recommendationEffectivenessProven, false);
   assert.equal(manager.serialiseTask(task).engineeringRecommendationOutcomeReceipt.receiptHash,
     task.engineeringRecommendationOutcomeReceipt.receiptHash);
@@ -176,7 +193,9 @@ test("task manager recomputes provider recommendation provenance before serializ
     },
   });
   assert.equal(unlinkedTask.engineeringRecommendationApplicationReceipt, undefined);
+  assert.equal(unlinkedTask.engineeringRecommendationExecutionReceipt, undefined);
   assert.equal(manager.serialiseTask(unlinkedTask).engineeringRecommendationApplicationReceipt, null);
+  assert.equal(manager.serialiseTask(unlinkedTask).engineeringRecommendationExecutionReceipt, null);
 
   assert.throws(() => manager.createTask({
     goal: "Reject a cross-task recommendation link",

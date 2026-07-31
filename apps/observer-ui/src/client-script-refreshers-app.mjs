@@ -271,6 +271,13 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
     lines.push(\`Recommendation Application Control: action=\${recommendationApplication.actionId ?? "none"} capability=\${recommendationApplication.capabilityId ?? "none"} control=\${recommendationApplication.observerControlId ?? "none"}\`);
     lines.push(\`Recommendation Application Boundary: selected=\${Boolean(recommendationApplication.governance?.explicitOperatorSelection)} bound=\${Boolean(recommendationApplication.governance?.downstreamTaskBound)} executed=\${Boolean(recommendationApplication.governance?.downstreamExecutionProven)} outcome=\${Boolean(recommendationApplication.governance?.downstreamOutcomeProven)} causal=\${Boolean(recommendationApplication.governance?.causalAttribution)}\`);
   }
+  const recommendationExecution = task.engineeringRecommendationExecutionReceipt ?? null;
+  if (recommendationExecution) {
+    lines.push(\`Recommendation Execution: \${recommendationExecution.registry ?? "unknown"} status=\${recommendationExecution.status ?? "unknown"} action=\${recommendationExecution.action?.requestedKind ?? "unknown"}\`);
+    lines.push(\`Recommendation Execution Binding: provider=\${recommendationExecution.providerTaskId ?? "none"} downstream=\${recommendationExecution.downstreamTaskId ?? "none"} application=\${recommendationExecution.applicationReceiptHash ?? "none"} receipt=\${recommendationExecution.receiptHash ?? "none"}\`);
+    lines.push(\`Recommendation Execution Evidence: action=\${recommendationExecution.action?.actionId ?? "none"} scene=\${recommendationExecution.evidence?.sceneContentHash ?? "none"} ordinal=\${recommendationExecution.evidence?.itemOrdinal ?? "none"} frame=\${recommendationExecution.evidence?.frameSequence ?? "none"} binding=\${recommendationExecution.evidence?.executionBindingHash ?? "none"}\`);
+    lines.push(\`Recommendation Execution Boundary: executed=\${Boolean(recommendationExecution.governance?.downstreamActionExecutionProven)} verified=\${Boolean(recommendationExecution.evidence?.postActionVerified)} automatic=\${Boolean(recommendationExecution.governance?.executesAutomatically)} provider=\${Boolean(recommendationExecution.governance?.callsProvider)} effective=\${Boolean(recommendationExecution.governance?.recommendationEffectivenessProven)} causal=\${Boolean(recommendationExecution.governance?.causalAttribution)}\`);
+  }
   const recommendationOutcome = task.engineeringRecommendationOutcomeReceipt ?? null;
   if (recommendationOutcome) {
     lines.push(\`Recommendation Outcome: \${recommendationOutcome.registry ?? "unknown"} status=\${recommendationOutcome.status ?? "unknown"} outcome=\${recommendationOutcome.terminalOutcome ?? "unknown"}\`);

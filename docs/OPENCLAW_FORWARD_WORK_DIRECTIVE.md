@@ -57,7 +57,7 @@ return bounded transient local OCR or one read-only provider assessment without
 pixel egress. Direct operator interaction also includes one armed projected
 click and one write-only 1-32 character native type; one reviewed task may
 also request that one objective-selected OCR item be focused and receive its
-exact allowlisted objective value through a fixed two-action sequence. All 1232 workspace tests
+exact allowlisted objective value through a fixed two-action sequence. All 1281 workspace tests
 and typecheck pass, the body-config and event-audit integration checks pass, the
 828-entry milestone registry and 1016-file script audit pass, and
 the Windows path budget has no file over 160 repository-relative characters.
@@ -106,7 +106,7 @@ non-empty tab set all still agree. The current active URL is deliberately not
 part of that decision, so operator navigation is preserved. First prepare,
 changed authority, stale lease, stopped browser, session drift, and an empty tab
 set retain the existing open/recovery path. Both Phase 3 service gates prove a
-second prepare keeps one session, lease, and tab; all 1232 tests, typecheck,
+second prepare keeps one session, lease, and tab; all 1281 tests, typecheck,
 body-config, MVP readiness, and the exact 32-file Session Manager closure pass.
 The physical prepare pair recorded `session_started` followed 11 ms later by
 `same_authority`, preserving session `47e6a200...`, Firefox PID 63947, the
@@ -284,20 +284,29 @@ When an operator selects the fixed provider recommendation in Observer, the
 existing semantic-click control creates its already-governed downstream task.
 Core validates the unchanged provider response and fixed control link, then
 derives a hash-bound application receipt that the caller cannot supply. This
-proves explicit selection and downstream task binding only. It does not prove
-execution, terminal outcome, effectiveness, causality, or justify automatic
-ranking, approval, task creation, action, or provider continuation. The next
-distinct review must bind a terminal downstream outcome before considering any
-non-causal effectiveness feedback.
+proves explicit selection and downstream task binding only; distinct execution
+and terminal receipts carry later claims without rewriting it. It does not
+prove effectiveness or causality or justify automatic ranking, approval, task
+creation, action, or provider continuation.
 
 That exact terminal edge is now implemented in
 [`docs/plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md`](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md).
 The shared complete, fail, and delegated terminal owner derives one
 application-receipt-bound observation before experience memory records the
 task. Only completed/failed and bounded terminal phase persist; outcome summary
-and details do not. This proves a terminal correlation, not action execution,
-recommendation effectiveness, or causality, and it cannot change ranking,
-policy, approval, execution, or provider behavior. Freeze this receipt chain
+and details do not.
+
+The missing action-evidence edge is now implemented in
+[`docs/plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md`](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md).
+The existing browser task executor forwards evidence only after trusted
+semantic handoff, one accepted Screen Act click, post-action frame verification,
+and fully passing task verification. Core derives a receipt without target id
+or name, URL, page/provider content, input value, or outcome details. Outcome v1
+binds that execution receipt to the same application, provider task, downstream
+task, and terminal observation; legacy outcome v0 remains valid. This proves
+exact governed action execution and terminal correlation, not recommendation
+effectiveness or causality, and it cannot change ranking, policy, approval,
+execution authority, training, or provider behavior. Freeze this receipt chain
 after its exact gates pass. The next capability requires a fresh canonical
 route review rather than another feedback wrapper or automatic-learning layer.
 

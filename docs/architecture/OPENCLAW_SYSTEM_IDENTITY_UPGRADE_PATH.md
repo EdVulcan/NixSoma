@@ -741,7 +741,7 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 
 | 身份层级 | 当前成熟度 | 证据与主要缺口 |
 | --- | --- | --- |
-| Level 1 用户态控制平面 | 约 92% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；durable experience feedback 将同类型后续终态以有界、幂等、非因果统计反馈到既有记录，task-bound consumption receipt 证明最多四条 recall 到达成功响应的 governed provider，operator-reviewed application receipt 与权威 terminal outcome receipt 又证明建议被选择并绑定到下游任务终态。动作执行、建议有效性与因果效果仍未证明。 |
+| Level 1 用户态控制平面 | 约 92% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；durable experience feedback 将同类型后续终态以有界、幂等、非因果统计反馈到既有记录，task-bound consumption receipt 证明最多四条 recall 到达成功响应的 governed provider，operator-reviewed application receipt、verified execution receipt 与权威 terminal outcome receipt 又分别证明建议被选择、一个既有治理 semantic click 确实执行并绑定到下游任务终态。建议有效性与因果效果仍未证明。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 72-76% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal/boot diagnosis、target-specific post-repair health receipt、只读 eBPF process-exec、network connect-attempt 与 file open-attempt evidence、已部署的 automatic incident scheduler，以及固定 body unit 的资源观测和声明式 cgroup envelope 已形成。物理 generation `52s1asvy...` 已包含三个 probes 及显式 compact aggregate；file-open 不含 filename/path/content/result，aggregate 不含 raw values，并通过 KVM 与物理双门禁。物理 Phase D mutation、自动 rollback、开发终端资源隔离和更广系统能力仍未建立。 |
 | Level 4 图形栈内生组件 | 约 86%（bounded native/operator input、semantic type/click、reviewed run/assessment、OCR actions、current-tab close 与 receipt-bound semantic submit 已物理完成） | 已有 user-owned nested compositor、AI-owned Nix Firefox、原生 frame/input/projection、surface 生命周期、task-grounded provider decisions、OCR workflows、当前 tab owner 与 type-receipt-bound submit。`5zlz2s6z...` gate 证明固定 local form 的 type -> submit、可见 completion、exact no-replay、无 plaintext persistence、task unchanged 与健康服务。该动作族已冻结；Enter、hotkey、repeat、通用键盘代理、开放式循环、任意进程/窗口控制和桌面接管仍未完成。 |
@@ -790,8 +790,11 @@ fresh canonical route review 已选择 Level 1 durable experience feedback：只
 能力 task-bound recall-consumption receipt 已在源码实现，能证明精确 recall set
 到达成功响应的 provider；operator-reviewed downstream application receipt 也已
 在源码实现，能证明操作者通过固定治理控件把建议绑定到一个下游 task；该 task 的
-权威 completed/failed 终态也已绑定回 application receipt 并进入 experience memory。
-这仍不证明动作执行、建议有效或因果关系，也不会自动调权、改变策略或训练。
+一个既有治理 semantic click 只有在 trusted handoff、Screen Act 执行与 post-action
+verification 全部成立后才生成 execution receipt，权威 completed/failed 终态再通过
+outcome v1 绑定 application 与 execution receipt 并进入 experience memory。该链证明
+精确动作执行与终态相关性，但仍不证明建议有效或因果关系，也不会自动调权、改变
+策略或训练。
 
 因此，当前实现与最终愿景的差异是**完成范围**而不是**架构方向**。仍显著缺失的是
 长时间自主运行、可验证的 durable learning/memory feedback loop、物理机上的 Phase D

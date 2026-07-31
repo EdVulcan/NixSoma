@@ -375,6 +375,7 @@ function buildSemanticClickExecutionFixture({
     },
   };
   const postCalls = [];
+  const recommendationExecutionCalls = [];
   let screenActCalls = 0;
   const client = {
     sessionManagerUrl: "http://session-manager",
@@ -415,26 +416,24 @@ function buildSemanticClickExecutionFixture({
             degraded: false,
             result: "executed-browser-runtime",
             mediation: {
+              registry: "nixsoma-ai-browser-semantic-scene-click-dispatch-v0",
+              attempted: true,
               accepted: true,
-              transport: "trusted-sidecar-ipc",
-              effect: { url: targetUrl },
-              visualGrounding: {
-                registry: "openclaw-trusted-work-view-visual-action-grounding-v0",
-                required: true,
-                status: "grounded",
-                before: {
-                  registry: "openclaw-browser-visual-frame-v0",
-                  sha256: frameSha256,
-                  sequence: frameSequence,
-                  fresh: true,
-                },
-                after: {
-                  registry: "openclaw-browser-visual-frame-v0",
-                  sha256: "c".repeat(64),
-                  sequence: frameSequence + 1,
-                  fresh: true,
-                },
-                sequenceAdvanced: true,
+              status: "executed",
+              leaseMatched: true,
+              transport: "browser-runtime-direct",
+              semanticClick: {
+                registry: "nixsoma-ai-browser-semantic-scene-click-resolution-v0",
+                sceneContentHash: "d".repeat(64),
+                itemOrdinal: 1,
+                itemCount: 1,
+                browserMatched: true,
+                frameMatched: true,
+                sceneMatched: true,
+                actionExecuted: true,
+                postActionVerified: true,
+                postFrameSequenceAdvanced: true,
+                postFrameChanged: true,
               },
             },
           },
@@ -448,6 +447,7 @@ function buildSemanticClickExecutionFixture({
     stateData,
     client,
     postCalls,
+    recommendationExecutionCalls,
     get screenActCalls() {
       return screenActCalls;
     },
@@ -466,6 +466,10 @@ function buildSemanticClickExecutionFixture({
       attachTaskToWorkView: (task, workView) => {
         task.workView = workView;
         return task;
+      },
+      recordRecommendationExecution: (task, evidence) => {
+        recommendationExecutionCalls.push({ task, evidence });
+        return { receiptHash: "e".repeat(64) };
       },
     },
   };
@@ -2658,6 +2662,41 @@ test("browser task executor dispatches one semantic click after trusted handoff 
   assert.equal(actionCall.body.semanticTarget.targetId, "frame-7-target-1");
   assert.equal(actionCall.body.semanticTarget.inventorySha256, "b".repeat(64));
   assert.equal(actionCall.body.semanticTarget.frame.sequence, 7);
+});
+
+test("browser task executor forwards verified recommendation action evidence to the receipt owner", async () => {
+  const fixture = buildSemanticClickExecutionFixture();
+  const { executor } = createExecutorHarness({
+    taskManager: fixture.taskManager,
+    deps: {
+      client: fixture.client,
+      readWorkViewState: fixture.readWorkViewState,
+    },
+  });
+  const task = {
+    id: "recommendation-semantic-click-task",
+    type: "browser_task",
+    goal: "Execute one reviewed recommendation",
+    status: "queued",
+    targetUrl: fixture.targetUrl,
+    engineeringRecommendationApplicationReceipt: { receiptHash: "a".repeat(64) },
+  };
+
+  const result = await executor.executeTaskWithRecovery(task, {
+    actions: [{ kind: "browser.semantic_click", params: { target: { name: "Inspect", role: "button" } } }],
+    expectedUrl: fixture.targetUrl,
+    hideOnComplete: false,
+  });
+
+  assert.equal(result.finalExecution.task.status, "completed");
+  assert.equal(fixture.recommendationExecutionCalls.length, 1);
+  const recorded = fixture.recommendationExecutionCalls[0];
+  assert.equal(recorded.task.id, task.id);
+  assert.equal(recorded.evidence.actionResults.length, 1);
+  assert.equal(recorded.evidence.actionResults[0].mediation.semanticClick.actionExecuted, true);
+  assert.equal(recorded.evidence.actionResults[0].mediation.semanticClick.postActionVerified, true);
+  assert.equal(recorded.evidence.semanticActionHandoff.status, "ready_for_dispatch");
+  assert.equal(recorded.evidence.verification.ok, true);
 });
 
 test("browser task executor blocks stale semantic click handoff without automatic redispatch", async () => {

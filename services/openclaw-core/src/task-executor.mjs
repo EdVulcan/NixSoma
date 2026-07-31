@@ -85,6 +85,7 @@ export function createTaskExecutor(deps) {
     buildWorkViewAttachPayload,
     completeTask,
     failTask,
+    recordRecommendationExecution,
     reconcileRuntimeState,
     getNextQueuedTask,
     buildTaskSummary,
@@ -848,6 +849,14 @@ async function executeTask(task, options = {}) {
         finalWorkViewState: preCompletionWorkViewState,
         verification,
       };
+    }
+
+    if (task.engineeringRecommendationApplicationReceipt) {
+      recordRecommendationExecution(task, {
+        actionResults,
+        semanticActionHandoff,
+        verification,
+      });
     }
 
     let finalWorkViewState = preCompletionWorkViewState;

@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildNativeEngineeringRecommendationApplicationReceipt } from "../src/native-engineering-recommendation-application-receipt.mjs";
+import { buildNativeEngineeringRecommendationExecutionReceipt } from "../src/native-engineering-recommendation-execution-receipt.mjs";
 import {
   buildNativeEngineeringRecommendationOutcomeReceipt,
   validateNativeEngineeringRecommendationOutcomeReceipt,
 } from "../src/native-engineering-recommendation-outcome-receipt.mjs";
+import { recommendationExecutionEvidence } from "./native-engineering-recommendation-receipt-fixture.mjs";
 
 function applicationReceipt() {
   return buildNativeEngineeringRecommendationApplicationReceipt({
@@ -80,6 +82,28 @@ test("recommendation outcome receipt accepts bounded failure without treating it
   assert.equal(receipt.terminalOutcome, "failed");
   assert.equal(receipt.governance.recommendationEffectivenessProven, false);
   assert.equal(receipt.governance.causalAttribution, false);
+});
+
+test("recommendation outcome receipt v1 binds verified action execution without claiming effectiveness", () => {
+  const application = applicationReceipt();
+  const execution = buildNativeEngineeringRecommendationExecutionReceipt({
+    applicationReceipt: application,
+    ...recommendationExecutionEvidence(),
+  });
+  const receipt = buildNativeEngineeringRecommendationOutcomeReceipt({
+    applicationReceipt: application,
+    executionReceipt: execution,
+    downstreamTaskId: "semantic-task-7",
+    terminalOutcome: "completed",
+    terminalPhase: "completed",
+  });
+  assert.equal(receipt.registry, "openclaw-native-engineering-recommendation-outcome-receipt-v1");
+  assert.equal(receipt.executionReceiptHash, execution.receiptHash);
+  assert.equal(receipt.governance.executionReceiptBound, true);
+  assert.equal(receipt.governance.downstreamActionExecutionProven, true);
+  assert.equal(receipt.governance.recommendationEffectivenessProven, false);
+  assert.equal(receipt.governance.causalAttribution, false);
+  assert.equal(validateNativeEngineeringRecommendationOutcomeReceipt(receipt), receipt);
 });
 
 test("recommendation outcome receipt rejects mismatched tasks, non-terminal states, and tampering", () => {

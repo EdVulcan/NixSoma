@@ -49,8 +49,9 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 semantic submit | One explicit request binds an under-five-minute verified write-only type receipt to the same current task and one enabled Submit/Send/Continue/Confirm button, then reuses the existing semantic click owner once | Physically accepted in `5zlz2s6z...` and carried by current `52s1asvy...`; the fixed local form executed type then submit with two calls/two actions, visible completion, exact replay rejection before provider contact, unchanged task, no plaintext persistence, tmpfs profile, and healthy services |
 | Level 1 durable experience feedback | Older experience records correlate at most 32 idempotent later terminal outcomes for the exact same task type; engineering context and Observer separate this feedback from historical outcome rate | Implemented in source; correlation is explicitly non-causal, advisory use is unproven, and feedback cannot change ranking, policy, provider calls, or execution |
 | Level 1 recall consumption receipt | A transient candidate binds at most four recalled records to one execution/source task and context hash; only a successful approved provider response finalizes a request-bound receipt | Implemented in source; provider consumption is proven without persisting provider content, while downstream advisory application and causality remain explicitly unproven |
-| Level 1 recommendation application receipt | Explicit Observer selection reuses the fixed governed semantic-click task control; Core derives a response/link/downstream-task-bound receipt that callers cannot inject | Implemented in source; operator application and downstream task binding are proven, while execution, terminal outcome, effectiveness, and causality remain explicitly unproven |
-| Level 1 recommendation outcome receipt | The authoritative task terminal owner binds one completed/failed observation to the exact application receipt and preserves it in task state and experience memory | Implemented in source; terminal outcome observation is proven without outcome content, while action execution, recommendation effectiveness, causality, ranking, and policy changes remain explicitly unproven |
+| Level 1 recommendation application receipt | Explicit Observer selection reuses the fixed governed semantic-click task control; Core derives a response/link/downstream-task-bound receipt that callers cannot inject | Implemented in source; the application receipt proves only selection and binding, leaving execution and terminal claims to separate receipts |
+| Level 1 recommendation execution receipt | The existing browser task executor forwards one trusted semantic-click result only after Screen Act execution and post-action verification; Core derives the receipt and excludes target/page/provider content | Implemented in source; exact action execution is proven without adding an actuator, provider call, retry, effectiveness, or causality claim |
+| Level 1 recommendation outcome receipt | The authoritative task terminal owner binds one completed/failed observation to the exact application receipt and optionally its verified execution receipt, then preserves it in task state and experience memory | Implemented in source; v0 remains terminal-only and v1 proves execution plus terminal correlation, while effectiveness, causality, ranking, and policy changes remain explicitly unproven |
 | Level 3 network observation | Fixed `fentry/__sys_connect` eBPF probe sends only timestamp, process identity, sockaddr family, and address length through the system-sense/Core/Observer read-only path; only the first two sockaddr bytes are read and destination, port, address bytes, payload, persistence, and policy execution remain excluded | Physical proof originated in `gd9ps40...`; current `52s1asvy...` retains the deployed route, with the prior Core and Observer gates capturing 27 `curl` events and no destination, port, payload, or persistence |
 | Level 3 file-open observation | Fixed `fentry/do_sys_openat2` eBPF probe sends only timestamp, process identity, flags, and mode through the same read-only path; filename/path/content/inode/mount/result, persistence, and policy execution remain excluded | Generation `qcv5ggpr...` passed both installed gates at the 128-event hard cap; current `52s1asvy...` retains the accepted probe and healthy service boundary |
 | Level 3 kernel activity snapshot | One explicit request invokes the three existing capture owners in parallel and returns only lane status, counts, and continuity through System Sense/Core/Observer | Current `52s1asvy...` passed both installed gates with Core counts 62/46/128 and Observer total 240; all three lanes were available with no raw values, persistence, repeat, provider/browser activity, or host mutation |
@@ -250,10 +251,17 @@ This evidence does not authorize another physical generation switch.
    It creates no extra task or approval and proves neither execution nor
    effectiveness. See
    [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md`](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md).
-6. **Downstream terminal observation closes the bounded feedback chain.** The
+6. **Verified recommendation execution closes the action-evidence gap.** The
+   existing browser task executor forwards one semantic-click result only after
+   trusted handoff, Screen Act execution, and post-action verification. Core
+   derives a target-free receipt and creates no new actuator, provider call, or
+   retry. See
+   [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md`](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md).
+7. **Downstream terminal observation closes the bounded feedback chain.** The
    authoritative complete/fail/delegated terminal owner derives one receipt
-   bound to the exact application receipt and downstream task. Task state,
-   experience memory, and Observer retain no outcome summary or details. See
+   bound to the exact application receipt and downstream task. When the verified
+   execution receipt is present, outcome v1 binds its hash while retaining no
+   outcome summary or details. See
    [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md`](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md).
 
 Do not manufacture a VFS/network variant, provider/readiness wrapper, generic
@@ -918,6 +926,9 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md](./plans/OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md) | Selected post-acceptance Level 4 form-workflow candidate and duplicate-capability guard. |
 | [OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md) | Completed exact request-bound incident diagnosis handoff and provider boundary. |
 | [OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md) | Completed local incident outcome absorption and matching-target advisory recall. |
+| [OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md) | Explicit operator application of one fixed provider recommendation to the existing semantic-click task path. |
+| [OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md) | Verified execution receipt for the exact existing governed semantic click without target or content persistence. |
+| [OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md) | Terminal outcome v0/v1 binding for application-only and execution-proven paths. |
 | [OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Completed learned-pattern inclusion in the exact approved incident diagnosis request. |
 | [OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_ACTION_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_ACTION_PLAN.md) | Completed reviewed read-only opening of provider-bound incident evidence. |
 | [OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md) | Completed reviewed same-unit health, inventory, and bounded journal refresh. |

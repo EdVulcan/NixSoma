@@ -31,9 +31,10 @@ No new actuator, provider call, task family, or approval owner is introduced.
   hash.
 - `explicitOperatorSelection=true`, `existingControlReused=true`, and
   `downstreamTaskBound=true` prove application through the reviewed control.
-- `downstreamExecutionProven=false`, `downstreamOutcomeProven=false`, and
-  `causalAttribution=false` are mandatory. No provider reason or content is
-  persisted.
+- This application receipt intentionally keeps `downstreamExecutionProven=false`
+  and `downstreamOutcomeProven=false`; later receipts prove those distinct
+  edges without rewriting the original application claim. No provider reason
+  or content is persisted.
 
 ## Evidence
 
@@ -57,7 +58,8 @@ reboot occurred.
 
 ## Deferred
 
-- proof that the downstream task started or executed its action;
+- downstream action execution is implemented separately in
+  [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md);
 - downstream terminal binding is implemented separately in
   [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md);
 - effectiveness scoring, causal attribution, ranking changes, training, or
@@ -67,7 +69,9 @@ reboot occurred.
 
 ## Next Real Capability
 
-The exact downstream terminal binding is now implemented in
+The exact downstream execution and terminal bindings are now implemented in
+[`OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md)
+and
 [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md).
-It does not infer success from task creation or automatically alter ranking,
-policy, approval, or execution.
+Neither infers effectiveness from task creation or automatically alters
+ranking, policy, approval, or execution.
