@@ -17,8 +17,6 @@ export function observerOperationsPanels() {
             <div class="actions">
               <button id="create-task-button">Create Task</button>
               <button id="create-planned-task-button" class="secondary">Create Plan</button>
-              <button id="operator-step-button" class="secondary">Operator Step</button>
-              <button id="operator-run-button" class="secondary">Operator Run</button>
               <button id="recover-latest-task-button" class="secondary">Recover Latest Finished Task</button>
               <button id="recover-latest-failed-task-button" class="secondary">Recover Latest Failed Task</button>
               <button id="load-history-button" class="secondary">Load Latest Task History</button>
@@ -63,6 +61,15 @@ ${observerAiWorkViewPanel()}
         </section>
         <section class="panel">
           <h2>Operator Loop</h2>
+          <div class="field">
+            <label for="operator-run-limit-input">Task Limit</label>
+            <input id="operator-run-limit-input" type="number" min="1" max="20" step="1" value="5" />
+          </div>
+          <div class="actions tight">
+            <button id="operator-step-button" class="secondary">Run Next</button>
+            <button id="operator-preview-button" class="secondary">Preview Queue</button>
+            <button id="operator-run-button">Run Queue</button>
+          </div>
           <div class="metric"><span>Status</span><span id="operator-loop-status">idle</span></div>
           <div class="metric"><span>Blocked</span><span id="operator-loop-blocked">false</span></div>
           <div class="metric"><span>Next Task</span><span id="operator-loop-next">none</span></div>

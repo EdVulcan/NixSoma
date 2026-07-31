@@ -23,6 +23,7 @@ import { observerClientRuntimeBindingsScript } from "./client-script-runtime-bin
 import { observerClientNativeRuntimeRefreshTasksScript } from "./client-script-runtime-native-runtime-refresh.mjs";
 import { observerClientRuntimeKernelActivityScript } from "./client-script-runtime-kernel-activity.mjs";
 import { observerClientRuntimeReviewedBrowserTaskScript } from "./client-script-runtime-reviewed-browser-task.mjs";
+import { observerClientRuntimeOperatorSessionScript } from "./client-script-runtime-operator-session.mjs";
 
 export const observerClientRuntimeActionsScript = `async function loadRecentEvents() {
   try {
@@ -36,66 +37,7 @@ export const observerClientRuntimeActionsScript = `async function loadRecentEven
   }
 }
 
-${observerClientRuntimeReviewedBrowserTaskScript}${observerClientRuntimeApprovalTasksScript}${observerClientRuntimeEngineeringLoopControlsScript}${observerClientRuntimeEngineeringLspTargetSelectionScript}${observerClientRuntimeEngineeringSuggestedActionScript}${observerClientRuntimeEngineeringRecommendationScript}${observerClientRuntimeEngineeringPlanScript}${observerClientNativeRuntimeRefreshTasksScript}${observerClientRuntimeSystemHealScript}${observerClientRuntimeScreenObservationScript}${observerClientRuntimeSemanticTargetTaskScript}${observerClientRuntimeWorkViewControlsScript}${observerClientRuntimeAiWorkspaceProjectionScript}${observerClientRuntimeAiWorkspaceSemanticSubmitScript}${observerClientRuntimeAiWorkspaceOperatorClickScript}${observerClientRuntimeAiWorkspaceOperatorTypeScript}${observerClientRuntimeAiWorkspaceReviewedCycleScript}${observerClientRuntimeAiWorkspaceOcrAssessmentScript}${observerClientRuntimeAiWorkspaceOcrClickScript}${observerClientRuntimeAiWorkspaceOcrTypeScript}${observerClientRuntimeAiWorkspaceOcrFocusTypeScript}${observerClientRuntimeKernelActivityScript}async function runOperatorStepFromUi() {
-  const result = await fetchJson(\`\${observerConfig.coreUrl}/operator/step\`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({}),
-  });
-
-  renderOperatorPanel(result);
-  renderEngineeringRecommendationFromOperatorResult(result);
-  renderEngineeringPlanFromOperatorResult(result);
-  taskHistoryFocus = result.task?.id ? "selected-task" : taskHistoryFocus;
-  selectedHistoryTaskId = result.task?.id ?? selectedHistoryTaskId;
-  if (result.task?.id) {
-    taskDetailIdInput.value = result.task.id;
-  }
-  setControlMessage(result.ran
-    ? \`Operator completed task \${result.task?.id ?? "unknown"}.\`
-    : "Operator step found no queued task.");
-  await refreshRuntime();
-  await refreshTaskList();
-  await refreshTaskHistoryDetail();
-  await refreshActionState();
-  await refreshWorkView();
-  await refreshScreen();
-  await refreshOperatorState();
-  await refreshPolicyState();
-  await refreshCapabilityHistory();
-  await refreshCommandLedger();
-}
-
-async function runOperatorLoopFromUi() {
-  const result = await fetchJson(\`\${observerConfig.coreUrl}/operator/run\`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ maxSteps: 5 }),
-  });
-
-  renderOperatorPanel(result);
-  renderEngineeringRecommendationFromOperatorResult(result);
-  renderEngineeringPlanFromOperatorResult(result);
-  const lastTask = [...(result.steps ?? [])].reverse().find((step) => step.task?.id)?.task ?? null;
-  taskHistoryFocus = lastTask?.id ? "selected-task" : taskHistoryFocus;
-  selectedHistoryTaskId = lastTask?.id ?? selectedHistoryTaskId;
-  if (lastTask?.id) {
-    taskDetailIdInput.value = lastTask.id;
-  }
-  setControlMessage(result.ran
-    ? \`Operator run completed \${result.count ?? result.steps?.length ?? 0} task(s).\`
-    : "Operator run found no queued tasks.");
-  await refreshRuntime();
-  await refreshTaskList();
-  await refreshTaskHistoryDetail();
-  await refreshActionState();
-  await refreshWorkView();
-  await refreshScreen();
-  await refreshOperatorState();
-  await refreshPolicyState();
-  await refreshCapabilityHistory();
-  await refreshCommandLedger();
-}
+${observerClientRuntimeReviewedBrowserTaskScript}${observerClientRuntimeOperatorSessionScript}${observerClientRuntimeApprovalTasksScript}${observerClientRuntimeEngineeringLoopControlsScript}${observerClientRuntimeEngineeringLspTargetSelectionScript}${observerClientRuntimeEngineeringSuggestedActionScript}${observerClientRuntimeEngineeringRecommendationScript}${observerClientRuntimeEngineeringPlanScript}${observerClientNativeRuntimeRefreshTasksScript}${observerClientRuntimeSystemHealScript}${observerClientRuntimeScreenObservationScript}${observerClientRuntimeSemanticTargetTaskScript}${observerClientRuntimeWorkViewControlsScript}${observerClientRuntimeAiWorkspaceProjectionScript}${observerClientRuntimeAiWorkspaceSemanticSubmitScript}${observerClientRuntimeAiWorkspaceOperatorClickScript}${observerClientRuntimeAiWorkspaceOperatorTypeScript}${observerClientRuntimeAiWorkspaceReviewedCycleScript}${observerClientRuntimeAiWorkspaceOcrAssessmentScript}${observerClientRuntimeAiWorkspaceOcrClickScript}${observerClientRuntimeAiWorkspaceOcrTypeScript}${observerClientRuntimeAiWorkspaceOcrFocusTypeScript}${observerClientRuntimeKernelActivityScript}
 
 async function launchTaskIntoWorkView(taskId, targetUrl) {
   if (!taskId || !targetUrl) {

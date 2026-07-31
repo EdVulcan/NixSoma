@@ -1,5 +1,6 @@
 import { sendJson, readJsonBody } from "../../../packages/shared-utils/src/http.mjs";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
+import { buildBoundedOperatorRunRequest } from "./operator-run-request.mjs";
 
 function serialiseOperatorStep(step, { serialiseTask, serialiseExecutionResult, buildOperatorState }) {
   return {
@@ -106,7 +107,8 @@ export async function handleOperatorControlRoute({
   if (req.method === "POST" && requestUrl.pathname === "/operator/run") {
     try {
       const body = await readJsonBody(req);
-      const result = await runOperatorLoop(body);
+      const boundedRun = buildBoundedOperatorRunRequest(body);
+      const result = await runOperatorLoop(boundedRun.request);
       sendJson(res, 200, {
         ok: true,
         ran: result.ran,
@@ -122,6 +124,7 @@ export async function handleOperatorControlRoute({
         })),
         operator: result.operator ?? buildOperatorState(),
         summary: result.summary,
+        session: boundedRun.session,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

@@ -25,6 +25,9 @@ rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp"
 
 cleanup() {
   rm -f "${HTML_FILE:-}" "${CLIENT_FILE:-}"
+  if [[ -n "${RESULT_DIR:-}" ]]; then
+    rm -rf "$RESULT_DIR"
+  fi
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -38,7 +41,12 @@ source "$SCRIPT_DIR/dev-openclaw-http-json-helper.sh"
 assert_json() {
   local json="$1"
   local script="$2"
-  node -e "$script" "$json"
+  printf '%s' "$json" | node -e '
+    const fs = require("node:fs");
+    const script = process.argv[1];
+    process.argv[1] = fs.readFileSync(0, "utf8");
+    eval(script);
+  ' "$script"
 }
 
 "$SCRIPT_DIR/dev-up.sh"
@@ -56,7 +64,11 @@ const client = fs.readFileSync(process.argv[3], "utf8");
 const requiredHtml = [
   "create-planned-task-button",
   "operator-step-button",
+  "operator-preview-button",
   "operator-run-button",
+  "operator-run-limit-input",
+  "Preview Queue",
+  "Run Queue",
   "task-plan-json",
   "operator-loop-json",
 ];
@@ -67,6 +79,8 @@ const requiredClient = [
   "task.planned",
   "renderTaskPlan",
   "renderOperatorPanel",
+  "boundedOperatorRunLimit",
+  "JSON.stringify({ maxSteps, dryRun })",
 ];
 
 for (const token of requiredHtml) {
@@ -84,19 +98,34 @@ EOF
 planned_task="$(post_json "$CORE_URL/tasks/plan" "{\"goal\":\"Observer operator planned task\",\"type\":\"browser_task\",\"targetUrl\":\"$TARGET_URL\",\"actions\":[{\"kind\":\"keyboard.type\",\"params\":{\"text\":\"observer operator\"}},{\"kind\":\"mouse.click\",\"params\":{\"x\":560,\"y\":320,\"button\":\"left\"}}]}")"
 assert_json "$planned_task" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.task?.status!=="queued" || data.plan?.status!=="planned"){throw new Error("planned task did not enter queued/planned state");}'
 
+queue_preview="$(post_json "$CORE_URL/operator/run" '{"maxSteps":2,"dryRun":true}')"
+assert_json "$queue_preview" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.ran!==false || data.dryRun!==true || data.nextTask?.id==null || data.session?.status!=="previewed" || data.session?.maximumSteps!==2){throw new Error("Observer bounded queue preview did not preserve queued task");}'
+
 operator_step="$(post_json "$CORE_URL/operator/step" '{}')"
 assert_json "$operator_step" 'const data=JSON.parse(process.argv[1]); if(!data.ok || !data.ran || data.task?.status!=="completed" || data.task?.plan?.status!=="completed" || data.execution?.verification?.ok!==true){throw new Error("operator step did not complete planned task from observer milestone");}'
 
-idle_run="$(post_json "$CORE_URL/operator/run" '{"maxSteps":2}')"
-assert_json "$idle_run" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.ran!==false || data.count!==0){throw new Error("operator run should be idle after single planned task");}'
+idle_run="$(post_json "$CORE_URL/operator/run" '{"maxSteps":2,"dryRun":false}')"
+assert_json "$idle_run" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.ran!==false || data.count!==0 || data.session?.status!=="run_requested" || data.session?.maximumSteps!==2){throw new Error("bounded operator run should be idle after single planned task");}'
 
 summary="$(curl --silent "$CORE_URL/tasks/summary")"
 
-node - <<'EOF' "$planned_task" "$operator_step" "$idle_run" "$summary"
-const planned = JSON.parse(process.argv[2]);
-const step = JSON.parse(process.argv[3]);
-const idle = JSON.parse(process.argv[4]);
-const summary = JSON.parse(process.argv[5]);
+RESULT_DIR="$(mktemp -d)"
+printf '%s' "$planned_task" > "$RESULT_DIR/planned.json"
+printf '%s' "$queue_preview" > "$RESULT_DIR/preview.json"
+printf '%s' "$operator_step" > "$RESULT_DIR/step.json"
+printf '%s' "$idle_run" > "$RESULT_DIR/idle.json"
+printf '%s' "$summary" > "$RESULT_DIR/summary.json"
+
+node - <<'EOF' "$RESULT_DIR"
+const fs = require("node:fs");
+const path = require("node:path");
+const resultDirectory = process.argv[2];
+const readResult = (name) => JSON.parse(fs.readFileSync(path.join(resultDirectory, `${name}.json`), "utf8"));
+const planned = readResult("planned");
+const preview = readResult("preview");
+const step = readResult("step");
+const idle = readResult("idle");
+const summary = readResult("summary");
 
 const counts = summary.summary?.counts ?? {};
 if (counts.completed !== 1 || counts.active !== 0) {
@@ -108,7 +137,9 @@ console.log(JSON.stringify({
     htmlControls: [
       "create-planned-task-button",
       "operator-step-button",
+      "operator-preview-button",
       "operator-run-button",
+      "operator-run-limit-input",
     ],
     clientApis: [
       "/tasks/plan",
@@ -128,6 +159,11 @@ console.log(JSON.stringify({
     status: step.task?.status ?? null,
     planStatus: step.task?.plan?.status ?? null,
     verification: step.execution?.verification?.ok ?? null,
+  },
+  queuePreview: {
+    taskId: preview.nextTask?.id ?? null,
+    status: preview.session?.status ?? null,
+    maximumSteps: preview.session?.maximumSteps ?? null,
   },
   idleRun: {
     ran: idle.ran,

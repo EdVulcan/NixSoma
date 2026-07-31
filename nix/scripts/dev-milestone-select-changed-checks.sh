@@ -570,6 +570,32 @@ const reviewedBrowserTaskComposerSlice = changedFiles.length > 0
   && changedFiles.every((file) => reviewedBrowserTaskComposerFiles.has(file))
   && changedFiles.some((file) => file === "services/openclaw-core/src/reviewed-browser-task-submission.mjs")
   && changedFiles.some((file) => file === "apps/observer-ui/src/client-script-runtime-reviewed-browser-task.mjs");
+const boundedOperatorWorkSessionFiles = new Set([
+  "apps/observer-ui/src/client-script-config-dom.mjs",
+  "apps/observer-ui/src/client-script-runtime-actions.mjs",
+  "apps/observer-ui/src/client-script-runtime-bindings.mjs",
+  "apps/observer-ui/src/client-script-runtime-operator-session.mjs",
+  "apps/observer-ui/src/observer-panels-operations.mjs",
+  "apps/observer-ui/test/client-script-runtime-operator-session.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_PLAN.md",
+  "docs/plans/README.md",
+  "nix/packages/observer-ui.nix",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "nix/scripts/dev-observer-operator-check.sh",
+  "nix/scripts/dev-operator-control-check.sh",
+  "services/openclaw-core/src/operator-control-routes.mjs",
+  "services/openclaw-core/src/operator-run-request.mjs",
+  "services/openclaw-core/test/operator-run-request.test.mjs",
+  "services/openclaw-core/test/route-handlers.test.mjs",
+]);
+const boundedOperatorWorkSessionSlice = changedFiles.length > 0
+  && changedFiles.every((file) => boundedOperatorWorkSessionFiles.has(file))
+  && changedFiles.some((file) => file === "services/openclaw-core/src/operator-run-request.mjs")
+  && changedFiles.some((file) => file === "apps/observer-ui/src/client-script-runtime-operator-session.mjs");
 const kernelFileOpenCaptureFiles = new Set([
   "apps/observer-ui/src/client-script-config-dom-kernel-file.mjs",
   "apps/observer-ui/src/client-script-config-dom.mjs",
@@ -1466,6 +1492,16 @@ function selectSourceHeuristics(file) {
 }
 
 for (const file of changedFiles) {
+  if (boundedOperatorWorkSessionSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("operator-control");
+    selectName("observer-operator");
+    continue;
+  }
   if (reviewedBrowserTaskComposerSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");

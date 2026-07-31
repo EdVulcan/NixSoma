@@ -214,6 +214,12 @@ operatorStepButton.addEventListener("click", () => {
   });
 });
 
+operatorPreviewButton.addEventListener("click", () => {
+  runOperatorLoopFromUi({ dryRun: true }).catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 operatorRunButton.addEventListener("click", () => {
   runOperatorLoopFromUi().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

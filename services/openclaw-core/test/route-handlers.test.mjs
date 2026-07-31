@@ -1413,7 +1413,49 @@ test("operator run route serialises loop steps and next task", async () => {
     }],
     operator: { mode: "loop-test" },
     summary: { completed: 1 },
+    session: {
+      registry: "nixsoma-bounded-operator-run-request-v0",
+      status: "previewed",
+      maximumSteps: 2,
+      dryRun: true,
+      governance: {
+        explicitOperatorTrigger: true,
+        taskOverridesAccepted: false,
+        backgroundScheduling: false,
+        automaticRepeat: false,
+        automaticRetry: false,
+        openLoop: false,
+        createsTask: false,
+        createsApproval: false,
+        callsProvider: false,
+        mutatesHost: false,
+      },
+    },
   });
+});
+
+test("operator run route rejects caller execution overrides before invoking the loop", async () => {
+  let callCount = 0;
+  const deps = createBaseDeps({
+    executor: {
+      runOperatorLoop: async () => {
+        callCount += 1;
+        return { ran: false, steps: [] };
+      },
+    },
+  });
+
+  for (const body of [
+    { maxSteps: 2, actions: [] },
+    { maxSteps: 2, taskId: "task-1" },
+    { maxSteps: 2, targetUrl: "https://example.com" },
+    { maxSteps: 2, policy: { decision: "allow" } },
+  ]) {
+    const response = await invokeRoute(deps, "POST", "/operator/run", body);
+    assert.equal(response.statusCode, 400);
+    assert.match(response.body.error, /does not accept task execution override fields/u);
+  }
+  assert.equal(callCount, 0);
 });
 
 test("operator step route preserves transient recommendation and compact evidence boundaries", async () => {

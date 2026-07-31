@@ -57,14 +57,23 @@ return bounded transient local OCR or one read-only provider assessment without
 pixel egress. Direct operator interaction also includes one armed projected
 click and one write-only 1-32 character native type; one reviewed task may
 also request that one objective-selected OCR item be focused and receive its
-exact allowlisted objective value through a fixed two-action sequence. All 1290 workspace tests
+exact allowlisted objective value through a fixed two-action sequence. All 1297 workspace tests
 and typecheck pass, the body-config and event-audit integration checks pass, the
-828-entry milestone registry and 1016-file script audit pass, and
+833-entry milestone registry and 1021-file script audit pass, and
 the Windows path budget has no file over 160 repository-relative characters.
 GitHub CI now enforces
 Node 22 typecheck, workspace tests, milestone registry/script audit, and the
 same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
+
+The current source frontier also closes the first bounded operator work session.
+Observer exposes a strict 1-20 task limit, an exact read-only queue preview, and
+a separate explicit finite run. Core accepts only `maxSteps + dryRun`, rejects
+task/action/URL/policy overrides before dispatch, and emits compact session
+governance. It reuses existing policy, pause, approval, execution,
+verification, persistence, and stop-condition owners. No scheduler, background
+pickup, automatic repeat/retry, open loop, provider call, task/approval
+creation, or host mutation was added. Physical deployment is deferred.
 
 For route planning, keep the denominators explicit. The currently bounded,
 operator-governed product is roughly 84-87% mature; the wider autonomous-agent
@@ -182,6 +191,13 @@ request-binding work; do not add another provider readiness wrapper or another
 one-off call surface.
 
 ## Selected Next Real Capability
+
+The newest source route is the accepted bounded operator work session in
+`OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_PLAN.md`. Its explicit queue preview and
+finite 1-20 task run supersede older source-level next-slice wording below. Full
+workspace, exact selector, structural, isolated-service, and closure evidence
+pass; freeze the contract and perform a fresh product-gap review. Do not extend
+it into scheduling, background pickup, retries, or an open-ended autonomy loop.
 
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation
