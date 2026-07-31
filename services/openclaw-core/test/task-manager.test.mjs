@@ -90,6 +90,7 @@ test("task manager recomputes provider recommendation provenance before serializ
       contract: "engineering_recommendation_v0",
       valid: true,
       actionId: "create_semantic_click_task",
+      responseContentHash: "a".repeat(64),
     },
   };
   manager.completeTask(providerTask, { summary: "Provider recommendation completed." });
@@ -109,6 +110,9 @@ test("task manager recomputes provider recommendation provenance before serializ
       createsApprovalAutomatically: false,
       executesAutomatically: false,
     },
+    engineeringRecommendationApplicationReceipt: {
+      downstreamTaskId: "caller-controlled-task",
+    },
   });
 
   assert.equal(task.engineeringRecommendationLink.registry, "openclaw-native-engineering-recommendation-link-v0");
@@ -116,7 +120,24 @@ test("task manager recomputes provider recommendation provenance before serializ
   assert.equal(task.engineeringRecommendationLink.source.taskStatus, "completed");
   assert.equal(task.engineeringRecommendationLink.action.actionId, "create_semantic_click_task");
   assert.equal(task.engineeringRecommendationLink.governance.providerCallAllowed, false);
+  assert.equal(task.engineeringRecommendationApplicationReceipt.providerTaskId, providerTask.id);
+  assert.equal(task.engineeringRecommendationApplicationReceipt.downstreamTaskId, task.id);
+  assert.notEqual(task.engineeringRecommendationApplicationReceipt.downstreamTaskId, "caller-controlled-task");
+  assert.equal(task.engineeringRecommendationApplicationReceipt.governance.downstreamExecutionProven, false);
+  assert.equal(task.engineeringRecommendationApplicationReceipt.governance.downstreamOutcomeProven, false);
+  assert.equal(task.engineeringRecommendationApplicationReceipt.governance.causalAttribution, false);
   assert.equal(manager.serialiseTask(task).engineeringRecommendationLink.source.taskId, providerTask.id);
+  assert.equal(manager.serialiseTask(task).engineeringRecommendationApplicationReceipt.downstreamTaskId, task.id);
+
+  const unlinkedTask = manager.createTask({
+    goal: "Ignore a caller-injected application receipt",
+    type: "browser_task",
+    engineeringRecommendationApplicationReceipt: {
+      downstreamTaskId: "caller-controlled-task",
+    },
+  });
+  assert.equal(unlinkedTask.engineeringRecommendationApplicationReceipt, undefined);
+  assert.equal(manager.serialiseTask(unlinkedTask).engineeringRecommendationApplicationReceipt, null);
 
   assert.throws(() => manager.createTask({
     goal: "Reject a cross-task recommendation link",

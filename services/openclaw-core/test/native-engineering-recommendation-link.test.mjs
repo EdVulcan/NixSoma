@@ -24,7 +24,7 @@ function createFixture() {
         contract: ENGINEERING_RECOMMENDATION_CONTRACT,
         valid: true,
         actionId: ENGINEERING_SEMANTIC_CLICK_ACTION_ID,
-        responseContentHash: "response-hash",
+        responseContentHash: "a".repeat(64),
       },
     },
   };
@@ -58,6 +58,7 @@ test("recommendation link binds a reviewed semantic-click plan to a completed pr
     taskStatus: "completed",
     registry: ENGINEERING_RECOMMENDATION_REGISTRY,
     contract: ENGINEERING_RECOMMENDATION_CONTRACT,
+    responseContentHash: "a".repeat(64),
     evidence: "provider_execution_recommendation",
   });
   assert.deepEqual(link.action, {
@@ -91,6 +92,20 @@ test("recommendation link rejects a missing, unfinished, or mismatched provider 
       status: "queued",
     }]]),
   }), /completed provider task/u);
+
+  assert.throws(() => buildNativeEngineeringRecommendationLink({
+    ...fixture,
+    tasks: new Map([[fixture.sourceTask.id, {
+      ...fixture.sourceTask,
+      cloudConsciousnessLiveProviderEgressExecution: {
+        ...fixture.sourceTask.cloudConsciousnessLiveProviderEgressExecution,
+        recommendation: {
+          ...fixture.sourceTask.cloudConsciousnessLiveProviderEgressExecution.recommendation,
+          responseContentHash: null,
+        },
+      },
+    }]]),
+  }), /provider response hash evidence/u);
 
   assert.throws(() => buildNativeEngineeringRecommendationLink({
     ...fixture,

@@ -3,12 +3,14 @@ import { createTaskRecovery } from "./task-recovery.mjs";
 import { redactWriteOnlyInputActionTree } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 import { buildBrowserTaskExecutionBinding } from "./browser-task-execution-binding.mjs";
 import { buildNativeEngineeringRecommendationLink } from "./native-engineering-recommendation-link.mjs";
+import { buildNativeEngineeringRecommendationApplicationReceipt } from "./native-engineering-recommendation-application-receipt.mjs";
 import { recoverCapabilityExecutionReservations } from "./capability-runtime-approval-binding.mjs";
 
 const TASK_EXTENSION_FIELDS = [
   { name: "sourceCommand", copyFromCreateInput: true },
   { name: "engineeringPlanTodoSuggestionLink", copyFromCreateInput: true },
   { name: "engineeringRecommendationLink", copyFromCreateInput: true },
+  { name: "engineeringRecommendationApplicationReceipt" },
   { name: "engineeringEditProposal" },
   { name: "engineeringWriteProposal" },
   { name: "workspaceMutation" },
@@ -333,6 +335,13 @@ function createTask(body, options = {}) {
       input: task.engineeringRecommendationLink,
       tasks,
     });
+    task.engineeringRecommendationApplicationReceipt =
+      buildNativeEngineeringRecommendationApplicationReceipt({
+        recommendationLink: task.engineeringRecommendationLink,
+        downstreamTaskId: task.id,
+        downstreamTaskType: task.type,
+        appliedAt: now,
+      });
   }
 
   // H-1 Fix: Evict oldest non-active tasks when the Map exceeds MAX_TASK_ENTRIES.

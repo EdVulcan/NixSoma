@@ -250,6 +250,18 @@ and Observer task detail retain compact evidence. This proves provider context
 consumption, not downstream use or causality; it changes no ranking, policy,
 approval, action, retry, or host state.
 
+The next explicit edge is now implemented in
+[`docs/plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md`](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md).
+When an operator selects the fixed provider recommendation in Observer, the
+existing semantic-click control creates its already-governed downstream task.
+Core validates the unchanged provider response and fixed control link, then
+derives a hash-bound application receipt that the caller cannot supply. This
+proves explicit selection and downstream task binding only. It does not prove
+execution, terminal outcome, effectiveness, causality, or justify automatic
+ranking, approval, task creation, action, or provider continuation. The next
+distinct review must bind a terminal downstream outcome before considering any
+non-causal effectiveness feedback.
+
 ## Governing Vision
 
 The controlling architecture documents are:

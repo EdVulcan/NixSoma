@@ -49,6 +49,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 semantic submit | One explicit request binds an under-five-minute verified write-only type receipt to the same current task and one enabled Submit/Send/Continue/Confirm button, then reuses the existing semantic click owner once | Deployed and physically accepted in `5zlz2s6z...`; the fixed local form executed type then submit with two calls/two actions, visible completion, exact replay rejection before provider contact, unchanged task, no plaintext persistence, tmpfs profile, and healthy services |
 | Level 1 durable experience feedback | Older experience records correlate at most 32 idempotent later terminal outcomes for the exact same task type; engineering context and Observer separate this feedback from historical outcome rate | Implemented in source; correlation is explicitly non-causal, advisory use is unproven, and feedback cannot change ranking, policy, provider calls, or execution |
 | Level 1 recall consumption receipt | A transient candidate binds at most four recalled records to one execution/source task and context hash; only a successful approved provider response finalizes a request-bound receipt | Implemented in source; provider consumption is proven without persisting provider content, while downstream advisory application and causality remain explicitly unproven |
+| Level 1 recommendation application receipt | Explicit Observer selection reuses the fixed governed semantic-click task control; Core derives a response/link/downstream-task-bound receipt that callers cannot inject | Implemented in source; operator application and downstream task binding are proven, while execution, terminal outcome, effectiveness, and causality remain explicitly unproven |
 | Level 3 network observation | Fixed `fentry/__sys_connect` eBPF probe sends only timestamp, process identity, sockaddr family, and address length through the system-sense/Core/Observer read-only path; only the first two sockaddr bytes are read and destination, port, address bytes, payload, persistence, and policy execution remain excluded | Physical proof originated in `gd9ps40...`; current `5zlz2s6z...` retains the deployed route, with the prior Core and Observer gates capturing 27 `curl` events and no destination, port, payload, or persistence |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Level 3 boot/restart evidence | `/system/systemd/boot-evidence` summarizes current/previous boot identity, bounded terminal markers, and a finite classification without returning journal messages; Core proxy and Observer checks are present | Accepted and carried by current generation `5zlz2s6z...`; registered Core/Observer and deployed direct/proxy checks bind boot `0fe071ee...` to previous boot `e8a6a4fa...`, classification `unknown`, 64 inspected entries, no markers, no journal payload, and nine healthy endpoints |
@@ -229,6 +230,13 @@ completed Phase D evidence lane remain frozen.
    binds task/source ids, up to four recalled ids, context/request hashes, and
    keeps downstream application and causality false. See
    [`OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md`](./plans/OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md).
+5. **Reviewed recommendation application closes the next explicit edge.** The
+   existing Observer recommendation control creates the existing governed
+   semantic-click task, while Core derives a tamper-evident receipt from the
+   verified provider response, recommendation link, and new downstream task.
+   It creates no extra task or approval and proves neither execution nor
+   effectiveness. See
+   [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md`](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md).
 
 Do not manufacture a VFS/network variant, provider/readiness wrapper, generic
 Enter or keyboard path, caller-coordinate action, automatic repetition, open

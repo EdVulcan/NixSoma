@@ -1061,6 +1061,7 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-engineering-work-view-binding.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-engineering-work-view-bind-routes.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-engineering-recommendation-link.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-engineering-recommendation-application-receipt.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-verification.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-recovery.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-microcompact.mjs"
@@ -1144,7 +1145,7 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/browser-action-contract.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-local-ocr.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 268 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 269 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi

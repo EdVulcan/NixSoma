@@ -7,6 +7,8 @@ export const ENGINEERING_SEMANTIC_CLICK_ACTION_ID = "create_semantic_click_task"
 export const ENGINEERING_SEMANTIC_CLICK_CONTROL_ID = "create-semantic-click-task-button";
 export const ENGINEERING_SEMANTIC_CLICK_CAPABILITY_ID = "plan.openclaw.browser.semantic_click_task";
 
+const SHA256 = /^[a-f0-9]{64}$/u;
+
 function boundedIdentifier(value, label, maxChars = 160) {
   const text = typeof value === "string" ? value.trim() : "";
   if (!text) {
@@ -49,6 +51,8 @@ export function buildNativeEngineeringRecommendationLink({
 
   const sourceTaskId = boundedIdentifier(input.sourceTaskId, "sourceTaskId");
   const sourceTask = requireSourceTask(tasks, sourceTaskId);
+  const responseContentHash = sourceTask.cloudConsciousnessLiveProviderEgressExecution
+    ?.recommendation?.responseContentHash;
   const sourceRegistry = boundedIdentifier(input.sourceRegistry, "sourceRegistry", 120);
   const contract = boundedIdentifier(input.contract, "contract", 80);
   const actionId = boundedIdentifier(input.actionId, "actionId", 80);
@@ -70,6 +74,9 @@ export function buildNativeEngineeringRecommendationLink({
     || input.executesAutomatically !== false) {
     throw new Error("Native engineering recommendation link does not match the fixed semantic-click control.");
   }
+  if (!SHA256.test(responseContentHash ?? "")) {
+    throw new Error("Native engineering recommendation link requires provider response hash evidence.");
+  }
 
   return {
     registry: NATIVE_ENGINEERING_RECOMMENDATION_LINK_REGISTRY,
@@ -81,6 +88,7 @@ export function buildNativeEngineeringRecommendationLink({
       taskStatus: sourceTask.status,
       registry: sourceRegistry,
       contract,
+      responseContentHash,
       evidence: "provider_execution_recommendation",
     },
     action: {

@@ -66,7 +66,8 @@ mutation, generation switch, or reboot occurred.
 
 ## Next Real Capability
 
-The next canonical review should select a downstream application receipt that explicitly binds
-one operator-reviewed recommendation to a later governed task before using that
-task's terminal outcome as effectiveness feedback. Do not derive application or
-causality from provider delivery alone.
+The downstream application receipt is now implemented in
+[`OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md).
+It binds one explicit operator-reviewed recommendation to a later governed task
+without deriving execution, outcome, effectiveness, or causality from provider
+delivery alone.

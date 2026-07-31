@@ -472,6 +472,28 @@ const taskBoundRecallConsumptionSlice = changedFiles.length > 0
   && changedFiles.every((file) => taskBoundRecallConsumptionFiles.has(file))
   && changedFiles.some((file) =>
     file === "services/openclaw-core/src/native-engineering-experience-consumption-receipt.mjs");
+const downstreamRecommendationApplicationFiles = new Set([
+  "apps/observer-ui/src/client-script-refreshers-app.mjs",
+  "apps/observer-ui/test/client-script-systemd-repair-receipt.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md",
+  "docs/plans/OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md",
+  "docs/plans/README.md",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "services/openclaw-core/src/native-engineering-recommendation-application-receipt.mjs",
+  "services/openclaw-core/src/native-engineering-recommendation-link.mjs",
+  "services/openclaw-core/src/task-manager.mjs",
+  "services/openclaw-core/test/native-engineering-recommendation-application-receipt.test.mjs",
+  "services/openclaw-core/test/native-engineering-recommendation-link.test.mjs",
+  "services/openclaw-core/test/task-manager.test.mjs",
+]);
+const downstreamRecommendationApplicationSlice = changedFiles.length > 0
+  && changedFiles.every((file) => downstreamRecommendationApplicationFiles.has(file))
+  && changedFiles.some((file) =>
+    file === "services/openclaw-core/src/native-engineering-recommendation-application-receipt.mjs");
 
 function physicalScriptsForManifestRow(phase, slug, forceShort = false) {
   const legacy = {
@@ -1277,6 +1299,16 @@ function selectSourceHeuristics(file) {
 }
 
 for (const file of changedFiles) {
+  if (downstreamRecommendationApplicationSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("observer-capability-invoke");
+    selectName("operator-loop");
+    continue;
+  }
   if (taskBoundRecallConsumptionSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");
