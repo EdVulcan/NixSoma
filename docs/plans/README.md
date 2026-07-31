@@ -22,6 +22,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md`](./OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md) | Operator identity, per-service credentials, and execution grants. |
 | [`OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md`](./OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Fixed Level 3 restart owners, bounded journal diagnosis, resource-pressure sensing, and declarative cgroup envelopes. |
 | [`OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md`](./OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md) | Bounded read-only boot/restart classification without journal payloads or recovery authority. |
+| [`OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md`](./OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md) | Post-acceptance Level 4 candidate for one task-bound semantic form activation/submit transition without generic keyboard or loop authority. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md) | Exact request-bound, guidance-only AI diagnosis from a compact terminal repair receipt. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md) | Local target-specific outcome absorption and advisory recall from verified incident receipts. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Up to three matching-target learned patterns inside the existing exact approved diagnosis request. |
@@ -40,7 +41,7 @@ The kernel whitepaper remains the long-horizon authority:
 ## Current Route
 
 The only current deployment baseline is physical generation
-`/nix/store/gd9ps40vz9qj4ll5sikxb0c0g3xnx7gc-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/1xh4x8ls64yzl919j2bssd9ilms98knv-nixos-system-nixos-26.05.4808.569d57850992`.
 Generation-specific `active` wording later in this section records the state at
 each historical checkpoint and does not override this baseline.
 
@@ -50,7 +51,7 @@ fixed observation, incident creation, automatic triage, pending repair
 promotion, explicit approval, one native hostd restart, target-specific
 post-health, and no replay for either completed or interrupted reservations.
 It found and fixed stopped-target `MainPID=0` handling. Current physical
-generation `gd9ps40...` contains that hostd correction.
+generation `1xh4x8ls...` contains that hostd correction.
 
 The Phase D controlled activation and rollback path now passes its disposable-VM
 release gate. `openclaw-declarative-evolution-activation-vm` proves one
@@ -75,6 +76,22 @@ sockaddr family metadata. Its disposable KVM proof and authorized physical
 deployment are release evidence; the final Core and Observer gates captured 27
 `curl` events with non-zero family and no destination, port, payload, or
 persistence fields. No new kernel hook is selected while this lane is frozen.
+
+The bounded boot/restart evidence route is also deployed in current generation
+`1xh4x8ls...`. Direct System Sense and Core proxy probes return HTTP 200. Its
+remaining work is acceptance reconciliation, not deployment or a new
+capability: run the registered Core/Observer checks, record compact generation
+and boot-bound evidence, update
+[`OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md`](./OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md),
+and freeze the lane. This acceptance requires no switch, reboot, provider call,
+browser action, recovery, or host mutation.
+
+After that gate closes, the selected real product candidate is the task-bound
+semantic form activation/submit workflow in
+[`OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md`](./OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md).
+The first design gate is a duplicate-capability audit against existing
+`click_item`: reuse the current actuator and add only missing lifecycle binding.
+Do not open another provider/readiness wrapper or generic keyboard/action lane.
 
 ### Historical Route Evidence
 
@@ -120,7 +137,7 @@ automatic local triage, pending repair promotion, approval-triggered one-shot
 dispatch, and fail-closed restart reconciliation were first deployed in
 generation
 `/nix/store/yzjwwp67apgv4rrzpm3g2gz12bqkq7vj-nixos-system-nixos-26.05.4808.569d57850992`
-and remain present in the current `gd9ps40...` generation.
+and remain present in the current `1xh4x8ls...` generation.
 Non-mutating health, auth, scheduler, live-closure, and Observer probes passed;
 the first post-switch tick observed all fixed targets healthy without changing
 task or approval counts. Freeze this lane and select a distinct concrete

@@ -13,7 +13,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, one-shot operator-authenticated projected click and bounded native type, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click, objective-bound OCR type, fixed OCR focus-then-type, governed current-tab close, an explicit bounded run-plus-assessment cycle, and the bounded Level 3 boot/restart evidence route, plus the completed Level 3 baseline | The twenty-fifth Level 4 slice remains physically complete; boot/restart evidence is source-complete and awaiting separately authorized deployment |
+| Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, one-shot operator-authenticated projected click and bounded native type, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click, objective-bound OCR type, fixed OCR focus-then-type, governed current-tab close, an explicit bounded run-plus-assessment cycle, and the bounded Level 3 boot/restart evidence route, plus the completed Level 3 baseline | The twenty-fifth Level 4 slice remains physically complete; boot/restart evidence is deployed and live-probed, with its registered Core/Observer acceptance record still to close |
 | Local validation | 1232 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1016-file script audit pass; 828 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/1xh4x8ls64yzl919j2bssd9ilms98knv-nixos-system-nixos-26.05.4808.569d57850992` | Generation 100 is active; same-authority prepare reuse, governed current-tab close, bounded Level 3 network observation, durable narrow operator-token ACLs, proxy-bound provider/browser networking, and the prior Level 4 capabilities are deployed |
@@ -48,7 +48,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 current-tab close | One explicit authenticated request carries only `browser.current_tab.close` plus `confirm=true`; Core grants one fixed Screen Act route and Browser Runtime closes only its current `activePage` while preserving the final tab | Physically proven in `pfiwq5p3...` and carried by current `1xh4x8ls...`; real headed Firefox PID 63947 stayed stable while the prepare-reuse test page closed with count 5 -> 4, helper lease plus Browser Runtime/Screen Act audit matched, and provider calls, automatic cleanup/repeat, user-service restarts, and reboot remained zero |
 | Level 3 network observation | Fixed `fentry/__sys_connect` eBPF probe sends only timestamp, process identity, sockaddr family, and address length through the system-sense/Core/Observer read-only path; only the first two sockaddr bytes are read and destination, port, address bytes, payload, persistence, and policy execution remain excluded | Physical proof originated in `gd9ps40...`; current `1xh4x8ls...` retains the deployed route, with the prior Core and Observer gates capturing 27 `curl` events and no destination, port, payload, or persistence |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
-| Level 3 boot/restart evidence | `/system/systemd/boot-evidence` summarizes current/previous boot identity, bounded terminal markers, and a finite classification without returning journal messages; Core proxy and Observer checks are present | Source-complete and locally probed; the current physical generation has not received the separate route gate |
+| Level 3 boot/restart evidence | `/system/systemd/boot-evidence` summarizes current/previous boot identity, bounded terminal markers, and a finite classification without returning journal messages; Core proxy and Observer checks are present | Deployed in current generation `1xh4x8ls...`; direct System Sense and Core proxy probes return HTTP 200, while the compact registered Core/Observer acceptance record remains pending |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Disposable Level 3 repair loop | `checks.x86_64-linux.openclaw-system-heal-repair-loop-vm` stops `openclaw-system-heal.service` inside KVM, observes and triages the incident, promotes one approval-gated repair, executes one native hostd restart, verifies post-health, and reconciles terminal state | Passed with one completed reservation and one interrupted reservation both proving no replay; no provider egress or generation mutation |
 | Disposable Phase D activation and rollback | `checks.x86_64-linux.openclaw-declarative-evolution-activation-vm` builds one approved managed-config closure, switches the guest through fixed hostd, then explicitly restores the exact previous generation and managed-source state through the separate fixed rollback owner | Passed with candidate `aed7e917...`, healthy post-activation/post-rollback evidence, preserved Core/hostd PIDs, consumed root snapshot, activation/rollback/snapshot replay rejection, zero failed units, and no provider/browser/automatic rollback activity |
@@ -61,6 +61,27 @@ The current checkout is on the only available physical host
 (`systemd-detect-virt=none`). A disposable KVM environment is available through
 the NixOS VM check, but there is no persistent VM workspace or permission to
 mutate the physical host implicitly.
+
+## How To Read Project Maturity
+
+Two percentages are intentionally used because they answer different questions:
+
+- **About 84-87% for the current bounded product** measures the operator-visible,
+  governed NixSoma scope that exists today: the local control plane, trusted
+  work view, fixed Level 3 body owners, bounded Level 4 eye-hand actions,
+  provider collaboration, audit, and recovery evidence. Its remaining work is
+  acceptance reconciliation, completion of coherent user workflows, and
+  integration/product hardening.
+- **About 52-60% for the final vision** measures the wider whitepaper target: a
+  durable local-first autonomous agent body with long-running autonomy, durable
+  learning and memory feedback loops, broader body nerves, physically governed
+  Phase D evolution, and a richer native graphical workspace.
+
+These estimates are not contradictory and do not indicate a change of product
+direction. The implemented architecture is aligned with the final vision, but
+the mature bounded product is only one major subset of that vision. Governance
+and evidence are required foundations; they must not be counted as substitutes
+for the missing autonomous behavior.
 
 ## Start Here
 
@@ -168,17 +189,32 @@ text input, operator-visible transient projection, minimal surface identity,
 and a fixed application lifecycle in production. General keyboard authority,
 desktop takeover, and generic process/window control remain future work.
 
-## Selected Next Capability
+## Selected Two-Stage Route
 
 The Phase C network connect-attempt slice is complete in source, disposable
-KVM, and the physical generation `1xh4x8ls...`; the kernel network lane and
-completed Phase D evidence lane remain frozen. The fresh route review selected
-source-complete bounded boot/restart evidence for the recent restart
-investigation. Its isolated Core/Observer checks pass, but physical deployment
-and physical route proof remain separately authorized. After that bounded
-deployment check, return to canonical route review. Do not manufacture a
-VFS/network variant, provider wrapper, browser action variant, or physical host
-mutation from the whitepaper inventory alone.
+KVM, and physical generation `1xh4x8ls...`; the kernel network lane and
+completed Phase D evidence lane remain frozen.
+
+1. **Close required boot-evidence acceptance.** The bounded boot/restart route
+   is already deployed in generation 100, and direct System Sense plus Core
+   proxy probes return HTTP 200. Run the two registered Core/Observer checks,
+   bind their compact result to the deployed generation and current boot IDs,
+   reconcile this plan, and freeze the lane. This is required proof, not a new
+   capability, and requires no generation switch, reboot, provider call,
+   browser action, recovery, or host mutation.
+2. **Then implement the next real Level 4 workflow.** The selected candidate is
+   a task-bound, one-shot semantic activation/submit step that reuses the
+   current semantic scene, reviewed task binding, existing execution grant,
+   durable audit, and post-action verification to close a real form workflow.
+   Before implementation, prove it is not merely a renamed `click_item`; prefer
+   a small coordinator over a new actuator when the existing semantic click
+   owner is sufficient. The candidate contract is recorded in
+   [`OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md`](./plans/OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md).
+
+Do not manufacture a VFS/network variant, provider/readiness wrapper, generic
+Enter or keyboard path, caller-coordinate action, automatic repetition, open
+loop, arbitrary tab/window/process control, automatic task completion, or
+physical host mutation from the whitepaper inventory alone.
 
 ## Active Route
 
@@ -820,7 +856,7 @@ These figures are capability-maturity estimates, not test coverage:
 | --- | --- |
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
-| Level 3 controlled system body | about 60% |
+| Level 3 controlled system body | about 68-72%; network observation, the `MainPID=0` correction, and boot evidence are deployed, while physical Phase D mutation and broader body nerves remain incomplete |
 | Level 4 graphics-stack-native body | about 85%; one-shot projected operator click, bounded native operator type, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, same-surface OCR click, objective-bound OCR type, fixed OCR focus-then-type, and governed current-tab close are physically complete |
 | Current bounded product scope | 84-87% |
 | Final whitepaper vision | 52-60% |
@@ -833,7 +869,8 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md](./plans/OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md) | Completed bounded Level 2 browser/work-view contract. |
 | [OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md](./plans/OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md) | Current operator, service identity, and execution-grant boundary. |
 | [OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md](./plans/OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Current fixed Level 3 restart and journal-diagnosis boundary. |
-| [OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md](./plans/OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md) | Source-complete bounded boot/restart classification and physical-deployment boundary. |
+| [OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md](./plans/OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md) | Deployed bounded boot/restart classification and the remaining compact Core/Observer acceptance boundary. |
+| [OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md](./plans/OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md) | Selected post-acceptance Level 4 form-workflow candidate and duplicate-capability guard. |
 | [OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md) | Completed exact request-bound incident diagnosis handoff and provider boundary. |
 | [OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md) | Completed local incident outcome absorption and matching-target advisory recall. |
 | [OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Completed learned-pattern inclusion in the exact approved incident diagnosis request. |

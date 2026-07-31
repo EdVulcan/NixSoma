@@ -709,9 +709,17 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
   `fentry/__sys_connect` 只读取 sockaddr 前两个字节得到 family，并通过现有
   system-sense/Core/Observer 路径返回有界连接尝试元数据；目标地址、端口、地址
   字节、payload、持久化、策略执行和物理 generation mutation 均未启用
-- 该 Phase C 切片的下一 gate 是已验证 closure 的显式物理部署；在获得独立的
-  operator mutation decision 前，当前 generation 保持不变，不继续增加 VFS、
-  socket-state、`fexit` outcome 或网络 enforcement hook
+- 该 Phase C 切片已部署到当前物理 generation `1xh4x8ls...`；Core/Observer gate
+  捕获 27 个验证 `curl` 连接尝试，只包含非零 family，不包含目标、端口、payload
+  或持久化字段。该 lane 已冻结，不继续增加 VFS、socket-state、`fexit` outcome
+  或网络 enforcement hook
+- bounded boot/restart evidence route 同样已经部署到 `1xh4x8ls...`，直接
+  System Sense 与 Core proxy 均返回 HTTP 200；剩余工作只是运行并记录注册的
+  Core/Observer acceptance gate，然后冻结该证据 lane，不需要再次 switch 或 reboot
+- 完成该验收后，下一真实 Level 4 候选是把同一 reviewed task 的已验证 write-only
+  semantic type receipt 绑定到一次 current semantic submit activation。实现前必须
+  审计现有 `click_item` 是否已经足够；若足够，只增加最小 lifecycle coordinator，
+  不新增 actuator、provider wrapper、通用 Enter/keyboard 或开放循环
 - 分开记录源码完成、验证通过、system generation 部署和真实物理动作
 - Phase D 操作者治理的 activation/rollback lane 已冻结；自动批准、自动回滚、
   provider 选择 generation、任意 root 命令和物理机 mutation 仍未授权
@@ -730,8 +738,13 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 | --- | --- | --- |
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
-| Level 3 系统级特权组件 | 约 68% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process-exec 与 network connect-attempt evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。System Heal 修复与 Phase D generation activation-to-exact-rollback 已分别在可丢弃 KVM 中真实证明且不可重放；network probe 尚未切换到物理 generation，物理 generation 仍未部署 `MainPID=0` 修复或 Phase D mutation，自动 rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 85%（one-shot projected operator click、bounded native operator type、semantic type、bounded run、reviewed cycle/acceptance、bounded local OCR、OCR assessment、same-surface OCR click、objective-bound OCR type、fixed OCR focus-then-type 与 governed current-tab close 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、verified-scroll-only 两步 run、显式 run-plus-assessment cycle、瞬时本地 OCR、无 pixel egress 的 OCR provider assessment、ordinal-grounded one-click action、objective-bound one-shot OCR type、固定两动作 focus/type 与当前 tab 生命周期 owner 已部署。`pfiwq5p3...` gate 在 Firefox PID 不变时证明 same-authority prepare 复用，并通过受治理关闭将测试 tab 从 5 恢复到 4，绑定 lease、两层 durable audit 与零自动重复。Enter、hotkey、repeat、通用键盘代理、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
+| Level 3 系统级特权组件 | 约 68-72% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal/boot diagnosis、target-specific post-repair health receipt、只读 eBPF process-exec 与 network connect-attempt evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。System Heal 修复与 Phase D generation activation-to-exact-rollback 已分别在可丢弃 KVM 中真实证明且不可重放；当前物理 generation `1xh4x8ls...` 已包含 network probe、`MainPID=0` 修复和 boot-evidence route，后者只差正式 Core/Observer acceptance 记录。物理 Phase D mutation、自动 rollback、开发终端资源隔离和更广系统能力仍未建立。 |
+| Level 4 图形栈内生组件 | 约 85%（one-shot projected operator click、bounded native operator type、semantic type、bounded run、reviewed cycle/acceptance、bounded local OCR、OCR assessment、same-surface OCR click、objective-bound OCR type、fixed OCR focus-then-type 与 governed current-tab close 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、verified-scroll-only 两步 run、显式 run-plus-assessment cycle、瞬时本地 OCR、无 pixel egress 的 OCR provider assessment、ordinal-grounded one-click action、objective-bound one-shot OCR type、固定两动作 focus/type 与当前 tab 生命周期 owner 已部署。`pfiwq5p3...` gate 在 Firefox PID 不变时证明 same-authority prepare 复用，并通过受治理关闭将测试 tab 从 5 恢复到 4，绑定 lease、两层 durable audit 与零自动重复。下一纵向缺口是把已验证 semantic type 与一次明确的 task-bound submit activation 组成真实表单生命周期；实现前必须排除与现有 `click_item` 重复。Enter、hotkey、repeat、通用键盘代理、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
+
+若只衡量当前明确受限、操作者治理的产品范围，成熟度约为 **84-87%**：本地控制面、
+trusted work view、固定 Level 3 body owner、bounded Level 4 眼手动作、provider 协作、
+审计和恢复证据已经形成可用子集，剩余主要是 acceptance reconciliation、完整工作流
+闭合与产品化整合。这一比例不能替代最终愿景比例。
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
 **52-60%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted
@@ -750,23 +763,22 @@ root-only snapshot；三类 replay 均被拒绝。物理机 Phase D mutation、�
 描述早期里程碑清单，不能代表最终白皮书完成度。
 
 当前 bounded Level 2 browser 眼手闭环与内核白皮书 Phase A 已收口。
-Phase B 的固定 D-Bus 控制切片、bounded journal diagnosis、incident loop、
+Phase B 的固定 D-Bus 控制切片、bounded journal/boot diagnosis、incident loop、
 显式批准的 DeepSeek diagnosis handoff、目标相关经验召回、自动本地分诊和
-审批后一次性 repair dispatch 均已形成。当前物理机已部署到 approved-dispatch
-baseline；资源观测、趋势告警和 system/user cgroup envelope 已随
-`9bbc00da...` generation 部署并通过无压力探测。当前 `6dm12j7...`
-generation 已通过 systemd `LoadCredential` 接入 root-only DeepSeek key，并完成
-一次 request-hash/approval 绑定、只返回建议且不自动执行的真实调用；prompt、
-建议理由和 credential value 均未进入持久状态。不要把 hostd 扩展成任意
-systemd API，也不要重做已经完成的 provider transport。低风险 standing
-advisory policy 已在源码完成：它只接受认证操作者的固定确认请求，由 Core
-生成三个固定 unit 的布尔/枚举健康上下文，强制 required audit、single-flight、
-15 分钟 cooldown、每日 3 次/4096 token 保守预算和本地 fallback。provider
-建议仍需人工审阅，且不能自动创建 task/approval，不能执行命令、修复或主机
-变更。该策略现已随 `czq8arvh...` generation 部署，并完成一次 459-token
-真实调用，返回 `observe_current_screen`；task/approval 数量未变化，required
-audit 与持久哈希一致，状态不含 prompt、建议理由或 credential value。冻结
-provider lane，下一步转向另一条白皮书能力主线。
+审批后一次性 repair dispatch 均已形成。当前物理 baseline 是
+`/nix/store/1xh4x8ls64yzl919j2bssd9ilms98knv-nixos-system-nixos-26.05.4808.569d57850992`：
+它保留资源观测、趋势告警、system/user cgroup envelope、systemd
+`LoadCredential` root-only provider key、standing advisory、Phase C network
+connect-attempt probe、`MainPID=0` 修复和 boot-evidence route。`9bbc00da...`、
+`6dm12j7...` 与 `czq8arvh...` 是这些能力首次部署的历史 checkpoint，不是当前
+generation。不要把 hostd 扩展成任意 systemd API，也不要重做已经完成的 provider
+transport。先关闭 boot-evidence 正式验收，再进入上述 task-bound semantic submit
+候选；冻结 provider readiness lane。
+
+因此，当前实现与最终愿景的差异是**完成范围**而不是**架构方向**。仍显著缺失的是
+长时间自主运行、可验证的 durable learning/memory feedback loop、物理机上的 Phase D
+治理 mutation/rollback、更广的 Level 3 body nerves，以及比 one-shot action 更完整但
+仍受限的 Level 4 工作流；这些缺口解释了最终愿景估算仍为 52-60%。
 
 ---
 

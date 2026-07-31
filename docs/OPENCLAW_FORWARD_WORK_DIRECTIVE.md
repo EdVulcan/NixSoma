@@ -44,8 +44,9 @@ The risk is local drift:
 
 ## Current Validated Frontier
 
-The current capability baseline includes bounded journal evidence, source-complete bounded boot/restart evidence, the bounded
-Event Hub audit store, the fixed Level 3 incident repair loop, its governed
+The current capability baseline includes bounded journal evidence, deployed
+bounded boot/restart evidence, the bounded Event Hub audit store, the fixed
+Level 3 incident repair loop, its governed
 DeepSeek diagnosis handoff, the local fixed-unit incident scheduler and
 triage/repair-promotion bridge, and twenty-five deployed Level 4 graphical
 identity slices through one governed current-tab close interaction. One
@@ -64,6 +65,14 @@ GitHub CI now enforces
 Node 22 typecheck, workspace tests, milestone registry/script audit, and the
 same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
+
+For route planning, keep the denominators explicit. The currently bounded,
+operator-governed product is roughly 84-87% mature; the wider autonomous-agent
+body described by the identity route and kernel whitepaper is roughly 52-60%
+complete. The first number reflects a strong usable subset. It does not include
+the missing long-running autonomy, durable learning feedback, broader body
+nerves, physical Phase D evolution, or richer native-workspace lifecycle that
+keep the second number lower.
 
 The physical host now runs generation
 `/nix/store/1xh4x8ls64yzl919j2bssd9ilms98knv-nixos-system-nixos-26.05.4808.569d57850992`.
@@ -172,7 +181,7 @@ checkpoint is complete and deployed. Freeze provider transport and
 request-binding work; do not add another provider readiness wrapper or another
 one-off call surface.
 
-## Selected Next Real Capability
+## Required Acceptance Then Next Real Capability
 
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation
@@ -183,17 +192,32 @@ non-zero family and no destination, port, payload, or persistence fields. All
 nine health endpoints and failed-unit checks remained healthy. Phase D and the
 kernel network lane are frozen.
 
-The fresh canonical route review selected a bounded read-only boot/restart
-evidence capability for the concrete operator gap observed during the recent
-restart investigation. Source and isolated Core/Observer service checks are
-complete, but the route has not received its separate physical gate in
-generation `1xh4x8ls...`; no physical
-switch, reboot, recovery, or host mutation was performed in this slice. The
-current physical host remains evidence-only. After a separately authorized
-physical deployment check, return to canonical route review. Do not add VFS,
-destination/port, socket-state, `fexit`, enforcement, persistence, provider,
-browser-action, or physical-mutation variants merely because they appear in the
-whitepaper inventory.
+The bounded read-only boot/restart evidence route selected for the recent
+restart investigation is already deployed in generation `1xh4x8ls...`. Direct
+System Sense and Core proxy requests return HTTP 200. The remaining work is a
+required acceptance closure: run the registered Core and Observer gates, bind a
+compact result to the deployed generation and boot identities, update the
+boot-evidence plan, and freeze this lane. Do not rebuild or switch the system,
+reboot, call a provider, drive the browser, trigger recovery, or mutate the host
+for this acceptance.
+
+After that proof closes, the next real Level 4 candidate is the task-bound,
+one-shot semantic activation/submit workflow in
+[`docs/plans/OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md`](./plans/OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md).
+It must reuse the existing reviewed task/work-view binding, semantic scene,
+execution grant, semantic action owner, durable audit, and post-action
+verification. First audit whether the existing `click_item` owner already
+provides the actuator behavior; if so, add only the smallest coordinator that
+binds the verified form state to one eligible submit target. A renamed click
+action is not capability progress.
+
+This slice must close one real form lifecycle with a visible verified
+transition. It must not add generic Enter, arbitrary keyboard input, caller
+coordinates, automatic repetition, an open loop, arbitrary tab/window/process
+control, automatic task completion, another provider/readiness wrapper, or host
+mutation. Do not add VFS, destination/port, socket-state, `fexit`, enforcement,
+persistence, or provider variants merely because they appear in the whitepaper
+inventory.
 
 ## Governing Vision
 
