@@ -122,7 +122,6 @@ test("rule plan builders preserve default planning and build decision contracts"
   const plan = builders.buildRulePlan({
     goal: "default task",
     targetUrl: null,
-    actions: [],
     type: "system.command",
   });
 
@@ -132,6 +131,20 @@ test("rule plan builders preserve default planning and build decision contracts"
   assert.equal(builders.shouldBuildPlan({}), false);
   assert.equal(plan.steps.some((step) => step.kind === "keyboard.type"), true);
   assert.equal(plan.steps.some((step) => step.kind === "mouse.click"), true);
+});
+
+test("rule plan builders preserve an explicit zero-action plan", () => {
+  const builders = createRulePlanHarness();
+  const plan = builders.buildRulePlan({
+    goal: "reviewed navigation task",
+    targetUrl: "https://example.com/work",
+    actions: [],
+    type: "browser_task",
+  });
+
+  assert.equal(plan.steps.some((step) => step.phase === "acting_on_target"), false);
+  assert.equal(plan.capabilitySummary.ids.includes("act.screen.pointer_keyboard"), false);
+  assert.equal(plan.capabilitySummary.ids.includes("act.browser.open"), true);
 });
 
 test("rule plan builders map browser new-tab to the existing browser capability", () => {

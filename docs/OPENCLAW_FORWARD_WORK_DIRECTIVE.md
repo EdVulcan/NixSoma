@@ -57,7 +57,7 @@ return bounded transient local OCR or one read-only provider assessment without
 pixel egress. Direct operator interaction also includes one armed projected
 click and one write-only 1-32 character native type; one reviewed task may
 also request that one objective-selected OCR item be focused and receive its
-exact allowlisted objective value through a fixed two-action sequence. All 1281 workspace tests
+exact allowlisted objective value through a fixed two-action sequence. All 1290 workspace tests
 and typecheck pass, the body-config and event-audit integration checks pass, the
 828-entry milestone registry and 1016-file script audit pass, and
 the Windows path budget has no file over 160 repository-relative characters.
@@ -106,7 +106,7 @@ non-empty tab set all still agree. The current active URL is deliberately not
 part of that decision, so operator navigation is preserved. First prepare,
 changed authority, stale lease, stopped browser, session drift, and an empty tab
 set retain the existing open/recovery path. Both Phase 3 service gates prove a
-second prepare keeps one session, lease, and tab; all 1281 tests, typecheck,
+second prepare keeps one session, lease, and tab; all 1290 tests, typecheck,
 body-config, MVP readiness, and the exact 32-file Session Manager closure pass.
 The physical prepare pair recorded `session_started` followed 11 ms later by
 `same_authority`, preserving session `47e6a200...`, Firefox PID 63947, the
@@ -309,6 +309,18 @@ effectiveness or causality, and it cannot change ranking, policy, approval,
 execution authority, training, or provider behavior. Freeze this receipt chain
 after its exact gates pass. The next capability requires a fresh canonical
 route review rather than another feedback wrapper or automatic-learning layer.
+
+That route review selected a distinct product-entry capability in
+[`docs/plans/OPENCLAW_REVIEWED_BROWSER_TASK_COMPOSER_PLAN.md`](./plans/OPENCLAW_REVIEWED_BROWSER_TASK_COMPOSER_PLAN.md).
+Observer no longer creates a hard-coded demo task or injects sample text and
+coordinates into a planned task. One explicit operator submission now carries
+only a bounded real goal, credential-free HTTP(S) URL, and plan-mode boolean.
+Core fixes the browser-task type, AI work-view strategy, and execution intent;
+Create Task reuses current prepare/navigation/bind, while Create Plan remains
+non-executing. Caller actions/policy, approvals, provider calls, automatic
+execution/continuation, scheduling, retries, host mutation, switch, and reboot
+remain false. Freeze this entry contract after representative service and store
+validation; do not widen it into a generic action or policy editor.
 
 ## Governing Vision
 

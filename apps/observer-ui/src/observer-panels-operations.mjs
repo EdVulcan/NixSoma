@@ -6,13 +6,17 @@ export function observerOperationsPanels() {
           <h2>Controls</h2>
           <div class="control-stack">
             <div class="field">
+              <label for="task-goal-input">Task Goal</label>
+              <input id="task-goal-input" type="text" maxlength="400" value="Inspect the current page" spellcheck="true" />
+            </div>
+            <div class="field">
               <label for="work-view-url-input">Desired Work View URL</label>
-              <input id="work-view-url-input" type="text" value="https://example.com/work-view" spellcheck="false" />
+              <input id="work-view-url-input" type="url" maxlength="2048" value="https://example.com/work-view" spellcheck="false" />
               <div class="hint" id="work-view-url-hint">Desired URL for the next open, task, or recovery action.</div>
             </div>
             <div class="actions">
-              <button id="create-task-button">Create Demo Task</button>
-              <button id="create-planned-task-button">Create Planned Task</button>
+              <button id="create-task-button">Create Task</button>
+              <button id="create-planned-task-button" class="secondary">Create Plan</button>
               <button id="operator-step-button" class="secondary">Operator Step</button>
               <button id="operator-run-button" class="secondary">Operator Run</button>
               <button id="recover-latest-task-button" class="secondary">Recover Latest Finished Task</button>

@@ -52,6 +52,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 1 recommendation application receipt | Explicit Observer selection reuses the fixed governed semantic-click task control; Core derives a response/link/downstream-task-bound receipt that callers cannot inject | Implemented in source; the application receipt proves only selection and binding, leaving execution and terminal claims to separate receipts |
 | Level 1 recommendation execution receipt | The existing browser task executor forwards one trusted semantic-click result only after Screen Act execution and post-action verification; Core derives the receipt and excludes target/page/provider content | Implemented in source; exact action execution is proven without adding an actuator, provider call, retry, effectiveness, or causality claim |
 | Level 1 recommendation outcome receipt | The authoritative task terminal owner binds one completed/failed observation to the exact application receipt and optionally its verified execution receipt, then preserves it in task state and experience memory | Implemented in source; v0 remains terminal-only and v1 proves execution plus terminal correlation, while effectiveness, causality, ranking, and policy changes remain explicitly unproven |
+| Level 1 reviewed browser task composer | Observer accepts a bounded real goal and HTTP(S) URL; Core fixes browser-task/work-view authority and creates either the current task or its capability-aware plan | Implemented in source; caller actions/policy, automatic execution, provider calls, approvals, scheduling, retries, and host mutation remain excluded |
 | Level 3 network observation | Fixed `fentry/__sys_connect` eBPF probe sends only timestamp, process identity, sockaddr family, and address length through the system-sense/Core/Observer read-only path; only the first two sockaddr bytes are read and destination, port, address bytes, payload, persistence, and policy execution remain excluded | Physical proof originated in `gd9ps40...`; current `52s1asvy...` retains the deployed route, with the prior Core and Observer gates capturing 27 `curl` events and no destination, port, payload, or persistence |
 | Level 3 file-open observation | Fixed `fentry/do_sys_openat2` eBPF probe sends only timestamp, process identity, flags, and mode through the same read-only path; filename/path/content/inode/mount/result, persistence, and policy execution remain excluded | Generation `qcv5ggpr...` passed both installed gates at the 128-event hard cap; current `52s1asvy...` retains the accepted probe and healthy service boundary |
 | Level 3 kernel activity snapshot | One explicit request invokes the three existing capture owners in parallel and returns only lane status, counts, and continuity through System Sense/Core/Observer | Current `52s1asvy...` passed both installed gates with Core counts 62/46/128 and Observer total 240; all three lanes were available with no raw values, persistence, repeat, provider/browser activity, or host mutation |
@@ -263,6 +264,11 @@ This evidence does not authorize another physical generation switch.
    execution receipt is present, outcome v1 binds its hash while retaining no
    outcome summary or details. See
    [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md`](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md).
+8. **Reviewed browser task entry replaces demo-only controls.** The operator can
+   submit one real bounded goal and HTTP(S) URL. Core fixes all task authority;
+   Create Task binds the existing work view, while Create Plan remains
+   non-executing. See
+   [`OPENCLAW_REVIEWED_BROWSER_TASK_COMPOSER_PLAN.md`](./plans/OPENCLAW_REVIEWED_BROWSER_TASK_COMPOSER_PLAN.md).
 
 Do not manufacture a VFS/network variant, provider/readiness wrapper, generic
 Enter or keyboard path, caller-coordinate action, automatic repetition, open

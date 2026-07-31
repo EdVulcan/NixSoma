@@ -265,6 +265,7 @@ const auditSourceCount = document.querySelector("#audit-source-count");
 const auditSummary = document.querySelector("#audit-summary");
 const createTaskButton = document.querySelector("#create-task-button");
 const createPlannedTaskButton = document.querySelector("#create-planned-task-button");
+const taskGoalInput = document.querySelector("#task-goal-input");
 const operatorStepButton = document.querySelector("#operator-step-button");
 const operatorRunButton = document.querySelector("#operator-run-button");
 const recoverLatestTaskButton = document.querySelector("#recover-latest-task-button");

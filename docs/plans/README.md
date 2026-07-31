@@ -30,6 +30,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md) | Explicit operator selection and server-derived binding of one fixed provider recommendation to an existing governed downstream task. |
 | [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md) | Exact application-bound proof of one existing governed semantic click from trusted handoff through post-action verification. |
 | [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md) | Exact application-receipt-bound completed/failed observation from the authoritative downstream task terminal owner. |
+| [`OPENCLAW_REVIEWED_BROWSER_TASK_COMPOSER_PLAN.md`](./OPENCLAW_REVIEWED_BROWSER_TASK_COMPOSER_PLAN.md) | Real bounded goal/URL browser-task entry through Observer and Core without caller action authority or automatic execution. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Up to three matching-target learned patterns inside the existing exact approved diagnosis request. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_ACTION_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_ACTION_PLAN.md) | Reviewed read-only opening of the exact incident receipt and recovery evidence bound to provider guidance. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md) | Reviewed same-unit refresh of existing health, fixed-unit inventory, and bounded journal evidence. |
@@ -48,7 +49,7 @@ The kernel whitepaper remains the long-horizon authority:
 ## Current Route
 
 The only current deployment baseline is physical generation
-`/nix/store/qcv5ggprl82xv75nc8nhkblnb53v759k-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/52s1asvywh94dsl76kvjacn4i1hpkmhc-nixos-system-nixos-26.05.4808.569d57850992`.
 Generation-specific `active` wording later in this section records the state at
 each historical checkpoint and does not override this baseline.
 
@@ -147,6 +148,13 @@ before experience recording. The execution continuation in
 [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md)
 binds one existing verified semantic click into outcome v1. Recommendation
 effectiveness, causality, ranking, and policy claims remain false.
+
+The subsequent product-entry review selected
+[`OPENCLAW_REVIEWED_BROWSER_TASK_COMPOSER_PLAN.md`](./OPENCLAW_REVIEWED_BROWSER_TASK_COMPOSER_PLAN.md).
+Observer now submits a real bounded goal and HTTP(S) URL through a Core-owned
+browser-task contract; Create Task binds the existing work view and Create Plan
+remains non-executing. Caller actions/policy and automatic execution stay
+excluded.
 
 ### Historical Route Evidence
 

@@ -18,7 +18,7 @@ function redactPublicParams(params, kind) {
 }
 
 function normalisePlanActions(actions) {
-  if (!Array.isArray(actions) || actions.length === 0) {
+  if (!Array.isArray(actions)) {
     return [
       { kind: "keyboard.type", params: { text: "hello from openclaw-planner" } },
       { kind: "mouse.click", params: { x: 640, y: 360, button: "left" } },

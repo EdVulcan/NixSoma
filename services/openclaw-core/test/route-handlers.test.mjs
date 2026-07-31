@@ -1859,6 +1859,55 @@ test("task list route returns capped items with total count and summary", async 
   });
 });
 
+test("reviewed browser task route creates a fixed plan without execution authority", async () => {
+  const events = [];
+  let createdInput = null;
+  const task = {
+    id: "reviewed-browser-task-1",
+    status: "queued",
+    plan: { strategy: "rule-v1", steps: [] },
+  };
+  const deps = createBaseDeps({
+    taskManager: {
+      createTask: (input) => {
+        createdInput = input;
+        return task;
+      },
+      supersedeOtherActiveTasks: () => [],
+      reconcileRuntimeState: () => {},
+      serialiseTask: (value) => ({ ...value, serialised: true }),
+    },
+    approvalEngine: {
+      publishTaskApprovalIfPending: async () => {},
+    },
+    planBuilder: {
+      serialisePlanForPublic: (plan) => ({ ...plan, public: true }),
+    },
+    publishEvent: async (type, payload) => events.push({ type, payload }),
+  });
+
+  const response = await invokeRoute(deps, "POST", "/tasks/reviewed-browser", {
+    goal: "Inspect customer details",
+    targetUrl: "https://example.com/customer",
+    includePlan: true,
+  });
+
+  assert.equal(response.statusCode, 201, JSON.stringify(response.body));
+  assert.deepEqual(createdInput, {
+    goal: "Inspect customer details",
+    type: "browser_task",
+    targetUrl: "https://example.com/customer",
+    workViewStrategy: "ai-work-view",
+    intent: "task.execute",
+    includePlan: true,
+    actions: [],
+  });
+  assert.equal(response.body.review.governance.startsExecution, false);
+  assert.equal(response.body.review.governance.actionsAccepted, false);
+  assert.equal(response.body.plan.public, true);
+  assert.deepEqual(events.map((event) => event.type), ["task.created", "task.planned"]);
+});
+
 test("task plan route publishes created, approval, planned, and reclaimed task events", async () => {
   const events = [];
   const approvalCalls = [];

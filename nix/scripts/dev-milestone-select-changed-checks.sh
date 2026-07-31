@@ -543,6 +543,33 @@ const downstreamRecommendationExecutionSlice = changedFiles.length > 0
   && changedFiles.every((file) => downstreamRecommendationExecutionFiles.has(file))
   && changedFiles.some((file) =>
     file === "services/openclaw-core/src/native-engineering-recommendation-execution-receipt.mjs");
+const reviewedBrowserTaskComposerFiles = new Set([
+  "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
+  "apps/observer-ui/src/client-script-runtime-actions.mjs",
+  "apps/observer-ui/src/client-script-runtime-bindings.mjs",
+  "apps/observer-ui/src/client-script-runtime-reviewed-browser-task.mjs",
+  "apps/observer-ui/src/observer-panels-operations.mjs",
+  "apps/observer-ui/test/client-script-runtime-reviewed-browser-task.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/OPENCLAW_REVIEWED_BROWSER_TASK_COMPOSER_PLAN.md",
+  "docs/plans/README.md",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "nix/scripts/dev-operator-loop-check.sh",
+  "nix/packages/observer-ui.nix",
+  "services/openclaw-core/src/reviewed-browser-task-submission.mjs",
+  "services/openclaw-core/src/rule-plan-builders.mjs",
+  "services/openclaw-core/src/task-routes.mjs",
+  "services/openclaw-core/test/reviewed-browser-task-submission.test.mjs",
+  "services/openclaw-core/test/route-handlers.test.mjs",
+  "services/openclaw-core/test/rule-plan-builders.test.mjs",
+]);
+const reviewedBrowserTaskComposerSlice = changedFiles.length > 0
+  && changedFiles.every((file) => reviewedBrowserTaskComposerFiles.has(file))
+  && changedFiles.some((file) => file === "services/openclaw-core/src/reviewed-browser-task-submission.mjs")
+  && changedFiles.some((file) => file === "apps/observer-ui/src/client-script-runtime-reviewed-browser-task.mjs");
 const kernelFileOpenCaptureFiles = new Set([
   "apps/observer-ui/src/client-script-config-dom-kernel-file.mjs",
   "apps/observer-ui/src/client-script-config-dom.mjs",
@@ -1439,6 +1466,16 @@ function selectSourceHeuristics(file) {
 }
 
 for (const file of changedFiles) {
+  if (reviewedBrowserTaskComposerSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("operator-loop");
+    selectName("observer-capability-invoke");
+    continue;
+  }
   if (kernelActivitySnapshotSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");

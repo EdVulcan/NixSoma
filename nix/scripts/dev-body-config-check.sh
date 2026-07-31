@@ -1064,6 +1064,7 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-engineering-recommendation-application-receipt.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-engineering-recommendation-execution-receipt.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-engineering-recommendation-outcome-receipt.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/reviewed-browser-task-submission.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-verification.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-recovery.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-engineering-microcompact.mjs"
@@ -1147,7 +1148,7 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/browser-action-contract.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-local-ocr.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 271 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 272 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -2028,8 +2029,9 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panels-kernel-file.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-kernel-activity.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-kernel-activity.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-reviewed-browser-task.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panels-kernel-activity.mjs"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 97 ]]; then
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 98 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi
@@ -2115,6 +2117,10 @@ if (health.ok !== true
   || !html.includes('id="run-ai-workspace-reviewed-cycle-button"')
   || !client.includes("act.ai.workspace.reviewed_cycle")
   || !client.includes("nixsoma-ai-workspace-reviewed-cycle-v0")
+  || !html.includes('id="task-goal-input"')
+  || !html.includes('id="create-task-button"')
+  || !client.includes("/tasks/reviewed-browser")
+  || !client.includes("Created reviewed task")
   || html.length < 250_000
   || client.length < 1_000_000) {
   throw new Error(`store-native observer-ui did not serve complete operator assets: ${JSON.stringify({ health, htmlChars: html.length, clientChars: client.length })}`);

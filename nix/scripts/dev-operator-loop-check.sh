@@ -60,8 +60,8 @@ assert_json "$blocked_result" 'const data=JSON.parse(process.argv[1]); if(!data.
 step_result="$(post_json "$CORE_URL/operator/step" '{"actions":[{"kind":"keyboard.type","params":{"text":"operator one re-entry"}}]}')"
 assert_json "$step_result" 'const data=JSON.parse(process.argv[1]); const b=data.task?.outcome?.details?.operatorExecutionBinding; if(!data.ok || data.ran!==true || data.task?.status!=="completed" || data.execution?.verification?.ok!==true || b?.registry!=="openclaw-browser-task-execution-binding-v0" || b?.actionShapeValidated!==true || b?.inputTextBound!==false || JSON.stringify(b).includes("operator one")){throw new Error("operator step did not preserve binding evidence");}'
 
-task_two="$(post_json "$CORE_URL/tasks/plan" "{\"goal\":\"Operator loop task two\",\"type\":\"browser_task\",\"targetUrl\":\"$TARGET_TWO\",\"actions\":[{\"kind\":\"keyboard.type\",\"params\":{\"text\":\"operator two\"}},{\"kind\":\"mouse.click\",\"params\":{\"x\":520,\"y\":300,\"button\":\"left\"}}]}")"
-assert_json "$task_two" 'const data=JSON.parse(process.argv[1]); const b=data.task?.operatorExecutionBinding; if(!data.ok || data.task?.status!=="queued" || data.plan?.status!=="planned" || b?.registry!=="openclaw-browser-task-execution-binding-v0" || b?.actionCount!==2 || b?.inputTextBound!==false || !/^[a-f0-9]{64}$/.test(b?.actionShapeHash??"") || JSON.stringify(b).includes("operator two")){throw new Error("task two binding missing or leaky");}'
+task_two="$(post_json "$CORE_URL/tasks/reviewed-browser" "{\"goal\":\"Reviewed navigation task\",\"targetUrl\":\"$TARGET_TWO\",\"includePlan\":true}")"
+assert_json "$task_two" 'const data=JSON.parse(process.argv[1]); const b=data.task?.operatorExecutionBinding; const g=data.review?.governance; if(!data.ok || data.task?.status!=="queued" || data.plan?.status!=="planned" || data.review?.registry!=="nixsoma-reviewed-browser-task-submission-v0" || data.review?.includePlan!==true || g?.explicitOperatorSubmission!==true || g?.actionsAccepted!==false || g?.startsExecution!==false || g?.callsProvider!==false || b?.registry!=="openclaw-browser-task-execution-binding-v0" || b?.actionCount!==0 || b?.inputTextBound!==false || !/^[a-f0-9]{64}$/.test(b?.actionShapeHash??"")){throw new Error("reviewed task contract or binding missing");}'
 task_two_id="$(json_value "$task_two" 'const data=JSON.parse(process.argv[1]); process.stdout.write(data.task.id);')"
 
 run_result="$(post_json "$CORE_URL/operator/run" '{"maxSteps":5}')"
@@ -113,7 +113,7 @@ function assertBinding(task, transientText) {
 }
 
 assertBinding(restoredOne, "operator one");
-assertBinding(restoredTwo, "operator two");
+assertBinding(restoredTwo, "never-persisted-input");
 
 const beforeCounts = beforeSummary.summary?.counts ?? {};
 const afterCounts = afterSummary.summary?.counts ?? {};

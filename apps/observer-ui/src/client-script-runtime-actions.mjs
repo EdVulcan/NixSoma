@@ -22,6 +22,7 @@ import { observerClientRuntimeAiWorkspaceOcrFocusTypeScript } from "./client-scr
 import { observerClientRuntimeBindingsScript } from "./client-script-runtime-bindings.mjs";
 import { observerClientNativeRuntimeRefreshTasksScript } from "./client-script-runtime-native-runtime-refresh.mjs";
 import { observerClientRuntimeKernelActivityScript } from "./client-script-runtime-kernel-activity.mjs";
+import { observerClientRuntimeReviewedBrowserTaskScript } from "./client-script-runtime-reviewed-browser-task.mjs";
 
 export const observerClientRuntimeActionsScript = `async function loadRecentEvents() {
   try {
@@ -35,59 +36,7 @@ export const observerClientRuntimeActionsScript = `async function loadRecentEven
   }
 }
 
-async function createDemoTask() {
-  const targetUrl = getDesiredWorkViewUrl();
-  const result = await fetchJson(\`\${observerConfig.coreUrl}/tasks\`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      goal: \`Open the AI work view at \${targetUrl}\`,
-      type: "browser_task",
-      targetUrl,
-      workViewStrategy: "ai-work-view",
-    }),
-  });
-  await launchTaskIntoWorkView(result.task?.id, targetUrl);
-  taskHistoryFocus = "current-task";
-  selectedHistoryTaskId = result.task?.id ?? null;
-  taskDetailIdInput.value = result.task?.id ?? "";
-  setControlMessage(\`Created task \${result.task?.id ?? "unknown"} for \${targetUrl}\`);
-  await refreshRuntime();
-  await refreshTaskList();
-  await refreshTaskHistoryDetail();
-  await refreshWorkView();
-  await refreshScreen();
-}
-
-async function createPlannedTask() {
-  const targetUrl = getDesiredWorkViewUrl();
-  const result = await fetchJson(\`\${observerConfig.coreUrl}/tasks/plan\`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      goal: \`Plan an AI work view run for \${targetUrl}\`,
-      type: "browser_task",
-      targetUrl,
-      workViewStrategy: "ai-work-view",
-      actions: [
-        { kind: "keyboard.type", params: { text: "hello from openclaw-operator" } },
-        { kind: "mouse.click", params: { x: 640, y: 360, button: "left" } },
-      ],
-    }),
-  });
-
-  taskHistoryFocus = "selected-task";
-  selectedHistoryTaskId = result.task?.id ?? null;
-  taskDetailIdInput.value = result.task?.id ?? "";
-  renderPlanPanel(result.task ?? { plan: result.plan });
-  setControlMessage(\`Planned task \${result.task?.id ?? "unknown"} for \${targetUrl}. Use Operator Step or Run to execute it.\`);
-  await refreshRuntime();
-  await refreshTaskList();
-  await refreshTaskHistoryDetail();
-  await refreshOperatorState();
-}
-
-${observerClientRuntimeApprovalTasksScript}${observerClientRuntimeEngineeringLoopControlsScript}${observerClientRuntimeEngineeringLspTargetSelectionScript}${observerClientRuntimeEngineeringSuggestedActionScript}${observerClientRuntimeEngineeringRecommendationScript}${observerClientRuntimeEngineeringPlanScript}${observerClientNativeRuntimeRefreshTasksScript}${observerClientRuntimeSystemHealScript}${observerClientRuntimeScreenObservationScript}${observerClientRuntimeSemanticTargetTaskScript}${observerClientRuntimeWorkViewControlsScript}${observerClientRuntimeAiWorkspaceProjectionScript}${observerClientRuntimeAiWorkspaceSemanticSubmitScript}${observerClientRuntimeAiWorkspaceOperatorClickScript}${observerClientRuntimeAiWorkspaceOperatorTypeScript}${observerClientRuntimeAiWorkspaceReviewedCycleScript}${observerClientRuntimeAiWorkspaceOcrAssessmentScript}${observerClientRuntimeAiWorkspaceOcrClickScript}${observerClientRuntimeAiWorkspaceOcrTypeScript}${observerClientRuntimeAiWorkspaceOcrFocusTypeScript}${observerClientRuntimeKernelActivityScript}async function runOperatorStepFromUi() {
+${observerClientRuntimeReviewedBrowserTaskScript}${observerClientRuntimeApprovalTasksScript}${observerClientRuntimeEngineeringLoopControlsScript}${observerClientRuntimeEngineeringLspTargetSelectionScript}${observerClientRuntimeEngineeringSuggestedActionScript}${observerClientRuntimeEngineeringRecommendationScript}${observerClientRuntimeEngineeringPlanScript}${observerClientNativeRuntimeRefreshTasksScript}${observerClientRuntimeSystemHealScript}${observerClientRuntimeScreenObservationScript}${observerClientRuntimeSemanticTargetTaskScript}${observerClientRuntimeWorkViewControlsScript}${observerClientRuntimeAiWorkspaceProjectionScript}${observerClientRuntimeAiWorkspaceSemanticSubmitScript}${observerClientRuntimeAiWorkspaceOperatorClickScript}${observerClientRuntimeAiWorkspaceOperatorTypeScript}${observerClientRuntimeAiWorkspaceReviewedCycleScript}${observerClientRuntimeAiWorkspaceOcrAssessmentScript}${observerClientRuntimeAiWorkspaceOcrClickScript}${observerClientRuntimeAiWorkspaceOcrTypeScript}${observerClientRuntimeAiWorkspaceOcrFocusTypeScript}${observerClientRuntimeKernelActivityScript}async function runOperatorStepFromUi() {
   const result = await fetchJson(\`\${observerConfig.coreUrl}/operator/step\`, {
     method: "POST",
     headers: { "content-type": "application/json" },

@@ -1,11 +1,11 @@
 export const observerClientRuntimeBindingsScript = `createTaskButton.addEventListener("click", () => {
-  createDemoTask().catch((error) => {
+  createReviewedBrowserTask().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);
   });
 });
 
 createPlannedTaskButton.addEventListener("click", () => {
-  createPlannedTask().catch((error) => {
+  createReviewedBrowserTask({ includePlan: true }).catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);
   });
 });

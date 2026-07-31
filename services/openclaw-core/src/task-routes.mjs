@@ -1,5 +1,6 @@
 import { sendJson, readJsonBody } from "../../../packages/shared-utils/src/http.mjs";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
+import { buildReviewedBrowserTaskSubmission } from "./reviewed-browser-task-submission.mjs";
 
 function parseTaskLimit(searchParams) {
   const limit = Number.parseInt(searchParams.get("limit") ?? "10", 10);
@@ -165,6 +166,39 @@ export async function handleTaskRoute({ req, res, requestUrl, state, approvalEng
       await publishTaskApprovalIfPending(task);
       await publishReclaimedTasks(reclaimedTasks, { publishEvent, serialiseTask });
       sendJson(res, 201, { ok: true, task: serialiseTask(task) });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/tasks/reviewed-browser") {
+    try {
+      const body = await readJsonBody(req);
+      const submission = buildReviewedBrowserTaskSubmission(body);
+      const task = createTask(submission.taskInput);
+      const reclaimedTasks = supersedeOtherActiveTasks(task.id);
+      reconcileRuntimeState();
+
+      await publishEvent(createEventName("task.created"), {
+        task: serialiseTask(task),
+        submission: submission.review,
+      });
+      await publishTaskApprovalIfPending(task);
+      if (submission.review.includePlan) {
+        await publishEvent(createEventName("task.planned"), {
+          task: serialiseTask(task),
+          plan: serialisePlanForPublic(task.plan),
+        });
+      }
+      await publishReclaimedTasks(reclaimedTasks, { publishEvent, serialiseTask });
+      sendJson(res, 201, {
+        ok: true,
+        task: serialiseTask(task),
+        plan: submission.review.includePlan ? serialisePlanForPublic(task.plan) : null,
+        review: submission.review,
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       sendJson(res, 400, { ok: false, error: message });
