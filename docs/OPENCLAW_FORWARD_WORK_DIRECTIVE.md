@@ -204,6 +204,17 @@ matched all protected paths, activated without reboot, captured the exact
 and kept the boot ID unchanged. Do not reopen this lane for path/result capture,
 enforcement, or persistence without a fresh concrete operator need.
 
+The fresh route review selects one compact Phase C Kernel Activity Snapshot,
+not a fourth hook. One explicit request invokes the existing process, network,
+and file capture owners in parallel and returns only lane status, event/unique
+counts, and compact continuity. Raw events, comm names, executable identity,
+network values, file values, persistence, automatic repeat, provider/browser
+activity, policy execution, and host mutation remain false. Observer owns one
+explicit button and no aggregate interval. Source, closure, and disposable-KVM
+evidence are complete: the VM captured 40 process, 40 network, and 128 file
+events in one parallel request with all private values excluded. Physical
+deployment remains separately authorized and deferred.
+
 The bounded read-only boot/restart evidence route selected for the recent
 restart investigation is already deployed in generation `1xh4x8ls...`. Direct
 System Sense and Core proxy requests return HTTP 200. Its required acceptance is

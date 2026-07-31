@@ -1737,6 +1737,7 @@ EOF
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-network-connect-readback.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-file-open-capture.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-file-open-readback.mjs"
+    || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-activity-snapshot.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/system-kernel-event-routes.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/system-health-governance.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-dbus-adapter.mjs"
@@ -1754,7 +1755,7 @@ EOF
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-dbus-transport.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-boot-evidence.mjs"
     || ! -f "$system_sense_out/share/openclaw/packages/shared-systemd/src/systemd-dbus-transport.mjs"
-    || "$system_sense_source_count" -ne 35 ]]; then
+    || "$system_sense_source_count" -ne 36 ]]; then
     echo "system-sense Nix closure is not exact, production-only, and read-only: $system_sense_out" >&2
     exit 1
   fi
@@ -2024,7 +2025,10 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-kernel-file.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-refreshers-kernel-file.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panels-kernel-file.mjs"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 94 ]]; then
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-kernel-activity.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-kernel-activity.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panels-kernel-activity.mjs"
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 97 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi

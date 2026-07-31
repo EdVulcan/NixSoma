@@ -21,6 +21,7 @@ mkOpenClawNpmRuntimeClosure {
     ../../services/openclaw-system-sense/src/kernel-network-connect-readback.mjs
     ../../services/openclaw-system-sense/src/kernel-file-open-capture.mjs
     ../../services/openclaw-system-sense/src/kernel-file-open-readback.mjs
+    ../../services/openclaw-system-sense/src/kernel-activity-snapshot.mjs
     ../../services/openclaw-system-sense/src/system-body-evidence-routes.mjs
     ../../services/openclaw-system-sense/src/system-body-evidence.mjs
     ../../services/openclaw-system-sense/src/system-command-operations.mjs

@@ -37,6 +37,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md`](./OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md) | Periodic local observation and restart-safe deduplicated incident tasks for fixed units. |
 | [`OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md) | Bounded read-only network connect-attempt observation through the existing Level 3 body nerve owner. |
 | [`OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md) | Physically accepted bounded file open-attempt metadata without filename, path, content, result, or persistence. |
+| [`OPENCLAW_PHASE_C_KERNEL_ACTIVITY_SNAPSHOT_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_ACTIVITY_SNAPSHOT_PLAN.md) | Selected explicit compact aggregate across the three existing Phase C nerves without a new hook. |
 | [`OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md`](./OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Declarative-evolution candidate, controlled activation, and exact rollback evidence plus deferred physical/automatic mutation boundaries. |
 | [`OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md`](./OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md) | Measured validation, runtime, and review debt that blocks the mainline. |
 
@@ -86,6 +87,13 @@ privacy-bounded `fentry/do_sys_openat2` observation in
 It carries flags and mode but never filename/path/content/result data. Physical
 generation `qcv5ggpr...` passed protected-path review, both installed gates,
 nine health endpoints, and zero failed units without reboot. Freeze this lane.
+
+The completed source/KVM slice is the compact aggregate in
+[`OPENCLAW_PHASE_C_KERNEL_ACTIVITY_SNAPSHOT_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_ACTIVITY_SNAPSHOT_PLAN.md).
+It invokes the three existing capture owners only on an explicit request and
+returns counts/continuity without raw event values. Its VM gate captured 40
+process, 40 network, and 128 file events. It does not authorize a new physical
+generation.
 
 The bounded boot/restart evidence route is also deployed in current generation
 `1xh4x8ls...`. Its registered Core/Observer gates, deployed direct/proxy

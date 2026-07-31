@@ -82,6 +82,10 @@
         openclaw-kernel-file-open-capture-vm =
           pkgs.testers.runNixOSTest
             (import ./nix/tests/openclaw-kernel-file-open-capture-vm.nix);
+
+        openclaw-kernel-activity-snapshot-vm =
+          pkgs.testers.runNixOSTest
+            (import ./nix/tests/openclaw-kernel-activity-snapshot-vm.nix);
       };
 
       packages.${system} = {

@@ -203,6 +203,13 @@ flags, and mode through System Sense/Core/Observer. Filename, path, content,
 inode, mount identity, syscall result, persistence, and policy execution remain
 excluded. These lanes and the completed Phase D evidence lane are frozen.
 
+The completed Level 3 source/KVM slice is one explicit compact Kernel Activity
+Snapshot across those three existing nerves. Its disposable VM captured 40
+process, 40 network, and 128 file events in parallel while returning only lane
+status, counts, and continuity; raw events and all process/network/file values
+remain absent. Observer exposes one button and no automatic aggregate refresh.
+This evidence does not authorize another physical generation switch.
+
 1. **Required boot-evidence acceptance is complete.** The two registered gates,
    deployed direct/proxy routes, Observer panel, boot binding, no-journal-payload
    boundary, nine health endpoints, and zero failed units passed in generation
@@ -919,6 +926,7 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md](./plans/OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md) | Completed first bounded read-only kernel event slice. |
 | [OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md](./plans/OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md) | Completed bounded read-only network connect-attempt metadata slice; physical deployment is complete and rollback/variants remain deferred. |
 | [OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md](./plans/OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md) | Physically accepted bounded read-only file open-attempt metadata slice; filename/path/content/result remain excluded. |
+| [OPENCLAW_PHASE_C_KERNEL_ACTIVITY_SNAPSHOT_PLAN.md](./plans/OPENCLAW_PHASE_C_KERNEL_ACTIVITY_SNAPSHOT_PLAN.md) | Explicit compact snapshot across the three existing kernel nerves without raw event aggregation or automatic repeat. |
 | [OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md](./plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Current declarative-evolution evidence and explicitly deferred activation boundary. |
 | [OPENCLAW_MONOLITH_REDUCTION_PLAN.md](./plans/OPENCLAW_MONOLITH_REDUCTION_PLAN.md) | Active coupling and maintainability debt record. |
 | [OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md](./plans/OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md) | Active validation and expert-review debt record. |

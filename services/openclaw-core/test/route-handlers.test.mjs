@@ -388,6 +388,35 @@ test("core infrastructure proxy forwards the bounded file-open route", async () 
   assert.equal(response.body.readback.persisted, false);
 });
 
+test("core infrastructure proxy forwards the compact kernel activity snapshot", async () => {
+  let observedUrl = null;
+  const deps = createBaseDeps({
+    client: {
+      fetchJson: async (url) => {
+        observedUrl = url;
+        return {
+          ok: true,
+          registry: "openclaw-kernel-activity-snapshot-v0",
+          mode: "explicit_bounded_read_only",
+          status: "complete",
+          laneCount: 3,
+          availableLaneCount: 3,
+          eventCount: 12,
+          boundary: { rawEventsIncluded: false, persisted: false, hostMutation: false },
+        };
+      },
+    },
+  });
+
+  const response = await invokeRoute(deps, "GET", "/proxy/system-sense/system/kernel/activity-snapshot");
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(observedUrl, "http://127.0.0.1:4106/system/kernel/activity-snapshot");
+  assert.equal(response.body.registry, "openclaw-kernel-activity-snapshot-v0");
+  assert.equal(response.body.boundary.rawEventsIncluded, false);
+  assert.equal(response.body.boundary.hostMutation, false);
+});
+
 test("core infrastructure proxy forwards bounded boot evidence", async () => {
   let observedUrl = null;
   const deps = createBaseDeps({

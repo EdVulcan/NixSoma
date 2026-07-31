@@ -115,6 +115,9 @@ AI 对系统的自主修改不应该通过脆弱的、命令式的命令行脚�
   包含网络拦截、blocking、持久化事件黑匣子或策略执行。file-open 已在物理
   generation `qcv5ggpr...` 通过两条安装态门禁，各捕获 128 条 bounded events，
   同时保持九个健康端点、零 failed unit、boot ID 不变和所有敏感字段缺失。
+  下一层 source/KVM 候选不增加 hook，而是在一次显式请求中并行调用三条 probe，
+  只返回 lane 状态、计数和 continuity。它不返回 raw events，不自动重复，也不构成
+  持久化事件黑匣子或策略执行。
 
 ### 🔄 Phase D: 声明式自进化闭环
 - **任务**：打通 Nix 配置文件生成器与 `nixos-rebuild` 执行沙箱。

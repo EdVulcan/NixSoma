@@ -768,6 +768,11 @@ root-only snapshot；三类 replay 均被拒绝。物理机 Phase D mutation、�
 自动 rollback/retry 与 provider-selected generation 仍未授权。因此旧阶段路线的“接近 90%”只能
 描述早期里程碑清单，不能代表最终白皮书完成度。
 
+三条 Phase C nerve 之上的下一层 source/KVM 候选是显式 compact activity
+snapshot：只聚合 lane status、counts 与 continuity，不聚合 raw event values，也不
+加入定时循环。它提升 operator body-state 可读性，但不等于 persistent black box、
+anomaly inference、enforcement 或 physical mutation。
+
 当前 bounded Level 2 browser 眼手闭环与内核白皮书 Phase A 已收口。
 Phase B 的固定 D-Bus 控制切片、bounded journal/boot diagnosis、incident loop、
 显式批准的 DeepSeek diagnosis handoff、目标相关经验召回、自动本地分诊和
