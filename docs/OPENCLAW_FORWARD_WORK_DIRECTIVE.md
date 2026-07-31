@@ -213,7 +213,12 @@ activity, policy execution, and host mutation remain false. Observer owns one
 explicit button and no aggregate interval. Source, closure, and disposable-KVM
 evidence are complete: the VM captured 40 process, 40 network, and 128 file
 events in one parallel request with all private values excluded. Physical
-deployment remains separately authorized and deferred.
+generation `52s1asvy...` is now accepted: the Core gate captured 62 process, 46
+network, and 128 file events, while the Observer gate captured 240 aggregate
+events with all three lanes available. Current/profile links match, boot ID
+`9b7f2879...` stayed unchanged, all nine health endpoints and services passed,
+restart/failed-unit counts were zero, and warning journals were empty. Freeze
+this lane.
 
 The bounded read-only boot/restart evidence route selected for the recent
 restart investigation is already deployed in generation `1xh4x8ls...`. Direct

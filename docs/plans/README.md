@@ -92,8 +92,10 @@ The completed source/KVM slice is the compact aggregate in
 [`OPENCLAW_PHASE_C_KERNEL_ACTIVITY_SNAPSHOT_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_ACTIVITY_SNAPSHOT_PLAN.md).
 It invokes the three existing capture owners only on an explicit request and
 returns counts/continuity without raw event values. Its VM gate captured 40
-process, 40 network, and 128 file events. It does not authorize a new physical
-generation.
+process, 40 network, and 128 file events. Physical generation `52s1asvy...`
+then passed protected-path review and both installed gates without reboot: Core
+captured 62/46/128 events across the three lanes, Observer captured 240 total,
+and all service/health/failure checks remained healthy. Freeze this lane.
 
 The bounded boot/restart evidence route is also deployed in current generation
 `1xh4x8ls...`. Its registered Core/Observer gates, deployed direct/proxy
