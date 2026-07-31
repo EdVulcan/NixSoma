@@ -1,0 +1,14 @@
+export const observerClientConfigDomKernelNetworkScript = `const kernelNetworkConnectStatus = document.querySelector("#kernel-network-connect-status");
+const kernelNetworkConnectAvailable = document.querySelector("#kernel-network-connect-available");
+const kernelNetworkConnectEventCount = document.querySelector("#kernel-network-connect-event-count");
+const kernelNetworkConnectUniqueCommCount = document.querySelector("#kernel-network-connect-unique-comm-count");
+const kernelNetworkConnectUniqueFamilyCount = document.querySelector("#kernel-network-connect-unique-family-count");
+const kernelNetworkConnectUniquePidCount = document.querySelector("#kernel-network-connect-unique-pid-count");
+const kernelNetworkConnectUniqueUidCount = document.querySelector("#kernel-network-connect-unique-uid-count");
+const kernelNetworkConnectContinuityStatus = document.querySelector("#kernel-network-connect-continuity-status");
+const kernelNetworkConnectCaptureSequence = document.querySelector("#kernel-network-connect-capture-sequence");
+const kernelNetworkConnectActivity = document.querySelector("#kernel-network-connect-activity");
+const kernelNetworkConnectNewCommCount = document.querySelector("#kernel-network-connect-new-comm-count");
+const kernelNetworkConnectReadbackJson = document.querySelector("#kernel-network-connect-readback-json");
+const kernelNetworkConnectJson = document.querySelector("#kernel-network-connect-json");
+`;

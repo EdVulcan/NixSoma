@@ -314,6 +314,42 @@ test("core infrastructure proxy route forwards read-only system kernel event rou
   assert.equal(response.body.readback.continuity.status, "first_capture");
 });
 
+test("core infrastructure proxy forwards the bounded network-connect route", async () => {
+  let observedUrl = null;
+  const deps = createBaseDeps({
+    client: {
+      fetchJson: async (url) => {
+        observedUrl = url;
+        return {
+          ok: true,
+          registry: "openclaw-kernel-network-connect-v0",
+          mode: "read_only",
+          source: {
+            destinationCaptured: false,
+            portCaptured: false,
+            networkPayloadCaptured: false,
+          },
+          readback: {
+            registry: "openclaw-kernel-network-connect-readback-v0",
+            persisted: false,
+            destinationCaptured: false,
+            portCaptured: false,
+            networkPayloadCaptured: false,
+          },
+        };
+      },
+    },
+  });
+
+  const response = await invokeRoute(deps, "GET", "/proxy/system-sense/system/kernel/network-connect-events");
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(observedUrl, "http://127.0.0.1:4106/system/kernel/network-connect-events");
+  assert.equal(response.body.registry, "openclaw-kernel-network-connect-v0");
+  assert.equal(response.body.source.destinationCaptured, false);
+  assert.equal(response.body.readback.networkPayloadCaptured, false);
+});
+
 test("core runtime read route reconciles and serialises current task", async () => {
   const task = { id: "task-current", status: "running" };
   let reconciled = false;

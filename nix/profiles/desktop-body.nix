@@ -18,6 +18,7 @@
     operatorAuthTokenReaders = [ "edvulcan" ];
     systemdRepairAuthDelegation.enable = true;
     kernelEventCapture.enable = true;
+    kernelNetworkCapture.enable = true;
     resourceControl.enable = true;
     aiGraphicalSession.enable = true;
     aiGraphicalSession.attachBrowser = true;

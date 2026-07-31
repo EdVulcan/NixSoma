@@ -853,6 +853,17 @@ if (ownership.systemSense.environment?.OPENCLAW_KERNEL_EVENT_CAPTURE_ENABLED !==
   || ownership.systemSense.serviceConfig?.LimitMEMLOCK !== "infinity") {
   throw new Error(`desktop system-sense must expose only the bounded eBPF capabilities: ${JSON.stringify(ownership.systemSense)}`);
 }
+if (ownership.systemSense.environment?.OPENCLAW_KERNEL_NETWORK_CAPTURE_ENABLED !== "1"
+  || !String(ownership.systemSense.environment?.OPENCLAW_KERNEL_NETWORK_PROBE ?? "").startsWith("/nix/store/")
+  || ownership.systemSense.environment?.OPENCLAW_KERNEL_NETWORK_CAPTURE_DURATION_MS !== "1000"
+  || ownership.systemSense.environment?.OPENCLAW_KERNEL_NETWORK_CAPTURE_MAX_EVENTS !== "128"
+  || !ownership.systemSense.serviceConfig?.AmbientCapabilities?.includes("CAP_BPF")
+  || !ownership.systemSense.serviceConfig?.AmbientCapabilities?.includes("CAP_PERFMON")
+  || !ownership.systemSense.serviceConfig?.CapabilityBoundingSet?.includes("CAP_BPF")
+  || !ownership.systemSense.serviceConfig?.CapabilityBoundingSet?.includes("CAP_PERFMON")
+  || ownership.systemSense.serviceConfig?.LimitMEMLOCK !== "infinity") {
+  throw new Error("desktop system-sense must expose the bounded network eBPF capability: " + JSON.stringify(ownership.systemSense));
+}
 if (ownership.observerUi.environment?.OPENCLAW_BODY_RUNTIME_SOURCE !== "nix-store"
   || !String(ownership.observerUi.serviceConfig?.WorkingDirectory ?? "").startsWith("/nix/store/")
   || !String(ownership.observerUi.serviceConfig?.WorkingDirectory ?? "").endsWith("/share/openclaw/apps/observer-ui")
@@ -1708,6 +1719,8 @@ EOF
     || ! -f "$system_sense_working_dir/node_modules/@homebridge/dbus-native/package.json"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-process-exec-capture.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-process-exec-readback.mjs"
+    || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-network-connect-capture.mjs"
+    || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-network-connect-readback.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/system-kernel-event-routes.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/system-health-governance.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-dbus-adapter.mjs"
@@ -1724,7 +1737,7 @@ EOF
     || -e "$system_sense_working_dir/node_modules/typescript"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-dbus-transport.mjs"
     || ! -f "$system_sense_out/share/openclaw/packages/shared-systemd/src/systemd-dbus-transport.mjs"
-    || "$system_sense_source_count" -ne 30 ]]; then
+    || "$system_sense_source_count" -ne 32 ]]; then
     echo "system-sense Nix closure is not exact, production-only, and read-only: $system_sense_out" >&2
     exit 1
   fi
@@ -1734,8 +1747,11 @@ EOF
   if [[ "$kernel_probe_out" != /nix/store/*
     || ! -x "$kernel_probe_out/bin/openclaw-kernel-process-exec"
     || ! -f "$kernel_probe_out/lib/openclaw-kernel-process-exec.bpf.o"
-    || ! -x "$kernel_probe_out/libexec/openclaw-kernel-process-exec-loader" ]]; then
-    echo "kernel process-exec probe package is incomplete: $kernel_probe_out" >&2
+    || ! -x "$kernel_probe_out/libexec/openclaw-kernel-process-exec-loader"
+    || ! -x "$kernel_probe_out/bin/openclaw-kernel-network-connect"
+    || ! -f "$kernel_probe_out/lib/openclaw-kernel-network-connect.bpf.o"
+    || ! -x "$kernel_probe_out/libexec/openclaw-kernel-network-connect-loader" ]]; then
+    echo "kernel event probe package is incomplete: $kernel_probe_out" >&2
     exit 1
   fi
 
@@ -1984,7 +2000,7 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/packages/shared-client/src/service-descriptors.mjs"
     || -w "$observer_ui_server"
     || -e "$observer_ui_out/share/openclaw/apps/observer-ui/scripts"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 87 ]]; then
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 90 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi

@@ -13,6 +13,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-config-dom-cloud-provider.mjs
     ../../apps/observer-ui/src/client-script-config-dom-declarative-evolution.mjs
     ../../apps/observer-ui/src/client-script-config-dom-kernel-events.mjs
+    ../../apps/observer-ui/src/client-script-config-dom-kernel-network.mjs
     ../../apps/observer-ui/src/client-script-config-dom-engineering-context.mjs
     ../../apps/observer-ui/src/client-script-config-dom-engineering-provider-handoff.mjs
     ../../apps/observer-ui/src/client-script-config-dom-mvp-memory.mjs
@@ -33,6 +34,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-refreshers-engineering-context.mjs
     ../../apps/observer-ui/src/client-script-refreshers-engineering-provider-handoff.mjs
     ../../apps/observer-ui/src/client-script-refreshers-kernel-events.mjs
+    ../../apps/observer-ui/src/client-script-refreshers-kernel-network.mjs
     ../../apps/observer-ui/src/client-script-refreshers-memory-phases.mjs
     ../../apps/observer-ui/src/client-script-refreshers-mvp-phases.mjs
     ../../apps/observer-ui/src/client-script-refreshers-runtime.mjs
@@ -87,6 +89,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/observer-panels-foundation.mjs
     ../../apps/observer-ui/src/observer-panels-operator-auth.mjs
     ../../apps/observer-ui/src/observer-panels-kernel-events.mjs
+    ../../apps/observer-ui/src/observer-panels-kernel-network.mjs
     ../../apps/observer-ui/src/observer-panels-operations.mjs
     ../../apps/observer-ui/src/observer-panel-ai-work-view.mjs
     ../../apps/observer-ui/src/observer-panel-snapshot-preview.mjs

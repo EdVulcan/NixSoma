@@ -79,3 +79,38 @@ test("system kernel event route ignores non-GET and unrelated paths", async () =
     builders: {},
   }), false);
 });
+
+test("system kernel event route exposes the read-only network connect model", async () => {
+  const res = responseCapture();
+  const handled = await handleSystemKernelEventRoutes({
+    req: { method: "GET" },
+    res,
+    requestUrl: new URL("http://127.0.0.1/system/kernel/network-connect-events"),
+    builders: {
+      buildKernelNetworkConnectEvents: async () => ({
+        ok: true,
+        registry: "openclaw-kernel-network-connect-v0",
+        status: "captured",
+        mode: "read_only",
+        events: [],
+        readback: {
+          registry: "openclaw-kernel-network-connect-readback-v0",
+          mode: "bounded_in_memory_summary",
+          persisted: false,
+          continuity: {
+            registry: "openclaw-kernel-network-connect-continuity-v0",
+            status: "first_capture",
+            persisted: false,
+          },
+        },
+      }),
+    },
+  });
+
+  assert.equal(handled, true);
+  assert.equal(res.statusCode, 200);
+  const payload = JSON.parse(res.body);
+  assert.equal(payload.registry, "openclaw-kernel-network-connect-v0");
+  assert.equal(payload.readback.destinationCaptured, undefined);
+  assert.equal(payload.readback.persisted, false);
+});

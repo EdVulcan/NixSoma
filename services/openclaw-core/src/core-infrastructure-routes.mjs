@@ -67,6 +67,7 @@ const READ_ONLY_PROXY_PATHS = {
     "/system/systemd/repair-plan",
     "/system/systemd/repair-dry-run",
     "/system/kernel/process-exec-events",
+    "/system/kernel/network-connect-events",
   ]),
 };
 

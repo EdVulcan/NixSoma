@@ -705,6 +705,10 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
   随后由独立 rollback task、step-bound approval 和 root-only snapshot 精确恢复
   previous generation 与 managed source；activation approval、rollback approval
   和 snapshot replay 均被拒绝，Core/hostd PID 保持不变且 failed unit 为 0
+- Phase C 的第二个只读内核神经切片已完成源码、closure 和可丢弃 KVM 证明：
+  `fentry/__sys_connect` 只读取 sockaddr 前两个字节得到 family，并通过现有
+  system-sense/Core/Observer 路径返回有界连接尝试元数据；目标地址、端口、地址
+  字节、payload、持久化、策略执行和物理 generation mutation 均未启用
 - 分开记录源码完成、验证通过、system generation 部署和真实物理动作
 - Phase D 操作者治理的 activation/rollback lane 已冻结；自动批准、自动回滚、
   provider 选择 generation、任意 root 命令和物理机 mutation 仍未授权
@@ -723,7 +727,7 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 | --- | --- | --- |
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
-| Level 3 系统级特权组件 | 约 68% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。System Heal 修复与 Phase D generation activation-to-exact-rollback 已分别在可丢弃 KVM 中真实证明且不可重放；物理 generation 仍未部署 `MainPID=0` 修复或 Phase D mutation，自动 rollback、开发终端资源隔离和更广系统能力仍未建立。 |
+| Level 3 系统级特权组件 | 约 68% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process-exec 与 network connect-attempt evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。System Heal 修复与 Phase D generation activation-to-exact-rollback 已分别在可丢弃 KVM 中真实证明且不可重放；network probe 尚未切换到物理 generation，物理 generation 仍未部署 `MainPID=0` 修复或 Phase D mutation，自动 rollback、开发终端资源隔离和更广系统能力仍未建立。 |
 | Level 4 图形栈内生组件 | 约 85%（one-shot projected operator click、bounded native operator type、semantic type、bounded run、reviewed cycle/acceptance、bounded local OCR、OCR assessment、same-surface OCR click、objective-bound OCR type、fixed OCR focus-then-type 与 governed current-tab close 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、verified-scroll-only 两步 run、显式 run-plus-assessment cycle、瞬时本地 OCR、无 pixel egress 的 OCR provider assessment、ordinal-grounded one-click action、objective-bound one-shot OCR type、固定两动作 focus/type 与当前 tab 生命周期 owner 已部署。`pfiwq5p3...` gate 在 Firefox PID 不变时证明 same-authority prepare 复用，并通过受治理关闭将测试 tab 从 5 恢复到 4，绑定 lease、两层 durable audit 与零自动重复。Enter、hotkey、repeat、通用键盘代理、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
@@ -731,7 +735,8 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 sidecar store 运行路径；Phase B 已完成原生只读 D-Bus inventory、三个由精确
 Polkit 和独立 hostd 所有的固定 native restart、bounded journal diagnosis，
 并已在可丢弃 KVM 中端到端证明 System Heal repair 与 non-replay；Phase C 已完成
-首个只读 `sched_process_exec` eBPF 探针切片；Phase D
+只读 `sched_process_exec` 以及 `fentry/__sys_connect` 网络连接尝试 eBPF 探针切片；后者
+只通过 sockaddr 前两个字节读取 family，不读取地址或端口；Phase D
 已完成候选生成、审批绑定、staging/build、真实 closure receipt、独立
 host-health oracle、受控 activation contract、人工 rollback evidence、物理机
 安全失败演练，以及可丢弃 KVM 中的真实 generation activation 和独立 healthy

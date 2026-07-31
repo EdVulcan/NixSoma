@@ -45,6 +45,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 objective-bound OCR type | One explicit reviewed task whose entire objective matches `Type exact text "VALUE" into the active surface` may receive one provider decision for exactly that 1-32 character allowlisted value; Core revalidates task/OCR/frame/surface/inventory before one opcode-5 type and requires newer OCR containing the value | Deployed in `m392zajq...`; one provider call typed a 6-character canary on surface 31/inventory 72, matched one native receipt and three owner OCR observations, verified the newer scene, left the task unchanged, and copied no plaintext into execution evidence; provider retention remains externally governed |
 | Level 4 OCR focus then type | One explicit reviewed task whose objective fixes both an OCR target substring and exact allowlisted value may receive one `focus_and_type + ordinal + value` decision; Core requires unchanged provider OCR, objective-local target verification, opcode-4 receipt, fresh task/frame/OCR revalidation, opcode-5 receipt, and final OCR containing the value | Deployed in `4mw7p3r3...`; task `158bd267...` bound provider/preprobe ordinal 14 on surface 14 to one call, opcodes `[4,5]`, four owner OCR observations, two receipts, final OCR, unchanged task, completion audit, and no execution-evidence plaintext |
 | Level 4 current-tab close | One explicit authenticated request carries only `browser.current_tab.close` plus `confirm=true`; Core grants one fixed Screen Act route and Browser Runtime closes only its current `activePage` while preserving the final tab | Deployed in `pfiwq5p3...`; real headed Firefox PID 63947 stayed stable while the prepare-reuse test page closed with count 5 -> 4, helper lease plus Browser Runtime/Screen Act audit matched, and provider calls, automatic cleanup/repeat, user-service restarts, and reboot remained zero |
+| Level 3 network observation | Fixed `fentry/__sys_connect` eBPF probe sends only timestamp, process identity, sockaddr family, and address length through the system-sense/Core/Observer read-only path; only the first two sockaddr bytes are read and destination, port, address bytes, payload, persistence, and policy execution remain excluded | Source-validated and disposable-KVM proven; not switched on the physical host |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Disposable Level 3 repair loop | `checks.x86_64-linux.openclaw-system-heal-repair-loop-vm` stops `openclaw-system-heal.service` inside KVM, observes and triages the incident, promotes one approval-gated repair, executes one native hostd restart, verifies post-health, and reconciles terminal state | Passed with one completed reservation and one interrupted reservation both proving no replay; no provider egress or generation mutation |
@@ -85,8 +86,9 @@ The completed bounded frontier is:
 - Level 2 trusted browser/work-view observation, semantic action, takeover,
   recovery, and Observer control within the bounded AI-owned workspace.
 - Level 3 independent hostd ownership, exact Polkit and peer boundaries, three
-  fixed systemd repair targets, read-only eBPF process evidence, bounded journal
-  diagnosis, and target-specific post-repair application health receipts. The
+  fixed systemd repair targets, read-only eBPF process-exec and network
+  connect-attempt evidence, bounded journal diagnosis, and target-specific
+  post-repair application health receipts. The
   full stopped-System-Heal scheduler-to-repair chain is physically proven in a
   disposable KVM guest, including completed and interrupted no-replay cases.
 - Level 4 has a dedicated headless Weston compositor owned by the login user's
@@ -835,6 +837,7 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_SYSTEMD_OBSERVATION_AI_HANDOFF_PLAN.md](./plans/OPENCLAW_SYSTEMD_OBSERVATION_AI_HANDOFF_PLAN.md) | Completed approval-bound diagnosis and reviewed readback for the observation receipt. |
 | [OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md](./plans/OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md) | Completed periodic local observation and deduplicated incident task creation for fixed units. |
 | [OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md](./plans/OPENCLAW_PHASE_C_KERNEL_PROCESS_EXEC_PLAN.md) | Completed first bounded read-only kernel event slice. |
+| [OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md](./plans/OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md) | Completed bounded read-only network connect-attempt metadata slice; physical switch remains deferred. |
 | [OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md](./plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Current declarative-evolution evidence and explicitly deferred activation boundary. |
 | [OPENCLAW_MONOLITH_REDUCTION_PLAN.md](./plans/OPENCLAW_MONOLITH_REDUCTION_PLAN.md) | Active coupling and maintainability debt record. |
 | [OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md](./plans/OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md) | Active validation and expert-review debt record. |

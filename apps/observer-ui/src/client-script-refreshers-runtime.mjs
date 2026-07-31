@@ -1,5 +1,6 @@
 import { observerClientBodyEvidenceRefreshersScript } from "./client-script-refreshers-body-evidence.mjs";
 import { observerClientKernelEventRefreshersScript } from "./client-script-refreshers-kernel-events.mjs";
+import { observerClientKernelNetworkRefreshersScript } from "./client-script-refreshers-kernel-network.mjs";
 import { observerClientSystemdRefreshersScript } from "./client-script-refreshers-systemd.mjs";
 export const observerClientRuntimeRefreshersScript = `async function refreshRuntime() {
   try {
@@ -375,7 +376,7 @@ async function refreshSystemState() {
   }
 }
 
-${observerClientBodyEvidenceRefreshersScript}${observerClientKernelEventRefreshersScript}${observerClientSystemdRefreshersScript}async function refreshHealState() {
+${observerClientBodyEvidenceRefreshersScript}${observerClientKernelEventRefreshersScript}${observerClientKernelNetworkRefreshersScript}${observerClientSystemdRefreshersScript}async function refreshHealState() {
   try {
     const data = await fetchJson(\`\${observerConfig.systemHealUrl}/heal/history\`);
     healCount.textContent = String(data.count ?? 0);

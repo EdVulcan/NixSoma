@@ -74,6 +74,10 @@
         openclaw-declarative-evolution-activation-vm =
           pkgs.testers.runNixOSTest
             (import ./nix/tests/openclaw-declarative-evolution-activation-vm.nix);
+
+        openclaw-kernel-network-connect-capture-vm =
+          pkgs.testers.runNixOSTest
+            (import ./nix/tests/openclaw-kernel-network-connect-capture-vm.nix);
       };
 
       packages.${system} = {

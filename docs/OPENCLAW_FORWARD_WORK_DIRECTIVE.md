@@ -158,15 +158,21 @@ one-off call surface.
 ## Selected Next Real Capability
 
 The disposable-NixOS-VM controlled activation and exact rollback gate is
-complete. Freeze this Phase D lane while its release evidence is committed and
-reconciled. The next product slice must be selected from a fresh route review
-after that closure and add distinct operator-visible behavior, not another
-activation/rollback receipt, readiness wrapper, or mirrored readback.
+complete, so Phase D remains frozen. The selected next capability is the
+smallest missing Phase C body nerve: read-only network connect-attempt
+observation through the existing system-sense, Core proxy, and Observer owners.
+The probe uses `fentry/__sys_connect` with only `CAP_BPF` and `CAP_PERFMON`,
+reads only the first two sockaddr bytes for the numeric family, and returns
+bounded timestamp/process/family/length metadata. It does not collect a
+destination, port, address bytes, payload, persistent event ledger, policy
+decision, or action authority.
 
-Do not run Phase D mutation on the current physical host. Do not accept an
-arbitrary closure, path, command, or flake target; infer rollback from provider
-output; approve, retry, or roll back automatically; add browser behavior; or
-widen hostd into general root/systemd authority.
+The source contract, exact Nix closure, focused Core/Observer checks, and
+disposable KVM gate are the evidence for this slice. The physical host remains
+on the existing generation; no `sudo`, generation switch, reboot, hostd
+mutation, provider call, or browser action is part of this route. After this
+slice is committed and reconciled, do not add another kernel hook or enforcement
+variant without a concrete operator need; return to a fresh capability review.
 
 ## Governing Vision
 

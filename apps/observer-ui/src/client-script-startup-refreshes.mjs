@@ -273,6 +273,7 @@ export const OBSERVER_STARTUP_REFRESH_GROUPS = [
     refreshNames: [
       "refreshSystemState",
       "refreshKernelProcessExecEvents",
+      "refreshKernelNetworkConnectEvents",
       "refreshHealthTrends",
       "refreshRouteAwareNextAction",
       "refreshConservativeRecoveryPolicy",

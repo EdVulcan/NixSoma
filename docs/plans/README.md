@@ -29,6 +29,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_SYSTEMD_INCIDENT_OBSERVATION_RECEIPT_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_OBSERVATION_RECEIPT_PLAN.md) | Compact hash-bound evidence from the reviewed same-unit observation refresh. |
 | [`OPENCLAW_SYSTEMD_OBSERVATION_AI_HANDOFF_PLAN.md`](./OPENCLAW_SYSTEMD_OBSERVATION_AI_HANDOFF_PLAN.md) | Exact approval-bound AI diagnosis and reviewed readback from the compact observation receipt. |
 | [`OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md`](./OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md) | Periodic local observation and restart-safe deduplicated incident tasks for fixed units. |
+| [`OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md) | Bounded read-only network connect-attempt observation through the existing Level 3 body nerve owner. |
 | [`OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md`](./OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Declarative-evolution candidate, controlled activation, and exact rollback evidence plus deferred physical/automatic mutation boundaries. |
 | [`OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md`](./OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md) | Measured validation, runtime, and review debt that blocks the mainline. |
 
@@ -63,6 +64,15 @@ This Phase D lane is frozen. The physical host remains evidence-only;
 arbitrary paths/commands, provider-driven or automatic rollback, retries, and
 wider hostd authority remain outside the completed slice. A fresh canonical
 route review must select the next distinct product capability.
+
+The fresh route review selected the bounded Phase C network connect-attempt
+slice recorded in
+[`OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md).
+It extends the existing read-only process-exec nerve through the same
+system-sense/Core/Observer path, uses `fentry/__sys_connect`, and reads only
+sockaddr family metadata. Its disposable KVM proof is release evidence; it does
+not authorize a physical generation switch, network enforcement, payload
+capture, persistence, provider egress, or host mutation.
 
 ### Historical Route Evidence
 
