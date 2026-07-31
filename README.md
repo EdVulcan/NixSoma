@@ -39,8 +39,8 @@ The repository now contains the full bounded local control plane listed above,
 plus the system-owned `openclaw-hostd` boundary. The current capability
 baseline includes governed engineering tools, the trusted browser/work-view
 loop, per-service identity and execution grants, three fixed systemd repair
-targets, Phase D declarative-evolution evidence, and bounded read-only journal
-diagnosis.
+targets, Phase D controlled activation-to-exact-rollback evidence in disposable
+KVM, and bounded read-only journal diagnosis.
 
 Source completion, validation, and deployment are tracked separately in the
 [documentation control room](./docs/README.md). A capability implemented at the

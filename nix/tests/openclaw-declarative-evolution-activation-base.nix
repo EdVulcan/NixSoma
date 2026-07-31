@@ -21,6 +21,10 @@ in
   system.switch.enable = true;
   system.systemBuilderArgs.allowSubstitutes = true;
 
+  # The direct-boot test disk has no partition table, so generation switches
+  # must update GRUB configuration without reinstalling GRUB onto that disk.
+  boot.loader.grub.device = lib.mkOverride 5 "nodev";
+
   environment.systemPackages = lib.mkBefore [
     pkgs.coreutils
     pkgs.curl

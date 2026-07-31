@@ -4,6 +4,18 @@
 > 当前源码、物理部署、成熟度与唯一下一能力以 `docs/README.md` 和
 > `docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md` 为准。
 
+## 当前接力检查点（2026-07-31）
+
+Phase D 的操作者治理 mutation loop 已在源码和可丢弃 KVM 中闭环：固定 hostd
+先把审批绑定的 managed-config candidate 切换为新 generation，独立 health oracle
+确认健康；随后独立 rollback task 经过显式确认和 step-bound approval，仅凭
+root-only snapshot ID 恢复精确 previous generation 与 previous managed-source
+state，并消费 snapshot。Activation approval、rollback approval 和直接 snapshot
+replay 均被拒绝，Core/hostd PID 保持，failed unit 为 0，provider/browser/自动
+rollback 均未发生。物理 generation 仍是 `pfiwq5p3...`，没有执行 Phase D
+activation/rollback。当前实现、证据和 deferred boundary 见
+`docs/plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md`。
+
 为了让后续接手开发工作的团队成员能够无缝过渡，本文件详细汇总了本次开发会话中完成的**架构解耦与重构工作**、**安全与逻辑热修复**、**产生的对应技术文档**以及**后续的验证与开发建议**。
 
 ---

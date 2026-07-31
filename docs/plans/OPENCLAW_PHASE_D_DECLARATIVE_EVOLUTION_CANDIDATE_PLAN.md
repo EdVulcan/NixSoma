@@ -1,19 +1,19 @@
 # Phase D: Declarative Evolution Candidate
 
 The source contract, physical-host-safe rehearsal, and real controlled
-activation release gate in this record are complete. The activation proof runs
-only in a disposable KVM guest; the physical host remains unchanged. The
-selected continuation is a separately governed fixed rollback owner and its own
-disposable-VM proof.
+activation-to-rollback release gate in this record are complete. The mutation
+proof runs only in a disposable KVM guest; the physical host remains unchanged.
 
 ## Status
 
-Complete through the controlled activation VM gate on 2026-07-30. This includes
+Complete through the controlled activation and fixed rollback VM gate on
+2026-07-31. This includes
 the first bounded Phase D capability, its
 approval-bound staging/build loop, read-only health-gate assessment, explicit
 host-health-bound activation decision boundary, and controlled hostd activation
-contract, plus one real guest generation switch with independent post-health.
-Physical generation activation remains disabled by default.
+and rollback contracts, plus one real guest generation switch and exact restore
+with independent health checks. Physical generation activation remains disabled
+by default.
 
 ## Delivered Capability
 
@@ -135,6 +135,29 @@ receipt hash and pre/post health hashes, names `deferred_manual_operator` as the
 rollback owner, and recommends operator review. It does not create a task or
 approval, call hostd again, execute rollback, or enable automatic recovery.
 
+The separately governed fixed rollback owner is complete through:
+
+```text
+POST /plugins/native-adapter/declarative-evolution/rollback-tasks
+act.openclaw.declarative_evolution.rollback
+hostd.rollback_managed_config
+```
+
+The public request accepts only an activation task ID and `confirm=true`. Core
+requires either a healthy completed activation or one whose generation switch
+succeeded but whose independent post-activation health was degraded. It
+revalidates the immutable activation receipt, binds the exact root-only snapshot
+ID, previous generation, activated generation, and previous managed-source
+state, then creates one step-bound approval. Hostd accepts only that fixed
+request over its peer-verified Unix socket and delegates to a NixOS-generated
+root helper that accepts only the snapshot ID. The helper restores the exact
+prior managed source, runs `nixos-rebuild switch --store-path` against the
+snapshot-bound previous generation, verifies the running generation and system
+profile, and consumes the snapshot only after success. Core validates the
+immutable rollback receipt and independently reads post-rollback health. No
+provider output can select the rollback, and there is no automatic retry or
+automatic rollback.
+
 The Core/Observer staging pair additionally proves that `confirm=false` creates
 no activation task or approval and performs no hostd call, managed-config write,
 generation switch, or rollback. The hostd protocol rejects oversized input,
@@ -153,6 +176,7 @@ services/openclaw-core/src/native-declarative-evolution-closure-integrity.mjs
 services/openclaw-core/src/native-declarative-evolution-health-gate.mjs
 services/openclaw-core/src/native-declarative-evolution-host-health-oracle.mjs
 services/openclaw-core/src/native-declarative-evolution-rollback-evidence.mjs
+services/openclaw-core/src/native-declarative-evolution-rollback.mjs
 services/openclaw-core/src/native-declarative-evolution-paths.mjs
 services/openclaw-core/src/native-declarative-evolution-task-builders.mjs
 services/openclaw-core/src/native-declarative-evolution-task-routes.mjs
@@ -160,6 +184,7 @@ services/openclaw-core/src/native-declarative-evolution-activation-decision.mjs
 services/openclaw-core/src/task-executor-native-declarative-evolution-handlers.mjs
 services/openclaw-core/src/task-executor-native-declarative-evolution-activation-handlers.mjs
 services/openclaw-core/src/task-executor-native-declarative-evolution-activation-execution-handlers.mjs
+services/openclaw-core/src/task-executor-native-declarative-evolution-rollback-handlers.mjs
 services/openclaw-core/test/native-declarative-evolution-builders.test.mjs
 services/openclaw-core/test/native-declarative-evolution-execution.test.mjs
 services/openclaw-core/test/native-declarative-evolution-closure-integrity.test.mjs
@@ -171,6 +196,8 @@ services/openclaw-core/test/native-declarative-evolution-activation-decision.tes
 services/openclaw-core/test/task-executor-native-declarative-evolution-activation-handlers.test.mjs
 services/openclaw-core/test/task-executor-native-declarative-evolution-activation-execution-handlers.test.mjs
 services/openclaw-core/test/native-declarative-evolution-physical-host-rehearsal.test.mjs
+services/openclaw-core/test/native-declarative-evolution-rollback.test.mjs
+services/openclaw-core/test/task-executor-native-declarative-evolution-rollback-handlers.test.mjs
 services/openclaw-core/test/task-executor-native-declarative-evolution-staging-handlers.test.mjs
 services/openclaw-core/test/native-declarative-evolution-activation.test.mjs
 services/openclaw-core/test/capability-runtime.test.mjs
@@ -185,9 +212,13 @@ apps/observer-ui/src/client-script-refreshers-declarative-evolution.mjs
 apps/observer-ui/src/client-script-renderers-declarative-evolution.mjs
 apps/observer-ui/test/client-script-declarative-evolution.test.mjs
 services/openclaw-hostd/src/hostd-activation-protocol.mjs
+services/openclaw-hostd/src/hostd-rollback-protocol.mjs
 services/openclaw-hostd/src/managed-config-activation.mjs
+services/openclaw-hostd/src/managed-config-rollback.mjs
 services/openclaw-hostd/test/hostd-activation.test.mjs
+services/openclaw-hostd/test/hostd-rollback.test.mjs
 packages/shared-systemd/src/openclaw-hostd-activation.mjs
+packages/shared-systemd/src/openclaw-hostd-rollback.mjs
 nix/modules/openclaw-managed-config-activation.nix
 nix/tests/openclaw-declarative-evolution-activation-base.nix
 nix/tests/openclaw-declarative-evolution-activation-vm.nix
@@ -214,20 +245,22 @@ KVM. It stages candidate `aed7e917...`, resolves the exact evaluated closure,
 executes the fixed hostd helper once, and moves the guest's current generation
 and system profile to that closure. `observer-ui.service` becomes active and
 the independent post-activation oracle returns `healthy`; Core and hostd PIDs
-are preserved, approval replay is rejected, and failed units remain zero. The
-result registry is `nixsoma-declarative-evolution-activation-vm-v0` with no
-provider egress, browser action, physical-host mutation, or rollback execution.
+are preserved. A second explicit approval then invokes the fixed rollback
+helper, restores the exact prior generation and absent managed source, stops the
+candidate-only Observer, consumes the root snapshot, and returns independent
+healthy post-state. Activation approval replay, rollback approval replay, and
+direct snapshot replay are rejected; failed units remain zero. The result
+registry is `nixsoma-declarative-evolution-activation-rollback-vm-v0` with no
+provider egress, browser action, physical-host mutation, automatic rollback, or
+retry. Focused tests separately prove that the same rollback task is available
+when a successful generation switch terminates only because post-activation
+health is degraded.
 
 ## Next Real Slice
 
-Add one separately governed fixed rollback owner and prove it in a disposable
-NixOS VM. It may accept only a verified activation receipt and the exact
-`previousGenerationPath` already bound by that receipt. Execution requires
-explicit operator confirmation, the existing step-bound approval, current
-receipt/task revalidation, one fixed hostd call, an immutable rollback receipt,
-replay rejection, and independent post-rollback health.
-
-Do not run the proof on the physical host or widen it into an arbitrary closure,
-path, command, flake target, provider-driven decision, automatic retry, or
-general root/systemd API. The existing `deferred_manual_operator` evidence must
-remain the only runtime claim until this distinct actuator and KVM gate exist.
+Freeze this operator-governed Phase D mutation loop. A later Phase D extension
+must be selected separately and add real recovery behavior rather than another
+receipt or readiness wrapper. Physical activation, provider-selected rollback,
+automatic approval, automatic rollback/retry, arbitrary closures or paths,
+caller-supplied commands or flake targets, and general root/systemd authority
+remain deferred.

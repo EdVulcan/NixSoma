@@ -58,7 +58,10 @@ function validateHelperEvidence(evidence, request) {
   return evidence?.registry === HOSTD_ACTIVATION_HELPER_RECEIPT_REGISTRY
     && evidence.candidateHash === request.candidateHash
     && evidence.evaluatedClosurePath === request.evaluatedClosurePath
+    && evidence.rollbackSnapshotId === request.requestId
+    && typeof evidence.previousTargetPresent === "boolean"
     && (evidence.previousTargetHash === null || isSha256(evidence.previousTargetHash))
+    && evidence.previousTargetPresent === (evidence.previousTargetHash !== null)
     && isNixStorePath(evidence.generationBefore)
     && evidence.generationBefore !== request.evaluatedClosurePath
     && evidence.generationAfter === request.evaluatedClosurePath
@@ -95,6 +98,8 @@ function buildReceipt({
     sourceStagingTaskId: request.sourceStagingTaskId ?? null,
     activationTaskId: request.activationTaskId ?? null,
     activationDecisionTaskId: request.activationDecisionTaskId ?? null,
+    rollbackSnapshotId: helperEvidence?.rollbackSnapshotId ?? null,
+    previousTargetPresent: helperEvidence?.previousTargetPresent ?? null,
     previousTargetHash,
     previousGenerationPath: helperEvidence?.generationBefore ?? null,
     activatedGenerationPath: helperEvidence?.generationAfter ?? null,
@@ -164,7 +169,7 @@ export function createManagedConfigActivationRunner({
 
       command = {
         executable: sudoExecutable,
-        args: ["--non-interactive", activationHelper, request.candidateHash, request.evaluatedClosurePath],
+        args: ["--non-interactive", activationHelper, request.candidateHash, request.evaluatedClosurePath, request.requestId],
       };
       activationExecuted = true;
       const result = await execFileImpl(command.executable, command.args, {

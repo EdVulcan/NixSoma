@@ -29,5 +29,6 @@ mkOpenClawNpmRuntimeClosure {
     ../../packages/shared-systemd/src/openclaw-hostd-capabilities.json
     ../../packages/shared-systemd/src/openclaw-hostd-capabilities.mjs
     ../../packages/shared-systemd/src/openclaw-hostd-activation.mjs
+    ../../packages/shared-systemd/src/openclaw-hostd-rollback.mjs
   ];
 }

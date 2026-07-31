@@ -3,6 +3,7 @@ import { sendJson, readJsonBody } from "../../../packages/shared-utils/src/http.
 const ROUTE = "/plugins/native-adapter/declarative-evolution/staging-tasks";
 const ACTIVATION_DECISION_ROUTE = "/plugins/native-adapter/declarative-evolution/activation-decisions";
 const ACTIVATION_ROUTE = "/plugins/native-adapter/declarative-evolution/activation-tasks";
+const ROLLBACK_ROUTE = "/plugins/native-adapter/declarative-evolution/rollback-tasks";
 const ACTIVATION_REVIEW_ROUTE = "/plugins/native-adapter/declarative-evolution/activation-decision";
 
 function errorMessage(error) {
@@ -30,7 +31,7 @@ export async function handleNativeDeclarativeEvolutionTaskRoute({
     return true;
   }
 
-  if (req.method !== "POST" || ![ROUTE, ACTIVATION_DECISION_ROUTE, ACTIVATION_ROUTE].includes(requestUrl.pathname)) {
+  if (req.method !== "POST" || ![ROUTE, ACTIVATION_DECISION_ROUTE, ACTIVATION_ROUTE, ROLLBACK_ROUTE].includes(requestUrl.pathname)) {
     return false;
   }
 
@@ -47,6 +48,11 @@ export async function handleNativeDeclarativeEvolutionTaskRoute({
           activationDecisionTaskId: body.activationDecisionTaskId,
           confirm: body.confirm === true,
         })
+        : requestUrl.pathname === ROLLBACK_ROUTE
+          ? await planBuilder.createNativeDeclarativeEvolutionRollbackTask({
+            activationTaskId: body.activationTaskId,
+            confirm: body.confirm === true,
+          })
         : await planBuilder.createNativeDeclarativeEvolutionStagingTask({
           changes: body.changes,
           confirm: body.confirm === true,

@@ -15,6 +15,16 @@ import {
   isNixStorePath,
   isSha256,
 } from "../../../packages/shared-systemd/src/openclaw-hostd-activation.mjs";
+import {
+  HOSTD_ROLLBACK_CAPABILITY_REGISTRY,
+  HOSTD_ROLLBACK_MAX_AGE_MS,
+  HOSTD_ROLLBACK_OPERATION,
+  HOSTD_ROLLBACK_PROTOCOL_VERSION,
+  HOSTD_ROLLBACK_RESPONSE_REGISTRY,
+  HOSTD_ROLLBACK_TARGET_PATH,
+  isBoundedRollbackExpiry,
+  isRollbackSnapshotId,
+} from "../../../packages/shared-systemd/src/openclaw-hostd-rollback.mjs";
 
 export const OPENCLAW_HOSTD_SOCKET_PATH_ENV = "OPENCLAW_HOSTD_SOCKET_PATH";
 export const DEFAULT_OPENCLAW_HOSTD_SOCKET_PATH = "/run/openclaw/hostd.sock";
@@ -184,6 +194,69 @@ export async function requestHostdManagedConfigActivation({
       registry: HOSTD_ACTIVATION_RESPONSE_REGISTRY,
       protocolVersion: HOSTD_ACTIVATION_PROTOCOL_VERSION,
       capabilityRegistry: HOSTD_ACTIVATION_CAPABILITY_REGISTRY,
+    },
+  });
+}
+
+export async function requestHostdManagedConfigRollback({
+  socketPath = process.env[OPENCLAW_HOSTD_SOCKET_PATH_ENV] ?? DEFAULT_OPENCLAW_HOSTD_SOCKET_PATH,
+  targetPath = HOSTD_ROLLBACK_TARGET_PATH,
+  activationTaskId,
+  rollbackTaskId,
+  activationReceiptHash,
+  rollbackSnapshotId,
+  candidateHash,
+  previousGenerationPath,
+  activatedGenerationPath,
+  previousTargetPresent,
+  previousTargetHash,
+  expiresAt = new Date(Date.now() + HOSTD_ROLLBACK_MAX_AGE_MS).toISOString(),
+  requestId = randomUUID(),
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  createConnection = net.createConnection,
+} = {}) {
+  const idPattern = /^[A-Za-z0-9._:-]{1,160}$/u;
+  if (targetPath !== HOSTD_ROLLBACK_TARGET_PATH
+    || !idPattern.test(activationTaskId)
+    || !idPattern.test(rollbackTaskId)
+    || !isSha256(activationReceiptHash)
+    || !isRollbackSnapshotId(rollbackSnapshotId)
+    || !isSha256(candidateHash)
+    || !isNixStorePath(previousGenerationPath)
+    || !isNixStorePath(activatedGenerationPath)
+    || previousGenerationPath === activatedGenerationPath
+    || typeof previousTargetPresent !== "boolean"
+    || !(previousTargetHash === null || isSha256(previousTargetHash))
+    || previousTargetPresent !== (previousTargetHash !== null)
+    || !isBoundedRollbackExpiry(expiresAt)) {
+    throw new Error("OpenClaw hostd client rejects an unbound managed-config rollback request.");
+  }
+  const request = {
+    version: HOSTD_ROLLBACK_PROTOCOL_VERSION,
+    operation: HOSTD_ROLLBACK_OPERATION,
+    target: HOSTD_ROLLBACK_TARGET_PATH,
+    requestId,
+    expiresAt,
+    activationTaskId,
+    rollbackTaskId,
+    activationReceiptHash,
+    rollbackSnapshotId,
+    candidateHash,
+    previousGenerationPath,
+    activatedGenerationPath,
+    previousTargetPresent,
+    previousTargetHash,
+  };
+  return requestHostdMessage({
+    socketPath,
+    request,
+    requestId,
+    timeoutMs,
+    createConnection,
+    response: {
+      registry: HOSTD_ROLLBACK_RESPONSE_REGISTRY,
+      protocolVersion: HOSTD_ROLLBACK_PROTOCOL_VERSION,
+      capabilityRegistry: HOSTD_ROLLBACK_CAPABILITY_REGISTRY,
     },
   });
 }

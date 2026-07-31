@@ -151,3 +151,30 @@ test("declarative evolution activation task route forwards only the decision tas
   assert.deepEqual(observed, { activationDecisionTaskId: "task-decision", confirm: false });
   assert.equal(response.body.approvalBinding.activationDecisionTaskId, "task-decision");
 });
+
+test("declarative evolution rollback route forwards only the verified activation task and confirmation", async () => {
+  let observed = null;
+  const response = await invoke(
+    "POST",
+    "/plugins/native-adapter/declarative-evolution/rollback-tasks",
+    { activationTaskId: "task-activation", confirm: true, previousGenerationPath: "/tmp/must-not-forward" },
+    {
+      createNativeDeclarativeEvolutionRollbackTask: async (input) => {
+        observed = input;
+        return {
+          registry: "openclaw-native-declarative-evolution-rollback-v0",
+          mode: "approval-gated",
+          generatedAt: "2026-07-30T00:00:00.000Z",
+          approvalBinding: { activationTaskId: input.activationTaskId, activationReceiptHash: "a".repeat(64) },
+          task: { id: "task-rollback", status: "queued" },
+          approval: { id: "approval-rollback", status: "pending" },
+          governance: { createsTask: true, createsApproval: true, executesRollback: false },
+        };
+      },
+    },
+  );
+  assert.equal(response.handled, true);
+  assert.equal(response.statusCode, 201);
+  assert.deepEqual(observed, { activationTaskId: "task-activation", confirm: true });
+  assert.equal(response.body.approvalBinding.activationTaskId, "task-activation");
+});

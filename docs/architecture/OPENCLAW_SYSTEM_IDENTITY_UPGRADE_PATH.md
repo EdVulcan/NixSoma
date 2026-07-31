@@ -702,17 +702,18 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
   restart、post-health receipt，以及 completed/interrupted reservation 均不重放
 - Phase D 真实受控 generation activation 已在可丢弃 KVM 中证明：审批绑定的
   candidate/staging/closure 经固定 hostd 单次切换，独立 post-health 为 healthy，
-  approval replay 被拒绝，Core/hostd PID 保持不变且 failed unit 为 0
+  随后由独立 rollback task、step-bound approval 和 root-only snapshot 精确恢复
+  previous generation 与 managed source；activation approval、rollback approval
+  和 snapshot replay 均被拒绝，Core/hostd PID 保持不变且 failed unit 为 0
 - 分开记录源码完成、验证通过、system generation 部署和真实物理动作
-- 下一步只实现绑定精确 previous generation、显式确认和 step-bound approval 的
-  固定 rollback owner，并先在可丢弃 VM 中证明单次执行、不可重放和独立健康结果；
-  物理机仍保持 evidence-only
+- Phase D 操作者治理的 activation/rollback lane 已冻结；自动批准、自动回滚、
+  provider 选择 generation、任意 root 命令和物理机 mutation 仍未授权
 
 而这些能力，已经比“强行抓整个用户桌面”更接近 OpenClaw 的长期产品形态。
 
 ---
 
-## 六、当前证据化进度基线（2026-07-30）
+## 六、当前证据化进度基线（2026-07-31）
 
 进度不能再按历史 Phase 数量计算。以下比例是根据当前运行时代码、NixOS
 模块、任务闭环、Observer、测试证据和仍缺失的架构组件估算的能力成熟度，
@@ -722,7 +723,7 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 | --- | --- | --- |
 | Level 1 用户态控制平面 | 约 90% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；仍需少量整合与产品化。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
-| Level 3 系统级特权组件 | 约 65% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。System Heal 修复与 Phase D generation activation 已分别在可丢弃 KVM 中真实证明且不可重放；物理 generation 仍未部署 `MainPID=0` 修复或 Phase D activation，rollback actuator、开发终端资源隔离和更广系统能力仍未建立。 |
+| Level 3 系统级特权组件 | 约 68% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal diagnosis、target-specific post-repair health receipt、只读 eBPF process evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。System Heal 修复与 Phase D generation activation-to-exact-rollback 已分别在可丢弃 KVM 中真实证明且不可重放；物理 generation 仍未部署 `MainPID=0` 修复或 Phase D mutation，自动 rollback、开发终端资源隔离和更广系统能力仍未建立。 |
 | Level 4 图形栈内生组件 | 约 85%（one-shot projected operator click、bounded native operator type、semantic type、bounded run、reviewed cycle/acceptance、bounded local OCR、OCR assessment、same-surface OCR click、objective-bound OCR type、fixed OCR focus-then-type 与 governed current-tab close 已物理完成） | 已有 user-owned、资源受限的 nested compositor 和固定 Wayland socket；AI-owned Nix Firefox、原生 frame/click/projection、最小 surface identity、固定 Workbench 生命周期、surface 激活、滚动、task-grounded provider decision、semantic click/type、verified-scroll-only 两步 run、显式 run-plus-assessment cycle、瞬时本地 OCR、无 pixel egress 的 OCR provider assessment、ordinal-grounded one-click action、objective-bound one-shot OCR type、固定两动作 focus/type 与当前 tab 生命周期 owner 已部署。`pfiwq5p3...` gate 在 Firefox PID 不变时证明 same-authority prepare 复用，并通过受治理关闭将测试 tab 从 5 恢复到 4，绑定 lease、两层 durable audit 与零自动重复。Enter、hotkey、repeat、通用键盘代理、开放式多步循环、任意进程/窗口控制和桌面接管仍未完成。 |
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
@@ -734,8 +735,10 @@ Polkit 和独立 hostd 所有的固定 native restart、bounded journal diagnosi
 已完成候选生成、审批绑定、staging/build、真实 closure receipt、独立
 host-health oracle、受控 activation contract、人工 rollback evidence、物理机
 安全失败演练，以及可丢弃 KVM 中的真实 generation activation 和独立 healthy
-post-state。实际 rollback 执行仍没有 runtime actuator；下一 gate 是精确绑定
-previous generation 的固定 rollback owner 及其独立 VM 证明。因此旧阶段路线的“接近 90%”只能
+post-state。独立固定 rollback actuator 现已通过第二次显式 approval，把同一
+KVM 精确恢复到 previous generation 和 previous managed-source state，并消费
+root-only snapshot；三类 replay 均被拒绝。物理机 Phase D mutation、自动 approval、
+自动 rollback/retry 与 provider-selected generation 仍未授权。因此旧阶段路线的“接近 90%”只能
 描述早期里程碑清单，不能代表最终白皮书完成度。
 
 当前 bounded Level 2 browser 眼手闭环与内核白皮书 Phase A 已收口。

@@ -16,6 +16,7 @@ import { createNativeDeclarativeEvolutionTaskBuilders } from "./native-declarati
 import { createNativeDeclarativeEvolutionExecution } from "./native-declarative-evolution-execution.mjs";
 import { createNativeDeclarativeEvolutionActivationDecisionBuilders } from "./native-declarative-evolution-activation-decision.mjs";
 import { createNativeDeclarativeEvolutionActivationBuilders } from "./native-declarative-evolution-activation.mjs";
+import { createNativeDeclarativeEvolutionRollbackBuilders } from "./native-declarative-evolution-rollback.mjs";
 import { createPhase2MvpReadinessBuilders } from "./phase2-mvp-readiness-builders.mjs";
 import { createPhase3WorkViewBuilders } from "./phase3-work-view-builders.mjs";
 import { createPhase4SelfHealBuilders } from "./phase4-self-heal-builders.mjs";
@@ -135,6 +136,7 @@ export function createPlanBuilder(deps) {
   let nativeDeclarativeEvolutionTaskBuilders = null;
   let nativeDeclarativeEvolutionActivationDecisionBuilders = null;
   let nativeDeclarativeEvolutionActivationBuilders = null;
+  let nativeDeclarativeEvolutionRollbackBuilders = null;
   const aiWorkspaceRuntimes = createAiWorkspaceRuntimesImpl({
     state,
     fetchJson,
@@ -221,6 +223,12 @@ export function createPlanBuilder(deps) {
           throw new Error("Native declarative evolution activation builders are not initialized.");
         }
         return nativeDeclarativeEvolutionActivationBuilders.createNativeDeclarativeEvolutionActivationTask(...args);
+      },
+      createNativeDeclarativeEvolutionRollbackTask: (...args) => {
+        if (!nativeDeclarativeEvolutionRollbackBuilders) {
+          throw new Error("Native declarative evolution rollback builders are not initialized.");
+        }
+        return nativeDeclarativeEvolutionRollbackBuilders.createNativeDeclarativeEvolutionRollbackTask(...args);
       },
     },
   });
@@ -358,6 +366,24 @@ export function createPlanBuilder(deps) {
     buildNativeDeclarativeEvolutionActivationTaskDraft,
     createNativeDeclarativeEvolutionActivationTask,
   } = nativeDeclarativeEvolutionActivationBuilders;
+  nativeDeclarativeEvolutionRollbackBuilders = createNativeDeclarativeEvolutionRollbackBuilders({
+    tasks,
+    autonomyMode,
+    evaluatePolicyIntent,
+    createTask,
+    createApprovalRequestForTask,
+    supersedeOtherActiveTasks,
+    reconcileRuntimeState,
+    persistState,
+    publishEvent,
+    publishTaskApprovalIfPending,
+    serialiseTask,
+    serialisePlanForPublic,
+  });
+  const {
+    buildNativeDeclarativeEvolutionRollbackTaskDraft,
+    createNativeDeclarativeEvolutionRollbackTask,
+  } = nativeDeclarativeEvolutionRollbackBuilders;
 
   const systemdTaskBuilders = createSystemdTaskBuilders({
     fetchJson,
@@ -872,6 +898,8 @@ function compactCloudConsciousnessEvidenceRef(evidence) {
     createNativeDeclarativeEvolutionActivationDecisionTask,
     buildNativeDeclarativeEvolutionActivationTaskDraft,
     createNativeDeclarativeEvolutionActivationTask,
+    buildNativeDeclarativeEvolutionRollbackTaskDraft,
+    createNativeDeclarativeEvolutionRollbackTask,
     readNativeDeclarativeEvolutionHostHealth,
     executeNativeDeclarativeEvolutionCandidate: nativeDeclarativeEvolutionExecution.executeNativeDeclarativeEvolutionCandidate,
     stageNativeDeclarativeEvolutionCandidate: nativeDeclarativeEvolutionExecution.stageCandidate,

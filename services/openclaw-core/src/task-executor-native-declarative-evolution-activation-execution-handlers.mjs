@@ -107,6 +107,8 @@ function compactReceipt(receipt) {
     sourceStagingTaskId: receipt.sourceStagingTaskId ?? null,
     activationDecisionTaskId: receipt.activationDecisionTaskId ?? null,
     activationTaskId: receipt.activationTaskId ?? null,
+    rollbackSnapshotId: receipt.rollbackSnapshotId ?? null,
+    previousTargetPresent: receipt.previousTargetPresent ?? null,
     previousTargetHash: receipt.previousTargetHash ?? null,
     previousGenerationPath: receipt.previousGenerationPath ?? null,
     activatedGenerationPath: receipt.activatedGenerationPath ?? null,

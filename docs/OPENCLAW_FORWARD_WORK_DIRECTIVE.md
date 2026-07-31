@@ -157,18 +157,16 @@ one-off call surface.
 
 ## Selected Next Real Capability
 
-The disposable-NixOS-VM controlled activation gate is complete. Select one
-separately governed fixed rollback owner and prove it in a disposable NixOS VM.
-It must accept only the exact previous generation bound by a verified immutable
-activation receipt, require explicit operator confirmation plus the existing
-step-bound approval, execute once through fixed hostd ownership, reject replay,
-and bind an independent post-rollback health result.
+The disposable-NixOS-VM controlled activation and exact rollback gate is
+complete. Freeze this Phase D lane while its release evidence is committed and
+reconciled. The next product slice must be selected from a fresh route review
+after that closure and add distinct operator-visible behavior, not another
+activation/rollback receipt, readiness wrapper, or mirrored readback.
 
-Do not run this proof on the current physical host. Do not accept an arbitrary
-closure, path, command, or flake target; infer rollback from provider output;
-retry automatically; add browser behavior; or widen hostd into general
-root/systemd authority. The existing `deferred_manual_operator` evidence remains
-truthful until this separate actuator and release gate exist.
+Do not run Phase D mutation on the current physical host. Do not accept an
+arbitrary closure, path, command, or flake target; infer rollback from provider
+output; approve, retry, or roll back automatically; add browser behavior; or
+widen hostd into general root/systemd authority.
 
 ## Governing Vision
 
@@ -1475,7 +1473,7 @@ This closes the Level 1 navigation boundary and stops here; it does not add
 another LSP request, generic tool dispatcher, task, approval, mutation,
 provider call, or network path.
 
-## Completed Phase D Candidate, Staging, Health-Gate, Activation-Decision, And Disposable Controlled Activation
+## Completed Phase D Candidate, Staging, Health-Gate, Activation-Decision, Controlled Activation, And Exact Rollback
 
 The first real Phase D declarative-evolution capability is complete. Core
 accepts only structured allowlisted changes, generates a transient
@@ -1530,20 +1528,22 @@ approval, revalidation, and zero activation.
 
 The authority split is explicit in both review and post-action readback: the
 Core host-health oracle owns health assessment, fixed `openclaw-hostd` owns
-activation, and `deferred_manual_operator` owns rollback. The oracle is an
+activation and exact rollback execution, and the operator owns rollback task
+creation plus approval. The oracle is an
 independent decision module inside the Core control plane, not a separate
-privileged daemon; process isolation and physical generation rehearsal remain
-deferred. The current workspace is a physical host, not a VM; no VM-only
-acceptance step may be treated as an available prerequisite.
+privileged daemon. The current workspace is a physical host, not a persistent
+VM workspace; the disposable KVM check is release evidence, not permission for
+physical mutation.
 
-The activation executor now records bounded manual rollback evidence when a
+The activation executor records bounded manual rollback evidence when a
 validated hostd receipt shows a generation switch but the independent
 post-activation health result is degraded or unavailable. That evidence binds
 the activation receipt and pre/post health hashes and recommends operator
 review; it never creates a task or approval, calls hostd again, executes
 rollback, or enables automatic recovery.
 
-This remains a decision boundary, not physical activation. It does not write
+The activation-decision capability remains a decision boundary, not physical
+activation. It does not write
 `/etc/nixos`, run `nixos-rebuild`, switch a generation, activate a system, or
 roll back. Before that Level 3 bridge, the control plane must pass the
 operator-identity boundary below.
@@ -1558,7 +1558,7 @@ bounded expiry. The activation executor revalidates the binding, requires the
 generic `planId + stepId + requestHash` approval contract, calls hostd through
 the peer-verified Unix socket, validates the immutable receipt, and reads
 post-action health through the Core-owned host-health oracle; rollback remains
-manual-only.
+manual-only but now has its own distinct fixed actuator.
 
 Hostd exposes only `hostd.activate_managed_config`, fixed to
 `/etc/nixos/openclaw-managed.nix` and the NixOS-generated root helper. That
@@ -1570,6 +1570,22 @@ Observer Phase D pair proves the zero-confirmation path creates no activation
 task or approval and performs no hostd call, managed-config write, generation
 switch, or rollback. The daily Core/Observer pair is a controlled activation
 contract, not evidence that a host generation has already been switched.
+
+The fixed rollback path is implemented through `POST
+/plugins/native-adapter/declarative-evolution/rollback-tasks`,
+`act.openclaw.declarative_evolution.rollback`, and
+`hostd.rollback_managed_config`. Its public body contains only a verified
+activation task ID plus `confirm=true`. Core accepts a healthy completed
+activation or one whose switch succeeded but whose post-activation health alone
+failed, revalidates the immutable activation receipt, and binds the exact
+root-only snapshot ID, prior/activated generations, and prior managed-source
+state into one step-bound approval. Hostd accepts the peer-bound fixed request;
+the root helper accepts only the snapshot ID, restores the prior source, runs
+`nixos-rebuild switch --store-path` for the snapshot-bound previous generation,
+verifies both running/system-profile paths, and consumes the snapshot only on
+success. Core validates the immutable rollback receipt and independently reads
+post-rollback health. Failed helper execution restores the activated source,
+retains the snapshot, records failure, and is never retried automatically.
 
 The closure-integrity receipt contract and fail-closed daily lane are now
 implemented and positively proven: when a real output exists, every health-gate
@@ -1608,11 +1624,15 @@ bytes and evaluated closure, fixed hostd installs
 `switch-to-configuration switch` moves both `/run/current-system` and the
 system profile to that closure. `observer-ui.service` becomes active, the
 independent post-activation oracle reports `healthy`, Core and hostd PIDs remain
-stable, approval replay is rejected, and failed units remain zero. The result
-registry is `nixsoma-declarative-evolution-activation-vm-v0`; provider egress,
-browser action, physical-host mutation, and rollback execution are all false.
-The next new behavior is the separately governed fixed rollback owner selected
-above, not another activation wrapper.
+stable, and activation approval replay is rejected. A separate explicit
+rollback task then restores the exact prior generation/system profile and
+absent managed source, stops candidate-only Observer, consumes the root
+snapshot, and returns healthy independent post-state. Rollback approval replay
+and direct snapshot replay are rejected; failed units remain zero. The result
+registry is `nixsoma-declarative-evolution-activation-rollback-vm-v0`;
+provider egress, browser action, physical-host mutation, automatic rollback,
+and automatic retry are all false. Focused tests separately prove eligibility
+when the switch succeeds but post-activation health degrades. Freeze this lane.
 
 ## Completed Level 3 Bounded Journal Evidence
 

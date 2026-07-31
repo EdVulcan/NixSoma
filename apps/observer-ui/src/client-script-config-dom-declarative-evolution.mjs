@@ -1,5 +1,6 @@
 export const observerClientConfigDomDeclarativeEvolutionScript = `const declarativeEvolutionSourceTaskIdInput = document.querySelector("#declarative-evolution-source-task-id");
 const declarativeEvolutionDecisionTaskIdInput = document.querySelector("#declarative-evolution-decision-task-id");
+const declarativeEvolutionRollbackActivationTaskIdInput = document.querySelector("#declarative-evolution-rollback-activation-task-id");
 const declarativeEvolutionDecision = document.querySelector("#declarative-evolution-decision");
 const declarativeEvolutionActivationRegistry = document.querySelector("#declarative-evolution-activation-registry");
 const declarativeEvolutionHealthGateStatus = document.querySelector("#declarative-evolution-health-gate-status");
@@ -13,7 +14,12 @@ const declarativeEvolutionExecutionStatus = document.querySelector("#declarative
 const declarativeEvolutionRefreshButton = document.querySelector("#declarative-evolution-refresh-button");
 const declarativeEvolutionDecisionButton = document.querySelector("#declarative-evolution-decision-button");
 const declarativeEvolutionActivationButton = document.querySelector("#declarative-evolution-activation-button");
+const declarativeEvolutionRollbackButton = document.querySelector("#declarative-evolution-rollback-button");
 const declarativeEvolutionReviewJson = document.querySelector("#declarative-evolution-review-json");
 const declarativeEvolutionDecisionJson = document.querySelector("#declarative-evolution-decision-json");
 const declarativeEvolutionExecutionJson = document.querySelector("#declarative-evolution-execution-json");
+const declarativeEvolutionRollbackTaskId = document.querySelector("#declarative-evolution-rollback-task-id");
+const declarativeEvolutionRollbackApprovalId = document.querySelector("#declarative-evolution-rollback-approval-id");
+const declarativeEvolutionRollbackStatus = document.querySelector("#declarative-evolution-rollback-status");
+const declarativeEvolutionRollbackJson = document.querySelector("#declarative-evolution-rollback-json");
 `;

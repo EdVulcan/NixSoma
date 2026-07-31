@@ -5,6 +5,7 @@ import {
   findHostdRestartCapability,
 } from "../../../packages/shared-systemd/src/openclaw-hostd-capabilities.mjs";
 import { createHostdActivationRequestHandler } from "./hostd-activation-protocol.mjs";
+import { createHostdRollbackRequestHandler } from "./hostd-rollback-protocol.mjs";
 
 export const HOSTD_PROTOCOL_VERSION = 1;
 export const HOSTD_REQUEST_MAX_BYTES = 8192;
@@ -85,13 +86,20 @@ export function parseHostdRequest(line) {
 export function createHostdRequestHandler({
   runRestart = runFixedSystemdRestart,
   runActivation,
+  runRollback,
   requirePeerIdentity = true,
 } = {}) {
   const handleActivation = createHostdActivationRequestHandler({
     runActivation,
     requirePeerIdentity,
   });
+  const handleRollback = createHostdRollbackRequestHandler({
+    runRollback,
+    requirePeerIdentity,
+  });
   return async function handleHostdRequest(line, { peerIdentity = null } = {}) {
+    const rollbackResponse = await handleRollback(line, { peerIdentity });
+    if (rollbackResponse !== null) return rollbackResponse;
     const activationResponse = await handleActivation(line, { peerIdentity });
     if (activationResponse !== null) return activationResponse;
     const parsed = parseHostdRequest(line);

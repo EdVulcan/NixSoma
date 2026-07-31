@@ -206,6 +206,8 @@ in
     assert "OPENCLAW_HOSTD_ACTIVATION_ENABLED=true" in hostd_environment
     assert "OPENCLAW_HOSTD_ACTIVATION_HELPER=/nix/store/" in hostd_environment
     assert "OPENCLAW_HOSTD_ACTIVATION_SUDO=/run/wrappers/bin/sudo" in hostd_environment
+    assert "OPENCLAW_HOSTD_ROLLBACK_HELPER=/nix/store/" in hostd_environment
+    assert "OPENCLAW_HOSTD_ROLLBACK_SUDO=/run/wrappers/bin/sudo" in hostd_environment
     assert "OPENCLAW_NIXOS_FLAKE=" not in hostd_environment
     assert "OPENCLAW_NIXOS_FLAKE_ATTRIBUTE=" not in hostd_environment
     assert command_output(
@@ -308,7 +310,7 @@ in
         )
         status, _ = machine.execute(
             "runuser -u openclaw-hostd -- /run/wrappers/bin/sudo --non-interactive "
-            f"{shlex.quote(helper_path)} {candidate_hash} /etc/passwd"
+            f"{shlex.quote(helper_path)} {candidate_hash} /etc/passwd rejected-request"
         )
         assert status != 0
         assert command_output("readlink -f /run/current-system") == generation_before
@@ -352,9 +354,13 @@ in
         assert receipt["previousGenerationPath"] == generation_before, receipt
         assert receipt["activatedGenerationPath"] == evaluated_closure, receipt
         assert receipt["activatedProfilePath"] == evaluated_closure, receipt
+        assert receipt["rollbackSnapshotId"] == receipt["requestId"], receipt
+        assert receipt["previousTargetPresent"] is False, receipt
         assert receipt["rollbackExecuted"] is False, receipt
         assert helper["registry"] == "nixsoma-managed-config-activation-helper-v0", helper
         assert helper["generationBefore"] == generation_before, helper
+        assert helper["rollbackSnapshotId"] == receipt["rollbackSnapshotId"], helper
+        assert helper["previousTargetPresent"] is False, helper
         assert helper["generationAfter"] == evaluated_closure, helper
         assert helper["profileAfter"] == evaluated_closure, helper
         assert helper["targetHashAfter"] == candidate_hash, helper
@@ -369,6 +375,12 @@ in
         machine.wait_until_succeeds("curl --silent --fail http://127.0.0.1:4170/health")
         assert service_pid("openclaw-core.service") == core_pid_before
         assert service_pid("openclaw-hostd.service") == hostd_pid_before
+        rollback_snapshot_id = receipt["rollbackSnapshotId"]
+        rollback_snapshot_path = f"/var/lib/nixsoma-managed-config-rollbacks/{rollback_snapshot_id}"
+        assert command_output(
+            f"stat -c '%U:%G:%a' {shlex.quote(rollback_snapshot_path)}"
+        ) == "root:root:700"
+        machine.succeed(f"test -f {shlex.quote(rollback_snapshot_path + '/candidate-hash')}")
 
     with subtest("terminal approval cannot replay activation"):
         generation_after = command_output("readlink -f /run/current-system")
@@ -394,6 +406,95 @@ in
         assert service_pid("openclaw-core.service") == core_pid_before
         assert service_pid("openclaw-hostd.service") == hostd_pid_before
 
+    with subtest("explicit rollback restores the exact previous generation and consumes its snapshot"):
+        rollback = core_json(
+            "/plugins/native-adapter/declarative-evolution/rollback-tasks",
+            "POST",
+            {"activationTaskId": activation_task_id, "confirm": True},
+        )
+        assert rollback["ok"] is True, rollback
+        assert rollback["task"]["type"] == "native_declarative_evolution_rollback", rollback
+        assert rollback["task"]["status"] == "queued", rollback
+        assert rollback["approval"]["status"] == "pending", rollback
+        rollback_task_id = rollback["task"]["id"]
+        rollback_approval_id = rollback["approval"]["id"]
+        assert rollback["approvalBinding"]["activationTaskId"] == activation_task_id, rollback
+        assert rollback["approvalBinding"]["activationReceiptHash"] == receipt["receiptHash"], rollback
+        assert rollback["approvalBinding"]["rollbackSnapshotId"] == rollback_snapshot_id, rollback
+        assert rollback["approvalBinding"]["previousGenerationPath"] == generation_before, rollback
+
+        approve(
+            rollback_approval_id,
+            "Approve one exact previous-generation rollback inside the disposable VM.",
+        )
+        rollback_step = execute_current_task()
+        rollback_task = rollback_step["task"]
+        rollback_execution = rollback_task["nativeDeclarativeEvolution"]["execution"]
+        rollback_receipt = rollback_execution["rollbackReceipt"]
+        rollback_helper = rollback_receipt["helperEvidence"]
+
+        assert rollback_task["id"] == rollback_task_id
+        assert rollback_task["status"] == "completed", rollback_step
+        assert rollback_execution["status"] == "passed", rollback_execution
+        assert rollback_execution["postRollbackHealth"]["status"] == "healthy", rollback_execution
+        assert rollback_execution["governance"]["executesRollback"] is True, rollback_execution
+        assert rollback_execution["governance"]["automaticRollback"] is False, rollback_execution
+        assert rollback_receipt["status"] == "passed", rollback_receipt
+        assert rollback_receipt["activationReceiptHash"] == receipt["receiptHash"], rollback_receipt
+        assert rollback_receipt["rollbackSnapshotId"] == rollback_snapshot_id, rollback_receipt
+        assert rollback_receipt["previousGenerationPath"] == generation_before, rollback_receipt
+        assert rollback_receipt["activatedGenerationPath"] == evaluated_closure, rollback_receipt
+        assert rollback_receipt["rollbackExecuted"] is True, rollback_receipt
+        assert rollback_receipt["generationRestored"] is True, rollback_receipt
+        assert rollback_receipt["snapshotConsumed"] is True, rollback_receipt
+        assert rollback_helper["registry"] == "nixsoma-managed-config-rollback-helper-v0", rollback_helper
+        assert rollback_helper["generationBefore"] == evaluated_closure, rollback_helper
+        assert rollback_helper["generationAfter"] == generation_before, rollback_helper
+        assert rollback_helper["profileAfter"] == generation_before, rollback_helper
+        assert rollback_helper["targetPresentAfter"] is False, rollback_helper
+        assert rollback_helper["snapshotConsumed"] is True, rollback_helper
+
+        assert command_output("readlink -f /run/current-system") == generation_before
+        assert command_output("readlink -f /nix/var/nix/profiles/system") == generation_before
+        machine.fail("test -e /etc/nixos/openclaw-managed.nix")
+        machine.fail(f"test -e {shlex.quote(rollback_snapshot_path)}")
+        machine.wait_until_succeeds("! systemctl is-active --quiet observer-ui.service")
+        assert service_pid("openclaw-core.service") == core_pid_before
+        assert service_pid("openclaw-hostd.service") == hostd_pid_before
+
+    with subtest("terminal approval and consumed root snapshot reject rollback replay"):
+        status_args = [
+            "curl",
+            "--silent",
+            "--output",
+            "/tmp/reapprove-rollback.json",
+            "--write-out",
+            "%{http_code}",
+            "--request",
+            "POST",
+            "--config",
+            auth_config,
+            "--header",
+            "content-type: application/json",
+            "--data",
+            json.dumps({"reason": "Attempt forbidden rollback replay."}),
+            f"{core_url}/approvals/{rollback_approval_id}/approve",
+        ]
+        assert command_output(shlex.join(status_args)) == "409"
+        rollback_helper_path = command_output(
+            "systemctl show openclaw-hostd.service --property=Environment --value "
+            "| tr ' ' '\\n' | sed -n 's/^OPENCLAW_HOSTD_ROLLBACK_HELPER=//p'"
+        )
+        status, _ = machine.execute(
+            "runuser -u openclaw-hostd -- /run/wrappers/bin/sudo --non-interactive "
+            f"{shlex.quote(rollback_helper_path)} {shlex.quote(rollback_snapshot_id)}"
+        )
+        assert status != 0
+        assert command_output("readlink -f /run/current-system") == generation_before
+        machine.fail("test -e /etc/nixos/openclaw-managed.nix")
+        assert service_pid("openclaw-core.service") == core_pid_before
+        assert service_pid("openclaw-hostd.service") == hostd_pid_before
+
     audit = request_json(event_hub_url, "/events/audit?limit=1000")
     assert not any(
         item["type"].startswith("cloud_provider.")
@@ -405,12 +506,12 @@ in
         "openclaw-session-manager.service openclaw-browser-runtime.service "
         "openclaw-screen-sense.service openclaw-screen-act.service "
         "openclaw-system-sense.service openclaw-system-heal.service "
-        "openclaw-hostd.service observer-ui.service backdoor.service"
+        "openclaw-hostd.service backdoor.service"
     )
     assert command_output("systemctl --failed --no-legend --plain") == ""
 
     print(json.dumps({
-        "registry": "nixsoma-declarative-evolution-activation-vm-v0",
+        "registry": "nixsoma-declarative-evolution-activation-rollback-vm-v0",
         "stagingTaskId": staging_task_id,
         "activationDecisionTaskId": decision_task_id,
         "activationTaskId": activation_task_id,
@@ -418,15 +519,21 @@ in
         "generationBefore": generation_before,
         "generationAfter": evaluated_closure,
         "activationReceiptHash": receipt["receiptHash"],
+        "rollbackTaskId": rollback_task_id,
+        "rollbackReceiptHash": rollback_receipt["receiptHash"],
         "helperRegistry": helper["registry"],
         "postActivationHealth": execution["postActivationHealth"]["status"],
-        "observerActivated": True,
+        "observerActivatedBeforeRollback": True,
+        "observerInactiveAfterRollback": True,
         "corePidPreserved": service_pid("openclaw-core.service") == core_pid_before,
         "hostdPidPreserved": service_pid("openclaw-hostd.service") == hostd_pid_before,
         "approvalReplayBlocked": True,
+        "rollbackApprovalReplayBlocked": True,
+        "rootSnapshotReplayBlocked": True,
         "providerEgress": False,
         "browserAction": False,
-        "rollbackExecuted": False,
+        "rollbackExecuted": True,
+        "automaticRollback": False,
         "failedUnits": 0,
     }, indent=2))
   '';

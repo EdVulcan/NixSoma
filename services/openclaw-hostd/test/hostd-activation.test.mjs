@@ -69,6 +69,8 @@ function createFakeRunner({ enabled = true } = {}) {
           registry: HOSTD_ACTIVATION_HELPER_RECEIPT_REGISTRY,
           candidateHash,
           evaluatedClosurePath: closurePath,
+          rollbackSnapshotId: args.at(-1),
+          previousTargetPresent: false,
           previousTargetHash: null,
           generationBefore: previousGenerationPath,
           generationAfter: closurePath,
@@ -99,8 +101,15 @@ test("managed config activation runner binds staging bytes and returns an immuta
   assert.equal(result.previousGenerationPath, previousGenerationPath);
   assert.equal(result.activatedGenerationPath, closurePath);
   assert.equal(result.activatedProfilePath, closurePath);
+  assert.equal(result.rollbackSnapshotId, "activation-request-1");
+  assert.equal(result.previousTargetPresent, false);
   assert.equal(result.helperEvidence.targetHashAfter, candidateHash);
   assert.equal(validateManagedConfigActivationReceipt(result), true);
+  const reordered = Object.fromEntries(Object.entries({
+    ...result,
+    helperEvidence: Object.fromEntries(Object.entries(result.helperEvidence).reverse()),
+  }).reverse());
+  assert.equal(validateManagedConfigActivationReceipt(reordered), true);
   assert.equal(JSON.stringify(result).includes(candidateText), false);
   assert.deepEqual(commands, [{
     executable: "/run/wrappers/bin/sudo",
@@ -109,6 +118,7 @@ test("managed config activation runner binds staging bytes and returns an immuta
       "/nix/store/helper/bin/nixsoma-managed-config-activation",
       candidateHash,
       closurePath,
+      "activation-request-1",
     ],
   }]);
 });

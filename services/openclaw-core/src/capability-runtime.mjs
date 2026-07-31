@@ -235,6 +235,7 @@ export function createCapabilityRuntime(deps) {
     createNativeDeclarativeEvolutionStagingTask: declarativeEvolution.createNativeDeclarativeEvolutionStagingTask,
     createNativeDeclarativeEvolutionActivationDecisionTask: declarativeEvolution.createNativeDeclarativeEvolutionActivationDecisionTask,
     createNativeDeclarativeEvolutionActivationTask: declarativeEvolution.createNativeDeclarativeEvolutionActivationTask,
+    createNativeDeclarativeEvolutionRollbackTask: declarativeEvolution.createNativeDeclarativeEvolutionRollbackTask,
   });
   const systemdIncidentObservationHandlers = createSystemdIncidentObservationCapabilityHandlers({
     tasks,

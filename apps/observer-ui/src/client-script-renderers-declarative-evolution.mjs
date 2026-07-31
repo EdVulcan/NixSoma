@@ -83,6 +83,12 @@ function renderDeclarativeEvolutionActivationExecution(data) {
   const execution = task?.nativeDeclarativeEvolution?.execution ?? data?.result?.activation ?? null;
   declarativeEvolutionExecutionTaskId.textContent = task?.id ?? "none";
   declarativeEvolutionExecutionStatus.textContent = execution?.status ?? task?.status ?? "queued";
+  if (task?.id
+    && execution?.executionReceipt?.generationSwitched === true
+    && execution?.executionReceipt?.rollbackExecuted === false
+    && declarativeEvolutionRollbackActivationTaskIdInput) {
+    declarativeEvolutionRollbackActivationTaskIdInput.value = task.id;
+  }
   declarativeEvolutionExecutionJson.textContent = JSON.stringify({
     ok: data?.ok === true || data?.result?.ok === true,
     taskId: task?.id ?? null,
@@ -102,6 +108,38 @@ function renderDeclarativeEvolutionActivationExecution(data) {
     postActivationHealth: execution?.postActivationHealth ?? null,
     rollbackEvidence: execution?.rollbackEvidence ?? null,
     receiptHash: execution?.executionReceipt?.receiptHash ?? null,
+    automaticRollback: false,
+  }, null, 2);
+}
+
+function renderDeclarativeEvolutionRollback(data) {
+  const task = data?.task ?? data?.result?.task ?? null;
+  const approval = data?.approval ?? data?.result?.approval ?? null;
+  const binding = data?.approvalBinding ?? data?.result?.approvalBinding ?? task?.nativeDeclarativeEvolution?.rollback ?? {};
+  const execution = task?.nativeDeclarativeEvolution?.execution ?? data?.result?.rollback ?? null;
+  const receipt = execution?.rollbackReceipt ?? data?.result?.rollbackReceipt ?? null;
+  declarativeEvolutionRollbackTaskId.textContent = task?.id ?? "none";
+  declarativeEvolutionRollbackApprovalId.textContent = approval?.id ?? "none";
+  declarativeEvolutionRollbackStatus.textContent = execution?.status ?? task?.status ?? "queued";
+  declarativeEvolutionRollbackJson.textContent = JSON.stringify({
+    ok: data?.ok === true || data?.result?.ok === true,
+    taskId: task?.id ?? null,
+    taskStatus: task?.status ?? null,
+    approvalId: approval?.id ?? null,
+    activationTaskId: binding.activationTaskId ?? null,
+    activationReceiptHash: binding.activationReceiptHash ?? null,
+    rollbackSnapshotId: binding.rollbackSnapshotId ?? null,
+    candidateHash: binding.candidateHash ?? null,
+    previousGenerationPath: binding.previousGenerationPath ?? null,
+    activatedGenerationPath: binding.activatedGenerationPath ?? null,
+    previousTargetPresent: binding.previousTargetPresent ?? null,
+    previousTargetHash: binding.previousTargetHash ?? null,
+    executionStatus: execution?.status ?? null,
+    rollbackExecuted: execution?.governance?.executesRollback === true,
+    generationRestored: receipt?.generationRestored === true,
+    snapshotConsumed: receipt?.snapshotConsumed === true,
+    rollbackReceiptHash: receipt?.receiptHash ?? null,
+    postRollbackHealth: execution?.postRollbackHealth ?? null,
     automaticRollback: false,
   }, null, 2);
 }

@@ -1095,9 +1095,11 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-task-routes.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-activation-decision.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-activation.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/native-declarative-evolution-rollback.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/task-executor-native-declarative-evolution-handlers.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/task-executor-native-declarative-evolution-activation-handlers.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/task-executor-native-declarative-evolution-activation-execution-handlers.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/task-executor-native-declarative-evolution-rollback-handlers.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/operator-auth.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/hostd-control-client.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/systemd-repair-verification.mjs"
@@ -1107,6 +1109,7 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-capabilities.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-capabilities.json"
     || ! -f "$core_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-activation.mjs"
+    || ! -f "$core_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-rollback.mjs"
     || ! -f "$core_out/share/openclaw/packages/plugin-runtime/src/plugin-registry.mjs"
     || ! -f "$core_out/share/openclaw/packages/plugin-runtime/src/plugin-registry-generation-store.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/persist.mjs"
@@ -1120,7 +1123,7 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/browser-action-contract.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-local-ocr.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 262 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 265 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -1744,12 +1747,15 @@ EOF
     || ! -f "$hostd_working_dir/src/hostd-protocol.mjs"
     || ! -f "$hostd_working_dir/src/hostd-activation-protocol.mjs"
     || ! -f "$hostd_working_dir/src/managed-config-activation.mjs"
+    || ! -f "$hostd_working_dir/src/hostd-rollback-protocol.mjs"
+    || ! -f "$hostd_working_dir/src/managed-config-rollback.mjs"
     || ! -f "$hostd_working_dir/src/openclaw-hostd-peer-credentials.c"
     || ! -x "$hostd_out/bin/openclaw-hostd-peer-credentials"
     || ! -f "$hostd_out/share/openclaw/packages/shared-systemd/src/systemd-dbus-transport.mjs"
     || ! -f "$hostd_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-capabilities.mjs"
     || ! -f "$hostd_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-capabilities.json"
     || ! -f "$hostd_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-activation.mjs"
+    || ! -f "$hostd_out/share/openclaw/packages/shared-systemd/src/openclaw-hostd-rollback.mjs"
     || ! -f "$hostd_working_dir/node_modules/@homebridge/dbus-native/package.json"
     || -w "$hostd_working_dir/src/server.mjs"
     || -e "$hostd_working_dir/test" ]]; then

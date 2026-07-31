@@ -56,9 +56,20 @@ export function hostdManagedConfigActivationCapability() {
   };
 }
 
+function canonicalReceiptValue(value) {
+  if (Array.isArray(value)) return value.map(canonicalReceiptValue);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.keys(value)
+      .sort()
+      .filter((key) => value[key] !== undefined)
+      .map((key) => [key, canonicalReceiptValue(value[key])]),
+  );
+}
+
 export function hashManagedConfigActivationReceipt(receipt) {
   const { receiptHash: _ignored, ...unsignedReceipt } = receipt ?? {};
-  return createHash("sha256").update(JSON.stringify(unsignedReceipt), "utf8").digest("hex");
+  return createHash("sha256").update(JSON.stringify(canonicalReceiptValue(unsignedReceipt)), "utf8").digest("hex");
 }
 
 export function validateManagedConfigActivationReceipt(receipt) {
@@ -80,8 +91,13 @@ export function validateManagedConfigActivationReceipt(receipt) {
     && helper?.registry === HOSTD_ACTIVATION_HELPER_RECEIPT_REGISTRY
     && helper.candidateHash === receipt.candidateHash
     && helper.evaluatedClosurePath === receipt.evaluatedClosurePath
+    && typeof helper.rollbackSnapshotId === "string"
+    && helper.rollbackSnapshotId === receipt.rollbackSnapshotId
+    && typeof helper.previousTargetPresent === "boolean"
+    && helper.previousTargetPresent === receipt.previousTargetPresent
     && (helper.previousTargetHash === null || isSha256(helper.previousTargetHash))
     && helper.previousTargetHash === receipt.previousTargetHash
+    && helper.previousTargetPresent === (helper.previousTargetHash !== null)
     && isNixStorePath(helper.generationBefore)
     && helper.generationBefore !== receipt.evaluatedClosurePath
     && helper.generationAfter === receipt.evaluatedClosurePath

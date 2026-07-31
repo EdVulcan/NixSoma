@@ -1,6 +1,6 @@
 # NixSoma Plans Directory
 
-Updated: 2026-07-30
+Updated: 2026-07-31
 
 This directory contains current decision records and historical milestone
 evidence. It is not a queue ordered by phase number. Use
@@ -29,7 +29,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_SYSTEMD_INCIDENT_OBSERVATION_RECEIPT_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_OBSERVATION_RECEIPT_PLAN.md) | Compact hash-bound evidence from the reviewed same-unit observation refresh. |
 | [`OPENCLAW_SYSTEMD_OBSERVATION_AI_HANDOFF_PLAN.md`](./OPENCLAW_SYSTEMD_OBSERVATION_AI_HANDOFF_PLAN.md) | Exact approval-bound AI diagnosis and reviewed readback from the compact observation receipt. |
 | [`OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md`](./OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md) | Periodic local observation and restart-safe deduplicated incident tasks for fixed units. |
-| [`OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md`](./OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Declarative-evolution evidence and deferred activation boundary. |
+| [`OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md`](./OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Declarative-evolution candidate, controlled activation, and exact rollback evidence plus deferred physical/automatic mutation boundaries. |
 | [`OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md`](./OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md) | Measured validation, runtime, and review debt that blocks the mainline. |
 
 The kernel whitepaper remains the long-horizon authority:
@@ -50,26 +50,26 @@ post-health, and no replay for either completed or interrupted reservations.
 It found and fixed stopped-target `MainPID=0` handling. Physical generation
 `pfiwq5p3...` remains unchanged and does not contain that hostd correction.
 
-The Phase D controlled activation path now passes its disposable-VM release
-gate. `openclaw-declarative-evolution-activation-vm` proves one approved,
-hash-bound managed-config closure, a real fixed hostd generation switch,
-independent healthy post-state, preserved Core/hostd PIDs, rejected approval
-replay, zero failed units, and no provider/browser/rollback activity.
+The Phase D controlled activation and rollback path now passes its disposable-VM
+release gate. `openclaw-declarative-evolution-activation-vm` proves one
+approved, hash-bound managed-config closure, a real fixed hostd generation
+switch, independent healthy post-state, and a separately approved rollback to
+the exact snapshot-bound previous generation and managed source. Core/hostd
+PIDs remain stable, the root snapshot is consumed, activation approval,
+rollback approval, and direct snapshot replay are rejected, failed units are
+zero, and no provider/browser/automatic rollback activity occurs.
 
-The selected next real capability is a separately governed fixed rollback owner
-and disposable-VM proof. It may use only the exact previous generation from a
-verified activation receipt, after explicit confirmation and step-bound
-approval, and must return an immutable receipt plus independent post-rollback
-health. The physical host remains evidence-only; arbitrary paths/commands,
-provider-driven or automatic rollback, retries, and wider hostd authority are
-outside this slice.
+This Phase D lane is frozen. The physical host remains evidence-only;
+arbitrary paths/commands, provider-driven or automatic rollback, retries, and
+wider hostd authority remain outside the completed slice. A fresh canonical
+route review must select the next distinct product capability.
 
 ### Historical Route Evidence
 
 The remainder of this section is chronological evidence for completed
 capability families. References to a selected continuation, active generation,
 or next slice record the checkpoint where they appear; they do not override the
-current baseline and selected fixed rollback VM proof above.
+current baseline and completed activation-to-rollback VM proof above.
 
 Completed capability families must not be reopened for another wrapper,
 readiness marker, readback mirror, or horizontal variant. The completed Level 3

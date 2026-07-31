@@ -80,7 +80,7 @@ AI 对系统的自主修改不应该通过脆弱的、命令式的命令行脚�
    AI 调用 `nixos-rebuild test` 对新配置进行局部编译与测试。
 3. **安全自愈与物理回滚**：
    - 如果构建失败，当前活动的系统不受任何污染。
-   - 如果构建成功但在运行阶段导致系统关键体征指标（Vitals）下降，自愈引擎（`system-heal`）直接触发 `nixos-rebuild switch --rollback` 自动恢复至前一个 Generation，确保系统永不“变砖”。
+   - 长期目标是在构建成功但运行阶段关键体征指标（Vitals）下降时，由受治理的恢复链恢复至已验证的前一个 Generation。自动触发必须建立在精确 receipt、独立健康判断、不可重放和失败闭锁之上，不能把通用 `--rollback` 命令直接暴露给 AI 控制面。
 
 ---
 
@@ -106,4 +106,5 @@ AI 对系统的自主修改不应该通过脆弱的、命令式的命令行脚�
 
 ### 🔄 Phase D: 声明式自进化闭环
 - **任务**：打通 Nix 配置文件生成器与 `nixos-rebuild` 执行沙箱。
-- **目标**：让 AI 能够自主安全地通过改写系统声明文件来改造系统，并完成失败自动回滚 the 闭环。
+- **目标**：让 AI 能够安全地通过受限声明式候选改造系统，并最终形成健康判断与恢复闭环。
+- **当前证据（2026-07-31）**：结构化候选、审批绑定 staging/build、closure receipt、独立 host-health oracle、固定 hostd activation，以及绑定精确 previous generation 和 managed-source snapshot 的独立 rollback owner 已完成。可丢弃 KVM 已真实执行一次 activation 和一次显式批准 rollback，并证明三类 replay 拒绝、snapshot 消费、Core/hostd PID 保持、零 failed unit、无 provider/browser/物理机变更。自动批准、自动 rollback/retry 和物理机 Phase D mutation 仍未授权。

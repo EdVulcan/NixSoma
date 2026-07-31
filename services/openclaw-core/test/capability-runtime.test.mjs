@@ -1560,6 +1560,60 @@ test("capability runtime keeps managed-config activation confirmation and execut
   assert.deepEqual(calls, [{ activationDecisionTaskId: "task-decision", confirm: true }]);
 });
 
+test("capability runtime keeps exact managed-config rollback confirmation and execution separate", async () => {
+  const calls = [];
+  const { runtime } = createHarness({
+    declarativeEvolution: {
+      createNativeDeclarativeEvolutionRollbackTask: async (input) => {
+        calls.push(input);
+        return {
+          ok: true,
+          registry: "openclaw-native-declarative-evolution-rollback-v0",
+          approvalBinding: {
+            activationTaskId: input.activationTaskId,
+            activationReceiptHash: "a".repeat(64),
+            rollbackSnapshotId: "activation-request-1",
+            previousGenerationPath: "/nix/store/old123-nixos-system-nixos-test",
+          },
+          task: { id: "task-managed-rollback", status: "queued" },
+          approval: { id: "approval-managed-rollback", status: "pending" },
+          governance: {
+            createsTask: true,
+            createsApproval: true,
+            executesRollback: false,
+            automaticRollback: false,
+            arbitraryGeneration: false,
+          },
+        };
+      },
+    },
+  });
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const descriptor = registry.capabilities.find((item) => item.id === "act.openclaw.declarative_evolution.rollback");
+  assert.equal(descriptor?.kind, "actuator");
+  assert.equal(descriptor?.risk, "high");
+
+  const blocked = await runtime.invokeCapability({
+    capabilityId: "act.openclaw.declarative_evolution.rollback",
+    params: { activationTaskId: "task-activation", confirm: false },
+  });
+  assert.equal(blocked.response.result.reason, "operator_confirmation_required");
+  assert.equal(blocked.response.result.governance.executesRollback, false);
+  assert.equal(calls.length, 0);
+
+  const created = await runtime.invokeCapability({
+    capabilityId: "act.openclaw.declarative_evolution.rollback",
+    params: { activationTaskId: "task-activation", confirm: true },
+  });
+  assert.equal(created.statusCode, 200);
+  assert.equal(created.response.summary.kind, "declarative_evolution.rollback");
+  assert.equal(created.response.summary.rollbackExecuted, false);
+  assert.equal(created.response.summary.noAutomaticRollback, true);
+  assert.equal(created.response.summary.arbitraryGeneration, false);
+  assert.deepEqual(calls, [{ activationTaskId: "task-activation", confirm: true }]);
+});
+
 test("capability runtime exposes the native engineering tool surface inventory without execution authority", async () => {
   const { runtime, state, events } = createHarness({
     pluginReview: {

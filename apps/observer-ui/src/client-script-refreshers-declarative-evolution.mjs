@@ -101,6 +101,39 @@ async function createDeclarativeEvolutionActivation() {
   }
 }
 
+async function createDeclarativeEvolutionRollback() {
+  if (!declarativeEvolutionRollbackActivationTaskIdInput || !declarativeEvolutionRollbackButton) {
+    return;
+  }
+  const activationTaskId = declarativeEvolutionRollbackActivationTaskIdInput.value.trim();
+  if (!activationTaskId) {
+    setControlMessage("Enter a completed verified activation task ID before queueing rollback.");
+    declarativeEvolutionRollbackActivationTaskIdInput.focus();
+    return;
+  }
+  declarativeEvolutionRollbackButton.disabled = true;
+  try {
+    const data = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/declarative-evolution/rollback-tasks\`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ activationTaskId, confirm: true }),
+    });
+    renderDeclarativeEvolutionRollback(data);
+    setControlMessage(\`Queued rollback task \${data.task?.id ?? "unknown"}; exact previous-generation restoration still requires approval.\`);
+    await Promise.all([
+      refreshRuntime(),
+      refreshTaskList(),
+      refreshTaskHistoryDetail(),
+      refreshApprovalState(),
+    ]);
+  } catch (error) {
+    declarativeEvolutionRollbackJson.textContent = \`Unable to queue managed-config rollback: \${formatError(error)}\`;
+    setControlMessage("Managed-config rollback was not queued.");
+  } finally {
+    declarativeEvolutionRollbackButton.disabled = false;
+  }
+}
+
 declarativeEvolutionRefreshButton?.addEventListener("click", () => {
   void refreshDeclarativeEvolutionActivationDecision();
 });
@@ -111,6 +144,10 @@ declarativeEvolutionDecisionButton?.addEventListener("click", () => {
 
 declarativeEvolutionActivationButton?.addEventListener("click", () => {
   void createDeclarativeEvolutionActivation();
+});
+
+declarativeEvolutionRollbackButton?.addEventListener("click", () => {
+  void createDeclarativeEvolutionRollback();
 });
 
 `;

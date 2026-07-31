@@ -1,6 +1,6 @@
 # NixSoma Documentation Control Room
 
-Updated: 2026-07-30
+Updated: 2026-07-31
 
 This is the canonical entry point for current NixSoma development. Historical
 OpenClaw names remain in service identifiers, environment variables, milestone
@@ -14,7 +14,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
 | Capability source | Current source through the Level 4 isolated compositor, headed AI-owned Firefox attachment, compositor-native frame/click/projection, one-shot operator-authenticated projected click and bounded native type, fixed Workbench lifecycle, governed numeric surface activation, active-surface vertical scroll, task-objective-bound provider decisions, bounded browser semantic-scene grounding, semantic click/type, a verified-scroll-only two-step run, read-only task assessment, explicit assessment acceptance, bounded local OCR, task-bound OCR assessment, same-surface OCR ordinal click, objective-bound OCR type, fixed OCR focus-then-type, governed current-tab close, and an explicit bounded run-plus-assessment cycle, plus the completed Level 3 baseline | The twenty-fifth Level 4 slice is physically complete and frozen |
-| Local validation | 1196 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1011-file script audit pass; 824 registry entries pass | Validated |
+| Local validation | 1214 workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1011-file script audit pass; 824 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/pfiwq5p3z284rpdqdlk35s8c4kg5cmkr-nixos-system-nixos-26.05.4808.569d57850992` | Same-authority prepare reuse, governed current-tab close, durable narrow operator-token ACLs, and the prior Level 4 capabilities are deployed and physically proven |
 | Previous generation | `/nix/store/ilybrrpmla5dvfxzsz4vb61jij4cv2q7-nixos-system-nixos-26.05.4808.569d57850992` | Superseded because the first ACL replay correction still left the shared system state directory at systemd's default `0755` mode |
@@ -48,9 +48,9 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
 | Disposable Level 3 repair loop | `checks.x86_64-linux.openclaw-system-heal-repair-loop-vm` stops `openclaw-system-heal.service` inside KVM, observes and triages the incident, promotes one approval-gated repair, executes one native hostd restart, verifies post-health, and reconciles terminal state | Passed with one completed reservation and one interrupted reservation both proving no replay; no provider egress or generation mutation |
-| Disposable Phase D activation | `checks.x86_64-linux.openclaw-declarative-evolution-activation-vm` builds one approved managed-config closure, invokes the fixed hostd activation once, switches the guest generation, and verifies health independently | Passed with candidate `aed7e917...`, preserved Core/hostd PIDs, approval replay rejection, zero failed units, no provider/browser activity, and `rollbackExecuted=false` |
+| Disposable Phase D activation and rollback | `checks.x86_64-linux.openclaw-declarative-evolution-activation-vm` builds one approved managed-config closure, switches the guest through fixed hostd, then explicitly restores the exact previous generation and managed-source state through the separate fixed rollback owner | Passed with candidate `aed7e917...`, healthy post-activation/post-rollback evidence, preserved Core/hostd PIDs, consumed root snapshot, activation/rollback/snapshot replay rejection, zero failed units, and no provider/browser/automatic rollback activity |
 | Deployed audit store | Current Event Hub package is active; retention and rotation remain source-validated without destructive live rehearsal | Deployed |
-| Privileged actions | Physical-host developer generation switch and governed provider egress are proven; fixed System Heal repair and fixed hostd generation activation are additionally proven in disposable VMs | Physical Phase D activation and every rollback actuator/execution remain deferred |
+| Privileged actions | Physical-host developer generation switch and governed provider egress are proven; fixed System Heal repair plus fixed hostd generation activation and exact rollback are additionally proven in disposable VMs | Physical Phase D activation/rollback, provider-selected rollback, and automatic rollback remain deferred |
 | Operator credential reference | Core still receives the root-managed token through `LoadCredential`; only `edvulcan` receives read ACL on the exact token plus traverse-only ACL on its directory | Deployed in `pfiwq5p3...`; every system-scope owner fixes the shared state directory at `0750`, Core reapplies the ACL on start, the operator cannot list the directory or read the execution-grant private key, and no credential value enters environment, command line, store, or logs |
 | Developer deployment | Default-off immutable helper accepts one canonical, root-owned physical `nixos-system-nixos` closure through one explicit `edvulcan` sudoers rule and rejects container markers or changes to kernel/initrd/fstab/GDM/NetworkManager/SSH paths | The fixed noninteractive helper activated `pfiwq5p3...` after every marker and protected-path check passed; current/profile match and no reboot occurred |
 
@@ -118,8 +118,9 @@ The completed bounded frontier is:
   grants Enter, hotkeys, modifier combinations, repeat, a general keyboard
   proxy, desktop-wide input, or parent-display access.
 - Phase D candidate generation, approval-bound staging/build, real closure
-  receipt, independent host-health oracle, controlled activation contract,
-  manual rollback evidence, and a physical-host-safe failure rehearsal.
+  receipt, independent host-health oracle, controlled activation, and a
+  separately approved exact previous-generation rollback with a single-use
+  root snapshot. The real mutation loop is proven only in disposable KVM.
 - Explicitly approved DeepSeek context handoff and structured engineering-plan
   recommendation without automatic task creation, execution, or provider use.
 - Exact request-bound DeepSeek diagnosis handoff for a verified terminal
@@ -165,24 +166,12 @@ desktop takeover, and generic process/window control remain future work.
 
 ## Selected Next Capability
 
-The controlled Phase D activation release gate is complete in a disposable
-NixOS VM. The next real capability is a separately governed fixed rollback
-owner and its own disposable-VM proof:
-
-```text
-reviewed activation receipt and exact previous generation
--> explicit operator confirmation and step-bound approval
--> one fixed hostd rollback
--> immutable rollback receipt
--> independent post-rollback host-health verification
-```
-
-The stop condition is one rollback to the exact `previousGenerationPath` bound
-by a verified activation receipt, with replay rejection and independent healthy
-post-state. The physical host remains evidence-only. This slice must not accept
-an arbitrary closure, path, command, or flake target; infer rollback from
-provider output; retry automatically; or widen hostd into general root/systemd
-authority.
+The operator-governed Phase D activation and exact rollback loop is complete in
+source and disposable KVM. Freeze this lane while the current release evidence
+is committed and reconciled. The next product slice must come from a fresh
+canonical route review and add distinct operator-visible behavior; it must not
+be another Phase D receipt/readiness wrapper or implicitly authorize physical,
+provider-selected, or automatic generation mutation.
 
 ## Active Route
 
@@ -232,9 +221,10 @@ source baseline is deployed at
 The switch restarted only Core; all eight system and two user services remained
 active with zero restarts, the live Core closure matched the candidate, and the
 first new scheduler tick left all three targets healthy with no task or
-approval change. Real repair, provider egress, hostd mutation, and generation
-rollback remain deferred to an explicit or disposable mutation check. Freeze
-this completed lane and select the next concrete whitepaper capability.
+approval change. At that deployed checkpoint, real repair, provider egress,
+hostd mutation, and generation rollback were deferred to explicit or disposable
+mutation checks; the disposable repair and Phase D activation/rollback gates
+are now complete above. Freeze this completed lane.
 
 The next Level 3 capability is deployed. Native systemd inventory reports
 bounded current/peak memory, effective soft and hard limits, CPU use, task

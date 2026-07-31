@@ -41,6 +41,8 @@ function createReceipt(taskId) {
     sourceStagingTaskId: "task-staging-physical-rehearsal",
     activationDecisionTaskId: "task-decision-physical-rehearsal",
     activationTaskId: taskId,
+    rollbackSnapshotId: "request-physical-rehearsal",
+    previousTargetPresent: false,
     previousTargetHash: null,
     previousGenerationPath,
     activatedGenerationPath: closurePath,
@@ -49,6 +51,8 @@ function createReceipt(taskId) {
       registry: HOSTD_ACTIVATION_HELPER_RECEIPT_REGISTRY,
       candidateHash,
       evaluatedClosurePath: closurePath,
+      rollbackSnapshotId: "request-physical-rehearsal",
+      previousTargetPresent: false,
       previousTargetHash: null,
       generationBefore: previousGenerationPath,
       generationAfter: closurePath,
@@ -64,6 +68,7 @@ function createReceipt(taskId) {
         "/nix/store/helper/bin/nixsoma-managed-config-activation",
         candidateHash,
         closurePath,
+        "request-physical-rehearsal",
       ],
     },
     status: "passed",
@@ -107,7 +112,7 @@ function createTask() {
 }
 
 function createObserverElement() {
-  return { textContent: "" };
+  return { textContent: "", value: "" };
 }
 
 function createObserverContext() {
@@ -115,6 +120,7 @@ function createObserverContext() {
     declarativeEvolutionExecutionTaskId: createObserverElement(),
     declarativeEvolutionExecutionStatus: createObserverElement(),
     declarativeEvolutionExecutionJson: createObserverElement(),
+    declarativeEvolutionRollbackActivationTaskIdInput: createObserverElement(),
   };
 }
 
@@ -284,6 +290,7 @@ test("physical-host rehearsal dispatches through Core executor and renders manua
   const readback = JSON.parse(observer.declarativeEvolutionExecutionJson.textContent);
 
   assert.equal(observer.declarativeEvolutionExecutionStatus.textContent, "failed");
+  assert.equal(observer.declarativeEvolutionRollbackActivationTaskIdInput.value, task.id);
   assert.equal(readback.rollbackEvidence.status, "manual_operator_required");
   assert.equal(readback.rollbackEvidence.owner, "deferred_manual_operator");
   assert.equal(readback.rollbackEvidence.governance.automaticRollback, false);

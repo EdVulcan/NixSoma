@@ -9,12 +9,17 @@ import {
   NATIVE_DECLARATIVE_EVOLUTION_ACTIVATION_CAPABILITY_ID,
   NATIVE_DECLARATIVE_EVOLUTION_ACTIVATION_REGISTRY,
 } from "./native-declarative-evolution-activation.mjs";
+import {
+  NATIVE_DECLARATIVE_EVOLUTION_ROLLBACK_CAPABILITY_ID,
+  NATIVE_DECLARATIVE_EVOLUTION_ROLLBACK_REGISTRY,
+} from "./native-declarative-evolution-rollback.mjs";
 
 const CAPABILITY_ID = "plan.openclaw.declarative_evolution.managed_config_candidate";
 const STAGING_TASK_CAPABILITY_ID = "act.openclaw.declarative_evolution.staging_task";
 const HEALTH_GATE_CAPABILITY_ID = NATIVE_DECLARATIVE_EVOLUTION_HEALTH_GATE_CAPABILITY_ID;
 const ACTIVATION_DECISION_CAPABILITY_ID = NATIVE_DECLARATIVE_EVOLUTION_ACTIVATION_DECISION_CAPABILITY_ID;
 const ACTIVATION_CAPABILITY_ID = NATIVE_DECLARATIVE_EVOLUTION_ACTIVATION_CAPABILITY_ID;
+const ROLLBACK_CAPABILITY_ID = NATIVE_DECLARATIVE_EVOLUTION_ROLLBACK_CAPABILITY_ID;
 
 function blockedTaskResult(reason, registry = "openclaw-native-declarative-evolution-staging-task-v0") {
   return {
@@ -44,9 +49,10 @@ export function createDeclarativeEvolutionCapabilityHandlers({
   createNativeDeclarativeEvolutionStagingTask,
   createNativeDeclarativeEvolutionActivationDecisionTask,
   createNativeDeclarativeEvolutionActivationTask,
+  createNativeDeclarativeEvolutionRollbackTask,
 } = {}) {
   function validateRequest(capability, request) {
-    if (![CAPABILITY_ID, STAGING_TASK_CAPABILITY_ID, HEALTH_GATE_CAPABILITY_ID, ACTIVATION_DECISION_CAPABILITY_ID, ACTIVATION_CAPABILITY_ID].includes(capability.id)) {
+    if (![CAPABILITY_ID, STAGING_TASK_CAPABILITY_ID, HEALTH_GATE_CAPABILITY_ID, ACTIVATION_DECISION_CAPABILITY_ID, ACTIVATION_CAPABILITY_ID, ROLLBACK_CAPABILITY_ID].includes(capability.id)) {
       return null;
     }
     if (capability.id === HEALTH_GATE_CAPABILITY_ID) {
@@ -73,6 +79,15 @@ export function createDeclarativeEvolutionCapabilityHandlers({
       }
       if (request.params?.confirm !== undefined && typeof request.params.confirm !== "boolean") {
         return "Declarative evolution activation confirm must be a boolean.";
+      }
+      return null;
+    }
+    if (capability.id === ROLLBACK_CAPABILITY_ID) {
+      if (typeof request.params?.activationTaskId !== "string" || !request.params.activationTaskId.trim()) {
+        return "Declarative evolution rollback requires activationTaskId.";
+      }
+      if (request.params?.confirm !== undefined && typeof request.params.confirm !== "boolean") {
+        return "Declarative evolution rollback confirm must be a boolean.";
       }
       return null;
     }
@@ -149,6 +164,24 @@ export function createDeclarativeEvolutionCapabilityHandlers({
         handled: true,
         result: await createNativeDeclarativeEvolutionActivationTask({
           activationDecisionTaskId: request.params.activationDecisionTaskId,
+          confirm: true,
+        }),
+      };
+    }
+    if (capability.id === ROLLBACK_CAPABILITY_ID) {
+      if (request.params?.confirm !== true) {
+        return {
+          handled: true,
+          result: blockedTaskResult("operator_confirmation_required", NATIVE_DECLARATIVE_EVOLUTION_ROLLBACK_REGISTRY),
+        };
+      }
+      if (typeof createNativeDeclarativeEvolutionRollbackTask !== "function") {
+        throw new Error("Native declarative evolution rollback builder is unavailable.");
+      }
+      return {
+        handled: true,
+        result: await createNativeDeclarativeEvolutionRollbackTask({
+          activationTaskId: request.params.activationTaskId,
           confirm: true,
         }),
       };
@@ -255,6 +288,26 @@ export function createDeclarativeEvolutionCapabilityHandlers({
         noAutomaticActivation: result?.governance?.automaticActivation === false,
         noAutomaticRollback: result?.governance?.automaticRollback === false,
         rollbackManualOnly: result?.governance?.executesRollback === false,
+        candidateTextInSummary: false,
+      };
+    }
+    if (capability.id === ROLLBACK_CAPABILITY_ID) {
+      return {
+        kind: "declarative_evolution.rollback",
+        ok: result?.ok === true,
+        blocked: result?.blocked === true,
+        reason: result?.reason ?? null,
+        taskId: result?.task?.id ?? null,
+        approvalId: result?.approval?.id ?? null,
+        activationTaskId: result?.approvalBinding?.activationTaskId ?? null,
+        activationReceiptHash: result?.approvalBinding?.activationReceiptHash ?? null,
+        rollbackSnapshotId: result?.approvalBinding?.rollbackSnapshotId ?? null,
+        previousGenerationPath: result?.approvalBinding?.previousGenerationPath ?? null,
+        createsTask: result?.governance?.createsTask === true,
+        createsApproval: result?.governance?.createsApproval === true,
+        rollbackExecuted: result?.task?.nativeDeclarativeEvolution?.execution?.governance?.executesRollback === true,
+        noAutomaticRollback: result?.governance?.automaticRollback === false,
+        arbitraryGeneration: result?.governance?.arbitraryGeneration === true,
         candidateTextInSummary: false,
       };
     }

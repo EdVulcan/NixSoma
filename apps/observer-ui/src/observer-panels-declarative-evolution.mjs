@@ -10,6 +10,10 @@ export function observerDeclarativeEvolutionPanels() {
             <input id="declarative-evolution-decision-task-id" type="text" value="" spellcheck="false" />
           </div>
           <div class="field">
+            <label for="declarative-evolution-rollback-activation-task-id">Verified Activation Task ID</label>
+            <input id="declarative-evolution-rollback-activation-task-id" type="text" value="" spellcheck="false" />
+          </div>
+          <div class="field">
             <label for="declarative-evolution-decision">Decision</label>
             <select id="declarative-evolution-decision">
               <option value="approve_activation_review">Approve future activation review</option>
@@ -25,14 +29,19 @@ export function observerDeclarativeEvolutionPanels() {
           <div class="metric"><span>Approval</span><span id="declarative-evolution-activation-approval-id">none</span></div>
           <div class="metric"><span>Execution Task</span><span id="declarative-evolution-execution-task-id">none</span></div>
           <div class="metric"><span>Execution Status</span><span id="declarative-evolution-execution-status">not executed</span></div>
+          <div class="metric"><span>Rollback Task</span><span id="declarative-evolution-rollback-task-id">none</span></div>
+          <div class="metric"><span>Rollback Approval</span><span id="declarative-evolution-rollback-approval-id">none</span></div>
+          <div class="metric"><span>Rollback Status</span><span id="declarative-evolution-rollback-status">not executed</span></div>
           <div class="actions tight">
             <button id="declarative-evolution-refresh-button" class="secondary" type="button">Refresh Health Boundary</button>
             <button id="declarative-evolution-decision-button" type="button">Queue Decision</button>
             <button id="declarative-evolution-activation-button" type="button">Queue Activation</button>
+            <button id="declarative-evolution-rollback-button" type="button">Queue Rollback</button>
           </div>
           <pre id="declarative-evolution-review-json">No activation decision review selected.</pre>
           <pre id="declarative-evolution-decision-json">No activation decision task created.</pre>
           <pre id="declarative-evolution-execution-json">No activation execution task created.</pre>
+          <pre id="declarative-evolution-rollback-json">No rollback task created.</pre>
         </section>
 `;
 }

@@ -38,6 +38,11 @@ function createRendererContext() {
     declarativeEvolutionActivationButton: element(),
     declarativeEvolutionDecisionJson: element(),
     declarativeEvolutionExecutionJson: element(),
+    declarativeEvolutionRollbackActivationTaskIdInput: element(),
+    declarativeEvolutionRollbackTaskId: element(),
+    declarativeEvolutionRollbackApprovalId: element(),
+    declarativeEvolutionRollbackStatus: element(),
+    declarativeEvolutionRollbackJson: element(),
   };
 }
 
@@ -50,6 +55,9 @@ test("Observer exposes the declarative-evolution activation decision panel", () 
     "declarative-evolution-refresh-button",
     "declarative-evolution-decision-button",
     "declarative-evolution-activation-button",
+    "declarative-evolution-rollback-activation-task-id",
+    "declarative-evolution-rollback-button",
+    "declarative-evolution-rollback-json",
     "declarative-evolution-host-health-oracle",
     "declarative-evolution-review-json",
     "declarative-evolution-decision-json",
@@ -61,6 +69,7 @@ test("Observer exposes the declarative-evolution activation decision panel", () 
   assert.match(observerClientDeclarativeEvolutionRefreshersScript, /confirm: true/u);
   assert.match(observerClientDeclarativeEvolutionRenderersScript, /candidateHash/u);
   assert.match(observerClientDeclarativeEvolutionRenderersScript, /rollbackEvidence/u);
+  assert.match(observerClientDeclarativeEvolutionRenderersScript, /snapshotConsumed/u);
 });
 
 test("Observer renders a compact host-health-bound activation review", () => {
@@ -134,7 +143,11 @@ test("Observer renders manual rollback evidence in activation execution readback
               executesRollback: false,
             },
           },
-          executionReceipt: { receiptHash: "b".repeat(64) },
+          executionReceipt: {
+            receiptHash: "b".repeat(64),
+            generationSwitched: true,
+            rollbackExecuted: false,
+          },
         },
       },
     },
@@ -145,6 +158,45 @@ test("Observer renders manual rollback evidence in activation execution readback
   assert.match(context.declarativeEvolutionExecutionJson.textContent, /deferred_manual_operator/u);
   assert.match(context.declarativeEvolutionExecutionJson.textContent, /automaticRollback/u);
   assert.match(context.declarativeEvolutionExecutionJson.textContent, /false/u);
+  assert.equal(context.declarativeEvolutionRollbackActivationTaskIdInput.value, "activation-task-1");
+});
+
+test("Observer renders a compact immutable rollback receipt", () => {
+  const context = createRendererContext();
+  vm.runInNewContext(observerClientDeclarativeEvolutionRenderersScript, context);
+  context.renderDeclarativeEvolutionRollback({
+    ok: true,
+    task: {
+      id: "rollback-task-1",
+      status: "completed",
+      nativeDeclarativeEvolution: {
+        rollback: {
+          activationTaskId: "activation-task-1",
+          activationReceiptHash: "a".repeat(64),
+          rollbackSnapshotId: "activation-request-1",
+          previousGenerationPath: "/nix/store/old-system",
+          activatedGenerationPath: "/nix/store/new-system",
+        },
+        execution: {
+          status: "passed",
+          rollbackReceipt: {
+            receiptHash: "b".repeat(64),
+            generationRestored: true,
+            snapshotConsumed: true,
+          },
+          postRollbackHealth: { status: "healthy" },
+          governance: { executesRollback: true, automaticRollback: false },
+        },
+      },
+    },
+    approval: { id: "approval-rollback-1" },
+  });
+  assert.equal(context.declarativeEvolutionRollbackTaskId.textContent, "rollback-task-1");
+  assert.equal(context.declarativeEvolutionRollbackApprovalId.textContent, "approval-rollback-1");
+  assert.equal(context.declarativeEvolutionRollbackStatus.textContent, "passed");
+  assert.match(context.declarativeEvolutionRollbackJson.textContent, /activation-request-1/u);
+  assert.match(context.declarativeEvolutionRollbackJson.textContent, /snapshotConsumed/u);
+  assert.match(context.declarativeEvolutionRollbackJson.textContent, /healthy/u);
 });
 
 test("Observer queues an explicit activation decision and refreshes existing read models", async () => {
@@ -154,6 +206,7 @@ test("Observer queues an explicit activation decision and refreshes existing rea
   const refreshButton = element();
   const decisionButton = element();
   const activationButton = element();
+  const rollbackButton = element();
   const calls = [];
   const refreshes = [];
   const rendered = [];
@@ -164,16 +217,20 @@ test("Observer queues an explicit activation decision and refreshes existing rea
     declarativeEvolutionRefreshButton: refreshButton,
     declarativeEvolutionDecisionButton: decisionButton,
     declarativeEvolutionActivationButton: activationButton,
+    declarativeEvolutionRollbackButton: rollbackButton,
+    declarativeEvolutionRollbackActivationTaskIdInput: element({ value: "activation-task-1" }),
     declarativeEvolutionExecutionTaskId: element(),
     declarativeEvolutionExecutionStatus: element(),
     declarativeEvolutionDecisionJson: element(),
     declarativeEvolutionExecutionJson: element(),
+    declarativeEvolutionRollbackJson: element(),
     observerConfig: { coreUrl: "http://core.invalid" },
     formatError: (error) => String(error?.message ?? error),
     setControlMessage: (message) => calls.push(["message", message]),
     renderDeclarativeEvolutionActivationReview: (data) => rendered.push(["review", data]),
     renderDeclarativeEvolutionActivationDecision: (data) => rendered.push(["decision", data]),
     renderDeclarativeEvolutionActivationExecution: (data) => rendered.push(["execution", data]),
+    renderDeclarativeEvolutionRollback: (data) => rendered.push(["rollback", data]),
     fetchJson: async (url, options) => {
       calls.push(["fetch", url, options]);
       if (!options) {
@@ -197,6 +254,7 @@ test("Observer queues an explicit activation decision and refreshes existing rea
   await context.refreshDeclarativeEvolutionActivationDecision();
   await context.createDeclarativeEvolutionActivationDecision();
   await context.createDeclarativeEvolutionActivation();
+  await context.createDeclarativeEvolutionRollback();
 
   const fetchCalls = calls.filter(([kind]) => kind === "fetch");
   assert.equal(fetchCalls[0][1], "http://core.invalid/plugins/native-adapter/declarative-evolution/activation-decision?taskId=staging-task-1");
@@ -211,9 +269,19 @@ test("Observer queues an explicit activation decision and refreshes existing rea
     activationDecisionTaskId: "decision-task-1",
     confirm: true,
   });
-  assert.deepEqual(rendered.map(([kind]) => kind), ["review", "review", "decision", "execution"]);
-  assert.deepEqual(refreshes, ["runtime", "tasks", "history", "approvals", "runtime", "tasks", "history", "approvals"]);
-  assert.match(calls.at(-1)[1], /Queued activation task activation-task-1/u);
+  assert.equal(fetchCalls[3][1], "http://core.invalid/plugins/native-adapter/declarative-evolution/rollback-tasks");
+  assert.deepEqual(JSON.parse(fetchCalls[3][2].body), {
+    activationTaskId: "activation-task-1",
+    confirm: true,
+  });
+  assert.deepEqual(rendered.map(([kind]) => kind), ["review", "review", "decision", "execution", "rollback"]);
+  assert.deepEqual(refreshes, [
+    "runtime", "tasks", "history", "approvals",
+    "runtime", "tasks", "history", "approvals",
+    "runtime", "tasks", "history", "approvals",
+  ]);
+  assert.match(calls.at(-1)[1], /Queued rollback task activation-task-1/u);
   assert.equal(decisionButton.disabled, false);
   assert.equal(activationButton.disabled, false);
+  assert.equal(rollbackButton.disabled, false);
 });
