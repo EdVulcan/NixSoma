@@ -2,9 +2,9 @@
 
 Updated: 2026-07-31
 
-Status: deployed in physical generation `1xh4x8ls...`; direct System Sense and
-Core proxy live probes return HTTP 200. The registered Core/Observer acceptance
-record remains to be closed.
+Status: accepted and frozen in physical generation `1xh4x8ls...`. Registered
+Core/Observer, deployed System Sense/Core proxy, deployed Observer, bounded
+payload, and service-health evidence all pass.
 
 ## Capability
 
@@ -47,9 +47,11 @@ approval, provider, or physical-mutation authority.
   `/nix/store/1xh4x8ls64yzl919j2bssd9ilms98knv-nixos-system-nixos-26.05.4808.569d57850992`
   contains the route. Direct deployed System Sense and Core proxy requests both
   return HTTP 200.
-- The deployed read model reports the previous boot as
-  `explicit_reboot_sequence` with reboot and shutdown markers. It does not
-  prove the original trigger or user intent.
+- The accepted read model binds current boot `0fe071ee879d4f65b0376cea208ca7cd`
+  to previous boot `e8a6a4fa094b43d5b43fd9ec584ec0e4`. Its finite result is
+  `unknown`, with no markers after 64 inspected terminal entries. That means
+  the bounded source cannot classify this boot; it does not prove the original
+  trigger or user intent.
 
 ## Governance Boundary
 
@@ -60,23 +62,25 @@ bounded evidence, not a causal proof. Normal hardware-watchdog shutdown
 messages and normal OOM-service lifecycle messages are excluded from abnormal
 cause markers.
 
-## Remaining Acceptance
+## Acceptance Closed
 
-This lane needs proof reconciliation, not another deployment:
+On 2026-07-31:
 
-1. Run `dev-openclaw-systemd-boot-evidence-check.sh` and
-   `dev-observer-openclaw-systemd-boot-evidence-check.sh` from the current
-   checkout.
-2. Recheck the deployed direct and Core proxy route and bind the compact result
-   to generation `1xh4x8ls...`, current/previous boot IDs, classification,
-   marker names, and the no-journal-payload boundary.
-3. Record the raw compact result in ignored timing/acceptance evidence, then
-   summarize its generation, boot binding, classification, and gate result in
-   this committed plan and update the status to accepted. Freeze the
-   boot-evidence lane afterward.
+- `dev-openclaw-systemd-boot-evidence-check.sh` passed the Core contract;
+- `dev-observer-openclaw-systemd-boot-evidence-check.sh` passed the Observer
+  contract and panel binding;
+- deployed System Sense and Core proxy returned HTTP 200 with identical boot,
+  classification, source, and governance evidence;
+- deployed Observer retained the panel and refresher without rendering journal
+  entries;
+- all nine health endpoints returned HTTP 200, with zero failed system or user
+  units;
+- journal payload return, provider calls, browser actions, recovery, generation
+  switch, reboot, and host mutation remained absent.
 
-The acceptance must not switch generations, reboot, call a provider, drive the
-browser, trigger recovery, persist journal text, or mutate the host.
+The raw compact record is
+`.artifacts/timing/systemd-boot-evidence-acceptance-20260731T164430.tsv`; this
+committed plan is the durable acceptance summary. Freeze this lane.
 
 ## Deferred
 
@@ -87,8 +91,7 @@ browser, trigger recovery, persist journal text, or mutate the host.
 
 ## Next Capability
 
-After the remaining acceptance closes, continue with the task-bound semantic
-activation/submit candidate in
+Continue with the task-bound semantic activation/submit candidate in
 [`OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md`](./OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md).
 Do not add another boot marker, evidence wrapper, or readback variant until a
 concrete operator gap requires it.

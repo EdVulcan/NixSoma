@@ -50,6 +50,7 @@ export async function executeAiWorkspaceSemanticClick({
   postJson,
   publishRequiredAudit,
   now,
+  grantCapabilityId = "act.ai.workspace.single_step",
 } = {}) {
   const prepared = prepareSemanticClick(decision, executionContext);
   const taskEvidence = taskObjectiveBinding?.evidence ?? {};
@@ -94,7 +95,7 @@ export async function executeAiWorkspaceSemanticClick({
       grantContext: {
         taskId: taskEvidence.taskId ?? null,
         stepId: null,
-        capabilityId: "act.ai.workspace.single_step",
+        capabilityId: grantCapabilityId,
         intent: "ai.workspace.semantic_click",
       },
     },

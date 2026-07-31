@@ -20,6 +20,13 @@ import {
   createAiWorkspaceContextObserver,
   stableAiWorkspaceJson,
 } from "./ai-workspace-context.mjs";
+import {
+  AI_WORKSPACE_SEMANTIC_SUBMIT_MODE,
+  buildAiWorkspaceSemanticSubmitInstruction,
+  buildAiWorkspaceSemanticSubmitRequestedBehavior,
+  isEligibleAiWorkspaceSemanticSubmitTarget,
+  parseAiWorkspaceSemanticSubmitDecision,
+} from "./ai-workspace-semantic-submit-policy.mjs";
 
 export const AI_WORKSPACE_SINGLE_STEP_REGISTRY =
   "nixsoma-ai-workspace-single-step-v0";
@@ -170,8 +177,13 @@ export function createAiWorkspaceSingleStep({
     return result;
   }
 
-  async function invoke({ taskId: requestedTaskId, expectedTaskBinding = null } = {}) {
+  async function invoke({
+    taskId: requestedTaskId,
+    expectedTaskBinding = null,
+    decisionMode = null,
+  } = {}) {
     const taskId = normaliseAiWorkspaceTaskId(requestedTaskId);
+    const semanticSubmitMode = decisionMode === AI_WORKSPACE_SEMANTIC_SUBMIT_MODE;
     if (!taskId || typeof getTaskById !== "function") {
       return fallback("task_objective_unavailable", standingAdvisory);
     }
@@ -193,7 +205,8 @@ export function createAiWorkspaceSingleStep({
       pixelsEgress: false,
       urlsEgress: false,
       inputValuesEgress: false,
-      providerGeneratedInputAllowed: true,
+      providerGeneratedInputAllowed: !semanticSubmitMode,
+      semanticSubmitOnly: semanticSubmitMode,
       rawTaskGoalEgress: false,
       taskObjectiveEgress: true,
     };
@@ -213,39 +226,56 @@ export function createAiWorkspaceSingleStep({
         }
         decisionContext.taskObjectiveBinding = taskObjectiveBinding;
         decisionContext.provider = buildAiWorkspaceProviderContext({
-          registry: "nixsoma-ai-workspace-single-step-context-v2",
+          registry: semanticSubmitMode
+            ? "nixsoma-ai-workspace-semantic-submit-context-v0"
+            : "nixsoma-ai-workspace-single-step-context-v2",
           observedAt,
           context: decisionContext,
           taskObjective: taskObjectiveBinding.providerProjection,
-          requestedBehavior: {
-            maximumActions: 1,
-            allowedActions: ["no_op", "scroll_up", "scroll_down", "click_item", "type_item"],
-            semanticItemOrdinals: "one_based_ordered_items",
-            semanticTypeInput: {
-              maximumCharacters: AI_WORKSPACE_SINGLE_STEP_MAX_INPUT_CHARS,
-              writeOnlyExecutionPayload: true,
-            },
-            automaticRepeat: false,
-          },
+          requestedBehavior: semanticSubmitMode
+            ? buildAiWorkspaceSemanticSubmitRequestedBehavior()
+            : {
+                maximumActions: 1,
+                allowedActions: ["no_op", "scroll_up", "scroll_down", "click_item", "type_item"],
+                semanticItemOrdinals: "one_based_ordered_items",
+                semanticTypeInput: {
+                  maximumCharacters: AI_WORKSPACE_SINGLE_STEP_MAX_INPUT_CHARS,
+                  writeOnlyExecutionPayload: true,
+                },
+                automaticRepeat: false,
+              },
         });
         Object.assign(egressAuditPayload, projectAiWorkspaceTaskEvidence(taskObjectiveBinding));
         return decisionContext.provider;
       },
-      instruction: buildAiWorkspaceSingleStepInstruction(),
+      instruction: semanticSubmitMode
+        ? buildAiWorkspaceSemanticSubmitInstruction()
+        : buildAiWorkspaceSingleStepInstruction(),
       buildPrompt: (context) =>
         `Choose exactly one bounded action for this server-generated AI workspace context: ${stableAiWorkspaceJson(context)}`,
       responseContract: AI_WORKSPACE_SINGLE_STEP_RESPONSE_CONTRACT,
-      parseResponse: parseAiWorkspaceSingleStepDecision,
+      parseResponse: semanticSubmitMode
+        ? parseAiWorkspaceSemanticSubmitDecision
+        : parseAiWorkspaceSingleStepDecision,
       readActionId: (parsed) => parsed.decision.actionId,
-      auditEventName: "cloud_provider.ai_workspace_single_step_egress_authorized",
+      auditEventName: semanticSubmitMode
+        ? "cloud_provider.ai_workspace_semantic_submit_egress_authorized"
+        : "cloud_provider.ai_workspace_single_step_egress_authorized",
       auditPayload: egressAuditPayload,
       successResult: "ai_workspace_single_step_decision_returned",
     });
-    if (!providerDecision.ok) {
-      return finaliseFallback(providerDecision.reason, {
-        providerDecision,
-        decisionContext,
-      });
+    if (!providerDecision.ok
+      || providerDecision.parsed?.ok !== true
+      || !providerDecision.parsed.decision) {
+      return finaliseFallback(
+        providerDecision.ok
+          ? providerDecision.parsed?.reason ?? "response_invalid"
+          : providerDecision.reason,
+        {
+          providerDecision,
+          decisionContext,
+        },
+      );
     }
 
     const decision = providerDecision.parsed.decision;
@@ -277,6 +307,17 @@ export function createAiWorkspaceSingleStep({
       || executionContext.inventorySequence !== decisionContext.inventorySequence
       || executionContext.scene.sceneContentSha256 !== decisionContext.scene.sceneContentSha256) {
       return finaliseFallback("execution_context_changed", {
+        providerDecision,
+        decisionContext,
+      });
+    }
+    if (semanticSubmitMode
+      && decision.actionId === "click_item"
+      && !isEligibleAiWorkspaceSemanticSubmitTarget(
+        executionContext.scene,
+        decision.itemOrdinal,
+      )) {
+      return finaliseFallback("semantic_submit_target_not_eligible", {
         providerDecision,
         decisionContext,
       });
@@ -335,6 +376,7 @@ export function createAiWorkspaceSingleStep({
           processLaunch: false,
           parentDisplayConnected: false,
           mutatesHost: false,
+          semanticSubmitMode,
         },
       };
     }
@@ -351,6 +393,9 @@ export function createAiWorkspaceSingleStep({
         postJson,
         publishRequiredAudit,
         now,
+        grantCapabilityId: semanticSubmitMode
+          ? "act.ai.workspace.semantic_submit"
+          : "act.ai.workspace.single_step",
       });
       if (!semanticClick.ok) {
         return finaliseFallback(semanticClick.reason, {
@@ -396,6 +441,8 @@ export function createAiWorkspaceSingleStep({
           processLaunch: false,
           parentDisplayConnected: false,
           mutatesHost: false,
+          semanticSubmitMode,
+          semanticSubmitTargetBound: semanticSubmitMode,
         },
       };
     }

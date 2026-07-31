@@ -36,6 +36,7 @@ import { createAiWorkspaceOcrFocusTypeCapabilityHandlers } from "./capability-ru
 import { createAiWorkspaceOcrTypeCapabilityHandlers } from "./capability-runtime-ai-workspace-ocr-type.mjs";
 import { createAiWorkspaceAssessmentAcceptanceCapabilityHandlers } from "./capability-runtime-ai-workspace-assessment-acceptance.mjs";
 import { createAiWorkspaceSingleStepCapabilityHandlers } from "./capability-runtime-ai-workspace-single-step.mjs";
+import { createAiWorkspaceSemanticSubmitCapabilityHandlers } from "./capability-runtime-ai-workspace-semantic-submit.mjs";
 import { createAiWorkspaceBoundedRunCapabilityHandlers } from "./capability-runtime-ai-workspace-bounded-run.mjs";
 import { createAiWorkspaceReviewedCycleCapabilityHandlers } from "./capability-runtime-ai-workspace-reviewed-cycle.mjs";
 import {
@@ -72,6 +73,7 @@ export function createCapabilityRuntime(deps) {
     aiWorkspaceOcrFocusType,
     aiWorkspaceOcrType,
     aiWorkspaceSingleStep,
+    aiWorkspaceSemanticSubmit,
     aiWorkspaceBoundedRun,
     aiWorkspaceReviewedCycle,
     declarativeEvolution = {},
@@ -280,6 +282,16 @@ export function createCapabilityRuntime(deps) {
     });
   const aiWorkspaceSingleStepHandlers = createAiWorkspaceSingleStepCapabilityHandlers({
     runtime: aiWorkspaceSingleStep,
+  });
+  const aiWorkspaceSemanticSubmitHandlers = createAiWorkspaceSemanticSubmitCapabilityHandlers({
+    runtime: aiWorkspaceSemanticSubmit,
+    capabilityInvocationLog,
+    taskManager,
+    readWorkViewState: typeof readWorkViewState === "function"
+      ? readWorkViewState
+      : () => fetchJson(`${sessionManagerUrl}/work-view/state`),
+    publishAuditEvent,
+    now,
   });
   const aiWorkspaceBoundedRunHandlers = createAiWorkspaceBoundedRunCapabilityHandlers({
     runtime: aiWorkspaceBoundedRun,
@@ -571,6 +583,13 @@ export function createCapabilityRuntime(deps) {
     const aiWorkspaceSingleStep = await aiWorkspaceSingleStepHandlers.callBackend(capability, request);
     if (aiWorkspaceSingleStep.handled) {
       return aiWorkspaceSingleStep.result;
+    }
+    const aiWorkspaceSemanticSubmit = await aiWorkspaceSemanticSubmitHandlers.callBackend(
+      capability,
+      request,
+    );
+    if (aiWorkspaceSemanticSubmit.handled) {
+      return aiWorkspaceSemanticSubmit.result;
     }
     const standingProviderAdvisory = await standingProviderAdvisoryHandlers.callBackend(capability, request);
     if (standingProviderAdvisory.handled) {
@@ -895,6 +914,11 @@ export function createCapabilityRuntime(deps) {
     const aiWorkspaceSingleStepSummary = aiWorkspaceSingleStepHandlers.summariseResult(capability, result);
     if (aiWorkspaceSingleStepSummary) {
       return aiWorkspaceSingleStepSummary;
+    }
+    const aiWorkspaceSemanticSubmitSummary =
+      aiWorkspaceSemanticSubmitHandlers.summariseResult(capability, result);
+    if (aiWorkspaceSemanticSubmitSummary) {
+      return aiWorkspaceSemanticSubmitSummary;
     }
     const standingProviderAdvisorySummary = standingProviderAdvisoryHandlers.summariseResult(capability, result);
     if (standingProviderAdvisorySummary) {
@@ -1353,6 +1377,11 @@ export function createCapabilityRuntime(deps) {
     if (aiWorkspaceAuthorization.handled) {
       serverApproval = aiWorkspaceAuthorization.authorization;
     }
+    const aiWorkspaceSemanticSubmitAuthorization =
+      aiWorkspaceSemanticSubmitHandlers.authorizeRequest(capability, request, body);
+    if (aiWorkspaceSemanticSubmitAuthorization.handled) {
+      serverApproval = aiWorkspaceSemanticSubmitAuthorization.authorization;
+    }
     const aiWorkspaceBoundedRunAuthorization = aiWorkspaceBoundedRunHandlers.authorizeRequest(
       capability,
       request,
@@ -1443,6 +1472,14 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: aiWorkspaceSingleStepValidationError },
+      };
+    }
+    const aiWorkspaceSemanticSubmitValidationError =
+      aiWorkspaceSemanticSubmitHandlers.validateRequest(capability, request, body);
+    if (aiWorkspaceSemanticSubmitValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: aiWorkspaceSemanticSubmitValidationError },
       };
     }
     const aiWorkspaceBoundedRunValidationError = aiWorkspaceBoundedRunHandlers.validateRequest(

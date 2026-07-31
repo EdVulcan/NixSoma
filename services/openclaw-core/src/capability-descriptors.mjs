@@ -144,6 +144,18 @@ export function buildBaseCapabilities({
       description: "Request one audited provider decision for an operator-reviewed local task and execute at most one existing scroll, semantic click, or write-only semantic type action without automatic repetition.",
     },
     {
+      id: "act.ai.workspace.semantic_submit",
+      name: "AI Workspace Semantic Submit",
+      kind: "actuator",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/capabilities/invoke`,
+      intents: ["ai.workspace.semantic_submit"],
+      domains: ["cross_boundary"],
+      risk: "medium",
+      governance: "standing_authorization",
+      description: "After explicit operator confirmation, bind one current verified semantic-type receipt to one eligible task-bound submit-button activation with no Enter, retry, or automatic task completion.",
+    },
+    {
       id: "act.ai.workspace.bounded_run",
       name: "AI Workspace Bounded Run",
       kind: "actuator",

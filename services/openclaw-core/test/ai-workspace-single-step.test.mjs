@@ -751,3 +751,51 @@ test("AI workspace semantic type does not retry or expose input when completion 
   assert.equal(calls.post.length, 1);
   assert.equal(JSON.stringify({ result, audit: calls.audit }).includes("NixSoma"), false);
 });
+
+test("AI workspace semantic-submit mode reuses one eligible semantic click", async () => {
+  const { owner, calls } = harness({
+    actionId: "click_item",
+    itemOrdinal: 1,
+    sceneRole: "button",
+    sceneName: "Submit form",
+    taskGoal: "Submit the completed form",
+  });
+
+  const result = await owner.invoke({
+    taskId: TASK_ID,
+    decisionMode: "semantic_submit",
+  });
+
+  assert.equal(result.status, "executed");
+  assert.equal(result.action.actionId, "click_item");
+  assert.equal(result.governance.semanticSubmitMode, true);
+  assert.equal(result.governance.semanticSubmitTargetBound, true);
+  assert.deepEqual(calls.decision[0].auditEventName,
+    "cloud_provider.ai_workspace_semantic_submit_egress_authorized");
+  assert.deepEqual(calls.post[0].options.grantContext, {
+    taskId: TASK_ID,
+    stepId: null,
+    capabilityId: "act.ai.workspace.semantic_submit",
+    intent: "ai.workspace.semantic_click",
+  });
+});
+
+test("AI workspace semantic-submit mode rejects non-submit targets before actuator contact", async () => {
+  const { owner, calls } = harness({
+    actionId: "click_item",
+    itemOrdinal: 1,
+    sceneRole: "button",
+    sceneName: "Cancel",
+    taskGoal: "Submit the completed form",
+  });
+
+  const result = await owner.invoke({
+    taskId: TASK_ID,
+    decisionMode: "semantic_submit",
+  });
+
+  assert.equal(result.status, "local_fallback");
+  assert.equal(result.fallback.reason,
+    "ai_workspace_single_step_semantic_submit_target_not_eligible");
+  assert.equal(calls.post.length, 0);
+});

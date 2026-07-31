@@ -132,6 +132,7 @@ function createHarness(overrides = {}) {
     aiWorkspaceOcrFocusType: overrides.aiWorkspaceOcrFocusType,
     aiWorkspaceOcrType: overrides.aiWorkspaceOcrType,
     aiWorkspaceSingleStep: overrides.aiWorkspaceSingleStep,
+    aiWorkspaceSemanticSubmit: overrides.aiWorkspaceSemanticSubmit,
     aiWorkspaceBoundedRun: overrides.aiWorkspaceBoundedRun,
     aiWorkspaceReviewedCycle: overrides.aiWorkspaceReviewedCycle,
     publishAuditEvent: overrides.publishAuditEvent,
@@ -193,6 +194,20 @@ test("capability runtime exposes the standing-authorized AI workspace single-ste
 
   const registry = await runtime.buildCapabilityRegistry();
   const capability = registry.capabilities.find((item) => item.id === "act.ai.workspace.single_step");
+
+  assert.equal(capability?.kind, "actuator");
+  assert.deepEqual(capability?.domains, ["cross_boundary"]);
+  assert.equal(capability?.risk, "medium");
+  assert.equal(capability?.governance, "standing_authorization");
+});
+
+test("capability runtime exposes the receipt-bound AI workspace semantic submit descriptor", async () => {
+  const { runtime } = createHarness();
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find(
+    (item) => item.id === "act.ai.workspace.semantic_submit",
+  );
 
   assert.equal(capability?.kind, "actuator");
   assert.deepEqual(capability?.domains, ["cross_boundary"]);
@@ -1203,6 +1218,142 @@ test("capability runtime records semantic type as write-only keyboard evidence",
   assert.equal(summary.inputTextPersisted, false);
   assert.equal(summary.keyboardInput, true);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("transient"), false);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes('"inputText":'), false);
+});
+
+test("capability runtime binds a semantic submit invocation to an exact type receipt", async () => {
+  const task = {
+    id: "task-reviewed-submit-1",
+    goal: "Type the customer name and submit the form",
+    status: "running",
+    updatedAt: "2026-07-08T00:00:00.000Z",
+    policy: { decision: { decision: "allow" } },
+    workView: {
+      workViewId: "work-view-primary",
+      sessionId: "session-current",
+      trustedBinding: {
+        registry: "openclaw-native-engineering-work-view-bind-v0",
+        mode: "operator_reviewed",
+        authorityStatus: "authoritative",
+        leaseMatched: true,
+        boundAt: "2026-07-08T00:00:00.000Z",
+      },
+    },
+  };
+  const workViewState = {
+    session: { sessionId: "session-current", status: "running", role: "ai-work-view" },
+    workView: {
+      workViewId: "work-view-primary",
+      status: "prepared",
+      trustedSession: {
+        sessionIdentity: { status: "authoritative" },
+        helperRuntime: { status: "active", actionAuthority: "active", leaseMatched: true },
+      },
+    },
+  };
+  const binding = buildAiWorkspaceTaskObjectiveBinding({
+    task,
+    taskId: task.id,
+    workViewState,
+  });
+  const hashes = {
+    objectiveContentHash: binding.evidence.objectiveContentHash,
+    taskVersionHash: binding.evidence.taskVersionHash,
+    responseContentHash: "a".repeat(64),
+    sceneContentHash: "b".repeat(64),
+  };
+  const inputEvidence = {
+    registry: "openclaw-write-only-input-evidence-v0",
+    charCount: 12,
+    byteLength: 12,
+    maxChars: 200,
+    truncated: false,
+    textExposed: false,
+    persisted: false,
+  };
+  const runtimeCalls = [];
+  const { runtime, state } = createHarness({
+    taskManager: { getTaskById: () => task },
+    readWorkViewState: async () => workViewState,
+    aiWorkspaceSemanticSubmit: {
+      invoke: async (input) => {
+        runtimeCalls.push(input);
+        return {
+          ok: true,
+          status: "executed",
+          decision: { actionId: "click_item", itemOrdinal: 2 },
+          action: { actionId: "click_item", itemOrdinal: 2, executed: true },
+          evidence: {
+            responseContentHash: "c".repeat(64),
+            sceneContentHash: "d".repeat(64),
+            postActionVerified: true,
+            completionAudit: true,
+          },
+          governance: {
+            providerCalled: true,
+            actionExecuted: true,
+            semanticSubmitTargetBound: true,
+          },
+        };
+      },
+    },
+  });
+  state.capabilityInvocationLog.push({
+    id: "type-invocation-1",
+    at: "2026-07-08T00:00:00.000Z",
+    capability: { id: "act.ai.workspace.single_step" },
+    request: { taskId: task.id },
+    authorization: { policyId: "ai-workspace-explicit-single-step", approved: true },
+    policy: { decision: "audit_only", domain: "cross_boundary", approved: true },
+    invoked: true,
+    blocked: false,
+    summary: {
+      kind: "ai.workspace.single_step",
+      ok: true,
+      status: "executed",
+      actionId: "type_item",
+      taskId: task.id,
+      ...hashes,
+      inputEvidence,
+      providerCalled: true,
+      actionExecuted: true,
+      currentFrameBound: true,
+      currentActiveSurfaceBound: true,
+      semanticSceneBound: true,
+      currentBrowserSurfaceBound: true,
+      taskObjectiveBound: true,
+      postActionVerified: true,
+      completionAudit: true,
+      providerGeneratedInput: true,
+      inputTextPersisted: false,
+      keyboardInput: true,
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.ai.workspace.semantic_submit",
+    taskId: task.id,
+    params: {
+      confirm: true,
+      typeInvocationId: "type-invocation-1",
+      ...hashes,
+    },
+  });
+
+  assert.equal(result.statusCode, 200);
+  assert.equal(result.response.invocation.authorization.policyId,
+    "ai-workspace-explicit-semantic-submit");
+  assert.equal(result.response.invocation.summary.kind, "ai.workspace.semantic_submit");
+  assert.equal(result.response.invocation.summary.priorTypeReceiptBound, true);
+  assert.equal(result.response.invocation.summary.semanticSubmitTargetBound, true);
+  assert.equal(result.response.invocation.summary.automaticTaskCompletion, false);
+  assert.equal(runtimeCalls.length, 1);
+  assert.deepEqual(runtimeCalls[0].expectedTaskBinding, {
+    taskId: task.id,
+    objectiveContentHash: hashes.objectiveContentHash,
+    taskVersionHash: hashes.taskVersionHash,
+  });
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("customer name"), false);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes('"inputText":'), false);
 });
 

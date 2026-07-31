@@ -71,6 +71,10 @@ function updateAiSurfaceScrollControls() {
   if (aiWorkspaceAssessmentTaskId && aiWorkspaceAssessmentTaskId !== taskId) {
     clearAiWorkspaceAssessment();
   }
+  if (aiWorkspaceSemanticTypeReceipt
+    && aiWorkspaceSemanticTypeReceipt.taskId !== taskId) {
+    clearAiWorkspaceSemanticSubmit();
+  }
   if (aiWorkspaceOcrAssessmentTaskId && aiWorkspaceOcrAssessmentTaskId !== taskId) {
     clearAiWorkspaceOcrAssessment();
   }
@@ -94,6 +98,7 @@ function updateAiSurfaceScrollControls() {
     || aiWorkspaceBoundedRunInFlight
     || aiWorkspaceReviewedCycleInFlight
     || aiWorkspaceAssessmentInFlight
+    || aiWorkspaceSemanticSubmitInFlight
     || aiWorkspaceAssessmentAcceptanceInFlight;
   scrollAiSurfaceUpButton.disabled = !enabled || aiRunInFlight;
   scrollAiSurfaceDownButton.disabled = !enabled || aiRunInFlight;
@@ -103,6 +108,10 @@ function updateAiSurfaceScrollControls() {
   ocrTypeAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
   ocrFocusTypeAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceSingleStepButton.disabled = !enabled || !taskId || aiRunInFlight;
+  runAiWorkspaceSemanticSubmitButton.disabled = !enabled
+    || !taskId
+    || aiWorkspaceSemanticTypeReceipt?.taskId !== taskId
+    || aiRunInFlight;
   runAiWorkspaceBoundedRunButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceReviewedCycleButton.disabled = !enabled || !taskId || aiRunInFlight;
   assessAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
@@ -137,6 +146,7 @@ function clearAiWorkspaceProjection(reason = "unavailable") {
   clearAiWorkspaceOcrClick(reason);
   clearAiWorkspaceOcrType(reason);
   clearAiWorkspaceOcrFocusType(reason);
+  clearAiWorkspaceSemanticSubmit(reason);
   updateAiSurfaceScrollControls();
 }
 
@@ -448,6 +458,7 @@ async function runAiWorkspaceSingleStep() {
         || governance.currentActiveSurfaceBound !== true)) {
       throw new Error("AI workspace single-step execution evidence was incomplete.");
     }
+    captureAiWorkspaceSemanticTypeReceipt(response, result, taskId);
     const itemSuffix = ["click_item", "type_item"].includes(actionId)
       && Number.isInteger(result.action?.itemOrdinal)
       ? " #" + result.action.itemOrdinal

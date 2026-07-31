@@ -185,6 +185,26 @@ test("bounded workspace run continues once after a verified scroll and keeps typ
   assert.equal(JSON.stringify(calls.audit).includes(PRIVATE_TEXT), false);
 });
 
+test("semantic submit shares the coordinator single-flight and applies the constrained mode", async () => {
+  const { calls, coordinator } = harness([
+    stepResult({ actionId: "click_item" }),
+  ]);
+
+  const result = await coordinator.semanticSubmit.invoke({
+    taskId: TASK_ID,
+    expectedTaskBinding: {
+      taskId: TASK_ID,
+      objectiveContentHash: "a".repeat(64),
+      taskVersionHash: "b".repeat(64),
+    },
+  });
+
+  assert.equal(result.decision.actionId, "click_item");
+  assert.equal(calls.invoke.length, 1);
+  assert.equal(calls.invoke[0].decisionMode, "semantic_submit");
+  assert.equal(calls.invoke[0].expectedTaskBinding.taskId, TASK_ID);
+});
+
 test("bounded workspace run stops after first no-op, click, or type", async (t) => {
   for (const actionId of ["no_op", "click_item", "type_item"]) {
     await t.test(actionId, async () => {

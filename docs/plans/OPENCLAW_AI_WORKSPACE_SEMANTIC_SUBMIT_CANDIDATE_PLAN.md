@@ -2,9 +2,9 @@
 
 Updated: 2026-07-31
 
-Status: selected as the next real Level 4 candidate after boot-evidence
-acceptance closes. No new capability id, route, or actuator is approved by this
-record.
+Status: source implemented and locally validated; deterministic physical
+acceptance remains pending explicit authorization. The implementation adds one
+receipt-bound capability id and reuses the existing semantic click actuator.
 
 ## User Capability
 
@@ -19,9 +19,9 @@ This is not generic Enter or a general second action. It is a narrow lifecycle
 binding from an existing verified type result to one task-bound semantic
 activation/submit result.
 
-## Duplicate-Capability Gate
+## Duplicate-Capability Audit
 
-Before implementation, prove what is actually missing:
+The implementation decision followed this gate:
 
 1. Check whether two explicit invocations of the existing task-bound
    `act.ai.workspace.single_step` path can already produce type -> submit with
@@ -29,13 +29,43 @@ Before implementation, prove what is actually missing:
 2. If the existing path is complete, add no actuator or response-contract
    variant. Close only the representative workflow acceptance and update the
    canonical docs.
-3. If the existing path lacks an exact prior-type-to-submit binding, add the
+3. Because the existing path lacked an exact prior-type-to-submit binding, add the
    smallest Core coordinator or contract constraint that supplies that binding.
    Reuse the existing semantic `click_item` owner in Screen Act and Browser
    Runtime.
 
 A renamed `click_item`, another provider wrapper, or another readiness/readback
 surface does not satisfy this candidate.
+
+## Source Implementation Record
+
+The duplicate-capability audit found that `act.ai.workspace.single_step` could
+already type and click separately, but its second request accepted only a task
+id and confirmation. It did not bind the follow-up click to the exact verified
+type invocation, and the bounded run intentionally stopped after type.
+
+Source now provides `act.ai.workspace.semantic_submit` as the missing lifecycle
+coordinator. It accepts only the reviewed task id, explicit confirmation, one
+type invocation id, and the exact objective, task-version, response, and scene
+hashes from that invocation. Core requires a successful, completion-audited,
+post-action-verified, write-only type receipt less than five minutes old;
+rejects a changed task binding, a later task action, or a consumed receipt; and
+allows the provider to choose only `no_op` or one enabled semantic `button`
+whose accessible name begins with Submit, Send, Continue, or Confirm. The
+existing semantic click owner retains target resolution, execution-grant,
+pre-action audit, actuation, and post-action verification ownership.
+
+Receipt consumption is durable through the compact capability invocation log
+after the authorization audit succeeds, including an audited execution failure.
+Malformed or mismatched requests do not consume a valid receipt. Observer keeps
+the exact verified type invocation only in browser memory, enables one explicit
+Submit control, sends no ordinal or input text, and clears the receipt after the
+attempt.
+
+Focused Core/runtime tests, complete Core and Observer suites, both builds,
+workspace typecheck/tests, and source-level closure wiring have passed. This is
+source evidence only: no provider call, browser action, deployment, generation
+switch, or physical acceptance is claimed by this record.
 
 ## Required Reuse And Binding
 

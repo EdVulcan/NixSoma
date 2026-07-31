@@ -181,7 +181,7 @@ checkpoint is complete and deployed. Freeze provider transport and
 request-binding work; do not add another provider readiness wrapper or another
 one-off call surface.
 
-## Required Acceptance Then Next Real Capability
+## Selected Next Real Capability
 
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation
@@ -194,25 +194,31 @@ kernel network lane are frozen.
 
 The bounded read-only boot/restart evidence route selected for the recent
 restart investigation is already deployed in generation `1xh4x8ls...`. Direct
-System Sense and Core proxy requests return HTTP 200. The remaining work is a
-required acceptance closure: run the registered Core and Observer gates, bind a
-compact result to the deployed generation and boot identities, update the
-boot-evidence plan, and freeze this lane. Do not rebuild or switch the system,
-reboot, call a provider, drive the browser, trigger recovery, or mutate the host
-for this acceptance.
+System Sense and Core proxy requests return HTTP 200. Its required acceptance is
+now closed: both registered gates, deployed direct/proxy binding, deployed
+Observer panel, no-journal-payload boundary, nine health endpoints, and zero
+failed units passed. Boot `0fe071ee...` binds previous boot `e8a6a4fa...`; the
+finite result is `unknown` with no markers after 64 inspected entries, which is
+truthful insufficient evidence rather than causal inference. No switch, reboot,
+provider call, browser action, recovery, or host mutation occurred. Freeze this
+lane.
 
-After that proof closes, the next real Level 4 candidate is the task-bound,
-one-shot semantic activation/submit workflow in
+The task-bound, one-shot semantic activation/submit workflow in
 [`docs/plans/OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md`](./plans/OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md).
-It must reuse the existing reviewed task/work-view binding, semantic scene,
-execution grant, semantic action owner, durable audit, and post-action
-verification. First audit whether the existing `click_item` owner already
-provides the actuator behavior; if so, add only the smallest coordinator that
-binds the verified form state to one eligible submit target. A renamed click
-action is not capability progress.
+is now implemented in source. The duplicate-capability audit retained the
+existing semantic click actuator and added only the missing lifecycle binding:
+one under-five-minute verified write-only type receipt, unchanged task binding,
+no later action, one explicit operator confirmation, and one provider decision
+limited to `no_op` or an enabled Submit/Send/Continue/Confirm button. Receipt
+consumption survives Core restart after successful authorization audit, and a
+malformed request does not consume it. Observer retains the receipt in browser
+memory only and sends neither ordinal nor text.
 
-This slice must close one real form lifecycle with a visible verified
-transition. It must not add generic Enter, arbitrary keyboard input, caller
+The next gate is an explicitly authorized deterministic Workbench physical
+acceptance that closes one real form lifecycle with a visible verified
+transition and proves no replay, no plaintext, no task mutation, durable audit,
+and service health. Do not select a subsequent Level 4 slice before that gate
+closes. This workflow must not add generic Enter, arbitrary keyboard input, caller
 coordinates, automatic repetition, an open loop, arbitrary tab/window/process
 control, automatic task completion, another provider/readiness wrapper, or host
 mutation. Do not add VFS, destination/port, socket-state, `fexit`, enforcement,

@@ -1,4 +1,5 @@
 import { createAiWorkspaceReviewedCycle } from "./ai-workspace-reviewed-cycle.mjs";
+import { AI_WORKSPACE_SEMANTIC_SUBMIT_MODE } from "./ai-workspace-semantic-submit-policy.mjs";
 
 export const AI_WORKSPACE_BOUNDED_RUN_REGISTRY =
   "nixsoma-ai-workspace-bounded-run-v0";
@@ -258,6 +259,13 @@ export function createAiWorkspaceRunCoordinator({
     } finally {
       inFlight = false;
     }
+  }
+
+  function invokeSemanticSubmit(input) {
+    return invokeSingle({
+      ...input,
+      decisionMode: AI_WORKSPACE_SEMANTIC_SUBMIT_MODE,
+    });
   }
 
   async function invokeReadOnlyAssessment(owner, input, registry, fallbackPrefix) {
@@ -594,5 +602,6 @@ export function createAiWorkspaceRunCoordinator({
     ocrClick: { invoke: invokeOcrClick },
     ocrType: { invoke: invokeOcrType },
     ocrFocusType: { invoke: invokeOcrFocusType },
+    semanticSubmit: { invoke: invokeSemanticSubmit },
   };
 }

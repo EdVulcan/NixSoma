@@ -102,6 +102,7 @@ export function createAiWorkspaceRuntimes({
     ocrClick: runs.ocrClick,
     ocrType: runs.ocrType,
     ocrFocusType: runs.ocrFocusType,
+    semanticSubmit: runs.semanticSubmit,
     singleStep: runs.singleStep,
     boundedRun: runs.boundedRun,
     reviewedCycle: runs.reviewedCycle,

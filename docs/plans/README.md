@@ -21,8 +21,8 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md`](./OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md) | Bounded Level 2 browser/work-view contract. |
 | [`OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md`](./OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md) | Operator identity, per-service credentials, and execution grants. |
 | [`OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md`](./OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Fixed Level 3 restart owners, bounded journal diagnosis, resource-pressure sensing, and declarative cgroup envelopes. |
-| [`OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md`](./OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md) | Bounded read-only boot/restart classification without journal payloads or recovery authority. |
-| [`OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md`](./OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md) | Post-acceptance Level 4 candidate for one task-bound semantic form activation/submit transition without generic keyboard or loop authority. |
+| [`OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md`](./OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md) | Accepted and frozen bounded read-only boot/restart classification without journal payloads or recovery authority. |
+| [`OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md`](./OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md) | Source-implemented Level 4 receipt-bound semantic submit transition; deterministic physical acceptance remains pending. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md) | Exact request-bound, guidance-only AI diagnosis from a compact terminal repair receipt. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md) | Local target-specific outcome absorption and advisory recall from verified incident receipts. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Up to three matching-target learned patterns inside the existing exact approved diagnosis request. |
@@ -78,20 +78,21 @@ deployment are release evidence; the final Core and Observer gates captured 27
 persistence fields. No new kernel hook is selected while this lane is frozen.
 
 The bounded boot/restart evidence route is also deployed in current generation
-`1xh4x8ls...`. Direct System Sense and Core proxy probes return HTTP 200. Its
-remaining work is acceptance reconciliation, not deployment or a new
-capability: run the registered Core/Observer checks, record compact generation
-and boot-bound evidence, update
-[`OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md`](./OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md),
-and freeze the lane. This acceptance requires no switch, reboot, provider call,
-browser action, recovery, or host mutation.
+`1xh4x8ls...`. Its registered Core/Observer gates, deployed direct/proxy
+binding, deployed Observer panel, no-journal-payload boundary, and service
+health acceptance now pass. Boot `0fe071ee...` binds previous boot
+`e8a6a4fa...`; classification is truthfully `unknown` with no markers after 64
+inspected entries. No switch, reboot, provider call, browser action, recovery,
+or host mutation occurred. Freeze this lane.
 
-After that gate closes, the selected real product candidate is the task-bound
-semantic form activation/submit workflow in
+The task-bound semantic form activation/submit workflow in
 [`OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md`](./OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md).
-The first design gate is a duplicate-capability audit against existing
-`click_item`: reuse the current actuator and add only missing lifecycle binding.
-Do not open another provider/readiness wrapper or generic keyboard/action lane.
+is implemented in source after the duplicate-capability audit retained the
+existing `click_item` actuator and added only the missing exact type-receipt
+lifecycle binding. Local Core, Observer, build, typecheck, and workspace tests
+are green. The current route is its explicitly authorized deterministic
+Workbench physical acceptance; do not open another provider/readiness wrapper,
+generic keyboard/action lane, or subsequent capability before it closes.
 
 ### Historical Route Evidence
 

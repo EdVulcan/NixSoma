@@ -97,6 +97,7 @@ export function createAiWorkspaceSingleStepCapabilityHandlers({ runtime } = {}) 
       urlsProviderEgress: result?.governance?.urlsProviderEgress === true,
       inputValuesProviderEgress: result?.governance?.inputValuesProviderEgress === true,
       postActionVerified: result?.evidence?.postActionVerified === true,
+      completionAudit: result?.evidence?.completionAudit === true,
       maximumActions: 1,
       automaticRepeat: false,
       createsTask: false,
