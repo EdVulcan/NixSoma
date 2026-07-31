@@ -91,6 +91,15 @@ test("Observer exposes only the allowlisted trusted work-view recovery actions",
       experienceMemoryIncidentLatestRestoredHealthy: false,
       experienceMemoryIncidentPattern: "mixed_restoration_outcomes",
       experienceMemoryIncidentNextAction: "Compare restored and unresolved receipts before selecting another governed repair.",
+      experienceMemoryFeedbackObservedRecords: 2,
+      experienceMemoryFeedbackObservedOutcomes: 3,
+      experienceMemoryFeedbackCompleted: 2,
+      experienceMemoryFeedbackFailed: 1,
+      experienceMemoryFeedbackCompletionRate: 0.67,
+      experienceMemoryFeedbackLatestOutcome: "completed",
+      experienceMemoryFeedbackCorrelation: "same_task_type_subsequent_terminal_outcome",
+      experienceMemoryFeedbackCausalAttribution: false,
+      experienceMemoryFeedbackAdvisoryUseProven: false,
       experienceMemoryStatus: "recalled",
       experienceMemoryAdvisoryOnly: true,
       semanticActionDecisionStatus: "blocked",
@@ -126,6 +135,7 @@ test("Observer exposes only the allowlisted trusted work-view recovery actions",
   assert.match(context.engineeringContextPacketJson.textContent, /recovery=prepare_work_view/);
   assert.match(context.engineeringContextPacketJson.textContent, /Experience Memory: included=true recalled=2 stored=5 matched=3 completed=2 failed=1 rate=0.67 latest=completed pattern=mixed_outcomes status=recalled advisoryOnly=true/);
   assert.match(context.engineeringContextPacketJson.textContent, /Experience Memory Next Action: Compare prior completion/);
+  assert.match(context.engineeringContextPacketJson.textContent, /Experience Feedback: records=2 outcomes=3 completed=2 failed=1 rate=0.67 latest=completed correlation=same_task_type_subsequent_terminal_outcome causal=false advisoryUseProven=false/u);
   assert.match(context.engineeringContextPacketJson.textContent, /Incident Experience: target=openclaw-event-hub\.service matched=2 restored=1 recoveryRequired=1 latestRestored=false pattern=mixed_restoration_outcomes/u);
   assert.match(context.engineeringContextPacketJson.textContent, /Incident Experience Next Action: Compare restored and unresolved receipts/u);
   assert.match(context.engineeringContextPacketJson.textContent, /Semantic Action Decision: status=blocked reason=work_view_authority_not_ready ready=false control=engineering-context-packet-recovery-button/);

@@ -25,6 +25,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md`](./OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md) | Physically accepted and frozen Level 4 receipt-bound semantic submit transition with one exact local fixture URL. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md) | Exact request-bound, guidance-only AI diagnosis from a compact terminal repair receipt. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md) | Local target-specific outcome absorption and advisory recall from verified incident receipts. |
+| [`OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md`](./OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md) | Selected Level 1 durable same-type subsequent-outcome feedback correlation, explicitly non-causal and advisory-use-unproven. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Up to three matching-target learned patterns inside the existing exact approved diagnosis request. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_ACTION_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_ACTION_PLAN.md) | Reviewed read-only opening of the exact incident receipt and recovery evidence bound to provider guidance. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md) | Reviewed same-unit refresh of existing health, fixed-unit inventory, and bounded journal evidence. |
@@ -93,8 +94,18 @@ lifecycle binding. Generation `5zlz2s6z...` physically accepted the fixed local
 Browser Runtime form with two provider calls, two actions, a visible completion
 transition, exact replay rejection before provider contact, no plaintext
 persistence, no task mutation, healthy services, and zero failed units. Freeze
-this lane. The current route is a fresh canonical review; do not open another
-provider/readiness wrapper, generic keyboard/action lane, or submit variant.
+this lane. Do not open another provider/readiness wrapper, generic
+keyboard/action lane, or submit variant.
+
+The fresh canonical review selects the first durable experience-feedback edge,
+recorded in
+[`OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md`](./OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md).
+Existing terminal experience records now accumulate bounded, idempotent later
+outcomes for the exact same task type and expose only compact correlation
+statistics through the engineering context packet and Observer. The signal is
+explicitly non-causal, does not prove advisory consumption, and cannot change
+policy or execution. Physical generation activation is not part of this source
+slice.
 
 ### Historical Route Evidence
 

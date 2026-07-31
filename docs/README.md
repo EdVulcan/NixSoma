@@ -47,6 +47,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 OCR focus then type | One explicit reviewed task whose objective fixes both an OCR target substring and exact allowlisted value may receive one `focus_and_type + ordinal + value` decision; Core requires unchanged provider OCR, objective-local target verification, opcode-4 receipt, fresh task/frame/OCR revalidation, opcode-5 receipt, and final OCR containing the value | Deployed in `4mw7p3r3...`; task `158bd267...` bound provider/preprobe ordinal 14 on surface 14 to one call, opcodes `[4,5]`, four owner OCR observations, two receipts, final OCR, unchanged task, completion audit, and no execution-evidence plaintext |
 | Level 4 current-tab close | One explicit authenticated request carries only `browser.current_tab.close` plus `confirm=true`; Core grants one fixed Screen Act route and Browser Runtime closes only its current `activePage` while preserving the final tab | Physically proven in `pfiwq5p3...` and carried by current `5zlz2s6z...`; real headed Firefox PID 63947 stayed stable while the prepare-reuse test page closed with count 5 -> 4, helper lease plus Browser Runtime/Screen Act audit matched, and provider calls, automatic cleanup/repeat, user-service restarts, and reboot remained zero |
 | Level 4 semantic submit | One explicit request binds an under-five-minute verified write-only type receipt to the same current task and one enabled Submit/Send/Continue/Confirm button, then reuses the existing semantic click owner once | Deployed and physically accepted in `5zlz2s6z...`; the fixed local form executed type then submit with two calls/two actions, visible completion, exact replay rejection before provider contact, unchanged task, no plaintext persistence, tmpfs profile, and healthy services |
+| Level 1 durable experience feedback | Older experience records correlate at most 32 idempotent later terminal outcomes for the exact same task type; engineering context and Observer separate this feedback from historical outcome rate | Implemented in source; correlation is explicitly non-causal, advisory use is unproven, and feedback cannot change ranking, policy, provider calls, or execution |
 | Level 3 network observation | Fixed `fentry/__sys_connect` eBPF probe sends only timestamp, process identity, sockaddr family, and address length through the system-sense/Core/Observer read-only path; only the first two sockaddr bytes are read and destination, port, address bytes, payload, persistence, and policy execution remain excluded | Physical proof originated in `gd9ps40...`; current `5zlz2s6z...` retains the deployed route, with the prior Core and Observer gates capturing 27 `curl` events and no destination, port, payload, or persistence |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Level 3 boot/restart evidence | `/system/systemd/boot-evidence` summarizes current/previous boot identity, bounded terminal markers, and a finite classification without returning journal messages; Core proxy and Observer checks are present | Accepted and carried by current generation `5zlz2s6z...`; registered Core/Observer and deployed direct/proxy checks bind boot `0fe071ee...` to previous boot `e8a6a4fa...`, classification `unknown`, 64 inspected entries, no markers, no journal payload, and nine healthy endpoints |
@@ -213,10 +214,14 @@ completed Phase D evidence lane remain frozen.
    mutation, durable audit, zero failed units, and unchanged restart counters.
    The contract and evidence are recorded in
    [`OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md`](./plans/OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md).
-3. **Run a fresh canonical route review.** Do not add submit aliases, generic
-   keyboard input, arbitrary loopback fixtures, retries, loops, or another
-   provider wrapper. Select the next missing end-to-end capability from the
-   identity path using current source and physical evidence.
+3. **Durable experience feedback is the selected next capability.** Existing
+   terminal experience records now correlate bounded later outcomes for the
+   exact same task type, persist through the existing Core state owner, and
+   expose a separate feedback summary through engineering context and Observer.
+   The contract says `causalAttribution=false` and
+   `advisoryUseProven=false`; it does not change ranking, policy, provider calls,
+   or execution. See
+   [`OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md`](./plans/OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md).
 
 Do not manufacture a VFS/network variant, provider/readiness wrapper, generic
 Enter or keyboard path, caller-coordinate action, automatic repetition, open

@@ -259,6 +259,15 @@ if (
   || !["repeatable_success", "mixed_outcomes", "recovery_needed", "non_terminal_history"].includes(packet.summary?.experienceMemoryPattern)
   || typeof packet.summary?.experienceMemoryNextAction !== "string"
   || packet.summary?.experienceMemoryNextAction.length === 0
+  || packet.summary?.experienceMemoryFeedbackObservedRecords < 1
+  || packet.summary?.experienceMemoryFeedbackObservedOutcomes < 1
+  || packet.summary?.experienceMemoryFeedbackCompleted < 1
+  || packet.summary?.experienceMemoryFeedbackFailed !== 0
+  || packet.summary?.experienceMemoryFeedbackCompletionRate !== 1
+  || packet.summary?.experienceMemoryFeedbackLatestOutcome !== "completed"
+  || packet.summary?.experienceMemoryFeedbackCorrelation !== "same_task_type_subsequent_terminal_outcome"
+  || packet.summary?.experienceMemoryFeedbackCausalAttribution !== false
+  || packet.summary?.experienceMemoryFeedbackAdvisoryUseProven !== false
   || packet.summary?.experienceMemoryAdvisoryOnly !== true
   || !packet.messages?.some((message) => message.evidenceKind === "experience_memory_evidence")
   || !packet.messages?.some((message) => message.evidenceKind === "engineering_plan_todo_evidence")
@@ -403,6 +412,7 @@ if (observerCheck) {
     "Task Selection:",
     "Experience Memory:",
     "Experience Memory Next Action:",
+    "Experience Feedback:",
     "engineeringContextPacketExperienceMemory",
     "engineeringContextPacketExperienceMemoryPattern",
     "engineeringContextPacketSemanticAction",
@@ -441,6 +451,8 @@ console.log(JSON.stringify({
     compactedMessages: packet.summary.compactedMessages,
     experienceMemoryPattern: packet.summary.experienceMemoryPattern,
     experienceMemoryCompletionRate: packet.summary.experienceMemoryCompletionRate,
+    experienceMemoryFeedbackObservedOutcomes: packet.summary.experienceMemoryFeedbackObservedOutcomes,
+    experienceMemoryFeedbackCompletionRate: packet.summary.experienceMemoryFeedbackCompletionRate,
     provider: packet.governance.callsProvider,
   },
 }, null, 2));

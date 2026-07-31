@@ -223,6 +223,17 @@ export function buildNativeEngineeringContextPacket({
       experienceMemoryIncidentLatestRestoredHealthy: experienceMemory?.summary?.incidentLatestRestoredHealthy ?? null,
       experienceMemoryIncidentPattern: experienceMemory?.summary?.incidentPattern ?? null,
       experienceMemoryIncidentNextAction: experienceMemory?.summary?.incidentNextAction ?? null,
+      experienceMemoryFeedbackObservedRecords: experienceMemory?.summary?.feedbackObservedRecords ?? 0,
+      experienceMemoryFeedbackObservedOutcomes: experienceMemory?.summary?.feedbackObservedOutcomes ?? 0,
+      experienceMemoryFeedbackCompleted: experienceMemory?.summary?.feedbackCompleted ?? 0,
+      experienceMemoryFeedbackFailed: experienceMemory?.summary?.feedbackFailed ?? 0,
+      experienceMemoryFeedbackCompletionRate: experienceMemory?.summary?.feedbackCompletionRate ?? null,
+      experienceMemoryFeedbackLatestOutcome: experienceMemory?.summary?.feedbackLatestOutcome ?? null,
+      experienceMemoryFeedbackCorrelation: experienceMemory?.summary?.feedbackCorrelation ?? null,
+      experienceMemoryFeedbackCausalAttribution:
+        experienceMemory?.summary?.feedbackCausalAttribution === true,
+      experienceMemoryFeedbackAdvisoryUseProven:
+        experienceMemory?.summary?.feedbackAdvisoryUseProven === true,
       experienceMemoryStatus: experienceMemory?.summary?.status ?? null,
       experienceMemoryAdvisoryOnly: experienceMemory?.summary?.advisoryOnly === true,
     },

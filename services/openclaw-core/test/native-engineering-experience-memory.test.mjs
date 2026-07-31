@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   createNativeEngineeringExperienceMemory,
+  NATIVE_ENGINEERING_EXPERIENCE_FEEDBACK_REGISTRY,
   NATIVE_ENGINEERING_EXPERIENCE_MEMORY_REGISTRY,
 } from "../src/native-engineering-experience-memory.mjs";
 import { createSystemdIncidentRepairTask } from "./systemd-incident-fixture.mjs";
@@ -37,6 +38,77 @@ test("experience memory records bounded terminal lessons without task details or
   assert.equal(JSON.stringify(record).includes("example.invalid"), false);
   assert.equal(JSON.stringify(record).includes("curl"), false);
   assert.equal(records.size, 1);
+  assert.deepEqual(record.feedback.observations, []);
+});
+
+test("experience memory durably correlates bounded subsequent outcomes without claiming advisory use", () => {
+  const records = new Map();
+  const memory = createNativeEngineeringExperienceMemory({
+    records,
+    now: (() => {
+      let index = 0;
+      return () => `2026-07-31T10:00:0${index++}.000Z`;
+    })(),
+  });
+  const first = {
+    id: "feedback-system-1",
+    type: "system_task",
+    goal: "verify bounded context",
+    status: "completed",
+    executionPhase: "completed",
+  };
+  const second = {
+    id: "feedback-system-2",
+    type: "system_task",
+    goal: "verify another bounded context",
+    status: "completed",
+    executionPhase: "completed",
+  };
+  const third = {
+    id: "feedback-system-3",
+    type: "system_task",
+    goal: "verify final bounded context",
+    status: "failed",
+    executionPhase: "verifying_result",
+  };
+
+  memory.recordTaskExperience(first);
+  memory.recordTaskExperience(second);
+  memory.recordTaskExperience(third);
+  memory.recordTaskExperience(third);
+  memory.recordTaskExperience({
+    id: "feedback-browser-1",
+    type: "browser_task",
+    goal: "inspect the work view",
+    status: "failed",
+    executionPhase: "verifying_result",
+  });
+
+  const firstRecord = records.get(first.id);
+  assert.equal(firstRecord.feedback.registry, NATIVE_ENGINEERING_EXPERIENCE_FEEDBACK_REGISTRY);
+  assert.equal(firstRecord.feedback.observations.length, 2);
+  assert.deepEqual(firstRecord.feedback.observations.map(({ outcome }) => outcome), ["completed", "failed"]);
+  assert.equal(firstRecord.feedback.observations.every(({ key }) => /^[a-f0-9]{64}$/u.test(key)), true);
+  assert.equal(JSON.stringify(firstRecord.feedback).includes(second.id), false);
+  assert.equal(records.get(second.id).feedback.observations.length, 1);
+  assert.equal(records.get(third.id).feedback.observations.length, 0);
+
+  const recalled = memory.buildExperienceMemoryReadModel({
+    taskType: "system_task",
+    goal: "verify bounded context",
+  });
+  assert.equal(recalled.summary.feedbackObservedRecords, 2);
+  assert.equal(recalled.summary.feedbackObservedOutcomes, 2);
+  assert.equal(recalled.summary.feedbackCompleted, 1);
+  assert.equal(recalled.summary.feedbackFailed, 1);
+  assert.equal(recalled.summary.feedbackCompletionRate, 0.5);
+  assert.equal(recalled.summary.feedbackLatestOutcome, "failed");
+  assert.equal(recalled.summary.feedbackCorrelation, "same_task_type_subsequent_terminal_outcome");
+  assert.equal(recalled.summary.feedbackCausalAttribution, false);
+  assert.equal(recalled.summary.feedbackAdvisoryUseProven, false);
+  assert.equal(recalled.records[0].feedback.causalAttribution, false);
+  assert.equal(recalled.governance.feedbackChangesExecutionPolicy, false);
+  assert.equal(recalled.auditEvidence.summary.feedbackObservedOutcomes, 2);
 });
 
 test("experience memory recalls the most applicable bounded lessons", () => {
@@ -208,4 +280,5 @@ test("experience memory keeps a bounded record window", () => {
   assert.equal(records.size, 200);
   assert.equal(records.has("experience-window-0"), false);
   assert.equal(records.has("experience-window-204"), true);
+  assert.equal(records.get("experience-window-5").feedback.observations.length, 32);
 });

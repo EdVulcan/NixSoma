@@ -62,6 +62,13 @@ test("core state persists and restores bounded experience memory records", async
     executionPhase: "completed",
     applicabilityTokens: ["type:system_task", "verify"],
     confidence: 0.72,
+    feedback: {
+      registry: "openclaw-native-engineering-experience-feedback-v0",
+      correlation: "same_task_type_subsequent_terminal_outcome",
+      observations: [{ key: "d".repeat(64), outcome: "completed", observedAt: "2026-07-31T10:00:00.000Z" }],
+      causalAttribution: false,
+      advisoryUseProven: false,
+    },
     source: {
       registry: "openclaw-task-lifecycle-terminal-v0",
       taskId: "experience-task-1",
@@ -79,6 +86,7 @@ test("core state persists and restores bounded experience memory records", async
   restored.loadPersistentState();
   assert.equal(restored.experienceMemoryRecords.size, 1);
   assert.equal(restored.experienceMemoryRecords.get("experience-task-1").taskType, "system_task");
+  assert.equal(restored.experienceMemoryRecords.get("experience-task-1").feedback.observations.length, 1);
 });
 
 test("core state persists and restores fixed-unit incident scheduler dedupe state", (t) => {

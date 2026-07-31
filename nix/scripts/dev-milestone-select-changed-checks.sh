@@ -427,6 +427,27 @@ const aiWorkspaceSemanticSubmitSlice = changedFiles.length > 0
     file === "services/openclaw-core/src/capability-runtime-ai-workspace-semantic-submit.mjs"
       || file === "services/openclaw-browser-runtime/src/browser-semantic-submit-fixture.mjs"
       || file === "nix/scripts/dev-ai-workspace-semantic-submit-live-check.sh");
+const durableExperienceFeedbackFiles = new Set([
+  "apps/observer-ui/src/client-script-renderers-engineering-context.mjs",
+  "apps/observer-ui/test/client-script-engineering-context.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md",
+  "docs/plans/README.md",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "nix/scripts/dev-openclaw-native-engineering-context-packet-common-check.sh",
+  "services/openclaw-core/src/capability-runtime-engineering-context.mjs",
+  "services/openclaw-core/src/native-engineering-context-packet.mjs",
+  "services/openclaw-core/src/native-engineering-experience-memory.mjs",
+  "services/openclaw-core/test/native-engineering-context-packet.test.mjs",
+  "services/openclaw-core/test/native-engineering-experience-memory.test.mjs",
+  "services/openclaw-core/test/runtime-state-input-redaction.test.mjs",
+]);
+const durableExperienceFeedbackSlice = changedFiles.length > 0
+  && changedFiles.every((file) => durableExperienceFeedbackFiles.has(file))
+  && changedFiles.some((file) =>
+    file === "services/openclaw-core/src/native-engineering-experience-memory.mjs");
 
 function physicalScriptsForManifestRow(phase, slug, forceShort = false) {
   const legacy = {
@@ -1232,6 +1253,14 @@ function selectSourceHeuristics(file) {
 }
 
 for (const file of changedFiles) {
+  if (durableExperienceFeedbackSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-core-service-unit-tests");
+    selectName(nativeEngineeringContextPacketPairBatchCheck);
+    continue;
+  }
   if (aiWorkspaceSemanticSubmitSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");

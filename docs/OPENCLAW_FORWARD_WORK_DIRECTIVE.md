@@ -227,6 +227,19 @@ coordinates, repetition, an open loop, arbitrary tab/window/process control,
 automatic task completion, another provider/readiness wrapper, host mutation,
 or another whitepaper inventory variant.
 
+That fresh review selects the bounded durable experience-feedback correlation
+in
+[`docs/plans/OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md`](./plans/OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md).
+The existing terminal-task memory owner now updates only older exact-task-type
+records with at most 32 idempotent hashed subsequent outcomes. Engineering
+context and Observer expose observed/completed/failed counts, rate, and latest
+outcome separately from ordinary recall history. This signal is explicitly
+non-causal and does not prove that an advisory was consumed; it changes no
+lesson, ranking, policy, provider call, approval, task, or action. Freeze the
+correlation contract after its existing Core/Observer context-packet pair gate
+passes. The next distinct memory capability is an explicit task-bound
+recall-consumption receipt, not inferred causality or automatic learning.
+
 ## Governing Vision
 
 The controlling architecture documents are:

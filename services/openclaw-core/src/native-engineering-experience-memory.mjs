@@ -8,10 +8,13 @@ import {
 
 export const NATIVE_ENGINEERING_EXPERIENCE_MEMORY_REGISTRY =
   "openclaw-native-engineering-experience-memory-v0";
+export const NATIVE_ENGINEERING_EXPERIENCE_FEEDBACK_REGISTRY =
+  "openclaw-native-engineering-experience-feedback-v0";
 
 const DEFAULT_RECALL_LIMIT = 4;
 const MAX_RECALL_LIMIT = 8;
 const MAX_RECORDS = 200;
+const MAX_FEEDBACK_OBSERVATIONS = 32;
 const MAX_TASK_TYPE_CHARS = 80;
 const MAX_LESSON_CHARS = 320;
 const MAX_TOKEN_CHARS = 40;
@@ -257,8 +260,91 @@ function publicRecord(record, relevance) {
       outcomeHash: record.source.outcomeHash,
     },
     incidentPattern: record.incidentPattern ? { ...record.incidentPattern } : null,
+    feedback: feedbackSummary(record),
     relevance,
   };
+}
+
+function feedbackObservations(record) {
+  return Array.isArray(record?.feedback?.observations)
+    ? record.feedback.observations
+      .filter((observation) => observation
+        && typeof observation.key === "string"
+        && (observation.outcome === "completed" || observation.outcome === "failed"))
+      .slice(-MAX_FEEDBACK_OBSERVATIONS)
+    : [];
+}
+
+function feedbackSummary(record) {
+  const observations = feedbackObservations(record);
+  const completed = observations.filter((observation) => observation.outcome === "completed").length;
+  const failed = observations.length - completed;
+  const latest = observations.at(-1) ?? null;
+  return {
+    registry: NATIVE_ENGINEERING_EXPERIENCE_FEEDBACK_REGISTRY,
+    correlation: "same_task_type_subsequent_terminal_outcome",
+    observedOutcomes: observations.length,
+    completed,
+    failed,
+    completionRate: observations.length > 0
+      ? Number((completed / observations.length).toFixed(2))
+      : null,
+    latestOutcome: latest?.outcome ?? null,
+    latestObservedAt: latest?.observedAt ?? null,
+    causalAttribution: false,
+    advisoryUseProven: false,
+  };
+}
+
+function aggregateFeedback(candidates) {
+  const observations = new Map();
+  let observedRecords = 0;
+  for (const { record } of candidates) {
+    const recordObservations = feedbackObservations(record);
+    if (recordObservations.length > 0) observedRecords += 1;
+    for (const observation of recordObservations) {
+      observations.set(observation.key, observation);
+    }
+  }
+  const ordered = [...observations.values()]
+    .sort((left, right) => String(left.observedAt).localeCompare(String(right.observedAt)));
+  const completed = ordered.filter((observation) => observation.outcome === "completed").length;
+  const failed = ordered.length - completed;
+  return {
+    observedRecords,
+    observedOutcomes: ordered.length,
+    completed,
+    failed,
+    completionRate: ordered.length > 0
+      ? Number((completed / ordered.length).toFixed(2))
+      : null,
+    latestOutcome: ordered.at(-1)?.outcome ?? null,
+    latestObservedAt: ordered.at(-1)?.observedAt ?? null,
+  };
+}
+
+function recordSubsequentOutcomeFeedback({ records, task, taskType, outcome, outcomeHash, observedAt }) {
+  const sourceTaskId = safeSourceTaskId(task?.id);
+  if (!sourceTaskId) return;
+  const observation = {
+    key: sha256(JSON.stringify({ sourceTaskId, outcomeHash })),
+    outcome,
+    observedAt,
+  };
+  for (const [recordTaskId, record] of records) {
+    if (recordTaskId === task.id || record?.taskType !== taskType) continue;
+    const observations = feedbackObservations(record);
+    const existingIndex = observations.findIndex((item) => item.key === observation.key);
+    if (existingIndex >= 0) observations[existingIndex] = observation;
+    else observations.push(observation);
+    record.feedback = {
+      registry: NATIVE_ENGINEERING_EXPERIENCE_FEEDBACK_REGISTRY,
+      correlation: "same_task_type_subsequent_terminal_outcome",
+      observations: observations.slice(-MAX_FEEDBACK_OBSERVATIONS),
+      causalAttribution: false,
+      advisoryUseProven: false,
+    };
+  }
 }
 
 export function createNativeEngineeringExperienceMemory({ records = new Map(), now = () => new Date().toISOString() } = {}) {
@@ -282,16 +368,32 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
       applicabilityTokens: tokens,
       incidentPattern,
     }));
+    const recordedAt = now();
+    recordSubsequentOutcomeFeedback({
+      records,
+      task,
+      taskType,
+      outcome,
+      outcomeHash,
+      observedAt: recordedAt,
+    });
     const record = {
       id: `experience-${outcomeHash.slice(0, 16)}`,
       schema: "openclaw.native_engineering_experience.v0",
-      recordedAt: now(),
+      recordedAt,
       taskType,
       lesson: lessonFor({ taskType, outcome, executionPhase, incidentPattern }),
       outcome,
       executionPhase,
       applicabilityTokens: tokens,
       incidentPattern,
+      feedback: {
+        registry: NATIVE_ENGINEERING_EXPERIENCE_FEEDBACK_REGISTRY,
+        correlation: "same_task_type_subsequent_terminal_outcome",
+        observations: [],
+        causalAttribution: false,
+        advisoryUseProven: false,
+      },
       confidence: outcome === "completed" ? 0.72 : 0.58,
       source: {
         registry: "openclaw-task-lifecycle-terminal-v0",
@@ -345,6 +447,7 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
     const recalledRecords = candidates.map(({ record, relevance }) => publicRecord(record, relevance));
     const pattern = buildAdvisoryPattern(matchingCandidates);
     const incidentPattern = buildIncidentAdvisoryPattern(matchingCandidates, selectedIncidentTargetUnit);
+    const feedback = aggregateFeedback(matchingCandidates);
     const generatedAt = now();
     const queryHash = sha256(JSON.stringify({
       taskType: selectedTaskType,
@@ -376,6 +479,16 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
         incidentLatestRestoredHealthy: incidentPattern.latestRestoredHealthy,
         incidentPattern: incidentPattern.pattern,
         incidentNextAction: incidentPattern.nextAction,
+        feedbackObservedRecords: feedback.observedRecords,
+        feedbackObservedOutcomes: feedback.observedOutcomes,
+        feedbackCompleted: feedback.completed,
+        feedbackFailed: feedback.failed,
+        feedbackCompletionRate: feedback.completionRate,
+        feedbackLatestOutcome: feedback.latestOutcome,
+        feedbackLatestObservedAt: feedback.latestObservedAt,
+        feedbackCorrelation: "same_task_type_subsequent_terminal_outcome",
+        feedbackCausalAttribution: false,
+        feedbackAdvisoryUseProven: false,
         matchedTaskType: recalledRecords.some((record) => record.taskType === selectedTaskType),
         queryTokenCount: queryTokens.size,
         status: recalledRecords.length > 0 ? "recalled" : records.size > 0 ? "no_match" : "empty",
@@ -386,6 +499,7 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
         maxRecallRecords: MAX_RECALL_LIMIT,
         selectedRecallRecords: recalledRecords.length,
         maxLessonChars: MAX_LESSON_CHARS,
+        maxFeedbackObservationsPerRecord: MAX_FEEDBACK_OBSERVATIONS,
       },
       governance: {
         advisoryOnly: true,
@@ -395,6 +509,7 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
         executesAction: false,
         callsProvider: false,
         networkEgress: false,
+        feedbackChangesExecutionPolicy: false,
       },
       auditEvidence: {
         operation: "engineering_experience_memory_recalled",
@@ -415,6 +530,15 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
           incidentRecoveryRequiredMatches: incidentPattern.recoveryRequiredMatches,
           incidentLatestRestoredHealthy: incidentPattern.latestRestoredHealthy,
           incidentPattern: incidentPattern.pattern,
+          feedbackObservedRecords: feedback.observedRecords,
+          feedbackObservedOutcomes: feedback.observedOutcomes,
+          feedbackCompleted: feedback.completed,
+          feedbackFailed: feedback.failed,
+          feedbackCompletionRate: feedback.completionRate,
+          feedbackLatestOutcome: feedback.latestOutcome,
+          feedbackCorrelation: "same_task_type_subsequent_terminal_outcome",
+          feedbackCausalAttribution: false,
+          feedbackAdvisoryUseProven: false,
           queryTokenCount: queryTokens.size,
           queryHash,
           advisoryOnly: true,
