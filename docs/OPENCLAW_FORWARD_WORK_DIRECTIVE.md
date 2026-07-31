@@ -262,6 +262,17 @@ ranking, approval, task creation, action, or provider continuation. The next
 distinct review must bind a terminal downstream outcome before considering any
 non-causal effectiveness feedback.
 
+That exact terminal edge is now implemented in
+[`docs/plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md`](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md).
+The shared complete, fail, and delegated terminal owner derives one
+application-receipt-bound observation before experience memory records the
+task. Only completed/failed and bounded terminal phase persist; outcome summary
+and details do not. This proves a terminal correlation, not action execution,
+recommendation effectiveness, or causality, and it cannot change ranking,
+policy, approval, execution, or provider behavior. Freeze this receipt chain
+after its exact gates pass. The next capability requires a fresh canonical
+route review rather than another feedback wrapper or automatic-learning layer.
+
 ## Governing Vision
 
 The controlling architecture documents are:

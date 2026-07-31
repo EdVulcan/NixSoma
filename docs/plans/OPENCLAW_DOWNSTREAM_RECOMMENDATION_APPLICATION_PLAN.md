@@ -58,7 +58,8 @@ reboot occurred.
 ## Deferred
 
 - proof that the downstream task started or executed its action;
-- binding the downstream terminal outcome back to this receipt;
+- downstream terminal binding is implemented separately in
+  [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md);
 - effectiveness scoring, causal attribution, ranking changes, training, or
   automatic policy changes;
 - automatic task creation, approval, execution, retries, provider calls, host
@@ -66,7 +67,7 @@ reboot occurred.
 
 ## Next Real Capability
 
-Bind a terminal outcome from the exact downstream task to this application
-receipt as bounded, explicitly non-causal effectiveness evidence. Do not infer
-success from task creation and do not let that evidence automatically alter
-ranking, policy, approval, or execution.
+The exact downstream terminal binding is now implemented in
+[`OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md).
+It does not infer success from task creation or automatically alter ranking,
+policy, approval, or execution.

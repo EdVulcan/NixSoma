@@ -28,6 +28,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md`](./OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md) | Selected Level 1 durable same-type subsequent-outcome feedback correlation, explicitly non-causal and advisory-use-unproven. |
 | [`OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md`](./OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md) | Task/source/context/request-bound proof that up to four recalled records reached one successfully responding governed provider. |
 | [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md) | Explicit operator selection and server-derived binding of one fixed provider recommendation to an existing governed downstream task. |
+| [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md) | Exact application-receipt-bound completed/failed observation from the authoritative downstream task terminal owner. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Up to three matching-target learned patterns inside the existing exact approved diagnosis request. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_ACTION_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_ACTION_PLAN.md) | Reviewed read-only opening of the exact incident receipt and recovery evidence bound to provider guidance. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md) | Reviewed same-unit refresh of existing health, fixed-unit inventory, and bounded journal evidence. |
@@ -121,6 +122,12 @@ The downstream application review is implemented in
 Core now derives a tamper-evident receipt only when explicit Observer selection
 reuses the fixed semantic-click task control. This proves downstream task
 binding, not execution, terminal outcome, effectiveness, or causality.
+
+The terminal continuation is implemented in
+[`OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md).
+The exact downstream task now binds completed/failed to its application receipt
+before experience recording. No action execution, recommendation effectiveness,
+causality, ranking, or policy claim is made.
 
 ### Historical Route Evidence
 

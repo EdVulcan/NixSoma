@@ -76,8 +76,16 @@ test("task manager stores a compact browser execution binding on planned tasks",
   assert.equal(manager.serialiseTask(task).operatorExecutionBinding.actionCount, 1);
 });
 
-test("task manager recomputes provider recommendation provenance before serializing a semantic-click task", () => {
-  const { manager } = createHarness();
+test("task manager recomputes provider recommendation provenance before serializing a semantic-click task", async () => {
+  const terminalExperiences = [];
+  const { manager } = createHarness({
+    recordTaskExperience: (terminalTask) => {
+      terminalExperiences.push({
+        taskId: terminalTask.id,
+        recommendationOutcomeReceipt: terminalTask.engineeringRecommendationOutcomeReceipt ?? null,
+      });
+    },
+  });
   const providerTask = manager.createTask({
     goal: "Completed provider recommendation source",
     type: "cloud_consciousness_live_provider_egress_execution_task",
@@ -95,21 +103,22 @@ test("task manager recomputes provider recommendation provenance before serializ
   };
   manager.completeTask(providerTask, { summary: "Provider recommendation completed." });
 
+  const recommendationLinkInput = {
+    sourceTaskId: providerTask.id,
+    sourceRegistry: "openclaw-cloud-consciousness-live-provider-engineering-recommendation-v0",
+    contract: "engineering_recommendation_v0",
+    actionId: "create_semantic_click_task",
+    expectedObserverControlId: "create-semantic-click-task-button",
+    existingCapabilityId: "plan.openclaw.browser.semantic_click_task",
+    requiresApproval: true,
+    createsTaskAutomatically: false,
+    createsApprovalAutomatically: false,
+    executesAutomatically: false,
+  };
   const task = manager.createTask({
     goal: "Create the reviewed semantic click task",
     type: "browser_task",
-    engineeringRecommendationLink: {
-      sourceTaskId: providerTask.id,
-      sourceRegistry: "openclaw-cloud-consciousness-live-provider-engineering-recommendation-v0",
-      contract: "engineering_recommendation_v0",
-      actionId: "create_semantic_click_task",
-      expectedObserverControlId: "create-semantic-click-task-button",
-      existingCapabilityId: "plan.openclaw.browser.semantic_click_task",
-      requiresApproval: true,
-      createsTaskAutomatically: false,
-      createsApprovalAutomatically: false,
-      executesAutomatically: false,
-    },
+    engineeringRecommendationLink: recommendationLinkInput,
     engineeringRecommendationApplicationReceipt: {
       downstreamTaskId: "caller-controlled-task",
     },
@@ -128,6 +137,36 @@ test("task manager recomputes provider recommendation provenance before serializ
   assert.equal(task.engineeringRecommendationApplicationReceipt.governance.causalAttribution, false);
   assert.equal(manager.serialiseTask(task).engineeringRecommendationLink.source.taskId, providerTask.id);
   assert.equal(manager.serialiseTask(task).engineeringRecommendationApplicationReceipt.downstreamTaskId, task.id);
+
+  manager.completeTask(task, { summary: "Completed reviewed semantic click task." });
+  assert.equal(task.engineeringRecommendationOutcomeReceipt.downstreamTaskId, task.id);
+  assert.equal(task.engineeringRecommendationOutcomeReceipt.terminalOutcome, "completed");
+  assert.equal(task.engineeringRecommendationOutcomeReceipt.applicationReceiptHash,
+    task.engineeringRecommendationApplicationReceipt.receiptHash);
+  assert.equal(task.engineeringRecommendationOutcomeReceipt.governance.recommendationEffectivenessProven, false);
+  assert.equal(manager.serialiseTask(task).engineeringRecommendationOutcomeReceipt.receiptHash,
+    task.engineeringRecommendationOutcomeReceipt.receiptHash);
+  assert.equal(terminalExperiences.at(-1).taskId, task.id);
+  assert.equal(terminalExperiences.at(-1).recommendationOutcomeReceipt.receiptHash,
+    task.engineeringRecommendationOutcomeReceipt.receiptHash);
+
+  const failedTask = manager.createTask({
+    goal: "Fail the reviewed semantic click task",
+    type: "browser_task",
+    engineeringRecommendationLink: recommendationLinkInput,
+  });
+  manager.failTask(failedTask, "Bounded downstream failure.");
+  assert.equal(failedTask.engineeringRecommendationOutcomeReceipt.terminalOutcome, "failed");
+  assert.equal(failedTask.engineeringRecommendationOutcomeReceipt.terminalPhase, "failed");
+
+  const delegatedTask = manager.createTask({
+    goal: "Fail the delegated reviewed semantic click task",
+    type: "browser_task",
+    engineeringRecommendationLink: recommendationLinkInput,
+  });
+  await manager.setTaskPhase(delegatedTask, "verification_failed", { status: "failed" });
+  assert.equal(delegatedTask.engineeringRecommendationOutcomeReceipt.terminalOutcome, "failed");
+  assert.equal(delegatedTask.engineeringRecommendationOutcomeReceipt.terminalPhase, "verification_failed");
 
   const unlinkedTask = manager.createTask({
     goal: "Ignore a caller-injected application receipt",

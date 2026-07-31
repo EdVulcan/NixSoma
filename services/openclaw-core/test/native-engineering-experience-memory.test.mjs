@@ -11,6 +11,52 @@ import {
   buildExperienceConsumptionCandidate,
   finaliseExperienceConsumptionReceipt,
 } from "../src/native-engineering-experience-consumption-receipt.mjs";
+import { buildNativeEngineeringRecommendationApplicationReceipt } from "../src/native-engineering-recommendation-application-receipt.mjs";
+import { buildNativeEngineeringRecommendationOutcomeReceipt } from "../src/native-engineering-recommendation-outcome-receipt.mjs";
+
+function recommendationOutcomeReceipt() {
+  const applicationReceipt = buildNativeEngineeringRecommendationApplicationReceipt({
+    recommendationLink: {
+      registry: "openclaw-native-engineering-recommendation-link-v0",
+      mode: "reviewed-provider-recommendation-to-semantic-click-task",
+      generatedAt: "2026-07-31T12:00:00.000Z",
+      source: {
+        taskId: "provider-task-42",
+        taskType: "cloud_consciousness_live_provider_egress_execution_task",
+        taskStatus: "completed",
+        registry: "openclaw-cloud-consciousness-live-provider-engineering-recommendation-v0",
+        contract: "engineering_recommendation_v0",
+        responseContentHash: "a".repeat(64),
+        evidence: "provider_execution_recommendation",
+      },
+      action: {
+        actionId: "create_semantic_click_task",
+        capabilityId: "plan.openclaw.browser.semantic_click_task",
+        expectedObserverControlId: "create-semantic-click-task-button",
+        requiresApproval: true,
+      },
+      governance: {
+        operatorReviewRequired: true,
+        targetSelectedFromCurrentWorkView: true,
+        automaticTaskCreationAllowed: false,
+        automaticApprovalAllowed: false,
+        automaticExecutionAllowed: false,
+        arbitraryEndpointAllowed: false,
+        providerCallAllowed: false,
+        credentialValueIncluded: false,
+        pagePayloadIncluded: false,
+      },
+    },
+    downstreamTaskId: "semantic-task-7",
+    downstreamTaskType: "browser_task",
+  });
+  return buildNativeEngineeringRecommendationOutcomeReceipt({
+    applicationReceipt,
+    downstreamTaskId: "semantic-task-7",
+    terminalOutcome: "completed",
+    terminalPhase: "completed",
+  });
+}
 
 test("experience memory records bounded terminal lessons without task details or sensitive goal values", () => {
   const records = new Map();
@@ -164,6 +210,34 @@ test("experience memory preserves only a validated task-bound consumption receip
     },
   });
   assert.equal(changed.consumptionReceipt, null);
+});
+
+test("experience memory preserves only a validated recommendation outcome receipt", () => {
+  const records = new Map();
+  const memory = createNativeEngineeringExperienceMemory({ records });
+  const receipt = recommendationOutcomeReceipt();
+  const record = memory.recordTaskExperience({
+    id: "semantic-task-7",
+    type: "browser_task",
+    goal: "Execute the reviewed semantic click task.",
+    status: "completed",
+    executionPhase: "completed",
+    engineeringRecommendationOutcomeReceipt: receipt,
+  });
+  assert.equal(record.recommendationOutcomeReceipt.receiptHash, receipt.receiptHash);
+  assert.equal(record.recommendationOutcomeReceipt.governance.causalAttribution, false);
+  assert.equal(memory.buildExperienceMemoryReadModel({
+    taskType: "browser_task",
+    goal: "Execute reviewed semantic click task.",
+  }).records[0].recommendationOutcomeReceipt.receiptHash, receipt.receiptHash);
+
+  const changed = memory.recordTaskExperience({
+    id: "semantic-task-invalid",
+    type: "browser_task",
+    status: "completed",
+    engineeringRecommendationOutcomeReceipt: { ...receipt, downstreamTaskId: "changed-task" },
+  });
+  assert.equal(changed.recommendationOutcomeReceipt, null);
 });
 
 test("experience memory recalls the most applicable bounded lessons", () => {

@@ -270,6 +270,12 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
     lines.push(\`Recommendation Application Control: action=\${recommendationApplication.actionId ?? "none"} capability=\${recommendationApplication.capabilityId ?? "none"} control=\${recommendationApplication.observerControlId ?? "none"}\`);
     lines.push(\`Recommendation Application Boundary: selected=\${Boolean(recommendationApplication.governance?.explicitOperatorSelection)} bound=\${Boolean(recommendationApplication.governance?.downstreamTaskBound)} executed=\${Boolean(recommendationApplication.governance?.downstreamExecutionProven)} outcome=\${Boolean(recommendationApplication.governance?.downstreamOutcomeProven)} causal=\${Boolean(recommendationApplication.governance?.causalAttribution)}\`);
   }
+  const recommendationOutcome = task.engineeringRecommendationOutcomeReceipt ?? null;
+  if (recommendationOutcome) {
+    lines.push(\`Recommendation Outcome: \${recommendationOutcome.registry ?? "unknown"} status=\${recommendationOutcome.status ?? "unknown"} outcome=\${recommendationOutcome.terminalOutcome ?? "unknown"}\`);
+    lines.push(\`Recommendation Outcome Binding: provider=\${recommendationOutcome.providerTaskId ?? "none"} downstream=\${recommendationOutcome.downstreamTaskId ?? "none"} application=\${recommendationOutcome.applicationReceiptHash ?? "none"} receipt=\${recommendationOutcome.receiptHash ?? "none"}\`);
+    lines.push(\`Recommendation Outcome Boundary: terminal=\${Boolean(recommendationOutcome.governance?.downstreamTerminalOutcomeObserved)} action=\${Boolean(recommendationOutcome.governance?.downstreamActionExecutionProven)} effective=\${Boolean(recommendationOutcome.governance?.recommendationEffectivenessProven)} causal=\${Boolean(recommendationOutcome.governance?.causalAttribution)} ranking=\${Boolean(recommendationOutcome.governance?.changesRanking)} policy=\${Boolean(recommendationOutcome.governance?.changesPolicy)}\`);
+  }
 
   if (includeOutcome) {
     lines.push(\`Outcome: \${task.outcome?.kind ?? "open"}\${task.outcome?.summary ? \` - \${task.outcome.summary}\` : ""}\`);

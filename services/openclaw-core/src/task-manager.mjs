@@ -4,6 +4,7 @@ import { redactWriteOnlyInputActionTree } from "../../../packages/shared-utils/s
 import { buildBrowserTaskExecutionBinding } from "./browser-task-execution-binding.mjs";
 import { buildNativeEngineeringRecommendationLink } from "./native-engineering-recommendation-link.mjs";
 import { buildNativeEngineeringRecommendationApplicationReceipt } from "./native-engineering-recommendation-application-receipt.mjs";
+import { buildNativeEngineeringRecommendationOutcomeReceipt } from "./native-engineering-recommendation-outcome-receipt.mjs";
 import { recoverCapabilityExecutionReservations } from "./capability-runtime-approval-binding.mjs";
 
 const TASK_EXTENSION_FIELDS = [
@@ -11,6 +12,7 @@ const TASK_EXTENSION_FIELDS = [
   { name: "engineeringPlanTodoSuggestionLink", copyFromCreateInput: true },
   { name: "engineeringRecommendationLink", copyFromCreateInput: true },
   { name: "engineeringRecommendationApplicationReceipt" },
+  { name: "engineeringRecommendationOutcomeReceipt" },
   { name: "engineeringEditProposal" },
   { name: "engineeringWriteProposal" },
   { name: "workspaceMutation" },
@@ -639,6 +641,16 @@ function failTask(task, reason, details = null) {
 }
 
 function recordTerminalTaskExperience(task) {
+  const recommendationOutcomeReceipt = buildNativeEngineeringRecommendationOutcomeReceipt({
+    applicationReceipt: task.engineeringRecommendationApplicationReceipt,
+    downstreamTaskId: task.id,
+    terminalOutcome: task.status,
+    terminalPhase: task.executionPhase,
+    observedAt: task.updatedAt,
+  });
+  if (recommendationOutcomeReceipt) {
+    task.engineeringRecommendationOutcomeReceipt = recommendationOutcomeReceipt;
+  }
   try {
     return recordTaskExperience(task);
   } catch (error) {

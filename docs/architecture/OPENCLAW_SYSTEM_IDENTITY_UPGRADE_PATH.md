@@ -782,8 +782,9 @@ fresh canonical route review 已选择 Level 1 durable experience feedback：只
 同类型后续终态作为非因果相关性写回既有经验记录，不自动改变执行。下一独立
 能力 task-bound recall-consumption receipt 已在源码实现，能证明精确 recall set
 到达成功响应的 provider；operator-reviewed downstream application receipt 也已
-在源码实现，能证明操作者通过固定治理控件把建议绑定到一个下游 task。下一缺口是
-该下游 task 的执行与终态效果绑定，而不是推断因果、自动调权或训练。
+在源码实现，能证明操作者通过固定治理控件把建议绑定到一个下游 task；该 task 的
+权威 completed/failed 终态也已绑定回 application receipt 并进入 experience memory。
+这仍不证明动作执行、建议有效或因果关系，也不会自动调权、改变策略或训练。
 
 因此，当前实现与最终愿景的差异是**完成范围**而不是**架构方向**。仍显著缺失的是
 长时间自主运行、可验证的 durable learning/memory feedback loop、物理机上的 Phase D
