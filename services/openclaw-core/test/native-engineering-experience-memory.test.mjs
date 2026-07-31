@@ -7,6 +7,10 @@ import {
   NATIVE_ENGINEERING_EXPERIENCE_MEMORY_REGISTRY,
 } from "../src/native-engineering-experience-memory.mjs";
 import { createSystemdIncidentRepairTask } from "./systemd-incident-fixture.mjs";
+import {
+  buildExperienceConsumptionCandidate,
+  finaliseExperienceConsumptionReceipt,
+} from "../src/native-engineering-experience-consumption-receipt.mjs";
 
 test("experience memory records bounded terminal lessons without task details or sensitive goal values", () => {
   const records = new Map();
@@ -109,6 +113,57 @@ test("experience memory durably correlates bounded subsequent outcomes without c
   assert.equal(recalled.records[0].feedback.causalAttribution, false);
   assert.equal(recalled.governance.feedbackChangesExecutionPolicy, false);
   assert.equal(recalled.auditEvidence.summary.feedbackObservedOutcomes, 2);
+});
+
+test("experience memory preserves only a validated task-bound consumption receipt", () => {
+  const records = new Map();
+  const memory = createNativeEngineeringExperienceMemory({ records });
+  const receipt = finaliseExperienceConsumptionReceipt({
+    candidate: buildExperienceConsumptionCandidate({
+      experienceMemory: { records: [{ id: "experience-source-1" }] },
+      executionTaskId: "provider-task-1",
+      sourceTaskId: "source-task-1",
+      contextContentHash: "a".repeat(64),
+      responseContract: "engineering_recommendation_v0",
+    }),
+    providerResult: {
+      ok: true,
+      audit: {
+        requestContentHash: "b".repeat(64),
+        providerResponseCreated: true,
+        endpointContacted: true,
+        networkEgress: true,
+        transmitsExternally: true,
+      },
+    },
+  });
+  const record = memory.recordTaskExperience({
+    id: "provider-task-1",
+    type: "cloud_provider_task",
+    goal: "Review bounded engineering context.",
+    status: "completed",
+    executionPhase: "completed",
+    cloudConsciousnessLiveProviderEgressExecution: {
+      contextPacket: { experienceMemoryConsumptionReceipt: receipt },
+    },
+  });
+  assert.equal(record.consumptionReceipt.receiptHash, receipt.receiptHash);
+  assert.equal(record.consumptionReceipt.governance.providerConsumptionProven, true);
+  assert.equal(memory.buildExperienceMemoryReadModel({
+    taskType: "cloud_provider_task",
+    goal: "Review bounded context.",
+  }).records[0].consumptionReceipt.receiptHash, receipt.receiptHash);
+
+  const changedReceipt = { ...receipt, sourceTaskId: "changed-source" };
+  const changed = memory.recordTaskExperience({
+    id: "provider-task-invalid",
+    type: "cloud_provider_task",
+    status: "completed",
+    cloudConsciousnessLiveProviderEgressExecution: {
+      contextPacket: { experienceMemoryConsumptionReceipt: changedReceipt },
+    },
+  });
+  assert.equal(changed.consumptionReceipt, null);
 });
 
 test("experience memory recalls the most applicable bounded lessons", () => {

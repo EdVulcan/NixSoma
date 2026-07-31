@@ -741,7 +741,7 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 
 | 身份层级 | 当前成熟度 | 证据与主要缺口 |
 | --- | --- | --- |
-| Level 1 用户态控制平面 | 约 91% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；新的 durable experience feedback 将同类型后续终态以有界、幂等、非因果统计反馈到既有经验记录和 Observer，但 advisory consumption 尚未被 task-bound receipt 证明。 |
+| Level 1 用户态控制平面 | 约 92% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；durable experience feedback 将同类型后续终态以有界、幂等、非因果统计反馈到既有记录，task-bound consumption receipt 又证明最多四条 recall 到达成功响应的 governed provider。下游是否应用建议以及因果效果仍未证明。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 68-72% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal/boot diagnosis、target-specific post-repair health receipt、只读 eBPF process-exec 与 network connect-attempt evidence、已部署的 automatic incident scheduler，以及固定 body unit 的内存/CPU/task/OOM 观测、有界趋势和声明式 system/user cgroup envelope 已部署并通过无压力探测。System Heal 修复与 Phase D generation activation-to-exact-rollback 已分别在可丢弃 KVM 中真实证明且不可重放；当前物理 generation `5zlz2s6z...` 已包含 network probe、`MainPID=0` 修复和已正式验收冻结的 boot-evidence route。物理 Phase D mutation、自动 rollback、开发终端资源隔离和更广系统能力仍未建立。 |
 | Level 4 图形栈内生组件 | 约 86%（bounded native/operator input、semantic type/click、reviewed run/assessment、OCR actions、current-tab close 与 receipt-bound semantic submit 已物理完成） | 已有 user-owned nested compositor、AI-owned Nix Firefox、原生 frame/input/projection、surface 生命周期、task-grounded provider decisions、OCR workflows、当前 tab owner 与 type-receipt-bound submit。`5zlz2s6z...` gate 证明固定 local form 的 type -> submit、可见 completion、exact no-replay、无 plaintext persistence、task unchanged 与健康服务。该动作族已冻结；Enter、hotkey、repeat、通用键盘代理、开放式循环、任意进程/窗口控制和桌面接管仍未完成。 |
@@ -780,7 +780,9 @@ generation。不要把 hostd 扩展成任意 systemd API，也不要重做已经
 transport。boot-evidence 与 task-bound semantic submit 正式验收均已关闭并冻结；
 fresh canonical route review 已选择 Level 1 durable experience feedback：只把
 同类型后续终态作为非因果相关性写回既有经验记录，不自动改变执行。下一独立
-能力是 task-bound recall-consumption receipt，而不是推断因果、自动调权或训练。
+能力 task-bound recall-consumption receipt 已在源码实现，能证明精确 recall set
+到达成功响应的 provider；下一缺口是 operator-reviewed downstream application
+receipt，而不是推断因果、自动调权或训练。
 
 因此，当前实现与最终愿景的差异是**完成范围**而不是**架构方向**。仍显著缺失的是
 长时间自主运行、可验证的 durable learning/memory feedback loop、物理机上的 Phase D

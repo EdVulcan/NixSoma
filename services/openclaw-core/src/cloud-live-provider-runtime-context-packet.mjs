@@ -15,6 +15,10 @@ import {
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_PLAN_CONTRACT,
   buildCloudLiveProviderEngineeringPlanInstruction,
 } from "./cloud-live-provider-runtime-engineering-plan-contract.mjs";
+import {
+  buildExperienceConsumptionCandidate,
+  NATIVE_ENGINEERING_EXPERIENCE_CONSUMPTION_CANDIDATE,
+} from "./native-engineering-experience-consumption-receipt.mjs";
 
 export const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-context-packet-v0";
@@ -238,6 +242,11 @@ export async function materialiseCloudLiveProviderContextPacketExecution({
         limit,
       })
     : null;
+  const experienceMemory = buildExperienceMemoryReadModel({
+    taskType: contextTask.type,
+    goal: contextTask.goal,
+    limit: 4,
+  });
   const packet = buildNativeEngineeringContextPacket({
     transcriptRecords,
     tasks,
@@ -250,11 +259,7 @@ export async function materialiseCloudLiveProviderContextPacketExecution({
     protectRecentAssistantTurns: contextRequest.protectRecentAssistantTurns,
     workViewAssociation,
     planTodoEvidence,
-    experienceMemory: buildExperienceMemoryReadModel({
-      taskType: contextTask.type,
-      goal: contextTask.goal,
-      limit: 4,
-    }),
+    experienceMemory,
   });
   const fullContextText = packet.messages.map(packetMessageText).filter(Boolean).join("\n\n");
   const requestedInstruction = boundedText(
@@ -295,6 +300,19 @@ export async function materialiseCloudLiveProviderContextPacketExecution({
     contextTruncated,
     responseContract,
   });
+  const consumptionCandidate = buildExperienceConsumptionCandidate({
+    experienceMemory,
+    executionTaskId,
+    sourceTaskId,
+    contextContentHash: evidence.contextContentHash,
+    responseContract,
+  });
+  if (consumptionCandidate) {
+    Object.defineProperty(evidence, NATIVE_ENGINEERING_EXPERIENCE_CONSUMPTION_CANDIDATE, {
+      value: consumptionCandidate,
+      enumerable: false,
+    });
+  }
   const requestEnvelope = {
     messages: [{ role: "user", content }],
   };

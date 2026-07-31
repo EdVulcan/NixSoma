@@ -14,6 +14,10 @@ import {
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_PLAN_CONTRACT,
   parseCloudLiveProviderEngineeringPlan,
 } from "./cloud-live-provider-runtime-engineering-plan-contract.mjs";
+import {
+  finaliseExperienceConsumptionReceipt,
+  NATIVE_ENGINEERING_EXPERIENCE_CONSUMPTION_CANDIDATE,
+} from "./native-engineering-experience-consumption-receipt.mjs";
 
 export const CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_LIVE_EXECUTION_REGISTRY =
   "openclaw-cloud-consciousness-live-provider-live-execution-v0";
@@ -195,6 +199,7 @@ function buildTaskExecutionState(
   planEvidence,
   responseContract,
   responseContractFailed,
+  experienceConsumptionReceipt,
 ) {
   const credentialRead = result?.governance?.credentialValueRead === true;
   const endpointContacted = result?.audit?.endpointContacted === true;
@@ -230,7 +235,14 @@ function buildTaskExecutionState(
     transmitsExternally: result?.audit?.transmitsExternally === true,
     liveProviderCallEnabled: result?.governance?.liveProviderCallEnabled === true,
     evidence: compactProviderEvidence(result),
-    contextPacket: compactContextPacketEvidence(contextPacketEvidence),
+    contextPacket: contextPacketEvidence
+      ? {
+          ...compactContextPacketEvidence(contextPacketEvidence),
+          ...(experienceConsumptionReceipt
+            ? { experienceMemoryConsumptionReceipt: experienceConsumptionReceipt }
+            : {}),
+        }
+      : null,
     responseContract: responseContract ?? null,
     responseContractEvidence,
     recommendation: recommendationEvidence,
@@ -311,9 +323,8 @@ export async function executeCloudConsciousnessLiveProviderRequest({
     requestEnvelope: request.requestEnvelope,
     operatorAuthorization: authorization,
   });
-  const contextPacketEvidence = compactContextPacketEvidence(
-    options[CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE],
-  );
+  const rawContextPacketEvidence = options[CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE];
+  const contextPacketEvidence = compactContextPacketEvidence(rawContextPacketEvidence);
   const contextSourceTaskId = request.contextPacket?.requested === true
     && typeof request.contextPacket.sourceTaskId === "string"
     && request.contextPacket.sourceTaskId.trim().length > 0
@@ -409,6 +420,10 @@ export async function executeCloudConsciousnessLiveProviderRequest({
     && responseContractResult.recommendation?.actionId !== "review_systemd_incident_observation";
   const responseContractFailed = result.ok === true
     && (responseContractResult.ok === false || observationRecommendationMismatch);
+  const experienceConsumptionReceipt = finaliseExperienceConsumptionReceipt({
+    candidate: rawContextPacketEvidence?.[NATIVE_ENGINEERING_EXPERIENCE_CONSUMPTION_CANDIDATE],
+    providerResult: result,
+  });
   const taskState = buildTaskExecutionState(
     result,
     authorization,
@@ -419,6 +434,7 @@ export async function executeCloudConsciousnessLiveProviderRequest({
     planEvidence,
     responseContract,
     responseContractFailed,
+    experienceConsumptionReceipt,
   );
   task.cloudConsciousnessLiveProviderEgressExecution = {
     ...(task.cloudConsciousnessLiveProviderEgressExecution ?? {}),

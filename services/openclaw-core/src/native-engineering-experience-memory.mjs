@@ -5,6 +5,7 @@ import {
   SYSTEMD_INCIDENT_EXPERIENCE_REGISTRY,
   validateSystemdIncidentReceiptTask,
 } from "./systemd-incident-receipt.mjs";
+import { validateExperienceConsumptionReceipt } from "./native-engineering-experience-consumption-receipt.mjs";
 
 export const NATIVE_ENGINEERING_EXPERIENCE_MEMORY_REGISTRY =
   "openclaw-native-engineering-experience-memory-v0";
@@ -162,6 +163,14 @@ function buildSystemdIncidentPattern(task) {
   };
 }
 
+function experienceConsumptionReceiptForTask(task) {
+  return validateExperienceConsumptionReceipt(
+    task?.cloudConsciousnessLiveProviderEgressExecution?.contextPacket
+      ?.experienceMemoryConsumptionReceipt
+      ?? task?.outcome?.details?.contextPacket?.experienceMemoryConsumptionReceipt,
+  );
+}
+
 function normaliseIncidentTargetUnit(value) {
   const targetUnit = boundedText(value, 120);
   return systemdHealthServiceKeyForUnit(targetUnit) ? targetUnit : null;
@@ -260,6 +269,7 @@ function publicRecord(record, relevance) {
       outcomeHash: record.source.outcomeHash,
     },
     incidentPattern: record.incidentPattern ? { ...record.incidentPattern } : null,
+    consumptionReceipt: record.consumptionReceipt ? { ...record.consumptionReceipt } : null,
     feedback: feedbackSummary(record),
     relevance,
   };
@@ -359,6 +369,7 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
     const taskType = normaliseTaskType(task.type);
     const executionPhase = normaliseExecutionPhase(task.executionPhase);
     const incidentPattern = buildSystemdIncidentPattern(task);
+    const consumptionReceipt = experienceConsumptionReceiptForTask(task);
     const tokens = applicabilityTokens(taskType, task.goal, incidentPattern);
     const sourceTaskId = safeSourceTaskId(task.id);
     const outcomeHash = sha256(JSON.stringify({
@@ -367,6 +378,7 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
       executionPhase,
       applicabilityTokens: tokens,
       incidentPattern,
+      consumptionReceipt,
     }));
     const recordedAt = now();
     recordSubsequentOutcomeFeedback({
@@ -387,6 +399,7 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
       executionPhase,
       applicabilityTokens: tokens,
       incidentPattern,
+      consumptionReceipt,
       feedback: {
         registry: NATIVE_ENGINEERING_EXPERIENCE_FEEDBACK_REGISTRY,
         correlation: "same_task_type_subsequent_terminal_outcome",

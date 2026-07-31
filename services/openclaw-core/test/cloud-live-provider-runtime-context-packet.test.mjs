@@ -5,6 +5,7 @@ import {
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_REGISTRY,
   materialiseCloudLiveProviderContextPacketExecution,
 } from "../src/cloud-live-provider-runtime-context-packet.mjs";
+import { NATIVE_ENGINEERING_EXPERIENCE_CONSUMPTION_CANDIDATE } from "../src/native-engineering-experience-consumption-receipt.mjs";
 
 function contextTask() {
   return {
@@ -114,6 +115,12 @@ test("context packet handoff materialises one bounded provider message with comp
   assert.equal(result.evidence.experienceMemoryLatestOutcome, "completed");
   assert.equal(result.evidence.experienceMemoryPattern, "repeatable_success");
   assert.equal(result.evidence.experienceMemoryAdvisoryOnly, true);
+  const consumptionCandidate = result.evidence[NATIVE_ENGINEERING_EXPERIENCE_CONSUMPTION_CANDIDATE];
+  assert.equal(consumptionCandidate.executionTaskId, "task-context-1");
+  assert.equal(consumptionCandidate.sourceTaskId, "task-context-1");
+  assert.deepEqual(consumptionCandidate.recordIds, ["experience-provider-1"]);
+  assert.equal(consumptionCandidate.contextContentHash, result.evidence.contextContentHash);
+  assert.equal(Object.keys(result.evidence).includes(String(NATIVE_ENGINEERING_EXPERIENCE_CONSUMPTION_CANDIDATE)), false);
   assert.equal(result.liveProviderExecution.requestEnvelope.messages.length, 1);
   assert.match(result.liveProviderExecution.requestEnvelope.messages[0].content, /npm test/);
   assert.match(result.liveProviderExecution.requestEnvelope.messages[0].content, /Return only a JSON object/);
@@ -121,6 +128,7 @@ test("context packet handoff materialises one bounded provider message with comp
   assert.equal(result.liveProviderExecution.responseContract, "engineering_recommendation_v0");
   assert.doesNotMatch(result.liveProviderExecution.requestEnvelope.messages[0].content, /should-be-redacted/);
   assert.doesNotMatch(JSON.stringify(result.evidence), /tests passed/);
+  assert.doesNotMatch(JSON.stringify(result.evidence), /experience-provider-1/);
 });
 
 test("context packet handoff rejects a different task and an ambiguous request envelope", async () => {

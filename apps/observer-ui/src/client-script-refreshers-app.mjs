@@ -288,6 +288,7 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
       ?? null;
     const scheduledSystemdRepairPromotion = task.systemdIncidentRepairPromotion ?? null;
     const providerContextPacket = task.outcome?.details?.contextPacket ?? null;
+    const experienceConsumptionReceipt = providerContextPacket?.experienceMemoryConsumptionReceipt ?? null;
     const systemdIncidentObservationReceipt = task.cloudConsciousnessLiveProviderEgressExecution
       ?.systemdIncidentObservationReceipt ?? null;
     lines.push(...formatEngineeringVerificationFollowupLines(task));
@@ -345,6 +346,11 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
       lines.push(\`Provider Incident Target: \${providerContextPacket.systemdIncidentTargetUnit ?? "unknown"} restored=\${providerContextPacket.systemdIncidentRestoredHealthy ?? "unknown"}\`);
       lines.push(\`Provider Incident Journal: available=\${providerContextPacket.systemdIncidentJournalAvailable ?? "unknown"} entries=\${providerContextPacket.systemdIncidentJournalEntries ?? 0} messagesIncluded=\${Boolean(providerContextPacket.journalMessagesIncluded)}\`);
       lines.push(\`Provider Incident Experience: matched=\${providerContextPacket.systemdIncidentExperiencePatterns ?? 0} restored=\${providerContextPacket.systemdIncidentExperienceRestoredPatterns ?? 0} recoveryRequired=\${providerContextPacket.systemdIncidentExperienceRecoveryRequiredPatterns ?? 0} providerOutputIncluded=\${Boolean(providerContextPacket.providerOutputIncluded)}\`);
+    }
+    if (experienceConsumptionReceipt) {
+      lines.push(\`Experience Consumption Receipt: \${experienceConsumptionReceipt.registry ?? "unknown"} status=\${experienceConsumptionReceipt.status ?? "unknown"}\`);
+      lines.push(\`Experience Consumption Binding: execution=\${experienceConsumptionReceipt.executionTaskId ?? "none"} source=\${experienceConsumptionReceipt.sourceTaskId ?? "none"} records=\${experienceConsumptionReceipt.recordCount ?? 0} receipt=\${experienceConsumptionReceipt.receiptHash ?? "none"}\`);
+      lines.push(\`Experience Consumption Boundary: provider=\${Boolean(experienceConsumptionReceipt.governance?.providerConsumptionProven)} downstream=\${Boolean(experienceConsumptionReceipt.governance?.downstreamAdvisoryApplicationProven)} causal=\${Boolean(experienceConsumptionReceipt.governance?.causalAttribution)} contentPersisted=\${Boolean(experienceConsumptionReceipt.governance?.providerContentPersisted)}\`);
     }
     if (systemdIncidentObservationReceipt) {
       const observationHealth = systemdIncidentObservationReceipt.health ?? {};

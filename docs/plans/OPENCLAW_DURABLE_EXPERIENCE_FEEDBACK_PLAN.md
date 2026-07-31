@@ -59,7 +59,7 @@ and observed three, each at completion rate 1 with `provider=false`.
 
 ## Next Real Capability
 
-The next canonical review should select an explicit task-bound
-recall-consumption receipt. That later slice must
-prove which bounded records reached a governed consumer before associating the
-consumer task outcome; it must not infer causality from type similarity alone.
+The next canonical review selected the task-bound recall-consumption receipt in
+[`OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md`](./OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md).
+That slice proves which bounded records reached a governed provider consumer;
+it still does not infer downstream application or causality.

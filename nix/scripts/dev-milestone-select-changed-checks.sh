@@ -448,6 +448,30 @@ const durableExperienceFeedbackSlice = changedFiles.length > 0
   && changedFiles.every((file) => durableExperienceFeedbackFiles.has(file))
   && changedFiles.some((file) =>
     file === "services/openclaw-core/src/native-engineering-experience-memory.mjs");
+const taskBoundRecallConsumptionFiles = new Set([
+  "apps/observer-ui/src/client-script-refreshers-app.mjs",
+  "apps/observer-ui/test/client-script-systemd-repair-receipt.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md",
+  "docs/plans/OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md",
+  "docs/plans/README.md",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "services/openclaw-core/src/cloud-live-provider-runtime-context-packet.mjs",
+  "services/openclaw-core/src/cloud-live-provider-runtime-live-execution.mjs",
+  "services/openclaw-core/src/native-engineering-experience-consumption-receipt.mjs",
+  "services/openclaw-core/src/native-engineering-experience-memory.mjs",
+  "services/openclaw-core/test/cloud-live-provider-runtime-context-packet.test.mjs",
+  "services/openclaw-core/test/cloud-live-provider-runtime-live-execution.test.mjs",
+  "services/openclaw-core/test/native-engineering-experience-consumption-receipt.test.mjs",
+  "services/openclaw-core/test/native-engineering-experience-memory.test.mjs",
+]);
+const taskBoundRecallConsumptionSlice = changedFiles.length > 0
+  && changedFiles.every((file) => taskBoundRecallConsumptionFiles.has(file))
+  && changedFiles.some((file) =>
+    file === "services/openclaw-core/src/native-engineering-experience-consumption-receipt.mjs");
 
 function physicalScriptsForManifestRow(phase, slug, forceShort = false) {
   const legacy = {
@@ -1253,6 +1277,16 @@ function selectSourceHeuristics(file) {
 }
 
 for (const file of changedFiles) {
+  if (taskBoundRecallConsumptionSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName(nativeEngineeringContextPacketPairBatchCheck);
+    selectName("observer-capability-invoke");
+    continue;
+  }
   if (durableExperienceFeedbackSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");

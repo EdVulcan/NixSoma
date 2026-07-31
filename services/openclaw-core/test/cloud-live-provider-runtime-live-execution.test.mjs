@@ -14,6 +14,11 @@ import {
 import { CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT } from "../src/cloud-live-provider-runtime-response-contract.mjs";
 import { CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_PLAN_CONTRACT } from "../src/cloud-live-provider-runtime-engineering-plan-contract.mjs";
 import {
+  buildExperienceConsumptionCandidate,
+  NATIVE_ENGINEERING_EXPERIENCE_CONSUMPTION_CANDIDATE,
+  validateExperienceConsumptionReceipt,
+} from "../src/native-engineering-experience-consumption-receipt.mjs";
+import {
   buildSystemdIncidentProviderContext,
   materialiseSystemdIncidentProviderHandoff,
   materialiseStoredSystemdIncidentProviderExecution,
@@ -815,6 +820,16 @@ test("live execution retains only compact work-view and plan/todo context eviden
     },
   });
   const task = createBoundTask(options, LIVE_PROVIDER_TEST_ENV, contextContentHash);
+  Object.defineProperty(contextEvidence, NATIVE_ENGINEERING_EXPERIENCE_CONSUMPTION_CANDIDATE, {
+    value: buildExperienceConsumptionCandidate({
+      experienceMemory: { records: [{ id: "experience-live-1" }, { id: "experience-live-2" }] },
+      executionTaskId: "task-1",
+      sourceTaskId: "task-1",
+      contextContentHash,
+      responseContract: CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
+    }),
+    enumerable: false,
+  });
   options[CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_CONTEXT_PACKET_EVIDENCE] = contextEvidence;
   const result = await executeCloudConsciousnessLiveProviderRequest({
     ...harness.deps,
@@ -824,6 +839,7 @@ test("live execution retains only compact work-view and plan/todo context eviden
     sendLiveProviderRequestImpl: async () => ({
       ok: true,
       audit: {
+        requestContentHash: "d".repeat(64),
         providerResponseCreated: true,
         endpointContacted: true,
         networkEgress: true,
@@ -864,6 +880,14 @@ test("live execution retains only compact work-view and plan/todo context eviden
   assert.equal(result.summary.contextPacket.experienceMemoryFailedMatches, 1);
   assert.equal(result.summary.contextPacket.experienceMemoryCompletionRate, 0.67);
   assert.equal(result.summary.contextPacket.experienceMemoryPattern, "mixed_outcomes");
+  const consumptionReceipt = result.summary.contextPacket.experienceMemoryConsumptionReceipt;
+  assert.equal(validateExperienceConsumptionReceipt(consumptionReceipt), consumptionReceipt);
+  assert.deepEqual(consumptionReceipt.recordIds, ["experience-live-1", "experience-live-2"]);
+  assert.equal(consumptionReceipt.executionTaskId, "task-1");
+  assert.equal(consumptionReceipt.sourceTaskId, "task-1");
+  assert.equal(consumptionReceipt.governance.providerConsumptionProven, true);
+  assert.equal(consumptionReceipt.governance.downstreamAdvisoryApplicationProven, false);
+  assert.equal(consumptionReceipt.governance.causalAttribution, false);
   assert.equal(result.task.outcome.details.contextPacket.contextContentIncluded, false);
   assert.doesNotMatch(JSON.stringify(result.task), /Review the bounded context/);
 });

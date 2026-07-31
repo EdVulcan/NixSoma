@@ -240,6 +240,16 @@ correlation contract after its existing Core/Observer context-packet pair gate
 passes. The next distinct memory capability is an explicit task-bound
 recall-consumption receipt, not inferred causality or automatic learning.
 
+That continuation is now implemented in source and recorded in
+[`docs/plans/OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md`](./plans/OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md).
+Context materialization keeps at most four recalled record ids in a private
+non-enumerable candidate. Only a successful approved provider response finalizes
+a receipt bound to execution/source tasks, record-set hash, context hash,
+request hash, and response contract. The provider task, terminal experience,
+and Observer task detail retain compact evidence. This proves provider context
+consumption, not downstream use or causality; it changes no ranking, policy,
+approval, action, retry, or host state.
+
 ## Governing Vision
 
 The controlling architecture documents are:
