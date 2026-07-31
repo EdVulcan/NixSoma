@@ -112,8 +112,9 @@ AI 对系统的自主修改不应该通过脆弱的、命令式的命令行脚�
   程序明确忽略 filename 指针，不返回 path、content、inode、mount 或 syscall result；
   网络切片已通过固定 noninteractive helper 部署到物理
   generation `gd9ps40...`，并通过 Core/Observer 安装版门禁捕获真实 `curl` 连接，仍不
-  包含网络拦截、blocking、持久化事件黑匣子或策略执行。file-open 目前只属于
-  source/disposable-KVM release evidence，物理部署尚未授权。
+  包含网络拦截、blocking、持久化事件黑匣子或策略执行。file-open 已在物理
+  generation `qcv5ggpr...` 通过两条安装态门禁，各捕获 128 条 bounded events，
+  同时保持九个健康端点、零 failed unit、boot ID 不变和所有敏感字段缺失。
 
 ### 🔄 Phase D: 声明式自进化闭环
 - **任务**：打通 Nix 配置文件生成器与 `nixos-rebuild` 执行沙箱。

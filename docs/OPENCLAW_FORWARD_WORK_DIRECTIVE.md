@@ -75,7 +75,7 @@ nerves, physical Phase D evolution, or richer native-workspace lifecycle that
 keep the second number lower.
 
 The physical host now runs generation
-`/nix/store/5zlz2s6zbcs5mhbmaskpl6njnsn7kl14-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/qcv5ggprl82xv75nc8nhkblnb53v759k-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, bounded local OCR, the
@@ -96,7 +96,7 @@ and an injected interrupted reservation failed closed without replay. The test
 made no provider call, browser action, physical-host mutation, or generation
 change. It exposed a real hostd defect where stopped-service `MainPID=0` became
 `null`; source now preserves zero as valid evidence, and physical generation
-`5zlz2s6z...` contains that correction.
+`qcv5ggpr...` contains that correction.
 
 The work-view lifecycle now makes an already-valid same-authority
 `work_view.prepare` idempotent. Session Manager reads Browser Runtime state and
@@ -128,9 +128,9 @@ and non-loopback proxy hosts. The semantic type race exposed by provider latency
 is also corrected: when a referenced frame expires, Browser Runtime reuses the
 exact cached frame/inventory before taking one replacement capture, preventing a
 false `semantic_target_inventory_stale` result. The active generation is
-`/nix/store/5zlz2s6zbcs5mhbmaskpl6njnsn7kl14-nixos-system-nixos-26.05.4808.569d57850992`
-(generation 101; generation 100 was
-`/nix/store/1xh4x8ls64yzl919j2bssd9ilms98knv-nixos-system-nixos-26.05.4808.569d57850992`).
+`/nix/store/qcv5ggprl82xv75nc8nhkblnb53v759k-nixos-system-nixos-26.05.4808.569d57850992`
+(generation 102; generation 101 was
+`/nix/store/5zlz2s6zbcs5mhbmaskpl6njnsn7kl14-nixos-system-nixos-26.05.4808.569d57850992`).
 Focused Browser Runtime, Screen Act, and Core semantic tests pass 31/31,
 8/8, and 14/14; the body configuration check also passes. A proxy-backed
 bounded run proved two task-bound provider calls, one write-only semantic type,
@@ -192,15 +192,17 @@ non-zero family and no destination, port, payload, or persistence fields. All
 nine health endpoints and failed-unit checks remained healthy. Phase D and the
 kernel network lane are frozen.
 
-The current distinct Level 3 slice is the bounded Phase C file open-attempt
-observation in `OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md`. It attaches at
+The bounded Phase C file open-attempt observation in
+`OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md` is complete and frozen. It attaches at
 `fentry/do_sys_openat2` and emits exactly timestamp, PID, UID, comm, flags, and
 mode. The filename pointer is deliberately ignored; path, content, inode, mount
 identity, syscall result, persistence, policy execution, provider/browser
-activity, and host mutation remain false. Source, focused tests, closures,
-installed-gate wiring, and disposable-KVM evidence belong to this slice.
-Physical generation activation is not included and requires a separate explicit
-authorization after the source/KVM release gate is green.
+activity remain false. Source, focused tests, closures, disposable KVM, and both
+installed gates pass. Separately authorized physical generation `qcv5ggpr...`
+matched all protected paths, activated without reboot, captured the exact
+128-event bound twice, retained nine healthy endpoints and zero failed units,
+and kept the boot ID unchanged. Do not reopen this lane for path/result capture,
+enforcement, or persistence without a fresh concrete operator need.
 
 The bounded read-only boot/restart evidence route selected for the recent
 restart investigation is already deployed in generation `1xh4x8ls...`. Direct

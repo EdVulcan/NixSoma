@@ -36,7 +36,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_SYSTEMD_OBSERVATION_AI_HANDOFF_PLAN.md`](./OPENCLAW_SYSTEMD_OBSERVATION_AI_HANDOFF_PLAN.md) | Exact approval-bound AI diagnosis and reviewed readback from the compact observation receipt. |
 | [`OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md`](./OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_PLAN.md) | Periodic local observation and restart-safe deduplicated incident tasks for fixed units. |
 | [`OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md) | Bounded read-only network connect-attempt observation through the existing Level 3 body nerve owner. |
-| [`OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md) | Bounded file open-attempt metadata without filename, path, content, result, persistence, or physical mutation. |
+| [`OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md) | Physically accepted bounded file open-attempt metadata without filename, path, content, result, or persistence. |
 | [`OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md`](./OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Declarative-evolution candidate, controlled activation, and exact rollback evidence plus deferred physical/automatic mutation boundaries. |
 | [`OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md`](./OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md) | Measured validation, runtime, and review debt that blocks the mainline. |
 
@@ -46,7 +46,7 @@ The kernel whitepaper remains the long-horizon authority:
 ## Current Route
 
 The only current deployment baseline is physical generation
-`/nix/store/5zlz2s6zbcs5mhbmaskpl6njnsn7kl14-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/qcv5ggprl82xv75nc8nhkblnb53v759k-nixos-system-nixos-26.05.4808.569d57850992`.
 Generation-specific `active` wording later in this section records the state at
 each historical checkpoint and does not override this baseline.
 
@@ -56,7 +56,7 @@ fixed observation, incident creation, automatic triage, pending repair
 promotion, explicit approval, one native hostd restart, target-specific
 post-health, and no replay for either completed or interrupted reservations.
 It found and fixed stopped-target `MainPID=0` handling. Current physical
-generation `5zlz2s6z...` contains that hostd correction.
+generation `qcv5ggpr...` contains that hostd correction.
 
 The Phase D controlled activation and rollback path now passes its disposable-VM
 release gate. `openclaw-declarative-evolution-activation-vm` proves one
@@ -83,8 +83,9 @@ deployment are release evidence; the final Core and Observer gates captured 27
 persistence fields. That lane is frozen. The next separate Phase C hook is the
 privacy-bounded `fentry/do_sys_openat2` observation in
 [`OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md).
-It carries flags and mode but never filename/path/content/result data. Its
-source and disposable-KVM evidence do not authorize physical deployment.
+It carries flags and mode but never filename/path/content/result data. Physical
+generation `qcv5ggpr...` passed protected-path review, both installed gates,
+nine health endpoints, and zero failed units without reboot. Freeze this lane.
 
 The bounded boot/restart evidence route is also deployed in current generation
 `1xh4x8ls...`. Its registered Core/Observer gates, deployed direct/proxy

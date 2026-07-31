@@ -1,7 +1,7 @@
 # Phase C Kernel File Open Observation Plan
 
-Status: source implementation, focused validation, closure validation, and
-disposable-KVM acceptance complete; physical deployment deferred, 2026-07-31
+Status: source implementation, focused validation, closure validation,
+disposable-KVM acceptance, and physical deployment complete, 2026-07-31
 
 ## Purpose
 
@@ -18,8 +18,9 @@ identify the file and cannot determine whether the call succeeded.
   metadata and an in-memory continuity summary.
 - Privilege boundary: the existing System Sense owner receives only `CAP_BPF`
   and `CAP_PERFMON`; hostd authority is unchanged.
-- Deployment boundary: this source slice does not authorize a physical NixOS
-  generation switch, reboot, rollback, or other host mutation.
+- Deployment boundary: the exact reviewed generation was activated through the
+  fixed developer-generation helper after separate operator authorization. No
+  reboot, rollback, arbitrary sudo command, or other host mutation was used.
 
 ## Implementation Contract
 
@@ -49,9 +50,10 @@ identify the file and cannot determine whether the call succeeded.
   path field.
 - `dev-body-config-check.sh` proves probe and service source closures, desktop
   enablement, probe environment, and the existing capability boundary.
-- `openclaw-kernel-file-open-capture` and its Observer pair are installed-host
-  acceptance gates. They must remain deferred until an exact physical
-  generation is separately authorized and deployed.
+- `openclaw-kernel-file-open-capture` and its Observer pair passed on physical
+  generation `qcv5ggpr...`. Each captured the configured 128-event maximum;
+  the first saw six unique comm values and the second five, both saw four flag
+  values, and continuity advanced from `baseline` to `compared`.
 - `checks.x86_64-linux.openclaw-kernel-file-open-capture-vm` loaded the real
   fentry probe and captured exactly the configured 128-event maximum, including
   validation `cat` processes, three unique comm values, and four unique flag
@@ -64,12 +66,12 @@ identify the file and cannot determine whether the call succeeded.
 
 ## Deliberately Deferred
 
-- physical deployment and rollback;
+- physical rollback;
 - filename, path, content, inode, mount, file descriptor, and return-value
   capture;
 - VFS-wide tracing, blocking, policy enforcement, or arbitrary probes;
-- persistence, automatic actions, provider egress, browser activity, and host
-  mutation.
+- persistence, automatic actions, provider egress, browser activity, and
+  runtime host mutation.
 
 ## Stop Condition
 
@@ -77,3 +79,19 @@ Freeze this lane after focused tests, exact closures, and disposable KVM proof
 pass. Do not add path capture, an `fexit` outcome hook, or enforcement as polish.
 Those are distinct higher-risk capabilities requiring a concrete operator need
 and a fresh route decision.
+
+## Physical Closure
+
+Candidate
+`/nix/store/qcv5ggprl82xv75nc8nhkblnb53v759k-nixos-system-nixos-26.05.4808.569d57850992`
+matched the current physical marker and the exact kernel, initrd, fstab, GDM,
+NetworkManager, and SSH store targets. Its closure changed only Core, System
+Sense, Observer, and the kernel probe. The fixed passwordless helper activated
+it without reboot; current and system-profile links match, and the boot ID
+remained `0fe071ee-879d-4f65-b037-6cea208ca7cd`.
+
+After both installed gates, all nine health endpoints and system/user services
+were active, failed-unit counts were zero, relevant restart counts were zero,
+and warning journals were empty. Path, filename, content, inode, mount identity,
+syscall result, persistence, policy execution, provider activity, browser
+activity, and additional host mutation remained absent. Freeze this lane.
