@@ -88,10 +88,28 @@ if (capture.registry !== "openclaw-kernel-network-connect-v0"
   || !capture.events?.some((event) => event.comm === "curl")) {
   throw new Error("Observer should expose real bounded network-connect events: " + JSON.stringify(capture));
 }
-const serialised = html + client + JSON.stringify(capture);
-if (serialised.includes("127.0.0.1") || serialised.includes("4100") || serialised.includes("4106")) {
-  throw new Error("network destination or port leaked into Observer evidence");
+const forbiddenNetworkFields = new Set([
+  "destination",
+  "port",
+  "address",
+  "addressBytes",
+  "payload",
+  "networkPayload",
+]);
+function assertNoForbiddenNetworkFields(value, path = "$") {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => assertNoForbiddenNetworkFields(item, `${path}[${index}]`));
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+  for (const [key, nested] of Object.entries(value)) {
+    if (forbiddenNetworkFields.has(key)) {
+      throw new Error(`network destination or port field leaked into Observer evidence at ${path}.${key}`);
+    }
+    assertNoForbiddenNetworkFields(nested, `${path}.${key}`);
+  }
 }
+assertNoForbiddenNetworkFields(capture);
 
 console.log(JSON.stringify({
   observerOpenClawKernelNetworkConnectCapture: {

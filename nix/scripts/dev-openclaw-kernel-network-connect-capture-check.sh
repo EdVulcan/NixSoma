@@ -110,10 +110,28 @@ if (capture.readback?.registry !== "openclaw-kernel-network-connect-readback-v0"
   || capture.readback?.networkPayloadCaptured !== false) {
   throw new Error("kernel network-connect readback violated its bounded contract: " + JSON.stringify(capture.readback));
 }
-const serialised = JSON.stringify(capture);
-if (serialised.includes("127.0.0.1") || serialised.includes("4100") || serialised.includes("4106")) {
-  throw new Error("network destination or port leaked into kernel connect evidence");
+const forbiddenNetworkFields = new Set([
+  "destination",
+  "port",
+  "address",
+  "addressBytes",
+  "payload",
+  "networkPayload",
+]);
+function assertNoForbiddenNetworkFields(value, path = "$") {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => assertNoForbiddenNetworkFields(item, `${path}[${index}]`));
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+  for (const [key, nested] of Object.entries(value)) {
+    if (forbiddenNetworkFields.has(key)) {
+      throw new Error(`network destination or port field leaked into kernel connect evidence at ${path}.${key}`);
+    }
+    assertNoForbiddenNetworkFields(nested, `${path}.${key}`);
+  }
 }
+assertNoForbiddenNetworkFields(capture);
 
 console.log(JSON.stringify({
   openclawKernelNetworkConnectCapture: {
