@@ -18,7 +18,11 @@ import {
 import { projectBrowserSemanticActionEvidence } from "./browser-semantic-action-evidence.mjs";
 import { buildWriteOnlyInputEvidence } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 import { BROWSER_CURRENT_TAB_CLOSE_ACTION } from "../../../packages/shared-utils/src/browser-action-contract.mjs";
-import { normaliseBoundedBrowserUrl, validateBoundedBrowserUrl } from "./browser-navigation.mjs";
+import {
+  createBoundedBrowserHostnameLookup,
+  normaliseBoundedBrowserUrl,
+  validateBoundedBrowserUrl,
+} from "./browser-navigation.mjs";
 import { createBrowserCurrentTabCloseRoute } from "./browser-current-tab-lifecycle.mjs";
 import { createBrowserWorkspaceStore } from "./browser-workspace-store.mjs";
 import { createBrowserEngineAdapter } from "./browser-engine-adapter.mjs";
@@ -35,6 +39,12 @@ const stateFilePath = process.env.OPENCLAW_BROWSER_RUNTIME_STATE_FILE ?? `/tmp/o
 const engineMode = process.env.OPENCLAW_BROWSER_ENGINE_MODE ?? "simulated";
 const engineProfileDirectory = process.env.OPENCLAW_BROWSER_PROFILE_DIR ?? `/tmp/openclaw-browser-profile-${port}`;
 const allowLocalFixtureUrls = process.env.OPENCLAW_BROWSER_ALLOW_LOCAL_FIXTURES === "1";
+const browserHttpProxy = process.env.OPENCLAW_BROWSER_HTTP_PROXY ?? "";
+const browserDohUrl = process.env.OPENCLAW_BROWSER_DOH_URL ?? "";
+const browserUrlLookup = createBoundedBrowserHostnameLookup({
+  dohUrl: browserDohUrl,
+  httpProxy: browserHttpProxy,
+});
 const isLoopbackHost = ["127.0.0.1", "::1", "localhost"].includes(host);
 const browserRuntimeAuth = createBrowserRuntimeAuthenticator({
   token: process.env.OPENCLAW_BROWSER_RUNTIME_AUTH_TOKEN,
@@ -100,6 +110,8 @@ if (engineMode === "firefox") {
     profileDirectory: engineProfileDirectory,
     browserFamily: "firefox",
     allowLocalFixtureUrls,
+    urlLookup: browserUrlLookup,
+    browserProxy: browserHttpProxy,
     graphicalSessionBinding: browserGraphicalSessionBinding,
     onDisconnected() {
       updateBrowserState({
@@ -405,10 +417,10 @@ const server = http.createServer(async (req, res) => {
       const body = await readJsonBody(req);
       const url = normaliseBoundedBrowserUrl(
         typeof body.url === "string" && body.url.trim() ? body.url.trim() : "https://example.com",
-        { allowLocalFixtureUrls },
+        { allowLocalFixtureUrls, lookup: browserUrlLookup },
       );
       const safeUrl = browserEngine
-        ? await validateBoundedBrowserUrl(url, { allowLocalFixtureUrls })
+        ? await validateBoundedBrowserUrl(url, { allowLocalFixtureUrls, lookup: browserUrlLookup })
         : url;
       const requestedSessionId = typeof body.sessionId === "string" && body.sessionId.trim()
         ? body.sessionId.trim()
@@ -421,7 +433,10 @@ const server = http.createServer(async (req, res) => {
         ? browserState.tabs.map((tab) => tab.url)
         : [];
       const safeRestoreUrls = browserEngine
-        ? await Promise.all(restoreUrls.map((restoreUrl) => validateBoundedBrowserUrl(restoreUrl, { allowLocalFixtureUrls })))
+        ? await Promise.all(restoreUrls.map((restoreUrl) => validateBoundedBrowserUrl(restoreUrl, {
+          allowLocalFixtureUrls,
+          lookup: browserUrlLookup,
+        })))
         : restoreUrls;
 
       if (!browserState.running) {
@@ -487,7 +502,7 @@ const server = http.createServer(async (req, res) => {
       const body = await readJsonBody(req);
       const url = normaliseBoundedBrowserUrl(body.url ?? "https://example.com/docs", { allowLocalFixtureUrls });
       const safeUrl = browserEngine
-        ? await validateBoundedBrowserUrl(url, { allowLocalFixtureUrls })
+        ? await validateBoundedBrowserUrl(url, { allowLocalFixtureUrls, lookup: browserUrlLookup })
         : url;
       const mediation = validateBrowserActionMediation(body);
       if (!mediation.accepted) {

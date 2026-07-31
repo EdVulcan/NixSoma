@@ -12,9 +12,15 @@ Phase D 的操作者治理 mutation loop 已在源码和可丢弃 KVM 中闭环�
 root-only snapshot ID 恢复精确 previous generation 与 previous managed-source
 state，并消费 snapshot。Activation approval、rollback approval 和直接 snapshot
 replay 均被拒绝，Core/hostd PID 保持，failed unit 为 0，provider/browser/自动
-rollback 均未发生。物理 generation 仍是 `pfiwq5p3...`，没有执行 Phase D
-activation/rollback。当前实现、证据和 deferred boundary 见
+rollback 均未发生。当前物理 generation 是 `1xh4x8ls...`（generation 100），
+generation 99 为 `d7lxwpm...`；没有执行 Phase D activation/rollback。当前实现、
+证据和 deferred boundary 见
 `docs/plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md`。
+
+本轮部署还固定了开发环境的 loopback proxy/DoH 网络边界，并修复了 provider
+延迟期间 semantic type 误报 `semantic_target_inventory_stale` 的帧竞态。Browser
+Runtime 27/27、Screen Act 8/8、Core 14/14 定向测试和 body-config 检查通过；
+物理服务健康、token ACL 与无明文状态审计通过。
 
 为了让后续接手开发工作的团队成员能够无缝过渡，本文件详细汇总了本次开发会话中完成的**架构解耦与重构工作**、**安全与逻辑热修复**、**产生的对应技术文档**以及**后续的验证与开发建议**。
 

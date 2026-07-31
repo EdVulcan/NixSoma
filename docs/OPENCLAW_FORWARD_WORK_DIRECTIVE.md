@@ -66,7 +66,7 @@ same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/gd9ps40vz9qj4ll5sikxb0c0g3xnx7gc-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/1xh4x8ls64yzl919j2bssd9ilms98knv-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, bounded local OCR, the
@@ -87,7 +87,7 @@ and an injected interrupted reservation failed closed without replay. The test
 made no provider call, browser action, physical-host mutation, or generation
 change. It exposed a real hostd defect where stopped-service `MainPID=0` became
 `null`; source now preserves zero as valid evidence, and physical generation
-`gd9ps40...` contains that correction.
+`1xh4x8ls...` contains that correction.
 
 The work-view lifecycle now makes an already-valid same-authority
 `work_view.prepare` idempotent. Session Manager reads Browser Runtime state and
@@ -109,6 +109,23 @@ ACL on every start. Physical checks prove exact token read plus directory
 traverse for `edvulcan`, no listing, no execution-private-key access, all nine
 health endpoints, zero failed units, matching current/profile paths, and no
 reboot.
+
+The latest deployment correction keeps outbound development traffic explicit and
+bounded. Core's provider fetch and the headed Browser Runtime use the configured
+loopback HTTP proxy at `127.0.0.1:7897`; Browser Runtime validates public
+hostnames with DoH through that same proxy, while internal service calls remain
+outside the proxy through `NO_PROXY`. Runtime configuration rejects credentials
+and non-loopback proxy hosts. The semantic type race exposed by provider latency
+is also corrected: when a referenced frame expires, Browser Runtime reuses the
+exact cached frame/inventory before taking one replacement capture, preventing a
+false `semantic_target_inventory_stale` result. The active generation is
+`/nix/store/1xh4x8ls64yzl919j2bssd9ilms98knv-nixos-system-nixos-26.05.4808.569d57850992`
+(generation 100; generation 99 was
+`/nix/store/d7lxwpmj6kh4p6vgrw377lbqiq3cfrjc-nixos-system-nixos-26.05.4808.569d57850992`).
+Focused Browser Runtime, Screen Act, and Core semantic tests pass 27/27,
+8/8, and 14/14; the body configuration check also passes. A proxy-backed
+bounded run proved two task-bound provider calls, one write-only semantic type,
+one verified continuation, no plaintext persistence, and no automatic repeat.
 
 One real request-bound DeepSeek advisory call completed through task
 `62ba696a-945e-4f37-b65e-8a6783316386` and approval
@@ -159,7 +176,7 @@ one-off call surface.
 
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation
-`/nix/store/gd9ps40vz9qj4ll5sikxb0c0g3xnx7gc-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/1xh4x8ls64yzl919j2bssd9ilms98knv-nixos-system-nixos-26.05.4808.569d57850992`.
 The fixed helper accepted the physical candidate after marker and protected
 path checks; Core and Observer gates captured 27 validation `curl` events with
 non-zero family and no destination, port, payload, or persistence fields. All
@@ -169,7 +186,8 @@ kernel network lane are frozen.
 The fresh canonical route review selected a bounded read-only boot/restart
 evidence capability for the concrete operator gap observed during the recent
 restart investigation. Source and isolated Core/Observer service checks are
-complete, but the route is not in physical generation `gd9ps40...`; no physical
+complete, but the route has not received its separate physical gate in
+generation `1xh4x8ls...`; no physical
 switch, reboot, recovery, or host mutation was performed in this slice. The
 current physical host remains evidence-only. After a separately authorized
 physical deployment check, return to canonical route review. Do not add VFS,

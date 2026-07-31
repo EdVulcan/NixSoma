@@ -21,7 +21,11 @@ import {
 } from "../../../packages/shared-utils/src/work-view-semantic-targets.mjs";
 import { buildWriteOnlyInputEvidence } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 import { buildBrowserCurrentTabCloseEffect } from "../../../packages/shared-utils/src/browser-action-contract.mjs";
-import { isHttpUrl, validateBoundedBrowserUrl } from "./browser-navigation.mjs";
+import {
+  isHttpUrl,
+  normaliseBoundedBrowserHttpProxy,
+  validateBoundedBrowserUrl,
+} from "./browser-navigation.mjs";
 
 const ENGINE_REGISTRY = "openclaw-browser-engine-adapter-v0";
 const MAX_RESTORED_TABS = 32;
@@ -48,6 +52,7 @@ export function createBrowserEngineAdapter({
   navigationTimeoutMs = 10_000,
   allowLocalFixtureUrls = false,
   urlLookup,
+  browserProxy = null,
   graphicalSessionBinding = null,
   onDisconnected = () => {},
 } = {}) {
@@ -56,6 +61,7 @@ export function createBrowserEngineAdapter({
   }
   const browserExecutable = requiredAbsolutePath(executablePath, "executable path");
   const boundedProfileDirectory = requiredAbsolutePath(profileDirectory, "profile directory");
+  const boundedBrowserProxy = normaliseBoundedBrowserHttpProxy(browserProxy);
   let browser = null;
   let activePage = null;
   let visualFrame = null;
@@ -219,6 +225,9 @@ export function createBrowserEngineAdapter({
     rmSync(boundedProfileDirectory, { recursive: true, force: true });
     mkdirSync(boundedProfileDirectory, { recursive: true, mode: 0o700 });
     const graphicalLaunch = graphicalSessionBinding?.launchOptions() ?? { headless: true };
+    const browserArgs = browserFamily === "chrome" && boundedBrowserProxy
+      ? [`--proxy-server=${boundedBrowserProxy}`]
+      : [];
     browser = await puppeteerApi.launch({
       browser: browserFamily,
       executablePath: browserExecutable,
@@ -233,7 +242,18 @@ export function createBrowserEngineAdapter({
         "--metrics-recording-only",
         "--no-first-run",
         "--safebrowsing-disable-auto-update",
+        ...browserArgs,
       ] : [],
+      ...(browserFamily === "firefox" && boundedBrowserProxy ? {
+        extraPrefsFirefox: {
+          "network.proxy.type": 1,
+          "network.proxy.http": new URL(boundedBrowserProxy).hostname,
+          "network.proxy.http_port": Number.parseInt(new URL(boundedBrowserProxy).port || "80", 10),
+          "network.proxy.ssl": new URL(boundedBrowserProxy).hostname,
+          "network.proxy.ssl_port": Number.parseInt(new URL(boundedBrowserProxy).port || "80", 10),
+          "network.proxy.no_proxies_on": "localhost, 127.0.0.1, ::1",
+        },
+      } : {}),
     });
     browser.once("disconnected", () => {
       browser = null;
@@ -335,9 +355,22 @@ export function createBrowserEngineAdapter({
     if (!activePage) throw new Error("semantic_target_browser_not_running");
     const boundedReference = normaliseWorkViewSemanticTargetReference(reference);
     if (!boundedReference || boundedReference.operation !== operation) throw new Error("semantic_target_reference_invalid");
-    const frame = await captureVisualFrame({ includeData: false });
-    const inventory = semanticTargetInventory();
-    if (!frame.available || !frame.fresh || !inventory.available) {
+
+    // Semantic dispatch has already captured and bound this exact inventory. Reuse it
+    // before taking another screenshot, otherwise a slow provider decision can make
+    // an unchanged frame look stale solely because its sequence advanced.
+    let frame = projectWorkViewVisualFrame(visualFrame, { includeData: false });
+    let inventory = semanticTargetInventory();
+    const cachedReferenceMatches = frame.available === true
+      && inventory.available === true
+      && inventory.inventorySha256 === boundedReference.inventorySha256
+      && inventory.frame?.sha256 === boundedReference.frame.sha256
+      && inventory.frame?.sequence === boundedReference.frame.sequence;
+    if (!cachedReferenceMatches) {
+      frame = await captureVisualFrame({ includeData: false });
+      inventory = semanticTargetInventory();
+    }
+    if (!frame.available || (!frame.fresh && !cachedReferenceMatches) || !inventory.available) {
       throw new Error("semantic_target_inventory_not_ready");
     }
     if (inventory.inventorySha256 !== boundedReference.inventorySha256

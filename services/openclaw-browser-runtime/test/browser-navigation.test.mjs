@@ -1,7 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { normaliseBoundedBrowserUrl, validateBoundedBrowserUrl } from "../src/browser-navigation.mjs";
+import {
+  createBoundedBrowserHostnameLookup,
+  normaliseBoundedBrowserDohUrl,
+  normaliseBoundedBrowserHttpProxy,
+  normaliseBoundedBrowserUrl,
+  validateBoundedBrowserUrl,
+} from "../src/browser-navigation.mjs";
 
 test("bounded browser navigation accepts canonical HTTP(S) URLs", () => {
   assert.equal(normaliseBoundedBrowserUrl("https://example.com/docs"), "https://example.com/docs");
@@ -17,6 +23,22 @@ test("bounded browser navigation rejects credentials, non-network schemes, and o
     normaliseBoundedBrowserUrl("http://127.0.0.1/fixture", { allowLocalFixtureUrls: true }),
     "http://127.0.0.1/fixture",
   );
+});
+
+test("browser network configuration is explicit and loopback-only", async () => {
+  assert.equal(normaliseBoundedBrowserHttpProxy("http://127.0.0.1:7897"), "http://127.0.0.1:7897/");
+  assert.equal(normaliseBoundedBrowserDohUrl("https://doh.pub/dns-query"), "https://doh.pub/dns-query");
+  assert.throws(() => normaliseBoundedBrowserHttpProxy("http://proxy.example:7897"), /loopback/u);
+  assert.throws(() => normaliseBoundedBrowserHttpProxy("http://user:secret@127.0.0.1:7897"), /credentials/u);
+  assert.throws(() => createBoundedBrowserHostnameLookup({ httpProxy: "http://127.0.0.1:7897" }), /both/u);
+  const lookup = createBoundedBrowserHostnameLookup({
+    dohUrl: "https://doh.pub/dns-query",
+    httpProxy: "http://127.0.0.1:7897",
+    dohRequest: async ({ recordType }) => ({
+      Answer: recordType === "A" ? [{ type: 1, data: "93.184.216.34" }] : [],
+    }),
+  });
+  assert.deepEqual(await lookup("public.example", { all: true }), [{ address: "93.184.216.34", family: 4 }]);
 });
 
 test("browser navigation rejects DNS results that point at private networks, including redirects", async () => {

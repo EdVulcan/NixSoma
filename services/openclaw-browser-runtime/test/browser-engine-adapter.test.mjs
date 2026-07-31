@@ -5,7 +5,10 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { createBrowserEngineAdapter } from "../src/browser-engine-adapter.mjs";
-import { WORK_VIEW_VISUAL_FRAME_MAX_BYTES } from "../../../packages/shared-utils/src/work-view-visual-frame.mjs";
+import {
+  WORK_VIEW_VISUAL_FRAME_FRESHNESS_MS,
+  WORK_VIEW_VISUAL_FRAME_MAX_BYTES,
+} from "../../../packages/shared-utils/src/work-view-visual-frame.mjs";
 
 function createFakePuppeteer(t, {
   screenshotBytes = Buffer.from([0xff, 0xd8, 0xff, 0xdb]),
@@ -125,6 +128,7 @@ test("browser engine adapter launches a bounded profile and delegates real page 
     profileDirectory: fake.profileDirectory,
     puppeteerApi: fake.puppeteerApi,
     allowLocalFixtureUrls: true,
+    browserProxy: "http://127.0.0.1:7897",
     onDisconnected: () => { disconnected += 1; },
   });
 
@@ -142,6 +146,8 @@ test("browser engine adapter launches a bounded profile and delegates real page 
   assert.equal(fake.launches[0].browser, "firefox");
   assert.equal(fake.launches[0].userDataDir, fake.profileDirectory);
   assert.equal(fake.launches[0].headless, true);
+  assert.equal(fake.launches[0].extraPrefsFirefox["network.proxy.http"], "127.0.0.1");
+  assert.equal(fake.launches[0].extraPrefsFirefox["network.proxy.http_port"], 7897);
   assert.equal(existsSync(fake.profileDirectory), true);
   assert.deepEqual(fake.browser.pageList.map((page) => page.viewport), [
     { width: 960, height: 540, deviceScaleFactor: 1 },
@@ -328,17 +334,27 @@ test("browser engine adapter types write-only input into one current textbox tar
   await adapter.open({ url: "http://127.0.0.1/semantic-type" });
   const frame = await adapter.captureVisualFrame({ includeData: false });
   const inventory = adapter.semanticTargetInventory();
-  const result = await adapter.typeSemanticTarget({
+  const reference = {
     registry: "openclaw-browser-semantic-target-reference-v0",
     operation: "type",
     targetId: inventory.items[0].targetId,
     inventorySha256: inventory.inventorySha256,
     frame: { sha256: frame.sha256, sequence: frame.sequence },
-  }, "private semantic input");
+  };
+  const originalNow = Date.now;
+  const capturedAt = originalNow();
+  Date.now = () => capturedAt + WORK_VIEW_VISUAL_FRAME_FRESHNESS_MS + 1;
+  let result;
+  try {
+    result = await adapter.typeSemanticTarget(reference, "private semantic input");
+  } finally {
+    Date.now = originalNow;
+  }
   assert.equal(result.semanticTarget.operation, "type");
   assert.equal(result.semanticTarget.inputEvidence.charCount, 22);
   assert.equal(result.semanticTarget.inputValuesExposed, false);
   assert.equal(JSON.stringify(result).includes("private semantic input"), false);
+  assert.equal(fake.browser.pageList.at(-1).screenshotCalls, 1);
   assert.deepEqual(fake.browser.pageList.at(-1).clicked, [{ x: 110, y: 46 }]);
   assert.deepEqual(fake.browser.pageList.at(-1).typed, ["private semantic input"]);
   assert.equal(adapter.semanticTargetInventory().available, false);

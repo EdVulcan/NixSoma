@@ -27,6 +27,7 @@ let
     token_file=${lib.escapeShellArg cfg.operatorAuthTokenFile}
     token_dir=$(${pkgs.coreutils}/bin/dirname "$token_file")
     ${pkgs.coreutils}/bin/install -d -m 0750 -o ${lib.escapeShellArg owner} -g ${lib.escapeShellArg group} "$token_dir"
+    ${pkgs.coreutils}/bin/chmod 0750 "$token_dir"
     if [ ! -s "$token_file" ]; then
       token_tmp="$token_file.tmp.$$"
       umask 0077
@@ -137,6 +138,9 @@ let
         OPENCLAW_BROWSER_PROFILE_DIR = profileDir;
       } // optionalAttrs (cfg.browserEngine.mode == "firefox") {
         OPENCLAW_BROWSER_EXECUTABLE = "${cfg.browserEngine.package}/bin/firefox";
+      } // optionalAttrs (cfg.browserEngine.proxy != null) {
+        OPENCLAW_BROWSER_HTTP_PROXY = cfg.browserEngine.proxy;
+        OPENCLAW_BROWSER_DOH_URL = cfg.browserEngine.dnsOverHttps;
       } // browserRuntimeAuthEnvironment;
     }
     {
@@ -425,6 +429,12 @@ let
         OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_MAX_CALLS_PER_DAY = toString cfg.cloudProvider.standingAdvisory.maxCallsPerDay;
         OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_MAX_TOKENS_PER_DAY = toString cfg.cloudProvider.standingAdvisory.maxTokensPerDay;
         OPENCLAW_CLOUD_PROVIDER_STANDING_ADVISORY_COOLDOWN_SECONDS = toString cfg.cloudProvider.standingAdvisory.cooldownSeconds;
+      } // optionalAttrs (spec.key == "core" && cfg.cloudProvider.httpProxy != null) {
+        OPENCLAW_CLOUD_PROVIDER_HTTP_PROXY = cfg.cloudProvider.httpProxy;
+        HTTP_PROXY = cfg.cloudProvider.httpProxy;
+        HTTPS_PROXY = cfg.cloudProvider.httpProxy;
+        NO_PROXY = "127.0.0.1,localhost,::1";
+        NODE_OPTIONS = "--use-env-proxy";
       } // optionalAttrs (spec.key == "core" && cfg.cloudProvider.enable && cfg.cloudProvider.apiKeyFile != null) {
         OPENCLAW_CLOUD_PROVIDER_API_KEY_FILE = "%d/deepseek-api-key";
       } // optionalAttrs (builtins.elem spec.key [ "screenAct" "systemSense" ]) {
@@ -650,6 +660,16 @@ in
         default = "${cfg.stateDir}/browser-profile";
         description = "Ephemeral AI-owned browser profile directory cleared by the adapter lifecycle.";
       };
+      proxy = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Optional loopback HTTP CONNECT proxy for the browser runtime; credentials and non-loopback proxies are rejected at runtime.";
+      };
+      dnsOverHttps = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "HTTPS DNS resolver used through browserEngine.proxy for public browser hostname validation.";
+      };
     };
 
     host = mkOption {
@@ -800,6 +820,11 @@ in
         default = null;
         description = "File containing the DeepSeek API key; Core receives it only through systemd LoadCredential.";
       };
+      httpProxy = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Optional loopback HTTP proxy used only by Core's live provider fetch; internal service calls bypass it through NO_PROXY.";
+      };
       liveEgress = mkOption {
         type = types.bool;
         default = false;
@@ -932,6 +957,10 @@ in
           || cfg.browserRuntimeAuthTokenFile != null
           || cfg.browserRuntimeCredentialMapFile != null;
         message = "A non-loopback browser runtime requires a legacy token, token file, or per-caller credential map.";
+      }
+      {
+        assertion = (cfg.browserEngine.proxy == null) == (cfg.browserEngine.dnsOverHttps == null);
+        message = "services.openclaw.browserEngine.proxy and dnsOverHttps must be configured together.";
       }
       {
         assertion = !builtins.elem "core" cfg.components || cfg.operatorAuthTokenFile != null;
