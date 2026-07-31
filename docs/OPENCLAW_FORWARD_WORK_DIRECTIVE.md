@@ -1,6 +1,6 @@
 # NixSoma Forward Work Directive
 
-Updated: 2026-07-30
+Updated: 2026-07-31
 
 This is the active guidance document for continuing NixSoma development. The
 enhanced source preservation and governed capability migration that originally
@@ -56,9 +56,9 @@ return bounded transient local OCR or one read-only provider assessment without
 pixel egress. Direct operator interaction also includes one armed projected
 click and one write-only 1-32 character native type; one reviewed task may
 also request that one objective-selected OCR item be focused and receive its
-exact allowlisted objective value through a fixed two-action sequence. All 1196 workspace tests
+exact allowlisted objective value through a fixed two-action sequence. All 1224 workspace tests
 and typecheck pass, the body-config and event-audit integration checks pass, the
-824-entry milestone registry and 1011-file script audit pass, and
+826-entry milestone registry and 1013-file script audit pass, and
 the Windows path budget has no file over 160 repository-relative characters.
 GitHub CI now enforces
 Node 22 typecheck, workspace tests, milestone registry/script audit, and the
@@ -97,7 +97,7 @@ non-empty tab set all still agree. The current active URL is deliberately not
 part of that decision, so operator navigation is preserved. First prepare,
 changed authority, stale lease, stopped browser, session drift, and an empty tab
 set retain the existing open/recovery path. Both Phase 3 service gates prove a
-second prepare keeps one session, lease, and tab; all 1196 tests, typecheck,
+second prepare keeps one session, lease, and tab; all 1224 tests, typecheck,
 body-config, MVP readiness, and the exact 32-file Session Manager closure pass.
 The physical prepare pair recorded `session_started` followed 11 ms later by
 `same_authority`, preserving session `47e6a200...`, Firefox PID 63947, the
@@ -157,22 +157,22 @@ one-off call surface.
 
 ## Selected Next Real Capability
 
-The disposable-NixOS-VM controlled activation and exact rollback gate is
-complete, so Phase D remains frozen. The selected next capability is the
-smallest missing Phase C body nerve: read-only network connect-attempt
-observation through the existing system-sense, Core proxy, and Observer owners.
-The probe uses `fentry/__sys_connect` with only `CAP_BPF` and `CAP_PERFMON`,
-reads only the first two sockaddr bytes for the numeric family, and returns
-bounded timestamp/process/family/length metadata. It does not collect a
-destination, port, address bytes, payload, persistent event ledger, policy
-decision, or action authority.
+The bounded Phase C network connect-attempt slice is complete in source and
+disposable KVM. Its exact `fentry/__sys_connect` closure, Core/Observer route,
+non-zero family proof, and negative data-boundary checks are now release
+evidence. Phase D remains frozen.
 
-The source contract, exact Nix closure, focused Core/Observer checks, and
-disposable KVM gate are the evidence for this slice. The physical host remains
-on the existing generation; no `sudo`, generation switch, reboot, hostd
-mutation, provider call, or browser action is part of this route. After this
-slice is committed and reconciled, do not add another kernel hook or enforcement
-variant without a concrete operator need; return to a fresh capability review.
+The next actionable gate is deployment of that already-proven closure to the
+physical generation, but this is a privileged mutation and is not authorized by
+route review alone. It requires an explicit operator decision immediately
+before the deployment command. Until then, keep the physical host on
+`pfiwq5p3...`, and do not add VFS capture, destination/port capture, socket
+state, `fexit` outcome hooks, network enforcement, or another kernel variant:
+none has a concrete operator requirement in the current incident loop.
+
+If physical deployment is not authorized, the project remains at a truthful
+source/VM-complete checkpoint and waits for a concrete diagnostic requirement;
+the next route must not be manufactured from the whitepaper inventory.
 
 ## Governing Vision
 

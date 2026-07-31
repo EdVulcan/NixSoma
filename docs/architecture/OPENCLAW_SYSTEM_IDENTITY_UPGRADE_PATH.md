@@ -709,6 +709,9 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
   `fentry/__sys_connect` 只读取 sockaddr 前两个字节得到 family，并通过现有
   system-sense/Core/Observer 路径返回有界连接尝试元数据；目标地址、端口、地址
   字节、payload、持久化、策略执行和物理 generation mutation 均未启用
+- 该 Phase C 切片的下一 gate 是已验证 closure 的显式物理部署；在获得独立的
+  operator mutation decision 前，当前 generation 保持不变，不继续增加 VFS、
+  socket-state、`fexit` outcome 或网络 enforcement hook
 - 分开记录源码完成、验证通过、system generation 部署和真实物理动作
 - Phase D 操作者治理的 activation/rollback lane 已冻结；自动批准、自动回滚、
   provider 选择 generation、任意 root 命令和物理机 mutation 仍未授权

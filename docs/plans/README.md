@@ -65,14 +65,17 @@ arbitrary paths/commands, provider-driven or automatic rollback, retries, and
 wider hostd authority remain outside the completed slice. A fresh canonical
 route review must select the next distinct product capability.
 
-The fresh route review selected the bounded Phase C network connect-attempt
-slice recorded in
+The fresh route review selected and completed the bounded Phase C network
+connect-attempt slice recorded in
 [`OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md).
 It extends the existing read-only process-exec nerve through the same
 system-sense/Core/Observer path, uses `fentry/__sys_connect`, and reads only
 sockaddr family metadata. Its disposable KVM proof is release evidence; it does
 not authorize a physical generation switch, network enforcement, payload
-capture, persistence, provider egress, or host mutation.
+capture, persistence, provider egress, or host mutation. The route review after
+closure selected physical deployment of this exact closure as the next
+actionable gate, pending explicit operator authorization; no new kernel hook is
+selected while that gate remains undecided.
 
 ### Historical Route Evidence
 

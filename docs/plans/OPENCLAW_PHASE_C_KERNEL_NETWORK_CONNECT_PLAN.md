@@ -75,6 +75,10 @@ only; it is not a firewall, network policy engine, or packet capture path.
 ## Closure
 
 The network connect-attempt capability is complete as a source and disposable
-VM slice. Do not add another kernel hook or enforcement variant without a
-concrete operator need. The next route must be selected by a fresh capability
-review rather than by extending this evidence surface horizontally.
+VM slice. The post-closure route review selected deployment of the exact
+closure to the physical generation as the next actionable gate, but that gate
+requires an explicit operator mutation decision and has not been executed.
+Until then, do not add another kernel hook or enforcement variant without a
+concrete operator need. VFS capture, destination/port capture, socket-state
+capture, `fexit` outcome hooks, enforcement, persistence, provider egress, and
+host mutation remain deferred.
