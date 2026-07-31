@@ -108,8 +108,9 @@ AI 对系统的自主修改不应该通过脆弱的、命令式的命令行脚�
   身份、sockaddr family 和 address length；它只从用户 sockaddr 读取前两个字节，
   不读取目标地址、端口、地址字节或 payload。两个切片都通过 system-sense 的
   `CAP_BPF`/`CAP_PERFMON` service boundary、Core proxy、Observer readback 和
-  disposable KVM evidence；网络切片尚未切换到物理 generation，也不包含网络拦截、
-  blocking、持久化事件黑匣子或策略执行。
+  disposable KVM evidence；网络切片已通过固定 noninteractive helper 部署到物理
+  generation `gd9ps40...`，并通过 Core/Observer 安装版门禁捕获真实 `curl` 连接，仍不
+  包含网络拦截、blocking、持久化事件黑匣子或策略执行。
 
 ### 🔄 Phase D: 声明式自进化闭环
 - **任务**：打通 Nix 配置文件生成器与 `nixos-rebuild` 执行沙箱。

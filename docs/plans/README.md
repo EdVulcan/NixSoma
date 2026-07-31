@@ -39,7 +39,7 @@ The kernel whitepaper remains the long-horizon authority:
 ## Current Route
 
 The only current deployment baseline is physical generation
-`/nix/store/pfiwq5p3z284rpdqdlk35s8c4kg5cmkr-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/gd9ps40vz9qj4ll5sikxb0c0g3xnx7gc-nixos-system-nixos-26.05.4808.569d57850992`.
 Generation-specific `active` wording later in this section records the state at
 each historical checkpoint and does not override this baseline.
 
@@ -48,8 +48,8 @@ The fixed Level 3 repair loop is now complete in a disposable NixOS VM. The
 fixed observation, incident creation, automatic triage, pending repair
 promotion, explicit approval, one native hostd restart, target-specific
 post-health, and no replay for either completed or interrupted reservations.
-It found and fixed stopped-target `MainPID=0` handling. Physical generation
-`pfiwq5p3...` remains unchanged and does not contain that hostd correction.
+It found and fixed stopped-target `MainPID=0` handling. Current physical
+generation `gd9ps40...` contains that hostd correction.
 
 The Phase D controlled activation and rollback path now passes its disposable-VM
 release gate. `openclaw-declarative-evolution-activation-vm` proves one
@@ -70,12 +70,10 @@ connect-attempt slice recorded in
 [`OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md).
 It extends the existing read-only process-exec nerve through the same
 system-sense/Core/Observer path, uses `fentry/__sys_connect`, and reads only
-sockaddr family metadata. Its disposable KVM proof is release evidence; it does
-not authorize a physical generation switch, network enforcement, payload
-capture, persistence, provider egress, or host mutation. The route review after
-closure selected physical deployment of this exact closure as the next
-actionable gate, pending explicit operator authorization; no new kernel hook is
-selected while that gate remains undecided.
+sockaddr family metadata. Its disposable KVM proof and authorized physical
+deployment are release evidence; the final Core and Observer gates captured 27
+`curl` events with non-zero family and no destination, port, payload, or
+persistence fields. No new kernel hook is selected while this lane is frozen.
 
 ### Historical Route Evidence
 
@@ -121,7 +119,7 @@ automatic local triage, pending repair promotion, approval-triggered one-shot
 dispatch, and fail-closed restart reconciliation were first deployed in
 generation
 `/nix/store/yzjwwp67apgv4rrzpm3g2gz12bqkq7vj-nixos-system-nixos-26.05.4808.569d57850992`
-and remain present in the current `pfiwq5p3...` generation.
+and remain present in the current `gd9ps40...` generation.
 Non-mutating health, auth, scheduler, live-closure, and Observer probes passed;
 the first post-switch tick observed all fixed targets healthy without changing
 task or approval counts. Freeze this lane and select a distinct concrete

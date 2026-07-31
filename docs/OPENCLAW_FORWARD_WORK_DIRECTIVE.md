@@ -66,7 +66,7 @@ same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
 The physical host now runs generation
-`/nix/store/pfiwq5p3z284rpdqdlk35s8c4kg5cmkr-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/gd9ps40vz9qj4ll5sikxb0c0g3xnx7gc-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, bounded local OCR, the
@@ -86,8 +86,8 @@ the incident receipt. A completed reservation stayed closed across Core restart
 and an injected interrupted reservation failed closed without replay. The test
 made no provider call, browser action, physical-host mutation, or generation
 change. It exposed a real hostd defect where stopped-service `MainPID=0` became
-`null`; source now preserves zero as valid evidence, while physical generation
-`pfiwq5p3...` does not yet include that correction.
+`null`; source now preserves zero as valid evidence, and physical generation
+`gd9ps40...` contains that correction.
 
 The work-view lifecycle now makes an already-valid same-authority
 `work_view.prepare` idempotent. Session Manager reads Browser Runtime state and
@@ -157,22 +157,20 @@ one-off call surface.
 
 ## Selected Next Real Capability
 
-The bounded Phase C network connect-attempt slice is complete in source and
-disposable KVM. Its exact `fentry/__sys_connect` closure, Core/Observer route,
-non-zero family proof, and negative data-boundary checks are now release
-evidence. Phase D remains frozen.
+The bounded Phase C network connect-attempt slice is complete in source,
+disposable KVM, and physical generation
+`/nix/store/gd9ps40vz9qj4ll5sikxb0c0g3xnx7gc-nixos-system-nixos-26.05.4808.569d57850992`.
+The fixed helper accepted the physical candidate after marker and protected
+path checks; Core and Observer gates captured 27 validation `curl` events with
+non-zero family and no destination, port, payload, or persistence fields. All
+nine health endpoints and failed-unit checks remained healthy. Phase D and the
+kernel network lane are frozen.
 
-The next actionable gate is deployment of that already-proven closure to the
-physical generation, but this is a privileged mutation and is not authorized by
-route review alone. It requires an explicit operator decision immediately
-before the deployment command. Until then, keep the physical host on
-`pfiwq5p3...`, and do not add VFS capture, destination/port capture, socket
-state, `fexit` outcome hooks, network enforcement, or another kernel variant:
-none has a concrete operator requirement in the current incident loop.
-
-If physical deployment is not authorized, the project remains at a truthful
-source/VM-complete checkpoint and waits for a concrete diagnostic requirement;
-the next route must not be manufactured from the whitepaper inventory.
+No new capability is selected by this deployment. The next work item must be a
+fresh canonical route review tied to a concrete operator gap. Do not add VFS,
+destination/port, socket-state, `fexit`, enforcement, persistence, provider,
+browser-action, or physical-mutation variants merely because they appear in the
+whitepaper inventory.
 
 ## Governing Vision
 

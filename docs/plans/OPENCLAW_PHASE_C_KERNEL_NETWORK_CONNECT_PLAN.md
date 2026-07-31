@@ -1,7 +1,7 @@
 # Phase C Kernel Network Connect Observation Plan
 
-Status: source implementation, closure validation, focused tests, and
-disposable-KVM acceptance complete; physical deployment deferred, 2026-07-31
+Status: source implementation, closure validation, focused tests,
+disposable-KVM acceptance, and physical deployment complete, 2026-07-31
 
 ## Purpose
 
@@ -18,9 +18,10 @@ only; it is not a firewall, network policy engine, or packet capture path.
   continuity summary for recent connect attempts.
 - Privilege boundary: system-sense receives only `CAP_BPF` and `CAP_PERFMON`.
   The probe does not run as root and does not widen hostd authority.
-- Physical boundary: the source and disposable KVM gate are evidence only. No
-  physical generation switch, reboot, sudo invocation, or host mutation is part
-  of this slice.
+- Physical boundary: the exact candidate was activated through the fixed,
+  passwordless developer-generation helper after explicit operator
+  authorization. No reboot, rollback, network enforcement, or hostd mutation
+  is part of this slice.
 
 ## Implementation Contract
 
@@ -61,11 +62,14 @@ only; it is not a firewall, network policy engine, or packet capture path.
   family, verifies the CAP_BPF/CAP_PERFMON service boundary, checks the Core and
   Observer readbacks, and proves no destination or port leakage.
 - `dev-openclaw-kernel-network-connect-capture-check.sh` and its Observer pair
-  are the installed-host checks for a future explicitly authorized deployment.
+  are the installed-host checks used for the authorized physical deployment.
+  The final physical run captured 27 validation `curl` events through both
+  Core and Observer, with family counts present and no destination, port,
+  payload, or persistence fields.
 
 ## Deliberately Deferred
 
-- physical generation activation or rollback;
+- physical generation rollback;
 - network destination, port, address-byte, socket-state, or payload capture;
 - network blocking, policy enforcement, firewall changes, or arbitrary probes;
 - persistent event black-box storage and automatic policy/action execution;
@@ -74,11 +78,12 @@ only; it is not a firewall, network policy engine, or packet capture path.
 
 ## Closure
 
-The network connect-attempt capability is complete as a source and disposable
-VM slice. The post-closure route review selected deployment of the exact
-closure to the physical generation as the next actionable gate, but that gate
-requires an explicit operator mutation decision and has not been executed.
-Until then, do not add another kernel hook or enforcement variant without a
-concrete operator need. VFS capture, destination/port capture, socket-state
-capture, `fexit` outcome hooks, enforcement, persistence, provider egress, and
-host mutation remain deferred.
+The network connect-attempt capability is complete as a source, disposable-VM,
+and physical-host slice. Candidate
+`/nix/store/gd9ps40vz9qj4ll5sikxb0c0g3xnx7gc-nixos-system-nixos-26.05.4808.569d57850992`
+passed the fixed helper marker and protected-path checks, was activated without
+reboot, and left all nine health endpoints and failed-unit checks healthy.
+Freeze this lane. VFS capture, destination/port capture, socket-state capture,
+`fexit` outcome hooks, enforcement, persistence, provider egress, physical
+rollback, and host mutation remain deferred until a concrete operator need is
+selected.
