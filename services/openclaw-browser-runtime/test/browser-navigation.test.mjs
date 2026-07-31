@@ -25,6 +25,21 @@ test("bounded browser navigation rejects credentials, non-network schemes, and o
   );
 });
 
+test("bounded browser navigation allows only an exact fixed loopback fixture URL", async () => {
+  const fixture = "http://127.0.0.1:4103/fixtures/semantic-submit";
+  const options = { localFixtureUrls: [fixture] };
+  assert.equal(normaliseBoundedBrowserUrl(fixture, options), fixture);
+  assert.equal(await validateBoundedBrowserUrl(fixture, options), fixture);
+  for (const rejected of [
+    "http://127.0.0.1:4103/fixtures/semantic-submit?value=secret",
+    "http://127.0.0.1:4103/fixtures/semantic-submit/complete",
+    "http://127.0.0.1:4104/fixtures/semantic-submit",
+    "http://127.0.0.1:4103/internal",
+  ]) {
+    assert.throws(() => normaliseBoundedBrowserUrl(rejected, options), /private/u);
+  }
+});
+
 test("browser network configuration is explicit and loopback-only", async () => {
   assert.equal(normaliseBoundedBrowserHttpProxy("http://127.0.0.1:7897"), "http://127.0.0.1:7897/");
   assert.equal(normaliseBoundedBrowserDohUrl("https://doh.pub/dns-query"), "https://doh.pub/dns-query");

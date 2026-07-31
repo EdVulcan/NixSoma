@@ -26,6 +26,7 @@ state-settling	dev-state-settling-check.sh	Session/browser/screen first-frame se
 ai-bounded-run-live	dev-ai-bounded-run-live-check.sh	Physical task-bound two-step AI workspace run with verified-scroll-only continuation
 ai-workspace-assessment-live	dev-ai-workspace-assessment-live-check.sh	Physical task-bound read-only AI workspace completion assessment with zero actions or task mutation
 ai-workspace-assessment-acceptance-live	dev-ai-workspace-assessment-acceptance-live-check.sh	Physical explicit operator acceptance of one exact verified-complete workspace assessment before task closure
+ai-workspace-semantic-submit-live	dev-ai-workspace-semantic-submit-live-check.sh	Physical exact type-receipt-bound semantic submit against the fixed local form with visible transition, no replay, and no plaintext persistence
 ai-workspace-reviewed-cycle-live	dev-ai-workspace-reviewed-cycle-live-check.sh	Physical bounded task run, read-only assessment, unchanged pre-acceptance task, and explicit acceptance through one exact outer receipt
 ai-workspace-operator-click-live	dev-ai-workspace-operator-click-live-check.sh	Physical authenticated one-shot click through the Observer projection with exact native frame, active-surface receipt, and zero provider calls
 ai-workspace-operator-type-live	dev-ai-workspace-operator-type-live-check.sh	Physical authenticated short write-only native type through the Observer projection with exact active-surface receipt, local visual verification, and zero provider calls

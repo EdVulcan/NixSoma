@@ -20,10 +20,13 @@ function boundedString(value, maxLength) {
   return text ? text.slice(0, maxLength) : null;
 }
 
-function boundedUrl(value, { allowLocalFixtureUrls = false } = {}) {
+function boundedUrl(value, {
+  allowLocalFixtureUrls = false,
+  localFixtureUrls = [],
+} = {}) {
   if (!value) return null;
   try {
-    return normaliseBoundedBrowserUrl(value, { allowLocalFixtureUrls });
+    return normaliseBoundedBrowserUrl(value, { allowLocalFixtureUrls, localFixtureUrls });
   } catch {
     return null;
   }
@@ -81,6 +84,7 @@ export function createBrowserWorkspaceStore({
   stateFilePath,
   now = () => new Date().toISOString(),
   allowLocalFixtureUrls = false,
+  localFixtureUrls = [],
 } = {}) {
   if (typeof stateFilePath !== "string" || !stateFilePath.trim()) {
     throw new Error("Browser workspace store requires a state file path.");
@@ -93,7 +97,7 @@ export function createBrowserWorkspaceStore({
         throw new Error("Browser workspace intent exceeds the bounded state size.");
       }
       const parsed = JSON.parse(readFileSync(targetPath, "utf8"));
-      const intent = normalizePersistedIntent(parsed, { allowLocalFixtureUrls });
+      const intent = normalizePersistedIntent(parsed, { allowLocalFixtureUrls, localFixtureUrls });
       return {
         restored: true,
         status: "restored_requires_explicit_prepare",
@@ -113,7 +117,7 @@ export function createBrowserWorkspaceStore({
   }
 
   function persist(browserState) {
-    const intent = buildWorkspaceIntent(browserState, now, { allowLocalFixtureUrls });
+    const intent = buildWorkspaceIntent(browserState, now, { allowLocalFixtureUrls, localFixtureUrls });
     const serialized = `${JSON.stringify(intent, null, 2)}\n`;
     if (Buffer.byteLength(serialized, "utf8") > MAX_STATE_BYTES) {
       throw new Error("Browser workspace intent exceeds the bounded state size.");

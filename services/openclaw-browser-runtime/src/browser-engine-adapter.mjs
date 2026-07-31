@@ -51,6 +51,7 @@ export function createBrowserEngineAdapter({
   puppeteerApi = puppeteer,
   navigationTimeoutMs = 10_000,
   allowLocalFixtureUrls = false,
+  localFixtureUrls = [],
   urlLookup,
   browserProxy = null,
   graphicalSessionBinding = null,
@@ -168,6 +169,7 @@ export function createBrowserEngineAdapter({
           }
           await validateBoundedBrowserUrl(request.url(), {
             allowLocalFixtureUrls,
+            localFixtureUrls,
             ...(urlLookup ? { lookup: urlLookup } : {}),
           });
           request.continue();
@@ -268,6 +270,7 @@ export function createBrowserEngineAdapter({
   async function navigatePage(page, url) {
     const safeUrl = await validateBoundedBrowserUrl(url, {
       allowLocalFixtureUrls,
+      localFixtureUrls,
       ...(urlLookup ? { lookup: urlLookup } : {}),
     });
     await page.goto(safeUrl, { waitUntil: "domcontentloaded", timeout: navigationTimeoutMs });

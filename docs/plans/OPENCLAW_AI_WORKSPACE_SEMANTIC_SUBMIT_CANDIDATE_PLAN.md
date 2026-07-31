@@ -2,9 +2,10 @@
 
 Updated: 2026-07-31
 
-Status: source implemented and locally validated; deterministic physical
-acceptance remains pending explicit authorization. The implementation adds one
-receipt-bound capability id and reuses the existing semantic click actuator.
+Status: physically accepted and frozen in generation `5zlz2s6z...`. The
+implementation adds one receipt-bound capability id, reuses the existing
+semantic click actuator, and exposes one exact Browser Runtime-owned local form
+fixture without allowing arbitrary loopback navigation.
 
 ## User Capability
 
@@ -63,9 +64,29 @@ Submit control, sends no ordinal or input text, and clears the receipt after the
 attempt.
 
 Focused Core/runtime tests, complete Core and Observer suites, both builds,
-workspace typecheck/tests, and source-level closure wiring have passed. This is
-source evidence only: no provider call, browser action, deployment, generation
-switch, or physical acceptance is claimed by this record.
+workspace typecheck/tests, and source-level closure wiring passed before
+deployment.
+
+## Physical Acceptance Record
+
+Generation
+`/nix/store/5zlz2s6zbcs5mhbmaskpl6njnsn7kl14-nixos-system-nixos-26.05.4808.569d57850992`
+physically accepted task `d1efe1b7-104c-47d2-b6e5-a83dc632dc02` through
+`dev-ai-workspace-semantic-submit-live-check.sh`. The fixed URL
+`http://127.0.0.1:4103/fixtures/semantic-submit` is the only production local
+fixture URL admitted by Browser Runtime; adjacent paths, query variants, and
+other ports remain blocked. The fixture prevents form network submission,
+clears its input in browser memory, and exposes a disabled `Submission complete`
+semantic control after activation.
+
+The physical run executed one verified `type_item` and one receipt-bound
+`click_item`, with two provider calls and two actions total. The exact replay was
+rejected before provider or actuator contact. Prior-type receipt binding,
+submit-target binding, post-action verification, and completion audit all
+matched; the task remained unchanged, the canary was absent from durable
+readbacks, the browser profile filesystem was tmpfs, all nine health endpoints
+were healthy, all relevant service restart counters remained zero, and both
+system and user failed-unit sets were empty.
 
 ## Required Reuse And Binding
 
@@ -106,9 +127,9 @@ The stop condition is one deterministic real-browser form workflow that proves:
   checks, service health, failed-unit, restart-count, and no-repeat evidence
   pass at the level required by the eventual implementation.
 
-Prefer a deterministic fixed Workbench form for the physical gate. A public
-form may supplement that proof when networking is healthy, but external service
-availability must not define product correctness.
+The deterministic Browser Runtime-owned form is the canonical physical gate. A
+public form may supplement that proof when networking is healthy, but external
+service availability does not define product correctness.
 
 ## Explicitly Deferred
 

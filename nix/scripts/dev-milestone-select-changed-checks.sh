@@ -378,6 +378,55 @@ const aiWorkspaceLocalOcrSlice = changedFiles.length > 0
   && changedFiles.every((file) => aiWorkspaceLocalOcrFiles.has(file))
   && changedFiles.some((file) =>
     file === "services/openclaw-core/src/capability-runtime-ai-workspace-local-ocr.mjs");
+const aiWorkspaceSemanticSubmitFiles = new Set([
+  "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
+  "apps/observer-ui/src/client-script-runtime-actions.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-semantic-submit.mjs",
+  "apps/observer-ui/src/observer-panel-ai-work-view.mjs",
+  "apps/observer-ui/test/ai-workspace-semantic-submit.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md",
+  "docs/plans/OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md",
+  "docs/plans/README.md",
+  "nix/packages/observer-ui.nix",
+  "nix/packages/openclaw-browser-runtime.nix",
+  "nix/scripts/dev-ai-workspace-semantic-submit-live-check.sh",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-checks.tsv",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "services/openclaw-browser-runtime/src/browser-engine-adapter.mjs",
+  "services/openclaw-browser-runtime/src/browser-navigation.mjs",
+  "services/openclaw-browser-runtime/src/browser-semantic-submit-fixture.mjs",
+  "services/openclaw-browser-runtime/src/browser-workspace-store.mjs",
+  "services/openclaw-browser-runtime/src/server.mjs",
+  "services/openclaw-browser-runtime/test/browser-navigation.test.mjs",
+  "services/openclaw-browser-runtime/test/browser-semantic-submit-fixture.test.mjs",
+  "services/openclaw-browser-runtime/test/browser-workspace-store.test.mjs",
+  "services/openclaw-core/src/ai-workspace-run-coordinator.mjs",
+  "services/openclaw-core/src/ai-workspace-runtime.mjs",
+  "services/openclaw-core/src/ai-workspace-semantic-click.mjs",
+  "services/openclaw-core/src/ai-workspace-semantic-submit-policy.mjs",
+  "services/openclaw-core/src/ai-workspace-single-step.mjs",
+  "services/openclaw-core/src/capability-descriptors.mjs",
+  "services/openclaw-core/src/capability-runtime-ai-workspace-semantic-submit.mjs",
+  "services/openclaw-core/src/capability-runtime-ai-workspace-single-step.mjs",
+  "services/openclaw-core/src/capability-runtime.mjs",
+  "services/openclaw-core/src/plan-builder.mjs",
+  "services/openclaw-core/test/ai-workspace-run-coordinator.test.mjs",
+  "services/openclaw-core/test/ai-workspace-semantic-submit-policy.test.mjs",
+  "services/openclaw-core/test/ai-workspace-semantic-submit.test.mjs",
+  "services/openclaw-core/test/ai-workspace-single-step.test.mjs",
+  "services/openclaw-core/test/capability-runtime.test.mjs",
+]);
+const aiWorkspaceSemanticSubmitSlice = changedFiles.length > 0
+  && changedFiles.every((file) => aiWorkspaceSemanticSubmitFiles.has(file))
+  && changedFiles.some((file) =>
+    file === "services/openclaw-core/src/capability-runtime-ai-workspace-semantic-submit.mjs"
+      || file === "services/openclaw-browser-runtime/src/browser-semantic-submit-fixture.mjs"
+      || file === "nix/scripts/dev-ai-workspace-semantic-submit-live-check.sh");
 
 function physicalScriptsForManifestRow(phase, slug, forceShort = false) {
   const legacy = {
@@ -1183,6 +1232,15 @@ function selectSourceHeuristics(file) {
 }
 
 for (const file of changedFiles) {
+  if (aiWorkspaceSemanticSubmitSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("ai-workspace-semantic-submit-live");
+    continue;
+  }
   if (aiWorkspaceOperatorTypeSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");

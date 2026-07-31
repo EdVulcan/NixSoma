@@ -29,6 +29,10 @@ import { createBrowserEngineAdapter } from "./browser-engine-adapter.mjs";
 import { createBrowserGraphicalSessionBinding } from "./browser-graphical-session-binding.mjs";
 import { createBrowserRuntimeAuthenticator } from "./browser-runtime-auth.mjs";
 import { parseBrowserCaptureQuery } from "./browser-capture-query.mjs";
+import {
+  buildBrowserSemanticSubmitFixtureUrl,
+  serveBrowserSemanticSubmitFixture,
+} from "./browser-semantic-submit-fixture.mjs";
 
 
 const host = process.env.OPENCLAW_BROWSER_RUNTIME_HOST ?? "127.0.0.1";
@@ -39,6 +43,8 @@ const stateFilePath = process.env.OPENCLAW_BROWSER_RUNTIME_STATE_FILE ?? `/tmp/o
 const engineMode = process.env.OPENCLAW_BROWSER_ENGINE_MODE ?? "simulated";
 const engineProfileDirectory = process.env.OPENCLAW_BROWSER_PROFILE_DIR ?? `/tmp/openclaw-browser-profile-${port}`;
 const allowLocalFixtureUrls = process.env.OPENCLAW_BROWSER_ALLOW_LOCAL_FIXTURES === "1";
+const semanticSubmitFixtureUrl = buildBrowserSemanticSubmitFixtureUrl({ host, port });
+const localFixtureUrls = [semanticSubmitFixtureUrl];
 const browserHttpProxy = process.env.OPENCLAW_BROWSER_HTTP_PROXY ?? "";
 const browserDohUrl = process.env.OPENCLAW_BROWSER_DOH_URL ?? "";
 const browserUrlLookup = createBoundedBrowserHostnameLookup({
@@ -65,7 +71,11 @@ if (!["firefox", "simulated"].includes(engineMode)) {
 
 const publishEvent = createEventPublisher(eventHubUrl, "openclaw-browser-runtime");
 
-const workspaceStore = createBrowserWorkspaceStore({ stateFilePath, allowLocalFixtureUrls });
+const workspaceStore = createBrowserWorkspaceStore({
+  stateFilePath,
+  allowLocalFixtureUrls,
+  localFixtureUrls,
+});
 const restoredWorkspace = workspaceStore.restore();
 const restoredIntent = restoredWorkspace.intent?.workspace ?? null;
 let browserEngine = null;
@@ -110,6 +120,7 @@ if (engineMode === "firefox") {
     profileDirectory: engineProfileDirectory,
     browserFamily: "firefox",
     allowLocalFixtureUrls,
+    localFixtureUrls,
     urlLookup: browserUrlLookup,
     browserProxy: browserHttpProxy,
     graphicalSessionBinding: browserGraphicalSessionBinding,
@@ -378,6 +389,8 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (serveBrowserSemanticSubmitFixture(req, res, requestUrl)) return;
+
   if (requestUrl.pathname !== "/health") {
     try {
       browserRuntimeAuth.authenticateRequest(req);
@@ -417,10 +430,14 @@ const server = http.createServer(async (req, res) => {
       const body = await readJsonBody(req);
       const url = normaliseBoundedBrowserUrl(
         typeof body.url === "string" && body.url.trim() ? body.url.trim() : "https://example.com",
-        { allowLocalFixtureUrls, lookup: browserUrlLookup },
+        { allowLocalFixtureUrls, localFixtureUrls },
       );
       const safeUrl = browserEngine
-        ? await validateBoundedBrowserUrl(url, { allowLocalFixtureUrls, lookup: browserUrlLookup })
+        ? await validateBoundedBrowserUrl(url, {
+            allowLocalFixtureUrls,
+            localFixtureUrls,
+            lookup: browserUrlLookup,
+          })
         : url;
       const requestedSessionId = typeof body.sessionId === "string" && body.sessionId.trim()
         ? body.sessionId.trim()
@@ -435,6 +452,7 @@ const server = http.createServer(async (req, res) => {
       const safeRestoreUrls = browserEngine
         ? await Promise.all(restoreUrls.map((restoreUrl) => validateBoundedBrowserUrl(restoreUrl, {
           allowLocalFixtureUrls,
+          localFixtureUrls,
           lookup: browserUrlLookup,
         })))
         : restoreUrls;
@@ -500,9 +518,16 @@ const server = http.createServer(async (req, res) => {
       }
 
       const body = await readJsonBody(req);
-      const url = normaliseBoundedBrowserUrl(body.url ?? "https://example.com/docs", { allowLocalFixtureUrls });
+      const url = normaliseBoundedBrowserUrl(body.url ?? "https://example.com/docs", {
+        allowLocalFixtureUrls,
+        localFixtureUrls,
+      });
       const safeUrl = browserEngine
-        ? await validateBoundedBrowserUrl(url, { allowLocalFixtureUrls, lookup: browserUrlLookup })
+        ? await validateBoundedBrowserUrl(url, {
+            allowLocalFixtureUrls,
+            localFixtureUrls,
+            lookup: browserUrlLookup,
+          })
         : url;
       const mediation = validateBrowserActionMediation(body);
       if (!mediation.accepted) {

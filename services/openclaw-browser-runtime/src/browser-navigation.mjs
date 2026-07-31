@@ -29,6 +29,22 @@ function isLocalFixtureHost(hostname) {
   return LOCAL_FIXTURE_HOSTS.has(normalised) || normalised.endsWith(".localhost");
 }
 
+function isAllowedLocalFixtureUrl(url, localFixtureUrls = []) {
+  if (!isLocalFixtureHost(url.hostname) || !Array.isArray(localFixtureUrls)) return false;
+  return localFixtureUrls.some((candidate) => {
+    try {
+      const allowed = new URL(candidate);
+      return ["http:", "https:"].includes(allowed.protocol)
+        && !allowed.username
+        && !allowed.password
+        && isLocalFixtureHost(allowed.hostname)
+        && allowed.href === url.href;
+    } catch {
+      return false;
+    }
+  });
+}
+
 function ipv4ToOctets(address) {
   const octets = address.split(".").map((part) => Number.parseInt(part, 10));
   return octets.length === 4 && octets.every((part) => Number.isInteger(part) && part >= 0 && part <= 255)
@@ -90,9 +106,13 @@ function isBlockedIp(address) {
     || prefix(32) === 0x20010db8n;
 }
 
-function assertSafeBrowserHost(url, { allowLocalFixtureUrls = false } = {}) {
+function assertSafeBrowserHost(url, {
+  allowLocalFixtureUrls = false,
+  localFixtureUrls = [],
+} = {}) {
   const hostname = normaliseHostname(url.hostname);
-  if (allowLocalFixtureUrls && isLocalFixtureHost(hostname)) {
+  if ((allowLocalFixtureUrls && isLocalFixtureHost(hostname))
+    || isAllowedLocalFixtureUrl(url, localFixtureUrls)) {
     return;
   }
   if (isLocalFixtureHost(hostname) || BLOCKED_HOSTNAMES.has(hostname) || hostname.endsWith(".local") || isBlockedIp(hostname)) {
@@ -356,10 +376,15 @@ export function createBoundedBrowserHostnameLookup({ dohUrl = null, httpProxy = 
   });
 }
 
-export async function validateBoundedBrowserUrl(value, { allowLocalFixtureUrls = false, lookup = defaultLookup } = {}) {
-  const href = normaliseBoundedBrowserUrl(value, { allowLocalFixtureUrls });
+export async function validateBoundedBrowserUrl(value, {
+  allowLocalFixtureUrls = false,
+  localFixtureUrls = [],
+  lookup = defaultLookup,
+} = {}) {
+  const href = normaliseBoundedBrowserUrl(value, { allowLocalFixtureUrls, localFixtureUrls });
   const url = new URL(href);
-  if (allowLocalFixtureUrls && isLocalFixtureHost(url.hostname)) {
+  if ((allowLocalFixtureUrls && isLocalFixtureHost(url.hostname))
+    || isAllowedLocalFixtureUrl(url, localFixtureUrls)) {
     return href;
   }
 

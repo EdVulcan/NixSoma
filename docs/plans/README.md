@@ -22,7 +22,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md`](./OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md) | Operator identity, per-service credentials, and execution grants. |
 | [`OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md`](./OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Fixed Level 3 restart owners, bounded journal diagnosis, resource-pressure sensing, and declarative cgroup envelopes. |
 | [`OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md`](./OPENCLAW_SYSTEMD_BOOT_EVIDENCE_PLAN.md) | Accepted and frozen bounded read-only boot/restart classification without journal payloads or recovery authority. |
-| [`OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md`](./OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md) | Source-implemented Level 4 receipt-bound semantic submit transition; deterministic physical acceptance remains pending. |
+| [`OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md`](./OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md) | Physically accepted and frozen Level 4 receipt-bound semantic submit transition with one exact local fixture URL. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_AI_HANDOFF_PLAN.md) | Exact request-bound, guidance-only AI diagnosis from a compact terminal repair receipt. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md) | Local target-specific outcome absorption and advisory recall from verified incident receipts. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Up to three matching-target learned patterns inside the existing exact approved diagnosis request. |
@@ -41,7 +41,7 @@ The kernel whitepaper remains the long-horizon authority:
 ## Current Route
 
 The only current deployment baseline is physical generation
-`/nix/store/1xh4x8ls64yzl919j2bssd9ilms98knv-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/5zlz2s6zbcs5mhbmaskpl6njnsn7kl14-nixos-system-nixos-26.05.4808.569d57850992`.
 Generation-specific `active` wording later in this section records the state at
 each historical checkpoint and does not override this baseline.
 
@@ -51,7 +51,7 @@ fixed observation, incident creation, automatic triage, pending repair
 promotion, explicit approval, one native hostd restart, target-specific
 post-health, and no replay for either completed or interrupted reservations.
 It found and fixed stopped-target `MainPID=0` handling. Current physical
-generation `1xh4x8ls...` contains that hostd correction.
+generation `5zlz2s6z...` contains that hostd correction.
 
 The Phase D controlled activation and rollback path now passes its disposable-VM
 release gate. `openclaw-declarative-evolution-activation-vm` proves one
@@ -87,12 +87,14 @@ or host mutation occurred. Freeze this lane.
 
 The task-bound semantic form activation/submit workflow in
 [`OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md`](./OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md).
-is implemented in source after the duplicate-capability audit retained the
+is implemented after the duplicate-capability audit retained the
 existing `click_item` actuator and added only the missing exact type-receipt
-lifecycle binding. Local Core, Observer, build, typecheck, and workspace tests
-are green. The current route is its explicitly authorized deterministic
-Workbench physical acceptance; do not open another provider/readiness wrapper,
-generic keyboard/action lane, or subsequent capability before it closes.
+lifecycle binding. Generation `5zlz2s6z...` physically accepted the fixed local
+Browser Runtime form with two provider calls, two actions, a visible completion
+transition, exact replay rejection before provider contact, no plaintext
+persistence, no task mutation, healthy services, and zero failed units. Freeze
+this lane. The current route is a fresh canonical review; do not open another
+provider/readiness wrapper, generic keyboard/action lane, or submit variant.
 
 ### Historical Route Evidence
 

@@ -83,3 +83,23 @@ test("browser workspace store retains only the newest bounded tab set", (t) => {
   assert.equal(tabs[0].id, "tab-8");
   assert.equal(tabs[31].id, "tab-39");
 });
+
+test("browser workspace store restores only the exact fixed local fixture", (t) => {
+  const targetPath = statePath(t);
+  const fixture = "http://127.0.0.1:4103/fixtures/semantic-submit";
+  const store = createBrowserWorkspaceStore({
+    stateFilePath: targetPath,
+    localFixtureUrls: [fixture],
+  });
+  store.persist({
+    running: true,
+    activeUrl: fixture,
+    tabs: [
+      { id: "fixture", url: fixture },
+      { id: "other-loopback", url: "http://127.0.0.1:4103/internal" },
+    ],
+  });
+  const restored = store.restore();
+  assert.equal(restored.intent.workspace.activeUrl, fixture);
+  assert.deepEqual(restored.intent.workspace.tabs.map((tab) => tab.url), [fixture]);
+});

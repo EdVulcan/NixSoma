@@ -21,6 +21,7 @@ mkOpenClawNpmRuntimeClosure {
     ../../services/openclaw-browser-runtime/src/browser-graphical-session-binding.mjs
     ../../services/openclaw-browser-runtime/src/browser-navigation.mjs
     ../../services/openclaw-browser-runtime/src/browser-runtime-auth.mjs
+    ../../services/openclaw-browser-runtime/src/browser-semantic-submit-fixture.mjs
     ../../services/openclaw-browser-runtime/src/browser-workspace-store.mjs
     ../../services/openclaw-browser-runtime/src/server.mjs
     ../../packages/shared-events/src/event-factory.mjs

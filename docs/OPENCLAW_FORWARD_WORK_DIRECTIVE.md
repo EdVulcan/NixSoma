@@ -75,7 +75,7 @@ nerves, physical Phase D evolution, or richer native-workspace lifecycle that
 keep the second number lower.
 
 The physical host now runs generation
-`/nix/store/1xh4x8ls64yzl919j2bssd9ilms98knv-nixos-system-nixos-26.05.4808.569d57850992`.
+`/nix/store/5zlz2s6zbcs5mhbmaskpl6njnsn7kl14-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, bounded local OCR, the
@@ -96,7 +96,7 @@ and an injected interrupted reservation failed closed without replay. The test
 made no provider call, browser action, physical-host mutation, or generation
 change. It exposed a real hostd defect where stopped-service `MainPID=0` became
 `null`; source now preserves zero as valid evidence, and physical generation
-`1xh4x8ls...` contains that correction.
+`5zlz2s6z...` contains that correction.
 
 The work-view lifecycle now makes an already-valid same-authority
 `work_view.prepare` idempotent. Session Manager reads Browser Runtime state and
@@ -128,10 +128,10 @@ and non-loopback proxy hosts. The semantic type race exposed by provider latency
 is also corrected: when a referenced frame expires, Browser Runtime reuses the
 exact cached frame/inventory before taking one replacement capture, preventing a
 false `semantic_target_inventory_stale` result. The active generation is
-`/nix/store/1xh4x8ls64yzl919j2bssd9ilms98knv-nixos-system-nixos-26.05.4808.569d57850992`
-(generation 100; generation 99 was
-`/nix/store/d7lxwpmj6kh4p6vgrw377lbqiq3cfrjc-nixos-system-nixos-26.05.4808.569d57850992`).
-Focused Browser Runtime, Screen Act, and Core semantic tests pass 27/27,
+`/nix/store/5zlz2s6zbcs5mhbmaskpl6njnsn7kl14-nixos-system-nixos-26.05.4808.569d57850992`
+(generation 101; generation 100 was
+`/nix/store/1xh4x8ls64yzl919j2bssd9ilms98knv-nixos-system-nixos-26.05.4808.569d57850992`).
+Focused Browser Runtime, Screen Act, and Core semantic tests pass 31/31,
 8/8, and 14/14; the body configuration check also passes. A proxy-backed
 bounded run proved two task-bound provider calls, one write-only semantic type,
 one verified continuation, no plaintext persistence, and no automatic repeat.
@@ -212,18 +212,20 @@ no later action, one explicit operator confirmation, and one provider decision
 limited to `no_op` or an enabled Submit/Send/Continue/Confirm button. Receipt
 consumption survives Core restart after successful authorization audit, and a
 malformed request does not consume it. Observer retains the receipt in browser
-memory only and sends neither ordinal nor text.
+memory only and sends neither ordinal nor text. Generation `5zlz2s6z...` now
+physically accepts the lane against one exact Browser Runtime-owned local form
+URL; arbitrary loopback paths remain blocked.
 
-The next gate is an explicitly authorized deterministic Workbench physical
-acceptance that closes one real form lifecycle with a visible verified
-transition and proves no replay, no plaintext, no task mutation, durable audit,
-and service health. Do not select a subsequent Level 4 slice before that gate
-closes. This workflow must not add generic Enter, arbitrary keyboard input, caller
-coordinates, automatic repetition, an open loop, arbitrary tab/window/process
-control, automatic task completion, another provider/readiness wrapper, or host
-mutation. Do not add VFS, destination/port, socket-state, `fexit`, enforcement,
-persistence, or provider variants merely because they appear in the whitepaper
-inventory.
+The physical gate executed one verified type and one receipt-bound submit click
+with two provider calls and two actions. It observed `Submission complete`,
+rejected exact replay before provider contact, retained no plaintext canary,
+left task state unchanged, matched durable authorization/completion audits, kept
+the browser profile on tmpfs, and left nine health endpoints, failed-unit sets,
+and restart counters healthy. Freeze this lane. The next action is a fresh
+canonical route review, not generic Enter, arbitrary keyboard input, caller
+coordinates, repetition, an open loop, arbitrary tab/window/process control,
+automatic task completion, another provider/readiness wrapper, host mutation,
+or another whitepaper inventory variant.
 
 ## Governing Vision
 
