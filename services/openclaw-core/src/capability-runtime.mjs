@@ -2,6 +2,12 @@ import { randomUUID } from "node:crypto";
 
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { buildBaseCapabilities } from "./capability-descriptors.mjs";
+import {
+  buildPrivilegedCapabilityDescriptors,
+  buildPrivilegedCapabilityPolicy,
+  PRIVILEGED_CAPABILITY_DEFERRED_REASON,
+  isPrivilegedCapability,
+} from "./privileged-capability-boundary.mjs";
 import { createEngineeringToolSurfaceCapabilityHandlers } from "./capability-runtime-engineering-tool-surface.mjs";
 import { createEngineeringReadSearchCapabilityHandlers } from "./capability-runtime-engineering-read-search.mjs";
 import { createEngineeringLspCapabilityHandlers } from "./capability-runtime-engineering-lsp.mjs";
@@ -301,18 +307,21 @@ export function createCapabilityRuntime(deps) {
   });
 
   function baseCapabilities() {
-    return buildBaseCapabilities({
-      host,
-      port,
-      eventHubUrl,
-      sessionManagerUrl,
-      browserRuntimeUrl,
-      screenSenseUrl,
-      screenActUrl,
-      systemSenseUrl,
-      systemHealUrl,
-      CROSS_BOUNDARY_INTENTS,
-    });
+    return [
+      ...buildBaseCapabilities({
+        host,
+        port,
+        eventHubUrl,
+        sessionManagerUrl,
+        browserRuntimeUrl,
+        screenSenseUrl,
+        screenActUrl,
+        systemSenseUrl,
+        systemHealUrl,
+        CROSS_BOUNDARY_INTENTS,
+      }),
+      ...buildPrivilegedCapabilityDescriptors({ host, port }),
+    ];
   }
 
   function capabilityById(capabilityId) {
@@ -436,6 +445,7 @@ export function createCapabilityRuntime(deps) {
       degraded: 0,
       offline: 0,
       unknown: 0,
+      deferred: 0,
       requiresApproval: 0,
       byKind: {},
       byRisk: {},
@@ -1331,6 +1341,50 @@ export function createCapabilityRuntime(deps) {
       };
     }
 
+    if (isPrivilegedCapability(capability.id)) {
+      const policy = buildPrivilegedCapabilityPolicy(capability);
+      policy.at = now();
+      const auditRequest = {
+        ...request,
+        params: {},
+      };
+      const invocation = recordCapabilityInvocation({
+        capability,
+        request: auditRequest,
+        policy,
+        invoked: false,
+        blocked: true,
+        reason: PRIVILEGED_CAPABILITY_DEFERRED_REASON,
+        summary: {
+          kind: "privileged_capability_boundary",
+          ok: false,
+          deferred: true,
+          backendCalled: false,
+          hostMutation: false,
+          providerCalled: false,
+        },
+      });
+      await publishEvent(createEventName("capability.blocked"), {
+        invocation,
+        capability,
+        policy,
+        reason: PRIVILEGED_CAPABILITY_DEFERRED_REASON,
+      });
+      return {
+        statusCode: 403,
+        response: {
+          ok: false,
+          invoked: false,
+          blocked: true,
+          error: PRIVILEGED_CAPABILITY_DEFERRED_REASON,
+          reason: PRIVILEGED_CAPABILITY_DEFERRED_REASON,
+          capability,
+          policy,
+          invocation,
+        },
+      };
+    }
+
     let serverApproval = validateCapabilityExecutionApproval({
       capability,
       request,
@@ -1798,6 +1852,18 @@ export function createCapabilityRuntime(deps) {
     const healthEntries = await Promise.all(serviceNames.map(async (service) => [service, await probeServiceHealth(service)]));
     const healthByService = Object.fromEntries(healthEntries);
     const capabilities = baseCapabilities().map((capability) => {
+      if (capability.deferred === true) {
+        return {
+          ...capability,
+          status: "deferred",
+          available: false,
+          health: {
+            ok: false,
+            status: "deferred",
+            detail: PRIVILEGED_CAPABILITY_DEFERRED_REASON,
+          },
+        };
+      }
       const health = healthByService[capability.service] ?? { ok: false, status: "unknown" };
       return {
         ...capability,

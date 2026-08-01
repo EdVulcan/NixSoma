@@ -109,14 +109,31 @@ if (byId["act.browser.current_tab.close"].risk !== "medium"
   throw new Error("browser current-tab close should expose one fixed medium-risk intent");
 }
 
+const privilegedDeferredIds = [
+  "act.host.root",
+  "act.host.mutate",
+  "sense.desktop.capture",
+  "act.desktop.input",
+  "act.process.any",
+  "act.window.any",
+];
+const deferred = capabilities.capabilities.filter((capability) => capability.status === "deferred");
+if (deferred.length !== privilegedDeferredIds.length
+  || privilegedDeferredIds.some((id) => byId[id]?.status !== "deferred"
+    || byId[id]?.available !== false
+    || byId[id]?.governance !== "deferred")) {
+  throw new Error("privileged capability boundaries should remain deferred and unavailable");
+}
+
 const requiredKinds = ["sensor", "actuator", "governance", "memory", "operator", "boundary"];
 for (const kind of requiredKinds) {
   if (!capabilities.summary?.byKind?.[kind]) {
     throw new Error(`capability summary missing kind ${kind}`);
   }
 }
-if ((capabilities.summary?.online ?? 0) < capabilities.capabilities.length) {
-  throw new Error("all services should be online during capability check");
+if ((capabilities.summary?.online ?? 0) < capabilities.capabilities.length - deferred.length
+  || capabilities.summary?.deferred !== deferred.length) {
+  throw new Error("all non-deferred services should be online during capability check");
 }
 if ((capabilities.summary?.requiresApproval ?? 0) < 1) {
   throw new Error("capability summary should count approval-gated capabilities");
@@ -137,6 +154,7 @@ console.log(JSON.stringify({
     mode: capabilities.mode,
     total: capabilities.summary.total,
     online: capabilities.summary.online,
+    deferred: capabilities.summary.deferred,
     kinds: capabilities.summary.byKind,
     risks: capabilities.summary.byRisk,
     governance: capabilities.summary.byGovernance,

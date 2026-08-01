@@ -232,6 +232,12 @@ operatorResumeButton.addEventListener("click", () => {
   });
 });
 
+operatorRecoveryButton.addEventListener("click", () => {
+  recoverInterruptedOperatorTaskFromUi().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 runSelectedReviewedCycleButton.addEventListener("click", () => {
   runSelectedReviewedWorkspaceCycleFromUi().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

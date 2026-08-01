@@ -126,6 +126,13 @@ export function buildNativeEngineeringWorkViewBindDecision({
   const taskWorkView = asObject(task?.workView);
   const existingSession = hasText(taskWorkView.sessionId) ? taskWorkView.sessionId.trim() : null;
   const existingWorkViewId = hasText(taskWorkView.workViewId) ? taskWorkView.workViewId.trim() : null;
+  const trustedBinding = asObject(taskWorkView.trustedBinding);
+  const trustedBindingPresent = trustedBinding.registry === NATIVE_ENGINEERING_WORK_VIEW_BIND_REGISTRY
+    && trustedBinding.mode === "operator_reviewed"
+    && trustedBinding.authorityStatus === "authoritative"
+    && trustedBinding.leaseMatched === true
+    && typeof trustedBinding.boundAt === "string"
+    && Number.isFinite(Date.parse(trustedBinding.boundAt));
   const stateAvailable = readStatus === "available"
     && hasText(parts.session.sessionId)
     && hasText(parts.workView.workViewId);
@@ -155,6 +162,8 @@ export function buildNativeEngineeringWorkViewBindDecision({
     status = "stale_session_binding";
   } else if (existingWorkViewId && !workViewMatched) {
     status = "stale_work_view_binding";
+  } else if (existingSession && existingWorkViewId && sessionMatched && workViewMatched && !trustedBindingPresent) {
+    status = rebind === true ? "ready_to_rebind" : "ready_to_bind";
   } else if (existingSession && existingWorkViewId && sessionMatched && workViewMatched) {
     status = "already_bound";
   }

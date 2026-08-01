@@ -74,6 +74,7 @@ export async function handleOperatorControlRoute({
   postJson,
   sessionManagerUrl,
   operatorRunSessionManager = null,
+  boundedOperatorScheduler = null,
 }) {
   const { tasks, runtimeState, getCurrentTask } = state;
   const {
@@ -96,6 +97,59 @@ export async function handleOperatorControlRoute({
       ok: true,
       operator: buildOperatorState(),
     }, operatorRunSessionManager));
+    return true;
+  }
+
+  if (requestUrl.pathname === "/operator/schedule") {
+    if (!boundedOperatorScheduler) {
+      sendJson(res, 503, { ok: false, error: "Bounded operator scheduling is unavailable." });
+      return true;
+    }
+    if (req.method === "GET") {
+      sendJson(res, 200, {
+        ok: true,
+        scheduler: boundedOperatorScheduler.state(),
+        schedules: boundedOperatorScheduler.listPublic(),
+      });
+      return true;
+    }
+    if (req.method === "POST") {
+      try {
+        const body = await readJsonBody(req);
+        const schedule = boundedOperatorScheduler.arm(body);
+        sendJson(res, 201, { ok: true, schedule, schedules: boundedOperatorScheduler.listPublic() });
+      } catch (error) {
+        sendJson(res, 400, { ok: false, error: error instanceof Error ? error.message : "Invalid schedule request." });
+      }
+      return true;
+    }
+    sendJson(res, 405, { ok: false, error: "Method not allowed." });
+    return true;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/operator/schedule/tick") {
+    if (!boundedOperatorScheduler) {
+      sendJson(res, 503, { ok: false, error: "Bounded operator scheduling is unavailable." });
+      return true;
+    }
+    const result = await boundedOperatorScheduler.tick();
+    sendJson(res, result.ok === false ? 409 : 200, result);
+    return true;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname.startsWith("/operator/schedule/") && requestUrl.pathname.endsWith("/cancel")) {
+    if (!boundedOperatorScheduler) {
+      sendJson(res, 503, { ok: false, error: "Bounded operator scheduling is unavailable." });
+      return true;
+    }
+    const scheduleId = requestUrl.pathname.slice("/operator/schedule/".length, -"/cancel".length);
+    try {
+      const body = await readJsonBody(req);
+      const schedule = boundedOperatorScheduler.cancel(scheduleId, body.confirm === true);
+      sendJson(res, 200, { ok: true, schedule });
+    } catch (error) {
+      sendJson(res, 400, { ok: false, error: error instanceof Error ? error.message : "Invalid schedule cancellation." });
+    }
     return true;
   }
 

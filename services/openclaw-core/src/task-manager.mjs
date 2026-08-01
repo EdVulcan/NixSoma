@@ -438,8 +438,11 @@ function reconcileRuntimeState() {
 function reconcileInterruptedTasksAtStartup() {
   const interruptedTasks = [...tasks.values()].filter((task) => (
     task.status === "running"
-    && task.type === "browser_task"
-    && task.plan?.strategy === "rule-v1"
+    && (
+      (task.type === "browser_task" && task.plan?.strategy === "rule-v1")
+      || hasRecoverableCapabilityPlan(task)
+      || task.executionPhase === "dispatching"
+    )
   ));
 
   for (const task of interruptedTasks) {

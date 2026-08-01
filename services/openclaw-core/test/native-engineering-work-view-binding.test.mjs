@@ -131,6 +131,13 @@ test("operator-reviewed bind is idempotent for the same current session and work
       workView: {
         sessionId: "session-current",
         workViewId: "work-view-primary",
+        trustedBinding: {
+          registry: "openclaw-native-engineering-work-view-bind-v0",
+          mode: "operator_reviewed",
+          authorityStatus: "authoritative",
+          leaseMatched: true,
+          boundAt: "2026-08-01T12:00:00.000Z",
+        },
       },
     },
     workViewState: workViewState(),

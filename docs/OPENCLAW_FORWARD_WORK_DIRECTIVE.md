@@ -105,6 +105,23 @@ retry execution, call a provider, create a task or approval, or mutate the
 host. The continuity contract is recorded in
 `OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md`.
 
+The current six-workpackage checkpoint then closes the next bounded product
+gaps. Core now reconciles in-flight operator dispatch at startup and Observer
+requires explicit recovery before Resume; Level 2 rebind continues through the
+authoritative trusted work-view owner. The controlled long-running slice is a
+finite one-shot schedule of at most 20 steps, default-off and requiring explicit
+arm; it has no automatic repeat, retry, planning, task creation, provider
+authority, or host mutation. The learning slice exposes read-only task-type
+effectiveness aggregates with explicit non-causal and non-policy-influencing
+governance. Finally, `act.host.root`, `act.host.mutate`,
+`sense.desktop.capture`, `act.desktop.input`, `act.process.any`, and
+`act.window.any` are known registry entries that remain deferred/unavailable
+and return HTTP 403 before policy/backend dispatch. See
+`OPENCLAW_SIX_WORKPACKAGES_20260801_PLAN.md` for the contract, evidence, and
+physical deployment rule. After the candidate is deployed, freeze this slice
+and select the next concrete user workflow rather than adding another
+readiness shell.
+
 The memory-to-recommendation provenance continuation is also closed in source.
 The existing task-bound recall receipt remains immutable and provider-only; the
 recommendation link and downstream application receipt may carry only its
@@ -122,8 +139,8 @@ the missing long-running autonomy, durable learning feedback, broader body
 nerves, physical Phase D evolution, or richer native-workspace lifecycle that
 keep the second number lower.
 
-The physical host now runs generation
-`/nix/store/qcv5ggprl82xv75nc8nhkblnb53v759k-nixos-system-nixos-26.05.4808.569d57850992`.
+The physical host now runs generation 107:
+`/nix/store/g3y9p0m9nr38npsyqx13npsvy3mcvcg1-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, bounded local OCR, the
@@ -144,7 +161,7 @@ and an injected interrupted reservation failed closed without replay. The test
 made no provider call, browser action, physical-host mutation, or generation
 change. It exposed a real hostd defect where stopped-service `MainPID=0` became
 `null`; source now preserves zero as valid evidence, and physical generation
-`qcv5ggpr...` contains that correction.
+`g3y9p0...` contains that correction.
 
 The work-view lifecycle now makes an already-valid same-authority
 `work_view.prepare` idempotent. Session Manager reads Browser Runtime state and
@@ -172,16 +189,15 @@ Clash Verge is no longer imported, `cloudProvider.httpProxy` and
 `browserEngine.proxy` are unset, and the paired Browser Runtime DoH setting is
 also unset. Core and Browser Runtime therefore do not depend on a local proxy;
 internal service calls remain direct. The physical generation currently running
-was built before this source change and may retain the old `127.0.0.1:7897`
-service environment until the next explicitly authorized `nixos-rebuild
-switch`; do not treat this source change as deployed before that check. The
-semantic type race exposed by provider latency is also corrected: when a
+includes this source change; the Clash/`127.0.0.1:7897` dependency is absent
+from the deployed Core and Browser Runtime configuration. The semantic type
+race exposed by provider latency is also corrected: when a
 referenced frame expires, Browser Runtime reuses the exact cached
 frame/inventory before taking one replacement capture, preventing a false
 `semantic_target_inventory_stale` result. The active generation is
-`/nix/store/qcv5ggprl82xv75nc8nhkblnb53v759k-nixos-system-nixos-26.05.4808.569d57850992`
-(generation 102; generation 101 was
-`/nix/store/5zlz2s6zbcs5mhbmaskpl6njnsn7kl14-nixos-system-nixos-26.05.4808.569d57850992`).
+`/nix/store/g3y9p0m9nr38npsyqx13npsvy3mcvcg1-nixos-system-nixos-26.05.4808.569d57850992`
+(generation 107; generation 106 was
+`/nix/store/ra0q584jdks0dckgnw869wvs7hjs18ak-nixos-system-nixos-26.05.4808.569d57850992`).
 Focused Browser Runtime, Screen Act, and Core semantic tests pass 31/31,
 8/8, and 14/14; the body configuration check also passes. A proxy-backed
 bounded run proved two task-bound provider calls, one write-only semantic type,

@@ -23,6 +23,7 @@ const MAX_TOKEN_CHARS = 40;
 const MAX_APPLICABILITY_TOKENS = 16;
 const MAX_SOURCE_TASK_ID_CHARS = 120;
 const MAX_NEXT_ACTION_CHARS = 240;
+const MAX_EFFECTIVENESS_GROUPS = 32;
 const STOP_WORDS = new Set([
   "the",
   "and",
@@ -343,6 +344,32 @@ function aggregateFeedback(candidates) {
   };
 }
 
+function effectivenessGroup(taskType, records) {
+  const completed = records.filter((record) => record.outcome === "completed").length;
+  const failed = records.filter((record) => record.outcome === "failed").length;
+  const terminalRecords = completed + failed;
+  const feedback = aggregateFeedback(records.map((record) => ({ record })));
+  const advisoryApplied = records.filter((record) => (
+    record.recommendationOutcomeReceipt?.advisoryApplied === true
+    || record.recommendationOutcomeReceipt?.applicationReceiptHash
+  )).length;
+  return {
+    taskType,
+    terminalRecords,
+    completed,
+    failed,
+    completionRate: terminalRecords > 0
+      ? Number((completed / terminalRecords).toFixed(2))
+      : null,
+    feedbackObservedOutcomes: feedback.observedOutcomes,
+    feedbackCompletionRate: feedback.completionRate,
+    advisoryAppliedRecords: advisoryApplied,
+    status: terminalRecords >= 2 ? "observed" : "insufficient_history",
+    causalAttribution: false,
+    policyInfluence: false,
+  };
+}
+
 function recordSubsequentOutcomeFeedback({ records, task, taskType, outcome, outcomeHash, observedAt }) {
   const sourceTaskId = safeSourceTaskId(task?.id);
   if (!sourceTaskId) return;
@@ -573,8 +600,88 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
     };
   }
 
+  function buildExperienceEffectivenessReadModel({ taskType } = {}) {
+    const selectedTaskType = typeof taskType === "string" && taskType.trim()
+      ? normaliseTaskType(taskType)
+      : null;
+    const grouped = new Map();
+    for (const record of records.values()) {
+      if (selectedTaskType && record.taskType !== selectedTaskType) continue;
+      const entries = grouped.get(record.taskType) ?? [];
+      entries.push(record);
+      grouped.set(record.taskType, entries);
+    }
+    const groups = [...grouped.entries()]
+      .map(([type, typeRecords]) => effectivenessGroup(type, typeRecords))
+      .sort((left, right) => right.terminalRecords - left.terminalRecords
+        || String(left.taskType).localeCompare(String(right.taskType)))
+      .slice(0, MAX_EFFECTIVENESS_GROUPS);
+    const terminalRecords = groups.reduce((total, group) => total + group.terminalRecords, 0);
+    const completed = groups.reduce((total, group) => total + group.completed, 0);
+    const failed = groups.reduce((total, group) => total + group.failed, 0);
+    const generatedAt = now();
+    return {
+      ok: true,
+      registry: "openclaw-native-engineering-experience-effectiveness-v0",
+      mode: "read_only_observed_effectiveness",
+      generatedAt,
+      filter: { taskType: selectedTaskType },
+      groups,
+      summary: {
+        groupCount: groups.length,
+        terminalRecords,
+        completed,
+        failed,
+        completionRate: terminalRecords > 0
+          ? Number((completed / terminalRecords).toFixed(2))
+          : null,
+        status: groups.length > 0 ? "observed" : "empty",
+        causalAttribution: false,
+        policyInfluence: false,
+        automaticRanking: false,
+      },
+      bounds: {
+        maxGroups: MAX_EFFECTIVENESS_GROUPS,
+        sourceRecords: records.size,
+      },
+      governance: {
+        readOnly: true,
+        mutatesRecords: false,
+        changesExecutionPolicy: false,
+        changesRanking: false,
+        createsTask: false,
+        createsApproval: false,
+        executesAction: false,
+        callsProvider: false,
+        networkEgress: false,
+        causalAttribution: false,
+        operatorReviewRequired: true,
+      },
+      deferred: [
+        "automatic ranking",
+        "execution-policy adaptation",
+        "causal attribution",
+        "model training or provider egress",
+      ],
+      auditEvidence: {
+        operation: "engineering_experience_effectiveness_read",
+        generatedAt,
+        contentRecorded: false,
+        summary: {
+          groupCount: groups.length,
+          terminalRecords,
+          completed,
+          failed,
+          causalAttribution: false,
+          policyInfluence: false,
+        },
+      },
+    };
+  }
+
   return {
     recordTaskExperience,
     buildExperienceMemoryReadModel,
+    buildExperienceEffectivenessReadModel,
   };
 }

@@ -63,6 +63,49 @@ test("startup turns an unfinished run into an explicitly resumable interruption"
   assert.equal(restored[0].resumeAvailable, true);
 });
 
+test("an interrupted task blocks Resume until the operator creates an explicit recovery task", () => {
+  const harness = createHarness();
+  const session = harness.manager.create({ maxSteps: 2 });
+  harness.manager.markTaskStarted(session.id, { id: "task-in-flight" });
+  harness.manager.reconcileInterruptedAtStartup();
+
+  const interrupted = harness.manager.markTaskInterrupted(
+    { id: "task-in-flight", status: "failed", executionPhase: "acting_on_target" },
+    { recoverable: true },
+  )[0];
+  assert.equal(interrupted.recovery.required, true);
+  assert.equal(interrupted.recovery.recoverable, true);
+  assert.equal(interrupted.resumeAvailable, false);
+  assert.throws(
+    () => harness.manager.beginResume(session.id),
+    /requires explicit task recovery first/u,
+  );
+
+  const recovered = harness.manager.markTaskRecovered("task-in-flight", "task-recovery")[0];
+  assert.equal(recovered.recovery.required, false);
+  assert.equal(recovered.recovery.recoveredTaskId, "task-recovery");
+  assert.equal(recovered.resumeAvailable, true);
+});
+
+test("a completed task checkpoint is counted once after Core restart", () => {
+  const harness = createHarness();
+  const session = harness.manager.create({ maxSteps: 2 });
+  harness.manager.markTaskStarted(session.id, { id: "task-completed" });
+  harness.manager.reconcileInterruptedAtStartup();
+
+  const restored = harness.manager.reconcileCompletedTaskCheckpoint(session.id, {
+    id: "task-completed",
+    status: "completed",
+  });
+  assert.equal(restored.stepsCompleted, 1);
+  assert.equal(restored.remainingSteps, 1);
+  assert.equal(restored.resumeAvailable, true);
+  assert.equal(harness.manager.reconcileCompletedTaskCheckpoint(session.id, {
+    id: "task-completed",
+    status: "completed",
+  }), null);
+});
+
 test("resume request accepts only an explicit session confirmation", () => {
   const request = buildBoundedOperatorRunResumeRequest({ sessionId: "run-session-1", confirm: true });
   assert.deepEqual(request.request, { sessionId: "run-session-1", confirm: true });

@@ -21,4 +21,10 @@ const engineeringContextPacketBindWorkViewButton = document.querySelector("#engi
 const engineeringContextPacketRecoveryButton = document.querySelector("#engineering-context-packet-recovery-button");
 const engineeringContextPacketUseTaskDetailButton = document.querySelector("#engineering-context-packet-use-task-detail-button");
 const engineeringContextPacketJson = document.querySelector("#engineering-context-packet-json");
+const engineeringExperienceEffectivenessGroups = document.querySelector("#engineering-experience-effectiveness-groups");
+const engineeringExperienceEffectivenessRecords = document.querySelector("#engineering-experience-effectiveness-records");
+const engineeringExperienceEffectivenessRate = document.querySelector("#engineering-experience-effectiveness-rate");
+const engineeringExperienceEffectivenessPolicy = document.querySelector("#engineering-experience-effectiveness-policy");
+const engineeringExperienceEffectivenessRefreshButton = document.querySelector("#engineering-experience-effectiveness-refresh-button");
+const engineeringExperienceEffectivenessJson = document.querySelector("#engineering-experience-effectiveness-json");
 `;

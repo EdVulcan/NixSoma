@@ -216,7 +216,7 @@ test("core infrastructure proxy rejects mutation and unknown routes", async () =
 
 test("operator-authenticated Core projection validates and never caches compositor pixels", async () => {
   let captureCalls = 0;
-  const operatorAuth = createOperatorAuthenticator({ token: "operator-secret" });
+  const operatorAuth = createOperatorAuthenticator({ token: "operator-secret", tokenFilePath: null });
   const deps = createBaseDeps({
     deps: { operatorAuth },
     client: {
@@ -1085,6 +1085,7 @@ test("registered mutation routes require operator authentication before capabili
   let invoked = false;
   const operatorAuth = createOperatorAuthenticator({
     token: "operator-secret",
+    tokenFilePath: null,
     allowedOrigins: ["http://127.0.0.1:4170"],
   });
   const deps = createBaseDeps({
@@ -1114,7 +1115,7 @@ test("registered mutation routes require operator authentication before capabili
 
 test("sensitive read routes require operator authentication before exposing state", async () => {
   let listApprovalsCalled = false;
-  const operatorAuth = createOperatorAuthenticator({ token: "operator-secret" });
+  const operatorAuth = createOperatorAuthenticator({ token: "operator-secret", tokenFilePath: null });
   const deps = createBaseDeps({
     deps: { operatorAuth },
     approvalEngine: {
@@ -1145,7 +1146,7 @@ test("sensitive read routes require operator authentication before exposing stat
 test("approval mutation derives approvedBy from authenticated operator instead of request body", async () => {
   const approval = { id: "approval-authenticated", status: "pending" };
   let observedInput = null;
-  const operatorAuth = createOperatorAuthenticator({ token: "operator-secret", actor: "real-operator" });
+  const operatorAuth = createOperatorAuthenticator({ token: "operator-secret", tokenFilePath: null, actor: "real-operator" });
   const deps = createBaseDeps({
     deps: { operatorAuth },
     state: { approvals: new Map([[approval.id, approval]]) },
@@ -1457,6 +1458,33 @@ test("operator run route rejects caller execution overrides before invoking the 
     assert.match(response.body.error, /does not accept task execution override fields/u);
   }
   assert.equal(callCount, 0);
+});
+
+test("bounded operator schedule routes keep arming, ticking, and cancellation explicit", async () => {
+  const calls = [];
+  const scheduler = {
+    state: () => ({ registry: "nixsoma-bounded-operator-scheduler-v0", enabled: false }),
+    listPublic: () => [{ id: "schedule-1", status: "armed" }],
+    arm: (body) => { calls.push({ action: "arm", body }); return { id: "schedule-1", status: "armed" }; },
+    tick: async () => { calls.push({ action: "tick" }); return { ok: true, ran: false, reason: "no_due_schedule" }; },
+    cancel: (id, confirm) => { calls.push({ action: "cancel", id, confirm }); return { id, status: "cancelled" }; },
+  };
+  const deps = createBaseDeps({ deps: { boundedOperatorScheduler: scheduler } });
+
+  const state = await invokeRoute(deps, "GET", "/operator/schedule");
+  assert.equal(state.statusCode, 200);
+  assert.equal(state.body.scheduler.registry, "nixsoma-bounded-operator-scheduler-v0");
+  const armed = await invokeRoute(deps, "POST", "/operator/schedule", { maxSteps: 2, confirm: true });
+  assert.equal(armed.statusCode, 201);
+  const tick = await invokeRoute(deps, "POST", "/operator/schedule/tick", {});
+  assert.equal(tick.statusCode, 200);
+  const cancelled = await invokeRoute(deps, "POST", "/operator/schedule/schedule-1/cancel", { confirm: true });
+  assert.equal(cancelled.statusCode, 200);
+  assert.deepEqual(calls, [
+    { action: "arm", body: { maxSteps: 2, confirm: true } },
+    { action: "tick" },
+    { action: "cancel", id: "schedule-1", confirm: true },
+  ]);
 });
 
 test("operator run route checkpoints a real bounded session without widening executor input", async () => {

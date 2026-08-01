@@ -45,6 +45,35 @@ export const observerClientEngineeringContextRefreshersScript = `async function 
   }
 }
 
+async function refreshEngineeringExperienceEffectiveness() {
+  if (!engineeringExperienceEffectivenessRefreshButton) return;
+  engineeringExperienceEffectivenessRefreshButton.disabled = true;
+  try {
+    const response = await fetchJson(\`\${observerConfig.coreUrl}/plugins/native-adapter/engineering-context/experience-effectiveness\`);
+    engineeringExperienceEffectivenessGroups.textContent = String(response.summary?.groupCount ?? 0);
+    engineeringExperienceEffectivenessRecords.textContent = String(response.summary?.terminalRecords ?? 0);
+    engineeringExperienceEffectivenessRate.textContent = response.summary?.completionRate == null
+      ? "none"
+      : String(response.summary.completionRate);
+    engineeringExperienceEffectivenessPolicy.textContent = String(
+      response.governance?.policyInfluence ?? response.summary?.policyInfluence ?? false,
+    );
+    engineeringExperienceEffectivenessJson.textContent = JSON.stringify({
+      registry: response.registry ?? null,
+      mode: response.mode ?? null,
+      groups: response.groups ?? [],
+      deferred: response.deferred ?? [],
+      governance: response.governance ?? null,
+    }, null, 2);
+    setControlMessage("Read bounded experience effectiveness; no execution policy was changed.");
+  } catch (error) {
+    engineeringExperienceEffectivenessJson.textContent = \`Unable to read experience effectiveness: \${formatError(error)}\`;
+    setControlMessage("Experience effectiveness was unavailable.");
+  } finally {
+    engineeringExperienceEffectivenessRefreshButton.disabled = false;
+  }
+}
+
 function useEngineeringContextTaskDetailAsSource() {
   const taskId = typeof taskDetailIdInput?.value === "string" && taskDetailIdInput.value.trim()
     ? taskDetailIdInput.value.trim()
@@ -128,5 +157,12 @@ engineeringContextPacketBindWorkViewButton?.addEventListener("click", () => {
 engineeringContextPacketRecoveryButton?.addEventListener("click", () => {
   void prepareEngineeringContextWorkView().catch(() => {});
 });
+
+if (typeof engineeringExperienceEffectivenessRefreshButton !== "undefined"
+  && engineeringExperienceEffectivenessRefreshButton) {
+  engineeringExperienceEffectivenessRefreshButton.addEventListener("click", () => {
+    void refreshEngineeringExperienceEffectiveness();
+  });
+}
 
 `;

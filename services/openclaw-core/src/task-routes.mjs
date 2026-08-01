@@ -44,7 +44,7 @@ function executionTaskInput(body) {
   };
 }
 
-export async function handleTaskRoute({ req, res, requestUrl, state, approvalEngine, taskManager, planBuilder, executor, publishEvent }) {
+export async function handleTaskRoute({ req, res, requestUrl, state, approvalEngine, taskManager, planBuilder, executor, publishEvent, operatorRunSessionManager = null }) {
   const { tasks, runtimeState, getCurrentTask } = state;
   const { publishTaskApprovalIfPending } = approvalEngine;
   const { serialisePlanForPublic } = planBuilder;
@@ -315,6 +315,7 @@ export async function handleTaskRoute({ req, res, requestUrl, state, approvalEng
       const recoveredTask = recoverTask(sourceTask);
       const reclaimedTasks = supersedeOtherActiveTasks(recoveredTask.id);
       reconcileRuntimeState();
+      operatorRunSessionManager?.markTaskRecovered(sourceTask.id, recoveredTask.id);
 
       await publishEvent(createEventName("task.created"), { task: serialiseTask(recoveredTask) });
       await publishTaskApprovalIfPending(recoveredTask);

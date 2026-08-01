@@ -25,7 +25,7 @@ import { handleWorkspaceNativeOpsRoute } from "./workspace-native-ops-routes.mjs
 import { handleWorkspacePluginReadRoute } from "./workspace-plugin-read-routes.mjs";
 
 export function registerRoutes(deps) {
-  const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl, readWorkViewState, buildExperienceMemoryReadModel, operatorAuth, dispatchApprovedFixedUnitRepair, operatorRunSessionManager } = deps;
+  const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl, readWorkViewState, buildExperienceMemoryReadModel, buildExperienceEffectivenessReadModel, operatorAuth, dispatchApprovedFixedUnitRepair, operatorRunSessionManager, boundedOperatorScheduler } = deps;
 
   const { reconcileApprovalExpirations, serialiseApproval } = approvalEngine;
   const { buildTaskSummary, serialiseTask } = taskManager;
@@ -77,7 +77,7 @@ export function registerRoutes(deps) {
       return;
     }
 
-    if (await handleTaskRoute({ req, res, requestUrl, state, approvalEngine, taskManager, planBuilder, executor, publishEvent })) {
+    if (await handleTaskRoute({ req, res, requestUrl, state, approvalEngine, taskManager, planBuilder, executor, publishEvent, operatorRunSessionManager })) {
       return;
     }
 
@@ -92,6 +92,7 @@ export function registerRoutes(deps) {
       postJson: client.postJson,
       sessionManagerUrl,
       operatorRunSessionManager,
+      boundedOperatorScheduler,
     })) {
       return;
     }
@@ -179,6 +180,7 @@ export function registerRoutes(deps) {
       publishEvent,
       sessionManagerUrl,
       buildExperienceMemoryReadModel,
+      buildExperienceEffectivenessReadModel,
     })) {
       return;
     }

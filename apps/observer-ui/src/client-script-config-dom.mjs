@@ -78,6 +78,7 @@ const operatorLoopJson = document.querySelector("#operator-loop-json");
 const operatorRunLimitInput = document.querySelector("#operator-run-limit-input");
 const operatorPreviewButton = document.querySelector("#operator-preview-button");
 const operatorResumeButton = document.querySelector("#operator-resume-button");
+const operatorRecoveryButton = document.querySelector("#operator-recover-interrupted-task-button");
 const operatorSessionStatus = document.querySelector("#operator-session-status");
 const operatorSessionRemaining = document.querySelector("#operator-session-remaining");
 const runSelectedReviewedCycleButton = document.querySelector("#run-selected-reviewed-cycle-button");

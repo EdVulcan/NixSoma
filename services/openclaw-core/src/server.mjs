@@ -16,6 +16,7 @@ import { createPlanBuilder } from "./plan-builder.mjs";
 import { createTaskExecutor } from "./task-executor.mjs";
 import { registerRoutes } from "./route-handlers.mjs";
 import { createNativeEngineeringExperienceMemory } from "./native-engineering-experience-memory.mjs";
+import { createBoundedOperatorScheduler } from "./bounded-operator-scheduler.mjs";
 import { createOperatorAuthenticator } from "./operator-auth.mjs";
 import { createExecutionGrantSigner } from "../../../packages/shared-utils/src/execution-grants.mjs";
 import { createFixedUnitIncidentScheduler } from "./fixed-unit-incident-scheduler.mjs";
@@ -137,6 +138,7 @@ const planBuilder = createPlanBuilder({
   listCommandTranscriptRecords: (options) => executor?.listCommandTranscriptRecords(options) ?? [],
   listFilesystemChangeRecords: (options) => executor?.listFilesystemChangeRecords(options) ?? [],
   buildExperienceMemoryReadModel: (...args) => experienceMemory.buildExperienceMemoryReadModel(...args),
+  buildExperienceEffectivenessReadModel: (...args) => experienceMemory.buildExperienceEffectivenessReadModel(...args),
 });
 
 executor = createTaskExecutor({
@@ -144,6 +146,7 @@ executor = createTaskExecutor({
   state,
   taskManager,
   buildExperienceMemoryReadModel: (...args) => experienceMemory.buildExperienceMemoryReadModel(...args),
+  buildExperienceEffectivenessReadModel: (...args) => experienceMemory.buildExperienceEffectivenessReadModel(...args),
   planBuilder,
   approvalEngine,
   workspaceOps,
@@ -153,6 +156,26 @@ executor = createTaskExecutor({
 const operatorRunSessionManager = createOperatorRunSessionManager({
   records: state.operatorRunSessions,
   persistState: state.persistState,
+});
+const boundedOperatorScheduler = createBoundedOperatorScheduler({
+  records: state.boundedOperatorSchedules,
+  persistState: state.persistState,
+  enabled: process.env.OPENCLAW_BOUNDED_OPERATOR_SCHEDULER_ENABLED === "1",
+  intervalMs: process.env.OPENCLAW_BOUNDED_OPERATOR_SCHEDULER_INTERVAL_MS,
+  run: async ({ maxSteps }) => {
+    const session = operatorRunSessionManager.create({ maxSteps });
+    try {
+      const result = await executor.runOperatorLoop(
+        { maxSteps, dryRun: false },
+        operatorRunSessionManager.executionHooks(session.id),
+      );
+      operatorRunSessionManager.finish(session.id, result);
+      return result;
+    } catch (error) {
+      operatorRunSessionManager.interrupt(session.id, "scheduled_run_failed");
+      throw error;
+    }
+  },
 });
 const dispatchApprovedFixedUnitRepair = createFixedUnitIncidentApprovedDispatcher({
   tasks: state.tasks,
@@ -190,7 +213,9 @@ const handleRequest = registerRoutes({
   operatorAuth,
   dispatchApprovedFixedUnitRepair,
   operatorRunSessionManager,
+  boundedOperatorScheduler,
   buildExperienceMemoryReadModel: (...args) => experienceMemory.buildExperienceMemoryReadModel(...args),
+  buildExperienceEffectivenessReadModel: (...args) => experienceMemory.buildExperienceEffectivenessReadModel(...args),
 });
 
 // create server
@@ -273,6 +298,7 @@ function shutdown() {
   if (shuttingDown) return;
   shuttingDown = true;
   fixedUnitIncidentScheduler?.stop();
+  boundedOperatorScheduler.stop();
   state.persistState.flush?.();
   if (!server.listening) {
     process.exit(0);
@@ -294,8 +320,44 @@ const nativePluginRuntimeRestore = planBuilder.restoreNativePluginRuntimeState()
 if (!nativePluginRuntimeRestore.ok && nativePluginRuntimeRestore.restored === false) {
   console.warn(`Native plugin runtime generation state was reset: ${nativePluginRuntimeRestore.reason}`);
 }
-taskManager.reconcileInterruptedTasksAtStartup();
-taskManager.reconcileInterruptedCapabilityReservationsAtStartup();
+const interruptedTasksAtStartup = taskManager.reconcileInterruptedTasksAtStartup();
+const interruptedCapabilityReservationsAtStartup = taskManager.reconcileInterruptedCapabilityReservationsAtStartup();
+const startupInterruptedTaskIds = new Set(interruptedTasksAtStartup.map((task) => task.id));
+for (const reservation of interruptedCapabilityReservationsAtStartup) {
+  if (reservation?.taskId) startupInterruptedTaskIds.add(reservation.taskId);
+}
+for (const taskId of operatorRunSessionManager.interruptedTaskIds()) {
+  startupInterruptedTaskIds.add(taskId);
+}
+for (const taskId of startupInterruptedTaskIds) {
+  const task = state.tasks.get(taskId);
+  if (!task) continue;
+  if (task.status === "completed") {
+    for (const session of operatorRunSessionManager.listPublic()) {
+      if (session.lastTaskId === task.id) {
+        operatorRunSessionManager.reconcileCompletedTaskCheckpoint(session.id, task);
+      }
+    }
+    continue;
+  }
+  const reconciledTask = task.status === "queued"
+    ? taskManager.failTask(task, "Core runtime restarted before the operator task completed dispatch.", {
+      executor: "core-startup-operator-dispatch-reconciliation-v1",
+      targetUrl: task.targetUrl ?? null,
+      coreRuntimeInterruption: {
+        kind: "core-runtime-interruption",
+        code: "operator_dispatch_interruption",
+        stage: task.executionPhase,
+        recoverable: true,
+        automaticRestart: false,
+        recoveryAction: "recover_task_after_core_restart",
+      },
+    })
+    : task;
+  operatorRunSessionManager.markTaskInterrupted(reconciledTask, {
+    recoverable: taskManager.isRecoverableTask(reconciledTask),
+  });
+}
 const fixedUnitDispatchStartupRecovery = reconcileFixedUnitIncidentDispatchesAtStartup({
   tasks: state.tasks,
   schedulerState: state.fixedUnitIncidentSchedulerState,
@@ -306,6 +368,8 @@ if (fixedUnitDispatchStartupRecovery.reconciledCount > 0) {
   console.warn(`Failed ${fixedUnitDispatchStartupRecovery.reconciledCount} interrupted fixed-unit dispatch(es) closed.`);
 }
 taskManager.reconcileRuntimeState();
+boundedOperatorScheduler.reconcileAtStartup();
+boundedOperatorScheduler.start();
 fixedUnitIncidentScheduler = createFixedUnitIncidentScheduler({
   enabled: process.env.OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_ENABLED === "1",
   intervalMs: process.env.OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_INTERVAL_MS,

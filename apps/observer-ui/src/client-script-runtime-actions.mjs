@@ -53,6 +53,36 @@ async function launchTaskIntoWorkView(taskId, targetUrl) {
   await attachTaskToWorkView(taskId, workViewResult);
 }
 
+async function bindRecoveredTaskToCurrentWorkView(taskId) {
+  if (!taskId) return null;
+  const response = await fetchJson(\`\${observerConfig.coreUrl}/capabilities/invoke\`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      capabilityId: "act.openclaw.engineering_context.work_view_bind",
+      taskId,
+      params: { confirm: true, rebind: true },
+    }),
+  });
+  const result = response.result ?? {};
+  const summary = result.bind?.summary ?? {};
+  const governance = result.bind?.governance ?? {};
+  if (response.invoked !== true
+    || result.registry !== "openclaw-native-engineering-work-view-bind-v0"
+    || !["bound", "already_bound"].includes(summary.status)
+    || !["bind", "rebind", "noop"].includes(summary.operation)
+    || governance.changesTaskStatus !== false
+    || governance.mutatesWorkViewState !== false
+    || governance.callsProvider !== false
+    || governance.networkEgress !== false
+    || governance.createsTask !== false
+    || governance.createsApproval !== false
+    || governance.executesAction !== false) {
+    throw new Error("Recovered task work-view binding was invalid.");
+  }
+  return result;
+}
+
 async function recoverLatestFinishedTask() {
   const latest = await fetchJson(\`\${observerConfig.coreUrl}/tasks/latest-finished\`);
   const sourceTask = latest.task ?? null;
@@ -69,6 +99,7 @@ async function recoverLatestFinishedTask() {
     method: "POST",
   });
   await launchTaskIntoWorkView(result.task?.id, targetUrl);
+  if (targetUrl) await bindRecoveredTaskToCurrentWorkView(result.task?.id);
   taskHistoryFocus = "current-task";
   selectedHistoryTaskId = result.task?.id ?? null;
   taskDetailIdInput.value = result.task?.id ?? "";
@@ -104,6 +135,7 @@ async function recoverSelectedTask() {
     method: "POST",
   });
   await launchTaskIntoWorkView(result.task?.id, targetUrl);
+  if (targetUrl) await bindRecoveredTaskToCurrentWorkView(result.task?.id);
   taskHistoryFocus = "current-task";
   selectedHistoryTaskId = result.task?.id ?? null;
   taskDetailIdInput.value = result.task?.id ?? "";

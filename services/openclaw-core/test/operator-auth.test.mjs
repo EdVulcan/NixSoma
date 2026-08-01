@@ -20,6 +20,7 @@ test("operator authentication fails closed when no token is configured", () => {
 test("operator authentication accepts bearer credentials and derives the actor", () => {
   const auth = createOperatorAuthenticator({
     token: "operator-secret",
+    tokenFilePath: null,
     actor: "edvulcan",
     allowedOrigins: ["http://127.0.0.1:4170"],
   });
@@ -76,6 +77,7 @@ test("operator credential files take precedence over legacy token values", () =>
 test("operator origin policy rejects untrusted browser origins and keeps health public", () => {
   const auth = createOperatorAuthenticator({
     token: "operator-secret",
+    tokenFilePath: null,
     allowedOrigins: ["http://127.0.0.1:4170"],
   });
 
@@ -94,6 +96,7 @@ test("operator origin policy rejects untrusted browser origins and keeps health 
   assert.equal(auth.requestRequiresAuth(request("GET"), new URL("/tasks", "http://127.0.0.1:4100")), true);
   assert.equal(auth.requestRequiresAuth(request("GET"), new URL("/approvals/summary", "http://127.0.0.1:4100")), true);
   assert.equal(auth.requestRequiresAuth(request("GET"), new URL("/capabilities/invocations", "http://127.0.0.1:4100")), true);
+  assert.equal(auth.requestRequiresAuth(request("GET"), new URL("/operator/schedule", "http://127.0.0.1:4100")), true);
   assert.equal(auth.requestRequiresAuth(
     request("GET"),
     new URL("/proxy/session-manager/work-view/compositor-frame", "http://127.0.0.1:4100"),
@@ -110,6 +113,7 @@ test("operator login issues an expiring HttpOnly session and logout revokes it",
   let currentTime = 1000;
   const auth = createOperatorAuthenticator({
     token: "operator-secret",
+    tokenFilePath: null,
     actor: "operator-one",
     allowedOrigins: ["http://127.0.0.1:4170"],
     sessionTtlMs: 5000,

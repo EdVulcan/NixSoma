@@ -59,5 +59,14 @@ export function observerEngineeringContextPanels() {
           <pre id="engineering-provider-plan-json">No transient AI plan draft available.</pre>
           <pre id="engineering-context-packet-json">No local engineering context packet built yet.</pre>
         </section>
+        <section class="panel">
+          <h2>Experience Effectiveness</h2>
+          <div class="metric"><span>Groups</span><span id="engineering-experience-effectiveness-groups">0</span></div>
+          <div class="metric"><span>Terminal Records</span><span id="engineering-experience-effectiveness-records">0</span></div>
+          <div class="metric"><span>Completion Rate</span><span id="engineering-experience-effectiveness-rate">none</span></div>
+          <div class="metric"><span>Policy Influence</span><span id="engineering-experience-effectiveness-policy">false</span></div>
+          <button id="engineering-experience-effectiveness-refresh-button" class="secondary" type="button">Read Effectiveness</button>
+          <pre id="engineering-experience-effectiveness-json">No effectiveness read yet.</pre>
+        </section>
 `;
 }

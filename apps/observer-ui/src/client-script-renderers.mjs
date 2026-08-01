@@ -146,8 +146,11 @@ function renderPlanPanel(task) {
 
 function renderOperatorState(operator) {
   const nextTask = operator?.nextTask ?? null;
-  const resumableSession = (Array.isArray(operator?.runSessions) ? operator.runSessions : [])
-    .find((session) => session?.resumeAvailable === true) ?? null;
+  const sessions = Array.isArray(operator?.runSessions) ? operator.runSessions : [];
+  const recoverySession = sessions
+    .find((session) => session?.recovery?.required === true) ?? null;
+  const resumableSession = sessions
+    .find((session) => session?.resumeAvailable === true && session?.recovery?.required !== true) ?? null;
   operatorLoopStatus.textContent = operator?.status ?? "idle";
   operatorLoopBlocked.textContent = String(operator?.blocked ?? false);
   operatorLoopNext.textContent = nextTask?.id ? nextTask.id.slice(0, 8) : "none";
@@ -155,11 +158,18 @@ function renderOperatorState(operator) {
     operatorResumeButton.disabled = !resumableSession;
     operatorResumeButton.dataset.sessionId = resumableSession?.id ?? "";
   }
+  if (typeof operatorRecoveryButton !== "undefined") {
+    const sourceTaskId = recoverySession?.recovery?.sourceTaskId ?? "";
+    operatorRecoveryButton.disabled = !sourceTaskId || recoverySession?.recovery?.recoverable !== true;
+    operatorRecoveryButton.dataset.taskId = sourceTaskId;
+  }
   if (typeof operatorSessionStatus !== "undefined") {
-    operatorSessionStatus.textContent = resumableSession?.status ?? "none";
+    operatorSessionStatus.textContent = recoverySession
+      ? "recovery_required"
+      : resumableSession?.status ?? "none";
   }
   if (typeof operatorSessionRemaining !== "undefined") {
-    operatorSessionRemaining.textContent = String(resumableSession?.remainingSteps ?? 0);
+    operatorSessionRemaining.textContent = String((recoverySession ?? resumableSession)?.remainingSteps ?? 0);
   }
 }
 

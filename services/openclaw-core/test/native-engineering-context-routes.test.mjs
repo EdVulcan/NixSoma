@@ -13,6 +13,13 @@ async function invoke({
   executor = { listCommandTranscriptRecords: () => [] },
   planBuilder = { listCapabilityInvocations: () => [] },
   buildExperienceMemoryReadModel = () => null,
+  buildExperienceEffectivenessReadModel = () => ({
+    ok: true,
+    registry: "openclaw-native-engineering-experience-effectiveness-v0",
+    groups: [],
+    summary: { groupCount: 0 },
+    auditEvidence: { summary: { groupCount: 0 } },
+  }),
   sessionManagerUrl = "http://127.0.0.1:4102",
   readWorkViewState = async () => ({ ok: false, data: null }),
 } = {}) {
@@ -31,6 +38,7 @@ async function invoke({
     executor,
     planBuilder,
     buildExperienceMemoryReadModel,
+    buildExperienceEffectivenessReadModel,
     publishEvent,
     sessionManagerUrl,
     readWorkViewState,
@@ -81,6 +89,30 @@ test("microcompact projection route fails closed when audit publication fails", 
   assert.equal(response.body.ok, false);
   assert.match(response.body.error, /audit is unavailable/u);
   assert.equal("messages" in response.body, false);
+});
+
+test("experience effectiveness route returns bounded read-only observations", async () => {
+  const events = [];
+  const response = await invoke({
+    method: "GET",
+    path: "/plugins/native-adapter/engineering-context/experience-effectiveness?taskType=system_task",
+    buildExperienceEffectivenessReadModel: ({ taskType }) => ({
+      ok: true,
+      registry: "openclaw-native-engineering-experience-effectiveness-v0",
+      filter: { taskType },
+      groups: [{ taskType, terminalRecords: 2, completed: 1, failed: 1 }],
+      summary: { groupCount: 1, causalAttribution: false, policyInfluence: false, automaticRanking: false },
+      governance: { readOnly: true, changesExecutionPolicy: false, operatorReviewRequired: true },
+      auditEvidence: { summary: { groupCount: 1, causalAttribution: false } },
+    }),
+    publishEvent: async (name, payload) => events.push({ name, payload }),
+  });
+
+  assert.equal(response.handled, true);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.filter.taskType, "system_task");
+  assert.equal(response.body.governance.readOnly, true);
+  assert.equal(events[0].name, "native_engineering.experience_effectiveness_read");
 });
 
 test("engineering context packet route assembles existing task evidence without provider use", async () => {

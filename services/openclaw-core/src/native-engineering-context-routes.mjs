@@ -7,6 +7,7 @@ import { readNativeEngineeringWorkViewState } from "./native-engineering-work-vi
 
 const MICROCOMPACT_PROJECTION_PATH = "/plugins/native-adapter/engineering-microcompact/projection";
 const ENGINEERING_CONTEXT_PACKET_PATH = "/plugins/native-adapter/engineering-context/packet";
+const ENGINEERING_EFFECTIVENESS_PATH = "/plugins/native-adapter/engineering-context/experience-effectiveness";
 
 async function publishAuditOrFail({ res, publishEvent, type, auditEvidence }) {
   const result = await publishEvent?.(type, auditEvidence);
@@ -27,9 +28,27 @@ export async function handleNativeEngineeringContextRoute({
   publishEvent,
   sessionManagerUrl,
   buildExperienceMemoryReadModel = () => null,
+  buildExperienceEffectivenessReadModel = () => null,
   readWorkViewState = readNativeEngineeringWorkViewState,
 }) {
-  if (![MICROCOMPACT_PROJECTION_PATH, ENGINEERING_CONTEXT_PACKET_PATH].includes(requestUrl.pathname)) return false;
+  if (![MICROCOMPACT_PROJECTION_PATH, ENGINEERING_CONTEXT_PACKET_PATH, ENGINEERING_EFFECTIVENESS_PATH].includes(requestUrl.pathname)) return false;
+  if (requestUrl.pathname === ENGINEERING_EFFECTIVENESS_PATH) {
+    if (req.method !== "GET") {
+      sendJson(res, 405, { ok: false, error: "Method not allowed." });
+      return true;
+    }
+    const result = buildExperienceEffectivenessReadModel({
+      taskType: requestUrl.searchParams.get("taskType") ?? null,
+    });
+    if (!await publishAuditOrFail({
+      res,
+      publishEvent,
+      type: "native_engineering.experience_effectiveness_read",
+      auditEvidence: result.auditEvidence,
+    })) return true;
+    sendJson(res, 200, result);
+    return true;
+  }
   if (req.method !== "POST") {
     sendJson(res, 405, { ok: false, error: "Method not allowed." });
     return true;

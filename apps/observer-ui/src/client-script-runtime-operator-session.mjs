@@ -73,6 +73,18 @@ async function resumeOperatorSessionFromUi() {
   await refreshAfterOperatorSession();
 }
 
+async function recoverInterruptedOperatorTaskFromUi() {
+  const sourceTaskId = operatorRecoveryButton?.dataset.taskId ?? "";
+  if (!sourceTaskId) {
+    throw new Error("No interrupted task is waiting for explicit recovery.");
+  }
+  selectedHistoryTaskId = sourceTaskId;
+  taskDetailIdInput.value = sourceTaskId;
+  await recoverSelectedTask();
+  setControlMessage(\`Recovered interrupted task \${sourceTaskId}; Resume is available after the recovery receipt.\`);
+  await refreshAfterOperatorSession();
+}
+
 async function refreshAfterOperatorSession() {
   await refreshRuntime();
   await refreshTaskList();

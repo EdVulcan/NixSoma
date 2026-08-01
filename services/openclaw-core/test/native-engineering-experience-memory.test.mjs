@@ -131,6 +131,39 @@ test("experience memory durably correlates bounded subsequent outcomes without c
   assert.equal(recalled.auditEvidence.summary.feedbackObservedOutcomes, 2);
 });
 
+test("experience effectiveness is an explicit read-only observation, never an automatic policy", () => {
+  const records = new Map();
+  const memory = createNativeEngineeringExperienceMemory({ records });
+  for (const [id, status] of [["effectiveness-1", "completed"], ["effectiveness-2", "failed"]]) {
+    memory.recordTaskExperience({
+      id,
+      type: "system_task",
+      goal: "observe bounded effectiveness",
+      status,
+      executionPhase: status === "completed" ? "completed" : "verifying_result",
+    });
+  }
+
+  const effectiveness = memory.buildExperienceEffectivenessReadModel({ taskType: "system_task" });
+  assert.equal(effectiveness.registry, "openclaw-native-engineering-experience-effectiveness-v0");
+  assert.deepEqual(effectiveness.groups[0], {
+    taskType: "system_task",
+    terminalRecords: 2,
+    completed: 1,
+    failed: 1,
+    completionRate: 0.5,
+    feedbackObservedOutcomes: 1,
+    feedbackCompletionRate: 0,
+    advisoryAppliedRecords: 0,
+    status: "observed",
+    causalAttribution: false,
+    policyInfluence: false,
+  });
+  assert.equal(effectiveness.governance.readOnly, true);
+  assert.equal(effectiveness.governance.changesExecutionPolicy, false);
+  assert.equal(effectiveness.summary.automaticRanking, false);
+});
+
 test("experience memory preserves only a validated task-bound consumption receipt", () => {
   const records = new Map();
   const memory = createNativeEngineeringExperienceMemory({ records });

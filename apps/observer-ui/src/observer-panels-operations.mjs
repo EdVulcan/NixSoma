@@ -73,6 +73,7 @@ ${observerAiWorkViewPanel()}
             <button id="operator-preview-button" class="secondary">Preview Queue</button>
             <button id="operator-run-button">Run Queue</button>
             <button id="operator-resume-button" class="secondary" disabled>Resume Interrupted Run</button>
+            <button id="operator-recover-interrupted-task-button" class="secondary" disabled>Recover Interrupted Task</button>
           </div>
           <div class="metric"><span>Status</span><span id="operator-loop-status">idle</span></div>
           <div class="metric"><span>Blocked</span><span id="operator-loop-blocked">false</span></div>

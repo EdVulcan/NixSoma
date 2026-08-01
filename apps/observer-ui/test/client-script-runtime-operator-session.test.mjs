@@ -12,6 +12,7 @@ function createContext({ limit = "5", response = {} } = {}) {
   const context = {
     operatorRunLimitInput: { value: limit },
     operatorResumeButton: { dataset: { sessionId: "session-1" } },
+    operatorRecoveryButton: { dataset: { taskId: "task-interrupted" }, disabled: false },
     observerConfig: { coreUrl: "http://core.invalid" },
     taskHistoryFocus: "current-task",
     selectedHistoryTaskId: null,
@@ -99,6 +100,19 @@ test("Observer resumes only the explicitly selected interrupted session", async 
   assert.match(fixture.messages.at(-1), /did not execute/u);
 });
 
+test("Observer recovers the task named by the recovery-required session before Resume", async () => {
+  let recovered = 0;
+  const fixture = createContext();
+  fixture.context.recoverSelectedTask = async () => { recovered += 1; };
+
+  await fixture.context.recoverInterruptedOperatorTaskFromUi();
+
+  assert.equal(recovered, 1);
+  assert.equal(fixture.context.selectedHistoryTaskId, "task-interrupted");
+  assert.equal(fixture.context.taskDetailIdInput.value, "task-interrupted");
+  assert.equal(fixture.context.operatorRecoveryButton.dataset.taskId, "task-interrupted");
+});
+
 test("Operator panel exposes finite preview and run controls", () => {
   const panel = observerOperationsPanels();
   for (const token of [
@@ -110,6 +124,8 @@ test("Operator panel exposes finite preview and run controls", () => {
     "Run Queue",
     "operator-resume-button",
     "Resume Interrupted Run",
+    "operator-recover-interrupted-task-button",
+    "Recover Interrupted Task",
     "operator-session-status",
   ]) {
     assert.equal(panel.includes(token), true, `panel is missing ${token}`);

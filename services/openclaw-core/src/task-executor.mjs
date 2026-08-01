@@ -1462,7 +1462,7 @@ async function buildOperatorOptions(task, body = {}) {
   return options;
 }
 
-async function runOperatorStep(body = {}) {
+async function runOperatorStep(body = {}, hooks = {}) {
   reconcileRuntimeState();
   const ignorePause = body.ignorePause === true;
   const dryRun = body.dryRun === true || body.peek === true;
@@ -1567,6 +1567,12 @@ async function runOperatorStep(body = {}) {
     };
   }
 
+  await hooks.onTaskStart?.(task);
+  task.status = "running";
+  appendTaskPhase(task, "dispatching", {
+    executor: "operator-loop-v1",
+    operatorCheckpoint: true,
+  });
   const executionResult = await executeTaskWithRecovery(task, operatorOptions);
   const finalExecution = executionResult.finalExecution ?? executionResult;
   if (finalExecution.blocked === true) {
@@ -1605,7 +1611,7 @@ async function runOperatorLoop(body = {}, hooks = {}) {
   let nextTask = null;
 
   for (let index = 0; index < maxSteps; index += 1) {
-    const step = await runOperatorStep(body);
+    const step = await runOperatorStep(body, hooks);
     if (!step.ran) {
       stopReason = step.reason ?? null;
       blocked = step.blocked === true;
