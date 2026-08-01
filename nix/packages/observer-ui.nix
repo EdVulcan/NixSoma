@@ -84,6 +84,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-runtime-operator-session.mjs
     ../../apps/observer-ui/src/client-script-runtime-operator-schedule.mjs
     ../../apps/observer-ui/src/client-script-runtime-operator-window.mjs
+    ../../apps/observer-ui/src/client-script-runtime-operator-mission.mjs
     ../../apps/observer-ui/src/client-script-runtime-reviewed-task-session.mjs
     ../../apps/observer-ui/src/client-script-runtime-reviewed-browser-task.mjs
     ../../apps/observer-ui/src/client-script-runtime-semantic-target-task.mjs
@@ -108,6 +109,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/observer-panels-operations.mjs
     ../../apps/observer-ui/src/observer-panel-operator-schedule.mjs
     ../../apps/observer-ui/src/observer-panel-operator-window.mjs
+    ../../apps/observer-ui/src/observer-panel-operator-mission.mjs
     ../../apps/observer-ui/src/observer-panel-ai-work-view.mjs
     ../../apps/observer-ui/src/observer-panel-snapshot-preview.mjs
     ../../apps/observer-ui/src/observer-panels-system.mjs

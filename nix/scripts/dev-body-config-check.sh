@@ -1157,7 +1157,9 @@ EOF
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/operator-run-request.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/bounded-operator-window-lease.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 278 ]]; then
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/renewable-operator-mission.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/operator-mission-routes.mjs"
+    || "$(find "$core_out" -type f | wc -l)" -ne 280 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -2052,10 +2054,12 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-operator-session.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-operator-schedule.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-operator-window.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-operator-mission.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-reviewed-task-session.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panel-operator-schedule.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panel-operator-window.mjs"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 107 ]]; then
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panel-operator-mission.mjs"
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 109 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi

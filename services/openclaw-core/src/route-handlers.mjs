@@ -16,6 +16,7 @@ import { handleNativeEngineeringWorkViewBindRoute } from "./native-engineering-w
 import { handleNativePluginRuntimeRoute } from "./native-plugin-runtime-routes.mjs";
 import { handleObserverReadModelRoute } from "./observer-read-model-routes.mjs";
 import { handleOperatorControlRoute } from "./operator-control-routes.mjs";
+import { handleOperatorMissionRoute } from "./operator-mission-routes.mjs";
 import { handlePhaseMemoryReadRoute } from "./phase-memory-read-routes.mjs";
 import { handlePolicyCapabilityRoute } from "./policy-capability-routes.mjs";
 import { handleSystemdDraftRoute } from "./systemd-draft-routes.mjs";
@@ -25,7 +26,7 @@ import { handleWorkspaceNativeOpsRoute } from "./workspace-native-ops-routes.mjs
 import { handleWorkspacePluginReadRoute } from "./workspace-plugin-read-routes.mjs";
 
 export function registerRoutes(deps) {
-  const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl, readWorkViewState, buildExperienceMemoryReadModel, buildExperienceEffectivenessReadModel, operatorAuth, dispatchApprovedFixedUnitRepair, operatorRunSessionManager, boundedOperatorScheduler, boundedOperatorWindowLease } = deps;
+  const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl, readWorkViewState, buildExperienceMemoryReadModel, buildExperienceEffectivenessReadModel, operatorAuth, dispatchApprovedFixedUnitRepair, operatorRunSessionManager, boundedOperatorScheduler, boundedOperatorWindowLease, renewableOperatorMissionSupervisor } = deps;
 
   const { reconcileApprovalExpirations, serialiseApproval } = approvalEngine;
   const { buildTaskSummary, serialiseTask } = taskManager;
@@ -94,6 +95,15 @@ export function registerRoutes(deps) {
       operatorRunSessionManager,
       boundedOperatorScheduler,
       boundedOperatorWindowLease,
+    })) {
+      return;
+    }
+
+    if (await handleOperatorMissionRoute({
+      req,
+      res,
+      requestUrl,
+      renewableOperatorMissionSupervisor,
     })) {
       return;
     }

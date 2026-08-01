@@ -1145,9 +1145,19 @@ test("registered mutation routes require operator authentication before capabili
 
 test("sensitive read routes require operator authentication before exposing state", async () => {
   let listApprovalsCalled = false;
+  let listMissionsCalled = false;
   const operatorAuth = createOperatorAuthenticator({ token: "operator-secret", tokenFilePath: null });
   const deps = createBaseDeps({
-    deps: { operatorAuth },
+    deps: {
+      operatorAuth,
+      renewableOperatorMissionSupervisor: {
+        state: () => ({ registry: "nixsoma-renewable-operator-mission-v0" }),
+        listPublic: () => {
+          listMissionsCalled = true;
+          return [{ id: "mission-authenticated", status: "armed" }];
+        },
+      },
+    },
     approvalEngine: {
       listApprovals: () => {
         listApprovalsCalled = true;
@@ -1171,6 +1181,21 @@ test("sensitive read routes require operator authentication before exposing stat
   assert.equal(accepted.statusCode, 200, JSON.stringify(accepted.body));
   assert.deepEqual(accepted.body.items, [{ id: "approval-1", status: "pending" }]);
   assert.equal(listApprovalsCalled, true);
+
+  const rejectedMission = await invokeRoute(deps, "GET", "/operator/mission");
+  assert.equal(rejectedMission.statusCode, 401);
+  assert.equal(listMissionsCalled, false);
+
+  const acceptedMission = await invokeRoute(
+    deps,
+    "GET",
+    "/operator/mission",
+    null,
+    { authorization: "Bearer operator-secret" },
+  );
+  assert.equal(acceptedMission.statusCode, 200, JSON.stringify(acceptedMission.body));
+  assert.deepEqual(acceptedMission.body.missions, [{ id: "mission-authenticated", status: "armed" }]);
+  assert.equal(listMissionsCalled, true);
 });
 
 test("approval mutation derives approvedBy from authenticated operator instead of request body", async () => {
@@ -1558,6 +1583,54 @@ test("bounded operator window routes expose only finite lease controls", async (
     { action: "tick" },
     { action: "rearm", id: "lease-1", body: { confirm: true } },
     { action: "cancel", id: "lease-1", confirm: true },
+  ]);
+});
+
+test("renewable mission routes forward only finite authority controls", async () => {
+  const calls = [];
+  const supervisor = {
+    state: () => ({ registry: "nixsoma-renewable-operator-mission-v0", enabled: false }),
+    listPublic: () => [{ id: "mission-1", status: "armed", epochsAuthorized: 4 }],
+    arm: (body) => { calls.push({ action: "arm", body }); return { id: "mission-1", status: "armed" }; },
+    tick: async () => { calls.push({ action: "tick" }); return { ok: true, ran: true, reason: null }; },
+    renew: (id, body) => { calls.push({ action: "renew", id, body }); return { id, status: "armed" }; },
+    pause: (id, confirm) => { calls.push({ action: "pause", id, confirm }); return { id, status: "paused" }; },
+    rearm: (id, body) => { calls.push({ action: "rearm", id, body }); return { id, status: "armed" }; },
+    cancel: (id, confirm) => { calls.push({ action: "cancel", id, confirm }); return { id, status: "cancelled" }; },
+  };
+  const deps = createBaseDeps({ deps: { renewableOperatorMissionSupervisor: supervisor } });
+  const armBody = {
+    epochCount: 4,
+    maxStepsPerEpoch: 2,
+    epochIntervalMs: 60_000,
+    deadlineMs: 3_600_000,
+    maxNoProgressEpochs: 2,
+    confirm: true,
+  };
+
+  const state = await invokeRoute(deps, "GET", "/operator/mission");
+  assert.equal(state.statusCode, 200);
+  assert.equal(state.body.supervisor.registry, "nixsoma-renewable-operator-mission-v0");
+  assert.equal((await invokeRoute(deps, "POST", "/operator/mission", armBody)).statusCode, 201);
+  assert.equal((await invokeRoute(deps, "POST", "/operator/mission/tick", {})).statusCode, 200);
+  assert.equal((await invokeRoute(deps, "POST", "/operator/mission/mission-1/renew", {
+    additionalEpochs: 2,
+    extensionMs: 3_600_000,
+    confirm: true,
+  })).statusCode, 200);
+  assert.equal((await invokeRoute(deps, "POST", "/operator/mission/mission-1/pause", { confirm: true })).statusCode, 200);
+  assert.equal((await invokeRoute(deps, "POST", "/operator/mission/mission-1/rearm", {
+    resetCircuit: false,
+    confirm: true,
+  })).statusCode, 200);
+  assert.equal((await invokeRoute(deps, "POST", "/operator/mission/mission-1/cancel", { confirm: true })).statusCode, 200);
+  assert.deepEqual(calls, [
+    { action: "arm", body: armBody },
+    { action: "tick" },
+    { action: "renew", id: "mission-1", body: { additionalEpochs: 2, extensionMs: 3_600_000, confirm: true } },
+    { action: "pause", id: "mission-1", confirm: true },
+    { action: "rearm", id: "mission-1", body: { resetCircuit: false, confirm: true } },
+    { action: "cancel", id: "mission-1", confirm: true },
   ]);
 });
 

@@ -61,6 +61,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 1 six-workpackage continuation | In-flight recovery, explicit Level 2 rebind, finite one-shot scheduling, read-only effectiveness, and six deferred privileged capability boundaries are implemented and tested | Source and physical deployment complete in generation 109; scheduler remains default-off, and unbounded autonomy/causal learning/privileged host-wide control remain deferred |
 | Level 1 scheduled operator workflow | Observer exposes finite queue scheduling, due-time/status readback, explicit cancellation, and exact-budget re-arm after Core restart; Nix configuration keeps the timer default-off | Source, isolated real-service validation, and physical generation 109 health deployment complete; physical scheduling remains intentionally disabled |
 | Level 1 bounded operator window lease | Observer explicitly arms one lease of 1-8 windows, each reusing the existing 1-20 step operator session; a hard 1-second-to-24-hour deadline, compact persistence, cancellation, and restart-required re-arm bound continuation | Candidate `48n622mrr...` passed marker/protected-path/closure preflight; the later active `y2f0fnrb...` generation retains the Core/Observer modules with timer default-off, and physical lease execution is not claimed |
+| Level 1 renewable operator mission | Observer arms 1-32 finite epochs, each checkpointed before one existing mission-owned child window; Core supports explicit finite renewal, boundary pause/cancel, restart-required re-arm, and a no-progress circuit | Source, real nine-service gates, exact 280-file Core/109-file Observer closures, and candidate `w58x78k1...` protected-path preflight pass; the timer remains default-off and activation is a separate release gate |
 | Level 3 network observation | Fixed `fentry/__sys_connect` eBPF probe sends only timestamp, process identity, sockaddr family, and address length through the system-sense/Core/Observer read-only path; only the first two sockaddr bytes are read and destination, port, address bytes, payload, persistence, and policy execution remain excluded | Physical proof originated in `gd9ps40...`; current `y2f0fnrb...` retains the deployed route, with the prior Core and Observer gates capturing 27 `curl` events and no destination, port, payload, or persistence |
 | Level 3 file-open observation | Fixed `fentry/do_sys_openat2` eBPF probe sends only timestamp, process identity, flags, and mode through the same system-sense/Core/Observer path; filename/path/content/inode/mount/result, persistence, and policy execution remain excluded | Generation `qcv5ggpr...` passed both installed gates at the 128-event hard cap; current `y2f0fnrb...` retains the accepted probe and healthy service boundary |
 | Level 3 kernel activity snapshot | One explicit request invokes the three existing capture owners in parallel and returns only lane status, counts, and continuity through System Sense/Core/Observer | Current `y2f0fnrb...` passed the deployment health gate and retains the prior 62/46/128 Core counts and Observer total 240; all three lanes remain available with no raw values, persistence, repeat, provider/browser activity, or host mutation |
@@ -84,12 +85,15 @@ mutate the physical host implicitly.
 
 Two percentages are intentionally used because they answer different questions:
 
-- **About 84-87% for the current bounded product** measures the operator-visible,
+- **About 84-87% for the physically deployed bounded product** measures the operator-visible,
   governed NixSoma scope that exists today: the local control plane, trusted
   work view, fixed Level 3 body owners, bounded Level 4 eye-hand actions,
   provider collaboration, audit, and recovery evidence. Its remaining work is
   completion of coherent user workflows and integration/product hardening.
-- **About 52-60% for the final vision** measures the wider whitepaper target: a
+- **About 86-89% for the current source bounded product** includes the renewable
+  mission supervisor and its real development-service evidence. It does not
+  claim physical deployment or background timer enablement.
+- **About 56-62% for the final vision** measures the wider whitepaper target: a
   durable local-first autonomous agent body with long-running autonomy, durable
   learning and memory feedback loops, broader body nerves, physically governed
   Phase D evolution, and a richer native graphical workspace.
@@ -104,14 +108,14 @@ for the missing autonomous behavior.
 
 Read in this order:
 
-1. [Forward Work Directive](./OPENCLAW_FORWARD_WORK_DIRECTIVE.md)
-2. [System Identity Upgrade Path](./architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md)
-3. [Kernel-Level Evolution Whitepaper](./architecture/KERNEL_LEVEL_EVOLUTION_WHITEPAPER.md)
-4. [Native Engineering Tool Surface](./plans/OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md)
-5. [D-Bus And Fixed Systemd Control](./plans/OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md)
-6. [Phase D Declarative Evolution](./plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md)
-7. [Plans Directory Guide](./plans/README.md)
-8. [Six Workpackages Checkpoint](./plans/OPENCLAW_SIX_WORKPACKAGES_20260801_PLAN.md)
+1. [Capability Map](./NIXSOMA_CAPABILITY_MAP.md)
+2. [Forward Work Directive](./OPENCLAW_FORWARD_WORK_DIRECTIVE.md)
+3. [System Identity Upgrade Path](./architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md)
+4. [Kernel-Level Evolution Whitepaper](./architecture/KERNEL_LEVEL_EVOLUTION_WHITEPAPER.md)
+5. [Native Engineering Tool Surface](./plans/OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md)
+6. [D-Bus And Fixed Systemd Control](./plans/OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md)
+7. [Phase D Declarative Evolution](./plans/OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md)
+8. [Plans Directory Guide](./plans/README.md)
 
 The enhanced-source migration brief and gap audit are retained as source and
 migration evidence. They are no longer instructions to repeat preservation or
@@ -950,18 +954,20 @@ These figures are capability-maturity estimates, not test coverage:
 
 | Scope | Current estimate |
 | --- | --- |
-| Level 1 user-space control plane | about 90%; finite window lease continuation is implemented, while open-ended autonomy and causal learning remain incomplete |
+| Level 1 user-space control plane | about 94% in source; renewable finite missions now checkpoint and continue across epochs, while autonomous task supply, open-ended planning, and causal learning remain incomplete |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 72-76%; process exec, network connect-attempt, bounded file open-attempt, and process lifecycle observation are physically deployed, while physical Phase D mutation and broader body nerves remain incomplete |
 | Level 4 graphics-stack-native body | about 85%; one-shot projected operator click, bounded native operator type, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, same-surface OCR click, objective-bound OCR type, fixed OCR focus-then-type, and governed current-tab close are physically complete |
-| Current bounded product scope | 84-87% |
-| Final whitepaper vision | 52-60% |
+| Physically deployed bounded product | 84-87% |
+| Current source bounded product | 86-89% |
+| Final whitepaper vision | 56-62% |
 
 ## Current Decision Records
 
 | Document | Role |
 | --- | --- |
 | [OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md) | Completed Level 1 governed engineering capability frontier and remaining boundaries. |
+| [OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md](./plans/OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md) | Source-complete renewable mission epochs, checkpoints, explicit renewal, recovery, circuit break, and Observer progress. |
 | [OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md](./plans/OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md) | Completed bounded Level 2 browser/work-view contract. |
 | [OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md](./plans/OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md) | Current operator, service identity, and execution-grant boundary. |
 | [OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md](./plans/OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Current fixed Level 3 restart and journal-diagnosis boundary. |

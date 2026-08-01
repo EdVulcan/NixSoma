@@ -18,6 +18,7 @@ import { registerRoutes } from "./route-handlers.mjs";
 import { createNativeEngineeringExperienceMemory } from "./native-engineering-experience-memory.mjs";
 import { createBoundedOperatorScheduler } from "./bounded-operator-scheduler.mjs";
 import { createBoundedOperatorWindowLease } from "./bounded-operator-window-lease.mjs";
+import { createRenewableOperatorMissionSupervisor } from "./renewable-operator-mission.mjs";
 import { createOperatorAuthenticator } from "./operator-auth.mjs";
 import { createExecutionGrantSigner } from "../../../packages/shared-utils/src/execution-grants.mjs";
 import { createFixedUnitIncidentScheduler } from "./fixed-unit-incident-scheduler.mjs";
@@ -199,6 +200,13 @@ const boundedOperatorWindowLease = createBoundedOperatorWindowLease({
     }
   },
 });
+const renewableOperatorMissionSupervisor = createRenewableOperatorMissionSupervisor({
+  records: state.renewableOperatorMissions,
+  persistState: state.persistState,
+  windowLease: boundedOperatorWindowLease,
+  enabled: process.env.OPENCLAW_RENEWABLE_OPERATOR_MISSION_ENABLED === "1",
+  intervalMs: process.env.OPENCLAW_RENEWABLE_OPERATOR_MISSION_INTERVAL_MS,
+});
 const dispatchApprovedFixedUnitRepair = createFixedUnitIncidentApprovedDispatcher({
   tasks: state.tasks,
   approvals: state.approvals,
@@ -237,6 +245,7 @@ const handleRequest = registerRoutes({
   operatorRunSessionManager,
   boundedOperatorScheduler,
   boundedOperatorWindowLease,
+  renewableOperatorMissionSupervisor,
   buildExperienceMemoryReadModel: (...args) => experienceMemory.buildExperienceMemoryReadModel(...args),
   buildExperienceEffectivenessReadModel: (...args) => experienceMemory.buildExperienceEffectivenessReadModel(...args),
 });
@@ -322,6 +331,7 @@ function shutdown() {
   shuttingDown = true;
   fixedUnitIncidentScheduler?.stop();
   boundedOperatorScheduler.stop();
+  renewableOperatorMissionSupervisor.stop();
   boundedOperatorWindowLease.stop();
   state.persistState.flush?.();
   if (!server.listening) {
@@ -395,7 +405,9 @@ taskManager.reconcileRuntimeState();
 boundedOperatorScheduler.reconcileAtStartup();
 boundedOperatorScheduler.start();
 boundedOperatorWindowLease.reconcileAtStartup();
+renewableOperatorMissionSupervisor.reconcileAtStartup();
 boundedOperatorWindowLease.start();
+renewableOperatorMissionSupervisor.start();
 fixedUnitIncidentScheduler = createFixedUnitIncidentScheduler({
   enabled: process.env.OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_ENABLED === "1",
   intervalMs: process.env.OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_INTERVAL_MS,

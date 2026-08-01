@@ -184,6 +184,30 @@ an 1826-entry closure of about 9.93 GB. Its profile keeps
 was not executed as part of this deployment, and no activation or reboot is
 claimed for the historical candidate-only evidence.
 
+The next vertical Level 1 behavior is now implemented in source as the
+renewable operator mission in
+`plans/OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md`. One explicit authority
+grant contains 1-32 epochs; every epoch permanently consumes its budget before
+creating exactly one mission-owned child through the existing bounded window
+owner. The mission exposes durable progress/checkpoint state, explicit finite
+renewal, boundary pause/cancel, restart-required exact re-arm, and a bounded
+no-progress circuit through Observer. A real nine-service gate completed three
+epochs, consumed two queued tasks, renewed once, reached 100%, then proved a
+second mission paused after Core restart, explicitly re-armed, and cancelled.
+
+This closes resident supervision for already-reviewed queued work, not open
+task supply. The timer remains default-off; there is no automatic goal
+invention, planning, task creation, retry, provider authority, policy change,
+root, arbitrary process/window/desktop control, or host mutation. Exact Nix
+Core/Observer closures pass with 280 and 109 files; physical candidate review
+also passes for root-owned switchable candidate
+`/nix/store/w58x78k1sl78nwjknzpgbs0a0gj5kxzx-nixos-system-nixos-26.05.4808.569d57850992`:
+the immutable target marker and all six protected paths match, the closure has
+1826 paths (about 9.2 GiB), and the mission timer remains disabled. Activation
+and post-switch health remain separate gates. After those gates, freeze the
+mission lifecycle and select a reviewed finite mission worklist, not another
+scheduling or readiness variant.
+
 The operator-feedback memory edge is now implemented in
 `plans/OPENCLAW_OPERATOR_RECOMMENDATION_FEEDBACK_PLAN.md`. A terminal task
 with a validated recommendation outcome can receive one explicit
@@ -203,15 +227,15 @@ owned by their separate receipts. No recalled record id, context, provider
 content, provider call, task creation, approval, retry, or host authority is
 added by this continuation.
 
-For route planning, keep the denominators explicit. The currently bounded,
-operator-governed product is roughly 84-87% mature; the wider autonomous-agent
-body described by the identity route and kernel whitepaper is roughly 52-60%
-complete. The first number reflects a strong usable subset. It does not include
-the missing long-running autonomy, durable learning feedback, broader body
-nerves, physical Phase D evolution, or richer native-workspace lifecycle that
-keep the second number lower. The finite window lease improves bounded
-continuation evidence but does not change that denominator: an unbounded
-resident loop remains incomplete.
+For route planning, keep deployment and source denominators explicit. The
+physically deployed operator-governed product is roughly 84-87% mature. The
+current source frontier, including renewable mission supervision, is roughly
+86-89%. The wider autonomous-agent body described by the identity route and
+kernel whitepaper is roughly 56-62% complete. Mission supervision closes
+multi-epoch lifecycle continuity for already-reviewed work; autonomous task
+supply/planning, evidence-based adaptation, broader body nerves, physical
+Phase D evolution, and richer native workflows keep the final number lower.
+The canonical breakdown is `NIXSOMA_CAPABILITY_MAP.md`.
 
 The physical host now runs generation 109:
 `/nix/store/y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`.

@@ -88,6 +88,16 @@ const requiredHtml = [
   "operator-window-rearm-button",
   "operator-window-cancel-button",
   "Arm Window Lease",
+  "Renewable Operator Mission",
+  "operator-mission-epoch-input",
+  "operator-mission-steps-input",
+  "operator-mission-authority-input",
+  "operator-mission-arm-button",
+  "operator-mission-renew-button",
+  "operator-mission-pause-button",
+  "operator-mission-rearm-button",
+  "operator-mission-cancel-button",
+  "operator-mission-progress-bar",
   "Schedule Queue",
   "Re-arm Paused Schedule",
   "run-selected-reviewed-cycle-button",
@@ -109,6 +119,8 @@ const requiredClient = [
   "/operator/schedule/",
   "/operator/window",
   "/operator/window/",
+  "/operator/mission",
+  "/operator/mission/",
   "task.planned",
   "renderTaskPlan",
   "renderOperatorPanel",
@@ -122,6 +134,12 @@ const requiredClient = [
   "rearmOperatorWindowFromUi",
   "cancelOperatorWindowFromUi",
   "boundedOperatorWindowDeadlineMs",
+  "refreshOperatorMission",
+  "armOperatorMissionFromUi",
+  "renewOperatorMissionFromUi",
+  "pauseOperatorMissionFromUi",
+  "rearmOperatorMissionFromUi",
+  "cancelOperatorMissionFromUi",
   "JSON.stringify({ maxSteps, dryRun })",
   "runSelectedReviewedWorkspaceCycleFromUi",
   "act.ai.workspace.reviewed_cycle",
@@ -155,6 +173,9 @@ assert_json "$operator_step" 'const data=JSON.parse(process.argv[1]); if(!data.o
 idle_run="$(post_json "$CORE_URL/operator/run" '{"maxSteps":2,"dryRun":false}')"
 assert_json "$idle_run" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.ran!==false || data.count!==0 || data.session?.status!=="run_requested" || data.session?.maximumSteps!==2){throw new Error("bounded operator run should be idle after single planned task");}'
 
+mission_state="$(curl --silent "$CORE_URL/operator/mission")"
+assert_json "$mission_state" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.supervisor?.registry!=="nixsoma-renewable-operator-mission-v0" || data.supervisor?.enabled!==false || data.supervisor?.timerActive!==false || !Array.isArray(data.missions)){throw new Error("Observer mission read model is unavailable or unexpectedly enabled");}'
+
 summary="$(curl --silent "$CORE_URL/tasks/summary")"
 
 RESULT_DIR="$(mktemp -d)"
@@ -162,6 +183,7 @@ printf '%s' "$planned_task" > "$RESULT_DIR/planned.json"
 printf '%s' "$queue_preview" > "$RESULT_DIR/preview.json"
 printf '%s' "$operator_step" > "$RESULT_DIR/step.json"
 printf '%s' "$idle_run" > "$RESULT_DIR/idle.json"
+printf '%s' "$mission_state" > "$RESULT_DIR/mission.json"
 printf '%s' "$summary" > "$RESULT_DIR/summary.json"
 
 node - <<'EOF' "$RESULT_DIR"
@@ -173,6 +195,7 @@ const planned = readResult("planned");
 const preview = readResult("preview");
 const step = readResult("step");
 const idle = readResult("idle");
+const mission = readResult("mission");
 const summary = readResult("summary");
 
 const counts = summary.summary?.counts ?? {};
@@ -202,6 +225,8 @@ console.log(JSON.stringify({
       "act.ai.workspace.accept_assessment",
       "rebindSelectedReviewedTaskFromUi",
       "act.openclaw.engineering_context.work_view_bind",
+      "/operator/mission",
+      "armOperatorMissionFromUi",
     ],
     stateFile: process.env.OPENCLAW_CORE_STATE_FILE ?? null,
   },
@@ -225,6 +250,12 @@ console.log(JSON.stringify({
   idleRun: {
     ran: idle.ran,
     count: idle.count,
+  },
+  renewableMission: {
+    registry: mission.supervisor?.registry ?? null,
+    enabled: mission.supervisor?.enabled ?? null,
+    timerActive: mission.supervisor?.timerActive ?? null,
+    missionCount: mission.missions?.length ?? null,
   },
   taskSummary: counts,
 }, null, 2));

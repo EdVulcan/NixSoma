@@ -109,6 +109,13 @@ export function observerStyles() {
         color: var(--muted);
         font-size: 13px;
       }
+      .mission-progress {
+        display: block;
+        width: 100%;
+        height: 10px;
+        margin: 14px 0 10px;
+        accent-color: var(--accent);
+      }
       .work-view-frame {
         display: block;
         width: 100%;

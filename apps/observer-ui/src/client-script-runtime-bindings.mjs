@@ -286,6 +286,42 @@ operatorWindowRefreshButton.addEventListener("click", () => {
   });
 });
 
+operatorMissionArmButton.addEventListener("click", () => {
+  armOperatorMissionFromUi().catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
+operatorMissionRenewButton.addEventListener("click", () => {
+  renewOperatorMissionFromUi().catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
+operatorMissionPauseButton.addEventListener("click", () => {
+  pauseOperatorMissionFromUi().catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
+operatorMissionRearmButton.addEventListener("click", () => {
+  rearmOperatorMissionFromUi().catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
+operatorMissionCancelButton.addEventListener("click", () => {
+  cancelOperatorMissionFromUi().catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
+operatorMissionRefreshButton.addEventListener("click", () => {
+  refreshOperatorMission().catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
 runSelectedReviewedCycleButton.addEventListener("click", () => {
   runSelectedReviewedWorkspaceCycleFromUi().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

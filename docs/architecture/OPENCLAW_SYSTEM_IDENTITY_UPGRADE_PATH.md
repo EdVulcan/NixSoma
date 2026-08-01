@@ -806,6 +806,18 @@ re-arm 可以恢复，且不自动重放任务、不保存输入或 provider 内
 契约、证据和 deferred boundaries 见
 `../plans/OPENCLAW_BOUNDED_OPERATOR_WINDOW_LEASE_PLAN.md`。
 
+在 finite window 之上，源码前沿新增 renewable operator mission。每个 mission
+先显式获得 1-32 个 epoch 的有限授权；每个 epoch 在执行前永久消费预算并只通过
+既有 window owner 创建一个单窗口 child。Observer 直接显示进度、checkpoint、
+deadline、no-progress circuit 和 stop reason，并提供有限续期、边界暂停/取消及
+restart 后精确 re-arm。真实九服务开发 gate 已完成三 epoch、一次续期和 100%
+收口，并证明另一个 mission 在 Core restart 后必须显式恢复。该能力把 Level 1
+源码成熟度提高到约 94%，但物理 generation 109 仍是 84-87% bounded 产品基线；
+timer 默认关闭，自动 task supply/planning、retry、provider authority 与 host
+mutation 仍不存在。契约见
+`../plans/OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md`，统一进度见
+`../NIXSOMA_CAPABILITY_MAP.md`。
+
 在该 lease 之后，Level 1 记忆边界增加了显式 operator feedback receipt：只有
 带有有效 recommendation outcome receipt 的 terminal task 才能记录一次
 `helpful`、`not_helpful` 或 `uncertain`。反馈只保存枚举值、terminal outcome、

@@ -12,6 +12,7 @@ const OPERATOR_READ_PATH_PATTERNS = [
   /^\/filesystem\/(?:changes|reads)(?:\/|$)/u,
   /^\/proxy\/session-manager\/work-view\/compositor-frame$/u,
   /^\/operator\/state$/u,
+  /^\/operator\/mission(?:\/|$)/u,
   /^\/operator\/schedule(?:\/|$)/u,
   /^\/policy\/state$/u,
   /^\/state\/runtime$/u,

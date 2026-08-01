@@ -118,3 +118,30 @@ test("blocked window execution closes the lease without retry", async () => {
   assert.equal(result.lease.governance.automaticRetry, false);
   assert.equal(harness.persistCount > 0, true);
 });
+
+test("mission-owned child leases are fixed to one window and exact ownership", async () => {
+  const { manager } = createHarness();
+  const lease = manager.armForMission({
+    missionId: "mission-1",
+    maxStepsPerWindow: 3,
+    deadlineMs: 60_000,
+  });
+
+  assert.equal(lease.windowCount, 1);
+  assert.equal(lease.maxStepsPerWindow, 3);
+  assert.deepEqual(lease.owner, {
+    kind: "renewable_operator_mission",
+    missionId: "mission-1",
+  });
+  assert.equal((await manager.tick()).reason, "no_due_window");
+  assert.throws(
+    () => manager.releaseForMission(lease.id, "mission-2"),
+    /Mission-owned window lease was not found/u,
+  );
+  manager.reconcileAtStartup();
+  assert.throws(
+    () => manager.rearm(lease.id, { confirm: true }),
+    /only through their mission owner/u,
+  );
+  assert.equal(manager.releaseForMission(lease.id, "mission-1").status, "cancelled");
+});

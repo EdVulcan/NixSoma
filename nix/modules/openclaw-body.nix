@@ -434,6 +434,8 @@ let
         OPENCLAW_BOUNDED_OPERATOR_SCHEDULER_INTERVAL_MS = toString (cfg.boundedOperatorScheduler.intervalSeconds * 1000);
         OPENCLAW_BOUNDED_OPERATOR_WINDOW_ENABLED = if cfg.boundedOperatorWindow.enable then "1" else "0";
         OPENCLAW_BOUNDED_OPERATOR_WINDOW_INTERVAL_MS = toString (cfg.boundedOperatorWindow.intervalSeconds * 1000);
+        OPENCLAW_RENEWABLE_OPERATOR_MISSION_ENABLED = if cfg.renewableOperatorMission.enable then "1" else "0";
+        OPENCLAW_RENEWABLE_OPERATOR_MISSION_INTERVAL_MS = toString (cfg.renewableOperatorMission.intervalSeconds * 1000);
       } // optionalAttrs (spec.key == "core" && cfg.cloudProvider.enable) {
         OPENCLAW_CLOUD_PROVIDER_ENDPOINT = cfg.cloudProvider.endpoint;
         OPENCLAW_CLOUD_PROVIDER_MODEL = cfg.cloudProvider.model;
@@ -840,6 +842,19 @@ in
         type = types.ints.between 1 86400;
         default = 30;
         description = "Interval between bounded operator window-lease due-time checks in seconds.";
+      };
+    };
+
+    renewableOperatorMission = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable due-time checks for explicitly armed, finite, renewable operator missions.";
+      };
+      intervalSeconds = mkOption {
+        type = types.ints.between 1 86400;
+        default = 30;
+        description = "Interval between renewable operator mission due-time checks in seconds.";
       };
     };
 

@@ -20,6 +20,7 @@ const VALID_STATUSES = new Set([
   "expired",
 ]);
 const SAFE_ID = /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,119}$/u;
+const MISSION_OWNER_KIND = "renewable_operator_mission";
 
 function safeId(value) {
   return typeof value === "string" && SAFE_ID.test(value) ? value : null;
@@ -38,12 +39,25 @@ function validTimestamp(value, fallback) {
 }
 
 function compactResult(result) {
+  const count = Number.isInteger(result?.count)
+    ? result.count
+    : Number.isInteger(result?.steps?.length)
+      ? result.steps.length
+      : 0;
   return {
     ran: result?.ran === true,
-    count: Number.isInteger(result?.steps?.length) ? result.steps.length : 0,
+    count: Math.max(0, Math.min(MAX_STEPS_PER_WINDOW, count)),
     blocked: result?.blocked === true,
     reason: typeof result?.reason === "string" ? result.reason.slice(0, 120) : null,
   };
+}
+
+function normaliseOwner(value) {
+  const missionId = safeId(value?.missionId);
+  if (value?.kind === MISSION_OWNER_KIND && missionId) {
+    return { kind: MISSION_OWNER_KIND, missionId };
+  }
+  return { kind: "operator", missionId: null };
 }
 
 function governance() {
@@ -85,6 +99,7 @@ function publicLease(lease) {
     stopReason: lease.stopReason ?? null,
     lastRunSessionId: safeId(lease.lastRunSessionId),
     lastResult: lease.lastResult ?? null,
+    owner: normaliseOwner(lease.owner),
     governance: governance(),
   };
 }
@@ -123,6 +138,7 @@ function normaliseStoredLease(raw, now) {
     stopReason: typeof raw.stopReason === "string" ? raw.stopReason.slice(0, 120) : null,
     lastRunSessionId: safeId(raw.lastRunSessionId),
     lastResult: raw.lastResult && typeof raw.lastResult === "object" ? compactResult(raw.lastResult) : null,
+    owner: normaliseOwner(raw.owner),
   };
 }
 
@@ -166,13 +182,13 @@ export function createBoundedOperatorWindowLease({
     }
   }
 
-  function arm({
+  function armInternal({
     windowCount,
     maxStepsPerWindow,
     intervalMs: requestedIntervalMs = 0,
     deadlineMs,
     confirm = false,
-  } = {}) {
+  } = {}, owner = { kind: "operator", missionId: null }) {
     if (confirm !== true) throw new Error("Bounded window lease requires confirm=true.");
     const boundedWindowCount = boundedPositiveInteger(windowCount, MAX_WINDOWS);
     const boundedSteps = boundedPositiveInteger(maxStepsPerWindow, MAX_STEPS_PER_WINDOW);
@@ -213,11 +229,31 @@ export function createBoundedOperatorWindowLease({
       stopReason: null,
       lastRunSessionId: null,
       lastResult: null,
+      owner: normaliseOwner(owner),
     };
     records.set(lease.id, lease);
     trim();
     persist();
     return publicLease(lease);
+  }
+
+  function arm(options = {}) {
+    return armInternal(options, { kind: "operator", missionId: null });
+  }
+
+  function armForMission({ missionId, maxStepsPerWindow, deadlineMs } = {}) {
+    const boundedMissionId = safeId(missionId);
+    if (!boundedMissionId) throw new Error("Mission-owned window lease requires a valid mission id.");
+    return armInternal({
+      windowCount: 1,
+      maxStepsPerWindow,
+      intervalMs: 0,
+      deadlineMs,
+      confirm: true,
+    }, {
+      kind: MISSION_OWNER_KIND,
+      missionId: boundedMissionId,
+    });
   }
 
   function get(leaseId) {
@@ -240,10 +276,32 @@ export function createBoundedOperatorWindowLease({
     return publicLease(lease);
   }
 
+  function releaseForMission(leaseId, missionId) {
+    const boundedMissionId = safeId(missionId);
+    const lease = get(leaseId);
+    if (!lease || lease.owner.kind !== MISSION_OWNER_KIND || lease.owner.missionId !== boundedMissionId) {
+      throw new Error("Mission-owned window lease was not found.");
+    }
+    if (lease.status === "running") {
+      throw new Error("A running mission-owned window lease can stop only at its epoch boundary.");
+    }
+    if (["completed", "cancelled", "expired"].includes(lease.status)) return publicLease(lease);
+    lease.status = "cancelled";
+    lease.stopReason = "mission_released_child_lease";
+    lease.endedAt = now();
+    touch(lease);
+    records.set(lease.id, lease);
+    persist();
+    return publicLease(lease);
+  }
+
   function rearm(leaseId, { confirm = false } = {}) {
     if (confirm !== true) throw new Error("Bounded window lease re-arm requires confirm=true.");
     const lease = get(leaseId);
     if (!lease) throw new Error("Bounded operator window lease was not found.");
+    if (lease.owner.kind !== "operator") {
+      throw new Error("Mission-owned window leases can be resumed only through their mission owner.");
+    }
     if (lease.status !== "paused") throw new Error("Only a paused window lease can be re-armed.");
     if (Date.parse(lease.deadlineAt) <= Date.parse(now())) {
       throw new Error("Bounded window lease deadline has expired and cannot be re-armed.");
@@ -287,12 +345,21 @@ export function createBoundedOperatorWindowLease({
     return listPublic();
   }
 
-  async function tick() {
+  async function tick({ missionId = null } = {}) {
+    const boundedMissionId = missionId === null ? null : safeId(missionId);
+    if (missionId !== null && !boundedMissionId) {
+      throw new Error("Mission-owned window tick requires a valid mission id.");
+    }
     const currentTime = now();
     const currentMs = Date.parse(currentTime);
     const lease = [...records.values()]
       .map((raw) => normaliseStoredLease(raw, now))
-      .filter((candidate) => candidate?.status === "armed" && Date.parse(candidate.nextWindowAt) <= currentMs)[0] ?? null;
+      .filter((candidate) => {
+        if (candidate?.status !== "armed" || Date.parse(candidate.nextWindowAt) > currentMs) return false;
+        return boundedMissionId
+          ? candidate.owner.kind === MISSION_OWNER_KIND && candidate.owner.missionId === boundedMissionId
+          : candidate.owner.kind === "operator";
+      })[0] ?? null;
     if (!lease) return { ok: true, ran: false, reason: "no_due_window", lease: null };
     if (Date.parse(lease.deadlineAt) <= currentMs) {
       lease.status = "expired";
@@ -399,8 +466,11 @@ export function createBoundedOperatorWindowLease({
 
   return {
     arm,
+    armForMission,
     cancel,
+    releaseForMission,
     rearm,
+    get,
     tick,
     reconcileAtStartup,
     listPublic,

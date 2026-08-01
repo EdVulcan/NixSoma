@@ -15,6 +15,8 @@ export OPENCLAW_BOUNDED_OPERATOR_SCHEDULER_ENABLED=1
 export OPENCLAW_BOUNDED_OPERATOR_SCHEDULER_INTERVAL_MS=60000
 export OPENCLAW_BOUNDED_OPERATOR_WINDOW_ENABLED=1
 export OPENCLAW_BOUNDED_OPERATOR_WINDOW_INTERVAL_MS=60000
+export OPENCLAW_RENEWABLE_OPERATOR_MISSION_ENABLED=1
+export OPENCLAW_RENEWABLE_OPERATOR_MISSION_INTERVAL_MS=60000
 
 export OPENCLAW_CORE_PORT="${OPENCLAW_CORE_PORT:-5700}"
 export OPENCLAW_EVENT_HUB_PORT="${OPENCLAW_EVENT_HUB_PORT:-5701}"
@@ -83,6 +85,8 @@ for (const token of [
   "Preview Queue",
   "Run Queue",
   "Resume Interrupted Run",
+  "Renewable Operator Mission",
+  "operator-mission-progress-bar",
 ]) {
   if (!html.includes(token)) {
     throw new Error(`Observer HTML missing ${token}`);
@@ -96,6 +100,8 @@ for (const token of [
   "Trusted Work-View Authority",
   "boundedOperatorRunLimit",
   "resumeOperatorSessionFromUi",
+  "refreshOperatorMission",
+  "armOperatorMissionFromUi",
   "JSON.stringify({ maxSteps, dryRun })",
 ]) {
   if (!client.includes(token)) {
@@ -210,6 +216,57 @@ assert_json "$window_first" 'const data=JSON.parse(process.argv[1]); if(!data.ok
 window_second="$(post_json "$CORE_URL/operator/window/tick" '{}')"
 assert_json "$window_second" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.ran!==true || data.lease?.status!=="completed" || data.lease?.stopReason!=="window_budget_consumed" || data.lease?.remainingWindows!==0 || data.lease?.governance?.automaticRepeat!==false){throw new Error("bounded window lease did not stop at its finite budget");}'
 
+anonymous_mission_status="$(command curl --silent --output /dev/null --write-out '%{http_code}' "$CORE_URL/operator/mission")"
+if [[ "$anonymous_mission_status" != "401" ]]; then
+  echo "anonymous renewable mission read should be rejected with HTTP 401, got $anonymous_mission_status" >&2
+  exit 1
+fi
+
+mission_task_one="$(post_json "$CORE_URL/tasks/plan" "{\"goal\":\"Operator mission task one\",\"type\":\"browser_task\",\"targetUrl\":\"$TARGET_URL\",\"actions\":[]}")"
+assert_json "$mission_task_one" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.task?.status!=="queued"){throw new Error("first mission task was not queued");}'
+
+mission_arm="$(post_json "$CORE_URL/operator/mission" '{"epochCount":2,"maxStepsPerEpoch":1,"epochIntervalMs":0,"deadlineMs":60000,"maxNoProgressEpochs":2,"confirm":true}')"
+assert_json "$mission_arm" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.mission?.status!=="armed" || data.mission?.epochsAuthorized!==2 || data.supervisor?.enabled!==true || data.mission?.governance?.oneBoundedWindowPerEpoch!==true){throw new Error("renewable mission did not arm finite authority");}'
+mission_id="$(printf '%s' "$mission_arm" | node -e 'const fs=require("node:fs"); const data=JSON.parse(fs.readFileSync(0,"utf8")); process.stdout.write(data.mission?.id ?? "");')"
+if [[ -z "$mission_id" ]]; then
+  echo "renewable mission id missing" >&2
+  exit 1
+fi
+export OPENCLAW_MISSION_ID="$mission_id"
+mission_authenticated_state="$(curl --silent "$CORE_URL/operator/mission")"
+assert_json "$mission_authenticated_state" 'const data=JSON.parse(process.argv[1]); const mission=data.missions?.find((item)=>item.id===process.env.OPENCLAW_MISSION_ID); if(!data.ok || mission?.status!=="armed"){throw new Error("authenticated renewable mission read did not return the armed mission");}'
+
+mission_first="$(post_json "$CORE_URL/operator/mission/tick" '{}')"
+assert_json "$mission_first" 'const data=JSON.parse(process.argv[1]); if(!data.ok || !data.ran || data.mission?.status!=="armed" || data.mission?.epochsConsumed!==1 || data.mission?.epochsCompleted!==1 || data.mission?.lastCheckpoint?.stepCount!==1){throw new Error("first mission epoch did not checkpoint task progress");}'
+mission_paused="$(post_json "$CORE_URL/operator/mission/$mission_id/pause" '{"confirm":true}')"
+assert_json "$mission_paused" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.mission?.status!=="paused" || data.mission?.epochsConsumed!==1){throw new Error("mission did not pause between epochs");}'
+mission_rearmed="$(post_json "$CORE_URL/operator/mission/$mission_id/rearm" '{"resetCircuit":false,"confirm":true}')"
+assert_json "$mission_rearmed" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.mission?.status!=="armed" || data.mission?.remainingEpochs!==1){throw new Error("mission did not explicitly resume remaining authority");}'
+mission_renewed="$(post_json "$CORE_URL/operator/mission/$mission_id/renew" '{"additionalEpochs":1,"extensionMs":60000,"confirm":true}')"
+assert_json "$mission_renewed" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.mission?.epochsAuthorized!==3 || data.mission?.remainingEpochs!==2 || data.mission?.renewalCount!==1){throw new Error("mission renewal did not extend finite authority");}'
+mission_task_two="$(post_json "$CORE_URL/tasks/plan" "{\"goal\":\"Operator mission task two\",\"type\":\"browser_task\",\"targetUrl\":\"$TARGET_URL\",\"actions\":[]}")"
+assert_json "$mission_task_two" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.task?.status!=="queued"){throw new Error("second mission task was not queued between epochs");}'
+mission_second="$(post_json "$CORE_URL/operator/mission/tick" '{}')"
+assert_json "$mission_second" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.mission?.status!=="armed" || data.mission?.epochsCompleted!==2 || data.mission?.lastCheckpoint?.stepCount!==1){throw new Error("second mission epoch did not consume the second task");}'
+mission_final="$(post_json "$CORE_URL/operator/mission/tick" '{}')"
+assert_json "$mission_final" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.mission?.status!=="completed" || data.mission?.epochsConsumed!==3 || data.mission?.remainingEpochs!==0 || data.mission?.progressPercent!==100 || data.mission?.governance?.automaticRetry!==false){throw new Error("renewed mission did not stop at its exact authority");}'
+
+mission_restart_arm="$(post_json "$CORE_URL/operator/mission" '{"epochCount":1,"maxStepsPerEpoch":1,"epochIntervalMs":0,"deadlineMs":600000,"maxNoProgressEpochs":2,"confirm":true}')"
+mission_restart_id="$(printf '%s' "$mission_restart_arm" | node -e 'const fs=require("node:fs"); const data=JSON.parse(fs.readFileSync(0,"utf8")); process.stdout.write(data.mission?.id ?? "");')"
+if [[ -z "$mission_restart_id" ]]; then
+  echo "restart mission id missing" >&2
+  exit 1
+fi
+export OPENCLAW_RESTART_MISSION_ID="$mission_restart_id"
+"$SCRIPT_DIR/dev-down.sh" >/dev/null
+"$SCRIPT_DIR/dev-up.sh"
+mission_restart_state="$(curl --silent "$CORE_URL/operator/mission")"
+assert_json "$mission_restart_state" 'const data=JSON.parse(process.argv[1]); const mission=data.missions?.find((item)=>item.id===process.env.OPENCLAW_RESTART_MISSION_ID); if(!data.ok || mission?.status!=="paused" || mission?.stopReason!=="core_restart_requires_explicit_rearm" || mission?.epochsConsumed!==0){throw new Error("restart did not pause untouched mission authority");}'
+mission_restart_rearmed="$(post_json "$CORE_URL/operator/mission/$mission_restart_id/rearm" '{"resetCircuit":false,"confirm":true}')"
+assert_json "$mission_restart_rearmed" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.mission?.status!=="armed" || data.mission?.epochsConsumed!==0){throw new Error("restart mission did not re-arm explicitly");}'
+mission_restart_cancelled="$(post_json "$CORE_URL/operator/mission/$mission_restart_id/cancel" '{"confirm":true}')"
+assert_json "$mission_restart_cancelled" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.mission?.status!=="cancelled"){throw new Error("restart mission did not cancel explicitly");}'
+
 final_state="$(curl --silent "$CORE_URL/operator/state")"
 
 RESULT_DIR="$(mktemp -d)"
@@ -232,6 +289,16 @@ printf '%s' "$cancelled_schedule" > "$RESULT_DIR/cancelled-schedule.json"
 printf '%s' "$window_arm" > "$RESULT_DIR/window-arm.json"
 printf '%s' "$window_first" > "$RESULT_DIR/window-first.json"
 printf '%s' "$window_second" > "$RESULT_DIR/window-second.json"
+printf '%s' "$mission_arm" > "$RESULT_DIR/mission-arm.json"
+printf '%s' "$mission_first" > "$RESULT_DIR/mission-first.json"
+printf '%s' "$mission_paused" > "$RESULT_DIR/mission-paused.json"
+printf '%s' "$mission_rearmed" > "$RESULT_DIR/mission-rearmed.json"
+printf '%s' "$mission_renewed" > "$RESULT_DIR/mission-renewed.json"
+printf '%s' "$mission_second" > "$RESULT_DIR/mission-second.json"
+printf '%s' "$mission_final" > "$RESULT_DIR/mission-final.json"
+printf '%s' "$mission_restart_state" > "$RESULT_DIR/mission-restart-state.json"
+printf '%s' "$mission_restart_rearmed" > "$RESULT_DIR/mission-restart-rearmed.json"
+printf '%s' "$mission_restart_cancelled" > "$RESULT_DIR/mission-restart-cancelled.json"
 printf '%s' "$final_state" > "$RESULT_DIR/final.json"
 
 OPENCLAW_CONTINUITY_SESSION_ID="$continuity_session_id" OPENCLAW_REARM_ID="$rearm_id" node - <<'EOF' "$RESULT_DIR"
@@ -257,10 +324,20 @@ const cancelledSchedule = readResult("cancelled-schedule");
 const windowArm = readResult("window-arm");
 const windowFirst = readResult("window-first");
 const windowSecond = readResult("window-second");
+const missionArm = readResult("mission-arm");
+const missionFirst = readResult("mission-first");
+const missionPaused = readResult("mission-paused");
+const missionRearmed = readResult("mission-rearmed");
+const missionRenewed = readResult("mission-renewed");
+const missionSecond = readResult("mission-second");
+const missionFinal = readResult("mission-final");
+const missionRestartState = readResult("mission-restart-state");
+const missionRestartRearmed = readResult("mission-restart-rearmed");
+const missionRestartCancelled = readResult("mission-restart-cancelled");
 const finalState = readResult("final");
 
-if (finalState.operator?.status !== "idle" || finalState.operator?.summary?.counts?.completed !== 3) {
-  throw new Error("final operator state should be idle with three completed tasks");
+if (finalState.operator?.status !== "idle" || finalState.operator?.summary?.counts?.completed !== 5) {
+  throw new Error("final operator state should be idle with five completed tasks");
 }
 const restoredSession = continuityRestored.runSessions?.find((item) => item.id === process.env.OPENCLAW_CONTINUITY_SESSION_ID);
   if (continuityBlocked.runSession?.status !== "paused"
@@ -282,6 +359,20 @@ if (windowArm.lease?.status !== "armed"
   || windowSecond.lease?.status !== "completed"
   || windowSecond.lease?.remainingWindows !== 0) {
   throw new Error("bounded operator window lease evidence is incomplete");
+}
+const restartMission = missionRestartState.missions?.find((item) => item.id === process.env.OPENCLAW_RESTART_MISSION_ID);
+if (missionArm.mission?.status !== "armed"
+  || missionFirst.mission?.epochsCompleted !== 1
+  || missionPaused.mission?.status !== "paused"
+  || missionRearmed.mission?.status !== "armed"
+  || missionRenewed.mission?.renewalCount !== 1
+  || missionSecond.mission?.epochsCompleted !== 2
+  || missionFinal.mission?.status !== "completed"
+  || missionFinal.mission?.progressPercent !== 100
+  || restartMission?.status !== "paused"
+  || missionRestartRearmed.mission?.status !== "armed"
+  || missionRestartCancelled.mission?.status !== "cancelled") {
+  throw new Error("renewable operator mission evidence is incomplete");
 }
 
 console.log(JSON.stringify({
@@ -307,6 +398,19 @@ console.log(JSON.stringify({
     stopReason: windowSecond.lease?.stopReason ?? null,
     automaticContinuationWithinLease: windowSecond.lease?.governance?.automaticContinuationWithinLease ?? null,
     automaticRepeat: windowSecond.lease?.governance?.automaticRepeat ?? null,
+  },
+  renewableMission: {
+    registry: missionFinal.mission?.registry ?? null,
+    missionId: missionFinal.mission?.id ?? null,
+    epochsAuthorized: missionFinal.mission?.epochsAuthorized ?? null,
+    epochsCompleted: missionFinal.mission?.epochsCompleted ?? null,
+    progressPercent: missionFinal.mission?.progressPercent ?? null,
+    renewalCount: missionFinal.mission?.renewalCount ?? null,
+    stopReason: missionFinal.mission?.stopReason ?? null,
+    restartStatus: restartMission?.status ?? null,
+    restartRearmed: missionRestartRearmed.mission?.status ?? null,
+    restartCancelled: missionRestartCancelled.mission?.status ?? null,
+    automaticRetry: missionFinal.mission?.governance?.automaticRetry ?? null,
   },
   pauseGate: {
     status: paused.operator?.status ?? null,
