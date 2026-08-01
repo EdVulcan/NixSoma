@@ -137,15 +137,18 @@ traverse for `edvulcan`, no listing, no execution-private-key access, all nine
 health endpoints, zero failed units, matching current/profile paths, and no
 reboot.
 
-The latest deployment correction keeps outbound development traffic explicit and
-bounded. Core's provider fetch and the headed Browser Runtime use the configured
-loopback HTTP proxy at `127.0.0.1:7897`; Browser Runtime validates public
-hostnames with DoH through that same proxy, while internal service calls remain
-outside the proxy through `NO_PROXY`. Runtime configuration rejects credentials
-and non-loopback proxy hosts. The semantic type race exposed by provider latency
-is also corrected: when a referenced frame expires, Browser Runtime reuses the
-exact cached frame/inventory before taking one replacement capture, preventing a
-false `semantic_target_inventory_stale` result. The active generation is
+The current desktop source profile keeps outbound development traffic direct:
+Clash Verge is no longer imported, `cloudProvider.httpProxy` and
+`browserEngine.proxy` are unset, and the paired Browser Runtime DoH setting is
+also unset. Core and Browser Runtime therefore do not depend on a local proxy;
+internal service calls remain direct. The physical generation currently running
+was built before this source change and may retain the old `127.0.0.1:7897`
+service environment until the next explicitly authorized `nixos-rebuild
+switch`; do not treat this source change as deployed before that check. The
+semantic type race exposed by provider latency is also corrected: when a
+referenced frame expires, Browser Runtime reuses the exact cached
+frame/inventory before taking one replacement capture, preventing a false
+`semantic_target_inventory_stale` result. The active generation is
 `/nix/store/qcv5ggprl82xv75nc8nhkblnb53v759k-nixos-system-nixos-26.05.4808.569d57850992`
 (generation 102; generation 101 was
 `/nix/store/5zlz2s6zbcs5mhbmaskpl6njnsn7kl14-nixos-system-nixos-26.05.4808.569d57850992`).

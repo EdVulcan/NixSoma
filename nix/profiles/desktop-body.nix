@@ -1,7 +1,6 @@
 {
   imports = [
     ./dev-body.nix
-    ./clash-verge.nix
     ../modules/nixsoma-developer-generation-switch.nix
   ];
 
@@ -28,7 +27,6 @@
     aiGraphicalSession.nativeInput = true;
     aiGraphicalSession.applicationLifecycle = true;
     cloudProvider.enable = true;
-    cloudProvider.httpProxy = "http://127.0.0.1:7897";
     developerGenerationSwitch = {
       enable = true;
       user = "edvulcan";
@@ -39,8 +37,6 @@
       "browserRuntime"
     ];
     browserEngine.mode = "firefox";
-    browserEngine.proxy = "http://127.0.0.1:7897";
-    browserEngine.dnsOverHttps = "https://doh.pub/dns-query";
     components = [
       "eventHub"
       "core"
