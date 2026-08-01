@@ -568,6 +568,7 @@ function subscribeEvents() {
     "task.paused",
     "task.resumed",
     "task.failed",
+    "experience.operator_feedback_recorded",
     "policy.evaluated",
     "approval.created",
     "approval.approved",
@@ -622,6 +623,9 @@ function subscribeEvents() {
         }
         if (eventName === "system.command.executed" || eventName === "task.completed" || eventName === "task.failed") {
           await refreshCommandLedger();
+        }
+        if (eventName === "experience.operator_feedback_recorded") {
+          await refreshEngineeringExperienceEffectiveness();
         }
         if (
           eventName === "screen.updated"

@@ -8,8 +8,10 @@ import {
   finaliseExperienceConsumptionReceipt,
 } from "../src/native-engineering-experience-consumption-receipt.mjs";
 import { recommendationExecutionEvidence } from "./native-engineering-recommendation-receipt-fixture.mjs";
+import { validateNativeEngineeringRecommendationFeedbackReceipt } from "../src/native-engineering-recommendation-feedback.mjs";
+import { buildNativeEngineeringRecommendationOutcomeReceipt } from "../src/native-engineering-recommendation-outcome-receipt.mjs";
 
-function createHarness({ buildRulePlan = () => null, shouldBuildPlan = () => false, recordTaskExperience = () => null } = {}) {
+function createHarness({ buildRulePlan = () => null, shouldBuildPlan = () => false, recordTaskExperience = () => null, recordOperatorFeedback = () => null } = {}) {
   const tasks = new Map();
   const runtimeState = {
     status: "idle",
@@ -47,6 +49,7 @@ function createHarness({ buildRulePlan = () => null, shouldBuildPlan = () => fal
     updatePlanForPhase: () => {},
     publishEvent: async () => {},
     recordTaskExperience,
+    recordOperatorFeedback,
   });
 
   return { manager, tasks };
@@ -113,6 +116,7 @@ test("task manager recomputes provider recommendation provenance before serializ
         recommendationOutcomeReceipt: terminalTask.engineeringRecommendationOutcomeReceipt ?? null,
       });
     },
+    recordOperatorFeedback: ({ receipt }) => receipt,
   });
   const providerTask = manager.createTask({
     goal: "Completed provider recommendation source",
@@ -200,6 +204,41 @@ test("task manager recomputes provider recommendation provenance before serializ
   assert.equal(terminalExperiences.at(-1).taskId, task.id);
   assert.equal(terminalExperiences.at(-1).recommendationOutcomeReceipt.receiptHash,
     task.engineeringRecommendationOutcomeReceipt.receiptHash);
+
+  const feedback = manager.recordRecommendationFeedback(task, {
+    confirm: true,
+    rating: "helpful",
+  });
+  assert.equal(feedback.status, "recorded");
+  assert.equal(feedback.receipt.taskId, task.id);
+  assert.equal(validateNativeEngineeringRecommendationFeedbackReceipt(
+    task.engineeringRecommendationFeedbackReceipt,
+  ), feedback.receipt);
+  assert.equal(manager.recordRecommendationFeedback(task, {
+    confirm: true,
+    rating: "helpful",
+  }).status, "already_recorded");
+  assert.throws(() => manager.recordRecommendationFeedback(task, {
+    confirm: true,
+    rating: "not_helpful",
+  }), /already recorded/u);
+
+  const mismatchedTask = manager.createTask({
+    goal: "Reject an outcome with a stale terminal status",
+    type: "browser_task",
+    engineeringRecommendationLink: recommendationLinkInput,
+  });
+  mismatchedTask.engineeringRecommendationOutcomeReceipt = buildNativeEngineeringRecommendationOutcomeReceipt({
+    applicationReceipt: mismatchedTask.engineeringRecommendationApplicationReceipt,
+    downstreamTaskId: mismatchedTask.id,
+    terminalOutcome: "completed",
+    terminalPhase: "completed",
+  });
+  mismatchedTask.status = "failed";
+  assert.throws(() => manager.recordRecommendationFeedback(mismatchedTask, {
+    confirm: true,
+    rating: "uncertain",
+  }), /matching the terminal task status/u);
 
   const failedTask = manager.createTask({
     goal: "Fail the reviewed semantic click task",

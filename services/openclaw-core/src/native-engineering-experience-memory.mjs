@@ -7,6 +7,9 @@ import {
 } from "./systemd-incident-receipt.mjs";
 import { validateExperienceConsumptionReceipt } from "./native-engineering-experience-consumption-receipt.mjs";
 import { validateNativeEngineeringRecommendationOutcomeReceipt } from "./native-engineering-recommendation-outcome-receipt.mjs";
+import {
+  validateNativeEngineeringRecommendationFeedbackReceipt,
+} from "./native-engineering-recommendation-feedback.mjs";
 
 export const NATIVE_ENGINEERING_EXPERIENCE_MEMORY_REGISTRY =
   "openclaw-native-engineering-experience-memory-v0";
@@ -179,6 +182,12 @@ function recommendationOutcomeReceiptForTask(task) {
   );
 }
 
+function operatorFeedbackReceiptForRecord(record) {
+  return validateNativeEngineeringRecommendationFeedbackReceipt(
+    record?.operatorFeedbackReceipt,
+  );
+}
+
 function normaliseIncidentTargetUnit(value) {
   const targetUnit = boundedText(value, 120);
   return systemdHealthServiceKeyForUnit(targetUnit) ? targetUnit : null;
@@ -281,6 +290,7 @@ function publicRecord(record, relevance) {
     recommendationOutcomeReceipt: record.recommendationOutcomeReceipt
       ? { ...record.recommendationOutcomeReceipt }
       : null,
+    operatorFeedbackReceipt: operatorFeedbackReceiptForRecord(record),
     feedback: feedbackSummary(record),
     relevance,
   };
@@ -349,6 +359,9 @@ function effectivenessGroup(taskType, records) {
   const failed = records.filter((record) => record.outcome === "failed").length;
   const terminalRecords = completed + failed;
   const feedback = aggregateFeedback(records.map((record) => ({ record })));
+  const operatorFeedback = records
+    .map(operatorFeedbackReceiptForRecord)
+    .filter(Boolean);
   const advisoryApplied = records.filter((record) => (
     record.recommendationOutcomeReceipt?.advisoryApplied === true
     || record.recommendationOutcomeReceipt?.applicationReceiptHash
@@ -363,9 +376,14 @@ function effectivenessGroup(taskType, records) {
       : null,
     feedbackObservedOutcomes: feedback.observedOutcomes,
     feedbackCompletionRate: feedback.completionRate,
+    operatorFeedbackRecorded: operatorFeedback.length,
+    operatorFeedbackHelpful: operatorFeedback.filter(({ rating }) => rating === "helpful").length,
+    operatorFeedbackNotHelpful: operatorFeedback.filter(({ rating }) => rating === "not_helpful").length,
+    operatorFeedbackUncertain: operatorFeedback.filter(({ rating }) => rating === "uncertain").length,
     advisoryAppliedRecords: advisoryApplied,
     status: terminalRecords >= 2 ? "observed" : "insufficient_history",
     causalAttribution: false,
+    recommendationEffectivenessProven: false,
     policyInfluence: false,
   };
 }
@@ -440,6 +458,7 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
       incidentPattern,
       consumptionReceipt,
       recommendationOutcomeReceipt,
+      operatorFeedbackReceipt: null,
       feedback: {
         registry: NATIVE_ENGINEERING_EXPERIENCE_FEEDBACK_REGISTRY,
         correlation: "same_task_type_subsequent_terminal_outcome",
@@ -470,6 +489,34 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
       records.delete(oldestKey);
     }
     return record;
+  }
+
+  function recordOperatorFeedback({ task, receipt } = {}) {
+    const validated = validateNativeEngineeringRecommendationFeedbackReceipt(receipt);
+    const record = task?.id ? records.get(task.id) : null;
+    const outcome = recommendationOutcomeReceiptForTask(task);
+    if (!validated
+      || !record
+      || !outcome
+      || validated.taskId !== task.id
+      || validated.recommendationOutcomeReceiptHash !== outcome.receiptHash
+      || validated.terminalOutcome !== outcome.terminalOutcome
+      || validated.terminalOutcome !== task.status
+      || record.source?.taskId !== task.id
+      || record.recommendationOutcomeReceipt?.receiptHash !== outcome.receiptHash) {
+      return null;
+    }
+
+    const existing = operatorFeedbackReceiptForRecord(record);
+    if (existing) {
+      if (existing.receiptHash !== validated.receiptHash) {
+        throw new Error("Operator recommendation feedback is already recorded for this task.");
+      }
+      return existing;
+    }
+
+    record.operatorFeedbackReceipt = validated;
+    return validated;
   }
 
   function buildExperienceMemoryReadModel({ taskType, goal, incidentTargetUnit, limit } = {}) {
@@ -619,6 +666,12 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
     const terminalRecords = groups.reduce((total, group) => total + group.terminalRecords, 0);
     const completed = groups.reduce((total, group) => total + group.completed, 0);
     const failed = groups.reduce((total, group) => total + group.failed, 0);
+    const operatorFeedback = groups.reduce((summary, group) => ({
+      recorded: summary.recorded + group.operatorFeedbackRecorded,
+      helpful: summary.helpful + group.operatorFeedbackHelpful,
+      notHelpful: summary.notHelpful + group.operatorFeedbackNotHelpful,
+      uncertain: summary.uncertain + group.operatorFeedbackUncertain,
+    }), { recorded: 0, helpful: 0, notHelpful: 0, uncertain: 0 });
     const generatedAt = now();
     return {
       ok: true,
@@ -632,11 +685,16 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
         terminalRecords,
         completed,
         failed,
+        operatorFeedbackRecorded: operatorFeedback.recorded,
+        operatorFeedbackHelpful: operatorFeedback.helpful,
+        operatorFeedbackNotHelpful: operatorFeedback.notHelpful,
+        operatorFeedbackUncertain: operatorFeedback.uncertain,
         completionRate: terminalRecords > 0
           ? Number((completed / terminalRecords).toFixed(2))
           : null,
         status: groups.length > 0 ? "observed" : "empty",
         causalAttribution: false,
+        recommendationEffectivenessProven: false,
         policyInfluence: false,
         automaticRanking: false,
       },
@@ -672,7 +730,12 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
           terminalRecords,
           completed,
           failed,
+          operatorFeedbackRecorded: operatorFeedback.recorded,
+          operatorFeedbackHelpful: operatorFeedback.helpful,
+          operatorFeedbackNotHelpful: operatorFeedback.notHelpful,
+          operatorFeedbackUncertain: operatorFeedback.uncertain,
           causalAttribution: false,
+          recommendationEffectivenessProven: false,
           policyInfluence: false,
         },
       },
@@ -681,6 +744,7 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
 
   return {
     recordTaskExperience,
+    recordOperatorFeedback,
     buildExperienceMemoryReadModel,
     buildExperienceEffectivenessReadModel,
   };

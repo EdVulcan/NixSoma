@@ -81,6 +81,7 @@ const taskManager = createTaskManager({
   createApprovalRequestForTask: (task, decision) => approvalEngine.createApprovalRequestForTask(task, decision),
   publishEvent,
   recordTaskExperience: (task) => experienceMemory.recordTaskExperience(task),
+  recordOperatorFeedback: (args) => experienceMemory.recordOperatorFeedback(args),
 });
 
 const approvalEngine = createApprovalEngine({ state, taskManager, policyEvaluator, publishEvent });

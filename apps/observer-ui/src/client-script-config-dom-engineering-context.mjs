@@ -25,6 +25,9 @@ const engineeringExperienceEffectivenessGroups = document.querySelector("#engine
 const engineeringExperienceEffectivenessRecords = document.querySelector("#engineering-experience-effectiveness-records");
 const engineeringExperienceEffectivenessRate = document.querySelector("#engineering-experience-effectiveness-rate");
 const engineeringExperienceEffectivenessPolicy = document.querySelector("#engineering-experience-effectiveness-policy");
+const engineeringExperienceFeedbackStatus = document.querySelector("#engineering-experience-feedback-status");
+const engineeringExperienceFeedbackRating = document.querySelector("#engineering-experience-feedback-rating");
+const engineeringExperienceFeedbackButton = document.querySelector("#engineering-experience-feedback-button");
 const engineeringExperienceEffectivenessRefreshButton = document.querySelector("#engineering-experience-effectiveness-refresh-button");
 const engineeringExperienceEffectivenessJson = document.querySelector("#engineering-experience-effectiveness-json");
 `;

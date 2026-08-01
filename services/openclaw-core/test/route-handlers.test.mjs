@@ -11,6 +11,9 @@ import {
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_REGISTRY,
 } from "../src/cloud-live-provider-runtime-response-contract.mjs";
+import { buildNativeEngineeringRecommendationFeedbackReceipt } from "../src/native-engineering-recommendation-feedback.mjs";
+import { buildNativeEngineeringRecommendationOutcomeReceipt } from "../src/native-engineering-recommendation-outcome-receipt.mjs";
+import { recommendationApplicationReceipt } from "./native-engineering-recommendation-receipt-fixture.mjs";
 
 function createBaseDeps(overrides = {}) {
   const state = {
@@ -2080,6 +2083,71 @@ test("task list route returns capped items with total count and summary", async 
     items: [{ id: "task-1", status: "queued" }],
     summary: { total: 2, queued: 1, running: 1 },
   });
+});
+
+test("recommendation feedback route forwards only the selected rating and publishes a compact receipt event", async () => {
+  const events = [];
+  const task = {
+    id: "semantic-task-7",
+    type: "browser_task",
+    status: "completed",
+  };
+  const outcome = buildNativeEngineeringRecommendationOutcomeReceipt({
+    applicationReceipt: recommendationApplicationReceipt(),
+    downstreamTaskId: task.id,
+    terminalOutcome: "completed",
+    terminalPhase: "completed",
+  });
+  task.engineeringRecommendationOutcomeReceipt = outcome;
+  let recordedReceipt = null;
+  const deps = createBaseDeps({
+    state: { tasks: new Map([[task.id, task]]) },
+    taskManager: {
+      getTaskById: (taskId) => taskId === task.id ? task : null,
+      recordRecommendationFeedback: (selectedTask, input) => {
+        assert.equal(selectedTask, task);
+        assert.deepEqual(input, { confirm: true, rating: "helpful" });
+        if (recordedReceipt) {
+          return { task: selectedTask, receipt: recordedReceipt, status: "already_recorded" };
+        }
+        const receipt = buildNativeEngineeringRecommendationFeedbackReceipt({
+          taskId: task.id,
+          recommendationOutcomeReceipt: outcome,
+          rating: input.rating,
+        });
+        selectedTask.engineeringRecommendationFeedbackReceipt = receipt;
+        recordedReceipt = receipt;
+        return { task: selectedTask, receipt, status: "recorded" };
+      },
+      serialiseTask: (value) => ({
+        id: value.id,
+        engineeringRecommendationFeedbackReceipt: value.engineeringRecommendationFeedbackReceipt,
+      }),
+    },
+    publishEvent: async (type, payload) => events.push({ type, payload }),
+  });
+
+  const response = await invokeRoute(deps, "POST", `/tasks/${task.id}/recommendation-feedback`, {
+    confirm: true,
+    rating: "helpful",
+    ignored: "not forwarded",
+  });
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(response.body.feedback.registry, "openclaw-native-engineering-recommendation-feedback-v0");
+  assert.equal(response.body.feedback.rating, "helpful");
+  assert.equal(response.body.feedback.governance.causalAttribution, false);
+  assert.deepEqual(events.map((event) => event.type), ["experience.operator_feedback_recorded"]);
+  assert.equal(events[0].payload.feedback.rating, "helpful");
+  assert.equal("ignored" in events[0].payload, false);
+
+  const repeated = await invokeRoute(deps, "POST", `/tasks/${task.id}/recommendation-feedback`, {
+    confirm: true,
+    rating: "helpful",
+  });
+  assert.equal(repeated.statusCode, 200, JSON.stringify(repeated.body));
+  assert.equal(repeated.body.status, "already_recorded");
+  assert.equal(events.length, 1, "idempotent feedback must not duplicate the audit event");
 });
 
 test("reviewed browser task route creates a fixed plan without execution authority", async () => {

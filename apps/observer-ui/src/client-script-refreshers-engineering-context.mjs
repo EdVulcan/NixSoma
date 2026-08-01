@@ -55,6 +55,9 @@ async function refreshEngineeringExperienceEffectiveness() {
     engineeringExperienceEffectivenessRate.textContent = response.summary?.completionRate == null
       ? "none"
       : String(response.summary.completionRate);
+    if (engineeringExperienceFeedbackStatus) {
+      engineeringExperienceFeedbackStatus.textContent = \`\${response.summary?.operatorFeedbackRecorded ?? 0} recorded\`;
+    }
     engineeringExperienceEffectivenessPolicy.textContent = String(
       response.governance?.policyInfluence ?? response.summary?.policyInfluence ?? false,
     );
@@ -71,6 +74,51 @@ async function refreshEngineeringExperienceEffectiveness() {
     setControlMessage("Experience effectiveness was unavailable.");
   } finally {
     engineeringExperienceEffectivenessRefreshButton.disabled = false;
+  }
+}
+
+async function recordEngineeringExperienceFeedback() {
+  if (!engineeringExperienceFeedbackButton) return;
+  const taskId = typeof taskDetailIdInput?.value === "string" && taskDetailIdInput.value.trim()
+    ? taskDetailIdInput.value.trim()
+    : null;
+  const rating = engineeringExperienceFeedbackRating?.value ?? "";
+  if (!taskId) {
+    throw new Error("Select a terminal recommendation task before recording feedback.");
+  }
+  if (!["helpful", "not_helpful", "uncertain"].includes(rating)) {
+    throw new Error("Recommendation feedback rating is not supported.");
+  }
+
+  engineeringExperienceFeedbackButton.disabled = true;
+  try {
+    const response = await fetchJson(
+      \`\${observerConfig.coreUrl}/tasks/\${encodeURIComponent(taskId)}/recommendation-feedback\`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ confirm: true, rating }),
+      },
+    );
+    if (response.ok !== true
+      || response.feedback?.registry !== "openclaw-native-engineering-recommendation-feedback-v0"
+      || response.feedback?.taskId !== taskId
+      || response.feedback?.rating !== rating
+      || response.feedback?.governance?.causalAttribution !== false
+      || response.feedback?.governance?.changesRanking !== false
+      || response.feedback?.governance?.changesPolicy !== false) {
+      throw new Error("Recommendation feedback receipt was invalid.");
+    }
+    if (engineeringExperienceFeedbackStatus) {
+      engineeringExperienceFeedbackStatus.textContent = \`\${response.status ?? "recorded"}/\${rating}\`;
+    }
+    await Promise.all([
+      refreshTaskHistoryDetail(),
+      refreshEngineeringExperienceEffectiveness(),
+    ]);
+    setControlMessage(\`Recorded \${rating} feedback for task \${taskId}; execution policy was unchanged.\`);
+  } finally {
+    engineeringExperienceFeedbackButton.disabled = false;
   }
 }
 
@@ -162,6 +210,15 @@ if (typeof engineeringExperienceEffectivenessRefreshButton !== "undefined"
   && engineeringExperienceEffectivenessRefreshButton) {
   engineeringExperienceEffectivenessRefreshButton.addEventListener("click", () => {
     void refreshEngineeringExperienceEffectiveness();
+  });
+}
+
+if (typeof engineeringExperienceFeedbackButton !== "undefined"
+  && engineeringExperienceFeedbackButton) {
+  engineeringExperienceFeedbackButton.addEventListener("click", () => {
+    void recordEngineeringExperienceFeedback().catch((error) => {
+      setControlMessage(\`Recommendation feedback was not recorded: \${formatError(error)}.\`);
+    });
   });
 }
 

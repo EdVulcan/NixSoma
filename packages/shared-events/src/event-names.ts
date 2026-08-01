@@ -13,6 +13,7 @@ export const eventNames = [
   "task.operator_takeover",
   "task.completed",
   "task.failed",
+  "experience.operator_feedback_recorded",
   "policy.evaluated",
   "approval.created",
   "approval.approved",

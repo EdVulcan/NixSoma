@@ -65,7 +65,17 @@ export function observerEngineeringContextPanels() {
           <div class="metric"><span>Terminal Records</span><span id="engineering-experience-effectiveness-records">0</span></div>
           <div class="metric"><span>Completion Rate</span><span id="engineering-experience-effectiveness-rate">none</span></div>
           <div class="metric"><span>Policy Influence</span><span id="engineering-experience-effectiveness-policy">false</span></div>
+          <div class="metric"><span>Operator Feedback</span><span id="engineering-experience-feedback-status">not recorded</span></div>
+          <div class="field">
+            <label for="engineering-experience-feedback-rating">Recommendation feedback</label>
+            <select id="engineering-experience-feedback-rating">
+              <option value="helpful">Helpful</option>
+              <option value="not_helpful">Not helpful</option>
+              <option value="uncertain">Uncertain</option>
+            </select>
+          </div>
           <button id="engineering-experience-effectiveness-refresh-button" class="secondary" type="button">Read Effectiveness</button>
+          <button id="engineering-experience-feedback-button" class="secondary" type="button">Record Feedback For Selected Task</button>
           <pre id="engineering-experience-effectiveness-json">No effectiveness read yet.</pre>
         </section>
 `;

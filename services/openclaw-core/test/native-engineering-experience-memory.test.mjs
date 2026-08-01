@@ -12,6 +12,7 @@ import {
   finaliseExperienceConsumptionReceipt,
 } from "../src/native-engineering-experience-consumption-receipt.mjs";
 import { buildNativeEngineeringRecommendationOutcomeReceipt } from "../src/native-engineering-recommendation-outcome-receipt.mjs";
+import { buildNativeEngineeringRecommendationFeedbackReceipt } from "../src/native-engineering-recommendation-feedback.mjs";
 import {
   recommendationApplicationReceipt,
   recommendationExecutionReceipt,
@@ -154,9 +155,14 @@ test("experience effectiveness is an explicit read-only observation, never an au
     completionRate: 0.5,
     feedbackObservedOutcomes: 1,
     feedbackCompletionRate: 0,
+    operatorFeedbackRecorded: 0,
+    operatorFeedbackHelpful: 0,
+    operatorFeedbackNotHelpful: 0,
+    operatorFeedbackUncertain: 0,
     advisoryAppliedRecords: 0,
     status: "observed",
     causalAttribution: false,
+    recommendationEffectivenessProven: false,
     policyInfluence: false,
   });
   assert.equal(effectiveness.governance.readOnly, true);
@@ -272,6 +278,36 @@ test("experience memory preserves the execution-bound recommendation outcome v1"
     },
   });
   assert.equal(changed.recommendationOutcomeReceipt, null);
+});
+
+test("experience memory records explicit recommendation feedback without learning claims", () => {
+  const records = new Map();
+  const memory = createNativeEngineeringExperienceMemory({ records });
+  const outcome = recommendationOutcomeReceipt({ withExecution: true });
+  const task = {
+    id: "semantic-task-7",
+    type: "browser_task",
+    status: "completed",
+    executionPhase: "completed",
+    engineeringRecommendationOutcomeReceipt: outcome,
+  };
+  memory.recordTaskExperience(task);
+
+  const feedback = buildNativeEngineeringRecommendationFeedbackReceipt({
+    taskId: task.id,
+    recommendationOutcomeReceipt: outcome,
+    rating: "helpful",
+  });
+  assert.equal(memory.recordOperatorFeedback({ task, receipt: feedback }).receiptHash, feedback.receiptHash);
+  assert.equal(memory.recordOperatorFeedback({ task, receipt: feedback }).receiptHash, feedback.receiptHash);
+  assert.equal(records.get(task.id).operatorFeedbackReceipt.rating, "helpful");
+
+  const readback = memory.buildExperienceEffectivenessReadModel({ taskType: "browser_task" });
+  assert.equal(readback.summary.operatorFeedbackRecorded, 1);
+  assert.equal(readback.summary.operatorFeedbackHelpful, 1);
+  assert.equal(readback.groups[0].recommendationEffectivenessProven, false);
+  assert.equal(readback.governance.changesRanking, false);
+  assert.equal(readback.governance.changesExecutionPolicy, false);
 });
 
 test("experience memory recalls the most applicable bounded lessons", () => {

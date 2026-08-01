@@ -55,6 +55,7 @@ export async function handleTaskRoute({ req, res, requestUrl, state, approvalEng
     appendTaskPhase,
     attachTaskToWorkView,
     completeTask,
+    recordRecommendationFeedback,
     recoverTask,
     isRecoverableTask,
     supersedeOtherActiveTasks,
@@ -371,6 +372,51 @@ export async function handleTaskRoute({ req, res, requestUrl, state, approvalEng
     }
 
     sendJson(res, 200, { ok: true, task: serialiseTask(task) });
+    return true;
+  }
+
+  if (req.method === "POST"
+    && requestUrl.pathname.startsWith("/tasks/")
+    && requestUrl.pathname.endsWith("/recommendation-feedback")) {
+    const taskId = requestUrl.pathname.slice("/tasks/".length, -"/recommendation-feedback".length);
+    const task = getTaskById(taskId);
+    if (!task) {
+      sendJson(res, 404, { ok: false, error: "Task not found." });
+      return true;
+    }
+
+    try {
+      const body = await readJsonBody(req, 64_000);
+      const result = recordRecommendationFeedback(task, {
+        confirm: body.confirm,
+        rating: body.rating,
+      });
+      if (result.status === "recorded") {
+        await publishEvent(createEventName("experience.operator_feedback_recorded"), {
+          taskId: task.id,
+          feedback: {
+            registry: result.receipt.registry,
+            status: result.status,
+            rating: result.receipt.rating,
+            terminalOutcome: result.receipt.terminalOutcome,
+            recommendationOutcomeReceiptHash: result.receipt.recommendationOutcomeReceiptHash,
+            receiptHash: result.receipt.receiptHash,
+            causalAttribution: false,
+            changesRanking: false,
+            changesPolicy: false,
+          },
+        });
+      }
+      sendJson(res, 200, {
+        ok: true,
+        status: result.status,
+        task: serialiseTask(result.task),
+        feedback: result.receipt,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
     return true;
   }
 

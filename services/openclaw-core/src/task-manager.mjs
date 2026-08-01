@@ -9,6 +9,10 @@ import {
   validateNativeEngineeringRecommendationExecutionReceipt,
 } from "./native-engineering-recommendation-execution-receipt.mjs";
 import { buildNativeEngineeringRecommendationOutcomeReceipt } from "./native-engineering-recommendation-outcome-receipt.mjs";
+import {
+  buildNativeEngineeringRecommendationFeedbackReceipt,
+  validateNativeEngineeringRecommendationFeedbackReceipt,
+} from "./native-engineering-recommendation-feedback.mjs";
 import { recoverCapabilityExecutionReservations } from "./capability-runtime-approval-binding.mjs";
 
 const TASK_EXTENSION_FIELDS = [
@@ -18,6 +22,7 @@ const TASK_EXTENSION_FIELDS = [
   { name: "engineeringRecommendationApplicationReceipt" },
   { name: "engineeringRecommendationExecutionReceipt" },
   { name: "engineeringRecommendationOutcomeReceipt" },
+  { name: "engineeringRecommendationFeedbackReceipt" },
   { name: "engineeringEditProposal" },
   { name: "engineeringWriteProposal" },
   { name: "workspaceMutation" },
@@ -112,6 +117,7 @@ export function createTaskManager(deps) {
     updatePlanForPhase,
     publishEvent,
     recordTaskExperience = () => null,
+    recordOperatorFeedback = () => null,
   } = deps;
   const {
     tasks,
@@ -687,6 +693,43 @@ function recordTerminalTaskExperience(task) {
   }
 }
 
+function recordRecommendationFeedback(task, { confirm = false, rating } = {}) {
+  if (confirm !== true) {
+    throw new Error("Explicit confirmation is required to record recommendation feedback.");
+  }
+  if (!task || !["completed", "failed"].includes(task.status)) {
+    throw new Error("Recommendation feedback requires a terminal task.");
+  }
+
+  const existing = validateNativeEngineeringRecommendationFeedbackReceipt(
+    task.engineeringRecommendationFeedbackReceipt,
+  );
+  const receipt = buildNativeEngineeringRecommendationFeedbackReceipt({
+    taskId: task.id,
+    recommendationOutcomeReceipt: task.engineeringRecommendationOutcomeReceipt,
+    rating,
+  });
+  if (!receipt || receipt.terminalOutcome !== task.status) {
+    throw new Error("Recommendation feedback requires a valid downstream outcome receipt matching the terminal task status.");
+  }
+  if (existing) {
+    if (existing.taskId !== receipt.taskId
+      || existing.recommendationOutcomeReceiptHash !== receipt.recommendationOutcomeReceiptHash
+      || existing.rating !== receipt.rating) {
+      throw new Error("Recommendation feedback is already recorded for this task.");
+    }
+    return { task, receipt: existing, status: "already_recorded" };
+  }
+
+  if (!recordOperatorFeedback({ task, receipt })) {
+    throw new Error("Recommendation feedback could not be bound to durable experience memory.");
+  }
+  task.engineeringRecommendationFeedbackReceipt = receipt;
+  task.updatedAt = new Date().toISOString();
+  persistState();
+  return { task, receipt, status: "recorded" };
+}
+
 function buildWorkViewAttachPayload(data, targetUrl) {
   const workView = data?.workView ?? {};
   return {
@@ -727,6 +770,7 @@ function buildWorkViewAttachPayload(data, targetUrl) {
     completeTask,
     failTask,
     recordRecommendationExecution,
+    recordRecommendationFeedback,
     recoverTask,
     supersedeOtherActiveTasks,
     reconcileRuntimeState,

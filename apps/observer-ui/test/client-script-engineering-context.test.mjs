@@ -58,10 +58,14 @@ test("Observer exposes only the allowlisted trusted work-view recovery actions",
     "engineering-context-packet-source-task",
     "engineering-context-packet-source-task-id-input",
     "engineering-context-packet-use-task-detail-button",
+    "engineering-experience-feedback-status",
+    "engineering-experience-feedback-rating",
+    "engineering-experience-feedback-button",
   ]) {
     assert.equal(panel.includes(token), true, `panel is missing ${token}`);
   }
   assert.equal(observerClientConfigDomEngineeringContextScript.includes("engineeringContextPacketRecovery"), true);
+  assert.equal(observerClientConfigDomEngineeringContextScript.includes("engineeringExperienceFeedback"), true);
   assert.equal(observerClientEngineeringContextRefreshersScript.includes("runRecommendedWorkViewAction"), true);
 
   const context = rendererContext();

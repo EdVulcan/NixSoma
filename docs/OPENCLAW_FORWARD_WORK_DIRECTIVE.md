@@ -57,7 +57,7 @@ return bounded transient local OCR or one read-only provider assessment without
 pixel egress. Direct operator interaction also includes one armed projected
 click and one write-only 1-32 character native type; one reviewed task may
 also request that one objective-selected OCR item be focused and receive its
-exact allowlisted objective value through a fixed two-action sequence. All 1355 workspace tests
+exact allowlisted objective value through a fixed two-action sequence. All 1359 workspace tests
 and typecheck pass, the body-config and event-audit integration checks pass, the
 835-entry milestone registry and 1023-file script audit pass, and
 the Windows path budget has no file over 160 repository-relative characters.
@@ -179,6 +179,16 @@ an 1826-entry closure of about 9.93 GB. Its profile keeps
 `OPENCLAW_BOUNDED_OPERATOR_WINDOW_ENABLED=0`; active generation `n23b58...`
 and all nine services remain unchanged and healthy. No activation or reboot is
 claimed for this candidate-only evidence.
+
+The operator-feedback memory edge is now implemented in
+`plans/OPENCLAW_OPERATOR_RECOMMENDATION_FEEDBACK_PLAN.md`. A terminal task
+with a validated recommendation outcome can receive one explicit
+`helpful`, `not_helpful`, or `uncertain` rating. Core binds it to the outcome
+receipt and experience record, persists only bounded hashes and enum state,
+and exposes aggregate counts in the existing Observer Experience Effectiveness
+panel. Repeating the same rating is idempotent; changing it is rejected. This
+is durable operator feedback, not causal learning: ranking, policy, provider
+training, automatic task creation, and execution remain disabled.
 
 The memory-to-recommendation provenance continuation is also closed in source.
 The existing task-bound recall receipt remains immutable and provider-only; the
@@ -310,13 +320,14 @@ one-off call surface.
 
 ## Selected Next Real Capability
 
-The reviewed task work-view continuity slice and the recall-to-recommendation
-provenance continuation are implemented and being frozen after source-level
-validation. The next route review must select a distinct user-visible Level 2
-or Level 3 capability, not another receipt wrapper, provider-readiness gate,
-automatic learning claim, rebind/retry path, or horizontal action variant.
-Use the identity-upgrade path and current evidence to choose that capability
-before editing; physical generation activation remains separately authorized.
+The reviewed task work-view continuity, recall-to-recommendation provenance,
+and explicit operator-feedback edges are implemented and being frozen after
+source-level validation. The next route is the separately authorized physical
+deployment proof for the already implemented Level 3 process-lifecycle
+observation. Do not reopen the feedback lane for another receipt wrapper,
+automatic learning claim, or ranking/policy variant; after physical proof,
+select a distinct broader body capability from the identity-upgrade path.
+Physical generation activation remains separately authorized.
 
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation
