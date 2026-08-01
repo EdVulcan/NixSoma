@@ -731,6 +731,10 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
   Core 只接受 `maxSteps + dryRun`，拒绝 action/task/URL/policy override。scheduler、
   background pickup、自动 repeat/retry、开放循环、provider call 与 host mutation
   仍未启用
+- reviewed browser task 现在可通过一个显式 selected-task bridge 进入既有
+  `act.ai.workspace.reviewed_cycle`：一次 bounded run 加只读 assessment，再保留
+  原有 operator acceptance；bridge 不新增 provider route、credential、scheduler、
+  retry 或 host authority
 - Phase D 操作者治理的 activation/rollback lane 已冻结；自动批准、自动回滚、
   provider 选择 generation、任意 root 命令和物理机 mutation 仍未授权
 
@@ -746,7 +750,7 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 
 | 身份层级 | 当前成熟度 | 证据与主要缺口 |
 | --- | --- | --- |
-| Level 1 用户态控制平面 | 约 92% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；Observer/Core reviewed task composer 已把 demo-only 入口替换为真实 bounded goal/URL browser task 或 plan，bounded operator work session 又增加严格 1-20 queue preview/run 而不引入 scheduler 或 open loop；durable experience feedback、task-bound consumption 以及 recommendation application/execution/outcome 链分别证明非因果反馈、recall provider delivery、建议选择、一个治理 click 与终态相关性。建议有效性与因果效果仍未证明。 |
+| Level 1 用户态控制平面 | 约 92% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；Observer/Core reviewed task composer 已把 demo-only 入口替换为真实 bounded goal/URL browser task 或 plan，bounded operator work session 增加严格 1-20 queue preview/run，reviewed task workspace session 又把选中 task 显式连接到既有 bounded run + assessment owner，而不引入 scheduler 或 open loop；durable experience feedback、task-bound consumption 以及 recommendation application/execution/outcome 链分别证明非因果反馈、recall provider delivery、建议选择、一个治理 click 与终态相关性。建议有效性与因果效果仍未证明。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 72-76% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal/boot diagnosis、target-specific post-repair health receipt、只读 eBPF process-exec、network connect-attempt 与 file open-attempt evidence、已部署的 automatic incident scheduler，以及固定 body unit 的资源观测和声明式 cgroup envelope 已形成。物理 generation `52s1asvy...` 已包含三个 probes 及显式 compact aggregate；file-open 不含 filename/path/content/result，aggregate 不含 raw values，并通过 KVM 与物理双门禁。物理 Phase D mutation、自动 rollback、开发终端资源隔离和更广系统能力仍未建立。 |
 | Level 4 图形栈内生组件 | 约 86%（bounded native/operator input、semantic type/click、reviewed run/assessment、OCR actions、current-tab close 与 receipt-bound semantic submit 已物理完成） | 已有 user-owned nested compositor、AI-owned Nix Firefox、原生 frame/input/projection、surface 生命周期、task-grounded provider decisions、OCR workflows、当前 tab owner 与 type-receipt-bound submit。`5zlz2s6z...` gate 证明固定 local form 的 type -> submit、可见 completion、exact no-replay、无 plaintext persistence、task unchanged 与健康服务。该动作族已冻结；Enter、hotkey、repeat、通用键盘代理、开放式循环、任意进程/窗口控制和桌面接管仍未完成。 |

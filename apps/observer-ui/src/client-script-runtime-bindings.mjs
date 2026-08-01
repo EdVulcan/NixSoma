@@ -226,6 +226,12 @@ operatorRunButton.addEventListener("click", () => {
   });
 });
 
+runSelectedReviewedCycleButton.addEventListener("click", () => {
+  runSelectedReviewedWorkspaceCycleFromUi().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 approveLatestButton.addEventListener("click", () => {
   resolveLatestApproval("approve").catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

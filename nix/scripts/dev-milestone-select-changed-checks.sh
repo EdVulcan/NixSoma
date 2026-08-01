@@ -596,6 +596,26 @@ const boundedOperatorWorkSessionSlice = changedFiles.length > 0
   && changedFiles.every((file) => boundedOperatorWorkSessionFiles.has(file))
   && changedFiles.some((file) => file === "services/openclaw-core/src/operator-run-request.mjs")
   && changedFiles.some((file) => file === "apps/observer-ui/src/client-script-runtime-operator-session.mjs");
+const reviewedTaskWorkspaceSessionFiles = new Set([
+  "apps/observer-ui/src/client-script-config-dom.mjs",
+  "apps/observer-ui/src/client-script-runtime-actions.mjs",
+  "apps/observer-ui/src/client-script-runtime-bindings.mjs",
+  "apps/observer-ui/src/client-script-runtime-reviewed-task-session.mjs",
+  "apps/observer-ui/src/observer-panels-operations.mjs",
+  "apps/observer-ui/test/client-script-runtime-reviewed-task-session.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md",
+  "docs/plans/README.md",
+  "nix/packages/observer-ui.nix",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "nix/scripts/dev-observer-operator-check.sh",
+]);
+const reviewedTaskWorkspaceSessionSlice = changedFiles.length > 0
+  && changedFiles.every((file) => reviewedTaskWorkspaceSessionFiles.has(file))
+  && changedFiles.some((file) => file === "apps/observer-ui/src/client-script-runtime-reviewed-task-session.mjs");
 const kernelFileOpenCaptureFiles = new Set([
   "apps/observer-ui/src/client-script-config-dom-kernel-file.mjs",
   "apps/observer-ui/src/client-script-config-dom.mjs",
@@ -1492,6 +1512,15 @@ function selectSourceHeuristics(file) {
 }
 
 for (const file of changedFiles) {
+  if (reviewedTaskWorkspaceSessionSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("body-config");
+    selectName("observer-operator");
+    selectName("observer-capability-invoke");
+    continue;
+  }
   if (boundedOperatorWorkSessionSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");

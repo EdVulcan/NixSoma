@@ -75,6 +75,14 @@ verification, persistence, and stop-condition owners. No scheduler, background
 pickup, automatic repeat/retry, open loop, provider call, task/approval
 creation, or host mutation was added. Physical deployment is deferred.
 
+The reviewed browser-task entry now also has one explicit selected-task bridge
+to the existing `act.ai.workspace.reviewed_cycle` owner. This closes the path
+from operator-authored goal/URL to bounded workspace run plus read-only
+assessment while preserving the existing three-provider-call/two-action limit,
+task/work-view revalidation, required acceptance, and no automatic completion.
+The bridge adds no provider route, credential access, scheduler, retry, or host
+authority.
+
 For route planning, keep the denominators explicit. The currently bounded,
 operator-governed product is roughly 84-87% mature; the wider autonomous-agent
 body described by the identity route and kernel whitepaper is roughly 52-60%
@@ -192,12 +200,13 @@ one-off call surface.
 
 ## Selected Next Real Capability
 
-The newest source route is the accepted bounded operator work session in
-`OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_PLAN.md`. Its explicit queue preview and
-finite 1-20 task run supersede older source-level next-slice wording below. Full
-workspace, exact selector, structural, isolated-service, and closure evidence
-pass; freeze the contract and perform a fresh product-gap review. Do not extend
-it into scheduling, background pickup, retries, or an open-ended autonomy loop.
+The newest source route is the reviewed task workspace session in
+`OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md`. Its explicit selected-task
+bridge composes the already accepted reviewed browser-task entry with the
+existing bounded workspace run and assessment owner. Complete its focused,
+served-client, structural, and closure evidence, then freeze the integration.
+Do not extend it into automatic start, retries, scheduling, or an open-ended
+autonomy loop.
 
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation

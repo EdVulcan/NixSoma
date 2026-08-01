@@ -17,6 +17,7 @@ export function observerOperationsPanels() {
             <div class="actions">
               <button id="create-task-button">Create Task</button>
               <button id="create-planned-task-button" class="secondary">Create Plan</button>
+              <button id="run-selected-reviewed-cycle-button" class="secondary">Run + Assess Selected Task</button>
               <button id="recover-latest-task-button" class="secondary">Recover Latest Finished Task</button>
               <button id="recover-latest-failed-task-button" class="secondary">Recover Latest Failed Task</button>
               <button id="load-history-button" class="secondary">Load Latest Task History</button>

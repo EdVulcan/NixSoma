@@ -67,6 +67,8 @@ const requiredHtml = [
   "operator-preview-button",
   "operator-run-button",
   "operator-run-limit-input",
+  "run-selected-reviewed-cycle-button",
+  "Run + Assess Selected Task",
   "Preview Queue",
   "Run Queue",
   "task-plan-json",
@@ -81,6 +83,8 @@ const requiredClient = [
   "renderOperatorPanel",
   "boundedOperatorRunLimit",
   "JSON.stringify({ maxSteps, dryRun })",
+  "runSelectedReviewedWorkspaceCycleFromUi",
+  "act.ai.workspace.reviewed_cycle",
 ];
 
 for (const token of requiredHtml) {
@@ -140,11 +144,14 @@ console.log(JSON.stringify({
       "operator-preview-button",
       "operator-run-button",
       "operator-run-limit-input",
+      "run-selected-reviewed-cycle-button",
     ],
     clientApis: [
       "/tasks/plan",
       "/operator/step",
       "/operator/run",
+      "runSelectedReviewedWorkspaceCycleFromUi",
+      "act.ai.workspace.reviewed_cycle",
     ],
     stateFile: process.env.OPENCLAW_CORE_STATE_FILE ?? null,
   },
