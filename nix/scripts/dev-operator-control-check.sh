@@ -11,6 +11,8 @@ export OPENCLAW_DEV_RUN_ID="${OPENCLAW_DEV_RUN_ID:-operator-control-$$}"
 unset OPENCLAW_OPERATOR_TOKEN OPENCLAW_OPERATOR_TOKEN_FILE
 export OPENCLAW_OPERATOR_TOKEN_FILE="$REPO_ROOT/.artifacts/openclaw-operator-token-$OPENCLAW_DEV_RUN_ID"
 export OPENCLAW_EVENT_LOG_FILE="${OPENCLAW_EVENT_LOG_FILE:-$REPO_ROOT/.artifacts/openclaw-events-$OPENCLAW_DEV_RUN_ID.jsonl}"
+export OPENCLAW_BOUNDED_OPERATOR_SCHEDULER_ENABLED=1
+export OPENCLAW_BOUNDED_OPERATOR_SCHEDULER_INTERVAL_MS=60000
 
 export OPENCLAW_CORE_PORT="${OPENCLAW_CORE_PORT:-5700}"
 export OPENCLAW_EVENT_HUB_PORT="${OPENCLAW_EVENT_HUB_PORT:-5701}"
@@ -162,6 +164,43 @@ assert_json "$restored_state" 'const data=JSON.parse(process.argv[1]); const ses
 continuity_resume="$(post_json "$CORE_URL/operator/resume" "{\"sessionId\":\"$continuity_session_id\",\"confirm\":true}")"
 assert_json "$continuity_resume" 'const data=JSON.parse(process.argv[1]); const run=data.runSession; if(!data.ok || data.resumed!==true || data.ran!==true || data.count!==1 || data.steps?.[0]?.task?.status!=="completed" || run?.status!=="completed" || run?.resumeCount!==1 || run?.stepsCompleted!==1 || run?.remainingSteps!==1 || run?.resumeAvailable!==false){throw new Error("explicit resume did not consume the persisted budget");}'
 
+scheduled_task="$(post_json "$CORE_URL/tasks/plan" "{\"goal\":\"Operator scheduled task\",\"type\":\"browser_task\",\"targetUrl\":\"$TARGET_URL\",\"actions\":[]}")"
+assert_json "$scheduled_task" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.task?.status!=="queued" || data.plan?.status!=="planned"){throw new Error("scheduled task was not queued");}'
+
+scheduled_arm="$(post_json "$CORE_URL/operator/schedule" '{"maxSteps":1,"delayMs":0,"confirm":true}')"
+assert_json "$scheduled_arm" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.schedule?.status!=="armed" || data.schedule?.maxSteps!==1 || data.scheduler?.enabled!==true){throw new Error("bounded schedule did not arm with explicit enabled timer");}'
+scheduled_id="$(printf '%s' "$scheduled_arm" | node -e 'const fs=require("node:fs"); const data=JSON.parse(fs.readFileSync(0,"utf8")); process.stdout.write(data.schedule?.id ?? "");')"
+if [[ -z "$scheduled_id" ]]; then
+  echo "scheduled operator id missing" >&2
+  exit 1
+fi
+
+scheduled_tick="$(post_json "$CORE_URL/operator/schedule/tick" '{}')"
+assert_json "$scheduled_tick" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.ran!==true || data.schedule?.status!=="completed" || data.schedule?.lastResult?.count!==1 || data.schedule?.governance?.automaticRetry!==false){throw new Error("bounded schedule did not consume exactly one due run");}'
+
+rearm_arm="$(post_json "$CORE_URL/operator/schedule" '{"maxSteps":1,"delayMs":600000,"confirm":true}')"
+assert_json "$rearm_arm" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.schedule?.status!=="armed"){throw new Error("re-arm fixture did not arm");}'
+rearm_id="$(printf '%s' "$rearm_arm" | node -e 'const fs=require("node:fs"); const data=JSON.parse(fs.readFileSync(0,"utf8")); process.stdout.write(data.schedule?.id ?? "");')"
+if [[ -z "$rearm_id" ]]; then
+  echo "re-arm fixture id missing" >&2
+  exit 1
+fi
+export OPENCLAW_REARM_ID="$rearm_id"
+
+# A clean restart must pause the armed schedule; only the explicit re-arm route
+# may return it to the timer.
+"$SCRIPT_DIR/dev-down.sh" >/dev/null
+"$SCRIPT_DIR/dev-up.sh"
+
+rearm_paused_state="$(curl --silent "$CORE_URL/operator/schedule")"
+assert_json "$rearm_paused_state" 'const data=JSON.parse(process.argv[1]); const schedule=data.schedules?.find((item)=>item.id===process.env.OPENCLAW_REARM_ID); if(!data.ok || schedule?.status!=="paused" || schedule?.stopReason!=="core_restart_requires_explicit_rearm"){throw new Error("restart did not pause the armed schedule");}'
+
+rearmed="$(post_json "$CORE_URL/operator/schedule/$rearm_id/rearm" '{"delayMs":0,"confirm":true}')"
+assert_json "$rearmed" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.schedule?.id!==process.env.OPENCLAW_REARM_ID || data.schedule?.status!=="armed" || data.schedule?.maxSteps!==1){throw new Error("explicit schedule re-arm did not preserve the budget");}'
+
+cancelled_schedule="$(post_json "$CORE_URL/operator/schedule/$rearm_id/cancel" '{"confirm":true}')"
+assert_json "$cancelled_schedule" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.schedule?.id!==process.env.OPENCLAW_REARM_ID || data.schedule?.status!=="cancelled"){throw new Error("re-armed schedule did not cancel explicitly");}'
+
 final_state="$(curl --silent "$CORE_URL/operator/state")"
 
 RESULT_DIR="$(mktemp -d)"
@@ -176,9 +215,14 @@ printf '%s' "$continuity_task" > "$RESULT_DIR/continuity-task.json"
 printf '%s' "$continuity_blocked_run" > "$RESULT_DIR/continuity-blocked.json"
 printf '%s' "$restored_state" > "$RESULT_DIR/continuity-restored.json"
 printf '%s' "$continuity_resume" > "$RESULT_DIR/continuity-resumed.json"
+printf '%s' "$scheduled_arm" > "$RESULT_DIR/scheduled-arm.json"
+printf '%s' "$scheduled_tick" > "$RESULT_DIR/scheduled-tick.json"
+printf '%s' "$rearm_paused_state" > "$RESULT_DIR/rearm-paused.json"
+printf '%s' "$rearmed" > "$RESULT_DIR/rearmed.json"
+printf '%s' "$cancelled_schedule" > "$RESULT_DIR/cancelled-schedule.json"
 printf '%s' "$final_state" > "$RESULT_DIR/final.json"
 
-OPENCLAW_CONTINUITY_SESSION_ID="$continuity_session_id" node - <<'EOF' "$RESULT_DIR"
+OPENCLAW_CONTINUITY_SESSION_ID="$continuity_session_id" OPENCLAW_REARM_ID="$rearm_id" node - <<'EOF' "$RESULT_DIR"
 const fs = require("node:fs");
 const path = require("node:path");
 const resultDirectory = process.argv[2];
@@ -193,17 +237,29 @@ const run = readResult("run");
 const continuityBlocked = readResult("continuity-blocked");
 const continuityRestored = readResult("continuity-restored");
 const continuityResumed = readResult("continuity-resumed");
+const scheduledArm = readResult("scheduled-arm");
+const scheduledTick = readResult("scheduled-tick");
+const rearmPaused = readResult("rearm-paused");
+const rearmed = readResult("rearmed");
+const cancelledSchedule = readResult("cancelled-schedule");
 const finalState = readResult("final");
 
-if (finalState.operator?.status !== "idle" || finalState.operator?.summary?.counts?.completed !== 2) {
-  throw new Error("final operator state should be idle with two completed tasks");
+if (finalState.operator?.status !== "idle" || finalState.operator?.summary?.counts?.completed !== 3) {
+  throw new Error("final operator state should be idle with three completed tasks");
 }
 const restoredSession = continuityRestored.runSessions?.find((item) => item.id === process.env.OPENCLAW_CONTINUITY_SESSION_ID);
-if (continuityBlocked.runSession?.status !== "paused"
+  if (continuityBlocked.runSession?.status !== "paused"
   || restoredSession?.status !== "paused"
   || continuityResumed.runSession?.status !== "completed"
   || continuityResumed.runSession?.resumeCount !== 1) {
   throw new Error("operator session continuity evidence is incomplete");
+}
+if (scheduledArm.schedule?.status !== "armed"
+  || scheduledTick.schedule?.status !== "completed"
+  || rearmPaused.schedules?.find((item) => item.id === process.env.OPENCLAW_REARM_ID)?.status !== "paused"
+  || rearmed.schedule?.status !== "armed"
+  || cancelledSchedule.schedule?.status !== "cancelled") {
+  throw new Error("bounded operator schedule evidence is incomplete");
 }
 
 console.log(JSON.stringify({
@@ -249,6 +305,14 @@ console.log(JSON.stringify({
     resumedStepsCompleted: continuityResumed.runSession?.stepsCompleted ?? null,
     resumedRemainingSteps: continuityResumed.runSession?.remainingSteps ?? null,
     automaticResume: continuityResumed.runSession?.governance?.automaticResume ?? null,
+  },
+  schedule: {
+    scheduledId: scheduledArm.schedule?.id ?? null,
+    tickStatus: scheduledTick.schedule?.status ?? null,
+    restartStatus: rearmPaused.schedules?.find((item) => item.id === process.env.OPENCLAW_REARM_ID)?.status ?? null,
+    rearmedStatus: rearmed.schedule?.status ?? null,
+    cancelledStatus: cancelledSchedule.schedule?.status ?? null,
+    automaticRetry: scheduledTick.schedule?.governance?.automaticRetry ?? null,
   },
   final: {
     status: finalState.operator?.status ?? null,

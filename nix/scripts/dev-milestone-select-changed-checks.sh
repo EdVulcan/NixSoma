@@ -587,6 +587,7 @@ const boundedOperatorWorkSessionFiles = new Set([
   "nix/scripts/dev-milestone-select-changed-checks.sh",
   "nix/scripts/dev-observer-operator-check.sh",
   "nix/scripts/dev-operator-control-check.sh",
+  "nix/scripts/dev-operator-control-check.sh",
   "services/openclaw-core/src/operator-control-routes.mjs",
   "services/openclaw-core/src/operator-run-request.mjs",
   "services/openclaw-core/test/operator-run-request.test.mjs",
@@ -596,6 +597,34 @@ const boundedOperatorWorkSessionSlice = changedFiles.length > 0
   && changedFiles.every((file) => boundedOperatorWorkSessionFiles.has(file))
   && changedFiles.some((file) => file === "services/openclaw-core/src/operator-run-request.mjs")
   && changedFiles.some((file) => file === "apps/observer-ui/src/client-script-runtime-operator-session.mjs");
+const boundedOperatorScheduleWorkflowFiles = new Set([
+  "apps/observer-ui/src/client-script-runtime-actions.mjs",
+  "apps/observer-ui/src/client-script-runtime-bindings.mjs",
+  "apps/observer-ui/src/client-script-runtime-operator-session.mjs",
+  "apps/observer-ui/src/client-script-runtime-operator-schedule.mjs",
+  "apps/observer-ui/src/client-script-startup-refreshes.mjs",
+  "apps/observer-ui/src/observer-panel-operator-schedule.mjs",
+  "apps/observer-ui/src/observer-panels-operations.mjs",
+  "apps/observer-ui/test/client-script-runtime-operator-schedule.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/plans/OPENCLAW_BOUNDED_OPERATOR_SCHEDULE_WORKFLOW_PLAN.md",
+  "docs/plans/README.md",
+  "nix/modules/openclaw-body.nix",
+  "nix/packages/observer-ui.nix",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "nix/scripts/dev-observer-operator-check.sh",
+  "nix/scripts/dev-operator-control-check.sh",
+  "services/openclaw-core/src/bounded-operator-scheduler.mjs",
+  "services/openclaw-core/src/operator-control-routes.mjs",
+  "services/openclaw-core/test/bounded-operator-scheduler.test.mjs",
+  "services/openclaw-core/test/route-handlers.test.mjs",
+]);
+const boundedOperatorScheduleWorkflowSlice = changedFiles.length > 0
+  && changedFiles.every((file) => boundedOperatorScheduleWorkflowFiles.has(file))
+  && changedFiles.some((file) => file === "apps/observer-ui/src/client-script-runtime-operator-schedule.mjs")
+  && changedFiles.some((file) => file === "services/openclaw-core/src/bounded-operator-scheduler.mjs");
 const reviewedTaskWorkspaceSessionFiles = new Set([
   "apps/observer-ui/src/client-script-config-dom.mjs",
   "apps/observer-ui/src/client-script-runtime-actions.mjs",
@@ -1523,6 +1552,16 @@ for (const file of changedFiles) {
     continue;
   }
   if (boundedOperatorWorkSessionSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("operator-control");
+    selectName("observer-operator");
+    continue;
+  }
+  if (boundedOperatorScheduleWorkflowSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");
     selectName(windowsPathBudgetCheck);

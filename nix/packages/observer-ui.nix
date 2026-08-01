@@ -80,6 +80,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-runtime-fixed-unit-incident-triage.mjs
     ../../apps/observer-ui/src/client-script-runtime-native-runtime-refresh.mjs
     ../../apps/observer-ui/src/client-script-runtime-operator-session.mjs
+    ../../apps/observer-ui/src/client-script-runtime-operator-schedule.mjs
     ../../apps/observer-ui/src/client-script-runtime-reviewed-task-session.mjs
     ../../apps/observer-ui/src/client-script-runtime-reviewed-browser-task.mjs
     ../../apps/observer-ui/src/client-script-runtime-semantic-target-task.mjs
@@ -101,6 +102,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/observer-panels-kernel-file.mjs
     ../../apps/observer-ui/src/observer-panels-kernel-activity.mjs
     ../../apps/observer-ui/src/observer-panels-operations.mjs
+    ../../apps/observer-ui/src/observer-panel-operator-schedule.mjs
     ../../apps/observer-ui/src/observer-panel-ai-work-view.mjs
     ../../apps/observer-ui/src/observer-panel-snapshot-preview.mjs
     ../../apps/observer-ui/src/observer-panels-system.mjs

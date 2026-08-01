@@ -1,5 +1,6 @@
 import { observerSnapshotPreviewPanel } from "./observer-panel-snapshot-preview.mjs";
 import { observerAiWorkViewPanel } from "./observer-panel-ai-work-view.mjs";
+import { observerOperatorSchedulePanel } from "./observer-panel-operator-schedule.mjs";
 
 export function observerOperationsPanels() {
   return `        <section class="panel">
@@ -92,6 +93,7 @@ ${observerAiWorkViewPanel()}
           <div class="metric"><span>Failed</span><span id="command-transcript-failed">0</span></div>
           <pre id="command-transcript-json">No command transcript yet.</pre>
         </section>
+${observerOperatorSchedulePanel()}
         <section class="panel">
           <h2>Policy Governance</h2>
           <div class="metric"><span>Engine</span><span id="policy-engine">policy-v0</span></div>

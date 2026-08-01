@@ -425,6 +425,8 @@ let
         OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE = "%d/execution-grant-private";
         OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_ENABLED = if cfg.fixedUnitIncidentScheduler.enable then "1" else "0";
         OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_INTERVAL_MS = toString (cfg.fixedUnitIncidentScheduler.intervalSeconds * 1000);
+        OPENCLAW_BOUNDED_OPERATOR_SCHEDULER_ENABLED = if cfg.boundedOperatorScheduler.enable then "1" else "0";
+        OPENCLAW_BOUNDED_OPERATOR_SCHEDULER_INTERVAL_MS = toString (cfg.boundedOperatorScheduler.intervalSeconds * 1000);
       } // optionalAttrs (spec.key == "core" && cfg.cloudProvider.enable) {
         OPENCLAW_CLOUD_PROVIDER_ENDPOINT = cfg.cloudProvider.endpoint;
         OPENCLAW_CLOUD_PROVIDER_MODEL = cfg.cloudProvider.model;
@@ -805,6 +807,19 @@ in
         type = types.ints.between 30 86400;
         default = 300;
         description = "Interval between local fixed-unit health observations.";
+      };
+    };
+
+    boundedOperatorScheduler = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Enable the explicit finite one-shot operator scheduler; background scheduling remains disabled by default.";
+      };
+      intervalSeconds = mkOption {
+        type = types.ints.between 1 86400;
+        default = 30;
+        description = "Interval between bounded operator schedule due-time checks in seconds.";
       };
     };
 

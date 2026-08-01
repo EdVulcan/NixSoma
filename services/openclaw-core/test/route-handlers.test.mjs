@@ -1467,6 +1467,7 @@ test("bounded operator schedule routes keep arming, ticking, and cancellation ex
     listPublic: () => [{ id: "schedule-1", status: "armed" }],
     arm: (body) => { calls.push({ action: "arm", body }); return { id: "schedule-1", status: "armed" }; },
     tick: async () => { calls.push({ action: "tick" }); return { ok: true, ran: false, reason: "no_due_schedule" }; },
+    rearm: (id, body) => { calls.push({ action: "rearm", id, body }); return { id, status: "armed" }; },
     cancel: (id, confirm) => { calls.push({ action: "cancel", id, confirm }); return { id, status: "cancelled" }; },
   };
   const deps = createBaseDeps({ deps: { boundedOperatorScheduler: scheduler } });
@@ -1478,11 +1479,14 @@ test("bounded operator schedule routes keep arming, ticking, and cancellation ex
   assert.equal(armed.statusCode, 201);
   const tick = await invokeRoute(deps, "POST", "/operator/schedule/tick", {});
   assert.equal(tick.statusCode, 200);
+  const rearmed = await invokeRoute(deps, "POST", "/operator/schedule/schedule-1/rearm", { delayMs: 60_000, confirm: true });
+  assert.equal(rearmed.statusCode, 200);
   const cancelled = await invokeRoute(deps, "POST", "/operator/schedule/schedule-1/cancel", { confirm: true });
   assert.equal(cancelled.statusCode, 200);
   assert.deepEqual(calls, [
     { action: "arm", body: { maxSteps: 2, confirm: true } },
     { action: "tick" },
+    { action: "rearm", id: "schedule-1", body: { delayMs: 60_000, confirm: true } },
     { action: "cancel", id: "schedule-1", confirm: true },
   ]);
 });

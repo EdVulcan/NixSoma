@@ -93,6 +93,7 @@ async function refreshAfterOperatorSession() {
   await refreshWorkView();
   await refreshScreen();
   await refreshOperatorState();
+  if (typeof refreshOperatorSchedule === "function") await refreshOperatorSchedule();
   await refreshPolicyState();
   await refreshCapabilityHistory();
   await refreshCommandLedger();

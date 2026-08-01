@@ -6,6 +6,14 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 TARGET_URL="https://www.baidu.com"
 
+export OPENCLAW_DEV_RUN_ID="${OPENCLAW_DEV_RUN_ID:-observer-operator-$$}"
+OPENCLAW_DEV_RUN_ID="$(printf '%s' "$OPENCLAW_DEV_RUN_ID" | tr -c 'A-Za-z0-9_.-' '-')"
+export OPENCLAW_DEV_RUN_ID
+unset OPENCLAW_OPERATOR_TOKEN OPENCLAW_OPERATOR_TOKEN_FILE
+export OPENCLAW_OPERATOR_TOKEN_FILE="$REPO_ROOT/.artifacts/openclaw-operator-token-$OPENCLAW_DEV_RUN_ID"
+export OPENCLAW_EVENT_LOG_FILE="$REPO_ROOT/.artifacts/openclaw-events-$OPENCLAW_DEV_RUN_ID.jsonl"
+export OPENCLAW_DEV_STATE_FILE="$REPO_ROOT/.artifacts/dev-services-unix-$OPENCLAW_DEV_RUN_ID.tsv"
+
 export OPENCLAW_CORE_PORT="${OPENCLAW_CORE_PORT:-5600}"
 export OPENCLAW_EVENT_HUB_PORT="${OPENCLAW_EVENT_HUB_PORT:-5601}"
 export OPENCLAW_SESSION_MANAGER_PORT="${OPENCLAW_SESSION_MANAGER_PORT:-5602}"
@@ -15,7 +23,8 @@ export OPENCLAW_SCREEN_ACT_PORT="${OPENCLAW_SCREEN_ACT_PORT:-5605}"
 export OPENCLAW_SYSTEM_SENSE_PORT="${OPENCLAW_SYSTEM_SENSE_PORT:-5606}"
 export OPENCLAW_SYSTEM_HEAL_PORT="${OPENCLAW_SYSTEM_HEAL_PORT:-5607}"
 export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-5670}"
-export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-observer-operator-check.json}"
+export OPENCLAW_CORE_STATE_FILE="$REPO_ROOT/.artifacts/openclaw-core-observer-operator-$OPENCLAW_DEV_RUN_ID.json"
+export OPENCLAW_SYSTEM_HEAL_STATE_FILE="$REPO_ROOT/.artifacts/openclaw-system-heal-observer-operator-$OPENCLAW_DEV_RUN_ID.json"
 
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 OBSERVER_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
@@ -67,6 +76,12 @@ const requiredHtml = [
   "operator-preview-button",
   "operator-run-button",
   "operator-run-limit-input",
+  "operator-schedule-arm-button",
+  "operator-schedule-rearm-button",
+  "operator-schedule-cancel-button",
+  "operator-schedule-delay-input",
+  "Schedule Queue",
+  "Re-arm Paused Schedule",
   "run-selected-reviewed-cycle-button",
   "accept-selected-reviewed-assessment-button",
   "rebind-selected-reviewed-task-button",
@@ -82,10 +97,17 @@ const requiredClient = [
   "/tasks/plan",
   "/operator/step",
   "/operator/run",
+  "/operator/schedule",
+  "/operator/schedule/",
   "task.planned",
   "renderTaskPlan",
   "renderOperatorPanel",
   "boundedOperatorRunLimit",
+  "boundedOperatorScheduleDelayMs",
+  "refreshOperatorSchedule",
+  "scheduleOperatorRunFromUi",
+  "rearmOperatorScheduleFromUi",
+  "cancelOperatorScheduleFromUi",
   "JSON.stringify({ maxSteps, dryRun })",
   "runSelectedReviewedWorkspaceCycleFromUi",
   "act.ai.workspace.reviewed_cycle",

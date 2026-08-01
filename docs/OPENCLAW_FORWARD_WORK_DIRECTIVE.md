@@ -73,7 +73,8 @@ task/action/URL/policy overrides before dispatch, and emits compact session
 governance. It reuses existing policy, pause, approval, execution,
 verification, persistence, and stop-condition owners. No scheduler, background
 pickup, automatic repeat/retry, open loop, provider call, task/approval
-creation, or host mutation was added. Physical deployment is deferred.
+creation, or host mutation was added. Generation 108 carries this contract;
+timer-driven scheduling remains separately disabled by default.
 
 The bounded operator session continuity continuation is also implemented in
 source. A non-preview finite run now persists a compact session checkpoint at
@@ -85,7 +86,8 @@ The isolated operator-control service check proves a clean nine-service restart,
 restored paused session, and one explicit resumed task. Write-only input remains
 fail-closed across restart and is never replayed. No scheduler, automatic
 resume/retry, new action/provider/credential authority, provider call, browser
-live gate, physical deployment, or host mutation was added. The contract is
+live gate, or host mutation was added. Generation 108 carries the source
+contract; browser live deployment and provider calls remain excluded. The contract is
 recorded in `OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_CONTINUITY_PLAN.md`.
 
 The reviewed browser-task entry now also has explicit selected-task bridges to
@@ -122,6 +124,24 @@ physical deployment rule. After the candidate is deployed, freeze this slice
 and select the next concrete user workflow rather than adding another
 readiness shell.
 
+The selected next workflow is the Observer-visible finite operator schedule in
+`plans/OPENCLAW_BOUNDED_OPERATOR_SCHEDULE_WORKFLOW_PLAN.md`. Observer now
+supplies bounded delay, status, cancellation, and exact-budget re-arm controls
+over the existing `/operator/schedule` owner. The Nix option
+`services.openclaw.boundedOperatorScheduler.enable` remains false by default;
+enabling the timer is a separate deployment decision. The workflow adds no task
+creation, action override, provider authority, retry, repeat, or host mutation.
+
+The bounded schedule workflow is now physically carried by generation 108:
+`/nix/store/n23b58fh3qm17n57k625l92ynp1wbi4k-nixos-system-nixos-26.05.4808.569d57850992`.
+The seven changed gates passed, the candidate marker and all protected physical
+paths matched, the helper activated it without a reboot, all nine health
+endpoints returned 200, all deployed system/user owners were active, and no
+failed units were present. The physical profile keeps
+`OPENCLAW_BOUNDED_OPERATOR_SCHEDULER_ENABLED=0`, so the deployment proves
+health and closure integration only; it does not claim a physical scheduled
+execution. Freeze this workflow and choose the next concrete user workflow.
+
 The memory-to-recommendation provenance continuation is also closed in source.
 The existing task-bound recall receipt remains immutable and provider-only; the
 recommendation link and downstream application receipt may carry only its
@@ -139,8 +159,8 @@ the missing long-running autonomy, durable learning feedback, broader body
 nerves, physical Phase D evolution, or richer native-workspace lifecycle that
 keep the second number lower.
 
-The physical host now runs generation 107:
-`/nix/store/g3y9p0m9nr38npsyqx13npsvy3mcvcg1-nixos-system-nixos-26.05.4808.569d57850992`.
+The physical host now runs generation 108:
+`/nix/store/n23b58fh3qm17n57k625l92ynp1wbi4k-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, bounded local OCR, the
@@ -161,7 +181,7 @@ and an injected interrupted reservation failed closed without replay. The test
 made no provider call, browser action, physical-host mutation, or generation
 change. It exposed a real hostd defect where stopped-service `MainPID=0` became
 `null`; source now preserves zero as valid evidence, and physical generation
-`g3y9p0...` contains that correction.
+`n23b58...` contains that correction.
 
 The work-view lifecycle now makes an already-valid same-authority
 `work_view.prepare` idempotent. Session Manager reads Browser Runtime state and
@@ -195,9 +215,9 @@ race exposed by provider latency is also corrected: when a
 referenced frame expires, Browser Runtime reuses the exact cached
 frame/inventory before taking one replacement capture, preventing a false
 `semantic_target_inventory_stale` result. The active generation is
-`/nix/store/g3y9p0m9nr38npsyqx13npsvy3mcvcg1-nixos-system-nixos-26.05.4808.569d57850992`
-(generation 107; generation 106 was
-`/nix/store/ra0q584jdks0dckgnw869wvs7hjs18ak-nixos-system-nixos-26.05.4808.569d57850992`).
+`/nix/store/n23b58fh3qm17n57k625l92ynp1wbi4k-nixos-system-nixos-26.05.4808.569d57850992`
+(generation 108; generation 107 was
+`/nix/store/g3y9p0m9nr38npsyqx13npsvy3mcvcg1-nixos-system-nixos-26.05.4808.569d57850992`).
 Focused Browser Runtime, Screen Act, and Core semantic tests pass 31/31,
 8/8, and 14/14; the body configuration check also passes. A proxy-backed
 bounded run proved two task-bound provider calls, one write-only semantic type,

@@ -24,6 +24,7 @@ import { observerClientNativeRuntimeRefreshTasksScript } from "./client-script-r
 import { observerClientRuntimeKernelActivityScript } from "./client-script-runtime-kernel-activity.mjs";
 import { observerClientRuntimeReviewedBrowserTaskScript } from "./client-script-runtime-reviewed-browser-task.mjs";
 import { observerClientRuntimeOperatorSessionScript } from "./client-script-runtime-operator-session.mjs";
+import { observerClientRuntimeOperatorScheduleScript } from "./client-script-runtime-operator-schedule.mjs";
 import { observerClientRuntimeReviewedTaskSessionScript } from "./client-script-runtime-reviewed-task-session.mjs";
 
 export const observerClientRuntimeActionsScript = `async function loadRecentEvents() {
@@ -38,7 +39,7 @@ export const observerClientRuntimeActionsScript = `async function loadRecentEven
   }
 }
 
-${observerClientRuntimeReviewedBrowserTaskScript}${observerClientRuntimeOperatorSessionScript}${observerClientRuntimeReviewedTaskSessionScript}${observerClientRuntimeApprovalTasksScript}${observerClientRuntimeEngineeringLoopControlsScript}${observerClientRuntimeEngineeringLspTargetSelectionScript}${observerClientRuntimeEngineeringSuggestedActionScript}${observerClientRuntimeEngineeringRecommendationScript}${observerClientRuntimeEngineeringPlanScript}${observerClientNativeRuntimeRefreshTasksScript}${observerClientRuntimeSystemHealScript}${observerClientRuntimeScreenObservationScript}${observerClientRuntimeSemanticTargetTaskScript}${observerClientRuntimeWorkViewControlsScript}${observerClientRuntimeAiWorkspaceProjectionScript}${observerClientRuntimeAiWorkspaceSemanticSubmitScript}${observerClientRuntimeAiWorkspaceOperatorClickScript}${observerClientRuntimeAiWorkspaceOperatorTypeScript}${observerClientRuntimeAiWorkspaceReviewedCycleScript}${observerClientRuntimeAiWorkspaceOcrAssessmentScript}${observerClientRuntimeAiWorkspaceOcrClickScript}${observerClientRuntimeAiWorkspaceOcrTypeScript}${observerClientRuntimeAiWorkspaceOcrFocusTypeScript}${observerClientRuntimeKernelActivityScript}
+${observerClientRuntimeReviewedBrowserTaskScript}${observerClientRuntimeOperatorSessionScript}${observerClientRuntimeOperatorScheduleScript}${observerClientRuntimeReviewedTaskSessionScript}${observerClientRuntimeApprovalTasksScript}${observerClientRuntimeEngineeringLoopControlsScript}${observerClientRuntimeEngineeringLspTargetSelectionScript}${observerClientRuntimeEngineeringSuggestedActionScript}${observerClientRuntimeEngineeringRecommendationScript}${observerClientRuntimeEngineeringPlanScript}${observerClientNativeRuntimeRefreshTasksScript}${observerClientRuntimeSystemHealScript}${observerClientRuntimeScreenObservationScript}${observerClientRuntimeSemanticTargetTaskScript}${observerClientRuntimeWorkViewControlsScript}${observerClientRuntimeAiWorkspaceProjectionScript}${observerClientRuntimeAiWorkspaceSemanticSubmitScript}${observerClientRuntimeAiWorkspaceOperatorClickScript}${observerClientRuntimeAiWorkspaceOperatorTypeScript}${observerClientRuntimeAiWorkspaceReviewedCycleScript}${observerClientRuntimeAiWorkspaceOcrAssessmentScript}${observerClientRuntimeAiWorkspaceOcrClickScript}${observerClientRuntimeAiWorkspaceOcrTypeScript}${observerClientRuntimeAiWorkspaceOcrFocusTypeScript}${observerClientRuntimeKernelActivityScript}
 
 async function launchTaskIntoWorkView(taskId, targetUrl) {
   if (!taskId || !targetUrl) {

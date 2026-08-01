@@ -31,6 +31,29 @@ test("bounded scheduler requires explicit finite one-shot authorization", () => 
   assert.equal(schedule.governance.automaticTaskCreation, false);
 });
 
+test("paused schedule requires explicit re-arm without changing its step budget", () => {
+  const harness = createHarness();
+  harness.records.set("paused-schedule", {
+    id: "paused-schedule",
+    status: "paused",
+    maxSteps: 4,
+    dueAt: "2026-08-01T12:59:00.000Z",
+    createdAt: "2026-08-01T12:58:00.000Z",
+    updatedAt: "2026-08-01T12:59:00.000Z",
+    stopReason: "core_restart_requires_explicit_rearm",
+  });
+
+  assert.throws(() => harness.scheduler.arm({ maxSteps: 2, confirm: true }), /requires explicit re-arm/u);
+  assert.throws(() => harness.scheduler.rearm("paused-schedule"), /confirm=true/u);
+
+  const rearmed = harness.scheduler.rearm("paused-schedule", { delayMs: 60_000, confirm: true });
+  assert.equal(rearmed.status, "armed");
+  assert.equal(rearmed.maxSteps, 4);
+  assert.equal(rearmed.stopReason, null);
+  assert.equal(rearmed.endedAt, null);
+  assert.equal(rearmed.dueAt, "2026-08-01T13:01:00.000Z");
+});
+
 test("bounded scheduler consumes one due run and never retries it", async () => {
   let calls = 0;
   let received = null;

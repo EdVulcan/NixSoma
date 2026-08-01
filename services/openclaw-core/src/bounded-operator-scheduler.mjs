@@ -103,6 +103,9 @@ export function createBoundedOperatorScheduler({
       throw new Error("Bounded schedule accepts 1-20 steps and a delay from 0 to 86400000 ms.");
     }
     if (activeSchedule()) throw new Error("A bounded operator schedule is already active.");
+    if ([...records.values()].some((schedule) => schedule.status === "paused")) {
+      throw new Error("A paused schedule requires explicit re-arm.");
+    }
     const timestamp = now();
     const schedule = {
       registry: BOUNDED_OPERATOR_SCHEDULER_REGISTRY,
@@ -132,6 +135,30 @@ export function createBoundedOperatorScheduler({
     schedule.status = "cancelled";
     schedule.stopReason = "operator_cancelled";
     schedule.endedAt = now();
+    touch(schedule);
+    persist();
+    return publicSchedule(schedule);
+  }
+
+  function rearm(scheduleId, { delayMs = 0, confirm = false } = {}) {
+    if (confirm !== true) throw new Error("Bounded schedule re-arm requires confirm=true.");
+    const id = boundedId(scheduleId);
+    const schedule = id ? records.get(id) : null;
+    const boundedDelayMs = boundedDelay(delayMs);
+    if (!schedule) throw new Error("Bounded operator schedule was not found.");
+    if (schedule.status !== "paused") {
+      throw new Error("Only a paused schedule can be re-armed.");
+    }
+    if (boundedDelayMs === null) {
+      throw new Error("Bounded schedule re-arm accepts a delay from 0 to 86400000 ms.");
+    }
+    if (activeSchedule()) throw new Error("A bounded operator schedule is already active.");
+    const timestamp = now();
+    schedule.status = "armed";
+    schedule.dueAt = new Date(Date.parse(timestamp) + boundedDelayMs).toISOString();
+    schedule.startedAt = null;
+    schedule.endedAt = null;
+    schedule.stopReason = null;
     touch(schedule);
     persist();
     return publicSchedule(schedule);
@@ -227,6 +254,7 @@ export function createBoundedOperatorScheduler({
   return {
     arm,
     cancel,
+    rearm,
     tick,
     reconcileAtStartup,
     listPublic,

@@ -34,6 +34,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_PLAN.md`](./OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_PLAN.md) | Explicit finite queue preview/run through a strict `maxSteps + dryRun` Core contract without scheduling, retries, or an open loop. |
 | [`OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_CONTINUITY_PLAN.md`](./OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_CONTINUITY_PLAN.md) | Durable finite-run checkpoints, restart interruption, and explicit remaining-budget Resume without automatic recovery. |
 | [`OPENCLAW_SIX_WORKPACKAGES_20260801_PLAN.md`](./OPENCLAW_SIX_WORKPACKAGES_20260801_PLAN.md) | Current six-workpackage checkpoint: recovery, Level 2 rebind, finite scheduling, effectiveness readback, privileged fail-closed boundary, and physical deployment rule. |
+| [`OPENCLAW_BOUNDED_OPERATOR_SCHEDULE_WORKFLOW_PLAN.md`](./OPENCLAW_BOUNDED_OPERATOR_SCHEDULE_WORKFLOW_PLAN.md) | Observer-visible finite queue scheduling with explicit cancellation and exact-budget re-arm after Core restart; timer remains default-off. |
 | [`OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md`](./OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md) | Explicit selected-task bridge from reviewed browser-task entry to the existing bounded AI workspace run and assessment owner. |
 | [`OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md`](./OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md) | Explicit selected-task rebind to the existing authoritative trusted work-view owner without task execution or automatic recovery. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Up to three matching-target learned patterns inside the existing exact approved diagnosis request. |
@@ -53,8 +54,8 @@ The kernel whitepaper remains the long-horizon authority:
 
 ## Current Route
 
-The only current deployment baseline is physical generation 107:
-`/nix/store/g3y9p0m9nr38npsyqx13npsvy3mcvcg1-nixos-system-nixos-26.05.4808.569d57850992`.
+The only current deployment baseline is physical generation 108:
+`/nix/store/n23b58fh3qm17n57k625l92ynp1wbi4k-nixos-system-nixos-26.05.4808.569d57850992`.
 Generation-specific `active` wording later in this section records the state at
 each historical checkpoint and does not override this baseline.
 
