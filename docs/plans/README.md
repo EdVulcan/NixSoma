@@ -57,8 +57,9 @@ The kernel whitepaper remains the long-horizon authority:
 
 ## Current Route
 
-The only current deployment baseline is physical generation 108:
-`/nix/store/n23b58fh3qm17n57k625l92ynp1wbi4k-nixos-system-nixos-26.05.4808.569d57850992`.
+The only current deployment baseline is the authorized process-lifecycle
+generation:
+`/nix/store/y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`.
 Generation-specific `active` wording later in this section records the state at
 each historical checkpoint and does not override this baseline.
 
@@ -110,14 +111,17 @@ and all service/health/failure checks remained healthy. Freeze this lane.
 
 The separate process-lifecycle slice in
 [`OPENCLAW_PHASE_C_KERNEL_PROCESS_LIFECYCLE_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_PROCESS_LIFECYCLE_PLAN.md)
-is complete in source, exact closure, and disposable KVM. Its physical
-candidate is
+is complete in source, exact closure, disposable KVM, and physical deployment.
+Its physical candidate was
 `/nix/store/y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`.
-The candidate matches the active physical target marker and all protected paths,
-contains the bounded process-exit probe in the System Sense unit, and has a
-root-owned switchable 1826-entry closure. Generation `n23b58...` remains active;
-physical activation and the installed process-lifecycle gate require explicit
-operator authorization and are not claimed here.
+It matched the active physical target marker and all protected paths, contained
+the bounded process-exit probe in the System Sense unit, and had a root-owned
+switchable 1826-entry closure. After explicit authorization it was activated
+without reboot; the installed Core gate captured 63 start/63 exit events and
+the Observer gate captured 129 total events with both lanes available. Nine
+health endpoints, seven system owners, two user owners, and system/user
+failed-unit checks all passed. Freeze this lane; the next route must be a
+distinct concrete body capability.
 
 The bounded boot/restart evidence route is also deployed in current generation
 `1xh4x8ls...`. Its registered Core/Observer gates, deployed direct/proxy

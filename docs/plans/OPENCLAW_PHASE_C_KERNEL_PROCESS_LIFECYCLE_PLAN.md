@@ -1,7 +1,7 @@
 # Phase C Kernel Process Lifecycle Observation Plan
 
-Status: source implementation, focused validation, exact closure, and
-disposable-KVM acceptance complete, 2026-08-01
+Status: source implementation, focused validation, exact closure,
+disposable-KVM acceptance, and physical deployment complete, 2026-08-01
 
 ## Purpose
 
@@ -20,8 +20,8 @@ owner.
 - Privilege boundary: System Sense receives the same bounded `CAP_BPF` and
   `CAP_PERFMON` envelope as the existing process-exec observation; hostd
   authority is unchanged.
-- Deployment boundary: source and disposable-VM proof are separate from
-  physical generation activation. This slice does not authorize a host switch,
+- Deployment boundary: source, disposable-VM proof, and physical generation
+  activation are separate evidence steps. This slice does not authorize a
   reboot, rollback, or process control.
 
 ## Implementation Contract
@@ -69,9 +69,14 @@ owner.
   Its target marker matched the active physical profile, all six protected paths
   matched the active closure, the candidate was root-owned and switchable, and
   its 1826-entry closure contained the process-exit probe plus System Sense,
-  Core, and Observer owners. This is candidate evidence only; the active
-  generation remains `n23b58...` until explicit activation authorization and a
-  post-switch installed gate are completed.
+  Core, and Observer owners. With explicit operator authorization, that
+  candidate was activated without reboot. The installed Core gate captured 63
+  process-start and 63 process-exit events; the installed Observer gate
+  captured 129 total events with both lanes available. The current and profile
+  paths match the candidate, seven system owners and two user owners are
+  active, all nine health endpoints pass, and system/user failed-unit counts
+  are zero. The public result retained no raw process metadata or host
+  mutation.
 
 ## Deliberately Deferred
 
@@ -85,16 +90,16 @@ owner.
 
 ## Stop Condition
 
-Freeze this lane after focused tests, exact store closure, and disposable-KVM
-proof pass. This lane is now frozen. A future process diagnosis or control capability requires a new
-route review and a separate privacy/governance contract; it must not be added
-as polish to this snapshot.
+Freeze this lane after focused tests, exact store closure, disposable-KVM proof,
+and the installed gate pass. This lane is now frozen. A future process
+diagnosis or control capability requires a new route review and a separate
+privacy/governance contract; it must not be added as polish to this snapshot.
 
 ## Physical Deployment Rule
 
-The current physical host remains evidence-only for the activation portion of
-this slice. The immutable-generation candidate review and protected-path checks
-are complete; a future deployment still requires explicit operator
-authorization and post-switch health evidence. No `sudo`, `nixos-rebuild
-switch`, reboot, rollback, or host mutation is part of this candidate-only
-completion.
+The physical deployment portion is complete without reboot. The fixed helper
+accepted only the canonical root-owned candidate after target-marker and
+kernel/initrd/fstab/GDM/NetworkManager/SSH protected-path checks. Post-switch
+health and both installed Core/Observer gates passed. Physical rollback,
+automatic mutation, arbitrary process control, and broader process diagnosis
+remain deferred.

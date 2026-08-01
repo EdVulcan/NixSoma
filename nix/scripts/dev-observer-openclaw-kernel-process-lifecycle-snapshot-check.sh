@@ -11,14 +11,34 @@ curl --silent --fail "$OBSERVER_URL/health" >/dev/null
 html_file="$(mktemp)"
 client_file="$(mktemp)"
 snapshot_file="$(mktemp)"
-cleanup() { rm -f "$html_file" "$client_file" "$snapshot_file"; }
+generator_pid=""
+cleanup() {
+  if [[ -n "$generator_pid" ]]; then
+    kill "$generator_pid" 2>/dev/null || true
+    wait "$generator_pid" 2>/dev/null || true
+  fi
+  rm -f "$html_file" "$client_file" "$snapshot_file"
+}
 trap cleanup EXIT
 
 curl --silent --fail "$OBSERVER_URL/" >"$html_file"
 curl --silent --fail "$OBSERVER_URL/client-v5.js" >"$client_file"
+
+# Create bounded local churn so the explicit capture proves both lanes instead
+# of treating an otherwise valid quiet capture window as installed failure.
+(
+  for _ in $(seq 1 24); do
+    /run/current-system/sw/bin/true
+    /run/current-system/sw/bin/sleep 0.01
+    sleep 0.03
+  done
+) &
+generator_pid=$!
 curl --silent --fail \
   "$CORE_URL/proxy/system-sense/system/kernel/process-lifecycle-snapshot" \
   >"$snapshot_file"
+wait "$generator_pid"
+generator_pid=""
 
 node - <<'EOF' "$html_file" "$client_file" "$snapshot_file"
 const fs = require("node:fs");

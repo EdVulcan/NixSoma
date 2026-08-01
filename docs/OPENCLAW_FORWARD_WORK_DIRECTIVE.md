@@ -66,15 +66,17 @@ Node 22 typecheck, workspace tests, milestone registry/script audit, and the
 same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
 
-The latest Level 3 process-lifecycle slice is complete in source and disposable
-KVM. Its physical candidate is
+The latest Level 3 process-lifecycle slice is complete in source, disposable
+KVM, and physical deployment. Its physical generation is
 `/nix/store/y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`.
-The candidate was built from the physical configuration, matched the current
+The generation was built from the physical configuration, matched the current
 immutable target marker, preserved kernel/initrd/fstab/GDM/NetworkManager/SSH
 protected paths, remained root-owned and switchable, and exposed the process-exit
-probe in the System Sense unit. The active generation remains `n23b58...` because
-candidate activation requires explicit operator authorization and a separate
-post-switch health gate.
+probe in the System Sense unit. It was then activated without reboot after
+explicit operator authorization. The installed Core gate captured 63
+process-start and 63 process-exit events; the installed Observer gate captured
+129 total events with both lanes available. Nine health endpoints, seven
+system owners, two user owners, and system/user failed-unit checks all passed.
 
 The current source frontier also closes the first bounded operator work session.
 Observer exposes a strict 1-20 task limit, an exact read-only queue preview, and
@@ -209,8 +211,8 @@ keep the second number lower. The finite window lease improves bounded
 continuation evidence but does not change that denominator: an unbounded
 resident loop remains incomplete.
 
-The physical host now runs generation 108:
-`/nix/store/n23b58fh3qm17n57k625l92ynp1wbi4k-nixos-system-nixos-26.05.4808.569d57850992`.
+The physical host now runs generation 109:
+`/nix/store/y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, bounded local OCR, the
@@ -231,7 +233,7 @@ and an injected interrupted reservation failed closed without replay. The test
 made no provider call, browser action, physical-host mutation, or generation
 change. It exposed a real hostd defect where stopped-service `MainPID=0` became
 `null`; source now preserves zero as valid evidence, and physical generation
-`n23b58...` contains that correction.
+`y2f0fnrb...` contains that correction.
 
 The work-view lifecycle now makes an already-valid same-authority
 `work_view.prepare` idempotent. Session Manager reads Browser Runtime state and
@@ -265,9 +267,9 @@ race exposed by provider latency is also corrected: when a
 referenced frame expires, Browser Runtime reuses the exact cached
 frame/inventory before taking one replacement capture, preventing a false
 `semantic_target_inventory_stale` result. The active generation is
-`/nix/store/n23b58fh3qm17n57k625l92ynp1wbi4k-nixos-system-nixos-26.05.4808.569d57850992`
-(generation 108; generation 107 was
-`/nix/store/g3y9p0m9nr38npsyqx13npsvy3mcvcg1-nixos-system-nixos-26.05.4808.569d57850992`).
+`/nix/store/y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`
+(generation 109; generation 108 was
+`/nix/store/n23b58fh3qm17n57k625l92ynp1wbi4k-nixos-system-nixos-26.05.4808.569d57850992`).
 Focused Browser Runtime, Screen Act, and Core semantic tests pass 31/31,
 8/8, and 14/14; the body configuration check also passes. A proxy-backed
 bounded run proved two task-bound provider calls, one write-only semantic type,
@@ -321,13 +323,11 @@ one-off call surface.
 ## Selected Next Real Capability
 
 The reviewed task work-view continuity, recall-to-recommendation provenance,
-and explicit operator-feedback edges are implemented and being frozen after
-source-level validation. The next route is the separately authorized physical
-deployment proof for the already implemented Level 3 process-lifecycle
-observation. Do not reopen the feedback lane for another receipt wrapper,
-automatic learning claim, or ranking/policy variant; after physical proof,
-select a distinct broader body capability from the identity-upgrade path.
-Physical generation activation remains separately authorized.
+and explicit operator-feedback edges are implemented and frozen after
+source-level validation. The process-lifecycle physical deployment proof is
+now also complete. Do not reopen the feedback lane for another receipt wrapper,
+automatic learning claim, or ranking/policy variant; select a distinct broader
+body capability from the identity-upgrade path.
 
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation
@@ -375,12 +375,12 @@ those values, and it does not expose exit status, signals, executable identity,
 parent/child relationships, persistence, provider/browser activity, policy
 execution, or host mutation. The VM captured 55 process starts and 55 process
 exits through the Core proxy, served the Observer panel/client, kept all four
-services healthy, and reported zero failed units. Physical candidate
-`y2f0fnrb...` passed marker/protected-path/closure preflight, but the current
-physical baseline still does not claim this lane is deployed. Freeze this lane
-after explicit activation and post-switch health evidence; the next product
-route must then be selected from a distinct missing capability, not another
-process snapshot variant.
+services healthy, and reported zero failed units. Physical generation
+`y2f0fnrb...` then passed marker/protected-path/closure preflight and the
+installed Core/Observer gates, capturing 63 start/63 exit events and 129
+aggregate events with nine healthy endpoints and zero failed units. Freeze this
+lane; the next product route must be selected from a distinct missing
+capability, not another process snapshot variant.
 
 The bounded read-only boot/restart evidence route selected for the recent
 restart investigation is already deployed in generation `1xh4x8ls...`. Direct

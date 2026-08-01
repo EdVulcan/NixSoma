@@ -788,13 +788,14 @@ bounded process lifecycle observation：在既有 process-exec owner 之外加�
 `sched_process_exit`，显式并行返回 start/exit counts 与 in-memory continuity。
 公开 snapshot 不返回 process name、PID、UID、executable、exit code、signal 或
 parent/child 关系；它也不提供 process diagnosis、control、provider egress 或
-host mutation。该 slice 已以 source/closure/disposable-KVM 证据收口（VM
+host mutation。该 slice 已以 source/closure/disposable-KVM/physical 证据收口（VM
 捕获 55 个 start 与 55 个 exit 事件，两个 lane 可用，服务健康且无 failed
-units）。物理 candidate
+units）。物理 generation
 `y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`
 已通过 target marker、kernel/initrd/fstab/GDM/NetworkManager/SSH protected-path
-和 closure preflight；active generation `n23b58...` 尚未切换，物理激活仍需单独授权
-和 post-switch health proof。
+和 closure preflight，并在明确授权后无重启激活。安装态 Core 捕获 63 个 start
+与 63 个 exit，Observer 捕获 129 个 aggregate events；9 个 health endpoint、7
+个 system owner、2 个 user owner 全部正常，system/user failed-unit 均为 0。
 
 Level 1 的 finite window lease 是 one-shot operator run 之后的最小持续运行
 切片。一个显式确认的 lease 允许 1-8 个窗口，每窗复用现有 bounded operator

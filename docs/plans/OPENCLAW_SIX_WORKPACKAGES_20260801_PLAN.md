@@ -10,7 +10,7 @@ unbounded autonomous loop.
 
 | Workpackage | Source status | Runtime/deployment status | Boundary |
 | --- | --- | --- | --- |
-| 1. Physical generation deployment | Implemented and validated in source | Generation 108 (`n23b58...`) is active after the fixed helper passed marker/protected-path checks; current/profile match, nine health endpoints, zero failed units, scheduler-disabled state, and no reboot were verified | No password transport, arbitrary sudo, or reboot |
+| 1. Physical generation deployment | Implemented and validated in source | The later process-lifecycle generation 109 (`y2f0fnrb...`) is now active after the fixed helper passed marker/protected-path checks; current/profile match, nine health endpoints, seven system plus two user owners, zero failed units, scheduler-disabled state, and no reboot were verified | No password transport, arbitrary sudo, or reboot |
 | 2. In-flight task recovery | Implemented | Startup reconciliation and explicit task recovery are tested and carried by the active physical generation | No automatic replay or automatic resume |
 | 3. Level 2 work-view/session recovery | Implemented | Explicit rebind reuses the authoritative session/lease owner; Observer recovery controls are tested | Fresh authority is required before actions resume |
 | 4. Controlled long-running operation | Implemented as a finite one-shot schedule | Scheduler is default-off; when explicitly enabled it runs at most one 1-20 step schedule | No daemon loop, repeat, retry, planning, task creation, or provider authority |
