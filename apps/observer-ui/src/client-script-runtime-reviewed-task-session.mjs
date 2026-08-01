@@ -8,4 +8,15 @@ export const observerClientRuntimeReviewedTaskSessionScript = `async function ru
   taskDetailIdInput.value = taskId;
   await runAiWorkspaceReviewedCycle();
 }
+
+async function acceptSelectedReviewedWorkspaceAssessmentFromUi() {
+  const taskId = selectedHistoryTaskId ?? getSelectedHistoryTaskId();
+  if (!taskId) {
+    throw new Error("Select a reviewed task before accepting its assessment.");
+  }
+
+  selectedHistoryTaskId = taskId;
+  taskDetailIdInput.value = taskId;
+  await acceptAiWorkspaceAssessment();
+}
 `;

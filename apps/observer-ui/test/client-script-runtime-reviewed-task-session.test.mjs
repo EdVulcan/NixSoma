@@ -12,6 +12,7 @@ function createContext({ selectedTaskId = null } = {}) {
     taskDetailIdInput: { value: "" },
     getSelectedHistoryTaskId: () => "loaded-task",
     runAiWorkspaceReviewedCycle: async () => calls.push("reviewed-cycle"),
+    acceptAiWorkspaceAssessment: async () => calls.push("accept-assessment"),
     Error,
   };
   vm.runInNewContext(observerClientRuntimeReviewedTaskSessionScript, context);
@@ -49,8 +50,31 @@ test("reviewed task bridge fails locally without a selected task", async () => {
   assert.deepEqual(fixture.calls, []);
 });
 
+test("reviewed task bridge forwards the selected task to the existing acceptance owner", async () => {
+  const fixture = createContext({ selectedTaskId: "completed-task" });
+
+  await fixture.context.acceptSelectedReviewedWorkspaceAssessmentFromUi();
+
+  assert.equal(fixture.context.selectedHistoryTaskId, "completed-task");
+  assert.equal(fixture.context.taskDetailIdInput.value, "completed-task");
+  assert.deepEqual(fixture.calls, ["accept-assessment"]);
+});
+
+test("reviewed task acceptance bridge fails locally without a selected task", async () => {
+  const fixture = createContext();
+  fixture.context.getSelectedHistoryTaskId = () => null;
+
+  await assert.rejects(
+    () => fixture.context.acceptSelectedReviewedWorkspaceAssessmentFromUi(),
+    /Select a reviewed task/u,
+  );
+  assert.deepEqual(fixture.calls, []);
+});
+
 test("Operations panel exposes the explicit reviewed-task cycle bridge", () => {
   const panel = observerOperationsPanels();
   assert.equal(panel.includes('id="run-selected-reviewed-cycle-button"'), true);
   assert.equal(panel.includes("Run + Assess Selected Task"), true);
+  assert.equal(panel.includes('id="accept-selected-reviewed-assessment-button"'), true);
+  assert.equal(panel.includes("Accept Selected Assessment"), true);
 });

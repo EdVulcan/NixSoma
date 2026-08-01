@@ -232,6 +232,12 @@ runSelectedReviewedCycleButton.addEventListener("click", () => {
   });
 });
 
+acceptSelectedReviewedAssessmentButton.addEventListener("click", () => {
+  acceptSelectedReviewedWorkspaceAssessmentFromUi().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 approveLatestButton.addEventListener("click", () => {
   resolveLatestApproval("approve").catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

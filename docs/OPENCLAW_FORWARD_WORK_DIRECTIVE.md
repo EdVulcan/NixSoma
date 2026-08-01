@@ -75,13 +75,14 @@ verification, persistence, and stop-condition owners. No scheduler, background
 pickup, automatic repeat/retry, open loop, provider call, task/approval
 creation, or host mutation was added. Physical deployment is deferred.
 
-The reviewed browser-task entry now also has one explicit selected-task bridge
-to the existing `act.ai.workspace.reviewed_cycle` owner. This closes the path
-from operator-authored goal/URL to bounded workspace run plus read-only
-assessment while preserving the existing three-provider-call/two-action limit,
-task/work-view revalidation, required acceptance, and no automatic completion.
-The bridge adds no provider route, credential access, scheduler, retry, or host
-authority.
+The reviewed browser-task entry now also has explicit selected-task bridges to
+the existing `act.ai.workspace.reviewed_cycle` and
+`act.ai.workspace.accept_assessment` owners. This closes the path from
+operator-authored goal/URL through bounded workspace run, read-only assessment,
+and explicit acceptance while preserving the existing three-provider-call/
+two-action limit, task/work-view revalidation, required audit, and no automatic
+completion. The bridges add no provider route, credential access, scheduler,
+retry, or host authority.
 
 For route planning, keep the denominators explicit. The currently bounded,
 operator-governed product is roughly 84-87% mature; the wider autonomous-agent

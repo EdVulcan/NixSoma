@@ -78,6 +78,7 @@ const operatorLoopJson = document.querySelector("#operator-loop-json");
 const operatorRunLimitInput = document.querySelector("#operator-run-limit-input");
 const operatorPreviewButton = document.querySelector("#operator-preview-button");
 const runSelectedReviewedCycleButton = document.querySelector("#run-selected-reviewed-cycle-button");
+const acceptSelectedReviewedAssessmentButton = document.querySelector("#accept-selected-reviewed-assessment-button");
 const commandTranscriptCount = document.querySelector("#command-transcript-count");
 const commandTranscriptExecuted = document.querySelector("#command-transcript-executed");
 const commandTranscriptSkipped = document.querySelector("#command-transcript-skipped");

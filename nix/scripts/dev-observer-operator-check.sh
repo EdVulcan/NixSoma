@@ -68,6 +68,8 @@ const requiredHtml = [
   "operator-run-button",
   "operator-run-limit-input",
   "run-selected-reviewed-cycle-button",
+  "accept-selected-reviewed-assessment-button",
+  "Accept Selected Assessment",
   "Run + Assess Selected Task",
   "Preview Queue",
   "Run Queue",
@@ -85,6 +87,8 @@ const requiredClient = [
   "JSON.stringify({ maxSteps, dryRun })",
   "runSelectedReviewedWorkspaceCycleFromUi",
   "act.ai.workspace.reviewed_cycle",
+  "acceptSelectedReviewedWorkspaceAssessmentFromUi",
+  "act.ai.workspace.accept_assessment",
 ];
 
 for (const token of requiredHtml) {
@@ -145,6 +149,7 @@ console.log(JSON.stringify({
       "operator-run-button",
       "operator-run-limit-input",
       "run-selected-reviewed-cycle-button",
+      "accept-selected-reviewed-assessment-button",
     ],
     clientApis: [
       "/tasks/plan",
@@ -152,6 +157,8 @@ console.log(JSON.stringify({
       "/operator/run",
       "runSelectedReviewedWorkspaceCycleFromUi",
       "act.ai.workspace.reviewed_cycle",
+      "acceptSelectedReviewedWorkspaceAssessmentFromUi",
+      "act.ai.workspace.accept_assessment",
     ],
     stateFile: process.env.OPENCLAW_CORE_STATE_FILE ?? null,
   },

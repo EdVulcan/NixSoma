@@ -24,11 +24,15 @@ It does not create a second provider route or a hidden automatic continuation.
 
 ## Contract
 
-- Observer adds one button beside the reviewed task composer.
+- Observer adds explicit Run + Assess and Accept buttons beside the reviewed task
+  composer.
 - The bridge reads only the already-selected task id, copies it into the task
   detail selector, and delegates to the existing `runAiWorkspaceReviewedCycle`
   owner.
 - No selected task means a local error and zero network requests.
+- The acceptance bridge reads the same selected task id and delegates to the
+  existing `acceptAiWorkspaceAssessment` owner; it does not manufacture or
+  accept a receipt locally.
 - The existing cycle retains its explicit trigger, bounded maximum of three
   provider calls and two actions, task/work-view revalidation, read-only
   assessment, required operator acceptance, no automatic task completion, and
@@ -38,21 +42,22 @@ It does not create a second provider route or a hidden automatic continuation.
 
 ## Evidence
 
-- Observer bridge tests prove selected-task forwarding, fallback to the current
-  selector, local failure without a task, and the panel control.
+- Observer bridge tests prove selected-task forwarding for both cycle and
+  acceptance, fallback to the current selector, local failure without a task,
+  and both panel controls.
 - Existing reviewed-cycle tests continue to prove the delegated owner contract.
 - The Observer operator service gate checks the served HTML/client bridge tokens;
   the capability-invoke gate remains the production capability surface.
 - Body-config will prove the new bridge is present in the read-only Observer
   closure; no Core closure changes are expected.
 
-Acceptance on 2026-08-01 passed 90 Observer workspace tests, including four
+Acceptance on 2026-08-01 passed 92 Observer workspace tests, including six
 bridge tests, Observer typecheck/build, the exact six-check `@changed`
 selection, the 833-entry registry, 1021-file script audit, Windows path budget,
 the isolated `observer-operator` and `observer-capability-invoke` gates, and
 resource-bounded body-config. The read-only Observer closure is the 100-file
 store path
-`/nix/store/9k8l3d2nkl85cfz7b3c7d0isx3nkf37d-openclaw-observer-ui-0.1.0`.
+`/nix/store/cmpllcg18wi4jib02ggcr9y0s9dg2wxl-openclaw-observer-ui-0.1.0`.
 The first body-config attempt stopped at an unavailable DNS substituter; the
 validated retry used `substitute = false`, one Nix job, and two cores and
 completed locally. No real provider call, physical generation switch, host
