@@ -5,6 +5,7 @@ const KERNEL_EVENT_GET_ROUTES = new Map([
   ["/system/kernel/network-connect-events", "buildKernelNetworkConnectEvents"],
   ["/system/kernel/file-open-events", "buildKernelFileOpenEvents"],
   ["/system/kernel/activity-snapshot", "buildKernelActivitySnapshot"],
+  ["/system/kernel/process-lifecycle-snapshot", "buildKernelProcessLifecycleSnapshot"],
 ]);
 
 export async function handleSystemKernelEventRoutes({ req, res, requestUrl, builders }) {

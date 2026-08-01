@@ -193,6 +193,11 @@ let
         OPENCLAW_KERNEL_FILE_PROBE = "${cfg.kernelFileCapture.probePackage}/bin/openclaw-kernel-file-open";
         OPENCLAW_KERNEL_FILE_CAPTURE_DURATION_MS = toString cfg.kernelFileCapture.durationMs;
         OPENCLAW_KERNEL_FILE_CAPTURE_MAX_EVENTS = toString cfg.kernelFileCapture.maxEvents;
+      } // optionalAttrs cfg.kernelProcessExitCapture.enable {
+        OPENCLAW_KERNEL_PROCESS_EXIT_CAPTURE_ENABLED = "1";
+        OPENCLAW_KERNEL_PROCESS_EXIT_PROBE = "${cfg.kernelProcessExitCapture.probePackage}/bin/openclaw-kernel-process-exit";
+        OPENCLAW_KERNEL_PROCESS_EXIT_CAPTURE_DURATION_MS = toString cfg.kernelProcessExitCapture.durationMs;
+        OPENCLAW_KERNEL_PROCESS_EXIT_CAPTURE_MAX_EVENTS = toString cfg.kernelProcessExitCapture.maxEvents;
       };
     }
     {
@@ -477,7 +482,7 @@ let
       } // optionalAttrs (!userScope && cfg.user != null && spec.key == "eventHub") {
         ExecStartPre = [ "+${eventLogOwnershipMigration}" ];
       } // optionalAttrs (!userScope && spec.key == "systemSense"
-        && (cfg.kernelEventCapture.enable || cfg.kernelNetworkCapture.enable || cfg.kernelFileCapture.enable)) {
+        && (cfg.kernelEventCapture.enable || cfg.kernelNetworkCapture.enable || cfg.kernelFileCapture.enable || cfg.kernelProcessExitCapture.enable)) {
         AmbientCapabilities = [ "CAP_BPF" "CAP_PERFMON" ];
         CapabilityBoundingSet = [ "CAP_BPF" "CAP_PERFMON" ];
         LimitMEMLOCK = "infinity";
@@ -948,6 +953,25 @@ in
         type = types.ints.between 1 4096;
         default = 128;
         description = "Maximum file open-attempt events returned by one capture request.";
+      };
+    };
+
+    kernelProcessExitCapture = {
+      enable = mkEnableOption "read-only eBPF process-exit observation for system-sense";
+      probePackage = mkOption {
+        type = types.nullOr types.package;
+        default = pkgs.callPackage ../packages/openclaw-kernel-event-probe.nix { };
+        description = "Nix package containing the bounded libbpf process-exit probe.";
+      };
+      durationMs = mkOption {
+        type = types.ints.between 1 5000;
+        default = 1000;
+        description = "Maximum duration of one process-exit capture request.";
+      };
+      maxEvents = mkOption {
+        type = types.ints.between 1 4096;
+        default = 128;
+        description = "Maximum process-exit events returned by one capture request.";
       };
     };
 

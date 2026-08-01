@@ -71,6 +71,7 @@ const READ_ONLY_PROXY_PATHS = {
     "/system/kernel/network-connect-events",
     "/system/kernel/file-open-events",
     "/system/kernel/activity-snapshot",
+    "/system/kernel/process-lifecycle-snapshot",
   ]),
 };
 

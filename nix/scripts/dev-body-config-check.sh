@@ -127,6 +127,10 @@ const envNames = [
   "OPENCLAW_KERNEL_EVENT_PROBE",
   "OPENCLAW_KERNEL_EVENT_CAPTURE_DURATION_MS",
   "OPENCLAW_KERNEL_EVENT_CAPTURE_MAX_EVENTS",
+  "OPENCLAW_KERNEL_PROCESS_EXIT_CAPTURE_ENABLED",
+  "OPENCLAW_KERNEL_PROCESS_EXIT_PROBE",
+  "OPENCLAW_KERNEL_PROCESS_EXIT_CAPTURE_DURATION_MS",
+  "OPENCLAW_KERNEL_PROCESS_EXIT_CAPTURE_MAX_EVENTS",
   "OPENCLAW_EXECUTION_GRANT_PRIVATE_KEY_FILE",
   "OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE",
   "OPENCLAW_CLOUD_PROVIDER_ENDPOINT",
@@ -237,6 +241,7 @@ requireIncludes("openclaw-body module", bodyModule, [
   "runtimePackages.screenAct",
   "runtimePackages.systemSense",
   "kernelEventCapture",
+  "kernelProcessExitCapture",
   "resourceControl",
   "systemd.slices",
   "systemd.user.slices",
@@ -400,6 +405,7 @@ requireIncludes("desktop-body profile", desktopProfile, [
   "componentOwnership.user",
   "browserEngine.mode = \"firefox\"",
   "kernelEventCapture.enable = true",
+  "kernelProcessExitCapture.enable = true",
   "resourceControl.enable = true",
   "aiGraphicalSession.enable = true",
   "aiGraphicalSession.attachBrowser = true",
@@ -1740,6 +1746,9 @@ EOF
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-network-connect-readback.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-file-open-capture.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-file-open-readback.mjs"
+    || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-process-exit-capture.mjs"
+    || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-process-exit-readback.mjs"
+    || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-process-lifecycle-snapshot.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/kernel-activity-snapshot.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/system-kernel-event-routes.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/system-health-governance.mjs"
@@ -1758,7 +1767,7 @@ EOF
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-dbus-transport.mjs"
     || ! -f "$system_sense_out/share/openclaw/services/openclaw-system-sense/src/systemd-boot-evidence.mjs"
     || ! -f "$system_sense_out/share/openclaw/packages/shared-systemd/src/systemd-dbus-transport.mjs"
-    || "$system_sense_source_count" -ne 36 ]]; then
+    || "$system_sense_source_count" -ne 39 ]]; then
     echo "system-sense Nix closure is not exact, production-only, and read-only: $system_sense_out" >&2
     exit 1
   fi
@@ -1774,7 +1783,10 @@ EOF
     || ! -x "$kernel_probe_out/libexec/openclaw-kernel-network-connect-loader"
     || ! -x "$kernel_probe_out/bin/openclaw-kernel-file-open"
     || ! -f "$kernel_probe_out/lib/openclaw-kernel-file-open.bpf.o"
-    || ! -x "$kernel_probe_out/libexec/openclaw-kernel-file-open-loader" ]]; then
+    || ! -x "$kernel_probe_out/libexec/openclaw-kernel-file-open-loader"
+    || ! -x "$kernel_probe_out/bin/openclaw-kernel-process-exit"
+    || ! -f "$kernel_probe_out/lib/openclaw-kernel-process-exit.bpf.o"
+    || ! -x "$kernel_probe_out/libexec/openclaw-kernel-process-exit-loader" ]]; then
     echo "kernel event probe package is incomplete: $kernel_probe_out" >&2
     exit 1
   fi
@@ -2032,11 +2044,14 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-kernel-activity.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-reviewed-browser-task.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panels-kernel-activity.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-kernel-process-lifecycle.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-kernel-process-lifecycle.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panels-kernel-process-lifecycle.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-operator-session.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-operator-schedule.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-reviewed-task-session.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panel-operator-schedule.mjs"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 102 ]]; then
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 105 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi

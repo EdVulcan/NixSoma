@@ -86,6 +86,10 @@
         openclaw-kernel-activity-snapshot-vm =
           pkgs.testers.runNixOSTest
             (import ./nix/tests/openclaw-kernel-activity-snapshot-vm.nix);
+
+        openclaw-kernel-process-lifecycle-snapshot-vm =
+          pkgs.testers.runNixOSTest
+            (import ./nix/tests/openclaw-kernel-process-lifecycle-snapshot-vm.nix);
       };
 
       packages.${system} = {

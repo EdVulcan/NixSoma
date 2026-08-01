@@ -418,6 +418,33 @@ test("core infrastructure proxy forwards the compact kernel activity snapshot", 
   assert.equal(response.body.boundary.hostMutation, false);
 });
 
+test("core infrastructure proxy forwards the bounded process lifecycle snapshot", async () => {
+  let observedUrl = null;
+  const deps = createBaseDeps({
+    client: {
+      fetchJson: async (url) => {
+        observedUrl = url;
+        return {
+          ok: true,
+          registry: "openclaw-kernel-process-lifecycle-snapshot-v0",
+          mode: "explicit_bounded_read_only",
+          status: "complete",
+          laneCount: 2,
+          availableLaneCount: 2,
+          eventCount: 8,
+          boundary: { rawEventsIncluded: false, processNamesIncluded: false, hostMutation: false },
+        };
+      },
+    },
+  });
+  const response = await invokeRoute(deps, "GET", "/proxy/system-sense/system/kernel/process-lifecycle-snapshot");
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.equal(observedUrl, "http://127.0.0.1:4106/system/kernel/process-lifecycle-snapshot");
+  assert.equal(response.body.registry, "openclaw-kernel-process-lifecycle-snapshot-v0");
+  assert.equal(response.body.boundary.processNamesIncluded, false);
+  assert.equal(response.body.boundary.hostMutation, false);
+});
+
 test("core infrastructure proxy forwards bounded boot evidence", async () => {
   let observedUrl = null;
   const deps = createBaseDeps({

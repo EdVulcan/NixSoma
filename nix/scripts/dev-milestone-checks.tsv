@@ -315,6 +315,7 @@ openclaw-kernel-process-exec-capture	dev-openclaw-kernel-process-exec-capture-ch
 openclaw-kernel-network-connect-capture	dev-openclaw-kernel-network-connect-capture-check.sh	Real read-only eBPF fentry __sys_connect metadata through the system-sense proxy
 openclaw-kernel-file-open-capture	dev-openclaw-kernel-file-open-capture-check.sh	Real read-only eBPF fentry do_sys_openat2 metadata through the system-sense proxy
 openclaw-kernel-activity-snapshot	dev-openclaw-kernel-activity-snapshot-check.sh	Explicit compact snapshot across the three bounded kernel observation lanes
+openclaw-kernel-process-lifecycle-snapshot	dev-openclaw-kernel-process-lifecycle-snapshot-check.sh	Explicit compact process start and exit lifecycle observation through the system-sense proxy
 system-heal	dev-system-heal-check.sh	Conservative diagnosis, repair plan, autofix, and heal history
 openclaw-workspace-detect	dev-openclaw-workspace-detect-check.sh	Read-only detection of configured OpenClaw workspaces
 openclaw-real-workspace-profile	dev-openclaw-real-workspace-profile-check.sh	Read-only profile of the real OpenClaw source workspace
@@ -674,6 +675,7 @@ observer-openclaw-kernel-process-exec-capture	dev-observer-openclaw-kernel-proce
 observer-openclaw-kernel-network-connect-capture	dev-observer-openclaw-kernel-network-connect-capture-check.sh	Observer visibility for real read-only eBPF network connect-attempt metadata
 observer-openclaw-kernel-file-open-capture	dev-observer-openclaw-kernel-file-open-capture-check.sh	Observer visibility for real read-only eBPF file open-attempt metadata
 observer-openclaw-kernel-activity-snapshot	dev-observer-openclaw-kernel-activity-snapshot-check.sh	Observer explicit compact snapshot across all three kernel observation lanes
+observer-openclaw-kernel-process-lifecycle-snapshot	dev-observer-openclaw-kernel-process-lifecycle-snapshot-check.sh	Observer visibility for bounded process start and exit lifecycle observation
 observer-openclaw-systemd-repair-plan	dev-observer-openclaw-systemd-repair-plan-check.sh	Observer visibility for plan-only OpenClaw systemd repair proposals
 observer-openclaw-systemd-repair-dry-run	dev-observer-openclaw-systemd-repair-dry-run-check.sh	Observer visibility for OpenClaw systemd repair dry-run envelopes
 observer-openclaw-systemd-repair-execution-task	dev-observer-openclaw-systemd-repair-execution-task-check.sh	Observer controls for approval-gated OpenClaw systemd repair execution task shells

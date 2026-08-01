@@ -315,6 +315,22 @@ events with all three lanes available. Current/profile links match, boot ID
 restart/failed-unit counts were zero, and warning journals were empty. Freeze
 this lane.
 
+The next distinct Phase C slice extends process observation with one bounded
+`raw_tracepoint/sched_process_exit` owner. The explicit process lifecycle
+snapshot runs process-start and process-exit capture concurrently and returns
+only two lane statuses, counts, and in-memory continuity. The internal probe
+allowlist is limited to timestamp, PID, UID, and command name; the public
+snapshot returns none of those values, and it does not expose exit status,
+signals, executable identity, parent/child relationships, persistence,
+provider/browser activity, policy execution, or host mutation. This is a body
+observation capability, not process diagnosis or control. Its source,
+closure, focused validation, and disposable-KVM proof are complete: the VM
+captured 55 process starts and 55 process exits through the Core proxy, served
+the Observer panel/client, kept all four services healthy, and reported zero
+failed units. Physical generation activation remains separately authorized and
+deferred, so the current physical baseline does not claim this new lane is
+deployed.
+
 The bounded read-only boot/restart evidence route selected for the recent
 restart investigation is already deployed in generation `1xh4x8ls...`. Direct
 System Sense and Core proxy requests return HTTP 200. Its required acceptance is

@@ -723,6 +723,49 @@ const kernelActivitySnapshotFiles = new Set([
 const kernelActivitySnapshotSlice = changedFiles.length > 0
   && changedFiles.every((file) => kernelActivitySnapshotFiles.has(file))
   && changedFiles.some((file) => file === "services/openclaw-system-sense/src/kernel-activity-snapshot.mjs");
+const kernelProcessLifecycleSnapshotFiles = new Set([
+  "apps/observer-ui/src/client-script-config-dom-kernel-process-lifecycle.mjs",
+  "apps/observer-ui/src/client-script-config-dom.mjs",
+  "apps/observer-ui/src/client-script-runtime-actions.mjs",
+  "apps/observer-ui/src/client-script-runtime-kernel-process-lifecycle.mjs",
+  "apps/observer-ui/src/observer-panels-kernel-process-lifecycle.mjs",
+  "apps/observer-ui/src/observer-panels-system.mjs",
+  "apps/observer-ui/test/kernel-process-lifecycle-snapshot.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/KERNEL_LEVEL_EVOLUTION_WHITEPAPER.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/OPENCLAW_PHASE_C_KERNEL_PROCESS_LIFECYCLE_PLAN.md",
+  "docs/plans/README.md",
+  "flake.nix",
+  "nix/modules/openclaw-body.nix",
+  "nix/packages/observer-ui.nix",
+  "nix/packages/openclaw-kernel-event-probe.nix",
+  "nix/packages/openclaw-system-sense.nix",
+  "nix/profiles/desktop-body.nix",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-checks.tsv",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "nix/scripts/dev-observer-openclaw-kernel-process-lifecycle-snapshot-check.sh",
+  "nix/scripts/dev-openclaw-kernel-process-lifecycle-snapshot-check.sh",
+  "nix/tests/openclaw-kernel-process-lifecycle-snapshot-vm.nix",
+  "packages/kernel-event-probe/src/openclaw-kernel-process-exit-loader.c",
+  "packages/kernel-event-probe/src/openclaw-kernel-process-exit.bpf.c",
+  "services/openclaw-core/src/core-infrastructure-routes.mjs",
+  "services/openclaw-core/test/route-handlers.test.mjs",
+  "services/openclaw-system-sense/src/kernel-process-exit-capture.mjs",
+  "services/openclaw-system-sense/src/kernel-process-exit-readback.mjs",
+  "services/openclaw-system-sense/src/kernel-process-lifecycle-snapshot.mjs",
+  "services/openclaw-system-sense/src/server.mjs",
+  "services/openclaw-system-sense/src/system-kernel-event-routes.mjs",
+  "services/openclaw-system-sense/test/kernel-process-exit-capture.test.mjs",
+  "services/openclaw-system-sense/test/kernel-process-exit-readback.test.mjs",
+  "services/openclaw-system-sense/test/kernel-process-lifecycle-snapshot.test.mjs",
+  "services/openclaw-system-sense/test/system-kernel-event-routes.test.mjs",
+]);
+const kernelProcessLifecycleSnapshotSlice = changedFiles.length > 0
+  && changedFiles.every((file) => kernelProcessLifecycleSnapshotFiles.has(file))
+  && changedFiles.some((file) => file === "services/openclaw-system-sense/src/kernel-process-lifecycle-snapshot.mjs");
 
 function physicalScriptsForManifestRow(phase, slug, forceShort = false) {
   const legacy = {
@@ -1444,13 +1487,13 @@ function selectSourceHeuristics(file) {
     ["services/openclaw-session-manager/src/trusted-work-view-sidecar-supervisor.mjs", ["state-settling"]],
     ["services/openclaw-session-manager/src/trusted-work-view-sidecar.mjs", ["state-settling"]],
     ["services/openclaw-session-manager/test/trusted-work-view-sidecar-launcher.test.mjs", ["state-settling"]],
-    ["services/openclaw-system-sense/src/server.mjs", ["system-sense", "openclaw-kernel-activity-snapshot", "openclaw-systemd-boot-evidence", "observer-openclaw-systemd-boot-evidence"]],
+    ["services/openclaw-system-sense/src/server.mjs", ["system-sense", "openclaw-kernel-activity-snapshot", "openclaw-kernel-process-lifecycle-snapshot", "openclaw-systemd-boot-evidence", "observer-openclaw-systemd-boot-evidence"]],
     ["services/openclaw-system-sense/src/systemd-boot-evidence.mjs", ["system-sense", "openclaw-systemd-boot-evidence", "observer-openclaw-systemd-boot-evidence"]],
     ["services/openclaw-system-sense/src/systemd-routes.mjs", ["system-sense", "openclaw-systemd-boot-evidence", "observer-openclaw-systemd-boot-evidence"]],
     ["services/openclaw-system-sense/test/systemd-boot-evidence.test.mjs", ["system-sense", "openclaw-systemd-boot-evidence"]],
     ["services/openclaw-system-sense/test/systemd-routes.test.mjs", ["system-sense", "openclaw-systemd-boot-evidence", "observer-openclaw-systemd-boot-evidence"]],
-    ["services/openclaw-core/src/core-infrastructure-routes.mjs", ["openclaw-kernel-network-connect-capture", "openclaw-kernel-file-open-capture", "openclaw-kernel-activity-snapshot", "openclaw-systemd-boot-evidence", "observer-openclaw-systemd-boot-evidence"]],
-    ["services/openclaw-core/test/route-handlers.test.mjs", ["openclaw-core-service-unit-tests", "openclaw-systemd-boot-evidence"]],
+    ["services/openclaw-core/src/core-infrastructure-routes.mjs", ["openclaw-kernel-network-connect-capture", "openclaw-kernel-file-open-capture", "openclaw-kernel-activity-snapshot", "openclaw-kernel-process-lifecycle-snapshot", "openclaw-systemd-boot-evidence", "observer-openclaw-systemd-boot-evidence"]],
+    ["services/openclaw-core/test/route-handlers.test.mjs", ["openclaw-core-service-unit-tests", "openclaw-kernel-process-lifecycle-snapshot", "openclaw-systemd-boot-evidence"]],
     ["services/openclaw-system-sense/src/kernel-process-exec-capture.mjs", ["openclaw-kernel-process-exec-capture"]],
     ["services/openclaw-system-sense/src/kernel-process-exec-readback.mjs", ["openclaw-kernel-process-exec-capture"]],
     ["services/openclaw-system-sense/src/kernel-network-connect-capture.mjs", ["openclaw-kernel-network-connect-capture"]],
@@ -1458,17 +1501,23 @@ function selectSourceHeuristics(file) {
     ["services/openclaw-system-sense/src/kernel-file-open-capture.mjs", ["openclaw-kernel-file-open-capture"]],
     ["services/openclaw-system-sense/src/kernel-file-open-readback.mjs", ["openclaw-kernel-file-open-capture"]],
     ["services/openclaw-system-sense/src/kernel-activity-snapshot.mjs", ["openclaw-kernel-activity-snapshot"]],
-    ["services/openclaw-system-sense/src/system-kernel-event-routes.mjs", ["openclaw-kernel-process-exec-capture", "openclaw-kernel-network-connect-capture", "openclaw-kernel-file-open-capture", "openclaw-kernel-activity-snapshot"]],
+    ["services/openclaw-system-sense/src/kernel-process-exit-capture.mjs", ["openclaw-kernel-process-lifecycle-snapshot"]],
+    ["services/openclaw-system-sense/src/kernel-process-exit-readback.mjs", ["openclaw-kernel-process-lifecycle-snapshot"]],
+    ["services/openclaw-system-sense/src/kernel-process-lifecycle-snapshot.mjs", ["openclaw-kernel-process-lifecycle-snapshot"]],
+    ["services/openclaw-system-sense/src/system-kernel-event-routes.mjs", ["openclaw-kernel-process-exec-capture", "openclaw-kernel-network-connect-capture", "openclaw-kernel-file-open-capture", "openclaw-kernel-activity-snapshot", "openclaw-kernel-process-lifecycle-snapshot"]],
     ["services/openclaw-system-sense/test/kernel-process-exec-capture.test.mjs", ["openclaw-kernel-process-exec-capture"]],
     ["services/openclaw-system-sense/test/kernel-process-exec-readback.test.mjs", ["openclaw-kernel-process-exec-capture"]],
-    ["services/openclaw-system-sense/test/system-kernel-event-routes.test.mjs", ["openclaw-kernel-process-exec-capture", "openclaw-kernel-network-connect-capture", "openclaw-kernel-file-open-capture", "openclaw-kernel-activity-snapshot"]],
+    ["services/openclaw-system-sense/test/system-kernel-event-routes.test.mjs", ["openclaw-kernel-process-exec-capture", "openclaw-kernel-network-connect-capture", "openclaw-kernel-file-open-capture", "openclaw-kernel-activity-snapshot", "openclaw-kernel-process-lifecycle-snapshot"]],
     ["services/openclaw-system-sense/test/kernel-network-connect-capture.test.mjs", ["openclaw-kernel-network-connect-capture"]],
     ["services/openclaw-system-sense/test/kernel-network-connect-readback.test.mjs", ["openclaw-kernel-network-connect-capture"]],
     ["services/openclaw-system-sense/test/kernel-file-open-capture.test.mjs", ["openclaw-kernel-file-open-capture"]],
     ["services/openclaw-system-sense/test/kernel-file-open-readback.test.mjs", ["openclaw-kernel-file-open-capture"]],
     ["services/openclaw-system-sense/test/kernel-activity-snapshot.test.mjs", ["openclaw-kernel-activity-snapshot"]],
+    ["services/openclaw-system-sense/test/kernel-process-exit-capture.test.mjs", ["openclaw-kernel-process-lifecycle-snapshot"]],
+    ["services/openclaw-system-sense/test/kernel-process-exit-readback.test.mjs", ["openclaw-kernel-process-lifecycle-snapshot"]],
+    ["services/openclaw-system-sense/test/kernel-process-lifecycle-snapshot.test.mjs", ["openclaw-kernel-process-lifecycle-snapshot"]],
     ["services/openclaw-system-heal/src/server.mjs", ["system-heal"]],
-    ["nix/modules/openclaw-body.nix", ["body-config", "openclaw-kernel-process-exec-capture", "observer-openclaw-kernel-process-exec-capture", "openclaw-kernel-network-connect-capture", "observer-openclaw-kernel-network-connect-capture", "openclaw-kernel-file-open-capture", "observer-openclaw-kernel-file-open-capture", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
+    ["nix/modules/openclaw-body.nix", ["body-config", "openclaw-kernel-process-exec-capture", "observer-openclaw-kernel-process-exec-capture", "openclaw-kernel-network-connect-capture", "observer-openclaw-kernel-network-connect-capture", "openclaw-kernel-file-open-capture", "observer-openclaw-kernel-file-open-capture", "openclaw-kernel-process-lifecycle-snapshot", "observer-openclaw-kernel-process-lifecycle-snapshot", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
     ["nix/modules/openclaw-managed-config-activation.nix", ["body-config", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
     ["nix/tests/openclaw-declarative-evolution-activation-vm.nix", ["body-config", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
     ["nix/packages/openclaw-core.nix", ["body-config", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
@@ -1477,11 +1526,11 @@ function selectSourceHeuristics(file) {
     ["packages/shared-systemd/src/openclaw-hostd-capabilities.json", ["body-config", "openclaw-systemd-next-repair-real-execution", "observer-openclaw-systemd-next-repair-real-execution", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
     ["packages/shared-systemd/src/openclaw-hostd-activation.mjs", ["body-config", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
     ["packages/shared-systemd/src/openclaw-hostd-rollback.mjs", ["body-config", nativeDeclarativeEvolutionCoreCheck, nativeDeclarativeEvolutionObserverCheck]],
-    ["nix/packages/openclaw-kernel-event-probe.nix", ["body-config", "openclaw-kernel-process-exec-capture", "observer-openclaw-kernel-process-exec-capture", "openclaw-kernel-network-connect-capture", "observer-openclaw-kernel-network-connect-capture", "openclaw-kernel-file-open-capture", "observer-openclaw-kernel-file-open-capture"]],
-    ["nix/packages/openclaw-system-sense.nix", ["body-config", "openclaw-kernel-process-exec-capture", "observer-openclaw-kernel-process-exec-capture", "openclaw-kernel-network-connect-capture", "observer-openclaw-kernel-network-connect-capture", "openclaw-kernel-file-open-capture", "observer-openclaw-kernel-file-open-capture", "openclaw-kernel-activity-snapshot", "observer-openclaw-kernel-activity-snapshot", "openclaw-systemd-boot-evidence", "observer-openclaw-systemd-boot-evidence"]],
-    ["nix/packages/observer-ui.nix", ["body-config", "observer-openclaw-kernel-process-exec-capture", "observer-openclaw-kernel-network-connect-capture", "observer-openclaw-kernel-file-open-capture", "observer-openclaw-kernel-activity-snapshot", "observer-openclaw-systemd-boot-evidence"]],
+    ["nix/packages/openclaw-kernel-event-probe.nix", ["body-config", "openclaw-kernel-process-exec-capture", "observer-openclaw-kernel-process-exec-capture", "openclaw-kernel-network-connect-capture", "observer-openclaw-kernel-network-connect-capture", "openclaw-kernel-file-open-capture", "observer-openclaw-kernel-file-open-capture", "openclaw-kernel-process-lifecycle-snapshot", "observer-openclaw-kernel-process-lifecycle-snapshot"]],
+    ["nix/packages/openclaw-system-sense.nix", ["body-config", "openclaw-kernel-process-exec-capture", "observer-openclaw-kernel-process-exec-capture", "openclaw-kernel-network-connect-capture", "observer-openclaw-kernel-network-connect-capture", "openclaw-kernel-file-open-capture", "observer-openclaw-kernel-file-open-capture", "openclaw-kernel-activity-snapshot", "observer-openclaw-kernel-activity-snapshot", "openclaw-kernel-process-lifecycle-snapshot", "observer-openclaw-kernel-process-lifecycle-snapshot", "openclaw-systemd-boot-evidence", "observer-openclaw-systemd-boot-evidence"]],
+    ["nix/packages/observer-ui.nix", ["body-config", "observer-openclaw-kernel-process-exec-capture", "observer-openclaw-kernel-network-connect-capture", "observer-openclaw-kernel-file-open-capture", "observer-openclaw-kernel-activity-snapshot", "observer-openclaw-kernel-process-lifecycle-snapshot", "observer-openclaw-systemd-boot-evidence"]],
     ["nix/scripts/dev-body-config-check.sh", ["body-config"]],
-    ["nix/profiles/desktop-body.nix", ["body-config", "openclaw-kernel-process-exec-capture", "observer-openclaw-kernel-process-exec-capture", "openclaw-kernel-network-connect-capture", "observer-openclaw-kernel-network-connect-capture", "openclaw-kernel-file-open-capture", "observer-openclaw-kernel-file-open-capture"]],
+    ["nix/profiles/desktop-body.nix", ["body-config", "openclaw-kernel-process-exec-capture", "observer-openclaw-kernel-process-exec-capture", "openclaw-kernel-network-connect-capture", "observer-openclaw-kernel-network-connect-capture", "openclaw-kernel-file-open-capture", "observer-openclaw-kernel-file-open-capture", "openclaw-kernel-process-lifecycle-snapshot", "observer-openclaw-kernel-process-lifecycle-snapshot"]],
     ["apps/observer-ui/src/server.mjs", ["observer-operator"]],
     ["apps/observer-ui/src/client-script.mjs", ["observer-operator"]],
     ["apps/observer-ui/src/client-script-config-dom-kernel-events.mjs", ["observer-openclaw-kernel-process-exec-capture"]],
@@ -1500,6 +1549,10 @@ function selectSourceHeuristics(file) {
     ["apps/observer-ui/src/client-script-runtime-kernel-activity.mjs", ["observer-openclaw-kernel-activity-snapshot"]],
     ["apps/observer-ui/src/observer-panels-kernel-activity.mjs", ["observer-openclaw-kernel-activity-snapshot"]],
     ["apps/observer-ui/test/kernel-activity-snapshot.test.mjs", ["observer-openclaw-kernel-activity-snapshot"]],
+    ["apps/observer-ui/src/client-script-config-dom-kernel-process-lifecycle.mjs", ["observer-openclaw-kernel-process-lifecycle-snapshot"]],
+    ["apps/observer-ui/src/client-script-runtime-kernel-process-lifecycle.mjs", ["observer-openclaw-kernel-process-lifecycle-snapshot"]],
+    ["apps/observer-ui/src/observer-panels-kernel-process-lifecycle.mjs", ["observer-openclaw-kernel-process-lifecycle-snapshot"]],
+    ["apps/observer-ui/test/kernel-process-lifecycle-snapshot.test.mjs", ["observer-openclaw-kernel-process-lifecycle-snapshot"]],
   ]);
 
   for (const [prefix, names] of direct.entries()) {
@@ -1588,6 +1641,15 @@ for (const file of changedFiles) {
     selectName("body-config");
     selectName("openclaw-kernel-activity-snapshot");
     selectName("observer-openclaw-kernel-activity-snapshot");
+    continue;
+  }
+  if (kernelProcessLifecycleSnapshotSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("body-config");
+    selectName("openclaw-kernel-process-lifecycle-snapshot");
+    selectName("observer-openclaw-kernel-process-lifecycle-snapshot");
     continue;
   }
   if (kernelFileOpenCaptureSlice) {

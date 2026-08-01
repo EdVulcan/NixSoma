@@ -19,6 +19,7 @@
     kernelEventCapture.enable = true;
     kernelNetworkCapture.enable = true;
     kernelFileCapture.enable = true;
+    kernelProcessExitCapture.enable = true;
     resourceControl.enable = true;
     aiGraphicalSession.enable = true;
     aiGraphicalSession.attachBrowser = true;

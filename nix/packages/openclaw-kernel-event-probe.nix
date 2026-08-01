@@ -30,6 +30,11 @@ stdenv.mkDerivation {
       -I${libbpf}/include \
       -c packages/kernel-event-probe/src/openclaw-kernel-file-open.bpf.c \
       -o openclaw-kernel-file-open.bpf.o
+    ${llvmPackages.clang-unwrapped}/bin/clang -O2 -g -target bpf -D__TARGET_ARCH_x86 \
+      -I${linuxHeaders}/include \
+      -I${libbpf}/include \
+      -c packages/kernel-event-probe/src/openclaw-kernel-process-exit.bpf.c \
+      -o openclaw-kernel-process-exit.bpf.o
     $CC -O2 -g -I${libbpf}/include \
       packages/kernel-event-probe/src/openclaw-kernel-process-exec-loader.c \
       -L${libbpf}/lib -L${elfutils}/lib -L${zlib}/lib \
@@ -48,6 +53,12 @@ stdenv.mkDerivation {
       -Wl,-rpath,${lib.makeLibraryPath [ elfutils libbpf zlib ]} \
       -lbpf -lelf -lz \
       -o openclaw-kernel-file-open-loader
+    $CC -O2 -g -I${libbpf}/include \
+      packages/kernel-event-probe/src/openclaw-kernel-process-exit-loader.c \
+      -L${libbpf}/lib -L${elfutils}/lib -L${zlib}/lib \
+      -Wl,-rpath,${lib.makeLibraryPath [ elfutils libbpf zlib ]} \
+      -lbpf -lelf -lz \
+      -o openclaw-kernel-process-exit-loader
     runHook postBuild
   '';
 
@@ -74,6 +85,13 @@ stdenv.mkDerivation {
     makeWrapper "$out/libexec/openclaw-kernel-file-open-loader" \
       "$out/bin/openclaw-kernel-file-open" \
       --add-flags "--object-path $out/lib/openclaw-kernel-file-open.bpf.o"
+    install -Dm444 openclaw-kernel-process-exit.bpf.o \
+      "$out/lib/openclaw-kernel-process-exit.bpf.o"
+    install -Dm755 openclaw-kernel-process-exit-loader \
+      "$out/libexec/openclaw-kernel-process-exit-loader"
+    makeWrapper "$out/libexec/openclaw-kernel-process-exit-loader" \
+      "$out/bin/openclaw-kernel-process-exit" \
+      --add-flags "--object-path $out/lib/openclaw-kernel-process-exit.bpf.o"
     runHook postInstall
   '';
 }

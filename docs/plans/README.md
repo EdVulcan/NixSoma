@@ -46,6 +46,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_NETWORK_CONNECT_PLAN.md) | Bounded read-only network connect-attempt observation through the existing Level 3 body nerve owner. |
 | [`OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_FILE_OPEN_PLAN.md) | Physically accepted bounded file open-attempt metadata without filename, path, content, result, or persistence. |
 | [`OPENCLAW_PHASE_C_KERNEL_ACTIVITY_SNAPSHOT_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_ACTIVITY_SNAPSHOT_PLAN.md) | Selected explicit compact aggregate across the three existing Phase C nerves without a new hook. |
+| [`OPENCLAW_PHASE_C_KERNEL_PROCESS_LIFECYCLE_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_PROCESS_LIFECYCLE_PLAN.md) | Bounded process-start and process-exit lifecycle counts through the existing Level 3 body nerve owner, without raw process metadata or control. |
 | [`OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md`](./OPENCLAW_PHASE_D_DECLARATIVE_EVOLUTION_CANDIDATE_PLAN.md) | Declarative-evolution candidate, controlled activation, and exact rollback evidence plus deferred physical/automatic mutation boundaries. |
 | [`OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md`](./OPENCLAW_EXPERT_REVIEW_OPTIMIZATION_PLAN.md) | Measured validation, runtime, and review debt that blocks the mainline. |
 

@@ -16,6 +16,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-config-dom-kernel-network.mjs
     ../../apps/observer-ui/src/client-script-config-dom-kernel-file.mjs
     ../../apps/observer-ui/src/client-script-config-dom-kernel-activity.mjs
+    ../../apps/observer-ui/src/client-script-config-dom-kernel-process-lifecycle.mjs
     ../../apps/observer-ui/src/client-script-config-dom-engineering-context.mjs
     ../../apps/observer-ui/src/client-script-config-dom-engineering-provider-handoff.mjs
     ../../apps/observer-ui/src/client-script-config-dom-mvp-memory.mjs
@@ -61,6 +62,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-renderers.mjs
     ../../apps/observer-ui/src/client-script-runtime-actions.mjs
     ../../apps/observer-ui/src/client-script-runtime-kernel-activity.mjs
+    ../../apps/observer-ui/src/client-script-runtime-kernel-process-lifecycle.mjs
     ../../apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-assessment.mjs
     ../../apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-click.mjs
     ../../apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-focus-type.mjs
@@ -101,6 +103,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/observer-panels-kernel-network.mjs
     ../../apps/observer-ui/src/observer-panels-kernel-file.mjs
     ../../apps/observer-ui/src/observer-panels-kernel-activity.mjs
+    ../../apps/observer-ui/src/observer-panels-kernel-process-lifecycle.mjs
     ../../apps/observer-ui/src/observer-panels-operations.mjs
     ../../apps/observer-ui/src/observer-panel-operator-schedule.mjs
     ../../apps/observer-ui/src/observer-panel-ai-work-view.mjs

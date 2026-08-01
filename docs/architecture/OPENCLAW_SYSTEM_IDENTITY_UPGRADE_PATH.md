@@ -780,10 +780,17 @@ root-only snapshot；三类 replay 均被拒绝。物理机 Phase D mutation、�
 自动 rollback/retry 与 provider-selected generation 仍未授权。因此旧阶段路线的“接近 90%”只能
 描述早期里程碑清单，不能代表最终白皮书完成度。
 
-三条 Phase C nerve 之上的下一层 source/KVM 候选是显式 compact activity
-snapshot：只聚合 lane status、counts 与 continuity，不聚合 raw event values，也不
-加入定时循环。它提升 operator body-state 可读性，但不等于 persistent black box、
-anomaly inference、enforcement 或 physical mutation。
+三条 Phase C nerve 之上的 compact activity snapshot 已完成并冻结：只聚合
+lane status、counts 与 continuity，不聚合 raw event values，也不加入定时循环。
+它提升 operator body-state 可读性，但不等于 persistent black box、anomaly
+inference、enforcement 或 physical mutation。当前新增的独立 Level 3 slice 是
+bounded process lifecycle observation：在既有 process-exec owner 之外加入
+`sched_process_exit`，显式并行返回 start/exit counts 与 in-memory continuity。
+公开 snapshot 不返回 process name、PID、UID、executable、exit code、signal 或
+parent/child 关系；它也不提供 process diagnosis、control、provider egress 或
+host mutation。该 slice 已以 source/closure/disposable-KVM 证据收口（VM
+捕获 55 个 start 与 55 个 exit 事件，两个 lane 可用，服务健康且无 failed
+units），物理 generation 激活仍需单独授权。
 
 当前 bounded Level 2 browser 眼手闭环与内核白皮书 Phase A 已收口。
 Phase B 的固定 D-Bus 控制切片、bounded journal/boot diagnosis、incident loop、

@@ -160,3 +160,27 @@ test("system kernel event route exposes the compact activity snapshot", async ()
   assert.equal(payload.registry, "openclaw-kernel-activity-snapshot-v0");
   assert.equal(payload.boundary.rawEventsIncluded, false);
 });
+
+test("system kernel event route exposes the compact process lifecycle snapshot", async () => {
+  const res = responseCapture();
+  const handled = await handleSystemKernelEventRoutes({
+    req: { method: "GET" },
+    res,
+    requestUrl: new URL("http://127.0.0.1/system/kernel/process-lifecycle-snapshot"),
+    builders: {
+      buildKernelProcessLifecycleSnapshot: async () => ({
+        ok: true,
+        registry: "openclaw-kernel-process-lifecycle-snapshot-v0",
+        status: "complete",
+        laneCount: 2,
+        availableLaneCount: 2,
+        boundary: { rawEventsIncluded: false, processNamesIncluded: false, hostMutation: false },
+      }),
+    },
+  });
+  assert.equal(handled, true);
+  assert.equal(res.statusCode, 200);
+  const payload = JSON.parse(res.body);
+  assert.equal(payload.registry, "openclaw-kernel-process-lifecycle-snapshot-v0");
+  assert.equal(payload.boundary.processNamesIncluded, false);
+});
