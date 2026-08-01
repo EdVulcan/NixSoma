@@ -170,17 +170,19 @@ creation, planning, retry, repeat after closure, provider authority, root,
 arbitrary process/window/desktop control, or host mutation. The Nix option
 `services.openclaw.boundedOperatorWindow.enable` remains false by default. The
 source, Core/Observer gates, runtime-state restart test, and exact body-config
-closures pass; a physical candidate is reviewed separately and the active
-generation remains unchanged until explicit activation authorization.
+closures pass. The later process-lifecycle generation carries the same modules,
+while the timer remains disabled by default and no physical lease execution is
+claimed.
 
 The reviewed physical candidate is
 `/nix/store/48n622mrrqzhaa3kxf8hrgn25niv0pwf-nixos-system-nixos-26.05.4808.569d57850992`.
 It matches the physical target marker and all six protected paths, is
 root-owned and switchable, contains the Core/Observer window modules, and has
 an 1826-entry closure of about 9.93 GB. Its profile keeps
-`OPENCLAW_BOUNDED_OPERATOR_WINDOW_ENABLED=0`; active generation `n23b58...`
-and all nine services remain unchanged and healthy. No activation or reboot is
-claimed for this candidate-only evidence.
+`OPENCLAW_BOUNDED_OPERATOR_WINDOW_ENABLED=0`; the later active generation
+`y2f0fnrb...` retains the timer-disabled profile. The candidate-specific lease
+was not executed as part of this deployment, and no activation or reboot is
+claimed for the historical candidate-only evidence.
 
 The operator-feedback memory edge is now implemented in
 `plans/OPENCLAW_OPERATOR_RECOMMENDATION_FEEDBACK_PLAN.md`. A terminal task
