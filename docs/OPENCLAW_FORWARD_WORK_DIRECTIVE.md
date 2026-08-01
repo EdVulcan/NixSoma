@@ -75,6 +75,19 @@ verification, persistence, and stop-condition owners. No scheduler, background
 pickup, automatic repeat/retry, open loop, provider call, task/approval
 creation, or host mutation was added. Physical deployment is deferred.
 
+The bounded operator session continuity continuation is also implemented in
+source. A non-preview finite run now persists a compact session checkpoint at
+creation, after each completed step, and at every terminal/interruption
+boundary. Core startup converts an unfinished `running` record to
+`interrupted`; Observer exposes the resumable record; and an explicit
+`POST /operator/resume` consumes only the server-stored remaining step budget.
+The isolated operator-control service check proves a clean nine-service restart,
+restored paused session, and one explicit resumed task. Write-only input remains
+fail-closed across restart and is never replayed. No scheduler, automatic
+resume/retry, new action/provider/credential authority, provider call, browser
+live gate, physical deployment, or host mutation was added. The contract is
+recorded in `OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_CONTINUITY_PLAN.md`.
+
 The reviewed browser-task entry now also has explicit selected-task bridges to
 the existing `act.ai.workspace.reviewed_cycle` and
 `act.ai.workspace.accept_assessment` owners. This closes the path from

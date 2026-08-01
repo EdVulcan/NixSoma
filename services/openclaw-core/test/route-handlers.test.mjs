@@ -6,6 +6,7 @@ import { Readable } from "node:stream";
 import { registerRoutes } from "../src/route-handlers.mjs";
 import { buildEyeHandRecoveryEvidence } from "../src/task-recovery.mjs";
 import { createOperatorAuthenticator } from "../src/operator-auth.mjs";
+import { createOperatorRunSessionManager } from "../src/operator-run-session.mjs";
 import {
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_REGISTRY,
@@ -1456,6 +1457,87 @@ test("operator run route rejects caller execution overrides before invoking the 
     assert.match(response.body.error, /does not accept task execution override fields/u);
   }
   assert.equal(callCount, 0);
+});
+
+test("operator run route checkpoints a real bounded session without widening executor input", async () => {
+  let observedBody = null;
+  const manager = createOperatorRunSessionManager({
+    persistState: () => {},
+    now: () => "2026-08-01T12:01:00.000Z",
+  });
+  const deps = createBaseDeps({
+    deps: { operatorRunSessionManager: manager },
+    executor: {
+      runOperatorLoop: async (body, hooks) => {
+        observedBody = body;
+        await hooks.onStep({ task: { id: "task-session-step" } });
+        return {
+          ran: true,
+          blocked: false,
+          dryRun: false,
+          reason: null,
+          nextTask: null,
+          steps: [{ task: { id: "task-session-step", status: "completed" }, execution: null }],
+          operator: { mode: "session-test" },
+          summary: { completed: 1 },
+        };
+      },
+    },
+  });
+
+  const response = await invokeRoute(deps, "POST", "/operator/run", { maxSteps: 2, dryRun: false });
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.deepEqual(observedBody, { maxSteps: 2, dryRun: false });
+  assert.equal(response.body.runSession.status, "completed");
+  assert.equal(response.body.runSession.stepsCompleted, 1);
+  assert.equal(response.body.runSession.resumeAvailable, false);
+  assert.equal(response.body.runSessions.length, 1);
+});
+
+test("operator resume route consumes only the remaining persisted session budget", async () => {
+  let observedBody = null;
+  const manager = createOperatorRunSessionManager({
+    persistState: () => {},
+    now: () => "2026-08-01T12:02:00.000Z",
+  });
+  const interrupted = manager.create({ maxSteps: 3 });
+  manager.markStep(interrupted.id, "task-before-restart");
+  manager.reconcileInterruptedAtStartup();
+
+  const deps = createBaseDeps({
+    deps: { operatorRunSessionManager: manager },
+    executor: {
+      runOperatorLoop: async (body, hooks) => {
+        observedBody = body;
+        await hooks.onStep({ task: { id: "task-after-restart" } });
+        return {
+          ran: true,
+          blocked: false,
+          dryRun: false,
+          reason: null,
+          nextTask: null,
+          steps: [{ task: { id: "task-after-restart", status: "completed" }, execution: null }],
+          operator: { mode: "resume-test" },
+          summary: { completed: 2 },
+        };
+      },
+    },
+  });
+
+  const response = await invokeRoute(deps, "POST", "/operator/resume", {
+    sessionId: interrupted.id,
+    confirm: true,
+  });
+
+  assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+  assert.deepEqual(observedBody, { maxSteps: 2, dryRun: false });
+  assert.equal(response.body.resumed, true);
+  assert.equal(response.body.resume.sessionId, interrupted.id);
+  assert.equal(response.body.runSession.resumeCount, 1);
+  assert.equal(response.body.runSession.stepsCompleted, 2);
+  assert.equal(response.body.runSession.remainingSteps, 1);
+  assert.equal(response.body.runSession.governance.automaticResume, false);
 });
 
 test("operator step route preserves transient recommendation and compact evidence boundaries", async () => {

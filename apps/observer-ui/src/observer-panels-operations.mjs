@@ -72,10 +72,13 @@ ${observerAiWorkViewPanel()}
             <button id="operator-step-button" class="secondary">Run Next</button>
             <button id="operator-preview-button" class="secondary">Preview Queue</button>
             <button id="operator-run-button">Run Queue</button>
+            <button id="operator-resume-button" class="secondary" disabled>Resume Interrupted Run</button>
           </div>
           <div class="metric"><span>Status</span><span id="operator-loop-status">idle</span></div>
           <div class="metric"><span>Blocked</span><span id="operator-loop-blocked">false</span></div>
           <div class="metric"><span>Next Task</span><span id="operator-loop-next">none</span></div>
+          <div class="metric"><span>Run Session</span><span id="operator-session-status">none</span></div>
+          <div class="metric"><span>Resume Steps</span><span id="operator-session-remaining">0</span></div>
           <div class="metric"><span>Last Run</span><span id="operator-loop-ran">none</span></div>
           <div class="metric"><span>Steps</span><span id="operator-loop-count">0</span></div>
           <pre id="operator-loop-json">No operator run yet.</pre>

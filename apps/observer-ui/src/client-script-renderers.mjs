@@ -146,9 +146,21 @@ function renderPlanPanel(task) {
 
 function renderOperatorState(operator) {
   const nextTask = operator?.nextTask ?? null;
+  const resumableSession = (Array.isArray(operator?.runSessions) ? operator.runSessions : [])
+    .find((session) => session?.resumeAvailable === true) ?? null;
   operatorLoopStatus.textContent = operator?.status ?? "idle";
   operatorLoopBlocked.textContent = String(operator?.blocked ?? false);
   operatorLoopNext.textContent = nextTask?.id ? nextTask.id.slice(0, 8) : "none";
+  if (typeof operatorResumeButton !== "undefined") {
+    operatorResumeButton.disabled = !resumableSession;
+    operatorResumeButton.dataset.sessionId = resumableSession?.id ?? "";
+  }
+  if (typeof operatorSessionStatus !== "undefined") {
+    operatorSessionStatus.textContent = resumableSession?.status ?? "none";
+  }
+  if (typeof operatorSessionRemaining !== "undefined") {
+    operatorSessionRemaining.textContent = String(resumableSession?.remainingSteps ?? 0);
+  }
 }
 
 function renderPolicyState(policy) {
@@ -776,6 +788,7 @@ function renderOperatorPanel(result) {
     status: operator?.status ?? (result.blocked ? "paused" : result.ran ? "ran" : "idle"),
     blocked: result.blocked ?? operator?.blocked ?? false,
     nextTask,
+    runSessions: result.runSessions ?? (result.runSession ? [result.runSession] : []),
   });
   operatorLoopRan.textContent = result.ran ? "yes" : "no";
   operatorLoopCount.textContent = String(result.count ?? steps.length);

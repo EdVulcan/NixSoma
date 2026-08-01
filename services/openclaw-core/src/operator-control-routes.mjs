@@ -1,6 +1,7 @@
 import { sendJson, readJsonBody } from "../../../packages/shared-utils/src/http.mjs";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { buildBoundedOperatorRunRequest } from "./operator-run-request.mjs";
+import { buildBoundedOperatorRunResumeRequest } from "./operator-run-session.mjs";
 
 function serialiseOperatorStep(step, { serialiseTask, serialiseExecutionResult, buildOperatorState }) {
   return {
@@ -15,6 +16,15 @@ function serialiseOperatorStep(step, { serialiseTask, serialiseExecutionResult, 
     approval: step.approval ?? step.task?.approval ?? null,
     operator: step.operator ?? buildOperatorState(),
     summary: step.summary,
+  };
+}
+
+function withRunSessionEvidence(response, operatorRunSessionManager, sessionId = null) {
+  if (!operatorRunSessionManager) return response;
+  return {
+    ...response,
+    runSession: sessionId ? operatorRunSessionManager.publicById(sessionId) : null,
+    runSessions: operatorRunSessionManager.listPublic(),
   };
 }
 
@@ -63,6 +73,7 @@ export async function handleOperatorControlRoute({
   publishEvent,
   postJson,
   sessionManagerUrl,
+  operatorRunSessionManager = null,
 }) {
   const { tasks, runtimeState, getCurrentTask } = state;
   const {
@@ -81,10 +92,10 @@ export async function handleOperatorControlRoute({
   } = executor;
 
   if (req.method === "GET" && requestUrl.pathname === "/operator/state") {
-    sendJson(res, 200, {
+    sendJson(res, 200, withRunSessionEvidence({
       ok: true,
       operator: buildOperatorState(),
-    });
+    }, operatorRunSessionManager));
     return true;
   }
 
@@ -92,11 +103,11 @@ export async function handleOperatorControlRoute({
     try {
       const body = await readJsonBody(req);
       const step = await runOperatorStep(body);
-      sendJson(res, 200, serialiseOperatorStep(step, {
+      sendJson(res, 200, withRunSessionEvidence(serialiseOperatorStep(step, {
         serialiseTask,
         serialiseExecutionResult,
         buildOperatorState,
-      }));
+      }), operatorRunSessionManager));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       sendJson(res, 400, { ok: false, error: message });
@@ -105,11 +116,19 @@ export async function handleOperatorControlRoute({
   }
 
   if (req.method === "POST" && requestUrl.pathname === "/operator/run") {
+    let runSessionId = null;
     try {
       const body = await readJsonBody(req);
       const boundedRun = buildBoundedOperatorRunRequest(body);
-      const result = await runOperatorLoop(boundedRun.request);
-      sendJson(res, 200, {
+      if (!boundedRun.request.dryRun && operatorRunSessionManager) {
+        runSessionId = operatorRunSessionManager.create({ maxSteps: boundedRun.request.maxSteps }).id;
+      }
+      const result = await runOperatorLoop(
+        boundedRun.request,
+        runSessionId ? operatorRunSessionManager.executionHooks(runSessionId) : undefined,
+      );
+      if (runSessionId) operatorRunSessionManager.finish(runSessionId, result);
+      sendJson(res, 200, withRunSessionEvidence({
         ok: true,
         ran: result.ran,
         count: result.steps.length,
@@ -125,8 +144,51 @@ export async function handleOperatorControlRoute({
         operator: result.operator ?? buildOperatorState(),
         summary: result.summary,
         session: boundedRun.session,
-      });
+      }, operatorRunSessionManager, runSessionId));
     } catch (error) {
+      if (runSessionId) operatorRunSessionManager.interrupt(runSessionId, "run_failed");
+      const message = error instanceof Error ? error.message : "Unknown error";
+      sendJson(res, 400, { ok: false, error: message });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/operator/resume") {
+    if (!operatorRunSessionManager) {
+      sendJson(res, 503, { ok: false, error: "Bounded operator session continuity is unavailable." });
+      return true;
+    }
+    let runSessionId = null;
+    try {
+      const body = await readJsonBody(req);
+      const boundedResume = buildBoundedOperatorRunResumeRequest(body);
+      const session = operatorRunSessionManager.beginResume(boundedResume.request.sessionId);
+      runSessionId = session.id;
+      const result = await runOperatorLoop(
+        { maxSteps: session.remainingSteps, dryRun: false },
+        operatorRunSessionManager.executionHooks(runSessionId),
+      );
+      operatorRunSessionManager.finish(runSessionId, result);
+      sendJson(res, 200, withRunSessionEvidence({
+        ok: true,
+        resumed: true,
+        ran: result.ran,
+        count: result.steps.length,
+        blocked: result.blocked ?? false,
+        reason: result.reason ?? null,
+        dryRun: false,
+        nextTask: result.nextTask ? serialiseTask(result.nextTask) : null,
+        steps: result.steps.map((step) => ({
+          task: step.task ? serialiseTask(step.task) : null,
+          execution: step.execution ? serialiseExecutionResult(step.execution) : null,
+          policy: step.policy ?? step.task?.policy?.decision ?? null,
+        })),
+        operator: result.operator ?? buildOperatorState(),
+        summary: result.summary,
+        resume: boundedResume.resume,
+      }, operatorRunSessionManager, runSessionId));
+    } catch (error) {
+      if (runSessionId) operatorRunSessionManager.interrupt(runSessionId, "resume_failed");
       const message = error instanceof Error ? error.message : "Unknown error";
       sendJson(res, 400, { ok: false, error: message });
     }

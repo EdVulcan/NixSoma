@@ -32,6 +32,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md) | Exact application-receipt-bound completed/failed observation from the authoritative downstream task terminal owner. |
 | [`OPENCLAW_REVIEWED_BROWSER_TASK_COMPOSER_PLAN.md`](./OPENCLAW_REVIEWED_BROWSER_TASK_COMPOSER_PLAN.md) | Real bounded goal/URL browser-task entry through Observer and Core without caller action authority or automatic execution. |
 | [`OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_PLAN.md`](./OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_PLAN.md) | Explicit finite queue preview/run through a strict `maxSteps + dryRun` Core contract without scheduling, retries, or an open loop. |
+| [`OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_CONTINUITY_PLAN.md`](./OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_CONTINUITY_PLAN.md) | Durable finite-run checkpoints, restart interruption, and explicit remaining-budget Resume without automatic recovery. |
 | [`OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md`](./OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md) | Explicit selected-task bridge from reviewed browser-task entry to the existing bounded AI workspace run and assessment owner. |
 | [`OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md`](./OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md) | Explicit selected-task rebind to the existing authoritative trusted work-view owner without task execution or automatic recovery. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Up to three matching-target learned patterns inside the existing exact approved diagnosis request. |
@@ -183,6 +184,14 @@ The reviewed task work-view continuity slice is implemented in
 Observer now exposes one explicit selected-task rebind bridge to the existing
 authoritative bind/rebind owner. It preserves task identity and status without
 preparing a browser, retrying execution, or creating another task.
+
+The bounded operator work-session continuity slice is implemented in
+[`OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_CONTINUITY_PLAN.md`](./OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_CONTINUITY_PLAN.md).
+Core now checkpoints a finite run, marks an unfinished session interrupted on
+startup, and exposes only an explicit server-budget-bound Resume. The isolated
+real-service control check proves clean restart, restored remaining budget, and
+one resumed task; automatic resume, retry, scheduling, and input replay remain
+excluded.
 
 ### Historical Route Evidence
 

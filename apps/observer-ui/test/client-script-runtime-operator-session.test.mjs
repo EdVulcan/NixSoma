@@ -11,6 +11,7 @@ function createContext({ limit = "5", response = {} } = {}) {
   const messages = [];
   const context = {
     operatorRunLimitInput: { value: limit },
+    operatorResumeButton: { dataset: { sessionId: "session-1" } },
     observerConfig: { coreUrl: "http://core.invalid" },
     taskHistoryFocus: "current-task",
     selectedHistoryTaskId: null,
@@ -86,6 +87,18 @@ test("Observer rejects malformed or out-of-range limits before contacting Core",
   }
 });
 
+test("Observer resumes only the explicitly selected interrupted session", async () => {
+  const fixture = createContext({
+    response: { resumed: true, ran: false, reason: "no_queued_task", runSession: { id: "session-1" } },
+  });
+
+  await fixture.context.resumeOperatorSessionFromUi();
+
+  assert.equal(fixture.calls[0].url, "http://core.invalid/operator/resume");
+  assert.deepEqual(JSON.parse(fixture.calls[0].options.body), { sessionId: "session-1", confirm: true });
+  assert.match(fixture.messages.at(-1), /did not execute/u);
+});
+
 test("Operator panel exposes finite preview and run controls", () => {
   const panel = observerOperationsPanels();
   for (const token of [
@@ -95,6 +108,9 @@ test("Operator panel exposes finite preview and run controls", () => {
     "Run Next",
     "Preview Queue",
     "Run Queue",
+    "operator-resume-button",
+    "Resume Interrupted Run",
+    "operator-session-status",
   ]) {
     assert.equal(panel.includes(token), true, `panel is missing ${token}`);
   }

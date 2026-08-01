@@ -1596,7 +1596,7 @@ async function runOperatorStep(body = {}) {
   };
 }
 
-async function runOperatorLoop(body = {}) {
+async function runOperatorLoop(body = {}, hooks = {}) {
   const maxSteps = Number.isInteger(body.maxSteps) && body.maxSteps > 0 ? Math.min(body.maxSteps, 20) : 5;
   const steps = [];
   let stopReason = null;
@@ -1614,6 +1614,7 @@ async function runOperatorLoop(body = {}) {
       break;
     }
     steps.push(step);
+    await hooks.onStep?.(step);
   }
 
   return {

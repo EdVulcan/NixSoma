@@ -53,6 +53,26 @@ async function runOperatorLoopFromUi({ dryRun = false } = {}) {
   await refreshAfterOperatorSession();
 }
 
+async function resumeOperatorSessionFromUi() {
+  const sessionId = operatorResumeButton.dataset.sessionId ?? "";
+  if (!sessionId) {
+    throw new Error("No interrupted operator run is available to resume.");
+  }
+  const result = await fetchJson(\`\${observerConfig.coreUrl}/operator/resume\`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ sessionId, confirm: true }),
+  });
+
+  renderOperatorPanel(result);
+  renderEngineeringRecommendationFromOperatorResult(result);
+  renderEngineeringPlanFromOperatorResult(result);
+  setControlMessage(result.ran
+    ? \`Resumed operator run \${sessionId} for \${result.count ?? result.steps?.length ?? 0} task(s).\`
+    : \`Operator run \${sessionId} did not execute a task: \${result.reason ?? "unknown"}.\`);
+  await refreshAfterOperatorSession();
+}
+
 async function refreshAfterOperatorSession() {
   await refreshRuntime();
   await refreshTaskList();

@@ -19,6 +19,7 @@ import { createNativeEngineeringExperienceMemory } from "./native-engineering-ex
 import { createOperatorAuthenticator } from "./operator-auth.mjs";
 import { createExecutionGrantSigner } from "../../../packages/shared-utils/src/execution-grants.mjs";
 import { createFixedUnitIncidentScheduler } from "./fixed-unit-incident-scheduler.mjs";
+import { createOperatorRunSessionManager } from "./operator-run-session.mjs";
 import {
   createFixedUnitIncidentApprovedDispatcher,
   reconcileFixedUnitIncidentDispatchesAtStartup,
@@ -149,6 +150,10 @@ executor = createTaskExecutor({
   policyEvaluator,
   publishEvent,
 });
+const operatorRunSessionManager = createOperatorRunSessionManager({
+  records: state.operatorRunSessions,
+  persistState: state.persistState,
+});
 const dispatchApprovedFixedUnitRepair = createFixedUnitIncidentApprovedDispatcher({
   tasks: state.tasks,
   approvals: state.approvals,
@@ -184,6 +189,7 @@ const handleRequest = registerRoutes({
   systemHealUrl,
   operatorAuth,
   dispatchApprovedFixedUnitRepair,
+  operatorRunSessionManager,
   buildExperienceMemoryReadModel: (...args) => experienceMemory.buildExperienceMemoryReadModel(...args),
 });
 
@@ -279,6 +285,7 @@ process.once("SIGTERM", shutdown);
 process.once("SIGINT", shutdown);
 
 state.loadPersistentState();
+operatorRunSessionManager.reconcileInterruptedAtStartup();
 const standingProviderAdvisoryRestore = planBuilder.restoreStandingProviderAdvisoryState();
 if (!standingProviderAdvisoryRestore.ok) {
   console.warn(`Standing provider advisory state was reset: ${standingProviderAdvisoryRestore.reason}`);

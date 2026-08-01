@@ -226,6 +226,12 @@ operatorRunButton.addEventListener("click", () => {
   });
 });
 
+operatorResumeButton.addEventListener("click", () => {
+  resumeOperatorSessionFromUi().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 runSelectedReviewedCycleButton.addEventListener("click", () => {
   runSelectedReviewedWorkspaceCycleFromUi().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

@@ -8,7 +8,7 @@ import { observerClientKernelFileRefreshersScript } from "./client-script-refres
 export const observerClientAppRefreshersScript = `async function refreshOperatorState() {
   try {
     const data = await fetchJson(\`\${observerConfig.coreUrl}/operator/state\`);
-    renderOperatorState(data.operator);
+    renderOperatorState({ ...(data.operator ?? {}), runSessions: data.runSessions ?? [] });
     if (operatorLoopJson.textContent === "No operator run yet." || operatorLoopJson.textContent === "Unable to read operator state.") {
       operatorLoopJson.textContent = [
         \`Status: \${data.operator?.status ?? "idle"}\`,
