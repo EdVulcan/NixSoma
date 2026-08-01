@@ -735,6 +735,9 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
   `act.ai.workspace.reviewed_cycle` 与 `act.ai.workspace.accept_assessment`：一次
   bounded run 加只读 assessment，再由操作者显式 acceptance；bridge 不新增
   provider route、credential、scheduler、retry 或 host authority
+- reviewed task 现在还可通过 Observer 的单一 `Rebind Selected Task` 控件显式
+  重新绑定当前 trusted work-view；它复用既有 authoritative bind/rebind owner，
+  保留 task id/status 与审计，不自动 prepare、执行、retry、provider call 或 host mutation
 - Phase D 操作者治理的 activation/rollback lane 已冻结；自动批准、自动回滚、
   provider 选择 generation、任意 root 命令和物理机 mutation 仍未授权
 

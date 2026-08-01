@@ -69,8 +69,10 @@ const requiredHtml = [
   "operator-run-limit-input",
   "run-selected-reviewed-cycle-button",
   "accept-selected-reviewed-assessment-button",
+  "rebind-selected-reviewed-task-button",
   "Accept Selected Assessment",
   "Run + Assess Selected Task",
+  "Rebind Selected Task",
   "Preview Queue",
   "Run Queue",
   "task-plan-json",
@@ -89,6 +91,8 @@ const requiredClient = [
   "act.ai.workspace.reviewed_cycle",
   "acceptSelectedReviewedWorkspaceAssessmentFromUi",
   "act.ai.workspace.accept_assessment",
+  "rebindSelectedReviewedTaskFromUi",
+  "act.openclaw.engineering_context.work_view_bind",
 ];
 
 for (const token of requiredHtml) {
@@ -150,6 +154,7 @@ console.log(JSON.stringify({
       "operator-run-limit-input",
       "run-selected-reviewed-cycle-button",
       "accept-selected-reviewed-assessment-button",
+      "rebind-selected-reviewed-task-button",
     ],
     clientApis: [
       "/tasks/plan",
@@ -159,6 +164,8 @@ console.log(JSON.stringify({
       "act.ai.workspace.reviewed_cycle",
       "acceptSelectedReviewedWorkspaceAssessmentFromUi",
       "act.ai.workspace.accept_assessment",
+      "rebindSelectedReviewedTaskFromUi",
+      "act.openclaw.engineering_context.work_view_bind",
     ],
     stateFile: process.env.OPENCLAW_CORE_STATE_FILE ?? null,
   },

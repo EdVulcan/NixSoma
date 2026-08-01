@@ -84,6 +84,14 @@ two-action limit, task/work-view revalidation, required audit, and no automatic
 completion. The bridges add no provider route, credential access, scheduler,
 retry, or host authority.
 
+The reviewed task entry now also exposes one explicit selected-task work-view
+rebind bridge. It reuses `act.openclaw.engineering_context.work_view_bind` with
+the existing authoritative session/lease checks, preserves the task id and
+status, and records the existing bind audit. It does not prepare a browser,
+retry execution, call a provider, create a task or approval, or mutate the
+host. The continuity contract is recorded in
+`OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md`.
+
 For route planning, keep the denominators explicit. The currently bounded,
 operator-governed product is roughly 84-87% mature; the wider autonomous-agent
 body described by the identity route and kernel whitepaper is roughly 52-60%
@@ -204,13 +212,13 @@ one-off call surface.
 
 ## Selected Next Real Capability
 
-The newest source route is the reviewed task workspace session in
-`OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md`. Its explicit selected-task
-bridge composes the already accepted reviewed browser-task entry with the
-existing bounded workspace run and assessment owner. Complete its focused,
-served-client, structural, and closure evidence, then freeze the integration.
-Do not extend it into automatic start, retries, scheduling, or an open-ended
-autonomy loop.
+The newest source route is the reviewed task work-view continuity slice in
+`OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md`. Its explicit selected-
+task rebind bridge composes the reviewed browser-task entry with the existing
+authoritative work-view bind/rebind owner. Complete its focused, served-client,
+structural, and closure evidence, then freeze the integration. Do not extend
+it into automatic rebind, browser restart, retries, scheduling, or an
+open-ended autonomy loop.
 
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation

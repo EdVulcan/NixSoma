@@ -238,6 +238,12 @@ acceptSelectedReviewedAssessmentButton.addEventListener("click", () => {
   });
 });
 
+rebindSelectedReviewedTaskButton.addEventListener("click", () => {
+  rebindSelectedReviewedTaskFromUi().catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 approveLatestButton.addEventListener("click", () => {
   resolveLatestApproval("approve").catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

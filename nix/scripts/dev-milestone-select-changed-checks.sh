@@ -606,6 +606,7 @@ const reviewedTaskWorkspaceSessionFiles = new Set([
   "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
   "docs/README.md",
   "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md",
   "docs/plans/OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md",
   "docs/plans/README.md",
   "nix/packages/observer-ui.nix",

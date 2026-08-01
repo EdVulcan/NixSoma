@@ -33,6 +33,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_REVIEWED_BROWSER_TASK_COMPOSER_PLAN.md`](./OPENCLAW_REVIEWED_BROWSER_TASK_COMPOSER_PLAN.md) | Real bounded goal/URL browser-task entry through Observer and Core without caller action authority or automatic execution. |
 | [`OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_PLAN.md`](./OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_PLAN.md) | Explicit finite queue preview/run through a strict `maxSteps + dryRun` Core contract without scheduling, retries, or an open loop. |
 | [`OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md`](./OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md) | Explicit selected-task bridge from reviewed browser-task entry to the existing bounded AI workspace run and assessment owner. |
+| [`OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md`](./OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md) | Explicit selected-task rebind to the existing authoritative trusted work-view owner without task execution or automatic recovery. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Up to three matching-target learned patterns inside the existing exact approved diagnosis request. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_ACTION_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_ACTION_PLAN.md) | Reviewed read-only opening of the exact incident receipt and recovery evidence bound to provider guidance. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_REFRESH_PLAN.md) | Reviewed same-unit refresh of existing health, fixed-unit inventory, and bounded journal evidence. |
@@ -173,6 +174,12 @@ bridge to the existing `act.ai.workspace.reviewed_cycle` owner. It preserves
 the cycle's bounded provider/action budgets, revalidation, assessment and
 acceptance boundaries; it does not start automatically or create a new
 provider route.
+
+The reviewed task work-view continuity slice is implemented in
+[`OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md`](./OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md).
+Observer now exposes one explicit selected-task rebind bridge to the existing
+authoritative bind/rebind owner. It preserves task identity and status without
+preparing a browser, retrying execution, or creating another task.
 
 ### Historical Route Evidence
 
