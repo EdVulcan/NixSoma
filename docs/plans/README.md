@@ -106,6 +106,17 @@ then passed protected-path review and both installed gates without reboot: Core
 captured 62/46/128 events across the three lanes, Observer captured 240 total,
 and all service/health/failure checks remained healthy. Freeze this lane.
 
+The separate process-lifecycle slice in
+[`OPENCLAW_PHASE_C_KERNEL_PROCESS_LIFECYCLE_PLAN.md`](./OPENCLAW_PHASE_C_KERNEL_PROCESS_LIFECYCLE_PLAN.md)
+is complete in source, exact closure, and disposable KVM. Its physical
+candidate is
+`/nix/store/y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`.
+The candidate matches the active physical target marker and all protected paths,
+contains the bounded process-exit probe in the System Sense unit, and has a
+root-owned switchable 1826-entry closure. Generation `n23b58...` remains active;
+physical activation and the installed process-lifecycle gate require explicit
+operator authorization and are not claimed here.
+
 The bounded boot/restart evidence route is also deployed in current generation
 `1xh4x8ls...`. Its registered Core/Observer gates, deployed direct/proxy
 binding, deployed Observer panel, no-journal-payload boundary, and service

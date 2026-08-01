@@ -62,7 +62,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 3 network observation | Fixed `fentry/__sys_connect` eBPF probe sends only timestamp, process identity, sockaddr family, and address length through the system-sense/Core/Observer read-only path; only the first two sockaddr bytes are read and destination, port, address bytes, payload, persistence, and policy execution remain excluded | Physical proof originated in `gd9ps40...`; current `n23b58...` retains the deployed route, with the prior Core and Observer gates capturing 27 `curl` events and no destination, port, payload, or persistence |
 | Level 3 file-open observation | Fixed `fentry/do_sys_openat2` eBPF probe sends only timestamp, process identity, flags, and mode through the same read-only path; filename/path/content/inode/mount/result, persistence, and policy execution remain excluded | Generation `qcv5ggpr...` passed both installed gates at the 128-event hard cap; current `n23b58...` retains the accepted probe and healthy service boundary |
 | Level 3 kernel activity snapshot | One explicit request invokes the three existing capture owners in parallel and returns only lane status, counts, and continuity through System Sense/Core/Observer | Current `n23b58...` passed the deployment health gate and retains the prior 62/46/128 Core counts and Observer total 240; all three lanes remain available with no raw values, persistence, repeat, provider/browser activity, or host mutation |
-| Level 3 process lifecycle observation | One explicit request runs the existing process-exec owner alongside a bounded `sched_process_exit` owner and returns only start/exit counts, availability, and in-memory continuity; raw process metadata and control remain excluded | Source, focused tests, exact closures, and disposable-KVM gate passed with 55 start/55 exit events, two available lanes, served Observer evidence, healthy services, and zero failed units; physical activation remains deliberately deferred |
+| Level 3 process lifecycle observation | One explicit request runs the existing process-exec owner alongside a bounded `sched_process_exit` owner and returns only start/exit counts, availability, and in-memory continuity; raw process metadata and control remain excluded | Source, focused tests, exact closures, and disposable-KVM gate passed with 55 start/55 exit events, two available lanes, served Observer evidence, healthy services, and zero failed units; physical candidate `y2f0fnrb...` also passed marker/protected-path/closure preflight, while active generation `n23b58...` remains unchanged until explicit activation authorization |
 | Deployed journal probe | Bounded `/system/systemd/journal-evidence` returns live read-only JSON; `openclaw-system-sense` has the `systemd-journal` supplementary group | Deployed and probed |
 | Level 3 boot/restart evidence | `/system/systemd/boot-evidence` summarizes current/previous boot identity, bounded terminal markers, and a finite classification without returning journal messages; Core proxy and Observer checks are present | Accepted and carried by current generation `n23b58...`; registered Core/Observer and deployed direct/proxy checks bind the earlier acceptance boot `0fe071ee...` to previous boot `e8a6a4fa...`, classification `unknown`, 64 inspected entries, no markers, no journal payload, and nine healthy endpoints |
 | Deployed scheduler | First five-minute tick recorded all three fixed targets healthy with no incident task | Deployed and probed |
@@ -125,8 +125,8 @@ The completed bounded frontier is:
 - Level 2 trusted browser/work-view observation, semantic action, takeover,
   recovery, and Observer control within the bounded AI-owned workspace.
 - Level 3 independent hostd ownership, exact Polkit and peer boundaries, three
-  fixed systemd repair targets, read-only eBPF process-exec and network
-  connect-attempt evidence, bounded journal diagnosis, and target-specific
+  fixed systemd repair targets, read-only eBPF process-exec/network-connect/file-open
+  evidence, bounded process lifecycle source/KVM evidence, bounded journal diagnosis, and target-specific
   post-repair application health receipts. The
   full stopped-System-Heal scheduler-to-repair chain is physically proven in a
   disposable KVM guest, including completed and interrupted no-replay cases.
@@ -223,6 +223,16 @@ process, 40 network, and 128 file events in parallel while returning only lane
 status, counts, and continuity; raw events and all process/network/file values
 remain absent. Observer exposes one button and no automatic aggregate refresh.
 This evidence does not authorize another physical generation switch.
+
+The separate process lifecycle slice is complete in source and disposable KVM.
+It adds a bounded `sched_process_exit` owner beside process-exec and exposes only
+start/exit counts, lane availability, and in-memory continuity. Candidate
+`/nix/store/y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`
+was built from the physical configuration and passed the immutable target marker,
+kernel/initrd/fstab/GDM/NetworkManager/SSH protected-path comparison, root-owned
+switchability, and 1826-entry closure inspection. The active physical generation
+is still `n23b58...`; no process lifecycle physical gate is claimed until an
+explicit operator-authorized switch and post-switch health proof occur.
 
 1. **Required boot-evidence acceptance is complete.** The two registered gates,
    deployed direct/proxy routes, Observer panel, boot binding, no-journal-payload
@@ -932,7 +942,7 @@ These figures are capability-maturity estimates, not test coverage:
 | --- | --- |
 | Level 1 user-space control plane | about 90% |
 | Level 2 bounded trusted work view | 95-100% |
-| Level 3 controlled system body | about 72-76%; process exec, network connect-attempt, and bounded file open-attempt observation are physically deployed, while physical Phase D mutation and broader body nerves remain incomplete |
+| Level 3 controlled system body | about 72-76%; process exec, network connect-attempt, and bounded file open-attempt observation are physically deployed, process lifecycle is source/KVM-complete with a verified physical candidate awaiting activation, while physical Phase D mutation and broader body nerves remain incomplete |
 | Level 4 graphics-stack-native body | about 85%; one-shot projected operator click, bounded native operator type, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, same-surface OCR click, objective-bound OCR type, fixed OCR focus-then-type, and governed current-tab close are physically complete |
 | Current bounded product scope | 84-87% |
 | Final whitepaper vision | 52-60% |

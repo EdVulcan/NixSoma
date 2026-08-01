@@ -790,7 +790,11 @@ bounded process lifecycle observation：在既有 process-exec owner 之外加�
 parent/child 关系；它也不提供 process diagnosis、control、provider egress 或
 host mutation。该 slice 已以 source/closure/disposable-KVM 证据收口（VM
 捕获 55 个 start 与 55 个 exit 事件，两个 lane 可用，服务健康且无 failed
-units），物理 generation 激活仍需单独授权。
+units）。物理 candidate
+`y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`
+已通过 target marker、kernel/initrd/fstab/GDM/NetworkManager/SSH protected-path
+和 closure preflight；active generation `n23b58...` 尚未切换，物理激活仍需单独授权
+和 post-switch health proof。
 
 当前 bounded Level 2 browser 眼手闭环与内核白皮书 Phase A 已收口。
 Phase B 的固定 D-Bus 控制切片、bounded journal/boot diagnosis、incident loop、

@@ -57,14 +57,24 @@ return bounded transient local OCR or one read-only provider assessment without
 pixel egress. Direct operator interaction also includes one armed projected
 click and one write-only 1-32 character native type; one reviewed task may
 also request that one objective-selected OCR item be focused and receive its
-exact allowlisted objective value through a fixed two-action sequence. All 1297 workspace tests
+exact allowlisted objective value through a fixed two-action sequence. All 1345 workspace tests
 and typecheck pass, the body-config and event-audit integration checks pass, the
-833-entry milestone registry and 1021-file script audit pass, and
+835-entry milestone registry and 1023-file script audit pass, and
 the Windows path budget has no file over 160 repository-relative characters.
 GitHub CI now enforces
 Node 22 typecheck, workspace tests, milestone registry/script audit, and the
 same path budget on pushes and pull requests; Nix closure and physical-host
 checks remain local.
+
+The latest Level 3 process-lifecycle slice is complete in source and disposable
+KVM. Its physical candidate is
+`/nix/store/y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`.
+The candidate was built from the physical configuration, matched the current
+immutable target marker, preserved kernel/initrd/fstab/GDM/NetworkManager/SSH
+protected paths, remained root-owned and switchable, and exposed the process-exit
+probe in the System Sense unit. The active generation remains `n23b58...` because
+candidate activation requires explicit operator authorization and a separate
+post-switch health gate.
 
 The current source frontier also closes the first bounded operator work session.
 Observer exposes a strict 1-20 task limit, an exact read-only queue preview, and
@@ -315,21 +325,21 @@ events with all three lanes available. Current/profile links match, boot ID
 restart/failed-unit counts were zero, and warning journals were empty. Freeze
 this lane.
 
-The next distinct Phase C slice extends process observation with one bounded
-`raw_tracepoint/sched_process_exit` owner. The explicit process lifecycle
-snapshot runs process-start and process-exit capture concurrently and returns
-only two lane statuses, counts, and in-memory continuity. The internal probe
-allowlist is limited to timestamp, PID, UID, and command name; the public
-snapshot returns none of those values, and it does not expose exit status,
-signals, executable identity, parent/child relationships, persistence,
-provider/browser activity, policy execution, or host mutation. This is a body
-observation capability, not process diagnosis or control. Its source,
-closure, focused validation, and disposable-KVM proof are complete: the VM
-captured 55 process starts and 55 process exits through the Core proxy, served
-the Observer panel/client, kept all four services healthy, and reported zero
-failed units. Physical generation activation remains separately authorized and
-deferred, so the current physical baseline does not claim this new lane is
-deployed.
+The separate process-lifecycle slice now closes that route. It adds one bounded
+`raw_tracepoint/sched_process_exit` owner beside process-exec. The explicit
+snapshot runs both captures concurrently and returns only two lane statuses,
+counts, and in-memory continuity. The internal allowlist is limited to
+timestamp, PID, UID, and command name; the public snapshot returns none of
+those values, and it does not expose exit status, signals, executable identity,
+parent/child relationships, persistence, provider/browser activity, policy
+execution, or host mutation. The VM captured 55 process starts and 55 process
+exits through the Core proxy, served the Observer panel/client, kept all four
+services healthy, and reported zero failed units. Physical candidate
+`y2f0fnrb...` passed marker/protected-path/closure preflight, but the current
+physical baseline still does not claim this lane is deployed. Freeze this lane
+after explicit activation and post-switch health evidence; the next product
+route must then be selected from a distinct missing capability, not another
+process snapshot variant.
 
 The bounded read-only boot/restart evidence route selected for the recent
 restart investigation is already deployed in generation `1xh4x8ls...`. Direct

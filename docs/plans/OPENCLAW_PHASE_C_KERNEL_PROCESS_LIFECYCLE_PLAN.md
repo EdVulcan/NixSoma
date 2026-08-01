@@ -64,6 +64,14 @@ owner.
   events, both lanes were available, the served Observer panel/client tokens
   were present, all four services were active, and failed-unit output was
   empty. The public result retained no raw process metadata.
+- A physical NixOS candidate was built from the host configuration at
+  `/nix/store/y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`.
+  Its target marker matched the active physical profile, all six protected paths
+  matched the active closure, the candidate was root-owned and switchable, and
+  its 1826-entry closure contained the process-exit probe plus System Sense,
+  Core, and Observer owners. This is candidate evidence only; the active
+  generation remains `n23b58...` until explicit activation authorization and a
+  post-switch installed gate are completed.
 
 ## Deliberately Deferred
 
@@ -84,8 +92,9 @@ as polish to this snapshot.
 
 ## Physical Deployment Rule
 
-The current physical host remains evidence-only for this slice. A future
-physical deployment would require the existing immutable-generation candidate
-review, protected-path checks, explicit operator authorization, and post-switch
-health evidence. No `sudo`, `nixos-rebuild switch`, reboot, rollback, or host
-mutation is part of this source completion.
+The current physical host remains evidence-only for the activation portion of
+this slice. The immutable-generation candidate review and protected-path checks
+are complete; a future deployment still requires explicit operator
+authorization and post-switch health evidence. No `sudo`, `nixos-rebuild
+switch`, reboot, rollback, or host mutation is part of this candidate-only
+completion.
