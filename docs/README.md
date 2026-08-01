@@ -14,7 +14,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
 | Capability source | Current source through the governed Level 1-3 baseline and the Level 4 isolated compositor, AI-owned Firefox, bounded frame/input/projection, semantic type/click, reviewed cycles, OCR actions, current-tab close, and receipt-bound semantic submit | The twenty-sixth Level 4 slice is physically complete; semantic submit and boot/restart evidence are accepted and frozen |
-| Local validation | Workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1023-file script audit pass; 835 registry entries pass | Validated |
+| Local validation | `1355/1355` workspace tests and typecheck pass; body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, and the 1023-file script audit pass; 835 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/n23b58fh3qm17n57k625l92ynp1wbi4k-nixos-system-nixos-26.05.4808.569d57850992` | Generation 108 is active; six-workpackage Core/Observer source and all prior physical capabilities are deployed |
 | Previous generation | `/nix/store/g3y9p0m9nr38npsyqx13npsvy3mcvcg1-nixos-system-nixos-26.05.4808.569d57850992` | Generation 107 immediately preceded the current physical switch |
@@ -59,6 +59,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 1 reviewed task work-view continuity | Observer exposes one explicit `Rebind Selected Task` bridge to the existing authoritative work-view bind/rebind owner, preserving task id/status and audit | Accepted in source with focused, served Observer, structural, and existing-owner evidence; automatic rebind, browser restart, execution retry, provider calls, and host mutation remain excluded |
 | Level 1 six-workpackage continuation | In-flight recovery, explicit Level 2 rebind, finite one-shot scheduling, read-only effectiveness, and six deferred privileged capability boundaries are implemented and tested | Source and physical deployment complete in generation 108; scheduler remains default-off, and unbounded autonomy/causal learning/privileged host-wide control remain deferred |
 | Level 1 scheduled operator workflow | Observer exposes finite queue scheduling, due-time/status readback, explicit cancellation, and exact-budget re-arm after Core restart; Nix configuration keeps the timer default-off | Source, isolated real-service validation, and physical generation 108 health deployment complete; physical scheduling remains intentionally disabled |
+| Level 1 bounded operator window lease | Observer explicitly arms one lease of 1-8 windows, each reusing the existing 1-20 step operator session; a hard 1-second-to-24-hour deadline, compact persistence, cancellation, and restart-required re-arm bound continuation | Candidate `48n622mrr...` passes marker/protected-path/closure preflight and carries the Core/Observer modules with timer default-off; active generation `n23b58...` remains unchanged and physical lease execution is not claimed |
 | Level 3 network observation | Fixed `fentry/__sys_connect` eBPF probe sends only timestamp, process identity, sockaddr family, and address length through the system-sense/Core/Observer read-only path; only the first two sockaddr bytes are read and destination, port, address bytes, payload, persistence, and policy execution remain excluded | Physical proof originated in `gd9ps40...`; current `n23b58...` retains the deployed route, with the prior Core and Observer gates capturing 27 `curl` events and no destination, port, payload, or persistence |
 | Level 3 file-open observation | Fixed `fentry/do_sys_openat2` eBPF probe sends only timestamp, process identity, flags, and mode through the same read-only path; filename/path/content/inode/mount/result, persistence, and policy execution remain excluded | Generation `qcv5ggpr...` passed both installed gates at the 128-event hard cap; current `n23b58...` retains the accepted probe and healthy service boundary |
 | Level 3 kernel activity snapshot | One explicit request invokes the three existing capture owners in parallel and returns only lane status, counts, and continuity through System Sense/Core/Observer | Current `n23b58...` passed the deployment health gate and retains the prior 62/46/128 Core counts and Observer total 240; all three lanes remain available with no raw values, persistence, repeat, provider/browser activity, or host mutation |
@@ -296,6 +297,12 @@ explicit operator-authorized switch and post-switch health proof occur.
    operator run now has durable checkpoints, startup interruption evidence, and
    an explicit Resume that consumes only the server-held remaining budget. See
    [`OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_CONTINUITY_PLAN.md`](./plans/OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_CONTINUITY_PLAN.md).
+10. **Finite window continuation adds the first bounded automatic continuation.**
+    An explicitly armed lease can consume at most eight due windows, with at most
+    twenty steps per window and one hard deadline. Core restarts pause or block
+    the lease, and only the exact lease id can re-arm it. This is still not an
+    unbounded resident loop. See
+    [`OPENCLAW_BOUNDED_OPERATOR_WINDOW_LEASE_PLAN.md`](./plans/OPENCLAW_BOUNDED_OPERATOR_WINDOW_LEASE_PLAN.md).
 
 Do not manufacture a VFS/network variant, provider/readiness wrapper, generic
 Enter or keyboard path, caller-coordinate action, automatic repetition, open
@@ -940,7 +947,7 @@ These figures are capability-maturity estimates, not test coverage:
 
 | Scope | Current estimate |
 | --- | --- |
-| Level 1 user-space control plane | about 90% |
+| Level 1 user-space control plane | about 90%; finite window lease continuation is implemented, while open-ended autonomy and causal learning remain incomplete |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 72-76%; process exec, network connect-attempt, and bounded file open-attempt observation are physically deployed, process lifecycle is source/KVM-complete with a verified physical candidate awaiting activation, while physical Phase D mutation and broader body nerves remain incomplete |
 | Level 4 graphics-stack-native body | about 85%; one-shot projected operator click, bounded native operator type, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, same-surface OCR click, objective-bound OCR type, fixed OCR focus-then-type, and governed current-tab close are physically complete |
@@ -964,6 +971,7 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md) | Terminal outcome v0/v1 binding for application-only and execution-proven paths. |
 | [OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_PLAN.md](./plans/OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_PLAN.md) | Explicit 1-20 task queue preview/run session with a strict Core request boundary and no scheduler or open loop. |
 | [OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_CONTINUITY_PLAN.md](./plans/OPENCLAW_BOUNDED_OPERATOR_WORK_SESSION_CONTINUITY_PLAN.md) | Durable finite-run checkpoints, restart interruption, and explicit remaining-budget Resume without automatic recovery. |
+| [OPENCLAW_BOUNDED_OPERATOR_WINDOW_LEASE_PLAN.md](./plans/OPENCLAW_BOUNDED_OPERATOR_WINDOW_LEASE_PLAN.md) | Finite restart-aware operator continuation with at most eight windows, a hard deadline, and a default-off timer; no open loop. |
 | [OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md](./plans/OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md) | Explicit bridge from the reviewed browser-task composer to the existing bounded AI workspace run and assessment owner. |
 | [OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Completed learned-pattern inclusion in the exact approved incident diagnosis request. |
 | [OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_ACTION_PLAN.md](./plans/OPENCLAW_SYSTEMD_INCIDENT_REVIEWED_ACTION_PLAN.md) | Completed reviewed read-only opening of provider-bound incident evidence. |

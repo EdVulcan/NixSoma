@@ -75,6 +75,7 @@ export async function handleOperatorControlRoute({
   sessionManagerUrl,
   operatorRunSessionManager = null,
   boundedOperatorScheduler = null,
+  boundedOperatorWindowLease = null,
 }) {
   const { tasks, runtimeState, getCurrentTask } = state;
   const {
@@ -180,6 +181,90 @@ export async function handleOperatorControlRoute({
       });
     } catch (error) {
       sendJson(res, 400, { ok: false, error: error instanceof Error ? error.message : "Invalid schedule cancellation." });
+    }
+    return true;
+  }
+
+  if (requestUrl.pathname === "/operator/window") {
+    if (!boundedOperatorWindowLease) {
+      sendJson(res, 503, { ok: false, error: "Bounded operator window leases are unavailable." });
+      return true;
+    }
+    if (req.method === "GET") {
+      sendJson(res, 200, {
+        ok: true,
+        leaseManager: boundedOperatorWindowLease.state(),
+        leases: boundedOperatorWindowLease.listPublic(),
+      });
+      return true;
+    }
+    if (req.method === "POST") {
+      try {
+        const body = await readJsonBody(req);
+        const lease = boundedOperatorWindowLease.arm(body);
+        sendJson(res, 201, {
+          ok: true,
+          leaseManager: boundedOperatorWindowLease.state(),
+          lease,
+          leases: boundedOperatorWindowLease.listPublic(),
+        });
+      } catch (error) {
+        sendJson(res, 400, { ok: false, error: error instanceof Error ? error.message : "Invalid window lease request." });
+      }
+      return true;
+    }
+    sendJson(res, 405, { ok: false, error: "Method not allowed." });
+    return true;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname === "/operator/window/tick") {
+    if (!boundedOperatorWindowLease) {
+      sendJson(res, 503, { ok: false, error: "Bounded operator window leases are unavailable." });
+      return true;
+    }
+    const result = await boundedOperatorWindowLease.tick();
+    sendJson(res, result.ok === false ? 409 : 200, result);
+    return true;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname.startsWith("/operator/window/") && requestUrl.pathname.endsWith("/rearm")) {
+    if (!boundedOperatorWindowLease) {
+      sendJson(res, 503, { ok: false, error: "Bounded operator window leases are unavailable." });
+      return true;
+    }
+    const leaseId = requestUrl.pathname.slice("/operator/window/".length, -"/rearm".length);
+    try {
+      const body = await readJsonBody(req);
+      const lease = boundedOperatorWindowLease.rearm(leaseId, body);
+      sendJson(res, 200, {
+        ok: true,
+        leaseManager: boundedOperatorWindowLease.state(),
+        lease,
+        leases: boundedOperatorWindowLease.listPublic(),
+      });
+    } catch (error) {
+      sendJson(res, 400, { ok: false, error: error instanceof Error ? error.message : "Invalid window lease re-arm." });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && requestUrl.pathname.startsWith("/operator/window/") && requestUrl.pathname.endsWith("/cancel")) {
+    if (!boundedOperatorWindowLease) {
+      sendJson(res, 503, { ok: false, error: "Bounded operator window leases are unavailable." });
+      return true;
+    }
+    const leaseId = requestUrl.pathname.slice("/operator/window/".length, -"/cancel".length);
+    try {
+      const body = await readJsonBody(req);
+      const lease = boundedOperatorWindowLease.cancel(leaseId, body.confirm === true);
+      sendJson(res, 200, {
+        ok: true,
+        leaseManager: boundedOperatorWindowLease.state(),
+        lease,
+        leases: boundedOperatorWindowLease.listPublic(),
+      });
+    } catch (error) {
+      sendJson(res, 400, { ok: false, error: error instanceof Error ? error.message : "Invalid window lease cancellation." });
     }
     return true;
   }

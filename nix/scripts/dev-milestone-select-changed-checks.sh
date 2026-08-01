@@ -625,6 +625,40 @@ const boundedOperatorScheduleWorkflowSlice = changedFiles.length > 0
   && changedFiles.every((file) => boundedOperatorScheduleWorkflowFiles.has(file))
   && changedFiles.some((file) => file === "apps/observer-ui/src/client-script-runtime-operator-schedule.mjs")
   && changedFiles.some((file) => file === "services/openclaw-core/src/bounded-operator-scheduler.mjs");
+const boundedOperatorWindowLeaseFiles = new Set([
+  "apps/observer-ui/src/client-script-runtime-actions.mjs",
+  "apps/observer-ui/src/client-script-runtime-bindings.mjs",
+  "apps/observer-ui/src/client-script-runtime-operator-session.mjs",
+  "apps/observer-ui/src/client-script-runtime-operator-window.mjs",
+  "apps/observer-ui/src/client-script-startup-refreshes.mjs",
+  "apps/observer-ui/src/observer-panel-operator-window.mjs",
+  "apps/observer-ui/src/observer-panels-operations.mjs",
+  "apps/observer-ui/test/client-script-runtime-operator-window.test.mjs",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/OPENCLAW_BOUNDED_OPERATOR_WINDOW_LEASE_PLAN.md",
+  "docs/plans/README.md",
+  "docs/plans/OPENCLAW_SIX_WORKPACKAGES_20260801_PLAN.md",
+  "nix/modules/openclaw-body.nix",
+  "nix/packages/observer-ui.nix",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "nix/scripts/dev-observer-operator-check.sh",
+  "nix/scripts/dev-operator-control-check.sh",
+  "services/openclaw-core/src/bounded-operator-window-lease.mjs",
+  "services/openclaw-core/src/operator-control-routes.mjs",
+  "services/openclaw-core/src/route-handlers.mjs",
+  "services/openclaw-core/src/runtime-state.mjs",
+  "services/openclaw-core/src/server.mjs",
+  "services/openclaw-core/test/bounded-operator-window-lease.test.mjs",
+  "services/openclaw-core/test/route-handlers.test.mjs",
+  "services/openclaw-core/test/runtime-state-window-lease.test.mjs",
+]);
+const boundedOperatorWindowLeaseSlice = changedFiles.length > 0
+  && changedFiles.every((file) => boundedOperatorWindowLeaseFiles.has(file))
+  && changedFiles.some((file) => file === "apps/observer-ui/src/client-script-runtime-operator-window.mjs")
+  && changedFiles.some((file) => file === "services/openclaw-core/src/bounded-operator-window-lease.mjs");
 const reviewedTaskWorkspaceSessionFiles = new Set([
   "apps/observer-ui/src/client-script-config-dom.mjs",
   "apps/observer-ui/src/client-script-runtime-actions.mjs",
@@ -1605,6 +1639,16 @@ for (const file of changedFiles) {
     continue;
   }
   if (boundedOperatorWorkSessionSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("operator-control");
+    selectName("observer-operator");
+    continue;
+  }
+  if (boundedOperatorWindowLeaseSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");
     selectName(windowsPathBudgetCheck);

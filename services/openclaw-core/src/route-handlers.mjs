@@ -25,7 +25,7 @@ import { handleWorkspaceNativeOpsRoute } from "./workspace-native-ops-routes.mjs
 import { handleWorkspacePluginReadRoute } from "./workspace-plugin-read-routes.mjs";
 
 export function registerRoutes(deps) {
-  const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl, readWorkViewState, buildExperienceMemoryReadModel, buildExperienceEffectivenessReadModel, operatorAuth, dispatchApprovedFixedUnitRepair, operatorRunSessionManager, boundedOperatorScheduler } = deps;
+  const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl, readWorkViewState, buildExperienceMemoryReadModel, buildExperienceEffectivenessReadModel, operatorAuth, dispatchApprovedFixedUnitRepair, operatorRunSessionManager, boundedOperatorScheduler, boundedOperatorWindowLease } = deps;
 
   const { reconcileApprovalExpirations, serialiseApproval } = approvalEngine;
   const { buildTaskSummary, serialiseTask } = taskManager;
@@ -93,6 +93,7 @@ export function registerRoutes(deps) {
       sessionManagerUrl,
       operatorRunSessionManager,
       boundedOperatorScheduler,
+      boundedOperatorWindowLease,
     })) {
       return;
     }

@@ -45,6 +45,11 @@ This is controlled delayed execution, not long-running autonomy. A future
 unbounded resident loop would require a separate product decision, resource
 budget, approval model, recovery proof, and release gate.
 
+The subsequent finite continuation is recorded separately in
+[`OPENCLAW_BOUNDED_OPERATOR_WINDOW_LEASE_PLAN.md`](./OPENCLAW_BOUNDED_OPERATOR_WINDOW_LEASE_PLAN.md).
+It adds a hard-deadline lease with at most eight windows while preserving this
+workpackage's no-open-loop boundary; it does not reopen the six workpackages.
+
 ### Effectiveness
 
 `GET /plugins/native-adapter/engineering-context/experience-effectiveness`
@@ -102,7 +107,9 @@ enable the scheduler during deployment, or reboot as part of this workpackage.
 ## Next Slice
 
 With deployment proof complete, freeze this six-workpackage slice. The next
-product work must be selected from a concrete missing user workflow, not from another
-nested readiness shell. Candidate long-horizon work remains a separate design
-decision for unbounded autonomy, causal learning, broader body nerves, and
-physical Phase D evolution.
+finite continuation is owned by
+[`OPENCLAW_BOUNDED_OPERATOR_WINDOW_LEASE_PLAN.md`](./OPENCLAW_BOUNDED_OPERATOR_WINDOW_LEASE_PLAN.md).
+After that slice, product work must again be selected from a concrete missing
+user workflow, not another nested readiness shell. Unbounded autonomy, causal
+learning, broader body nerves, and physical Phase D evolution remain separate
+design and authorization decisions.

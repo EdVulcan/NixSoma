@@ -202,6 +202,7 @@ export const OBSERVER_STARTUP_REFRESH_GROUPS = [
       "refreshActionState",
       "refreshOperatorState",
       "refreshOperatorSchedule",
+      "refreshOperatorWindow",
       "refreshPolicyState",
       "refreshApprovalState",
       "refreshCapabilityState",

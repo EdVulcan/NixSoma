@@ -57,7 +57,7 @@ return bounded transient local OCR or one read-only provider assessment without
 pixel egress. Direct operator interaction also includes one armed projected
 click and one write-only 1-32 character native type; one reviewed task may
 also request that one objective-selected OCR item be focused and receive its
-exact allowlisted objective value through a fixed two-action sequence. All 1345 workspace tests
+exact allowlisted objective value through a fixed two-action sequence. All 1355 workspace tests
 and typecheck pass, the body-config and event-audit integration checks pass, the
 835-entry milestone registry and 1023-file script audit pass, and
 the Windows path budget has no file over 160 repository-relative characters.
@@ -152,6 +152,34 @@ failed units were present. The physical profile keeps
 health and closure integration only; it does not claim a physical scheduled
 execution. Freeze this workflow and choose the next concrete user workflow.
 
+The next selected workflow is the finite operator window lease in
+`plans/OPENCLAW_BOUNDED_OPERATOR_WINDOW_LEASE_PLAN.md`. Core now accepts one
+explicit lease with 1-8 windows, at most 20 steps per window, an interval, and a
+hard 1-second-to-24-hour deadline. Each due window reuses the existing operator
+run-session and task executor, and only the lease budget or deadline can permit
+continuation. Core startup pauses armed leases and blocks running leases; an
+exact lease id plus explicit confirmation is required to re-arm without
+extending the original deadline. Observer exposes the arm/status/cancel/re-arm
+workflow, while the internal tick remains a Core timer concern.
+
+The window lease adds bounded automatic continuation within an explicit lease;
+it does not claim long-running resident autonomy. There is no automatic task
+creation, planning, retry, repeat after closure, provider authority, root,
+arbitrary process/window/desktop control, or host mutation. The Nix option
+`services.openclaw.boundedOperatorWindow.enable` remains false by default. The
+source, Core/Observer gates, runtime-state restart test, and exact body-config
+closures pass; a physical candidate is reviewed separately and the active
+generation remains unchanged until explicit activation authorization.
+
+The reviewed physical candidate is
+`/nix/store/48n622mrrqzhaa3kxf8hrgn25niv0pwf-nixos-system-nixos-26.05.4808.569d57850992`.
+It matches the physical target marker and all six protected paths, is
+root-owned and switchable, contains the Core/Observer window modules, and has
+an 1826-entry closure of about 9.93 GB. Its profile keeps
+`OPENCLAW_BOUNDED_OPERATOR_WINDOW_ENABLED=0`; active generation `n23b58...`
+and all nine services remain unchanged and healthy. No activation or reboot is
+claimed for this candidate-only evidence.
+
 The memory-to-recommendation provenance continuation is also closed in source.
 The existing task-bound recall receipt remains immutable and provider-only; the
 recommendation link and downstream application receipt may carry only its
@@ -167,7 +195,9 @@ body described by the identity route and kernel whitepaper is roughly 52-60%
 complete. The first number reflects a strong usable subset. It does not include
 the missing long-running autonomy, durable learning feedback, broader body
 nerves, physical Phase D evolution, or richer native-workspace lifecycle that
-keep the second number lower.
+keep the second number lower. The finite window lease improves bounded
+continuation evidence but does not change that denominator: an unbounded
+resident loop remains incomplete.
 
 The physical host now runs generation 108:
 `/nix/store/n23b58fh3qm17n57k625l92ynp1wbi4k-nixos-system-nixos-26.05.4808.569d57850992`.

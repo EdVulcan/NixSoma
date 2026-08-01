@@ -20,6 +20,7 @@ const acpxBridgeSessionRecords = new Map();
 const experienceMemoryRecords = new Map();
 const operatorRunSessions = new Map();
 const boundedOperatorSchedules = new Map();
+const boundedOperatorWindowLeases = new Map();
 const fixedUnitIncidentSchedulerState = {};
 const standingProviderAdvisoryState = {};
 const runtimeState = {
@@ -42,6 +43,7 @@ const MAX_ACPX_BRIDGE_SESSION_RECORDS = 100;
 const MAX_EXPERIENCE_MEMORY_RECORDS = 200;
 const MAX_OPERATOR_RUN_SESSION_ENTRIES = 20;
 const MAX_BOUNDED_OPERATOR_SCHEDULE_ENTRIES = 8;
+const MAX_BOUNDED_OPERATOR_WINDOW_LEASE_ENTRIES = 8;
 const CROSS_BOUNDARY_INTENTS = new Set([
   "account.login",
   "data.egress",
@@ -170,6 +172,7 @@ function updateRuntimeState(patch) {
     experienceMemoryRecords: [...experienceMemoryRecords.values()],
     operatorRunSessions: [...operatorRunSessions.values()],
     boundedOperatorSchedules: [...boundedOperatorSchedules.values()],
+    boundedOperatorWindowLeases: [...boundedOperatorWindowLeases.values()],
     fixedUnitIncidentSchedulerState,
     standingProviderAdvisoryState,
   }));
@@ -280,6 +283,14 @@ function loadPersistentState() {
         }
       }
     }
+    if (Array.isArray(data?.boundedOperatorWindowLeases)) {
+      boundedOperatorWindowLeases.clear();
+      for (const lease of data.boundedOperatorWindowLeases.slice(-MAX_BOUNDED_OPERATOR_WINDOW_LEASE_ENTRIES)) {
+        if (typeof lease?.id === "string" && lease.id.trim()) {
+          boundedOperatorWindowLeases.set(lease.id, lease);
+        }
+      }
+    }
     if (data?.fixedUnitIncidentSchedulerState && typeof data.fixedUnitIncidentSchedulerState === "object") {
       Object.assign(fixedUnitIncidentSchedulerState, data.fixedUnitIncidentSchedulerState);
     }
@@ -296,10 +307,10 @@ function getCurrentTask() {
 }
 
   return {
-    tasks, approvals, runtimeState, policyAuditLog, capabilityInvocationLog, nativeEngineeringLspLifecycleRecords, nativeEngineeringPlanTodoWorkbenchRecords, acpxBridgeSessionRecords, experienceMemoryRecords, operatorRunSessions, boundedOperatorSchedules, fixedUnitIncidentSchedulerState, standingProviderAdvisoryState,
+    tasks, approvals, runtimeState, policyAuditLog, capabilityInvocationLog, nativeEngineeringLspLifecycleRecords, nativeEngineeringPlanTodoWorkbenchRecords, acpxBridgeSessionRecords, experienceMemoryRecords, operatorRunSessions, boundedOperatorSchedules, boundedOperatorWindowLeases, fixedUnitIncidentSchedulerState, standingProviderAdvisoryState,
     ACTIVE_TASK_STATUSES, MAX_TASK_ENTRIES, MAX_PHASE_HISTORY_ENTRIES,
     MAX_POLICY_AUDIT_ENTRIES, MAX_APPROVAL_ITEMS, MAX_CAPABILITY_INVOCATION_ENTRIES,
-    MAX_NATIVE_ENGINEERING_LSP_LIFECYCLE_RECORDS, MAX_NATIVE_ENGINEERING_PLAN_TODO_WORKBENCH_RECORDS, MAX_ACPX_BRIDGE_SESSION_RECORDS, MAX_EXPERIENCE_MEMORY_RECORDS, MAX_OPERATOR_RUN_SESSION_ENTRIES, MAX_BOUNDED_OPERATOR_SCHEDULE_ENTRIES,
+    MAX_NATIVE_ENGINEERING_LSP_LIFECYCLE_RECORDS, MAX_NATIVE_ENGINEERING_PLAN_TODO_WORKBENCH_RECORDS, MAX_ACPX_BRIDGE_SESSION_RECORDS, MAX_EXPERIENCE_MEMORY_RECORDS, MAX_OPERATOR_RUN_SESSION_ENTRIES, MAX_BOUNDED_OPERATOR_SCHEDULE_ENTRIES, MAX_BOUNDED_OPERATOR_WINDOW_LEASE_ENTRIES,
     CROSS_BOUNDARY_INTENTS, DENIED_INTENTS, CAPABILITY_HEALTH_TIMEOUT_MS,
     CAPABILITY_EXECUTION_RESERVATION_TTL_MS,
     APPROVAL_TTL_MS, SYSTEMD_REPAIR_EXECUTION_TIMEOUT_MS,

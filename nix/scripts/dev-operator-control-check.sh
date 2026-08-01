@@ -13,6 +13,8 @@ export OPENCLAW_OPERATOR_TOKEN_FILE="$REPO_ROOT/.artifacts/openclaw-operator-tok
 export OPENCLAW_EVENT_LOG_FILE="${OPENCLAW_EVENT_LOG_FILE:-$REPO_ROOT/.artifacts/openclaw-events-$OPENCLAW_DEV_RUN_ID.jsonl}"
 export OPENCLAW_BOUNDED_OPERATOR_SCHEDULER_ENABLED=1
 export OPENCLAW_BOUNDED_OPERATOR_SCHEDULER_INTERVAL_MS=60000
+export OPENCLAW_BOUNDED_OPERATOR_WINDOW_ENABLED=1
+export OPENCLAW_BOUNDED_OPERATOR_WINDOW_INTERVAL_MS=60000
 
 export OPENCLAW_CORE_PORT="${OPENCLAW_CORE_PORT:-5700}"
 export OPENCLAW_EVENT_HUB_PORT="${OPENCLAW_EVENT_HUB_PORT:-5701}"
@@ -201,6 +203,13 @@ assert_json "$rearmed" 'const data=JSON.parse(process.argv[1]); if(!data.ok || d
 cancelled_schedule="$(post_json "$CORE_URL/operator/schedule/$rearm_id/cancel" '{"confirm":true}')"
 assert_json "$cancelled_schedule" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.schedule?.id!==process.env.OPENCLAW_REARM_ID || data.schedule?.status!=="cancelled"){throw new Error("re-armed schedule did not cancel explicitly");}'
 
+window_arm="$(post_json "$CORE_URL/operator/window" '{"windowCount":2,"maxStepsPerWindow":1,"intervalMs":0,"deadlineMs":60000,"confirm":true}')"
+assert_json "$window_arm" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.lease?.status!=="armed" || data.lease?.windowCount!==2 || data.leaseManager?.enabled!==true){throw new Error("bounded operator window lease did not arm");}'
+window_first="$(post_json "$CORE_URL/operator/window/tick" '{}')"
+assert_json "$window_first" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.ran!==true || data.continued!==true || data.lease?.status!=="armed" || data.lease?.windowsCompleted!==1){throw new Error("first bounded window did not continue within lease");}'
+window_second="$(post_json "$CORE_URL/operator/window/tick" '{}')"
+assert_json "$window_second" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.ran!==true || data.lease?.status!=="completed" || data.lease?.stopReason!=="window_budget_consumed" || data.lease?.remainingWindows!==0 || data.lease?.governance?.automaticRepeat!==false){throw new Error("bounded window lease did not stop at its finite budget");}'
+
 final_state="$(curl --silent "$CORE_URL/operator/state")"
 
 RESULT_DIR="$(mktemp -d)"
@@ -220,6 +229,9 @@ printf '%s' "$scheduled_tick" > "$RESULT_DIR/scheduled-tick.json"
 printf '%s' "$rearm_paused_state" > "$RESULT_DIR/rearm-paused.json"
 printf '%s' "$rearmed" > "$RESULT_DIR/rearmed.json"
 printf '%s' "$cancelled_schedule" > "$RESULT_DIR/cancelled-schedule.json"
+printf '%s' "$window_arm" > "$RESULT_DIR/window-arm.json"
+printf '%s' "$window_first" > "$RESULT_DIR/window-first.json"
+printf '%s' "$window_second" > "$RESULT_DIR/window-second.json"
 printf '%s' "$final_state" > "$RESULT_DIR/final.json"
 
 OPENCLAW_CONTINUITY_SESSION_ID="$continuity_session_id" OPENCLAW_REARM_ID="$rearm_id" node - <<'EOF' "$RESULT_DIR"
@@ -242,6 +254,9 @@ const scheduledTick = readResult("scheduled-tick");
 const rearmPaused = readResult("rearm-paused");
 const rearmed = readResult("rearmed");
 const cancelledSchedule = readResult("cancelled-schedule");
+const windowArm = readResult("window-arm");
+const windowFirst = readResult("window-first");
+const windowSecond = readResult("window-second");
 const finalState = readResult("final");
 
 if (finalState.operator?.status !== "idle" || finalState.operator?.summary?.counts?.completed !== 3) {
@@ -261,6 +276,13 @@ if (scheduledArm.schedule?.status !== "armed"
   || cancelledSchedule.schedule?.status !== "cancelled") {
   throw new Error("bounded operator schedule evidence is incomplete");
 }
+if (windowArm.lease?.status !== "armed"
+  || windowFirst.lease?.status !== "armed"
+  || windowFirst.lease?.windowsCompleted !== 1
+  || windowSecond.lease?.status !== "completed"
+  || windowSecond.lease?.remainingWindows !== 0) {
+  throw new Error("bounded operator window lease evidence is incomplete");
+}
 
 console.log(JSON.stringify({
   operatorControl: {
@@ -277,6 +299,14 @@ console.log(JSON.stringify({
     maximumSteps: preview.session?.maximumSteps ?? null,
     status: preview.session?.status ?? null,
     openLoop: preview.session?.governance?.openLoop ?? null,
+  },
+  windowLease: {
+    registry: windowSecond.lease?.registry ?? null,
+    windowsCompleted: windowSecond.lease?.windowsCompleted ?? null,
+    remainingWindows: windowSecond.lease?.remainingWindows ?? null,
+    stopReason: windowSecond.lease?.stopReason ?? null,
+    automaticContinuationWithinLease: windowSecond.lease?.governance?.automaticContinuationWithinLease ?? null,
+    automaticRepeat: windowSecond.lease?.governance?.automaticRepeat ?? null,
   },
   pauseGate: {
     status: paused.operator?.status ?? null,

@@ -17,6 +17,7 @@ import { createTaskExecutor } from "./task-executor.mjs";
 import { registerRoutes } from "./route-handlers.mjs";
 import { createNativeEngineeringExperienceMemory } from "./native-engineering-experience-memory.mjs";
 import { createBoundedOperatorScheduler } from "./bounded-operator-scheduler.mjs";
+import { createBoundedOperatorWindowLease } from "./bounded-operator-window-lease.mjs";
 import { createOperatorAuthenticator } from "./operator-auth.mjs";
 import { createExecutionGrantSigner } from "../../../packages/shared-utils/src/execution-grants.mjs";
 import { createFixedUnitIncidentScheduler } from "./fixed-unit-incident-scheduler.mjs";
@@ -177,6 +178,26 @@ const boundedOperatorScheduler = createBoundedOperatorScheduler({
     }
   },
 });
+const boundedOperatorWindowLease = createBoundedOperatorWindowLease({
+  records: state.boundedOperatorWindowLeases,
+  persistState: state.persistState,
+  enabled: process.env.OPENCLAW_BOUNDED_OPERATOR_WINDOW_ENABLED === "1",
+  intervalMs: process.env.OPENCLAW_BOUNDED_OPERATOR_WINDOW_INTERVAL_MS,
+  run: async ({ maxSteps, leaseId, windowIndex }) => {
+    const session = operatorRunSessionManager.create({ maxSteps });
+    try {
+      const result = await executor.runOperatorLoop(
+        { maxSteps, dryRun: false },
+        operatorRunSessionManager.executionHooks(session.id),
+      );
+      operatorRunSessionManager.finish(session.id, result);
+      return { ...result, runSessionId: session.id, leaseId, windowIndex };
+    } catch (error) {
+      operatorRunSessionManager.interrupt(session.id, "window_run_failed");
+      throw error;
+    }
+  },
+});
 const dispatchApprovedFixedUnitRepair = createFixedUnitIncidentApprovedDispatcher({
   tasks: state.tasks,
   approvals: state.approvals,
@@ -214,6 +235,7 @@ const handleRequest = registerRoutes({
   dispatchApprovedFixedUnitRepair,
   operatorRunSessionManager,
   boundedOperatorScheduler,
+  boundedOperatorWindowLease,
   buildExperienceMemoryReadModel: (...args) => experienceMemory.buildExperienceMemoryReadModel(...args),
   buildExperienceEffectivenessReadModel: (...args) => experienceMemory.buildExperienceEffectivenessReadModel(...args),
 });
@@ -299,6 +321,7 @@ function shutdown() {
   shuttingDown = true;
   fixedUnitIncidentScheduler?.stop();
   boundedOperatorScheduler.stop();
+  boundedOperatorWindowLease.stop();
   state.persistState.flush?.();
   if (!server.listening) {
     process.exit(0);
@@ -370,6 +393,8 @@ if (fixedUnitDispatchStartupRecovery.reconciledCount > 0) {
 taskManager.reconcileRuntimeState();
 boundedOperatorScheduler.reconcileAtStartup();
 boundedOperatorScheduler.start();
+boundedOperatorWindowLease.reconcileAtStartup();
+boundedOperatorWindowLease.start();
 fixedUnitIncidentScheduler = createFixedUnitIncidentScheduler({
   enabled: process.env.OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_ENABLED === "1",
   intervalMs: process.env.OPENCLAW_FIXED_UNIT_INCIDENT_SCHEDULER_INTERVAL_MS,

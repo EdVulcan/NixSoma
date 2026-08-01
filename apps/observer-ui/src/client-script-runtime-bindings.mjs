@@ -262,6 +262,30 @@ operatorScheduleRefreshButton.addEventListener("click", () => {
   });
 });
 
+operatorWindowArmButton.addEventListener("click", () => {
+  armOperatorWindowFromUi().catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
+operatorWindowRearmButton.addEventListener("click", () => {
+  rearmOperatorWindowFromUi().catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
+operatorWindowCancelButton.addEventListener("click", () => {
+  cancelOperatorWindowFromUi().catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
+operatorWindowRefreshButton.addEventListener("click", () => {
+  refreshOperatorWindow().catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
 runSelectedReviewedCycleButton.addEventListener("click", () => {
   runSelectedReviewedWorkspaceCycleFromUi().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

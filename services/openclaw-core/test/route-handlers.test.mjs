@@ -1518,6 +1518,46 @@ test("bounded operator schedule routes keep arming, ticking, and cancellation ex
   ]);
 });
 
+test("bounded operator window routes expose only finite lease controls", async () => {
+  const calls = [];
+  const windowLease = {
+    state: () => ({ registry: "nixsoma-bounded-operator-window-lease-v0", enabled: false }),
+    listPublic: () => [{ id: "lease-1", status: "armed", windowCount: 2 }],
+    arm: (body) => { calls.push({ action: "arm", body }); return { id: "lease-1", status: "armed" }; },
+    tick: async () => { calls.push({ action: "tick" }); return { ok: true, ran: true, reason: "window_budget_consumed" }; },
+    rearm: (id, body) => { calls.push({ action: "rearm", id, body }); return { id, status: "armed" }; },
+    cancel: (id, confirm) => { calls.push({ action: "cancel", id, confirm }); return { id, status: "cancelled" }; },
+  };
+  const deps = createBaseDeps({ deps: { boundedOperatorWindowLease: windowLease } });
+
+  const state = await invokeRoute(deps, "GET", "/operator/window");
+  assert.equal(state.statusCode, 200);
+  assert.equal(state.body.leaseManager.registry, "nixsoma-bounded-operator-window-lease-v0");
+  const armed = await invokeRoute(deps, "POST", "/operator/window", {
+    windowCount: 2,
+    maxStepsPerWindow: 1,
+    intervalMs: 0,
+    deadlineMs: 60_000,
+    confirm: true,
+  });
+  assert.equal(armed.statusCode, 201);
+  const tick = await invokeRoute(deps, "POST", "/operator/window/tick", {});
+  assert.equal(tick.statusCode, 200);
+  const rearmed = await invokeRoute(deps, "POST", "/operator/window/lease-1/rearm", { confirm: true });
+  assert.equal(rearmed.statusCode, 200);
+  const cancelled = await invokeRoute(deps, "POST", "/operator/window/lease-1/cancel", { confirm: true });
+  assert.equal(cancelled.statusCode, 200);
+  assert.deepEqual(calls, [
+    {
+      action: "arm",
+      body: { windowCount: 2, maxStepsPerWindow: 1, intervalMs: 0, deadlineMs: 60_000, confirm: true },
+    },
+    { action: "tick" },
+    { action: "rearm", id: "lease-1", body: { confirm: true } },
+    { action: "cancel", id: "lease-1", confirm: true },
+  ]);
+});
+
 test("operator run route checkpoints a real bounded session without widening executor input", async () => {
   let observedBody = null;
   const manager = createOperatorRunSessionManager({
