@@ -1,6 +1,6 @@
 # NixSoma Forward Work Directive
 
-Updated: 2026-07-31
+Updated: 2026-08-01
 
 This is the active guidance document for continuing NixSoma development. The
 enhanced source preservation and governed capability migration that originally
@@ -91,6 +91,15 @@ status, and records the existing bind audit. It does not prepare a browser,
 retry execution, call a provider, create a task or approval, or mutate the
 host. The continuity contract is recorded in
 `OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md`.
+
+The memory-to-recommendation provenance continuation is also closed in source.
+The existing task-bound recall receipt remains immutable and provider-only; the
+recommendation link and downstream application receipt may carry only its
+validated `receiptHash`. Observer exposes that hash and an `advisoryApplied`
+boundary, while execution, terminal outcome, effectiveness, and causality stay
+owned by their separate receipts. No recalled record id, context, provider
+content, provider call, task creation, approval, retry, or host authority is
+added by this continuation.
 
 For route planning, keep the denominators explicit. The currently bounded,
 operator-governed product is roughly 84-87% mature; the wider autonomous-agent
@@ -212,13 +221,13 @@ one-off call surface.
 
 ## Selected Next Real Capability
 
-The newest source route is the reviewed task work-view continuity slice in
-`OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md`. Its explicit selected-
-task rebind bridge composes the reviewed browser-task entry with the existing
-authoritative work-view bind/rebind owner. Complete its focused, served-client,
-structural, and closure evidence, then freeze the integration. Do not extend
-it into automatic rebind, browser restart, retries, scheduling, or an
-open-ended autonomy loop.
+The reviewed task work-view continuity slice and the recall-to-recommendation
+provenance continuation are implemented and being frozen after source-level
+validation. The next route review must select a distinct user-visible Level 2
+or Level 3 capability, not another receipt wrapper, provider-readiness gate,
+automatic learning claim, rebind/retry path, or horizontal action variant.
+Use the identity-upgrade path and current evidence to choose that capability
+before editing; physical generation activation remains separately authorized.
 
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation
@@ -311,20 +320,25 @@ Context materialization keeps at most four recalled record ids in a private
 non-enumerable candidate. Only a successful approved provider response finalizes
 a receipt bound to execution/source tasks, record-set hash, context hash,
 request hash, and response contract. The provider task, terminal experience,
-and Observer task detail retain compact evidence. This proves provider context
-consumption, not downstream use or causality; it changes no ranking, policy,
-approval, action, retry, or host state.
+and Observer task detail retain compact evidence. A later recommendation link
+and application receipt carry only the validated consumption receipt hash and
+mark `advisoryApplied` at that boundary. This proves provider context
+consumption and explicit advisory transfer, not execution, effectiveness, or
+causality; it changes no ranking, policy, approval, action, retry, or host
+state.
 
 The next explicit edge is now implemented in
 [`docs/plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md`](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md).
 When an operator selects the fixed provider recommendation in Observer, the
 existing semantic-click control creates its already-governed downstream task.
 Core validates the unchanged provider response and fixed control link, then
-derives a hash-bound application receipt that the caller cannot supply. This
-proves explicit selection and downstream task binding only; distinct execution
-and terminal receipts carry later claims without rewriting it. It does not
-prove effectiveness or causality or justify automatic ranking, approval, task
-creation, action, or provider continuation.
+derives a hash-bound application receipt that the caller cannot supply. When
+available, only the validated recall-consumption receipt hash is carried into
+that receipt. This proves explicit selection, downstream task binding, and the
+bounded advisory-transfer edge; distinct execution and terminal receipts carry
+later claims without rewriting it. It does not prove effectiveness or causality
+or justify automatic ranking, approval, task creation, action, or provider
+continuation.
 
 That exact terminal edge is now implemented in
 [`docs/plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md`](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md).

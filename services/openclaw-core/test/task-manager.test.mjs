@@ -3,6 +3,10 @@ import test from "node:test";
 
 import { createTaskManager } from "../src/task-manager.mjs";
 import { EXECUTION_RESERVATION_REGISTRY } from "../src/capability-runtime-approval-binding.mjs";
+import {
+  buildExperienceConsumptionCandidate,
+  finaliseExperienceConsumptionReceipt,
+} from "../src/native-engineering-experience-consumption-receipt.mjs";
 import { recommendationExecutionEvidence } from "./native-engineering-recommendation-receipt-fixture.mjs";
 
 function createHarness({ buildRulePlan = () => null, shouldBuildPlan = () => false, recordTaskExperience = () => null } = {}) {
@@ -46,6 +50,29 @@ function createHarness({ buildRulePlan = () => null, shouldBuildPlan = () => fal
   });
 
   return { manager, tasks };
+}
+
+function consumptionReceipt() {
+  const candidate = buildExperienceConsumptionCandidate({
+    experienceMemory: { records: [{ id: "experience-a" }] },
+    executionTaskId: "provider-task",
+    sourceTaskId: "engineering-task",
+    contextContentHash: "b".repeat(64),
+    responseContract: "engineering_recommendation_v0",
+  });
+  return finaliseExperienceConsumptionReceipt({
+    candidate,
+    providerResult: {
+      ok: true,
+      audit: {
+        requestContentHash: "c".repeat(64),
+        providerResponseCreated: true,
+        endpointContacted: true,
+        networkEgress: true,
+        transmitsExternally: true,
+      },
+    },
+  });
 }
 
 test("task manager stores a compact browser execution binding on planned tasks", () => {
@@ -101,6 +128,7 @@ test("task manager recomputes provider recommendation provenance before serializ
       actionId: "create_semantic_click_task",
       responseContentHash: "a".repeat(64),
     },
+    contextPacket: { experienceMemoryConsumptionReceipt: consumptionReceipt() },
   };
   manager.completeTask(providerTask, { summary: "Provider recommendation completed." });
 
@@ -134,11 +162,17 @@ test("task manager recomputes provider recommendation provenance before serializ
   assert.equal(task.engineeringRecommendationLink.source.taskStatus, "completed");
   assert.equal(task.engineeringRecommendationLink.action.actionId, "create_semantic_click_task");
   assert.equal(task.engineeringRecommendationLink.governance.providerCallAllowed, false);
+  assert.equal(
+    task.engineeringRecommendationLink.source.experienceMemoryConsumptionReceiptHash,
+    providerTask.cloudConsciousnessLiveProviderEgressExecution.contextPacket
+      .experienceMemoryConsumptionReceipt.receiptHash,
+  );
   assert.equal(task.engineeringRecommendationApplicationReceipt.providerTaskId, providerTask.id);
   assert.equal(task.engineeringRecommendationApplicationReceipt.downstreamTaskId, task.id);
   assert.notEqual(task.engineeringRecommendationApplicationReceipt.downstreamTaskId, "caller-controlled-task");
   assert.equal(task.engineeringRecommendationApplicationReceipt.governance.downstreamExecutionProven, false);
   assert.equal(task.engineeringRecommendationApplicationReceipt.governance.downstreamOutcomeProven, false);
+  assert.equal(task.engineeringRecommendationApplicationReceipt.governance.downstreamAdvisoryApplicationProven, true);
   assert.equal(task.engineeringRecommendationApplicationReceipt.governance.causalAttribution, false);
   assert.equal(task.engineeringRecommendationExecutionReceipt, undefined);
   assert.equal(manager.serialiseTask(task).engineeringRecommendationLink.source.taskId, providerTask.id);

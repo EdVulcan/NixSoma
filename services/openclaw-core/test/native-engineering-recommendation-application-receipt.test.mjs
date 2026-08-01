@@ -6,7 +6,7 @@ import {
   validateNativeEngineeringRecommendationApplicationReceipt,
 } from "../src/native-engineering-recommendation-application-receipt.mjs";
 
-function recommendationLink() {
+function recommendationLink({ consumptionHash = null } = {}) {
   return {
     registry: "openclaw-native-engineering-recommendation-link-v0",
     mode: "reviewed-provider-recommendation-to-semantic-click-task",
@@ -19,6 +19,7 @@ function recommendationLink() {
       contract: "engineering_recommendation_v0",
       responseContentHash: "a".repeat(64),
       evidence: "provider_execution_recommendation",
+      ...(consumptionHash ? { experienceMemoryConsumptionReceiptHash: consumptionHash } : {}),
     },
     action: {
       actionId: "create_semantic_click_task",
@@ -54,6 +55,7 @@ test("application receipt binds explicit recommendation selection to one downstr
   assert.equal(receipt.governance.explicitOperatorSelection, true);
   assert.equal(receipt.governance.existingControlReused, true);
   assert.equal(receipt.governance.downstreamTaskBound, true);
+  assert.equal(receipt.governance.downstreamAdvisoryApplicationProven, false);
   assert.equal(receipt.governance.downstreamExecutionProven, false);
   assert.equal(receipt.governance.downstreamOutcomeProven, false);
   assert.equal(receipt.governance.causalAttribution, false);
@@ -61,6 +63,19 @@ test("application receipt binds explicit recommendation selection to one downstr
   assert.equal(validateNativeEngineeringRecommendationApplicationReceipt(receipt), receipt);
   assert.equal("reason" in receipt, false);
   assert.equal("recommendation" in receipt, false);
+});
+
+test("application receipt binds a validated recall-consumption hash without claiming causality", () => {
+  const receipt = buildNativeEngineeringRecommendationApplicationReceipt({
+    recommendationLink: recommendationLink({ consumptionHash: "b".repeat(64) }),
+    downstreamTaskId: "semantic-task-7",
+    downstreamTaskType: "browser_task",
+  });
+
+  assert.equal(receipt.experienceMemoryConsumptionReceiptHash, "b".repeat(64));
+  assert.equal(receipt.governance.downstreamAdvisoryApplicationProven, true);
+  assert.equal(receipt.governance.causalAttribution, false);
+  assert.equal(validateNativeEngineeringRecommendationApplicationReceipt(receipt), receipt);
 });
 
 test("application receipt rejects a non-governed link or a non-browser downstream task", () => {
@@ -96,5 +111,10 @@ test("application receipt validation rejects changed binding and governance clai
   assert.equal(validateNativeEngineeringRecommendationApplicationReceipt({
     ...receipt,
     governance: { ...receipt.governance, downstreamOutcomeProven: true },
+  }), null);
+  assert.equal(validateNativeEngineeringRecommendationApplicationReceipt({
+    ...receipt,
+    experienceMemoryConsumptionReceiptHash: "c".repeat(64),
+    governance: { ...receipt.governance, downstreamAdvisoryApplicationProven: true },
   }), null);
 });

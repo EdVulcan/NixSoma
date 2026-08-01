@@ -48,8 +48,8 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 current-tab close | One explicit authenticated request carries only `browser.current_tab.close` plus `confirm=true`; Core grants one fixed Screen Act route and Browser Runtime closes only its current `activePage` while preserving the final tab | Physically proven in `pfiwq5p3...` and carried by current `52s1asvy...`; real headed Firefox PID 63947 stayed stable while the prepare-reuse test page closed with count 5 -> 4, helper lease plus Browser Runtime/Screen Act audit matched, and provider calls, automatic cleanup/repeat, user-service restarts, and reboot remained zero |
 | Level 4 semantic submit | One explicit request binds an under-five-minute verified write-only type receipt to the same current task and one enabled Submit/Send/Continue/Confirm button, then reuses the existing semantic click owner once | Physically accepted in `5zlz2s6z...` and carried by current `52s1asvy...`; the fixed local form executed type then submit with two calls/two actions, visible completion, exact replay rejection before provider contact, unchanged task, no plaintext persistence, tmpfs profile, and healthy services |
 | Level 1 durable experience feedback | Older experience records correlate at most 32 idempotent later terminal outcomes for the exact same task type; engineering context and Observer separate this feedback from historical outcome rate | Implemented in source; correlation is explicitly non-causal, advisory use is unproven, and feedback cannot change ranking, policy, provider calls, or execution |
-| Level 1 recall consumption receipt | A transient candidate binds at most four recalled records to one execution/source task and context hash; only a successful approved provider response finalizes a request-bound receipt | Implemented in source; provider consumption is proven without persisting provider content, while downstream advisory application and causality remain explicitly unproven |
-| Level 1 recommendation application receipt | Explicit Observer selection reuses the fixed governed semantic-click task control; Core derives a response/link/downstream-task-bound receipt that callers cannot inject | Implemented in source; the application receipt proves only selection and binding, leaving execution and terminal claims to separate receipts |
+| Level 1 recall consumption receipt | A transient candidate binds at most four recalled records to one execution/source task and context hash; only a successful approved provider response finalizes a request-bound receipt | Implemented in source; the consumption receipt remains provider-only, while a later application receipt may carry only its validated hash; record ids, provider content, and causality remain excluded |
+| Level 1 recommendation application receipt | Explicit Observer selection reuses the fixed governed semantic-click task control; Core derives a response/link/downstream-task-bound receipt and optionally carries the validated recall-consumption receipt hash | Implemented in source; `advisoryApplied` is proven only at the hash-bound application edge, while execution, terminal outcome, effectiveness, and causality remain separate claims |
 | Level 1 recommendation execution receipt | The existing browser task executor forwards one trusted semantic-click result only after Screen Act execution and post-action verification; Core derives the receipt and excludes target/page/provider content | Implemented in source; exact action execution is proven without adding an actuator, provider call, retry, effectiveness, or causality claim |
 | Level 1 recommendation outcome receipt | The authoritative task terminal owner binds one completed/failed observation to the exact application receipt and optionally its verified execution receipt, then preserves it in task state and experience memory | Implemented in source; v0 remains terminal-only and v1 proves execution plus terminal correlation, while effectiveness, causality, ranking, and policy changes remain explicitly unproven |
 | Level 1 reviewed browser task composer | Observer accepts a bounded real goal and HTTP(S) URL; Core fixes browser-task/work-view authority and creates either the current task or its capability-aware plan | Implemented in source; caller actions/policy, automatic execution, provider calls, approvals, scheduling, retries, and host mutation remain excluded |
@@ -246,14 +246,16 @@ This evidence does not authorize another physical generation switch.
    private context candidate becomes durable only after a successfully
    responding governed provider receives the exact bound request. The receipt
    binds task/source ids, up to four recalled ids, context/request hashes, and
-   keeps downstream application and causality false. See
+   keeps downstream application and causality false on the consumption receipt.
+   See
    [`OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md`](./plans/OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md).
 5. **Reviewed recommendation application closes the next explicit edge.** The
    existing Observer recommendation control creates the existing governed
    semantic-click task, while Core derives a tamper-evident receipt from the
-   verified provider response, recommendation link, and new downstream task.
-   It creates no extra task or approval and proves neither execution nor
-   effectiveness. See
+   verified provider response, recommendation link, new downstream task, and
+   optional validated recall-consumption hash. Only the hash crosses this
+   boundary; it creates no extra task or approval and proves neither execution
+   nor effectiveness. See
    [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md`](./plans/OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md).
 6. **Verified recommendation execution closes the action-evidence gap.** The
    existing browser task executor forwards one semantic-click result only after

@@ -1,6 +1,6 @@
 # Downstream Recommendation Application Receipt
 
-Updated: 2026-07-31
+Updated: 2026-08-01
 
 Status: implemented and accepted in source, isolated real development services,
 and the store-native Core closure. Physical generation deployment and real
@@ -13,6 +13,7 @@ Prove one explicit transition after provider recommendation delivery:
 ```text
 verified provider recommendation -> explicit Observer selection
 -> existing governed semantic-click task control
+-> optional validated recall-consumption receipt hash
 -> server-derived downstream application receipt
 ```
 
@@ -28,9 +29,15 @@ No new actuator, provider call, task family, or approval owner is introduced.
   receipt. A caller-supplied receipt is ignored and cannot select its bindings.
 - The receipt binds provider task, downstream task, response hash, complete
   recommendation-link hash, action, capability, control, timestamp, and its own
-  hash.
+  hash. When the recommendation link carries a validated
+  `experienceMemoryConsumptionReceiptHash`, the application receipt carries
+  that hash and no recall record id, context, or provider content.
 - `explicitOperatorSelection=true`, `existingControlReused=true`, and
   `downstreamTaskBound=true` prove application through the reviewed control.
+- `downstreamAdvisoryApplicationProven=true` is derived only when the validated
+  recall-consumption hash is present. It means the advisory crossed the
+  reviewed application boundary; it does not mean the action executed, the
+  terminal outcome followed, or the recommendation was effective.
 - This application receipt intentionally keeps `downstreamExecutionProven=false`
   and `downstreamOutcomeProven=false`; later receipts prove those distinct
   edges without rewriting the original application claim. No provider reason
@@ -46,6 +53,9 @@ No new actuator, provider call, task family, or approval owner is introduced.
   only through the reviewed control without dispatching the task.
 - Observer task detail exposes compact application, binding, control, and
   governance lines.
+- Recall-link tests prove only the validated consumption receipt hash is
+  projected, and application-receipt tests cover the hash-bound and legacy
+  application shapes without changing causality or effectiveness claims.
 - The store-native Core closure must contain the receipt module and exactly 269
   files.
 
@@ -55,6 +65,11 @@ closure is
 `/nix/store/7vn7y0lli7846xyq7g748bjzyjm3jx1d-openclaw-core-0.1.0`.
 No real provider request, credential read, host mutation, generation switch, or
 reboot occurred.
+
+The 2026-08-01 continuation passed Core 900/900, Observer 95/95, workspace
+typecheck/build, and touched-module syntax checks. It did not rerun the
+store-closure or physical deployment gates; no new module or provider route
+was introduced.
 
 ## Deferred
 

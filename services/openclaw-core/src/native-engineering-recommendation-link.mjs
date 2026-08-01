@@ -1,3 +1,5 @@
+import { validateExperienceConsumptionReceipt } from "./native-engineering-experience-consumption-receipt.mjs";
+
 export const NATIVE_ENGINEERING_RECOMMENDATION_LINK_REGISTRY =
   "openclaw-native-engineering-recommendation-link-v0";
 export const ENGINEERING_RECOMMENDATION_REGISTRY =
@@ -53,6 +55,10 @@ export function buildNativeEngineeringRecommendationLink({
   const sourceTask = requireSourceTask(tasks, sourceTaskId);
   const responseContentHash = sourceTask.cloudConsciousnessLiveProviderEgressExecution
     ?.recommendation?.responseContentHash;
+  const experienceMemoryConsumptionReceipt = validateExperienceConsumptionReceipt(
+    sourceTask.cloudConsciousnessLiveProviderEgressExecution
+      ?.contextPacket?.experienceMemoryConsumptionReceipt,
+  );
   const sourceRegistry = boundedIdentifier(input.sourceRegistry, "sourceRegistry", 120);
   const contract = boundedIdentifier(input.contract, "contract", 80);
   const actionId = boundedIdentifier(input.actionId, "actionId", 80);
@@ -90,6 +96,9 @@ export function buildNativeEngineeringRecommendationLink({
       contract,
       responseContentHash,
       evidence: "provider_execution_recommendation",
+      ...(experienceMemoryConsumptionReceipt
+        ? { experienceMemoryConsumptionReceiptHash: experienceMemoryConsumptionReceipt.receiptHash }
+        : {}),
     },
     action: {
       actionId,

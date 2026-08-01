@@ -1,6 +1,6 @@
 # NixSoma Plans Directory
 
-Updated: 2026-07-31
+Updated: 2026-08-01
 
 This directory contains current decision records and historical milestone
 evidence. It is not a queue ordered by phase number. Use
@@ -27,7 +27,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_EXPERIENCE_MEMORY_PLAN.md) | Local target-specific outcome absorption and advisory recall from verified incident receipts. |
 | [`OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md`](./OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md) | Selected Level 1 durable same-type subsequent-outcome feedback correlation, explicitly non-causal and advisory-use-unproven. |
 | [`OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md`](./OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md) | Task/source/context/request-bound proof that up to four recalled records reached one successfully responding governed provider. |
-| [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md) | Explicit operator selection and server-derived binding of one fixed provider recommendation to an existing governed downstream task. |
+| [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md) | Explicit operator selection and server-derived binding of one fixed provider recommendation, optionally linked by validated recall-consumption hash, to an existing governed downstream task. |
 | [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_EXECUTION_PLAN.md) | Exact application-bound proof of one existing governed semantic click from trusted handoff through post-action verification. |
 | [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md) | Exact application-receipt-bound completed/failed observation from the authoritative downstream task terminal owner. |
 | [`OPENCLAW_REVIEWED_BROWSER_TASK_COMPOSER_PLAN.md`](./OPENCLAW_REVIEWED_BROWSER_TASK_COMPOSER_PLAN.md) | Real bounded goal/URL browser-task entry through Observer and Core without caller action authority or automatic execution. |
@@ -135,14 +135,17 @@ The next memory review selects the task-bound recall-consumption receipt in
 [`OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md`](./OPENCLAW_TASK_BOUND_RECALL_CONSUMPTION_PLAN.md).
 The context candidate remains private and transient; only a successful bound
 provider response creates a durable receipt listing at most four recalled
-record ids. Provider delivery is proven, while downstream advisory application
-and causality remain explicitly false.
+record ids. Provider delivery is proven; the consumption receipt itself keeps
+downstream advisory application and causality false.
 
 The downstream application review is implemented in
 [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md).
 Core now derives a tamper-evident receipt only when explicit Observer selection
-reuses the fixed semantic-click task control. This proves downstream task
-binding, not execution, terminal outcome, effectiveness, or causality.
+reuses the fixed semantic-click task control. When the upstream recommendation
+is linked to a validated recall-consumption receipt, Core carries only that
+receipt hash and marks the advisory application boundary. This proves downstream
+task binding and advisory transfer, not execution, terminal outcome,
+effectiveness, or causality.
 
 The terminal continuation is implemented in
 [`OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_OUTCOME_PLAN.md).

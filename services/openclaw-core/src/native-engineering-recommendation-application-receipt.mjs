@@ -20,6 +20,7 @@ function sha256(value) {
 }
 
 function validRecommendationLink(link) {
+  const experienceMemoryConsumptionReceiptHash = link?.source?.experienceMemoryConsumptionReceiptHash;
   return link?.registry === NATIVE_ENGINEERING_RECOMMENDATION_LINK_REGISTRY
     && link.mode === "reviewed-provider-recommendation-to-semantic-click-task"
     && SAFE_ID.test(link.source?.taskId ?? "")
@@ -28,6 +29,8 @@ function validRecommendationLink(link) {
     && link.source?.registry === ENGINEERING_RECOMMENDATION_REGISTRY
     && link.source?.contract === ENGINEERING_RECOMMENDATION_CONTRACT
     && SHA256.test(link.source?.responseContentHash ?? "")
+    && (experienceMemoryConsumptionReceiptHash === undefined
+      || SHA256.test(experienceMemoryConsumptionReceiptHash))
     && link.source?.evidence === "provider_execution_recommendation"
     && link.action?.actionId === ENGINEERING_SEMANTIC_CLICK_ACTION_ID
     && link.action?.capabilityId === ENGINEERING_SEMANTIC_CLICK_CAPABILITY_ID
@@ -56,6 +59,9 @@ export function buildNativeEngineeringRecommendationApplicationReceipt({
     throw new Error("Native engineering recommendation application requires a validated downstream semantic-click task.");
   }
 
+  const experienceMemoryConsumptionReceiptHash =
+    recommendationLink.source.experienceMemoryConsumptionReceiptHash;
+  const downstreamAdvisoryApplicationProven = typeof experienceMemoryConsumptionReceiptHash === "string";
   const receipt = {
     registry: NATIVE_ENGINEERING_RECOMMENDATION_APPLICATION_RECEIPT_REGISTRY,
     status: "applied_through_governed_control",
@@ -68,10 +74,14 @@ export function buildNativeEngineeringRecommendationApplicationReceipt({
     capabilityId: recommendationLink.action.capabilityId,
     observerControlId: recommendationLink.action.expectedObserverControlId,
     recommendationLinkHash: sha256(JSON.stringify(recommendationLink)),
+    ...(downstreamAdvisoryApplicationProven
+      ? { experienceMemoryConsumptionReceiptHash }
+      : {}),
     governance: {
       explicitOperatorSelection: true,
       existingControlReused: true,
       downstreamTaskBound: true,
+      downstreamAdvisoryApplicationProven,
       downstreamExecutionProven: false,
       downstreamOutcomeProven: false,
       causalAttribution: false,
@@ -88,6 +98,8 @@ export function buildNativeEngineeringRecommendationApplicationReceipt({
 }
 
 export function validateNativeEngineeringRecommendationApplicationReceipt(value) {
+  const experienceMemoryConsumptionReceiptHash = value?.experienceMemoryConsumptionReceiptHash;
+  const downstreamAdvisoryApplicationProven = value?.governance?.downstreamAdvisoryApplicationProven ?? false;
   if (!value
     || value.registry !== NATIVE_ENGINEERING_RECOMMENDATION_APPLICATION_RECEIPT_REGISTRY
     || value.status !== "applied_through_governed_control"
@@ -95,6 +107,8 @@ export function validateNativeEngineeringRecommendationApplicationReceipt(value)
     || !SAFE_ID.test(value.downstreamTaskId ?? "")
     || value.recommendationRegistry !== ENGINEERING_RECOMMENDATION_REGISTRY
     || !SHA256.test(value.responseContentHash ?? "")
+    || (experienceMemoryConsumptionReceiptHash !== undefined
+      && !SHA256.test(experienceMemoryConsumptionReceiptHash))
     || value.actionId !== ENGINEERING_SEMANTIC_CLICK_ACTION_ID
     || value.capabilityId !== ENGINEERING_SEMANTIC_CLICK_CAPABILITY_ID
     || value.observerControlId !== ENGINEERING_SEMANTIC_CLICK_CONTROL_ID
@@ -103,6 +117,7 @@ export function validateNativeEngineeringRecommendationApplicationReceipt(value)
     || value.governance?.explicitOperatorSelection !== true
     || value.governance?.existingControlReused !== true
     || value.governance?.downstreamTaskBound !== true
+    || downstreamAdvisoryApplicationProven !== (experienceMemoryConsumptionReceiptHash !== undefined)
     || value.governance?.downstreamExecutionProven !== false
     || value.governance?.downstreamOutcomeProven !== false
     || value.governance?.causalAttribution !== false

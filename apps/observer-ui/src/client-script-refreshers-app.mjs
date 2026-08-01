@@ -267,9 +267,9 @@ function renderTaskSummary(task, { includeRecovery = true, includeOutcome = true
   const recommendationApplication = task.engineeringRecommendationApplicationReceipt ?? null;
   if (recommendationApplication) {
     lines.push(\`Recommendation Application: \${recommendationApplication.registry ?? "unknown"} status=\${recommendationApplication.status ?? "unknown"}\`);
-    lines.push(\`Recommendation Application Binding: provider=\${recommendationApplication.providerTaskId ?? "none"} downstream=\${recommendationApplication.downstreamTaskId ?? "none"} receipt=\${recommendationApplication.receiptHash ?? "none"}\`);
+    lines.push(\`Recommendation Application Binding: provider=\${recommendationApplication.providerTaskId ?? "none"} downstream=\${recommendationApplication.downstreamTaskId ?? "none"} recall=\${recommendationApplication.experienceMemoryConsumptionReceiptHash ?? "none"} receipt=\${recommendationApplication.receiptHash ?? "none"}\`);
     lines.push(\`Recommendation Application Control: action=\${recommendationApplication.actionId ?? "none"} capability=\${recommendationApplication.capabilityId ?? "none"} control=\${recommendationApplication.observerControlId ?? "none"}\`);
-    lines.push(\`Recommendation Application Boundary: selected=\${Boolean(recommendationApplication.governance?.explicitOperatorSelection)} bound=\${Boolean(recommendationApplication.governance?.downstreamTaskBound)} executed=\${Boolean(recommendationApplication.governance?.downstreamExecutionProven)} outcome=\${Boolean(recommendationApplication.governance?.downstreamOutcomeProven)} causal=\${Boolean(recommendationApplication.governance?.causalAttribution)}\`);
+    lines.push(\`Recommendation Application Boundary: selected=\${Boolean(recommendationApplication.governance?.explicitOperatorSelection)} bound=\${Boolean(recommendationApplication.governance?.downstreamTaskBound)} advisoryApplied=\${Boolean(recommendationApplication.governance?.downstreamAdvisoryApplicationProven)} executed=\${Boolean(recommendationApplication.governance?.downstreamExecutionProven)} outcome=\${Boolean(recommendationApplication.governance?.downstreamOutcomeProven)} causal=\${Boolean(recommendationApplication.governance?.causalAttribution)}\`);
   }
   const recommendationExecution = task.engineeringRecommendationExecutionReceipt ?? null;
   if (recommendationExecution) {

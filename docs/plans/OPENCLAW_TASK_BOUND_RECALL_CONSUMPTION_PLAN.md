@@ -1,6 +1,6 @@
 # NixSoma Task-Bound Recall Consumption Receipt
 
-Updated: 2026-07-31
+Updated: 2026-08-01
 
 Status: implemented and accepted in source, isolated real development services,
 and the store-native Core closure. Physical generation deployment is not part
@@ -34,8 +34,11 @@ memory ranking, or task execution policy.
 - The provider task outcome and its terminal experience record retain the
   validated receipt; Observer task detail shows only compact binding evidence.
 - `providerConsumptionProven=true` means the governed provider returned after
-  receiving the bound context. `downstreamAdvisoryApplicationProven=false` and
-  `causalAttribution=false` remain mandatory.
+  receiving the bound context. The consumption receipt itself keeps
+  `downstreamAdvisoryApplicationProven=false` and `causalAttribution=false`.
+  A later validated recommendation link may project only this receipt's
+  `receiptHash`; its downstream application receipt may then mark advisory
+  application as proven without copying recalled record ids or context.
 
 ## Evidence
 
@@ -47,6 +50,9 @@ memory ranking, or task execution policy.
   successful provider response without performing network access.
 - Experience-memory tests accept only a valid receipt, and Observer tests cover
   the compact task-detail readback.
+- Recommendation-link and application-receipt tests prove that only the
+  validated receipt hash crosses into the downstream recommendation chain;
+  legacy application receipts without that optional hash remain valid.
 - Core package closure explicitly contains the new receipt owner.
 
 Acceptance on 2026-07-31 passed Core 874/874, Observer 76/76, workspace
@@ -56,9 +62,13 @@ invoke, and `body-config`. The exact Core closure contains 268 files at
 receipt module is read-only. No real provider request, credential read, host
 mutation, generation switch, or reboot occurred.
 
+The 2026-08-01 provenance continuation passed Core 900/900, Observer 95/95,
+workspace typecheck/build, and touched-module syntax checks. It did not rerun
+the Nix closure or physical deployment; no new module was added, and the
+previous store-closure evidence remains the last closure record.
+
 ## Deferred
 
-- proof that a later downstream engineering action applied the advisory;
 - causal effectiveness, reward scoring, automatic confidence/ranking changes,
   training, or model updates;
 - automatic provider calls, task creation/completion, retries, actions, host
@@ -66,8 +76,9 @@ mutation, generation switch, or reboot occurred.
 
 ## Next Real Capability
 
-The downstream application receipt is now implemented in
-[`OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md`](./OPENCLAW_DOWNSTREAM_RECOMMENDATION_APPLICATION_PLAN.md).
-It binds one explicit operator-reviewed recommendation to a later governed task
-without deriving execution, outcome, effectiveness, or causality from provider
-delivery alone.
+The downstream application receipt now consumes the validated recall receipt by
+hash only, when present. It binds one explicit operator-reviewed
+recommendation to a later governed task without deriving execution, outcome,
+effectiveness, or causality from provider delivery alone. The next route review
+must select a distinct user capability rather than another memory or receipt
+wrapper.

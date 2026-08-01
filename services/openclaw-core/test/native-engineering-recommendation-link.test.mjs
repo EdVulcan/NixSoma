@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildExperienceConsumptionCandidate,
+  finaliseExperienceConsumptionReceipt,
+} from "../src/native-engineering-experience-consumption-receipt.mjs";
+import {
   ENGINEERING_RECOMMENDATION_CONTRACT,
   ENGINEERING_RECOMMENDATION_REGISTRY,
   ENGINEERING_SEMANTIC_CLICK_ACTION_ID,
@@ -11,7 +15,31 @@ import {
   buildNativeEngineeringRecommendationLink,
 } from "../src/native-engineering-recommendation-link.mjs";
 
-function createFixture() {
+function createConsumptionReceipt() {
+  const candidate = buildExperienceConsumptionCandidate({
+    experienceMemory: { records: [{ id: "experience-a" }] },
+    executionTaskId: "provider-task-42",
+    sourceTaskId: "engineering-task-1",
+    contextContentHash: "b".repeat(64),
+    responseContract: ENGINEERING_RECOMMENDATION_CONTRACT,
+  });
+  return finaliseExperienceConsumptionReceipt({
+    candidate,
+    providerResult: {
+      ok: true,
+      audit: {
+        requestContentHash: "c".repeat(64),
+        providerResponseCreated: true,
+        endpointContacted: true,
+        networkEgress: true,
+        transmitsExternally: true,
+      },
+    },
+    consumedAt: "2026-07-31T12:00:30.000Z",
+  });
+}
+
+function createFixture({ includeConsumption = false } = {}) {
   const sourceTask = {
     id: "provider-task-42",
     type: "cloud_consciousness_live_provider_egress_execution_task",
@@ -26,6 +54,9 @@ function createFixture() {
         actionId: ENGINEERING_SEMANTIC_CLICK_ACTION_ID,
         responseContentHash: "a".repeat(64),
       },
+      ...(includeConsumption
+        ? { contextPacket: { experienceMemoryConsumptionReceipt: createConsumptionReceipt() } }
+        : {}),
     },
   };
   const input = {
@@ -130,4 +161,17 @@ test("recommendation link rejects a missing, unfinished, or mismatched provider 
       input: { ...fixture.input, [field]: "mismatch" },
     }), /fixed semantic-click control/u);
   }
+});
+
+test("recommendation link carries only the validated recall-consumption receipt hash", () => {
+  const fixture = createFixture({ includeConsumption: true });
+  const link = buildNativeEngineeringRecommendationLink({ ...fixture });
+
+  assert.equal(
+    link.source.experienceMemoryConsumptionReceiptHash,
+    fixture.sourceTask.cloudConsciousnessLiveProviderEgressExecution
+      .contextPacket.experienceMemoryConsumptionReceipt.receiptHash,
+  );
+  assert.equal("recordIds" in link.source, false);
+  assert.equal("contextPacket" in link.source, false);
 });
