@@ -322,6 +322,30 @@ operatorMissionRefreshButton.addEventListener("click", () => {
   });
 });
 
+operatorMissionWorklistAddButton.addEventListener("click", () => {
+  try {
+    addOperatorMissionWorklistDraftItem();
+  } catch (error) {
+    setControlMessage("Request failed: " + formatError(error));
+  }
+});
+
+operatorMissionWorklistClearButton.addEventListener("click", () => {
+  clearOperatorMissionWorklistDraft();
+});
+
+operatorMissionWorklistBindButton.addEventListener("click", () => {
+  bindOperatorMissionWorklistFromUi().catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
+operatorMissionWorklistDraft.addEventListener("click", (event) => {
+  const button = event.target.closest?.("[data-worklist-draft-index]");
+  if (!button || !operatorMissionWorklistDraft.contains(button)) return;
+  removeOperatorMissionWorklistDraftItem(Number.parseInt(button.dataset.worklistDraftIndex ?? "", 10));
+});
+
 runSelectedReviewedCycleButton.addEventListener("click", () => {
   runSelectedReviewedWorkspaceCycleFromUi().catch((error) => {
     setControlMessage(\`Request failed: \${formatError(error)}\`);

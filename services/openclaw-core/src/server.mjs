@@ -19,6 +19,8 @@ import { createNativeEngineeringExperienceMemory } from "./native-engineering-ex
 import { createBoundedOperatorScheduler } from "./bounded-operator-scheduler.mjs";
 import { createBoundedOperatorWindowLease } from "./bounded-operator-window-lease.mjs";
 import { createRenewableOperatorMissionSupervisor } from "./renewable-operator-mission.mjs";
+import { createReviewedBrowserTaskOwner } from "./reviewed-browser-task-owner.mjs";
+import { createReviewedMissionWorklist } from "./reviewed-mission-worklist.mjs";
 import { createOperatorAuthenticator } from "./operator-auth.mjs";
 import { createExecutionGrantSigner } from "../../../packages/shared-utils/src/execution-grants.mjs";
 import { createFixedUnitIncidentScheduler } from "./fixed-unit-incident-scheduler.mjs";
@@ -143,6 +145,12 @@ const planBuilder = createPlanBuilder({
   buildExperienceMemoryReadModel: (...args) => experienceMemory.buildExperienceMemoryReadModel(...args),
   buildExperienceEffectivenessReadModel: (...args) => experienceMemory.buildExperienceEffectivenessReadModel(...args),
 });
+const reviewedBrowserTaskOwner = createReviewedBrowserTaskOwner({
+  taskManager,
+  approvalEngine,
+  planBuilder,
+  publishEvent,
+});
 
 executor = createTaskExecutor({
   client,
@@ -200,12 +208,19 @@ const boundedOperatorWindowLease = createBoundedOperatorWindowLease({
     }
   },
 });
+const reviewedMissionWorklist = createReviewedMissionWorklist({
+  records: state.reviewedMissionWorklists,
+  persistState: state.persistState,
+  taskManager,
+  reviewedTaskOwner: reviewedBrowserTaskOwner,
+});
 const renewableOperatorMissionSupervisor = createRenewableOperatorMissionSupervisor({
   records: state.renewableOperatorMissions,
   persistState: state.persistState,
   windowLease: boundedOperatorWindowLease,
   enabled: process.env.OPENCLAW_RENEWABLE_OPERATOR_MISSION_ENABLED === "1",
   intervalMs: process.env.OPENCLAW_RENEWABLE_OPERATOR_MISSION_INTERVAL_MS,
+  missionWorklist: reviewedMissionWorklist,
 });
 const dispatchApprovedFixedUnitRepair = createFixedUnitIncidentApprovedDispatcher({
   tasks: state.tasks,
@@ -246,6 +261,8 @@ const handleRequest = registerRoutes({
   boundedOperatorScheduler,
   boundedOperatorWindowLease,
   renewableOperatorMissionSupervisor,
+  reviewedBrowserTaskOwner,
+  reviewedMissionWorklist,
   buildExperienceMemoryReadModel: (...args) => experienceMemory.buildExperienceMemoryReadModel(...args),
   buildExperienceEffectivenessReadModel: (...args) => experienceMemory.buildExperienceEffectivenessReadModel(...args),
 });
@@ -406,6 +423,7 @@ boundedOperatorScheduler.reconcileAtStartup();
 boundedOperatorScheduler.start();
 boundedOperatorWindowLease.reconcileAtStartup();
 renewableOperatorMissionSupervisor.reconcileAtStartup();
+reviewedMissionWorklist.reconcileAtStartup();
 boundedOperatorWindowLease.start();
 renewableOperatorMissionSupervisor.start();
 fixedUnitIncidentScheduler = createFixedUnitIncidentScheduler({

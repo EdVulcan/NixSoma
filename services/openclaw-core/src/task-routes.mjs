@@ -1,6 +1,5 @@
 import { sendJson, readJsonBody } from "../../../packages/shared-utils/src/http.mjs";
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
-import { buildReviewedBrowserTaskSubmission } from "./reviewed-browser-task-submission.mjs";
 
 function parseTaskLimit(searchParams) {
   const limit = Number.parseInt(searchParams.get("limit") ?? "10", 10);
@@ -44,7 +43,7 @@ function executionTaskInput(body) {
   };
 }
 
-export async function handleTaskRoute({ req, res, requestUrl, state, approvalEngine, taskManager, planBuilder, executor, publishEvent, operatorRunSessionManager = null }) {
+export async function handleTaskRoute({ req, res, requestUrl, state, approvalEngine, taskManager, planBuilder, executor, publishEvent, operatorRunSessionManager = null, reviewedBrowserTaskOwner = null }) {
   const { tasks, runtimeState, getCurrentTask } = state;
   const { publishTaskApprovalIfPending } = approvalEngine;
   const { serialisePlanForPublic } = planBuilder;
@@ -177,28 +176,13 @@ export async function handleTaskRoute({ req, res, requestUrl, state, approvalEng
   if (req.method === "POST" && requestUrl.pathname === "/tasks/reviewed-browser") {
     try {
       const body = await readJsonBody(req);
-      const submission = buildReviewedBrowserTaskSubmission(body);
-      const task = createTask(submission.taskInput);
-      const reclaimedTasks = supersedeOtherActiveTasks(task.id);
-      reconcileRuntimeState();
-
-      await publishEvent(createEventName("task.created"), {
-        task: serialiseTask(task),
-        submission: submission.review,
-      });
-      await publishTaskApprovalIfPending(task);
-      if (submission.review.includePlan) {
-        await publishEvent(createEventName("task.planned"), {
-          task: serialiseTask(task),
-          plan: serialisePlanForPublic(task.plan),
-        });
-      }
-      await publishReclaimedTasks(reclaimedTasks, { publishEvent, serialiseTask });
+      if (!reviewedBrowserTaskOwner) throw new Error("Reviewed browser task owner is unavailable.");
+      const result = await reviewedBrowserTaskOwner.create(body);
       sendJson(res, 201, {
         ok: true,
-        task: serialiseTask(task),
-        plan: submission.review.includePlan ? serialisePlanForPublic(task.plan) : null,
-        review: submission.review,
+        task: result.publicTask,
+        plan: result.plan,
+        review: result.review,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";

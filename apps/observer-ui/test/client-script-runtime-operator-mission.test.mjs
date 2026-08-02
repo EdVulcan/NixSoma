@@ -98,6 +98,8 @@ function createFixture({ response = {} } = {}) {
     },
     formatTimestamp: (value) => value,
     setControlMessage: (message) => messages.push(message),
+    renderOperatorMissionWorklist: () => {},
+    renderOperatorMissionWorklistOffline: () => {},
     refreshOperatorState: async () => {},
     Error,
     encodeURIComponent,

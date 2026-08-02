@@ -8,12 +8,21 @@ function missionIdFromPath(pathname, action) {
   return id && !id.includes("/") ? id : null;
 }
 
-function missionEnvelope(supervisor, mission = null) {
+function worklistMissionIdFromPath(pathname) {
+  const prefix = "/operator/mission/";
+  const suffix = "/worklist";
+  if (!pathname.startsWith(prefix) || !pathname.endsWith(suffix)) return null;
+  const id = pathname.slice(prefix.length, -suffix.length);
+  return id && !id.includes("/") ? id : null;
+}
+
+function missionEnvelope(supervisor, mission = null, reviewedMissionWorklist = null) {
   return {
     ok: true,
     supervisor: supervisor.state(),
     mission,
     missions: supervisor.listPublic(),
+    worklists: reviewedMissionWorklist?.listPublic() ?? [],
   };
 }
 
@@ -33,6 +42,7 @@ export async function handleOperatorMissionRoute({
   res,
   requestUrl,
   renewableOperatorMissionSupervisor = null,
+  reviewedMissionWorklist = null,
 }) {
   const supervisor = renewableOperatorMissionSupervisor;
 
@@ -42,13 +52,13 @@ export async function handleOperatorMissionRoute({
       return true;
     }
     if (req.method === "GET") {
-      sendJson(res, 200, missionEnvelope(supervisor));
+      sendJson(res, 200, missionEnvelope(supervisor, null, reviewedMissionWorklist));
       return true;
     }
     if (req.method === "POST") {
       try {
         const mission = supervisor.arm(await readJsonBody(req));
-        sendJson(res, 201, missionEnvelope(supervisor, mission));
+        sendJson(res, 201, missionEnvelope(supervisor, mission, reviewedMissionWorklist));
       } catch (error) {
         invalid(res, error, "Invalid renewable mission request.");
       }
@@ -68,6 +78,31 @@ export async function handleOperatorMissionRoute({
     return true;
   }
 
+  const worklistMissionId = worklistMissionIdFromPath(requestUrl.pathname);
+  if (worklistMissionId && ["GET", "POST"].includes(req.method)) {
+    if (!supervisor || !reviewedMissionWorklist) {
+      unavailable(res);
+      return true;
+    }
+    const mission = supervisor.listPublic().find((item) => item.id === worklistMissionId) ?? null;
+    if (!mission) {
+      sendJson(res, 404, { ok: false, error: "Renewable operator mission was not found." });
+      return true;
+    }
+    if (req.method === "GET") {
+      const worklist = reviewedMissionWorklist.refreshForMission(worklistMissionId);
+      sendJson(res, 200, { ...missionEnvelope(supervisor, mission, reviewedMissionWorklist), worklist });
+      return true;
+    }
+    try {
+      const worklist = reviewedMissionWorklist.bind(mission, await readJsonBody(req));
+      sendJson(res, 201, { ...missionEnvelope(supervisor, mission, reviewedMissionWorklist), worklist });
+    } catch (error) {
+      invalid(res, error, "Invalid reviewed mission worklist request.");
+    }
+    return true;
+  }
+
   for (const action of ["renew", "pause", "rearm", "cancel"]) {
     const missionId = missionIdFromPath(requestUrl.pathname, action);
     if (req.method !== "POST" || !missionId) continue;
@@ -82,7 +117,7 @@ export async function handleOperatorMissionRoute({
         : action === "rearm"
           ? supervisor.rearm(missionId, body)
           : supervisor[action](missionId, body.confirm === true);
-      sendJson(res, 200, missionEnvelope(supervisor, mission));
+      sendJson(res, 200, missionEnvelope(supervisor, mission, reviewedMissionWorklist));
     } catch (error) {
       invalid(res, error, `Invalid mission ${action} request.`);
     }

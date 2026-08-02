@@ -62,6 +62,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 1 scheduled operator workflow | Observer exposes finite queue scheduling, due-time/status readback, explicit cancellation, and exact-budget re-arm after Core restart; Nix configuration keeps the timer default-off | Source, isolated real-service validation, and physical generation 110 health deployment complete; physical scheduling remains intentionally disabled |
 | Level 1 bounded operator window lease | Observer explicitly arms one lease of 1-8 windows, each reusing the existing 1-20 step operator session; a hard 1-second-to-24-hour deadline, compact persistence, cancellation, and restart-required re-arm bound continuation | Candidate `48n622mrr...` passed marker/protected-path/closure preflight; current `w58x78k1...` retains the Core/Observer modules with timer default-off, and physical lease execution is not claimed |
 | Level 1 renewable operator mission | Observer arms 1-32 finite epochs, each checkpointed before one existing mission-owned child window; Core supports explicit finite renewal, boundary pause/cancel, restart-required re-arm, and a no-progress circuit | Physical generation 110 runs `w58x78k1...`; current/profile and boot continuity, nine health endpoints, authenticated default-off readback, served Observer controls, zero restarts, and zero failed units pass |
+| Level 1 reviewed finite mission worklist | One unstarted mission accepts one immutable ordered set of 1-16 reviewed goal/URL blueprints; each epoch checkpoints before the existing reviewed-task owner issues at most the next item, and only completion advances | Candidate `2rg3qq3nz...` passed real two-item ordered execution, Core/Observer tests and gates, exact 282/111-file packages, marker/protected-path review, and 1826-path closure inspection; binding creates zero tasks, retry/skip stay disabled, and activation remains separate |
 | Level 3 network observation | Fixed `fentry/__sys_connect` eBPF probe sends only timestamp, process identity, sockaddr family, and address length through the system-sense/Core/Observer read-only path; only the first two sockaddr bytes are read and destination, port, address bytes, payload, persistence, and policy execution remain excluded | Physical proof originated in `gd9ps40...`; current `w58x78k1...` retains the deployed route, with the prior Core and Observer gates capturing 27 `curl` events and no destination, port, payload, or persistence |
 | Level 3 file-open observation | Fixed `fentry/do_sys_openat2` eBPF probe sends only timestamp, process identity, flags, and mode through the same system-sense/Core/Observer path; filename/path/content/inode/mount/result, persistence, and policy execution remain excluded | Generation `qcv5ggpr...` passed both installed gates at the 128-event hard cap; current `w58x78k1...` retains the accepted probe and healthy service boundary |
 | Level 3 kernel activity snapshot | One explicit request invokes the three existing capture owners in parallel and returns only lane status, counts, and continuity through System Sense/Core/Observer | Current `w58x78k1...` retains the prior 62/46/128 Core counts and Observer total 240; all three lanes remain available with no raw values, persistence, repeat, provider/browser activity, or host mutation |
@@ -955,12 +956,12 @@ These figures are capability-maturity estimates, not test coverage:
 
 | Scope | Current estimate |
 | --- | --- |
-| Level 1 user-space control plane | about 94% in source; renewable finite missions now checkpoint and continue across epochs, while autonomous task supply, open-ended planning, and causal learning remain incomplete |
+| Level 1 user-space control plane | about 96% in source; renewable finite missions now consume an immutable reviewed worklist, while provider planning, open-ended task supply, retry/skip, and causal learning remain incomplete |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 72-76%; process exec, network connect-attempt, bounded file open-attempt, and process lifecycle observation are physically deployed, while physical Phase D mutation and broader body nerves remain incomplete |
 | Level 4 graphics-stack-native body | about 85%; one-shot projected operator click, bounded native operator type, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, same-surface OCR click, objective-bound OCR type, fixed OCR focus-then-type, and governed current-tab close are physically complete |
 | Physically deployed bounded product | 86-89% |
-| Current source bounded product | 86-89% |
+| Current source bounded product | 88-91% |
 | Final whitepaper vision | 56-62% |
 
 ## Current Decision Records
@@ -969,6 +970,7 @@ These figures are capability-maturity estimates, not test coverage:
 | --- | --- |
 | [OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md) | Completed Level 1 governed engineering capability frontier and remaining boundaries. |
 | [OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md](./plans/OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md) | Physically deployed renewable mission epochs, checkpoints, explicit renewal, recovery, circuit break, and Observer progress. |
+| [OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md](./plans/OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md) | Source-complete immutable reviewed task supply with issue checkpoints, exact provenance, and stop-on-failure. |
 | [OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md](./plans/OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md) | Completed bounded Level 2 browser/work-view contract. |
 | [OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md](./plans/OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md) | Current operator, service identity, and execution-grant boundary. |
 | [OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md](./plans/OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Current fixed Level 3 restart and journal-diagnosis boundary. |

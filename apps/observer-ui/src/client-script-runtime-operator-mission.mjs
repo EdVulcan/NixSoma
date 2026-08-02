@@ -103,6 +103,7 @@ function renderOperatorMission(data) {
     supervisor,
     mission,
   }, null, 2);
+  renderOperatorMissionWorklist(data, mission);
 }
 
 function renderOperatorMissionOffline() {
@@ -123,6 +124,7 @@ function renderOperatorMissionOffline() {
     button.disabled = true;
   }
   operatorMissionJson.textContent = "Unable to read renewable operator mission.";
+  renderOperatorMissionWorklistOffline();
 }
 
 async function refreshOperatorMission() {

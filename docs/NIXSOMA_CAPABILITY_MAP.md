@@ -12,14 +12,14 @@ representative evidence agree.
 | Baseline | Maturity | Meaning |
 | --- | --- | --- |
 | Physically deployed bounded product | about 86-89% | Generation 110 carries the governed control plane, renewable mission supervisor, trusted work view, fixed Level 3 body owners, and bounded Level 4 eye-hand workflows. |
-| Current source bounded product | about 86-89% | The source frontier now matches the deployed renewable mission lifecycle; the reviewed finite mission worklist is selected but not implemented. |
+| Current candidate bounded product | about 88-91% | Candidate `2rg3qq3nz...` adds an immutable 1-16 item reviewed mission worklist with issue-before-create checkpoints, exact task provenance, terminal-only advance, and stop-on-failure; physical activation is a separate gate. |
 | Final whitepaper vision | about 56-62% | Includes durable autonomous task supply and planning, evidence-based adaptation, broader body nerves, physical Phase D evolution, and richer native workflows. |
 
 ## Capability Families
 
 | Family | Status | Current evidence | Remaining product gap |
 | --- | --- | --- | --- |
-| Level 1 control plane | Deployed frontier | Finite sessions, restart checkpoints, one-shot scheduling, bounded window leases, and renewable missions with finite epochs, explicit renewal, pause/cancel, restart re-arm, and no-progress circuit break | A mission still consumes only already-reviewed queued work; it cannot invent goals, create an open-ended backlog, retry failures, or change policy |
+| Level 1 control plane | Candidate-ready | The deployed finite mission remains available; candidate `2rg3qq3nz...` adds an immutable reviewed task worklist, and the real gate proved zero-task binding plus two ordered one-per-epoch completions | Goals and order still require operator review; there is no provider planning, open-ended backlog, retry/skip, causal ranking, or policy change |
 | Level 2 trusted work view | Deployed | User-owned helper, isolated browser/workspace, fresh bounded capture, stale-authority rejection, recovery, takeover, and Observer projection | Broader native application workflows, not another capture or lease variant |
 | Level 3 controlled system body | Partially deployed | Fixed systemd owners, exact Polkit/peer boundaries, repair loop, resource evidence, process/network/file/process-lifecycle nerves | Physical Phase D mutation/rollback, wider fixed body nerves, and governed action composition |
 | Level 4 graphical body | Deployed bounded subset | Dedicated compositor/browser, native frame/input, semantic and OCR actions, bounded run/assessment, reviewed acceptance, submit, and current-tab close | Multi-application native workflows and longer mission-bound eye-hand work without arbitrary desktop control |
@@ -43,11 +43,18 @@ most 256 during one mission lifetime. Each authority grant is at most seven
 days and cannot extend the live horizon beyond 30 days. It is renewable, not
 uninterruptible or unbounded.
 
-## Next Vertical Route
+## Current Candidate Workflow
 
-The next missing autonomy behavior is a reviewed finite mission worklist. It should let
-the operator bind a bounded set of task blueprints to one mission and let the
-mission issue only the next reviewed item at an epoch boundary. This closes the
-task-supply gap without giving a provider open-ended task creation or policy
-authority. Adaptive ranking, physical Phase D, and wider body actions remain
+```text
+operator binds 1-16 reviewed goal + URL blueprints
+-> no task exists at bind time
+-> next epoch checkpoints one item as issuing
+-> existing reviewed task owner creates exactly that fixed task
+-> existing bounded window executes it
+-> only terminal completion unlocks the next item
+```
+
+After deployment review, the next route is a controlled
+evidence-based adaptation or richer native workflow. Provider goal invention,
+open-ended planning, retry/skip, physical Phase D, and wider body actions remain
 separate subsequent routes.

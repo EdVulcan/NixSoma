@@ -116,6 +116,25 @@ export function observerStyles() {
         margin: 14px 0 10px;
         accent-color: var(--accent);
       }
+      .mission-worklist-draft {
+        display: grid;
+        gap: 8px;
+        margin: 12px 0;
+        padding-left: 22px;
+      }
+      .mission-worklist-draft li {
+        min-width: 0;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--line);
+      }
+      .mission-worklist-draft li span {
+        display: block;
+        margin-bottom: 6px;
+        overflow-wrap: anywhere;
+      }
+      .mission-worklist-remove {
+        padding: 6px 10px;
+      }
       .work-view-frame {
         display: block;
         width: 100%;

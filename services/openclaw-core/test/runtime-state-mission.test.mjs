@@ -51,3 +51,42 @@ test("core state persists compact renewable mission checkpoints", (t) => {
   assert.equal(restored.renewableOperatorMissions.get("mission-1").status, "paused");
   assert.equal(restored.renewableOperatorMissions.get("mission-1").remainingEpochs, 5);
 });
+
+test("core state persists reviewed mission worklist issue checkpoints", (t) => {
+  const root = mkdtempSync(path.join(tmpdir(), "openclaw-core-reviewed-worklist-state-"));
+  const stateFilePath = path.join(root, "state.json");
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+
+  const runtime = createRuntimeState({ stateFilePath, getTaskById: () => null });
+  runtime.reviewedMissionWorklists.set("worklist-1", {
+    registry: "nixsoma-reviewed-finite-mission-worklist-v0",
+    id: "worklist-1",
+    missionId: "mission-1",
+    status: "active",
+    items: [{
+      id: "item-1",
+      ordinal: 1,
+      goal: "Inspect the persisted reviewed item",
+      targetUrl: "https://example.com/persisted",
+      blueprintHash: "a".repeat(64),
+      status: "issued",
+      issuedTaskId: "task-1",
+      issuedAt: "2026-08-02T12:01:00.000Z",
+      issueCheckpointAt: "2026-08-02T12:00:59.000Z",
+    }],
+    createdAt: "2026-08-02T12:00:00.000Z",
+    updatedAt: "2026-08-02T12:01:00.000Z",
+  });
+  runtime.persistState.flush();
+
+  const persisted = JSON.parse(readFileSync(stateFilePath, "utf8"));
+  assert.equal(persisted.reviewedMissionWorklists.length, 1);
+  assert.equal(persisted.reviewedMissionWorklists[0].items[0].issuedTaskId, "task-1");
+  assert.equal(persisted.reviewedMissionWorklists[0].items[0].goal, "Inspect the persisted reviewed item");
+
+  const restored = createRuntimeState({ stateFilePath, getTaskById: () => null });
+  restored.loadPersistentState();
+  assert.equal(restored.reviewedMissionWorklists.size, 1);
+  assert.equal(restored.reviewedMissionWorklists.get("worklist-1").missionId, "mission-1");
+  assert.equal(restored.reviewedMissionWorklists.get("worklist-1").items[0].status, "issued");
+});

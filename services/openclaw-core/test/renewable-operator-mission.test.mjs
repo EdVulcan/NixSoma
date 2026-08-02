@@ -4,7 +4,7 @@ import test from "node:test";
 import { createBoundedOperatorWindowLease } from "../src/bounded-operator-window-lease.mjs";
 import { createRenewableOperatorMissionSupervisor } from "../src/renewable-operator-mission.mjs";
 
-function createHarness(results = []) {
+function createHarness(results = [], { missionWorklist = null } = {}) {
   let currentMs = Date.parse("2026-08-01T14:00:00.000Z");
   const now = () => new Date(currentMs).toISOString();
   const leases = new Map();
@@ -26,6 +26,7 @@ function createHarness(results = []) {
     persistState: () => {},
     windowLease,
     now,
+    missionWorklist,
   });
   return {
     supervisor,
@@ -268,4 +269,79 @@ test("mission rejects unbounded authority and starts no timer by default", () =>
     governance: harness.supervisor.state().governance,
   });
   assert.equal(harness.supervisor.state().governance.automaticRetry, false);
+});
+
+test("mission issues reviewed work only before opening an epoch and closes on worklist completion", async () => {
+  const calls = [];
+  let worklistStatus = "active";
+  const worklist = {
+    async prepareEpoch(mission) {
+      calls.push({ action: "prepare", consumed: mission.epochsConsumed });
+      return {
+        ok: true,
+        managed: true,
+        ready: true,
+        issued: true,
+        taskId: "task-reviewed-1",
+        worklist: { id: "worklist-1", status: "active" },
+      };
+    },
+    refreshForMission(missionId) {
+      calls.push({ action: "refresh", missionId });
+      return { id: "worklist-1", status: worklistStatus, blockedReason: null };
+    },
+  };
+  const harness = createHarness([
+    { ran: true, steps: [{ task: { id: "task-reviewed-1" } }], blocked: false },
+  ], { missionWorklist: worklist });
+  arm(harness.supervisor, { epochCount: 2 });
+  worklistStatus = "completed";
+
+  const result = await harness.supervisor.tick();
+  assert.equal(result.ran, true);
+  assert.equal(result.mission.status, "completed");
+  assert.equal(result.mission.stopReason, "reviewed_worklist_completed");
+  assert.equal(result.mission.epochsConsumed, 1);
+  assert.equal(result.worklist.status, "completed");
+  assert.deepEqual(calls[0], { action: "prepare", consumed: 0 });
+  assert.equal(calls[1].action, "refresh");
+});
+
+test("mission blocks before consuming epoch authority when reviewed work supply fails", async () => {
+  const worklist = {
+    async prepareEpoch() {
+      return {
+        ok: false,
+        managed: true,
+        ready: false,
+        reason: "unrelated_active_task",
+        worklist: { id: "worklist-1", status: "blocked", blockedReason: "unrelated_active_task" },
+      };
+    },
+    refreshForMission: () => null,
+  };
+  const harness = createHarness([], { missionWorklist: worklist });
+  arm(harness.supervisor);
+
+  const result = await harness.supervisor.tick();
+  assert.equal(result.ran, false);
+  assert.equal(result.ok, false);
+  assert.equal(result.mission.status, "blocked");
+  assert.equal(result.mission.stopReason, "reviewed_worklist_unrelated_active_task");
+  assert.equal(result.mission.epochsConsumed, 0);
+  assert.equal(harness.windowLease.listPublic().length, 0);
+});
+
+test("mission cancellation closes its reviewed worklist", () => {
+  const closed = [];
+  const worklist = {
+    prepareEpoch: async () => ({ ok: true, managed: false, ready: true }),
+    refreshForMission: () => null,
+    closeForMission: (missionId, reason) => { closed.push({ missionId, reason }); },
+  };
+  const harness = createHarness([], { missionWorklist: worklist });
+  const mission = arm(harness.supervisor);
+
+  assert.equal(harness.supervisor.cancel(mission.id, true).status, "cancelled");
+  assert.deepEqual(closed, [{ missionId: mission.id, reason: "mission_cancelled" }]);
 });

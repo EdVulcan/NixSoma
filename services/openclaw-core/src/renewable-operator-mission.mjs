@@ -63,6 +63,8 @@ function governance() {
     explicitResumeAfterRestart: true,
     noProgressCircuitBreaker: true,
     automaticTaskCreation: false,
+    reviewedWorklistTaskIssuance: true,
+    openEndedTaskCreation: false,
     automaticPlanning: false,
     automaticRetry: false,
     providerAuthority: false,
@@ -155,10 +157,15 @@ export function createRenewableOperatorMissionSupervisor({
   clearTimer = clearInterval,
   intervalMs = 30_000,
   enabled = false,
+  missionWorklist = null,
 } = {}) {
   if (!(records instanceof Map)) throw new Error("Renewable operator mission supervisor requires a Map.");
   if (!windowLease || typeof windowLease.armForMission !== "function" || typeof windowLease.tick !== "function") {
     throw new Error("Renewable operator mission supervisor requires the bounded window lease owner.");
+  }
+  if (missionWorklist && (typeof missionWorklist.prepareEpoch !== "function"
+    || typeof missionWorklist.refreshForMission !== "function")) {
+    throw new Error("Renewable operator mission supervisor received an invalid reviewed worklist owner.");
   }
   let timer = null;
 
@@ -326,6 +333,7 @@ export function createRenewableOperatorMissionSupervisor({
     if (child?.status === "running") {
       mission.status = "cancelling";
       mission.stopReason = "operator_cancel_requested";
+      missionWorklist?.closeForMission?.(mission.id, "mission_cancelled");
       return save(mission);
     }
     if (child) windowLease.releaseForMission(child.id, mission.id);
@@ -333,6 +341,7 @@ export function createRenewableOperatorMissionSupervisor({
     mission.status = "cancelled";
     mission.stopReason = "operator_cancelled";
     mission.endedAt = now();
+    missionWorklist?.closeForMission?.(mission.id, "mission_cancelled");
     return save(mission);
   }
 
@@ -426,12 +435,16 @@ export function createRenewableOperatorMissionSupervisor({
 
   async function tick() {
     const mission = activeMission();
+    let worklistState = null;
     if (!mission) return { ok: true, ran: false, reason: "no_active_mission", mission: null };
     if (["pausing", "cancelling"].includes(mission.status) && !mission.childLeaseId) {
       mission.status = mission.status === "pausing" ? "paused" : "cancelled";
       mission.stopReason = mission.status === "paused" ? "operator_paused" : "operator_cancelled";
       if (mission.status === "paused") mission.pausedAt = now();
-      else mission.endedAt = now();
+      else {
+        mission.endedAt = now();
+        missionWorklist?.closeForMission?.(mission.id, "mission_cancelled");
+      }
       return { ok: true, ran: false, reason: mission.stopReason, mission: save(mission) };
     }
     if (Date.parse(mission.deadlineAt) <= Date.parse(now())) {
@@ -459,6 +472,29 @@ export function createRenewableOperatorMissionSupervisor({
         mission.stopReason = "insufficient_authority_for_next_epoch";
         mission.endedAt = now();
         return { ok: true, ran: false, reason: mission.stopReason, mission: save(mission) };
+      }
+      if (missionWorklist) {
+        let supply;
+        try {
+          supply = await missionWorklist.prepareEpoch(mission);
+        } catch {
+          supply = { ok: false, managed: true, ready: false, reason: "owner_unavailable", worklist: null };
+        }
+        worklistState = supply.worklist ?? null;
+        if (supply.managed === true && supply.ready !== true) {
+          mission.status = supply.reason === "worklist_completed" ? "completed" : "blocked";
+          mission.stopReason = supply.reason === "worklist_completed"
+            ? "reviewed_worklist_completed"
+            : `reviewed_worklist_${supply.reason ?? "blocked"}`;
+          mission.endedAt = now();
+          return {
+            ok: supply.ok !== false && mission.status === "completed",
+            ran: false,
+            reason: mission.stopReason,
+            mission: save(mission),
+            worklist: worklistState,
+          };
+        }
       }
       try {
         const child = windowLease.armForMission({
@@ -497,14 +533,31 @@ export function createRenewableOperatorMissionSupervisor({
         ran: childResult?.ran === true,
         reason: child?.status === "running" ? "epoch_running" : "epoch_window_not_due",
         mission: publicMission(currentMission),
+        worklist: worklistState,
       };
     }
     finishAfterChild(currentMission, child);
+    if (currentMission.status === "cancelled") {
+      missionWorklist?.closeForMission?.(currentMission.id, "mission_cancelled");
+    }
+    worklistState = missionWorklist?.refreshForMission(currentMission.id) ?? worklistState;
+    if (worklistState?.status === "blocked"
+      && !["cancelled", "expired"].includes(currentMission.status)) {
+      currentMission.status = "blocked";
+      currentMission.stopReason = `reviewed_worklist_${worklistState.blockedReason ?? "blocked"}`;
+      currentMission.endedAt = now();
+    } else if (worklistState?.status === "completed"
+      && ["armed", "completed"].includes(currentMission.status)) {
+      currentMission.status = "completed";
+      currentMission.stopReason = "reviewed_worklist_completed";
+      currentMission.endedAt = now();
+    }
     return {
       ok: childResult?.ok !== false && currentMission.status !== "blocked",
       ran: childResult?.ran === true,
       reason: currentMission.stopReason,
       mission: save(currentMission),
+      worklist: worklistState,
     };
   }
 
@@ -539,6 +592,7 @@ export function createRenewableOperatorMissionSupervisor({
             ? "authority_deadline_reached_during_restart"
             : "operator_cancelled_during_restart";
           mission.endedAt = now();
+          if (!authorityExpired) missionWorklist?.closeForMission?.(mission.id, "mission_cancelled");
         } else {
           mission.status = "paused";
           mission.stopReason = "core_restart_requires_explicit_rearm";

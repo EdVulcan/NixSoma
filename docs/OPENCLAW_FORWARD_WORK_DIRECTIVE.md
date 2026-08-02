@@ -210,6 +210,34 @@ units, authenticated default-off readback, and served Observer controls pass.
 Freeze the mission lifecycle and select a reviewed finite mission worklist,
 not another scheduling or readiness variant.
 
+That reviewed finite mission worklist is now candidate-ready. One
+unstarted mission may bind one immutable ordered set of 1-16 operator-reviewed
+goal/URL browser-task blueprints. Binding creates no task. At an epoch boundary
+Core flushes an `issuing` checkpoint, then the shared reviewed-task owner may
+create exactly that fixed task with compact worklist provenance. Only terminal
+completion unlocks the next item; failure, supersession, missing state,
+unrelated active work, issue failure, or restart during issue blocks without
+retry or skip. Cancellation closes the list, while finite authority exhaustion
+preserves pending items for existing explicit renewal. Provider planning,
+append/reorder, automatic recovery, policy changes, and host authority remain
+absent. The selected contract is
+`plans/OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md`.
+
+The real Core gate proved that binding two reviewed items created zero tasks,
+then two explicit epoch ticks issued and completed exactly those two goals in
+order without retry or skip. The served Observer gate exposes the draft, bind,
+progress, and durable readback controls. Focused Core/Observer tests, all 955
+Core package tests, workspace typecheck, the exact seven changed checks, and
+the 282/111-file Core/Observer Nix closures pass. The root-owned switchable
+physical candidate is
+`/nix/store/2rg3qq3nzg5yva0z0yg7scs4hb99asl0-nixos-system-nixos-26.05.4808.569d57850992`.
+It has the same immutable physical marker and six protected paths as active
+generation 110, contains 1826 closure paths (about 9.2 GiB), and keeps the
+mission timer disabled. It has not been activated; current/profile remain on
+generation 110 with the same boot id. Freeze implementation pending a fresh
+activation decision, then move to a controlled evidence-based adaptation or a
+richer native workflow rather than another queue wrapper.
+
 The operator-feedback memory edge is now implemented in
 `plans/OPENCLAW_OPERATOR_RECOMMENDATION_FEEDBACK_PLAN.md`. A terminal task
 with a validated recommendation outcome can receive one explicit

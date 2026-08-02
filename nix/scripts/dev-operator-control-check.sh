@@ -267,6 +267,26 @@ assert_json "$mission_restart_rearmed" 'const data=JSON.parse(process.argv[1]); 
 mission_restart_cancelled="$(post_json "$CORE_URL/operator/mission/$mission_restart_id/cancel" '{"confirm":true}')"
 assert_json "$mission_restart_cancelled" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.mission?.status!=="cancelled"){throw new Error("restart mission did not cancel explicitly");}'
 
+worklist_before_bind_summary="$(curl --silent "$CORE_URL/tasks/summary")"
+worklist_mission_arm="$(post_json "$CORE_URL/operator/mission" '{"epochCount":2,"maxStepsPerEpoch":1,"epochIntervalMs":0,"deadlineMs":60000,"maxNoProgressEpochs":2,"confirm":true}')"
+assert_json "$worklist_mission_arm" 'const data=JSON.parse(process.argv[1]); if(!data.ok || data.mission?.status!=="armed" || data.mission?.epochsConsumed!==0 || data.mission?.remainingEpochs!==2){throw new Error("reviewed worklist mission did not arm with two untouched epochs");}'
+worklist_mission_id="$(printf '%s' "$worklist_mission_arm" | node -e 'const fs=require("node:fs"); const data=JSON.parse(fs.readFileSync(0,"utf8")); process.stdout.write(data.mission?.id ?? "");')"
+if [[ -z "$worklist_mission_id" ]]; then
+  echo "reviewed worklist mission id missing" >&2
+  exit 1
+fi
+export OPENCLAW_WORKLIST_MISSION_ID="$worklist_mission_id"
+
+worklist_bound="$(post_json "$CORE_URL/operator/mission/$worklist_mission_id/worklist" "{\"items\":[{\"goal\":\"Reviewed mission worklist task one\",\"targetUrl\":\"$TARGET_URL\"},{\"goal\":\"Reviewed mission worklist task two\",\"targetUrl\":\"$TARGET_URL\"}],\"confirm\":true}")"
+assert_json "$worklist_bound" 'const data=JSON.parse(process.argv[1]); const worklist=data.worklist; if(!data.ok || worklist?.registry!=="nixsoma-reviewed-finite-mission-worklist-v0" || worklist?.status!=="bound" || worklist?.itemCount!==2 || worklist?.issuedCount!==0 || worklist?.completedCount!==0 || worklist?.nextItemOrdinal!==1 || worklist?.items?.some((item)=>item.status!=="pending" || item.issuedTaskId!==null) || worklist?.governance?.automaticRetry!==false || worklist?.governance?.automaticSkip!==false || worklist?.governance?.providerCanExtendWorklist!==false){throw new Error("reviewed mission worklist did not bind as an immutable zero-task supply");}'
+worklist_after_bind_summary="$(curl --silent "$CORE_URL/tasks/summary")"
+
+worklist_first="$(post_json "$CORE_URL/operator/mission/tick" '{}')"
+assert_json "$worklist_first" 'const data=JSON.parse(process.argv[1]); const items=data.worklist?.items; if(!data.ok || data.ran!==true || data.mission?.status!=="armed" || data.mission?.epochsConsumed!==1 || data.mission?.epochsCompleted!==1 || data.worklist?.completedCount!==1 || data.worklist?.nextItemOrdinal!==2 || items?.[0]?.ordinal!==1 || items?.[0]?.status!=="completed" || !items?.[0]?.issuedTaskId || !items?.[0]?.issueCheckpointAt || items?.[1]?.ordinal!==2 || items?.[1]?.status!=="pending" || items?.[1]?.issuedTaskId!==null){throw new Error("first reviewed worklist epoch did not issue and complete only item one");}'
+worklist_second="$(post_json "$CORE_URL/operator/mission/tick" '{}')"
+assert_json "$worklist_second" 'const data=JSON.parse(process.argv[1]); const items=data.worklist?.items; if(!data.ok || data.ran!==true || data.mission?.status!=="completed" || data.mission?.stopReason!=="reviewed_worklist_completed" || data.mission?.epochsConsumed!==2 || data.mission?.epochsCompleted!==2 || data.worklist?.status!=="completed" || data.worklist?.issuedCount!==2 || data.worklist?.completedCount!==2 || data.worklist?.progressPercent!==100 || data.worklist?.nextItemOrdinal!==null || items?.length!==2 || items.some((item)=>item.status!=="completed" || item.terminalTaskStatus!=="completed" || !item.issuedTaskId || !item.issueCheckpointAt) || items[0].issuedTaskId===items[1].issuedTaskId){throw new Error("second reviewed worklist epoch did not finish the exact ordered supply");}'
+worklist_final_tasks="$(curl --silent "$CORE_URL/tasks?limit=20")"
+
 final_state="$(curl --silent "$CORE_URL/operator/state")"
 
 RESULT_DIR="$(mktemp -d)"
@@ -299,6 +319,13 @@ printf '%s' "$mission_final" > "$RESULT_DIR/mission-final.json"
 printf '%s' "$mission_restart_state" > "$RESULT_DIR/mission-restart-state.json"
 printf '%s' "$mission_restart_rearmed" > "$RESULT_DIR/mission-restart-rearmed.json"
 printf '%s' "$mission_restart_cancelled" > "$RESULT_DIR/mission-restart-cancelled.json"
+printf '%s' "$worklist_before_bind_summary" > "$RESULT_DIR/worklist-before-bind-summary.json"
+printf '%s' "$worklist_mission_arm" > "$RESULT_DIR/worklist-mission-arm.json"
+printf '%s' "$worklist_bound" > "$RESULT_DIR/worklist-bound.json"
+printf '%s' "$worklist_after_bind_summary" > "$RESULT_DIR/worklist-after-bind-summary.json"
+printf '%s' "$worklist_first" > "$RESULT_DIR/worklist-first.json"
+printf '%s' "$worklist_second" > "$RESULT_DIR/worklist-second.json"
+printf '%s' "$worklist_final_tasks" > "$RESULT_DIR/worklist-final-tasks.json"
 printf '%s' "$final_state" > "$RESULT_DIR/final.json"
 
 OPENCLAW_CONTINUITY_SESSION_ID="$continuity_session_id" OPENCLAW_REARM_ID="$rearm_id" node - <<'EOF' "$RESULT_DIR"
@@ -334,10 +361,17 @@ const missionFinal = readResult("mission-final");
 const missionRestartState = readResult("mission-restart-state");
 const missionRestartRearmed = readResult("mission-restart-rearmed");
 const missionRestartCancelled = readResult("mission-restart-cancelled");
+const worklistBeforeBindSummary = readResult("worklist-before-bind-summary");
+const worklistMissionArm = readResult("worklist-mission-arm");
+const worklistBound = readResult("worklist-bound");
+const worklistAfterBindSummary = readResult("worklist-after-bind-summary");
+const worklistFirst = readResult("worklist-first");
+const worklistSecond = readResult("worklist-second");
+const worklistFinalTasks = readResult("worklist-final-tasks");
 const finalState = readResult("final");
 
-if (finalState.operator?.status !== "idle" || finalState.operator?.summary?.counts?.completed !== 5) {
-  throw new Error("final operator state should be idle with five completed tasks");
+if (finalState.operator?.status !== "idle" || finalState.operator?.summary?.counts?.completed !== 7) {
+  throw new Error("final operator state should be idle with seven completed tasks");
 }
 const restoredSession = continuityRestored.runSessions?.find((item) => item.id === process.env.OPENCLAW_CONTINUITY_SESSION_ID);
   if (continuityBlocked.runSession?.status !== "paused"
@@ -373,6 +407,26 @@ if (missionArm.mission?.status !== "armed"
   || missionRestartRearmed.mission?.status !== "armed"
   || missionRestartCancelled.mission?.status !== "cancelled") {
   throw new Error("renewable operator mission evidence is incomplete");
+}
+const beforeBindCounts = worklistBeforeBindSummary.summary?.counts ?? {};
+const afterBindCounts = worklistAfterBindSummary.summary?.counts ?? {};
+const worklistItems = worklistSecond.worklist?.items ?? [];
+const worklistTasks = worklistFinalTasks.items?.filter((task) => (
+  worklistItems.some((item) => item.issuedTaskId === task.id)
+)) ?? [];
+if (beforeBindCounts.total !== 5
+  || afterBindCounts.total !== beforeBindCounts.total
+  || afterBindCounts.active !== 0
+  || worklistMissionArm.mission?.epochsConsumed !== 0
+  || worklistBound.worklist?.issuedCount !== 0
+  || worklistFirst.worklist?.items?.[1]?.status !== "pending"
+  || worklistSecond.worklist?.status !== "completed"
+  || worklistTasks.length !== 2
+  || worklistTasks.find((task) => task.id === worklistItems[0]?.issuedTaskId)?.goal !== "Reviewed mission worklist task one"
+  || worklistTasks.find((task) => task.id === worklistItems[1]?.issuedTaskId)?.goal !== "Reviewed mission worklist task two"
+  || worklistTasks.some((task) => task.status !== "completed")
+  || worklistFinalTasks.summary?.counts?.total !== beforeBindCounts.total + 2) {
+  throw new Error("reviewed finite mission worklist task issuance evidence is incomplete");
 }
 
 console.log(JSON.stringify({
@@ -411,6 +465,21 @@ console.log(JSON.stringify({
     restartRearmed: missionRestartRearmed.mission?.status ?? null,
     restartCancelled: missionRestartCancelled.mission?.status ?? null,
     automaticRetry: missionFinal.mission?.governance?.automaticRetry ?? null,
+  },
+  reviewedMissionWorklist: {
+    registry: worklistSecond.worklist?.registry ?? null,
+    missionId: worklistSecond.worklist?.missionId ?? null,
+    itemCount: worklistSecond.worklist?.itemCount ?? null,
+    issuedCount: worklistSecond.worklist?.issuedCount ?? null,
+    completedCount: worklistSecond.worklist?.completedCount ?? null,
+    taskIds: worklistItems.map((item) => item.issuedTaskId),
+    taskGoals: worklistItems.map((item) => (
+      worklistTasks.find((task) => task.id === item.issuedTaskId)?.goal ?? null
+    )),
+    bindingCreatedTasks: afterBindCounts.total - beforeBindCounts.total,
+    stopReason: worklistSecond.mission?.stopReason ?? null,
+    automaticRetry: worklistSecond.worklist?.governance?.automaticRetry ?? null,
+    automaticSkip: worklistSecond.worklist?.governance?.automaticSkip ?? null,
   },
   pauseGate: {
     status: paused.operator?.status ?? null,

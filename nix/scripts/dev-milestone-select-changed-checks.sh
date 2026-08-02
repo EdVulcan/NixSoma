@@ -726,6 +726,45 @@ const renewableOperatorMissionSlice = changedFiles.length > 0
   && changedFiles.every((file) => renewableOperatorMissionFiles.has(file))
   && changedFiles.some((file) => file === "apps/observer-ui/src/client-script-runtime-operator-mission.mjs")
   && changedFiles.some((file) => file === "services/openclaw-core/src/renewable-operator-mission.mjs");
+const reviewedFiniteMissionWorklistFiles = new Set([
+  "apps/observer-ui/src/client-script-runtime-actions.mjs",
+  "apps/observer-ui/src/client-script-runtime-bindings.mjs",
+  "apps/observer-ui/src/client-script-runtime-operator-mission.mjs",
+  "apps/observer-ui/src/client-script-runtime-operator-mission-worklist.mjs",
+  "apps/observer-ui/src/observer-panel-operator-mission-worklist.mjs",
+  "apps/observer-ui/src/observer-panels-operations.mjs",
+  "apps/observer-ui/src/observer-styles.mjs",
+  "apps/observer-ui/test/client-script-runtime-operator-mission.test.mjs",
+  "apps/observer-ui/test/client-script-runtime-operator-mission-worklist.test.mjs",
+  "docs/NIXSOMA_CAPABILITY_MAP.md",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/plans/OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md",
+  "docs/plans/README.md",
+  "nix/packages/observer-ui.nix",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "nix/scripts/dev-observer-operator-check.sh",
+  "nix/scripts/dev-operator-control-check.sh",
+  "services/openclaw-core/src/operator-mission-routes.mjs",
+  "services/openclaw-core/src/renewable-operator-mission.mjs",
+  "services/openclaw-core/src/reviewed-browser-task-owner.mjs",
+  "services/openclaw-core/src/reviewed-mission-worklist.mjs",
+  "services/openclaw-core/src/route-handlers.mjs",
+  "services/openclaw-core/src/runtime-state.mjs",
+  "services/openclaw-core/src/server.mjs",
+  "services/openclaw-core/src/task-routes.mjs",
+  "services/openclaw-core/test/operator-auth.test.mjs",
+  "services/openclaw-core/test/renewable-operator-mission.test.mjs",
+  "services/openclaw-core/test/reviewed-browser-task-owner.test.mjs",
+  "services/openclaw-core/test/reviewed-mission-worklist.test.mjs",
+  "services/openclaw-core/test/route-handlers.test.mjs",
+  "services/openclaw-core/test/runtime-state-mission.test.mjs",
+]);
+const reviewedFiniteMissionWorklistSlice = changedFiles.length > 0
+  && changedFiles.every((file) => reviewedFiniteMissionWorklistFiles.has(file))
+  && changedFiles.some((file) => file === "services/openclaw-core/src/reviewed-mission-worklist.mjs")
+  && changedFiles.some((file) => file === "apps/observer-ui/src/client-script-runtime-operator-mission-worklist.mjs");
 const reviewedTaskWorkspaceSessionFiles = new Set([
   "apps/observer-ui/src/client-script-config-dom.mjs",
   "apps/observer-ui/src/client-script-runtime-actions.mjs",
@@ -1696,6 +1735,16 @@ function selectSourceHeuristics(file) {
 }
 
 for (const file of changedFiles) {
+  if (reviewedFiniteMissionWorklistSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("operator-control");
+    selectName("observer-operator");
+    continue;
+  }
   if (renewableOperatorMissionSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");

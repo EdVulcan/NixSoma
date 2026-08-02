@@ -7,6 +7,7 @@ import { registerRoutes } from "../src/route-handlers.mjs";
 import { buildEyeHandRecoveryEvidence } from "../src/task-recovery.mjs";
 import { createOperatorAuthenticator } from "../src/operator-auth.mjs";
 import { createOperatorRunSessionManager } from "../src/operator-run-session.mjs";
+import { createReviewedBrowserTaskOwner } from "../src/reviewed-browser-task-owner.mjs";
 import {
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_REGISTRY,
@@ -1588,6 +1589,12 @@ test("bounded operator window routes expose only finite lease controls", async (
 
 test("renewable mission routes forward only finite authority controls", async () => {
   const calls = [];
+  const worklist = {
+    id: "worklist-1",
+    missionId: "mission-1",
+    status: "bound",
+    itemCount: 1,
+  };
   const supervisor = {
     state: () => ({ registry: "nixsoma-renewable-operator-mission-v0", enabled: false }),
     listPublic: () => [{ id: "mission-1", status: "armed", epochsAuthorized: 4 }],
@@ -1598,7 +1605,20 @@ test("renewable mission routes forward only finite authority controls", async ()
     rearm: (id, body) => { calls.push({ action: "rearm", id, body }); return { id, status: "armed" }; },
     cancel: (id, confirm) => { calls.push({ action: "cancel", id, confirm }); return { id, status: "cancelled" }; },
   };
-  const deps = createBaseDeps({ deps: { renewableOperatorMissionSupervisor: supervisor } });
+  const reviewedMissionWorklist = {
+    listPublic: () => [worklist],
+    refreshForMission: (missionId) => {
+      calls.push({ action: "worklist_read", missionId });
+      return worklist;
+    },
+    bind: (mission, body) => {
+      calls.push({ action: "worklist_bind", missionId: mission.id, body });
+      return worklist;
+    },
+  };
+  const deps = createBaseDeps({
+    deps: { renewableOperatorMissionSupervisor: supervisor, reviewedMissionWorklist },
+  });
   const armBody = {
     epochCount: 4,
     maxStepsPerEpoch: 2,
@@ -1611,6 +1631,16 @@ test("renewable mission routes forward only finite authority controls", async ()
   const state = await invokeRoute(deps, "GET", "/operator/mission");
   assert.equal(state.statusCode, 200);
   assert.equal(state.body.supervisor.registry, "nixsoma-renewable-operator-mission-v0");
+  assert.equal(state.body.worklists[0].id, "worklist-1");
+  const boundWorklist = await invokeRoute(deps, "POST", "/operator/mission/mission-1/worklist", {
+    items: [{ goal: "Inspect one item", targetUrl: "https://example.com/one" }],
+    confirm: true,
+  });
+  assert.equal(boundWorklist.statusCode, 201);
+  assert.equal(boundWorklist.body.worklist.id, "worklist-1");
+  const readWorklist = await invokeRoute(deps, "GET", "/operator/mission/mission-1/worklist");
+  assert.equal(readWorklist.statusCode, 200);
+  assert.equal(readWorklist.body.worklist.status, "bound");
   assert.equal((await invokeRoute(deps, "POST", "/operator/mission", armBody)).statusCode, 201);
   assert.equal((await invokeRoute(deps, "POST", "/operator/mission/tick", {})).statusCode, 200);
   assert.equal((await invokeRoute(deps, "POST", "/operator/mission/mission-1/renew", {
@@ -1625,6 +1655,15 @@ test("renewable mission routes forward only finite authority controls", async ()
   })).statusCode, 200);
   assert.equal((await invokeRoute(deps, "POST", "/operator/mission/mission-1/cancel", { confirm: true })).statusCode, 200);
   assert.deepEqual(calls, [
+    {
+      action: "worklist_bind",
+      missionId: "mission-1",
+      body: {
+        items: [{ goal: "Inspect one item", targetUrl: "https://example.com/one" }],
+        confirm: true,
+      },
+    },
+    { action: "worklist_read", missionId: "mission-1" },
     { action: "arm", body: armBody },
     { action: "tick" },
     { action: "renew", id: "mission-1", body: { additionalEpochs: 2, extensionMs: 3_600_000, confirm: true } },
@@ -2231,23 +2270,34 @@ test("reviewed browser task route creates a fixed plan without execution authori
     status: "queued",
     plan: { strategy: "rule-v1", steps: [] },
   };
+  const taskManager = {
+    createTask: (input) => {
+      createdInput = input;
+      return task;
+    },
+    supersedeOtherActiveTasks: () => [],
+    reconcileRuntimeState: () => {},
+    serialiseTask: (value) => ({ ...value, serialised: true }),
+  };
+  const approvalEngine = {
+    publishTaskApprovalIfPending: async () => {},
+  };
+  const planBuilder = {
+    serialisePlanForPublic: (plan) => ({ ...plan, public: true }),
+  };
+  const publishEvent = async (type, payload) => events.push({ type, payload });
+  const reviewedBrowserTaskOwner = createReviewedBrowserTaskOwner({
+    taskManager,
+    approvalEngine,
+    planBuilder,
+    publishEvent,
+  });
   const deps = createBaseDeps({
-    taskManager: {
-      createTask: (input) => {
-        createdInput = input;
-        return task;
-      },
-      supersedeOtherActiveTasks: () => [],
-      reconcileRuntimeState: () => {},
-      serialiseTask: (value) => ({ ...value, serialised: true }),
-    },
-    approvalEngine: {
-      publishTaskApprovalIfPending: async () => {},
-    },
-    planBuilder: {
-      serialisePlanForPublic: (plan) => ({ ...plan, public: true }),
-    },
-    publishEvent: async (type, payload) => events.push({ type, payload }),
+    taskManager,
+    approvalEngine,
+    planBuilder,
+    publishEvent,
+    deps: { reviewedBrowserTaskOwner },
   });
 
   const response = await invokeRoute(deps, "POST", "/tasks/reviewed-browser", {
