@@ -53,6 +53,7 @@ export function createTaskExecutor(deps) {
     hostdActivationClient = requestHostdManagedConfigActivation,
     hostdRollbackClient = requestHostdManagedConfigRollback,
     buildExperienceMemoryReadModel = () => null,
+    selectProviderExperienceMemory = null,
     readWorkViewState = readNativeEngineeringWorkViewState,
   } = deps;
   const {
@@ -1435,6 +1436,7 @@ async function buildOperatorOptions(task, body = {}) {
       runtimeState,
       workbenchRecords: state.nativeEngineeringPlanTodoWorkbenchRecords,
       buildExperienceMemoryReadModel,
+      selectProviderExperienceMemory,
       sessionManagerUrl,
       readWorkViewState,
     });

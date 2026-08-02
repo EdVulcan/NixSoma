@@ -18,6 +18,8 @@ const nativeEngineeringLspLifecycleRecords = new Map();
 const nativeEngineeringPlanTodoWorkbenchRecords = new Map();
 const acpxBridgeSessionRecords = new Map();
 const experienceMemoryRecords = new Map();
+const experienceAdaptationExperiments = new Map();
+const experienceAdaptationProfiles = new Map();
 const operatorRunSessions = new Map();
 const boundedOperatorSchedules = new Map();
 const boundedOperatorWindowLeases = new Map();
@@ -43,6 +45,8 @@ const MAX_NATIVE_ENGINEERING_LSP_LIFECYCLE_RECORDS = 100;
 const MAX_NATIVE_ENGINEERING_PLAN_TODO_WORKBENCH_RECORDS = 100;
 const MAX_ACPX_BRIDGE_SESSION_RECORDS = 100;
 const MAX_EXPERIENCE_MEMORY_RECORDS = 200;
+const MAX_EXPERIENCE_ADAPTATION_EXPERIMENTS = 16;
+const MAX_EXPERIENCE_ADAPTATION_PROFILES = 32;
 const MAX_OPERATOR_RUN_SESSION_ENTRIES = 20;
 const MAX_BOUNDED_OPERATOR_SCHEDULE_ENTRIES = 8;
 const MAX_BOUNDED_OPERATOR_WINDOW_LEASE_ENTRIES = 8;
@@ -174,6 +178,8 @@ function updateRuntimeState(patch) {
     nativeEngineeringPlanTodoWorkbenchRecords: [...nativeEngineeringPlanTodoWorkbenchRecords.values()],
     acpxBridgeSessionRecords: [...acpxBridgeSessionRecords.values()],
     experienceMemoryRecords: [...experienceMemoryRecords.values()],
+    experienceAdaptationExperiments: [...experienceAdaptationExperiments.values()],
+    experienceAdaptationProfiles: [...experienceAdaptationProfiles.values()],
     operatorRunSessions: [...operatorRunSessions.values()],
     boundedOperatorSchedules: [...boundedOperatorSchedules.values()],
     boundedOperatorWindowLeases: [...boundedOperatorWindowLeases.values()],
@@ -273,6 +279,25 @@ function loadPersistentState() {
         }
       }
     }
+    if (Array.isArray(data?.experienceAdaptationExperiments)) {
+      experienceAdaptationExperiments.clear();
+      for (const experiment of data.experienceAdaptationExperiments.slice(-MAX_EXPERIENCE_ADAPTATION_EXPERIMENTS)) {
+        if (typeof experiment?.id === "string"
+          && experiment.registry === "nixsoma-experience-ranking-experiment-v0"
+          && Array.isArray(experiment.assignments)) {
+          experienceAdaptationExperiments.set(experiment.id, experiment);
+        }
+      }
+    }
+    if (Array.isArray(data?.experienceAdaptationProfiles)) {
+      experienceAdaptationProfiles.clear();
+      for (const profile of data.experienceAdaptationProfiles.slice(-MAX_EXPERIENCE_ADAPTATION_PROFILES)) {
+        if (typeof profile?.taskType === "string"
+          && profile.registry === "nixsoma-experience-ranking-profile-v0") {
+          experienceAdaptationProfiles.set(profile.taskType, profile);
+        }
+      }
+    }
     if (Array.isArray(data?.operatorRunSessions)) {
       operatorRunSessions.clear();
       for (const session of data.operatorRunSessions.slice(-MAX_OPERATOR_RUN_SESSION_ENTRIES)) {
@@ -329,10 +354,10 @@ function getCurrentTask() {
 }
 
   return {
-    tasks, approvals, runtimeState, policyAuditLog, capabilityInvocationLog, nativeEngineeringLspLifecycleRecords, nativeEngineeringPlanTodoWorkbenchRecords, acpxBridgeSessionRecords, experienceMemoryRecords, operatorRunSessions, boundedOperatorSchedules, boundedOperatorWindowLeases, renewableOperatorMissions, reviewedMissionWorklists, fixedUnitIncidentSchedulerState, standingProviderAdvisoryState,
+    tasks, approvals, runtimeState, policyAuditLog, capabilityInvocationLog, nativeEngineeringLspLifecycleRecords, nativeEngineeringPlanTodoWorkbenchRecords, acpxBridgeSessionRecords, experienceMemoryRecords, experienceAdaptationExperiments, experienceAdaptationProfiles, operatorRunSessions, boundedOperatorSchedules, boundedOperatorWindowLeases, renewableOperatorMissions, reviewedMissionWorklists, fixedUnitIncidentSchedulerState, standingProviderAdvisoryState,
     ACTIVE_TASK_STATUSES, MAX_TASK_ENTRIES, MAX_PHASE_HISTORY_ENTRIES,
     MAX_POLICY_AUDIT_ENTRIES, MAX_APPROVAL_ITEMS, MAX_CAPABILITY_INVOCATION_ENTRIES,
-    MAX_NATIVE_ENGINEERING_LSP_LIFECYCLE_RECORDS, MAX_NATIVE_ENGINEERING_PLAN_TODO_WORKBENCH_RECORDS, MAX_ACPX_BRIDGE_SESSION_RECORDS, MAX_EXPERIENCE_MEMORY_RECORDS, MAX_OPERATOR_RUN_SESSION_ENTRIES, MAX_BOUNDED_OPERATOR_SCHEDULE_ENTRIES, MAX_BOUNDED_OPERATOR_WINDOW_LEASE_ENTRIES, MAX_RENEWABLE_OPERATOR_MISSION_ENTRIES, MAX_REVIEWED_MISSION_WORKLIST_ENTRIES,
+    MAX_NATIVE_ENGINEERING_LSP_LIFECYCLE_RECORDS, MAX_NATIVE_ENGINEERING_PLAN_TODO_WORKBENCH_RECORDS, MAX_ACPX_BRIDGE_SESSION_RECORDS, MAX_EXPERIENCE_MEMORY_RECORDS, MAX_EXPERIENCE_ADAPTATION_EXPERIMENTS, MAX_EXPERIENCE_ADAPTATION_PROFILES, MAX_OPERATOR_RUN_SESSION_ENTRIES, MAX_BOUNDED_OPERATOR_SCHEDULE_ENTRIES, MAX_BOUNDED_OPERATOR_WINDOW_LEASE_ENTRIES, MAX_RENEWABLE_OPERATOR_MISSION_ENTRIES, MAX_REVIEWED_MISSION_WORKLIST_ENTRIES,
     CROSS_BOUNDARY_INTENTS, DENIED_INTENTS, CAPABILITY_HEALTH_TIMEOUT_MS,
     CAPABILITY_EXECUTION_RESERVATION_TTL_MS,
     APPROVAL_TTL_MS, SYSTEMD_REPAIR_EXECUTION_TIMEOUT_MS,

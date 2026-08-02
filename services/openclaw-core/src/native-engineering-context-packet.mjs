@@ -1,4 +1,7 @@
 import { buildNativeEngineeringMicrocompactProjection } from "./native-engineering-microcompact-projection.mjs";
+import {
+  NATIVE_ENGINEERING_EXPERIENCE_ADAPTATION_EVIDENCE,
+} from "./native-engineering-experience-adaptation.mjs";
 
 export const NATIVE_ENGINEERING_CONTEXT_PACKET_REGISTRY =
   "openclaw-native-engineering-context-packet-v0";
@@ -141,6 +144,9 @@ export function buildNativeEngineeringContextPacket({
     .slice(0, safeLimit)
     .reverse();
   const sourceMessages = [];
+  const experienceAdaptation = experienceMemory
+    ? experienceMemory[NATIVE_ENGINEERING_EXPERIENCE_ADAPTATION_EVIDENCE] ?? null
+    : null;
   let redactions = 0;
   let truncatedOutputs = 0;
 
@@ -236,6 +242,13 @@ export function buildNativeEngineeringContextPacket({
         experienceMemory?.summary?.feedbackAdvisoryUseProven === true,
       experienceMemoryStatus: experienceMemory?.summary?.status ?? null,
       experienceMemoryAdvisoryOnly: experienceMemory?.summary?.advisoryOnly === true,
+      experienceMemoryRankingMode: experienceAdaptation?.rankingMode ?? "baseline",
+      experienceAdaptationExperimentId: experienceAdaptation?.experimentId ?? null,
+      experienceAdaptationAssignmentIndex: experienceAdaptation?.assignmentIndex ?? null,
+      experienceAdaptationAssignmentHash: experienceAdaptation?.assignmentHash ?? null,
+      experienceAdaptationRandomized: experienceAdaptation?.randomizedAssignment === true,
+      experienceAdaptationProfileId: experienceAdaptation?.activeProfileId ?? null,
+      experienceAdaptationProfileEvidenceHash: experienceAdaptation?.profileEvidenceHash ?? null,
     },
     bounds: {
       maxTranscriptRecords: MAX_LIMIT,
@@ -252,6 +265,7 @@ export function buildNativeEngineeringContextPacket({
       sourceTaskId: selectedSourceTaskId,
       workViewAssociationRegistry: workViewAssociation?.registry ?? null,
       experienceMemoryRegistry: experienceMemory?.registry ?? null,
+      experienceAdaptationRegistry: experienceAdaptation?.registry ?? null,
     },
     governance: {
       localAssemblyOnly: true,
@@ -268,6 +282,10 @@ export function buildNativeEngineeringContextPacket({
       readsPlanTodoEvidence: Boolean(planTodoEvidence),
       readsExperienceMemory: Boolean(experienceMemory),
       experienceMemoryAdvisoryOnly: experienceMemory?.governance?.advisoryOnly === true,
+      experienceAdaptationChangesExecutionPolicy:
+        experienceAdaptation?.changesExecutionPolicy === true,
+      experienceAdaptationChangesAuthority: experienceAdaptation?.changesAuthority === true,
+      experienceAdaptationCallerSelectedArm: experienceAdaptation?.callerSelectedArm === true,
       localServiceReadOnly: Boolean(workViewAssociation),
     },
     auditEvidence: {
@@ -284,6 +302,19 @@ export function buildNativeEngineeringContextPacket({
           reclaimedChars: projection.summary.reclaimedChars,
           workViewAssociation: workViewAssociation?.summary ?? null,
           experienceMemory: experienceMemory?.auditEvidence?.summary ?? null,
+          experienceAdaptation: experienceAdaptation
+            ? {
+                registry: experienceAdaptation.registry,
+                rankingMode: experienceAdaptation.rankingMode,
+                experimentId: experienceAdaptation.experimentId,
+                assignmentIndex: experienceAdaptation.assignmentIndex,
+                assignmentHash: experienceAdaptation.assignmentHash,
+                randomizedAssignment: experienceAdaptation.randomizedAssignment,
+                callerSelectedArm: experienceAdaptation.callerSelectedArm,
+                activeProfileId: experienceAdaptation.activeProfileId,
+                profileEvidenceHash: experienceAdaptation.profileEvidenceHash,
+              }
+            : null,
         },
     },
     workViewAssociation,

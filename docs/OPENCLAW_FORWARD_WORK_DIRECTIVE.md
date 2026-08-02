@@ -239,8 +239,9 @@ restarted, and GDM/NetworkManager/SSH remained on their prior processes. All
 nine endpoints return 200, all seven system plus two user owners are active
 with zero restarts, failed-unit/error-journal checks are empty, authenticated
 default-off worklist readback passes, and deployed Observer controls are
-served. Freeze this lifecycle and move to controlled evidence-based adaptation
-or a richer native workflow rather than another queue wrapper.
+served. Freeze this lifecycle. The selected controlled evidence-based
+adaptation continuation is implemented in source below; generation 111 remains
+the deployed worklist baseline until a separately authorized switch.
 
 The operator-feedback memory edge is now implemented in
 `plans/OPENCLAW_OPERATOR_RECOMMENDATION_FEEDBACK_PLAN.md`. A terminal task
@@ -261,14 +262,31 @@ owned by their separate receipts. No recalled record id, context, provider
 content, provider call, task creation, approval, retry, or host authority is
 added by this continuation.
 
+The first controlled evidence-based adaptation owner is now complete in
+source. One explicit operator command arms 8-32 finite assignments for one
+task type. Core privately uses balanced random pairs to compare the existing
+baseline recall order with an operator-feedback-weighted order, checkpoints the
+assignment before provider dispatch, and binds terminal evidence through the
+existing provider/application/execution/outcome receipt chain. The provider
+message receives neither the experiment id nor arm label. Only a complete
+balanced result satisfying the predeclared 0.25 effect and two-sided Fisher
+exact `p <= 0.05` rule produces a hash-bound candidate; exact operator
+activation or revocation changes recall ordering only. Core restart pauses open
+experiments. There is no caller-selected arm, automatic provider call, task,
+approval, action, policy change, authority expansion, model training, retry, or
+general causal claim. Core `963/963`, Observer `118/118`, the reusable real
+Core/Observer gate, body-config, and exact `284/114`-file Nix closures pass.
+Physical deployment and a live experiment remain separate decisions. The
+contract is `plans/OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md`.
+
 For route planning, keep deployment and source denominators explicit. The
-physically deployed operator-governed product and current source frontier,
-including the reviewed finite mission worklist, are roughly 88-91% mature. The wider
-autonomous-agent body described by the identity route and kernel whitepaper is
-roughly 56-62% complete. Mission supervision closes
+physically deployed operator-governed product remains roughly 88-91% mature,
+while the source bounded product with controlled adaptation is roughly 90-92%
+mature. The wider autonomous-agent body described by the identity route and
+kernel whitepaper is roughly 58-63% complete. Mission supervision closes
 multi-epoch lifecycle continuity for already-reviewed work; autonomous task
-supply/planning, evidence-based adaptation, broader body nerves, physical
-Phase D evolution, and richer native workflows keep the final number lower.
+supply/planning, live replicated adaptation evidence, broader body nerves,
+physical Phase D evolution, and richer native workflows keep the final number lower.
 The canonical breakdown is `NIXSOMA_CAPABILITY_MAP.md`.
 
 The physical host now runs generation 111:
@@ -384,11 +402,13 @@ one-off call surface.
 ## Selected Next Real Capability
 
 The reviewed task work-view continuity, recall-to-recommendation provenance,
-and explicit operator-feedback edges are implemented and frozen after
-source-level validation. The process-lifecycle physical deployment proof is
-now also complete. Do not reopen the feedback lane for another receipt wrapper,
-automatic learning claim, or ranking/policy variant; select a distinct broader
-body capability from the identity-upgrade path.
+explicit operator-feedback edge, and controlled recall-ordering experiment are
+implemented and frozen after source, real-service, and Nix closure validation.
+The process-lifecycle physical deployment proof is also complete. Do not reopen
+the feedback lane for another receipt wrapper, observational score, automatic
+learning claim, or authority-changing ranking variant. The next source route is
+a richer native multi-step workflow; physical Phase D promotion/rollback is a
+separate explicitly authorized route.
 
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation

@@ -18,6 +18,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-config-dom-kernel-activity.mjs
     ../../apps/observer-ui/src/client-script-config-dom-kernel-process-lifecycle.mjs
     ../../apps/observer-ui/src/client-script-config-dom-engineering-context.mjs
+    ../../apps/observer-ui/src/client-script-config-dom-engineering-adaptation.mjs
     ../../apps/observer-ui/src/client-script-config-dom-engineering-provider-handoff.mjs
     ../../apps/observer-ui/src/client-script-config-dom-mvp-memory.mjs
     ../../apps/observer-ui/src/client-script-config-dom-native-runtime-refresh.mjs
@@ -78,6 +79,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-runtime-engineering-lsp-target-selection.mjs
     ../../apps/observer-ui/src/client-script-runtime-engineering-plan.mjs
     ../../apps/observer-ui/src/client-script-runtime-engineering-recommendation.mjs
+    ../../apps/observer-ui/src/client-script-runtime-engineering-adaptation.mjs
     ../../apps/observer-ui/src/client-script-runtime-engineering-suggested-action.mjs
     ../../apps/observer-ui/src/client-script-runtime-fixed-unit-incident-triage.mjs
     ../../apps/observer-ui/src/client-script-runtime-native-runtime-refresh.mjs
@@ -100,6 +102,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/observer-panels-cloud.mjs
     ../../apps/observer-ui/src/observer-panels-declarative-evolution.mjs
     ../../apps/observer-ui/src/observer-panels-engineering-context.mjs
+    ../../apps/observer-ui/src/observer-panel-engineering-adaptation.mjs
     ../../apps/observer-ui/src/observer-panels-foundation.mjs
     ../../apps/observer-ui/src/observer-panels-operator-auth.mjs
     ../../apps/observer-ui/src/observer-panels-kernel-events.mjs

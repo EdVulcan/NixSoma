@@ -1547,6 +1547,51 @@ test("bounded operator schedule routes keep arming, ticking, and cancellation ex
   ]);
 });
 
+test("route assembly exposes the controlled experience adaptation owner", async () => {
+  const calls = [];
+  const experienceAdaptation = {
+    readModel: ({ taskType }) => ({
+      ok: true,
+      registry: "nixsoma-controlled-experience-adaptation-v0",
+      filter: { taskType },
+      experiments: [],
+      profiles: [],
+    }),
+    arm: (body) => {
+      calls.push(body);
+      return {
+        registry: "nixsoma-experience-ranking-experiment-v0",
+        id: "experiment-route-1",
+        taskType: body.taskType,
+        status: "armed",
+      };
+    },
+  };
+  const deps = createBaseDeps({ deps: { experienceAdaptation } });
+
+  const state = await invokeRoute(
+    deps,
+    "GET",
+    "/plugins/native-adapter/engineering-context/experience-adaptation?taskType=browser_task",
+  );
+  assert.equal(state.statusCode, 200);
+  assert.equal(state.body.registry, "nixsoma-controlled-experience-adaptation-v0");
+  const armed = await invokeRoute(
+    deps,
+    "POST",
+    "/plugins/native-adapter/engineering-context/experience-adaptation/experiments",
+    { confirm: true, taskType: "browser_task", trialLimit: 8, durationMinutes: 60 },
+  );
+  assert.equal(armed.statusCode, 201);
+  assert.equal(armed.body.experiment.id, "experiment-route-1");
+  assert.deepEqual(calls, [{
+    confirm: true,
+    taskType: "browser_task",
+    trialLimit: 8,
+    durationMinutes: 60,
+  }]);
+});
+
 test("bounded operator window routes expose only finite lease controls", async () => {
   const calls = [];
   const windowLease = {

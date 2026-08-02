@@ -1,0 +1,15 @@
+export const observerClientConfigDomEngineeringAdaptationScript = `const engineeringAdaptationTaskTypeInput = document.querySelector("#engineering-adaptation-task-type-input");
+const engineeringAdaptationTrialLimitInput = document.querySelector("#engineering-adaptation-trial-limit-input");
+const engineeringAdaptationDurationInput = document.querySelector("#engineering-adaptation-duration-input");
+const engineeringAdaptationStatus = document.querySelector("#engineering-adaptation-status");
+const engineeringAdaptationAssignments = document.querySelector("#engineering-adaptation-assignments");
+const engineeringAdaptationCandidate = document.querySelector("#engineering-adaptation-candidate");
+const engineeringAdaptationProfile = document.querySelector("#engineering-adaptation-profile");
+const engineeringAdaptationRefreshButton = document.querySelector("#engineering-adaptation-refresh-button");
+const engineeringAdaptationArmButton = document.querySelector("#engineering-adaptation-arm-button");
+const engineeringAdaptationRearmButton = document.querySelector("#engineering-adaptation-rearm-button");
+const engineeringAdaptationCancelButton = document.querySelector("#engineering-adaptation-cancel-button");
+const engineeringAdaptationActivateButton = document.querySelector("#engineering-adaptation-activate-button");
+const engineeringAdaptationRevokeButton = document.querySelector("#engineering-adaptation-revoke-button");
+const engineeringAdaptationJson = document.querySelector("#engineering-adaptation-json");
+`;

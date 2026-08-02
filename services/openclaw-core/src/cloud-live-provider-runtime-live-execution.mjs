@@ -100,6 +100,17 @@ function compactContextPacketEvidence(evidence) {
     experienceMemoryLatestOutcome: evidence.experienceMemoryLatestOutcome ?? null,
     experienceMemoryPattern: evidence.experienceMemoryPattern ?? null,
     experienceMemoryStatus: evidence.experienceMemoryStatus ?? null,
+    experienceMemoryRankingMode: ["baseline", "feedback_weighted"].includes(
+      evidence.experienceMemoryRankingMode,
+    ) ? evidence.experienceMemoryRankingMode : "baseline",
+    experienceAdaptationExperimentId: evidence.experienceAdaptationExperimentId ?? null,
+    experienceAdaptationAssignmentIndex: Number.isInteger(evidence.experienceAdaptationAssignmentIndex)
+      ? evidence.experienceAdaptationAssignmentIndex
+      : null,
+    experienceAdaptationAssignmentHash: evidence.experienceAdaptationAssignmentHash ?? null,
+    experienceAdaptationRandomized: evidence.experienceAdaptationRandomized === true,
+    experienceAdaptationProfileId: evidence.experienceAdaptationProfileId ?? null,
+    experienceAdaptationProfileEvidenceHash: evidence.experienceAdaptationProfileEvidenceHash ?? null,
     contextContentHash: typeof evidence.contextContentHash === "string"
       ? evidence.contextContentHash
       : null,

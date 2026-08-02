@@ -6,6 +6,7 @@ import {
   materialiseCloudLiveProviderContextPacketExecution,
 } from "../src/cloud-live-provider-runtime-context-packet.mjs";
 import { NATIVE_ENGINEERING_EXPERIENCE_CONSUMPTION_CANDIDATE } from "../src/native-engineering-experience-consumption-receipt.mjs";
+import { NATIVE_ENGINEERING_EXPERIENCE_ADAPTATION_EVIDENCE } from "../src/native-engineering-experience-adaptation.mjs";
 
 function contextTask() {
   return {
@@ -98,6 +99,26 @@ test("context packet handoff materialises one bounded provider message with comp
       governance: { advisoryOnly: true },
       auditEvidence: { summary: { storedRecords: 1, recalledRecords: 1, queryTokenCount: 1, queryHash: "b".repeat(64), advisoryOnly: true } },
     }),
+    selectProviderExperienceMemory: ({ buildReadModel, taskType, goal, limit }) => {
+      const memory = buildReadModel({ taskType, goal, limit, rankingMode: "feedback_weighted" });
+      Object.defineProperty(memory, NATIVE_ENGINEERING_EXPERIENCE_ADAPTATION_EVIDENCE, {
+        value: {
+          registry: "nixsoma-controlled-experience-adaptation-v0",
+          rankingMode: "feedback_weighted",
+          experimentId: "experience-experiment-1",
+          assignmentIndex: 1,
+          assignmentHash: "c".repeat(64),
+          randomizedAssignment: true,
+          callerSelectedArm: false,
+          activeProfileId: null,
+          profileEvidenceHash: null,
+          changesExecutionPolicy: false,
+          changesAuthority: false,
+        },
+        enumerable: false,
+      });
+      return memory;
+    },
   });
 
   assert.equal(result.ok, true);
@@ -115,6 +136,11 @@ test("context packet handoff materialises one bounded provider message with comp
   assert.equal(result.evidence.experienceMemoryLatestOutcome, "completed");
   assert.equal(result.evidence.experienceMemoryPattern, "repeatable_success");
   assert.equal(result.evidence.experienceMemoryAdvisoryOnly, true);
+  assert.equal(result.evidence.experienceMemoryRankingMode, "feedback_weighted");
+  assert.equal(result.evidence.experienceAdaptationExperimentId, "experience-experiment-1");
+  assert.equal(result.evidence.experienceAdaptationAssignmentIndex, 1);
+  assert.equal(result.evidence.experienceAdaptationAssignmentHash, "c".repeat(64));
+  assert.equal(result.evidence.experienceAdaptationRandomized, true);
   const consumptionCandidate = result.evidence[NATIVE_ENGINEERING_EXPERIENCE_CONSUMPTION_CANDIDATE];
   assert.equal(consumptionCandidate.executionTaskId, "task-context-1");
   assert.equal(consumptionCandidate.sourceTaskId, "task-context-1");
@@ -125,6 +151,8 @@ test("context packet handoff materialises one bounded provider message with comp
   assert.match(result.liveProviderExecution.requestEnvelope.messages[0].content, /npm test/);
   assert.match(result.liveProviderExecution.requestEnvelope.messages[0].content, /Return only a JSON object/);
   assert.match(result.liveProviderExecution.requestEnvelope.messages[0].content, /Reuse bounded verification evidence/);
+  assert.doesNotMatch(result.liveProviderExecution.requestEnvelope.messages[0].content, /feedback_weighted/);
+  assert.doesNotMatch(result.liveProviderExecution.requestEnvelope.messages[0].content, /experience-experiment-1/);
   assert.equal(result.liveProviderExecution.responseContract, "engineering_recommendation_v0");
   assert.doesNotMatch(result.liveProviderExecution.requestEnvelope.messages[0].content, /should-be-redacted/);
   assert.doesNotMatch(JSON.stringify(result.evidence), /tests passed/);

@@ -13,8 +13,8 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source through the governed Level 1-3 baseline and the Level 4 isolated compositor, AI-owned Firefox, bounded frame/input/projection, semantic type/click, reviewed cycles, OCR actions, current-tab close, and receipt-bound semantic submit | The twenty-sixth Level 4 slice is physically complete; semantic submit and boot/restart evidence are accepted and frozen |
-| Local validation | All workspace tests pass, including Core `955/955` and Observer `115/115`; typecheck, body-config, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, the 1023-file script audit, and 835 registry entries pass | Validated |
+| Capability source | Current source adds controlled paired-randomized experience recall ordering, exact terminal binding, and explicit evidence-hash profile activation to the governed Level 1-4 baseline | Core/Observer source and exact Nix closures pass; physical generation 111 remains the prior reviewed-worklist baseline |
+| Local validation | All workspace tests pass, including Core `963/963` and Observer `118/118`; typecheck, body-config, the reusable real Core/Observer context gate, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, the 1023-file script audit, and 835 registry entries pass | Validated |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/2rg3qq3nzg5yva0z0yg7scs4hb99asl0-nixos-system-nixos-26.05.4808.569d57850992` | Generation 111 deploys the reviewed finite mission worklist; current/profile paths match, all nine health endpoints pass, related services have zero restarts, and system/user failed-unit counts are zero |
 | Previous generation | `/nix/store/w58x78k1sl78nwjknzpgbs0a0gj5kxzx-nixos-system-nixos-26.05.4808.569d57850992` | Generation 110 renewable-mission baseline before the authorized reviewed-worklist switch |
@@ -53,6 +53,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 1 recommendation execution receipt | The existing browser task executor forwards one trusted semantic-click result only after Screen Act execution and post-action verification; Core derives the receipt and excludes target/page/provider content | Implemented in source; exact action execution is proven without adding an actuator, provider call, retry, effectiveness, or causality claim |
 | Level 1 recommendation outcome receipt | The authoritative task terminal owner binds one completed/failed observation to the exact application receipt and optionally its verified execution receipt, then preserves it in task state and experience memory | Implemented in source; v0 remains terminal-only and v1 proves execution plus terminal correlation, while effectiveness, causality, ranking, and policy changes remain explicitly unproven |
 | Level 1 operator recommendation feedback | Observer records one explicit `helpful`, `not_helpful`, or `uncertain` rating for a terminal recommendation outcome; Core persists only the receipt-bound rating and exposes read-only aggregate counts | Implemented in source with Core, memory, route, and Observer tests; same-rating repeat is idempotent, changed ratings are rejected, and causality, ranking, policy, provider training, and automatic execution remain false |
+| Level 1 controlled experience adaptation | One explicit finite experiment privately balances baseline and operator-feedback-weighted recall ordering for one task type; exact provider/application/execution/outcome receipts feed a predeclared Fisher comparison, and only the exact evidence hash plus operator confirmation can activate or revoke a recall-order profile | Implemented and validated in source with Core `963/963`, Observer `118/118`, real Core/Observer service proof, body-config, and exact `284/114`-file Nix closures; no physical deployment, live result, policy change, authority change, automatic provider call, or general causal claim is asserted |
 | Level 1 reviewed browser task composer | Observer accepts a bounded real goal and HTTP(S) URL; Core fixes browser-task/work-view authority and creates either the current task or its capability-aware plan | Implemented in source; caller actions/policy, automatic execution, provider calls, approvals, scheduling, retries, and host mutation remain excluded |
 | Level 1 bounded operator work session | Observer selects a 1-20 task limit, previews the exact next queued task without mutation, then explicitly starts one finite run; Core accepts only `maxSteps` and `dryRun` | Accepted in source and carried by physical generation 111; scheduler, background pickup, repeat/retry, open loop, provider calls, caller execution overrides, and host mutation remain excluded |
 | Level 1 bounded operator session continuity | Core persists finite-run checkpoints, marks unfinished sessions interrupted on startup, and Observer exposes an explicit Resume that consumes only the saved remaining budget | Accepted in source with Core/route/Observer focused tests and an isolated nine-service restart/resume check; automatic resume/retry, task replay, provider calls, browser live deployment, physical activation, and host mutation remain excluded |
@@ -87,15 +88,15 @@ mutate the physical host implicitly.
 The source and deployed bounded-product estimates currently converge, but they
 remain separate scopes for future development:
 
-- **About 86-89% for the physically deployed bounded product** measures the operator-visible,
+- **About 88-91% for the physically deployed bounded product** measures the operator-visible,
   governed NixSoma scope that exists today: the local control plane, trusted
   work view, fixed Level 3 body owners, bounded Level 4 eye-hand actions,
   provider collaboration, audit, and recovery evidence. Its remaining work is
   completion of coherent user workflows and integration/product hardening.
-- **About 86-89% for the current source bounded product** currently matches the
-  deployed renewable mission lifecycle. It does not claim background timer
-  enablement or the selected finite mission worklist.
-- **About 56-62% for the final vision** measures the wider whitepaper target: a
+- **About 90-92% for the current source bounded product** includes the finite
+  mission worklist and controlled recall-order adaptation. It does not claim a
+  physical switch, enabled mission timer, or live randomized outcome.
+- **About 58-63% for the final vision** measures the wider whitepaper target: a
   durable local-first autonomous agent body with long-running autonomy, durable
   learning and memory feedback loops, broader body nerves, physically governed
   Phase D evolution, and a richer native graphical workspace.
@@ -262,7 +263,7 @@ both lanes available, nine healthy endpoints, and zero failed units.
    mutation, durable audit, zero failed units, and unchanged restart counters.
    The contract and evidence are recorded in
    [`OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md`](./plans/OPENCLAW_AI_WORKSPACE_SEMANTIC_SUBMIT_CANDIDATE_PLAN.md).
-3. **Durable experience feedback is the selected next capability.** Existing
+3. **Durable experience feedback is a completed prerequisite.** Existing
    terminal experience records now correlate bounded later outcomes for the
    exact same task type, persist through the existing Core state owner, and
    expose a separate feedback summary through engineering context and Observer.
@@ -312,6 +313,16 @@ both lanes available, nine healthy endpoints, and zero failed units.
     the lease, and only the exact lease id can re-arm it. This is still not an
     unbounded resident loop. See
     [`OPENCLAW_BOUNDED_OPERATOR_WINDOW_LEASE_PLAN.md`](./plans/OPENCLAW_BOUNDED_OPERATOR_WINDOW_LEASE_PLAN.md).
+11. **Controlled experience adaptation closes the first measured intervention.**
+    One finite task-type experiment privately balances baseline and
+    feedback-weighted recall order. Existing receipts bind each terminal result;
+    a predeclared exact test produces a hash-bound candidate, and only explicit
+    operator activation changes future recall order. See
+    [`OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md`](./plans/OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md).
+
+The next source route is a richer native multi-step workflow. Physical Phase D
+promotion/rollback remains separately authorized and is not implied by this
+source checkpoint.
 
 Do not manufacture a VFS/network variant, provider/readiness wrapper, generic
 Enter or keyboard path, caller-coordinate action, automatic repetition, open
@@ -956,13 +967,13 @@ These figures are capability-maturity estimates, not test coverage:
 
 | Scope | Current estimate |
 | --- | --- |
-| Level 1 user-space control plane | about 96% in source; renewable finite missions now consume an immutable reviewed worklist, while provider planning, open-ended task supply, retry/skip, and causal learning remain incomplete |
+| Level 1 user-space control plane | about 96% in source; renewable finite missions now consume an immutable reviewed worklist, while provider planning, open-ended task supply, retry/skip, and live replicated adaptation evidence remain incomplete |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 72-76%; process exec, network connect-attempt, bounded file open-attempt, and process lifecycle observation are physically deployed, while physical Phase D mutation and broader body nerves remain incomplete |
 | Level 4 graphics-stack-native body | about 85%; one-shot projected operator click, bounded native operator type, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, same-surface OCR click, objective-bound OCR type, fixed OCR focus-then-type, and governed current-tab close are physically complete |
-| Physically deployed bounded product | 86-89% |
-| Current source bounded product | 88-91% |
-| Final whitepaper vision | 56-62% |
+| Physically deployed bounded product | 88-91% |
+| Current source bounded product | 90-92% |
+| Final whitepaper vision | 58-63% |
 
 ## Current Decision Records
 
@@ -971,6 +982,7 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md) | Completed Level 1 governed engineering capability frontier and remaining boundaries. |
 | [OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md](./plans/OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md) | Physically deployed renewable mission epochs, checkpoints, explicit renewal, recovery, circuit break, and Observer progress. |
 | [OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md](./plans/OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md) | Source-complete immutable reviewed task supply with issue checkpoints, exact provenance, and stop-on-failure. |
+| [OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md](./plans/OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md) | Source-complete finite paired-random adaptation experiment, exact evidence binding, and explicit recall-profile activation without policy or action authority. |
 | [OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md](./plans/OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md) | Completed bounded Level 2 browser/work-view contract. |
 | [OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md](./plans/OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md) | Current operator, service identity, and execution-grant boundary. |
 | [OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md](./plans/OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Current fixed Level 3 restart and journal-diagnosis boundary. |

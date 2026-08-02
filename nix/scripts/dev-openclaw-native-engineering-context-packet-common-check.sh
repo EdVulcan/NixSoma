@@ -28,6 +28,7 @@ export OPENCLAW_SYSTEM_COMMAND_ALLOWLIST="npm"
 export OPENCLAW_SYSTEM_COMMAND_TIMEOUT_MS="15000"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/${CHECK_KIND}-core-state.json}"
 export OPENCLAW_EVENT_LOG_FILE="${OPENCLAW_EVENT_LOG_FILE:-$REPO_ROOT/.artifacts/${CHECK_KIND}-events.jsonl}"
+export OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_CONTEXT_PACKET_OPERATOR_TOKEN_FILE:-$REPO_ROOT/.artifacts/${CHECK_KIND}-operator-token}"
 
 CORE_URL="http://127.0.0.1:$OPENCLAW_CORE_PORT"
 OBSERVER_URL="http://127.0.0.1:$OBSERVER_UI_PORT"
@@ -47,7 +48,7 @@ packageJson.scripts.typecheck = `node -e "process.stdout.write('password=${secre
 fs.writeFileSync(file, `${JSON.stringify(packageJson, null, 2)}\n`);
 NODE
 
-rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_EVENT_LOG_FILE"
+rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_EVENT_LOG_FILE" "$OPENCLAW_OPERATOR_TOKEN_FILE"
 cleanup() {
   rm -f \
     "${HTML_FILE:-}" "${CLIENT_FILE:-}" "${TASK_FILE:-}" "${BLOCKED_FILE:-}" \
@@ -58,7 +59,10 @@ cleanup() {
     "${SESSION_RESTART_FILE:-}" "${REBIND_PREPARE_FILE:-}" \
     "${STALE_PACKET_FILE:-}" "${STALE_BIND_FILE:-}" \
     "${REBOUND_FILE:-}" "${REBOUND_PACKET_FILE:-}" \
-    "${SOURCE_PACKET_FILE:-}" "${UNKNOWN_SOURCE_PACKET_FILE:-}"
+    "${SOURCE_PACKET_FILE:-}" "${UNKNOWN_SOURCE_PACKET_FILE:-}" \
+    "${ADAPTATION_INITIAL_FILE:-}" "${ADAPTATION_ARM_FILE:-}" \
+    "${ADAPTATION_STATE_FILE:-}" "${ADAPTATION_CANCEL_FILE:-}"
+  rm -f "$OPENCLAW_OPERATOR_TOKEN_FILE"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
@@ -95,6 +99,10 @@ REBOUND_FILE="$(mktemp)"
 REBOUND_PACKET_FILE="$(mktemp)"
 SOURCE_PACKET_FILE="$(mktemp)"
 UNKNOWN_SOURCE_PACKET_FILE="$(mktemp)"
+ADAPTATION_INITIAL_FILE="$(mktemp)"
+ADAPTATION_ARM_FILE="$(mktemp)"
+ADAPTATION_STATE_FILE="$(mktemp)"
+ADAPTATION_CANCEL_FILE="$(mktemp)"
 HTML_FILE=""
 CLIENT_FILE=""
 
@@ -153,6 +161,32 @@ post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"task
 post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"taskId\":\"$second_task_id\",\"sourceTaskId\":\"$task_id\",\"limit\":8,\"maxOutputChars\":2000,\"thresholdChars\":256,\"protectRecentAssistantTurns\":0}" > "$SOURCE_PACKET_FILE"
 OPENCLAW_POST_JSON_FAILURE=allow post_json "$CORE_URL/plugins/native-adapter/engineering-context/packet" "{\"taskId\":\"$second_task_id\",\"sourceTaskId\":\"missing-context-source-task\"}" > "$UNKNOWN_SOURCE_PACKET_FILE"
 curl --silent --fail "$CORE_URL/plugins/openclaw-native-plugin-adapter" > "$ADAPTER_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-context/experience-adaptation?taskType=source_command_task" > "$ADAPTATION_INITIAL_FILE"
+post_json "$CORE_URL/plugins/native-adapter/engineering-context/experience-adaptation/experiments" '{"confirm":true,"taskType":"source_command_task","trialLimit":8,"durationMinutes":60}' > "$ADAPTATION_ARM_FILE"
+curl --silent --fail "$CORE_URL/plugins/native-adapter/engineering-context/experience-adaptation?taskType=source_command_task" > "$ADAPTATION_STATE_FILE"
+
+adaptation_experiment_id="$(node -e 'const fs=require("node:fs"); const data=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); process.stdout.write(data.experiment.id);' "$ADAPTATION_ARM_FILE")"
+post_json "$CORE_URL/plugins/native-adapter/engineering-context/experience-adaptation/experiments/$adaptation_experiment_id/cancel" '{"confirm":true}' > "$ADAPTATION_CANCEL_FILE"
+
+node - <<'NODE' "$ADAPTATION_INITIAL_FILE" "$ADAPTATION_ARM_FILE" "$ADAPTATION_STATE_FILE" "$ADAPTATION_CANCEL_FILE"
+const fs = require("node:fs");
+const [initial, armed, state, cancelled] = process.argv.slice(2).map((file) => JSON.parse(fs.readFileSync(file, "utf8")));
+if (initial.registry !== "nixsoma-controlled-experience-adaptation-v0"
+  || initial.governance?.pairedRandomAssignment !== true
+  || initial.governance?.callerSelectsArm !== false
+  || initial.governance?.changesExecutionPolicy !== false
+  || initial.governance?.changesAuthority !== false
+  || armed.experiment?.registry !== "nixsoma-experience-ranking-experiment-v0"
+  || armed.experiment?.status !== "armed"
+  || armed.experiment?.trialLimit !== 8
+  || armed.experiment?.assignments?.length !== 0
+  || state.experiments?.[0]?.id !== armed.experiment.id
+  || state.experiments?.[0]?.status !== "armed"
+  || cancelled.experiment?.id !== armed.experiment.id
+  || cancelled.experiment?.status !== "cancelled") {
+  throw new Error(`controlled experience adaptation service workflow mismatch: ${JSON.stringify({ initial, armed, state, cancelled })}`);
+}
+NODE
 
 node - <<'NODE' "$TASK_FILE" "$STEP_FILE" "$SECOND_STEP_FILE" "$PRE_RECOVERY_PACKET_FILE" "$PREPARE_FILE" "$CAPABILITY_BIND_FILE" "$BIND_FILE" "$PACKET_FILE" "$SESSION_RESTART_FILE" "$REBIND_PREPARE_FILE" "$STALE_PACKET_FILE" "$STALE_BIND_FILE" "$REBOUND_FILE" "$REBOUND_PACKET_FILE" "$SOURCE_PACKET_FILE" "$UNKNOWN_SOURCE_PACKET_FILE" "$ADAPTER_FILE" "$HTML_FILE" "$CLIENT_FILE" "$OUTPUT_SECRET" "$OBSERVER_CHECK"
 const fs = require("node:fs");
@@ -393,6 +427,12 @@ if (observerCheck) {
     "engineering-loop-state-recommendation-control",
     "engineering-loop-recommendation-use-button",
     "engineering-loop-recommendation-json",
+    "Experience Adaptation",
+    "engineering-adaptation-task-type-input",
+    "engineering-adaptation-trial-limit-input",
+    "engineering-adaptation-arm-button",
+    "engineering-adaptation-activate-button",
+    "engineering-adaptation-revoke-button",
   ]) {
     if (!html.includes(token)) throw new Error(`Observer HTML missing context packet token: ${token}`);
   }
@@ -436,6 +476,11 @@ if (observerCheck) {
     "useEngineeringRecommendation",
     "ENGINEERING_RECOMMENDATION_CONTRACT",
     "GOVERNED_PLAN_TODO_SUGGESTION_CONTROLS",
+    "refreshEngineeringAdaptation",
+    "armEngineeringAdaptation",
+    "activateEngineeringAdaptationCandidate",
+    "nixsoma-controlled-experience-adaptation-v0",
+    "callerSelectsArm",
   ]) {
     if (!client.includes(token)) throw new Error(`Observer client missing context packet token: ${token}`);
   }

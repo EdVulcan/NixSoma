@@ -89,6 +89,47 @@ test("core state persists and restores bounded experience memory records", async
   assert.equal(restored.experienceMemoryRecords.get("experience-task-1").feedback.observations.length, 1);
 });
 
+test("core state persists compact experience adaptation experiments and profiles", (t) => {
+  const root = mkdtempSync(path.join(tmpdir(), "openclaw-core-experience-adaptation-state-"));
+  const stateFilePath = path.join(root, "state.json");
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+
+  const runtime = createRuntimeState({ stateFilePath, getTaskById: () => null });
+  runtime.experienceAdaptationExperiments.set("experiment-1", {
+    registry: "nixsoma-experience-ranking-experiment-v0",
+    id: "experiment-1",
+    status: "collecting",
+    taskType: "browser_task",
+    trialLimit: 8,
+    assignments: [{
+      index: 1,
+      providerTaskId: "provider-1",
+      sourceTaskId: "source-1",
+      rankingMode: "feedback_weighted",
+      assignmentHash: "a".repeat(64),
+      selectedRecordSetHash: "b".repeat(64),
+      terminalOutcome: "completed",
+    }],
+  });
+  runtime.experienceAdaptationProfiles.set("browser_task", {
+    registry: "nixsoma-experience-ranking-profile-v0",
+    id: "profile-1",
+    taskType: "browser_task",
+    rankingMode: "feedback_weighted",
+    evidenceHash: "c".repeat(64),
+  });
+  runtime.persistState.flush();
+
+  const persisted = JSON.parse(readFileSync(stateFilePath, "utf8"));
+  assert.equal(persisted.experienceAdaptationExperiments[0].assignments[0].providerTaskId, "provider-1");
+  assert.equal(persisted.experienceAdaptationProfiles[0].rankingMode, "feedback_weighted");
+
+  const restored = createRuntimeState({ stateFilePath, getTaskById: () => null });
+  restored.loadPersistentState();
+  assert.equal(restored.experienceAdaptationExperiments.get("experiment-1").status, "collecting");
+  assert.equal(restored.experienceAdaptationProfiles.get("browser_task").evidenceHash, "c".repeat(64));
+});
+
 test("core state persists and restores fixed-unit incident scheduler dedupe state", (t) => {
   const root = mkdtempSync(path.join(tmpdir(), "openclaw-core-incident-scheduler-state-"));
   const stateFilePath = path.join(root, "state.json");

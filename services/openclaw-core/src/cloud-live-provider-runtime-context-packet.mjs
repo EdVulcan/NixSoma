@@ -126,6 +126,16 @@ function compactPacketEvidence(packet, {
     experienceMemoryPattern: packet.summary?.experienceMemoryPattern ?? null,
     experienceMemoryStatus: packet.summary?.experienceMemoryStatus ?? null,
     experienceMemoryAdvisoryOnly: packet.summary?.experienceMemoryAdvisoryOnly === true,
+    experienceMemoryRankingMode: packet.summary?.experienceMemoryRankingMode ?? "baseline",
+    experienceAdaptationExperimentId: packet.summary?.experienceAdaptationExperimentId ?? null,
+    experienceAdaptationAssignmentIndex:
+      packet.summary?.experienceAdaptationAssignmentIndex ?? null,
+    experienceAdaptationAssignmentHash:
+      packet.summary?.experienceAdaptationAssignmentHash ?? null,
+    experienceAdaptationRandomized: packet.summary?.experienceAdaptationRandomized === true,
+    experienceAdaptationProfileId: packet.summary?.experienceAdaptationProfileId ?? null,
+    experienceAdaptationProfileEvidenceHash:
+      packet.summary?.experienceAdaptationProfileEvidenceHash ?? null,
     contextContentHash: hashText(contextText),
     providerMessageChars,
     contextTruncated,
@@ -143,6 +153,7 @@ export async function materialiseCloudLiveProviderContextPacketExecution({
   runtimeState = {},
   workbenchRecords = new Map(),
   buildExperienceMemoryReadModel = () => null,
+  selectProviderExperienceMemory = null,
   sessionManagerUrl,
   readWorkViewState = readNativeEngineeringWorkViewState,
 } = {}) {
@@ -242,11 +253,22 @@ export async function materialiseCloudLiveProviderContextPacketExecution({
         limit,
       })
     : null;
-  const experienceMemory = buildExperienceMemoryReadModel({
-    taskType: contextTask.type,
-    goal: contextTask.goal,
-    limit: 4,
-  });
+  const experienceMemory = typeof selectProviderExperienceMemory === "function"
+    ? selectProviderExperienceMemory({
+        taskType: contextTask.type,
+        goal: contextTask.goal,
+        limit: 4,
+        sourceTaskId,
+        executionTaskId,
+        responseContract,
+        model: contextRequest.model ?? liveProviderExecution.model ?? null,
+        buildReadModel: buildExperienceMemoryReadModel,
+      })
+    : buildExperienceMemoryReadModel({
+        taskType: contextTask.type,
+        goal: contextTask.goal,
+        limit: 4,
+      });
   const packet = buildNativeEngineeringContextPacket({
     transcriptRecords,
     tasks,

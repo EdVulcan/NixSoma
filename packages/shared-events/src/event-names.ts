@@ -14,6 +14,7 @@ export const eventNames = [
   "task.completed",
   "task.failed",
   "experience.operator_feedback_recorded",
+  "experience.adaptation_changed",
   "policy.evaluated",
   "approval.created",
   "approval.approved",

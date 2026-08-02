@@ -802,6 +802,11 @@ test("live execution retains only compact work-view and plan/todo context eviden
     experienceMemoryLatestOutcome: "completed",
     experienceMemoryPattern: "mixed_outcomes",
     experienceMemoryStatus: "recalled",
+    experienceMemoryRankingMode: "feedback_weighted",
+    experienceAdaptationExperimentId: "experience-experiment-live-1",
+    experienceAdaptationAssignmentIndex: 3,
+    experienceAdaptationAssignmentHash: "c".repeat(64),
+    experienceAdaptationRandomized: true,
     contextContentHash,
     providerMessageChars: 1200,
     contextTruncated: false,
@@ -880,6 +885,11 @@ test("live execution retains only compact work-view and plan/todo context eviden
   assert.equal(result.summary.contextPacket.experienceMemoryFailedMatches, 1);
   assert.equal(result.summary.contextPacket.experienceMemoryCompletionRate, 0.67);
   assert.equal(result.summary.contextPacket.experienceMemoryPattern, "mixed_outcomes");
+  assert.equal(result.summary.contextPacket.experienceMemoryRankingMode, "feedback_weighted");
+  assert.equal(result.summary.contextPacket.experienceAdaptationExperimentId, "experience-experiment-live-1");
+  assert.equal(result.summary.contextPacket.experienceAdaptationAssignmentIndex, 3);
+  assert.equal(result.summary.contextPacket.experienceAdaptationAssignmentHash, "c".repeat(64));
+  assert.equal(result.summary.contextPacket.experienceAdaptationRandomized, true);
   const consumptionReceipt = result.summary.contextPacket.experienceMemoryConsumptionReceipt;
   assert.equal(validateExperienceConsumptionReceipt(consumptionReceipt), consumptionReceipt);
   assert.deepEqual(consumptionReceipt.recordIds, ["experience-live-1", "experience-live-2"]);

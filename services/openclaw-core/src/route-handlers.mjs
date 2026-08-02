@@ -12,6 +12,9 @@ import { handleNativeDeclarativeEvolutionTaskRoute } from "./native-declarative-
 import { handleNativeAcpxCodexProcessSpawnTaskRoute } from "./native-acpx-codex-process-spawn-task-routes.mjs";
 import { handleNativeEngineeringPlanTodoWorkbenchRoute } from "./native-engineering-plan-todo-workbench-routes.mjs";
 import { handleNativeEngineeringContextRoute } from "./native-engineering-context-routes.mjs";
+import {
+  handleNativeEngineeringExperienceAdaptationRoute,
+} from "./native-engineering-experience-adaptation-routes.mjs";
 import { handleNativeEngineeringWorkViewBindRoute } from "./native-engineering-work-view-bind-routes.mjs";
 import { handleNativePluginRuntimeRoute } from "./native-plugin-runtime-routes.mjs";
 import { handleObserverReadModelRoute } from "./observer-read-model-routes.mjs";
@@ -26,7 +29,7 @@ import { handleWorkspaceNativeOpsRoute } from "./workspace-native-ops-routes.mjs
 import { handleWorkspacePluginReadRoute } from "./workspace-plugin-read-routes.mjs";
 
 export function registerRoutes(deps) {
-  const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl, readWorkViewState, buildExperienceMemoryReadModel, buildExperienceEffectivenessReadModel, operatorAuth, dispatchApprovedFixedUnitRepair, operatorRunSessionManager, boundedOperatorScheduler, boundedOperatorWindowLease, renewableOperatorMissionSupervisor, reviewedBrowserTaskOwner, reviewedMissionWorklist } = deps;
+  const { state, client, policyEvaluator, approvalEngine, taskManager, pluginReview, workspaceOps, planBuilder, executor, publishEvent, host, port, stateFilePath, eventHubUrl, sessionManagerUrl, browserRuntimeUrl, screenSenseUrl, screenActUrl, systemSenseUrl, systemHealUrl, readWorkViewState, buildExperienceMemoryReadModel, buildExperienceEffectivenessReadModel, operatorAuth, dispatchApprovedFixedUnitRepair, operatorRunSessionManager, boundedOperatorScheduler, boundedOperatorWindowLease, renewableOperatorMissionSupervisor, reviewedBrowserTaskOwner, reviewedMissionWorklist, experienceAdaptation } = deps;
 
   const { reconcileApprovalExpirations, serialiseApproval } = approvalEngine;
   const { buildTaskSummary, serialiseTask } = taskManager;
@@ -193,6 +196,16 @@ export function registerRoutes(deps) {
       sessionManagerUrl,
       buildExperienceMemoryReadModel,
       buildExperienceEffectivenessReadModel,
+    })) {
+      return;
+    }
+
+    if (await handleNativeEngineeringExperienceAdaptationRoute({
+      req,
+      res,
+      requestUrl,
+      experienceAdaptation,
+      publishEvent,
     })) {
       return;
     }

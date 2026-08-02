@@ -16,6 +16,7 @@ import { createPlanBuilder } from "./plan-builder.mjs";
 import { createTaskExecutor } from "./task-executor.mjs";
 import { registerRoutes } from "./route-handlers.mjs";
 import { createNativeEngineeringExperienceMemory } from "./native-engineering-experience-memory.mjs";
+import { createNativeEngineeringExperienceAdaptation } from "./native-engineering-experience-adaptation.mjs";
 import { createBoundedOperatorScheduler } from "./bounded-operator-scheduler.mjs";
 import { createBoundedOperatorWindowLease } from "./bounded-operator-window-lease.mjs";
 import { createRenewableOperatorMissionSupervisor } from "./renewable-operator-mission.mjs";
@@ -65,6 +66,11 @@ const state = createRuntimeState({
   stateFilePath,
   getTaskById: (id) => taskManager.getTaskById(id)
 });
+const experienceAdaptation = createNativeEngineeringExperienceAdaptation({
+  experiments: state.experienceAdaptationExperiments,
+  profiles: state.experienceAdaptationProfiles,
+  persistState: state.persistState,
+});
 const experienceMemory = createNativeEngineeringExperienceMemory({
   records: state.experienceMemoryRecords,
 });
@@ -83,8 +89,20 @@ const taskManager = createTaskManager({
   ensureTaskPolicy: (task, context) => policyEvaluator.ensureTaskPolicy(task, context),
   createApprovalRequestForTask: (task, decision) => approvalEngine.createApprovalRequestForTask(task, decision),
   publishEvent,
-  recordTaskExperience: (task) => experienceMemory.recordTaskExperience(task),
-  recordOperatorFeedback: (args) => experienceMemory.recordOperatorFeedback(args),
+  recordTaskExperience: (task) => {
+    const record = experienceMemory.recordTaskExperience(task);
+    const providerTaskId = task?.engineeringRecommendationOutcomeReceipt?.providerTaskId;
+    experienceAdaptation.recordTerminalOutcome({
+      task,
+      providerTask: providerTaskId ? state.tasks.get(providerTaskId) ?? null : null,
+    });
+    return record;
+  },
+  recordOperatorFeedback: (args) => {
+    const receipt = experienceMemory.recordOperatorFeedback(args);
+    if (receipt) experienceAdaptation.recordOperatorFeedback(args);
+    return receipt;
+  },
 });
 
 const approvalEngine = createApprovalEngine({ state, taskManager, policyEvaluator, publishEvent });
@@ -157,6 +175,7 @@ executor = createTaskExecutor({
   state,
   taskManager,
   buildExperienceMemoryReadModel: (...args) => experienceMemory.buildExperienceMemoryReadModel(...args),
+  selectProviderExperienceMemory: (args) => experienceAdaptation.selectProviderExperience(args),
   buildExperienceEffectivenessReadModel: (...args) => experienceMemory.buildExperienceEffectivenessReadModel(...args),
   planBuilder,
   approvalEngine,
@@ -263,6 +282,7 @@ const handleRequest = registerRoutes({
   renewableOperatorMissionSupervisor,
   reviewedBrowserTaskOwner,
   reviewedMissionWorklist,
+  experienceAdaptation,
   buildExperienceMemoryReadModel: (...args) => experienceMemory.buildExperienceMemoryReadModel(...args),
   buildExperienceEffectivenessReadModel: (...args) => experienceMemory.buildExperienceEffectivenessReadModel(...args),
 });
@@ -362,6 +382,7 @@ process.once("SIGTERM", shutdown);
 process.once("SIGINT", shutdown);
 
 state.loadPersistentState();
+experienceAdaptation.reconcileOnStartup();
 operatorRunSessionManager.reconcileInterruptedAtStartup();
 const standingProviderAdvisoryRestore = planBuilder.restoreStandingProviderAdvisoryState();
 if (!standingProviderAdvisoryRestore.ok) {

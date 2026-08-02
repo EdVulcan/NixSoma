@@ -572,6 +572,48 @@ const operatorRecommendationFeedbackSlice = changedFiles.length > 0
   && changedFiles.every((file) => operatorRecommendationFeedbackFiles.has(file))
   && changedFiles.some((file) =>
     file === "services/openclaw-core/src/native-engineering-recommendation-feedback.mjs");
+const controlledExperienceAdaptationFiles = new Set([
+  "apps/observer-ui/src/client-script-config-dom.mjs",
+  "apps/observer-ui/src/client-script-config-dom-engineering-adaptation.mjs",
+  "apps/observer-ui/src/client-script-runtime-actions.mjs",
+  "apps/observer-ui/src/client-script-runtime-engineering-adaptation.mjs",
+  "apps/observer-ui/src/observer-html.mjs",
+  "apps/observer-ui/src/observer-panel-engineering-adaptation.mjs",
+  "apps/observer-ui/test/client-script-runtime-engineering-adaptation.test.mjs",
+  "docs/NIXSOMA_CAPABILITY_MAP.md",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md",
+  "docs/plans/README.md",
+  "nix/packages/observer-ui.nix",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "nix/scripts/dev-openclaw-native-engineering-context-packet-common-check.sh",
+  "packages/shared-events/src/event-names.mjs",
+  "packages/shared-events/src/event-names.ts",
+  "services/openclaw-core/src/cloud-live-provider-runtime-context-packet.mjs",
+  "services/openclaw-core/src/cloud-live-provider-runtime-live-execution.mjs",
+  "services/openclaw-core/src/native-engineering-context-packet.mjs",
+  "services/openclaw-core/src/native-engineering-experience-adaptation-routes.mjs",
+  "services/openclaw-core/src/native-engineering-experience-adaptation.mjs",
+  "services/openclaw-core/src/native-engineering-experience-memory.mjs",
+  "services/openclaw-core/src/route-handlers.mjs",
+  "services/openclaw-core/src/runtime-state.mjs",
+  "services/openclaw-core/src/server.mjs",
+  "services/openclaw-core/src/task-executor.mjs",
+  "services/openclaw-core/test/cloud-live-provider-runtime-context-packet.test.mjs",
+  "services/openclaw-core/test/cloud-live-provider-runtime-live-execution.test.mjs",
+  "services/openclaw-core/test/native-engineering-experience-adaptation-routes.test.mjs",
+  "services/openclaw-core/test/native-engineering-experience-adaptation.test.mjs",
+  "services/openclaw-core/test/native-engineering-experience-memory.test.mjs",
+  "services/openclaw-core/test/route-handlers.test.mjs",
+  "services/openclaw-core/test/runtime-state-input-redaction.test.mjs",
+]);
+const controlledExperienceAdaptationSlice = changedFiles.length > 0
+  && changedFiles.every((file) => controlledExperienceAdaptationFiles.has(file))
+  && changedFiles.some((file) =>
+    file === "services/openclaw-core/src/native-engineering-experience-adaptation.mjs");
 const reviewedBrowserTaskComposerFiles = new Set([
   "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
   "apps/observer-ui/src/client-script-runtime-actions.mjs",
@@ -1851,6 +1893,16 @@ for (const file of changedFiles) {
     selectName("body-config");
     selectName(nativeEngineeringContextPacketPairBatchCheck);
     selectName("observer-capability-invoke");
+    continue;
+  }
+  if (controlledExperienceAdaptationSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-shared-package-contracts");
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName(nativeEngineeringContextPacketPairBatchCheck);
     continue;
   }
   if (downstreamRecommendationOutcomeSlice) {

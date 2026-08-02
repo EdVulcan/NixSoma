@@ -1,6 +1,6 @@
 # NixSoma Plans Directory
 
-Updated: 2026-08-01
+Updated: 2026-08-02
 
 This directory contains current decision records and historical milestone
 evidence. It is not a queue ordered by phase number. Use
@@ -39,6 +39,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md`](./OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md) | Physically deployed renewable finite mission epochs over the existing bounded window owner, with checkpoint-before-execution, explicit renewal, pause/cancel, restart re-arm, circuit break, and Observer progress. |
 | [`OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md`](./OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md) | Physically deployed immutable 1-16 item operator-reviewed browser-task supply for one renewable mission, with zero-task binding, issue-before-create checkpoints, ordered one-at-boundary issuance, and stop-on-failure. |
 | [`OPENCLAW_OPERATOR_RECOMMENDATION_FEEDBACK_PLAN.md`](./OPENCLAW_OPERATOR_RECOMMENDATION_FEEDBACK_PLAN.md) | Explicit one-use operator feedback bound to a verified recommendation outcome and read-only effectiveness counts. |
+| [`OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md`](./OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md) | Finite paired-randomized baseline versus feedback-weighted recall ordering, exact outcome evidence, and explicit hash-bound profile activation or revocation. |
 | [`OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md`](./OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md) | Explicit selected-task bridge from reviewed browser-task entry to the existing bounded AI workspace run and assessment owner. |
 | [`OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md`](./OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md) | Explicit selected-task rebind to the existing authoritative trusted work-view owner without task execution or automatic recovery. |
 | [`OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md`](./OPENCLAW_SYSTEMD_INCIDENT_LEARNED_PROVIDER_CONTEXT_PLAN.md) | Up to three matching-target learned patterns inside the existing exact approved diagnosis request. |

@@ -310,6 +310,56 @@ test("experience memory records explicit recommendation feedback without learnin
   assert.equal(readback.governance.changesExecutionPolicy, false);
 });
 
+test("experience memory exposes a private feedback-weighted ordering mode without changing record content", () => {
+  const records = new Map();
+  let clock = 0;
+  const memory = createNativeEngineeringExperienceMemory({
+    records,
+    now: () => `2026-08-02T15:00:0${clock++}.000Z`,
+  });
+  const outcome = recommendationOutcomeReceipt({ withExecution: true });
+  const helpfulTask = {
+    id: "semantic-task-7",
+    type: "browser_task",
+    goal: "Inspect the same bounded browser target",
+    status: "completed",
+    executionPhase: "completed",
+    engineeringRecommendationOutcomeReceipt: outcome,
+  };
+  memory.recordTaskExperience(helpfulTask);
+  memory.recordOperatorFeedback({
+    task: helpfulTask,
+    receipt: buildNativeEngineeringRecommendationFeedbackReceipt({
+      taskId: helpfulTask.id,
+      recommendationOutcomeReceipt: outcome,
+      rating: "helpful",
+    }),
+  });
+  memory.recordTaskExperience({
+    id: "newer-neutral-task",
+    type: "browser_task",
+    goal: "Inspect the same bounded browser target",
+    status: "completed",
+    executionPhase: "completed",
+  });
+
+  const baseline = memory.buildExperienceMemoryReadModel({
+    taskType: "browser_task",
+    goal: "Inspect the same bounded browser target",
+    rankingMode: "baseline",
+  });
+  const weighted = memory.buildExperienceMemoryReadModel({
+    taskType: "browser_task",
+    goal: "Inspect the same bounded browser target",
+    rankingMode: "feedback_weighted",
+  });
+
+  assert.equal(baseline.records[0].id, records.get("newer-neutral-task").id);
+  assert.equal(weighted.records[0].id, records.get(helpfulTask.id).id);
+  assert.deepEqual(new Set(baseline.records.map(({ id }) => id)), new Set(weighted.records.map(({ id }) => id)));
+  assert.equal(JSON.stringify(weighted).includes("feedback_weighted"), false);
+});
+
 test("experience memory recalls the most applicable bounded lessons", () => {
   const records = new Map();
   const memory = createNativeEngineeringExperienceMemory({

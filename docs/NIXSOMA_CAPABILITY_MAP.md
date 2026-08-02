@@ -12,8 +12,8 @@ representative evidence agree.
 | Baseline | Maturity | Meaning |
 | --- | --- | --- |
 | Physically deployed bounded product | about 88-91% | Generation 111 carries the governed control plane, renewable mission supervisor, immutable reviewed mission worklist, trusted work view, fixed Level 3 body owners, and bounded Level 4 eye-hand workflows. |
-| Current source bounded product | about 88-91% | Source matches deployed generation 111 for the reviewed worklist; the next source frontier is evidence-based adaptation or a richer native workflow. |
-| Final whitepaper vision | about 56-62% | Includes durable autonomous task supply and planning, evidence-based adaptation, broader body nerves, physical Phase D evolution, and richer native workflows. |
+| Current source bounded product | about 90-92% | Source adds a controlled paired-randomized recall-ordering experiment, exact outcome binding, and explicit evidence-hash profile activation beyond deployed generation 111. |
+| Final whitepaper vision | about 58-63% | The first controlled adaptation mechanism now exists in source; live replicated evidence, durable autonomous task planning, broader body nerves, physical Phase D evolution, and richer native workflows remain. |
 
 ## Capability Families
 
@@ -23,7 +23,7 @@ representative evidence agree.
 | Level 2 trusted work view | Deployed | User-owned helper, isolated browser/workspace, fresh bounded capture, stale-authority rejection, recovery, takeover, and Observer projection | Broader native application workflows, not another capture or lease variant |
 | Level 3 controlled system body | Partially deployed | Fixed systemd owners, exact Polkit/peer boundaries, repair loop, resource evidence, process/network/file/process-lifecycle nerves | Physical Phase D mutation/rollback, wider fixed body nerves, and governed action composition |
 | Level 4 graphical body | Deployed bounded subset | Dedicated compositor/browser, native frame/input, semantic and OCR actions, bounded run/assessment, reviewed acceptance, submit, and current-tab close | Multi-application native workflows and longer mission-bound eye-hand work without arbitrary desktop control |
-| Memory and adaptation | Partial | Durable experience records, task-bound recall consumption, recommendation application/execution/outcome, and explicit operator feedback | Controlled experiments and counterfactual evidence sufficient to justify adaptive ranking; no causal claim or automatic authority change exists |
+| Memory and adaptation | Source-validated controlled subset | Durable experience records, task-bound recall consumption, recommendation application/execution/outcome, explicit operator feedback, and one finite paired-randomized baseline-versus-feedback ranking owner | Physical deployment and real replicated experiment outcomes; broader learning domains and automatic authority change remain absent |
 | Declarative evolution | VM-proven | Candidate generation, approval binding, activation, health oracle, exact rollback, and replay rejection in disposable KVM | Physical-host promotion policy and an independently authorized automatic rollback boundary |
 
 ## Newly Deployed Workflow
@@ -54,7 +54,24 @@ operator binds 1-16 reviewed goal + URL blueprints
 -> only terminal completion unlocks the next item
 ```
 
-The next route is a controlled evidence-based adaptation or richer native
-workflow. Provider goal invention,
-open-ended planning, retry/skip, physical Phase D, and wider body actions remain
-separate subsequent routes.
+## Newly Validated Adaptation
+
+```text
+operator arms 8-32 finite assignments for one task type
+-> Core privately balances baseline and feedback-weighted recall ordering
+-> existing provider/application/execution/outcome receipts bind terminal evidence
+-> a predeclared Fisher exact rule produces one hash-bound candidate or no change
+-> operator explicitly activates or revokes recall ordering only
+```
+
+Core restart pauses an open experiment. Assignment is checkpointed before the
+provider call, the caller cannot select an arm, and the provider message does
+not receive the arm or experiment id. The profile changes neither execution
+policy nor authority. Core `963/963`, Observer `118/118`, the real reusable
+Core/Observer gate, body-config, and exact `284/114`-file Nix packages pass.
+No physical deployment or live experiment result is claimed.
+
+The next route is a richer native multi-step workflow. A physical Phase D
+promotion/rollback boundary remains a separate explicitly authorized route.
+Provider goal invention, open-ended planning, retry/skip, physical Phase D, and
+wider body actions remain separate subsequent routes.

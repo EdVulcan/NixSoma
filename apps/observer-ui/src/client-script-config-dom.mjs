@@ -8,6 +8,7 @@ import { observerClientConfigDomKernelProcessLifecycleScript } from "./client-sc
 import { observerClientConfigDomSystemBodyScript } from "./client-script-config-dom-system-body.mjs";
 import { observerClientConfigDomWorkspaceSourceScript } from "./client-script-config-dom-workspace-source.mjs";
 import { observerClientConfigDomEngineeringContextScript } from "./client-script-config-dom-engineering-context.mjs";
+import { observerClientConfigDomEngineeringAdaptationScript } from "./client-script-config-dom-engineering-adaptation.mjs";
 import { observerClientConfigDomEngineeringProviderHandoffScript } from "./client-script-config-dom-engineering-provider-handoff.mjs";
 import { observerClientConfigDomNativeRuntimeRefreshScript } from "./client-script-config-dom-native-runtime-refresh.mjs";
 import { observerClientConfigDomDeclarativeEvolutionScript } from "./client-script-config-dom-declarative-evolution.mjs";
@@ -188,7 +189,7 @@ const filesystemReadLedgerQuery = document.querySelector("#filesystem-read-ledge
 const filesystemReadLedgerReadText = document.querySelector("#filesystem-read-ledger-read-text");
 const filesystemReadLedgerTasks = document.querySelector("#filesystem-read-ledger-tasks");
 const filesystemReadLedgerJson = document.querySelector("#filesystem-read-ledger-json");
-${observerClientConfigDomWorkspaceSourceScript}${observerClientConfigDomEngineeringContextScript}${observerClientConfigDomEngineeringProviderHandoffScript}${observerClientConfigDomNativeRuntimeRefreshScript}${observerClientConfigDomDeclarativeEvolutionScript}let currentTaskState = null;
+${observerClientConfigDomWorkspaceSourceScript}${observerClientConfigDomEngineeringContextScript}${observerClientConfigDomEngineeringAdaptationScript}${observerClientConfigDomEngineeringProviderHandoffScript}${observerClientConfigDomNativeRuntimeRefreshScript}${observerClientConfigDomDeclarativeEvolutionScript}let currentTaskState = null;
 let latestActionState = null;
 let latestHistoryTask = null;
 let selectedHistoryTaskId = null;

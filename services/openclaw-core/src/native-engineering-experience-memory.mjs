@@ -27,6 +27,7 @@ const MAX_APPLICABILITY_TOKENS = 16;
 const MAX_SOURCE_TASK_ID_CHARS = 120;
 const MAX_NEXT_ACTION_CHARS = 240;
 const MAX_EFFECTIVENESS_GROUPS = 32;
+const EXPERIENCE_RANKING_MODES = new Set(["baseline", "feedback_weighted"]);
 const STOP_WORDS = new Set([
   "the",
   "and",
@@ -186,6 +187,27 @@ function operatorFeedbackReceiptForRecord(record) {
   return validateNativeEngineeringRecommendationFeedbackReceipt(
     record?.operatorFeedbackReceipt,
   );
+}
+
+function normaliseRankingMode(value) {
+  return EXPERIENCE_RANKING_MODES.has(value) ? value : "baseline";
+}
+
+function feedbackRankingAdjustment(record) {
+  const feedback = operatorFeedbackReceiptForRecord(record);
+  if (feedback?.rating === "helpful") return 8;
+  if (feedback?.rating === "not_helpful") return -8;
+  return 0;
+}
+
+function compareRecallCandidates(left, right, rankingMode) {
+  if (rankingMode === "feedback_weighted") {
+    const adjustedDifference = (right.relevance + feedbackRankingAdjustment(right.record))
+      - (left.relevance + feedbackRankingAdjustment(left.record));
+    if (adjustedDifference !== 0) return adjustedDifference;
+  }
+  return right.relevance - left.relevance
+    || String(right.record.recordedAt).localeCompare(String(left.record.recordedAt));
 }
 
 function normaliseIncidentTargetUnit(value) {
@@ -519,8 +541,9 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
     return validated;
   }
 
-  function buildExperienceMemoryReadModel({ taskType, goal, incidentTargetUnit, limit } = {}) {
+  function buildExperienceMemoryReadModel({ taskType, goal, incidentTargetUnit, limit, rankingMode } = {}) {
     const selectedTaskType = normaliseTaskType(taskType);
+    const selectedRankingMode = normaliseRankingMode(rankingMode);
     const selectedIncidentTargetUnit = normaliseIncidentTargetUnit(incidentTargetUnit);
     const queryTokens = new Set(applicabilityTokens(
       selectedTaskType,
@@ -541,8 +564,7 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
         return { record, relevance };
       })
       .filter(({ relevance }) => relevance > 0)
-      .sort((left, right) => right.relevance - left.relevance
-        || String(right.record.recordedAt).localeCompare(String(left.record.recordedAt)))
+      .sort((left, right) => compareRecallCandidates(left, right, selectedRankingMode));
     const candidates = matchingCandidates.slice(0, normaliseLimit(limit));
     const recalledRecords = candidates.map(({ record, relevance }) => publicRecord(record, relevance));
     const pattern = buildAdvisoryPattern(matchingCandidates);
@@ -553,6 +575,7 @@ export function createNativeEngineeringExperienceMemory({ records = new Map(), n
       taskType: selectedTaskType,
       tokens: [...queryTokens],
       incidentTargetUnit: selectedIncidentTargetUnit,
+      rankingMode: selectedRankingMode,
     }));
 
     return {
