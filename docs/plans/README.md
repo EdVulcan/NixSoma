@@ -37,7 +37,7 @@ their historical `Next Slice` sections do not independently select new work:
 | [`OPENCLAW_BOUNDED_OPERATOR_SCHEDULE_WORKFLOW_PLAN.md`](./OPENCLAW_BOUNDED_OPERATOR_SCHEDULE_WORKFLOW_PLAN.md) | Observer-visible finite queue scheduling with explicit cancellation and exact-budget re-arm after Core restart; timer remains default-off. |
 | [`OPENCLAW_BOUNDED_OPERATOR_WINDOW_LEASE_PLAN.md`](./OPENCLAW_BOUNDED_OPERATOR_WINDOW_LEASE_PLAN.md) | Finite restart-aware operator continuation with 1-8 windows, per-window step budgets, hard deadline, and default-off timer; no open loop. |
 | [`OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md`](./OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md) | Physically deployed renewable finite mission epochs over the existing bounded window owner, with checkpoint-before-execution, explicit renewal, pause/cancel, restart re-arm, circuit break, and Observer progress. |
-| [`OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md`](./OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md) | Candidate-ready immutable 1-16 item operator-reviewed browser-task supply for one renewable mission, with zero-task binding, issue-before-create checkpoints, ordered one-at-boundary issuance, and stop-on-failure. |
+| [`OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md`](./OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md) | Physically deployed immutable 1-16 item operator-reviewed browser-task supply for one renewable mission, with zero-task binding, issue-before-create checkpoints, ordered one-at-boundary issuance, and stop-on-failure. |
 | [`OPENCLAW_OPERATOR_RECOMMENDATION_FEEDBACK_PLAN.md`](./OPENCLAW_OPERATOR_RECOMMENDATION_FEEDBACK_PLAN.md) | Explicit one-use operator feedback bound to a verified recommendation outcome and read-only effectiveness counts. |
 | [`OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md`](./OPENCLAW_REVIEWED_TASK_WORKSPACE_SESSION_PLAN.md) | Explicit selected-task bridge from reviewed browser-task entry to the existing bounded AI workspace run and assessment owner. |
 | [`OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md`](./OPENCLAW_REVIEWED_TASK_WORKSPACE_CONTINUITY_PLAN.md) | Explicit selected-task rebind to the existing authoritative trusted work-view owner without task execution or automatic recovery. |
@@ -59,9 +59,9 @@ The kernel whitepaper remains the long-horizon authority:
 
 ## Current Route
 
-The only current deployment baseline is the authorized renewable-mission
-generation 110:
-`/nix/store/w58x78k1sl78nwjknzpgbs0a0gj5kxzx-nixos-system-nixos-26.05.4808.569d57850992`.
+The only current deployment baseline is the authorized reviewed-worklist
+generation 111:
+`/nix/store/2rg3qq3nzg5yva0z0yg7scs4hb99asl0-nixos-system-nixos-26.05.4808.569d57850992`.
 Generation-specific `active` wording later in this section records the state at
 each historical checkpoint and does not override this baseline.
 

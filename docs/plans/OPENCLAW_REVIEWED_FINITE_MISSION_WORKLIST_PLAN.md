@@ -2,9 +2,9 @@
 
 Updated: 2026-08-02
 
-Status: candidate-ready. Core ownership, persistence, route assembly, mission
-integration, Observer controls, real service gates, exact Nix closures, and
-physical-candidate preflight pass. The candidate is not activated.
+Status: physically deployed. Core ownership, persistence, route assembly,
+mission integration, Observer controls, real service gates, exact Nix closures,
+guarded activation, and post-switch health evidence pass in generation 111.
 
 ## Selected Capability
 
@@ -88,13 +88,24 @@ progress, stop reason, and the bounded durable record.
   `/nix/store/r303bl6qb6myqprl3d33j73x7mqw1w5x-openclaw-core-0.1.0` and
   `/nix/store/7prwbg79yay8hyp54krjp5gyxppfkw02-openclaw-observer-ui-0.1.0`
   with exact file counts `282` and `111`.
-- The root-owned switchable physical candidate is
+- The root-owned switchable physical generation is
   `/nix/store/2rg3qq3nzg5yva0z0yg7scs4hb99asl0-nixos-system-nixos-26.05.4808.569d57850992`.
   Its physical target marker and kernel/initrd/fstab/GDM/NetworkManager/SSH
-  protected paths match generation 110. Its closure has 1826 paths (about
+  protected paths matched generation 110 before activation. Its closure has
+  1826 paths (about
   9.2 GiB), contains all four new Core/Observer runtime modules, and keeps
-  `OPENCLAW_RENEWABLE_OPERATOR_MISSION_ENABLED=0`. Building and inspecting it
-  did not change `/run/current-system`, the system profile, or boot id.
+  `OPENCLAW_RENEWABLE_OPERATOR_MISSION_ENABLED=0`.
+- The fixed generation helper exited 0 and activated it as generation 111.
+  `/run/current-system` and the system profile both match the exact store path;
+  boot id `6e950d88-62a0-41b6-a17b-8a918b2895f1` did not change. Only Core and
+  Observer restarted. GDM, NetworkManager, and SSH retained their existing
+  PIDs/start timestamps.
+- All nine health endpoints returned HTTP 200. Seven system owners and two
+  user owners are active with `NRestarts=0`; system/user failed-unit checks and
+  the post-switch error journal are empty. Anonymous mission readback returns
+  401, while the deployed operator credential returns the default-off
+  supervisor with reviewed-worklist issuance present and open-ended creation
+  absent. Deployed Observer HTML/client contain the worklist controls.
 
 ## Deferred
 
@@ -104,11 +115,11 @@ progress, stop reason, and the bounded durable record.
   renewal;
 - causal ranking, adaptive policy, physical Phase D mutation, arbitrary
   process/window/desktop/root control, or host mutation;
-- physical activation until a fresh operator authorization is given.
+- physical timer enablement or a live physical mission/worklist execution.
 
 ## Stop Condition
 
-Source and candidate proof are complete. Freeze this task-supply lifecycle; do
-not add another queue/readiness variant. After deployment review, select the
+Source, candidate, activation, and post-switch proof are complete. Freeze this
+task-supply lifecycle; do not add another queue/readiness variant. Select the
 smallest evidence-based adaptation or richer native workflow that changes real
 operator behavior.

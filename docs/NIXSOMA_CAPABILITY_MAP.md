@@ -11,15 +11,15 @@ representative evidence agree.
 
 | Baseline | Maturity | Meaning |
 | --- | --- | --- |
-| Physically deployed bounded product | about 86-89% | Generation 110 carries the governed control plane, renewable mission supervisor, trusted work view, fixed Level 3 body owners, and bounded Level 4 eye-hand workflows. |
-| Current candidate bounded product | about 88-91% | Candidate `2rg3qq3nz...` adds an immutable 1-16 item reviewed mission worklist with issue-before-create checkpoints, exact task provenance, terminal-only advance, and stop-on-failure; physical activation is a separate gate. |
+| Physically deployed bounded product | about 88-91% | Generation 111 carries the governed control plane, renewable mission supervisor, immutable reviewed mission worklist, trusted work view, fixed Level 3 body owners, and bounded Level 4 eye-hand workflows. |
+| Current source bounded product | about 88-91% | Source matches deployed generation 111 for the reviewed worklist; the next source frontier is evidence-based adaptation or a richer native workflow. |
 | Final whitepaper vision | about 56-62% | Includes durable autonomous task supply and planning, evidence-based adaptation, broader body nerves, physical Phase D evolution, and richer native workflows. |
 
 ## Capability Families
 
 | Family | Status | Current evidence | Remaining product gap |
 | --- | --- | --- | --- |
-| Level 1 control plane | Candidate-ready | The deployed finite mission remains available; candidate `2rg3qq3nz...` adds an immutable reviewed task worklist, and the real gate proved zero-task binding plus two ordered one-per-epoch completions | Goals and order still require operator review; there is no provider planning, open-ended backlog, retry/skip, causal ranking, or policy change |
+| Level 1 control plane | Deployed | Generation 111 adds the immutable reviewed task worklist; the real gate proved zero-task binding plus two ordered one-per-epoch completions, and post-switch health/readback pass | Goals and order still require operator review; there is no provider planning, open-ended backlog, retry/skip, causal ranking, or policy change |
 | Level 2 trusted work view | Deployed | User-owned helper, isolated browser/workspace, fresh bounded capture, stale-authority rejection, recovery, takeover, and Observer projection | Broader native application workflows, not another capture or lease variant |
 | Level 3 controlled system body | Partially deployed | Fixed systemd owners, exact Polkit/peer boundaries, repair loop, resource evidence, process/network/file/process-lifecycle nerves | Physical Phase D mutation/rollback, wider fixed body nerves, and governed action composition |
 | Level 4 graphical body | Deployed bounded subset | Dedicated compositor/browser, native frame/input, semantic and OCR actions, bounded run/assessment, reviewed acceptance, submit, and current-tab close | Multi-application native workflows and longer mission-bound eye-hand work without arbitrary desktop control |
@@ -43,7 +43,7 @@ most 256 during one mission lifetime. Each authority grant is at most seven
 days and cannot extend the live horizon beyond 30 days. It is renewable, not
 uninterruptible or unbounded.
 
-## Current Candidate Workflow
+## Newly Deployed Worklist
 
 ```text
 operator binds 1-16 reviewed goal + URL blueprints
@@ -54,7 +54,7 @@ operator binds 1-16 reviewed goal + URL blueprints
 -> only terminal completion unlocks the next item
 ```
 
-After deployment review, the next route is a controlled
-evidence-based adaptation or richer native workflow. Provider goal invention,
+The next route is a controlled evidence-based adaptation or richer native
+workflow. Provider goal invention,
 open-ended planning, retry/skip, physical Phase D, and wider body actions remain
 separate subsequent routes.

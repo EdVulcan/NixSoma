@@ -210,7 +210,7 @@ units, authenticated default-off readback, and served Observer controls pass.
 Freeze the mission lifecycle and select a reviewed finite mission worklist,
 not another scheduling or readiness variant.
 
-That reviewed finite mission worklist is now candidate-ready. One
+That reviewed finite mission worklist is now physically deployed. One
 unstarted mission may bind one immutable ordered set of 1-16 operator-reviewed
 goal/URL browser-task blueprints. Binding creates no task. At an epoch boundary
 Core flushes an `issuing` checkpoint, then the shared reviewed-task owner may
@@ -229,14 +229,18 @@ order without retry or skip. The served Observer gate exposes the draft, bind,
 progress, and durable readback controls. Focused Core/Observer tests, all 955
 Core package tests, workspace typecheck, the exact seven changed checks, and
 the 282/111-file Core/Observer Nix closures pass. The root-owned switchable
-physical candidate is
+physical generation is
 `/nix/store/2rg3qq3nzg5yva0z0yg7scs4hb99asl0-nixos-system-nixos-26.05.4808.569d57850992`.
-It has the same immutable physical marker and six protected paths as active
-generation 110, contains 1826 closure paths (about 9.2 GiB), and keeps the
-mission timer disabled. It has not been activated; current/profile remain on
-generation 110 with the same boot id. Freeze implementation pending a fresh
-activation decision, then move to a controlled evidence-based adaptation or a
-richer native workflow rather than another queue wrapper.
+It matched generation 110's immutable physical marker and six protected paths,
+contains 1826 closure paths (about 9.2 GiB), and keeps the mission timer
+disabled. The fixed helper exited 0 and activated it as generation 111 without
+reboot: current/profile match, the boot id is unchanged, only Core/Observer
+restarted, and GDM/NetworkManager/SSH remained on their prior processes. All
+nine endpoints return 200, all seven system plus two user owners are active
+with zero restarts, failed-unit/error-journal checks are empty, authenticated
+default-off worklist readback passes, and deployed Observer controls are
+served. Freeze this lifecycle and move to controlled evidence-based adaptation
+or a richer native workflow rather than another queue wrapper.
 
 The operator-feedback memory edge is now implemented in
 `plans/OPENCLAW_OPERATOR_RECOMMENDATION_FEEDBACK_PLAN.md`. A terminal task
@@ -259,7 +263,7 @@ added by this continuation.
 
 For route planning, keep deployment and source denominators explicit. The
 physically deployed operator-governed product and current source frontier,
-including renewable mission supervision, are roughly 86-89% mature. The wider
+including the reviewed finite mission worklist, are roughly 88-91% mature. The wider
 autonomous-agent body described by the identity route and kernel whitepaper is
 roughly 56-62% complete. Mission supervision closes
 multi-epoch lifecycle continuity for already-reviewed work; autonomous task
@@ -267,14 +271,15 @@ supply/planning, evidence-based adaptation, broader body nerves, physical
 Phase D evolution, and richer native workflows keep the final number lower.
 The canonical breakdown is `NIXSOMA_CAPABILITY_MAP.md`.
 
-The physical host now runs generation 110:
-`/nix/store/w58x78k1sl78nwjknzpgbs0a0gj5kxzx-nixos-system-nixos-26.05.4808.569d57850992`.
+The physical host now runs generation 111:
+`/nix/store/2rg3qq3nzg5yva0z0yg7scs4hb99asl0-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, bounded local OCR, the
 task-bound OCR assessment, OCR ordinal-click, objective-bound OCR-type, and
 fixed OCR focus-then-type owners, plus Observer controls for one-shot click and
-bounded native type. Core still receives the operator token through systemd
+bounded native type, and the reviewed finite mission worklist. Core still
+receives the operator token through systemd
 `LoadCredential`; only `edvulcan` has exact-file read plus directory-traverse
 ACL, without directory listing or execution-private-key access. All nine health
 endpoints pass.
@@ -323,9 +328,9 @@ race exposed by provider latency is also corrected: when a
 referenced frame expires, Browser Runtime reuses the exact cached
 frame/inventory before taking one replacement capture, preventing a false
 `semantic_target_inventory_stale` result. The active generation is
-`/nix/store/w58x78k1sl78nwjknzpgbs0a0gj5kxzx-nixos-system-nixos-26.05.4808.569d57850992`
-(generation 110; generation 109 was
-`/nix/store/y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`).
+`/nix/store/2rg3qq3nzg5yva0z0yg7scs4hb99asl0-nixos-system-nixos-26.05.4808.569d57850992`
+(generation 111; generation 110 was
+`/nix/store/w58x78k1sl78nwjknzpgbs0a0gj5kxzx-nixos-system-nixos-26.05.4808.569d57850992`).
 Focused Browser Runtime, Screen Act, and Core semantic tests pass 31/31,
 8/8, and 14/14; the body configuration check also passes. A proxy-backed
 bounded run proved two task-bound provider calls, one write-only semantic type,
