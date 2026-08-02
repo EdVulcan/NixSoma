@@ -1,6 +1,6 @@
 # NixSoma Forward Work Directive
 
-Updated: 2026-08-01
+Updated: 2026-08-02
 
 This is the active guidance document for continuing NixSoma development. The
 enhanced source preservation and governed capability migration that originally
@@ -184,7 +184,7 @@ an 1826-entry closure of about 9.93 GB. Its profile keeps
 was not executed as part of this deployment, and no activation or reboot is
 claimed for the historical candidate-only evidence.
 
-The next vertical Level 1 behavior is now implemented in source as the
+The next vertical Level 1 behavior is now implemented and physically deployed as the
 renewable operator mission in
 `plans/OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md`. One explicit authority
 grant contains 1-32 epochs; every epoch permanently consumes its budget before
@@ -199,14 +199,16 @@ This closes resident supervision for already-reviewed queued work, not open
 task supply. The timer remains default-off; there is no automatic goal
 invention, planning, task creation, retry, provider authority, policy change,
 root, arbitrary process/window/desktop control, or host mutation. Exact Nix
-Core/Observer closures pass with 280 and 109 files; physical candidate review
-also passes for root-owned switchable candidate
+Core/Observer closures pass with 280 and 109 files. The root-owned, switchable
+physical generation is
 `/nix/store/w58x78k1sl78nwjknzpgbs0a0gj5kxzx-nixos-system-nixos-26.05.4808.569d57850992`:
 the immutable target marker and all six protected paths match, the closure has
-1826 paths (about 9.2 GiB), and the mission timer remains disabled. Activation
-and post-switch health remain separate gates. After those gates, freeze the
-mission lifecycle and select a reviewed finite mission worklist, not another
-scheduling or readiness variant.
+1826 paths (about 9.2 GiB), and the mission timer remains disabled. The fixed
+helper activated it as generation 110 without reboot; current/profile match,
+nine health endpoints, relevant service state, zero restarts, zero failed
+units, authenticated default-off readback, and served Observer controls pass.
+Freeze the mission lifecycle and select a reviewed finite mission worklist,
+not another scheduling or readiness variant.
 
 The operator-feedback memory edge is now implemented in
 `plans/OPENCLAW_OPERATOR_RECOMMENDATION_FEEDBACK_PLAN.md`. A terminal task
@@ -228,17 +230,17 @@ content, provider call, task creation, approval, retry, or host authority is
 added by this continuation.
 
 For route planning, keep deployment and source denominators explicit. The
-physically deployed operator-governed product is roughly 84-87% mature. The
-current source frontier, including renewable mission supervision, is roughly
-86-89%. The wider autonomous-agent body described by the identity route and
-kernel whitepaper is roughly 56-62% complete. Mission supervision closes
+physically deployed operator-governed product and current source frontier,
+including renewable mission supervision, are roughly 86-89% mature. The wider
+autonomous-agent body described by the identity route and kernel whitepaper is
+roughly 56-62% complete. Mission supervision closes
 multi-epoch lifecycle continuity for already-reviewed work; autonomous task
 supply/planning, evidence-based adaptation, broader body nerves, physical
 Phase D evolution, and richer native workflows keep the final number lower.
 The canonical breakdown is `NIXSOMA_CAPABILITY_MAP.md`.
 
-The physical host now runs generation 109:
-`/nix/store/y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`.
+The physical host now runs generation 110:
+`/nix/store/w58x78k1sl78nwjknzpgbs0a0gj5kxzx-nixos-system-nixos-26.05.4808.569d57850992`.
 It retains the Level 1-3 baseline and deploys the fixed Level 4 Workbench,
 Weston-owned surface inventory, session-manager lifecycle owner, Core execution
 grant path, governed surface activation and scroll, bounded local OCR, the
@@ -293,9 +295,9 @@ race exposed by provider latency is also corrected: when a
 referenced frame expires, Browser Runtime reuses the exact cached
 frame/inventory before taking one replacement capture, preventing a false
 `semantic_target_inventory_stale` result. The active generation is
-`/nix/store/y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`
-(generation 109; generation 108 was
-`/nix/store/n23b58fh3qm17n57k625l92ynp1wbi4k-nixos-system-nixos-26.05.4808.569d57850992`).
+`/nix/store/w58x78k1sl78nwjknzpgbs0a0gj5kxzx-nixos-system-nixos-26.05.4808.569d57850992`
+(generation 110; generation 109 was
+`/nix/store/y2f0fnrb2yr5ch930vyj9nrvaa2dljir-nixos-system-nixos-26.05.4808.569d57850992`).
 Focused Browser Runtime, Screen Act, and Core semantic tests pass 31/31,
 8/8, and 14/14; the body configuration check also passes. A proxy-backed
 bounded run proved two task-bound provider calls, one write-only semantic type,

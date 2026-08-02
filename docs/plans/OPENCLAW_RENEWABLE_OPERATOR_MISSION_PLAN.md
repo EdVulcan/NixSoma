@@ -1,11 +1,11 @@
 # Renewable Operator Mission
 
-Updated: 2026-08-01
+Updated: 2026-08-02
 
-Status: implemented, source-accepted, and built as a reviewed physical
-candidate. Focused Core/Observer tests, production route assembly, real
-nine-service Core/Observer development gates, exact Nix closures, and physical
-candidate preflight pass. Activation remains a separate operator decision.
+Status: implemented, source-accepted, physically deployed as generation 110,
+and post-switch accepted. Focused Core/Observer tests, production route
+assembly, real nine-service development gates, exact Nix closures, physical
+candidate preflight, activation, and deployed readback all pass.
 
 ## Selected Capability
 
@@ -83,13 +83,19 @@ Core and does not expose the internal tick route.
   `/nix/store/8h1hy8jz8h1v7ab5wrrad1xcp8v0rscy-openclaw-core-0.1.0` and
   `/nix/store/y5xi43dxg0lpv875sjwfib68hxz7xph3-openclaw-observer-ui-0.1.0`,
   with 280 and 109 files respectively.
-- Physical candidate
+- Physical generation 110
   `/nix/store/w58x78k1sl78nwjknzpgbs0a0gj5kxzx-nixos-system-nixos-26.05.4808.569d57850992`
   is root-owned and switchable, matches the immutable physical target marker
   and kernel/initrd/fstab/GDM/NetworkManager/SSH protected paths, contains both
   mission modules, and has 1826 closure paths (about 9.2 GiB). Its Core unit
-  keeps `OPENCLAW_RENEWABLE_OPERATOR_MISSION_ENABLED=0`. The active generation
-  and boot id remained unchanged during build and inspection.
+  keeps `OPENCLAW_RENEWABLE_OPERATOR_MISSION_ENABLED=0`. The fixed developer
+  helper activated it without reboot; current/profile paths match, the boot id
+  stayed unchanged, all nine health endpoints return 200, relevant system and
+  user services are active with zero restarts, and no failed unit exists.
+- Deployed readback rejects anonymous mission state with HTTP 401 and returns
+  the exact default-off supervisor through the operator credential boundary.
+  The served Observer HTML and client contain the mission panel and all finite
+  arm/renew/pause/re-arm/cancel controls.
 
 ## Deferred
 
@@ -97,10 +103,10 @@ Core and does not expose the internal tick route.
   backlog growth;
 - causal learning, adaptive authority, or provider control of mission budgets;
 - arbitrary process/window/desktop/root control and physical host mutation;
-- physical timer enablement, mission execution, or NixOS generation activation.
+- physical timer enablement or mission execution.
 
 ## Stop Condition
 
-Freeze this lifecycle after activation/health review. The next real behavior is
-a reviewed finite mission worklist, not another lease, receipt, readiness, or
-mission status variant.
+This lifecycle is frozen after activation and health review. The next real
+behavior is a reviewed finite mission worklist, not another lease, receipt,
+readiness, or mission status variant.

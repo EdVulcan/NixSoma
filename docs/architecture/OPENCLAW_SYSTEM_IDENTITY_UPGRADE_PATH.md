@@ -745,7 +745,7 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 
 ---
 
-## 六、当前证据化进度基线（2026-08-01）
+## 六、当前证据化进度基线（2026-08-02）
 
 进度不能再按历史 Phase 数量计算。以下比例是根据当前运行时代码、NixOS
 模块、任务闭环、Observer、测试证据和仍缺失的架构组件估算的能力成熟度，
@@ -753,18 +753,18 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 
 | 身份层级 | 当前成熟度 | 证据与主要缺口 |
 | --- | --- | --- |
-| Level 1 用户态控制平面 | 约 92% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；Observer/Core reviewed task composer 已把 demo-only 入口替换为真实 bounded goal/URL browser task 或 plan，bounded operator work session 增加严格 1-20 queue preview/run，reviewed task workspace session 又把选中 task 显式连接到既有 bounded run、assessment 与 acceptance owner；新增 finite window lease 允许显式 arm 后在 1-8 个窗口内继续，每窗最多 20 步且受 hard deadline、restart pause/re-arm 和既有 run-session owner 约束；durable experience feedback、task-bound consumption、recommendation application/execution/outcome 与新增的显式 operator feedback receipt 分别证明非因果终态相关、recall provider delivery、建议选择、治理 click、终态和一条可持久化人工反馈。建议有效性、因果效果、自动调权与 open-ended autonomy 仍未证明。 |
+| Level 1 用户态控制平面 | 约 94% | 本地服务、任务/审批/审计、工程读写验证恢复、记忆与 provider 治理面已形成；Observer/Core reviewed task composer 已把 demo-only 入口替换为真实 bounded goal/URL browser task 或 plan，bounded operator work session 增加严格 1-20 queue preview/run，reviewed task workspace session 又把选中 task 显式连接到既有 bounded run、assessment 与 acceptance owner；finite window lease 允许显式 arm 后在 1-8 个窗口内继续，每窗最多 20 步且受 hard deadline、restart pause/re-arm 和既有 run-session owner 约束；物理 generation 110 又部署 renewable mission，使有限 epoch 能 checkpoint、续期、暂停/取消并在 restart 后显式 re-arm；durable experience feedback、task-bound consumption、recommendation application/execution/outcome 与显式 operator feedback receipt 分别证明非因果终态相关、recall provider delivery、建议选择、治理 click、终态和一条可持久化人工反馈。有限 task supply、建议有效性、因果效果、自动调权与 open-ended autonomy 仍未证明。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 72-76% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal/boot diagnosis、target-specific post-repair health receipt、只读 eBPF process-exec、network connect-attempt 与 file open-attempt evidence、已部署的 automatic incident scheduler，以及固定 body unit 的资源观测和声明式 cgroup envelope 已形成。物理 generation `52s1asvy...` 已包含三个 probes 及显式 compact aggregate；file-open 不含 filename/path/content/result，aggregate 不含 raw values，并通过 KVM 与物理双门禁。物理 Phase D mutation、自动 rollback、开发终端资源隔离和更广系统能力仍未建立。 |
 | Level 4 图形栈内生组件 | 约 86%（bounded native/operator input、semantic type/click、reviewed run/assessment、OCR actions、current-tab close 与 receipt-bound semantic submit 已物理完成） | 已有 user-owned nested compositor、AI-owned Nix Firefox、原生 frame/input/projection、surface 生命周期、task-grounded provider decisions、OCR workflows、当前 tab owner 与 type-receipt-bound submit。`5zlz2s6z...` gate 证明固定 local form 的 type -> submit、可见 completion、exact no-replay、无 plaintext persistence、task unchanged 与健康服务。该动作族已冻结；Enter、hotkey、repeat、通用键盘代理、开放式循环、任意进程/窗口控制和桌面接管仍未完成。 |
 
-若只衡量当前明确受限、操作者治理的产品范围，成熟度约为 **84-87%**：本地控制面、
+若只衡量当前明确受限、操作者治理的产品范围，成熟度约为 **86-89%**：本地控制面、
 trusted work view、固定 Level 3 body owner、bounded Level 4 眼手动作、provider 协作、
 审计和恢复证据已经形成可用子集，剩余主要是 acceptance reconciliation、完整工作流
 闭合与产品化整合。这一比例不能替代最终愿景比例。
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
-**52-60%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted
+**56-62%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted
 sidecar store 运行路径；Phase B 已完成原生只读 D-Bus inventory、三个由精确
 Polkit 和独立 hostd 所有的固定 native restart、bounded journal diagnosis，
 并已在可丢弃 KVM 中端到端证明 System Heal repair 与 non-replay；Phase C 已完成
@@ -812,9 +812,10 @@ re-arm 可以恢复，且不自动重放任务、不保存输入或 provider 内
 deadline、no-progress circuit 和 stop reason，并提供有限续期、边界暂停/取消及
 restart 后精确 re-arm。真实九服务开发 gate 已完成三 epoch、一次续期和 100%
 收口，并证明另一个 mission 在 Core restart 后必须显式恢复。该能力把 Level 1
-源码成熟度提高到约 94%，但物理 generation 109 仍是 84-87% bounded 产品基线；
-timer 默认关闭，自动 task supply/planning、retry、provider authority 与 host
-mutation 仍不存在。契约见
+源码成熟度提高到约 94%；该能力现已随 generation 110
+`w58x78k1sl78nwjknzpgbs0a0gj5kxzx-nixos-system-nixos-26.05.4808.569d57850992`
+物理部署，使 bounded 产品基线达到约 86-89%。部署保持 timer 默认关闭，自动
+task supply/planning、retry、provider authority 与 host mutation 仍不存在。契约见
 `../plans/OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md`，统一进度见
 `../NIXSOMA_CAPABILITY_MAP.md`。
 
