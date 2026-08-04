@@ -6,6 +6,7 @@ let aiWorkspaceOperatorClickInFlight = false;
 let aiWorkspaceOperatorTypeInFlight = false;
 let aiWorkspaceLocalOcrInFlight = false;
 let aiWorkspaceSingleStepInFlight = false;
+let aiWorkspaceSemanticFormWorkflowInFlight = false;
 let aiWorkspaceBoundedRunInFlight = false;
 let aiWorkspaceReviewedCycleInFlight = false;
 let aiWorkspaceAssessmentInFlight = false;
@@ -99,6 +100,7 @@ function updateAiSurfaceScrollControls() {
     || aiWorkspaceReviewedCycleInFlight
     || aiWorkspaceAssessmentInFlight
     || aiWorkspaceSemanticSubmitInFlight
+    || aiWorkspaceSemanticFormWorkflowInFlight
     || aiWorkspaceAssessmentAcceptanceInFlight;
   scrollAiSurfaceUpButton.disabled = !enabled || aiRunInFlight;
   scrollAiSurfaceDownButton.disabled = !enabled || aiRunInFlight;
@@ -112,6 +114,7 @@ function updateAiSurfaceScrollControls() {
     || !taskId
     || aiWorkspaceSemanticTypeReceipt?.taskId !== taskId
     || aiRunInFlight;
+  runAiWorkspaceSemanticFormWorkflowButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceBoundedRunButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceReviewedCycleButton.disabled = !enabled || !taskId || aiRunInFlight;
   assessAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;

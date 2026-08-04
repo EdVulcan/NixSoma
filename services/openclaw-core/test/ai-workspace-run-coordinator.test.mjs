@@ -103,6 +103,29 @@ function assessmentResult({ outcome = "complete" } = {}) {
   };
 }
 
+function semanticFormStep(actionId) {
+  const result = stepResult({ actionId });
+  result.decision.itemOrdinal = actionId === "type_item" ? 1 : 2;
+  result.action = {
+    actionId,
+    itemOrdinal: result.decision.itemOrdinal,
+    inputEvidence: actionId === "type_item" ? inputEvidence() : null,
+    executed: true,
+  };
+  result.evidence.postActionVerified = true;
+  Object.assign(result.governance, {
+    semanticSceneBound: true,
+    currentFrameBound: true,
+    currentActiveSurfaceBound: true,
+    semanticItemOrdinalBound: true,
+    currentBrowserSurfaceBound: true,
+    taskObjectiveBound: true,
+    providerGeneratedInput: actionId === "type_item",
+    semanticSubmitTargetBound: actionId === "click_item",
+  });
+  return result;
+}
+
 function harness(results, {
   rejectContinuationAudit = false,
   rejectRunCompletionAudit = false,
@@ -203,6 +226,30 @@ test("semantic submit shares the coordinator single-flight and applies the const
   assert.equal(calls.invoke.length, 1);
   assert.equal(calls.invoke[0].decisionMode, "semantic_submit");
   assert.equal(calls.invoke[0].expectedTaskBinding.taskId, TASK_ID);
+});
+
+test("semantic form workflow applies type-only then submit modes under one coordinator lease", async () => {
+  const { calls, coordinator } = harness([
+    semanticFormStep("type_item"),
+    semanticFormStep("click_item"),
+  ]);
+
+  const result = await coordinator.semanticFormWorkflow.invoke({ taskId: TASK_ID });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.status, "completed");
+  assert.deepEqual(result.steps.map((step) => step.actionId), ["type_item", "click_item"]);
+  assert.equal(calls.invoke[0].decisionMode, "semantic_form_type");
+  assert.equal(calls.invoke[1].decisionMode, "semantic_submit");
+  assert.deepEqual(calls.invoke[1].expectedTaskBinding, {
+    taskId: TASK_ID,
+    objectiveContentHash: "a".repeat(64),
+    taskVersionHash: "b".repeat(64),
+  });
+  assert.equal(result.evidence.continuationAudit, true);
+  assert.equal(result.evidence.workflowCompletionAudit, true);
+  assert.equal(result.governance.boundedAutomaticContinuation, true);
+  assert.equal(JSON.stringify(result).includes(PRIVATE_TEXT), false);
 });
 
 test("bounded workspace run stops after first no-op, click, or type", async (t) => {

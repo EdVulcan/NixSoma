@@ -21,6 +21,12 @@ import {
   stableAiWorkspaceJson,
 } from "./ai-workspace-context.mjs";
 import {
+  AI_WORKSPACE_SEMANTIC_FORM_TYPE_MODE,
+  buildAiWorkspaceSemanticFormTypeInstruction,
+  buildAiWorkspaceSemanticFormTypeRequestedBehavior,
+  parseAiWorkspaceSemanticFormTypeDecision,
+} from "./ai-workspace-semantic-form-policy.mjs";
+import {
   AI_WORKSPACE_SEMANTIC_SUBMIT_MODE,
   buildAiWorkspaceSemanticSubmitInstruction,
   buildAiWorkspaceSemanticSubmitRequestedBehavior,
@@ -184,6 +190,7 @@ export function createAiWorkspaceSingleStep({
   } = {}) {
     const taskId = normaliseAiWorkspaceTaskId(requestedTaskId);
     const semanticSubmitMode = decisionMode === AI_WORKSPACE_SEMANTIC_SUBMIT_MODE;
+    const semanticFormTypeMode = decisionMode === AI_WORKSPACE_SEMANTIC_FORM_TYPE_MODE;
     if (!taskId || typeof getTaskById !== "function") {
       return fallback("task_objective_unavailable", standingAdvisory);
     }
@@ -207,6 +214,7 @@ export function createAiWorkspaceSingleStep({
       inputValuesEgress: false,
       providerGeneratedInputAllowed: !semanticSubmitMode,
       semanticSubmitOnly: semanticSubmitMode,
+      semanticFormTypeOnly: semanticFormTypeMode,
       rawTaskGoalEgress: false,
       taskObjectiveEgress: true,
     };
@@ -228,12 +236,16 @@ export function createAiWorkspaceSingleStep({
         decisionContext.provider = buildAiWorkspaceProviderContext({
           registry: semanticSubmitMode
             ? "nixsoma-ai-workspace-semantic-submit-context-v0"
+            : semanticFormTypeMode
+              ? "nixsoma-ai-workspace-semantic-form-type-context-v0"
             : "nixsoma-ai-workspace-single-step-context-v2",
           observedAt,
           context: decisionContext,
           taskObjective: taskObjectiveBinding.providerProjection,
           requestedBehavior: semanticSubmitMode
             ? buildAiWorkspaceSemanticSubmitRequestedBehavior()
+            : semanticFormTypeMode
+              ? buildAiWorkspaceSemanticFormTypeRequestedBehavior()
             : {
                 maximumActions: 1,
                 allowedActions: ["no_op", "scroll_up", "scroll_down", "click_item", "type_item"],
@@ -250,16 +262,22 @@ export function createAiWorkspaceSingleStep({
       },
       instruction: semanticSubmitMode
         ? buildAiWorkspaceSemanticSubmitInstruction()
+        : semanticFormTypeMode
+          ? buildAiWorkspaceSemanticFormTypeInstruction()
         : buildAiWorkspaceSingleStepInstruction(),
       buildPrompt: (context) =>
         `Choose exactly one bounded action for this server-generated AI workspace context: ${stableAiWorkspaceJson(context)}`,
       responseContract: AI_WORKSPACE_SINGLE_STEP_RESPONSE_CONTRACT,
       parseResponse: semanticSubmitMode
         ? parseAiWorkspaceSemanticSubmitDecision
+        : semanticFormTypeMode
+          ? parseAiWorkspaceSemanticFormTypeDecision
         : parseAiWorkspaceSingleStepDecision,
       readActionId: (parsed) => parsed.decision.actionId,
       auditEventName: semanticSubmitMode
         ? "cloud_provider.ai_workspace_semantic_submit_egress_authorized"
+        : semanticFormTypeMode
+          ? "cloud_provider.ai_workspace_semantic_form_type_egress_authorized"
         : "cloud_provider.ai_workspace_single_step_egress_authorized",
       auditPayload: egressAuditPayload,
       successResult: "ai_workspace_single_step_decision_returned",
@@ -377,6 +395,7 @@ export function createAiWorkspaceSingleStep({
           parentDisplayConnected: false,
           mutatesHost: false,
           semanticSubmitMode,
+          semanticFormTypeMode,
         },
       };
     }
@@ -442,6 +461,7 @@ export function createAiWorkspaceSingleStep({
           parentDisplayConnected: false,
           mutatesHost: false,
           semanticSubmitMode,
+          semanticFormTypeMode,
           semanticSubmitTargetBound: semanticSubmitMode,
         },
       };
@@ -506,6 +526,7 @@ export function createAiWorkspaceSingleStep({
           processLaunch: false,
           parentDisplayConnected: false,
           mutatesHost: false,
+          semanticFormTypeMode,
         },
       };
     }

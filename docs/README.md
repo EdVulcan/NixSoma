@@ -13,8 +13,8 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source adds controlled paired-randomized experience recall ordering, exact terminal binding, and explicit evidence-hash profile activation to the governed Level 1-4 baseline | Core/Observer source and exact Nix closures pass; physical generation 111 remains the prior reviewed-worklist baseline |
-| Local validation | All workspace tests pass, including Core `963/963` and Observer `118/118`; typecheck, body-config, the reusable real Core/Observer context gate, native frame/input/application lifecycle, provider flake, native inventory, event-audit integration, the 1023-file script audit, and 835 registry entries pass | Validated |
+| Capability source | Current source adds controlled paired-randomized experience recall ordering plus one exact-evidence semantic type -> submit workflow to the governed Level 1-4 baseline | Core `972/972`, Observer `119/119`, full workspace tests/typecheck, real Core/Observer gates, and exact `287/115`-file Nix closures pass; physical generation 111 remains the prior reviewed-worklist baseline |
+| Local validation | Full workspace tests/typecheck, body-config, real Core/Observer capability gates, the 835-entry registry, 1007-script audit, Windows path budget, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration pass | Validated in source; physical activation and live workflow remain separate |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/2rg3qq3nzg5yva0z0yg7scs4hb99asl0-nixos-system-nixos-26.05.4808.569d57850992` | Generation 111 deploys the reviewed finite mission worklist; current/profile paths match, all nine health endpoints pass, related services have zero restarts, and system/user failed-unit counts are zero |
 | Previous generation | `/nix/store/w58x78k1sl78nwjknzpgbs0a0gj5kxzx-nixos-system-nixos-26.05.4808.569d57850992` | Generation 110 renewable-mission baseline before the authorized reviewed-worklist switch |
@@ -47,6 +47,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 OCR focus then type | One explicit reviewed task whose objective fixes both an OCR target substring and exact allowlisted value may receive one `focus_and_type + ordinal + value` decision; Core requires unchanged provider OCR, objective-local target verification, opcode-4 receipt, fresh task/frame/OCR revalidation, opcode-5 receipt, and final OCR containing the value | Deployed in `4mw7p3r3...`; task `158bd267...` bound provider/preprobe ordinal 14 on surface 14 to one call, opcodes `[4,5]`, four owner OCR observations, two receipts, final OCR, unchanged task, completion audit, and no execution-evidence plaintext |
 | Level 4 current-tab close | One explicit authenticated request carries only `browser.current_tab.close` plus `confirm=true`; Core grants one fixed Screen Act route and Browser Runtime closes only its current `activePage` while preserving the final tab | Physically proven in `pfiwq5p3...` and carried by current `2rg3qq3nz...`; real headed Firefox PID 63947 stayed stable while the prepare-reuse test page closed with count 5 -> 4, helper lease plus Browser Runtime/Screen Act audit matched, and provider calls, automatic cleanup/repeat, user-service restarts, and reboot remained zero |
 | Level 4 semantic submit | One explicit request binds an under-five-minute verified write-only type receipt to the same current task and one enabled Submit/Send/Continue/Confirm button, then reuses the existing semantic click owner once | Physically accepted in `5zlz2s6z...` and carried by current `2rg3qq3nz...`; the fixed local form executed type then submit with two calls/two actions, visible completion, exact replay rejection before provider contact, unchanged task, no plaintext persistence, tmpfs profile, and healthy services |
+| Level 4 semantic form workflow | One explicit task-bound request constrains step one to semantic type, continues only from exact post-action/audit evidence, constrains step two to an eligible semantic submit click, verifies both actions, and terminates | Source-validated with Core `972/972`, Observer `119/119`, full workspace tests/typecheck, real Core/Observer gates, body-config, and exact `287/115`-file Nix closures; physical deployment and a live provider run remain unclaimed |
 | Level 1 durable experience feedback | Older experience records correlate at most 32 idempotent later terminal outcomes for the exact same task type; engineering context and Observer separate this feedback from historical outcome rate | Implemented in source; correlation is explicitly non-causal, advisory use is unproven, and feedback cannot change ranking, policy, provider calls, or execution |
 | Level 1 recall consumption receipt | A transient candidate binds at most four recalled records to one execution/source task and context hash; only a successful approved provider response finalizes a request-bound receipt | Implemented in source; the consumption receipt remains provider-only, while a later application receipt may carry only its validated hash; record ids, provider content, and causality remain excluded |
 | Level 1 recommendation application receipt | Explicit Observer selection reuses the fixed governed semantic-click task control; Core derives a response/link/downstream-task-bound receipt and optionally carries the validated recall-consumption receipt hash | Implemented in source; `advisoryApplied` is proven only at the hash-bound application edge, while execution, terminal outcome, effectiveness, and causality remain separate claims |
@@ -93,10 +94,11 @@ remain separate scopes for future development:
   work view, fixed Level 3 body owners, bounded Level 4 eye-hand actions,
   provider collaboration, audit, and recovery evidence. Its remaining work is
   completion of coherent user workflows and integration/product hardening.
-- **About 90-92% for the current source bounded product** includes the finite
-  mission worklist and controlled recall-order adaptation. It does not claim a
-  physical switch, enabled mission timer, or live randomized outcome.
-- **About 58-63% for the final vision** measures the wider whitepaper target: a
+- **About 91-93% for the current source bounded product** includes the finite
+  mission worklist, controlled recall-order adaptation, and one bounded semantic
+  type -> submit workflow. It does not claim a physical switch, enabled mission
+  timer, live randomized outcome, or live multi-step provider run.
+- **About 59-64% for the final vision** measures the wider whitepaper target: a
   durable local-first autonomous agent body with long-running autonomy, durable
   learning and memory feedback loops, broader body nerves, physically governed
   Phase D evolution, and a richer native graphical workspace.
@@ -319,10 +321,16 @@ both lanes available, nine healthy endpoints, and zero failed units.
     a predeclared exact test produces a hash-bound candidate, and only explicit
     operator activation changes future recall order. See
     [`OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md`](./plans/OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md).
+12. **Semantic form workflow closes one bounded multi-step eye-hand action.**
+    One explicit request permits only a write-only semantic type, exact verified
+    continuation, and one eligible submit click. It terminates after the second
+    action and never retries, completes the task, or persists input text. See
+    [`OPENCLAW_SEMANTIC_FORM_WORKFLOW_PLAN.md`](./plans/OPENCLAW_SEMANTIC_FORM_WORKFLOW_PLAN.md).
 
-The next source route is a richer native multi-step workflow. Physical Phase D
-promotion/rollback remains separately authorized and is not implied by this
-source checkpoint.
+The next source route is a second fixed native application workflow, so Level 4
+can progress beyond the single browser application without arbitrary process,
+window, keyboard, or desktop control. Physical Phase D promotion/rollback
+remains separately authorized and is not implied by this source checkpoint.
 
 Do not manufacture a VFS/network variant, provider/readiness wrapper, generic
 Enter or keyboard path, caller-coordinate action, automatic repetition, open
@@ -970,10 +978,10 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 96% in source; renewable finite missions now consume an immutable reviewed worklist, while provider planning, open-ended task supply, retry/skip, and live replicated adaptation evidence remain incomplete |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 72-76%; process exec, network connect-attempt, bounded file open-attempt, and process lifecycle observation are physically deployed, while physical Phase D mutation and broader body nerves remain incomplete |
-| Level 4 graphics-stack-native body | about 85%; one-shot projected operator click, bounded native operator type, semantic type, bounded run, explicit reviewed cycle/acceptance, bounded local OCR, OCR assessment, same-surface OCR click, objective-bound OCR type, fixed OCR focus-then-type, and governed current-tab close are physically complete |
+| Level 4 graphics-stack-native body | about 87% in source; the physically complete one-shot actions now have one source-only semantic type -> verified submit workflow, while a second fixed native application and longer mission-bound eye-hand work remain incomplete |
 | Physically deployed bounded product | 88-91% |
-| Current source bounded product | 90-92% |
-| Final whitepaper vision | 58-63% |
+| Current source bounded product | 91-93% |
+| Final whitepaper vision | 59-64% |
 
 ## Current Decision Records
 
@@ -983,6 +991,7 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md](./plans/OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md) | Physically deployed renewable mission epochs, checkpoints, explicit renewal, recovery, circuit break, and Observer progress. |
 | [OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md](./plans/OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md) | Source-complete immutable reviewed task supply with issue checkpoints, exact provenance, and stop-on-failure. |
 | [OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md](./plans/OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md) | Source-complete finite paired-random adaptation experiment, exact evidence binding, and explicit recall-profile activation without policy or action authority. |
+| [OPENCLAW_SEMANTIC_FORM_WORKFLOW_PLAN.md](./plans/OPENCLAW_SEMANTIC_FORM_WORKFLOW_PLAN.md) | Source-validated semantic type -> exact verified continuation -> eligible submit workflow with a two-step hard stop. |
 | [OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md](./plans/OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md) | Completed bounded Level 2 browser/work-view contract. |
 | [OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md](./plans/OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md) | Current operator, service identity, and execution-grant boundary. |
 | [OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md](./plans/OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Current fixed Level 3 restart and journal-diagnosis boundary. |

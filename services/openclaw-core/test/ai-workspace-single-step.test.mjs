@@ -799,3 +799,49 @@ test("AI workspace semantic-submit mode rejects non-submit targets before actuat
     "ai_workspace_single_step_semantic_submit_target_not_eligible");
   assert.equal(calls.post.length, 0);
 });
+
+test("AI workspace semantic-form type mode permits only one write-only type", async () => {
+  const taskGoal = "Type NixSoma into Search, then submit the form";
+  const typed = harness({
+    actionId: "type_item",
+    sceneRole: "textbox",
+    sceneName: "Search",
+    inputText: "NixSoma",
+    taskGoal,
+  });
+
+  const result = await typed.owner.invoke({
+    taskId: TASK_ID,
+    decisionMode: "semantic_form_type",
+  });
+
+  assert.equal(result.status, "executed");
+  assert.equal(result.action.actionId, "type_item");
+  assert.equal(result.governance.semanticFormTypeMode, true);
+  assert.equal(result.governance.keyboardInput, true);
+  assert.equal(result.governance.inputTextPersisted, false);
+  assert.equal(typed.calls.decision[0].auditEventName,
+    "cloud_provider.ai_workspace_semantic_form_type_egress_authorized");
+  assert.deepEqual(typed.calls.post[0].options.grantContext, {
+      taskId: TASK_ID,
+      stepId: null,
+      capabilityId: "act.ai.workspace.single_step",
+      intent: "ai.workspace.semantic_type",
+  });
+  assert.equal(JSON.stringify(result).includes("NixSoma"), false);
+
+  const clicked = harness({
+    actionId: "click_item",
+    sceneRole: "button",
+    sceneName: "Submit form",
+    taskGoal,
+  });
+  const rejected = await clicked.owner.invoke({
+    taskId: TASK_ID,
+    decisionMode: "semantic_form_type",
+  });
+  assert.equal(rejected.status, "local_fallback");
+  assert.equal(rejected.fallback.reason,
+    "ai_workspace_single_step_semantic_form_type_action_not_allowed");
+  assert.equal(clicked.calls.post.length, 0);
+});

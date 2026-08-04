@@ -21,6 +21,7 @@ const ACTION_CAPABILITY_IDS = new Set([
   SINGLE_STEP_CAPABILITY_ID,
   "act.ai.workspace.bounded_run",
   "act.ai.workspace.reviewed_cycle",
+  "act.ai.workspace.semantic_form_workflow",
   "act.ai.workspace.ocr_click",
   "act.ai.workspace.ocr_type",
   "act.ai.workspace.ocr_focus_type",
@@ -168,11 +169,18 @@ function taskBindingMatchesReceipt(binding, receipt) {
     && binding.evidence.taskVersionHash === receipt.taskVersionHash;
 }
 
+function summaryExecutedAction(summary) {
+  return summary?.actionExecuted === true
+    || (Number.isInteger(summary?.actionCountMinimum) && summary.actionCountMinimum > 0)
+    || (Array.isArray(summary?.steps)
+      && summary.steps.some((step) => step?.actionExecuted === true));
+}
+
 function laterTaskActionExists(log, receiptIndex, taskId) {
   return log.slice(receiptIndex + 1).some((entry) =>
     entry?.request?.taskId === taskId
       && ACTION_CAPABILITY_IDS.has(entry?.capability?.id)
-      && entry?.summary?.actionExecuted === true);
+      && summaryExecutedAction(entry?.summary));
 }
 
 export function createAiWorkspaceSemanticSubmitCapabilityHandlers({

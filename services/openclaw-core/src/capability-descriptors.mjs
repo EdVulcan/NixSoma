@@ -156,6 +156,18 @@ export function buildBaseCapabilities({
       description: "After explicit operator confirmation, bind one current verified semantic-type receipt to one eligible task-bound submit-button activation with no Enter, retry, or automatic task completion.",
     },
     {
+      id: "act.ai.workspace.semantic_form_workflow",
+      name: "AI Workspace Semantic Form Workflow",
+      kind: "actuator",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/capabilities/invoke`,
+      intents: ["ai.workspace.semantic_form_workflow"],
+      domains: ["cross_boundary"],
+      risk: "medium",
+      governance: "standing_authorization",
+      description: "Run one explicit task-bound semantic type followed only by an exact-evidence-authorized eligible submit click, then terminate without retry or automatic task completion.",
+    },
+    {
       id: "act.ai.workspace.bounded_run",
       name: "AI Workspace Bounded Run",
       kind: "actuator",

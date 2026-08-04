@@ -122,11 +122,18 @@ function createHarness({
   };
   const capabilityInvocationLog = [invocation];
   if (laterAction) {
+    const semanticFormWorkflow = laterAction === "semantic_form_workflow";
     capabilityInvocationLog.push({
       id: "later-action",
-      capability: { id: "act.ai.workspace.single_step" },
+      capability: {
+        id: semanticFormWorkflow
+          ? "act.ai.workspace.semantic_form_workflow"
+          : "act.ai.workspace.single_step",
+      },
       request: { taskId: TASK_ID },
-      summary: { actionExecuted: true },
+      summary: semanticFormWorkflow
+        ? { actionCountMinimum: 1 }
+        : { actionExecuted: true },
     });
   }
   for (const [index, summary] of priorSemanticSubmitSummaries.entries()) {
@@ -242,6 +249,14 @@ test("semantic submit rejects unverified or superseded type receipts before audi
   const supersededResponse = await superseded.handlers.callBackend(capability, superseded.request);
   assert.equal(supersededResponse.result.reason, "type_receipt_not_current");
   assert.equal(superseded.calls.length, 0);
+
+  const supersededByWorkflow = createHarness({ laterAction: "semantic_form_workflow" });
+  const workflowResponse = await supersededByWorkflow.handlers.callBackend(
+    capability,
+    supersededByWorkflow.request,
+  );
+  assert.equal(workflowResponse.result.reason, "type_receipt_not_current");
+  assert.equal(supersededByWorkflow.calls.length, 0);
 });
 
 test("semantic submit does not consume a receipt when an invalid request is durably recorded", async () => {

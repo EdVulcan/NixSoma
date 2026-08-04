@@ -281,9 +281,10 @@ contract is `plans/OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md`.
 
 For route planning, keep deployment and source denominators explicit. The
 physically deployed operator-governed product remains roughly 88-91% mature,
-while the source bounded product with controlled adaptation is roughly 90-92%
-mature. The wider autonomous-agent body described by the identity route and
-kernel whitepaper is roughly 58-63% complete. Mission supervision closes
+while the source bounded product with controlled adaptation and one semantic
+type -> submit workflow is roughly 91-93% mature. The wider autonomous-agent
+body described by the identity route and kernel whitepaper is roughly 59-64%
+complete. Mission supervision closes
 multi-epoch lifecycle continuity for already-reviewed work; autonomous task
 supply/planning, live replicated adaptation evidence, broader body nerves,
 physical Phase D evolution, and richer native workflows keep the final number lower.
@@ -406,9 +407,26 @@ explicit operator-feedback edge, and controlled recall-ordering experiment are
 implemented and frozen after source, real-service, and Nix closure validation.
 The process-lifecycle physical deployment proof is also complete. Do not reopen
 the feedback lane for another receipt wrapper, observational score, automatic
-learning claim, or authority-changing ranking variant. The next source route is
-a richer native multi-step workflow; physical Phase D promotion/rollback is a
-separate explicitly authorized route.
+learning claim, or authority-changing ranking variant.
+
+The first richer bounded workflow is now implemented in source as
+`act.ai.workspace.semantic_form_workflow`. One explicit reviewed-task request
+constrains provider step one to `type_item` or `no_op`, continues only when the
+existing semantic type owner proves task/scene/surface binding, post-action
+verification, completion audit, and write-only input evidence, then constrains
+step two to the existing eligible semantic-submit policy. It terminates after
+that submit attempt. Task/scene drift, fallback, no-op, missing audit, unverified
+action, malformed result, or unknown outcome stop without retry. It never stores
+input text, completes the task, creates a task/approval, accepts Enter/hotkeys,
+or adds an actuator. Core `972/972`, Observer `119/119`, full workspace
+tests/typecheck, real Core/Observer gates, body-config, registry/script/path
+gates, and exact `287/115`-file Nix closures pass. Physical activation and live
+provider evidence remain separate.
+
+The next source route is a second fixed native application workflow so Level 4
+progresses beyond the single browser application without arbitrary process,
+window, keyboard, or desktop authority. Physical Phase D promotion/rollback is
+a separate explicitly authorized route.
 
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation

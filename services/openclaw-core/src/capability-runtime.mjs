@@ -43,6 +43,7 @@ import { createAiWorkspaceOcrTypeCapabilityHandlers } from "./capability-runtime
 import { createAiWorkspaceAssessmentAcceptanceCapabilityHandlers } from "./capability-runtime-ai-workspace-assessment-acceptance.mjs";
 import { createAiWorkspaceSingleStepCapabilityHandlers } from "./capability-runtime-ai-workspace-single-step.mjs";
 import { createAiWorkspaceSemanticSubmitCapabilityHandlers } from "./capability-runtime-ai-workspace-semantic-submit.mjs";
+import { createAiWorkspaceSemanticFormWorkflowCapabilityHandlers } from "./capability-runtime-ai-workspace-semantic-form-workflow.mjs";
 import { createAiWorkspaceBoundedRunCapabilityHandlers } from "./capability-runtime-ai-workspace-bounded-run.mjs";
 import { createAiWorkspaceReviewedCycleCapabilityHandlers } from "./capability-runtime-ai-workspace-reviewed-cycle.mjs";
 import {
@@ -80,6 +81,7 @@ export function createCapabilityRuntime(deps) {
     aiWorkspaceOcrType,
     aiWorkspaceSingleStep,
     aiWorkspaceSemanticSubmit,
+    aiWorkspaceSemanticFormWorkflow,
     aiWorkspaceBoundedRun,
     aiWorkspaceReviewedCycle,
     declarativeEvolution = {},
@@ -299,6 +301,10 @@ export function createCapabilityRuntime(deps) {
     publishAuditEvent,
     now,
   });
+  const aiWorkspaceSemanticFormWorkflowHandlers =
+    createAiWorkspaceSemanticFormWorkflowCapabilityHandlers({
+      runtime: aiWorkspaceSemanticFormWorkflow,
+    });
   const aiWorkspaceBoundedRunHandlers = createAiWorkspaceBoundedRunCapabilityHandlers({
     runtime: aiWorkspaceBoundedRun,
   });
@@ -600,6 +606,11 @@ export function createCapabilityRuntime(deps) {
     );
     if (aiWorkspaceSemanticSubmit.handled) {
       return aiWorkspaceSemanticSubmit.result;
+    }
+    const aiWorkspaceSemanticFormWorkflow =
+      await aiWorkspaceSemanticFormWorkflowHandlers.callBackend(capability, request);
+    if (aiWorkspaceSemanticFormWorkflow.handled) {
+      return aiWorkspaceSemanticFormWorkflow.result;
     }
     const standingProviderAdvisory = await standingProviderAdvisoryHandlers.callBackend(capability, request);
     if (standingProviderAdvisory.handled) {
@@ -929,6 +940,11 @@ export function createCapabilityRuntime(deps) {
       aiWorkspaceSemanticSubmitHandlers.summariseResult(capability, result);
     if (aiWorkspaceSemanticSubmitSummary) {
       return aiWorkspaceSemanticSubmitSummary;
+    }
+    const aiWorkspaceSemanticFormWorkflowSummary =
+      aiWorkspaceSemanticFormWorkflowHandlers.summariseResult(capability, result);
+    if (aiWorkspaceSemanticFormWorkflowSummary) {
+      return aiWorkspaceSemanticFormWorkflowSummary;
     }
     const standingProviderAdvisorySummary = standingProviderAdvisoryHandlers.summariseResult(capability, result);
     if (standingProviderAdvisorySummary) {
@@ -1436,6 +1452,11 @@ export function createCapabilityRuntime(deps) {
     if (aiWorkspaceSemanticSubmitAuthorization.handled) {
       serverApproval = aiWorkspaceSemanticSubmitAuthorization.authorization;
     }
+    const aiWorkspaceSemanticFormWorkflowAuthorization =
+      aiWorkspaceSemanticFormWorkflowHandlers.authorizeRequest(capability, request, body);
+    if (aiWorkspaceSemanticFormWorkflowAuthorization.handled) {
+      serverApproval = aiWorkspaceSemanticFormWorkflowAuthorization.authorization;
+    }
     const aiWorkspaceBoundedRunAuthorization = aiWorkspaceBoundedRunHandlers.authorizeRequest(
       capability,
       request,
@@ -1534,6 +1555,14 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: aiWorkspaceSemanticSubmitValidationError },
+      };
+    }
+    const aiWorkspaceSemanticFormWorkflowValidationError =
+      aiWorkspaceSemanticFormWorkflowHandlers.validateRequest(capability, request, body);
+    if (aiWorkspaceSemanticFormWorkflowValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: aiWorkspaceSemanticFormWorkflowValidationError },
       };
     }
     const aiWorkspaceBoundedRunValidationError = aiWorkspaceBoundedRunHandlers.validateRequest(

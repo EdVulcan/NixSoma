@@ -133,6 +133,7 @@ function createHarness(overrides = {}) {
     aiWorkspaceOcrType: overrides.aiWorkspaceOcrType,
     aiWorkspaceSingleStep: overrides.aiWorkspaceSingleStep,
     aiWorkspaceSemanticSubmit: overrides.aiWorkspaceSemanticSubmit,
+    aiWorkspaceSemanticFormWorkflow: overrides.aiWorkspaceSemanticFormWorkflow,
     aiWorkspaceBoundedRun: overrides.aiWorkspaceBoundedRun,
     aiWorkspaceReviewedCycle: overrides.aiWorkspaceReviewedCycle,
     publishAuditEvent: overrides.publishAuditEvent,
@@ -213,6 +214,93 @@ test("capability runtime exposes the receipt-bound AI workspace semantic submit 
   assert.deepEqual(capability?.domains, ["cross_boundary"]);
   assert.equal(capability?.risk, "medium");
   assert.equal(capability?.governance, "standing_authorization");
+});
+
+test("capability runtime exposes and invokes the bounded semantic form workflow", async () => {
+  const calls = [];
+  const { runtime, state } = createHarness({
+    aiWorkspaceSemanticFormWorkflow: {
+      invoke: async (input) => {
+        calls.push(input);
+        return {
+          ok: true,
+          registry: "nixsoma-ai-workspace-semantic-form-workflow-v0",
+          status: "completed",
+          terminalReason: "verified_type_then_submit",
+          steps: [{
+            index: 1,
+            status: "executed",
+            actionId: "type_item",
+            itemOrdinal: 1,
+            inputEvidence: {
+              registry: "openclaw-write-only-input-evidence-v0",
+              charCount: 7,
+              byteLength: 7,
+              textExposed: false,
+              persisted: false,
+            },
+            providerCalled: true,
+            actionExecuted: true,
+            postActionVerified: true,
+            completionAudit: true,
+          }, {
+            index: 2,
+            status: "executed",
+            actionId: "click_item",
+            itemOrdinal: 2,
+            providerCalled: true,
+            actionExecuted: true,
+            postActionVerified: true,
+            completionAudit: true,
+            semanticSubmitTargetBound: true,
+          }],
+          evidence: {
+            taskId: input.taskId,
+            objectiveContentHash: "a".repeat(64),
+            taskVersionHash: "b".repeat(64),
+            stepCount: 2,
+            providerCallCount: 2,
+            providerCallCountMinimum: 2,
+            actionCount: 2,
+            actionCountMinimum: 2,
+            continuationAudit: true,
+            workflowCompletionAudit: true,
+            outcomeUnknown: false,
+          },
+          governance: {
+            continuationAfterVerifiedTypeOnly: true,
+            continuedAfterVerifiedType: true,
+            boundedAutomaticContinuation: true,
+          },
+        };
+      },
+    },
+  });
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find(
+    (item) => item.id === "act.ai.workspace.semantic_form_workflow",
+  );
+  assert.equal(capability?.kind, "actuator");
+  assert.deepEqual(capability?.domains, ["cross_boundary"]);
+  assert.equal(capability?.governance, "standing_authorization");
+
+  const response = await runtime.invokeCapability({
+    capabilityId: "act.ai.workspace.semantic_form_workflow",
+    taskId: "task-form-1",
+    params: { confirm: true },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(calls, [{ taskId: "task-form-1" }]);
+  assert.equal(response.response.invocation.authorization.policyId,
+    "ai-workspace-explicit-semantic-form-workflow");
+  assert.equal(response.response.summary.kind, "ai.workspace.semantic_form_workflow");
+  assert.equal(response.response.summary.providerCallCount, 2);
+  assert.equal(response.response.summary.actionCount, 2);
+  assert.equal(response.response.summary.continuationAudit, true);
+  assert.equal(response.response.summary.workflowCompletionAudit, true);
+  assert.equal(response.response.summary.automaticTaskCompletion, false);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("private form value"), false);
 });
 
 test("capability runtime exposes the standing-authorized read-only AI workspace assessment", async () => {

@@ -178,6 +178,7 @@ export function createPlanBuilder(deps) {
     aiWorkspaceOcrFocusType: aiWorkspaceRuntimes.ocrFocusType,
     aiWorkspaceOcrType: aiWorkspaceRuntimes.ocrType,
     aiWorkspaceSemanticSubmit: aiWorkspaceRuntimes.semanticSubmit,
+    aiWorkspaceSemanticFormWorkflow: aiWorkspaceRuntimes.semanticFormWorkflow,
     aiWorkspaceSingleStep: aiWorkspaceRuntimes.singleStep,
     aiWorkspaceBoundedRun: aiWorkspaceRuntimes.boundedRun,
     aiWorkspaceReviewedCycle: aiWorkspaceRuntimes.reviewedCycle,

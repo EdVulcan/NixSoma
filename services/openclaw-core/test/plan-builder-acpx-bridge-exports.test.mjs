@@ -340,6 +340,7 @@ test("plan builder assembles read-only AI workspace assessment with shared autho
 
 test("plan builder exports the reviewed-cycle coordinator through capability runtime", async () => {
   let reviewedInvocations = 0;
+  let semanticFormInvocations = 0;
   const planBuilder = createPlanBuilderHarness({
     acpxDraft: () => ({ ok: true }),
     publishAuditEvent: async () => ({ ok: true }),
@@ -404,6 +405,35 @@ test("plan builder exports the reviewed-cycle coordinator through capability run
           };
         },
       },
+      semanticFormWorkflow: {
+        invoke: async ({ taskId }) => {
+          semanticFormInvocations += 1;
+          return {
+            ok: true,
+            status: "completed",
+            terminalReason: "verified_type_then_submit",
+            steps: [],
+            evidence: {
+              taskId,
+              objectiveContentHash: "a".repeat(64),
+              taskVersionHash: "b".repeat(64),
+              stepCount: 2,
+              providerCallCount: 2,
+              providerCallCountMinimum: 2,
+              actionCount: 2,
+              actionCountMinimum: 2,
+              continuationAudit: true,
+              workflowCompletionAudit: true,
+              outcomeUnknown: false,
+            },
+            governance: {
+              continuationAfterVerifiedTypeOnly: true,
+              continuedAfterVerifiedType: true,
+              boundedAutomaticContinuation: true,
+            },
+          };
+        },
+      },
     }),
   });
 
@@ -417,6 +447,17 @@ test("plan builder exports the reviewed-cycle coordinator through capability run
   assert.equal(result.response.invocation.summary.kind, "ai.workspace.reviewed_cycle");
   assert.equal(result.response.invocation.summary.assessment.outcome, "incomplete");
   assert.equal(reviewedInvocations, 1);
+
+  const semanticForm = await planBuilder.invokeCapability({
+    capabilityId: "act.ai.workspace.semantic_form_workflow",
+    taskId: "task-reviewed-1",
+    params: { confirm: true },
+  });
+  assert.equal(semanticForm.statusCode, 200);
+  assert.equal(semanticForm.response.invocation.summary.kind,
+    "ai.workspace.semantic_form_workflow");
+  assert.equal(semanticForm.response.invocation.summary.workflowCompletionAudit, true);
+  assert.equal(semanticFormInvocations, 1);
 });
 
 test("plan builder assembles task-bound OCR assessment with shared provider authority", async () => {

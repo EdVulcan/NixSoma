@@ -71,6 +71,7 @@ mkOpenClawSourceClosure {
     ../../apps/observer-ui/src/client-script-runtime-ai-workspace-operator-click.mjs
     ../../apps/observer-ui/src/client-script-runtime-ai-workspace-operator-type.mjs
     ../../apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs
+    ../../apps/observer-ui/src/client-script-runtime-ai-workspace-semantic-form-workflow.mjs
     ../../apps/observer-ui/src/client-script-runtime-ai-workspace-semantic-submit.mjs
     ../../apps/observer-ui/src/client-script-runtime-ai-workspace-reviewed-cycle.mjs
     ../../apps/observer-ui/src/client-script-runtime-approval-tasks.mjs

@@ -745,7 +745,7 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 
 ---
 
-## 六、当前证据化进度基线（2026-08-02）
+## 六、当前证据化进度基线（2026-08-04）
 
 进度不能再按历史 Phase 数量计算。以下比例是根据当前运行时代码、NixOS
 模块、任务闭环、Observer、测试证据和仍缺失的架构组件估算的能力成熟度，
@@ -756,16 +756,16 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 | Level 1 用户态控制平面 | 约 96%（bounded source scope） | 本地服务、任务/审批/审计、工程读写验证恢复、provider 治理、reviewed task composer/session、finite window、renewable mission 与 generation 111 的 immutable reviewed worklist 已形成；durable experience、task-bound consumption、recommendation application/execution/outcome、显式 operator feedback，以及源码中的有限配对随机 recall-order experiment 又闭合第一条受控调权链。profile 激活只改变既有经验记录顺序，且要求 exact evidence hash 与 operator confirmation。物理部署、真实重复试验、开放式 task planning 与 open-ended autonomy 仍未完成。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded browser 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 72-76% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal/boot diagnosis、target-specific post-repair health receipt、只读 eBPF process-exec、network connect-attempt 与 file open-attempt evidence、已部署的 automatic incident scheduler，以及固定 body unit 的资源观测和声明式 cgroup envelope 已形成。物理 generation `52s1asvy...` 已包含三个 probes 及显式 compact aggregate；file-open 不含 filename/path/content/result，aggregate 不含 raw values，并通过 KVM 与物理双门禁。物理 Phase D mutation、自动 rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 86%（bounded native/operator input、semantic type/click、reviewed run/assessment、OCR actions、current-tab close 与 receipt-bound semantic submit 已物理完成） | 已有 user-owned nested compositor、AI-owned Nix Firefox、原生 frame/input/projection、surface 生命周期、task-grounded provider decisions、OCR workflows、当前 tab owner 与 type-receipt-bound submit。`5zlz2s6z...` gate 证明固定 local form 的 type -> submit、可见 completion、exact no-replay、无 plaintext persistence、task unchanged 与健康服务。该动作族已冻结；Enter、hotkey、repeat、通用键盘代理、开放式循环、任意进程/窗口控制和桌面接管仍未完成。 |
+| Level 4 图形栈内生组件 | 约 87%（source bounded scope） | 物理 baseline 已有 native/operator input、semantic type/click、reviewed run/assessment、OCR actions、current-tab close 与 receipt-bound submit；源码又新增一次显式 `type -> exact verified continuation -> submit` 协调器，复用既有 actuator 且两步终止。第二个固定原生应用、多应用工作流、longer mission-bound eye-hand、Enter/hotkey/repeat、任意进程/窗口控制和桌面接管仍未完成。 |
 
 若只衡量当前明确受限、操作者治理的产品范围，物理部署成熟度约为
-**88-91%**，当前源码成熟度约为 **90-92%**：本地控制面、
+**88-91%**，当前源码成熟度约为 **91-93%**：本地控制面、
 trusted work view、固定 Level 3 body owner、bounded Level 4 眼手动作、provider 协作、
 审计和恢复证据已经形成可用子集，剩余主要是 acceptance reconciliation、完整工作流
 闭合与产品化整合。这一比例不能替代最终愿景比例。
 
 按四级身份路线与内核长期白皮书综合衡量，整个最终项目当前约完成
-**58-63%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted
+**59-64%**。内核白皮书中的 Phase A 已完成全部 9 个服务 closure 与 trusted
 sidecar store 运行路径；Phase B 已完成原生只读 D-Bus inventory、三个由精确
 Polkit 和独立 hostd 所有的固定 native restart、bounded journal diagnosis，
 并已在可丢弃 KVM 中端到端证明 System Heal repair 与 non-replay；Phase C 已完成
@@ -839,6 +839,18 @@ Core/Observer gate、body-config 与 `284/114` Nix closure 已通过；物理部
 experiment 未发生。契约见
 `../plans/OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md`。
 
+其后的 Level 4 semantic form workflow 把两个已存在的受治理动作闭合为一个
+单次显式多步请求。首步 provider contract 只接受 `type_item/no_op`；只有 task、
+objective/version、semantic scene、surface、post-action frame 和 completion audit
+全部匹配，Core 才记录 continuation audit 并进入既有 semantic-submit policy。第二步
+只允许 eligible Submit/Send/Continue/Confirm button，随后终止。任何 fallback、
+no-op、drift、missing audit、unverified/unknown outcome 都停止且不 retry。输入明文不
+进入 workflow/capability/audit/task/event/Observer/persistence，任务不会自动完成。
+源码 Core `972/972`、Observer `119/119`、full workspace tests/typecheck、真实
+Core/Observer capability gates、body-config、registry/script/path gates 与精确
+`287/115`-file Nix closure 已通过；物理部署和 live provider workflow 尚未声明。契约见
+`../plans/OPENCLAW_SEMANTIC_FORM_WORKFLOW_PLAN.md`。
+
 当前 bounded Level 2 browser 眼手闭环与内核白皮书 Phase A 已收口。
 Phase B 的固定 D-Bus 控制切片、bounded journal/boot diagnosis、incident loop、
 显式批准的 DeepSeek diagnosis handoff、目标相关经验召回、自动本地分诊和
@@ -864,8 +876,9 @@ outcome v1 绑定 application 与 execution receipt 并进入 experience memory�
 
 因此，当前实现与最终愿景的差异是**完成范围**而不是**架构方向**。仍显著缺失的是
 无硬 deadline 的长时间自主运行、live replicated causal/adaptive learning evidence、物理机上的 Phase D
-治理 mutation/rollback、更广的 Level 3 body nerves，以及比 one-shot action 更完整但
-仍受限的 Level 4 工作流；这些缺口解释了最终愿景估算仍为 58-63%。
+治理 mutation/rollback、更广的 Level 3 body nerves、第二个固定原生应用，以及比当前
+两步表单更完整但仍受限的多应用 Level 4 工作流；这些缺口解释了最终愿景估算仍为
+59-64%。
 
 ---
 

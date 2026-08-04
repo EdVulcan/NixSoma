@@ -9,6 +9,7 @@ TOOL_SURFACE_WORKSPACE_DIR="$TOOL_SURFACE_FIXTURE_DIR/openclaw"
 
 source "$SCRIPT_DIR/openclaw-engineering-tool-surface-fixture.sh"
 
+unset OPENCLAW_OPERATOR_TOKEN
 export OPENCLAW_CORE_PORT="${OPENCLAW_CORE_PORT:-6900}"
 export OPENCLAW_EVENT_HUB_PORT="${OPENCLAW_EVENT_HUB_PORT:-6901}"
 export OPENCLAW_SESSION_MANAGER_PORT="${OPENCLAW_SESSION_MANAGER_PORT:-6902}"
@@ -20,6 +21,7 @@ export OPENCLAW_SYSTEM_HEAL_PORT="${OPENCLAW_SYSTEM_HEAL_PORT:-6907}"
 export OBSERVER_UI_PORT="${OBSERVER_UI_PORT:-6970}"
 export OPENCLAW_CORE_STATE_FILE="${OPENCLAW_CORE_STATE_FILE:-$REPO_ROOT/.artifacts/openclaw-core-capability-invoke-check.json}"
 export OPENCLAW_EVENT_LOG_FILE="${OPENCLAW_EVENT_LOG_FILE:-$REPO_ROOT/.artifacts/openclaw-capability-invoke-check-events.jsonl}"
+export OPENCLAW_OPERATOR_TOKEN_FILE="${OPENCLAW_CAPABILITY_INVOKE_OPERATOR_TOKEN_FILE:-$REPO_ROOT/.artifacts/capability-invoke-operator-token}"
 export OPENCLAW_SYSTEM_ALLOWED_ROOTS="$FIXTURE_DIR"
 export OPENCLAW_WORKSPACE_ROOTS="$FIXTURE_DIR:$TOOL_SURFACE_WORKSPACE_DIR"
 
@@ -28,7 +30,7 @@ EVENT_HUB_URL="http://127.0.0.1:$OPENCLAW_EVENT_HUB_PORT"
 SESSION_MANAGER_URL="http://127.0.0.1:$OPENCLAW_SESSION_MANAGER_PORT"
 
 "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
-rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_EVENT_LOG_FILE"
+rm -f "$OPENCLAW_CORE_STATE_FILE" "$OPENCLAW_CORE_STATE_FILE.tmp" "$OPENCLAW_EVENT_LOG_FILE" "$OPENCLAW_OPERATOR_TOKEN_FILE"
 rm -rf "$FIXTURE_DIR"
 rm -rf "$TOOL_SURFACE_FIXTURE_DIR"
 mkdir -p "$FIXTURE_DIR/nested" "$FIXTURE_DIR/src" "$FIXTURE_DIR/scratch" "$FIXTURE_DIR/.openclaw"
@@ -78,6 +80,7 @@ cleanup() {
     "${BLOCKED_COMMAND_FILE:-}" \
     "${APPROVED_COMMAND_FILE:-}" \
     "${EVENTS_FILE:-}"
+  rm -f "$OPENCLAW_OPERATOR_TOKEN_FILE"
   "$SCRIPT_DIR/dev-down.sh" >/dev/null 2>&1 || true
   rm -rf "$TOOL_SURFACE_FIXTURE_DIR"
 }
@@ -445,6 +448,14 @@ if (!capabilities.capabilities?.some((capability) =>
   && capability.intents?.includes("engineering.tool_surface_inventory")
 )) {
   throw new Error("capability registry should expose the engineering tool surface inventory contract");
+}
+if (!capabilities.capabilities?.some((capability) =>
+  capability.id === "act.ai.workspace.semantic_form_workflow"
+  && capability.kind === "actuator"
+  && capability.governance === "standing_authorization"
+  && capability.intents?.includes("ai.workspace.semantic_form_workflow")
+)) {
+  throw new Error("capability registry should expose the bounded semantic form workflow contract");
 }
 if (
   !workView.ok

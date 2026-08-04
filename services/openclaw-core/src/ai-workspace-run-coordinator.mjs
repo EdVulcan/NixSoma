@@ -1,4 +1,6 @@
 import { createAiWorkspaceReviewedCycle } from "./ai-workspace-reviewed-cycle.mjs";
+import { createAiWorkspaceSemanticFormWorkflow } from "./ai-workspace-semantic-form-workflow.mjs";
+import { AI_WORKSPACE_SEMANTIC_FORM_TYPE_MODE } from "./ai-workspace-semantic-form-policy.mjs";
 import { AI_WORKSPACE_SEMANTIC_SUBMIT_MODE } from "./ai-workspace-semantic-submit-policy.mjs";
 
 export const AI_WORKSPACE_BOUNDED_RUN_REGISTRY =
@@ -259,6 +261,13 @@ export function createAiWorkspaceRunCoordinator({
     } finally {
       inFlight = false;
     }
+  }
+
+  function runSemanticSubmit(input) {
+    return singleStep.invoke({
+      ...input,
+      decisionMode: AI_WORKSPACE_SEMANTIC_SUBMIT_MODE,
+    });
   }
 
   function invokeSemanticSubmit(input) {
@@ -593,6 +602,26 @@ export function createAiWorkspaceRunCoordinator({
     }
   }
 
+  const semanticFormWorkflowOwner = createAiWorkspaceSemanticFormWorkflow({
+    invokeType: (input) => singleStep.invoke({
+      ...input,
+      decisionMode: AI_WORKSPACE_SEMANTIC_FORM_TYPE_MODE,
+    }),
+    invokeSubmit: runSemanticSubmit,
+    publishAuditEvent,
+    now,
+  });
+
+  async function invokeSemanticFormWorkflow(input) {
+    if (inFlight) return semanticFormWorkflowOwner.busy();
+    inFlight = true;
+    try {
+      return await semanticFormWorkflowOwner.invoke(input);
+    } finally {
+      inFlight = false;
+    }
+  }
+
   return {
     singleStep: { invoke: invokeSingle },
     boundedRun: { invoke: invokeBounded },
@@ -603,5 +632,6 @@ export function createAiWorkspaceRunCoordinator({
     ocrType: { invoke: invokeOcrType },
     ocrFocusType: { invoke: invokeOcrFocusType },
     semanticSubmit: { invoke: invokeSemanticSubmit },
+    semanticFormWorkflow: { invoke: invokeSemanticFormWorkflow },
   };
 }
