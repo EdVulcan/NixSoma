@@ -13,6 +13,7 @@ let
   workbenchActionDirectory = "workbench-action";
   workbenchHomeDirectory = "workbench-home";
   workbenchUnitName = "nixsoma-ai-workbench";
+  nativeIntakeUnitName = "nixsoma-ai-native-intake";
   westonPackage = if sessionCfg.applicationLifecycle then
     pkgs.callPackage ../packages/nixsoma-weston.nix {
       weston = sessionCfg.package;
@@ -164,6 +165,65 @@ let
     ${pkgs.coreutils}/bin/rm -f \
       "$runtime_base/${runtimeDirectory}/${workbenchActionDirectory}/acknowledged"
   '';
+  nativeIntakeShell = pkgs.writeShellScript "nixsoma-ai-native-intake-shell" ''
+    set -eu
+    value=""
+    character=""
+
+    cleanup() {
+      value=""
+      character=""
+      ${pkgs.coreutils}/bin/printf '\033[2J\033[H'
+    }
+    trap 'exit 0' HUP INT TERM
+    trap cleanup EXIT
+
+    render() {
+      ${pkgs.coreutils}/bin/printf '\033[2J\033[H'
+      ${pkgs.coreutils}/bin/printf '%s\n' \
+        'NixSoma Native Intake' \
+        "" \
+        'Application lifecycle: active' \
+        'Compositor: nixsoma-ai-0' \
+        'Authority: fixed write-only intake process' \
+        "" \
+        'Input value:' \
+        "$value" \
+        "Input count: ''${#value}/32"
+    }
+
+    render
+    while IFS= read -r -s -n 1 character; do
+      case "$character" in
+        [A-Za-z0-9.,_-]|" ")
+          if [[ ''${#value} -lt 32 ]]; then
+            value="$value$character"
+            render
+          fi
+          ;;
+      esac
+      character=""
+    done
+  '';
+  nativeIntakeLaunchScript = pkgs.writeShellScript "nixsoma-ai-native-intake-launch" ''
+    set -euo pipefail
+    runtime_base="''${XDG_RUNTIME_DIR:?XDG_RUNTIME_DIR is required}"
+    runtime_dir="$runtime_base/${runtimeDirectory}"
+    private_root="''${TMPDIR:-/tmp}/nixsoma-ai-native-intake"
+    ${pkgs.coreutils}/bin/rm -rf "$private_root"
+    ${pkgs.coreutils}/bin/install -d -m 0700 "$private_root/home" "$private_root/cache"
+    exec ${pkgs.coreutils}/bin/env -i \
+      HOME="$private_root/home" \
+      XDG_RUNTIME_DIR="$runtime_dir" \
+      XDG_CACHE_HOME="$private_root/cache" \
+      WAYLAND_DISPLAY="${socketName}" \
+      XCURSOR_THEME="Adwaita" \
+      ${westonPackage}/bin/weston-terminal \
+      --fullscreen \
+      --font="monospace" \
+      --font-size=20 \
+      --shell=${nativeIntakeShell}
+  '';
 in
 {
   options.services.openclaw.aiGraphicalSession = {
@@ -312,6 +372,11 @@ in
         OPENCLAW_AI_WORKBENCH_COMMAND_TIMEOUT_MS = "3000";
         OPENCLAW_AI_WORKBENCH_SETTLE_TIMEOUT_MS = "2000";
         OPENCLAW_AI_WORKBENCH_POLL_MS = "25";
+        OPENCLAW_AI_NATIVE_INTAKE_UNIT = "${nativeIntakeUnitName}.service";
+        OPENCLAW_AI_NATIVE_INTAKE_SYSTEMCTL = "${pkgs.systemd}/bin/systemctl";
+        OPENCLAW_AI_NATIVE_INTAKE_COMMAND_TIMEOUT_MS = "3000";
+        OPENCLAW_AI_NATIVE_INTAKE_SETTLE_TIMEOUT_MS = "2000";
+        OPENCLAW_AI_NATIVE_INTAKE_POLL_MS = "25";
         OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE = cfg.executionGrantPublicKeyFile;
       };
     } // optionalAttrs cfg.resourceControl.enable {
@@ -358,6 +423,46 @@ in
         ];
         ReadWritePaths = [
           "%t/${runtimeDirectory}/${workbenchActionDirectory}"
+        ];
+      };
+    };
+
+    systemd.user.services.${nativeIntakeUnitName} = mkIf sessionCfg.applicationLifecycle {
+      description = "NixSoma Fixed Native Intake";
+      requires = [ "${unitName}.service" ];
+      after = [ "${unitName}.service" ];
+      partOf = [ "${unitName}.service" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = nativeIntakeLaunchScript;
+        Restart = "no";
+        TimeoutStartSec = "5s";
+        TimeoutStopSec = "3s";
+        UMask = "0077";
+        Slice = "openclaw-session.slice";
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        PrivateDevices = false;
+        ProtectSystem = "strict";
+        ProtectHome = "read-only";
+        DevicePolicy = "closed";
+        RestrictAddressFamilies = [ "AF_UNIX" ];
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
+        TasksMax = 16;
+        MemoryMax = "128M";
+        UnsetEnvironment = [
+          "DISPLAY"
+          "WAYLAND_DISPLAY"
+          "WAYLAND_SOCKET"
+          "DBUS_SESSION_BUS_ADDRESS"
+        ];
+        InaccessiblePaths = [
+          "-%t/${runtimeDirectory}/${captureDirectory}"
+          "-%t/${runtimeDirectory}/${inputDirectory}"
+          "-%t/${runtimeDirectory}/${surfaceDirectory}"
+          "-%t/${runtimeDirectory}/${workbenchActionDirectory}"
+          "-%t/${runtimeDirectory}/${workbenchHomeDirectory}"
         ];
       };
     };

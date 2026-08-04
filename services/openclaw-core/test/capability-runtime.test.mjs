@@ -134,6 +134,7 @@ function createHarness(overrides = {}) {
     aiWorkspaceSingleStep: overrides.aiWorkspaceSingleStep,
     aiWorkspaceSemanticSubmit: overrides.aiWorkspaceSemanticSubmit,
     aiWorkspaceSemanticFormWorkflow: overrides.aiWorkspaceSemanticFormWorkflow,
+    aiWorkspaceNativeIntakeWorkflow: overrides.aiWorkspaceNativeIntakeWorkflow,
     aiWorkspaceBoundedRun: overrides.aiWorkspaceBoundedRun,
     aiWorkspaceReviewedCycle: overrides.aiWorkspaceReviewedCycle,
     publishAuditEvent: overrides.publishAuditEvent,
@@ -301,6 +302,105 @@ test("capability runtime exposes and invokes the bounded semantic form workflow"
   assert.equal(response.response.summary.workflowCompletionAudit, true);
   assert.equal(response.response.summary.automaticTaskCompletion, false);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("private form value"), false);
+});
+
+test("capability runtime exposes and invokes the fixed native intake workflow", async () => {
+  const calls = [];
+  const { runtime, state } = createHarness({
+    aiWorkspaceNativeIntakeWorkflow: {
+      invoke: async (input) => {
+        calls.push(input);
+        return {
+          ok: true,
+          registry: "nixsoma-ai-workspace-native-intake-workflow-v0",
+          status: "completed",
+          terminalReason: "verified_native_intake_type",
+          application: {
+            started: {
+              registry: "nixsoma-ai-native-intake-lifecycle-v0",
+              unitName: "nixsoma-ai-native-intake.service",
+              status: "running",
+              active: true,
+              surfaceAttached: true,
+              surfaceId: 81,
+              inventorySequence: 8,
+              activated: true,
+            },
+            stopped: {
+              registry: "nixsoma-ai-native-intake-lifecycle-v0",
+              unitName: "nixsoma-ai-native-intake.service",
+              status: "stopped",
+              active: false,
+              surfaceAttached: false,
+            },
+          },
+          typeStep: {
+            status: "executed",
+            actionId: "type_text",
+            inputEvidence: {
+              registry: "openclaw-write-only-input-evidence-v0",
+              charCount: 7,
+              byteLength: 7,
+              maxChars: 32,
+              textExposed: false,
+              persisted: false,
+            },
+            providerCalled: true,
+            actionExecuted: true,
+            postActionVerified: true,
+            completionAudit: true,
+            expectedSurfaceBound: true,
+          },
+          evidence: {
+            taskId: input.taskId,
+            objectiveContentHash: "a".repeat(64),
+            taskVersionHash: "b".repeat(64),
+            surfaceId: 81,
+            inventorySequence: 8,
+            providerCallCount: 1,
+            providerCallCountMinimum: 1,
+            actionCount: 1,
+            actionCountMinimum: 1,
+            lifecycleActionCount: 2,
+            lifecycleActionCountMinimum: 2,
+            lifecycleStartVerified: true,
+            lifecycleStopVerified: true,
+            workflowCompletionAudit: true,
+            outcomeUnknown: false,
+          },
+          governance: {
+            exactFixedApplication: true,
+            currentActiveSurfaceBound: true,
+          },
+        };
+      },
+    },
+  });
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find(
+    (item) => item.id === "act.ai.workspace.native_intake_workflow",
+  );
+  assert.equal(capability?.kind, "actuator");
+  assert.deepEqual(capability?.domains, ["cross_boundary"]);
+  assert.equal(capability?.governance, "standing_authorization");
+
+  const response = await runtime.invokeCapability({
+    capabilityId: "act.ai.workspace.native_intake_workflow",
+    taskId: "task-native-intake-1",
+    params: { confirm: true },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(calls, [{ taskId: "task-native-intake-1" }]);
+  assert.equal(response.response.invocation.authorization.policyId,
+    "ai-workspace-explicit-native-intake-workflow");
+  assert.equal(response.response.summary.kind, "ai.workspace.native_intake_workflow");
+  assert.equal(response.response.summary.providerCallCount, 1);
+  assert.equal(response.response.summary.actionCount, 1);
+  assert.equal(response.response.summary.lifecycleActionCount, 2);
+  assert.equal(response.response.summary.lifecycleStopVerified, true);
+  assert.equal(response.response.summary.inputTextPersisted, false);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("private intake value"), false);
 });
 
 test("capability runtime exposes the standing-authorized read-only AI workspace assessment", async () => {
@@ -3299,6 +3399,8 @@ test("capability runtime maps each canonical work-view control to its fixed owne
     { operation: "work_view.hide", params: {} },
     { operation: "work_view.application.start", params: {} },
     { operation: "work_view.application.stop", params: {} },
+    { operation: "work_view.native_intake.start", params: {} },
+    { operation: "work_view.native_intake.stop", params: {} },
     { operation: "work_view.surface.activate", params: { surfaceId: 31, inventorySequence: 12 } },
   ];
 
@@ -3347,6 +3449,20 @@ test("capability runtime maps each canonical work-view control to its fixed owne
       body: {
         operatorActionSource: "capability_runtime_work_view_control",
         recommendedAction: "stop_ai_workbench",
+      },
+    },
+    {
+      url: "http://127.0.0.1:4102/work-view/application/native-intake/start",
+      body: {
+        operatorActionSource: "capability_runtime_work_view_control",
+        recommendedAction: "start_ai_native_intake",
+      },
+    },
+    {
+      url: "http://127.0.0.1:4102/work-view/application/native-intake/stop",
+      body: {
+        operatorActionSource: "capability_runtime_work_view_control",
+        recommendedAction: "stop_ai_native_intake",
       },
     },
     {
@@ -3401,6 +3517,59 @@ test("capability runtime projects fixed application lifecycle metadata without s
   assert.equal(result.response.result.governance.fixedApplicationLifecycle, true);
   assert.equal(result.response.result.governance.arbitraryProcessLaunch, false);
   assert.equal(result.response.summary.applicationSurfaceAttached, true);
+  assert.equal(JSON.stringify(result.response).includes("must-not-cross-core"), false);
+});
+
+test("capability runtime projects the exact native intake lifecycle route", async () => {
+  const { runtime, calls } = createHarness({
+    postJsonResult: {
+      ok: true,
+      application: {
+        registry: "nixsoma-ai-native-intake-lifecycle-v0",
+        unitName: "nixsoma-ai-native-intake.service",
+        status: "running",
+        active: true,
+        mainPid: 5252,
+        surfaceAttached: true,
+        surfaceInventorySequence: 18,
+        matchingSurface: {
+          surfaceId: 81,
+          pid: 5252,
+          width: 1280,
+          height: 720,
+          activated: true,
+          title: "must-not-cross-core",
+        },
+      },
+    },
+  });
+
+  const result = await runtime.invokeCapability({
+    capabilityId: "act.work_view.control",
+    operation: "work_view.native_intake.start",
+    params: {},
+  });
+
+  assert.equal(result.response.invoked, true);
+  assert.deepEqual(result.response.result.application, {
+    registry: "nixsoma-ai-native-intake-lifecycle-v0",
+    status: "running",
+    active: true,
+    mainPid: 5252,
+    surfaceAttached: true,
+    surfaceId: 81,
+    unitName: "nixsoma-ai-native-intake.service",
+    inventorySequence: 18,
+    activated: true,
+  });
+  assert.deepEqual(calls.postJson.at(-1), {
+    url: "http://127.0.0.1:4102/work-view/application/native-intake/start",
+    body: {
+      operatorActionSource: "capability_runtime_work_view_control",
+      recommendedAction: "start_ai_native_intake",
+    },
+  });
+  assert.equal(result.response.result.governance.fixedApplicationLifecycle, true);
   assert.equal(JSON.stringify(result.response).includes("must-not-cross-core"), false);
 });
 

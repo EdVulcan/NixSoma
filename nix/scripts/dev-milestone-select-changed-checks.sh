@@ -468,6 +468,57 @@ const aiWorkspaceSemanticFormWorkflowSlice = changedFiles.length > 0
   && changedFiles.every((file) => aiWorkspaceSemanticFormWorkflowFiles.has(file))
   && changedFiles.some((file) =>
     file === "services/openclaw-core/src/ai-workspace-semantic-form-workflow.mjs");
+const aiWorkspaceNativeIntakeWorkflowFiles = new Set([
+  "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
+  "apps/observer-ui/src/client-script-refreshers-runtime.mjs",
+  "apps/observer-ui/src/client-script-runtime-actions.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-native-intake-workflow.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs",
+  "apps/observer-ui/src/client-script-runtime-bindings.mjs",
+  "apps/observer-ui/src/client-script-runtime-work-view-controls.mjs",
+  "apps/observer-ui/src/observer-panel-ai-work-view.mjs",
+  "apps/observer-ui/test/ai-workbench-lifecycle.test.mjs",
+  "apps/observer-ui/test/ai-workspace-native-intake-workflow.test.mjs",
+  "docs/NIXSOMA_CAPABILITY_MAP.md",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/OPENCLAW_NATIVE_INTAKE_WORKFLOW_PLAN.md",
+  "docs/plans/README.md",
+  "nix/modules/openclaw-ai-graphical-session.nix",
+  "nix/packages/observer-ui.nix",
+  "nix/packages/openclaw-session-manager.nix",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-capability-invoke-check.sh",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "nix/scripts/dev-observer-capability-invoke-check.sh",
+  "services/openclaw-core/src/ai-workspace-native-intake-workflow.mjs",
+  "services/openclaw-core/src/ai-workspace-ocr-type.mjs",
+  "services/openclaw-core/src/ai-workspace-run-coordinator.mjs",
+  "services/openclaw-core/src/ai-workspace-runtime.mjs",
+  "services/openclaw-core/src/capability-descriptors.mjs",
+  "services/openclaw-core/src/capability-runtime-ai-workspace-native-intake-workflow.mjs",
+  "services/openclaw-core/src/capability-runtime-work-view.mjs",
+  "services/openclaw-core/src/capability-runtime.mjs",
+  "services/openclaw-core/src/plan-builder.mjs",
+  "services/openclaw-core/test/ai-workspace-native-intake-workflow.test.mjs",
+  "services/openclaw-core/test/ai-workspace-ocr-type.test.mjs",
+  "services/openclaw-core/test/capability-runtime-ai-workspace-native-intake-workflow.test.mjs",
+  "services/openclaw-core/test/capability-runtime.test.mjs",
+  "services/openclaw-session-manager/src/ai-fixed-application-lifecycle-route.mjs",
+  "services/openclaw-session-manager/src/ai-fixed-application-lifecycle.mjs",
+  "services/openclaw-session-manager/src/ai-native-intake-lifecycle-route.mjs",
+  "services/openclaw-session-manager/src/ai-native-intake-lifecycle.mjs",
+  "services/openclaw-session-manager/src/ai-workbench-lifecycle-route.mjs",
+  "services/openclaw-session-manager/src/ai-workbench-lifecycle.mjs",
+  "services/openclaw-session-manager/src/server.mjs",
+  "services/openclaw-session-manager/test/ai-native-intake-lifecycle-route.test.mjs",
+  "services/openclaw-session-manager/test/ai-native-intake-lifecycle.test.mjs",
+]);
+const aiWorkspaceNativeIntakeWorkflowSlice = changedFiles.length > 0
+  && changedFiles.every((file) => aiWorkspaceNativeIntakeWorkflowFiles.has(file))
+  && changedFiles.some((file) =>
+    file === "services/openclaw-core/src/ai-workspace-native-intake-workflow.mjs");
 const durableExperienceFeedbackFiles = new Set([
   "apps/observer-ui/src/client-script-renderers-engineering-context.mjs",
   "apps/observer-ui/test/client-script-engineering-context.test.mjs",
@@ -1995,6 +2046,16 @@ for (const file of changedFiles) {
     continue;
   }
   if (aiWorkspaceSemanticFormWorkflowSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("capability-invoke");
+    selectName("observer-capability-invoke");
+    continue;
+  }
+  if (aiWorkspaceNativeIntakeWorkflowSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");
     selectName(windowsPathBudgetCheck);

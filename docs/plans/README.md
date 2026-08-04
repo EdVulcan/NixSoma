@@ -146,6 +146,16 @@ persistence, no task mutation, healthy services, and zero failed units. Freeze
 this lane. Do not open another provider/readiness wrapper, generic
 keyboard/action lane, or submit variant.
 
+The second fixed native application workflow is recorded in
+[`OPENCLAW_NATIVE_INTAKE_WORKFLOW_PLAN.md`](./OPENCLAW_NATIVE_INTAKE_WORKFLOW_PLAN.md).
+It adds one non-autostarting networkless terminal shell and composes exact
+start, matching activated-surface OCR Type, post-action verification, and stop
+under one reviewed task and one shared AI single-flight. Input stays transient;
+unit, process, text, surface, action, and budget selection remain server-owned.
+All `1427/1427` workspace tests, typecheck, real Core/Observer gates,
+body-config, and exact `289/36/116`-file Core/Session Manager/Observer closures
+pass. Physical deployment and a live provider run are not claimed.
+
 The fresh canonical review selects the first durable experience-feedback edge,
 recorded in
 [`OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md`](./OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md).

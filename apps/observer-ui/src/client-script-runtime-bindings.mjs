@@ -441,6 +441,18 @@ stopAiWorkbenchButton.addEventListener("click", () => {
   });
 });
 
+startAiNativeIntakeButton.addEventListener("click", () => {
+  postWorkView("/work-view/application/native-intake/start").catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
+stopAiNativeIntakeButton.addEventListener("click", () => {
+  postWorkView("/work-view/application/native-intake/stop").catch((error) => {
+    setControlMessage(\`Request failed: \${formatError(error)}\`);
+  });
+});
+
 activateAiSurfaceButton.addEventListener("click", () => {
   const surfaceId = Number(aiSurfaceSelect.value);
   const inventorySequence = Number(aiSurfaceSelect.dataset.sequence);

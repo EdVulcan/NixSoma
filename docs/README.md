@@ -1,6 +1,6 @@
 # NixSoma Documentation Control Room
 
-Updated: 2026-08-02
+Updated: 2026-08-04
 
 This is the canonical entry point for current NixSoma development. Historical
 OpenClaw names remain in service identifiers, environment variables, milestone
@@ -13,8 +13,8 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source adds controlled paired-randomized experience recall ordering plus one exact-evidence semantic type -> submit workflow to the governed Level 1-4 baseline | Core `972/972`, Observer `119/119`, full workspace tests/typecheck, real Core/Observer gates, and exact `287/115`-file Nix closures pass; physical generation 111 remains the prior reviewed-worklist baseline |
-| Local validation | Full workspace tests/typecheck, body-config, real Core/Observer capability gates, the 835-entry registry, 1007-script audit, Windows path budget, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration pass | Validated in source; physical activation and live workflow remain separate |
+| Capability source | Current source adds controlled paired-randomized experience recall ordering, one exact-evidence semantic type -> submit workflow, and a second fixed native application workflow to the governed Level 1-4 baseline | All `1427/1427` workspace tests, typecheck, real Core/Observer gates, body-config, and exact `289/36/116`-file Core/Session Manager/Observer Nix closures pass; physical generation 111 remains the prior reviewed-worklist baseline |
+| Local validation | Full workspace tests/typecheck, body-config, real Core/Observer capability gates, the 835-entry registry, 1023-file/1007-shell-script audit, Windows path budget, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration pass | Validated in source; physical activation and live workflow remain separate |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/2rg3qq3nzg5yva0z0yg7scs4hb99asl0-nixos-system-nixos-26.05.4808.569d57850992` | Generation 111 deploys the reviewed finite mission worklist; current/profile paths match, all nine health endpoints pass, related services have zero restarts, and system/user failed-unit counts are zero |
 | Previous generation | `/nix/store/w58x78k1sl78nwjknzpgbs0a0gj5kxzx-nixos-system-nixos-26.05.4808.569d57850992` | Generation 110 renewable-mission baseline before the authorized reviewed-worklist switch |
@@ -48,6 +48,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 4 current-tab close | One explicit authenticated request carries only `browser.current_tab.close` plus `confirm=true`; Core grants one fixed Screen Act route and Browser Runtime closes only its current `activePage` while preserving the final tab | Physically proven in `pfiwq5p3...` and carried by current `2rg3qq3nz...`; real headed Firefox PID 63947 stayed stable while the prepare-reuse test page closed with count 5 -> 4, helper lease plus Browser Runtime/Screen Act audit matched, and provider calls, automatic cleanup/repeat, user-service restarts, and reboot remained zero |
 | Level 4 semantic submit | One explicit request binds an under-five-minute verified write-only type receipt to the same current task and one enabled Submit/Send/Continue/Confirm button, then reuses the existing semantic click owner once | Physically accepted in `5zlz2s6z...` and carried by current `2rg3qq3nz...`; the fixed local form executed type then submit with two calls/two actions, visible completion, exact replay rejection before provider contact, unchanged task, no plaintext persistence, tmpfs profile, and healthy services |
 | Level 4 semantic form workflow | One explicit task-bound request constrains step one to semantic type, continues only from exact post-action/audit evidence, constrains step two to an eligible semantic submit click, verifies both actions, and terminates | Source-validated with Core `972/972`, Observer `119/119`, full workspace tests/typecheck, real Core/Observer gates, body-config, and exact `287/115`-file Nix closures; physical deployment and a live provider run remain unclaimed |
+| Level 4 fixed native intake workflow | One second non-autostarting fixed application accepts at most 32 transient allowlisted characters; one task-bound request starts its exact unit, binds its activated surface, reuses OCR Type once, verifies the result, and stops it | Source-validated with Core `980/980`, Observer `120/120`, Session Manager `85/85`, full workspace tests/typecheck, real Core/Observer gates, body-config, and exact `289/36/116`-file closures; physical activation/live-provider proof remains deferred |
 | Level 1 durable experience feedback | Older experience records correlate at most 32 idempotent later terminal outcomes for the exact same task type; engineering context and Observer separate this feedback from historical outcome rate | Implemented in source; correlation is explicitly non-causal, advisory use is unproven, and feedback cannot change ranking, policy, provider calls, or execution |
 | Level 1 recall consumption receipt | A transient candidate binds at most four recalled records to one execution/source task and context hash; only a successful approved provider response finalizes a request-bound receipt | Implemented in source; the consumption receipt remains provider-only, while a later application receipt may carry only its validated hash; record ids, provider content, and causality remain excluded |
 | Level 1 recommendation application receipt | Explicit Observer selection reuses the fixed governed semantic-click task control; Core derives a response/link/downstream-task-bound receipt and optionally carries the validated recall-consumption receipt hash | Implemented in source; `advisoryApplied` is proven only at the hash-bound application edge, while execution, terminal outcome, effectiveness, and causality remain separate claims |
@@ -326,11 +327,17 @@ both lanes available, nine healthy endpoints, and zero failed units.
     continuation, and one eligible submit click. It terminates after the second
     action and never retries, completes the task, or persists input text. See
     [`OPENCLAW_SEMANTIC_FORM_WORKFLOW_PLAN.md`](./plans/OPENCLAW_SEMANTIC_FORM_WORKFLOW_PLAN.md).
+13. **Fixed native intake closes the second application workflow.** One explicit
+    reviewed task starts only `nixsoma-ai-native-intake.service`, binds the
+    matching activated surface, runs the existing objective-bound OCR Type owner
+    once, verifies exact post-action evidence, stops the unit, and terminates.
+    See
+    [`OPENCLAW_NATIVE_INTAKE_WORKFLOW_PLAN.md`](./plans/OPENCLAW_NATIVE_INTAKE_WORKFLOW_PLAN.md).
 
-The next source route is a second fixed native application workflow, so Level 4
-can progress beyond the single browser application without arbitrary process,
-window, keyboard, or desktop control. Physical Phase D promotion/rollback
-remains separately authorized and is not implied by this source checkpoint.
+The next Level 4 source route is finite mission-bound composition across the
+already fixed browser and native applications without arbitrary process, window,
+keyboard, or desktop control. Physical Phase D promotion/rollback remains
+separately authorized and is not implied by this source checkpoint.
 
 Do not manufacture a VFS/network variant, provider/readiness wrapper, generic
 Enter or keyboard path, caller-coordinate action, automatic repetition, open
@@ -978,9 +985,9 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 1 user-space control plane | about 96% in source; renewable finite missions now consume an immutable reviewed worklist, while provider planning, open-ended task supply, retry/skip, and live replicated adaptation evidence remain incomplete |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 72-76%; process exec, network connect-attempt, bounded file open-attempt, and process lifecycle observation are physically deployed, while physical Phase D mutation and broader body nerves remain incomplete |
-| Level 4 graphics-stack-native body | about 87% in source; the physically complete one-shot actions now have one source-only semantic type -> verified submit workflow, while a second fixed native application and longer mission-bound eye-hand work remain incomplete |
+| Level 4 graphics-stack-native body | about 90% in source; the physically complete one-shot actions now have source-only semantic type -> verified submit and fixed native intake workflows, while longer mission-bound multi-application eye-hand work remains incomplete |
 | Physically deployed bounded product | 88-91% |
-| Current source bounded product | 91-93% |
+| Current source bounded product | 92-94% |
 | Final whitepaper vision | 59-64% |
 
 ## Current Decision Records
@@ -992,6 +999,7 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md](./plans/OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md) | Source-complete immutable reviewed task supply with issue checkpoints, exact provenance, and stop-on-failure. |
 | [OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md](./plans/OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md) | Source-complete finite paired-random adaptation experiment, exact evidence binding, and explicit recall-profile activation without policy or action authority. |
 | [OPENCLAW_SEMANTIC_FORM_WORKFLOW_PLAN.md](./plans/OPENCLAW_SEMANTIC_FORM_WORKFLOW_PLAN.md) | Source-validated semantic type -> exact verified continuation -> eligible submit workflow with a two-step hard stop. |
+| [OPENCLAW_NATIVE_INTAKE_WORKFLOW_PLAN.md](./plans/OPENCLAW_NATIVE_INTAKE_WORKFLOW_PLAN.md) | Source fixed-unit start -> exact activated-surface OCR Type -> verified stop workflow with no arbitrary process, command, network, or persistence authority. |
 | [OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md](./plans/OPENCLAW_TRUSTED_WORK_VIEW_SESSION_CONTRACT_PLAN.md) | Completed bounded Level 2 browser/work-view contract. |
 | [OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md](./plans/OPENCLAW_INTERNAL_SERVICE_IDENTITY_PLAN.md) | Current operator, service identity, and execution-grant boundary. |
 | [OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md](./plans/OPENCLAW_DBUS_NATIVE_SYSTEMD_CONTROL_PLAN.md) | Current fixed Level 3 restart and journal-diagnosis boundary. |

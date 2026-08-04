@@ -457,6 +457,21 @@ if (!capabilities.capabilities?.some((capability) =>
 )) {
   throw new Error("capability registry should expose the bounded semantic form workflow contract");
 }
+if (!capabilities.capabilities?.some((capability) =>
+  capability.id === "act.ai.workspace.native_intake_workflow"
+  && capability.kind === "actuator"
+  && capability.governance === "standing_authorization"
+  && capability.intents?.includes("ai.workspace.native_intake_workflow")
+)) {
+  throw new Error("capability registry should expose the fixed native intake workflow contract");
+}
+if (!capabilities.capabilities?.some((capability) =>
+  capability.id === "act.work_view.control"
+  && capability.intents?.includes("work_view.native_intake.start")
+  && capability.intents?.includes("work_view.native_intake.stop")
+)) {
+  throw new Error("work-view control should expose exact native intake recovery routes");
+}
 if (
   !workView.ok
   || workView.invoked !== true

@@ -1,6 +1,6 @@
 # NixSoma Forward Work Directive
 
-Updated: 2026-08-02
+Updated: 2026-08-04
 
 This is the active guidance document for continuing NixSoma development. The
 enhanced source preservation and governed capability migration that originally
@@ -57,9 +57,9 @@ return bounded transient local OCR or one read-only provider assessment without
 pixel egress. Direct operator interaction also includes one armed projected
 click and one write-only 1-32 character native type; one reviewed task may
 also request that one objective-selected OCR item be focused and receive its
-exact allowlisted objective value through a fixed two-action sequence. All 1359 workspace tests
+exact allowlisted objective value through a fixed two-action sequence. All 1427 workspace tests
 and typecheck pass, the body-config and event-audit integration checks pass, the
-835-entry milestone registry and 1023-file script audit pass, and
+835-entry milestone registry and 1023-file/1007-shell-script audit pass, and
 the Windows path budget has no file over 160 repository-relative characters.
 GitHub CI now enforces
 Node 22 typecheck, workspace tests, milestone registry/script audit, and the
@@ -423,10 +423,26 @@ tests/typecheck, real Core/Observer gates, body-config, registry/script/path
 gates, and exact `287/115`-file Nix closures pass. Physical activation and live
 provider evidence remain separate.
 
-The next source route is a second fixed native application workflow so Level 4
-progresses beyond the single browser application without arbitrary process,
-window, keyboard, or desktop authority. Physical Phase D promotion/rollback is
-a separate explicitly authorized route.
+The second fixed application workflow is now implemented in source as
+`act.ai.workspace.native_intake_workflow`. The exact non-autostarting
+`nixsoma-ai-native-intake.service` keeps at most 32 allowlisted characters only
+in process memory, executes no command, and has no network family beyond
+`AF_UNIX`. Core requires it stopped, starts it through the execution-grant and
+durable-audit lifecycle owner, binds the matching activated surface, reuses the
+objective-bound OCR Type owner once with an internal expected-surface guard,
+then stops it in a mandatory cleanup path. Provider/type/lifecycle budgets are
+separate; no retry, Enter, hotkey, arbitrary process/window, persistence, task
+completion, root, or host mutation is added.
+
+All `1427/1427` workspace tests, typecheck, Core `980/980`, Observer `120/120`,
+Session Manager `85/85`, the real Core/Observer capability gates, body-config,
+the 835-entry registry, 1023-file/1007-shell-script audit, Windows path budget, and exact
+`289/36/116`-file Core/Session Manager/Observer closures pass. Physical
+activation and live-provider behavior are not claimed by this source evidence.
+
+The next Level 4 source route is finite reviewed mission composition across the
+already fixed browser and native applications. Physical deployment/live-provider
+evidence and Phase D promotion/rollback remain separately authorized routes.
 
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation

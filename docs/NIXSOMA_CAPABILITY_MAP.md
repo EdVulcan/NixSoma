@@ -12,17 +12,17 @@ representative evidence agree.
 | Baseline | Maturity | Meaning |
 | --- | --- | --- |
 | Physically deployed bounded product | about 88-91% | Generation 111 carries the governed control plane, renewable mission supervisor, immutable reviewed mission worklist, trusted work view, fixed Level 3 body owners, and bounded Level 4 eye-hand workflows. |
-| Current source bounded product | about 91-93% | Source adds controlled recall-order adaptation and one exact-evidence semantic type -> submit workflow beyond deployed generation 111. |
-| Final whitepaper vision | about 59-64% | The first controlled adaptation and bounded two-step form mechanisms now exist in source; live replicated evidence, durable autonomous task planning, broader body nerves, physical Phase D evolution, and multi-application native workflows remain. |
+| Current source bounded product | about 92-94% | Source adds controlled recall-order adaptation, one exact-evidence semantic type -> submit workflow, and a second fixed native application workflow beyond deployed generation 111. |
+| Final whitepaper vision | about 59-64% | Controlled adaptation and bounded browser/native workflow mechanisms now exist in source; live replicated evidence, durable autonomous task planning, broader body nerves, physical Phase D evolution, and longer multi-application missions remain. |
 
 ## Capability Families
 
 | Family | Status | Current evidence | Remaining product gap |
 | --- | --- | --- | --- |
 | Level 1 control plane | Deployed | Generation 111 adds the immutable reviewed task worklist; the real gate proved zero-task binding plus two ordered one-per-epoch completions, and post-switch health/readback pass | Goals and order still require operator review; there is no provider planning, open-ended backlog, retry/skip, causal ranking, or policy change |
-| Level 2 trusted work view | Deployed | User-owned helper, isolated browser/workspace, fresh bounded capture, stale-authority rejection, recovery, takeover, and Observer projection | Broader native application workflows, not another capture or lease variant |
+| Level 2 trusted work view | Deployed plus source native workflow | User-owned helper, isolated browser/workspace, a second fixed native intake unit, fresh bounded capture, stale-authority rejection, recovery, takeover, and Observer projection | Longer finite composition across fixed applications, not another capture or lease variant |
 | Level 3 controlled system body | Partially deployed | Fixed systemd owners, exact Polkit/peer boundaries, repair loop, resource evidence, process/network/file/process-lifecycle nerves | Physical Phase D mutation/rollback, wider fixed body nerves, and governed action composition |
-| Level 4 graphical body | Deployed bounded subset plus source workflow | Dedicated compositor/browser, native frame/input, semantic and OCR actions, bounded run/assessment, reviewed acceptance, submit, current-tab close, and a source-only exact type -> submit coordinator | A second fixed native application workflow and longer mission-bound eye-hand work without arbitrary desktop control |
+| Level 4 graphical body | Deployed bounded subset plus source workflows | Dedicated compositor/browser, native frame/input, semantic and OCR actions, bounded run/assessment, reviewed acceptance, submit, current-tab close, exact type -> submit, and fixed native intake start -> type -> stop | Longer mission-bound multi-application eye-hand work without arbitrary desktop control |
 | Memory and adaptation | Source-validated controlled subset | Durable experience records, task-bound recall consumption, recommendation application/execution/outcome, explicit operator feedback, and one finite paired-randomized baseline-versus-feedback ranking owner | Physical deployment and real replicated experiment outcomes; broader learning domains and automatic authority change remain absent |
 | Declarative evolution | VM-proven | Candidate generation, approval binding, activation, health oracle, exact rollback, and replay rejection in disposable KVM | Physical-host promotion policy and an independently authorized automatic rollback boundary |
 
@@ -87,7 +87,25 @@ workspace tests/typecheck, real Core/Observer capability gates, body-config,
 registry/script/path gates, and exact `287/115`-file Nix closures pass. Physical
 deployment and a live provider run are not claimed.
 
-The next route is a second fixed native application workflow. A physical Phase
-D promotion/rollback boundary remains a separate explicitly authorized route.
-Provider goal invention, open-ended planning, retry/skip, physical Phase D, and
-wider body actions remain separate subsequent routes.
+## Newly Implemented Fixed Native Workflow
+
+```text
+reviewed exact-type task
+-> require fixed native intake stopped
+-> start exact non-autostarting user unit
+-> bind matching activated surface and inventory
+-> run existing objective-bound OCR Type once
+-> verify task/frame/surface/receipt/post-OCR/audit
+-> stop unit, clear transient state, terminate
+```
+
+The fixed shell executes no command, has no network family beyond `AF_UNIX`,
+persists no input, and accepts no caller-selected unit, process, text, surface,
+or action. All `1427/1427` workspace tests, typecheck, Core `980/980`, Observer
+`120/120`, Session Manager `85/85`, the real Core/Observer gates, body-config,
+and exact `289/36/116`-file Core/Session Manager/Observer closures pass. Physical
+activation and a live provider run remain unclaimed.
+
+The next source route is finite mission-bound composition across fixed browser
+and native applications. Provider goal invention, open-ended planning,
+retry/skip, physical Phase D, and wider body actions remain separate routes.

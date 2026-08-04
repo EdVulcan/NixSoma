@@ -20,6 +20,29 @@ export const AI_WORKSPACE_OCR_TYPE_REGISTRY =
 
 const OBJECTIVE_PATTERN = /^Type exact text "([A-Za-z0-9 .,_-]{1,32})" into the active surface$/u;
 
+function normaliseExpectedSurfaceBinding(value) {
+  if (value === undefined || value === null) return null;
+  const keys = typeof value === "object" && !Array.isArray(value)
+    ? Object.keys(value).sort()
+    : [];
+  if (keys.join("\0") !== ["inventorySequence", "surfaceId"].sort().join("\0")
+    || !Number.isInteger(value.surfaceId)
+    || value.surfaceId < 1
+    || value.surfaceId > 0xffff_ffff
+    || !Number.isSafeInteger(value.inventorySequence)
+    || value.inventorySequence < 1) return undefined;
+  return {
+    surfaceId: value.surfaceId,
+    inventorySequence: value.inventorySequence,
+  };
+}
+
+function expectedSurfaceMatches(context, expectedSurfaceBinding) {
+  if (!expectedSurfaceBinding) return false;
+  return context?.observation?.surface?.surfaceId === expectedSurfaceBinding.surfaceId
+    && context?.observation?.inventorySequence === expectedSurfaceBinding.inventorySequence;
+}
+
 function providerWasCalled(reason, providerDecision) {
   return providerDecision?.ok === true
     || ["provider_failed", "response_invalid"].includes(reason);
@@ -80,6 +103,7 @@ function fallback(reason, standingAdvisory, {
   verificationContext = null,
   postActionContext = null,
   action = null,
+  expectedSurfaceBinding = null,
 } = {}) {
   const state = standingAdvisory?.state ?? {};
   const config = standingAdvisory?.config ?? {};
@@ -125,6 +149,9 @@ function fallback(reason, standingAdvisory, {
       frameChanged: action?.frameChanged === true,
       postActionVerified: false,
       completionAudit: false,
+      expectedSurfaceBound: expectedSurfaceBinding
+        ? expectedSurfaceMatches(verificationContext ?? decisionContext, expectedSurfaceBinding)
+        : false,
       budget: {
         limitsEnforced: providerEvidence.budget?.limitsEnforced
           ?? config.enforceLimits
@@ -152,6 +179,9 @@ function fallback(reason, standingAdvisory, {
       localOcrRevalidated: verificationContext !== null,
       currentFrameBound: actionExecuted,
       currentActiveSurfaceBound: actionExecuted,
+      fixedApplicationSurfaceBound: expectedSurfaceBinding
+        ? expectedSurfaceMatches(verificationContext ?? decisionContext, expectedSurfaceBinding)
+        : false,
       taskObjectiveInputBound: false,
       providerGeneratedInput: actionExecuted,
       keyboardInput: actionExecuted,
@@ -278,13 +308,27 @@ export function createAiWorkspaceOcrType({
     return result;
   }
 
-  async function invoke({ taskId: requestedTaskId } = {}) {
+  async function invoke({ taskId: requestedTaskId, expectedSurfaceBinding: expectedInput } = {}) {
     if (typeof postJson !== "function") {
       return fallback("runtime_unavailable", standingAdvisory);
     }
+    const expectedSurfaceBinding = normaliseExpectedSurfaceBinding(expectedInput);
+    if (expectedSurfaceBinding === undefined) {
+      return fallback("expected_surface_invalid", standingAdvisory);
+    }
     const session = await decisionSession.decide({ taskId: requestedTaskId });
     const { taskId, providerDecision, decisionContext, verificationContext } = session;
-    if (!session.ok) return finaliseFallback(session.reason, session);
+    if (!session.ok) {
+      return finaliseFallback(session.reason, { ...session, expectedSurfaceBinding });
+    }
+    if (expectedSurfaceBinding
+      && (!expectedSurfaceMatches(decisionContext, expectedSurfaceBinding)
+        || !expectedSurfaceMatches(verificationContext, expectedSurfaceBinding))) {
+      return finaliseFallback("expected_surface_changed", {
+        ...session,
+        expectedSurfaceBinding,
+      });
+    }
 
     const decision = providerDecision.parsed.decision;
     let inputText = decision.inputText;
@@ -337,12 +381,14 @@ export function createAiWorkspaceOcrType({
             actionExecuted: false,
             postActionVerified: false,
             completionAudit: true,
+            expectedSurfaceBound: expectedSurfaceBinding !== null,
           },
           governance: {
             ...fallback("no_action", standingAdvisory, {
               providerDecision,
               decisionContext,
               verificationContext,
+              expectedSurfaceBinding,
             }).governance,
             providerCalled: true,
             localOcrRevalidated: true,
@@ -387,6 +433,7 @@ export function createAiWorkspaceOcrType({
         surfaceId,
         inventorySequence,
         taskObjectiveInputBound: true,
+        expectedSurfaceBound: expectedSurfaceBinding !== null,
         maximumActions: 1,
         automaticContinuation: false,
         inputTextExposed: false,
@@ -491,6 +538,7 @@ export function createAiWorkspaceOcrType({
         frameChanged: true,
         actionExecuted: true,
         postActionVerified: true,
+        expectedSurfaceBound: expectedSurfaceBinding !== null,
         maximumActions: 1,
         taskMutated: false,
         automaticContinuation: false,
@@ -524,6 +572,7 @@ export function createAiWorkspaceOcrType({
           frameChanged: true,
           postActionVerified: true,
           completionAudit: true,
+          expectedSurfaceBound: expectedSurfaceBinding !== null,
         },
         governance: {
           explicitOperatorTrigger: true,
@@ -539,6 +588,7 @@ export function createAiWorkspaceOcrType({
           localOcrRevalidated: true,
           currentFrameBound: true,
           currentActiveSurfaceBound: true,
+          fixedApplicationSurfaceBound: expectedSurfaceBinding !== null,
           taskObjectiveInputBound: true,
           providerGeneratedInput: true,
           keyboardInput: true,

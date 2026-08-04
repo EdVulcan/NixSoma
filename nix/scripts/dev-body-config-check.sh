@@ -176,6 +176,8 @@ const aiGraphicalSessionEnvNames = [
   "OPENCLAW_AI_APPLICATION_LIFECYCLE_ENABLED",
   "OPENCLAW_AI_WORKBENCH_UNIT",
   "OPENCLAW_AI_WORKBENCH_SYSTEMCTL",
+  "OPENCLAW_AI_NATIVE_INTAKE_UNIT",
+  "OPENCLAW_AI_NATIVE_INTAKE_SYSTEMCTL",
   "OPENCLAW_BROWSER_GRAPHICAL_SESSION_ENABLED",
   "OPENCLAW_BROWSER_GRAPHICAL_SESSION_MODE",
   "OPENCLAW_BROWSER_GRAPHICAL_SESSION_RUNTIME_DIRECTORY",
@@ -290,6 +292,10 @@ requireIncludes("AI graphical session module", aiGraphicalSessionModule, [
   "workbench-action",
   "while [[ ! -s \"$action_file\" ]]",
   "nixsoma-ai-workbench-cleanup",
+  "nixsoma-ai-native-intake",
+  "NixSoma Native Intake",
+  "Authority: fixed write-only intake process",
+  "Input count: ''${#value}/32",
   "InaccessiblePaths",
   "RuntimeDirectoryMode = \"0700\"",
   "UMask = \"0077\"",
@@ -522,6 +528,7 @@ if command -v nix >/dev/null 2>&1; then
       browser = project config.systemd.user.services.openclaw-browser-runtime;
       aiGraphicalSession = project config.systemd.user.services.nixsoma-ai-graphical-session;
       aiWorkbench = project config.systemd.user.services.nixsoma-ai-workbench;
+      aiNativeIntake = project config.systemd.user.services.nixsoma-ai-native-intake;
       core = project config.systemd.services.openclaw-core;
       operatorTokenInit = project config.systemd.services.openclaw-operator-token-init;
       operatorTokenReaders = config.services.openclaw.operatorAuthTokenReaders;
@@ -688,6 +695,33 @@ if (ownership.aiWorkbench.wantedBy?.length !== 0
   ])) {
   throw new Error(`AI workbench must remain a non-automatic fixed user application: ${JSON.stringify(ownership.aiWorkbench)}`);
 }
+if (ownership.aiNativeIntake.wantedBy?.length !== 0
+  || !ownership.aiNativeIntake.requires?.includes("nixsoma-ai-graphical-session.service")
+  || !ownership.aiNativeIntake.after?.includes("nixsoma-ai-graphical-session.service")
+  || !ownership.aiNativeIntake.partOf?.includes("nixsoma-ai-graphical-session.service")
+  || ownership.aiNativeIntake.serviceConfig?.User != null
+  || !String(ownership.aiNativeIntake.serviceConfig?.ExecStart ?? "").includes("nixsoma-ai-native-intake-launch")
+  || ownership.aiNativeIntake.serviceConfig?.ExecStopPost != null
+  || ownership.aiNativeIntake.serviceConfig?.Restart !== "no"
+  || ownership.aiNativeIntake.serviceConfig?.Slice !== "openclaw-session.slice"
+  || ownership.aiNativeIntake.serviceConfig?.ProtectSystem !== "strict"
+  || ownership.aiNativeIntake.serviceConfig?.ProtectHome !== "read-only"
+  || ownership.aiNativeIntake.serviceConfig?.PrivateTmp !== true
+  || ownership.aiNativeIntake.serviceConfig?.PrivateDevices !== false
+  || ownership.aiNativeIntake.serviceConfig?.DevicePolicy !== "closed"
+  || ownership.aiNativeIntake.serviceConfig?.MemoryMax !== "128M"
+  || ownership.aiNativeIntake.serviceConfig?.TasksMax !== 16
+  || JSON.stringify(ownership.aiNativeIntake.serviceConfig?.RestrictAddressFamilies) !== JSON.stringify(["AF_UNIX"])
+  || JSON.stringify(ownership.aiNativeIntake.serviceConfig?.InaccessiblePaths) !== JSON.stringify([
+    "-%t/nixsoma-ai-graphical-session/capture",
+    "-%t/nixsoma-ai-graphical-session/input",
+    "-%t/nixsoma-ai-graphical-session/surfaces",
+    "-%t/nixsoma-ai-graphical-session/workbench-action",
+    "-%t/nixsoma-ai-graphical-session/workbench-home",
+  ])
+  || ownership.aiNativeIntake.serviceConfig?.ReadWritePaths?.length !== 0) {
+  throw new Error(`AI native intake must remain non-automatic, networkless, and non-persistent: ${JSON.stringify(ownership.aiNativeIntake)}`);
+}
 if (!ownership.session.wants?.includes("nixsoma-ai-graphical-session.service")
   || !ownership.session.after?.includes("nixsoma-ai-graphical-session.service")
   || ownership.session.environment?.OPENCLAW_AI_GRAPHICAL_SESSION_ENABLED !== "1"
@@ -709,6 +743,8 @@ if (!ownership.session.wants?.includes("nixsoma-ai-graphical-session.service")
   || ownership.session.environment?.OPENCLAW_AI_APPLICATION_LIFECYCLE_ENABLED !== "1"
   || ownership.session.environment?.OPENCLAW_AI_WORKBENCH_UNIT !== "nixsoma-ai-workbench.service"
   || !String(ownership.session.environment?.OPENCLAW_AI_WORKBENCH_SYSTEMCTL ?? "").endsWith("/bin/systemctl")
+  || ownership.session.environment?.OPENCLAW_AI_NATIVE_INTAKE_UNIT !== "nixsoma-ai-native-intake.service"
+  || !String(ownership.session.environment?.OPENCLAW_AI_NATIVE_INTAKE_SYSTEMCTL ?? "").endsWith("/bin/systemctl")
   || ownership.session.environment?.OPENCLAW_EXECUTION_GRANT_PUBLIC_KEY_FILE !== "/var/lib/openclaw-public/execution-grant-public.pem") {
   throw new Error(`session-manager must observe the fixed AI graphical session identity: ${JSON.stringify(ownership.session)}`);
 }
@@ -1159,6 +1195,8 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-semantic-form-policy.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-semantic-form-workflow.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-semantic-form-workflow.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/ai-workspace-native-intake-workflow.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/capability-runtime-ai-workspace-native-intake-workflow.mjs"
     || ! -f "$core_out/share/openclaw/packages/shared-utils/src/work-view-semantic-scene.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/operator-run-request.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/bounded-operator-window-lease.mjs"
@@ -1166,7 +1204,7 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/operator-mission-routes.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/reviewed-browser-task-owner.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/reviewed-mission-worklist.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 287 ]]; then
+    || "$(find "$core_out" -type f | wc -l)" -ne 289 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi
@@ -1296,8 +1334,12 @@ EOF
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-compositor-input-route.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-surface-inventory-observer.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-surface-activation-route.mjs"
+    || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-fixed-application-lifecycle.mjs"
+    || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-fixed-application-lifecycle-route.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-workbench-lifecycle.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-workbench-lifecycle-route.mjs"
+    || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-native-intake-lifecycle.mjs"
+    || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/ai-native-intake-lifecycle-route.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/work-view-prepare-reuse.mjs"
     || ! -f "$session_manager_out/share/openclaw/services/openclaw-session-manager/src/trusted-work-view-sidecar.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/work-view-trust.mjs"
@@ -1309,7 +1351,7 @@ EOF
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/ai-compositor-input.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/execution-grants.mjs"
     || ! -f "$session_manager_out/share/openclaw/packages/shared-utils/src/browser-action-contract.mjs"
-    || "$(find "$session_manager_out" -type f | wc -l)" -ne 32 ]]; then
+    || "$(find "$session_manager_out" -type f | wc -l)" -ne 36 ]]; then
     echo "session-manager Nix closure is not exact and read-only: $session_manager_out" >&2
     exit 1
   fi
@@ -2037,6 +2079,7 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-type.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-ocr-focus-type.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-semantic-form-workflow.mjs"
+    || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-runtime-ai-workspace-native-intake-workflow.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-declarative-evolution.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-auth.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/client-script-config-dom-operator-auth.mjs"
@@ -2072,7 +2115,7 @@ EOF
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panel-operator-window.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panel-operator-mission.mjs"
     || ! -f "$observer_ui_out/share/openclaw/apps/observer-ui/src/observer-panel-operator-mission-worklist.mjs"
-    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 115 ]]; then
+    || "$(find "$observer_ui_out" -type f | wc -l)" -ne 116 ]]; then
     echo "observer-ui Nix closure is not exact and read-only: $observer_ui_out" >&2
     exit 1
   fi

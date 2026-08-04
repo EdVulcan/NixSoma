@@ -5,6 +5,8 @@ export const observerClientRuntimeWorkViewControlsScript = `function workViewOpe
     "/work-view/hide": "work_view.hide",
     "/work-view/application/start": "work_view.application.start",
     "/work-view/application/stop": "work_view.application.stop",
+    "/work-view/application/native-intake/start": "work_view.native_intake.start",
+    "/work-view/application/native-intake/stop": "work_view.native_intake.stop",
     "/work-view/surface/activate": "work_view.surface.activate",
   }[path] ?? null;
 }
@@ -49,7 +51,10 @@ async function postWorkView(path, payload = {}, { refresh = true } = {}) {
   if (result.surfaceActivation) {
     setControlMessage(\`AI surface #\${result.surfaceActivation.surfaceId ?? "unknown"} \${result.surfaceActivation.status ?? "updated"}.\`);
   } else if (result.application) {
-    setControlMessage(\`AI workbench \${result.application.status ?? "updated"} / surface=\${result.application.surfaceAttached ? "attached" : "absent"}\`);
+    const applicationName = result.application.registry === "nixsoma-ai-native-intake-lifecycle-v0"
+      ? "AI native intake"
+      : "AI workbench";
+    setControlMessage(\`\${applicationName} \${result.application.status ?? "updated"} / surface=\${result.application.surfaceAttached ? "attached" : "absent"}\`);
   } else {
     setControlMessage(\`Work view \${result.workView?.status ?? "updated"} / \${result.workView?.visibility ?? "unknown"}\`);
   }

@@ -9,6 +9,8 @@ export function observerAiWorkViewPanel() {
           <div class="metric"><span>Session Identity</span><span id="work-view-session-identity">pending</span></div>
           <div class="metric"><span>Workbench</span><span id="ai-workbench-status">disabled</span></div>
           <div class="metric"><span>Workbench Surface</span><span id="ai-workbench-surface">none</span></div>
+          <div class="metric"><span>Native Intake</span><span id="ai-native-intake-status">disabled</span></div>
+          <div class="metric"><span>Native Intake Surface</span><span id="ai-native-intake-surface">none</span></div>
           <div class="metric"><span>AI Surfaces</span><span id="ai-surface-count">0</span></div>
           <div class="metric"><span>Local OCR</span><span id="ai-workspace-local-ocr-status">not observed</span></div>
           <div class="metric"><span>OCR Assessment</span><span id="ai-workspace-ocr-assessment-status">not assessed</span></div>
@@ -19,11 +21,14 @@ export function observerAiWorkViewPanel() {
           <div class="metric"><span>Cycle</span><span id="ai-workspace-reviewed-cycle-status">not run</span></div>
           <div class="metric"><span>Semantic Submit</span><span id="ai-workspace-semantic-submit-status">type receipt required</span></div>
           <div class="metric"><span>Form Workflow</span><span id="ai-workspace-semantic-form-workflow-status">not run</span></div>
+          <div class="metric"><span>Native Intake Workflow</span><span id="ai-workspace-native-intake-workflow-status">not run</span></div>
           <label for="ai-surface-select">Surface</label>
           <select id="ai-surface-select" disabled></select>
           <div class="actions">
             <button id="start-ai-workbench-button" type="button">Start Workbench</button>
             <button id="stop-ai-workbench-button" class="secondary" type="button">Stop Workbench</button>
+            <button id="start-ai-native-intake-button" type="button">Start Native Intake</button>
+            <button id="stop-ai-native-intake-button" class="secondary" type="button">Stop Native Intake</button>
             <button id="activate-ai-surface-button" class="secondary" type="button" disabled>Activate Surface</button>
             <button id="scroll-ai-surface-up-button" class="secondary" type="button" disabled title="Scroll active AI surface up" aria-label="Scroll active AI surface up">&#8593;</button>
             <button id="scroll-ai-surface-down-button" class="secondary" type="button" disabled title="Scroll active AI surface down" aria-label="Scroll active AI surface down">&#8595;</button>
@@ -35,6 +40,7 @@ export function observerAiWorkViewPanel() {
             <button id="run-ai-workspace-single-step-button" type="button" disabled>AI Step</button>
             <button id="run-ai-workspace-semantic-submit-button" type="button" disabled>Submit</button>
             <button id="run-ai-workspace-semantic-form-workflow-button" type="button" disabled>Type + Submit</button>
+            <button id="run-ai-workspace-native-intake-workflow-button" type="button" disabled>Native Intake</button>
             <button id="run-ai-workspace-bounded-run-button" type="button" disabled>AI Run</button>
             <button id="run-ai-workspace-reviewed-cycle-button" type="button" disabled>Run + Assess</button>
             <button id="assess-ai-workspace-button" class="secondary" type="button" disabled>Assess</button>

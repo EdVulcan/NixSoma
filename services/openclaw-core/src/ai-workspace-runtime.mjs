@@ -3,6 +3,7 @@ import { createAiWorkspaceOcrAssessment } from "./ai-workspace-ocr-assessment.mj
 import { createAiWorkspaceOcrClick } from "./ai-workspace-ocr-click.mjs";
 import { createAiWorkspaceOcrFocusType } from "./ai-workspace-ocr-focus-type.mjs";
 import { createAiWorkspaceOcrType } from "./ai-workspace-ocr-type.mjs";
+import { createAiWorkspaceNativeIntakeWorkflow } from "./ai-workspace-native-intake-workflow.mjs";
 import { createAiWorkspaceRunCoordinator } from "./ai-workspace-run-coordinator.mjs";
 import { createAiWorkspaceSingleStep } from "./ai-workspace-single-step.mjs";
 import { createStandingProviderAdvisory } from "./standing-provider-advisory.mjs";
@@ -24,6 +25,7 @@ export function createAiWorkspaceRuntimes({
   createAiWorkspaceOcrClickImpl = createAiWorkspaceOcrClick,
   createAiWorkspaceOcrFocusTypeImpl = createAiWorkspaceOcrFocusType,
   createAiWorkspaceOcrTypeImpl = createAiWorkspaceOcrType,
+  createAiWorkspaceNativeIntakeWorkflowImpl = createAiWorkspaceNativeIntakeWorkflow,
   createAiWorkspaceSingleStepImpl = createAiWorkspaceSingleStep,
   createAiWorkspaceRunCoordinatorImpl = createAiWorkspaceRunCoordinator,
 } = {}) {
@@ -86,6 +88,13 @@ export function createAiWorkspaceRuntimes({
     publishAuditEvent,
     getTaskById,
   });
+  const nativeIntakeWorkflowOwner = createAiWorkspaceNativeIntakeWorkflowImpl({
+    invokeType: (input) => ocrTypeOwner.invoke(input),
+    fetchJson,
+    postJson,
+    sessionManagerUrl,
+    publishAuditEvent,
+  });
   const runs = createAiWorkspaceRunCoordinatorImpl({
     singleStep: singleStepOwner,
     assessment: assessmentOwner,
@@ -93,6 +102,7 @@ export function createAiWorkspaceRuntimes({
     ocrClick: ocrClickOwner,
     ocrType: ocrTypeOwner,
     ocrFocusType: ocrFocusTypeOwner,
+    nativeIntakeWorkflow: nativeIntakeWorkflowOwner,
     publishAuditEvent,
   });
   return {
@@ -104,6 +114,7 @@ export function createAiWorkspaceRuntimes({
     ocrFocusType: runs.ocrFocusType,
     semanticSubmit: runs.semanticSubmit,
     semanticFormWorkflow: runs.semanticFormWorkflow,
+    nativeIntakeWorkflow: runs.nativeIntakeWorkflow,
     singleStep: runs.singleStep,
     boundedRun: runs.boundedRun,
     reviewedCycle: runs.reviewedCycle,

@@ -286,6 +286,29 @@ test("OCR type rejects provider input not named by the fixed objective", async (
   assert.equal(JSON.stringify({ result, audit: calls.audit }).includes("OTHER"), false);
 });
 
+test("OCR type refuses action when an internal fixed-application surface binding differs", async () => {
+  const { owner, calls } = harness();
+  const result = await owner.invoke({
+    taskId: TASK_ID,
+    expectedSurfaceBinding: { surfaceId: 99, inventorySequence: 9 },
+  });
+  assert.equal(result.status, "local_fallback");
+  assert.equal(result.fallback.reason, "ai_workspace_ocr_type_expected_surface_changed");
+  assert.equal(result.evidence.expectedSurfaceBound, false);
+  assert.equal(result.governance.fixedApplicationSurfaceBound, false);
+  assert.equal(calls.provider, 1);
+  assert.equal(calls.action.length, 0);
+
+  const invalid = harness();
+  const invalidResult = await invalid.owner.invoke({
+    taskId: TASK_ID,
+    expectedSurfaceBinding: { surfaceId: 42, inventorySequence: 9, unit: "widened" },
+  });
+  assert.equal(invalidResult.fallback.reason, "ai_workspace_ocr_type_expected_surface_invalid");
+  assert.equal(invalid.calls.provider, 0);
+  assert.equal(invalid.calls.action.length, 0);
+});
+
 test("OCR type falls back on task/OCR drift, preexisting text, and owner rejection", async () => {
   for (const options of [
     { changedTask: true },

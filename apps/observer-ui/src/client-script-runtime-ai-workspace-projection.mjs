@@ -7,6 +7,7 @@ let aiWorkspaceOperatorTypeInFlight = false;
 let aiWorkspaceLocalOcrInFlight = false;
 let aiWorkspaceSingleStepInFlight = false;
 let aiWorkspaceSemanticFormWorkflowInFlight = false;
+let aiWorkspaceNativeIntakeWorkflowInFlight = false;
 let aiWorkspaceBoundedRunInFlight = false;
 let aiWorkspaceReviewedCycleInFlight = false;
 let aiWorkspaceAssessmentInFlight = false;
@@ -66,6 +67,24 @@ function currentAiSurfaceScrollBinding() {
   return currentAiSurfaceActionBinding();
 }
 
+function aiWorkspaceActionInFlight() {
+  return aiWorkspaceSingleStepInFlight
+    || aiWorkspaceOperatorClickInFlight
+    || aiWorkspaceOperatorTypeInFlight
+    || aiWorkspaceLocalOcrInFlight
+    || aiWorkspaceOcrAssessmentInFlight
+    || aiWorkspaceOcrClickInFlight
+    || aiWorkspaceOcrTypeInFlight
+    || aiWorkspaceOcrFocusTypeInFlight
+    || aiWorkspaceBoundedRunInFlight
+    || aiWorkspaceReviewedCycleInFlight
+    || aiWorkspaceAssessmentInFlight
+    || aiWorkspaceSemanticSubmitInFlight
+    || aiWorkspaceSemanticFormWorkflowInFlight
+    || aiWorkspaceNativeIntakeWorkflowInFlight
+    || aiWorkspaceAssessmentAcceptanceInFlight;
+}
+
 function updateAiSurfaceScrollControls() {
   const enabled = currentAiSurfaceActionBinding() !== null;
   const taskId = currentAiWorkspaceTaskId();
@@ -88,20 +107,19 @@ function updateAiSurfaceScrollControls() {
   if (aiWorkspaceOcrFocusTypeTaskId && aiWorkspaceOcrFocusTypeTaskId !== taskId) {
     clearAiWorkspaceOcrFocusType();
   }
-  const aiRunInFlight = aiWorkspaceSingleStepInFlight
-    || aiWorkspaceOperatorClickInFlight
-    || aiWorkspaceOperatorTypeInFlight
-    || aiWorkspaceLocalOcrInFlight
-    || aiWorkspaceOcrAssessmentInFlight
-    || aiWorkspaceOcrClickInFlight
-    || aiWorkspaceOcrTypeInFlight
-    || aiWorkspaceOcrFocusTypeInFlight
-    || aiWorkspaceBoundedRunInFlight
-    || aiWorkspaceReviewedCycleInFlight
-    || aiWorkspaceAssessmentInFlight
-    || aiWorkspaceSemanticSubmitInFlight
-    || aiWorkspaceSemanticFormWorkflowInFlight
-    || aiWorkspaceAssessmentAcceptanceInFlight;
+  const aiRunInFlight = aiWorkspaceActionInFlight();
+  const nativeIntakeLifecycle = latestWorkViewState?.aiGraphicalSession
+    ?.nativeIntakeLifecycle ?? {};
+  const nativeIntakeReady = nativeIntakeLifecycle.enabled === true
+    && nativeIntakeLifecycle.status === "stopped"
+    && nativeIntakeLifecycle.active === false
+    && nativeIntakeLifecycle.surfaceAttached === false;
+  const workbenchLifecycle = latestWorkViewState?.aiGraphicalSession
+    ?.applicationLifecycle ?? {};
+  const workbenchLifecycleBusy = ["starting", "surface_pending", "stopping"]
+    .includes(workbenchLifecycle.status);
+  const nativeIntakeLifecycleBusy = ["starting", "surface_pending", "stopping"]
+    .includes(nativeIntakeLifecycle.status);
   scrollAiSurfaceUpButton.disabled = !enabled || aiRunInFlight;
   scrollAiSurfaceDownButton.disabled = !enabled || aiRunInFlight;
   runAiWorkspaceLocalOcrButton.disabled = !enabled || aiRunInFlight;
@@ -115,11 +133,30 @@ function updateAiSurfaceScrollControls() {
     || aiWorkspaceSemanticTypeReceipt?.taskId !== taskId
     || aiRunInFlight;
   runAiWorkspaceSemanticFormWorkflowButton.disabled = !enabled || !taskId || aiRunInFlight;
+  runAiWorkspaceNativeIntakeWorkflowButton.disabled = !taskId
+    || !nativeIntakeReady
+    || aiRunInFlight;
   runAiWorkspaceBoundedRunButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceReviewedCycleButton.disabled = !enabled || !taskId || aiRunInFlight;
   assessAiWorkspaceButton.disabled = !enabled || !taskId || aiRunInFlight;
   acceptAiWorkspaceAssessmentButton.disabled = aiRunInFlight
     || aiWorkspaceAssessmentReceipt?.taskId !== taskId;
+  startAiWorkbenchButton.disabled = workbenchLifecycle.enabled !== true
+    || workbenchLifecycle.active === true
+    || workbenchLifecycleBusy
+    || aiRunInFlight;
+  stopAiWorkbenchButton.disabled = workbenchLifecycle.enabled !== true
+    || workbenchLifecycle.active !== true
+    || workbenchLifecycle.status === "stopping"
+    || aiRunInFlight;
+  startAiNativeIntakeButton.disabled = nativeIntakeLifecycle.enabled !== true
+    || nativeIntakeLifecycle.active === true
+    || nativeIntakeLifecycleBusy
+    || aiRunInFlight;
+  stopAiNativeIntakeButton.disabled = nativeIntakeLifecycle.enabled !== true
+    || nativeIntakeLifecycle.active !== true
+    || nativeIntakeLifecycle.status === "stopping"
+    || aiRunInFlight;
   syncAiWorkspaceOperatorClickControl({ bindingReady: enabled, busy: aiRunInFlight });
   syncAiWorkspaceOperatorTypeControl({ bindingReady: enabled, busy: aiRunInFlight });
 }

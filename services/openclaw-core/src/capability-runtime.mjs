@@ -44,6 +44,7 @@ import { createAiWorkspaceAssessmentAcceptanceCapabilityHandlers } from "./capab
 import { createAiWorkspaceSingleStepCapabilityHandlers } from "./capability-runtime-ai-workspace-single-step.mjs";
 import { createAiWorkspaceSemanticSubmitCapabilityHandlers } from "./capability-runtime-ai-workspace-semantic-submit.mjs";
 import { createAiWorkspaceSemanticFormWorkflowCapabilityHandlers } from "./capability-runtime-ai-workspace-semantic-form-workflow.mjs";
+import { createAiWorkspaceNativeIntakeWorkflowCapabilityHandlers } from "./capability-runtime-ai-workspace-native-intake-workflow.mjs";
 import { createAiWorkspaceBoundedRunCapabilityHandlers } from "./capability-runtime-ai-workspace-bounded-run.mjs";
 import { createAiWorkspaceReviewedCycleCapabilityHandlers } from "./capability-runtime-ai-workspace-reviewed-cycle.mjs";
 import {
@@ -82,6 +83,7 @@ export function createCapabilityRuntime(deps) {
     aiWorkspaceSingleStep,
     aiWorkspaceSemanticSubmit,
     aiWorkspaceSemanticFormWorkflow,
+    aiWorkspaceNativeIntakeWorkflow,
     aiWorkspaceBoundedRun,
     aiWorkspaceReviewedCycle,
     declarativeEvolution = {},
@@ -304,6 +306,10 @@ export function createCapabilityRuntime(deps) {
   const aiWorkspaceSemanticFormWorkflowHandlers =
     createAiWorkspaceSemanticFormWorkflowCapabilityHandlers({
       runtime: aiWorkspaceSemanticFormWorkflow,
+    });
+  const aiWorkspaceNativeIntakeWorkflowHandlers =
+    createAiWorkspaceNativeIntakeWorkflowCapabilityHandlers({
+      runtime: aiWorkspaceNativeIntakeWorkflow,
     });
   const aiWorkspaceBoundedRunHandlers = createAiWorkspaceBoundedRunCapabilityHandlers({
     runtime: aiWorkspaceBoundedRun,
@@ -611,6 +617,11 @@ export function createCapabilityRuntime(deps) {
       await aiWorkspaceSemanticFormWorkflowHandlers.callBackend(capability, request);
     if (aiWorkspaceSemanticFormWorkflow.handled) {
       return aiWorkspaceSemanticFormWorkflow.result;
+    }
+    const aiWorkspaceNativeIntakeWorkflow =
+      await aiWorkspaceNativeIntakeWorkflowHandlers.callBackend(capability, request);
+    if (aiWorkspaceNativeIntakeWorkflow.handled) {
+      return aiWorkspaceNativeIntakeWorkflow.result;
     }
     const standingProviderAdvisory = await standingProviderAdvisoryHandlers.callBackend(capability, request);
     if (standingProviderAdvisory.handled) {
@@ -945,6 +956,11 @@ export function createCapabilityRuntime(deps) {
       aiWorkspaceSemanticFormWorkflowHandlers.summariseResult(capability, result);
     if (aiWorkspaceSemanticFormWorkflowSummary) {
       return aiWorkspaceSemanticFormWorkflowSummary;
+    }
+    const aiWorkspaceNativeIntakeWorkflowSummary =
+      aiWorkspaceNativeIntakeWorkflowHandlers.summariseResult(capability, result);
+    if (aiWorkspaceNativeIntakeWorkflowSummary) {
+      return aiWorkspaceNativeIntakeWorkflowSummary;
     }
     const standingProviderAdvisorySummary = standingProviderAdvisoryHandlers.summariseResult(capability, result);
     if (standingProviderAdvisorySummary) {
@@ -1457,6 +1473,11 @@ export function createCapabilityRuntime(deps) {
     if (aiWorkspaceSemanticFormWorkflowAuthorization.handled) {
       serverApproval = aiWorkspaceSemanticFormWorkflowAuthorization.authorization;
     }
+    const aiWorkspaceNativeIntakeWorkflowAuthorization =
+      aiWorkspaceNativeIntakeWorkflowHandlers.authorizeRequest(capability, request, body);
+    if (aiWorkspaceNativeIntakeWorkflowAuthorization.handled) {
+      serverApproval = aiWorkspaceNativeIntakeWorkflowAuthorization.authorization;
+    }
     const aiWorkspaceBoundedRunAuthorization = aiWorkspaceBoundedRunHandlers.authorizeRequest(
       capability,
       request,
@@ -1563,6 +1584,14 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: aiWorkspaceSemanticFormWorkflowValidationError },
+      };
+    }
+    const aiWorkspaceNativeIntakeWorkflowValidationError =
+      aiWorkspaceNativeIntakeWorkflowHandlers.validateRequest(capability, request, body);
+    if (aiWorkspaceNativeIntakeWorkflowValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: aiWorkspaceNativeIntakeWorkflowValidationError },
       };
     }
     const aiWorkspaceBoundedRunValidationError = aiWorkspaceBoundedRunHandlers.validateRequest(

@@ -167,6 +167,7 @@ export function createAiWorkspaceRunCoordinator({
   ocrClick,
   ocrType,
   ocrFocusType,
+  nativeIntakeWorkflow,
   publishAuditEvent = async () => ({ ok: true }),
   now = () => new Date().toISOString(),
 } = {}) {
@@ -622,6 +623,16 @@ export function createAiWorkspaceRunCoordinator({
     }
   }
 
+  async function invokeNativeIntakeWorkflow(input) {
+    if (inFlight) return nativeIntakeWorkflow.busy();
+    inFlight = true;
+    try {
+      return await nativeIntakeWorkflow.invoke(input);
+    } finally {
+      inFlight = false;
+    }
+  }
+
   return {
     singleStep: { invoke: invokeSingle },
     boundedRun: { invoke: invokeBounded },
@@ -633,5 +644,6 @@ export function createAiWorkspaceRunCoordinator({
     ocrFocusType: { invoke: invokeOcrFocusType },
     semanticSubmit: { invoke: invokeSemanticSubmit },
     semanticFormWorkflow: { invoke: invokeSemanticFormWorkflow },
+    nativeIntakeWorkflow: { invoke: invokeNativeIntakeWorkflow },
   };
 }

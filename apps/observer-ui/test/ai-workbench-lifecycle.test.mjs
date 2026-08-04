@@ -45,6 +45,8 @@ test("Observer exposes bounded fixed workbench lifecycle state and controls", ()
   }
   assert.equal(observerClientRuntimeBindingsScript.includes('/work-view/application/start'), true);
   assert.equal(observerClientRuntimeBindingsScript.includes('/work-view/application/stop'), true);
+  assert.equal(observerClientRuntimeBindingsScript.includes('/work-view/application/native-intake/start'), true);
+  assert.equal(observerClientRuntimeBindingsScript.includes('/work-view/application/native-intake/stop'), true);
   assert.equal(observerClientRuntimeBindingsScript.includes('/work-view/surface/activate'), true);
   const script = clientScript();
   assert.equal(script.includes('operation: "mouse.scroll"'), true);
@@ -73,6 +75,8 @@ test("production Observer client assembles workbench controls through Core only"
   const script = clientScript();
   assert.equal(script.includes('"/work-view/application/start": "work_view.application.start"'), true);
   assert.equal(script.includes('"/work-view/application/stop": "work_view.application.stop"'), true);
+  assert.equal(script.includes('"/work-view/application/native-intake/start": "work_view.native_intake.start"'), true);
+  assert.equal(script.includes('"/work-view/application/native-intake/stop": "work_view.native_intake.stop"'), true);
   assert.equal(script.includes('"/work-view/surface/activate": "work_view.surface.activate"'), true);
   assert.equal(script.includes("observerConfig.sessionManagerUrl}/work-view/application"), false);
   assert.equal(script.includes("capabilityId: \"act.work_view.control\""), true);

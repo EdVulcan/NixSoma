@@ -256,6 +256,11 @@ for (const token of [
   "run-ai-workspace-semantic-form-workflow-button",
   "ai-workspace-semantic-form-workflow-status",
   "Type + Submit",
+  "start-ai-native-intake-button",
+  "stop-ai-native-intake-button",
+  "run-ai-workspace-native-intake-workflow-button",
+  "ai-workspace-native-intake-workflow-status",
+  "Native Intake",
 ]) {
   if (!html.includes(token)) {
     throw new Error(`Observer HTML missing ${token}`);
@@ -314,6 +319,11 @@ for (const token of [
   "runAiWorkspaceSemanticFormWorkflow",
   "act.ai.workspace.semantic_form_workflow",
   "nixsoma-ai-workspace-semantic-form-workflow-v0",
+  "runAiWorkspaceNativeIntakeWorkflow",
+  "act.ai.workspace.native_intake_workflow",
+  "nixsoma-ai-workspace-native-intake-workflow-v0",
+  "work_view.native_intake.start",
+  "work_view.native_intake.stop",
 ]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);
@@ -713,6 +723,14 @@ if (!capabilities.capabilities?.some((capability) =>
   && capability.intents?.includes("ai.workspace.semantic_form_workflow")
 )) {
   throw new Error("Observer capability registry should expose the bounded semantic form workflow contract");
+}
+if (!capabilities.capabilities?.some((capability) =>
+  capability.id === "act.ai.workspace.native_intake_workflow"
+  && capability.kind === "actuator"
+  && capability.governance === "standing_authorization"
+  && capability.intents?.includes("ai.workspace.native_intake_workflow")
+)) {
+  throw new Error("Observer capability registry should expose the fixed native intake workflow contract");
 }
 if (
   !contextPacket.ok

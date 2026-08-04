@@ -26,6 +26,8 @@ import { createAiSurfaceInventoryObserver } from "./ai-surface-inventory-observe
 import { createAiSurfaceActivationRoute } from "./ai-surface-activation-route.mjs";
 import { createAiWorkbenchLifecycle } from "./ai-workbench-lifecycle.mjs";
 import { createAiWorkbenchLifecycleRoute } from "./ai-workbench-lifecycle-route.mjs";
+import { createAiNativeIntakeLifecycle } from "./ai-native-intake-lifecycle.mjs";
+import { createAiNativeIntakeLifecycleRoute } from "./ai-native-intake-lifecycle-route.mjs";
 import { createExecutionGrantVerifier } from "../../../packages/shared-utils/src/execution-grants.mjs";
 import { createServiceCredentialHeaders, readServiceCredential } from "../../../packages/shared-utils/src/service-credentials.mjs";
 
@@ -88,6 +90,9 @@ const sessionManagerExecutionGrantVerifier = createExecutionGrantVerifier({
   required: false,
 });
 const aiWorkbenchLifecycle = createAiWorkbenchLifecycle({
+  observeSurfaceInventory: observeAiSurfaceInventory,
+});
+const aiNativeIntakeLifecycle = createAiNativeIntakeLifecycle({
   observeSurfaceInventory: observeAiSurfaceInventory,
 });
 const aiCompositorInputController = createAiCompositorInputController({
@@ -204,6 +209,7 @@ function buildAiGraphicalSessionEvidence() {
       aiCompositorInputController.snapshot(),
     ),
     applicationLifecycle: aiWorkbenchLifecycle.snapshot(),
+    nativeIntakeLifecycle: aiNativeIntakeLifecycle.snapshot(),
     surfaceActivation: aiCompositorInputController.surfaceActivationSnapshot(),
   };
 }
@@ -301,6 +307,13 @@ const handleAiCompositorInputRoute = createAiCompositorInputRoute({
 });
 const handleAiWorkbenchLifecycleRoute = createAiWorkbenchLifecycleRoute({
   lifecycle: aiWorkbenchLifecycle,
+  executionGrantVerifier: sessionManagerExecutionGrantVerifier,
+  publishEvent,
+  createEventName,
+  sendJson,
+});
+const handleAiNativeIntakeLifecycleRoute = createAiNativeIntakeLifecycleRoute({
+  lifecycle: aiNativeIntakeLifecycle,
   executionGrantVerifier: sessionManagerExecutionGrantVerifier,
   publishEvent,
   createEventName,
@@ -678,6 +691,7 @@ const server = http.createServer(async (req, res) => {
   if (await handleAiLocalOcrRoute(req, res, requestUrl)) return;
   if (await handleAiCompositorInputRoute(req, res, requestUrl)) return;
   if (await handleAiWorkbenchLifecycleRoute(req, res, requestUrl)) return;
+  if (await handleAiNativeIntakeLifecycleRoute(req, res, requestUrl)) return;
   if (await handleAiSurfaceActivationRoute(req, res, requestUrl)) return;
 
   if (req.method === "POST" && requestUrl.pathname === "/session/start") {
@@ -1025,7 +1039,10 @@ async function startSessionManager() {
   if (sidecarLifecycleIntent?.status === "recovery_required") {
     await revokeStaleBrowserLeaseBeforeRecovery();
   }
-  await aiWorkbenchLifecycle.reconcile();
+  await Promise.all([
+    aiWorkbenchLifecycle.reconcile(),
+    aiNativeIntakeLifecycle.reconcile(),
+  ]);
   server.listen(port, host, async () => {
     console.log(`openclaw-session-manager listening on http://${host}:${port}`);
     await registerService(eventHubUrl, "openclaw-session-manager", `http://${host}:${port}`);

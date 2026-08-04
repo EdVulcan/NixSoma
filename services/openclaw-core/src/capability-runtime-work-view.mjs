@@ -25,6 +25,14 @@ const CONTROL_OPERATIONS = new Map([
     action: "stop_ai_workbench",
     route: "/work-view/application/stop",
   }],
+  ["work_view.native_intake.start", {
+    action: "start_ai_native_intake",
+    route: "/work-view/application/native-intake/start",
+  }],
+  ["work_view.native_intake.stop", {
+    action: "stop_ai_native_intake",
+    route: "/work-view/application/native-intake/stop",
+  }],
   ["work_view.surface.activate", {
     action: "activate_ai_surface",
     route: "/work-view/surface/activate",
@@ -165,7 +173,15 @@ function projectControlResult(action, response) {
   const trustedSession = workView.trustedSession ?? {};
   const application = response?.application ?? {};
   const surfaceActivation = response?.surfaceActivation ?? {};
-  const applicationAction = action === "start_ai_workbench" || action === "stop_ai_workbench";
+  const applicationAction = [
+    "start_ai_workbench",
+    "stop_ai_workbench",
+    "start_ai_native_intake",
+    "stop_ai_native_intake",
+  ].includes(action);
+  const applicationRegistry = action.includes("native_intake")
+    ? "nixsoma-ai-native-intake-lifecycle-v0"
+    : "nixsoma-ai-workbench-lifecycle-v0";
   const surfaceAction = action === "activate_ai_surface";
   const result = {
     ok: response?.ok === true,
@@ -183,7 +199,7 @@ function projectControlResult(action, response) {
       ) ?? "none",
     },
     application: applicationAction ? {
-      registry: application.registry === "nixsoma-ai-workbench-lifecycle-v0"
+      registry: application.registry === applicationRegistry
         ? application.registry
         : null,
       status: publicEnum(application.status, PUBLIC_APPLICATION_STATUSES),
@@ -193,6 +209,13 @@ function projectControlResult(action, response) {
       surfaceId: Number.isInteger(application.matchingSurface?.surfaceId)
         ? application.matchingSurface.surfaceId
         : null,
+      ...(action.includes("native_intake") ? {
+        unitName: typeof application.unitName === "string" ? application.unitName : null,
+        inventorySequence: Number.isSafeInteger(application.surfaceInventorySequence)
+          ? application.surfaceInventorySequence
+          : null,
+        activated: application.matchingSurface?.activated === true,
+      } : {}),
     } : null,
     surfaceActivation: surfaceAction ? {
       registry: surfaceActivation.registry === "nixsoma-ai-surface-activation-v0"

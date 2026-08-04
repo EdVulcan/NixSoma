@@ -142,10 +142,15 @@ async function refreshWorkView() {
     const aiGraphicalSession = workView.aiGraphicalSession ?? data.aiGraphicalSession ?? {};
     const surfaceInventory = aiGraphicalSession.surfaceInventory ?? {};
     const applicationLifecycle = aiGraphicalSession.applicationLifecycle ?? {};
+    const nativeIntakeLifecycle = aiGraphicalSession.nativeIntakeLifecycle ?? {};
     workViewSessionIdentity.textContent = sessionIdentity.status ?? "unknown";
     aiWorkbenchStatus.textContent = applicationLifecycle.status ?? "unknown";
     aiWorkbenchSurface.textContent = applicationLifecycle.surfaceAttached
       ? \`#\${applicationLifecycle.matchingSurface?.surfaceId ?? "unknown"} pid=\${applicationLifecycle.mainPid ?? "unknown"}\`
+      : "none";
+    aiNativeIntakeStatus.textContent = nativeIntakeLifecycle.status ?? "unknown";
+    aiNativeIntakeSurface.textContent = nativeIntakeLifecycle.surfaceAttached
+      ? \`#\${nativeIntakeLifecycle.matchingSurface?.surfaceId ?? "unknown"} pid=\${nativeIntakeLifecycle.mainPid ?? "unknown"}\`
       : "none";
     aiSurfaceCount.textContent = String(surfaceInventory.count ?? 0);
     const priorSurfaceSelection = aiSurfaceSelect.value;
@@ -168,7 +173,6 @@ async function refreshWorkView() {
     aiSurfaceSelect.disabled = surfaceInventory.available !== true || surfaces.length === 0;
     const selectedSurface = surfaces.find((surface) => String(surface.surfaceId) === aiSurfaceSelect.value);
     activateAiSurfaceButton.disabled = aiSurfaceSelect.disabled || selectedSurface?.activated === true;
-    updateAiSurfaceScrollControls();
     const lifecycleBusy = ["starting", "surface_pending", "stopping"].includes(applicationLifecycle.status);
     startAiWorkbenchButton.disabled = applicationLifecycle.enabled !== true
       || applicationLifecycle.active === true
@@ -176,6 +180,15 @@ async function refreshWorkView() {
     stopAiWorkbenchButton.disabled = applicationLifecycle.enabled !== true
       || applicationLifecycle.active !== true
       || applicationLifecycle.status === "stopping";
+    const nativeIntakeBusy = ["starting", "surface_pending", "stopping"]
+      .includes(nativeIntakeLifecycle.status);
+    startAiNativeIntakeButton.disabled = nativeIntakeLifecycle.enabled !== true
+      || nativeIntakeLifecycle.active === true
+      || nativeIntakeBusy;
+    stopAiNativeIntakeButton.disabled = nativeIntakeLifecycle.enabled !== true
+      || nativeIntakeLifecycle.active !== true
+      || nativeIntakeLifecycle.status === "stopping";
+    updateAiSurfaceScrollControls();
     if (!desiredWorkViewUrlPinned && document.activeElement !== workViewUrlInput) {
       setDesiredWorkViewUrl(workView.activeUrl ?? workView.entryUrl ?? "https://example.com/work-view", {
         pinned: false,
@@ -193,6 +206,7 @@ async function refreshWorkView() {
       "AI Surface Inventory: status=" + (surfaceInventory.status ?? "unknown") + " sequence=" + (surfaceInventory.sequence ?? "none") + " count=" + (surfaceInventory.count ?? 0) + " truncated=" + Boolean(surfaceInventory.truncated) + " titles=" + Boolean(surfaceInventory.boundary?.titleExposed) + " pixels=" + Boolean(surfaceInventory.boundary?.pixelsExposed),
       "AI Surface Activation: status=" + (aiGraphicalSession.surfaceActivation?.status ?? "not_executed") + " target=" + (aiGraphicalSession.surfaceActivation?.surfaceId ?? "none") + " inventory=" + (aiGraphicalSession.surfaceActivation?.inventorySequenceBefore ?? "none") + "->" + (aiGraphicalSession.surfaceActivation?.inventorySequenceAfter ?? "none") + " receipt=" + Boolean(aiGraphicalSession.surfaceActivation?.receiptMatched) + " frameChanged=" + Boolean(aiGraphicalSession.surfaceActivation?.frameChanged),
       "AI Workbench: status=" + (applicationLifecycle.status ?? "unknown") + " active=" + Boolean(applicationLifecycle.active) + " pid=" + (applicationLifecycle.mainPid ?? "none") + " surface=" + (applicationLifecycle.matchingSurface?.surfaceId ?? "none") + " attached=" + Boolean(applicationLifecycle.surfaceAttached) + " arbitraryProcess=" + Boolean(applicationLifecycle.boundary?.arbitraryProcessLaunch) + " root=" + Boolean(applicationLifecycle.boundary?.rootRequired),
+      "AI Native Intake: status=" + (nativeIntakeLifecycle.status ?? "unknown") + " active=" + Boolean(nativeIntakeLifecycle.active) + " pid=" + (nativeIntakeLifecycle.mainPid ?? "none") + " surface=" + (nativeIntakeLifecycle.matchingSurface?.surfaceId ?? "none") + " attached=" + Boolean(nativeIntakeLifecycle.surfaceAttached) + " persisted=" + Boolean(nativeIntakeLifecycle.boundary?.persisted) + " provider=" + Boolean(nativeIntakeLifecycle.boundary?.providerEgress),
       \`Session: \${data.session?.status ?? "unknown"}\`,
       \`Session ID: \${data.session?.sessionId ?? "none"}\`,
       \`Display: \${workView.displayTarget ?? "unknown"}\`,
@@ -225,12 +239,16 @@ async function refreshWorkView() {
     workViewSessionIdentity.textContent = "offline";
     aiWorkbenchStatus.textContent = "offline";
     aiWorkbenchSurface.textContent = "none";
+    aiNativeIntakeStatus.textContent = "offline";
+    aiNativeIntakeSurface.textContent = "none";
     aiSurfaceCount.textContent = "0";
     aiSurfaceSelect.replaceChildren();
     aiSurfaceSelect.dataset.sequence = "";
     aiSurfaceSelect.disabled = true;
     startAiWorkbenchButton.disabled = true;
     stopAiWorkbenchButton.disabled = true;
+    startAiNativeIntakeButton.disabled = true;
+    stopAiNativeIntakeButton.disabled = true;
     activateAiSurfaceButton.disabled = true;
     updateAiSurfaceScrollControls();
     workViewJson.textContent = "Unable to read work view state.";
