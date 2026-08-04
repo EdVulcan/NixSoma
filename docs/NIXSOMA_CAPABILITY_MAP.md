@@ -12,8 +12,8 @@ representative evidence agree.
 | Baseline | Maturity | Meaning |
 | --- | --- | --- |
 | Physically deployed bounded product | about 88-91% | Generation 111 carries the governed control plane, renewable mission supervisor, immutable reviewed mission worklist, trusted work view, fixed Level 3 body owners, and bounded Level 4 eye-hand workflows. |
-| Current source bounded product | about 92-94% | Source adds controlled recall-order adaptation, one exact-evidence semantic type -> submit workflow, and a second fixed native application workflow beyond deployed generation 111. |
-| Final whitepaper vision | about 59-64% | Controlled adaptation and bounded browser/native workflow mechanisms now exist in source; live replicated evidence, durable autonomous task planning, broader body nerves, physical Phase D evolution, and longer multi-application missions remain. |
+| Current source bounded product | about 93-95% | Source adds controlled recall-order adaptation, exact-evidence browser and native workflows, and one fixed-order reviewed mission across both applications beyond deployed generation 111. |
+| Final whitepaper vision | about 60-65% | Controlled adaptation and bounded multi-application mission mechanisms now exist in source; live replicated evidence, durable autonomous task planning, broader body nerves, physical Phase D evolution, and reviewed workflow selection remain. |
 
 ## Capability Families
 
@@ -22,7 +22,7 @@ representative evidence agree.
 | Level 1 control plane | Deployed | Generation 111 adds the immutable reviewed task worklist; the real gate proved zero-task binding plus two ordered one-per-epoch completions, and post-switch health/readback pass | Goals and order still require operator review; there is no provider planning, open-ended backlog, retry/skip, causal ranking, or policy change |
 | Level 2 trusted work view | Deployed plus source native workflow | User-owned helper, isolated browser/workspace, a second fixed native intake unit, fresh bounded capture, stale-authority rejection, recovery, takeover, and Observer projection | Longer finite composition across fixed applications, not another capture or lease variant |
 | Level 3 controlled system body | Partially deployed | Fixed systemd owners, exact Polkit/peer boundaries, repair loop, resource evidence, process/network/file/process-lifecycle nerves | Physical Phase D mutation/rollback, wider fixed body nerves, and governed action composition |
-| Level 4 graphical body | Deployed bounded subset plus source workflows | Dedicated compositor/browser, native frame/input, semantic and OCR actions, bounded run/assessment, reviewed acceptance, submit, current-tab close, exact type -> submit, and fixed native intake start -> type -> stop | Longer mission-bound multi-application eye-hand work without arbitrary desktop control |
+| Level 4 graphical body | Deployed bounded subset plus source mission | Dedicated compositor/browser, native frame/input, semantic and OCR actions, bounded run/assessment, reviewed acceptance, exact browser and native workflows, and one fixed browser -> native mission | Finite reviewed-worklist workflow selection without provider task invention or arbitrary desktop control |
 | Memory and adaptation | Source-validated controlled subset | Durable experience records, task-bound recall consumption, recommendation application/execution/outcome, explicit operator feedback, and one finite paired-randomized baseline-versus-feedback ranking owner | Physical deployment and real replicated experiment outcomes; broader learning domains and automatic authority change remain absent |
 | Declarative evolution | VM-proven | Candidate generation, approval binding, activation, health oracle, exact rollback, and replay rejection in disposable KVM | Physical-host promotion policy and an independently authorized automatic rollback boundary |
 
@@ -106,6 +106,26 @@ or action. All `1427/1427` workspace tests, typecheck, Core `980/980`, Observer
 and exact `289/36/116`-file Core/Session Manager/Observer closures pass. Physical
 activation and a live provider run remain unclaimed.
 
-The next source route is finite mission-bound composition across fixed browser
-and native applications. Provider goal invention, open-ended planning,
-retry/skip, physical Phase D, and wider body actions remain separate routes.
+## Newly Implemented Reviewed Multi-Application Mission
+
+```text
+exact reviewed browser -> native objective
+-> browser type + verified submit
+-> exact task/value revalidation and durable continuation audit
+-> fixed Native Intake start + OCR Type + verified stop
+-> mission completion audit and terminate
+```
+
+The same 1-32 character exact objective value is checked locally before both
+keyboard actions but remains absent from mission results and audit. Application
+order is fixed; maximum provider/action/lifecycle counts are `3/3/2`, with no
+retry, task completion, arbitrary process/window control, root, or host mutation.
+All `1442/1442` workspace tests, typecheck, Core `994/994`, Observer `121/121`,
+Session Manager `85/85`, the real Core/Observer gates, body-config, the 835-entry
+registry, 1023-file/1007-shell-script audit, Windows path budget, and exact
+`291/36/117`-file Core/Session Manager/Observer closures pass. Physical
+activation and a live provider mission remain unclaimed.
+
+The next source route is finite reviewed-worklist selection among existing fixed
+workflows. Provider goal invention, open-ended planning, retry/skip, physical
+Phase D, and wider body actions remain separate routes.

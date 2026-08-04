@@ -261,6 +261,9 @@ for (const token of [
   "run-ai-workspace-native-intake-workflow-button",
   "ai-workspace-native-intake-workflow-status",
   "Native Intake",
+  "run-ai-workspace-reviewed-multi-application-mission-button",
+  "ai-workspace-reviewed-multi-application-mission-status",
+  "Browser + Native",
 ]) {
   if (!html.includes(token)) {
     throw new Error(`Observer HTML missing ${token}`);
@@ -324,6 +327,9 @@ for (const token of [
   "nixsoma-ai-workspace-native-intake-workflow-v0",
   "work_view.native_intake.start",
   "work_view.native_intake.stop",
+  "runAiWorkspaceReviewedMultiApplicationMission",
+  "act.ai.workspace.reviewed_multi_application_mission",
+  "nixsoma-ai-workspace-reviewed-multi-application-mission-v0",
 ]) {
   if (!client.includes(token)) {
     throw new Error(`Observer client missing ${token}`);
@@ -731,6 +737,14 @@ if (!capabilities.capabilities?.some((capability) =>
   && capability.intents?.includes("ai.workspace.native_intake_workflow")
 )) {
   throw new Error("Observer capability registry should expose the fixed native intake workflow contract");
+}
+if (!capabilities.capabilities?.some((capability) =>
+  capability.id === "act.ai.workspace.reviewed_multi_application_mission"
+  && capability.kind === "actuator"
+  && capability.governance === "standing_authorization"
+  && capability.intents?.includes("ai.workspace.reviewed_multi_application_mission")
+)) {
+  throw new Error("Observer capability registry should expose the reviewed multi-application mission contract");
 }
 if (
   !contextPacket.ok

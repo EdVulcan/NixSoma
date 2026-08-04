@@ -1,8 +1,15 @@
 import {
   AI_WORKSPACE_OCR_TYPE_RESPONSE_CONTRACT,
   buildAiWorkspaceOcrTypeInstruction,
+  buildAiWorkspaceReviewedMultiApplicationOcrTypeInstruction,
   parseAiWorkspaceOcrTypeDecision,
+  readAiWorkspaceOcrTypeObjectiveInput,
+  readAiWorkspaceReviewedMultiApplicationObjectiveInput,
 } from "./ai-workspace-ocr-type-contract.mjs";
+import {
+  AI_COMPOSITOR_TYPE_MAX_CHARS,
+  AI_COMPOSITOR_TYPE_PATTERN,
+} from "../../../packages/shared-utils/src/ai-compositor-input.mjs";
 import { createAiWorkspaceOcrDecisionSession } from "./ai-workspace-ocr-decision-session.mjs";
 import { executeAiWorkspaceOcrNativeType } from "./ai-workspace-ocr-native-actions.mjs";
 import {
@@ -17,8 +24,9 @@ import {
 
 export const AI_WORKSPACE_OCR_TYPE_REGISTRY =
   "nixsoma-ai-workspace-ocr-type-v0";
-
-const OBJECTIVE_PATTERN = /^Type exact text "([A-Za-z0-9 .,_-]{1,32})" into the active surface$/u;
+export const AI_WORKSPACE_OCR_TYPE_REVIEWED_MULTI_APPLICATION_MODE =
+  "reviewed_multi_application_mission";
+const SHA256 = /^[a-f0-9]{64}$/u;
 
 function normaliseExpectedSurfaceBinding(value) {
   if (value === undefined || value === null) return null;
@@ -48,9 +56,38 @@ function providerWasCalled(reason, providerDecision) {
     || ["provider_failed", "response_invalid"].includes(reason);
 }
 
-function objectiveInputValue(binding) {
+function objectiveInputValue(binding, missionMode = false) {
   const statement = binding?.providerProjection?.statement;
-  return typeof statement === "string" ? OBJECTIVE_PATTERN.exec(statement)?.[1] ?? null : null;
+  return missionMode
+    ? readAiWorkspaceReviewedMultiApplicationObjectiveInput(statement)
+    : readAiWorkspaceOcrTypeObjectiveInput(statement);
+}
+
+function normaliseExpectedObjectiveInput(value) {
+  if (value === null || value === undefined) return null;
+  return typeof value === "string"
+    && value.length >= 1
+    && value.length <= AI_COMPOSITOR_TYPE_MAX_CHARS
+    && AI_COMPOSITOR_TYPE_PATTERN.test(value)
+    ? value
+    : undefined;
+}
+
+function normaliseExpectedTaskBinding(value) {
+  if (value === null || value === undefined) return null;
+  const keys = typeof value === "object" && !Array.isArray(value)
+    ? Object.keys(value).sort()
+    : [];
+  if (keys.join("\0") !== [
+    "objectiveContentHash",
+    "taskId",
+    "taskVersionHash",
+  ].sort().join("\0")
+    || typeof value.taskId !== "string"
+    || !value.taskId
+    || !SHA256.test(value.objectiveContentHash)
+    || !SHA256.test(value.taskVersionHash)) return undefined;
+  return { ...value };
 }
 
 function compactInputEvidence(value) {
@@ -226,44 +263,61 @@ export function createAiWorkspaceOcrType({
   publishAuditEvent = async () => ({ ok: true }),
   now = () => new Date().toISOString(),
 } = {}) {
-  const decisionSession = createAiWorkspaceOcrDecisionSession({
-    standingAdvisory,
-    fetchJson,
-    sessionManagerUrl,
-    getTaskById,
-    registry: AI_WORKSPACE_OCR_TYPE_REGISTRY,
-    providerContextRegistry: "nixsoma-ai-workspace-ocr-type-context-v0",
-    allowedActions: ["type_text", "no_op"],
-    requestedBehavior: {
+  function createDecisionSession({ missionMode = false } = {}) {
+    const objectiveForm = missionMode
+      ? 'Enter exact text "VALUE" in the current browser form, submit it, then type it into the fixed native intake'
+      : 'Type exact text "VALUE" into the active surface';
+    return createAiWorkspaceOcrDecisionSession({
+      standingAdvisory,
+      fetchJson,
+      sessionManagerUrl,
+      getTaskById,
+      registry: AI_WORKSPACE_OCR_TYPE_REGISTRY,
+      providerContextRegistry: missionMode
+        ? "nixsoma-ai-workspace-reviewed-multi-application-native-type-context-v0"
+        : "nixsoma-ai-workspace-ocr-type-context-v0",
       allowedActions: ["type_text", "no_op"],
-      objectiveForm: 'Type exact text "VALUE" into the active surface',
-      inputMustExactlyMatchObjectiveValue: true,
-      inputCharacters: "ASCII letters, digits, spaces, period, comma, underscore, hyphen",
-      inputMaximumCharacters: 32,
-      maximumActions: 1,
-      taskMutation: false,
-      automaticContinuation: false,
-      enterKeyInput: false,
-      hotkeyInput: false,
-      automaticRepeat: false,
-    },
-    instruction: buildAiWorkspaceOcrTypeInstruction(),
-    responseContract: AI_WORKSPACE_OCR_TYPE_RESPONSE_CONTRACT,
-    parseResponse: parseAiWorkspaceOcrTypeDecision,
-    readActionId: (parsed) => parsed.decision.actionId,
-    auditEventName: "cloud_provider.ai_workspace_ocr_type_egress_authorized",
-    successResult: "ai_workspace_ocr_type_returned",
-    egressAudit: {
-      providerGeneratedInputAllowed: true,
-      providerInputMustMatchTaskObjective: true,
-      inputTextPersistedLocally: false,
-      enterKeyInput: false,
-      hotkeyInput: false,
-      automaticRepeat: false,
-    },
-    now,
-  });
-  const { observeContext } = decisionSession;
+      requestedBehavior: {
+        allowedActions: ["type_text", "no_op"],
+        objectiveForm,
+        inputMustExactlyMatchObjectiveValue: true,
+        inputCharacters: "ASCII letters, digits, spaces, period, comma, underscore, hyphen",
+        inputMaximumCharacters: 32,
+        maximumActions: 1,
+        taskMutation: false,
+        automaticContinuation: false,
+        enterKeyInput: false,
+        hotkeyInput: false,
+        automaticRepeat: false,
+        reviewedMultiApplicationMissionMode: missionMode,
+      },
+      instruction: missionMode
+        ? buildAiWorkspaceReviewedMultiApplicationOcrTypeInstruction()
+        : buildAiWorkspaceOcrTypeInstruction(),
+      responseContract: AI_WORKSPACE_OCR_TYPE_RESPONSE_CONTRACT,
+      parseResponse: parseAiWorkspaceOcrTypeDecision,
+      readActionId: (parsed) => parsed.decision.actionId,
+      auditEventName: missionMode
+        ? "cloud_provider.ai_workspace_reviewed_multi_application_native_type_egress_authorized"
+        : "cloud_provider.ai_workspace_ocr_type_egress_authorized",
+      successResult: missionMode
+        ? "ai_workspace_reviewed_multi_application_native_type_returned"
+        : "ai_workspace_ocr_type_returned",
+      egressAudit: {
+        providerGeneratedInputAllowed: true,
+        providerInputMustMatchTaskObjective: true,
+        inputTextPersistedLocally: false,
+        enterKeyInput: false,
+        hotkeyInput: false,
+        automaticRepeat: false,
+        reviewedMultiApplicationMissionMode: missionMode,
+      },
+      now,
+    });
+  }
+
+  const decisionSession = createDecisionSession();
+  const reviewedMultiApplicationDecisionSession = createDecisionSession({ missionMode: true });
 
   async function publishRequiredAudit(name, payload) {
     const accepted = await publishAuditEvent(name, payload);
@@ -308,7 +362,13 @@ export function createAiWorkspaceOcrType({
     return result;
   }
 
-  async function invoke({ taskId: requestedTaskId, expectedSurfaceBinding: expectedInput } = {}) {
+  async function invoke({
+    taskId: requestedTaskId,
+    expectedSurfaceBinding: expectedInput,
+    expectedTaskBinding: expectedTaskInput = null,
+    expectedInputText: expectedObjectiveInputValue = null,
+    decisionMode = null,
+  } = {}) {
     if (typeof postJson !== "function") {
       return fallback("runtime_unavailable", standingAdvisory);
     }
@@ -316,7 +376,23 @@ export function createAiWorkspaceOcrType({
     if (expectedSurfaceBinding === undefined) {
       return fallback("expected_surface_invalid", standingAdvisory);
     }
-    const session = await decisionSession.decide({ taskId: requestedTaskId });
+    const missionMode = decisionMode === AI_WORKSPACE_OCR_TYPE_REVIEWED_MULTI_APPLICATION_MODE;
+    const expectedTaskBinding = normaliseExpectedTaskBinding(expectedTaskInput);
+    const expectedObjectiveInput = normaliseExpectedObjectiveInput(expectedObjectiveInputValue);
+    if ((decisionMode !== null && !missionMode)
+      || expectedTaskBinding === undefined
+      || expectedObjectiveInput === undefined
+      || (missionMode && (!expectedTaskBinding || !expectedObjectiveInput))
+      || (!missionMode && (expectedTaskBinding || expectedObjectiveInput))) {
+      return fallback("reviewed_multi_application_binding_invalid", standingAdvisory);
+    }
+    const activeDecisionSession = missionMode
+      ? reviewedMultiApplicationDecisionSession
+      : decisionSession;
+    const session = await activeDecisionSession.decide({
+      taskId: requestedTaskId,
+      expectedTaskBinding,
+    });
     const { taskId, providerDecision, decisionContext, verificationContext } = session;
     if (!session.ok) {
       return finaliseFallback(session.reason, { ...session, expectedSurfaceBinding });
@@ -396,9 +472,12 @@ export function createAiWorkspaceOcrType({
         };
       }
 
-      const objectiveValue = objectiveInputValue(decisionContext.taskObjectiveBinding);
+      const objectiveValue = objectiveInputValue(decisionContext.taskObjectiveBinding, missionMode);
       const inputEvidence = compactInputEvidence(decision.inputEvidence);
-      if (!objectiveValue || inputText !== objectiveValue || !inputEvidence) {
+      if (!objectiveValue
+        || inputText !== objectiveValue
+        || (expectedObjectiveInput !== null && inputText !== expectedObjectiveInput)
+        || !inputEvidence) {
         return await finaliseFallback("input_not_objective_bound", {
           providerDecision,
           decisionContext,
@@ -478,7 +557,7 @@ export function createAiWorkspaceOcrType({
       const input = execution.nativeInput;
       let postActionContext;
       try {
-        postActionContext = await observeContext(now());
+        postActionContext = await activeDecisionSession.observeContext(now());
       } catch {
         return await finaliseFallback("post_action_context_unavailable", {
           providerDecision,
@@ -590,6 +669,7 @@ export function createAiWorkspaceOcrType({
           currentActiveSurfaceBound: true,
           fixedApplicationSurfaceBound: expectedSurfaceBinding !== null,
           taskObjectiveInputBound: true,
+          reviewedMultiApplicationMissionMode: missionMode,
           providerGeneratedInput: true,
           keyboardInput: true,
           hotkeyInput: false,

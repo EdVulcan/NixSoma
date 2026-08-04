@@ -8,6 +8,7 @@ let aiWorkspaceLocalOcrInFlight = false;
 let aiWorkspaceSingleStepInFlight = false;
 let aiWorkspaceSemanticFormWorkflowInFlight = false;
 let aiWorkspaceNativeIntakeWorkflowInFlight = false;
+let aiWorkspaceReviewedMultiApplicationMissionInFlight = false;
 let aiWorkspaceBoundedRunInFlight = false;
 let aiWorkspaceReviewedCycleInFlight = false;
 let aiWorkspaceAssessmentInFlight = false;
@@ -82,6 +83,7 @@ function aiWorkspaceActionInFlight() {
     || aiWorkspaceSemanticSubmitInFlight
     || aiWorkspaceSemanticFormWorkflowInFlight
     || aiWorkspaceNativeIntakeWorkflowInFlight
+    || aiWorkspaceReviewedMultiApplicationMissionInFlight
     || aiWorkspaceAssessmentAcceptanceInFlight;
 }
 
@@ -134,6 +136,10 @@ function updateAiSurfaceScrollControls() {
     || aiRunInFlight;
   runAiWorkspaceSemanticFormWorkflowButton.disabled = !enabled || !taskId || aiRunInFlight;
   runAiWorkspaceNativeIntakeWorkflowButton.disabled = !taskId
+    || !nativeIntakeReady
+    || aiRunInFlight;
+  runAiWorkspaceReviewedMultiApplicationMissionButton.disabled = !enabled
+    || !taskId
     || !nativeIntakeReady
     || aiRunInFlight;
   runAiWorkspaceBoundedRunButton.disabled = !enabled || !taskId || aiRunInFlight;

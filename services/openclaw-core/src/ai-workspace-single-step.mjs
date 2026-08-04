@@ -10,6 +10,10 @@ import {
   buildWriteOnlyInputEvidence,
 } from "../../../packages/shared-utils/src/work-view-input-evidence.mjs";
 import {
+  AI_COMPOSITOR_TYPE_MAX_CHARS,
+  AI_COMPOSITOR_TYPE_PATTERN,
+} from "../../../packages/shared-utils/src/ai-compositor-input.mjs";
+import {
   aiWorkspaceTaskObjectiveBindingMatches,
   buildAiWorkspaceTaskObjectiveBinding,
   normaliseAiWorkspaceTaskId,
@@ -56,6 +60,16 @@ function expectedTaskEvidenceMatches(expected, binding) {
     && expected.taskId === actual.taskId
     && expected.objectiveContentHash === actual.objectiveContentHash
     && expected.taskVersionHash === actual.taskVersionHash;
+}
+
+function normaliseExpectedSemanticFormInput(value, semanticFormTypeMode) {
+  if (value === null || value === undefined) return null;
+  if (!semanticFormTypeMode
+    || typeof value !== "string"
+    || value.length < 1
+    || value.length > AI_COMPOSITOR_TYPE_MAX_CHARS
+    || !AI_COMPOSITOR_TYPE_PATTERN.test(value)) return undefined;
+  return value;
 }
 
 function fallback(reason, standingAdvisory, {
@@ -186,11 +200,19 @@ export function createAiWorkspaceSingleStep({
   async function invoke({
     taskId: requestedTaskId,
     expectedTaskBinding = null,
+    expectedInputText = null,
     decisionMode = null,
   } = {}) {
     const taskId = normaliseAiWorkspaceTaskId(requestedTaskId);
     const semanticSubmitMode = decisionMode === AI_WORKSPACE_SEMANTIC_SUBMIT_MODE;
     const semanticFormTypeMode = decisionMode === AI_WORKSPACE_SEMANTIC_FORM_TYPE_MODE;
+    const expectedSemanticFormInput = normaliseExpectedSemanticFormInput(
+      expectedInputText,
+      semanticFormTypeMode,
+    );
+    if (expectedSemanticFormInput === undefined) {
+      return fallback("expected_semantic_form_input_invalid", standingAdvisory);
+    }
     if (!taskId || typeof getTaskById !== "function") {
       return fallback("task_objective_unavailable", standingAdvisory);
     }
@@ -215,6 +237,7 @@ export function createAiWorkspaceSingleStep({
       providerGeneratedInputAllowed: !semanticSubmitMode,
       semanticSubmitOnly: semanticSubmitMode,
       semanticFormTypeOnly: semanticFormTypeMode,
+      taskObjectiveInputRequired: expectedSemanticFormInput !== null,
       rawTaskGoalEgress: false,
       taskObjectiveEgress: true,
     };
@@ -297,6 +320,14 @@ export function createAiWorkspaceSingleStep({
     }
 
     const decision = providerDecision.parsed.decision;
+    if (expectedSemanticFormInput !== null
+      && decision.actionId === "type_item"
+      && decision.inputText !== expectedSemanticFormInput) {
+      return finaliseFallback("semantic_form_input_not_objective_bound", {
+        providerDecision,
+        decisionContext,
+      });
+    }
     let executionContext;
     try {
       executionContext = await observeContext(now());
@@ -396,6 +427,7 @@ export function createAiWorkspaceSingleStep({
           mutatesHost: false,
           semanticSubmitMode,
           semanticFormTypeMode,
+          taskObjectiveInputBound: false,
         },
       };
     }
@@ -527,6 +559,7 @@ export function createAiWorkspaceSingleStep({
           parentDisplayConnected: false,
           mutatesHost: false,
           semanticFormTypeMode,
+          taskObjectiveInputBound: expectedSemanticFormInput !== null,
         },
       };
     }

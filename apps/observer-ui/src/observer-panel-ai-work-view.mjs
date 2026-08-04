@@ -22,6 +22,7 @@ export function observerAiWorkViewPanel() {
           <div class="metric"><span>Semantic Submit</span><span id="ai-workspace-semantic-submit-status">type receipt required</span></div>
           <div class="metric"><span>Form Workflow</span><span id="ai-workspace-semantic-form-workflow-status">not run</span></div>
           <div class="metric"><span>Native Intake Workflow</span><span id="ai-workspace-native-intake-workflow-status">not run</span></div>
+          <div class="metric"><span>Multi-App Mission</span><span id="ai-workspace-reviewed-multi-application-mission-status">not run</span></div>
           <label for="ai-surface-select">Surface</label>
           <select id="ai-surface-select" disabled></select>
           <div class="actions">
@@ -41,6 +42,7 @@ export function observerAiWorkViewPanel() {
             <button id="run-ai-workspace-semantic-submit-button" type="button" disabled>Submit</button>
             <button id="run-ai-workspace-semantic-form-workflow-button" type="button" disabled>Type + Submit</button>
             <button id="run-ai-workspace-native-intake-workflow-button" type="button" disabled>Native Intake</button>
+            <button id="run-ai-workspace-reviewed-multi-application-mission-button" type="button" disabled>Browser + Native</button>
             <button id="run-ai-workspace-bounded-run-button" type="button" disabled>AI Run</button>
             <button id="run-ai-workspace-reviewed-cycle-button" type="button" disabled>Run + Assess</button>
             <button id="assess-ai-workspace-button" class="secondary" type="button" disabled>Assess</button>

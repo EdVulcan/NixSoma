@@ -519,6 +519,52 @@ const aiWorkspaceNativeIntakeWorkflowSlice = changedFiles.length > 0
   && changedFiles.every((file) => aiWorkspaceNativeIntakeWorkflowFiles.has(file))
   && changedFiles.some((file) =>
     file === "services/openclaw-core/src/ai-workspace-native-intake-workflow.mjs");
+const aiWorkspaceReviewedMultiApplicationMissionFiles = new Set([
+  "apps/observer-ui/src/client-script-config-dom-system-body.mjs",
+  "apps/observer-ui/src/client-script-runtime-actions.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-projection.mjs",
+  "apps/observer-ui/src/client-script-runtime-ai-workspace-reviewed-multi-application-mission.mjs",
+  "apps/observer-ui/src/observer-panel-ai-work-view.mjs",
+  "apps/observer-ui/test/ai-workspace-reviewed-multi-application-mission.test.mjs",
+  "docs/NIXSOMA_CAPABILITY_MAP.md",
+  "docs/OPENCLAW_FORWARD_WORK_DIRECTIVE.md",
+  "docs/README.md",
+  "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
+  "docs/plans/OPENCLAW_NATIVE_INTAKE_WORKFLOW_PLAN.md",
+  "docs/plans/OPENCLAW_REVIEWED_MULTI_APPLICATION_MISSION_PLAN.md",
+  "docs/plans/README.md",
+  "nix/packages/observer-ui.nix",
+  "nix/scripts/dev-body-config-check.sh",
+  "nix/scripts/dev-capability-invoke-check.sh",
+  "nix/scripts/dev-milestone-select-changed-checks.sh",
+  "nix/scripts/dev-observer-capability-invoke-check.sh",
+  "services/openclaw-core/src/ai-workspace-native-intake-workflow.mjs",
+  "services/openclaw-core/src/ai-workspace-ocr-decision-session.mjs",
+  "services/openclaw-core/src/ai-workspace-ocr-type-contract.mjs",
+  "services/openclaw-core/src/ai-workspace-ocr-type.mjs",
+  "services/openclaw-core/src/ai-workspace-reviewed-multi-application-mission.mjs",
+  "services/openclaw-core/src/ai-workspace-run-coordinator.mjs",
+  "services/openclaw-core/src/ai-workspace-runtime.mjs",
+  "services/openclaw-core/src/ai-workspace-semantic-form-workflow.mjs",
+  "services/openclaw-core/src/ai-workspace-single-step.mjs",
+  "services/openclaw-core/src/capability-descriptors.mjs",
+  "services/openclaw-core/src/capability-runtime-ai-workspace-reviewed-multi-application-mission.mjs",
+  "services/openclaw-core/src/capability-runtime.mjs",
+  "services/openclaw-core/src/plan-builder.mjs",
+  "services/openclaw-core/test/ai-workspace-native-intake-workflow.test.mjs",
+  "services/openclaw-core/test/ai-workspace-ocr-type-contract.test.mjs",
+  "services/openclaw-core/test/ai-workspace-ocr-type.test.mjs",
+  "services/openclaw-core/test/ai-workspace-reviewed-multi-application-mission.test.mjs",
+  "services/openclaw-core/test/ai-workspace-run-coordinator.test.mjs",
+  "services/openclaw-core/test/ai-workspace-semantic-form-workflow.test.mjs",
+  "services/openclaw-core/test/ai-workspace-single-step.test.mjs",
+  "services/openclaw-core/test/capability-runtime-ai-workspace-reviewed-multi-application-mission.test.mjs",
+  "services/openclaw-core/test/capability-runtime.test.mjs",
+]);
+const aiWorkspaceReviewedMultiApplicationMissionSlice = changedFiles.length > 0
+  && changedFiles.every((file) => aiWorkspaceReviewedMultiApplicationMissionFiles.has(file))
+  && changedFiles.some((file) =>
+    file === "services/openclaw-core/src/ai-workspace-reviewed-multi-application-mission.mjs");
 const durableExperienceFeedbackFiles = new Set([
   "apps/observer-ui/src/client-script-renderers-engineering-context.mjs",
   "apps/observer-ui/test/client-script-engineering-context.test.mjs",
@@ -2056,6 +2102,16 @@ for (const file of changedFiles) {
     continue;
   }
   if (aiWorkspaceNativeIntakeWorkflowSlice) {
+    selectName("milestone-registry");
+    selectName("milestone-script-audit");
+    selectName(windowsPathBudgetCheck);
+    selectName("openclaw-core-service-unit-tests");
+    selectName("body-config");
+    selectName("capability-invoke");
+    selectName("observer-capability-invoke");
+    continue;
+  }
+  if (aiWorkspaceReviewedMultiApplicationMissionSlice) {
     selectName("milestone-registry");
     selectName("milestone-script-audit");
     selectName(windowsPathBudgetCheck);

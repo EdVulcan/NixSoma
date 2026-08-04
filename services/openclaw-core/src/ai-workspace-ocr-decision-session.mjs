@@ -36,7 +36,17 @@ export function createAiWorkspaceOcrDecisionSession({
     return { ok: false, reason, taskId: evidence.taskId ?? null, ...evidence };
   }
 
-  async function decide({ taskId: requestedTaskId } = {}) {
+  function expectedTaskEvidenceMatches(expected, binding) {
+    if (expected === null || expected === undefined) return true;
+    const actual = projectAiWorkspaceTaskEvidence(binding);
+    return expected && typeof expected === "object" && !Array.isArray(expected)
+      && Object.keys(expected).length === 3
+      && expected.taskId === actual.taskId
+      && expected.objectiveContentHash === actual.objectiveContentHash
+      && expected.taskVersionHash === actual.taskVersionHash;
+  }
+
+  async function decide({ taskId: requestedTaskId, expectedTaskBinding = null } = {}) {
     const taskId = normaliseAiWorkspaceTaskId(requestedTaskId);
     if (!taskId || typeof getTaskById !== "function") {
       return failure("task_objective_unavailable");
@@ -77,6 +87,9 @@ export function createAiWorkspaceOcrDecisionSession({
           maximumActions,
         });
         if (!taskObjectiveBinding.ok) throw new Error(taskObjectiveBinding.reason);
+        if (!expectedTaskEvidenceMatches(expectedTaskBinding, taskObjectiveBinding)) {
+          throw new Error("ai_workspace_task_objective_changed");
+        }
         decisionContext.taskObjectiveBinding = taskObjectiveBinding;
         decisionContext.provider = buildAiWorkspaceOcrProviderContext({
           registry: providerContextRegistry,

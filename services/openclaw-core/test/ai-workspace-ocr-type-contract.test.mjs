@@ -4,7 +4,10 @@ import test from "node:test";
 import {
   AI_WORKSPACE_OCR_TYPE_RESPONSE_CONTRACT,
   buildAiWorkspaceOcrTypeInstruction,
+  buildAiWorkspaceReviewedMultiApplicationOcrTypeInstruction,
   parseAiWorkspaceOcrTypeDecision,
+  readAiWorkspaceOcrTypeObjectiveInput,
+  readAiWorkspaceReviewedMultiApplicationObjectiveInput,
 } from "../src/ai-workspace-ocr-type-contract.mjs";
 
 function parse(value) {
@@ -64,4 +67,34 @@ test("OCR type contract rejects extra authority and invalid input", () => {
   const instruction = buildAiWorkspaceOcrTypeInstruction();
   assert.equal(instruction.includes('exact form Type exact text "VALUE" into the active surface'), true);
   assert.equal(instruction.includes("Do not send Enter, hotkeys, modifiers, repeated input"), true);
+});
+
+test("OCR type objective parser accepts only the complete exact-value grammar", () => {
+  assert.equal(
+    readAiWorkspaceOcrTypeObjectiveInput(
+      'Type exact text "MISSION_7" into the active surface',
+    ),
+    "MISSION_7",
+  );
+  for (const statement of [
+    'Please Type exact text "MISSION_7" into the active surface',
+    'Type exact text "MISSION_7" into another surface',
+    'Type exact text "bad!" into the active surface',
+    'Type exact text "' + "x".repeat(33) + '" into the active surface',
+  ]) {
+    assert.equal(readAiWorkspaceOcrTypeObjectiveInput(statement), null);
+  }
+});
+
+test("multi-application OCR objective parser owns one separate complete grammar", () => {
+  const statement = 'Enter exact text "MISSION_7" in the current browser form, submit it, then type it into the fixed native intake';
+  assert.equal(readAiWorkspaceReviewedMultiApplicationObjectiveInput(statement), "MISSION_7");
+  assert.equal(readAiWorkspaceOcrTypeObjectiveInput(statement), null);
+  assert.equal(
+    buildAiWorkspaceReviewedMultiApplicationOcrTypeInstruction().includes(statement.replace(
+      "MISSION_7",
+      "VALUE",
+    )),
+    true,
+  );
 });

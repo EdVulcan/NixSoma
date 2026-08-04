@@ -61,6 +61,7 @@ function compactStep(result, index) {
     semanticItemOrdinalBound: result?.governance?.semanticItemOrdinalBound === true,
     currentBrowserSurfaceBound: result?.governance?.currentBrowserSurfaceBound === true,
     taskObjectiveBound: result?.governance?.taskObjectiveBound === true,
+    taskObjectiveInputBound: result?.governance?.taskObjectiveInputBound === true,
     semanticSubmitTargetBound: result?.governance?.semanticSubmitTargetBound === true,
     keyboardInput: result?.governance?.keyboardInput === true,
     providerGeneratedInput: result?.governance?.providerGeneratedInput === true,
@@ -99,7 +100,7 @@ function sameTaskBinding(left, right) {
     && left.taskVersionHash === right.taskVersionHash;
 }
 
-function verifiedType(step) {
+function verifiedType(step, exactInputRequired = false) {
   return step.status === "executed"
     && step.actionId === "type_item"
     && Number.isInteger(step.itemOrdinal)
@@ -117,6 +118,7 @@ function verifiedType(step) {
     && step.semanticItemOrdinalBound
     && step.currentBrowserSurfaceBound
     && step.taskObjectiveBound
+    && (!exactInputRequired || step.taskObjectiveInputBound)
     && step.keyboardInput
     && step.providerGeneratedInput;
 }
@@ -182,6 +184,7 @@ export function createAiWorkspaceSemanticFormWorkflow({
         automaticRepeat: false,
         taskMutated: false,
         automaticTaskCompletion: false,
+        taskObjectiveInputBound: steps[0]?.taskObjectiveInputBound === true,
       });
       workflowCompletionAudit = accepted?.ok === true;
     } catch {
@@ -210,6 +213,7 @@ export function createAiWorkspaceSemanticFormWorkflow({
         actionCountMinimum,
         continuationAudit,
         workflowCompletionAudit,
+        taskObjectiveInputBound: steps[0]?.taskObjectiveInputBound === true,
         outcomeUnknown,
       },
       governance: {
@@ -226,6 +230,7 @@ export function createAiWorkspaceSemanticFormWorkflow({
         automaticRepeat: false,
         inputTextExposed: false,
         inputTextPersisted: false,
+        taskObjectiveInputBound: steps[0]?.taskObjectiveInputBound === true,
         taskMutated: false,
         automaticTaskCompletion: false,
         createsTask: false,
@@ -278,7 +283,8 @@ export function createAiWorkspaceSemanticFormWorkflow({
         steps: [typeStep],
       });
     }
-    if (!verifiedType(typeStep)) {
+    const exactInputRequired = typeof input.expectedInputText === "string";
+    if (!verifiedType(typeStep, exactInputRequired)) {
       return complete({
         ok: false,
         status: "stopped_after_type",
@@ -315,8 +321,9 @@ export function createAiWorkspaceSemanticFormWorkflow({
 
     let submitResult;
     try {
+      const { expectedInputText: _expectedInputText, ...submitInput } = input;
       submitResult = await invokeSubmit({
-        ...input,
+        ...submitInput,
         expectedTaskBinding: taskBinding(typeStep),
       });
     } catch {

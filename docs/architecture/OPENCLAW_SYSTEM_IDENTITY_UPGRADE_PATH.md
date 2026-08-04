@@ -756,10 +756,10 @@ GNOME 输入、root 与 host mutation 仍未包含。这证明 AI 已拥有独�
 | Level 1 用户态控制平面 | 约 96%（bounded source scope） | 本地服务、任务/审批/审计、工程读写验证恢复、provider 治理、reviewed task composer/session、finite window、renewable mission 与 generation 111 的 immutable reviewed worklist 已形成；durable experience、task-bound consumption、recommendation application/execution/outcome、显式 operator feedback，以及源码中的有限配对随机 recall-order experiment 又闭合第一条受控调权链。profile 激活只改变既有经验记录顺序，且要求 exact evidence hash 与 operator confirmation。物理部署、真实重复试验、开放式 task planning 与 open-ended autonomy 仍未完成。 |
 | Level 2 受信会话组件 | 约 95-100%（当前 bounded work-view 边界） | trusted-session、takeover/rebind、user-session sidecar、fail-closed recovery、`systemd --user` ownership、workspace continuity、真实 NixOS Firefox、第二个固定 native intake unit、bounded 像素帧、frame-grounded action、语义目标清单、stale rejection、自主 semantic click/type、write-only input、审计与 Observer 证据已形成闭环。更广的原生图形工作空间属于 Level 4，不应继续作为 Level 2 横向变体。 |
 | Level 3 系统级特权组件 | 约 72-76% | 独立 `openclaw-hostd`、精确 Polkit、`SO_PEERCRED`、三个固定 OpenClaw unit restart、原生只读 systemd D-Bus、bounded journal/boot diagnosis、target-specific post-repair health receipt、只读 eBPF process-exec、network connect-attempt 与 file open-attempt evidence、已部署的 automatic incident scheduler，以及固定 body unit 的资源观测和声明式 cgroup envelope 已形成。物理 generation `52s1asvy...` 已包含三个 probes 及显式 compact aggregate；file-open 不含 filename/path/content/result，aggregate 不含 raw values，并通过 KVM 与物理双门禁。物理 Phase D mutation、自动 rollback、开发终端资源隔离和更广系统能力仍未建立。 |
-| Level 4 图形栈内生组件 | 约 90%（source bounded scope） | 物理 baseline 已有 native/operator input、semantic type/click、reviewed run/assessment、OCR actions、current-tab close 与 receipt-bound submit；源码又新增显式 `type -> exact verified continuation -> submit` 和固定 native intake `start -> type -> stop` 两个工作流。更长的 mission-bound multi-application eye-hand、Enter/hotkey/repeat、任意进程/窗口控制和桌面接管仍未完成。 |
+| Level 4 图形栈内生组件 | 约 92%（source bounded scope） | 物理 baseline 已有 native/operator input、semantic type/click、reviewed run/assessment、OCR actions、current-tab close 与 receipt-bound submit；源码又新增 browser type/submit、固定 native intake，以及同一 exact reviewed task 下固定 browser -> native 的完整有限 mission。reviewed-worklist workflow selection、Enter/hotkey/repeat、任意进程/窗口控制和桌面接管仍未完成。 |
 
 若只衡量当前明确受限、操作者治理的产品范围，物理部署成熟度约为
-**88-91%**，当前源码成熟度约为 **92-94%**：本地控制面、
+**88-91%**，当前源码成熟度约为 **93-95%**：本地控制面、
 trusted work view、固定 Level 3 body owner、bounded Level 4 眼手动作、provider 协作、
 审计和恢复证据已经形成可用子集，剩余主要是 acceptance reconciliation、完整工作流
 闭合与产品化整合。这一比例不能替代最终愿景比例。
@@ -865,6 +865,20 @@ Observer `120/120`、Session Manager `85/85`、真实 Core/Observer capability
 gates、body-config，以及精确 `289/36/116`-file Core/Session Manager/Observer
 Nix closures；物理激活与 live provider run 尚未声明。
 
+其后的 reviewed multi-application mission 首次把两个固定应用放进同一个
+Level 4 continuation contract。完整 objective 明确授权 browser textbox 输入、
+verified submit 和 fixed native intake 输入；Core 在 browser 前与 continuation 前
+两次绑定 task/objective/version/value，只把 transient exact value 交给当前执行 owner，
+并在 durable continuation audit 后才允许 Native Intake start。三个 provider call、
+三个 input/click action、两个 lifecycle action 和五个 fixed action 都是硬上限；任一
+fallback、drift、audit failure、unknown 或 cleanup uncertainty 都终止且不重试。契约见
+`../plans/OPENCLAW_REVIEWED_MULTI_APPLICATION_MISSION_PLAN.md`。
+当前源码证据为全部 `1442/1442` workspace tests、typecheck、Core `994/994`、
+Observer `121/121`、Session Manager `85/85`、真实 Core/Observer capability gates、
+body-config、835-entry registry、1023-file/1007-shell-script audit、Windows path
+budget，以及精确 `291/36/117`-file Core/Session Manager/Observer Nix closures；
+物理激活与 live provider mission 尚未声明。
+
 当前 bounded Level 2 browser 眼手闭环与内核白皮书 Phase A 已收口。
 Phase B 的固定 D-Bus 控制切片、bounded journal/boot diagnosis、incident loop、
 显式批准的 DeepSeek diagnosis handoff、目标相关经验召回、自动本地分诊和
@@ -891,8 +905,8 @@ outcome v1 绑定 application 与 execution receipt 并进入 experience memory�
 因此，当前实现与最终愿景的差异是**完成范围**而不是**架构方向**。仍显著缺失的是
 无硬 deadline 的长时间自主运行、live replicated causal/adaptive learning evidence、物理机上的 Phase D
 治理 mutation/rollback、更广的 Level 3 body nerves，以及比当前固定 browser/native
-工作流更完整但仍受限的多应用 Level 4 mission composition；这些缺口解释了最终愿景估算仍为
-59-64%。
+工作流之上的 reviewed-worklist workflow selection；这些缺口解释了最终愿景估算仍为
+60-65%。
 
 ---
 

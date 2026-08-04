@@ -135,6 +135,8 @@ function createHarness(overrides = {}) {
     aiWorkspaceSemanticSubmit: overrides.aiWorkspaceSemanticSubmit,
     aiWorkspaceSemanticFormWorkflow: overrides.aiWorkspaceSemanticFormWorkflow,
     aiWorkspaceNativeIntakeWorkflow: overrides.aiWorkspaceNativeIntakeWorkflow,
+    aiWorkspaceReviewedMultiApplicationMission:
+      overrides.aiWorkspaceReviewedMultiApplicationMission,
     aiWorkspaceBoundedRun: overrides.aiWorkspaceBoundedRun,
     aiWorkspaceReviewedCycle: overrides.aiWorkspaceReviewedCycle,
     publishAuditEvent: overrides.publishAuditEvent,
@@ -401,6 +403,119 @@ test("capability runtime exposes and invokes the fixed native intake workflow", 
   assert.equal(response.response.summary.lifecycleStopVerified, true);
   assert.equal(response.response.summary.inputTextPersisted, false);
   assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("private intake value"), false);
+});
+
+test("capability runtime exposes and invokes the reviewed multi-application mission", async () => {
+  const calls = [];
+  const { runtime, state } = createHarness({
+    aiWorkspaceReviewedMultiApplicationMission: {
+      invoke: async (input) => {
+        calls.push(input);
+        return {
+          ok: true,
+          registry: "nixsoma-ai-workspace-reviewed-multi-application-mission-v0",
+          status: "completed",
+          terminalReason: "verified_browser_then_native_intake",
+          applications: [
+            {
+              applicationId: "fixed_browser_form",
+              registry: "nixsoma-ai-workspace-semantic-form-workflow-v0",
+              status: "completed",
+              stepCount: 2,
+              actionSequence: ["type_item", "click_item"],
+              providerCallCount: 2,
+              providerCallCountMinimum: 2,
+              actionCount: 2,
+              actionCountMinimum: 2,
+              lifecycleActionCount: 0,
+              lifecycleActionCountMinimum: 0,
+              continuationAudit: true,
+              completionAudit: true,
+              exactInputMatched: true,
+              verified: true,
+              outcomeUnknown: false,
+            },
+            {
+              applicationId: "fixed_native_intake",
+              registry: "nixsoma-ai-workspace-native-intake-workflow-v0",
+              status: "completed",
+              stepCount: 1,
+              actionSequence: ["type_text"],
+              providerCallCount: 1,
+              providerCallCountMinimum: 1,
+              actionCount: 1,
+              actionCountMinimum: 1,
+              lifecycleActionCount: 2,
+              lifecycleActionCountMinimum: 2,
+              completionAudit: true,
+              exactInputMatched: true,
+              lifecycleStartVerified: true,
+              lifecycleStopVerified: true,
+              verified: true,
+              outcomeUnknown: false,
+            },
+          ],
+          evidence: {
+            taskId: input.taskId,
+            objectiveContentHash: "a".repeat(64),
+            taskVersionHash: "b".repeat(64),
+            inputEvidence: {
+              registry: "openclaw-write-only-input-evidence-v0",
+              charCount: 9,
+              byteLength: 9,
+              maxChars: 32,
+              truncated: false,
+              textExposed: false,
+              persisted: false,
+            },
+            applicationCount: 2,
+            providerCallCount: 3,
+            providerCallCountMinimum: 3,
+            actionCount: 3,
+            actionCountMinimum: 3,
+            lifecycleActionCount: 2,
+            lifecycleActionCountMinimum: 2,
+            fixedActionCount: 5,
+            fixedActionCountMinimum: 5,
+            continuationAudit: true,
+            missionCompletionAudit: true,
+            outcomeUnknown: false,
+          },
+          governance: {
+            continuedToNativeApplication: true,
+            sameReviewedTaskAcrossApplications: true,
+            sameExactObjectiveInputAcrossApplications: true,
+          },
+        };
+      },
+    },
+  });
+
+  const registry = await runtime.buildCapabilityRegistry();
+  const capability = registry.capabilities.find(
+    (item) => item.id === "act.ai.workspace.reviewed_multi_application_mission",
+  );
+  assert.equal(capability?.kind, "actuator");
+  assert.deepEqual(capability?.domains, ["cross_boundary"]);
+  assert.equal(capability?.governance, "standing_authorization");
+
+  const response = await runtime.invokeCapability({
+    capabilityId: "act.ai.workspace.reviewed_multi_application_mission",
+    taskId: "task-multi-app-1",
+    params: { confirm: true },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(calls, [{ taskId: "task-multi-app-1" }]);
+  assert.equal(response.response.invocation.authorization.policyId,
+    "ai-workspace-explicit-reviewed-multi-application-mission");
+  assert.equal(response.response.summary.kind,
+    "ai.workspace.reviewed_multi_application_mission");
+  assert.equal(response.response.summary.applicationCount, 2);
+  assert.equal(response.response.summary.providerCallCount, 3);
+  assert.equal(response.response.summary.fixedActionCount, 5);
+  assert.equal(response.response.summary.sameExactObjectiveInputAcrossApplications, true);
+  assert.equal(response.response.summary.inputTextPersisted, false);
+  assert.equal(JSON.stringify(state.capabilityInvocationLog).includes("private mission value"), false);
 });
 
 test("capability runtime exposes the standing-authorized read-only AI workspace assessment", async () => {

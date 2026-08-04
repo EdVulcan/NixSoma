@@ -156,6 +156,17 @@ All `1427/1427` workspace tests, typecheck, real Core/Observer gates,
 body-config, and exact `289/36/116`-file Core/Session Manager/Observer closures
 pass. Physical deployment and a live provider run are not claimed.
 
+The finite cross-application continuation is recorded in
+[`OPENCLAW_REVIEWED_MULTI_APPLICATION_MISSION_PLAN.md`](./OPENCLAW_REVIEWED_MULTI_APPLICATION_MISSION_PLAN.md).
+One exact reviewed objective now binds existing browser type/submit evidence to
+a separately audited fixed Native Intake start/type/stop continuation. The
+application order and `3/3/2` provider/action/lifecycle ceilings are fixed;
+caller text, order, unit, surface, action, retry, and budget fields are absent.
+All `1442/1442` workspace tests, typecheck, Core `994/994`, Observer `121/121`,
+Session Manager `85/85`, the real Core/Observer gates, body-config, and exact
+`291/36/117`-file Core/Session Manager/Observer closures pass. Physical
+deployment and a live provider mission are not claimed.
+
 The fresh canonical review selects the first durable experience-feedback edge,
 recorded in
 [`OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md`](./OPENCLAW_DURABLE_EXPERIENCE_FEEDBACK_PLAN.md).

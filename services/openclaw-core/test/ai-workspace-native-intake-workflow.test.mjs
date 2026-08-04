@@ -171,6 +171,40 @@ test("native intake workflow binds one type to the started surface and always st
   assert.equal(JSON.stringify({ result, audit: calls.audit }).includes("private input"), false);
 });
 
+test("native intake workflow forwards only one internal multi-application binding", async () => {
+  const missionResult = typeResult({
+    governance: {
+      ...typeResult().governance,
+      reviewedMultiApplicationMissionMode: true,
+    },
+  });
+  const { workflow, calls } = harness({ result: missionResult });
+  const expectedTaskBinding = {
+    taskId: TASK_ID,
+    objectiveContentHash: "a".repeat(64),
+    taskVersionHash: "b".repeat(64),
+  };
+  const result = await workflow.invoke({
+    taskId: TASK_ID,
+    expectedTaskBinding,
+    expectedInputText: "MISSION_7",
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.governance.reviewedMultiApplicationMissionMode, true);
+  assert.deepEqual(calls.type, [{
+    taskId: TASK_ID,
+    expectedSurfaceBinding: {
+      surfaceId: SURFACE_ID,
+      inventorySequence: INVENTORY_SEQUENCE,
+    },
+    expectedTaskBinding,
+    expectedInputText: "MISSION_7",
+    decisionMode: "reviewed_multi_application_mission",
+  }]);
+  assert.equal(JSON.stringify(result).includes("MISSION_7"), false);
+});
+
 test("native intake workflow stops after unverified type without retry", async () => {
   const unverified = typeResult({
     evidence: { ...typeResult().evidence, postActionVerified: false },

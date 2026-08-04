@@ -1,3 +1,7 @@
+import {
+  AI_WORKSPACE_OCR_TYPE_REVIEWED_MULTI_APPLICATION_MODE,
+} from "./ai-workspace-ocr-type.mjs";
+
 export const AI_WORKSPACE_NATIVE_INTAKE_WORKFLOW_REGISTRY =
   "nixsoma-ai-workspace-native-intake-workflow-v0";
 
@@ -7,6 +11,7 @@ const LIFECYCLE_REGISTRY = "nixsoma-ai-native-intake-lifecycle-v0";
 const LIFECYCLE_UNIT = "nixsoma-ai-native-intake.service";
 const OCR_TYPE_REGISTRY = "nixsoma-ai-workspace-ocr-type-v0";
 const SHA256 = /^[a-f0-9]{64}$/u;
+const FIXED_INPUT = /^[A-Za-z0-9 .,_-]{1,32}$/u;
 
 function boundedHash(value) {
   return typeof value === "string" && SHA256.test(value) ? value : null;
@@ -35,6 +40,27 @@ function compactInputEvidence(value) {
   };
 }
 
+function normaliseMissionBinding(taskBinding, inputText) {
+  if (taskBinding === null || taskBinding === undefined) {
+    return inputText === null || inputText === undefined ? null : undefined;
+  }
+  const keys = typeof taskBinding === "object" && !Array.isArray(taskBinding)
+    ? Object.keys(taskBinding).sort()
+    : [];
+  if (keys.join("\0") !== [
+    "objectiveContentHash",
+    "taskId",
+    "taskVersionHash",
+  ].sort().join("\0")
+    || typeof taskBinding.taskId !== "string"
+    || !taskBinding.taskId
+    || boundedHash(taskBinding.objectiveContentHash) === null
+    || boundedHash(taskBinding.taskVersionHash) === null
+    || typeof inputText !== "string"
+    || !FIXED_INPUT.test(inputText)) return undefined;
+  return { taskBinding: { ...taskBinding }, inputText };
+}
+
 function nativeIntakeLifecycleFromState(state) {
   return state?.workView?.aiGraphicalSession?.nativeIntakeLifecycle
     ?? state?.aiGraphicalSession?.nativeIntakeLifecycle
@@ -49,6 +75,10 @@ function lifecycleStopped(application) {
     && application.active === false
     && application.surfaceAttached === false
     && application.matchingSurface === null;
+}
+
+export function aiWorkspaceNativeIntakeLifecycleStopped(state) {
+  return lifecycleStopped(nativeIntakeLifecycleFromState(state));
 }
 
 function compactStartedLifecycle(application) {
@@ -153,10 +183,12 @@ function compactTypeStep(result) {
     currentActiveSurfaceBound: result.governance?.currentActiveSurfaceBound === true,
     keyboardInput: result.governance?.keyboardInput === true,
     providerGeneratedInput: result.governance?.providerGeneratedInput === true,
+    reviewedMultiApplicationMissionMode:
+      result.governance?.reviewedMultiApplicationMissionMode === true,
   };
 }
 
-function verifiedTypeStep(step, expectedSurfaceBinding, expectedTaskId) {
+function verifiedTypeStep(step, expectedSurfaceBinding, expectedTaskId, missionBound = false) {
   return step?.status === "executed"
     && step.actionId === "type_text"
     && step.inputEvidence !== null
@@ -186,7 +218,8 @@ function verifiedTypeStep(step, expectedSurfaceBinding, expectedTaskId) {
     && step.currentFrameBound
     && step.currentActiveSurfaceBound
     && step.keyboardInput
-    && step.providerGeneratedInput;
+    && step.providerGeneratedInput
+    && (!missionBound || step.reviewedMultiApplicationMissionMode);
 }
 
 export function createAiWorkspaceNativeIntakeWorkflow({
@@ -297,6 +330,8 @@ export function createAiWorkspaceNativeIntakeWorkflow({
         fixedProcessStop: stopAttempted,
         currentActiveSurfaceBound: typeStep?.expectedSurfaceBound === true,
         taskObjectiveBound: typeStep?.taskObjectiveBound === true,
+        reviewedMultiApplicationMissionMode:
+          typeStep?.reviewedMultiApplicationMissionMode === true,
         keyboardInput: typeStep?.keyboardInput === true,
         arbitraryKeyboardInput: false,
         enterKeyInput: false,
@@ -333,7 +368,11 @@ export function createAiWorkspaceNativeIntakeWorkflow({
     });
   }
 
-  async function invoke({ taskId } = {}) {
+  async function invoke({
+    taskId,
+    expectedTaskBinding = null,
+    expectedInputText = null,
+  } = {}) {
     if (typeof invokeType !== "function"
       || typeof fetchJson !== "function"
       || typeof postJson !== "function"
@@ -341,6 +380,14 @@ export function createAiWorkspaceNativeIntakeWorkflow({
       return complete({
         status: "runtime_unavailable",
         terminalReason: "native_intake_workflow_runtime_unavailable",
+      });
+    }
+    const missionBinding = normaliseMissionBinding(expectedTaskBinding, expectedInputText);
+    if (missionBinding === undefined
+      || (missionBinding && missionBinding.taskBinding.taskId !== taskId)) {
+      return complete({
+        status: "precondition_failed",
+        terminalReason: "reviewed_multi_application_binding_invalid",
       });
     }
 
@@ -353,7 +400,7 @@ export function createAiWorkspaceNativeIntakeWorkflow({
         terminalReason: "native_intake_state_unavailable",
       });
     }
-    if (!lifecycleStopped(nativeIntakeLifecycleFromState(initialState))) {
+    if (!aiWorkspaceNativeIntakeLifecycleStopped(initialState)) {
       return complete({
         status: "precondition_failed",
         terminalReason: "native_intake_not_stopped",
@@ -391,7 +438,15 @@ export function createAiWorkspaceNativeIntakeWorkflow({
           };
           let typeResult;
           try {
-            typeResult = await invokeType({ taskId, expectedSurfaceBinding });
+            typeResult = await invokeType({
+              taskId,
+              expectedSurfaceBinding,
+              ...(missionBinding ? {
+                expectedTaskBinding: missionBinding.taskBinding,
+                expectedInputText: missionBinding.inputText,
+                decisionMode: AI_WORKSPACE_OCR_TYPE_REVIEWED_MULTI_APPLICATION_MODE,
+              } : {}),
+            });
           } catch {
             providerOutcomeUnknown = true;
             status = "type_outcome_unknown";
@@ -399,7 +454,12 @@ export function createAiWorkspaceNativeIntakeWorkflow({
           }
           if (!providerOutcomeUnknown) {
             typeStep = compactTypeStep(typeResult);
-            if (verifiedTypeStep(typeStep, expectedSurfaceBinding, taskId)) {
+            if (verifiedTypeStep(
+              typeStep,
+              expectedSurfaceBinding,
+              taskId,
+              missionBinding !== null,
+            )) {
               status = "completed";
               terminalReason = "verified_native_intake_type";
             } else {

@@ -440,9 +440,26 @@ the 835-entry registry, 1023-file/1007-shell-script audit, Windows path budget, 
 `289/36/116`-file Core/Session Manager/Observer closures pass. Physical
 activation and live-provider behavior are not claimed by this source evidence.
 
-The next Level 4 source route is finite reviewed mission composition across the
-already fixed browser and native applications. Physical deployment/live-provider
-evidence and Phase D promotion/rollback remain separately authorized routes.
+That fixed-order reviewed mission is now implemented in source as
+`act.ai.workspace.reviewed_multi_application_mission`. Its complete objective
+grammar binds one 1-32 character exact value to the existing browser semantic
+type -> submit workflow and, only after task/value revalidation plus durable
+continuation audit, to the existing fixed Native Intake start -> OCR Type ->
+stop workflow. The shared coordinator owns one single-flight across all three
+provider calls, three input/click actions, and two lifecycle actions. Caller
+application order, text, unit, target, action, retry, and budget fields remain
+absent; task completion, arbitrary process/window control, root, and host
+mutation remain false.
+
+All `1442/1442` workspace tests, typecheck, Core `994/994`, Observer `121/121`,
+Session Manager `85/85`, the real Core/Observer capability gates, body-config,
+the 835-entry registry, 1023-file/1007-shell-script audit, Windows path budget,
+and exact `291/36/117`-file Core/Session Manager/Observer closures pass.
+
+The next source route is finite reviewed-worklist workflow selection without
+provider-authored tasks or arbitrary application routing. Physical deployment,
+live-provider evidence, and Phase D promotion/rollback remain separately
+authorized routes.
 
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation

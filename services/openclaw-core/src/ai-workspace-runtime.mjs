@@ -4,6 +4,9 @@ import { createAiWorkspaceOcrClick } from "./ai-workspace-ocr-click.mjs";
 import { createAiWorkspaceOcrFocusType } from "./ai-workspace-ocr-focus-type.mjs";
 import { createAiWorkspaceOcrType } from "./ai-workspace-ocr-type.mjs";
 import { createAiWorkspaceNativeIntakeWorkflow } from "./ai-workspace-native-intake-workflow.mjs";
+import {
+  createAiWorkspaceReviewedMultiApplicationMissionPreflight,
+} from "./ai-workspace-reviewed-multi-application-mission.mjs";
 import { createAiWorkspaceRunCoordinator } from "./ai-workspace-run-coordinator.mjs";
 import { createAiWorkspaceSingleStep } from "./ai-workspace-single-step.mjs";
 import { createStandingProviderAdvisory } from "./standing-provider-advisory.mjs";
@@ -26,6 +29,8 @@ export function createAiWorkspaceRuntimes({
   createAiWorkspaceOcrFocusTypeImpl = createAiWorkspaceOcrFocusType,
   createAiWorkspaceOcrTypeImpl = createAiWorkspaceOcrType,
   createAiWorkspaceNativeIntakeWorkflowImpl = createAiWorkspaceNativeIntakeWorkflow,
+  createAiWorkspaceReviewedMultiApplicationMissionPreflightImpl =
+    createAiWorkspaceReviewedMultiApplicationMissionPreflight,
   createAiWorkspaceSingleStepImpl = createAiWorkspaceSingleStep,
   createAiWorkspaceRunCoordinatorImpl = createAiWorkspaceRunCoordinator,
 } = {}) {
@@ -95,6 +100,12 @@ export function createAiWorkspaceRuntimes({
     sessionManagerUrl,
     publishAuditEvent,
   });
+  const reviewedMultiApplicationMissionPreflight =
+    createAiWorkspaceReviewedMultiApplicationMissionPreflightImpl({
+      fetchJson,
+      sessionManagerUrl,
+      getTaskById,
+    });
   const runs = createAiWorkspaceRunCoordinatorImpl({
     singleStep: singleStepOwner,
     assessment: assessmentOwner,
@@ -103,6 +114,7 @@ export function createAiWorkspaceRuntimes({
     ocrType: ocrTypeOwner,
     ocrFocusType: ocrFocusTypeOwner,
     nativeIntakeWorkflow: nativeIntakeWorkflowOwner,
+    reviewedMultiApplicationMissionPreflight,
     publishAuditEvent,
   });
   return {
@@ -115,6 +127,7 @@ export function createAiWorkspaceRuntimes({
     semanticSubmit: runs.semanticSubmit,
     semanticFormWorkflow: runs.semanticFormWorkflow,
     nativeIntakeWorkflow: runs.nativeIntakeWorkflow,
+    reviewedMultiApplicationMission: runs.reviewedMultiApplicationMission,
     singleStep: runs.singleStep,
     boundedRun: runs.boundedRun,
     reviewedCycle: runs.reviewedCycle,

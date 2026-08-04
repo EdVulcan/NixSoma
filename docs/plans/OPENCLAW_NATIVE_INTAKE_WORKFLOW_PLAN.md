@@ -76,14 +76,15 @@ registry is `nixsoma-ai-workspace-native-intake-workflow-v0`.
 ## Deferred
 
 Physical generation activation and a live provider run are not part of this
-source slice. Longer mission-bound eye-hand composition across fixed browser and
-native applications, provider-authored task supply, retry/skip policy, wider
+source slice. The source mission-bound browser -> native composition is now
+owned by `OPENCLAW_REVIEWED_MULTI_APPLICATION_MISSION_PLAN.md`; provider-authored
+task supply, retry/skip policy, wider
 Level 3 body actions, and physical Phase D mutation/rollback remain separate
 explicitly governed routes.
 
 ## Stop Condition
 
-Freeze this owner after the representative source, real-service, and closure
-checks pass. The next real Level 4 slice should compose already fixed
-applications under a finite reviewed mission; it must not widen this owner into
-arbitrary process, window, desktop, or keyboard control.
+This owner is frozen after its representative source, real-service, and closure
+checks passed. Cross-application continuation belongs to the separate reviewed
+multi-application mission owner; do not widen this owner into arbitrary process,
+window, desktop, or keyboard control.

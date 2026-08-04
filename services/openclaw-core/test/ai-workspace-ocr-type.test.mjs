@@ -5,6 +5,8 @@ import test from "node:test";
 import { buildAiLocalOcrObservation } from
   "../../../packages/shared-utils/src/ai-local-ocr.mjs";
 import { createAiWorkspaceOcrType } from "../src/ai-workspace-ocr-type.mjs";
+import { buildAiWorkspaceTaskObjectiveBinding } from
+  "../src/ai-workspace-task-objective.mjs";
 
 const NOW = "2026-07-29T13:30:00.000Z";
 const TASK_ID = "task-ocr-type-1";
@@ -116,6 +118,7 @@ function harness({
   rejectAction = false,
   throwAction = false,
   rejectAudit = false,
+  taskGoal = `Type exact text "${INPUT}" into the active surface`,
 } = {}) {
   const calls = {
     provider: 0,
@@ -134,7 +137,7 @@ function harness({
       calls.provider += 1;
       calls.prompt = options.buildPrompt(context);
       assert.equal(context.workspace.localOcr.items[0].text, "NixSoma AI Workbench");
-      assert.equal(context.taskObjective.statement, reviewedTask().goal);
+      assert.equal(context.taskObjective.statement, taskGoal);
       assert.equal(context.workspace.frame.sha256, undefined);
       assert.equal(calls.prompt.includes(TASK_ID), false);
       const assistantContent = JSON.stringify({
@@ -169,8 +172,8 @@ function harness({
       calls.task += 1;
       if (taskId !== TASK_ID) return null;
       return reviewedTask(changedTask && calls.task > 1
-        ? { goal: `Type exact text "OTHER" into the active surface`, updatedAt: "2026-07-29T13:30:01.000Z" }
-        : {});
+        ? { goal: taskGoal.replace(INPUT, "OTHER"), updatedAt: "2026-07-29T13:30:01.000Z" }
+        : { goal: taskGoal });
     },
     fetchJson: async (url) => {
       if (url.endsWith("/work-view/local-ocr")) {
@@ -264,6 +267,48 @@ test("OCR type executes one objective-bound native type and verifies newer OCR",
   ]);
   assert.equal(JSON.stringify({ result, audit: calls.audit }).includes(INPUT), false);
   assert.equal(calls.parsed.decision.inputText, null);
+});
+
+test("OCR type binds the internal multi-application mode to its exact task input", async () => {
+  const taskGoal = `Enter exact text "${INPUT}" in the current browser form, submit it, then type it into the fixed native intake`;
+  const expected = buildAiWorkspaceTaskObjectiveBinding({
+    task: reviewedTask({ goal: taskGoal }),
+    taskId: TASK_ID,
+    workViewState: workViewState(),
+  });
+  assert.equal(expected.ok, true);
+  const expectedTaskBinding = {
+    taskId: expected.evidence.taskId,
+    objectiveContentHash: expected.evidence.objectiveContentHash,
+    taskVersionHash: expected.evidence.taskVersionHash,
+  };
+  const { owner, calls } = harness({ taskGoal });
+  const result = await owner.invoke({
+    taskId: TASK_ID,
+    expectedSurfaceBinding: { surfaceId: 42, inventorySequence: 9 },
+    expectedTaskBinding,
+    expectedInputText: INPUT,
+    decisionMode: "reviewed_multi_application_mission",
+  });
+
+  assert.equal(result.status, "executed");
+  assert.equal(result.governance.reviewedMultiApplicationMissionMode, true);
+  assert.equal(result.governance.taskObjectiveInputBound, true);
+  assert.equal(calls.action.length, 1);
+  assert.equal(JSON.stringify({ result, audit: calls.audit }).includes(INPUT), false);
+
+  const invalid = harness({ taskGoal });
+  const invalidResult = await invalid.owner.invoke({
+    taskId: TASK_ID,
+    expectedSurfaceBinding: { surfaceId: 42, inventorySequence: 9 },
+    expectedTaskBinding,
+    expectedInputText: "OTHER",
+    decisionMode: "reviewed_multi_application_mission",
+  });
+  assert.equal(invalidResult.status, "local_fallback");
+  assert.equal(invalidResult.fallback.reason,
+    "ai_workspace_ocr_type_input_not_objective_bound");
+  assert.equal(invalid.calls.action.length, 0);
 });
 
 test("OCR type no-op remains provider-bound and action-free", async () => {

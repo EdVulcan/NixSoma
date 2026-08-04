@@ -845,3 +845,26 @@ test("AI workspace semantic-form type mode permits only one write-only type", as
     "ai_workspace_single_step_semantic_form_type_action_not_allowed");
   assert.equal(clicked.calls.post.length, 0);
 });
+
+test("AI workspace semantic-form type mode enforces one internal exact input", async () => {
+  const typed = harness({
+    actionId: "type_item",
+    sceneRole: "textbox",
+    sceneName: "Search",
+    inputText: "different",
+    taskGoal: "Enter the reviewed mission value",
+  });
+
+  const result = await typed.owner.invoke({
+    taskId: TASK_ID,
+    decisionMode: "semantic_form_type",
+    expectedInputText: "MISSION_7",
+  });
+
+  assert.equal(result.status, "local_fallback");
+  assert.equal(result.fallback.reason,
+    "ai_workspace_single_step_semantic_form_input_not_objective_bound");
+  assert.equal(typed.calls.post.length, 0);
+  assert.equal(JSON.stringify(result).includes("MISSION_7"), false);
+  assert.equal(JSON.stringify(result).includes("expectedInputText"), false);
+});

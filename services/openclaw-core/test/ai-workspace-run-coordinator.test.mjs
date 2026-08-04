@@ -103,7 +103,7 @@ function assessmentResult({ outcome = "complete" } = {}) {
   };
 }
 
-function semanticFormStep(actionId) {
+function semanticFormStep(actionId, { exactInputBound = false } = {}) {
   const result = stepResult({ actionId });
   result.decision.itemOrdinal = actionId === "type_item" ? 1 : 2;
   result.action = {
@@ -122,8 +122,38 @@ function semanticFormStep(actionId) {
     taskObjectiveBound: true,
     providerGeneratedInput: actionId === "type_item",
     semanticSubmitTargetBound: actionId === "click_item",
+    taskObjectiveInputBound: exactInputBound,
   });
   return result;
+}
+
+function nativeMissionResult() {
+  return {
+    ok: true,
+    registry: "nixsoma-ai-workspace-native-intake-workflow-v0",
+    status: "completed",
+    typeStep: {
+      actionId: "type_text",
+      inputEvidence: { ...inputEvidence(), maxChars: 32 },
+      expectedSurfaceBound: true,
+    },
+    evidence: {
+      taskId: TASK_ID,
+      objectiveContentHash: "a".repeat(64),
+      taskVersionHash: "b".repeat(64),
+      providerCallCount: 1,
+      providerCallCountMinimum: 1,
+      actionCount: 1,
+      actionCountMinimum: 1,
+      lifecycleActionCount: 2,
+      lifecycleActionCountMinimum: 2,
+      lifecycleStartVerified: true,
+      lifecycleStopVerified: true,
+      workflowCompletionAudit: true,
+      outcomeUnknown: false,
+    },
+    governance: { taskObjectiveBound: true },
+  };
 }
 
 function harness(results, {
@@ -131,7 +161,7 @@ function harness(results, {
   rejectRunCompletionAudit = false,
   rejectAssessmentContinuationAudit = false,
 } = {}) {
-  const calls = { invoke: [], assessment: [], audit: [], order: [] };
+  const calls = { invoke: [], assessment: [], native: [], audit: [], order: [] };
   const queue = [...results];
   const coordinator = createAiWorkspaceRunCoordinator({
     singleStep: {
@@ -158,6 +188,24 @@ function harness(results, {
         fallback: { reason },
       }),
     },
+    nativeIntakeWorkflow: {
+      async invoke(input) {
+        calls.native.push(input);
+        calls.order.push("native");
+        return nativeMissionResult();
+      },
+      busy: () => ({ status: "local_fallback" }),
+    },
+    reviewedMultiApplicationMissionPreflight: async () => ({
+      ok: true,
+      taskBinding: {
+        taskId: TASK_ID,
+        objectiveContentHash: "a".repeat(64),
+        taskVersionHash: "b".repeat(64),
+      },
+      transientInputText: PRIVATE_TEXT,
+      inputEvidence: { ...inputEvidence(), maxChars: 32 },
+    }),
     publishAuditEvent: async (name, payload) => {
       calls.audit.push({ name, payload });
       calls.order.push(`audit:${name}`);
@@ -249,6 +297,36 @@ test("semantic form workflow applies type-only then submit modes under one coord
   assert.equal(result.evidence.continuationAudit, true);
   assert.equal(result.evidence.workflowCompletionAudit, true);
   assert.equal(result.governance.boundedAutomaticContinuation, true);
+  assert.equal(JSON.stringify(result).includes(PRIVATE_TEXT), false);
+});
+
+test("reviewed multi-application mission shares one coordinator lease across both apps", async () => {
+  const { calls, coordinator } = harness([
+    semanticFormStep("type_item", { exactInputBound: true }),
+    semanticFormStep("click_item"),
+  ]);
+
+  const result = await coordinator.reviewedMultiApplicationMission.invoke({
+    taskId: TASK_ID,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.status, "completed");
+  assert.equal(calls.invoke[0].decisionMode, "semantic_form_type");
+  assert.equal(calls.invoke[0].expectedInputText, PRIVATE_TEXT);
+  assert.equal(calls.invoke[1].decisionMode, "semantic_submit");
+  assert.equal("expectedInputText" in calls.invoke[1], false);
+  assert.deepEqual(calls.native, [{
+    taskId: TASK_ID,
+    expectedTaskBinding: {
+      taskId: TASK_ID,
+      objectiveContentHash: "a".repeat(64),
+      taskVersionHash: "b".repeat(64),
+    },
+    expectedInputText: PRIVATE_TEXT,
+  }]);
+  assert.equal(result.evidence.providerCallCount, 3);
+  assert.equal(result.evidence.fixedActionCount, 5);
   assert.equal(JSON.stringify(result).includes(PRIVATE_TEXT), false);
 });
 

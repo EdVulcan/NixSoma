@@ -118,6 +118,38 @@ test("semantic form workflow continues only from exact verified type evidence", 
   ]);
 });
 
+test("semantic form workflow carries one exact input only into its type step", async () => {
+  let typeInput = null;
+  let submitInput = null;
+  const workflow = createAiWorkspaceSemanticFormWorkflow({
+    invokeType: async (input) => {
+      typeInput = input;
+      return typeResult({
+        governance: {
+          ...typeResult().governance,
+          taskObjectiveInputBound: true,
+        },
+      });
+    },
+    invokeSubmit: async (input) => {
+      submitInput = input;
+      return submitResult();
+    },
+  });
+
+  const result = await workflow.invoke({
+    taskId: taskBinding.taskId,
+    expectedTaskBinding: taskBinding,
+    expectedInputText: "private exact value",
+  });
+  assert.equal(result.ok, true);
+  assert.equal(typeInput.expectedInputText, "private exact value");
+  assert.equal("expectedInputText" in submitInput, false);
+  assert.equal(result.evidence.taskObjectiveInputBound, true);
+  assert.equal(result.governance.taskObjectiveInputBound, true);
+  assert.equal(JSON.stringify(result).includes("private exact value"), false);
+});
+
 test("semantic form workflow stops before submit when type evidence is unverified", async () => {
   let submitCalls = 0;
   const workflow = createAiWorkspaceSemanticFormWorkflow({

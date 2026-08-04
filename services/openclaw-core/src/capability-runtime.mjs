@@ -45,6 +45,9 @@ import { createAiWorkspaceSingleStepCapabilityHandlers } from "./capability-runt
 import { createAiWorkspaceSemanticSubmitCapabilityHandlers } from "./capability-runtime-ai-workspace-semantic-submit.mjs";
 import { createAiWorkspaceSemanticFormWorkflowCapabilityHandlers } from "./capability-runtime-ai-workspace-semantic-form-workflow.mjs";
 import { createAiWorkspaceNativeIntakeWorkflowCapabilityHandlers } from "./capability-runtime-ai-workspace-native-intake-workflow.mjs";
+import {
+  createAiWorkspaceReviewedMultiApplicationMissionCapabilityHandlers,
+} from "./capability-runtime-ai-workspace-reviewed-multi-application-mission.mjs";
 import { createAiWorkspaceBoundedRunCapabilityHandlers } from "./capability-runtime-ai-workspace-bounded-run.mjs";
 import { createAiWorkspaceReviewedCycleCapabilityHandlers } from "./capability-runtime-ai-workspace-reviewed-cycle.mjs";
 import {
@@ -84,6 +87,7 @@ export function createCapabilityRuntime(deps) {
     aiWorkspaceSemanticSubmit,
     aiWorkspaceSemanticFormWorkflow,
     aiWorkspaceNativeIntakeWorkflow,
+    aiWorkspaceReviewedMultiApplicationMission,
     aiWorkspaceBoundedRun,
     aiWorkspaceReviewedCycle,
     declarativeEvolution = {},
@@ -310,6 +314,10 @@ export function createCapabilityRuntime(deps) {
   const aiWorkspaceNativeIntakeWorkflowHandlers =
     createAiWorkspaceNativeIntakeWorkflowCapabilityHandlers({
       runtime: aiWorkspaceNativeIntakeWorkflow,
+    });
+  const aiWorkspaceReviewedMultiApplicationMissionHandlers =
+    createAiWorkspaceReviewedMultiApplicationMissionCapabilityHandlers({
+      runtime: aiWorkspaceReviewedMultiApplicationMission,
     });
   const aiWorkspaceBoundedRunHandlers = createAiWorkspaceBoundedRunCapabilityHandlers({
     runtime: aiWorkspaceBoundedRun,
@@ -622,6 +630,11 @@ export function createCapabilityRuntime(deps) {
       await aiWorkspaceNativeIntakeWorkflowHandlers.callBackend(capability, request);
     if (aiWorkspaceNativeIntakeWorkflow.handled) {
       return aiWorkspaceNativeIntakeWorkflow.result;
+    }
+    const aiWorkspaceReviewedMultiApplicationMission =
+      await aiWorkspaceReviewedMultiApplicationMissionHandlers.callBackend(capability, request);
+    if (aiWorkspaceReviewedMultiApplicationMission.handled) {
+      return aiWorkspaceReviewedMultiApplicationMission.result;
     }
     const standingProviderAdvisory = await standingProviderAdvisoryHandlers.callBackend(capability, request);
     if (standingProviderAdvisory.handled) {
@@ -961,6 +974,11 @@ export function createCapabilityRuntime(deps) {
       aiWorkspaceNativeIntakeWorkflowHandlers.summariseResult(capability, result);
     if (aiWorkspaceNativeIntakeWorkflowSummary) {
       return aiWorkspaceNativeIntakeWorkflowSummary;
+    }
+    const aiWorkspaceReviewedMultiApplicationMissionSummary =
+      aiWorkspaceReviewedMultiApplicationMissionHandlers.summariseResult(capability, result);
+    if (aiWorkspaceReviewedMultiApplicationMissionSummary) {
+      return aiWorkspaceReviewedMultiApplicationMissionSummary;
     }
     const standingProviderAdvisorySummary = standingProviderAdvisoryHandlers.summariseResult(capability, result);
     if (standingProviderAdvisorySummary) {
@@ -1478,6 +1496,15 @@ export function createCapabilityRuntime(deps) {
     if (aiWorkspaceNativeIntakeWorkflowAuthorization.handled) {
       serverApproval = aiWorkspaceNativeIntakeWorkflowAuthorization.authorization;
     }
+    const aiWorkspaceReviewedMultiApplicationMissionAuthorization =
+      aiWorkspaceReviewedMultiApplicationMissionHandlers.authorizeRequest(
+        capability,
+        request,
+        body,
+      );
+    if (aiWorkspaceReviewedMultiApplicationMissionAuthorization.handled) {
+      serverApproval = aiWorkspaceReviewedMultiApplicationMissionAuthorization.authorization;
+    }
     const aiWorkspaceBoundedRunAuthorization = aiWorkspaceBoundedRunHandlers.authorizeRequest(
       capability,
       request,
@@ -1592,6 +1619,18 @@ export function createCapabilityRuntime(deps) {
       return {
         statusCode: 400,
         response: { ok: false, error: aiWorkspaceNativeIntakeWorkflowValidationError },
+      };
+    }
+    const aiWorkspaceReviewedMultiApplicationMissionValidationError =
+      aiWorkspaceReviewedMultiApplicationMissionHandlers.validateRequest(
+        capability,
+        request,
+        body,
+      );
+    if (aiWorkspaceReviewedMultiApplicationMissionValidationError) {
+      return {
+        statusCode: 400,
+        response: { ok: false, error: aiWorkspaceReviewedMultiApplicationMissionValidationError },
       };
     }
     const aiWorkspaceBoundedRunValidationError = aiWorkspaceBoundedRunHandlers.validateRequest(

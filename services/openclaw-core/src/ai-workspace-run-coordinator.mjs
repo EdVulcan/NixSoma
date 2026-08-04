@@ -1,5 +1,8 @@
 import { createAiWorkspaceReviewedCycle } from "./ai-workspace-reviewed-cycle.mjs";
 import { createAiWorkspaceSemanticFormWorkflow } from "./ai-workspace-semantic-form-workflow.mjs";
+import {
+  createAiWorkspaceReviewedMultiApplicationMission,
+} from "./ai-workspace-reviewed-multi-application-mission.mjs";
 import { AI_WORKSPACE_SEMANTIC_FORM_TYPE_MODE } from "./ai-workspace-semantic-form-policy.mjs";
 import { AI_WORKSPACE_SEMANTIC_SUBMIT_MODE } from "./ai-workspace-semantic-submit-policy.mjs";
 
@@ -168,6 +171,7 @@ export function createAiWorkspaceRunCoordinator({
   ocrType,
   ocrFocusType,
   nativeIntakeWorkflow,
+  reviewedMultiApplicationMissionPreflight,
   publishAuditEvent = async () => ({ ok: true }),
   now = () => new Date().toISOString(),
 } = {}) {
@@ -633,6 +637,25 @@ export function createAiWorkspaceRunCoordinator({
     }
   }
 
+  const reviewedMultiApplicationMissionOwner =
+    createAiWorkspaceReviewedMultiApplicationMission({
+      prepare: reviewedMultiApplicationMissionPreflight,
+      invokeBrowserWorkflow: (input) => semanticFormWorkflowOwner.invoke(input),
+      invokeNativeWorkflow: (input) => nativeIntakeWorkflow.invoke(input),
+      publishAuditEvent,
+      now,
+    });
+
+  async function invokeReviewedMultiApplicationMission(input) {
+    if (inFlight) return reviewedMultiApplicationMissionOwner.busy();
+    inFlight = true;
+    try {
+      return await reviewedMultiApplicationMissionOwner.invoke(input);
+    } finally {
+      inFlight = false;
+    }
+  }
+
   return {
     singleStep: { invoke: invokeSingle },
     boundedRun: { invoke: invokeBounded },
@@ -645,5 +668,6 @@ export function createAiWorkspaceRunCoordinator({
     semanticSubmit: { invoke: invokeSemanticSubmit },
     semanticFormWorkflow: { invoke: invokeSemanticFormWorkflow },
     nativeIntakeWorkflow: { invoke: invokeNativeIntakeWorkflow },
+    reviewedMultiApplicationMission: { invoke: invokeReviewedMultiApplicationMission },
   };
 }

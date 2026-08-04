@@ -180,6 +180,18 @@ export function buildBaseCapabilities({
       description: "Start the exact fixed native intake application for one reviewed task, execute at most one objective-bound write-only OCR type on its matching active surface, verify it, stop the application, and terminate.",
     },
     {
+      id: "act.ai.workspace.reviewed_multi_application_mission",
+      name: "AI Workspace Reviewed Multi-Application Mission",
+      kind: "actuator",
+      service: "openclaw-core",
+      endpoint: `http://${host}:${port}/capabilities/invoke`,
+      intents: ["ai.workspace.reviewed_multi_application_mission"],
+      domains: ["cross_boundary"],
+      risk: "medium",
+      governance: "standing_authorization",
+      description: "Run one exact reviewed task through the fixed browser type-and-submit workflow, continue only after exact evidence and durable audit, then run the fixed native intake workflow and terminate.",
+    },
+    {
       id: "act.ai.workspace.bounded_run",
       name: "AI Workspace Bounded Run",
       kind: "actuator",

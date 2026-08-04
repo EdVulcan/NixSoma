@@ -47,6 +47,7 @@ export function createPlanBuilder(deps) {
     createAiWorkspaceOcrFocusTypeImpl,
     createAiWorkspaceOcrTypeImpl,
     createAiWorkspaceNativeIntakeWorkflowImpl,
+    createAiWorkspaceReviewedMultiApplicationMissionPreflightImpl,
     createAiWorkspaceSingleStepImpl,
     createAiWorkspaceRunCoordinatorImpl,
     host,
@@ -156,6 +157,7 @@ export function createPlanBuilder(deps) {
     createAiWorkspaceOcrFocusTypeImpl,
     createAiWorkspaceOcrTypeImpl,
     createAiWorkspaceNativeIntakeWorkflowImpl,
+    createAiWorkspaceReviewedMultiApplicationMissionPreflightImpl,
     createAiWorkspaceSingleStepImpl,
     createAiWorkspaceRunCoordinatorImpl,
   });
@@ -182,6 +184,8 @@ export function createPlanBuilder(deps) {
     aiWorkspaceSemanticSubmit: aiWorkspaceRuntimes.semanticSubmit,
     aiWorkspaceSemanticFormWorkflow: aiWorkspaceRuntimes.semanticFormWorkflow,
     aiWorkspaceNativeIntakeWorkflow: aiWorkspaceRuntimes.nativeIntakeWorkflow,
+    aiWorkspaceReviewedMultiApplicationMission:
+      aiWorkspaceRuntimes.reviewedMultiApplicationMission,
     aiWorkspaceSingleStep: aiWorkspaceRuntimes.singleStep,
     aiWorkspaceBoundedRun: aiWorkspaceRuntimes.boundedRun,
     aiWorkspaceReviewedCycle: aiWorkspaceRuntimes.reviewedCycle,

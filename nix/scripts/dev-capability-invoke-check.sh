@@ -466,6 +466,14 @@ if (!capabilities.capabilities?.some((capability) =>
   throw new Error("capability registry should expose the fixed native intake workflow contract");
 }
 if (!capabilities.capabilities?.some((capability) =>
+  capability.id === "act.ai.workspace.reviewed_multi_application_mission"
+  && capability.kind === "actuator"
+  && capability.governance === "standing_authorization"
+  && capability.intents?.includes("ai.workspace.reviewed_multi_application_mission")
+)) {
+  throw new Error("capability registry should expose the reviewed multi-application mission contract");
+}
+if (!capabilities.capabilities?.some((capability) =>
   capability.id === "act.work_view.control"
   && capability.intents?.includes("work_view.native_intake.start")
   && capability.intents?.includes("work_view.native_intake.stop")
