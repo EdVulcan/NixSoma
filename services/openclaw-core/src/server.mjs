@@ -263,6 +263,7 @@ reviewedMissionWorklist = createReviewedMissionWorklist({
   taskManager,
   reviewedTaskOwner: reviewedBrowserTaskOwner,
   workflowRunner: reviewedWorkflowRunner,
+  publishAuditEvent,
 });
 const renewableOperatorMissionSupervisor = createRenewableOperatorMissionSupervisor({
   records: state.renewableOperatorMissions,

@@ -17,6 +17,14 @@ function worklistMissionIdFromPath(pathname) {
   return id && !id.includes("/") ? id : null;
 }
 
+function worklistAcceptanceMissionIdFromPath(pathname) {
+  const prefix = "/operator/mission/";
+  const suffix = "/worklist/accept";
+  if (!pathname.startsWith(prefix) || !pathname.endsWith(suffix)) return null;
+  const id = pathname.slice(prefix.length, -suffix.length);
+  return id && !id.includes("/") ? id : null;
+}
+
 function missionEnvelope(supervisor, mission = null, reviewedMissionWorklist = null) {
   return {
     ok: true,
@@ -67,6 +75,35 @@ export async function handleOperatorMissionRoute({
       return true;
     }
     sendJson(res, 405, { ok: false, error: "Method not allowed." });
+    return true;
+  }
+
+  const worklistAcceptanceMissionId = worklistAcceptanceMissionIdFromPath(requestUrl.pathname);
+  if (worklistAcceptanceMissionId && req.method === "POST") {
+    if (!supervisor || !reviewedMissionWorklist
+      || typeof reviewedMissionWorklist.acceptWorkflow !== "function") {
+      unavailable(res);
+      return true;
+    }
+    const mission = supervisor.listPublic().find((item) => item.id === worklistAcceptanceMissionId) ?? null;
+    if (!mission) {
+      sendJson(res, 404, { ok: false, error: "Renewable operator mission was not found." });
+      return true;
+    }
+    try {
+      const result = await reviewedMissionWorklist.acceptWorkflow(
+        worklistAcceptanceMissionId,
+        await readJsonBody(req),
+      );
+      const currentMission = supervisor.listPublic().find((item) => item.id === worklistAcceptanceMissionId) ?? mission;
+      sendJson(res, 200, {
+        ...missionEnvelope(supervisor, currentMission, reviewedMissionWorklist),
+        worklist: result.worklist,
+        acceptance: result.acceptance,
+      });
+    } catch (error) {
+      invalid(res, error, "Invalid reviewed workflow acceptance request.");
+    }
     return true;
   }
 

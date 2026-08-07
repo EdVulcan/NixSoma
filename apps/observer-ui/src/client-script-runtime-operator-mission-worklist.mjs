@@ -1,6 +1,7 @@
 export const observerClientRuntimeOperatorMissionWorklistScript = `const operatorMissionWorklistAddButton = document.querySelector("#operator-mission-worklist-add-button");
 const operatorMissionWorklistClearButton = document.querySelector("#operator-mission-worklist-clear-button");
 const operatorMissionWorklistBindButton = document.querySelector("#operator-mission-worklist-bind-button");
+const operatorMissionWorklistAcceptButton = document.querySelector("#operator-mission-worklist-accept-button");
 const operatorMissionWorklistWorkflowSelect = document.querySelector("#operator-mission-worklist-workflow");
 const operatorMissionWorklistDraft = document.querySelector("#operator-mission-worklist-draft");
 const operatorMissionWorklistProgressBar = document.querySelector("#operator-mission-worklist-progress-bar");
@@ -93,6 +94,17 @@ function renderOperatorMissionWorklist(data, mission) {
   if (operatorMissionWorklistCurrentWorkflow) {
     operatorMissionWorklistCurrentWorkflow.textContent = worklist?.currentWorkflowId ?? "none";
   }
+  const acceptanceItem = (Array.isArray(worklist?.items) ? worklist.items : [])
+    .find((item) => item?.workflowStatus === "awaiting_acceptance") ?? null;
+  if (operatorMissionWorklistAcceptButton) {
+    operatorMissionWorklistAcceptButton.disabled = acceptanceItem === null;
+    operatorMissionWorklistAcceptButton.dataset.missionId = mission?.id ?? "";
+    operatorMissionWorklistAcceptButton.dataset.itemId = acceptanceItem?.id ?? "";
+    operatorMissionWorklistAcceptButton.dataset.taskId = acceptanceItem?.issuedTaskId ?? "";
+    operatorMissionWorklistAcceptButton.dataset.workflowId = acceptanceItem?.workflowId ?? "";
+    operatorMissionWorklistAcceptButton.dataset.selectionHash = acceptanceItem?.workflowSelectionHash ?? "";
+    operatorMissionWorklistAcceptButton.dataset.outcomeHash = acceptanceItem?.workflowOutcomeHash ?? "";
+  }
   operatorMissionWorklistNext.textContent = worklist?.nextItemOrdinal ? String(worklist.nextItemOrdinal) : "none";
   operatorMissionWorklistStopReason.textContent = worklist?.blockedReason ?? "none";
   operatorMissionWorklistProgressBar.value = Math.max(0, Math.min(100, progress));
@@ -127,6 +139,15 @@ function renderOperatorMissionWorklistOffline() {
   operatorMissionWorklistProgressBar.value = 0;
   operatorMissionWorklistBindButton.dataset.bindEligible = "false";
   operatorMissionWorklistBindButton.disabled = true;
+  if (operatorMissionWorklistAcceptButton) {
+    operatorMissionWorklistAcceptButton.disabled = true;
+    operatorMissionWorklistAcceptButton.dataset.missionId = "";
+    operatorMissionWorklistAcceptButton.dataset.itemId = "";
+    operatorMissionWorklistAcceptButton.dataset.taskId = "";
+    operatorMissionWorklistAcceptButton.dataset.workflowId = "";
+    operatorMissionWorklistAcceptButton.dataset.selectionHash = "";
+    operatorMissionWorklistAcceptButton.dataset.outcomeHash = "";
+  }
   operatorMissionWorklistJson.textContent = "Unable to read reviewed mission worklist.";
 }
 
@@ -167,6 +188,47 @@ function removeOperatorMissionWorklistDraftItem(index) {
   if (!Number.isInteger(index) || index < 0 || index >= operatorMissionWorklistDraftItems.length) return;
   operatorMissionWorklistDraftItems.splice(index, 1);
   renderOperatorMissionWorklistDraft();
+}
+
+async function acceptOperatorMissionWorklistWorkflowFromUi() {
+  if (!operatorMissionWorklistAcceptButton) {
+    throw new Error("Reviewed workflow acceptance is unavailable.");
+  }
+  const missionId = operatorMissionWorklistAcceptButton.dataset.missionId ?? "";
+  const itemId = operatorMissionWorklistAcceptButton.dataset.itemId ?? "";
+  const taskId = operatorMissionWorklistAcceptButton.dataset.taskId ?? "";
+  const workflowId = operatorMissionWorklistAcceptButton.dataset.workflowId ?? "";
+  const selectionHash = operatorMissionWorklistAcceptButton.dataset.selectionHash ?? "";
+  const outcomeHash = operatorMissionWorklistAcceptButton.dataset.outcomeHash ?? "";
+  if (!missionId || !itemId || !taskId || !workflowId || !selectionHash || !outcomeHash
+    || operatorMissionWorklistAcceptButton.disabled) {
+    throw new Error("A current awaiting-acceptance workflow result is required.");
+  }
+  operatorMissionWorklistAcceptButton.disabled = true;
+  try {
+    const result = await fetchJson(observerConfig.coreUrl + "/operator/mission/"
+      + encodeURIComponent(missionId) + "/worklist/accept", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        confirm: true,
+        itemId,
+        taskId,
+        workflowId,
+        selectionHash,
+        outcomeHash,
+      }),
+    });
+    renderOperatorMission(result);
+    setControlMessage("Accepted reviewed workflow result for item " + itemId + ".");
+    await refreshTaskList();
+    await refreshOperatorState();
+    return result;
+  } finally {
+    if (operatorMissionWorklistAcceptButton.dataset.itemId === itemId) {
+      operatorMissionWorklistAcceptButton.disabled = false;
+    }
+  }
 }
 
 async function bindOperatorMissionWorklistFromUi() {

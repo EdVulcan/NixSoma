@@ -921,6 +921,7 @@ const reviewedFiniteMissionWorklistFiles = new Set([
   "docs/README.md",
   "docs/architecture/OPENCLAW_SYSTEM_IDENTITY_UPGRADE_PATH.md",
   "docs/plans/OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md",
+  "docs/plans/OPENCLAW_REVIEWED_WORKFLOW_ACCEPTANCE_PLAN.md",
   "docs/plans/OPENCLAW_REVIEWED_WORKLIST_WORKFLOW_SELECTION_PLAN.md",
   "docs/plans/README.md",
   "nix/packages/observer-ui.nix",

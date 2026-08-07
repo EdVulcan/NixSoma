@@ -53,6 +53,7 @@ function createHarness() {
           summary: {
             status: "completed",
             taskId: task.id,
+            runCompletionAudit: true,
             workflowCompletionAudit: true,
             providerCallCount: 2,
             actionCount: 2,
@@ -108,9 +109,42 @@ test("worklist binds a fixed recipe and executes it through the existing workflo
   const run = await harness.owner.runEpoch({ missionId: harness.mission.id });
   assert.equal(run.managed, true);
   assert.equal(run.result.ran, true);
-  assert.equal(run.worklist.status, "completed");
-  assert.equal(run.worklist.items[0].workflowStatus, "completed");
-  assert.equal(run.worklist.items[0].status, "completed");
+  assert.equal(run.worklist.status, "active");
+  assert.equal(run.worklist.items[0].workflowStatus, "awaiting_acceptance");
+  assert.equal(run.worklist.items[0].status, "issued");
+  assert.equal(run.worklist.items[0].workflowAcceptanceRequired, true);
+  const observed = harness.owner.refreshForMission(harness.mission.id);
+  assert.equal(observed.status, "active");
+  assert.equal(observed.items[0].workflowStatus, "awaiting_acceptance");
+  const pausedForAcceptance = await harness.owner.prepareEpoch(harness.mission);
+  assert.equal(pausedForAcceptance.reason, "workflow_acceptance_required");
+  assert.equal(pausedForAcceptance.ready, false);
+  const pending = run.worklist.items[0];
+  const accepted = await harness.owner.acceptWorkflow(harness.mission.id, {
+    confirm: true,
+    itemId: pending.id,
+    taskId: pending.issuedTaskId,
+    workflowId: pending.workflowId,
+    selectionHash: pending.workflowSelectionHash,
+    outcomeHash: pending.workflowOutcomeHash,
+  });
+  assert.equal(accepted.ok, true);
+  assert.equal(accepted.worklist.status, "completed");
+  assert.equal(accepted.worklist.items[0].workflowStatus, "completed");
+  assert.equal(accepted.worklist.items[0].status, "completed");
+  assert.equal(accepted.worklist.items[0].workflowAcceptanceRequired, false);
+  assert.match(accepted.acceptance.acceptanceHash, /^[a-f0-9]{64}$/u);
+  await assert.rejects(
+    () => harness.owner.acceptWorkflow(harness.mission.id, {
+      confirm: true,
+      itemId: pending.id,
+      taskId: pending.issuedTaskId,
+      workflowId: pending.workflowId,
+      selectionHash: pending.workflowSelectionHash,
+      outcomeHash: pending.workflowOutcomeHash,
+    }),
+    /active worklist/u,
+  );
   assert.deepEqual(harness.calls.map((call) => call.action), ["create", "workflow"]);
 });
 
@@ -173,6 +207,55 @@ test("workflow checkpoint is terminal on restart and cannot be replayed", async 
   assert.equal(reconciled.blockedReason, "core_restart_during_workflow_execution");
   assert.equal(reconciled.items[0].terminalTaskStatus, "workflow_interrupted");
   assert.equal(harness.calls.filter((call) => call.action === "workflow").length, 0);
+});
+
+test("workflow acceptance checkpoint is terminal on restart and cannot be replayed", async () => {
+  const harness = createHarness();
+  const bound = harness.owner.bind(harness.mission, {
+    items: [{
+      goal: "Inspect the reviewed form",
+      targetUrl: "https://example.com/form",
+      workflowId: "bounded_run",
+    }],
+    confirm: true,
+  });
+  await harness.owner.prepareEpoch(harness.mission);
+  const run = await harness.owner.runEpoch({ missionId: harness.mission.id });
+  const raw = harness.records.get(bound.id);
+  raw.items[0].workflowStatus = "accepting";
+  raw.items[0].workflowCheckpointAt = harness.now();
+  const observed = harness.owner.refreshForMission(harness.mission.id);
+  assert.equal(observed.status, "active");
+  assert.equal(observed.items[0].workflowStatus, "accepting");
+  const [reconciled] = harness.owner.reconcileAtStartup();
+  assert.equal(reconciled.status, "blocked");
+  assert.equal(reconciled.blockedReason, "core_restart_during_workflow_acceptance");
+  assert.equal(reconciled.items[0].terminalTaskStatus, "workflow_acceptance_interrupted");
+  assert.equal(run.worklist.items[0].workflowStatus, "awaiting_acceptance");
+});
+
+test("completed selected workflow without an acceptance receipt fails closed", async () => {
+  const harness = createHarness();
+  const bound = harness.owner.bind(harness.mission, {
+    items: [{
+      goal: "Inspect the reviewed form",
+      targetUrl: "https://example.com/form",
+      workflowId: "bounded_run",
+    }],
+    confirm: true,
+  });
+  await harness.owner.prepareEpoch(harness.mission);
+  await harness.owner.runEpoch({ missionId: harness.mission.id });
+  const raw = harness.records.get(bound.id);
+  raw.status = "completed";
+  raw.items[0].status = "completed";
+  raw.items[0].workflowStatus = "completed";
+  raw.items[0].workflowAcceptance = null;
+  const [reconciled] = harness.owner.reconcileAtStartup();
+  assert.equal(reconciled.status, "blocked");
+  assert.equal(reconciled.blockedReason, "workflow_acceptance_missing");
+  assert.equal(reconciled.items[0].workflowStatus, "failed");
+  assert.equal(harness.calls.filter((call) => call.action === "workflow").length, 1);
 });
 
 test("legacy persisted worklists stay generic after the first checkpoint", async () => {

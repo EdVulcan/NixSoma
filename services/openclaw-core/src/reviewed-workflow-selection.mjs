@@ -2,8 +2,11 @@ import { createHash } from "node:crypto";
 
 export const REVIEWED_WORKFLOW_SELECTION_REGISTRY =
   "nixsoma-reviewed-workflow-selection-v0";
+export const REVIEWED_WORKFLOW_ACCEPTANCE_REGISTRY =
+  "nixsoma-reviewed-workflow-acceptance-v0";
 
 const RECIPE_VERSION = 0;
+const ACCEPTANCE_VERSION = 0;
 const SAFE_ID = /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,119}$/u;
 const SHA256 = /^[a-f0-9]{64}$/u;
 const NATIVE_INTAKE_GOAL = /^Type exact text "[A-Za-z0-9 .,_-]{1,32}" into the active surface$/u;
@@ -225,6 +228,113 @@ export function normaliseReviewedWorkflowOutcome(value, selection, taskId = null
   };
 }
 
+export function reviewedWorkflowOutcomeHash(outcome) {
+  if (!outcome || typeof outcome !== "object" || Array.isArray(outcome)) return null;
+  return createHash("sha256").update(JSON.stringify(outcome), "utf8").digest("hex");
+}
+
+function canonicalWorkflowAcceptance({
+  worklistId,
+  missionId,
+  itemId,
+  itemOrdinal,
+  taskId,
+  workflowSelection,
+  outcomeHash,
+  acceptedAt,
+} = {}) {
+  return JSON.stringify({
+    registry: REVIEWED_WORKFLOW_ACCEPTANCE_REGISTRY,
+    version: ACCEPTANCE_VERSION,
+    worklistId,
+    missionId,
+    itemId,
+    itemOrdinal,
+    taskId,
+    workflowId: workflowSelection.workflowId,
+    selectionHash: workflowSelection.selectionHash,
+    outcomeHash,
+    acceptedAt,
+  });
+}
+
+export function buildReviewedWorkflowAcceptance({
+  worklistId,
+  missionId,
+  itemId,
+  itemOrdinal,
+  taskId,
+  workflowSelection,
+  outcomeHash,
+  acceptedAt,
+} = {}) {
+  const canonicalSelection = normaliseReviewedWorkflowSelection(workflowSelection);
+  if (![worklistId, missionId, itemId, taskId].every(safeId)
+    || !Number.isInteger(itemOrdinal)
+    || itemOrdinal < 1
+    || !canonicalSelection
+    || !sameReviewedWorkflowSelection(workflowSelection, canonicalSelection)
+    || !boundedHash(outcomeHash)
+    || typeof acceptedAt !== "string"
+    || !Number.isFinite(Date.parse(acceptedAt))) {
+    throw new Error("Reviewed workflow acceptance requires the exact current receipt binding.");
+  }
+  const canonical = canonicalWorkflowAcceptance({
+    worklistId,
+    missionId,
+    itemId,
+    itemOrdinal,
+    taskId,
+    workflowSelection: canonicalSelection,
+    outcomeHash,
+    acceptedAt,
+  });
+  return {
+    registry: REVIEWED_WORKFLOW_ACCEPTANCE_REGISTRY,
+    version: ACCEPTANCE_VERSION,
+    worklistId,
+    missionId,
+    itemId,
+    itemOrdinal,
+    taskId,
+    workflowId: canonicalSelection.workflowId,
+    selectionHash: canonicalSelection.selectionHash,
+    outcomeHash,
+    acceptanceHash: createHash("sha256").update(canonical, "utf8").digest("hex"),
+    acceptedAt,
+    explicitOperatorConfirmation: true,
+    providerCalled: false,
+    actionExecuted: false,
+    mutatesHost: false,
+  };
+}
+
+export function normaliseReviewedWorkflowAcceptance(value, expected = {}) {
+  try {
+    const receipt = buildReviewedWorkflowAcceptance(expected);
+    if (!value || typeof value !== "object" || Array.isArray(value)
+      || value.registry !== REVIEWED_WORKFLOW_ACCEPTANCE_REGISTRY
+      || value.version !== ACCEPTANCE_VERSION
+      || value.worklistId !== receipt.worklistId
+      || value.missionId !== receipt.missionId
+      || value.itemId !== receipt.itemId
+      || value.itemOrdinal !== receipt.itemOrdinal
+      || value.taskId !== receipt.taskId
+      || value.workflowId !== receipt.workflowId
+      || value.selectionHash !== receipt.selectionHash
+      || value.outcomeHash !== receipt.outcomeHash
+      || value.acceptedAt !== receipt.acceptedAt
+      || value.acceptanceHash !== receipt.acceptanceHash
+      || value.explicitOperatorConfirmation !== true
+      || value.providerCalled !== false
+      || value.actionExecuted !== false
+      || value.mutatesHost !== false) return null;
+    return receipt;
+  } catch {
+    return null;
+  }
+}
+
 export function reviewedWorkflowSelectionGovernance() {
   return {
     registry: REVIEWED_WORKFLOW_SELECTION_REGISTRY,
@@ -239,6 +349,8 @@ export function reviewedWorkflowSelectionGovernance() {
     automaticRetry: false,
     automaticSkip: false,
     automaticRepeat: false,
+    explicitWorkflowAcceptance: true,
+    automaticWorkflowAcceptance: false,
     mutatesHost: false,
   };
 }

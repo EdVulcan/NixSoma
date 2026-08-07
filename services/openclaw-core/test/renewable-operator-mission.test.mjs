@@ -332,6 +332,34 @@ test("mission blocks before consuming epoch authority when reviewed work supply 
   assert.equal(harness.windowLease.listPublic().length, 0);
 });
 
+test("mission pauses before opening another epoch while a workflow awaits acceptance", async () => {
+  const worklist = {
+    prepareEpoch: async () => ({
+      ok: true,
+      managed: true,
+      ready: false,
+      reason: "workflow_acceptance_required",
+      worklist: {
+        id: "worklist-1",
+        status: "active",
+        currentWorkflowAcceptanceRequired: true,
+      },
+    }),
+    refreshForMission: () => ({ id: "worklist-1", status: "active" }),
+  };
+  const harness = createHarness([], { missionWorklist: worklist });
+  const mission = arm(harness.supervisor, { epochCount: 2 });
+
+  const result = await harness.supervisor.tick();
+  assert.equal(result.ran, false);
+  assert.equal(result.ok, true);
+  assert.equal(result.mission.status, "paused");
+  assert.equal(result.mission.stopReason, "reviewed_worklist_workflow_acceptance_required");
+  assert.equal(result.mission.epochsConsumed, 0);
+  assert.equal(result.mission.id, mission.id);
+  assert.equal(harness.windowLease.listPublic().length, 0);
+});
+
 test("mission cancellation closes its reviewed worklist", () => {
   const closed = [];
   const worklist = {

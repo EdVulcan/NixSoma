@@ -340,6 +340,12 @@ operatorMissionWorklistBindButton.addEventListener("click", () => {
   });
 });
 
+operatorMissionWorklistAcceptButton.addEventListener("click", () => {
+  acceptOperatorMissionWorklistWorkflowFromUi().catch((error) => {
+    setControlMessage("Request failed: " + formatError(error));
+  });
+});
+
 operatorMissionWorklistDraft.addEventListener("click", (event) => {
   const button = event.target.closest?.("[data-worklist-draft-index]");
   if (!button || !operatorMissionWorklistDraft.contains(button)) return;

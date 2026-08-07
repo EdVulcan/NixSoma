@@ -451,7 +451,7 @@ application order, text, unit, target, action, retry, and budget fields remain
 absent; task completion, arbitrary process/window control, root, and host
 mutation remain false.
 
-All `1452/1452` workspace tests, typecheck, Core `1004/1004`, Observer `121/121`,
+All `1457/1457` workspace tests, typecheck, Core `1008/1008`, Observer `122/122`,
 Session Manager `85/85`, the real Core/Observer capability gates, body-config,
 the 835-entry registry, 1023-file/1007-shell-script audit, Windows path budget,
 and exact `293/36/117`-file Core/Session Manager/Observer closures pass.
@@ -459,12 +459,16 @@ and exact `293/36/117`-file Core/Session Manager/Observer closures pass.
 The finite reviewed-worklist workflow-selection route is now implemented in
 source without provider-authored tasks or arbitrary application routing. Four
 server-owned recipes are available through immutable selection hashes, and
-legacy worklists without recipe fields remain generic after persistence. The
-selection slice must be frozen after representative validation; the next route
-review must choose a distinct concrete user workflow. Physical deployment,
-live-provider evidence, and Phase D promotion/rollback remain separately
-authorized routes. See
+legacy worklists without recipe fields remain generic after persistence. A
+selected workflow now waits in `awaiting_acceptance` until the operator sends
+the exact item/task/selection/outcome hashes; Core audits that receipt before
+advancing the worklist. Acceptance checkpoint or audit uncertainty blocks
+without replaying provider or action work. Physical deployment, live-provider
+evidence, and Phase D promotion/rollback remain separately authorized routes.
+See
 `OPENCLAW_REVIEWED_WORKLIST_WORKFLOW_SELECTION_PLAN.md`.
+The reconciliation contract is recorded in
+`OPENCLAW_REVIEWED_WORKFLOW_ACCEPTANCE_PLAN.md`.
 
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation

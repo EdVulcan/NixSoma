@@ -1661,6 +1661,14 @@ test("renewable mission routes forward only finite authority controls", async ()
       calls.push({ action: "worklist_bind", missionId: mission.id, body });
       return worklist;
     },
+    acceptWorkflow: async (missionId, body) => {
+      calls.push({ action: "worklist_accept", missionId, body });
+      return {
+        ok: true,
+        worklist: { ...worklist, status: "completed" },
+        acceptance: { registry: "nixsoma-reviewed-workflow-acceptance-v0", acceptanceHash: "a".repeat(64) },
+      };
+    },
   };
   const deps = createBaseDeps({
     deps: { renewableOperatorMissionSupervisor: supervisor, reviewedMissionWorklist },
@@ -1692,6 +1700,16 @@ test("renewable mission routes forward only finite authority controls", async ()
   const readWorklist = await invokeRoute(deps, "GET", "/operator/mission/mission-1/worklist");
   assert.equal(readWorklist.statusCode, 200);
   assert.equal(readWorklist.body.worklist.status, "bound");
+  const acceptedWorklist = await invokeRoute(deps, "POST", "/operator/mission/mission-1/worklist/accept", {
+    confirm: true,
+    itemId: "item-1",
+    taskId: "task-1",
+    workflowId: "bounded_run",
+    selectionHash: "b".repeat(64),
+    outcomeHash: "c".repeat(64),
+  });
+  assert.equal(acceptedWorklist.statusCode, 200);
+  assert.equal(acceptedWorklist.body.acceptance.registry, "nixsoma-reviewed-workflow-acceptance-v0");
   assert.equal((await invokeRoute(deps, "POST", "/operator/mission", armBody)).statusCode, 201);
   assert.equal((await invokeRoute(deps, "POST", "/operator/mission/tick", {})).statusCode, 200);
   assert.equal((await invokeRoute(deps, "POST", "/operator/mission/mission-1/renew", {
@@ -1715,6 +1733,18 @@ test("renewable mission routes forward only finite authority controls", async ()
       },
     },
     { action: "worklist_read", missionId: "mission-1" },
+    {
+      action: "worklist_accept",
+      missionId: "mission-1",
+      body: {
+        confirm: true,
+        itemId: "item-1",
+        taskId: "task-1",
+        workflowId: "bounded_run",
+        selectionHash: "b".repeat(64),
+        outcomeHash: "c".repeat(64),
+      },
+    },
     { action: "arm", body: armBody },
     { action: "tick" },
     { action: "renew", id: "mission-1", body: { additionalEpochs: 2, extensionMs: 3_600_000, confirm: true } },

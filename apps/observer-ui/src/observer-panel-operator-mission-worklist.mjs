@@ -5,6 +5,7 @@ export function observerOperatorMissionWorklistPanel() {
             <button id="operator-mission-worklist-add-button" class="secondary" type="button">Add Current Goal + URL</button>
             <button id="operator-mission-worklist-clear-button" class="secondary" type="button" disabled>Clear Draft</button>
             <button id="operator-mission-worklist-bind-button" type="button" disabled>Bind Reviewed Worklist</button>
+            <button id="operator-mission-worklist-accept-button" class="secondary" type="button" disabled>Accept Workflow Result</button>
           </div>
           <label for="operator-mission-worklist-workflow">Workflow recipe</label>
           <select id="operator-mission-worklist-workflow">

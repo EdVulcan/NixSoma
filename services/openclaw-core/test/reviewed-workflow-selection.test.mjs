@@ -3,8 +3,11 @@ import test from "node:test";
 
 import {
   buildReviewedWorkflowSelection,
+  buildReviewedWorkflowAcceptance,
   compactReviewedWorkflowOutcome,
   listReviewedWorkflowRecipes,
+  normaliseReviewedWorkflowAcceptance,
+  reviewedWorkflowOutcomeHash,
   reviewedWorkflowOutcomeComplete,
 } from "../src/reviewed-workflow-selection.mjs";
 
@@ -66,4 +69,65 @@ test("workflow outcome is compact and requires the selected recipe completion au
     selection,
     "task-1",
   ), false);
+});
+
+test("workflow acceptance binds the exact outcome and rejects receipt tampering", () => {
+  const selection = buildReviewedWorkflowSelection({ workflowId: "bounded_run", goal: "Inspect the form" });
+  const outcome = compactReviewedWorkflowOutcome({
+    selection,
+    response: {
+      ok: true,
+      invoked: true,
+      blocked: false,
+      invocation: { id: "invocation-acceptance" },
+      summary: {
+        status: "completed",
+        taskId: "task-acceptance",
+        runCompletionAudit: true,
+        outcomeUnknown: false,
+      },
+    },
+  });
+  const receipt = buildReviewedWorkflowAcceptance({
+    worklistId: "worklist-1",
+    missionId: "mission-1",
+    itemId: "item-1",
+    itemOrdinal: 1,
+    taskId: "task-acceptance",
+    workflowSelection: selection,
+    outcomeHash: reviewedWorkflowOutcomeHash(outcome),
+    acceptedAt: "2026-08-07T12:00:00.000Z",
+  });
+  assert.equal(receipt.explicitOperatorConfirmation, true);
+  assert.equal(receipt.providerCalled, false);
+  assert.equal(receipt.actionExecuted, false);
+  assert.deepEqual(
+    normaliseReviewedWorkflowAcceptance(receipt, {
+      worklistId: "worklist-1",
+      missionId: "mission-1",
+      itemId: "item-1",
+      itemOrdinal: 1,
+      taskId: "task-acceptance",
+      workflowSelection: selection,
+      outcomeHash: reviewedWorkflowOutcomeHash(outcome),
+      acceptedAt: receipt.acceptedAt,
+    }),
+    receipt,
+  );
+  assert.equal(
+    normaliseReviewedWorkflowAcceptance(
+      { ...receipt, outcomeHash: "a".repeat(64) },
+      {
+        worklistId: "worklist-1",
+        missionId: "mission-1",
+        itemId: "item-1",
+        itemOrdinal: 1,
+        taskId: "task-acceptance",
+        workflowSelection: selection,
+        outcomeHash: reviewedWorkflowOutcomeHash(outcome),
+        acceptedAt: receipt.acceptedAt,
+      },
+    ),
+    null,
+  );
 });

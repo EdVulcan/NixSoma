@@ -13,7 +13,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source adds controlled paired-randomized experience recall ordering, exact browser and native workflows, one fixed-order reviewed mission across both applications, and finite server-owned worklist recipe selection to the governed Level 1-4 baseline | All `1452/1452` workspace tests, typecheck, Core `1004/1004`, Observer `121/121`, Session Manager `85/85`, real Core/Observer gates, body-config, and exact `293/36/117`-file Core/Session Manager/Observer Nix closures pass; physical generation 111 remains the prior reviewed-worklist baseline |
+| Capability source | Current source adds controlled paired-randomized experience recall ordering, exact browser and native workflows, one fixed-order reviewed mission across both applications, finite server-owned worklist recipe selection, and explicit workflow-result acceptance to the governed Level 1-4 baseline | Workspace `1457/1457`, Core `1008/1008`, Observer `122/122`, Session Manager `85/85`, typecheck, and representative service checks pass; physical generation 111 remains the prior reviewed-worklist baseline and physical/live workflow evidence is separate |
 | Local validation | Full workspace tests/typecheck, body-config, real Core/Observer capability gates, the 835-entry registry, 1023-file/1007-shell-script audit, Windows path budget, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration pass | Validated in source; physical activation and live workflow remain separate |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/2rg3qq3nzg5yva0z0yg7scs4hb99asl0-nixos-system-nixos-26.05.4808.569d57850992` | Generation 111 deploys the reviewed finite mission worklist; current/profile paths match, all nine health endpoints pass, related services have zero restarts, and system/user failed-unit counts are zero |
@@ -96,11 +96,12 @@ remain separate scopes for future development:
   work view, fixed Level 3 body owners, bounded Level 4 eye-hand actions,
   provider collaboration, audit, and recovery evidence. Its remaining work is
   completion of coherent user workflows and integration/product hardening.
-- **About 91-93% for the current source bounded product** includes the finite
-  mission worklist, controlled recall-order adaptation, and one bounded semantic
-  type -> submit workflow. It does not claim a physical switch, enabled mission
-  timer, live randomized outcome, or live multi-step provider run.
-- **About 59-64% for the final vision** measures the wider whitepaper target: a
+- **About 93-95% for the current source bounded product** includes the finite
+  mission worklist, four fixed workflow recipes, explicit workflow-result
+  acceptance, controlled recall-order adaptation, and bounded browser/native
+  workflows. It does not claim a physical switch, enabled mission timer, live
+  randomized outcome, or live multi-step provider run.
+- **About 60-65% for the final vision** measures the wider whitepaper target: a
   durable local-first autonomous agent body with long-running autonomy, durable
   learning and memory feedback loops, broader body nerves, physically governed
   Phase D evolution, and a richer native graphical workspace.
@@ -340,12 +341,13 @@ both lanes available, nine healthy endpoints, and zero failed units.
     verifies, and stops Native Intake. See
     [`OPENCLAW_REVIEWED_MULTI_APPLICATION_MISSION_PLAN.md`](./plans/OPENCLAW_REVIEWED_MULTI_APPLICATION_MISSION_PLAN.md).
 
-The finite reviewed-worklist selection route is now implemented in source. Each
-item chooses one of four server-owned recipes, stores an immutable selection
-hash, and reuses the existing workflow owner; old worklists without recipe
-fields remain generic. Physical activation/live-provider proof and Phase D
-promotion/rollback remain separately authorized and are not implied by this
-source checkpoint.
+The finite reviewed-worklist selection route and its explicit reconciliation
+step are now implemented in source. Each item chooses one of four server-owned
+recipes, stores an immutable selection hash, reuses the existing workflow
+owner, and waits for an explicit hash-bound operator acceptance before the
+worklist advances. Old worklists without recipe fields remain generic.
+Physical activation/live-provider proof and Phase D promotion/rollback remain
+separately authorized and are not implied by this source checkpoint.
 
 Do not manufacture a VFS/network variant, provider/readiness wrapper, generic
 Enter or keyboard path, caller-coordinate action, automatic repetition, open
@@ -1006,6 +1008,7 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md](./plans/OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md) | Physically deployed renewable mission epochs, checkpoints, explicit renewal, recovery, circuit break, and Observer progress. |
 | [OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md](./plans/OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md) | Source-complete immutable reviewed task supply with issue checkpoints, exact provenance, and stop-on-failure. |
 | [OPENCLAW_REVIEWED_WORKLIST_WORKFLOW_SELECTION_PLAN.md](./plans/OPENCLAW_REVIEWED_WORKLIST_WORKFLOW_SELECTION_PLAN.md) | Source-bound finite recipe selection, shared workflow execution ownership, immutable hashes, and legacy generic-worklist compatibility. |
+| [OPENCLAW_REVIEWED_WORKFLOW_ACCEPTANCE_PLAN.md](./plans/OPENCLAW_REVIEWED_WORKFLOW_ACCEPTANCE_PLAN.md) | Explicit receipt-bound acceptance and worklist reconciliation after a selected workflow completes. |
 | [OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md](./plans/OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md) | Source-complete finite paired-random adaptation experiment, exact evidence binding, and explicit recall-profile activation without policy or action authority. |
 | [OPENCLAW_SEMANTIC_FORM_WORKFLOW_PLAN.md](./plans/OPENCLAW_SEMANTIC_FORM_WORKFLOW_PLAN.md) | Source-validated semantic type -> exact verified continuation -> eligible submit workflow with a two-step hard stop. |
 | [OPENCLAW_NATIVE_INTAKE_WORKFLOW_PLAN.md](./plans/OPENCLAW_NATIVE_INTAKE_WORKFLOW_PLAN.md) | Source fixed-unit start -> exact activated-surface OCR Type -> verified stop workflow with no arbitrary process, command, network, or persistence authority. |

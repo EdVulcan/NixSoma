@@ -28,6 +28,7 @@ function createFixture() {
     add: element(),
     clear: element(),
     bind: element(),
+    accept: element(),
     workflow: element(),
     draft: element(),
     progress: element(),
@@ -46,6 +47,7 @@ function createFixture() {
     "#operator-mission-worklist-add-button": elements.add,
     "#operator-mission-worklist-clear-button": elements.clear,
     "#operator-mission-worklist-bind-button": elements.bind,
+    "#operator-mission-worklist-accept-button": elements.accept,
     "#operator-mission-worklist-workflow": elements.workflow,
     "#operator-mission-worklist-draft": elements.draft,
     "#operator-mission-worklist-progress-bar": elements.progress,
@@ -197,6 +199,47 @@ test("Observer caps an eligible draft at the mission's remaining epoch authority
   assert.equal(fixture.elements.draft.children.length, 1);
 });
 
+test("Observer exposes exact workflow acceptance and posts only receipt hashes", async () => {
+  const fixture = createFixture();
+  fixture.context.renderOperatorMissionWorklist({
+    worklist: {
+      id: "worklist-acceptance",
+      missionId: "mission-1",
+      status: "active",
+      itemCount: 1,
+      issuedCount: 1,
+      completedCount: 0,
+      currentTaskId: "task-1",
+      currentWorkflowId: "bounded_run",
+      items: [{
+        id: "item-1",
+        issuedTaskId: "task-1",
+        workflowId: "bounded_run",
+        workflowSelectionHash: "b".repeat(64),
+        workflowOutcomeHash: "c".repeat(64),
+        workflowStatus: "awaiting_acceptance",
+      }],
+    },
+  }, {
+    id: "mission-1",
+    status: "paused",
+    epochsConsumed: 1,
+    remainingEpochs: 1,
+  });
+  assert.equal(fixture.elements.accept.disabled, false);
+  await fixture.context.acceptOperatorMissionWorklistWorkflowFromUi();
+  assert.equal(fixture.calls[0].url, "http://core.invalid/operator/mission/mission-1/worklist/accept");
+  assert.deepEqual(JSON.parse(fixture.calls[0].options.body), {
+    confirm: true,
+    itemId: "item-1",
+    taskId: "task-1",
+    workflowId: "bounded_run",
+    selectionHash: "b".repeat(64),
+    outcomeHash: "c".repeat(64),
+  });
+  assert.match(fixture.messages.at(-1), /Accepted reviewed workflow result/u);
+});
+
 test("Observer panel exposes reviewed worklist draft, bind, and progress controls", () => {
   const panel = observerOperationsPanels();
   for (const token of [
@@ -204,6 +247,7 @@ test("Observer panel exposes reviewed worklist draft, bind, and progress control
     "operator-mission-worklist-add-button",
     "operator-mission-worklist-clear-button",
     "operator-mission-worklist-bind-button",
+    "operator-mission-worklist-accept-button",
     "operator-mission-worklist-workflow",
     "operator-mission-worklist-draft",
     "operator-mission-worklist-progress-bar",

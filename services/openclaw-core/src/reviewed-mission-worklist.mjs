@@ -3,8 +3,12 @@ import { createHash, randomUUID } from "node:crypto";
 import { buildReviewedBrowserTaskSubmission } from "./reviewed-browser-task-submission.mjs";
 import {
   buildReviewedWorkflowSelection,
+  buildReviewedWorkflowAcceptance,
+  REVIEWED_WORKFLOW_ACCEPTANCE_REGISTRY,
   normaliseReviewedWorkflowOutcome,
+  normaliseReviewedWorkflowAcceptance,
   normaliseReviewedWorkflowSelection,
+  reviewedWorkflowOutcomeHash,
   reviewedWorkflowOutcomeComplete,
   reviewedWorkflowSelectionGovernance,
   sameReviewedWorkflowSelection,
@@ -17,7 +21,14 @@ const MAX_WORKLISTS = 8;
 const MAX_ITEMS = 16;
 const SAFE_ID = /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,119}$/u;
 const ITEM_STATUSES = new Set(["pending", "issuing", "issued", "completed", "failed"]);
-const WORKFLOW_STATUSES = new Set(["pending", "running", "completed", "failed"]);
+const WORKFLOW_STATUSES = new Set([
+  "pending",
+  "running",
+  "awaiting_acceptance",
+  "accepting",
+  "completed",
+  "failed",
+]);
 const WORKLIST_STATUSES = new Set(["bound", "active", "completed", "blocked", "closed"]);
 const TERMINAL_TASK_STATUSES = new Set(["completed", "failed", "superseded"]);
 
@@ -63,7 +74,7 @@ function blueprint(value) {
   };
 }
 
-function normaliseItem(raw) {
+function normaliseItem(raw, { worklistId = null, missionId = null } = {}) {
   try {
     const persistedWorkflowId = raw?.workflowId ?? raw?.workflowSelection?.workflowId;
     const itemBlueprint = blueprint({
@@ -103,6 +114,32 @@ function normaliseItem(raw) {
       && !["issue_failed", "issue_interrupted"].includes(raw?.terminalTaskStatus)) {
       return null;
     }
+    const workflowOutcome = workflowSelectionBound && raw?.workflowOutcome && typeof raw.workflowOutcome === "object"
+      ? normaliseReviewedWorkflowOutcome(raw.workflowOutcome, workflowSelection, issuedTaskId)
+      : null;
+    const workflowOutcomeHash = reviewedWorkflowOutcomeHash(workflowOutcome);
+    const hasWorkflowAcceptance = raw?.workflowAcceptance !== undefined && raw.workflowAcceptance !== null;
+    const workflowAcceptance = workflowSelectionBound && hasWorkflowAcceptance
+      ? normaliseReviewedWorkflowAcceptance(raw.workflowAcceptance, {
+          worklistId,
+          missionId,
+          itemId: id,
+          itemOrdinal: ordinal,
+          taskId: issuedTaskId,
+          workflowSelection,
+          outcomeHash: workflowOutcomeHash,
+          acceptedAt: raw?.workflowAcceptance?.acceptedAt,
+        })
+      : null;
+    if (workflowSelectionBound && hasWorkflowAcceptance && !workflowAcceptance) return null;
+    if (workflowSelectionBound && !hasWorkflowAcceptance
+      && raw?.workflowAcceptedAt !== undefined && raw.workflowAcceptedAt !== null) return null;
+    if (workflowAcceptance && raw?.workflowAcceptedAt !== undefined
+      && raw.workflowAcceptedAt !== null
+      && raw.workflowAcceptedAt !== workflowAcceptance.acceptedAt) return null;
+    if (workflowSelectionBound
+      && ["awaiting_acceptance", "accepting"].includes(workflowStatus)
+      && (!workflowOutcome || !workflowOutcomeHash)) return null;
     return {
       id,
       ordinal,
@@ -122,9 +159,11 @@ function normaliseItem(raw) {
       workflowStatus,
       workflowCheckpointAt: validTimestamp(raw?.workflowCheckpointAt),
       workflowCompletedAt: validTimestamp(raw?.workflowCompletedAt),
-      workflowOutcome: workflowSelectionBound && raw?.workflowOutcome && typeof raw.workflowOutcome === "object"
-        ? normaliseReviewedWorkflowOutcome(raw.workflowOutcome, workflowSelection, issuedTaskId)
-        : null,
+      workflowOutcome,
+      workflowOutcomeHash,
+      workflowAcceptanceRequired: workflowSelectionBound && workflowStatus === "awaiting_acceptance",
+      workflowAcceptedAt: workflowAcceptance?.acceptedAt ?? null,
+      workflowAcceptance,
     };
   } catch {
     return null;
@@ -135,7 +174,8 @@ function normaliseRecord(raw, now) {
   const id = safeId(raw?.id);
   const missionId = safeId(raw?.missionId);
   const items = Array.isArray(raw?.items)
-    ? raw.items.map(normaliseItem).filter(Boolean).sort((left, right) => left.ordinal - right.ordinal)
+    ? raw.items.map((item) => normaliseItem(item, { worklistId: id, missionId })).filter(Boolean)
+      .sort((left, right) => left.ordinal - right.ordinal)
     : [];
   if (!id || !missionId || items.length < 1 || items.length > MAX_ITEMS) return null;
   if (new Set(items.map((item) => item.id)).size !== items.length
@@ -168,6 +208,8 @@ function governance() {
     reviewedBrowserTasksOnly: true,
     reviewedWorkflowSelection: true,
     fixedWorkflowRecipeAllowlist: true,
+    explicitWorkflowAcceptance: true,
+    automaticWorkflowAcceptance: false,
     providerCanSelectWorkflow: false,
     providerCanChangeWorkflow: false,
     oneItemIssuedAtEpochBoundary: true,
@@ -194,6 +236,8 @@ function publicRecord(record, now = () => record.updatedAt) {
     currentTaskId: currentItem?.issuedTaskId ?? null,
     currentWorkflowId: currentItem?.workflowId ?? null,
     currentWorkflowSelectionHash: currentItem?.workflowSelectionHash ?? null,
+    currentWorkflowOutcomeHash: currentItem?.workflowOutcomeHash ?? null,
+    currentWorkflowAcceptanceRequired: currentItem?.workflowStatus === "awaiting_acceptance",
     nextItemOrdinal: nextItem?.ordinal ?? null,
     progressPercent: Math.floor((normalised.completedCount / normalised.itemCount) * 100),
     governance: governance(),
@@ -206,6 +250,7 @@ export function createReviewedMissionWorklist({
   taskManager,
   reviewedTaskOwner,
   workflowRunner = null,
+  publishAuditEvent = async () => ({ ok: true }),
   now = () => new Date().toISOString(),
   createId = randomUUID,
 } = {}) {
@@ -258,6 +303,9 @@ export function createReviewedMissionWorklist({
       if (item.workflowStatus === "running") {
         item.workflowStatus = "failed";
       }
+      if (["awaiting_acceptance", "accepting", "completed"].includes(item.workflowStatus)) {
+        item.workflowStatus = "failed";
+      }
     }
     record.status = "blocked";
     record.blockedReason = reason;
@@ -266,16 +314,31 @@ export function createReviewedMissionWorklist({
   }
 
   function refreshRecord(record) {
+    const completedWithoutAcceptance = record.items.find((item) => (
+      item.workflowSelectionBound
+      && item.workflowStatus === "completed"
+      && !item.workflowAcceptance
+    )) ?? null;
+    if (completedWithoutAcceptance && !["blocked", "closed"].includes(record.status)) {
+      return block(record, "workflow_acceptance_missing", completedWithoutAcceptance, "workflow_acceptance_missing");
+    }
     if (["completed", "blocked", "closed"].includes(record.status)) return publicRecord(record, now);
     let changed = false;
     for (const item of record.items) {
       if (workflowRunner && item.workflowSelectionBound && item.workflowStatus === "running") {
         return block(record, "workflow_execution_interrupted", item, "workflow_interrupted");
       }
+      if (item.workflowSelectionBound && item.workflowStatus === "accepting") {
+        return publicRecord(record, now);
+      }
       if (item.status !== "issued") continue;
       const task = taskManager.getTaskById(item.issuedTaskId);
       if (!task) return block(record, "issued_task_missing", item, "missing");
       if (task.status === "completed") {
+        if (workflowRunner && item.workflowSelectionBound
+          && item.workflowStatus === "awaiting_acceptance") {
+          return publicRecord(record, now);
+        }
         if (workflowRunner && item.workflowSelectionBound && !reviewedWorkflowOutcomeComplete(
           item.workflowOutcome,
           item.workflowSelection,
@@ -363,6 +426,9 @@ export function createReviewedMissionWorklist({
           workflowCheckpointAt: null,
           workflowCompletedAt: null,
           workflowOutcome: null,
+          workflowOutcomeHash: null,
+          workflowAcceptedAt: null,
+          workflowAcceptance: null,
         };
       }),
       blockedReason: null,
@@ -390,6 +456,20 @@ export function createReviewedMissionWorklist({
     }
     if (refreshed.status === "closed") {
       return { ok: false, managed: true, ready: false, reason: refreshed.blockedReason ?? "mission_cancelled", worklist: refreshed };
+    }
+
+    const acceptanceItem = current.items.find((item) => (
+      item.workflowSelectionBound && ["awaiting_acceptance", "accepting"].includes(item.workflowStatus)
+    )) ?? null;
+    if (acceptanceItem) {
+      return {
+        ok: true,
+        managed: true,
+        ready: false,
+        reason: "workflow_acceptance_required",
+        taskId: acceptanceItem.issuedTaskId,
+        worklist: publicRecord(current, now),
+      };
     }
 
     const issuedItem = current.items.find((item) => item.status === "issued") ?? null;
@@ -471,6 +551,126 @@ export function createReviewedMissionWorklist({
     return record ? refreshRecord(record) : null;
   }
 
+  async function acceptWorkflow(missionId, request = {}) {
+    const allowedKeys = new Set([
+      "confirm",
+      "itemId",
+      "taskId",
+      "workflowId",
+      "selectionHash",
+      "outcomeHash",
+    ]);
+    if (!request || typeof request !== "object" || Array.isArray(request)
+      || Object.keys(request).some((key) => !allowedKeys.has(key))) {
+      throw new Error("Reviewed workflow acceptance accepts only its exact receipt binding.");
+    }
+    if (request.confirm !== true) {
+      throw new Error("Reviewed workflow acceptance requires confirm=true.");
+    }
+    const mission = safeId(missionId);
+    const itemId = safeId(request.itemId);
+    const taskId = safeId(request.taskId);
+    const outcomeHash = typeof request.outcomeHash === "string" ? request.outcomeHash : null;
+    if (!mission || !itemId || !taskId || typeof request.workflowId !== "string"
+      || typeof request.selectionHash !== "string" || !outcomeHash) {
+      throw new Error("Reviewed workflow acceptance requires the exact current receipt binding.");
+    }
+
+    const record = getByMission(mission);
+    if (!record || ["completed", "blocked", "closed"].includes(record.status)) {
+      throw new Error("Reviewed workflow acceptance requires an active worklist.");
+    }
+    refreshRecord(record);
+    const current = getByMission(mission);
+    const item = current?.items.find((candidate) => candidate.id === itemId) ?? null;
+    const task = item?.issuedTaskId ? taskManager.getTaskById(item.issuedTaskId) : null;
+    const currentOutcomeHash = reviewedWorkflowOutcomeHash(item?.workflowOutcome);
+    if (!item || item.status !== "issued" || item.workflowSelectionBound !== true
+      || item.workflowStatus !== "awaiting_acceptance"
+      || item.issuedTaskId !== taskId
+      || item.workflowId !== request.workflowId
+      || item.workflowSelectionHash !== request.selectionHash
+      || currentOutcomeHash !== outcomeHash
+      || !reviewedWorkflowOutcomeComplete(item.workflowOutcome, item.workflowSelection, taskId)
+      || task?.status !== "completed") {
+      throw new Error("Reviewed workflow acceptance receipt is stale, incomplete, or mismatched.");
+    }
+
+    const acceptedAt = now();
+    const acceptance = buildReviewedWorkflowAcceptance({
+      worklistId: current.id,
+      missionId: current.missionId,
+      itemId: item.id,
+      itemOrdinal: item.ordinal,
+      taskId,
+      workflowSelection: item.workflowSelection,
+      outcomeHash,
+      acceptedAt,
+    });
+    item.workflowStatus = "accepting";
+    item.workflowCheckpointAt = acceptedAt;
+    save(current);
+
+    let audit;
+    try {
+      audit = await publishAuditEvent("ai_workspace.reviewed_workflow_acceptance_authorized", {
+        registry: REVIEWED_WORKFLOW_ACCEPTANCE_REGISTRY,
+        at: acceptedAt,
+        worklistId: current.id,
+        missionId: current.missionId,
+        itemId: item.id,
+        itemOrdinal: item.ordinal,
+        taskId,
+        workflowId: item.workflowId,
+        selectionHash: item.workflowSelectionHash,
+        outcomeHash,
+        acceptanceHash: acceptance.acceptanceHash,
+        explicitOperatorConfirmation: true,
+        providerCalled: false,
+        actionExecuted: false,
+        mutatesHost: false,
+      });
+    } catch {
+      audit = { ok: false };
+    }
+    if (audit?.ok !== true) {
+      const failed = getByMission(mission);
+      if (failed) {
+        block(
+          failed,
+          "workflow_acceptance_audit_unavailable",
+          failed.items.find((candidate) => candidate.id === itemId),
+          "workflow_acceptance_audit_unavailable",
+        );
+      }
+      throw new Error("Required reviewed workflow acceptance audit was not accepted.");
+    }
+
+    const afterAudit = getByMission(mission);
+    const afterItem = afterAudit?.items.find((candidate) => candidate.id === itemId) ?? null;
+    const afterTask = afterItem?.issuedTaskId ? taskManager.getTaskById(afterItem.issuedTaskId) : null;
+    if (!afterAudit || !afterItem || afterItem.workflowStatus !== "accepting"
+      || afterItem.workflowSelectionHash !== request.selectionHash
+      || reviewedWorkflowOutcomeHash(afterItem.workflowOutcome) !== outcomeHash
+      || !reviewedWorkflowOutcomeComplete(afterItem.workflowOutcome, afterItem.workflowSelection, taskId)
+      || afterTask?.status !== "completed") {
+      if (afterAudit) block(afterAudit, "workflow_acceptance_binding_changed", afterItem, "workflow_acceptance_binding_changed");
+      throw new Error("Reviewed workflow acceptance binding changed after audit.");
+    }
+
+    afterItem.workflowStatus = "completed";
+    afterItem.workflowAcceptedAt = acceptedAt;
+    afterItem.workflowAcceptance = acceptance;
+    const worklist = refreshRecord(afterAudit);
+    return {
+      ok: true,
+      accepted: true,
+      reason: null,
+      acceptance,
+      worklist,
+    };
+  }
+
   async function runEpoch({ missionId } = {}) {
     const record = getByMission(missionId);
     if (!record) return { managed: false, result: null, worklist: null };
@@ -509,6 +709,18 @@ export function createReviewedMissionWorklist({
     }
     if (!workflowRunner || item.workflowSelectionBound !== true) {
       return { managed: false, result: null, worklist: publicRecord(current, now) };
+    }
+    if (["awaiting_acceptance", "accepting"].includes(item.workflowStatus)) {
+      return {
+        managed: true,
+        result: {
+          ran: false,
+          blocked: true,
+          reason: "workflow_acceptance_required",
+          steps: [],
+        },
+        worklist: publicRecord(current, now),
+      };
     }
     const task = taskManager.getTaskById(item.issuedTaskId);
     if (!task) {
@@ -574,9 +786,10 @@ export function createReviewedMissionWorklist({
       };
     }
 
-    item.workflowStatus = "completed";
+    item.workflowStatus = "awaiting_acceptance";
     item.workflowCompletedAt = now();
     item.workflowOutcome = workflowResult.outcome;
+    item.workflowOutcomeHash = reviewedWorkflowOutcomeHash(workflowResult.outcome);
     save(current);
     const worklist = refreshRecord(current);
     return {
@@ -587,6 +800,7 @@ export function createReviewedMissionWorklist({
         reason: null,
         steps: workflowResult.steps ?? [{ task: taskManager.getTaskById(item.issuedTaskId) }],
         workflow: workflowResult.outcome,
+        awaitingAcceptance: true,
       },
       worklist,
     };
@@ -602,7 +816,7 @@ export function createReviewedMissionWorklist({
         item.status = "failed";
         item.terminalTaskStatus = "issue_interrupted";
         item.completedAt = now();
-      } else if (item.workflowStatus === "running") {
+      } else if (["running", "awaiting_acceptance", "accepting"].includes(item.workflowStatus)) {
         item.status = "failed";
         item.workflowStatus = "failed";
         item.terminalTaskStatus = "workflow_interrupted";
@@ -625,10 +839,14 @@ export function createReviewedMissionWorklist({
       const issuingItem = record.items.find((item) => item.status === "issuing") ?? null;
       const workflowItem = record.items.find((item) => item.workflowSelectionBound
         && item.workflowStatus === "running") ?? null;
+      const acceptanceItem = record.items.find((item) => item.workflowSelectionBound
+        && item.workflowStatus === "accepting") ?? null;
       if (issuingItem && !["completed", "blocked", "closed"].includes(record.status)) {
         block(record, "core_restart_during_task_issue", issuingItem, "issue_interrupted");
       } else if (workflowRunner && workflowItem && !["completed", "blocked", "closed"].includes(record.status)) {
         block(record, "core_restart_during_workflow_execution", workflowItem, "workflow_interrupted");
+      } else if (acceptanceItem && !["completed", "blocked", "closed"].includes(record.status)) {
+        block(record, "core_restart_during_workflow_acceptance", acceptanceItem, "workflow_acceptance_interrupted");
       } else {
         refreshRecord(record);
       }
@@ -653,6 +871,7 @@ export function createReviewedMissionWorklist({
     hasForMission: (missionId) => Boolean(getByMission(missionId)),
     prepareEpoch,
     runEpoch,
+    acceptWorkflow,
     refreshForMission,
     closeForMission,
     reconcileAtStartup,

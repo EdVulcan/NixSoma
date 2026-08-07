@@ -482,13 +482,20 @@ export function createRenewableOperatorMissionSupervisor({
         }
         worklistState = supply.worklist ?? null;
         if (supply.managed === true && supply.ready !== true) {
-          mission.status = supply.reason === "worklist_completed" ? "completed" : "blocked";
+          const acceptanceRequired = supply.reason === "workflow_acceptance_required";
+          mission.status = supply.reason === "worklist_completed"
+            ? "completed"
+            : acceptanceRequired ? "paused" : "blocked";
           mission.stopReason = supply.reason === "worklist_completed"
             ? "reviewed_worklist_completed"
             : `reviewed_worklist_${supply.reason ?? "blocked"}`;
-          mission.endedAt = now();
+          if (mission.status === "paused") {
+            mission.pausedAt = now();
+          } else {
+            mission.endedAt = now();
+          }
           return {
-            ok: supply.ok !== false && mission.status === "completed",
+            ok: supply.ok !== false && mission.status !== "blocked",
             ran: false,
             reason: mission.stopReason,
             mission: save(mission),
