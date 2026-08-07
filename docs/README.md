@@ -13,7 +13,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source adds controlled paired-randomized experience recall ordering, exact browser and native workflows, one fixed-order reviewed mission across both applications, finite server-owned worklist recipe selection, and explicit workflow-result acceptance to the governed Level 1-4 baseline | Workspace `1457/1457`, Core `1008/1008`, Observer `122/122`, Session Manager `85/85`, typecheck, and representative service checks pass; physical generation 111 remains the prior reviewed-worklist baseline and physical/live workflow evidence is separate |
+| Capability source | Current source adds controlled paired-randomized experience recall ordering, exact browser and native workflows, one fixed-order reviewed mission across both applications, finite server-owned worklist recipe selection, explicit workflow-result acceptance, and explicit resident continuation to the governed Level 1-4 baseline | Workspace `1461/1461`, Core `1011/1011`, Observer `123/123`, Session Manager `85/85`, typecheck, and representative service checks pass; physical generation 111 remains the prior reviewed-worklist baseline and physical/live workflow evidence is separate |
 | Local validation | Full workspace tests/typecheck, body-config, real Core/Observer capability gates, the 835-entry registry, 1023-file/1007-shell-script audit, Windows path budget, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration pass | Validated in source; physical activation and live workflow remain separate |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/2rg3qq3nzg5yva0z0yg7scs4hb99asl0-nixos-system-nixos-26.05.4808.569d57850992` | Generation 111 deploys the reviewed finite mission worklist; current/profile paths match, all nine health endpoints pass, related services have zero restarts, and system/user failed-unit counts are zero |
@@ -67,6 +67,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 | Level 1 bounded operator window lease | Observer explicitly arms one lease of 1-8 windows, each reusing the existing 1-20 step operator session; a hard 1-second-to-24-hour deadline, compact persistence, cancellation, and restart-required re-arm bound continuation | Candidate `48n622mrr...` passed marker/protected-path/closure preflight; current `2rg3qq3nz...` retains the Core/Observer modules with timer default-off, and physical lease execution is not claimed |
 | Level 1 renewable operator mission | Observer arms 1-32 finite epochs, each checkpointed before one existing mission-owned child window; Core supports explicit finite renewal, boundary pause/cancel, restart-required re-arm, and a no-progress circuit | Physical generation 111 runs `2rg3qq3nz...`; current/profile and boot continuity, nine health endpoints, authenticated default-off readback, served Observer controls, zero restarts, and zero failed units pass |
 | Level 1 reviewed finite mission worklist | One unstarted mission accepts one immutable ordered set of 1-16 reviewed goal/URL blueprints; each epoch checkpoints before the existing reviewed-task owner issues at most the next item, and only completion advances | Physical generation 111 runs `2rg3qq3nz...`; ordered real-service proof, exact 282/111-file packages, marker/protected-path review, current/profile and boot continuity, nine endpoints, authenticated default-off readback, served Observer controls, zero restarts, and zero failed units pass |
+| Level 1 resident mission continuation | An explicitly armed mission may remain `armed` while its bound reviewed workflow awaits acceptance, polling only after the configured minimum interval and consuming no epoch until the same worklist is ready | Implemented in source with Core/Observer tests; startup still pauses the mission and requires exact explicit re-arm, the timer remains default-off, and physical/live resident execution is not claimed |
 | Level 3 network observation | Fixed `fentry/__sys_connect` eBPF probe sends only timestamp, process identity, sockaddr family, and address length through the system-sense/Core/Observer read-only path; only the first two sockaddr bytes are read and destination, port, address bytes, payload, persistence, and policy execution remain excluded | Physical proof originated in `gd9ps40...`; current `2rg3qq3nz...` retains the deployed route, with the prior Core and Observer gates capturing 27 `curl` events and no destination, port, payload, or persistence |
 | Level 3 file-open observation | Fixed `fentry/do_sys_openat2` eBPF probe sends only timestamp, process identity, flags, and mode through the same system-sense/Core/Observer path; filename/path/content/inode/mount/result, persistence, and policy execution remain excluded | Generation `qcv5ggpr...` passed both installed gates at the 128-event hard cap; current `2rg3qq3nz...` retains the accepted probe and healthy service boundary |
 | Level 3 kernel activity snapshot | One explicit request invokes the three existing capture owners in parallel and returns only lane status, counts, and continuity through System Sense/Core/Observer | Current `2rg3qq3nz...` retains the prior 62/46/128 Core counts and Observer total 240; all three lanes remain available with no raw values, persistence, repeat, provider/browser activity, or host mutation |
@@ -986,13 +987,32 @@ reapplies the exact operator-token ACL on every Core start; physical checks
 prove token read, traverse without listing, no execution-private-key access,
 all nine health endpoints, zero failed units, and an unchanged boot ID.
 
+## Newly Implemented Resident Continuation
+
+The source now supports an explicit `residentContinuation` option on a reviewed
+finite mission arm. When a selected workflow is waiting for exact operator
+acceptance, Core keeps the mission armed and schedules a bounded poll instead
+of pausing or charging another epoch. The existing reviewed worklist remains
+the only task-supply owner, and resident mode rejects missing or unmanaged
+worklists before execution.
+
+The mode preserves the existing 32-epoch initial limit, 32-epoch renewal
+limit, 256-epoch lifetime limit, authority deadline, no-progress circuit, and
+one-window child ownership. Core startup still pauses every active mission;
+the resident flag and consumed count survive, but exact explicit re-arm is
+required. Observer exposes the mode as an explicit arm checkbox. Focused Core
+and Observer tests pass; physical activation, live resident execution,
+automatic acceptance/re-arm, provider-authored work, and open-ended autonomy
+remain unclaimed. See
+`plans/OPENCLAW_RESIDENT_AUTONOMOUS_CONTINUATION_PLAN.md`.
+
 ## Progress Estimate
 
 These figures are capability-maturity estimates, not test coverage:
 
 | Scope | Current estimate |
 | --- | --- |
-| Level 1 user-space control plane | about 96% in source; renewable finite missions now consume an immutable reviewed worklist, while provider planning, open-ended task supply, retry/skip, and live replicated adaptation evidence remain incomplete |
+| Level 1 user-space control plane | about 96% in source; renewable finite missions now consume an immutable reviewed worklist and can remain resident while acceptance is pending, while provider planning, open-ended task supply, retry/skip, and live replicated adaptation evidence remain incomplete |
 | Level 2 bounded trusted work view | 95-100% |
 | Level 3 controlled system body | about 72-76%; process exec, network connect-attempt, bounded file open-attempt, and process lifecycle observation are physically deployed, while physical Phase D mutation and broader body nerves remain incomplete |
 | Level 4 graphics-stack-native body | about 90% in source; the physically complete one-shot actions now have source-only semantic type -> verified submit and fixed native intake workflows, while longer mission-bound multi-application eye-hand work remains incomplete |
@@ -1009,6 +1029,7 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md](./plans/OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md) | Source-complete immutable reviewed task supply with issue checkpoints, exact provenance, and stop-on-failure. |
 | [OPENCLAW_REVIEWED_WORKLIST_WORKFLOW_SELECTION_PLAN.md](./plans/OPENCLAW_REVIEWED_WORKLIST_WORKFLOW_SELECTION_PLAN.md) | Source-bound finite recipe selection, shared workflow execution ownership, immutable hashes, and legacy generic-worklist compatibility. |
 | [OPENCLAW_REVIEWED_WORKFLOW_ACCEPTANCE_PLAN.md](./plans/OPENCLAW_REVIEWED_WORKFLOW_ACCEPTANCE_PLAN.md) | Explicit receipt-bound acceptance and worklist reconciliation after a selected workflow completes. |
+| [OPENCLAW_RESIDENT_AUTONOMOUS_CONTINUATION_PLAN.md](./plans/OPENCLAW_RESIDENT_AUTONOMOUS_CONTINUATION_PLAN.md) | Explicit resident continuation for a reviewed finite mission with bounded polling and restart-required re-arm. |
 | [OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md](./plans/OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md) | Source-complete finite paired-random adaptation experiment, exact evidence binding, and explicit recall-profile activation without policy or action authority. |
 | [OPENCLAW_SEMANTIC_FORM_WORKFLOW_PLAN.md](./plans/OPENCLAW_SEMANTIC_FORM_WORKFLOW_PLAN.md) | Source-validated semantic type -> exact verified continuation -> eligible submit workflow with a two-step hard stop. |
 | [OPENCLAW_NATIVE_INTAKE_WORKFLOW_PLAN.md](./plans/OPENCLAW_NATIVE_INTAKE_WORKFLOW_PLAN.md) | Source fixed-unit start -> exact activated-surface OCR Type -> verified stop workflow with no arbitrary process, command, network, or persistence authority. |

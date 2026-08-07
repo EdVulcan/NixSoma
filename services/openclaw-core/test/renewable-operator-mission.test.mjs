@@ -172,6 +172,45 @@ test("startup pauses remaining authority and exact re-arm never restores consume
   assert.equal(harness.supervisor.rearm(created.id, { confirm: true }).status, "armed");
 });
 
+test("startup preserves resident continuation but still requires explicit re-arm", async () => {
+  const worklist = {
+    prepareEpoch: async () => ({
+      ok: true,
+      managed: true,
+      ready: true,
+      issued: true,
+      taskId: "task-resident-1",
+      worklist: { id: "worklist-1", status: "active" },
+    }),
+    refreshForMission: () => ({ id: "worklist-1", status: "active" }),
+  };
+  const harness = createHarness([
+    { ran: true, steps: [{ task: { id: "task-resident-1" } }], blocked: false },
+  ], { missionWorklist: worklist });
+  const created = arm(harness.supervisor, {
+    residentContinuation: true,
+    epochCount: 3,
+    epochIntervalMs: 1000,
+  });
+  const first = await harness.supervisor.tick();
+  assert.equal(first.mission.residentContinuation, true);
+  assert.equal(first.mission.epochsConsumed, 1);
+
+  harness.windowLease.reconcileAtStartup();
+  const [paused] = harness.supervisor.reconcileAtStartup();
+  assert.equal(paused.id, created.id);
+  assert.equal(paused.residentContinuation, true);
+  assert.equal(paused.status, "paused");
+  assert.equal(paused.stopReason, "core_restart_requires_explicit_rearm");
+  assert.equal(paused.epochsConsumed, 1);
+  assert.equal((await harness.supervisor.tick()).reason, "no_active_mission");
+
+  const rearmed = harness.supervisor.rearm(created.id, { confirm: true });
+  assert.equal(rearmed.status, "armed");
+  assert.equal(rearmed.residentContinuation, true);
+  assert.equal(rearmed.epochsConsumed, 1);
+});
+
 test("mission starts no epoch with less than one second of authority", async () => {
   const harness = createHarness();
   const created = arm(harness.supervisor, { epochCount: 1, deadlineMs: 1000 });
@@ -358,6 +397,73 @@ test("mission pauses before opening another epoch while a workflow awaits accept
   assert.equal(result.mission.epochsConsumed, 0);
   assert.equal(result.mission.id, mission.id);
   assert.equal(harness.windowLease.listPublic().length, 0);
+});
+
+test("resident continuation waits for acceptance and resumes the bound worklist", async () => {
+  let phase = "first";
+  const calls = [];
+  const worklist = {
+    prepareEpoch: async (mission) => {
+      calls.push({ action: "prepare", phase, consumed: mission.epochsConsumed });
+      if (phase === "acceptance") {
+        return {
+          ok: true,
+          managed: true,
+          ready: false,
+          reason: "workflow_acceptance_required",
+          worklist: { id: "worklist-1", status: "active" },
+        };
+      }
+      return {
+        ok: true,
+        managed: true,
+        ready: true,
+        issued: true,
+        taskId: `task-${mission.epochsConsumed + 1}`,
+        worklist: { id: "worklist-1", status: "active" },
+      };
+    },
+    refreshForMission: () => {
+      calls.push({ action: "refresh", phase, consumed: null });
+      return { id: "worklist-1", status: "active" };
+    },
+  };
+  const harness = createHarness([
+    { ran: true, steps: [{ task: { id: "task-1" } }], blocked: false },
+    { ran: true, steps: [{ task: { id: "task-2" } }], blocked: false },
+  ], { missionWorklist: worklist });
+  const created = arm(harness.supervisor, { residentContinuation: true, epochCount: 3 });
+
+  const first = await harness.supervisor.tick();
+  assert.equal(first.ran, true);
+  assert.equal(first.mission.residentContinuation, true);
+  assert.equal(first.mission.status, "armed");
+  assert.equal(first.mission.epochsConsumed, 1);
+
+  phase = "acceptance";
+  const waiting = await harness.supervisor.tick();
+  assert.equal(waiting.ran, false);
+  assert.equal(waiting.mission.status, "armed");
+  assert.equal(waiting.mission.stopReason, "reviewed_worklist_workflow_acceptance_pending");
+  assert.equal(waiting.mission.epochsConsumed, 1);
+  assert.equal(harness.windowLease.listPublic().length, 1);
+
+  phase = "second";
+  harness.advance(1000);
+  const second = await harness.supervisor.tick();
+  assert.equal(second.ran, true);
+  assert.equal(second.mission.status, "armed");
+  assert.equal(second.mission.epochsConsumed, 2);
+  assert.deepEqual(calls.map((call) => call.action), ["prepare", "refresh", "prepare", "prepare", "refresh"]);
+  assert.equal(created.id, first.mission.id);
+});
+
+test("resident continuation requires a reviewed worklist owner", () => {
+  const harness = createHarness();
+  assert.throws(
+    () => arm(harness.supervisor, { residentContinuation: true }),
+    /reviewed mission worklist owner/u,
+  );
 });
 
 test("mission cancellation closes its reviewed worklist", () => {

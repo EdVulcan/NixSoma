@@ -12,14 +12,14 @@ representative evidence agree.
 | Baseline | Maturity | Meaning |
 | --- | --- | --- |
 | Physically deployed bounded product | about 88-91% | Generation 111 carries the governed control plane, renewable mission supervisor, immutable reviewed mission worklist, trusted work view, fixed Level 3 body owners, and bounded Level 4 eye-hand workflows. |
-| Current source bounded product | about 93-95% | Source adds controlled recall-order adaptation, exact-evidence browser and native workflows, one fixed-order reviewed mission across both applications, finite server-owned workflow selection, and explicit workflow-result reconciliation beyond deployed generation 111. |
+| Current source bounded product | about 93-95% | Source adds controlled recall-order adaptation, exact-evidence browser and native workflows, one fixed-order reviewed mission across both applications, finite server-owned workflow selection, explicit workflow-result reconciliation, and bounded resident continuation beyond deployed generation 111. |
 | Final whitepaper vision | about 60-65% | Controlled adaptation, bounded multi-application missions, and finite reviewed workflow selection now exist in source; live replicated evidence, durable autonomous task planning, broader body nerves, and physical Phase D evolution remain. |
 
 ## Capability Families
 
 | Family | Status | Current evidence | Remaining product gap |
 | --- | --- | --- | --- |
-| Level 1 control plane | Deployed plus source workflow selection/reconciliation | Generation 111 adds the immutable reviewed task worklist; current source binds one immutable server recipe per item, requires explicit acceptance of its exact workflow receipt before advancement, and preserves legacy generic items | Goals and order still require operator review; there is no provider planning, open-ended backlog, retry/skip, causal ranking, or policy change |
+| Level 1 control plane | Deployed plus source workflow selection/reconciliation/continuation | Generation 111 adds the immutable reviewed task worklist; current source binds one immutable server recipe per item, requires explicit acceptance of its exact workflow receipt before advancement, and can remain resident without consuming an epoch while that acceptance is pending | Goals and order still require operator review; there is no provider planning, open-ended backlog, retry/skip, causal ranking, automatic re-arm, or policy change |
 | Level 2 trusted work view | Deployed plus source native workflow | User-owned helper, isolated browser/workspace, a second fixed native intake unit, fresh bounded capture, stale-authority rejection, recovery, takeover, and Observer projection | Longer finite composition across fixed applications, not another capture or lease variant |
 | Level 3 controlled system body | Partially deployed | Fixed systemd owners, exact Polkit/peer boundaries, repair loop, resource evidence, process/network/file/process-lifecycle nerves | Physical Phase D mutation/rollback, wider fixed body nerves, and governed action composition |
 | Level 4 graphical body | Deployed bounded subset plus source mission/worklist selection | Dedicated compositor/browser, native frame/input, semantic and OCR actions, bounded run/assessment, reviewed acceptance, exact browser and native workflows, fixed browser -> native mission, four allowlisted worklist recipes, and explicit workflow-result acceptance | Physical activation/live workflow evidence, provider-authored task supply, and arbitrary desktop control |
@@ -170,3 +170,18 @@ items cannot enter this path. A mission pauses before opening another epoch
 when acceptance is pending, and Core restart or audit uncertainty blocks the
 worklist without replaying provider or action work. See
 `OPENCLAW_REVIEWED_WORKFLOW_ACCEPTANCE_PLAN.md`.
+
+## Newly Implemented Resident Continuation
+
+An explicitly armed reviewed mission may now opt into `residentContinuation`.
+While the bound workflow is waiting for exact acceptance, Core leaves the
+mission armed, waits at least one second between polls, and consumes no new
+epoch until the worklist is ready. Missing worklist ownership blocks before
+execution. Core startup still pauses the mission and requires exact explicit
+re-arm, preserving the resident flag and consumed budget for operator review.
+Observer exposes the option, while the mission timer remains default-off.
+
+This is source-validated with focused Core and Observer tests. It is not a
+claim of physical activation, live resident provider execution, automatic
+acceptance, or open-ended autonomy. See
+`OPENCLAW_RESIDENT_AUTONOMOUS_CONTINUATION_PLAN.md`.

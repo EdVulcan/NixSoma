@@ -3,6 +3,7 @@ const operatorMissionStepsInput = document.querySelector("#operator-mission-step
 const operatorMissionIntervalInput = document.querySelector("#operator-mission-interval-input");
 const operatorMissionAuthorityInput = document.querySelector("#operator-mission-authority-input");
 const operatorMissionCircuitInput = document.querySelector("#operator-mission-circuit-input");
+const operatorMissionResidentContinuationInput = document.querySelector("#operator-mission-resident-continuation-input");
 const operatorMissionArmButton = document.querySelector("#operator-mission-arm-button");
 const operatorMissionRenewButton = document.querySelector("#operator-mission-renew-button");
 const operatorMissionPauseButton = document.querySelector("#operator-mission-pause-button");
@@ -88,6 +89,10 @@ function renderOperatorMission(data) {
     : "0 / 0";
   operatorMissionRenewals.textContent = String(mission?.renewalCount ?? 0);
   operatorMissionStopReason.textContent = mission?.stopReason ?? "none";
+  if (operatorMissionResidentContinuationInput) {
+    operatorMissionResidentContinuationInput.checked = mission?.residentContinuation === true;
+    operatorMissionResidentContinuationInput.disabled = active || status === "paused";
+  }
   operatorMissionArmButton.disabled = active || status === "paused";
   operatorMissionRenewButton.disabled = !mission || ["cancelled", "cancelling"].includes(status);
   operatorMissionPauseButton.disabled = !["armed", "running"].includes(status);
@@ -123,6 +128,10 @@ function renderOperatorMissionOffline() {
   for (const button of [operatorMissionArmButton, operatorMissionRenewButton, operatorMissionPauseButton, operatorMissionRearmButton, operatorMissionCancelButton]) {
     button.disabled = true;
   }
+  if (operatorMissionResidentContinuationInput) {
+    operatorMissionResidentContinuationInput.checked = false;
+    operatorMissionResidentContinuationInput.disabled = true;
+  }
   operatorMissionJson.textContent = "Unable to read renewable operator mission.";
   renderOperatorMissionWorklistOffline();
 }
@@ -146,6 +155,7 @@ async function armOperatorMissionFromUi() {
       epochIntervalMs: missionIntervalMs(),
       deadlineMs: missionAuthorityMs(),
       maxNoProgressEpochs: missionNoProgressLimit(),
+      residentContinuation: operatorMissionResidentContinuationInput?.checked === true,
       confirm: true,
     }),
   });

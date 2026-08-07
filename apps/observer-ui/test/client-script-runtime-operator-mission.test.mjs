@@ -6,7 +6,7 @@ import { observerClientRuntimeOperatorMissionScript } from "../src/client-script
 import { observerOperationsPanels } from "../src/observer-panels-operations.mjs";
 
 function element(value = "") {
-  return { value, textContent: "", disabled: false, dataset: {} };
+  return { value, textContent: "", disabled: false, checked: false, dataset: {} };
 }
 
 function mission(id = "mission-1", overrides = {}) {
@@ -36,6 +36,7 @@ function createFixture({ response = {} } = {}) {
     interval: element("300"),
     authority: element("24"),
     circuitInput: element("2"),
+    resident: element(),
     arm: element(),
     renew: element(),
     pause: element(),
@@ -63,6 +64,7 @@ function createFixture({ response = {} } = {}) {
     "#operator-mission-interval-input": elements.interval,
     "#operator-mission-authority-input": elements.authority,
     "#operator-mission-circuit-input": elements.circuitInput,
+    "#operator-mission-resident-continuation-input": elements.resident,
     "#operator-mission-arm-button": elements.arm,
     "#operator-mission-renew-button": elements.renew,
     "#operator-mission-pause-button": elements.pause,
@@ -123,6 +125,7 @@ test("Observer arms a finite renewable mission and renders checkpoint progress",
     epochIntervalMs: 300_000,
     deadlineMs: 86_400_000,
     maxNoProgressEpochs: 2,
+    residentContinuation: false,
     confirm: true,
   });
   assert.equal(fixture.elements.id.textContent, "mission-1");
@@ -130,6 +133,18 @@ test("Observer arms a finite renewable mission and renders checkpoint progress",
   assert.equal(fixture.elements.progressBar.value, 25);
   assert.equal(fixture.elements.checkpoint.textContent, "epoch 2 / completed / 3 steps");
   assert.match(fixture.messages.at(-1), /Armed renewable mission mission-1/u);
+});
+
+test("Observer explicitly arms resident continuation for a bound worklist", async () => {
+  const current = mission("mission-resident", { residentContinuation: true });
+  const fixture = createFixture({ response: { mission: current, missions: [current] } });
+  fixture.elements.resident.checked = true;
+
+  await fixture.context.armOperatorMissionFromUi();
+
+  assert.equal(JSON.parse(fixture.calls[0].options.body).residentContinuation, true);
+  assert.equal(fixture.elements.resident.checked, true);
+  assert.equal(fixture.elements.resident.disabled, true);
 });
 
 test("Observer binds renew, pause, resume, and cancel to the Core-returned mission id", async () => {
@@ -180,6 +195,7 @@ test("Observer panel exposes mission authority and progress controls", () => {
     "operator-mission-epoch-input",
     "operator-mission-steps-input",
     "operator-mission-authority-input",
+    "operator-mission-resident-continuation-input",
     "operator-mission-arm-button",
     "operator-mission-renew-button",
     "operator-mission-pause-button",

@@ -470,6 +470,23 @@ See
 The reconciliation contract is recorded in
 `OPENCLAW_REVIEWED_WORKFLOW_ACCEPTANCE_PLAN.md`.
 
+The next Level 1 continuation is now implemented in source as explicit
+`residentContinuation` for a reviewed finite mission. When a selected workflow
+is waiting for exact operator acceptance, the mission remains `armed` and
+polls the same bound worklist after a minimum one-second delay without charging
+another epoch. Resident mode requires the reviewed worklist owner, preserves
+the existing finite epoch/deadline/circuit limits, and keeps the existing
+one-window child owner. Core startup still pauses active missions and requires
+exact explicit re-arm; the resident flag and consumed budget survive the
+reconciliation. Observer exposes only the explicit boolean arm control.
+
+Focused Core/Observer evidence is source-green. Physical activation, live
+resident execution, automatic acceptance/re-arm, provider-authored task supply,
+and open-ended autonomy remain separately authorized or deferred. The
+canonical contract is `plans/OPENCLAW_RESIDENT_AUTONOMOUS_CONTINUATION_PLAN.md`.
+Freeze this slice after the changed checks and select a distinct operator
+capability or separately authorized physical evidence gate.
+
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation
 `/nix/store/1xh4x8ls64yzl919j2bssd9ilms98knv-nixos-system-nixos-26.05.4808.569d57850992`.

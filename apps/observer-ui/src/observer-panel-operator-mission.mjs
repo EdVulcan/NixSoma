@@ -21,6 +21,10 @@ export function observerOperatorMissionPanel() {
             <label for="operator-mission-circuit-input">No-progress Circuit</label>
             <input id="operator-mission-circuit-input" type="number" min="1" max="5" step="1" value="2" />
           </div>
+          <label class="checkbox-field">
+            <input id="operator-mission-resident-continuation-input" type="checkbox" />
+            Resident continuation for bound worklist
+          </label>
           <div class="actions tight">
             <button id="operator-mission-arm-button">Arm Mission</button>
             <button id="operator-mission-renew-button" class="secondary" disabled>Renew Authority</button>

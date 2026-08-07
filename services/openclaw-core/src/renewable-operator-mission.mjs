@@ -13,6 +13,7 @@ const MIN_AUTHORITY_MS = 1000;
 const MAX_AUTHORITY_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_RENEWED_HORIZON_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_NO_PROGRESS_EPOCHS = 5;
+const MIN_RESIDENT_CONTINUATION_POLL_MS = 1000;
 const ACTIVE_STATUSES = new Set(["armed", "running", "pausing", "cancelling"]);
 const VALID_STATUSES = new Set([
   "armed",
@@ -66,6 +67,9 @@ function governance() {
     reviewedWorklistTaskIssuance: true,
     openEndedTaskCreation: false,
     automaticPlanning: false,
+    residentContinuationDefault: false,
+    residentContinuationRequiresReviewedWorklist: true,
+    residentContinuationFiniteAuthority: true,
     automaticRetry: false,
     providerAuthority: false,
     mutatesHost: false,
@@ -124,6 +128,7 @@ function normaliseStoredMission(raw, now) {
     childLeaseId: safeId(raw.childLeaseId),
     lastLeaseId: safeId(raw.lastLeaseId),
     renewalCount: Math.max(0, Math.min(1000, Number.isInteger(raw.renewalCount) ? raw.renewalCount : 0)),
+    residentContinuation: raw.residentContinuation === true,
     createdAt: validTimestamp(raw.createdAt, updatedAt),
     startedAt: validTimestamp(raw.startedAt, null),
     pausedAt: validTimestamp(raw.pausedAt, null),
@@ -214,9 +219,16 @@ export function createRenewableOperatorMissionSupervisor({
     epochIntervalMs = 0,
     deadlineMs,
     maxNoProgressEpochs = 2,
+    residentContinuation = false,
     confirm = false,
   } = {}) {
     if (confirm !== true) throw new Error("Renewable operator mission requires confirm=true.");
+    if (typeof residentContinuation !== "boolean") {
+      throw new Error("Resident continuation must be a boolean.");
+    }
+    if (residentContinuation && !missionWorklist) {
+      throw new Error("Resident continuation requires the reviewed mission worklist owner.");
+    }
     const boundedEpochs = boundedPositiveInteger(epochCount, MAX_INITIAL_EPOCHS);
     const boundedSteps = boundedPositiveInteger(maxStepsPerEpoch, MAX_STEPS_PER_EPOCH);
     const boundedInterval = boundedNonNegativeInteger(epochIntervalMs, MAX_EPOCH_INTERVAL_MS);
@@ -250,6 +262,7 @@ export function createRenewableOperatorMissionSupervisor({
       childLeaseId: null,
       lastLeaseId: null,
       renewalCount: 0,
+      residentContinuation,
       createdAt: timestamp,
       startedAt: null,
       pausedAt: null,
@@ -473,6 +486,12 @@ export function createRenewableOperatorMissionSupervisor({
         mission.endedAt = now();
         return { ok: true, ran: false, reason: mission.stopReason, mission: save(mission) };
       }
+      if (mission.residentContinuation && !missionWorklist) {
+        mission.status = "blocked";
+        mission.stopReason = "resident_continuation_requires_reviewed_worklist";
+        mission.endedAt = now();
+        return { ok: false, ran: false, reason: mission.stopReason, mission: save(mission) };
+      }
       if (missionWorklist) {
         let supply;
         try {
@@ -481,15 +500,29 @@ export function createRenewableOperatorMissionSupervisor({
           supply = { ok: false, managed: true, ready: false, reason: "owner_unavailable", worklist: null };
         }
         worklistState = supply.worklist ?? null;
+        if (mission.residentContinuation && supply.managed !== true) {
+          mission.status = "blocked";
+          mission.stopReason = "resident_continuation_requires_bound_worklist";
+          mission.endedAt = now();
+          return { ok: false, ran: false, reason: mission.stopReason, mission: save(mission), worklist: worklistState };
+        }
         if (supply.managed === true && supply.ready !== true) {
           const acceptanceRequired = supply.reason === "workflow_acceptance_required";
+          const residentWaiting = mission.residentContinuation === true && acceptanceRequired;
           mission.status = supply.reason === "worklist_completed"
             ? "completed"
-            : acceptanceRequired ? "paused" : "blocked";
+            : residentWaiting ? "armed" : acceptanceRequired ? "paused" : "blocked";
           mission.stopReason = supply.reason === "worklist_completed"
             ? "reviewed_worklist_completed"
-            : `reviewed_worklist_${supply.reason ?? "blocked"}`;
-          if (mission.status === "paused") {
+            : residentWaiting
+              ? "reviewed_worklist_workflow_acceptance_pending"
+              : `reviewed_worklist_${supply.reason ?? "blocked"}`;
+          if (residentWaiting) {
+            mission.nextEpochAt = addMilliseconds(
+              now(),
+              Math.max(mission.epochIntervalMs, MIN_RESIDENT_CONTINUATION_POLL_MS),
+            );
+          } else if (mission.status === "paused") {
             mission.pausedAt = now();
           } else {
             mission.endedAt = now();
