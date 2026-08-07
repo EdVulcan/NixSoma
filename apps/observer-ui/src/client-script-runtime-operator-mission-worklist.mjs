@@ -1,6 +1,7 @@
 export const observerClientRuntimeOperatorMissionWorklistScript = `const operatorMissionWorklistAddButton = document.querySelector("#operator-mission-worklist-add-button");
 const operatorMissionWorklistClearButton = document.querySelector("#operator-mission-worklist-clear-button");
 const operatorMissionWorklistBindButton = document.querySelector("#operator-mission-worklist-bind-button");
+const operatorMissionWorklistWorkflowSelect = document.querySelector("#operator-mission-worklist-workflow");
 const operatorMissionWorklistDraft = document.querySelector("#operator-mission-worklist-draft");
 const operatorMissionWorklistProgressBar = document.querySelector("#operator-mission-worklist-progress-bar");
 const operatorMissionWorklistStatus = document.querySelector("#operator-mission-worklist-status");
@@ -10,6 +11,7 @@ const operatorMissionWorklistItems = document.querySelector("#operator-mission-w
 const operatorMissionWorklistIssued = document.querySelector("#operator-mission-worklist-issued");
 const operatorMissionWorklistCompleted = document.querySelector("#operator-mission-worklist-completed");
 const operatorMissionWorklistCurrentTask = document.querySelector("#operator-mission-worklist-current-task");
+const operatorMissionWorklistCurrentWorkflow = document.querySelector("#operator-mission-worklist-current-workflow");
 const operatorMissionWorklistNext = document.querySelector("#operator-mission-worklist-next");
 const operatorMissionWorklistStopReason = document.querySelector("#operator-mission-worklist-stop-reason");
 const operatorMissionWorklistJson = document.querySelector("#operator-mission-worklist-json");
@@ -34,7 +36,8 @@ function renderOperatorMissionWorklistDraft() {
     operatorMissionWorklistDraftItems.forEach((item, index) => {
       const row = document.createElement("li");
       const label = document.createElement("span");
-      label.textContent = String(index + 1) + ". " + item.goal + " | " + item.targetUrl;
+      label.textContent = String(index + 1) + ". " + item.goal + " | " + item.targetUrl
+        + (item.workflowId ? " | " + item.workflowId : "");
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "secondary mission-worklist-remove";
@@ -54,7 +57,25 @@ function renderOperatorMissionWorklistDraft() {
     || !draftFitsAuthority;
 }
 
+function renderOperatorMissionWorklistWorkflowRecipes(data) {
+  if (!operatorMissionWorklistWorkflowSelect) return;
+  const recipes = Array.isArray(data?.workflowRecipes) ? data.workflowRecipes : [];
+  const selected = operatorMissionWorklistWorkflowSelect.value || "bounded_run";
+  operatorMissionWorklistWorkflowSelect.replaceChildren();
+  for (const recipe of recipes) {
+    if (!recipe?.workflowId) continue;
+    const option = document.createElement("option");
+    option.value = recipe.workflowId;
+    option.textContent = recipe.workflowId;
+    operatorMissionWorklistWorkflowSelect.append(option);
+  }
+  operatorMissionWorklistWorkflowSelect.value = recipes.some((recipe) => recipe?.workflowId === selected)
+    ? selected
+    : "bounded_run";
+}
+
 function renderOperatorMissionWorklist(data, mission) {
+  renderOperatorMissionWorklistWorkflowRecipes(data);
   const worklist = data?.worklist ?? currentOperatorMissionWorklist(data, mission);
   const progress = Number.isInteger(worklist?.progressPercent) ? worklist.progressPercent : 0;
   const bindEligible = Boolean(mission)
@@ -69,6 +90,9 @@ function renderOperatorMissionWorklist(data, mission) {
   operatorMissionWorklistIssued.textContent = String(worklist?.issuedCount ?? 0);
   operatorMissionWorklistCompleted.textContent = String(worklist?.completedCount ?? 0);
   operatorMissionWorklistCurrentTask.textContent = worklist?.currentTaskId ?? "none";
+  if (operatorMissionWorklistCurrentWorkflow) {
+    operatorMissionWorklistCurrentWorkflow.textContent = worklist?.currentWorkflowId ?? "none";
+  }
   operatorMissionWorklistNext.textContent = worklist?.nextItemOrdinal ? String(worklist.nextItemOrdinal) : "none";
   operatorMissionWorklistStopReason.textContent = worklist?.blockedReason ?? "none";
   operatorMissionWorklistProgressBar.value = Math.max(0, Math.min(100, progress));
@@ -95,6 +119,9 @@ function renderOperatorMissionWorklistOffline() {
   operatorMissionWorklistIssued.textContent = "0";
   operatorMissionWorklistCompleted.textContent = "0";
   operatorMissionWorklistCurrentTask.textContent = "unknown";
+  if (operatorMissionWorklistCurrentWorkflow) {
+    operatorMissionWorklistCurrentWorkflow.textContent = "unknown";
+  }
   operatorMissionWorklistNext.textContent = "unknown";
   operatorMissionWorklistStopReason.textContent = "unknown";
   operatorMissionWorklistProgressBar.value = 0;
@@ -117,6 +144,9 @@ function addOperatorMissionWorklistDraftItem() {
     goal: reviewedBrowserTaskGoal(),
     targetUrl: getDesiredWorkViewUrl(),
   };
+  if (operatorMissionWorklistWorkflowSelect?.value) {
+    item.workflowId = operatorMissionWorklistWorkflowSelect.value;
+  }
   if (operatorMissionWorklistDraftItems.some((candidate) => (
     candidate.goal === item.goal && candidate.targetUrl === item.targetUrl
   ))) {

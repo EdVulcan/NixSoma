@@ -22,6 +22,7 @@ import { createBoundedOperatorWindowLease } from "./bounded-operator-window-leas
 import { createRenewableOperatorMissionSupervisor } from "./renewable-operator-mission.mjs";
 import { createReviewedBrowserTaskOwner } from "./reviewed-browser-task-owner.mjs";
 import { createReviewedMissionWorklist } from "./reviewed-mission-worklist.mjs";
+import { createReviewedWorkflowRunner } from "./reviewed-workflow-runner.mjs";
 import { createOperatorAuthenticator } from "./operator-auth.mjs";
 import { createExecutionGrantSigner } from "../../../packages/shared-utils/src/execution-grants.mjs";
 import { createFixedUnitIncidentScheduler } from "./fixed-unit-incident-scheduler.mjs";
@@ -183,6 +184,13 @@ executor = createTaskExecutor({
   policyEvaluator,
   publishEvent,
 });
+const reviewedWorkflowRunner = createReviewedWorkflowRunner({
+  prepareTask: (task) => executor.prepareTaskForReviewedWorkflow(task),
+  invokeCapability: (body) => planBuilder.invokeCapability(body),
+  hideWorkView: ({ taskId }) => executor.hideReviewedWorkflowWorkView({ taskId }),
+  taskManager,
+  publishAuditEvent,
+});
 const operatorRunSessionManager = createOperatorRunSessionManager({
   records: state.operatorRunSessions,
   persistState: state.persistState,
@@ -207,14 +215,36 @@ const boundedOperatorScheduler = createBoundedOperatorScheduler({
     }
   },
 });
+let reviewedMissionWorklist = null;
 const boundedOperatorWindowLease = createBoundedOperatorWindowLease({
   records: state.boundedOperatorWindowLeases,
   persistState: state.persistState,
   enabled: process.env.OPENCLAW_BOUNDED_OPERATOR_WINDOW_ENABLED === "1",
   intervalMs: process.env.OPENCLAW_BOUNDED_OPERATOR_WINDOW_INTERVAL_MS,
-  run: async ({ maxSteps, leaseId, windowIndex }) => {
+  run: async ({ maxSteps, leaseId, windowIndex, owner }) => {
     const session = operatorRunSessionManager.create({ maxSteps });
     try {
+      if (owner?.kind === "renewable_operator_mission") {
+        const managed = await reviewedMissionWorklist?.runEpoch({
+          missionId: owner.missionId,
+          maxSteps,
+          leaseId,
+          windowIndex,
+        });
+        if (managed?.managed === true) {
+          const result = {
+            ...(managed.result ?? {
+              ran: false,
+              blocked: true,
+              reason: "reviewed_workflow_unavailable",
+              steps: [],
+            }),
+            runSessionId: session.id,
+          };
+          operatorRunSessionManager.finish(session.id, result);
+          return result;
+        }
+      }
       const result = await executor.runOperatorLoop(
         { maxSteps, dryRun: false },
         operatorRunSessionManager.executionHooks(session.id),
@@ -227,11 +257,12 @@ const boundedOperatorWindowLease = createBoundedOperatorWindowLease({
     }
   },
 });
-const reviewedMissionWorklist = createReviewedMissionWorklist({
+reviewedMissionWorklist = createReviewedMissionWorklist({
   records: state.reviewedMissionWorklists,
   persistState: state.persistState,
   taskManager,
   reviewedTaskOwner: reviewedBrowserTaskOwner,
+  workflowRunner: reviewedWorkflowRunner,
 });
 const renewableOperatorMissionSupervisor = createRenewableOperatorMissionSupervisor({
   records: state.renewableOperatorMissions,

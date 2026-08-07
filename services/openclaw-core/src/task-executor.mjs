@@ -38,6 +38,7 @@ import { readNativeEngineeringWorkViewState } from "./native-engineering-work-vi
 import { buildCapabilityRequestBindingHash } from "./capability-runtime-approval-binding.mjs";
 import { validateWorkspaceCommandAutonomousGrant } from "./workspace-command-autonomy.mjs";
 import { createWorkspaceMutationVerificationFollowupCoordinator } from "./task-executor-verification-followup.mjs";
+import { executeNativeEngineeringWorkViewBind } from "./native-engineering-work-view-bind-operation.mjs";
 
 export function createTaskExecutor(deps) {
   const {
@@ -980,6 +981,68 @@ async function executeTask(task, options = {}) {
   }
 }
 
+async function prepareTaskForReviewedWorkflow(task) {
+  if (!isActiveTask(task) || task.status !== "queued") {
+    throw new Error("Reviewed workflow preparation requires a queued active task.");
+  }
+  const targetUrl = typeof task.targetUrl === "string" && task.targetUrl.trim()
+    ? task.targetUrl.trim()
+    : null;
+  if (!targetUrl) throw new Error("Reviewed workflow task targetUrl is required.");
+
+  const policy = ensureTaskPolicy(task, { stage: "reviewed_workflow.prepare", targetUrl });
+  if (!isPolicyExecutionAllowed(policy.decision)) {
+    throw new Error("Reviewed workflow task policy did not allow preparation.");
+  }
+  await setTaskPhase(task, "preparing_work_view", {
+    status: "running",
+    details: {
+      targetUrl,
+      displayTarget: "workspace-2",
+      executor: "reviewed-workflow-runner-v1",
+    },
+  });
+  await invokeWorkViewAuthority("reviewed_workflow_prepare", () => postJson(`${sessionManagerUrl}/work-view/prepare`, {
+    displayTarget: "workspace-2",
+    entryUrl: targetUrl,
+    operatorActionSource: "reviewed_workflow_selection",
+  }));
+  const reveal = await invokeWorkViewAuthority("reviewed_workflow_reveal", () => postJson(`${sessionManagerUrl}/work-view/reveal`, {
+    entryUrl: targetUrl,
+    operatorActionSource: "reviewed_workflow_selection",
+  }));
+  const attachedTask = attachTaskToWorkView(task, buildWorkViewAttachPayload(reveal, targetUrl));
+  await publishEvent(createEventName("task.running"), {
+    task: serialiseTask(attachedTask),
+    executor: "reviewed-workflow-runner-v1",
+  });
+
+  const binding = await executeNativeEngineeringWorkViewBind({
+    taskManager,
+    taskId: task.id,
+    confirm: true,
+    rebind: false,
+    publishEvent,
+    sessionManagerUrl,
+    readWorkViewState,
+    serialiseTask,
+    operatorActionSource: "reviewed_workflow_selection",
+  });
+  if (binding?.body?.ok !== true) {
+    throw new Error("Reviewed workflow trusted work-view binding was rejected.");
+  }
+  return task;
+}
+
+async function hideReviewedWorkflowWorkView() {
+  return invokeWorkViewAuthority(
+    "reviewed_workflow_hide",
+    () => postJson(`${sessionManagerUrl}/work-view/hide`, {
+      operatorActionSource: "reviewed_workflow_selection",
+    }),
+  );
+}
+
 async function executeCapabilityPlanTask(task, options = {}) {
   if (!isActiveTask(task)) {
     throw new Error("Task is not active and cannot be executed.");
@@ -1654,5 +1717,7 @@ async function runOperatorLoop(body = {}, hooks = {}) {
     buildOperatorOptions,
     runOperatorStep,
     runOperatorLoop,
+    prepareTaskForReviewedWorkflow,
+    hideReviewedWorkflowWorkView,
   };
 }

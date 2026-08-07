@@ -1,5 +1,8 @@
 import { createEventName } from "../../../packages/shared-events/src/event-factory.mjs";
 import { buildReviewedBrowserTaskSubmission } from "./reviewed-browser-task-submission.mjs";
+import {
+  normaliseReviewedWorkflowSelection,
+} from "./reviewed-workflow-selection.mjs";
 
 const SAFE_ID = /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,119}$/u;
 const SHA256 = /^[a-f0-9]{64}$/u;
@@ -19,8 +22,23 @@ function reviewedSource(value) {
   const itemOrdinal = Number.isInteger(value?.itemOrdinal) && value.itemOrdinal > 0 && value.itemOrdinal <= 16
     ? value.itemOrdinal
     : null;
-  if (!registry || !worklistId || !missionId || !itemId || !blueprintHash || !itemOrdinal) return null;
-  return { registry, worklistId, missionId, itemId, itemOrdinal, blueprintHash };
+  const hasWorkflowSelection = value?.workflowSelection !== undefined;
+  const workflowSelection = hasWorkflowSelection
+    ? normaliseReviewedWorkflowSelection(value.workflowSelection)
+    : null;
+  if (!registry || !worklistId || !missionId || !itemId || !blueprintHash || !itemOrdinal
+    || (hasWorkflowSelection && !workflowSelection)) {
+    return null;
+  }
+  return {
+    registry,
+    worklistId,
+    missionId,
+    itemId,
+    itemOrdinal,
+    blueprintHash,
+    ...(workflowSelection ? { workflowSelection } : {}),
+  };
 }
 
 export function createReviewedBrowserTaskOwner({
@@ -45,7 +63,11 @@ export function createReviewedBrowserTaskOwner({
     if (source && !sourceReceipt) {
       throw new Error("Reviewed browser task source receipt is invalid.");
     }
-    const task = taskManager.createTask(submission.taskInput);
+    const task = taskManager.createTask(submission.taskInput, {
+      serverExtensions: sourceReceipt?.workflowSelection
+        ? { reviewedWorkflowSelection: sourceReceipt.workflowSelection }
+        : {},
+    });
     const reclaimedTasks = taskManager.supersedeOtherActiveTasks(task.id);
     taskManager.reconcileRuntimeState();
 

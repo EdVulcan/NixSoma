@@ -386,6 +386,7 @@ export function createBoundedOperatorWindowLease({
         maxSteps: lease.maxStepsPerWindow,
         leaseId: lease.id,
         windowIndex: lease.windowsCompleted + 1,
+        owner: normaliseOwner(lease.owner),
       });
       lease.lastResult = compactResult(result);
       lease.lastRunSessionId = safeId(result?.runSessionId);

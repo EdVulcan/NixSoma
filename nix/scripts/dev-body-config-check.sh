@@ -1206,7 +1206,9 @@ EOF
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/operator-mission-routes.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/reviewed-browser-task-owner.mjs"
     || ! -f "$core_out/share/openclaw/services/openclaw-core/src/reviewed-mission-worklist.mjs"
-    || "$(find "$core_out" -type f | wc -l)" -ne 291 ]]; then
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/reviewed-workflow-runner.mjs"
+    || ! -f "$core_out/share/openclaw/services/openclaw-core/src/reviewed-workflow-selection.mjs"
+    || "$(find "$core_out" -type f | wc -l)" -ne 293 ]]; then
     echo "core Nix closure is not exact and read-only: $core_out" >&2
     exit 1
   fi

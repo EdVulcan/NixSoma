@@ -72,8 +72,18 @@ test("window lease continues only within its finite window budget", async () => 
   assert.equal(second.lease.remainingWindows, 0);
   assert.equal((await harness.manager.tick()).reason, "no_due_window");
   assert.deepEqual(calls, [
-    { maxSteps: 3, leaseId: lease.id, windowIndex: 1 },
-    { maxSteps: 3, leaseId: lease.id, windowIndex: 2 },
+    {
+      maxSteps: 3,
+      leaseId: lease.id,
+      windowIndex: 1,
+      owner: { kind: "operator", missionId: null },
+    },
+    {
+      maxSteps: 3,
+      leaseId: lease.id,
+      windowIndex: 2,
+      owner: { kind: "operator", missionId: null },
+    },
   ]);
 });
 

@@ -17,6 +17,8 @@ import { recoverCapabilityExecutionReservations } from "./capability-runtime-app
 
 const TASK_EXTENSION_FIELDS = [
   { name: "sourceCommand", copyFromCreateInput: true },
+  { name: "reviewedWorkflowSelection", serverOnly: true },
+  { name: "reviewedWorkflowOutcome", serverOnly: true },
   { name: "engineeringPlanTodoSuggestionLink", copyFromCreateInput: true },
   { name: "engineeringRecommendationLink", copyFromCreateInput: true },
   { name: "engineeringRecommendationApplicationReceipt" },
@@ -97,6 +99,20 @@ function cloneTaskExtensionFieldsFromCreateInput(body) {
     }
     fields[name] = body[name] && typeof body[name] === "object"
       ? clonePlainObject(body[name])
+      : null;
+  }
+  return fields;
+}
+
+function cloneTaskExtensionFieldsFromServerOptions(options) {
+  const source = options?.serverExtensions && typeof options.serverExtensions === "object"
+    ? options.serverExtensions
+    : {};
+  const fields = {};
+  for (const { name, serverOnly } of TASK_EXTENSION_FIELDS) {
+    if (serverOnly !== true || !(name in source)) continue;
+    fields[name] = source[name] && typeof source[name] === "object"
+      ? clonePlainObject(source[name])
       : null;
   }
   return fields;
@@ -308,6 +324,7 @@ function createTask(body, options = {}) {
     lastAction: null,
     outcome: null,
     ...cloneTaskExtensionFieldsFromCreateInput(body),
+    ...cloneTaskExtensionFieldsFromServerOptions(options),
     recovery:
       body.recovery && typeof body.recovery === "object"
         ? {
@@ -631,6 +648,21 @@ function completeTask(task, details = null) {
   return task;
 }
 
+function recordReviewedWorkflowOutcome(task, outcome) {
+  if (!task || !outcome || typeof outcome !== "object") {
+    throw new Error("Reviewed workflow outcome requires a task and compact outcome.");
+  }
+  task.reviewedWorkflowOutcome = clonePlainObject(outcome);
+  appendTaskPhase(task, "reviewed_workflow_completed", {
+    workflowId: typeof outcome.workflowId === "string" ? outcome.workflowId : null,
+    selectionHash: typeof outcome.selectionHash === "string" ? outcome.selectionHash : null,
+    status: typeof outcome.status === "string" ? outcome.status : null,
+    completionAudit: outcome.completionAudit === true,
+  });
+  persistState();
+  return task;
+}
+
 function failTask(task, reason, details = null) {
   const failureDetails = details && typeof details === "object"
     ? {
@@ -768,6 +800,7 @@ function buildWorkViewAttachPayload(data, targetUrl) {
     bindTaskToTrustedWorkView,
     buildWorkViewAttachPayload,
     completeTask,
+    recordReviewedWorkflowOutcome,
     failTask,
     recordRecommendationExecution,
     recordRecommendationFeedback,

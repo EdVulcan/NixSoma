@@ -28,6 +28,7 @@ function createFixture() {
     add: element(),
     clear: element(),
     bind: element(),
+    workflow: element(),
     draft: element(),
     progress: element(),
     status: element(),
@@ -45,6 +46,7 @@ function createFixture() {
     "#operator-mission-worklist-add-button": elements.add,
     "#operator-mission-worklist-clear-button": elements.clear,
     "#operator-mission-worklist-bind-button": elements.bind,
+    "#operator-mission-worklist-workflow": elements.workflow,
     "#operator-mission-worklist-draft": elements.draft,
     "#operator-mission-worklist-progress-bar": elements.progress,
     "#operator-mission-worklist-status": elements.status,
@@ -81,6 +83,10 @@ function createFixture() {
           completedCount: 0,
           progressPercent: 0,
         },
+        workflowRecipes: [
+          { workflowId: "bounded_run" },
+          { workflowId: "semantic_form_workflow" },
+        ],
       };
     },
     renderOperatorMission: (data) => rendered.push(data),
@@ -107,6 +113,7 @@ function createFixture() {
 
 test("Observer drafts and binds a finite reviewed worklist to the exact mission", async () => {
   const fixture = createFixture();
+  fixture.elements.workflow.value = "semantic_form_workflow";
   fixture.context.addOperatorMissionWorklistDraftItem();
   fixture.context.renderOperatorMissionWorklist({}, {
     id: "mission-1",
@@ -120,7 +127,11 @@ test("Observer drafts and binds a finite reviewed worklist to the exact mission"
   await fixture.context.bindOperatorMissionWorklistFromUi();
   assert.equal(fixture.calls[0].url, "http://core.invalid/operator/mission/mission-1/worklist");
   assert.deepEqual(JSON.parse(fixture.calls[0].options.body), {
-    items: [{ goal: "Inspect reviewed item one", targetUrl: "https://example.com/one" }],
+    items: [{
+      goal: "Inspect reviewed item one",
+      targetUrl: "https://example.com/one",
+      workflowId: "semantic_form_workflow",
+    }],
     confirm: true,
   });
   assert.equal(fixture.rendered[0].worklist.id, "worklist-1");
@@ -193,6 +204,7 @@ test("Observer panel exposes reviewed worklist draft, bind, and progress control
     "operator-mission-worklist-add-button",
     "operator-mission-worklist-clear-button",
     "operator-mission-worklist-bind-button",
+    "operator-mission-worklist-workflow",
     "operator-mission-worklist-draft",
     "operator-mission-worklist-progress-bar",
     "operator-mission-worklist-current-task",

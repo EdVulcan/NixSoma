@@ -873,10 +873,10 @@ verified submit 和 fixed native intake 输入；Core 在 browser 前与 continu
 三个 input/click action、两个 lifecycle action 和五个 fixed action 都是硬上限；任一
 fallback、drift、audit failure、unknown 或 cleanup uncertainty 都终止且不重试。契约见
 `../plans/OPENCLAW_REVIEWED_MULTI_APPLICATION_MISSION_PLAN.md`。
-当前源码证据为全部 `1442/1442` workspace tests、typecheck、Core `994/994`、
+当前源码证据为全部 `1452/1452` workspace tests、typecheck、Core `1004/1004`、
 Observer `121/121`、Session Manager `85/85`、真实 Core/Observer capability gates、
 body-config、835-entry registry、1023-file/1007-shell-script audit、Windows path
-budget，以及精确 `291/36/117`-file Core/Session Manager/Observer Nix closures；
+budget，以及精确 `293/36/117`-file Core/Session Manager/Observer Nix closures；
 物理激活与 live provider mission 尚未声明。
 
 当前 bounded Level 2 browser 眼手闭环与内核白皮书 Phase A 已收口。

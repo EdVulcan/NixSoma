@@ -8,6 +8,7 @@ import { buildEyeHandRecoveryEvidence } from "../src/task-recovery.mjs";
 import { createOperatorAuthenticator } from "../src/operator-auth.mjs";
 import { createOperatorRunSessionManager } from "../src/operator-run-session.mjs";
 import { createReviewedBrowserTaskOwner } from "../src/reviewed-browser-task-owner.mjs";
+import { listReviewedWorkflowRecipes } from "../src/reviewed-workflow-selection.mjs";
 import {
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_CONTRACT,
   CLOUD_CONSCIOUSNESS_LIVE_PROVIDER_ENGINEERING_RECOMMENDATION_REGISTRY,
@@ -1677,6 +1678,11 @@ test("renewable mission routes forward only finite authority controls", async ()
   assert.equal(state.statusCode, 200);
   assert.equal(state.body.supervisor.registry, "nixsoma-renewable-operator-mission-v0");
   assert.equal(state.body.worklists[0].id, "worklist-1");
+  assert.deepEqual(
+    state.body.workflowRecipes.map((recipe) => recipe.workflowId),
+    listReviewedWorkflowRecipes().map((recipe) => recipe.workflowId),
+  );
+  assert.ok(state.body.workflowRecipes.every((recipe) => /^[a-f0-9]{64}$/u.test(recipe.selectionHash)));
   const boundWorklist = await invokeRoute(deps, "POST", "/operator/mission/mission-1/worklist", {
     items: [{ goal: "Inspect one item", targetUrl: "https://example.com/one" }],
     confirm: true,

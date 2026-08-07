@@ -1,6 +1,6 @@
 # NixSoma Documentation Control Room
 
-Updated: 2026-08-04
+Updated: 2026-08-07
 
 This is the canonical entry point for current NixSoma development. Historical
 OpenClaw names remain in service identifiers, environment variables, milestone
@@ -13,7 +13,7 @@ paragraph. Reconcile this baseline with the repository and live host first.
 
 | Layer | Evidence at this checkpoint | Status |
 | --- | --- | --- |
-| Capability source | Current source adds controlled paired-randomized experience recall ordering, exact browser and native workflows, and one fixed-order reviewed mission across both applications to the governed Level 1-4 baseline | All `1442/1442` workspace tests, typecheck, Core `994/994`, Observer `121/121`, Session Manager `85/85`, real Core/Observer gates, body-config, and exact `291/36/117`-file Core/Session Manager/Observer Nix closures pass; physical generation 111 remains the prior reviewed-worklist baseline |
+| Capability source | Current source adds controlled paired-randomized experience recall ordering, exact browser and native workflows, one fixed-order reviewed mission across both applications, and finite server-owned worklist recipe selection to the governed Level 1-4 baseline | All `1452/1452` workspace tests, typecheck, Core `1004/1004`, Observer `121/121`, Session Manager `85/85`, real Core/Observer gates, body-config, and exact `293/36/117`-file Core/Session Manager/Observer Nix closures pass; physical generation 111 remains the prior reviewed-worklist baseline |
 | Local validation | Full workspace tests/typecheck, body-config, real Core/Observer capability gates, the 835-entry registry, 1023-file/1007-shell-script audit, Windows path budget, native frame/input/application lifecycle, provider flake, native inventory, and event-audit integration pass | Validated in source; physical activation and live workflow remain separate |
 | Continuous integration | GitHub CI runs Node 22 install, typecheck, workspace tests, milestone registry/script audit, and Windows path budget on pushes and pull requests | Configured in source |
 | Installed system | NixOS `26.05.4808.569d57850992`, generation `/nix/store/2rg3qq3nzg5yva0z0yg7scs4hb99asl0-nixos-system-nixos-26.05.4808.569d57850992` | Generation 111 deploys the reviewed finite mission worklist; current/profile paths match, all nine health endpoints pass, related services have zero restarts, and system/user failed-unit counts are zero |
@@ -340,10 +340,12 @@ both lanes available, nine healthy endpoints, and zero failed units.
     verifies, and stops Native Intake. See
     [`OPENCLAW_REVIEWED_MULTI_APPLICATION_MISSION_PLAN.md`](./plans/OPENCLAW_REVIEWED_MULTI_APPLICATION_MISSION_PLAN.md).
 
-The next source route is finite reviewed-worklist selection among already fixed
-workflows without provider task invention or arbitrary application routing.
-Physical activation/live-provider proof and Phase D promotion/rollback remain
-separately authorized and are not implied by this source checkpoint.
+The finite reviewed-worklist selection route is now implemented in source. Each
+item chooses one of four server-owned recipes, stores an immutable selection
+hash, and reuses the existing workflow owner; old worklists without recipe
+fields remain generic. Physical activation/live-provider proof and Phase D
+promotion/rollback remain separately authorized and are not implied by this
+source checkpoint.
 
 Do not manufacture a VFS/network variant, provider/readiness wrapper, generic
 Enter or keyboard path, caller-coordinate action, automatic repetition, open
@@ -993,7 +995,7 @@ These figures are capability-maturity estimates, not test coverage:
 | Level 3 controlled system body | about 72-76%; process exec, network connect-attempt, bounded file open-attempt, and process lifecycle observation are physically deployed, while physical Phase D mutation and broader body nerves remain incomplete |
 | Level 4 graphics-stack-native body | about 90% in source; the physically complete one-shot actions now have source-only semantic type -> verified submit and fixed native intake workflows, while longer mission-bound multi-application eye-hand work remains incomplete |
 | Physically deployed bounded product | 88-91% |
-| Current source bounded product | 92-94% |
+| Current source bounded product | 93-95% |
 | Final whitepaper vision | 59-64% |
 
 ## Current Decision Records
@@ -1003,6 +1005,7 @@ These figures are capability-maturity estimates, not test coverage:
 | [OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md](./plans/OPENCLAW_NATIVE_ENGINEERING_TOOL_SURFACE_PLAN.md) | Completed Level 1 governed engineering capability frontier and remaining boundaries. |
 | [OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md](./plans/OPENCLAW_RENEWABLE_OPERATOR_MISSION_PLAN.md) | Physically deployed renewable mission epochs, checkpoints, explicit renewal, recovery, circuit break, and Observer progress. |
 | [OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md](./plans/OPENCLAW_REVIEWED_FINITE_MISSION_WORKLIST_PLAN.md) | Source-complete immutable reviewed task supply with issue checkpoints, exact provenance, and stop-on-failure. |
+| [OPENCLAW_REVIEWED_WORKLIST_WORKFLOW_SELECTION_PLAN.md](./plans/OPENCLAW_REVIEWED_WORKLIST_WORKFLOW_SELECTION_PLAN.md) | Source-bound finite recipe selection, shared workflow execution ownership, immutable hashes, and legacy generic-worklist compatibility. |
 | [OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md](./plans/OPENCLAW_CONTROLLED_EXPERIENCE_ADAPTATION_PLAN.md) | Source-complete finite paired-random adaptation experiment, exact evidence binding, and explicit recall-profile activation without policy or action authority. |
 | [OPENCLAW_SEMANTIC_FORM_WORKFLOW_PLAN.md](./plans/OPENCLAW_SEMANTIC_FORM_WORKFLOW_PLAN.md) | Source-validated semantic type -> exact verified continuation -> eligible submit workflow with a two-step hard stop. |
 | [OPENCLAW_NATIVE_INTAKE_WORKFLOW_PLAN.md](./plans/OPENCLAW_NATIVE_INTAKE_WORKFLOW_PLAN.md) | Source fixed-unit start -> exact activated-surface OCR Type -> verified stop workflow with no arbitrary process, command, network, or persistence authority. |

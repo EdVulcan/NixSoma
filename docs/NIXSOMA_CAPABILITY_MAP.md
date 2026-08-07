@@ -1,6 +1,6 @@
 # NixSoma Capability Map
 
-Updated: 2026-08-04
+Updated: 2026-08-07
 
 This is the canonical progress view. Historical phase numbers and test counts
 do not determine completion. A capability advances only when its operator
@@ -12,17 +12,17 @@ representative evidence agree.
 | Baseline | Maturity | Meaning |
 | --- | --- | --- |
 | Physically deployed bounded product | about 88-91% | Generation 111 carries the governed control plane, renewable mission supervisor, immutable reviewed mission worklist, trusted work view, fixed Level 3 body owners, and bounded Level 4 eye-hand workflows. |
-| Current source bounded product | about 93-95% | Source adds controlled recall-order adaptation, exact-evidence browser and native workflows, and one fixed-order reviewed mission across both applications beyond deployed generation 111. |
-| Final whitepaper vision | about 60-65% | Controlled adaptation and bounded multi-application mission mechanisms now exist in source; live replicated evidence, durable autonomous task planning, broader body nerves, physical Phase D evolution, and reviewed workflow selection remain. |
+| Current source bounded product | about 93-95% | Source adds controlled recall-order adaptation, exact-evidence browser and native workflows, one fixed-order reviewed mission across both applications, and finite server-owned workflow selection beyond deployed generation 111. |
+| Final whitepaper vision | about 60-65% | Controlled adaptation, bounded multi-application missions, and finite reviewed workflow selection now exist in source; live replicated evidence, durable autonomous task planning, broader body nerves, and physical Phase D evolution remain. |
 
 ## Capability Families
 
 | Family | Status | Current evidence | Remaining product gap |
 | --- | --- | --- | --- |
-| Level 1 control plane | Deployed | Generation 111 adds the immutable reviewed task worklist; the real gate proved zero-task binding plus two ordered one-per-epoch completions, and post-switch health/readback pass | Goals and order still require operator review; there is no provider planning, open-ended backlog, retry/skip, causal ranking, or policy change |
+| Level 1 control plane | Deployed plus source workflow selection | Generation 111 adds the immutable reviewed task worklist; current source binds one immutable server recipe per item while preserving legacy generic items | Goals and order still require operator review; there is no provider planning, open-ended backlog, retry/skip, causal ranking, or policy change |
 | Level 2 trusted work view | Deployed plus source native workflow | User-owned helper, isolated browser/workspace, a second fixed native intake unit, fresh bounded capture, stale-authority rejection, recovery, takeover, and Observer projection | Longer finite composition across fixed applications, not another capture or lease variant |
 | Level 3 controlled system body | Partially deployed | Fixed systemd owners, exact Polkit/peer boundaries, repair loop, resource evidence, process/network/file/process-lifecycle nerves | Physical Phase D mutation/rollback, wider fixed body nerves, and governed action composition |
-| Level 4 graphical body | Deployed bounded subset plus source mission | Dedicated compositor/browser, native frame/input, semantic and OCR actions, bounded run/assessment, reviewed acceptance, exact browser and native workflows, and one fixed browser -> native mission | Finite reviewed-worklist workflow selection without provider task invention or arbitrary desktop control |
+| Level 4 graphical body | Deployed bounded subset plus source mission/worklist selection | Dedicated compositor/browser, native frame/input, semantic and OCR actions, bounded run/assessment, reviewed acceptance, exact browser and native workflows, fixed browser -> native mission, and four allowlisted worklist recipes | Physical activation/live workflow evidence, provider-authored task supply, and arbitrary desktop control |
 | Memory and adaptation | Source-validated controlled subset | Durable experience records, task-bound recall consumption, recommendation application/execution/outcome, explicit operator feedback, and one finite paired-randomized baseline-versus-feedback ranking owner | Physical deployment and real replicated experiment outcomes; broader learning domains and automatic authority change remain absent |
 | Declarative evolution | VM-proven | Candidate generation, approval binding, activation, health oracle, exact rollback, and replay rejection in disposable KVM | Physical-host promotion policy and an independently authorized automatic rollback boundary |
 
@@ -120,12 +120,35 @@ The same 1-32 character exact objective value is checked locally before both
 keyboard actions but remains absent from mission results and audit. Application
 order is fixed; maximum provider/action/lifecycle counts are `3/3/2`, with no
 retry, task completion, arbitrary process/window control, root, or host mutation.
-All `1442/1442` workspace tests, typecheck, Core `994/994`, Observer `121/121`,
+All `1452/1452` workspace tests, typecheck, Core `1004/1004`, Observer `121/121`,
 Session Manager `85/85`, the real Core/Observer gates, body-config, the 835-entry
 registry, 1023-file/1007-shell-script audit, Windows path budget, and exact
-`291/36/117`-file Core/Session Manager/Observer closures pass. Physical
+`293/36/117`-file Core/Session Manager/Observer closures pass. Physical
 activation and a live provider mission remain unclaimed.
 
 The next source route is finite reviewed-worklist selection among existing fixed
-workflows. Provider goal invention, open-ended planning, retry/skip, physical
-Phase D, and wider body actions remain separate routes.
+workflows. That route is now implemented in source and must be frozen after its
+representative validation. Provider goal invention, open-ended planning,
+retry/skip, physical Phase D, and wider body actions remain separate routes.
+
+## Newly Implemented Reviewed Worklist Workflow Selection
+
+```text
+operator chooses one of four fixed recipes for each reviewed item
+-> Core checks the recipe against the exact item goal grammar
+-> the bound worklist stores the immutable selection hash
+-> one epoch issues one task and invokes only that selected existing owner
+-> cleanup and the recipe's completion audit are required before advancement
+```
+
+The recipes are `bounded_run`, `semantic_form_workflow`,
+`native_intake_workflow`, and `reviewed_multi_application_mission`. Providers
+cannot choose or alter a recipe, application order, action, budget, retry, or
+task supply. Old persisted worklists without recipe fields remain generic and
+do not silently become `bounded_run` after a checkpoint or restart. All
+`1452/1452` workspace tests, typecheck, Core `1004/1004`, Observer
+`121/121`, Session Manager `85/85`, operator-control and Observer operator
+gates, body-config, the 835-entry registry, 1023-file/1007-shell-script audit,
+Windows path budget, and exact `293/36/117`-file Core/Session
+Manager/Observer closures pass. Physical activation and live provider
+execution remain unclaimed.

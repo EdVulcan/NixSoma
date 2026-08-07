@@ -1,4 +1,5 @@
 import { readJsonBody, sendJson } from "../../../packages/shared-utils/src/http.mjs";
+import { listReviewedWorkflowRecipes } from "./reviewed-workflow-selection.mjs";
 
 function missionIdFromPath(pathname, action) {
   const prefix = "/operator/mission/";
@@ -23,6 +24,7 @@ function missionEnvelope(supervisor, mission = null, reviewedMissionWorklist = n
     mission,
     missions: supervisor.listPublic(),
     worklists: reviewedMissionWorklist?.listPublic() ?? [],
+    workflowRecipes: listReviewedWorkflowRecipes(),
   };
 }
 

@@ -451,15 +451,20 @@ application order, text, unit, target, action, retry, and budget fields remain
 absent; task completion, arbitrary process/window control, root, and host
 mutation remain false.
 
-All `1442/1442` workspace tests, typecheck, Core `994/994`, Observer `121/121`,
+All `1452/1452` workspace tests, typecheck, Core `1004/1004`, Observer `121/121`,
 Session Manager `85/85`, the real Core/Observer capability gates, body-config,
 the 835-entry registry, 1023-file/1007-shell-script audit, Windows path budget,
-and exact `291/36/117`-file Core/Session Manager/Observer closures pass.
+and exact `293/36/117`-file Core/Session Manager/Observer closures pass.
 
-The next source route is finite reviewed-worklist workflow selection without
-provider-authored tasks or arbitrary application routing. Physical deployment,
+The finite reviewed-worklist workflow-selection route is now implemented in
+source without provider-authored tasks or arbitrary application routing. Four
+server-owned recipes are available through immutable selection hashes, and
+legacy worklists without recipe fields remain generic after persistence. The
+selection slice must be frozen after representative validation; the next route
+review must choose a distinct concrete user workflow. Physical deployment,
 live-provider evidence, and Phase D promotion/rollback remain separately
-authorized routes.
+authorized routes. See
+`OPENCLAW_REVIEWED_WORKLIST_WORKFLOW_SELECTION_PLAN.md`.
 
 The bounded Phase C network connect-attempt slice is complete in source,
 disposable KVM, and physical generation
